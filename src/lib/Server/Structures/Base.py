@@ -2,11 +2,12 @@
 __revision__ = '$Revision$'
 
 from copy import deepcopy
-
+from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Generator import SingleXMLFileBacked
 from Bcfg2.Server.Structure import Structure
 
 from elementtree.ElementTree import Element, XML
+from xml.parsers.expat import ExpatError
 
 class BaseFile(SingleXMLFileBacked):
     '''The Base file contains unstructured/independent configuration elements'''
@@ -14,7 +15,12 @@ class BaseFile(SingleXMLFileBacked):
     def Index(self):
         '''Store XML data in reasonable structures'''
         self.store = {'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
-        for entry in XML(self.data).getchildren():
+        try:
+            xdata = XML(self.data)
+        except ExpatError:
+            syslog(LOG_ERR, "Failed to parse base.xml")
+            return
+        for entry in xdata.getchildren():
             self.store[entry.tag][entry.get('name')] = {'all':[], 'Class':{}, 'Image':{}}
             if entry.tag in ['Image', 'Class']:
                 for child in entry.getchildren():
