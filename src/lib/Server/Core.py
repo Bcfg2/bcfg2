@@ -12,23 +12,28 @@ from time import time
 import _fam
 
 class GeneratorError(Exception):
+    '''This error is raised upon generator failures'''
     pass
 
 class PublishError(Exception):
+    '''This error is raised upon publication failures'''
     pass
 
 class fam(object):
     '''The fam object is a set of callbacks for file alteration events'''
     
     def __init__(self):
+        object.__init__(self)
         self.fm = _fam.open()
         self.users = {}
         self.handles = {}
 
     def fileno(self):
+        '''return fam file handle number'''
         return self.fm.fileno()
 
     def AddMonitor(self, path, obj=None):
+        '''add a monitor to path, installing a callback to obj.HandleEvent'''
         mode = stat(path)[ST_MODE]
         if S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
@@ -40,23 +45,28 @@ class fam(object):
         return handle.requestID()
 
     def HandleEvent(self):
+        '''Route a fam event to the proper callback'''
         event = self.fm.nextEvent()
         reqid = event.requestID
         if self.users.has_key(reqid):
             self.users[reqid].HandleEvent(event)
 
 class PublishedValue(object):
+    '''This is for data shared between generators'''
     def __init__(self, owner, key, value):
+        object.__init__(self)
         self.owner = owner
         self.key = key
         self.value = value
 
     def Update(self, owner, value):
+        '''Update the value after an ownership check succeeds'''
         if owner != self.owner:
             raise PublishError, (self.key, owner)
         self.value = value
 
 class Core(object):
+    '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, repository, structures, generators):
         object.__init__(self)
         self.datastore = repository
@@ -92,6 +102,7 @@ class Core(object):
             gen.CompleteSetup()
 
     def PublishValue(self, owner, key, value):
+        '''Publish a shared generator value'''
         if not self.pubspace.has_key(key):
             # This is a new entry
             self.pubspace[key] = PublishedValue(owner, key, value)
@@ -104,42 +115,47 @@ class Core(object):
                        (key, self.pubspace[key].owner, owner))
 
     def ReadValue(self, key):
+        '''Read a value published by another generator'''
         if self.pubspace.has_key(key):
             return self.pubspace[key].value
         raise KeyError, key
 
     def GetStructures(self, metadata):
+        '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
-                      [z.Construct(metadata) for z in self.structures])
+                      [struct.Construct(metadata) for struct in self.structures])
 
     def BindStructure(self, structure, metadata):
-        for entry in [x for x in structure.getchildren() if x.tag not in ['SymLink', 'Directory']]:
+        '''Bind a complete structure'''
+        for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory']]:
             try:
                 self.Bind(entry, metadata)
-            except KeyError, k:
-                syslog(LOG_ERR, "Unable to locate %s"%k)
+            except KeyError, key:
+                syslog(LOG_ERR, "Unable to locate %s" % key)
 
     def Bind(self, entry, metadata):
-        g = [x for x in self.generators if
-             x.__provides__.get(entry.tag, {}).has_key(entry.attrib['name'])]
-        if len(g) == 1:
-            return g[0].__provides__[entry.tag][entry.attrib['name']](entry, metadata)
-        elif len(g) > 1:
-            print "Data Integrity error for %s %s" % (entry.tag, entry.attrib['name'])
+        '''Bind an entry using the appropriate generator'''
+        glist = [gen for gen in self.generators if
+                 gen.__provides__.get(entry.tag, {}).has_key(entry.get('name'))]
+        if len(glist) == 1:
+            return glist[0].__provides__[entry.tag][entry.get('name')](entry, metadata)
+        elif len(glist) > 1:
+            print "Data Integrity error for %s %s" % (entry.tag, entry.get('name'))
         else:
-            for g in self.generators:
-                if hasattr(g, "FindHandler"):
+            for gen in self.generators:
+                if hasattr(gen, "FindHandler"):
                     try:
-                        return g.FindHandler(entry)(entry, metadata)
+                        return gen.FindHandler(entry)(entry, metadata)
                     except:
-                        print g, "failed"
-            raise KeyError, (entry.tag, entry.attrib['name'])
+                        print gen, "failed"
+            raise KeyError, (entry.tag, entry.get('name'))
                 
     def RunCronTasks(self):
-        g = [x for x in self.generators if x.__croninterval__]
-        for generator in g:
-            t = time()
-            if ((t - self.cron.get(generator, 0)) > generator.__croninterval__):
+        '''Run periodic tasks for generators'''
+        generators = [gen for gen in self.generators if gen.__croninterval__]
+        for generator in generators:
+            current = time()
+            if ((current - self.cron.get(generator, 0)) > generator.__croninterval__):
                 generator.Cron()
-                self.cron[generator] = t
+                self.cron[generator] = current
 

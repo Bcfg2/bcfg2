@@ -4,21 +4,16 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from glob import glob
-from os import environ, stat, system
+from os import environ, system
 from popen2 import Popen4
 
 import apt_pkg
 
 from Bcfg2.Client.Toolset import Toolset
 
-def Detect():
-    try:
-        stat('/etc/debian_version')
-        return True
-    except OSError:
-        return False
-
 class Debian(Toolset):
+    '''The Debian toolset implements package and service operations and inherits
+    the rest from Toolset.Toolset'''
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group']
 
@@ -30,19 +25,23 @@ class Debian(Toolset):
         if not self.setup['build']:
             system("dpkg-reconfigure -f noninteractive debconf < /dev/null")
         system("apt-get -q=2 -y update")
+        self.installed = {}
+        self.pkgwork = {'add':[], 'update':[], 'remove':[]}        
         self.Refresh()
 
     def Refresh(self):
+        '''Refresh memory hashes of packages'''
         apt_pkg.init()
-        self.cache = apt_pkg.GetCache()
+        cache = apt_pkg.GetCache()
         self.installed = {}
-        for pkg in self.cache.Packages:
+        for pkg in cache.Packages:
             if pkg.CurrentVer:
                 self.installed[pkg.Name] = pkg.CurrentVer.VerStr
 
     # implement entry (Verify|Install) ops
     
     def VerifyService(self, entry):
+        '''Verify Service status for entry'''
         files = glob("/etc/rc*.d/*%s" % (entry.get('name')))
         if entry.get('status') == 'off':
             if files:
@@ -56,6 +55,7 @@ class Debian(Toolset):
                 return False
 
     def InstallService(self, entry):
+        '''Install Service for entry'''
         if self.setup['verbose']:
             print "Installing Service %s" % (entry.get('name'))
         if entry.attrib['status'] == 'off':
@@ -63,18 +63,19 @@ class Debian(Toolset):
                 print "Disabling service %s" % (entry.get('name'))
                 return False
             else:
-                rc = system("update-rc.d -f %s remove" % entry.get('name'))
+                cmdrc = system("update-rc.d -f %s remove" % entry.get('name'))
         else:
             if self.setup['dryrun']:
                 print "Enabling service %s" % (entry.attrib['name'])
                 return False
             else:
-                rc = system("update-rc.d %s defaults" % (entry.attrib['name']))
-        if rc:
+                cmdrc = system("update-rc.d %s defaults" % (entry.attrib['name']))
+        if cmdrc:
             return False
         return True
 
     def VerifyPackage(self, entry, modlist=[]):
+        '''Verify Package for entry'''
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick']:
@@ -84,13 +85,14 @@ class Debian(Toolset):
                     while cstat == -1:
                         output += cmd.fromchild.read()
                         cstat = cmd.poll()
-                    output = [x for x in output.split('\n') if x]
-                    if [x for x in output if x not in modlist]:
+                    output = [line for line in output.split('\n') if line]
+                    if [filename for filename in output if filename not in modlist]:
                         return False
                 return True
         return False
 
     def InstallPackage(self, entry):
+        '''Install Package for entry - DEPRICATED'''
         if not entry.attrib.has_key('version'):
             print "Package entry for %s is malformed" % (entry.attrib['name'])
         if self.setup['dryrun'] or self.setup['verbose']:
@@ -98,6 +100,7 @@ class Debian(Toolset):
         return False
 
     def Inventory(self):
+        '''Inventory system status'''
         print "In Inventory::"
         Toolset.Inventory(self)
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
@@ -122,6 +125,7 @@ class Debian(Toolset):
         # all data remaining in all is extra packages
         
     def Install(self):
+        '''Correct detected misconfigurations'''
         print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
@@ -130,7 +134,7 @@ class Debian(Toolset):
         # build up work queue
         work = self.pkgwork['add'] + self.pkgwork['update']
         # add non-package entries
-        work += [x for x in self.states if x.tag != 'Package' and not self.states[x]]
+        work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
 
         left = len(work)
         old = left + 1
@@ -143,17 +147,18 @@ class Debian(Toolset):
                                                         len(self.pkgwork['update']), len(self.pkgwork['remove']))
             count = count + 1
             old = left
-            packages = [x for x in work if x.tag == 'Package']
+            packages = [pkg for pkg in work if pkg.tag == 'Package']
 
-            for nonpkg in [x for x in work if x.tag != 'Package']:
+            for nonpkg in [ent for ent in work if ent.tag != 'Package']:
                 self.InstallEntry(nonpkg)
                 if self.states[nonpkg]:
                     work.remove(nonpkg)
             
             # try single large install
-            rc = system(cmd % " ".join(["%s=%s" % (x.get('name'), x.get('version', 'dummy')) for x in packages]))
+            cmdrc = system(cmd % " ".join(["%s=%s" % (pkg.get('name'), pkg.get('version', 'dummy'))
+                                           for pkg in packages]))
 
-            if rc == 0:
+            if cmdrc == 0:
                 # set all states to true and flush workqueues
                 for pkg in packages:
                     self.states[pkg] = True
@@ -169,8 +174,8 @@ class Debian(Toolset):
                         self.states[pkg] = True
                         work.remove(pkg)
                     else:
-                        rc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
-                        if rc == 0:
+                        cmdrc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
+                        if cmdrc == 0:
                             self.states[pkg] = True
                             work.remove(pkg)
                         else:
