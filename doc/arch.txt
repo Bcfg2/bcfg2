@@ -1,0 +1,25 @@
+The BCFG2 Architecture consists of four main parts:
+
+The core is the component containing shared data:
+ - file alteration monitor
+ - metadata store
+ - generators
+ - structuring agents
+ - change notification mechanism
+
+Generators: configuration atom construction mechanism
+ - configuration repository
+ - package management
+ - service management
+ - ssh key management
+ - hostbase
+
+Structuring Agents - code that forms the configuration into
+      independant and dependant clauses
+ - Bundler
+ - Translator
+ - Literal
+ - Image data
+
+Client - state transition engine that runs on clients. 
+ 
