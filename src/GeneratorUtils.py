@@ -5,14 +5,18 @@ from os import listdir, stat
 from stat import ST_MTIME
 
 class FileBacked(object):
-    '''FileBacked is a class that will cache file data and automatically reload it as required from disk.
-    This class is currently READ-ONLY.'''
+    '''FileBacked is a class that will cache file data and automatically reload it as required from disk.'''
 
     def __init__(self,filename):
         '''Setup initial structures'''
         self.filename = filename
-        self.mtime = stat(filename)[ST_MTIME]
-        self._data = file(filename).read()
+        try:
+            self.mtime = stat(filename)[ST_MTIME]
+            self._data = file(filename).read()
+        except OSError:
+            self.mtime = 0
+            self._data = None
+            self.setdata('')
 
     def getdata(self):
         mtime = stat(self.filename)[ST_MTIME]
@@ -22,12 +26,16 @@ class FileBacked(object):
         return self._data
 
     def setdata(self,val):
-        pass
+        if val != self._data:
+            self._data = val
+            file(self.filename,'w').write(val)
+            self.mtime = stat(self.filename)[ST_MTIME]
 
     data=property(getdata,setdata)
 
 class DirectoryBacked(object):
-    '''DirectoryBacked caches a complete directory (including proper negative caching)'''
+    '''DirectoryBacked caches a complete directory (including proper negative caching).
+    This class is READ-ONLY.'''
 
     def __init__(self,path):
         self.path = path
