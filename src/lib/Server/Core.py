@@ -5,10 +5,15 @@ from os import stat
 from stat import ST_MODE, S_ISDIR
 from syslog import syslog, LOG_ERR
 
-from Error import PublishError
 from Types import Clause
 
 import _fam
+
+class GeneratorError(Exception):
+    pass
+
+class PublishError(Exception):
+    pass
 
 class fam(object):
     '''The fam object contains alteration monitors'''
@@ -56,6 +61,7 @@ class Core(object):
         self.fam = fam()
         self.pubspace = {}
         self.structures = []
+        self.cron = {}
         for structure in structures:
             m = getattr(__import__("Bcfg2.Server.Structures.%s"%(structure)).Server.Structures, structure)
             s = getattr(m, structure)
@@ -111,3 +117,11 @@ class Core(object):
                         print g, "failed"
             raise KeyError, (entry.tag,entry.attrib['name'])
                 
+    def RunCronTasks(self):
+        g = [x for x in self.generators if x.__croninterval__]
+        for generator in g:
+            t = time()
+            if ((t - self.cron.get(generator,0)) > generator.__croninterval__):
+                generator.Cron()
+                self.cron[generator] = t
+
