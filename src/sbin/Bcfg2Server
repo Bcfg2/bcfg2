@@ -15,7 +15,7 @@ from ConfigParser import ConfigParser
 from elementtree.ElementTree import Element
 
 from Bcfg2.Server.Core import Core
-from Bcfg2.Server.Metadata import MetadataStore
+from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
 
 from sss.daemonize import daemonize
@@ -95,11 +95,15 @@ class BcfgServer(Server):
                 return Element("error", type='host resolution error')
         t = time()
         config = Element("Configuration", version='2.0')
-        # get metadata for host
-        if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
-            m = self.metadata.FetchMetadata(client, image=xml.attrib['image'], profile=xml.attrib['profile'])
-        else:
-            m = self.metadata.FetchMetadata(client)
+        try:
+            # get metadata for host
+            if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
+                m = self.metadata.FetchMetadata(client, image=xml.attrib['image'], profile=xml.attrib['profile'])
+            else:
+                m = self.metadata.FetchMetadata(client)
+        except MetadataConsistencyError:
+            syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
+            return Element("error", type='metadata error')
             
         config.set('toolset', m.toolset)
         try:
@@ -123,7 +127,10 @@ class BcfgServer(Server):
             client = gethostbyaddr(peer)[0].split('.')[0]
         except herror:
             return Element("error", type='host resolution error')
-        m = self.metadata.FetchMetadata(client)
+        try:
+            m = self.metadata.FetchMetadata(client)
+        except MetadataConsistencyError:
+            return Element("error", type='metadata resolution error')
         for g in self.core.generators:
             for p in g.get_probes(m):
                 r.append(p)
