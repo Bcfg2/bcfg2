@@ -10,12 +10,11 @@ from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
 from sys import argv, exit as sysexit, exc_info
 from time import time
 from traceback import extract_tb
-from ConfigParser import ConfigParser
 
 from elementtree.ElementTree import Element
 
 from Bcfg2.Server.Core import Core
-from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
+from Bcfg2.Server.Metadata import MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
 
 from sss.daemonize import daemonize
@@ -54,15 +53,7 @@ class BcfgServer(Server):
         
     def __setup__(self):
         self.setup = self.kwargs['setup']
-        c = ConfigParser()
-        c.read([self.kwargs.get('configfile', '/etc/bcfg2.conf')])
-        repo = c.get('server','repository')
-        generators = c.get('server','generators').split(',')
-        structures = c.get('server', 'structures').split(',')
-        mpath = c.get('server','metadata')
-        self.core = Core(repo, structures, generators)
-        self.metadata = MetadataStore("%s/metadata.xml"%(mpath), self.core.fam)
-        self.stats = Statistics("%s/statistics.xml"%(mpath))
+        self.core = Core(self.kwargs.get('configfile', '/etc/bcfg2.conf'))
         self.__progress__()
 
     def __progress__(self):
@@ -74,7 +65,7 @@ class BcfgServer(Server):
             self.LogFailure("Cron")
 
         try:
-            self.stats.WriteBack()
+            self.core.stats.WriteBack()
         except:
             self.LogFailure("Statistics")
             
@@ -82,10 +73,11 @@ class BcfgServer(Server):
 
     def __shutdown__(self):
         # Update Statistics on shutdown
-        self.stats.WriteBack()
+        self.core.stats.WriteBack()
 
     def BuildConfig(self, xml, (peer, port)):
         '''Build Client Config'''
+        # find client info
         if setup['client']:
             client = setup['client']
         else:
@@ -93,32 +85,17 @@ class BcfgServer(Server):
                 client = gethostbyaddr(peer)[0].split('.')[0]
             except herror:
                 return Element("error", type='host resolution error')
-        t = time()
-        config = Element("Configuration", version='2.0')
-        try:
-            # get metadata for host
-            if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
-                m = self.metadata.FetchMetadata(client, image=xml.attrib['image'], profile=xml.attrib['profile'])
-            else:
-                m = self.metadata.FetchMetadata(client)
-        except MetadataConsistencyError:
-            syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
-            return Element("error", type='metadata error')
-            
-        config.set('toolset', m.toolset)
-        try:
-            structures = self.core.GetStructures(m)
-        except:
-            self.LogFailure("GetStructures")
-            return Element("error", type='structure error')
-        for s in structures:
+
+        if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
             try:
-                self.core.BindStructure(s, m)
-                config.append(s)
-            except:
-                self.LogFailure("BindStructure")
-        syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time()-t))
-        return config
+                # if metadata is provided, call FetchMetadata with settings
+                # it is screwey. i know.
+                meta = self.core.metadata.FetchMetadata(client, image=xml.attrib['image'],
+                                                        profile=xml.attrib['profile'])
+            except MetadataConsistencyError:
+                syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
+                return Element("error", type='metadata error')
+        return self.core.BuildConfiguration(client)
 
     def get_probes(self, xml, (peer, port)):
         '''Get Probes for Client'''
@@ -128,7 +105,7 @@ class BcfgServer(Server):
         except herror:
             return Element("error", type='host resolution error')
         try:
-            m = self.metadata.FetchMetadata(client)
+            m = self.core.metadata.FetchMetadata(client)
         except MetadataConsistencyError:
             return Element("error", type='metadata resolution error')
         for g in self.core.generators:
@@ -161,7 +138,7 @@ class BcfgServer(Server):
                 return Element("error", type='host resolution error')
 
             # Update statistics
-            self.stats.updateStats(xml, client)
+            self.core.stats.updateStats(xml, client)
 
         syslog(LOG_INFO, "Client %s reported state %s"%(peer, e.attrib['state']))
         return Element("ok")
