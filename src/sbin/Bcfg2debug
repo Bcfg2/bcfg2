@@ -3,6 +3,7 @@
 __revision__ = '$Revision$'
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 
+from sys import argv
 from time import sleep
 from Bcfg2.Server.Core import Core
 
@@ -14,7 +15,11 @@ def input():
 
 if __name__ == '__main__':
     settings = {}
-    core = Core('/etc/bcfg2.conf')
+    if '-c' in argv:
+        cfile = argv[-1]
+    else:
+        cfile = '/etc/bcfg2.conf'
+    core = Core(cfile)
     while core.fam.fm.pending():
         while core.fam.fm.pending():
             core.fam.HandleEvent()
