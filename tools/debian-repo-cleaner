@@ -1,0 +1,3 @@
+#!/bin/bash
+
+for i in alpha arm hppa ia64 m68k mipsel powerpc s390 sparc mips; do find /cluster/distro/debian -name \*${i}.deb | xargs rm -f; done

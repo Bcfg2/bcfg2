@@ -1,0 +1,4 @@
+#!/bin/sh
+/usr/bin/rsync -a --exclude="**/*alpha*" --exclude="**/*arm*" --exclude="**/*hppa*" --exclude="**/*ia64*" --exclude="**/*m68k*" --exclude="**/*mipsel*" --exclude="**/*powerpc*" --exclude="**/*s390*" --exclude="**/*sparc*" --exclude="**/*mips*" rsync://mirror.mcs.anl.gov/debian/ /cluster/distro/debian/
+/usr/bin/rsync -a --exclude="**/*alpha*" --exclude="**/*arm*" --exclude="**/*hppa*" --exclude="**/*ia64*" --exclude="**/*m68k*" --exclude="**/*mipsel*" --exclude="**/*powerpc*" --exclude="**/*s390*" --exclude="**/*sparc*" --exclude="**/*mips*" rsync://non-us.debian.org/debian-non-US/ /cluster/distro/debian-non-US/
+rsync -a rsync://debian-test/deb-repo/ /cluster/debian/woody/
