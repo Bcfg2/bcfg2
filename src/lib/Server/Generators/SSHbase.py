@@ -3,6 +3,8 @@ __revision__ = '$Revision$'
 
 from binascii import b2a_base64
 from os import rename, system
+from socket import gethostbyname, gethostbyaddr, gaierror
+from syslog import syslog, LOG_ERR
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
@@ -44,17 +46,48 @@ class SSHbase(Generator):
                               '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
                               '/etc/ssh/ssh_host_key':self.build_hk,
                               '/etc/ssh/ssh_host_key.pub':self.build_hk}}
+        self.ipcache = {}
+        self.domains = ['mcs.anl.gov', 'bgl.mcs.anl.gov', 'globus.org']
+
+    def get_ipcache_entry(self, client):
+        '''build a cache of dns results'''
+        if self.ipcache.has_key(client):
+            return self.ipcache[client]
+        else:
+            # need to add entry
+            for domain in self.domains:
+                try:
+                    ipaddr = gethostbyname("%s.%s" % (client, domain))
+                    fqdn = gethostbyaddr(ipaddr)[0]
+                    return (ipaddr, fqdn)
+                except gaierror:
+                    continue
+            syslog(LOG_ERR, "Failed to find fqdn for %s" % client)
+            raise gaierror
+
+    def cache_skn(self):
+        '''build memory cache of the ssh known hosts file'''
+        self.static_skn = ''
+        for pubkey in [pubk for pubk in self.repository.entries.keys() if '.pub.H_' in pubk]:
+            hostname = pubkey.split('H_')[1]
+            try:
+                (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
+            except gaierror:
+                continue
+            self.static_skn += "%s,%s,%s %s" % (hostname, fqdn, ipaddr,
+                                         self.repository.entries[pubkey].data)
+            
 
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
-        filedata = "".join([info.data for (filename, info) in self.repository.entries.iteritems()
-                            if ".pub" in filename])
+        if not hasattr(self, 'static_skn'):
+            self.cache_skn()
+        entry.text = self.static_skn
         for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
-            filedata += "localhost,localhost.localdomain,127.0.0.1 %s" % (
+            entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.repository.entries[hostkey].data)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
-        entry.text = filedata
 
     def build_hk(self, entry, metadata):
         '''This binds host key data into entries'''
@@ -62,7 +95,8 @@ class SSHbase(Generator):
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
-            #self.GenerateKnownHosts()
+            if hasattr(self, 'static_skn'):
+                del self.static_skn
         keydata = self.repository.entries[filename].data
         perms = '0600'
         if entry.get('name')[-4:] == '.pub':
