@@ -15,7 +15,8 @@ class Debconf(Generator):
 
     probes = [XML('''<probe interpreter='/bin/sh'>lspci|grep VGA</probe>''')]
 
-    def __setup__(self):
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
         self.repo = DirectoryBacked(self.data, self.core.fam)
         self.xsensed = {}
 
@@ -29,6 +30,7 @@ class Debconf(Generator):
         entry.text = filedata % (metadata.hostname, xdriver)
 
     def get_probes(self, metadata):
+        '''Send out X probe'''
         return self.probes
 
     
