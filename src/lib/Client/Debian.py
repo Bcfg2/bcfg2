@@ -144,6 +144,11 @@ class Debian(Toolset):
             count = count + 1
             old = left
             packages = [x for x in work if x.tag == 'Package']
+
+            for nonpkg in [x for x in work if x.tag != 'Package']:
+                self.InstallEntry(nonpkg)
+                if self.states[nonpkg]:
+                    work.remove(nonpkg)
             
             # try single large install
             rc = system(cmd % " ".join(["%s=%s" % (x.get('name'), x.get('version', 'dummy')) for x in packages]))
@@ -170,10 +175,5 @@ class Debian(Toolset):
                             work.remove(pkg)
                         else:
                             print "Failed to install package %s" % (pkg.get('name'))
-
-            for nonpkg in [x for x in work if x.tag != 'Package']:
-                self.InstallEntry(nonpkg)
-                if self.states[nonpkg]:
-                    work.remove(nonpkg)
 
             left = len(work)
