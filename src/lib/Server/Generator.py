@@ -125,7 +125,11 @@ class XMLFileBacked(FileBacked):
     __identifier__ = 'name'
 
     def Index(self):
-        a = XML(self.data)
+        try:
+            a = XML(self.data)
+        except:
+            syslog(LOG_ERR, "Failed to parse %s"%(self.name))
+            return
         self.label = a.attrib[self.__identifier__]
         self.entries = a.getchildren()
 
@@ -149,7 +153,11 @@ class ScopedXMLFile(SingleXMLFileBacked):
         self.store[entry.tag][entry.attrib['name']].append((metadata, entry))
     
     def Index(self):
-        a = XML(self.data)
+        try:
+            a = XML(self.data)
+        except:
+            syslog(LOG_ERR, "Failed to parse %s"%(self.name))
+            return
         self.store = {}
         for e in a.getchildren():
             if e.tag not in self.__containers__:
