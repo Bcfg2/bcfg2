@@ -4,6 +4,7 @@
 <!ENTITY concepts SYSTEM "concepts.xml">
 <!ENTITY install SYSTEM "install.xml">
 <!ENTITY generators SYSTEM "generators.xml">
+<!ENTITY deployment SYSTEM "deployment.xml">
 ]>
 <book id="bcfg2">
   <bookinfo>
@@ -57,4 +58,5 @@
 &concepts;
 &install;
 &generators;
+&deployment;
 </book>
