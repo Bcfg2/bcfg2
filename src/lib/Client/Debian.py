@@ -24,6 +24,7 @@ class Debian(Toolset):
         system("dpkg --force-confold --configure -a")
         if not self.setup['build']:
             system("dpkg-reconfigure -f noninteractive debconf < /dev/null")
+        system("apt-get clean")
         system("apt-get -q=2 -y update")
         self.installed = {}
         self.installed_this_run = []
