@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from binascii import b2a_base64
+from string import join
 
 class ConfigFile(object):
     format="<ConfigFile name='%s' owner='%s' group='%s' perms='%s' encoding='%s'>%s</ConfigFile>"
@@ -16,7 +17,7 @@ class ConfigFile(object):
         else:
             self.xcontent=self.content
         
-    def XMLSerialize(self):
+    def toxml(self):
         return self.format%(self.name,self.owner,self.group,self.perms,self.encoding,self.xcontent)
 
 class Service(object):
@@ -28,5 +29,31 @@ class Service(object):
         self.status = status
         self.scope = scope
 
-    def XMLSerialize(self):
+    def toxml(self):
         return self.format%(self.name,self.type,self.status,self.scope)
+
+class Package(object):
+    format = '''<Package name='%s' type='%s' url='%s'/>'''
+
+    def __init__(self, name, t, url):
+        self.name = name
+        self.type = t
+        self.url = url
+
+    def toxml(self):
+        return self.format%(self.name, self.type, self.url)
+
+class Clause(list):
+    format = '''<%s name='%s'>%%s</%s>'''
+    
+    def __init__(self, t, name, data=None):
+        list.__init__(self)
+        self.type = t
+        self.name = name
+        if data:
+            self.extend(data)
+
+    def toxml(self):
+        r = self.format%(self.type,self.name,self.type)
+        children = map(lambda x:x.toxml(), self)
+        return r%(join(children,''))
