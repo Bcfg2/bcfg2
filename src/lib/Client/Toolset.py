@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from grp import getgrgid
-from os import chown, chmod, lstat, mkdir, stat, system, unlink
-from pwd import getpwuid
+from grp import getgrgid, getgrnam
+from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename
+from pwd import getpwuid, getpwnam
 from stat import *
 from string import join, split
 
@@ -161,7 +161,7 @@ class Toolset(object):
             newfile = open("%s.new"%(entry.attrib['name']), 'w')
             newfile.write(entry.text)
             newfile.close()
-            chown(newfile.name, entry.attrib['owner'], entry.attrib['group'])
+            chown(newfile.name, getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
             chmod(newfile.name, CalcPerms(S_IFREG, entry.attrib['perms']))
             if entry.attrib.get("paranoid", False) and setup.get("paranoid", False):
                 system("diff -u %s %s.new"%(entry.attrib['name'], entry.attrib['name']))
