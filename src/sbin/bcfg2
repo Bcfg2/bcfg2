@@ -97,8 +97,6 @@ if __name__ == '__main__':
 
     # install incorrect aspects of configuration
     client.Install()
-    # flush pending changes
-    client.Commit()
 
     print "--> %s of %s config elements correct"%(client.states.values().count(True), len(client.states.values()))
     print "bad:"
@@ -108,7 +106,7 @@ if __name__ == '__main__':
 
     # upload statistics
     m = Element("upload-statistics")
-    stats = client.GetStats()
+    stats = client.GenerateStats()
     m.append(stats)
 
     comm.SendMessage(h, tostring(stats))
