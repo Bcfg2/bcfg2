@@ -15,7 +15,7 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ssslib-python, python2.3-fam, bcfg2, fam
+Depends: ${python:Depends}, ssslib-python, python2.3-fam, bcfg2, fam, python2.3-elementtree
 Description: build configuration system, version two
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
