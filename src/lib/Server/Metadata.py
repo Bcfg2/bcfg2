@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from elementtree.ElementTree import XML, SubElement, Element
-from syslog import syslog, LOG_ERR
+from syslog import syslog, LOG_ERR, LOG_INFO
 
 from Bcfg2.Server.Generator import SingleXMLFileBacked
 
