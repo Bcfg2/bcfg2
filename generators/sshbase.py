@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from binascii import b2a_base64
 from glob import glob
 from os import rename, stat, system
 from socket import gethostbyname
@@ -44,6 +45,7 @@ class sshbase(Generator):
         entry.text = keydata
         if "ssh_host_key.H_" in filename:
             entry.attrib['encoding'] = 'base64'
+            entry.text = b2a_base64(keydata)
 
     def GenerateKnownHosts(self):
         output = ''
