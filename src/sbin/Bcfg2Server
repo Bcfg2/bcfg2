@@ -13,7 +13,7 @@ from traceback import extract_tb
 
 from elementtree.ElementTree import Element
 
-from Bcfg2.Server.Core import Core
+from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
 
@@ -53,7 +53,11 @@ class BcfgServer(Server):
         
     def __setup__(self):
         self.setup = self.kwargs['setup']
-        self.core = Core(self.kwargs.get('configfile', '/etc/bcfg2.conf'))
+        try:
+            self.core = Core(setup, self.kwargs.get('configfile', '/etc/bcfg2.conf'))
+        except CoreInitError, msg:
+            print msg
+            raise SystemExit, 1
         self.__progress__()
 
     def __progress__(self):
