@@ -6,7 +6,7 @@ __revision__ = '$Revision'
 
 from getopt import getopt, GetoptError
 from socket import gethostbyaddr, herror
-from syslog import syslog, LOG_INFO, LOG_ERR
+from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
 from sys import argv, exit as sysexit, exc_info
 from time import time
 from traceback import extract_tb
@@ -146,6 +146,7 @@ class BcfgServer(Server):
         del t, v, tb
 
 if __name__ == '__main__':
+    openlog("Bcfg2", 0, LOG_LOCAL0)
     options =  {'v':'verbose', 'd':'debug'}
     doptions = {'D':'daemon', 'C':'client'}
     setup = dgetopt(argv[1:], options, doptions)
