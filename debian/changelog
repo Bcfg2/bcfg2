@@ -1,3 +1,9 @@
+bcfg2 (0.6.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Brian Pellin <bpellin@mcs.anl.gov>  Fri,  7 Jan 2005 11:02:47 -0600
+
 bcfg2 (0.6.1-1) unstable; urgency=low
 
   * actual release
