@@ -140,7 +140,7 @@ class Debian(Toolset):
                 system("apt-get remove %s" % " ".join(self.pkgwork['remove']))
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
-        if len(self.extra_packages) > 0:
+        if len(self.extra_services) > 0:
             self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
         
     def Install(self):
