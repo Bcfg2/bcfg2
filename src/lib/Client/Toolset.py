@@ -9,7 +9,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 from sys import exc_info
-from time import asctime, localtime
+#from time import asctime, localtime
 from traceback import extract_tb
 
 from elementtree.ElementTree import Element, SubElement, tostring
@@ -107,7 +107,7 @@ class Toolset(object):
 
         # Calculate number of total bundles and structures
         total =  len(self.states)
-        stats.set('total',str(total))
+        stats.set('total', str(total))
         # Calculate number of good bundles and structures
         good = len([key for key, val in self.states.iteritems() if val])
         stats.set('good', str(good))
@@ -126,12 +126,15 @@ class Toolset(object):
         # List bad elements of the configuration
         if dirty:
             bad_elms = SubElement(stats, "Bad")
-            for elm in [key for key,val in self.states.iteritems() if not val]:
+            for elm in [key for key, val in self.states.iteritems() if not val]:
                 if elm.get('name') == None:
                     SubElement(bad_elms, elm.tag)
                 else:
                     SubElement(bad_elms, elm.tag, name=elm.get('name'))
-
+        if self.modified:
+            mod = SubElement(stats, "Modified")
+            for elm in self.modified:
+                SubElement(mod, elm.tag, elm.get('name'))
         return stats
 
     # the next two are dispatch functions
