@@ -1,6 +1,6 @@
 %define name bcfg2
 %define version 0.6.2
-%define release 1
+%define release 2
 %define pythonversion 2.2
 
 Summary: Bcfg2 Client
