@@ -178,8 +178,10 @@ class Toolset(object):
         try:
             fmode = lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
+                self.CondPrint('debug', "Non-directory entry already exists at %s" % (entry.get('name')))
                 unlink(entry.get('name'))
             elif S_ISDIR(fmode):
+                self.CondPrint('debug', "Directory entry already exists at %s" % (entry.get('name')))
                 system("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
             else:
                 unlink(entry.get('name'))
@@ -220,24 +222,29 @@ class Toolset(object):
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
+        exists = False
         self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
         try:
             fmode = lstat(entry.get('name'))
             if not S_ISDIR(fmode[0]):
+                self.CondPrint("debug", "Found a non-directory entry at %s" % (entry.get('name')))
                 try:
                     unlink(entry.get('name'))
                 except OSError:
-                    self.CondPrint('debug', "Failed to unlink %s" % (entry.get('name')))
+                    self.CondPrint('verbose', "Failed to unlink %s" % (entry.get('name')))
                     return False
+            else:
+                exists = True
         except OSError:
             # stat failed
             pass
-        
-        try:
-            mkdir(entry.get('name'))
-        except OSError:
-            self.CondPrint('debug', 'Failed to create directory %s' % (entry.get('name')))
-            return False
+
+        if not exists:
+            try:
+                mkdir(entry.get('name'))
+            except OSError:
+                self.CondPrint('debug', 'Failed to create directory %s' % (entry.get('name')))
+                return False
         try:
             chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
