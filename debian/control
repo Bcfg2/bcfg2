@@ -12,5 +12,5 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ssslib-python, python2.3-fam, bcfg2
+Depends: ${python:Depends}, ssslib-python, python2.3-fam, bcfg2, fam
 Description: build configuration system
