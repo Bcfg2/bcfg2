@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from grp import getgrgid
-from os import lstat, mkdir, stat
+from os import chown, chmod, lstat, mkdir, stat, system, unlink
 from pwd import getpwuid
 from stat import *
 from string import join, split
