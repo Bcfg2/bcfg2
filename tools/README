@@ -1,4 +1,8 @@
 This directory contains repository maintenance tools. 
 
-bundlecvt.py <bundle directory> <translation directory> - converts v1 bundles into (non-optimal bcfg2 bundles)
-basebuilder.py <image directory> - builds v2 base.xml from bcfg1 repo
+bundlecvt.py <bundle directory> <translation directory> 
+    - converts v1 bundles into (non-optimal bcfg2 bundles)
+basebuilder.py <image directory> 
+    - builds v2 base.xml from bcfg1 repo
+validate_repo <repo directory> <schema directory>
+    - check all repo files against schemas
