@@ -113,7 +113,7 @@ class Core(object):
                       [z.Construct(metadata) for z in self.structures])
 
     def BindStructure(self, structure, metadata):
-        for entry in [x for x in structure.getchildren() if x.tag not in ['SymLink','Directory']]:
+        for entry in [x for x in structure.getchildren() if x.tag not in ['SymLink', 'Directory']]:
             try:
                 self.Bind(entry, metadata)
             except KeyError, k:
