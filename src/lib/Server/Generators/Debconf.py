@@ -13,7 +13,7 @@ class Debconf(Generator):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __provides__ = {'ConfigFile':{}}
 
-    probes = [Element("probe", name='VGA', interpreter='/bin/sh', source='debconf')]
+    probes = [Element("probe", name='VGA', interpreter='/bin/sh', source='Debconf')]
     probes[0].text = '''
     XSERVER='/usr/bin/X11/X|/usr/X11R6/bin/X'
     if [ XFree86 -configure 2>/dev/null ] ; then
