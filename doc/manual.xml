@@ -1,0 +1,60 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+[
+<!ENTITY concepts SYSTEM "concepts.xml">
+<!ENTITY install SYSTEM "install.xml">
+<!ENTITY generators SYSTEM "generators.xml">
+]>
+<book id="bcfg2">
+  <bookinfo>
+    <title>Bcfg2 Manual</title>
+    <author>
+      <firstname>Narayan</firstname>
+      <surname>Desai</surname>
+      <email>desai@mcs.anl.gov</email>
+    </author>
+    <affiliation>
+      <orgname>Argonne National Laboratory</orgname>
+      <orgdiv>MCS Division</orgdiv> 
+    </affiliation>
+    <date>February 2, 2005</date>
+    <releaseinfo>$Revision$</releaseinfo>
+    <pubdate>February 2005</pubdate>
+    <copyright>
+      <year>2005</year>
+      <holder>Argonne National Laboratory</holder>
+    </copyright> 
+    
+    <legalnotice>
+      <para>
+	This manual is free software; you can redistribute it and/or
+	modify it under the terms of the GNU General Public License as
+	published by the Free Software Foundation; either version 2 of
+	the License, or (at your option) any later version.
+      </para>
+      <para>
+	This is distributed in the hope that it will be useful,
+	but <emphasis>without any warranty</emphasis>; without even the
+	implied warranty of <emphasis>merchantability</emphasis> or
+	<emphasis>fitness for a particular purpose</emphasis>.  See the
+	GNU General Public License for more details.
+      </para>
+    </legalnotice>
+
+    <revhistory>
+      <revision>
+	<revnumber>0.6.4</revnumber>
+	<date>2005/02/01 11:38:27</date>
+	<revremark>
+	  $Id$
+        </revremark>
+      </revision>
+    </revhistory>
+  </bookinfo>
+
+  <toc/>
+
+&concepts;
+&install;
+&generators;
+</book>
