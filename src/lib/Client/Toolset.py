@@ -117,17 +117,20 @@ class Toolset(object):
 
         if len([key for key, val in self.structures.iteritems() if not val]) == 0:
             stats.set('state', 'clean')
+            dirty = 0
         else:
             stats.set('state', 'dirty')
+            dirty = 1
         #stats.set('time', asctime(localtime()))
 
         # List bad elements of the configuration
-        bad_elms = SubElement(stats, "Bad")
-        for elm in [key for key,val in self.states.iteritems() if not val]:
-            if elm.get('name') == None:
-                SubElement(bad_elms, elm.tag)
-            else:
-                SubElement(bad_elms, elm.tag, name=elm.get('name'))
+        if dirty:
+            bad_elms = SubElement(stats, "Bad")
+            for elm in [key for key,val in self.states.iteritems() if not val]:
+                if elm.get('name') == None:
+                    SubElement(bad_elms, elm.tag)
+                else:
+                    SubElement(bad_elms, elm.tag, name=elm.get('name'))
 
         return stats
 
