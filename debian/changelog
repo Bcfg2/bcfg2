@@ -1,3 +1,10 @@
+bcfg2 (0.6pre4-1) unstable; urgency=low
+
+  * add schema validation
+  * new upstream
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri, 29 Oct 2004 14:23:06 -0500
+
 bcfg2 (0.6pre3-1) unstable; urgency=low
 
   * new upstream
