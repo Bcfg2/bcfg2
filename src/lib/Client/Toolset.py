@@ -272,10 +272,13 @@ class Toolset(object):
                 filedata = entry.text
             newfile.write(filedata)
             newfile.close()
-            chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+            try:
+                chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+            except:
+                chown(newfile.name, 0, 0)
             chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
-                system("diff -u %s %s.new"%(entry.get('name'), entry.get('name')))
+                system("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), e:
