@@ -96,7 +96,8 @@ class ConfigFileEntry(object):
                     else:
                         print "unhandled action %s"%(action)
 
-    def GetConfigFile(self, name, metadata):
+    def GetConfigFile(self, entry, metadata):
+        name = entry.attrib['name']
         filedata = ""
         # first find basefile
         try:
@@ -111,7 +112,8 @@ class ConfigFileEntry(object):
         for delta in deltas:
             pass
         # apply diffs, etc
-        return ConfigFile(self.path, self.owner, self.group, self.perms, filedata, self.encoding)
+        entry.attrib.update({'owner':self.owner, 'group':self.group, 'perms':self.perms, 'encoding':self.encoding})
+        entry.text = filedata
 
 class ConfigFileRepository(DirectoryBacked):
     '''This class implements repos and all change handling'''
