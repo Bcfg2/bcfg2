@@ -12,11 +12,11 @@ class sshbase(Generator):
     __name__ = 'sshbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __build__ = { '/etc/ssh/ssh_known_hosts':'build_skn',
-                  '/etc/ssh/ssh_host_dsa_key':'build_hk',
-                  '/etc/ssh/ssh_host_rsa_key':'build_hk',
-                  '/etc/ssh/ssh_host_dsa_key.pub':'build_hk',
-                  '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}
+    __provides__ = {'ConfigFile':{'/etc/ssh/ssh_known_hosts':'build_skn',
+                                  '/etc/ssh/ssh_host_dsa_key':'build_hk',
+                                  '/etc/ssh/ssh_host_rsa_key':'build_hk',
+                                  '/etc/ssh/ssh_host_dsa_key.pub':'build_hk',
+                                  '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}}
 
     def __setup__(self):
         self.repository = DirectoryBacked(self.data)
