@@ -150,7 +150,7 @@ class Core(object):
         if len(glist) == 1:
             return glist[0].__provides__[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
-            print "Data Integrity error for %s %s" % (entry.tag, entry.get('name'))
+            syslog(LOG_ERR, "%s %s served by multiple generators" % (entry.tag, entry.get('name')))
         else:
             for gen in self.generators:
                 if hasattr(gen, "FindHandler"):
