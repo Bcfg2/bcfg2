@@ -225,7 +225,7 @@ class Debian(Toolset):
                         system('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload')))
             
         for entry in self.structures:
-            if [strent for strent in entry.getchildren() if not self.states[strent]]:
+            if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
                 self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.get('name', "")))
             else:
                 self.structures[entry] = True
