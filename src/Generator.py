@@ -53,3 +53,8 @@ class Generator(object):
         '''Generate change notification for region'''
         pass
 
+    def GetProbes(self, metadata):
+        return []
+
+    def AcceptProbeData(self, metadata, probedata):
+        return
