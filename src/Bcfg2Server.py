@@ -2,10 +2,12 @@
 # $Id: $
 
 from socket import gethostbyaddr, herror
+from string import split
 from syslog import syslog, LOG_INFO, LOG_ERR
 from sys import exc_info
 from time import time
 from traceback import extract_tb
+from ConfigParser import ConfigParser
 
 from elementtree.ElementTree import Element, tostring
 
@@ -22,8 +24,14 @@ class BcfgServer(Server):
     __validate__ = 0
         
     def __setup__(self):
-        self.core=Core('/home/desai/data/b2',['bundler'],['sshbase','fstab','myri','cfg','pkgmgr','servicemgr'])
-        self.metadata = MetadataStore('/home/desai/data/b2/common/metadata.xml', self.core.fam)
+        c = ConfigParser()
+        c.read(['/home/desai/dev/bcfg2/bcfg2.conf'])
+        repo = c.get('server','repository')
+        generators = split(c.get('server','generators'),',')
+        structures = split(c.get('server', 'structures'),',')
+        mpath = c.get('server','metadata')
+        self.core = Core(repo, structures, generators)
+        self.metadata = MetadataStore("%s/metadata.xml"%(mpath), self.core.fam)
         self.__progress__()
 
     def __progress__(self):
