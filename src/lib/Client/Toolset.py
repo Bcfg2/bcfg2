@@ -52,28 +52,28 @@ class Toolset(object):
                     if c.get("name") == name:
                         self.InstallConfigFile(c)
 
-    def VerifySymLink(self, src, dst):
+    def VerifySymLink(self, entry):
         try:
-            s = readlink(dst)
-            if s == src:
+            s = readlink(entry.attrib['dst'])
+            if s == entry.attrib['src']:
                 return True
             return False
         except OSError:
             return False
 
-    def InstallSymLink(self, src, dst):
+    def InstallSymLink(self, entry):
         try:
-            fmode = lstat(dst)[ST_MODE]
+            fmode = lstat(entry.attrib['dst'])[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
-                unlink(dst)
+                unlink(entry.attrib['dst'])
             elif S_ISDIR(fmode):
-                system("mv %s/ %s.bak"%(dst, dst))
+                system("mv %s/ %s.bak"%(entry.attrib['dst'], entry.attrib['dst']))
             else:
-                unlink(dst)
+                unlink(entry.attrib['dst'])
         except OSError, e:
             pass
         try:
-            symlink(src, dst)
+            symlink(entry.attrib['src'], entry.attrib['dst'])
         except OSError, e:
             return False
 
@@ -174,4 +174,7 @@ class Toolset(object):
     def FindConfig(self):
         pass
         
-            
+    def Commit(self):
+        '''Commit pending changes to the system. This method allows for interrelated
+        operations to be executed concurrently'''
+        return 
