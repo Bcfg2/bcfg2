@@ -16,6 +16,7 @@ from elementtree.ElementTree import Element
 
 from Bcfg2.Server.Core import Core
 from Bcfg2.Server.Metadata import MetadataStore
+from Bcfg2.Server.Statistics import Statistics
 
 from sss.daemonize import daemonize
 from sss.server import Server
@@ -61,6 +62,7 @@ class BcfgServer(Server):
         mpath = c.get('server','metadata')
         self.core = Core(repo, structures, generators)
         self.metadata = MetadataStore("%s/metadata.xml"%(mpath), self.core.fam)
+        self.stats = Statistics("%s/statistics.xml"%(mpath))
         self.__progress__()
 
     def __progress__(self):
@@ -70,7 +72,17 @@ class BcfgServer(Server):
             self.core.RunCronTasks()
         except:
             self.LogFailure("Cron")
+
+        try:
+            self.stats.WriteBack()
+        except:
+            self.LogFailure("Statistics")
+            
         return 0
+
+    def __shutdown__(self):
+        # Update Statistics on shutdown
+        self.stats.WriteBack()
 
     def BuildConfig(self, xml, (peer, port)):
         '''Build Client Config'''
@@ -134,6 +146,16 @@ class BcfgServer(Server):
     def HandleStats(self, xml, (peer, port)):
         '''Act on statistics upload'''
         e = xml.find(".//Statistics")
+        # Versioned stats to prevent tied client/server upgrade
+        if e.get('version') >= '2.0':
+            try:
+                client = gethostbyaddr(peer)[0].split('.')[0]
+            except herror:
+                return Element("error", type='host resolution error')
+
+            # Update statistics
+            self.stats.updateStats(xml, client)
+
         syslog(LOG_INFO, "Client %s reported state %s"%(peer, e.attrib['state']))
         return Element("ok")
 
