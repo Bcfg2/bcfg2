@@ -1,0 +1,43 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      bundle schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name='PackageType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='ConfigFileType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='ServiceType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='SystemType'>
+    <xsd:choice maxOccurs='unbounded'>
+      <xsd:element name='Package' type='PackageType'/>
+      <xsd:element name='Service' type='ServiceType'/>
+      <xsd:element name='ConfigFile' type='ConfigFileType'/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:element name='Bundle'>
+    <xsd:complexType>
+      <xsd:choice maxOccurs='unbounded'>
+	<xsd:element type='SystemType' name='System'/>
+	<xsd:element name='Package' type='PackageType'/>
+	<xsd:element name='Service' type='ServiceType'/>
+	<xsd:element name='ConfigFile' type='ConfigFileType'/>
+      </xsd:choice>
+      <xsd:attribute type='xsd:string' name='name'/>
+      <xsd:attribute type='xsd:string' name='version'/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
