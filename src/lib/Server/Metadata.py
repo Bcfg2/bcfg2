@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 from elementtree.ElementTree import XML
-from threading import Lock
 from time import localtime, mktime
 
-from Error import NodeConfigurationError
 from GeneratorUtils import SingleXMLFileBacked
 
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
