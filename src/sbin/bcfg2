@@ -1,25 +1,15 @@
 #!/usr/bin/env python
 from getopt import getopt, GetoptError
 from os import popen, chmod, unlink
-from sys import argv, exit, exc_info
+from sys import argv, exit
 from string import join
 from tempfile import mktemp
-from time import asctime, localtime
-from traceback import extract_tb
 
 from elementtree.ElementTree import Element, XML, tostring
 
 from sss.ssslib import comm_lib
 
 from Bcfg2.Client.Debian import Debian
-
-def ElementMatch(master, sub):
-    if master.tag == sub.tag:
-        for k in sub.attrib.keys():
-            if master.attrib[k] != sub.attrib[k]:
-                return False
-        return True
-    return False
 
 def RunProbe(probe):
     ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
@@ -54,105 +44,6 @@ def dgetopt(arglist, opt, vopt):
         else:
             r[vopt[option]] = garg
     return r
-
-class ClientState(object):
-    def __init__(self, cfg, setup):
-        self.states = {}
-        self.structures = {}
-        self.cfg = cfg
-        self.setup = setup
-        self.modified = []
-        self.extra = []
-        self.toolset = Debian(cfg, setup)
-
-    def LogFailure(self, area, entry):
-        print "Failure in %s for entry: %s"%(area, tostring(entry))
-        (t,v,tb) = exc_info()
-        for line in extract_tb(tb):
-            print "File %s, line %i, in %s\n   %s\n"%(line)
-        print "%s: %s\n"%(t,v)
-        del t,v,tb
-
-    def VerifyEntry(self, entry, modlist = []):
-         try:
-            method = getattr(self.toolset, "Verify%s"%(entry.tag))
-            # verify state and stash value in state
-            if entry.tag == 'Package':
-                self.states[entry] = method(entry, modlist)
-            else:
-                self.states[entry] = method(entry)
-
-            if self.setup['debug']:
-                print entry.attrib['name'], self.states[entry]
-         except:
-            self.LogFailure("Verify", entry)
-
-    def InstallEntry(self, entry):
-        try:
-            method = getattr(self.toolset, "Install%s"%(entry.tag))
-            self.states[entry] = method(entry)
-        except:
-            self.LogFailure("Install", entry)
-
-    def Inventory(self):
-        # build initial set of states
-        unexamined = map(lambda x:(x,[]), self.cfg.getchildren())
-        while unexamined:
-            (r, modlist) = unexamined.pop()
-            if r.tag not in ['Bundle', 'Independant']:
-                self.VerifyEntry(r, modlist)
-            else:
-                modlist = [x.attrib['name'] for x in r.getchildren() if x.tag == 'ConfigFile']
-                unexamined += map(lambda x:(x,modlist), r.getchildren())
-                self.structures[r] = False
-
-        for structure in self.cfg.getchildren():
-            self.CheckStructure(structure)
-
-        # TwoWay: build list of "extra configs"
-        #e = self.toolset.FindElements()
-        #known = self.states.keys()
-        #for entry in e:
-        #    if not filter(lambda x:ElementMatch(x, entry), known):
-        #        self.extra.append(entry)
-        #print self.extra
-
-    def CheckStructure(self, structure):
-        if structure in self.modified:
-            self.modified.remove(structure)
-            if structure.tag == 'Bundle':
-                # check for clobbered data
-                modlist = [x.attrib['name'] for x in structure.getchildren() if x.tag == 'ConfigFile']
-                for entry in structure.getchildren():
-                    self.VerifyEntry(entry, modlist)
-        try:
-            state = map(lambda x:self.states[x], structure.getchildren())
-            if False not in state:
-                self.structures[structure] = True
-        except KeyError, k:
-            print "State verify evidently failed for %s"%(k)
-            self.structures[structure] = False
-
-    def Install(self):
-        self.modified  =  [k for (k,v) in self.structures.iteritems() if not v]
-        for entry in [k for (k,v) in self.states.iteritems() if not v]:
-            self.InstallEntry(entry)
-
-    def Commit(self):
-        self.toolset.Commit(self.states)
-
-    def GenerateStats(self):
-        stats = Element("Statistics")
-        SubElement(stats, "Structures", good=str(len([k for k,v in self.structures.iteritems() if v])), \
-                   bad=str(len([k for k,v in self.structures.iteritems() if not v])))
-        SubElement(stats, "Entries", good=str(len([k for k,v in self.states.iteritems() if v])), \
-                   bad=str(len([k for k,v in self.states.iteritems() if not v])))
-        if len([k for k,v in self.structures.iteritems() if not v]) == 0:
-            stats.attrib['state'] = 'clean'
-        else:
-            stats.attrib['state'] = 'dirty'
-        stats.attrib['time'] = asctime(localtime())
-        return stats
 
 if __name__ == '__main__':
     # parse command line options
@@ -197,7 +88,7 @@ if __name__ == '__main__':
         print "got error from server"
         exit(1)
 
-    client = ClientState(cfg, setup)
+    client = Debian(cfg, setup)
     # verify state
     client.Inventory()
 
