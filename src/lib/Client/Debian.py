@@ -222,6 +222,9 @@ class Debian(Toolset):
                             system('/etc/init.d/%s restart > /dev/null' % (svc.get('name')))
             
             if [x for x in entry.getchildren() if not self.states[x]]:
-                self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.name))
+                if entry.tag == 'Bundle':
+                    self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.get('name')))
+                else:
+                    self.CondPrint('verbose', "Independant incomplete")
             else:
                 self.structures[entry] = True
