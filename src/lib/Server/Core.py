@@ -4,19 +4,22 @@ __revision__ = '$Revision$'
 from os import stat
 from stat import ST_MODE, S_ISDIR
 from sys import exc_info
-from syslog import syslog, LOG_ERR
+from syslog import syslog, LOG_ERR, LOG_INFO
 from traceback import extract_tb
 from time import time
-
+from ConfigParser import ConfigParser
+from elementtree.ElementTree import Element
 import _fam
 
 from Bcfg2.Server.Generator import GeneratorError, GeneratorInitError
+from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
+from Bcfg2.Server.Statistics import Statistics
 
 class PublishError(Exception):
     '''This error is raised upon publication failures'''
     pass
 
-class fam(object):
+class Fam(object):
     '''The fam object is a set of callbacks for file alteration events'''
     
     def __init__(self):
@@ -66,14 +69,23 @@ class PublishedValue(object):
 
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
-    def __init__(self, repository, structures, generators):
+    def __init__(self, setup, configfile='/etc/bcfg2.conf'):
         object.__init__(self)
-        self.datastore = repository
-        self.fam = fam()
+        cfile = ConfigParser()
+        cfile.read([configfile])
+        self.datastore = cfile.get('server','repository')
+        self.fam = Fam()
         self.pubspace = {}
         self.structures = []
+        self.generators = []
         self.cron = {}
-        for structure in structures:
+        self.setup = setup
+        
+        mpath = cfile.get('server','metadata')
+        self.metadata = MetadataStore("%s/metadata.xml" % mpath, self.fam)
+        self.stats = Statistics("%s/statistics.xml" % (mpath))
+        
+        for structure in cfile.get('server', 'structures').split(','):
             try:
                 mod = getattr(__import__("Bcfg2.Server.Structures.%s" %
                                          (structure)).Server.Structures, structure)
@@ -82,8 +94,8 @@ class Core(object):
                 continue
             struct = getattr(mod, structure)
             self.structures.append(struct(self, self.datastore))
-        self.generators = []
-        for generator in generators:
+
+        for generator in cfile.get('server', 'generators').split(','):
             try:
                 mod = getattr(__import__("Bcfg2.Server.Generators.%s" %
                                          (generator)).Server.Generators, generator)
@@ -166,3 +178,37 @@ class Core(object):
                 generator.Cron()
                 self.cron[generator] = current
 
+    def BuildConfiguration(self, client):
+        '''Build Configuration for client'''
+        start = time()
+        config = Element("Configuration", version='2.0')
+        try:
+            meta = self.metadata.FetchMetadata(client)
+        except MetadataConsistencyError:
+            syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
+            return Element("error", type='metadata error')
+
+        config.set('toolset', meta.toolset)
+        try:
+            structures = self.GetStructures(meta)
+        except:
+            self.LogFailure("GetStructures")
+            return Element("error", type='structure error')
+        
+        for astruct in structures:
+            try:
+                self.BindStructure(astruct, meta)
+                config.append(astruct)
+            except:
+                self.LogFailure("BindStructure")
+        syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time() - start))
+        return config
+
+    def LogFailure(self, failure):
+        '''Log Failures in unexpected cases'''
+        (trace, val, trb) = exc_info()
+        syslog(LOG_ERR, "Unexpected failure in %s" % (failure))
+        for line in extract_tb(trb):
+            syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n' % line)
+        syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+        del trace, val, trb
