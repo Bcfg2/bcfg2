@@ -14,14 +14,17 @@ class BaseFile(SingleXMLFileBacked):
     
     def Index(self):
         '''Store XML data in reasonable structures'''
-        self.store = {}
+        self.store = {'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
         for entry in XML(self.data).getchildren():
-            self.store[entry.tag][entry.get('name')] = {'all':[], 'Class':{}}
-            for child in entry.getchildren():
-                if child.tag in ['Image', 'Class']:
-                    self.store[entry.tag][child.tag][child.get('name')] = child.getchildren()
-                else:
-                    self.store[entry.tag]['all'].append(child)
+            self.store[entry.tag][entry.get('name')] = {'all':[], 'Class':{}, 'Image':{}}
+            if entry.tag in ['Image', 'Class']:
+                for child in entry.getchildren():
+                    if child.tag in ['Image', 'Class']:
+                        self.store[entry.tag][entry.get('name')][child.tag][child.get('name')] = child.getchildren()
+                    else:
+                        self.store[entry.tag][entry.get('name')]['all'].append(child)
+            else:
+                self.store[entry.tag]['all'].append(child)
 
     def Construct(self, metadata):
         '''Build structures for client described by metadata'''
