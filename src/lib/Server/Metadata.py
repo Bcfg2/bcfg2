@@ -7,13 +7,14 @@ from Bcfg2.Server.Generator import SingleXMLFileBacked
         
 class Metadata(object):
     '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
-    def __init__(self, all, image, classes, bundles, attributes, hostname):
+    def __init__(self, all, image, classes, bundles, attributes, hostname, toolset):
         self.all = all
         self.image = image
         self.classes = classes
         self.bundles = bundles
         self.attributes = attributes
         self.hostname = hostname
+        self.toolset = toolset
 
     def Applies(self, other):
         '''Check if metadata styled object applies to current metadata'''
@@ -44,6 +45,7 @@ class MetadataStore(SingleXMLFileBacked):
         self.clients = {}
         self.profiles = {}
         self.classes = {}
+        self.images = {}
         self.element = Element("dummy")
         
     def Index(self):
@@ -53,12 +55,15 @@ class MetadataStore(SingleXMLFileBacked):
         self.clients = {}
         self.profiles = {}
         self.classes = {}
+        self.images = {}
         for prof in self.element.findall("Profile"):
             self.profiles[prof.attrib['name']] = Profile(prof)
         for cli in self.element.findall("Client"):
             self.clients[cli.attrib['name']] = (cli.attrib['image'], cli.attrib['profile'])
         for cls in self.element.findall("Class"):
             self.classes[cls.attrib['name']] = [bundle.attrib['name'] for bundle in cls.findall("Bundle")]
+        for img in self.element.findall("Image"):
+            self.images[img.attrib['name']] = img.attrib['toolset']
         for key in [key[8:] for key in self.element.attrib if key[:8] == 'default_']:
             self.defaults[key] = self.element.get("default_%s" % key)
 
@@ -87,7 +92,8 @@ class MetadataStore(SingleXMLFileBacked):
         prof = self.profiles[profile]
         # should we uniq here? V
         bundles = reduce(lambda x, y:x + y, [self.classes.get(cls) for cls in prof.classes])
-        return Metadata(False, image, prof.classes, bundles, prof.attributes, client)
+        toolset = self.images[image]
+        return Metadata(False, image, prof.classes, bundles, prof.attributes, client, toolset)
 
     def pretty_print(self, element, level=0):
         '''Produce a pretty-printed text representation of element'''
