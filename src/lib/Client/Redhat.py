@@ -90,9 +90,10 @@ class Redhat(Toolset):
             print "Can't install package, not enough data."
             return False
         instp = Popen4("rpm -qi %s-%s" % (entry.attrib['name'], entry.attrib['version']))
-        while instp.poll() == -1:
+        istat = instp.poll()
+        while istat == -1:
             instp.fromchild.read()
-        istat = instp.wait()/256
+            istat = instp.poll()
         if istat == 0:
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick']:
