@@ -10,7 +10,7 @@ Architecture: all
 Depends: ${python:Depends}, ssslib-python, debsums
 Description: build configuration system
 
-Package: bcfg-server
+Package: bcfg2-server
 Architecture: all
 Depends: ${python:Depends}, ssslib-python, python2.3-fam
 Description: build configuration system
