@@ -21,7 +21,7 @@ def calc_perms(initial, perms):
     tempperms = initial
     if len(perms) == 3:
         perms = '0%s' % (perms)
-    [suid, user, group, other] = [perms[int(x)] for x in range(4)]
+    [suid, user, group, other] = [int(perms[x]) for x in range(4)]
     for (num, perm) in {1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}.iteritems():
         if suid & num:
             tempperms |= perm
