@@ -16,9 +16,10 @@ class Generator(object):
     __provides__ = {}
     __requires__ = []
     
-    def __init__(self, core, datastore):
-        self.core=core
-        self.data="%s/%s"%(datastore,self.__name__)
+    def __init__(self, core, datastore, fam):
+        self.core = core
+        self.fam = fam
+        self.data = "%s/%s"%(datastore,self.__name__)
         self.__setup__()
 
     def __setup__(self):
