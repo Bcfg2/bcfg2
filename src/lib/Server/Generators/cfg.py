@@ -7,11 +7,13 @@ from binascii import b2a_base64
 from os import stat
 from re import compile as regcompile
 from stat import S_ISDIR, ST_MODE
+from syslog import syslog, LOG_INFO
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked, FileBacked
 from Bcfg2.Server.Metadata import Metadata
 
 class CfgFileException(Exception):
+    '''Raised for repository errors'''
     pass
 
 class FileEntry(FileBacked):
