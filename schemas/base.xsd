@@ -15,6 +15,9 @@
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Service' type='ServiceType'/>
       <xsd:element name='ConfigFile' type='ConfigFileType'/>
+      <xsd:element name='SymLink' type='SymLinkType'/>
+      <xsd:element name='Class' type='ContainerType'/>
+      <xsd:element name='Image' type='ContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
