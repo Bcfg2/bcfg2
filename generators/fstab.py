@@ -15,7 +15,7 @@ class fstab(Generator):
     mayor = compile("\$MAYOR")
 
     def __setup__(self):
-        self.repo = DirectoryBacked(self.data)
+        self.repo = DirectoryBacked(self.data, self.fam)
 
     def build_fstab(self,name,client):
         node = client.split('.')[0]
