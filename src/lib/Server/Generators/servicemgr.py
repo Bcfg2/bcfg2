@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
+from elementtree.ElementTree import XML
 from Bcfg2.Server.Generator import Generator, SingleXMLFileBacked
 
 class ServiceList(SingleXMLFileBacked):
     def Index(self):
-        SingleXMLFileBacked.Index(self)
+        a = XML(self.data)
+        self.entries = a.getchildren()
         self.services = {}
         for e in self.entries:
             m = (e.tag, e.attrib['name'])
@@ -21,7 +23,8 @@ class ServiceList(SingleXMLFileBacked):
     def GetService(self, entry, metadata):
         s = self.services[entry.attrib['name']]
         useful = filter(lambda x:self.MatchMetadata(x[0], metadata), s)
-        return useful[-1][1]
+        data = useful[-1][1]
+        entry.attrib.update(data.attrib)
         
     def MatchMetadata(self, m, metadata):
         if m[0] == 'Global':
@@ -51,13 +54,11 @@ class servicemgr(Generator):
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    def __setup__(self):
-        self.srvinfo = ServiceList("%s/packages.xml"%(self.data))
-        self.__provides__ = self.srvinfo.__provides__
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
+        self.svrinfo = ServiceList("%s/common/services.xml"%(datastore), self.core.fam)
+        self.__provides__ = self.svrinfo.__provides__
 
-    def GetService(self,entry,metadata):
-        # for now sshd is on
-        if entry.attrib['name'] == 'sshd':
-            entry.attrib['status'] = 'on'
+
 
 
