@@ -53,3 +53,9 @@ Adding to the repository:
      activated in <REPO>/etc/services.xml. 
 
    - Activate the bundle for a class in <REPO>/etc/metadata.xml
+
+In all cases, run /usr/sbin/ValidateBcfg2Repo <repo> after changes are
+made. This wil check that the files still parse (ie typos, or quote
+errors)  and check their values against xml schemas, which will ensure
+that all element names are correct and that required attributes are
+included. 
