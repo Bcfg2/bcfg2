@@ -10,15 +10,15 @@ class fstab(Generator):
     __name__ = 'fstab'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __build__ = {'/etc/fstab':'build_fstab'}
 
     mayor = compile("\$MAYOR")
 
     def __setup__(self):
         self.repo = DirectoryBacked(self.data, self.core.fam)
+        self.__provides__ = {'ConfigFile':{'/etc/fstab':self.build_fstab}}
 
-    def build_fstab(self,name,client):
-        node = client.split('.')[0]
+    def build_fstab(self,name,metadata):
+        node = metadata.hostname.split('.')[0]
         if 'ccn' in node:
             nodeclass = 'compute'
             mayor = 'cct%sm.mcs.anl.gov'%((int(node[3:]) / 32) + 1)
