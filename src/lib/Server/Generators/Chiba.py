@@ -25,6 +25,16 @@ class Chiba(Generator):
 
     mayor = regcompile("\$MAYOR")
 
+    def get_mayor(self, node):
+        if 'ccn' in node:
+            return 'cct%sm.mcs.anl.gov' % ((int(node[3:]) / 32) + 1)
+        elif 'ccviz' in node:
+            return 'cct10m.mcs.anl.gov'
+        elif 'ccsto' in node:
+            return 'cct9m.mcs.anl.gov'
+        else:
+            return 'ccprez.mcs.anl.gov'
+
     def __setup__(self):
         self.repo = DirectoryBacked(self.data, self.core.fam)
         self.__provides__['ConfigFile']['/etc/fstab'] = self.build_fstab
@@ -32,21 +42,18 @@ class Chiba(Generator):
     def build_fstab(self, entry, metadata):
         '''build fstab for chiba nodes'''
         node = metadata.hostname.split('.')[0]
+        mayor = self.get_mayor(node)
+        
         if 'ccn' in node:
             nodeclass = 'compute'
-            mayor = 'cct%sm.mcs.anl.gov' % ((int(node[3:]) / 32) + 1)
         elif 'ccviz' in node:
             nodeclass = 'compute'
-            mayor = 'cct10m.mcs.anl.gov'
         elif 'ccsto' in node:
             nodeclass = 'storage'
-            mayor = 'cct9m.mcs.anl.gov'
         elif 'cct' in node:
             nodeclass = 'mayor'
-            mayor = 'ccprez.mcs.anl.gov'
         elif 'ccfs' in node:
             nodeclass = 'fs'
-            mayor = 'ccprez.mcs.anl.gov'
         else:
             raise KeyError, node
 
@@ -70,6 +77,9 @@ class Chiba(Generator):
 
     def build_tftp(self, entry, metadata):
         '''build tftp files for client netboot'''
+        mayor = self.get_mayor(metadata.hostname.split('.')[0])
+        kvers = '2.4.26'
+        root = '/dev/sda2'
         data = self.repo.entries['tftp-template']
-
-    
+        entry.text = data % ( kvers, root, mayor, kvers, kvers, root, mayor, kvers) 
+        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
