@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from elementtree.ElementTree import XML
+from elementtree.ElementTree import XML, tostring, SubElement
 from time import localtime, mktime
 
 from Generator import SingleXMLFileBacked
@@ -82,19 +82,44 @@ class Metadata(object):
             return False
         return True
 
+class Profile(object):
+    def __init__(self, xml):
+        self.classes = map(lambda x:x.attrib['name'], xml.findall("Class"))
+        self.attributes = map(lambda x:"%s.%s"%(x.attrib['scope'],x.attrib['name']), xml.findall("Attribute"))
+
 class MetadataStore(SingleXMLFileBacked):
     def Index(self):
-        self.clients = {}
-        self.classes = {}
         self.element = XML(self.data)
+        self.defaults = {}
+        self.clients = {}
+        self.profiles = {}
+        self.classes = {}
+        for p in self.element.findall("Profile"):
+            self.profiles[p.attrib['name']] = Profile(p)
+        for c in self.element.findall("Client"):
+            self.clients[c.attrib['name']] = (c.attrib['image'], c.attrib['profile'])
         for c in self.element.findall("Class"):
-            self.classes[c.attrib['name']] = map(lambda x:x.attrib['name'], c.findall(".//Bundle"))
-        for client in self.element.findall('Client'):
-            attributes = map(lambda x:"%s.%s"%(x.attrib['scope'],x.attrib['name']),
-                             client.findall(".//Attribute"))
-            classes = map(lambda x:x.attrib['name'], client.findall(".//Class"))
-            bundles = reduce(lambda x,y:x+y, map(lambda z:self.classes.get(z,[]), classes),[])
-            for b in bundles:
-                if bundles.count(b) > 1: bundles.remove(b)
-            self.clients[client.attrib['name']] = Metadata(False, client.attrib['image'], classes,
-                                                           bundles, attributes, client.attrib['name'])
+            self.classes[c.attrib['name']] = map(lambda x:x.attrib['name'], c.findall("Bundle"))
+        for (k,v) in self.element.attrib.iteritems():
+            if k[:8] == 'default_':
+                self.defaults[k[8:]] = v
+
+    def FetchMetadata(self,client):
+        if self.clients.has_key(client):
+            (image,profile) = self.clients[client]
+        else:
+            # default profile stuff goes here
+            (image,profile) = (self.defaults['image'], self.defaults['profile'])
+            SubElement(self.element, "Client", name=client, profile=profile, image=image)
+            self.WriteBack()
+        p = self.profiles[profile]
+        # should we uniq here? V
+        bundles = reduce(lambda x,y:x+y, map(self.classes.get, p.classes))
+        return Metadata(False, image, p.classes, bundles, p.attributes, client)
+
+    def WriteBack(self):
+        # write changes to file back to fs
+        f = open(self.name, 'w')
+        f.write(tostring(self.element))
+        f.close()
+
