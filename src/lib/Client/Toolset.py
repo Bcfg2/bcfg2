@@ -18,22 +18,16 @@ from elementtree.ElementTree import Element, SubElement, tostring
 
 def calc_perms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
+    pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}, {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
+             {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP}, {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}]
     tempperms = initial
     if len(perms) == 3:
         perms = '0%s' % (perms)
-    [suid, user, group, other] = [int(perms[x]) for x in range(4)]
-    for (num, perm) in {1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}.iteritems():
-        if suid & num:
-            tempperms |= perm
-    for (num, perm) in {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR}.iteritems():
-        if user & num:
-            tempperms |= perm
-    for (num, perm) in {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP}.iteritems():
-        if group & num:
-            tempperms |= perm
-    for (num, perm) in {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}.iteritems():
-        if other & num:
-            tempperms |= perm
+    pdigits = [int(perms[digit]) for digit in range(4)]
+    for index in range(4):
+        for (num, perm) in pdisp[index].iteritems():
+            if pdigits[index] & num:
+                tempperms |= perm
     return tempperms
 
 class Toolset(object):
@@ -58,11 +52,11 @@ class Toolset(object):
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
         print "Failure in %s for entry: %s" % (area, tostring(entry))
-        (t, v, tb) = exc_info()
-        for line in extract_tb(tb):
+        (ttype, value, trace) = exc_info()
+        for line in extract_tb(trace):
             print "File %s, line %i, in %s\n   %s\n" % (line)
-        print "%s: %s\n" % (t, v)
-        del t, v, tb
+        print "%s: %s\n" % (ttype, value)
+        del ttype, v, trace
 
     def print_failure(self):
         '''Display curses style failure message'''
@@ -77,16 +71,17 @@ class Toolset(object):
     # These next functions form the external API
 
     def Inventory(self):
+        '''Build up workqueue for installation'''
         # build initial set of states
-        unexamined = [(x, []) for x in self.cfg.getchildren()]
+        unexamined = [(child, []) for child in self.cfg.getchildren()]
         while unexamined:
-            (r, modlist) = unexamined.pop()
-            if r.tag not in ['Bundle', 'Independant']:
-                self.VerifyEntry(r, modlist)
+            (entry, modlist) = unexamined.pop()
+            if entry.tag not in ['Bundle', 'Independant']:
+                self.VerifyEntry(entry, modlist)
             else:
-                modlist = [x.get('name') for x in r.getchildren() if x.tag == 'ConfigFile']
-                unexamined += [(x, modlist) for x in r.getchildren()]
-                self.structures[r] = False
+                modlist = [cfile.get('name') for cfile in entry.getchildren() if cfile.tag == 'ConfigFile']
+                unexamined += [(child, modlist) for child in entry.getchildren()]
+                self.structures[entry] = False
 
         for structure in self.cfg.getchildren():
             self.CheckStructure(structure)
@@ -156,15 +151,17 @@ class Toolset(object):
     # All remaining operations implement the mechanics of POSIX cfg elements
 
     def VerifySymLink(self, entry):
+        '''Verify SymLink Entry'''
         try:
-            s = readlink(entry.get('name'))
-            if s == entry.get('to'):
+            sloc = readlink(entry.get('name'))
+            if sloc == entry.get('to'):
                 return True
             return False
         except OSError:
             return False
 
     def InstallSymLink(self, entry):
+        '''Install SymLink Entry'''
         try:
             fmode = lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
@@ -177,10 +174,11 @@ class Toolset(object):
             print "Symlink %s cleanup failed" % (entry.get('name'))
         try:
             symlink(entry.get('to'), entry.get('name'))
-        except OSError, e:
+        except OSError:
             return False
 
     def VerifyDirectory(self, entry):
+        '''Verify Directory Entry'''
         try:
             ondisk = stat(entry.get('name'))
         except OSError:
@@ -200,6 +198,7 @@ class Toolset(object):
             return False
 
     def InstallDirectory(self, entry):
+        '''Install Directory Entry'''
         try:
             fmode = lstat(entry.get('name'))
             if not S_ISDIR(fmode[0]):
@@ -221,6 +220,7 @@ class Toolset(object):
             return False
 
     def VerifyConfigFile(self, entry):
+        '''Install ConfigFile Entry'''
         try:
             ondisk = stat(entry.get('name'))
         except OSError:
@@ -245,6 +245,7 @@ class Toolset(object):
         return False
 
     def InstallConfigFile(self, entry):
+        '''Install ConfigFile Entry'''
         if self.setup['dryrun'] or self.setup['verbose']:
             print "Installing ConfigFile %s" % (entry.get('name'))
         if self.setup['dryrun']:
@@ -252,9 +253,9 @@ class Toolset(object):
         parent = "/".join(entry.get('name').split('/')[:-1])
         if parent:
             try:
-                s = lstat(parent)
+                sloc = lstat(parent)
                 try:
-                    if not S_ISDIR(s[ST_MODE]):
+                    if not S_ISDIR(sloc[ST_MODE]):
                         unlink(parent)
                         mkdir(parent)
                 except OSError:
@@ -281,7 +282,7 @@ class Toolset(object):
                 system("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             rename(newfile.name, entry.get('name'))
             return True
-        except (OSError, IOError), e:
-            print e
+        except (OSError, IOError), errmsg:
+            print errmsg
             return False
 
