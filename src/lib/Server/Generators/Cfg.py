@@ -88,7 +88,6 @@ class ConfigFileEntry(object):
         specmatch = self.specific.match(name)
         if specmatch == None:
             syslog(LOG_ERR, "Failed to match file %s" % (name))
-            print "match failed for file name %s" % (name)
             return
 
         data = {}
@@ -119,7 +118,7 @@ class ConfigFileEntry(object):
                 elif action == 'deleted':
                     [flist.remove(entry) for flist in [self.basefiles, self.deltas] if entry in flist]
                 else:
-                    print "unhandled action %s" % (action)
+                    syslog(LOG_ERR, "Cfg: Unhandled Action %s for file %s" % (action, event.filename))
 
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
@@ -167,7 +166,7 @@ class ConfigFileRepository(object):
             try:
                 stat(name)
             except OSError:
-                print "Failed to open %s" % (name)
+                syslog(LOG_ERR, "Failed to open directory %s" % (name))
                 return
             reqid = self.fam.AddMonitor(name, self)
             self.famID[reqid] = name
@@ -218,10 +217,10 @@ class ConfigFileRepository(object):
         elif action == 'deleted':
             configfile = filename[len(self.name):-(len(event.filename)+1)]
             self.entries[configfile].HandleEvent(event)
-        elif action in ['endExist']:
+        elif action in ['exists', 'endExist']:
             pass
         else:
-            print "Got unknown event %s %s %s" % (event.requestID, event.code2str(), event.filename)
+            syslog(LOG_ERR, "Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
 
 class Cfg(Generator):
     '''This generator manages the configuration file repository for bcfg2'''
