@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from threading import Lock
+from time import localtime, mktime
 
 from Error import NodeConfigurationError
 
@@ -21,9 +22,12 @@ class NodeStatistics(object):
         self.count = 0
         self.fail = 0
 
+    def GetStats(self):
+        return (self.status, self.count, self.last, self.fail)
+
     def Suceed(self,changeset):
         self.count += 1
-        self.last = localtime()
+        self.last = mktime(localtime())
         self.status = True
         self.changeset=changeset
 
@@ -42,9 +46,12 @@ class Client(object):
 
     def UpdateStats(self,status,changeset):
         if status:
-            self.stats.Succeed(changeset)
+            self.stats.Suceed(changeset)
         else:
             self.stats.Fail(changeset)
+
+    def GetStats(self):
+        return self.stats.GetStats()
         
 class ConfigurationRegion(object):
     def __init__(self,name,scope,stype):
@@ -73,25 +80,25 @@ class Store(object):
 
     def GetImage(self,node):
         try:
-            return self.nodes[node].image
+            return self.clients[node].image
         except NodeConfigurationError, e:
-            self.nodes[node]=Node(node,self.default['image'],self.default['tags'])
-            return self.nodes[node].image
+            self.clients[node]=Node(node,self.default['image'],self.default['tags'])
+            return self.clients[node].image
 
     def GetTags(self,node):
         try:
-            return self.nodes[node].tags
+            return self.clients[node].tags
         except NodeConfigurationError, e:
-            self.nodes[node]=Node(node,self.default['image'],self.default['tags'])
-            return self.nodes[node].image
+            self.clients[node]=Node(node,self.default['image'],self.default['tags'])
+            return self.clients[node].image
 
     def AddTag(self,node,tag):
         if GetTags(node).count(tag) == 0:
-            self.nodes[node].tags.append(tag)
+            self.clients[node].tags.append(tag)
 
     def DelTag(self,node,tag):
         if GetTags(node).count(tag) != 0:
-            self.nodes[node].tags.remove(tag)
+            self.clients[node].tags.remove(tag)
 
     def GetBundles(self,tag):
         return self.bundles.get(tag,[])
@@ -102,3 +109,26 @@ class Store(object):
             for bundle in self.GetBundles(tag):
                 ret[bundle]=True
         return ret.keys()
+
+class Metadata(object):
+    '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
+    def __init__(self, all, image, bundles, tags, hostname):
+        self.all = all
+        self.image = image
+        self.bundles = bundles
+        self.tags = tags
+        self.hostname = hostname
+
+    def Applies(self, other):
+        '''Applies checks if the object associated with this metadata is relevant to
+        the metadata supplied by other'''
+        for tag in self.tags:
+            if tag not in other.tags:
+                return False
+        for bundle in self.bundles:
+            if bundle not in other.bundles:
+                return False
+        if (self.hostname != None) and (self.hostname != other.hostname):
+            return False
+        return True
+
