@@ -17,12 +17,14 @@ class PublishedValue(object):
         self.value=value
 
 class Core(object):
-    def __init__(self, generators):
-        self.handles = {}
+    def __init__(self, repository, generators):
+        self.datastore = repository
+        self.provides = {'Service':{},'ConfigFile':{},'Packages':{}}
         self.pubspace = {}
         self.generators = []
         for generator in generators:
-            self.generators.append(generator(self))
+            g = getattr(__import__(generator),generator)
+            self.generators.append(g(self, self.datastore))
         # we need to inventory and setup generators
         # Process generator requirements
         for g in self.generators:
@@ -30,8 +32,9 @@ class Core(object):
                 if not self.pubspace.has_key(prq):
                     raise GeneratorError, (g.name, prq)
             g.CompleteSetup()
-            for f in g.__build__.keys():
-                self.handles[f] = g
+            for etype in g.__provides__.keys():
+                for entry in g.__provides__[etype]:
+                    self.provides[etype][entry] = getattr(g,g.__provides__[etype][entry])
 
     def PublishValue(self,owner,key,value):
         if not self.pubspace.has_key(key):
@@ -53,3 +56,7 @@ class Core(object):
         if self.handles.has_key(filename):
             return self.handles[filename].Build(filename,client)
         raise KeyError, filename
+
+    def Get(self,type,name,client):
+        f = self.provides[type][name]
+        return f(name,client)
