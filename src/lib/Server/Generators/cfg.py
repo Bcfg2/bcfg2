@@ -168,7 +168,12 @@ class ConfigFileRepository(DirectoryBacked):
 
     def AddEntry(self, name):
         '''Add new entry to FAM structures'''
-        if S_ISDIR(stat(name)[ST_MODE]):
+        try:
+            sdata = stat(name)[ST_MODE]
+        except OSError:
+            return
+
+        if S_ISDIR(sdata):
             self.AddDirectoryMonitor(name)
         else:
             # file entries shouldn't contain path-to-repo
@@ -196,7 +201,10 @@ class ConfigFileRepository(DirectoryBacked):
             configfile = filename[len(self.name):-(len(event.filename)+1)]
             if event.filename == ':info':
                 event.filename = filename
-            self.entries[configfile].HandleEvent(event)
+            if self.entries.has_key(configfile):
+                self.entries[configfile].HandleEvent(event)
+            else:
+                syslog(LOG_INFO, "Ignoring event for %s"%(configfile))
         elif action == 'deleted':
             configfile = filename[len(self.name):-(len(event.filename)+1)]
             self.entries[configfile].HandleEvent(event)
