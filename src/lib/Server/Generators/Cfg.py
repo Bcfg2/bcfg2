@@ -41,7 +41,7 @@ class FileEntry(FileBacked):
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    specific = regcompile('(.*/)(?P<filename>[\w.]+)\.((H_(?P<hostname>\w+))|(B(?P<bprio>\d+)_(?P<bundle>\w+))|(A(?P<aprio>\d+)_(?P<attr>\w+))|(I(?P<iprio>\d+)_(?P<image>\w+))|(C(?P<cprio>\d+)_(?P<class>\w+)))(\.(?P<op>cat|udiff))?')
+    specific = regcompile('(.*/)(?P<filename>[\w.]+)\.((H_(?P<hostname>\S+))|(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|(I(?P<iprio>\d+)_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))(\.(?P<op>cat|udiff))?$')
     info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|(?P<paranoid>paranoid(\s)*)$')
     
     def __init__(self, path):
