@@ -65,14 +65,22 @@ class Core(object):
         self.structures = []
         self.cron = {}
         for structure in structures:
-            mod = getattr(__import__("Bcfg2.Server.Structures.%s" %
-                                     (structure)).Server.Structures, structure)
+            try:
+                mod = getattr(__import__("Bcfg2.Server.Structures.%s" %
+                                         (structure)).Server.Structures, structure)
+            except ImportError:
+                syslog(LOG_ERR, "Failed to load structure %s" % (structure))
+                continue
             struct = getattr(mod, structure)
             self.structures.append(struct(self, self.datastore))
         self.generators = []
         for generator in generators:
-            mod = getattr(__import__("Bcfg2.Server.Generators.%s" %
-                                     (generator)).Server.Generators, generator)
+            try:
+                mod = getattr(__import__("Bcfg2.Server.Generators.%s" %
+                                         (generator)).Server.Generators, generator)
+            except ImportError:
+                syslog(LOG_ERR, 'Failed to load generator %s' % (generator))
+                continue
             gen = getattr(mod, generator)
             self.generators.append(gen(self, self.datastore))
         # we need to inventory and setup generators
