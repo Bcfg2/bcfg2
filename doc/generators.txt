@@ -70,5 +70,5 @@ result belonging to the generator. This data may then be used in
 constructing configuration elements for the client. 
 
 There is a generator base class that provides skeleton methods, which
-custom generators can subclass. It is named
+custom generators should subclass. It is named
 Bcfg2.Server.Generator.Generator. 
