@@ -8,18 +8,17 @@ from syslog import syslog, LOG_ERR
 class Generator(object):
     '''This is a class that generators can be subclassed from.
     __name__, __version__, and __author__ must be set for the module
-    __build__ is a dictionary mapping filename to generator function
+    __provides__ is a dictionary mapping listing the entity type and name to a function name
     __requires__ is a set of external published data needed for operation'''
     
     __name__ = None
     __version__ = None
-    __datastore__ = '/home/desai/data/b2'
-    __build__ = {}
+    __provides__ = {}
     __requires__ = []
     
-    def __init__(self, core):
+    def __init__(self, core, datastore):
         self.core=core
-        self.data="%s/%s"%(self.__datastore__,self.__name__)
+        self.data="%s/%s"%(datastore,self.__name__)
         self.__setup__()
 
     def __setup__(self):
@@ -33,13 +32,6 @@ class Generator(object):
     def Cron(self):
         '''Cron defines periodic tasks to maintain data coherence'''
         pass
-
-    def Build(self,filename,client):
-        '''Build will construct a Config File object for client.'''
-        if self.__build__.has_key(filename):
-            return getattr(self,self.__build__[filename])(filename,client)
-        else:
-            raise GeneratorError, ("Key",filename)
 
     def Publish(self,key,value):
         self.core.Publish(self.__name__,key,value)
