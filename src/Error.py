@@ -15,3 +15,10 @@ class GeneratorError(Exception):
 class PublishError(Exception):
     pass
 
+class CfgFileException(Exception):
+    def __init__(self,op,filename):
+        self.operation=op
+        self.filename=filename
+        
+    def __str__(self):
+        return "%s : %s"%(`self.operation`, `self.filename`)
