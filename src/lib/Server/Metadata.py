@@ -39,7 +39,6 @@ class MetadataStore(SingleXMLFileBacked):
     '''The MetadataStore is a filebacked xml repository that contains all setup info for all clients'''
 
     def __init__(self, filename, fam):
-        SingleXMLFileBacked.__init__(self, filename, fam)
         # initialize Index data to avoid race
         self.defaults = {}
         self.clients = {}
@@ -47,6 +46,7 @@ class MetadataStore(SingleXMLFileBacked):
         self.classes = {}
         self.images = {}
         self.element = Element("dummy")
+        SingleXMLFileBacked.__init__(self, filename, fam)
         
     def Index(self):
         '''Build data structures for XML data'''
