@@ -197,7 +197,7 @@ class Debian(Toolset):
 
             for entry in [ent for ent in work if self.states[ent]]:
                 work.remove(entry)
-                self.installed_this_run.append(entry)
+                self.modified.append(entry)
             left = len(work) + len(self.pkgwork['remove'])
 
         self.HandleBundleDeps()
@@ -206,7 +206,7 @@ class Debian(Toolset):
         '''Handle bundles depending on what has been modified'''
         for entry in [child for child in self.structures if child.tag == 'Bundle']:
             bchildren = entry.getchildren()
-            if [b_ent for b_ent in bchildren if b_ent in self.installed_this_run]:
+            if [b_ent for b_ent in bchildren if b_ent in self.modified]:
                 # This bundle has been modified
                 self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name', '???')))
                 modfiles = [cfile.get('name') for cfile in bchildren if cfile.tag == 'ConfigFile']
