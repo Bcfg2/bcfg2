@@ -3,14 +3,20 @@ Section: admin
 Priority: optional
 Maintainer: Narayan Desai <desai@mcs.anl.gov>
 Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 3.6.0
+Standards-Version: 3.6.1.1
 
 Package: bcfg2
 Architecture: all
 Depends: ${python:Depends}, ssslib-python, debsums, python-apt, python2.3-elementtree
 Description: build configuration system
+ Bcfg2 is a symbolic configuration management system, 
+ produced at Argonne National Lab.
+ This is the client side components.
 
 Package: bcfg2-server
 Architecture: all
 Depends: ${python:Depends}, ssslib-python, python2.3-fam, bcfg2, fam
-Description: build configuration system
+Description: build configuration system, version two
+ Bcfg2 is a symbolic configuration management system, 
+ produced at Argonne National Lab.
+ This is the server side component.
