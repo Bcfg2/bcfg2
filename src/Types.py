@@ -19,4 +19,14 @@ class ConfigFile(object):
     def XMLSerialize(self):
         return self.format%(self.name,self.owner,self.group,self.perms,self.encoding,self.xcontent)
 
+class Service(object):
+    format = '''<Service name='%s' type='%s' status='%s' scope='%s'/>'''
 
+    def __init__(self,name,stype,status,scope):
+        self.name = name
+        self.type = stype
+        self.status = status
+        self.scope = scope
+
+    def XMLSerialize(self):
+        return self.format%(self.name,self.type,self.status,self.scope)
