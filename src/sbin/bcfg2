@@ -109,7 +109,7 @@ if __name__ == '__main__':
     stats = client.GenerateStats()
     m.append(stats)
 
-    comm.SendMessage(h, tostring(stats))
+    comm.SendMessage(h, tostring(m))
     r = comm.RecvMessage(h)
     # clean up
     comm.ClientClose(h)
