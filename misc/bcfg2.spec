@@ -22,7 +22,7 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: sslib-python
+Requires: ssslib-python
 
 %description -n bcfg2-server
 Bcfg2 client
