@@ -67,9 +67,12 @@ class PublishedValue(object):
             raise PublishError, (self.key, owner)
         self.value = value
 
+class CoreInitError(Exception):
+    pass
+
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
-    def __init__(self, setup, configfile='/etc/bcfg2.conf'):
+    def __init__(self, setup, configfile):
         object.__init__(self)
         cfile = ConfigParser()
         cfile.read([configfile])
@@ -82,7 +85,11 @@ class Core(object):
         self.setup = setup
         
         mpath = cfile.get('server','metadata')
-        self.metadata = MetadataStore("%s/metadata.xml" % mpath, self.fam)
+        try:
+            self.metadata = MetadataStore("%s/metadata.xml" % mpath, self.fam)
+        except OSError:
+            raise CoreInitError, "metadata path incorrect"
+        
         self.stats = Statistics("%s/statistics.xml" % (mpath))
         
         for structure in cfile.get('server', 'structures').split(','):
