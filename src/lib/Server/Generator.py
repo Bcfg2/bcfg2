@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 from elementtree.ElementTree import XML
 from syslog import syslog, LOG_ERR
+from xml.parsers.expat import ExpatError
 
 class Generator(object):
     '''This is a class that generators can be subclassed from.
@@ -21,13 +22,10 @@ class Generator(object):
         object.__init__(self)
         self.core = core
         self.data = "%s/%s" % (datastore, self.__name__)
-        self.__setup__()
-
-    def __setup__(self):
-        '''This method must be overloaded during subclassing.
-        All module specific setup, including all publication, occurs here.'''
+        self.external = {}
 
     def CompleteSetup(self):
+        '''Read any external required publication data'''
         self.ReadAll()
         print "%s loaded" % (self.__version__)
 
@@ -36,29 +34,28 @@ class Generator(object):
         pass
 
     def Publish(self, key, value):
+        '''publish a value for external consumption'''
         self.core.Publish(self.__name__, key, value)
 
     def Read(self, key):
+        '''Read a publication value'''
         self.core.ReadValue(key)
 
     def ReadAll(self):
-        self.external = {}
+        '''Read all required publication values'''
         for field in self.__requires__:
             self.external[field] = self.Read(field)
-
-    def GetMetadata(self, client, field):
-        '''GetMetadata returns current metadata file client. Field can be one of:
-        image, tags, bundles'''
-        pass
 
     def Notify(self, region):
         '''Generate change notification for region'''
         pass
 
-    def get_probes(self, metadata):
+    def get_probes(self, client):
+        '''Get appropriate probes for client'''
         return []
 
     def accept_probe_data(self, client, probedata):
+        '''Recieve probe response for client'''
         return
 
 class FileBacked(object):
@@ -74,6 +71,7 @@ class FileBacked(object):
         self.HandleEvent()
 
     def HandleEvent(self, event=None):
+        '''Read file upon update'''
         try:
             self.data = file(self.name).read()
         except IOError:
@@ -81,6 +79,7 @@ class FileBacked(object):
         self.Index()
 
     def Index(self):
+        '''Update local data structures based on current file state'''
         pass
 
 class DirectoryBacked(object):
@@ -102,6 +101,7 @@ class DirectoryBacked(object):
         return self.entries.iteritems()
 
     def AddEntry(self, name):
+        '''Add new entry to data structures upon file creation'''
         if self.entries.has_key(name):
             print "got multiple adds"
         else:
@@ -111,6 +111,7 @@ class DirectoryBacked(object):
             self.entries[name].HandleEvent()
 
     def HandleEvent(self, event):
+        '''Propagate fam events to underlying objects'''
         action = event.code2str()
         if action == 'exists':
             if event.filename != self.name:
@@ -131,10 +132,16 @@ class XMLFileBacked(FileBacked):
     '''This object is a coherent cache for an XML file to be used as a part of DirectoryBacked.'''
     __identifier__ = 'name'
 
+    def __init__(self, filename, fam):
+        FileBacked.__init__(self, filename, fam)
+        self.label = "dummy"
+        self.entries = []
+
     def Index(self):
+        '''Build local data structures'''
         try:
             xdata = XML(self.data)
-        except:
+        except ExpatError:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
             return
         self.label = xdata.attrib[self.__identifier__]
@@ -150,9 +157,16 @@ class SingleXMLFileBacked(XMLFileBacked):
         fam.AddMonitor(filename, self)
 
 class ScopedXMLFile(SingleXMLFileBacked):
+    '''Scoped XML files are coherent files with Metadata structured data'''
     __containers__ = ['Class', 'Host', 'Image']
 
+    def __init__(self, filename, fam):
+        SingleXMLFileBacked.__init__(self, filename, fam)
+        self.store = {}
+        self.__provides__ = {}
+
     def StoreRecord(self, metadata, entry):
+        '''Store scoped record based on metadata'''
         if not self.store.has_key(entry.tag):
             self.store[entry.tag] = {}
         if not self.store[entry.tag].has_key(entry.attrib['name']):
@@ -160,53 +174,58 @@ class ScopedXMLFile(SingleXMLFileBacked):
         self.store[entry.tag][entry.attrib['name']].append((metadata, entry))
     
     def Index(self):
+        '''Build internal data structures'''
         try:
             xdata = XML(self.data)
-        except:
+        except ExpatError, msg:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
+            syslog(LOG_ERR, msg)
             return
         self.store = {}
-        for e in xdata.getchildren():
-            if e.tag not in self.__containers__:
-                self.StoreRecord(('Global','all'), e)
+        for entry in xdata.getchildren():
+            if entry.tag not in self.__containers__:
+                self.StoreRecord(('Global','all'), entry)
             else:
-                m = (e.tag, e.attrib['name'])
-                for entry in e.getchildren():
-                    self.StoreRecord(m, entry)
+                name = (entry.tag, entry.get('name'))
+                [self.StoreRecord(name, child) for child in entry.getchildren()]
         # now to build the __provides__ table
         self.__provides__ = {}
         for key in self.store.keys():
             self.__provides__[key] = {}
-            for j in self.store[key].keys():
-                self.__provides__[key][j] = self.FetchRecord
+            for name in self.store[key].keys():
+                self.__provides__[key][name] = self.FetchRecord
                 # also need to sort all leaf node lists
-                self.store[key][j].sort(self.Sort)
+                self.store[key][name].sort(self.Sort)
 
-    def Sort(self, m1, m2):
-        d = {('Global','Host'):-1, ('Global','Image'):-1, ("Global",'Class'):-1,
-             ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
-             ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
-             ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
-        if d.has_key((m1[0][0],  m2[0][0])):
-            return d[(m1[0][0], m2[0][0])]
+    def Sort(self, meta1, meta2):
+        '''Sort based on specificity'''
+        smap = {('Global','Host'):-1, ('Global','Image'):-1, ("Global",'Class'):-1,
+                ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
+                ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
+                ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
+        if smap.has_key((meta1[0][0],  meta2[0][0])):
+            return smap[(meta1[0][0], meta2[0][0])]
 
-    def MatchMetadata(self, m, metadata):
-        if m[0] == 'Global':
+    def MatchMetadata(self, mdata, metadata):
+        '''Match internal metadata representation against metadata'''
+        (mtype, mvalue) = mdata
+        if mtype == 'Global':
             return True
-        elif m[0] == 'Image':
-            if m[1] == metadata.image:
+        elif mtype == 'Image':
+            if mvalue == metadata.image:
                 return True
-        elif m[0] == 'Class':
-            if m[1] in metadata.classes:
+        elif mtype == 'Class':
+            if mvalue in metadata.classes:
                 return True
-        elif m[0] == 'Host':
-            if m[1] == metadata.hostname:
+        elif mtype == 'Host':
+            if mvalue == metadata.hostname:
                 return True
         return False
 
     def FetchRecord(self, entry, metadata):
-        l = self.store[entry.tag][entry.attrib['name']]
-        useful = [x for x in l if self.MatchMetadata(x[0], metadata)]
+        '''Build a data for specified metadata'''
+        dlist = self.store[entry.tag][entry.get('name')]
+        useful = [ent for ent in dlist if self.MatchMetadata(ent[0], metadata)]
         if not useful:
             syslog(LOG_ERR, "Failed to FetchRecord %s:%s"%(entry.tag, entry.get('name')))
         else:
