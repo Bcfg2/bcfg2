@@ -1,64 +1,51 @@
 #!/usr/bin/env python
-# $Id$
-
-from os import listdir, stat
-from stat import ST_MTIME
+# $Id: $
 
 class FileBacked(object):
-    '''FileBacked is a class that will cache file data and automatically reload it as required from disk.'''
+    '''This object caches file data in memory.
+    HandleEvent is called whenever fam registers an event.
+    Index can parse the data into member data as required.'''
+    
+    def __init__(self, name):
+        self.name = name
 
-    def __init__(self,filename):
-        '''Setup initial structures'''
-        self.filename = filename
-        try:
-            self.mtime = stat(filename)[ST_MTIME]
-            self._data = file(filename).read()
-        except OSError:
-            self.mtime = 0
-            self._data = None
-            self.setdata('')
+    def HandleEvent(self, event=None):
+        self.data = file(self.name).read()
+        self.Index()
 
-    def getdata(self):
-        mtime = stat(self.filename)[ST_MTIME]
-        if mtime != self.mtime:
-            self._data = file(self.filename).read()
-            self.mtime = mtime
-        return self._data
-
-    def setdata(self,val):
-        if val != self._data:
-            self._data = val
-            file(self.filename,'w').write(val)
-            self.mtime = stat(self.filename)[ST_MTIME]
-
-    data=property(getdata,setdata)
-
-class DirectoryBacked(object):
-    '''DirectoryBacked caches a complete directory (including proper negative caching).
-    This class is READ-ONLY.'''
-
-    def __init__(self,path):
-        self.path = path
-        self._entries = {}
-        self.mtime = stat(path)[ST_MTIME]
-        for entry in listdir(path):
-            self._entries[entry] = FileBacked("%s/%s"%(path,entry))
-
-    def GetEntries(self):
-        mtime = stat(self.path)[ST_MTIME]
-        if mtime != self.mtime:
-            current = self._entries.keys()
-            new = listdir(self.path)
-            for key in new:
-                if key not in current:
-                    self._entries[key] = FileBacked("%s/%s"%(self.path,key))
-            for key in current:
-                if key not in new:
-                    del self._entries[key]
-        return self._entries
-
-    def SetEntries(self,val):
+    def Index(self):
         pass
 
-    entries = property(GetEntries,SetEntries)
-                
+class DirectoryBacked(object):
+    def __init__(self, name, fam):
+        self.name = name
+        self.fam = fam
+        self.entries = {}
+        self.inventory = False
+        fam.AddMonitor(name, self)
+
+    def AddEntry(self, name):
+        if self.entries.has_key(name):
+            print "got multiple adds"
+        else:
+            self.entries[name] = FileBacked('%s/%s'%(self.name, name))
+            self.entries[name].HandleEvent()
+
+    def HandleEvent(self, event):
+        action = event.code2str()
+        print "Got event %s %s %s"%(event.requestID, event.code2str(), event.filename)
+        if action == 'exists':
+            if event.filename != self.name:
+                self.AddEntry(event.filename)
+        elif action == 'created':
+            self.AddEntry(event.filename)
+        elif action == 'changed':
+            self.entries[event.filename].HandleEvent(event)
+        elif action == 'deleted':
+            if self.entries.has_key(event.filename):
+                del self.entries[event.filename]
+        elif action in ['endExist']:
+            pass
+        else:
+            print "Got unknown event %s %s %s"%(event.requestID, event.code2str(), event.filename)
+
