@@ -17,8 +17,8 @@ if __name__ == '__main__':
 
     # add more validation as more schemas get written
     filesets = {'metadata':("%s/etc/metadata.xml", "%s/metadata.xsd"),
-                'bundle':("%s/bundler/*.xml", "%s/bundle.xsd"),
-                'pkglist':("%s/pkgmgr/*.xml", "%s/pkglist.xsd"),
+                'bundle':("%s/Bundler/*.xml", "%s/bundle.xsd"),
+                'pkglist':("%s/Pkgmgr/*.xml", "%s/pkglist.xsd"),
                 'base':("%s/etc/base.xml", "%s/base.xsd"),
                 'imageinfo':("%s/etc/imageinfo.xml", "%s/translation.xsd"),
                 'services':("%s/etc/services.xml", "%s/services.xsd")}
