@@ -5,10 +5,9 @@ from re import compile
 from stat import S_ISDIR, ST_MODE
 from string import join
 
-from Types import ConfigFile
-from Generator import Generator
-from GeneratorUtils import DirectoryBacked, FileBacked
-from Metadata import Metadata
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.GeneratorUtils import DirectoryBacked, FileBacked
+from Bcfg2.Server.Metadata import Metadata
 
 class FileEntry(FileBacked):
     '''The File Entry class pertains to the config files contained in a particular directory.

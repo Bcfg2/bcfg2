@@ -1,18 +1,10 @@
 #!/usr/bin/env python
 
-from Generator import Generator
-from GeneratorUtils import XMLFileBacked
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.GeneratorUtils import SingleXMLFileBacked
 
-
-class ServiceList(XMLFileBacked):
-    def __init__(self, filename, fam):
-        XMLFileBacked.__init__(self, filename)
-        fam.AddMonitor(filename)
-
-    def Index(self):
-        a = XML(self.data)
-        self.name = a.attrib['name']
-        self.entries = a.getchildren()
+class ServiceList(SingleXMLFileBacked):
+    pass
 
 class servicemgr(Generator):
     '''This is a generator that handles service assignments'''
