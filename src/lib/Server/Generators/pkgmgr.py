@@ -47,7 +47,9 @@ class pkgmgr(Generator):
         pl = self.pkgdir["%s.xml"%(metadata.image)]
         if pl.packages.has_key(pkgname):
             p = pl.packages[pkgname]
-            if p['type'] == 'rpm':
+            if p.get('type', None) == 'rpm':
                 entry.attrib.update({'url':"%s/%s"%(p['uri'],p['file']), 'version':p['version']})
+            else:
+                entry.attrib.update(p)
         else:
             raise KeyError, ("Package", name)
