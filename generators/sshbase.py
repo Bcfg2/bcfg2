@@ -19,7 +19,7 @@ class sshbase(Generator):
                                   '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}}
 
     def __setup__(self):
-        self.repository = DirectoryBacked(self.data, self.fam)
+        self.repository = DirectoryBacked(self.data, self.core.fam)
 
     def build_skn(self,name,client):
         filedata = self.repository.entries['ssh_known_hosts'].data
