@@ -32,6 +32,9 @@ class DirectoryBacked(object):
     def __getitem__(self, key):
         return self.entries[key]
 
+    def __iter__(self):
+        return self.entries.iteritems()
+
     def AddEntry(self, name):
         if self.entries.has_key(name):
             print "got multiple adds"
@@ -63,3 +66,6 @@ class XMLFileBacked(FileBacked):
         a = XML(self.data)
         self.label = a.attrib[self.__identifier__]
         self.entries = a.getchildren()
+
+    def __iter__(self):
+        return iter(self.entries)
