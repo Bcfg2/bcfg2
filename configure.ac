@@ -1,5 +1,0 @@
-AC_INIT(bcfg2,0.0.1)
-AM_INIT_AUTOMAKE(bcfg2,0.0.1)
-AM_PATH_PYTHON(2.3)
-AM_PYTHON_CHECK_VERSION($PYTHON,2.1,,AC_MSG_ERROR(Python version 2.1 or greater is required.))
-AC_OUTPUT(Makefile src/Makefile generators/Makefile)
