@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+from getopt import getopt, GetoptError
+from os import popen, chmod, unlink
+from sys import argv, exit
+from string import join
+from tempfile import mktemp
+
+from elementtree.ElementTree import Element, XML, tostring
+
+from sss.ssslib import comm_lib
+
+from Bcfg2.Client.Debian import Debian
+
+def RunProbe(probe):
+    ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
+    script = open(mktemp(), 'w+')
+    script.write("#!%s\n"%(probe.attrib.get('interpreter', '/bin/sh')))
+    script.write(probe.text)
+    script.close()
+    chmod(script.name, 0755)             
+    ret.text = popen(script.name).read()
+    unlink(script.name)
+    return ret
+
+def dgetopt(arglist, opt, vopt):
+    r = {}
+    for o in opt.values() + vopt.values():
+        r[o] = False
+    gstr = join(opt.keys()) + join([x+':' for x in vopt.keys()])
+    try:
+        (o, a) = getopt(arglist, gstr)
+    except GetoptError, g:
+        print g
+        print "bcfg2 Usage:"
+        for (k,v) in opt.iteritems():
+            print " -%s %s"%(k,v)
+        for (k,v) in  vopt.iteritems():
+            print " -%s <%s>"%(k,v)
+        exit(1)
+    for (gopt,garg) in o:
+        option = gopt[1:]
+        if opt.has_key(option):
+            r[opt[option]] = True
+        else:
+            r[vopt[option]] = garg
+    return r
+
+if __name__ == '__main__':
+    # parse command line options
+    options =  {'v':'verbose','q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build'}
+    doptions = {'b':'bundle', 'f':'file', 'c':'cache'}
+    setup = dgetopt(argv[1:], options, doptions)
+    print setup
+
+    # connect to bcfg2d
+    comm = comm_lib()
+    h = comm.ClientInit("bcfg2")
+
+    # get probes
+    comm.SendMessage(h, "<get-probes/>")
+    data = comm.RecvMessage(h)
+    if setup['verbose']: print data
+    probes = XML(data)
+    # execute probes
+    probedata = map(RunProbe, probes.findall(".//probe"))
+    
+    # upload probe responses
+    cpd = Element("probe-data")
+    map(lambda x:cpd.append(x), probedata)
+
+    if setup['verbose'] : print tostring(cpd)
+    comm.SendMessage(h, tostring(cpd))
+    r = comm.RecvMessage(h)
+    # get config
+    comm.SendMessage(h, "<get-config/>")
+    r = comm.RecvMessage(h)
+    if setup['cache']:
+        try:
+            open(setup['cache'], 'w').write(r)
+        except:
+            print "failed to write config cache file %s"%(setup['cache'])
+
+    cfg = XML(r)
+    if cfg.tag == 'error':
+        print "got error from server"
+        exit(1)
+
+    # initialize toolset stuff
+    toolset = Debian(cfg, setup)
+    
+    # verify state
+    unexamined = cfg.getchildren()
+    structurestate = {}
+    entrystate = {}
+    while unexamined:
+        r = unexamined.pop()
+        unexamined += r.getchildren()
+        if r.tag in ['Bundle', 'Image']:
+            structurestate[r] = False
+            continue
+        try:
+            method = getattr(toolset, "Verify%s"%(r.tag))
+        except:
+            print ":failed: for %s :failed:"%(tostring(r))
+            continue
+        # verify state and stash value in state
+        entrystate[r] = method(r)
+        if setup['debug']:
+            print r.attrib['name'], entrystate[r]
+
+    # now we go back to check structures
+    for structure in cfg.getchildren():
+        for child in structure.getchildren():
+            if not entrystate[child]:
+                break
+        structurestate[structure] = True
+
+    for entry in [k for (k,v) in entrystate.iteritems() if not v]:
+        method = getattr(toolset, "Install%s"%(entry.tag))
+        entrystate[entry] = method(entry)
+
+    for structure in structurestate.keys():
+        if structurestate[structure]:
+            continue
+        for entry in structure.getchildren():
+            entrystate[entry] = getattr(toolset, "Verify%s"%(entry.tag))
+        states = map(lambda x:entrystate[x], structure.getchildren())
+        if False not in states:
+            structurestate[structure] = True
+
+    #print entrystate
+    print "good:",
+    for k,v in entrystate.iteritems():
+        if v:
+            print k.attrib['name'],
+            
+    # install config
+    # upload statistics
+    comm.ClientClose(h)
