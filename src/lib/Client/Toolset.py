@@ -49,6 +49,11 @@ class Toolset(object):
                     if cfile.get("name") == name:
                         self.InstallConfigFile(cfile)
 
+    def CondPrint(self, state, msg):
+        '''Conditionally print message'''
+        if self.setup[state]:
+            print msg
+
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
         print "Failure in %s for entry: %s" % (area, tostring(entry))
@@ -60,13 +65,11 @@ class Toolset(object):
 
     def print_failure(self):
         '''Display curses style failure message'''
-        if self.setup['verbose']:
-            print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
+        self.CondPrint('verbose', "\033[60G[\033[1;31mFAILED\033[0;39m]\r")
 
     def print_success(self):
         '''Display curses style success message'''
-        if self.setup['verbose']:
-            print "\033[60G[  \033[1;32mOK\033[0;39m  ]\r"
+        self.CondPrint('verbose', "\033[60G[  \033[1;32mOK\033[0;39m  ]\r")
 
     # These next functions form the external API
 
@@ -135,8 +138,6 @@ class Toolset(object):
             else:
                 self.states[entry] = method(entry)
 
-            if self.setup['debug']:
-                print entry.get('name'), self.states[entry]
         except:
             self.LogFailure("Verify", entry)
 
@@ -162,6 +163,7 @@ class Toolset(object):
 
     def InstallSymLink(self, entry):
         '''Install SymLink Entry'''
+        self.CondPrint('verbose', "Installing Symlink %s" % (entry.get('name')))
         try:
             fmode = lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
@@ -199,55 +201,74 @@ class Toolset(object):
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
+        self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
         try:
             fmode = lstat(entry.get('name'))
             if not S_ISDIR(fmode[0]):
                 try:
                     unlink(entry.get('name'))
-                except:
+                except OSError:
+                    self.CondPrint('debug', "Failed to unlink %s" % (entry.get('name')))
                     return False
         except OSError:
-            print "Failed to cleanup for directory %s" % (entry.get('name'))
+            # stat failed
+            pass
+        
         try:
             mkdir(entry.get('name'))
         except OSError:
+            self.CondPrint('debug', 'Failed to create directory %s' % (entry.get('name')))
             return False
         try:
             chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
             chmod(entry.get('name'), entry.get('perms'))
         except:
+            self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
             return False
 
     def VerifyConfigFile(self, entry):
         '''Install ConfigFile Entry'''
+        filename = entry.get('name')
         try:
-            ondisk = stat(entry.get('name'))
+            ondisk = stat(filename)
         except OSError:
+            self.CondPrint('debug', "File %s doesn't exist" % (filename))
             return False
         try:
-            data = open(entry.get('name')).read()
+            data = open(filename).read()
         except IOError:
+            self.CondPrint('debug', "Failed to read %s" % (filename))
             return False
         try:
             owner = getpwuid(ondisk[ST_UID])[0]
             group = getgrgid(ondisk[ST_GID])[0]
         except KeyError:
+            self.CondPrint('debug', "Owner/Group failure for %s: %s, %s" %
+                           (filename, ondisk[ST_UID], ondisk[ST_GID]))
             return False
-        perms = stat(entry.get('name'))[ST_MODE]
+        perms = stat(filename)[ST_MODE]
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = a2b_base64(entry.text)
         else:
             tempdata = entry.text
+
         if ((data == tempdata) and (owner == entry.get('owner')) and
             (group == entry.get('group')) and (perms == calc_perms(S_IFREG, entry.get('perms')))):
             return True
-        return False
+        else:
+            if data != tempdata:
+                self.CondPrint('debug', "File %s contents wrong" % (filename))
+            elif ((owner != entry.get('owner')) or (group != entry.get('group'))):
+                self.CondPrint('debug', 'File %s ownership wrong' % (filename))
+            elif perms != calc_perms(S_IFREG, entry.get('perms')):
+                self.CondPrint('debug', 'File %s permissions wrong' % (filename))
+            return False
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
-        if self.setup['dryrun'] or self.setup['verbose']:
-            print "Installing ConfigFile %s" % (entry.get('name'))
+        self.CondPrint('verbose', "Installing ConfigFile %s" % (entry.get('name')))
+
         if self.setup['dryrun']:
             return False
         parent = "/".join(entry.get('name').split('/')[:-1])
@@ -267,7 +288,7 @@ class Toolset(object):
         # If we get here, then the parent directory should exist
         try:
             newfile = open("%s.new"%(entry.get('name')), 'w')
-            if entry.attrib.get('encoding', 'ascii') == 'base64':
+            if entry.get('encoding', 'ascii') == 'base64':
                 filedata = a2b_base64(entry.text)
             else:
                 filedata = entry.text
@@ -275,7 +296,7 @@ class Toolset(object):
             newfile.close()
             try:
                 chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
-            except:
+            except KeyError:
                 chown(newfile.name, 0, 0)
             chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
