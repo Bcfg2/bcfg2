@@ -7,10 +7,8 @@ Server:
   Put support
   Change notification interface
   Revision control support
-  Paranoid mode support
   Metadata manipulation tool
   Default metadata/profile support
-  Generator support for periodic tasks
 
 Client:
   Two way verification
