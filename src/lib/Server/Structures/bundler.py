@@ -26,7 +26,7 @@ class BundleSet(DirectoryBacked):
 
 class bundler(Structure):
     __name__ =  'bundler'
-    __version__ = '$Version'
+    __version__ = '$Id$'
     
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     def __init__(self, core, datastore):
