@@ -1,3 +1,5 @@
 BitKeeper/*/*
 PENDING/*
 doc/auto/*el
+*pyc
+*pyo
