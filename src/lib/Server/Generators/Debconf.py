@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
-from elementtree.ElementTree import XML, Element
+from elementtree.ElementTree import Element
 
 class Debconf(Generator):
     '''Debconf takes <data>/template.dat and adds entries for
@@ -17,12 +17,12 @@ class Debconf(Generator):
     probes[0].text = '''
     XSERVER='/usr/bin/X11/X|/usr/X11R6/bin/X'
     if [ XFree86 -configure 2>/dev/null ] ; then
-       VGACARD=`tail -50 /root/XF86Config.new | grep Driver | awk -F/\" '{print $2}'`
+       VGACARD=`tail -50 /root/XF86Config.new | grep Driver | awk -F'"' '{print $2}'`
     elif  ps auxww | egrep ${XSERVER} | grep -v grep > /dev/null ;then
        if [ -e /etc/X11/XF86Config ]; then
-           VGACARD=`tail -50 /etc/X11/XF86Config | grep Driver | awk -F/\" '{print $2}'`
+           VGACARD=`tail -50 /etc/X11/XF86Config | grep Driver | awk -F'"' '{print $2}'`
        else
-           VGACARD=`tail -50 /etc/X11/XF86Config-4 | grep Driver | awk -F/\" '{print $2}'`
+           VGACARD=`tail -50 /etc/X11/XF86Config-4 | grep Driver | awk -F'"' '{print $2}'`
        fi
     else
        VGACARD=nv
@@ -30,7 +30,8 @@ class Debconf(Generator):
     echo ${VGACARD}
     '''
     
-    def __setup__(self):
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
         self.__provides__['ConfigFile']['/var/spool/debconf/config.dat'] = self.build_config_dat
         self.repo = DirectoryBacked(self.data, self.core.fam)
         self.xsensed = {}
@@ -48,9 +49,10 @@ class Debconf(Generator):
         '''Send out X probe'''
         return self.probes
 
-    def accept_probe_data(self, metadata, probedata):
+    def accept_probe_data(self, client, probedata):
+        '''Stash probe data for later use'''
         if probedata.attrib['name'] == "VGA":
-            self.xsensed[metadata.hostname] = probedata.text
+            self.xsensed[client] = probedata.text
             
     
 
