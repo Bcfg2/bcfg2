@@ -3,6 +3,7 @@
 __revision__ = '$Revision$'
 
 from copy import deepcopy
+from glob import glob
 from os import environ, stat, system
 from popen2 import Popen4
 
@@ -24,11 +25,11 @@ class Debian(Toolset):
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
-        #system("dpkg --configure -a")
-        if not self.setup['build']:
-            system("dpkg-reconfigure -f noninteractive debconf")
-        system("apt-get -q=2 -y update")
         environ["DEBIAN_FRONTEND"] = 'noninteractive'
+        system("dpkg --configure -a")
+        if not self.setup['build']:
+            system("dpkg-reconfigure -f noninteractive debconf < /dev/null")
+        system("apt-get -q=2 -y update")
         self.Refresh()
 
     def Refresh(self):
@@ -42,32 +43,31 @@ class Debian(Toolset):
     # implement entry (Verify|Install) ops
     
     def VerifyService(self, entry):
-        if entry.attrib['status'] == 'off':
-            cmd = Popen4("/usr/sbin/update-rc.d -n -f %s remove" % (entry.attrib['name']))
-            num = 1
+        files = glob("/etc/rc*.d/*%s" % (entry.get('name')))
+        if entry.get('status') == 'off':
+            if files:
+                return False
+            else:
+                return True
         else:
-            cmd = Popen4("/usr/sbin/update-rc.d -n -f %s remove" % (entry.attrib['name']))
-            num = 2
-        cstat = cmd.poll()
-        output = ''
-        while cstat == -1:
-            output += cmd.fromchild.read()
-            cstat = cmd.poll() >> 8
-        if len([x for x in output.split('\n') if x]) > num:
-            return False
-        return True
+            if files:
+                return True
+            else:
+                return False
 
     def InstallService(self, entry):
+        if self.setup['verbose']:
+            print "Installing Service %s" % (entry.get('name'))
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
-                print "Disabling service %s" % (entry.attrib['name'])
-                rc = 1
+                print "Disabling service %s" % (entry.get('name'))
+                return False
             else:
-                rc = system("update-rc.d -f %s remove" % entry.attrib['name'])
+                rc = system("update-rc.d -f %s remove" % entry.get('name'))
         else:
             if self.setup['dryrun']:
                 print "Enabling service %s" % (entry.attrib['name'])
-                rc = 1
+                return False
             else:
                 rc = system("update-rc.d %s defaults" % (entry.attrib['name']))
         if rc:
@@ -93,17 +93,9 @@ class Debian(Toolset):
     def InstallPackage(self, entry):
         if not entry.attrib.has_key('version'):
             print "Package entry for %s is malformed" % (entry.attrib['name'])
-            return False
-        
         if self.setup['dryrun'] or self.setup['verbose']:
             print "Installing package %s %s" % (entry.attrib['name'], entry.attrib['version'])
-
-        if self.setup['dryrun']:
-            return False
-        else:
-            # queue package for bulk installation
-            self.pkgtodo.append(entry)
-            return False
+        return False
 
     def Inventory(self):
         print "In Inventory::"
@@ -133,36 +125,55 @@ class Debian(Toolset):
         print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
-        print "%s new, %s update, %s remove" % (len(self.pkgwork['add']),
-                                                len(self.pkgwork['update']), len(self.pkgwork['remove']))
-        # try single large install
-        rc = system(cmd % " ".join(["%s=%s" % (x.attrib['name'], x.attrib.get('version', 'dummy')) for x in
-                                    self.pkgwork['add'] + self.pkgwork['update']]))
-        if rc == 0:
-            # set installed to true for pkgtodo
-            for pkg in self.pkgwork['add'] + self.pkgwork['update']:
-                self.states[pkg] = True
-            self.pkgtodo = []
-            self.Refresh()
-        else:
-            # do single pass installs
-            system("dpkg --configure --pending")
-            self.Refresh()
-            work = self.pkgwork['add'] + self.pkgwork['update']
-            for pkg in work:
-                if self.VerifyPackage(pkg):
+        self.setup['quick'] = True
+
+        # build up work queue
+        work = self.pkgwork['add'] + self.pkgwork['update']
+        # add non-package entries
+        work += [x for x in self.states if x.tag != 'Package' and not self.states[x]]
+
+        left = len(work)
+        old = left + 1
+        count = 1
+        
+        while ((0 < left < old) and (count < 20)):
+            if self.setup['verbose']:
+                print "Starting Pass: %s" % (count)
+                print "%s new, %s update, %s remove" % (len(self.pkgwork['add']),
+                                                        len(self.pkgwork['update']), len(self.pkgwork['remove']))
+            count = count + 1
+            old = left
+            packages = [x for x in work if x.tag == 'Package']
+            
+            # try single large install
+            rc = system(cmd % " ".join(["%s=%s" % (x.get('name'), x.get('version', 'dummy')) for x in packages]))
+
+            if rc == 0:
+                # set all states to true and flush workqueues
+                for pkg in packages:
                     self.states[pkg] = True
-                    #self.pkgtodo.remove(pkg)
-            oldlen = len(work) + 1
-            while (len(work) < oldlen):
-                oldlen = len(work)
-                for pkg in work:
-                    print cmd % ("%s=%s"%(pkg.attrib['name'], pkg.attrib['version']))
-                    rc = system(cmd % ("%s=%s" % (pkg.attrib['name'], pkg.attrib['version'])))
-                    if rc == 0:
+                    work.remove(pkg)
+                self.Refresh()
+            else:
+                # do single pass installs
+                system("dpkg --configure --pending")
+                self.Refresh()
+                for pkg in packages:
+                    # handle state tracking updates
+                    if self.VerifyPackage(pkg):
                         self.states[pkg] = True
                         work.remove(pkg)
                     else:
-                        print "Failed to install package %s" % (pkg.attrib['name'])
-        for entry in [x for x in self.states if not self.states[x] and x.tag != 'Package']:
-            self.InstallEntry(entry)
+                        rc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
+                        if rc == 0:
+                            self.states[pkg] = True
+                            work.remove(pkg)
+                        else:
+                            print "Failed to install package %s" % (pkg.get('name'))
+
+            for nonpkg in [x for x in work if x.tag != 'Package']:
+                self.InstallEntry(nonpkg)
+                if self.states[nonpkg]:
+                    work.remove(nonpkg)
+
+            left = len(work)
