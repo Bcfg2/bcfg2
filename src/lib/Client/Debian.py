@@ -115,13 +115,16 @@ class Debian(Toolset):
             else:
                 if all.has_key(pkg):
                     # wrong version
+                    del all[pkg]
                     self.pkgwork['update'].append(entry)
                 else:
                     # new pkg
                     self.pkgwork['add'].append(entry)
 
+
         # pkgwork contains all one-way verification data now
         # all data remaining in all is extra packages
+        self.pkgwork['remove'] = all.keys()
         
     def Install(self):
         '''Correct detected misconfigurations'''
