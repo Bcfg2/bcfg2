@@ -5,7 +5,7 @@ __revision__ = '$Revision$'
 
 from sys import argv
 from time import sleep
-from Bcfg2.Server.Core import Core
+from Bcfg2.Server.Core import Core, CoreInitError
 
 def input():
     try:
@@ -19,7 +19,11 @@ if __name__ == '__main__':
         cfile = argv[-1]
     else:
         cfile = '/etc/bcfg2.conf'
-    core = Core(cfile)
+    try:
+        core = Core({}, cfile)
+    except CoreInitError, msg:
+        print "Core load failed because %s" % msg
+        raise SystemExit, 1
     while core.fam.fm.pending():
         while core.fam.fm.pending():
             core.fam.HandleEvent()
@@ -46,7 +50,7 @@ if __name__ == '__main__':
             for (key, value) in settings.iteritems():
                 print "%s --> %s" % (key, value)
         elif cmd[0] == 'shell':
-            cmd = ''
+            cmd = ['']
             continue
         elif cmd[0] == 'version':
             print 'Bcfg2debug v. %s' % __revision__
