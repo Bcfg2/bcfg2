@@ -26,7 +26,7 @@ class BaseFile(SingleXMLFileBacked):
         for c in metadata.classes:
             for entry in self.store['Class'].get(c, []):
                 r.append(deepcopy(entry))
-        for entry in self.store['Host'].get(metadata.hostname):
+        for entry in self.store['Host'].get(metadata.hostname, []):
             r.append(deepcopy(entry))
         return [r]
 
