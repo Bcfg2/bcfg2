@@ -7,11 +7,7 @@ from re import compile as regcompile
 from stat import S_ISDIR, ST_MODE
 from syslog import syslog, LOG_INFO, LOG_ERR
 
-from Bcfg2.Server.Generator import Generator, FileBacked
-
-class CfgFileException(Exception):
-    '''Raised for repository errors'''
-    pass
+from Bcfg2.Server.Generator import Generator, GeneratorError, FileBacked
 
 class FileEntry(FileBacked):
     '''The File Entry class pertains to the config files contained in a particular directory.
@@ -128,7 +124,8 @@ class ConfigFileEntry(object):
         try:
             basefile = [bfile for bfile in self.basefiles if metadata.Applies(bfile)][-1]
         except IndexError:
-            raise CfgFileException, ('basefile', name)
+            syslog(LOG_ERR, "Failed to locate basefile for %s" % name)
+            raise GeneratorError, ('basefile', name)
         filedata += basefile.data
 
         # find applicable deltas
@@ -146,17 +143,19 @@ class ConfigFileEntry(object):
         else:
             entry.text = filedata
 
-class ConfigFileRepository(object):
-    '''This class implements repos and all change handling'''
+class Cfg(Generator):
+    '''This generator in the configuration file repository for bcfg2'''
+    __name__ = 'Cfg'
+    __version__ = '$Id$'
+    __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    def __init__(self, name, fam):
-        self.name = name
-        self.fam = fam
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
         self.entries = {}
-        self.provides = {}
+        self.__provides__ = {'ConfigFile':{}}
         self.famID = {}
         self.directories = []
-        self.AddDirectoryMonitor(self.name)
+        self.AddDirectoryMonitor(self.data)
         # eventually flush fam events here so that all entries built here
         # ready to go
 
@@ -166,9 +165,9 @@ class ConfigFileRepository(object):
             try:
                 stat(name)
             except OSError:
-                syslog(LOG_ERR, "Failed to open directory %s" % (name))
+                self.LogError("Failed to open directory %s" % (name))
                 return
-            reqid = self.fam.AddMonitor(name, self)
+            reqid = self.core.fam.AddMonitor(name, self)
             self.famID[reqid] = name
             self.directories.append(name)
 
@@ -183,10 +182,10 @@ class ConfigFileRepository(object):
             self.AddDirectoryMonitor(name)
         else:
             # file entries shouldn't contain path-to-repo
-            shortname = '/'+ '/'.join(name[len(self.name)+1:].split('/')[:-1])
+            shortname = '/'+ '/'.join(name[len(self.data)+1:].split('/')[:-1])
             if not self.entries.has_key(shortname):
                 self.entries[shortname] = ConfigFileEntry(shortname)
-                self.provides[shortname] = self.entries[shortname].GetConfigFile
+                self.__provides__['ConfigFile'][shortname] = self.entries[shortname].GetConfigFile
             self.entries[shortname].AddEntry(name)
             #self.entries[shortname].HandleEvent()
 
@@ -197,41 +196,24 @@ class ConfigFileRepository(object):
             filename = "%s/%s" % (self.famID[event.requestID], event.filename)
         else:
             filename = event.filename
+        configfile = filename[len(self.data):-(len(event.filename)+1)]
 
-        if ((action == 'exists') and (filename != self.name)):
-            self.AddEntry(filename)
-        elif action == 'created':
+        if ((action in ['exists', 'created']) and (filename != self.data)):
             self.AddEntry(filename)
         elif action == 'changed':
             # pass the event down the chain to the ConfigFileEntry
-            configfile = filename[len(self.name):-(len(event.filename)+1)]
             if event.filename == ':info':
                 event.filename = filename
             if self.entries.has_key(configfile):
                 self.entries[configfile].HandleEvent(event)
             else:
-                if filename != self.name:
+                if filename != self.data:
                     self.AddEntry(filename)
                 else:
-                    syslog(LOG_INFO, "Ignoring event for %s"%(configfile))
+                    self.LogError("Ignoring event for %s"%(configfile))
         elif action == 'deleted':
-            configfile = filename[len(self.name):-(len(event.filename)+1)]
             self.entries[configfile].HandleEvent(event)
         elif action in ['exists', 'endExist']:
             pass
         else:
-            syslog(LOG_ERR, "Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
-
-class Cfg(Generator):
-    '''This generator manages the configuration file repository for bcfg2'''
-    __name__ = 'Cfg'
-    __version__ = '$Id$'
-    __author__ = 'bcfg-dev@mcs.anl.gov'
-    __provides__ = {}
-
-    def __init__(self, core, datastore):
-        Generator.__init__(self, core, datastore)
-        self.repo = ConfigFileRepository(self.data, self.core.fam)
-        self.__provides__ = {'ConfigFile':self.repo.provides}
-
-    
+            self.LogError("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
