@@ -217,7 +217,7 @@ class Debian(Toolset):
                         system("/etc/init.d/%s stop" % (svc))
                     else:
                         self.CondPrint('debug', "Restarting service %s" % (svc))
-                        system('/etc/init.d/%s restart > /dev/null' % (svc))
+                        system('/etc/init.d/%s reload > /dev/null' % (svc))
             
         for entry in self.structures:
             if [strent for strent in entry.getchildren() if not self.states[strent]]:
