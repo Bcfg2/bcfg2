@@ -89,7 +89,7 @@ class ConfigFileEntry(object):
 
     def HandleEvent(self, event):
         action = event.code2str()
-        if event.filename == ':info':
+        if event.filename[-5:] == ':info':
             return self.GetInfo(event.filename)
         for l in [self.basefiles, self.deltas]:
             for entry in l:
@@ -176,6 +176,8 @@ class ConfigFileRepository(DirectoryBacked):
         elif action == 'changed':
             # pass the event down the chain to the ConfigFileEntry
             configfile = filename[len(self.name):-(len(event.filename)+1)]
+            if event.filename == ':info':
+                event.filename = filename
             self.entries[configfile].HandleEvent(event)
         elif action == 'deleted':
             configfile = filename[len(self.name):-(len(event.filename)+1)]
