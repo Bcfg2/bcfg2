@@ -197,7 +197,7 @@ class Toolset(object):
         perms=stat(entry.attrib['name'])[ST_MODE]
         if ((owner == entry.attrib['owner']) and
             (group == entry.attrib['group']) and
-            (perms == entry.attrib['perms'])):
+            (perms == CalcPerms(entry.attrib['perms']))):
             return True
         else:
             return False
