@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+'''This is the basic toolset class for the Bcfg2 client'''
+__revision__ = '$Revision$'
+
 from binascii import a2b_base64
 from grp import getgrgid, getgrnam
 from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlink, symlink
@@ -13,41 +16,33 @@ from traceback import extract_tb
 
 from elementtree.ElementTree import Element, SubElement, tostring
 
-def CalcPerms(initial, perms):
+def calc_perms(initial, perms):
+    '''This compares ondisk permissions with specified ones'''
     tempperms = initial
     if len(perms) == 3:
         perms = '0%s' % (perms)
-    [s, u, g, o] = [perms[int(x)] for x in range(4)]
-    if s & 1:
-        tempperms |= S_ISVTX
-    if s & 2:
-        tempperms |= S_ISGID
-    if s & 4:
-        tempperms |= S_ISUID
-    if u & 1:
-        tempperms |= S_IXUSR
-    if u & 2:
-        tempperms |= S_IWUSR
-    if u & 4:
-        tempperms |= S_IRUSR
-    if g & 1:
-        tempperms |= S_IXGRP
-    if g & 2:
-        tempperms |= S_IWGRP
-    if g & 4:
-        tempperms |= S_IRGRP
-    if o & 1:
-        tempperms |= S_IXOTH
-    if o & 2:
-        tempperms |= S_IWOTH
-    if o & 4:
-        tempperms |= S_IROTH
+    [suid, user, group, other] = [perms[int(x)] for x in range(4)]
+    for (num, perm) in {1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}.iteritems():
+        if suid & num:
+            tempperms |= perm
+    for (num, perm) in {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR}.iteritems():
+        if user & num:
+            tempperms |= perm
+    for (num, perm) in {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP}.iteritems():
+        if group & num:
+            tempperms |= perm
+    for (num, perm) in {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}.iteritems():
+        if other & num:
+            tempperms |= perm
     return tempperms
 
 class Toolset(object):
+    '''The toolset class contains underlying command support and all states'''
     __important__ = []
 
     def __init__(self, cfg, setup):
+        '''Install initial configs, and setup state structures'''
+        object.__init__(self)
         self.setup = setup
         self.cfg = cfg
         self.states = {}
@@ -55,10 +50,10 @@ class Toolset(object):
         self.modified = []
         self.extra = []
         if self.__important__:
-            for c in cfg.findall(".//ConfigFile"):
+            for cfile in cfg.findall(".//ConfigFile"):
                 for name in self.__important__:
-                    if c.get("name") == name:
-                        self.InstallConfigFile(c)
+                    if cfile.get("name") == name:
+                        self.InstallConfigFile(cfile)
 
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
@@ -70,10 +65,12 @@ class Toolset(object):
         del t, v, tb
 
     def print_failure(self):
+        '''Display curses style failure message'''
         if self.setup['verbose']:
             print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
 
     def print_success(self):
+        '''Display curses style success message'''
         if self.setup['verbose']:
             print "\033[60G[  \033[1;32mOK\033[0;39m  ]\r"
 
@@ -87,7 +84,7 @@ class Toolset(object):
             if r.tag not in ['Bundle', 'Independant']:
                 self.VerifyEntry(r, modlist)
             else:
-                modlist = [x.attrib['name'] for x in r.getchildren() if x.tag == 'ConfigFile']
+                modlist = [x.get('name') for x in r.getchildren() if x.tag == 'ConfigFile']
                 unexamined += [(x, modlist) for x in r.getchildren()]
                 self.structures[r] = False
 
@@ -100,7 +97,7 @@ class Toolset(object):
             self.modified.remove(structure)
             if structure.tag == 'Bundle':
                 # check for clobbered data
-                modlist = [x.attrib['name'] for x in structure.getchildren() if x.tag == 'ConfigFile']
+                modlist = [x.get('name') for x in structure.getchildren() if x.tag == 'ConfigFile']
                 for entry in structure.getchildren():
                     self.VerifyEntry(entry, modlist)
         try:
@@ -112,14 +109,10 @@ class Toolset(object):
             self.structures[structure] = False
 
     def Install(self):
+        '''Baseline Installation method based on current entry states'''
         self.modified  =  [k for (k, v) in self.structures.iteritems() if not v]
         for entry in [k for (k, v) in self.states.iteritems() if not v]:
             self.InstallEntry(entry)
-
-    def Commit(self):
-        '''Commit pending changes to the system. This method allows for interrelated
-        operations to be executed concurrently'''
-        return
 
     def GenerateStats(self):
         '''Generate XML summary of execution statistics'''
@@ -129,10 +122,10 @@ class Toolset(object):
         SubElement(stats, "Entries", good=str(len([k for k, v in self.states.iteritems() if v])), \
                    bad=str(len([k for k, v in self.states.iteritems() if not v])))
         if len([k for k, v in self.structures.iteritems() if not v]) == 0:
-            stats.attrib['state'] = 'clean'
+            stats.set('state', 'clean')
         else:
-            stats.attrib['state'] = 'dirty'
-        stats.attrib['time'] = asctime(localtime())
+            stats.set('state', 'dirty')
+        stats.set('time', asctime(localtime()))
         return stats
 
     # the next two are dispatch functions
@@ -148,7 +141,7 @@ class Toolset(object):
                 self.states[entry] = method(entry)
 
             if self.setup['debug']:
-                print entry.attrib['name'], self.states[entry]
+                print entry.get('name'), self.states[entry]
         except:
             self.LogFailure("Verify", entry)
 
@@ -164,8 +157,8 @@ class Toolset(object):
 
     def VerifySymLink(self, entry):
         try:
-            s = readlink(entry.attrib['name'])
-            if s == entry.attrib['to']:
+            s = readlink(entry.get('name'))
+            if s == entry.get('to'):
                 return True
             return False
         except OSError:
@@ -173,23 +166,23 @@ class Toolset(object):
 
     def InstallSymLink(self, entry):
         try:
-            fmode = lstat(entry.attrib['name'])[ST_MODE]
+            fmode = lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
-                unlink(entry.attrib['name'])
+                unlink(entry.get('name'))
             elif S_ISDIR(fmode):
-                system("mv %s/ %s.bak" % (entry.attrib['name'], entry.attrib['name']))
+                system("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
             else:
-                unlink(entry.attrib['name'])
-        except OSError, e:
-            pass
+                unlink(entry.get('name'))
+        except OSError:
+            print "Symlink %s cleanup failed" % (entry.get('name'))
         try:
-            symlink(entry.attrib['to'], entry.attrib['name'])
+            symlink(entry.get('to'), entry.get('name'))
         except OSError, e:
             return False
 
     def VerifyDirectory(self, entry):
         try:
-            ondisk = stat(entry.attrib['name'])
+            ondisk = stat(entry.get('name'))
         except OSError:
             return False
         try:
@@ -198,42 +191,42 @@ class Toolset(object):
         except OSError:
             owner = 'root'
             group = 'root'
-        perms = stat(entry.attrib['name'])[ST_MODE]
-        if ((owner == entry.attrib['owner']) and
-            (group == entry.attrib['group']) and
-            (perms == CalcPerms(S_IFDIR, entry.attrib['perms']))):
+        perms = stat(entry.get('name'))[ST_MODE]
+        if ((owner == entry.get('owner')) and
+            (group == entry.get('group')) and
+            (perms == calc_perms(S_IFDIR, entry.get('perms')))):
             return True
         else:
             return False
 
     def InstallDirectory(self, entry):
         try:
-            fmode = lstat(entry.attrib['name'])
+            fmode = lstat(entry.get('name'))
             if not S_ISDIR(fmode[0]):
                 try:
-                    unlink(entry.attrib['name'])
+                    unlink(entry.get('name'))
                 except:
                     return False
         except OSError:
-            pass
+            print "Failed to cleanup for directory %s" % (entry.get('name'))
         try:
-            mkdir(entry.attrib['name'])
+            mkdir(entry.get('name'))
         except OSError:
             return False
         try:
-            chown(entry.attrib['name'],
-                  getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
-            chmod(entry.attrib['name'], entry.attrib['perms'])
+            chown(entry.get('name'),
+                  getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+            chmod(entry.get('name'), entry.get('perms'))
         except:
             return False
 
     def VerifyConfigFile(self, entry):
         try:
-            ondisk = stat(entry.attrib['name'])
+            ondisk = stat(entry.get('name'))
         except OSError:
             return False
         try:
-            data = open(entry.attrib['name']).read()
+            data = open(entry.get('name')).read()
         except IOError:
             return False
         try:
@@ -241,22 +234,22 @@ class Toolset(object):
             group = getgrgid(ondisk[ST_GID])[0]
         except KeyError:
             return False
-        perms = stat(entry.attrib['name'])[ST_MODE]
-        if entry.attrib.get('encoding', 'ascii') == 'base64':
+        perms = stat(entry.get('name'))[ST_MODE]
+        if entry.get('encoding', 'ascii') == 'base64':
             tempdata = a2b_base64(entry.text)
         else:
             tempdata = entry.text
-        if ((data == tempdata) and (owner == entry.attrib['owner']) and
-            (group == entry.attrib['group']) and (perms == CalcPerms(S_IFREG, entry.attrib['perms']))):
+        if ((data == tempdata) and (owner == entry.get('owner')) and
+            (group == entry.get('group')) and (perms == calc_perms(S_IFREG, entry.get('perms')))):
             return True
         return False
 
     def InstallConfigFile(self, entry):
         if self.setup['dryrun'] or self.setup['verbose']:
-            print "Installing ConfigFile %s" % (entry.attrib['name'])
+            print "Installing ConfigFile %s" % (entry.get('name'))
         if self.setup['dryrun']:
             return False
-        parent = "/".join(entry.attrib['name'].split('/')[:-1])
+        parent = "/".join(entry.get('name').split('/')[:-1])
         if parent:
             try:
                 s = lstat(parent)
@@ -272,18 +265,18 @@ class Toolset(object):
 
         # If we get here, then the parent directory should exist
         try:
-            newfile = open("%s.new"%(entry.attrib['name']), 'w')
+            newfile = open("%s.new"%(entry.get('name')), 'w')
             if entry.attrib.get('encoding', 'ascii') == 'base64':
                 filedata = a2b_base64(entry.text)
             else:
                 filedata = entry.text
             newfile.write(filedata)
             newfile.close()
-            chown(newfile.name, getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
-            chmod(newfile.name, CalcPerms(S_IFREG, entry.attrib['perms']))
-            if entry.attrib.get("paranoid", False) and self.setup.get("paranoid", False):
-                system("diff -u %s %s.new"%(entry.attrib['name'], entry.attrib['name']))
-            rename(newfile.name, entry.attrib['name'])
+            chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+            chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
+            if entry.get("paranoid", False) and self.setup.get("paranoid", False):
+                system("diff -u %s %s.new"%(entry.get('name'), entry.get('name')))
+            rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), e:
             print e
