@@ -1,0 +1,16 @@
+Source: bcfg2
+Section: unknown
+Priority: optional
+Maintainer: Narayan Desai <desai@mcs.anl.gov>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.0
+
+Package: bcfg2
+Architecture: all
+Depends: ${python:Depends}, ssslib-python, debsums
+Description: build configuration system
+
+Package: bcfg-server
+Architecture: all
+Depends: ${python:Depends}, ssslib-python, python2.3-fam
+Description: build configuration system
