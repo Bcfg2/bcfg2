@@ -9,6 +9,12 @@
   </xsd:annotation>
   
   <xsd:complexType name='ClientType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='image' use='required'/>
+    <xsd:attribute type='xsd:string' name='profile' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='ProfileType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Class'>
 	<xsd:complexType>
@@ -17,15 +23,13 @@
       </xsd:element>
       <xsd:element name='Attribute'>
 	<xsd:complexType>
-	  <xsd:attribute name='name' type='xsd:string'
-	    use='required'/>
-	  <xsd:attribute name='scope' type='xsd:string'
-	    use='required'/>
+	  <xsd:attribute name='name' type='xsd:string' use='required'/>
+	  <xsd:attribute name='scope' type='xsd:string' use='required'/>
 	</xsd:complexType>
       </xsd:element>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='image' use='required'/>
+    <xsd:attribute type='xsd:string' name='public' use='required'/>
   </xsd:complexType>
 
   <xsd:complexType name='ClassType'>
@@ -44,8 +48,11 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Client' type='ClientType'/>
 	<xsd:element name='Class' type='ClassType'/>
+	<xsd:element name='Profile' type='ProfileType'/>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>
+      <xsd:attribute type='xsd:string' name='default_image' use='required'/>
+      <xsd:attribute type='xsd:string' name='default_profile' use='required'/>
     </xsd:complexType>
   </xsd:element>
 
