@@ -54,8 +54,8 @@ class Toolset(object):
 
     def VerifySymLink(self, entry):
         try:
-            s = readlink(entry.attrib['dst'])
-            if s == entry.attrib['src']:
+            s = readlink(entry.attrib['from'])
+            if s == entry.attrib['to']:
                 return True
             return False
         except OSError:
@@ -63,17 +63,17 @@ class Toolset(object):
 
     def InstallSymLink(self, entry):
         try:
-            fmode = lstat(entry.attrib['dst'])[ST_MODE]
+            fmode = lstat(entry.attrib['from'])[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
-                unlink(entry.attrib['dst'])
+                unlink(entry.attrib['from'])
             elif S_ISDIR(fmode):
-                system("mv %s/ %s.bak"%(entry.attrib['dst'], entry.attrib['dst']))
+                system("mv %s/ %s.bak"%(entry.attrib['from'], entry.attrib['from']))
             else:
-                unlink(entry.attrib['dst'])
+                unlink(entry.attrib['from'])
         except OSError, e:
             pass
         try:
-            symlink(entry.attrib['src'], entry.attrib['dst'])
+            symlink(entry.attrib['to'], entry.attrib['from'])
         except OSError, e:
             return False
 
