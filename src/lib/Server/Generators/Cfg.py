@@ -204,7 +204,10 @@ class ConfigFileRepository(DirectoryBacked):
             if self.entries.has_key(configfile):
                 self.entries[configfile].HandleEvent(event)
             else:
-                syslog(LOG_INFO, "Ignoring event for %s"%(configfile))
+                if filename != self.name:
+                    self.AddEntry(filename)
+                else:
+                    syslog(LOG_INFO, "Ignoring event for %s"%(configfile))
         elif action == 'deleted':
             configfile = filename[len(self.name):-(len(event.filename)+1)]
             self.entries[configfile].HandleEvent(event)
