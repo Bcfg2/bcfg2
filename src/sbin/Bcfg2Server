@@ -30,7 +30,11 @@ class BcfgServer(Server):
         generators = split(c.get('server','generators'),',')
         structures = split(c.get('server', 'structures'),',')
         mpath = c.get('server','metadata')
-        self.core = Core(repo, structures, generators)
+        try:
+            self.core = Core(repo, structures, generators)
+        except IOError, e:
+            syslog(LOG_ERR, "Failed to connect to FAM")
+            self.shut = 1
         self.metadata = MetadataStore("%s/metadata.xml"%(mpath), self.core.fam)
         self.__progress__()
 
