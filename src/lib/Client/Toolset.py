@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from binascii import a2b_base64
 from grp import getgrgid, getgrnam
 from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlink, symlink
 from pwd import getpwuid, getpwnam
@@ -236,7 +237,10 @@ class Toolset(object):
         except KeyError:
             return False
         perms=stat(entry.attrib['name'])[ST_MODE]
-        tempdata = entry.text
+        if entry.attrib.get('encoding', 'ascii') == 'base64':
+            tempdata = a2b_base64(entry.text)
+        else:
+            tempdata = entry.text
         if ((data == tempdata) and (owner == entry.attrib['owner']) and
             (group == entry.attrib['group']) and (perms == CalcPerms(S_IFREG, entry.attrib['perms']))):
             return True
@@ -264,7 +268,11 @@ class Toolset(object):
         # If we get here, then the parent directory should exist
         try:
             newfile = open("%s.new"%(entry.attrib['name']), 'w')
-            newfile.write(entry.text)
+            if entry.attrib.get('encoding', 'ascii') == 'base64':
+                filedata = a2b_base64(entry.text)
+            else:
+                filedata = entry.text
+            newfile.write(filedata)
             newfile.close()
             chown(newfile.name, getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
             chmod(newfile.name, CalcPerms(S_IFREG, entry.attrib['perms']))
