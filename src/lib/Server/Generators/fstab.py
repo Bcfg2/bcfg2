@@ -34,7 +34,7 @@ class fstab(Generator):
             nodeclass = 'fs'
             mayor = 'ccprez.mcs.anl.gov'
         else:
-            raise KeyError,client
+            raise KeyError, node
 
         fsname = "fstab_%s"%(nodeclass)
         fsdata = self.repo.entries[fsname].data

@@ -52,4 +52,4 @@ class pkgmgr(Generator):
             else:
                 entry.attrib.update(p)
         else:
-            raise KeyError, ("Package", name)
+            raise KeyError, ("Package", pkgname)
