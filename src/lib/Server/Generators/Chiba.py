@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 from socket import gethostbyname, gaierror
+from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Generator import Generator, DirectoryBacked, SingleXMLFileBacked, GeneratorError
 
 class ChibaConf(SingleXMLFileBacked):
@@ -33,6 +34,7 @@ class Chiba(Generator):
         try:
             myriaddr = gethostbyname("%s-myr" % metadata.hostname)
         except gaierror:
+            syslog(LOG_ERR, "Failed to resolve %s-myr"% metadata.hostname)
             raise GeneratorError, ("%s-myr" % metadata.hostname, 'lookup')
         entry.text = self.repo.entries['interfaces-template'].data % myriaddr
 
