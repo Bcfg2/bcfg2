@@ -26,7 +26,7 @@ class FileEntry(FileBacked):
         return self.metadata.__cmp__(other.metadata)
 
 class ConfigFileEntry(object):
-    mx = compile("(^(?P<filename>.*)(\.((B(?P<bprio>\d+)_(?P<bundle>\S+))|(T(?P<tprio>\d+)_(?P<tag>\S+))(I(?P<iprio>\d+)_(?P<image>\S+))|(H_(?P<hostname>\S+)))(\.(?P<op>cat|udiff))?)?$)")
+    mx = compile("(^(?P<filename>.*)(\.((B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|(I(?P<iprio>\d+)_(?P<image>\S+))|(I(?P<cprio>\d+)_(?P<class>\S+))|(H_(?P<hostname>\S+)))(\.(?P<op>cat|udiff))?)?$)")
     info = compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)$')
     
     def __init__(self, path):
@@ -66,14 +66,17 @@ class ConfigFileEntry(object):
             return
 
         data = {}
-        for attr in ['bundle', 'tag', 'hostname']:
+        for attr in ['bundle', 'attr', 'hostname', 'class']:
             if g.group(attr) != None: data[attr] = g.group(attr)
         if data == {}:
             all = True
         else:
             all = False
-        arg = (all, 'linux') + tuple(map(lambda z:filter(lambda x:x, [data.get(z, None)]), ['bundle','tag'])) + \
-        (data.get("hostname",None), )
+        # metadata args (global, image, classes, bundles, attributes, hostname)
+        arg = (all, data.get('image', None))
+        for mtype in ['class', 'bundle', 'attr']:
+            arg = arg + (data.get(mtype, []),)
+        arg = arg + (data.get('hostname', None),)
         m = apply(Metadata, arg)
         if g.group("op") != None:
             self.deltas.append(FileEntry(name, m))
