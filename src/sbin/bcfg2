@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from getopt import getopt, GetoptError
 from os import popen, chmod, unlink
-from sys import argv, exit
+from sys import argv, exit, exc_info
 from string import join
 from tempfile import mktemp
+from traceback import extract_tb
 
 from elementtree.ElementTree import Element, XML, tostring
 
@@ -117,7 +118,16 @@ if __name__ == '__main__':
 
     for entry in [k for (k,v) in entrystate.iteritems() if not v]:
         method = getattr(toolset, "Install%s"%(entry.tag))
-        entrystate[entry] = method(entry)
+        try:
+            entrystate[entry] = method(entry)
+        except:
+            print "Install failed for %s"%(tostring(entry))
+            (t,v,tb) = exc_info()
+            print "Unexpected failure in Install:"
+            for line in extract_tb(tb):
+                print "File %s, line %i, in %s\n   %s\n"%(line)
+            print "%s: %s\n"%(t,v)
+            del t,v,tb
 
     for structure in structurestate.keys():
         if structurestate[structure]:
