@@ -35,7 +35,11 @@ class Redhat(Toolset):
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
-        srvdata = popen("/sbin/chkconfig --list %s"%entry.attrib['name']).readlines()[0].split()
+        try:
+            srvdata = popen("/sbin/chkconfig --list %s"%entry.attrib['name']).readlines()[0].split()
+        except IndexError:
+            # Ocurrs when no lines are returned (service not installed)
+            return False
         if entry.attrib['type'] == 'xinetd':
             if entry.attrib['status'] == srvdata[1]:
                 return True
@@ -82,6 +86,9 @@ class Redhat(Toolset):
 
     def VerifyPackage(self, entry, modlist = []):
         '''Verify Package status for entry'''
+        if ! (entry.get('name') and entry.get('version')):
+            print "Can't install package, not enough data."
+            return False
         instp = Popen4("rpm -qi %s-%s" % (entry.attrib['name'], entry.attrib['version']))
         istat = instp.wait()/256
         if istat == 0:
