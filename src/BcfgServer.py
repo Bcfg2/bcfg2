@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # $Id: $
 
+from syslog import syslog, LOG_INFO
+from time import time
+
 from elementtree.ElementTree import Element, tostring
 
 from Bcfg2.Core import Core
@@ -11,7 +14,8 @@ from sss.server import Server
 
 class MetadataStore(object):
     def __init__(self):
-        self.images = {'topaz':'debian-3.1'}
+        self.classes = {}
+        self.images = {'debian-3.1':['topaz']}
         self.tags = {'laptop':['topaz']}
         self.bundles = {'global':['ssh'], 'tags':{'laptop':[]}, 'hosts':{}}
 
@@ -39,15 +43,17 @@ class BcfgServer(Server):
         return 1
 
     def BuildConfig(self, xml, (peer,port)):
+        t = time()
         # get metadata for host
         config = Element("Configuration", version='2.0')
-        m = Metadata(False, 'chiba-rh73', ['ssh'], [], 'topaz')
+        m = Metadata(False, 'chiba-rh73', [], ['ssh'], [], 'topaz')
         structures = self.core.GetStructures(m)
-        #         for s in structures:
-        #             self.core.BindStructure(s, m)
-        #             config.append(s)
-        #             for x in s.getchildren():
-        #                 print x.attrib['name'], '\000' in tostring(x)
+        for s in structures:
+            self.core.BindStructure(s, m)
+            config.append(s)
+            #for x in s.getchildren():
+            #    print x.attrib['name'], '\000' in tostring(x)
+        syslog(LOG_INFO, "Generated config for %s in %s seconds"%(peer, time()-t))
         return config
 
     def GetProbes(self, xml, (peer,port)):
