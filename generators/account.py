@@ -8,10 +8,10 @@ class account(Generator):
     __name__ = 'account'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __build__ = {'/etc/passwd':"GenFromYP",
-                 '/etc/group':"GenFromYP",
-                 '/etc/security/limits.conf':"GenLimits",
-                 '/root/.ssh/authorized_keys':"GenRootKeys"}
+    __provides__ = {'ConfigFile':{'/etc/passwd':"GenFromYP",
+                                  '/etc/group':"GenFromYP",
+                                  '/etc/security/limits.conf':"GenLimits",
+                                  '/root/.ssh/authorized_keys':"GenRootKeys"}}
 
     __doc__ = '''This module generates account config files, based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
