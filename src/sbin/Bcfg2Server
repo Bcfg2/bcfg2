@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # $Id: $
 
+from getopt import getopt, GetoptError
 from socket import gethostbyaddr, herror
 from string import split
 from syslog import syslog, LOG_INFO, LOG_ERR
@@ -18,6 +19,29 @@ from sss.daemonize import daemonize
 from sss.restriction import DataSet, Data
 from sss.server import Server
 
+def dgetopt(arglist, opt, vopt):
+    r = {}
+    for o in opt.values() + vopt.values():
+        r[o] = False
+    gstr = join(opt.keys()) + join([x+':' for x in vopt.keys()])
+    try:
+        (o, a) = getopt(arglist, gstr)
+    except GetoptError, g:
+        print g
+        print "bcfg2 Usage:"
+        for (k,v) in opt.iteritems():
+            print " -%s %s"%(k,v)
+        for (k,v) in  vopt.iteritems():
+            print " -%s <%s>"%(k,v)
+        exit(1)
+    for (gopt,garg) in o:
+        option = gopt[1:]
+        if opt.has_key(option):
+            r[opt[option]] = True
+        else:
+            r[vopt[option]] = garg
+    return r
+
 class BcfgServer(Server):
     __implementation__ = 'Bcfg2'
     __component__ = 'bcfg2'
@@ -25,6 +49,7 @@ class BcfgServer(Server):
     __validate__ = 0
         
     def __setup__(self):
+        self.setup = self.kwargs['setup']
         c = ConfigParser()
         c.read([self.kwargs.get('configfile', '/etc/bcfg2.conf')])
         repo = c.get('server','repository')
@@ -45,10 +70,13 @@ class BcfgServer(Server):
         return 0
 
     def BuildConfig(self, xml, (peer,port)):
-        try:
-            client = gethostbyaddr(peer)[0].split('.')[0]
-        except herror:
-            return Element("error", type='host resolution error')
+        if setup['client']:
+            client = setup['client']
+        else:
+            try:
+                client = gethostbyaddr(peer)[0].split('.')[0]
+            except herror:
+                return Element("error", type='host resolution error')
         t = time()
         config = Element("Configuration", version='2.0')
         # get metadata for host
@@ -111,9 +139,13 @@ class BcfgServer(Server):
         del t,v,tb
 
 if __name__ == '__main__':
-    if '--daemon' in argv:
-        daemonize('/dev/null')
-    server = BcfgServer()
+    options =  {'v':'verbose','d':'debug'}
+    doptions = {'D':'daemon', 'C':'client'}
+    setup = dgetopt(argv[1:], options, doptions)
+    print setup
+    if setup['daemon']:
+        daemonize(setup['daemon'])
+    server = BcfgServer(setup=setup)
     for i in range(10):
         server.__progress__()
     server.ServeForever()
