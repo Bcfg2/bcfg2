@@ -13,8 +13,8 @@ from xml.parsers.expat import ExpatError
 class ImageFile(SingleXMLFileBacked):
     '''This file contains image -> system mappings'''
     def __init__(self, filename, fam):
-        SingleXMLFileBacked.__init__(self, filename, fam)
         self.images = {}
+        SingleXMLFileBacked.__init__(self, filename, fam)
     
     def Index(self):
         '''Build data structures out of the data'''
@@ -35,10 +35,10 @@ class Bundle(XMLFileBacked):
     '''Bundles are configuration specifications (with image/translation abstraction)'''
 
     def __init__(self, filename):
-        XMLFileBacked.__init__(self, filename)
         self.all = []
         self.attributes = {}
         self.systems = {}
+        XMLFileBacked.__init__(self, filename)
 
     def Index(self):
         '''Build data structures from the source data'''
