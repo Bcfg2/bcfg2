@@ -8,11 +8,6 @@ class account(Generator):
     __name__ = 'account'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __provides__ = {'ConfigFile':{'/etc/passwd':"GenFromYP",
-                                  '/etc/group':"GenFromYP",
-                                  '/etc/security/limits.conf':"GenLimits",
-                                  '/root/.ssh/authorized_keys':"GenRootKeys"}}
-
     __doc__ = '''This module generates account config files, based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
     dyn.(passwd|group) -> dynamic entries (usually acquired from yp)
@@ -24,6 +19,10 @@ class account(Generator):
     def __setup__(self):
         self.repository = DirectoryBacked(self.data)
         self.ssh = DirectoryBacked("%s/ssh"%(self.data))
+        self.__provides__ = {'ConfigFile':{'/etc/passwd':self.GenFromYP,
+                                           '/etc/group':self.GenFromYP,
+                                           '/etc/security/limits.conf':self.GenLimits,
+                                           '/root/.ssh/authorized_keys':self.GenRootKeys}}
 
     def GenFromYP(self,filename,client):
         fname = filename.split('/')[-1]

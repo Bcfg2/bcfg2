@@ -12,7 +12,7 @@ class servicemgr(Generator):
 
     __provides__ = {'Service':{'sshd':'GetService'}}
 
-    def GetService(self,name,client):
+    def GetService(self,name,metadata):
         # for now sshd is on
         if name == 'sshd':
             return Service('sshd','chkconfig','on','global')
