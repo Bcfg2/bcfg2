@@ -30,7 +30,7 @@ class Generator(object):
 
     def CompleteSetup(self):
         self.ReadAll()
-        print "%s loaded"%(self.__version__)
+        print "%s loaded" % (self.__version__)
 
     def Cron(self):
         '''Cron defines periodic tasks to maintain data coherence'''
@@ -69,13 +69,15 @@ class FileBacked(object):
     This object is meant to be used as a part of DirectoryBacked.'''
     
     def __init__(self, name):
+        object.__init__(self)
+        self.data = ''
         self.name = name
         self.HandleEvent()
 
     def HandleEvent(self, event=None):
         try:
             self.data = file(self.name).read()
-        except IOError, e:
+        except IOError:
             syslog(LOG_ERR, "Failed to read file %s" % (self.name))
         self.Index()
 
@@ -87,6 +89,7 @@ class DirectoryBacked(object):
     __child__ = FileBacked
 
     def __init__(self, name, fam):
+        object.__init__(self)
         self.name = name
         self.fam = fam
         self.entries = {}
@@ -131,12 +134,12 @@ class XMLFileBacked(FileBacked):
 
     def Index(self):
         try:
-            a = XML(self.data)
+            xdata = XML(self.data)
         except:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
             return
-        self.label = a.attrib[self.__identifier__]
-        self.entries = a.getchildren()
+        self.label = xdata.attrib[self.__identifier__]
+        self.entries = xdata.getchildren()
 
     def __iter__(self):
         return iter(self.entries)
@@ -159,12 +162,12 @@ class ScopedXMLFile(SingleXMLFileBacked):
     
     def Index(self):
         try:
-            a = XML(self.data)
+            xdata = XML(self.data)
         except:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
             return
         self.store = {}
-        for e in a.getchildren():
+        for e in xdata.getchildren():
             if e.tag not in self.__containers__:
                 self.StoreRecord(('Global','all'), e)
             else:

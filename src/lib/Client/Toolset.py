@@ -4,24 +4,20 @@ from binascii import a2b_base64
 from grp import getgrgid, getgrnam
 from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlink, symlink
 from pwd import getpwuid, getpwnam
-from stat import *
-from string import join, split
+from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
+from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
+from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 from sys import exc_info
 from time import asctime, localtime
 from traceback import extract_tb
 
 from elementtree.ElementTree import Element, SubElement, tostring
 
-def print_failure():
-    if '-v' in argv: print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
-
-def print_success():
-    if '-v' in argv: print "\033[60G[  \033[1;32mOK\033[0;39m  ]\r"
-
-def CalcPerms(initial,perms):
+def CalcPerms(initial, perms):
     tempperms = initial
-    if len(perms) == 3: perms = '0%s'%(perms)
-    (s,u,g,o) = map(int, map(lambda x:perms[x], range(4)))
+    if len(perms) == 3:
+        perms = '0%s' % (perms)
+    [s, u, g, o] = [perms[int(x)] for x in range(4)]
     if s & 1:
         tempperms |= S_ISVTX
     if s & 2:
@@ -66,25 +62,33 @@ class Toolset(object):
 
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
-        print "Failure in %s for entry: %s"%(area, tostring(entry))
-        (t,v,tb) = exc_info()
+        print "Failure in %s for entry: %s" % (area, tostring(entry))
+        (t, v, tb) = exc_info()
         for line in extract_tb(tb):
-            print "File %s, line %i, in %s\n   %s\n"%(line)
-        print "%s: %s\n"%(t,v)
-        del t,v,tb
+            print "File %s, line %i, in %s\n   %s\n" % (line)
+        print "%s: %s\n" % (t, v)
+        del t, v, tb
+
+    def print_failure(self):
+        if self.setup['verbose']:
+            print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
+
+    def print_success(self):
+        if self.setup['verbose']:
+            print "\033[60G[  \033[1;32mOK\033[0;39m  ]\r"
 
     # These next functions form the external API
 
     def Inventory(self):
         # build initial set of states
-        unexamined = map(lambda x:(x,[]), self.cfg.getchildren())
+        unexamined = [(x, []) for x in self.cfg.getchildren()]
         while unexamined:
             (r, modlist) = unexamined.pop()
             if r.tag not in ['Bundle', 'Independant']:
                 self.VerifyEntry(r, modlist)
             else:
                 modlist = [x.attrib['name'] for x in r.getchildren() if x.tag == 'ConfigFile']
-                unexamined += map(lambda x:(x,modlist), r.getchildren())
+                unexamined += [(x, modlist) for x in r.getchildren()]
                 self.structures[r] = False
 
         for structure in self.cfg.getchildren():
@@ -100,16 +104,16 @@ class Toolset(object):
                 for entry in structure.getchildren():
                     self.VerifyEntry(entry, modlist)
         try:
-            state = map(lambda x:self.states[x], structure.getchildren())
+            state = [self.states[x] for x in structure.getchildren()]
             if False not in state:
                 self.structures[structure] = True
         except KeyError, k:
-            print "State verify evidently failed for %s"%(k)
+            print "State verify evidently failed for %s" % (k)
             self.structures[structure] = False
 
     def Install(self):
-        self.modified  =  [k for (k,v) in self.structures.iteritems() if not v]
-        for entry in [k for (k,v) in self.states.iteritems() if not v]:
+        self.modified  =  [k for (k, v) in self.structures.iteritems() if not v]
+        for entry in [k for (k, v) in self.states.iteritems() if not v]:
             self.InstallEntry(entry)
 
     def Commit(self):
@@ -120,11 +124,11 @@ class Toolset(object):
     def GenerateStats(self):
         '''Generate XML summary of execution statistics'''
         stats = Element("Statistics")
-        SubElement(stats, "Structures", good=str(len([k for k,v in self.structures.iteritems() if v])), \
-                   bad=str(len([k for k,v in self.structures.iteritems() if not v])))
-        SubElement(stats, "Entries", good=str(len([k for k,v in self.states.iteritems() if v])), \
-                   bad=str(len([k for k,v in self.states.iteritems() if not v])))
-        if len([k for k,v in self.structures.iteritems() if not v]) == 0:
+        SubElement(stats, "Structures", good=str(len([k for k, v in self.structures.iteritems() if v])), \
+                   bad=str(len([k for k, v in self.structures.iteritems() if not v])))
+        SubElement(stats, "Entries", good=str(len([k for k, v in self.states.iteritems() if v])), \
+                   bad=str(len([k for k, v in self.states.iteritems() if not v])))
+        if len([k for k, v in self.structures.iteritems() if not v]) == 0:
             stats.attrib['state'] = 'clean'
         else:
             stats.attrib['state'] = 'dirty'
@@ -173,7 +177,7 @@ class Toolset(object):
             if S_ISREG(fmode) or S_ISLNK(fmode):
                 unlink(entry.attrib['name'])
             elif S_ISDIR(fmode):
-                system("mv %s/ %s.bak"%(entry.attrib['name'], entry.attrib['name']))
+                system("mv %s/ %s.bak" % (entry.attrib['name'], entry.attrib['name']))
             else:
                 unlink(entry.attrib['name'])
         except OSError, e:
@@ -185,16 +189,16 @@ class Toolset(object):
 
     def VerifyDirectory(self, entry):
         try:
-            ondisk=stat(entry.attrib['name'])
+            ondisk = stat(entry.attrib['name'])
         except OSError:
             return False
         try:
-            owner=getpwuid(ondisk[ST_UID])[0]
-            group=getgrgid(ondisk[ST_GID])[0]
+            owner = getpwuid(ondisk[ST_UID])[0]
+            group = getgrgid(ondisk[ST_GID])[0]
         except OSError:
-            owner='root'
-            group='root'
-        perms=stat(entry.attrib['name'])[ST_MODE]
+            owner = 'root'
+            group = 'root'
+        perms = stat(entry.attrib['name'])[ST_MODE]
         if ((owner == entry.attrib['owner']) and
             (group == entry.attrib['group']) and
             (perms == CalcPerms(S_IFDIR, entry.attrib['perms']))):
@@ -217,26 +221,27 @@ class Toolset(object):
         except OSError:
             return False
         try:
-            chown(entry.attrib['name'],getpwnam(self.attrib['owner'])[2],getgrnam(entry.attrib['group'])[2])
-            chmod(entry.attrib['name'],entry.attrib['perms'])
+            chown(entry.attrib['name'],
+                  getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
+            chmod(entry.attrib['name'], entry.attrib['perms'])
         except:
             return False
 
     def VerifyConfigFile(self, entry):
         try:
-            ondisk=stat(entry.attrib['name'])
+            ondisk = stat(entry.attrib['name'])
         except OSError:
             return False
         try:
-            data=open(entry.attrib['name']).read()
+            data = open(entry.attrib['name']).read()
         except IOError:
             return False
         try:
-            owner=getpwuid(ondisk[ST_UID])[0]
-            group=getgrgid(ondisk[ST_GID])[0]
+            owner = getpwuid(ondisk[ST_UID])[0]
+            group = getgrgid(ondisk[ST_GID])[0]
         except KeyError:
             return False
-        perms=stat(entry.attrib['name'])[ST_MODE]
+        perms = stat(entry.attrib['name'])[ST_MODE]
         if entry.attrib.get('encoding', 'ascii') == 'base64':
             tempdata = a2b_base64(entry.text)
         else:
@@ -248,10 +253,10 @@ class Toolset(object):
 
     def InstallConfigFile(self, entry):
         if self.setup['dryrun'] or self.setup['verbose']:
-            print "Installing ConfigFile %s"%(entry.attrib['name'])
+            print "Installing ConfigFile %s" % (entry.attrib['name'])
         if self.setup['dryrun']:
             return False
-        parent = join(split(entry.attrib['name'],"/")[:-1],"/")
+        parent = "/".join(entry.attrib['name'].split('/')[:-1])
         if parent:
             try:
                 s = lstat(parent)
@@ -276,7 +281,7 @@ class Toolset(object):
             newfile.close()
             chown(newfile.name, getpwnam(entry.attrib['owner'])[2], getgrnam(entry.attrib['group'])[2])
             chmod(newfile.name, CalcPerms(S_IFREG, entry.attrib['perms']))
-            if entry.attrib.get("paranoid", False) and setup.get("paranoid", False):
+            if entry.attrib.get("paranoid", False) and self.setup.get("paranoid", False):
                 system("diff -u %s %s.new"%(entry.attrib['name'], entry.attrib['name']))
             rename(newfile.name, entry.attrib['name'])
             return True

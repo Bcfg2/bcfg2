@@ -1,60 +1,14 @@
 #!/usr/bin/env python
 
-from elementtree.ElementTree import XML, tostring, SubElement
-from time import localtime, mktime
-
-from Generator import SingleXMLFileBacked
-
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
+__revision__ = '$Revision$'
 
-class NodeStatistics(object):
-    '''Statistics type for Nodes.
-    self.last => time of last successful run
-    self.status => final status of last run
-    self.changeset -> the id of the last config successfully configured
-    self.count => number of times client run
-    self.fail => failure count'''
-    
-    def __init__(self):
-        self.last = 0
-        self.status = False
-        self.changeset = 0
-        self.count = 0
-        self.fail = 0
+from elementtree.ElementTree import XML, tostring, SubElement
 
-    def GetStats(self):
-        return (self.status, self.count, self.last, self.fail)
-
-    def Suceed(self,changeset):
-        self.count += 1
-        self.last = mktime(localtime())
-        self.status = True
-        self.changeset=changeset
-
-    def Fail(self,changeset):
-        self.count += 1
-        self.fail += 1
-        self.status = False
-
-class Client(object):
-    def __init__(self,name,image,tags):
-        self.name = name
-        self.image = image
-        self.tags = tags
-        self.stats = NodeStatistics()
-        self.dirty = []
-
-    def UpdateStats(self,status,changeset):
-        if status:
-            self.stats.Suceed(changeset)
-        else:
-            self.stats.Fail(changeset)
-
-    def GetStats(self):
-        return self.stats.GetStats()
+from Bcfg2.Server.Generator import SingleXMLFileBacked
         
 class ConfigurationRegion(object):
-    def __init__(self,name,scope,stype):
+    def __init__(self, name, scope, stype):
         self.name = name
         self.scope = scope
         self.stype = stype
@@ -84,8 +38,9 @@ class Metadata(object):
 
 class Profile(object):
     def __init__(self, xml):
-        self.classes = map(lambda x:x.attrib['name'], xml.findall("Class"))
-        self.attributes = map(lambda x:"%s.%s"%(x.attrib['scope'],x.attrib['name']), xml.findall("Attribute"))
+        object.__init__(self)
+        self.classes = [x.attrib['name'] for x in xml.findall("Class")]
+        self.attributes = ["%s.%s" % (x.attrib['scope'], x.attrib['name']) for x in xml.findall("Attribute")]
 
 class MetadataStore(SingleXMLFileBacked):
     def Index(self):
@@ -99,16 +54,16 @@ class MetadataStore(SingleXMLFileBacked):
         for c in self.element.findall("Client"):
             self.clients[c.attrib['name']] = (c.attrib['image'], c.attrib['profile'])
         for c in self.element.findall("Class"):
-            self.classes[c.attrib['name']] = map(lambda x:x.attrib['name'], c.findall("Bundle"))
-        for (k,v) in self.element.attrib.iteritems():
+            self.classes[c.attrib['name']] = [x.attrib['name'] for x in c.findall("Bundle")]
+        for (k, v) in self.element.attrib.iteritems():
             if k[:8] == 'default_':
                 self.defaults[k[8:]] = v
 
-    def FetchMetadata(self,client, image=None, profile=None):
+    def FetchMetadata(self, client, image=None, profile=None):
         if ((image != None) and (profile != None)):
             # Client asserted profile/image
-            self.clients[client] = (image,profile)
-            f = filter(lambda x:x.attrib['name'] == client, self.element.findall("Client"))
+            self.clients[client] = (image, profile)
+            f = [x for x in self.element.findall("Client") if x.attrib['name'] == client]
             if len(f) == 0:
                 # non-existent client
                 SubElement(self.element, "Client", name=client, image=image, profile=profile)
@@ -119,15 +74,15 @@ class MetadataStore(SingleXMLFileBacked):
                 f[0].attrib['image'] = image
                 self.WriteBack()
         elif self.clients.has_key(client):
-            (image,profile) = self.clients[client]
+            (image, profile) = self.clients[client]
         else:
             # default profile stuff goes here
-            (image,profile) = (self.defaults['image'], self.defaults['profile'])
+            (image, profile) = (self.defaults['image'], self.defaults['profile'])
             SubElement(self.element, "Client", name=client, profile=profile, image=image)
             self.WriteBack()
         p = self.profiles[profile]
         # should we uniq here? V
-        bundles = reduce(lambda x,y:x+y, map(self.classes.get, p.classes))
+        bundles = reduce(lambda x, y:x + y, [self.classes.get[x] for x in p.classes])
         return Metadata(False, image, p.classes, bundles, p.attributes, client)
 
     def WriteBack(self):
