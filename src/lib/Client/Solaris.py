@@ -1,7 +1,8 @@
-# This is the bcfg2 support for debian
-# $Id: $
+# This is the bcfg2 support for solaris
+'''This provides (vestigal) bcfg2 support for Solaris'''
+__revision__ = '$Revision$'
 
-from Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset
 
 def Detect():
     # until the code works

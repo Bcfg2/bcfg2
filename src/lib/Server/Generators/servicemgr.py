@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+'''This generator provides service mappings'''
+__revision__ = '$Revision$'
 
-from elementtree.ElementTree import XML
 from Bcfg2.Server.Generator import Generator, ScopedXMLFile
 
 class servicemgr(Generator):
