@@ -17,12 +17,12 @@ class Debconf(Generator):
     probes[0].text = '''
     XSERVER='/usr/bin/X11/X|/usr/X11R6/bin/X'
     if [ XFree86 -configure 2>/dev/null ] ; then
-       VGACARD=`tail -50 /root/XF86Config.new | grep Driver | awk -F\&quot; '{print $2}'`
+       VGACARD=`tail -50 /root/XF86Config.new | grep Driver | awk -F/\" '{print $2}'`
     elif  ps auxww | egrep ${XSERVER} | grep -v grep > /dev/null ;then
        if [ -e /etc/X11/XF86Config ]; then
-           VGACARD=`tail -50 /etc/X11/XF86Config | grep Driver | awk -F\&quot; '{print $2}'`
+           VGACARD=`tail -50 /etc/X11/XF86Config | grep Driver | awk -F/\" '{print $2}'`
        else
-           VGACARD=`tail -50 /etc/X11/XF86Config-4 | grep Driver | awk -F\&quot; '{print $2}'`
+           VGACARD=`tail -50 /etc/X11/XF86Config-4 | grep Driver | awk -F/\" '{print $2}'`
        fi
     else
        VGACARD=nv
