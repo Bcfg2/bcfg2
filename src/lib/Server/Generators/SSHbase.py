@@ -4,7 +4,6 @@ __revision__ = '$Revision$'
 from binascii import b2a_base64
 from os import rename, system
 from socket import gethostbyname, gaierror
-from syslog import syslog, LOG_ERR
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
@@ -58,7 +57,7 @@ class SSHbase(Generator):
                 filedata += "%s,%s,%s %s" % (client, "%s.mcs.anl.gov"%(client),
                                              ipaddr, self.repository.entries[hostkey].data)
         except gaierror:
-            syslog(LOG_ERR, "SSHbase: DNS lookup failed for client %s" % client)
+            self.LogError("DNS lookup failed for client %s" % client)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
         entry.text = filedata
 
