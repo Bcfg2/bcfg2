@@ -9,5 +9,6 @@ setup(name="Bcfg2.Server",
       author_email="desai@mcs.anl.gov",
       packages=["Bcfg2", 'Bcfg2.Server', "Bcfg2.Server.Generators", "Bcfg2.Server.Structures", "Bcfg2.Client"],
       package_dir = {'Bcfg2':'src/lib'}, 
-      scripts = ['src/sbin/Bcfg2Server', 'src/sbin/bcfg2']
+      scripts = ['src/sbin/Bcfg2Server', 'src/sbin/bcfg2', 'tools/ValidateBcfg2Repo'],
+      data_files = [('share/bcfg2/schemas', ['schemas/atom.xsd', 'schemas/base.xsd', 'schemas/bundle.xsd', 'schemas/metadata.xsd', 'schemas/pkglist.xsd', 'schemas/services.xsd', 'schemas/translation.xsd'])]
      )
