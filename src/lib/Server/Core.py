@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# $Id$
-
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
 __revision__ = '$Revision$'
 

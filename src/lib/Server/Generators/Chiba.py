@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from re import compile as regcompile
 from Bcfg2.Server.Generator import Generator, DirectoryBacked, SingleXMLFileBacked
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''This module sets up a base list of configuration entries'''
 __revision__ = '$Revision$'
 

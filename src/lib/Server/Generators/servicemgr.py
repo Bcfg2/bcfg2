@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''This generator provides service mappings'''
 __revision__ = '$Revision$'
 

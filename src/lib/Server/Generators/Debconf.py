@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''this generator handles production of client-specific debconf files'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This module implements a package management scheme for all images'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This handles authentication setup'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 

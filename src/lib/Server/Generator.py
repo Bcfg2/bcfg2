@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''This is a baseclass not intended for instantiation'''
 __revision__ = '$Revision$'
 

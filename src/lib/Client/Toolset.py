@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This is the basic toolset class for the Bcfg2 client'''
 __revision__ = '$Revision$'
 

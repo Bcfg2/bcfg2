@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''This is the bcfg2 support for debian'''
 __revision__ = '$Revision$'
 
