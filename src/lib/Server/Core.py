@@ -96,11 +96,11 @@ class Core(object):
             except:
                 print "Unexpected initiantiation failure for generator %s" % gen.__name__
                 syslog(LOG_ERR, "Unexpected initiantiation failure for generator %s" % gen.__name__)
-                (t, v, tb)=exc_info()
-                for line in extract_tb(tb):
+                (trace, val, trb)=exc_info()
+                for line in extract_tb(trb):
                     syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-                syslog(LOG_ERR, "%s: %s\n"%(t, v))
-                del t, v, tb
+                syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+                del trace, val, trb
         # we need to inventory and setup generators
         # Process generator requirements
         for gen in self.generators:
@@ -138,7 +138,7 @@ class Core(object):
         for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory']]:
             try:
                 self.Bind(entry, metadata)
-            except GeneratorError, key:
+            except GeneratorError:
                 syslog(LOG_ERR, "Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
 
     def Bind(self, entry, metadata):
