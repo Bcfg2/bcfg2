@@ -50,10 +50,14 @@ class PublishedValue(object):
         self.value=value
 
 class Core(object):
-    def __init__(self, repository, generators):
+    def __init__(self, repository, structures, generators):
         self.datastore = repository
         self.fam = fam()
         self.pubspace = {}
+        self.structures = []
+        for structure in structures:
+            s = getattr(__import__(structure),structure)
+            self.structures.append(s(self, self.datastore))
         self.generators = []
         for generator in generators:
             g = getattr(__import__(generator),generator)
