@@ -108,3 +108,4 @@ if __name__ == '__main__':
     server = BcfgServer()
     for i in range(10):
         server.__progress__()
+    Server.ServeForever()
