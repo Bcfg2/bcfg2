@@ -20,7 +20,7 @@ state.
 .TP 
 .B \-v run bcfg2 in verbose mode.
 .TP 
-.B \-p run bcfg2 in paranoid mode. Diffs will be logged for
+.B \-P run bcfg2 in paranoid mode. Diffs will be logged for
 configuration files marked as paranoid by the Bcfg2 server.
 .TP
 .B \-q run bcfg2 in quick mode. Package checksum verification won't be
@@ -34,6 +34,10 @@ system.
 may still be in miniroot.
 .TP
 .B \-r removal mode
+.TP
+.B \-i image specify image for client
+.TP
+.B \-p profile specify profile for client
 .TP
 Remove extra configuration located by two way verification. Removal
 mode is one of all, packages, or services. (Services are currently
