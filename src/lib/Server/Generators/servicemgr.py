@@ -39,8 +39,8 @@ class ServiceList(SingleXMLFileBacked):
 
     def Sort(self, m1, m2):
         d = {('Global','Host'):-1,('Global','Image'):-1,("Global",'Class'):-1,
-             ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image':'Class'):-1,
-             ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'), -1,
+             ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
+             ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
              ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
         if d.has_key((m1[0][0], m2[0][0])):
             return d[(m1[0][0],m2[0][0])]
