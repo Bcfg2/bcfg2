@@ -49,7 +49,7 @@ binary-indep: build install
 	rm debian/tmp/usr/sbin/Bcfg2Server
 	rm debian/tmp/usr/sbin/ValidateBcfg2Repo
 	rm -Rf debian/tmp/usr/lib/python2.3/site-packages/Bcfg2/Server
-	rm -Rf debian/tmp/usr/share/schemas
+	rm -Rf debian/tmp/usr/share/bcfg2/schemas
 #	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate
