@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from elementtree.ElementTree import XML, tostring, SubElement, Element
+from elementtree.ElementTree import XML, SubElement, Element
 
 from Bcfg2.Server.Generator import SingleXMLFileBacked
         
@@ -88,9 +88,24 @@ class MetadataStore(SingleXMLFileBacked):
         bundles = reduce(lambda x, y:x + y, [self.classes.get(cls) for cls in prof.classes])
         return Metadata(False, image, prof.classes, bundles, prof.attributes, client)
 
+    def pretty_print(self, element, level=0):
+        '''Produce a pretty-printed text representation of element'''
+        if element.text:
+            fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
+            data = (element.tag, (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()])),
+                    element.text, element.tag)
+        if element._children:
+            fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
+            data = (element.tag, ) + (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()]),)
+            data += tuple([self.pretty_print(x, level+2) for x in element._children]) + (element.tag, )
+        else:
+            fmt = "%s<%%s %%s/>\n" % (level * " ")
+            data = (element.tag, " ".join(["%s='%s'" % x for x in element.attrib.iteritems()]))
+        return fmt % data
+
     def WriteBack(self):
         '''Write metadata changes back to persistent store'''
         fout = open(self.name, 'w')
-        fout.write(tostring(self.element))
+        fout.write(self.pretty_print(self.element))
         fout.close()
 
