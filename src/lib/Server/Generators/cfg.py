@@ -35,7 +35,7 @@ class ConfigFileEntry(object):
         self.encoding = 'ascii'
         self.owner = 'root'
         self.group = 'root'
-        self.perms = '644'
+        self.perms = '0644'
         self.paranoid = False
 
     def GetInfo(self, filename):
