@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 from re import compile as regcompile
 
-from Bcfg2.Server.Generator import Generator, DirectoryBacked, XMLFileBacked
+from Bcfg2.Server.Generator import Generator, GeneratorError, DirectoryBacked, XMLFileBacked
 
 class PackageEntry(XMLFileBacked):
     '''PackageEntry is a set of packages and locations for a single image'''
@@ -46,13 +46,13 @@ class Pkgmgr(Generator):
     def FindHandler(self, entry):
         '''Non static mechanism of determining entry provisioning'''
         if entry.tag != 'Package':
-            raise KeyError, (entry.tag, entry.get('name'))
+            raise GeneratorError, (entry.tag, entry.get('name'))
         return self.LocatePackage
 
     def LocatePackage(self, entry, metadata):
         '''Locates a package entry for particular metadata'''
         pkgname = entry.get('name')
-        if self.pkgdir.has_key("%s.xml" % metadata.hostname):
+        if self.pkgdir.entries.has_key("%s.xml" % metadata.hostname):
             pkglist = self.pkgdir["%s.xml" % metadata.hostname]
             if pkglist.packages.has_key(pkgname):
                 entry.attrib.update(pkglist.packages[pkgname])
@@ -65,4 +65,4 @@ class Pkgmgr(Generator):
             else:
                 entry.attrib.update(pkg)
         else:
-            raise KeyError, ("Package", pkgname)
+            raise GeneratorError, ("Package", pkgname)
