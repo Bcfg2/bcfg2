@@ -220,7 +220,7 @@ class Toolset(object):
         try:
             chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
-            chmod(entry.get('name'), entry.get('perms'))
+            chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
         except (OSError, KeyError):
             self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
             return False
