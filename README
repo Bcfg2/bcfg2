@@ -1,5 +1,23 @@
-This is the BCFG2 repo. 
+Release 0.3 - $Id: $
 
-BCFG2 is a wholesale replacement of the BCFG1 codebase. 
-This is not even software yet, it is starting as a dumping 
-ground for design documents and initial code. 
+This is the Bcfg2 repo. It is a configuration management system
+designed to ease the management of networks of heterogenous
+systems. The system has been completely redesigned and reimplemented
+from version 1.
+
+Currently, bcfg2 is in alpha-ish state. The server infrastructure can
+produce configurations in clients based on the a set of structures and
+generators. Generators can provide clients with probes to execute
+(guiding the configuration generation process) and recieve the data
+these probes generate. Client statistics are not currently generated. 
+
+The bcfg2 client is a lot more rough. The client works, though its
+adherence to bundle semantics is probably not what it should be. It
+successfully one-way validates configurations. Two-way support is not
+yet implemented. 
+
+The source tree is structured in the following way:
+
+doc/ - documentation
+src/  - source code
+schemas/ - schemas defining the data format for configuration files
