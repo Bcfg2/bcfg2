@@ -211,13 +211,13 @@ class Debian(Toolset):
                         self.VerifyEntry(child)
                     self.CondPrint('debug', "Re-checked entry %s %s: %s" %
                                    (child.tag, child.get('name'), self.states[child]))
-                for svc in [svc.get('name') for svc in bchildren if svc.tag == 'Service']:
+                for svc in [svc for svc in bchildren if svc.tag == 'Service']:
                     if self.setup['build']:
                         # stop services in miniroot
-                        system("/etc/init.d/%s stop" % (svc))
+                        system('/etc/init.d/%s stop' % svc.get('name'))
                     else:
-                        self.CondPrint('debug', "Restarting service %s" % (svc))
-                        system('/etc/init.d/%s reload > /dev/null' % (svc))
+                        self.CondPrint('debug', 'Restarting service %s' % svc.get('name'))
+                        system('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload'))
             
         for entry in self.structures:
             if [strent for strent in entry.getchildren() if not self.states[strent]]:
