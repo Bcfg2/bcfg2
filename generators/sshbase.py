@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from glob import glob
-from os import rename, stat
+from os import rename, stat, system
 from socket import gethostbyname
 
 from Types import ConfigFile
@@ -19,27 +19,31 @@ class sshbase(Generator):
                                            '/etc/ssh/ssh_host_dsa_key':self.build_hk,
                                            '/etc/ssh/ssh_host_rsa_key':self.build_hk,
                                            '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
-                                           '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk}}
+                                           '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
+                                           '/etc/ssh/ssh_host_key':self.build_hk,
+                                           '/etc/ssh/ssh_host_key.pub':self.build_hk}}
 
-    def build_skn(self,name,metadata):
+    def build_skn(self,entry,metadata):
         client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
         ip=gethostbyname(client)
         keylist = map(lambda x:x%(client), ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"])
         for hostkey in keylist:
             filedata += "%s,%s,%s %s"%(client,"%s.mcs.anl.gov"%(client),ip,self.repository.entries[hostkey].data)
-        return ConfigFile(name,'root','root','0644',filedata)
+        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
+        entry.text = filedata
 
-    def build_hk(self,name,metadata):
+    def build_hk(self,entry,metadata):
         client = metadata.hostname
-        filename = "%s.H_%s"%(name.split('/')[-1],client)
+        filename = "%s.H_%s"%(entry.attrib['name'].split('/')[-1],client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
             self.GenerateKnownHosts()
         keydata = self.repository.entries[filename].data
+        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
+        entry.text = keydata
         if "ssh_host_key.H_" in filename:
-            return ConfigFile(name,'root','root','0600',keydata,'base64')
-        return ConfigFile(name,'root','root','0600',keydata)
+            entry.attrib['encoding'] = 'base64'
 
     def GenerateKnownHosts(self):
         output = ''
