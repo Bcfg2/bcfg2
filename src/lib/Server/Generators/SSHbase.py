@@ -74,7 +74,7 @@ class SSHbase(Generator):
             perms = '0644'
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':perms})
         entry.text = keydata
-        if "ssh_host_key.H_" in filename:
+        if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
             entry.text = b2a_base64(keydata)
 
@@ -95,9 +95,9 @@ class SSHbase(Generator):
         '''Generate new host keys for client'''
         keylist = [keytmpl % client for keytmpl in self.hostkeys]
         for hostkey in keylist:
-            if 'ssh_host_rsa_key.H_' in hostkey:
+            if 'ssh_host_rsa_key.H_' == hostkey[:19]:
                 keytype = 'rsa'
-            elif 'ssh_host_dsa_key.H_' in hostkey:
+            elif 'ssh_host_dsa_key.H_' == hostkey[:19]:
                 keytype = 'dsa'
             else:
                 keytype = 'rsa1'
