@@ -2,3 +2,4 @@ debian/tmp/usr/sbin/Bcfg2Server
 debian/tmp/usr/sbin/ValidateBcfg2Repo
 debian/tmp/usr/lib/python2.3/site-packages/Bcfg2/Server/*
 debian/tmp/usr/share/bcfg2/schemas/*
+debian/tmp/usr/share/man/man8/*
