@@ -40,9 +40,11 @@ if __name__ == '__main__':
             print 'exit - quit'
             print 'generators - list current versions of generators'
             print 'help - print this text'
+            print 'mappings <type*> - print generator mappings for optional type'
             print 'set <variable> <value> - set variable for later use'
             print 'settings - display all settings'
             print 'shell - shell out to native python interpreter'
+            print 'update - process pending fam events'
             print 'version - print version of this tool'
         elif cmd[0] == 'set':
             settings[cmd[1]] = cmd[2]
@@ -54,6 +56,18 @@ if __name__ == '__main__':
             continue
         elif cmd[0] == 'version':
             print 'Bcfg2debug v. %s' % __revision__
+        elif cmd[0] == 'mappings':
+            # dump all mappings unless type specified
+            for generator in core.generators:
+                print "Generator -> ", generator.__name__
+                for key, value in generator.__provides__.iteritems():
+                    for instance in generator.__provides__[key].keys():
+                        print "   ", key, instance
+        elif cmd[0] == 'update':
+            while core.fam.fm.pending():
+                while core.fam.fm.pending():
+                    core.fam.HandleEvent()
+                sleep(0.5)
         else:
             print "Unknown command %s" % cmd[0]
         cmd = input()
