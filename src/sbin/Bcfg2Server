@@ -3,7 +3,7 @@
 
 from getopt import getopt, GetoptError
 from socket import gethostbyaddr, herror
-from string import split
+from string import join, split
 from syslog import syslog, LOG_INFO, LOG_ERR
 from sys import argv, exit, exc_info
 from time import time
