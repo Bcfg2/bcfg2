@@ -20,6 +20,7 @@ class Metadata(object):
         if (other.all or (other.image and (self.image == other.image)) or
             (other.classes and (other.classes in self.classes)) or
             (other.attributes and (other.attributes in self.attributes)) or
+            (other.bundles and (other.bundles in self.bundles)) or
             (other.hostname and (self.hostname == other.hostname))):
             return True
         else:
