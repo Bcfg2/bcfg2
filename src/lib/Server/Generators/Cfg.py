@@ -113,7 +113,7 @@ class ConfigFileEntry(object):
                 if action == 'changed':
                     syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
                     entry.HandleEvent(event)
-                elif action == 'exists':
+                elif action == 'exists' or action == 'created':
                     entry.HandleEvent(event)
                 elif action == 'deleted':
                     [flist.remove(entry) for flist in [self.basefiles, self.deltas] if entry in flist]
