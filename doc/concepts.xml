@@ -50,10 +50,11 @@
 	<para>
 	  Bcfg2 takes a different approach. The default assumption is
 	  that data on the server is correct, however, the client has
-	  options to run in two other modes. If the Bcfg2 client is
+	  option to run in another mode where local changes are
+	  catalogued for server-side integration. If the Bcfg2 client is
 	  run in dry run mode, it can help to reconcile differences
 	  between current client state and the configuration described
-	  on the server. 
+	  on the server.
 	</para>
 	<para>
 	  The Bcfg2 client also searches for extra configuration; that
