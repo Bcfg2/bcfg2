@@ -98,7 +98,11 @@ class Debian(Toolset):
                 return False
         else:
             # implement package installation here
-            return False
+            rc = system("apt-get --reinstall -q=2 -y install %s=%s"%(entry.attrib['name'],entry.attrib['version']))
+            if rc == 0:
+                return True
+            else:
+                return False
 
     def GetInstalledConfigs(self):
         # returns a list of installed config files
@@ -106,3 +110,11 @@ class Debian(Toolset):
         for a in map(lambda x:split(open(x).read(),"\n"),glob("/var/lib/dpkg/info/*.conffiles")):
             ret += a
         return ret
+
+    def FindConfigs(self):
+        e = []
+        for (pkg, vers) in self.installed.iteritems():
+            e.append(Element('Package', name=pkg, version=vers))
+        # need to add config file two way later
+        return e
+                    
