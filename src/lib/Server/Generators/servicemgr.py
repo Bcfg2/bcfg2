@@ -11,7 +11,7 @@ class servicemgr(Generator):
 
     def __init__(self, core, datastore):
         Generator.__init__(self, core, datastore)
-        self.svc = ScopedXMLFile("%s/common/services.xml"%(datastore), self.core.fam)
+        self.svc = ScopedXMLFile("%s/etc/services.xml"%(datastore), self.core.fam)
         self.__provides__ = self.svc.__provides__
 
 
