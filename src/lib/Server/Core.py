@@ -57,11 +57,13 @@ class Core(object):
         self.pubspace = {}
         self.structures = []
         for structure in structures:
-            s = getattr(__import__("Bcfg2.Structures.%s"%(structure)),structure)
+            m = getattr(__import__("Bcfg2.Server.Structures.%s"%(structure)).Server.Structures, structure)
+            s = getattr(m, structure)
             self.structures.append(s(self, self.datastore))
         self.generators = []
         for generator in generators:
-            g = getattr(__import__("Bcfg2.Generators.%s"%(generator)),generator)
+            m=getattr(__import__("Bcfg2.Server.Generators.%s"%(generator)).Server.Generators,generator)
+            g = getattr(m, generator)
             self.generators.append(g(self, self.datastore))
         # we need to inventory and setup generators
         # Process generator requirements
