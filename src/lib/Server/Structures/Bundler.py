@@ -8,13 +8,25 @@ from Bcfg2.Server.Generator import SingleXMLFileBacked, XMLFileBacked, Directory
 from Bcfg2.Server.Structure import Structure
 
 from elementtree.ElementTree import Element, XML
+from xml.parsers.expat import ExpatError
 
 class ImageFile(SingleXMLFileBacked):
     '''This file contains image -> system mappings'''
+    def __init__(self, filename, fam):
+        SingleXMLFileBacked.__init__(self, filename, fam)
+        self.images = {}
+    
     def Index(self):
         '''Build data structures out of the data'''
+        try:
+            xdata = XML(self.data)
+        except ExpatError, err:
+            syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
+            syslog(LOG_ERR, err)
+            del self.data
+            return
         self.images = {}
-        for child in XML(self.data).getchildren():
+        for child in xdata.getchildren():
             [name, pkg, service] = [child.get(field) for field in ['name', 'package', 'service']]
             for grandchild in child.getchildren():
                 self.images[grandchild.get('name')] = (name, pkg, service)
@@ -22,12 +34,25 @@ class ImageFile(SingleXMLFileBacked):
 class Bundle(XMLFileBacked):
     '''Bundles are configuration specifications (with image/translation abstraction)'''
 
+    def __init__(self, filename, fam):
+        XMLFileBacked.__init__(self, filename, fam)
+        self.all = []
+        self.attributes = {}
+        self.systems = {}
+
     def Index(self):
         '''Build data structures from the source data'''
+        try:
+            xdata = XML(self.data)
+        except ExpatError, err:
+            syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
+            syslog(LOG_ERR, err)
+            del self.data
+            return
         self.all = []
         self.systems = {}
         self.attributes = {}
-        for entry in XML(self.data).getchildren():
+        for entry in xdata.getchildren():
             if entry.tag == 'System':
                 self.systems[entry.attrib['name']] = entry.getchildren()
             elif entry.tag == 'Attribute':
