@@ -21,7 +21,7 @@ from sss.server import Server
 class BcfgServer(Server):
     __implementation__ = 'Bcfg2'
     __component__ = 'bcfg2'
-    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'GetProbes', 'probe-data':'CommitProbeData'}
+    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'GetProbes', 'probe-data':'CommitProbeData', 'upload-statistics':'HandleStats'}
     __validate__ = 0
         
     def __setup__(self):
@@ -97,6 +97,10 @@ class BcfgServer(Server):
             except:
                 self.LogFailure("CommitProbeData")
         return Element("OK")
+
+    def HandleStats(self, xml, (peer, port)):
+        syslog(LOG_INFO, "Client %s reported state %s"%(peer, xml.attrib['state']))
+        return Element("ok")
 
     def LogFailure(self, failure):
         (t,v,tb)=exc_info()
