@@ -1,3 +1,9 @@
+bcfg2 (0.6.3-1) unstable; urgency=low
+
+  * New Upstream version
+
+ -- Brian Pellin <bpellin@mcs.anl.gov>  Tue, 11 Jan 2005 13:53:57 -0600
+
 bcfg2 (0.6.2-2) unstable; urgency=low
 
   * Several bug fixes over last release
