@@ -4,12 +4,12 @@
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
 
-from GeneratorUtils import XMLFileBacked, DirectoryBacked
+from GeneratorUtils import SingleXMLFileBacked, DirectoryBacked
 from Structure import Structure
 
 from elementtree.ElementTree import Element, XML, tostring
 
-class ImageFile(XMLFileBacked):
+class ImageFile(SingleXMLFileBacked):
     def Index(self):
         a = XML(self.data)
         self.attr = a.attrib
