@@ -1,0 +1,17 @@
+1. Client Metadata
+
+Clients are differentiated in terms of several types of
+metadata. These types (from least to most specific) are:
+
+- image : the binary compatibility domain of the machine (like
+       debian-3.1 or redhat-7.3)
+- classes : a host can belong to multiple classes. Classes are used to
+       derive the set of software to install on a particular client. 
+- bundles: bundles are a sets of related bits of
+       configuration. Generally, each bundle provides some piece of
+       discrete functionality.
+- attributes : attributes can be used to further differentiate
+       bundles, or client configurations and are bundle scoped. A host
+       may have the webserver.ssl attribute if it is supposed to provide
+       ssl/https services in addition to normal port 80 http service. 
+- hostname : this is kind of obvious

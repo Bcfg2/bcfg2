@@ -1,0 +1,37 @@
+$Id: $
+
+This document describes how to setup a Bcfg2 repository from scratch. 
+
+1. /etc/bcfg2.conf
+
+This file tells Bcfg2Server important bootstrapping information about
+where its repository is, and which configuration structuring agents
+and generators should be used to build client
+configurations. The list of structures and generators are comma
+delimited and must be importable by python from the
+Bcfg2.Server.(Generators|Structures) hierarchy (respectively). All
+options currently are in the [server] section. 
+
+repository: top level of configuration file repository
+structures: comma delimited list of structuring agents to use. 
+generators: comma delimited list of generators to use. 
+metadata: path to the directory where metadata.xml (the client
+                 metadata setup) resides. 
+
+2. metadata/metadata.xml
+
+This file defines metadata constructs for all known systems. This file
+contains two types of declarations: one for clients, including an
+attribute for client image, and client nodes for class membership and
+attributes.  See the example file for more info. This file doesn't
+need to be exhaustively written: bcfg2 will soon support defaults (to
+support environments where machines are frequently added) and default
+profiles. 
+
+3. The repository
+
+Structuring agents and generators are responsible for contructing
+client configurations. All of these currently use FAM to coherently
+cache files on disk, with notifications upon file changes. The
+repository contains a directory for each of these; which is structured
+according to the needs of that generator/structure. 
