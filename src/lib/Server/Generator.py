@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# $Id$
+'''This is a baseclass not intended for instantiation'''
+__revision__ = '$Revision$'
 
 from elementtree.ElementTree import XML
 from syslog import syslog, LOG_ERR
@@ -18,8 +19,9 @@ class Generator(object):
     __requires__ = []
     
     def __init__(self, core, datastore):
+        object.__init__(self)
         self.core = core
-        self.data = "%s/%s"%(datastore,self.__name__)
+        self.data = "%s/%s" % (datastore, self.__name__)
         self.__setup__()
 
     def __setup__(self):
@@ -34,10 +36,10 @@ class Generator(object):
         '''Cron defines periodic tasks to maintain data coherence'''
         pass
 
-    def Publish(self,key,value):
-        self.core.Publish(self.__name__,key,value)
+    def Publish(self, key, value):
+        self.core.Publish(self.__name__, key, value)
 
-    def Read(self,key):
+    def Read(self, key):
         self.core.ReadValue(key)
 
     def ReadAll(self):
@@ -45,12 +47,12 @@ class Generator(object):
         for field in self.__requires__:
             self.external[field] = self.Read(field)
 
-    def GetMetadata(self,client,field):
+    def GetMetadata(self, client, field):
         '''GetMetadata returns current metadata file client. Field can be one of:
         image, tags, bundles'''
         pass
 
-    def Notify(self,region):
+    def Notify(self, region):
         '''Generate change notification for region'''
         pass
 
@@ -74,7 +76,7 @@ class FileBacked(object):
         try:
             self.data = file(self.name).read()
         except IOError, e:
-            syslog(LOG_ERR, "Failed to read file %s"%(self.name))
+            syslog(LOG_ERR, "Failed to read file %s" % (self.name))
         self.Index()
 
     def Index(self):
@@ -103,7 +105,7 @@ class DirectoryBacked(object):
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS') or (name[-4:] == '.swp')):
                 return
-            self.entries[name] = self.__child__('%s/%s'%(self.name, name))
+            self.entries[name] = self.__child__('%s/%s' % (self.name, name))
             self.entries[name].HandleEvent()
 
     def HandleEvent(self, event):
@@ -121,7 +123,7 @@ class DirectoryBacked(object):
         elif action in ['endExist']:
             pass
         else:
-            print "Got unknown event %s %s %s"%(event.requestID, event.code2str(), event.filename)
+            print "Got unknown event %s %s %s" % (event.requestID, event.code2str(), event.filename)
 
 class XMLFileBacked(FileBacked):
     '''This object is a coherent cache for an XML file to be used as a part of DirectoryBacked.'''
@@ -141,12 +143,12 @@ class XMLFileBacked(FileBacked):
 
 class SingleXMLFileBacked(XMLFileBacked):
     '''This object is a coherent cache for an independent XML File.'''
-    def __init__(self,filename,fam):
+    def __init__(self, filename, fam):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
 
 class ScopedXMLFile(SingleXMLFileBacked):
-    __containers__ = ['Class','Host','Image']
+    __containers__ = ['Class', 'Host', 'Image']
 
     def StoreRecord(self, metadata, entry):
         if not self.store.has_key(entry.tag):
@@ -179,12 +181,12 @@ class ScopedXMLFile(SingleXMLFileBacked):
                 self.store[key][j].sort(self.Sort)
 
     def Sort(self, m1, m2):
-        d = {('Global','Host'):-1,('Global','Image'):-1,("Global",'Class'):-1,
+        d = {('Global','Host'):-1, ('Global','Image'):-1, ("Global",'Class'):-1,
              ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
              ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
              ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
-        if d.has_key((m1[0][0], m2[0][0])):
-            return d[(m1[0][0],m2[0][0])]
+        if d.has_key((m1[0][0],  m2[0][0])):
+            return d[(m1[0][0], m2[0][0])]
 
     def MatchMetadata(self, m, metadata):
         if m[0] == 'Global':
@@ -202,6 +204,6 @@ class ScopedXMLFile(SingleXMLFileBacked):
 
     def FetchRecord(self, entry, metadata):
         l = self.store[entry.tag][entry.attrib['name']]
-        useful = filter(lambda x:self.MatchMetadata(x[0], metadata), l)
+        useful = [x for x in l if self.MatchMetadata(x[0], metadata)]
         data = useful[-1][-1]
         entry.attrib.update(data.attrib)
