@@ -16,7 +16,7 @@ class PublishError(Exception):
     pass
 
 class fam(object):
-    '''The fam object contains alteration monitors'''
+    '''The fam object is a set of callbacks for file alteration events'''
     
     def __init__(self):
         self.fm = _fam.open()
@@ -30,10 +30,9 @@ class fam(object):
         m = stat(path)[ST_MODE]
         if S_ISDIR(m):
             h = self.fm.monitorDirectory(path, None)
-            self.handles[h.requestID()] = h
         else:
             h = self.fm.monitorFile(path, None)
-            self.handles[h.requestID()] = h
+        self.handles[h.requestID()] = h
         if obj != None:
             self.users[h.requestID()] = obj
         return h.requestID()
