@@ -130,7 +130,7 @@ class Debian(Toolset):
     def Install(self):
         '''Correct detected misconfigurations'''
         self.CondPrint("verbose", "Installing needed configuration changes")
-        cmd = "apt-get --reinstall -q=2 -y install %s"
+        cmd = "DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
         self.setup['quick'] = True
         # need installed for bundle verification
