@@ -132,10 +132,10 @@ class XMLFileBacked(FileBacked):
     '''This object is a coherent cache for an XML file to be used as a part of DirectoryBacked.'''
     __identifier__ = 'name'
 
-    def __init__(self, filename, fam):
-        FileBacked.__init__(self, filename, fam)
+    def __init__(self, filename):
         self.label = "dummy"
         self.entries = []
+        FileBacked.__init__(self, filename)
 
     def Index(self):
         '''Build local data structures'''
@@ -161,9 +161,9 @@ class ScopedXMLFile(SingleXMLFileBacked):
     __containers__ = ['Class', 'Host', 'Image']
 
     def __init__(self, filename, fam):
-        SingleXMLFileBacked.__init__(self, filename, fam)
         self.store = {}
         self.__provides__ = {}
+        SingleXMLFileBacked.__init__(self, filename, fam)
 
     def StoreRecord(self, metadata, entry):
         '''Store scoped record based on metadata'''
@@ -189,7 +189,8 @@ class ScopedXMLFile(SingleXMLFileBacked):
                 name = (entry.tag, entry.get('name'))
                 [self.StoreRecord(name, child) for child in entry.getchildren()]
         # now to build the __provides__ table
-        self.__provides__ = {}
+        for key in self.__provides__.keys():
+            del self.__provides__[key]
         for key in self.store.keys():
             self.__provides__[key] = {}
             for name in self.store[key].keys():
