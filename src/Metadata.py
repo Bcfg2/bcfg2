@@ -59,57 +59,6 @@ class ConfigurationRegion(object):
         self.scope = scope
         self.stype = stype
 
-class Store(object):
-    def __init__(self):
-        self.clients = {}
-        self.default = {}
-        self.bundles = {}
-        self.mappings = {}
-        self.rw = Lock()
-        self.r = Lock()
-
-    def __getstate__(self):
-        d=self.__dict__.copy()
-        del d['rw'], d['r']
-        return d
-
-    def __setstate__(self,d):
-        self.__dict__=d
-        self.rw=Lock()
-        self.r=Lock()
-
-    def GetImage(self,node):
-        try:
-            return self.clients[node].image
-        except NodeConfigurationError, e:
-            self.clients[node]=Node(node,self.default['image'],self.default['tags'])
-            return self.clients[node].image
-
-    def GetTags(self,node):
-        try:
-            return self.clients[node].tags
-        except NodeConfigurationError, e:
-            self.clients[node]=Node(node,self.default['image'],self.default['tags'])
-            return self.clients[node].image
-
-    def AddTag(self,node,tag):
-        if GetTags(node).count(tag) == 0:
-            self.clients[node].tags.append(tag)
-
-    def DelTag(self,node,tag):
-        if GetTags(node).count(tag) != 0:
-            self.clients[node].tags.remove(tag)
-
-    def GetBundles(self,tag):
-        return self.bundles.get(tag,[])
-
-    def GetNodeBundles(self,node):
-        ret = {}
-        for tag in self.GetTags(node):
-            for bundle in self.GetBundles(tag):
-                ret[bundle]=True
-        return ret.keys()
-
 class Metadata(object):
     '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
     def __init__(self, all, image, classes, bundles, attributes, hostname):
@@ -133,3 +82,11 @@ class Metadata(object):
             return False
         return True
 
+class eMetadata(Metadata):
+    def __init__(self, element):
+        self.all = False
+        self.image = element.attrib['image']
+        self.classes = [x.attrib['name'] for x in element.findall(".//class")]
+        self.bundles = ['ssh']
+        self.attributes = []
+        self.hostname = element.attrib['client']
