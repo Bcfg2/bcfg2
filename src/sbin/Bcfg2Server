@@ -25,7 +25,7 @@ class BcfgServer(Server):
         
     def __setup__(self):
         c = ConfigParser()
-        c.read(['/home/desai/dev/bcfg2/bcfg2.conf'])
+        c.read(['/etc/bcfg2.conf'])
         repo = c.get('server','repository')
         generators = split(c.get('server','generators'),',')
         structures = split(c.get('server', 'structures'),',')
