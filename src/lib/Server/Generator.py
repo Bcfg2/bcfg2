@@ -227,18 +227,17 @@ class ScopedXMLFile(SingleXMLFileBacked):
 
     def Sort(self, meta1, meta2):
         '''Sort based on specificity'''
-        smap = {('Global','Host'):-1, ('Global','Image'):-1, ("Global",'Class'):-1,
-                ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
-                ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
-                ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
-        if smap.has_key((meta1[0][0],  meta2[0][0])):
-            return smap[(meta1[0][0], meta2[0][0])]
+        order = ['Global', 'Image', 'Profile', 'Class', 'Host']
+        return order.index(meta1[0][0]) - order.index(meta2[0][0])
 
     def MatchMetadata(self, mdata, metadata):
         '''Match internal metadata representation against metadata'''
         (mtype, mvalue) = mdata
         if mtype == 'Global':
             return True
+        elif mtype == 'Profile':
+            if mvalue == metadata.profile:
+                return True
         elif mtype == 'Image':
             if mvalue == metadata.image:
                 return True
