@@ -71,7 +71,10 @@ class FileBacked(object):
         self.HandleEvent()
 
     def HandleEvent(self, event=None):
-        self.data = file(self.name).read()
+        try:
+            self.data = file(self.name).read()
+        except IOError, e:
+            syslog(LOG_ERR, "Failed to read file %s"%(self.name))
         self.Index()
 
     def Index(self):
@@ -98,7 +101,7 @@ class DirectoryBacked(object):
         if self.entries.has_key(name):
             print "got multiple adds"
         else:
-            if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS')):
+            if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS') or (name[-4:] == '.swp')):
                 return
             self.entries[name] = self.__child__('%s/%s'%(self.name, name))
             self.entries[name].HandleEvent()
