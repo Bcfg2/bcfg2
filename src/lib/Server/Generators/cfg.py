@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from binascii import b2a_base64
 from os import stat
 from re import compile
 from stat import S_ISDIR, ST_MODE
@@ -119,7 +120,10 @@ class ConfigFileEntry(object):
         entry.attrib.update({'owner':self.owner, 'group':self.group, 'perms':self.perms, 'encoding':self.encoding})
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
-        entry.text = filedata
+        if self.encoding == 'base64':
+            entry.text = b2a_base64(filedata)
+        else:
+            entry.text = filedata
 
 class ConfigFileRepository(DirectoryBacked):
     '''This class implements repos and all change handling'''
