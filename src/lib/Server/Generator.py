@@ -54,10 +54,10 @@ class Generator(object):
         '''Generate change notification for region'''
         pass
 
-    def GetProbes(self, metadata):
+    def get_probes(self, metadata):
         return []
 
-    def AcceptProbeData(self, client, probedata):
+    def accept_probe_data(self, client, probedata):
         return
 
 class FileBacked(object):
