@@ -2,6 +2,7 @@
 # $Id: $
 
 from copy import deepcopy
+from syslog import LOG_ERR, syslog
 
 from GeneratorUtils import XMLFileBacked, DirectoryBacked
 from Structure import Structure
@@ -38,7 +39,11 @@ class bundler(Structure):
         (system, package, service) = self.GetTransInfo(metadata)
         bundleset = []
         for bundlename in metadata.bundles:
-            bundle = self.bundles.entries["%s.xml"%(bundlename)]
+            if self.bundles.entries.has_key("%s.xml"%(bundlename)):
+                bundle = self.bundles.entries["%s.xml"%(bundlename)]
+            else:
+                syslog(LOG_ERR, "Client %s requested nonexistent bundle %s"%(metadata.hostname, bundlename))
+                continue
             b = Element("Bundle", name=bundlename)
             for entry in bundle.entries:
                 if entry.tag != 'System':
