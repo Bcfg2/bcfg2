@@ -1,0 +1,34 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      package list schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+      $Id: $
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:complexType name='PackageType'>
+    <xsd:attribute type='xsd:string' name='name'/>
+    <xsd:attribute type='xsd:string' name='version'/>
+    <xsd:attribute type='xsd:string' name='file'/>
+    <xsd:attribute type='xsd:string' name='verify'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='LocationType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Package' type='PackageType'/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='uri' use='required'/>
+  </xsd:complexType>
+
+  <xsd:element name='PackageList'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+	<xsd:element name='Location' type='LocationType'/>
+      </xsd:choice>
+      <xsd:attribute name='image' type='xsd:string' use='required'/>
+    </xsd:complexType>
+  </xsd:element>
+
+</xsd:schema>
