@@ -53,7 +53,10 @@ class sshbase(Generator):
             self.GenerateHostKeys(client)
             self.GenerateKnownHosts()
         keydata = self.repository.entries[filename].data
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
+        perms = '0600'
+        if filename[-4:] == '.pub':
+            perms = '0644'
+        entry.attrib.update({'owner':'root', 'group':'root', 'perms':perms})
         entry.text = keydata
         if "ssh_host_key.H_" in filename:
             entry.attrib['encoding'] = 'base64'
