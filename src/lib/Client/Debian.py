@@ -1,9 +1,11 @@
 # This is the bcfg2 support for debian
 # $Id $
+
+from copy import deepcopy
 from glob import glob
 from os import environ, stat, system
 from popen2 import Popen4
-from string import split
+from string import join, split
 from sys import argv
 
 import apt_pkg
@@ -23,6 +25,7 @@ class Debian(Toolset):
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
+        self.cfg = cfg
         #system("dpkg --configure -a")
         if not self.setup['build']:
             system("dpkg-reconfigure -f noninteractive debconf")
@@ -38,6 +41,8 @@ class Debian(Toolset):
             if pkg.CurrentVer:
                 self.installed[pkg.Name] = pkg.CurrentVer.VerStr
 
+    # implement entry (Verify|Install) ops
+    
     def VerifyService(self, entry):
         if entry.attrib['status'] == 'off':
             cmd = Popen4("/usr/sbin/update-rc.d -n -f %s remove"%(entry.attrib['name']))
@@ -102,22 +107,61 @@ class Debian(Toolset):
             self.pkgtodo.append(entry)
             return False
 
-    def Commit(self, entrystate):
+    def Inventory(self):
+        Toolset.Inventory(self)
+        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
+        all = deepcopy(self.installed)
+        desired = {}
+        for entry in self.cfg.findall("Package"):
+            desired[entry.attrib['name']] = entry
+
+        for pkg, entry in desired.iteritems():
+            if self.states[entry]:
+                # package entry verifies
+                del all[pkg]
+            else:
+                if all.has_key(pkg):
+                    # wrong version
+                    self.pkgwork['update'].append(entry)
+                else:
+                    # new pkg
+                    self.pkgwork['add'].append(entry)
+                    # ???
+                    del all[pkg]
+                    
+                
+            if all.has_key[pkg]:
+                if all[pkg] != desired[pkg]:
+                    # package version is wrong
+                    self.pkgwork['update'].append(entry)
+                del all[pkg]
+                del desired[pkg]
+            else:
+                # new package install
+                self.pkgwork['add'].append(entry)
+                del desired[pkg]
+
+        # pkgwork contains all one-way verification data now
+        # all data remaining in all is extra packages
+        
+    def Install(self):
+        if self.setup['verbose'] : print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
         # try single large install
-        rc = system(join(map(lambda x:"%s-%s"%(x.attrib['name'], x.attrib['version']), self.pkgtodo)))
+        rc = system(join(map(lambda x:"%s-%s"%(x.attrib['name'], x.attrib['version']), self.pkgwork['add'] + self.pkgwork['update'])))
         if rc == 0:
             # set installed to true for pkgtodo
-            for pkg in self.pkgtodo:
-                entrystate[x]=True
+            for pkg in self.pkgwork['add'] + self.pkgwork['update']:
+                self.states[x]=True
             self.pkgtodo = []
+            self.Refresh()
         else:
             # do single pass installs
             system("dpkg --configure --pending")
             self.Refresh()
             for pkg in self.pkgtodo:
                 if self.VerifyPackage(pkg):
-                    entrystate[pkg] = True
+                    self.states[pkg] = True
                     self.pkgtodo.remove(pkg)
             oldlen = len(self.pkgtodo) + 1
             while (len(self.pkgtodo) < oldlen):
@@ -125,21 +169,9 @@ class Debian(Toolset):
                 for pkg in self.pkgtodo:
                     rc = system(cmd%(pkg.attrib['name'], pkg.attrib['user']))
                     if rc == 0:
-                        entrystate[pkg] = True
+                        self.states[pkg] = True
                         self.pkgtodo.remove(pkg)
                     else:
                         print "Failed to install package %s"%(pkg.attrib['name'])
-
-    def GetInstalledConfigs(self):
-        # returns a list of installed config files
-        ret = []
-        for a in map(lambda x:split(open(x).read(),"\n"),glob("/var/lib/dpkg/info/*.conffiles")):
-            ret += a
-        return ret
-
-    def FindConfigs(self):
-        e = []
-        for (pkg, vers) in self.installed.iteritems():
-            e.append(Element('Package', name=pkg, version=vers))
-        # need to add config file two way later
-        return e
+        for entry in [x for x in self.states if not self.states[x] and x.tag != 'Package']:
+            self.InstallEntry(entry)
