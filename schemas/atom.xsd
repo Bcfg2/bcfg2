@@ -7,11 +7,18 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name='PackageType'>
+  <xsd:complexType name='ConfigFileType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
-  <xsd:complexType name='ConfigFileType'>
+  <xsd:complexType name='DirectoryType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='perms'/>
+    <xsd:attribute type='xsd:string' name='owner'/>
+    <xsd:attribute type='xsd:string' name='group'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='PackageType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
