@@ -124,14 +124,21 @@ class ClientState(object):
                 modlist = [x.attrib['name'] for x in structure.getchildren() if x.tag == 'ConfigFile']
                 for entry in structure.getchildren():
                     self.VerifyEntry(entry, modlist)
-        state = map(lambda x:self.states[x], structure.getchildren())
-        if False not in state:
-            self.structures[structure] = True
+        try:
+            state = map(lambda x:self.states[x], structure.getchildren())
+            if False not in state:
+                self.structures[structure] = True
+        except KeyError, k:
+            print "State verify evidently failed for %s"%(k)
+            self.structures[structure] = False
 
     def Install(self):
         self.modified  =  [k for (k,v) in self.structures.iteritems() if not v]
         for entry in [k for (k,v) in self.states.iteritems() if not v]:
             self.InstallEntry(entry)
+
+    def Commit(self):
+        self.toolset.Commit()
 
 if __name__ == '__main__':
     # parse command line options
