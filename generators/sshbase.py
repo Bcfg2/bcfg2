@@ -12,24 +12,26 @@ class sshbase(Generator):
     __name__ = 'sshbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __provides__ = {'ConfigFile':{'/etc/ssh/ssh_known_hosts':'build_skn',
-                                  '/etc/ssh/ssh_host_dsa_key':'build_hk',
-                                  '/etc/ssh/ssh_host_rsa_key':'build_hk',
-                                  '/etc/ssh/ssh_host_dsa_key.pub':'build_hk',
-                                  '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}}
 
     def __setup__(self):
         self.repository = DirectoryBacked(self.data, self.core.fam)
+        self.__provides__ = {'ConfigFile':{'/etc/ssh/ssh_known_hosts':self.build_skn, 
+                                           '/etc/ssh/ssh_host_dsa_key':self.build_hk,
+                                           '/etc/ssh/ssh_host_rsa_key':self.build_hk,
+                                           '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
+                                           '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk}}
 
-    def build_skn(self,name,client):
+    def build_skn(self,name,metadata):
+        client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
         ip=gethostbyname(client)
-        keylist = map(lambda x:x%client, ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"])
+        keylist = map(lambda x:x%(client), ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"])
         for hostkey in keylist:
             filedata += "%s,%s,%s %s"%(client,"%s.mcs.anl.gov"%(client),ip,self.repository.entries[hostkey].data)
         return ConfigFile(name,'root','root','0644',filedata)
 
-    def build_hk(self,name,client):
+    def build_hk(self,name,metadata):
+        client = metadata.hostname
         filename = "%s.H_%s"%(name.split('/')[-1],client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
