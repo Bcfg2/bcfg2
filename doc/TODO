@@ -1,7 +1,6 @@
 $Id: $
 
 Server:
-  Generator interface documentation
   Statistics interface
   Put support
   Change notification interface
