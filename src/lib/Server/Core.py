@@ -3,14 +3,14 @@ __revision__ = '$Revision$'
 
 from os import stat
 from stat import ST_MODE, S_ISDIR
+from sys import exc_info
 from syslog import syslog, LOG_ERR
+from traceback import extract_tb
 from time import time
 
 import _fam
 
-class GeneratorError(Exception):
-    '''This error is raised upon generator failures'''
-    pass
+from Bcfg2.Server.Generator import GeneratorError, GeneratorInitError
 
 class PublishError(Exception):
     '''This error is raised upon publication failures'''
@@ -89,7 +89,18 @@ class Core(object):
                 syslog(LOG_ERR, 'Failed to load generator %s' % (generator))
                 continue
             gen = getattr(mod, generator)
-            self.generators.append(gen(self, self.datastore))
+            try:
+                self.generators.append(gen(self, self.datastore))
+            except GeneratorInitError:
+                syslog(LOG_ERR, "Failed to instantiate generator %s" % gen.__name__)
+            except:
+                print "Unexpected initiantiation failure for generator %s" % gen.__name__
+                syslog(LOG_ERR, "Unexpected initiantiation failure for generator %s" % gen.__name__)
+                (t, v, tb)=exc_info()
+                for line in extract_tb(tb):
+                    syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+                syslog(LOG_ERR, "%s: %s\n"%(t, v))
+                del t, v, tb
         # we need to inventory and setup generators
         # Process generator requirements
         for gen in self.generators:
@@ -127,8 +138,8 @@ class Core(object):
         for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory']]:
             try:
                 self.Bind(entry, metadata)
-            except KeyError, key:
-                syslog(LOG_ERR, "Unable to locate %s" % key)
+            except GeneratorError, key:
+                syslog(LOG_ERR, "Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
 
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
@@ -141,11 +152,8 @@ class Core(object):
         else:
             for gen in self.generators:
                 if hasattr(gen, "FindHandler"):
-                    try:
-                        return gen.FindHandler(entry)(entry, metadata)
-                    except:
-                        print gen, "failed"
-            raise KeyError, (entry.tag, entry.get('name'))
+                    return gen.FindHandler(entry)(entry, metadata)
+            raise GeneratorError, (entry.tag, entry.get('name'))
                 
     def RunCronTasks(self):
         '''Run periodic tasks for generators'''
