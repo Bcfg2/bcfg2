@@ -1,3 +1,3 @@
 # $Id: $
 
-all = ['bundler']
+all = ['bundler','base']
