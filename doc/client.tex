@@ -1,0 +1,34 @@
+\documentclass[11pt]{article}
+
+\title{Bcfg2 Client Design}
+\author{Narayan Desai \\ desai@mcs.anl.gov}
+
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\topmargin}{0.0in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0.5in}
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{8.5in}
+\setlength{\parskip}{0.05in}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+The client model in BCFG2 remains much the same as the client model in
+BCFG1. This assumptions in place are as follows:
+\begin{itemize}
+\item{BCFG is the source of all client configuration.}
+\item{Skew from the configuration determined by BCFG is defined to be
+    incorrect.} 
+\item{Local state isn't trusted. All client metadata is determined on
+    the server side.}
+\end{itemize}
+
+The client configuration consists of a complete software inventory,
+extra filesystem modifications, and configuration file changes. The
+client configuration will be augmented in BCFG2 to also include state
+information about process profiles and normal usage.
+
+\end{document}
