@@ -32,7 +32,15 @@ class FileEntry(FileBacked):
             most2 = [index for index in range(len(fields)) if getattr(other, fields[index])][0]
         except IndexError:
             most2 = 0
-        return most1 - most2
+        if most1 == most2:
+            if self.name.split('.')[1][0] not in ['C', 'B']:
+                return 0
+            # need to tiebreak with numeric prio
+            prio1 = int(self.name.split('.')[1][1:2])
+            prio2 = int(other.name.split('.')[1][1:2])
+            return prio1 - prio2
+        else:
+            return most1 - most2
 
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
