@@ -1,7 +1,6 @@
 $Id: $
 
 Server:
-  Service Manager (currently hardcoded)
   Generator interface documentation
   Statistics interface
   Put support
