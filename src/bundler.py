@@ -1,79 +1,66 @@
 #!/usr/bin/env python
 # $Id: $
 
+from copy import deepcopy
+
 from GeneratorUtils import XMLFileBacked, DirectoryBacked
 from Structure import Structure
 
-from elementtree.ElementTree import Element
+from elementtree.ElementTree import Element, XML, tostring
 
-class Bundle(XMLFileBacked):
-    def __iter__(self):
-        return iter(self.entries)
-
-class Translation(XMLFileBacked):
-    __identifier__ = 'system'
-    
+class ImageFile(XMLFileBacked):
     def Index(self):
-        XMLFileBacked.Index(self)
-        self.images = []
-        self.trans = {'VPackage':{}, 'VConfig':{}, 'VService':{}, 'VFS':{}}
-        for entry in self.entries:
-            if entry.tag == 'Image':
-                self.images.append(entry.attrib['name'] )
-            else:
-                self.trans[entry.tag][entry.attrib['name']] = entry.getchildren()
-
-class TranslationSet(DirectoryBacked):
-    '''TranslationSet is the container for all active translations in the system. It
-    is coherent cache of a directory.'''
-    __child__ = Translation
-
-    def __iter__(self):
-        return self.entries.iteritems()
-
-    def FindTranslation(self, image):
-        '''Locate a translation by image name. Needed because translations can handle multiple images'''
-        x = [v for k,v in self if image in v.images]
-        if len(x) == 1:
-            return x[0]
-        else:
-            raise "Bang"
-
-    def BindTranslation(self, image, ba):
-        '''Map Bundle elements through the translation layer into concrete elements'''
-        return map(lambda x:(x.tag, x.attrib),
-                   self.FindTranslation(image).trans[ba.tag][ba.attrib['name']])
+        a = XML(self.data)
+        self.attr = a.attrib
+        self.entries = a.getchildren()
+        self.images = {}
+        for child in self.entries:
+            (name, package, service) = map(lambda x:child.attrib.get(x), ['name', 'package', 'service'])
+            for grandchild in child.getchildren():
+                self.images[grandchild.attrib['name']] = (name, package, service)
             
 class BundleSet(DirectoryBacked):
     '''The Bundler handles creation of dependent clauses based on bundle definitions'''
-    __child__ = Bundle
-
-    def __iter__(self):
-        return self.entries.iteritems()
+    __child__ = XMLFileBacked
 
 class bundler(Structure):
+    __name__ =  'bundler'
+    __version__ = '$Version'
+    
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     def __init__(self, core, datastore):
-        self.core = core
-        self.datastore = "%s/bundler/"%(datastore)
-        self.bundles = BundleSet("%s/bundles"%(self.datastore), self.core.fam)
-        self.translations = TranslationSet("%s/translations"%(self.datastore), self.core.fam)
-        # now we build the local repr of the translated bundleset
-        self.core.fam.AddMonitor("%s/bundles"%(self.datastore), self)
-        self.core.fam.AddMonitor("%s/translations"%(self.datastore), self)
-        # check which order events will be delivered in; need bundles/trans updated before self
-        self.HandleEvent(True)
-
-    def HandleEvent(self,event):
-        self.built = {}
-        for image in reduce(lambda x,y:x+y, [v.images for k,v in self.translations],[]):
-            self.built[image] = {}
-            for (name,bundle) in self.bundles:
-                name = name[:-4]
-                self.built[image][name] = []
-                for entry in bundle:
-                    self.built[image][name].extend(self.translations.BindTranslation(image,entry))
+        Structure.__init__(self, core, datastore)
+        self.imageinfo = ImageFile("%s/common/imageinfo.xml"%(datastore))
+        self.core.fam.AddMonitor(self.imageinfo.name, self.imageinfo)
+        self.bundles = BundleSet(self.data, self.core.fam)
 
     def Construct(self, metadata):
-        return map(lambda x:self.built[metadata.image][x], metadata.bundles)
+        (system, package, service) = self.GetTransInfo(metadata)
+        bundleset = []
+        for bundlename in metadata.bundles:
+            bundle = self.bundles.entries["%s.xml"%(bundlename)]
+            b = Element("Bundle", name=bundlename)
+            for entry in bundle.entries:
+                if entry.tag != 'System':
+                    d = deepcopy(entry)
+                    b.append(d)
+                else:
+                    if entry.attrib['name'] == system:
+                        d = deepcopy(entry.getchildren())
+                        b._children += d
+            for entry in b._children:
+                if entry.tag == 'Package':
+                    entry.attrib['type'] = package
+                elif entry.tag == 'Service':
+                    entry.attrib['type'] = service
+            bundleset.append(b)
+        return bundleset
+
+    def GetTransInfo(self, metadata):
+        if self.imageinfo.images.has_key(metadata.image):
+            return self.imageinfo.images[metadata.image]
+        else:
+            raise KeyError, metadata.image
+
+    
 
