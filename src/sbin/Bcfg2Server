@@ -45,7 +45,7 @@ def dgetopt(arglist, opt, vopt):
 class BcfgServer(Server):
     __implementation__ = 'Bcfg2'
     __component__ = 'bcfg2'
-    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'GetProbes', 'probe-data':'CommitProbeData', 'upload-statistics':'HandleStats'}
+    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'get_probes', 'probe-data':'put_probe_data', 'upload-statistics':'HandleStats'}
     __validate__ = 0
         
     def __setup__(self):
@@ -101,7 +101,7 @@ class BcfgServer(Server):
         syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time()-t))
         return config
 
-    def GetProbes(self, xml, (peer,port)):
+    def get_probes(self, xml, (peer,port)):
         r = Element('probes')
         try:
             client = gethostbyaddr(peer)[0].split('.')[0]
@@ -109,11 +109,11 @@ class BcfgServer(Server):
             return Element("error", type='host resolution error')
         m = self.metadata.FetchMetadata(client)
         for g in self.core.generators:
-            for p in g.GetProbes(m):
+            for p in g.get_probes(m):
                 r.append(p)
         return r
 
-    def CommitProbeData(self, xml, (peer,port)):
+    def put_probe_data(self, xml, (peer,port)):
         try:
             client = gethostbyaddr(peer)[0].split('.')[0]
         except herror:
@@ -121,9 +121,9 @@ class BcfgServer(Server):
         for data in xml.findall(".//probe-data"):
             try:
                 [g] = [x for x in self.core.generators if x.__name__ == data.attrib['source']]
-                g.AcceptProbeData(client, data)
+                g.accept_probe_data(client, data)
             except:
-                self.LogFailure("CommitProbeData")
+                self.LogFailure("put_probe_data")
         return Element("OK")
 
     def HandleStats(self, xml, (peer, port)):
