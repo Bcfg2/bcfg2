@@ -2,10 +2,12 @@
 __revision__ = '$Revision$'
 
 from elementtree.ElementTree import XML, SubElement, Element
+from syslog import syslog, LOG_ERR
 
 from Bcfg2.Server.Generator import SingleXMLFileBacked
 
 class MetadataConsistencyError(Exception):
+    '''This error gets raised when metadata is internally inconsistent'''
     pass
 
 class Metadata(object):
