@@ -1,0 +1,382 @@
+<Metadata version='2.0' default_image='debian-sarge' default_profile='compute'>
+  <Image toolset='debian' name='debian-sarge'/>
+  <Client profile='desktop' image='debian-sarge' name='wonkarific'/>
+  <Client profile='desktop' image='debian-sarge' name='mpc-demo'/>
+  <Client profile='desktop' image='debian-3.0' name='debian-test'/>
+  <Profile name='compute' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='chiba-compute'/>
+    <Class name='chiba'/>
+    <Class name='pvfs-client'/>
+  </Profile>
+  <Profile name='chiba-login' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='chiba'/>
+    <Class name='chiba-login'/>
+    <Class name='pvfs-client'/>
+    <Class name='chibalogin' />
+  </Profile>
+  <Profile name='desktop' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='ypbound'/>
+    <Class name='workstation'/>
+  </Profile>
+  <Profile name='server' public='true'>
+    <Class name='mcs-base'/>
+  </Profile>
+  <Profile name='chiba-pvfs-server' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='chiba'/>
+    <Class name='pvfs-server'/>
+    <Class name='chiba-fileserver'/>
+  </Profile>
+  <Profile name='chiba-mayor' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='chiba'/>
+    <Class name='chiba-mayor'/>
+  </Profile>
+  <Profile name='chiba-home-fileserver' public='true'>
+    <Class name='mcs-base'/>
+    <Class name='chiba'/>
+    <Class name='chiba-fileserver'/>
+    <Class name='chiba-homefarm-server'/>
+    <Class name='base-webserver'/>
+  </Profile>
+  <Class name='pvfs-client'/>
+  <Class name='pvfs-server'/>
+  <Class name='chiba-compute'>
+    <Bundle name='rsh'/>
+  </Class>
+  <Class name='chiba-login'>
+    <Bundle name='autofs-chiba'/>
+    <Bundle name='account'/>
+  </Class>
+  <Class name='chibalogin' />
+  <Class name='chiba-mayor'>
+    <Bundle name='tftp-server'/>
+    <Bundle name='conserver'/>
+    <Bundle name='pvfs2-server'/>
+  </Class>
+  <Class name='chiba-fileserver'>
+    <Bundle name='adsm-client'/>
+  </Class>
+  <Class name='chiba-homefarm-server'>
+    <Bundle name='autofs-chiba'/>
+  </Class>
+  <Class name='chiba'/>
+  <Class name='mcs-base'>
+    <Bundle name='ssh'/>
+    <Bundle name='shells'/>
+    <Bundle name='sudo'/>
+    <Bundle name='ntp'/>
+    <Bundle name='mpd'/>
+    <Bundle name='account'/>
+  </Class>
+  <Class name='ypbound'>
+    <Bundle name='yp-client'/>
+  </Class>
+  <Class name='workstation'>
+    <Bundle name='gdm'/>
+    <Bundle name='tex-stuff'/>
+    <Bundle name='thunderbird'/>
+    <Bundle name='firefox'/>
+    <Bundle name='spamassassin'/>
+    <Bundle name='lpd'/>
+  </Class>
+  <Class name='base-webserver'>
+    <Bundle name='apache'/>
+  </Class>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto1'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto1-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto2'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto2-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto3'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto3-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto4'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto4-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto5'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto5-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto6'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto6-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto7'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto7-67'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto8'/>
+  <Client profile='chiba-pvfs-server' image='debian-sarge' name='ccsto8-67'/>
+  <Client profile='chiba-login' image='debian-sarge' name='cclogin1'/>
+  <Client profile='chiba-login' image='debian-sarge' name='cclogin2'/>
+  <Client profile='chiba-login' image='debian-sarge' name='cclogin4'/>
+  <Client profile='chiba-home-fileserver' image='debian-sarge' name='ccfs1'/>
+  <Client profile='chiba-home-fileserver' image='debian-sarge' name='ccfs2'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct1m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct2m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct3m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct4m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct5m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct6m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct7m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct8m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct9m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct10m'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct1m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct2m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct3m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct4m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct5m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct6m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct7m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct8m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct9m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct10m-fe'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct1m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct2m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct3m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct4m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct5m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct6m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct7m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct8m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct9m-67'/>
+  <Client profile='chiba-mayor' image='debian-sarge' name='cct10m-67'/>
+  <Client profile='compute' image='debian-sarge' name='ccn243'/>
+  <Client profile='compute' image='debian-sarge' name='ccn242'/>
+  <Client profile='compute' image='debian-sarge' name='ccn241'/>
+  <Client profile='compute' image='debian-sarge' name='ccn251'/>
+  <Client profile='compute' image='debian-sarge' name='ccn250'/>
+  <Client profile='compute' image='debian-sarge' name='ccn252'/>
+  <Client profile='compute' image='debian-sarge' name='ccn253'/>
+  <Client profile='compute' image='debian-sarge' name='ccn254'/>
+  <Client profile='compute' image='debian-sarge' name='ccn245'/>
+  <Client profile='compute' image='debian-sarge' name='ccn240'/>
+  <Client profile='compute' image='debian-sarge' name='ccn237'/>
+  <Client profile='compute' image='debian-sarge' name='ccn256'/>
+  <Client profile='compute' image='debian-sarge' name='ccn244'/>
+  <Client profile='compute' image='debian-sarge' name='ccn1'/>
+  <Client profile='compute' image='debian-sarge' name='ccn2'/>
+  <Client profile='compute' image='debian-sarge' name='ccn4'/>
+  <Client profile='compute' image='debian-sarge' name='ccn5'/>
+  <Client profile='compute' image='debian-sarge' name='ccn7'/>
+  <Client profile='compute' image='debian-sarge' name='ccn12'/>
+  <Client profile='compute' image='debian-sarge' name='ccn13'/>
+  <Client profile='compute' image='debian-sarge' name='ccn15'/>
+  <Client profile='compute' image='debian-sarge' name='ccn16'/>
+  <Client profile='compute' image='debian-sarge' name='ccn17'/>
+  <Client profile='compute' image='debian-sarge' name='ccn20'/>
+  <Client profile='compute' image='debian-sarge' name='ccn21'/>
+  <Client profile='compute' image='debian-sarge' name='ccn22'/>
+  <Client profile='compute' image='debian-sarge' name='ccn23'/>
+  <Client profile='compute' image='debian-sarge' name='ccn24'/>
+  <Client profile='compute' image='debian-sarge' name='ccn27'/>
+  <Client profile='compute' image='debian-sarge' name='ccn25'/>
+  <Client profile='compute' image='debian-sarge' name='ccn26'/>
+  <Client profile='compute' image='debian-sarge' name='ccn28'/>
+  <Client profile='compute' image='debian-sarge' name='ccn31'/>
+  <Client profile='compute' image='debian-sarge' name='ccn29'/>
+  <Client profile='compute' image='debian-sarge' name='ccn30'/>
+  <Client profile='compute' image='debian-sarge' name='ccn32'/>
+  <Client profile='compute' image='debian-sarge' name='ccn9'/>
+  <Client profile='compute' image='debian-sarge' name='ccn65'/>
+  <Client profile='compute' image='debian-sarge' name='ccn67'/>
+  <Client profile='compute' image='debian-sarge' name='ccn70'/>
+  <Client profile='compute' image='debian-sarge' name='ccn71'/>
+  <Client profile='compute' image='debian-sarge' name='ccn72'/>
+  <Client profile='compute' image='debian-sarge' name='ccn74'/>
+  <Client profile='compute' image='debian-sarge' name='ccn78'/>
+  <Client profile='compute' image='debian-sarge' name='ccn80'/>
+  <Client profile='compute' image='debian-sarge' name='ccn82'/>
+  <Client profile='compute' image='debian-sarge' name='ccn83'/>
+  <Client profile='compute' image='debian-sarge' name='ccn86'/>
+  <Client profile='compute' image='debian-sarge' name='ccn89'/>
+  <Client profile='compute' image='debian-sarge' name='ccn90'/>
+  <Client profile='compute' image='debian-sarge' name='ccn92'/>
+  <Client profile='compute' image='debian-sarge' name='ccn94'/>
+  <Client profile='compute' image='debian-sarge' name='ccn95'/>
+  <Client profile='compute' image='debian-sarge' name='ccn96'/>
+  <Client profile='compute' image='debian-sarge' name='ccn98'/>
+  <Client profile='compute' image='debian-sarge' name='ccn100'/>
+  <Client profile='compute' image='debian-sarge' name='ccn101'/>
+  <Client profile='compute' image='debian-sarge' name='ccn102'/>
+  <Client profile='compute' image='debian-sarge' name='ccn103'/>
+  <Client profile='compute' image='debian-sarge' name='ccn109'/>
+  <Client profile='compute' image='debian-sarge' name='ccn107'/>
+  <Client profile='compute' image='debian-sarge' name='ccn106'/>
+  <Client profile='compute' image='debian-sarge' name='ccn104'/>
+  <Client profile='compute' image='debian-sarge' name='ccn130'/>
+  <Client profile='compute' image='debian-sarge' name='ccn131'/>
+  <Client profile='compute' image='debian-sarge' name='ccn132'/>
+  <Client profile='compute' image='debian-sarge' name='ccn133'/>
+  <Client profile='compute' image='debian-sarge' name='ccn114'/>
+  <Client profile='compute' image='debian-sarge' name='ccn113'/>
+  <Client profile='compute' image='debian-sarge' name='ccn112'/>
+  <Client profile='compute' image='debian-sarge' name='ccn111'/>
+  <Client profile='compute' image='debian-sarge' name='ccn137'/>
+  <Client profile='compute' image='debian-sarge' name='ccn136'/>
+  <Client profile='compute' image='debian-sarge' name='ccn134'/>
+  <Client profile='compute' image='debian-sarge' name='ccn135'/>
+  <Client profile='compute' image='debian-sarge' name='ccn138'/>
+  <Client profile='compute' image='debian-sarge' name='ccn139'/>
+  <Client profile='compute' image='debian-sarge' name='ccn140'/>
+  <Client profile='compute' image='debian-sarge' name='ccn141'/>
+  <Client profile='compute' image='debian-sarge' name='ccn121'/>
+  <Client profile='compute' image='debian-sarge' name='ccn122'/>
+  <Client profile='compute' image='debian-sarge' name='ccn116'/>
+  <Client profile='compute' image='debian-sarge' name='ccn115'/>
+  <Client profile='compute' image='debian-sarge' name='ccn145'/>
+  <Client profile='compute' image='debian-sarge' name='ccn142'/>
+  <Client profile='compute' image='debian-sarge' name='ccn147'/>
+  <Client profile='compute' image='debian-sarge' name='ccn146'/>
+  <Client profile='compute' image='debian-sarge' name='ccn148'/>
+  <Client profile='compute' image='debian-sarge' name='ccn149'/>
+  <Client profile='compute' image='debian-sarge' name='ccn126'/>
+  <Client profile='compute' image='debian-sarge' name='ccn125'/>
+  <Client profile='compute' image='debian-sarge' name='ccn124'/>
+  <Client profile='compute' image='debian-sarge' name='ccn123'/>
+  <Client profile='compute' image='debian-sarge' name='ccn151'/>
+  <Client profile='compute' image='debian-sarge' name='ccn154'/>
+  <Client profile='compute' image='debian-sarge' name='ccn127'/>
+  <Client profile='compute' image='debian-sarge' name='ccn128'/>
+  <Client profile='compute' image='debian-sarge' name='ccn155'/>
+  <Client profile='compute' image='debian-sarge' name='ccn156'/>
+  <Client profile='compute' image='debian-sarge' name='ccn157'/>
+  <Client profile='compute' image='debian-sarge' name='ccn159'/>
+  <Client profile='compute' image='debian-sarge' name='ccn158'/>
+  <Client profile='compute' image='debian-sarge' name='ccn160'/>
+  <Client profile='compute' image='debian-sarge' name='ccn165'/>
+  <Client profile='compute' image='debian-sarge' name='ccn163'/>
+  <Client profile='compute' image='debian-sarge' name='ccn161'/>
+  <Client profile='compute' image='debian-sarge' name='ccn193'/>
+  <Client profile='compute' image='debian-sarge' name='ccn195'/>
+  <Client profile='compute' image='debian-sarge' name='ccn196'/>
+  <Client profile='compute' image='debian-sarge' name='ccn197'/>
+  <Client profile='compute' image='debian-sarge' name='ccn198'/>
+  <Client profile='compute' image='debian-sarge' name='ccn168'/>
+  <Client profile='compute' image='debian-sarge' name='ccn166'/>
+  <Client profile='compute' image='debian-sarge' name='ccn171'/>
+  <Client profile='compute' image='debian-sarge' name='ccn169'/>
+  <Client profile='compute' image='debian-sarge' name='ccn175'/>
+  <Client profile='compute' image='debian-sarge' name='ccn174'/>
+  <Client profile='compute' image='debian-sarge' name='ccn173'/>
+  <Client profile='compute' image='debian-sarge' name='ccn201'/>
+  <Client profile='compute' image='debian-sarge' name='ccn202'/>
+  <Client profile='compute' image='debian-sarge' name='ccn199'/>
+  <Client profile='compute' image='debian-sarge' name='ccn176'/>
+  <Client profile='compute' image='debian-sarge' name='ccn179'/>
+  <Client profile='compute' image='debian-sarge' name='ccn182'/>
+  <Client profile='compute' image='debian-sarge' name='ccn178'/>
+  <Client profile='compute' image='debian-sarge' name='ccn203'/>
+  <Client profile='compute' image='debian-sarge' name='ccn206'/>
+  <Client profile='compute' image='debian-sarge' name='ccn204'/>
+  <Client profile='compute' image='debian-sarge' name='ccn186'/>
+  <Client profile='compute' image='debian-sarge' name='ccn189'/>
+  <Client profile='compute' image='debian-sarge' name='ccn187'/>
+  <Client profile='compute' image='debian-sarge' name='ccn208'/>
+  <Client profile='compute' image='debian-sarge' name='ccn210'/>
+  <Client profile='compute' image='debian-sarge' name='ccn207'/>
+  <Client profile='compute' image='debian-sarge' name='ccn211'/>
+  <Client profile='compute' image='debian-sarge' name='ccn219'/>
+  <Client profile='compute' image='debian-sarge' name='ccn220'/>
+  <Client profile='compute' image='debian-sarge' name='ccn218'/>
+  <Client profile='compute' image='debian-sarge' name='ccn217'/>
+  <Client profile='compute' image='debian-sarge' name='ccn221'/>
+  <Client profile='compute' image='debian-sarge' name='ccn222'/>
+  <Client profile='compute' image='debian-sarge' name='ccn223'/>
+  <Client profile='compute' image='debian-sarge' name='ccn224'/>
+  <Client profile='compute' image='debian-sarge' name='ccn213'/>
+  <Client profile='compute' image='debian-sarge' name='ccn216'/>
+  <Client profile='compute' image='debian-sarge' name='ccn215'/>
+  <Client profile='compute' image='debian-sarge' name='ccn69'/>
+  <Client profile='compute' image='debian-sarge' name='ccn93'/>
+  <Client profile='compute' image='debian-sarge' name='ccn144'/>
+  <Client profile='compute' image='debian-sarge' name='ccn167'/>
+  <Client profile='compute' image='debian-sarge' name='ccn181'/>
+  <Client profile='compute' image='debian-sarge' name='ccn192'/>
+  <Client profile='compute' image='debian-sarge' name='ccn185'/>
+  <Client profile='compute' image='debian-sarge' name='ccn188'/>
+  <Client profile='fileserver' image='debian-sarge' name='ccfs1-fe'/>
+  <Client profile='compute' image='debian-sarge' name='ccn66'/>
+  <Client profile='compute' image='debian-sarge' name='ccn91'/>
+  <Client profile='compute' image='debian-sarge' name='ccn8'/>
+  <Client profile='compute' image='debian-sarge' name='ccn117'/>
+  <Client profile='compute' image='debian-sarge' name='ccn118'/>
+  <Client profile='compute' image='debian-sarge' name='ccn6'/>
+  <Client profile='compute' image='debian-sarge' name='ccn10'/>
+  <Client profile='compute' image='debian-sarge' name='ccn11'/>
+  <Client profile='compute' image='debian-sarge' name='ccn14'/>
+  <Client profile='compute' image='debian-sarge' name='ccn18'/>
+  <Client profile='compute' image='debian-sarge' name='ccn19'/>
+  <Client profile='compute' image='debian-sarge' name='ccn68'/>
+  <Client profile='compute' image='debian-sarge' name='ccn79'/>
+  <Client profile='compute' image='debian-sarge' name='ccn77'/>
+  <Client profile='compute' image='debian-sarge' name='ccn76'/>
+  <Client profile='compute' image='debian-sarge' name='ccn88'/>
+  <Client profile='compute' image='debian-sarge' name='ccn73'/>
+  <Client profile='compute' image='debian-sarge' name='ccn75'/>
+  <Client profile='compute' image='debian-sarge' name='ccn84'/>
+  <Client profile='compute' image='debian-sarge' name='ccn108'/>
+  <Client profile='compute' image='debian-sarge' name='ccn3'/>
+  <Client profile='compute' image='debian-sarge' name='ccn85'/>
+  <Client profile='compute' image='debian-sarge' name='ccn87'/>
+  <Client profile='compute' image='debian-sarge' name='ccn99'/>
+  <Client profile='compute' image='debian-sarge' name='ccn180'/>
+  <Client profile='compute' image='debian-sarge' name='ccn105'/>
+  <Client profile='compute' image='debian-sarge' name='ccn110'/>
+  <Client profile='compute' image='debian-sarge' name='ccn249'/>
+  <Client profile='compute' image='debian-sarge' name='ccn119'/>
+  <Client profile='compute' image='debian-sarge' name='ccn97'/>
+  <Client profile='compute' image='debian-sarge' name='ccn120'/>
+  <Client profile='compute' image='debian-sarge' name='ccn143'/>
+  <Client profile='compute' image='debian-sarge' name='ccn129'/>
+  <Client profile='compute' image='debian-sarge' name='ccn150'/>
+  <Client profile='compute' image='debian-sarge' name='ccn152'/>
+  <Client profile='compute' image='debian-sarge' name='ccn153'/>
+  <Client profile='compute' image='debian-sarge' name='ccn209'/>
+  <Client profile='compute' image='debian-sarge' name='ccn190'/>
+  <Client profile='compute' image='debian-sarge' name='ccn170'/>
+  <Client profile='compute' image='debian-sarge' name='ccn205'/>
+  <Client profile='compute' image='debian-sarge' name='ccn164'/>
+  <Client profile='compute' image='debian-sarge' name='ccn172'/>
+  <Client profile='compute' image='debian-sarge' name='ccn177'/>
+  <Client profile='compute' image='debian-sarge' name='ccn184'/>
+  <Client profile='compute' image='debian-sarge' name='ccn183'/>
+  <Client profile='compute' image='debian-sarge' name='ccn191'/>
+  <Client profile='compute' image='debian-sarge' name='ccn200'/>
+  <Client profile='compute' image='debian-sarge' name='ccn194'/>
+  <Client profile='compute' image='debian-sarge' name='ccn212'/>
+  <Client profile='compute' image='debian-sarge' name='ccn214'/>
+  <Client profile='compute' image='debian-sarge' name='ccn57'/>
+  <Client profile='compute' image='debian-sarge' name='ccn61'/>
+  <Client profile='compute' image='debian-sarge' name='ccn49'/>
+  <Client profile='compute' image='debian-sarge' name='ccn41'/>
+  <Client profile='compute' image='debian-sarge' name='ccn44'/>
+  <Client profile='compute' image='debian-sarge' name='ccn63'/>
+  <Client profile='compute' image='debian-sarge' name='ccn162'/>
+  <Client profile='compute' image='debian-sarge' name='ccn234'/>
+  <Client profile='compute' image='debian-sarge' name='ccn58'/>
+  <Client profile='compute' image='debian-sarge' name='ccn59'/>
+  <Client profile='compute' image='debian-sarge' name='ccn60'/>
+  <Client profile='compute' image='debian-sarge' name='ccn62'/>
+  <Client profile='compute' image='debian-sarge' name='ccn64'/>
+  <Client profile='compute' image='debian-sarge' name='ccn51'/>
+  <Client profile='compute' image='debian-sarge' name='ccn52'/>
+  <Client profile='compute' image='debian-sarge' name='ccn54'/>
+  <Client profile='compute' image='debian-sarge' name='ccn50'/>
+  <Client profile='compute' image='debian-sarge' name='ccn53'/>
+  <Client profile='compute' image='debian-sarge' name='ccn55'/>
+  <Client profile='compute' image='debian-sarge' name='ccn33'/>
+  <Client profile='compute' image='debian-sarge' name='ccn38'/>
+  <Client profile='compute' image='debian-sarge' name='ccn42'/>
+  <Client profile='compute' image='debian-sarge' name='ccn43'/>
+  <Client profile='compute' image='debian-sarge' name='ccn40'/>
+  <Client profile='compute' image='debian-sarge' name='ccn35'/>
+  <Client profile='compute' image='debian-sarge' name='ccn56'/>
+  <Client profile='compute' image='debian-sarge' name='ccn37'/>
+  <Client profile='compute' image='debian-sarge' name='ccn36'/>
+  <Client profile='compute' image='debian-sarge' name='ccn48'/>
+  <Client profile='compute' image='debian-sarge' name='ccn47'/>
+  <Client profile='compute' image='debian-sarge' name='ccn46'/>
+  <Client profile='compute' image='debian-sarge' name='ccn45'/>
+  <Client profile='compute' image='debian-sarge' name='ccn39'/>
+  <Client profile='compute' image='debian-sarge' name='ccn34'/>
+  <Client profile='compute' image='debian-sarge' name='ccn255'/>
+  <Client profile='compute' image='debian-sarge' name='ccfs2-67'/>
+  <Client profile='compute' image='debian-sarge' name='ccsched'/>
+</Metadata>
