@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # $Id: $
 
+from elementtree.ElementTree import XML
+
 class FileBacked(object):
     '''This object caches file data in memory.
     HandleEvent is called whenever fam registers an event.
@@ -18,6 +20,8 @@ class FileBacked(object):
         pass
 
 class DirectoryBacked(object):
+    __child__ = FileBacked
+
     def __init__(self, name, fam):
         self.name = name
         self.fam = fam
@@ -32,12 +36,11 @@ class DirectoryBacked(object):
         if self.entries.has_key(name):
             print "got multiple adds"
         else:
-            self.entries[name] = FileBacked('%s/%s'%(self.name, name))
+            self.entries[name] = self.__child__('%s/%s'%(self.name, name))
             self.entries[name].HandleEvent()
 
     def HandleEvent(self, event):
         action = event.code2str()
-        print "Got event %s %s %s"%(event.requestID, event.code2str(), event.filename)
         if action == 'exists':
             if event.filename != self.name:
                 self.AddEntry(event.filename)
@@ -53,3 +56,10 @@ class DirectoryBacked(object):
         else:
             print "Got unknown event %s %s %s"%(event.requestID, event.code2str(), event.filename)
 
+class XMLFileBacked(FileBacked):
+    __identifier__ = 'name'
+
+    def Index(self):
+        a = XML(self.data)
+        self.label = a.attrib[self.__identifier__]
+        self.entries = a.getchildren()
