@@ -1,3 +1,9 @@
+bcfg2 (0.6.3-3) unstable; urgency=low
+
+  * Fixes for TG
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu, 20 Jan 2005 16:45:20 -0600
+
 bcfg2 (0.6.3-2) unstable; urgency=low
 
   * Fixed some stats counting and format issues
