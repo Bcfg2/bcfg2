@@ -72,5 +72,4 @@ class Chiba(Generator):
         '''build tftp files for client netboot'''
         data = self.repo.entries['tftp-template']
 
-
-        
+    
