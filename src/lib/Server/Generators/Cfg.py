@@ -113,10 +113,16 @@ class ConfigFileEntry(object):
                 if action == 'changed':
                     syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
                     entry.HandleEvent(event)
+                elif action == 'exists':
+                    entry.HandleEvent(event)
                 elif action == 'deleted':
                     [flist.remove(entry) for flist in [self.basefiles, self.deltas] if entry in flist]
                 else:
-                    syslog(LOG_ERR, "Cfg: Unhandled Action %s for file %s" % (action, event.filename))
+                    syslog(LOG_ERR, "Cfg: Unhandled Action '%s' for file %s" % (action, event.filename))
+                return
+
+        # This code is only reached when an event goes unhandled
+        syslog(LOG_ERR, "Cfg: Event '%s' when unhandled for file '%s'" %(action, event.filename))
 
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
@@ -172,7 +178,7 @@ class Cfg(Generator):
             self.famID[reqid] = name
             self.directories.append(name)
 
-    def AddEntry(self, name):
+    def AddEntry(self, name, event):
         '''Add new entry to FAM structures'''
         try:
             sdata = stat(name)[ST_MODE]
@@ -188,7 +194,7 @@ class Cfg(Generator):
                 self.entries[shortname] = ConfigFileEntry(shortname)
                 self.__provides__['ConfigFile'][shortname] = self.entries[shortname].GetConfigFile
             self.entries[shortname].AddEntry(name)
-            #self.entries[shortname].HandleEvent()
+            self.entries[shortname].HandleEvent(event)
 
     def HandleEvent(self, event):
         '''Handle FAM updates'''
@@ -199,17 +205,17 @@ class Cfg(Generator):
             filename = event.filename
         configfile = filename[len(self.data):-(len(event.filename)+1)]
 
+        if event.filename == ':info':
+            event.filename = filename
         if ((action in ['exists', 'created']) and (filename != self.data)):
-            self.AddEntry(filename)
+            self.AddEntry(filename, event)
         elif action == 'changed':
             # pass the event down the chain to the ConfigFileEntry
-            if event.filename == ':info':
-                event.filename = filename
             if self.entries.has_key(configfile):
                 self.entries[configfile].HandleEvent(event)
             else:
                 if filename != self.data:
-                    self.AddEntry(filename)
+                    self.AddEntry(filename, event)
                 else:
                     self.LogError("Ignoring event for %s"%(configfile))
         elif action == 'deleted':
