@@ -61,7 +61,7 @@ class Toolset(object):
         for line in extract_tb(trace):
             print "File %s, line %i, in %s\n   %s\n" % (line)
         print "%s: %s\n" % (ttype, value)
-        del ttype, v, trace
+        del ttype, value, trace
 
     def print_failure(self):
         '''Display curses style failure message'''
