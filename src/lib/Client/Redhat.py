@@ -29,9 +29,8 @@ class Redhat(Toolset):
         # Build list of packages
         instp = popen("rpm -qa --qf '%{NAME} %{VERSION}\n'")
         for line in instp:
-            [name,version] = line.split(' ')
+            [name, version] = line.split(' ')
             self.installed[name] = version
-        
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -41,28 +40,15 @@ class Redhat(Toolset):
             # Ocurrs when no lines are returned (service not installed)
             return False
         if entry.attrib['type'] == 'xinetd':
-            if entry.attrib['status'] == srvdata[1]:
-                return True
-            else:
-                return False
+            return entry.attrib['status'] == srvdata[1]
+
+        onlevels = [level.split(':')[0] for level in srvdata[1:] if level.split(':')[1] == 'on']
 
         # chkconfig/init.d service
-        if entry.attrib['status'] == 'off':
-            for level in srvdata[1:]:
-                if level.split(':')[1] != 'off':
-                    return False
-            return True
+        if entry.get('status') == 'on':
+            return len(onlevels) > 0
         else:
-            # services should be on for 2345
-            for level in srvdata[1:]:
-                [num, status] = level.split(':')
-                if num in '2345':
-                    if status == 'off':
-                        return False
-                else:
-                    if status == 'on':
-                        return False
-            return True
+            return len(onlevels) == 0
     
     def InstallService(self, entry):
         '''Install Service entry'''
@@ -89,28 +75,33 @@ class Redhat(Toolset):
         if not (entry.get('name') and entry.get('version')):
             print "Can't install package, not enough data."
             return False
-        instp = Popen4("rpm -qi %s-%s" % (entry.attrib['name'], entry.attrib['version']))
+        instp = Popen4("rpm -qi %s-%s" % (entry.get('name'), entry.get('version')))
         istat = instp.poll()
         while istat == -1:
             instp.fromchild.read()
             istat = instp.poll()
-        if istat == 0:
+        if istat != 0:
+            self.CondPrint('debug', "Package %s version incorrect" % entry.get('name'))
+        else:
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick']:
                     return True
                 verp = Popen4("rpm --verify -q %s-%s" %
-                              (entry.attrib['name'],entry.attrib['version']), bufsize=16384)
+                              (entry.get('name'),entry.get('version')), bufsize=16384)
                 odata = ''
                 vstat = verp.poll()
                 while vstat == -1:
                     odata += verp.fromchild.read()
-                    vstat = verp.poll() >> 8
+                    vstat = verp.poll()
                 output = [line for line in odata.split("\n") if line]
                 if vstat == 0:
                     return True
                 else:
                     if len([name for name in output if name.split()[-1] not in modlist]):
                         return True
+                    else:
+                        self.CondPrint('debug',
+                                       "Package %s content verification failed" % entry.get('name'))
         return False
 
     def Inventory(self):
