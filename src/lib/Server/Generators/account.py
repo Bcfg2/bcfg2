@@ -36,7 +36,7 @@ class account(Generator):
         useraccess = self.repository.entries["useraccess"].data
         users = [x[0] for x in useraccess if x[1] == client]
 
-        data = static + join(map(lambda x:"%s hard maxlogins 1024\n"%x, superusers + users), ""),
+        data = static + "".join(map(lambda x:"%s hard maxlogins 1024\n"%x, superusers + users))
 
         if "*" not in users:
             data += "* hard maxlogins 0\n"
@@ -46,7 +46,7 @@ class account(Generator):
     def GenRootKeys(self,filename,client):
         su = self.repository.entries['superusers'].data.split()
         rl = self.repository.entries['rootlike'].data.split()
-        su += [split(x,':')[0] for x in rl if split(x,':')[1] == client]
+        su += [x.split(':')[0] for x in rl if x.split(':')[1] == client]
         data = ''
         for user in su:
             if self.ssh.entries.has_key(user):

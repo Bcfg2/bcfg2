@@ -1,26 +1,31 @@
 #!/usr/bin/env python
 
-from binascii import b2a_base64
-from glob import glob
-from os import rename, stat, system
-from socket import gethostbyname
-from string import strip
-from syslog import syslog, LOG_INFO
+'''This module manages ssh key files for bcfg2'''
+__revision__ = '$Revision$'
 
-from Bcfg2.Server.Types import ConfigFile
+from binascii import b2a_base64
+from os import rename, system
+from socket import gethostbyname
+
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
-from elementtree.ElementTree import Element
-
 class sshbase(Generator):
-    '''The sshbase generator manages ssh host keys (both v1 and v2) for hosts. It also manages
-    the ssh_known_hosts file. It can integrate host keys from other management domains and
-    similarly export its keys. The repository contains files in the following formats:
-    ssh_host_key.H_(hostname)  -> the v1 host private key for (hostname)
-    ssh_host_key.pub.H_(hostname)  -> the v1 host public key for (hostname) 
-    ssh_host_(dr)sa_key.H_(hostname)  -> the v2 ssh host private key for (hostname)
-    ssh_host_(dr)sa_key.pub.H_(hostname)  -> the v2 ssh host public key for (hostname)
-    ssh_known_hosts -> the current known hosts file. this is regenerated each time a new key is generated.
+    '''The sshbase generator manages ssh host keys (both v1 and v2)
+    for hosts.  It also manages the ssh_known_hosts file. It can
+    integrate host keys from other management domains and similarly
+    export its keys. The repository contains files in the following
+    formats:
+
+    ssh_host_key.H_(hostname) -> the v1 host private key for
+      (hostname)
+    ssh_host_key.pub.H_(hostname) -> the v1 host public key
+      for (hostname)
+    ssh_host_(dr)sa_key.H_(hostname) -> the v2 ssh host
+      private key for (hostname)
+    ssh_host_(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
+      public key for (hostname)
+    ssh_known_hosts -> the current known hosts file. this
+      is regenerated each time a new key is generated.
 '''
     __name__ = 'sshbase'
     __version__ = '$Id$'
@@ -28,27 +33,33 @@ class sshbase(Generator):
 
     def __setup__(self):
         self.repository = DirectoryBacked(self.data, self.core.fam)
-        self.__provides__ = {'ConfigFile':{'/etc/ssh/ssh_known_hosts':self.build_skn, 
-                                           '/etc/ssh/ssh_host_dsa_key':self.build_hk,
-                                           '/etc/ssh/ssh_host_rsa_key':self.build_hk,
-                                           '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
-                                           '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
-                                           '/etc/ssh/ssh_host_key':self.build_hk,
-                                           '/etc/ssh/ssh_host_key.pub':self.build_hk}}
+        self.__provides__ = {'ConfigFile':
+                             {'/etc/ssh/ssh_known_hosts':self.build_skn, 
+                              '/etc/ssh/ssh_host_dsa_key':self.build_hk,
+                              '/etc/ssh/ssh_host_rsa_key':self.build_hk,
+                              '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
+                              '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
+                              '/etc/ssh/ssh_host_key':self.build_hk,
+                              '/etc/ssh/ssh_host_key.pub':self.build_hk}}
 
-    def build_skn(self,entry,metadata):
+    def build_skn(self, entry, metadata):
+        '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
-        ip=gethostbyname(client)
-        keylist = map(lambda x:x%(client), ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"])
+        ipaddr = gethostbyname(client)
+        keylist = map(lambda x:x % (client),
+                      ["ssh_host_dsa_key.pub.H_%s",
+                       "ssh_host_rsa_key.pub.H_%s", "ssh_host_key.pub.H_%s"])
         for hostkey in keylist:
-            filedata += "%s,%s,%s %s"%(client,"%s.mcs.anl.gov"%(client),ip,self.repository.entries[hostkey].data)
+            filedata += "%s,%s,%s %s" % (client, "%s.mcs.anl.gov"%(client),
+                                         ipaddr, self.repository.entries[hostkey].data)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
         entry.text = filedata
 
-    def build_hk(self,entry,metadata):
+    def build_hk(self, entry, metadata):
+        '''This binds host key data into entries'''
         client = metadata.hostname
-        filename = "%s.H_%s"%(entry.attrib['name'].split('/')[-1],client)
+        filename = "%s.H_%s" % (entry.attrib['name'].split('/')[-1], client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
             self.GenerateKnownHosts()
@@ -63,20 +74,23 @@ class sshbase(Generator):
             entry.text = b2a_base64(keydata)
 
     def GenerateKnownHosts(self):
+        '''Build the static portion of known_hosts (for all hosts)'''
         output = ''
-        for f in self.repository.entries.keys():
-            if ".pub.H_" in f:
-                h = f.split('_')[-1]
+        for filename, entry in self.repository.entries.iteritems():
+            if ".pub.H_" in filename:
+                h = filename.split('_')[-1]
                 try:
-                    ip = gethostbyname(h)
-                    output += "%s,%s.mcs.anl.gov,%s %s"%(h, h, ip, self.repository.entries[f].data)
+                    ipaddr = gethostbyname(h)
+                    output += "%s,%s.mcs.anl.gov,%s %s" % (h, h, ipaddr, entry.data)
                 except:
-                    output += "%s,%s.mcs.anl.gov %s"%(h, h, self.repository.entries[f].data)
-                    syslog(LOG_ERR, "Failed to resolve host %s"%(h))
+                    pass
         self.repository.entries['ssh_known_hosts'].data = output
 
-    def GenerateHostKeys(self,client):
-        keylist = map(lambda x:x%client, ["ssh_host_dsa_key.H_%s","ssh_host_rsa_key.H_%s","ssh_host_key.H_%s"])
+    def GenerateHostKeys(self, client):
+        '''Generate new host keys for client'''
+        keys = ["ssh_host_dsa_key.H_%s",
+                "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
+        keylist = map(lambda x:x % client, keys)
         for hostkey in keylist:
             if 'ssh_host_rsa_key.H_' in hostkey:
                 keytype = 'rsa'
@@ -86,16 +100,11 @@ class sshbase(Generator):
                 keytype = 'rsa1'
 
             if hostkey not in self.repository.entries.keys():
-                system('ssh-keygen -f %s/%s -N "" -t %s -C root@%s'%(self.data,hostkey,keytype,client))
-                rename("%s/%s.pub"%(self.data,hostkey),"%s/"%(self.data)+".".join(hostkey.split('.')[:-1]+['pub']+hostkey.split('.')[-1]))
+                fileloc = "%s/%s" % (self.data, hostkey)
+                system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' % (fileloc, keytype, client))
+                rename("%s.pub"%(fileloc),"%s/" %
+                       (self.data, )+".".join(hostkey.split('.')[:-1]+['pub']+[hostkey.split('.')[-1]]))
+                self.repository.AddEntry(hostkey)
+                self.repository.AddEntry("%s.pub"%(hostkey))
         # call the notifier for global
 
-    def GetProbes(self, metadata):
-        p = Element("probe", name='hostname', interpreter='/bin/sh', source='sshbase')
-        p.text = 'hostname'
-        return [p]
-
-    def AcceptProbeData(self, client, probedata):
-        p = strip(probedata.text)
-        #syslog(LOG_INFO, "Got hostname %s for client %s"%(p, client))
-        
