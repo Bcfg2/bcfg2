@@ -6,6 +6,7 @@ from socket import gethostbyname
 
 from Types import ConfigFile
 from Generator import Generator
+from GeneratorUtils import DirectoryBacked
 
 class sshbase(Generator):
     __name__ = 'sshbase'
@@ -17,50 +18,47 @@ class sshbase(Generator):
                   '/etc/ssh/ssh_host_dsa_key.pub':'build_hk',
                   '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}
 
+    def __setup__(self):
+        self.repository = DirectoryBacked(self.data)
+
     def build_skn(self,name,client):
-        data=file("%s/ssh_known_hosts"%(self.data)).read()
+        filedata = self.repository.entries['ssh_known_hosts'].data
         ip=gethostbyname(client)
-        for hostkey in ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"]:
-            filename="%s/%s"%(self.data,hostkey)%(client)
-            hdata=file(filename).read()
-            data+="%s,%s,%s %s"%(client,"%s.mcs.anl.gov"%(client),ip,hdata)
-        return ConfigFile(name,'root','root','0644',data)
+        keylist = map(lambda x:x%client, ["ssh_host_dsa_key.pub.H_%s","ssh_host_rsa_key.pub.H_%s","ssh_host_key.pub.H_%s"])
+        for hostkey in keylist:
+            filedata += "%s,%s,%s %s"%(client,"%s.mcs.anl.gov"%(client),ip,self.repository.entries[hostkey].data)
+        return ConfigFile(name,'root','root','0644',filedata)
 
     def build_hk(self,name,client):
-        reponame="%s/%s.H_%s"%(self.data,name.split('/')[-1],client)
-        try:
-            stat(reponame)
-        except IOError:
+        filename = "%s.H_%s"%(name.split('/')[-1],client)
+        if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
             self.GenerateKnownHosts()
-        # then we read the data file
-        keydata=file(reponame).read()
-        if "ssh_host_key.H_" in reponame:
+        keydata = self.repository.entries[filename].data
+        if "ssh_host_key.H_" in filename:
             return ConfigFile(name,'root','root','0600',keydata,'base64')
         return ConfigFile(name,'root','root','0600',keydata)
 
     def GenerateKnownHosts(self):
-        output=file("%s/ssh_known_hosts"%(self.__data__),'w')
-        for f in glob("%s/ssh_host_key.pub.H_*"%(self.__data__)) + glob("%s/ssh_host_*sa_key.pub.H_*"%(self.__data__)):
-            host=f.split('_')[-1]
-            data=file(f).read()
-            output.write("%s,%s.mcs.anl.gov,%s %s"%(host,host,gethostbyname(host),data))
-        output.close()
+        output = ''
+        for f in self.repository.entries.keys():
+            if ".pub.H_" in f:
+                hostname = f.split('_')[-1]
+                output += "%s,%s.mcs.anl.gov,%s %s"%(host,host,gethostbyname(host),data)
+        self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self,client):
-        for hostkey in ["ssh_host_dsa_key.H_%s","ssh_host_rsa_key.H_%s","ssh_host_key.H_%s"]:
-            filename="%s/%s"%(self.data,hostkey)%(client)
-            if "ssh_host_rsa_key.H_" in filename:
-                keytype='rsa'
-            elif "ssh_host_dsa_key.H_" in filename:
-                keytype='dsa'
+        keylist = map(lambda x:x%client, ["ssh_host_dsa_key.H_%s","ssh_host_rsa_key.H_%s","ssh_host_key.H_%s"])
+        for hostkey in keylist:
+            if 'ssh_host_rsa_key.H_' in filename:
+                keytype = 'rsa'
+            elif 'ssh_host_dsa_key.H_' in filename:
+                keytype = 'dsa'
             else:
-                keytype='rsa1'
-                
-            try:
-                stat(filename)
-            except:
-                system('ssh-keygen -f %s -N "" -t %s -C root@%s'%(filename,keytype,client))
-                rename("%s.pub"%(filename),".".join(filename.split('.')[:-1]+['pub']+filename.split('.')[-1]))
+                keytype = 'rsa1'
+
+            if hostkey not in self.repository.entries.keys():
+                system('ssh-keygen -f %s/%s -N "" -t %s -C root@%s'%(self.data,hostkey,keytype,client))
+                rename("%s/%s.pub"%(self.data,hostkey),"%s/"%(self.data)+".".join(hostkey.split('.')[:-1]+['pub']+hostkey.split('.')[-1]))
         # call the notifier for global
 
