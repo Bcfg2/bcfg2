@@ -11,7 +11,7 @@ class fs(Generator):
 
     def __init__(self, core, datastore):
         Generator.__init__(self, core, datastore)
-        self.fs = ScopedXMLFile("%s/../common/fs.xml"%(datastore), self.core.fam)
+        self.fs = ScopedXMLFile("%s/../etc/fs.xml"%(datastore), self.core.fam)
         self.__provides__ = self.fs.__provides__
 
         
