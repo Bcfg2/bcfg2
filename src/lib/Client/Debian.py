@@ -28,7 +28,8 @@ class Debian(Toolset):
         system("apt-get -q=2 -y update")
         self.installed = {}
         self.installed_this_run = []
-        self.pkgwork = {'add':[], 'update':[], 'remove':[]}        
+        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
+        self.extra_services = []
         self.Refresh()
 
     def Refresh(self):
@@ -124,12 +125,18 @@ class Debian(Toolset):
         # pkgwork contains all one-way verification data now
         # all data remaining in all is extra packages
         self.pkgwork['remove'] = all.keys()
+        # now for packages
+        allsrv = []
+        [allsrv.append(x[14:]) for x in glob.glob("/etc/rc[12345].d/S*") if x[14:] not in allsrv]
+        csrv = self.cfg.findall(".//Service")
+        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on']
+        self.extra_services = allsrv
         
     def Install(self):
         '''Correct detected misconfigurations'''
         self.CondPrint("verbose", "Installing needed configuration changes")
         cmd = '''apt-get --reinstall -q=2 --force-yes -y install %s'''
-        print "Need to remove:", self.pkgwork['remove']
+        print "Need to remove:", self.pkgwork['remove'], self.extra_services
         self.setup['quick'] = True
 
         self.CondPrint('dryrun', "Packages to update: %s" % (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
