@@ -1,0 +1,4 @@
+debian/bcfg2-install/usr/bin/bcfg2 usr/sbin
+debian/bcfg2-install/usr/lib/python2.3/site-packages/Bcfg2/__init__.py usr/lib/python2.3/site-packages/Bcfg2/__init__.py
+debian/bcfg2-install/usr/lib/python2.3/site-packages/Bcfg2/Client/* usr/lib/python2.3/site-packages/Bcfg2/Client/
+debian/bcfg2-install/usr/share/man/man1/* usr/share/man/man1
