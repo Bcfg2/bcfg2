@@ -11,23 +11,26 @@ class PackageEntry(XMLFileBacked):
     rpm = regcompile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$')
 
     def Index(self):
+        '''Build internal data structures'''
         XMLFileBacked.Index(self)
         self.packages = {}
         for location in self.entries:
             for pkg in location.getchildren():
                 if pkg.attrib.has_key("file"):
-                    m = self.rpm.match(pkg.get('file'))
-                    if not m:
+                    mdata = self.rpm.match(pkg.get('file'))
+                    if not mdata:
                         print "failed to rpm match %s" % (pkg.get('file'))
                         continue
-                    self.packages[m.group('name')] = m.groupdict()
-                    self.packages[m.group('name')]['file'] = pkg.attrib['file']
-                    self.packages[m.group('name')]['uri'] = location.attrib['uri']
-                    self.packages[m.group('name')]['type'] = 'rpm'
+                    pkgname = mdata.group('name')
+                    self.packages[pkgname] = mdata.groupdict()
+                    self.packages[pkgname]['file'] = pkg.attrib['file']
+                    self.packages[pkgname]['uri'] = location.attrib['uri']
+                    self.packages[pkgname]['type'] = 'rpm'
                 else:
                     self.packages[pkg.get('name')] = pkg.attrib
 
 class PackageDir(DirectoryBacked):
+    '''A directory of package files'''
     __child__ = PackageEntry
 
 class Pkgmgr(Generator):
@@ -41,6 +44,7 @@ class Pkgmgr(Generator):
         self.pkgdir = PackageDir(self.data, self.core.fam)
 
     def FindHandler(self, entry):
+        '''Non static mechanism of determining entry provisioning'''
         if entry.tag != 'Package':
             raise KeyError, (entry.tag, entry.get('name'))
         return self.LocatePackage
@@ -48,12 +52,12 @@ class Pkgmgr(Generator):
     def LocatePackage(self, entry, metadata):
         '''Locates a package entry for particular metadata'''
         pkgname = entry.get('name')
-        pl = self.pkgdir["%s.xml" % (metadata.image)]
-        if pl.packages.has_key(pkgname):
-            p = pl.packages[pkgname]
-            if p.get('type', None) == 'rpm':
-                entry.attrib.update({'url':"%s/%s" % (p['uri'], p['file']), 'version':p['version']})
+        pkglist = self.pkgdir["%s.xml" % (metadata.image)]
+        if pkglist.packages.has_key(pkgname):
+            pkg = pkglist.packages[pkgname]
+            if pkg.get('type', None) == 'rpm':
+                entry.attrib.update({'url':"%s/%s" % (pkg['uri'], pkg['file']), 'version':pkg['version']})
             else:
-                entry.attrib.update(p)
+                entry.attrib.update(pkg)
         else:
             raise KeyError, ("Package", pkgname)

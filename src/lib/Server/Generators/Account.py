@@ -38,7 +38,7 @@ class Account(Generator):
         static = self.repository.entries["static.limits.conf"].data
         superusers = self.repository.entries["superusers"].data.split()
         useraccess = self.repository.entries["useraccess"].data
-        users = [x[0] for x in useraccess if x[1] == metadata.hostname]
+        users = [user for (user, host) in useraccess if host == metadata.hostname]
         entry.attrib.upate({'owner':'root', 'group':'root', 'perms':'0600'})
         entry.text = static + "".join(["%s hard maxlogins 1024\n" % x for x in superusers + users])
         if "*" not in users:
@@ -47,11 +47,11 @@ class Account(Generator):
     def gen_root_keys(self, entry, metadata):
         '''Build root authorized keys file based on current ACLs'''
         data = ''
-        su = self.repository.entries['superusers'].data.split()
-        rl = self.repository.entries['rootlike'].data.split()
-        su += [x.split(':')[0] for x in rl if x.split(':')[1] == metadata.hostname]
+        superusers = self.repository.entries['superusers'].data.split()
+        rootlike = self.repository.entries['rootlike'].data.split()
+        superusers += [x.split(':')[0] for x in rootlike if x.split(':')[1] == metadata.hostname]
         data = ''
-        for user in su:
+        for user in superusers:
             if self.ssh.entries.has_key(user):
                 data += self.ssh.entries[user].data
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})

@@ -51,7 +51,7 @@ class SSHbase(Generator):
         client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
         ipaddr = gethostbyname(client)
-        keylist = [x % client for x in self.pubkeys]
+        keylist = [keytmpl % client for keytmpl in self.pubkeys]
         for hostkey in keylist:
             filedata += "%s,%s,%s %s" % (client, "%s.mcs.anl.gov"%(client),
                                          ipaddr, self.repository.entries[hostkey].data)
@@ -80,17 +80,17 @@ class SSHbase(Generator):
         output = ''
         for filename, entry in self.repository.entries.iteritems():
             if ".pub.H_" in filename:
-                h = filename.split('_')[-1]
+                hname = filename.split('_')[-1]
                 try:
-                    ipaddr = gethostbyname(h)
-                    output += "%s,%s.mcs.anl.gov,%s %s" % (h, h, ipaddr, entry.data)
+                    ipaddr = gethostbyname(hname)
+                    output += "%s,%s.mcs.anl.gov,%s %s" % (hname, hname, ipaddr, entry.data)
                 except gaierror:
                     continue
         self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self, client):
         '''Generate new host keys for client'''
-        keylist = [x % client for x in self.hostkeys]
+        keylist = [keytmpl % client for keytmpl in self.hostkeys]
         for hostkey in keylist:
             if 'ssh_host_rsa_key.H_' in hostkey:
                 keytype = 'rsa'
