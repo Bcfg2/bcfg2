@@ -30,6 +30,7 @@ class fam(object):
             self.handles[h.requestID()] = h
         if obj != None:
             self.users[h.requestID()] = obj
+        return h.requestID()
 
     def HandleEvent(self):
         event = self.fm.nextEvent()
@@ -52,12 +53,11 @@ class Core(object):
     def __init__(self, repository, generators):
         self.datastore = repository
         self.fam = fam()
-        self.provides = {'Service':{},'ConfigFile':{},'Packages':{}}
         self.pubspace = {}
         self.generators = []
         for generator in generators:
             g = getattr(__import__(generator),generator)
-            self.generators.append(g(self, self.datastore, self.fam))
+            self.generators.append(g(self, self.datastore))
         # we need to inventory and setup generators
         # Process generator requirements
         for g in self.generators:
@@ -65,9 +65,6 @@ class Core(object):
                 if not self.pubspace.has_key(prq):
                     raise GeneratorError, (g.name, prq)
             g.CompleteSetup()
-            for etype in g.__provides__.keys():
-                for entry in g.__provides__[etype]:
-                    self.provides[etype][entry] = getattr(g,g.__provides__[etype][entry])
 
     def PublishValue(self,owner,key,value):
         if not self.pubspace.has_key(key):
@@ -85,10 +82,19 @@ class Core(object):
             return self.pubspace[key].value
         raise KeyError,key
 
-    def GetConfigFile(self,filename,client):
-        if self.provides['ConfigFile'].has_key(filename):
-            return self.Get('ConfigFile', filename, client)
-        raise KeyError, filename
+    def GetEntry(self, key1, key2):
+        for d in map(lambda x:x.__provides__, self.generators):
+            if d.has_key(key1):
+                if d[key1].has_key(key2):
+                    return d[key1][key2]
+        raise KeyError, (key1, key2)
 
-    def Get(self,type,name,client):
-        return self.provides[type][name](name,client)
+    def GetConfigFile(self,filename,metadata):
+        try:
+            self.Get("ConfigFile", filename, metadata)
+        except:
+            raise KeyError, filename
+
+    def Get(self,type,name,metadata):
+        return self.GetEntry(type, name)(name, metadata)
+
