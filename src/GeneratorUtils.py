@@ -8,6 +8,7 @@ class FileBacked(object):
     
     def __init__(self, name):
         self.name = name
+        self.HandleEvent()
 
     def HandleEvent(self, event=None):
         self.data = file(self.name).read()
@@ -23,6 +24,9 @@ class DirectoryBacked(object):
         self.entries = {}
         self.inventory = False
         fam.AddMonitor(name, self)
+
+    def __getitem__(self, key):
+        return self.entries[key]
 
     def AddEntry(self, name):
         if self.entries.has_key(name):
