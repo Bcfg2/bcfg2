@@ -20,8 +20,9 @@ class TemplateFile(FileBacked):
         self.template.properties = self.properties.properties
         # put in owner permission detection
 
-    def BuildFile(self, entry):
+    def BuildFile(self, entry, metadata):
         '''Build literal file information'''
+        self.metadata = metadata
         try:
             entry.text = str(self.template)
         except:
@@ -58,7 +59,7 @@ class TCheetah(Generator):
 
     def BuildEntry(self, entry, metadata):
         '''Dispatch fetch calls to the correct object'''
-        self.entries[entry.get('name')].BuildFile(entry)
+        self.entries[entry.get('name')].BuildFile(entry, metadata)
 
     def MapName(self, name):
         '''MapName finds the object corresponding to a particular file
