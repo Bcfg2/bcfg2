@@ -34,8 +34,8 @@ class ImageFile(SingleXMLFileBacked):
 class Bundle(XMLFileBacked):
     '''Bundles are configuration specifications (with image/translation abstraction)'''
 
-    def __init__(self, filename, fam):
-        XMLFileBacked.__init__(self, filename, fam)
+    def __init__(self, filename):
+        XMLFileBacked.__init__(self, filename)
         self.all = []
         self.attributes = {}
         self.systems = {}
