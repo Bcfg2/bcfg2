@@ -127,7 +127,7 @@ class Debian(Toolset):
         self.pkgwork['remove'] = all.keys()
         # now for packages
         allsrv = []
-        [allsrv.append(x[14:]) for x in glob.glob("/etc/rc[12345].d/S*") if x[14:] not in allsrv]
+        [allsrv.append(fname[14:]) for fname in glob("/etc/rc[12345].d/S*") if fname[14:] not in allsrv]
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on']
         self.extra_services = allsrv
