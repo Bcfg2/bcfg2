@@ -18,8 +18,8 @@ class Metadata(object):
     def Applies(self, other):
         '''Check if metadata styled object applies to current metadata'''
         if (other.all or (other.image and (self.image == other.image)) or
-            (other.classes and (self.classes == other.classes)) or
-            (other.attributes and (self.attributes == other.attributes)) or
+            (other.classes and (other.classes in self.classes)) or
+            (other.attributes and (other.attributes in self.attributes)) or
             (other.hostname and (self.hostname == other.hostname))):
             return True
         else:
