@@ -19,4 +19,9 @@
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
+  <xsd:complexType name='SymLinkType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='to' use='required'/>
+  </xsd:complexType>
+
 </xsd:schema>
