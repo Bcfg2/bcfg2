@@ -170,6 +170,8 @@ class Toolset(object):
         except (OSError, IOError), e:
             print e
             return False
-        
+
+    def FindConfig(self):
+        pass
         
             
