@@ -1,9 +1,11 @@
 '''This is a baseclass not intended for instantiation'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1.34 $'
 
 from elementtree.ElementTree import XML
 from syslog import syslog, LOG_ERR, LOG_INFO
 from xml.parsers.expat import ExpatError
+from os import stat
+from stat import ST_MTIME
 
 class GeneratorError(Exception):
     '''Generator runtime error used to inform upper layers of internal generator failure'''
@@ -80,15 +82,28 @@ class FileBacked(object):
         object.__init__(self)
         self.data = ''
         self.name = name
-        self.HandleEvent()
+        self.mtime = 0
+        #self.readonce = 0
+        #self.HandleEvent()
 
     def HandleEvent(self, event=None):
         '''Read file upon update'''
+        oldmtime = self.mtime
         try:
-            self.data = file(self.name).read()
-        except IOError:
-            syslog(LOG_ERR, "Failed to read file %s" % (self.name))
-        self.Index()
+            self.mtime = stat(self.name)[ST_MTIME]
+        except OSError:
+            syslog(LOG_ERR, "Failed to stat file %s" % (self.name))
+            
+        if self.mtime > oldmtime:
+            try:
+            #    if self.readonce == 0:
+            #        self.readonce = 1
+            #    else:
+            #        syslog(LOG_INFO, "Updated file %s" % (self.name))
+                self.data = file(self.name).read()
+                self.Index()
+            except IOError:
+                syslog(LOG_ERR, "Failed to read file %s" % (self.name))
 
     def Index(self):
         '''Update local data structures based on current file state'''
