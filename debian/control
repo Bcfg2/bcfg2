@@ -1,5 +1,5 @@
 Source: bcfg2
-Section: unknown
+Section: admin
 Priority: optional
 Maintainer: Narayan Desai <desai@mcs.anl.gov>
 Build-Depends: debhelper (>= 4.0.0)
