@@ -1,6 +1,7 @@
 '''This module implements a package management scheme for all images'''
 __revision__ = '$Revision$'
 
+from copy import deepcopy
 from re import compile as regcompile
 from syslog import syslog, LOG_ERR
 
@@ -17,7 +18,11 @@ class PackageEntry(XMLFileBacked):
         self.packages = {}
         for location in self.entries:
             for pkg in location.getchildren():
-                if pkg.attrib.has_key("file"):
+                if pkg.attrib.has_key("simplefile"):
+                    self.packages[pkg.get('name')] = deepcopy(pkg.attrib)
+                    # most attribs will be set from pkg
+                    self.packages[pkg.get('name')]['uri'] = location.attrib['uri']
+                elif pkg.attrib.has_key("file"):
                     mdata = self.rpm.match(pkg.get('file'))
                     if not mdata:
                         print "failed to rpm match %s" % (pkg.get('file'))
@@ -62,7 +67,7 @@ class Pkgmgr(Generator):
             if pkglist.packages.has_key(pkgname):
                 entry.attrib.update(pkglist.packages[pkgname])
                 return
-        elif not self.pkgdir.has_key("%s.xml" % metadata.image):
+        elif not self.pkgdir.entries.has_key("%s.xml" % metadata.image):
             syslog(LOG_ERR, "Pkgmgr: no package index for image %s" % metadata.image)
             raise GeneratorError, ("Image", metadata.image)
         pkglist = self.pkgdir["%s.xml" % (metadata.image)]
