@@ -19,6 +19,7 @@ def print_success():
 
 def CalcPerms(initial,perms):
     tempperms = initial
+    if len(perms) == 3: perms = '0%s'%(perms)
     (s,u,g,o) = map(int, map(lambda x:perms[x], range(4)))
     if s & 1:
         tempperms |= S_ISVTX
@@ -158,7 +159,7 @@ class Toolset(object):
 
     def VerifySymLink(self, entry):
         try:
-            s = readlink(entry.attrib['from'])
+            s = readlink(entry.attrib['name'])
             if s == entry.attrib['to']:
                 return True
             return False
@@ -167,17 +168,17 @@ class Toolset(object):
 
     def InstallSymLink(self, entry):
         try:
-            fmode = lstat(entry.attrib['from'])[ST_MODE]
+            fmode = lstat(entry.attrib['name'])[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
-                unlink(entry.attrib['from'])
+                unlink(entry.attrib['name'])
             elif S_ISDIR(fmode):
-                system("mv %s/ %s.bak"%(entry.attrib['from'], entry.attrib['from']))
+                system("mv %s/ %s.bak"%(entry.attrib['name'], entry.attrib['name']))
             else:
-                unlink(entry.attrib['from'])
+                unlink(entry.attrib['name'])
         except OSError, e:
             pass
         try:
-            symlink(entry.attrib['to'], entry.attrib['from'])
+            symlink(entry.attrib['to'], entry.attrib['name'])
         except OSError, e:
             return False
 
