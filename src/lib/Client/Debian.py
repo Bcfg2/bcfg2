@@ -56,8 +56,7 @@ class Debian(Toolset):
 
     def InstallService(self, entry):
         '''Install Service for entry'''
-        if self.setup['verbose']:
-            print "Installing Service %s" % (entry.get('name'))
+        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
                 print "Disabling service %s" % (entry.get('name'))
@@ -101,7 +100,7 @@ class Debian(Toolset):
 
     def Inventory(self):
         '''Inventory system status'''
-        print "In Inventory::"
+        self.CondPrint('verbose', "Inventorying system...")
         Toolset.Inventory(self)
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         all = deepcopy(self.installed)
@@ -126,7 +125,7 @@ class Debian(Toolset):
         
     def Install(self):
         '''Correct detected misconfigurations'''
-        print "Installing"
+        self.CondPrint("verbose", "Installing needed configuration changes")
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
         self.setup['quick'] = True
@@ -141,44 +140,54 @@ class Debian(Toolset):
         count = 1
         
         while ((0 < left < old) and (count < 20)):
-            if self.setup['verbose']:
-                print "Starting Pass: %s" % (count)
-                print "%s new, %s update, %s remove" % (len(self.pkgwork['add']),
-                                                        len(self.pkgwork['update']), len(self.pkgwork['remove']))
+            self.CondPrint('verbose', "Starting pass %s" % (count))
+            self.CondPrint("verbose", "%s Entries left" % (len(work)))
+            self.CondPrint('verbose', "%s new, %s update, %s remove" %
+                           (len(self.pkgwork['add']), len(self.pkgwork['update']),
+                            len(self.pkgwork['remove'])))
+                           
             count = count + 1
             old = left
-            packages = [pkg for pkg in work if pkg.tag == 'Package']
 
+            self.CondPrint("verbose", "Installing Non Package entries")
             for nonpkg in [ent for ent in work if ent.tag != 'Package']:
                 self.InstallEntry(nonpkg)
                 if self.states[nonpkg]:
                     work.remove(nonpkg)
-            
-            # try single large install
-            cmdrc = system(cmd % " ".join(["%s=%s" % (pkg.get('name'), pkg.get('version', 'dummy'))
-                                           for pkg in packages]))
 
-            if cmdrc == 0:
-                # set all states to true and flush workqueues
-                for pkg in packages:
-                    self.states[pkg] = True
-                    work.remove(pkg)
-                self.Refresh()
-            else:
-                # do single pass installs
-                system("dpkg --configure --pending")
-                self.Refresh()
-                for pkg in packages:
-                    # handle state tracking updates
-                    if self.VerifyPackage(pkg):
+            packages = [pkg for pkg in work if pkg.tag == 'Package']
+            if packages:
+                # try single large install
+                self.CondPrint("verbose", "Trying single pass package install")
+                cmdrc = system(cmd % " ".join(["%s=%s" % (pkg.get('name'), pkg.get('version', 'dummy'))
+                                               for pkg in packages]))
+
+                if cmdrc == 0:
+                    self.CondPrint('verbose', "Single Pass Succeded")
+                    # set all states to true and flush workqueues
+                    for pkg in packages:
                         self.states[pkg] = True
                         work.remove(pkg)
-                    else:
-                        cmdrc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
-                        if cmdrc == 0:
+                    self.Refresh()
+                else:
+                    self.CondPrint("verbose", "Single Pass Failed")
+                    # do single pass installs
+                    system("dpkg --configure --pending")
+                    self.Refresh()
+                    for pkg in packages:
+                        # handle state tracking updates
+                        if self.VerifyPackage(pkg):
+                            self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
                             self.states[pkg] = True
                             work.remove(pkg)
                         else:
-                            print "Failed to install package %s" % (pkg.get('name'))
+                            self.CondPrint("verbose", "Installing pkg %s version %s" %
+                                           (pkg.get('name'), pkg.get('version')))
+                            cmdrc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
+                            if cmdrc == 0:
+                                self.states[pkg] = True
+                                work.remove(pkg)
+                            else:
+                                self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
 
             left = len(work)
