@@ -88,6 +88,13 @@ if __name__ == '__main__':
         print "got error from server"
         exit(1)
 
+    if setup['bundle']:
+        c = XML("<Configuration version='2.0/>")
+        for child in cfg.getroot().getchildren():
+            if ((child.tag == 'Bundle') and (child.attrib['name'] == setup['bundle'])):
+                c.append(child)
+        cfg = c
+
     client = Debian(cfg, setup)
     # verify state
     client.Inventory()
