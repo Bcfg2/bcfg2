@@ -37,6 +37,10 @@ class BcfgServer(Server):
     def __progress__(self):
         while self.core.fam.fm.pending():
             self.core.fam.HandleEvent()
+        try:
+            self.core.RunCronTasks()
+        except:
+            self.LogFailure("Cron")
         return 0
 
     def GetMetadata(self, client):
