@@ -4,6 +4,7 @@ bcfg \- reconfigure machine based on settings in BCFG2
 .SH SYNOPSIS
 .B bcfg2
 .I [-d] [-v] [-p] [-c cache file] [-f config file] [-q] [-b bundle]
+[-r removal mode]
 .SH DESCRIPTION
 .PP
 .B bcfg2
@@ -32,6 +33,11 @@ system.
 .B \-B run bcfg2 in build mode. Services aren't started, as the system
 may still be in miniroot.
 .TP
+.B \-r removal mode
+.TP
+Remove extra configuration located by two way verification. Removal
+mode is one of all, packages, or services. (Services are currently
+unimplemented under Debian. Nothing is currently supported under redhat)
 .B \-p <profile> assert profile for client.
 .TP
 .B \-i <image> assert image for client.
@@ -39,4 +45,5 @@ may still be in miniroot.
 .BR Bcfg2Server(8),
 .BR Bcfg2Ctl(8)
 .SH "BUGS"
-The code is too beta to list all.
+Two way removal mode is only implemented for packages under
+Debian. All other types are not yet implemented.
