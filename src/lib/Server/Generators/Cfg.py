@@ -53,8 +53,9 @@ class ConfigFileEntry(object):
         self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
         self.paranoid = False
 
-    def read_info(self, filename):
+    def read_info(self):
         '''read in :info metadata'''
+        filename = "%s/:info" % self.path
         for line in open(filename).readlines():
             match = self.info.match(line)
             if not match:
@@ -77,7 +78,7 @@ class ConfigFileEntry(object):
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''
         if name[-5:] == ':info':
-            return self.read_info(name)
+            return self.read_info()
 
         if name.split('/')[-1] == self.path.split('/')[-1]:
             self.basefiles.append(FileEntry(name, True, None, [], [], [], None))
@@ -106,8 +107,8 @@ class ConfigFileEntry(object):
     def HandleEvent(self, event):
         '''Handle FAM updates'''
         action = event.code2str()
-        if event.filename[-5:] == ':info':
-            return self.read_info(event.filename)
+        if event.filename == ':info':
+            return self.read_info()
         for entry in self.basefiles + self.deltas:
             if entry.name.split('/')[-1] == event.filename:
                 if action == 'changed':
@@ -122,7 +123,7 @@ class ConfigFileEntry(object):
                 return
 
         # This code is only reached when an event goes unhandled
-        syslog(LOG_ERR, "Cfg: Event '%s' when unhandled for file '%s'" %(action, event.filename))
+        syslog(LOG_ERR, "Cfg: Event '%s' went unhandled for file '%s'" %(action, event.filename))
 
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
@@ -155,6 +156,7 @@ class Cfg(Generator):
     __name__ = 'Cfg'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    tempfile = regcompile("^.*~$|^.*\.swp")
 
     def __init__(self, core, datastore):
         Generator.__init__(self, core, datastore)
@@ -199,14 +201,15 @@ class Cfg(Generator):
     def HandleEvent(self, event):
         '''Handle FAM updates'''
         action = event.code2str()
+        if self.tempfile.match(event.filename):
+            syslog(LOG_INFO, "Suppressed event for file %s" % event.filename)
+            return
         if event.filename[0] != '/':
             filename = "%s/%s" % (self.famID[event.requestID], event.filename)
         else:
             filename = event.filename
         configfile = filename[len(self.data):-(len(event.filename)+1)]
 
-        if event.filename == ':info':
-            event.filename = filename
         if ((action in ['exists', 'created']) and (filename != self.data)):
             self.AddEntry(filename, event)
         elif action == 'changed':
