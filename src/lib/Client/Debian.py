@@ -92,6 +92,10 @@ class Debian(Toolset):
             system("apt-get --reinstall -q=2 -y install %s=%s"%(e.attrib['name'],e.attrib['version']))
 
     def InstallPackage(self, entry):
+        if not entry.attrib.has_key('version'):
+            print "Package entry for %s is malformed"%(entry.attrib['name'])
+            return False
+        
         if self.setup['dryrun'] or self.setup['verbose']:
             print "Installing package %s %s"%(entry.attrib['name'], entry.attrib['version'])
 
