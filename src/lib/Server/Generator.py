@@ -131,7 +131,8 @@ class DirectoryBacked(object):
         elif action == 'created':
             self.AddEntry(event.filename)
         elif action == 'changed':
-            self.entries[event.filename].HandleEvent(event)
+            if self.entries.has_key(event.filename):
+                self.entries[event.filename].HandleEvent(event)
         elif action == 'deleted':
             if self.entries.has_key(event.filename):
                 del self.entries[event.filename]
