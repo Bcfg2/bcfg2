@@ -102,7 +102,7 @@ class Core(object):
             try:
                 self.Bind(entry, metadata)
             except KeyError, k:
-                syslog(LOG_ERR, "Unable to locate %s %s"%k)
+                syslog(LOG_ERR, "Unable to locate %s"%k)
 
     def Bind(self, entry, metadata):
         g = [x for x in self.generators if x.__provides__.get(entry.tag, {}).has_key(entry.attrib['name'])]
