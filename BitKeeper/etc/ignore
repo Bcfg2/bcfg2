@@ -3,3 +3,14 @@ PENDING/*
 doc/auto/*el
 *pyc
 *pyo
+Makefile.in
+Makefile
+aclocal.m4
+config.log
+config.status
+configure
+*/Makefile
+install-sh
+missing
+mkinstalldirs
+py-compile
