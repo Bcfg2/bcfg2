@@ -12,7 +12,7 @@ from sss.ssslib import comm_lib
 from Debian import Debian
 
 def RunProbe(probe):
-    ret = Element("probe-data", name=probe.attrib['name'])
+    ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
     script = open(mktemp(), 'w+')
     script.write("#!%s\n"%(probe.attrib.get('interpreter', '/bin/sh')))
     script.write(probe.text)
@@ -32,9 +32,11 @@ def dgetopt(arglist, opt, vopt):
     except GetoptError, g:
         print g
         print "bcfg2 Usage:"
-        for (k,v) in opt.iteritems() + vopt.iteritems():
+        for (k,v) in opt.iteritems():
             print " -%s %s"%(k,v)
-            exit(1)
+        for (k,v) in  vopt.iteritems():
+            print " -%s <%s>"%(k,v)
+        exit(1)
     for (gopt,garg) in o:
         option = gopt[1:]
         if opt.has_key(option):
@@ -116,6 +118,15 @@ if __name__ == '__main__':
     for entry in [k for (k,v) in entrystate.iteritems() if not v]:
         method = getattr(toolset, "Install%s"%(entry.tag))
         entrystate[entry] = method(entry)
+
+    for structure in structurestate.keys():
+        if structurestate[structure]:
+            continue
+        for entry in structure.getchildren():
+            entrystate[entry] = getattr(toolset, "Verify%s"%(entry.tag))
+        states = map(lambda x:entrystate[x], structure.getchildren())
+        if False not in states:
+            structurestate[structure] = True
 
     #print entrystate
     print "good:",
