@@ -19,7 +19,7 @@ class sshbase(Generator):
                                   '/etc/ssh/ssh_host_rsa_key.pub':'build_hk'}}
 
     def __setup__(self):
-        self.repository = DirectoryBacked(self.data)
+        self.repository = DirectoryBacked(self.data, self.fam)
 
     def build_skn(self,name,client):
         filedata = self.repository.entries['ssh_known_hosts'].data
@@ -43,16 +43,16 @@ class sshbase(Generator):
         output = ''
         for f in self.repository.entries.keys():
             if ".pub.H_" in f:
-                hostname = f.split('_')[-1]
-                output += "%s,%s.mcs.anl.gov,%s %s"%(host,host,gethostbyname(host),data)
+                h = f.split('_')[-1]
+                output += "%s,%s.mcs.anl.gov,%s %s"%(h, h, gethostbyname(h), self.repository.entries[f].data)
         self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self,client):
         keylist = map(lambda x:x%client, ["ssh_host_dsa_key.H_%s","ssh_host_rsa_key.H_%s","ssh_host_key.H_%s"])
         for hostkey in keylist:
-            if 'ssh_host_rsa_key.H_' in filename:
+            if 'ssh_host_rsa_key.H_' in hostkey:
                 keytype = 'rsa'
-            elif 'ssh_host_dsa_key.H_' in filename:
+            elif 'ssh_host_dsa_key.H_' in hostkey:
                 keytype = 'dsa'
             else:
                 keytype = 'rsa1'
