@@ -12,7 +12,7 @@ class Structure(object):
     def __init__(self, core, datastore):
         '''Common structure setup'''
         object.__init__(self)
-        self.data = "%s/%s"%(datastore,self.__name__)
+        self.data = "%s/%s" % (datastore, self.__name__)
         self.core = core
         self.__setup__()
 
