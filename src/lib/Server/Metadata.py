@@ -34,11 +34,21 @@ class Metadata(object):
             return False
         return True
 
+    def __str__(self):
+        return "Image:%s, classes:%s, b:%s, attr:%s, host:%s" % (self.image, self.classes,
+                                                                 self.bundles, self.attributes, self.hostname)
+
     def __cmp__(self, other):
         fields = ['image', 'classes', 'bundles', 'attributes', 'hostname']
-        sum1 = [x for x in range(len(fields)) if getattr(self, fields[x])][0]
-        sum2 = [x for x in range(len(fields)) if getattr(other, fields[x])][0]
-        return sum1 < sum2
+        try:
+            most1 = [x for x in range(len(fields)) if getattr(self, fields[x])][0]
+        except:
+            most1 = 0
+        try:
+            most2 = [x for x in range(len(fields)) if getattr(other, fields[x])][0]
+        except:
+            most2 = 0
+        return most1 < most2
 
 class Profile(object):
     def __init__(self, xml):
