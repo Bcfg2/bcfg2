@@ -20,7 +20,11 @@ class Generator(object):
     def __init__(self, core):
         self.core=core
         self.data="%s/%s"%(self.__datastore__,self.__name__)
-        self.PublishAll()
+        self.__setup__()
+
+    def __setup__(self):
+        '''This method must be overloaded during subclassing.
+        All module specific setup, including all publication, occurs here.'''
 
     def CompleteSetup(self):
         self.ReadAll()
@@ -39,9 +43,6 @@ class Generator(object):
 
     def Publish(self,key,value):
         self.core.Publish(self.__name__,key,value)
-
-    def PublishAll(self):
-        pass
 
     def Read(self,key):
         self.core.ReadValue(key)
