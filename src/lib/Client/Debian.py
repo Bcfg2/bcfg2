@@ -98,12 +98,37 @@ class Debian(Toolset):
         if self.setup['dryrun']:
             return False
         else:
-            # implement package installation here
-            rc = system("apt-get --reinstall -q=2 -y install %s=%s"%(entry.attrib['name'],entry.attrib['version']))
-            if rc == 0:
-                return True
-            else:
-                return False
+            # queue package for bulk installation
+            self.pkgtodo.append(entry)
+            return False
+
+    def Commit(self, entrystate):
+        cmd = "apt-get --reinstall -q=2 -y install %s"
+        # try single large install
+        rc = system(join(map(lambda x:"%s-%s"%(x.attrib['name'], x.attrib['version']), self.pkgtodo)))
+        if rc == 0:
+            # set installed to true for pkgtodo
+            for pkg in self.pkgtodo:
+                entrystate[x]=True
+            self.pkgtodo = []
+        else:
+            # do single pass installs
+            system("dpkg --configure --pending")
+            self.Refresh()
+            for pkg in self.pkgtodo:
+                if self.VerifyPackage(pkg):
+                    entrystate[pkg] = True
+                    self.pkgtodo.remove(pkg)
+            oldlen = len(self.pkgtodo) + 1
+            while (len(self.pkgtodo) < oldlen):
+                oldlen = len(self.pkgtodo)
+                for pkg in self.pkgtodo:
+                    rc = system(cmd%(pkg.attrib['name'], pkg.attrib['user']))
+                    if rc == 0:
+                        entrystate[pkg] = True
+                        self.pkgtodo.remove(pkg)
+                    else:
+                        print "Failed to install package %s"%(pkg.attrib['name'])
 
     def GetInstalledConfigs(self):
         # returns a list of installed config files
@@ -118,4 +143,3 @@ class Debian(Toolset):
             e.append(Element('Package', name=pkg, version=vers))
         # need to add config file two way later
         return e
-                    
