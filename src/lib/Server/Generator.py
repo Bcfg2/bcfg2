@@ -41,7 +41,6 @@ class Generator(object):
     def CompleteSetup(self):
         '''Read any external required publication data'''
         self.ReadAll()
-        print "%s loaded" % (self.__version__)
 
     def Cron(self):
         '''Cron defines periodic tasks to maintain data coherence'''
