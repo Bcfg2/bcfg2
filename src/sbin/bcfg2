@@ -155,7 +155,7 @@ if __name__ == '__main__':
     if not setup['file']:
         # upload statistics
         m = Element("upload-statistics")
-        stats = client.GenerateStats()
+        stats = client.GenerateStats(__revision__)
         m.append(stats)
 
         comm.SendMessage(h, tostring(m))
