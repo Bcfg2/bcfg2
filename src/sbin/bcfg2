@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+
+'''Bcfg2 Client'''
+__revision__ = '$Revision$'
+
 from getopt import getopt, GetoptError
 from os import popen, chmod, unlink
-from sys import argv, exit
-from string import join
+from sys import argv, exit as sysexit
 from tempfile import mktemp
 
 from elementtree.ElementTree import Element, XML, tostring
@@ -12,6 +15,7 @@ from sss.ssslib import comm_lib
 from Bcfg2.Client.Debian import Debian
 
 def RunProbe(probe):
+    '''Execute probe'''
     ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
     script = open(mktemp(), 'w+')
     script.write("#!%s\n"%(probe.attrib.get('interpreter', '/bin/sh')))
@@ -23,34 +27,34 @@ def RunProbe(probe):
     return ret
 
 def dgetopt(arglist, opt, vopt):
-    r = {}
-    for o in opt.values() + vopt.values():
-        r[o] = False
-    gstr = join(opt.keys()) + join([x+':' for x in vopt.keys()])
+    '''parse options into a dictionary'''
+    ret = {}
+    for optname in opt.values() + vopt.values():
+        ret[optname] = False
+    gstr = "".join(opt.keys()) + "".join([xy+':' for xy in vopt.keys()])
     try:
         (o, a) = getopt(arglist, gstr)
-    except GetoptError, g:
-        print g
+    except GetoptError, gerr:
+        print gerr
         print "bcfg2 Usage:"
-        for (k,v) in opt.iteritems():
-            print " -%s %s"%(k,v)
-        for (k,v) in  vopt.iteritems():
-            print " -%s <%s>"%(k,v)
-        exit(1)
-    for (gopt,garg) in o:
+        for arg in opt.iteritems():
+            print " -%s %s" % arg
+        for arg in  vopt.iteritems():
+            print " -%s <%s>" % arg
+        sysexit(1)
+    for (gopt, garg) in o:
         option = gopt[1:]
         if opt.has_key(option):
-            r[opt[option]] = True
+            ret[opt[option]] = True
         else:
-            r[vopt[option]] = garg
-    return r
+            ret[vopt[option]] = garg
+    return ret
 
 if __name__ == '__main__':
     # parse command line options
-    options =  {'v':'verbose','q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'p':'paranoid'}
+    options =  {'v':'verbose', 'q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'p':'paranoid'}
     doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image'}
     setup = dgetopt(argv[1:], options, doptions)
-    print setup
 
     # connect to bcfg2d
     comm = comm_lib()
@@ -62,31 +66,30 @@ if __name__ == '__main__':
     #if setup['verbose']: print data
     probes = XML(data)
     # execute probes
-    probedata = map(RunProbe, probes.findall(".//probe"))
+    cpd = Element("probe-data")
+    [cpd.append(RunProbe(x)) for x in probes.findall(".//probe")]
     
     # upload probe responses
-    cpd = Element("probe-data")
-    map(lambda x:cpd.append(x), probedata)
-
-    if setup['verbose'] : print tostring(cpd)
     comm.SendMessage(h, tostring(cpd))
     r = comm.RecvMessage(h)
     msg = Element("get-config")
-    if setup['profile']: msg.attrib['profile'] = setup['profile']
-    if setup['image']: msg.attrib['image'] = setup['image']
+    if setup['profile']:
+        msg.attrib['profile'] = setup['profile']
+    if setup['image']:
+        msg.attrib['image'] = setup['image']
     # get config
     comm.SendMessage(h, tostring(msg))
     r = comm.RecvMessage(h)
     if setup['cache']:
         try:
             open(setup['cache'], 'w').write(r)
-        except:
-            print "failed to write config cache file %s"%(setup['cache'])
+        except IOError:
+            print "failed to write config cache file %s" % (setup['cache'])
 
     cfg = XML(r)
     if cfg.tag == 'error':
         print "got error from server"
-        exit(1)
+        sysexit(1)
 
     if setup['bundle']:
         c = XML("<Configuration version='2.0/>")
@@ -99,17 +102,23 @@ if __name__ == '__main__':
     # verify state
     client.Inventory()
 
-    # summarize current state
-    print "--> %s of %s config elements correct"%(client.states.values().count(True), len(client.states.values()))
+    correct = client.states.values().count(True)
+    total = len(client.states.values())
 
-    # install incorrect aspects of configuration
-    client.Install()
+    if correct < total:
+        # summarize current state
+        client.CondPrint('verbose', "--> %s of %s config elements correct" % (correct, total))
 
-    print "--> %s of %s config elements correct"%(client.states.values().count(True), len(client.states.values()))
-    print "bad:"
-    for k,v in client.states.iteritems():
-        if not v:
-            print "%s:%s"%(k.tag, k.attrib['name'])
+        # install incorrect aspects of configuration
+        client.Install()
+
+        client.CondPrint('verbose', "--> %s of %s config elements correct"%(client.states.values().count(True), total))
+        print "Failing Entries:"
+        for k, v in client.states.iteritems():
+            if not v:
+                print "%s:%s" % (k.tag, k.attrib['name'])
+    else:
+        client.CondPrint("verbose", "All entries correct")
 
     # upload statistics
     m = Element("upload-statistics")
