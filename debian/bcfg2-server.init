@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Bcfg2Server - Bcfg2 configuration daemon
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 server for configuration requests
+# 
+
+case "$1" in
+  start)
+    echo -n "Starting Bcfg2Server: "
+    /usr/sbin/Bcfg2Server -D /var/run/Bcfg2Server.pid
+    echo "Bcfg2Server"
+    ;;
+  stop)
+    echo -n "Stopping Bcfg2Server: "
+    kill -INT `cat /var/run/Bcfg2Server.pid`
+    echo done
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: bcfgd {start|stop|restart|force-reload}"
+    exit 1
+esac
+
+exit 0
