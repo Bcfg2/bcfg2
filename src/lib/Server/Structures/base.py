@@ -37,5 +37,5 @@ class base(Structure):
     '''base creates independent clauses based on client metadata'''
     def __init__(self, core, datastore):
         Structure.__init__(self, core, datastore)
-        self.base = ImageFile("%s/common/base.xml"%(datastore), self.core.fam)
+        self.base = BaseFile("%s/common/base.xml"%(datastore), self.core.fam)
         self.Construct = self.base.Construct
