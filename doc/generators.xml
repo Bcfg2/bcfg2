@@ -177,5 +177,54 @@
       written that executed logic in another language, but this
       functionality is currently not implemented. 
     </para>
+
+    <example>
+      <title>Simple Generator</title>
+      <programlisting>
+	from socket import gethostbyname, gaierror
+	from syslog import syslog, LOG_ERR
+	from Bcfg2.Server.Generator import Generator, DirectoryBacked, SingleXMLFileBacked, GeneratorError
+
+class Chiba(Generator):
+    '''the Chiba generator builds the following files:
+      -> /etc/network/interfaces'''
+
+    __name__ = 'Chiba'
+    __version__ = '$Id: Chiba.py 1.12 05/01/15 11:05:02-06:00 desai@topaz.mcs.anl.gov $'
+    __author__ = 'bcfg-dev@mcs.anl.gov'
+    __provides__ = {'ConfigFile':{}}
+
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
+        self.repo = DirectoryBacked(self.data, self.core.fam)
+        self.__provides__['ConfigFile']['/etc/network/interfaces'] = self.build_interfaces
+
+    def build_interfaces(self, entry, metadata):
+        '''build network configs for clients'''
+        entry.attrib['owner'] = 'root'
+        entry.attrib['group'] = 'root'
+        entry.attrib['perms'] = '0644'
+        try:
+            myriaddr = gethostbyname("%s-myr" % metadata.hostname)
+        except gaierror:
+            syslog(LOG_ERR, "Failed to resolve %s-myr"% metadata.hostname)
+            raise GeneratorError, ("%s-myr" % metadata.hostname, 'lookup')
+        entry.text = self.repo.entries['interfaces-template'].data % myriaddr
+      </programlisting>
+    </example>
+
+    <para>
+      Generators must subclass the Bcfg2.Server.Generator.Generator
+      class. Generator constructors must take two arguments: an
+      instance of a Bcfg2.Core object, and a location for a
+      datastore. __name__, __version__, __author__, and __provides__
+      are used to describe what the generator is and how it
+      works. __provides__ describes a set of configuration entries
+      that can be provided by the generator, and a set of handlers
+      that can bind in the proper data. build_interfaces is an example
+      of a handler. It gets client metadata and an configuration entry
+      passed in, and binds data into entry as appropriate. 
+    </para>
+
   </section>
 </chapter>
