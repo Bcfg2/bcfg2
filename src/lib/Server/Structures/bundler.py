@@ -41,7 +41,7 @@ class Bundle(XMLFileBacked):
         del self.data
 
     def BuildBundle(self, metadata, system):
-        bundlename = self.name[:-4]
+        bundlename = self.name.split('/')[-1]
         b = Element('Bundle', name=bundlename)
         for entry in self.all + self.systems.get(system, []):
             b.append(deepcopy(entry))
