@@ -25,7 +25,7 @@ class FileEntry(FileBacked):
 
 class ConfigFileEntry(object):
     mx = compile("(^(?P<filename>.*)(\.((B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|(I(?P<iprio>\d+)_(?P<image>\S+))|(I(?P<cprio>\d+)_(?P<class>\S+))|(H_(?P<hostname>\S+)))(\.(?P<op>cat|udiff))?)?$)")
-    info = compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)$')
+    info = compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|(?P<paranoid>paranoid(\s)*)$')
     
     def __init__(self, path):
         self.path = path
@@ -35,6 +35,7 @@ class ConfigFileEntry(object):
         self.owner = 'root'
         self.group = 'root'
         self.perms = '644'
+        self.paranoid = False
 
     def GetInfo(self, filename):
         for line in open(filename).readlines():
@@ -53,6 +54,8 @@ class ConfigFileEntry(object):
                     self.perms=d['perms']
                     if len(self.perms) == 3:
                         self.perms="0%s"%(self.perms)
+                elif d['paranoid']:
+                    self.paranoid = True
 
     def AddEntry(self, name):
         if name[-5:] == ':info':
@@ -114,6 +117,8 @@ class ConfigFileEntry(object):
             pass
         # apply diffs, etc
         entry.attrib.update({'owner':self.owner, 'group':self.group, 'perms':self.perms, 'encoding':self.encoding})
+        if entry.paranoid:
+            entry.attrib['paranoid'] = 'true'
         entry.text = filedata
 
 class ConfigFileRepository(DirectoryBacked):
