@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+'''This is the Structure base class'''
 __revision__ = '$Revision$'
 
 class Structure(object):
@@ -9,6 +10,7 @@ class Structure(object):
     __name__ = 'example'
 
     def __init__(self, core, datastore):
+        '''Common structure setup'''
         self.data = "%s/%s"%(datastore,self.__name__)
         self.core = core
         self.__setup__()
@@ -16,7 +18,7 @@ class Structure(object):
     def __setup__(self):
         pass
 
-    def Construct(self, metadata, subset):
+    def Construct(self, metadata):
         '''Returns a list of configuration structure chunks for client'''
         return []
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# $Id: $
+
+'''This provides bundle clauses with translation functionality'''
+__revision__ = '$Revision$'
 
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
@@ -7,18 +9,20 @@ from syslog import LOG_ERR, syslog
 from Bcfg2.Server.Generator import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 from Bcfg2.Server.Structure import Structure
 
-from elementtree.ElementTree import Element, XML, tostring
+from elementtree.ElementTree import Element, XML
 
 class ImageFile(SingleXMLFileBacked):
+    '''This file contains image -> system mappings'''
     def Index(self):
+        '''Build data structures out of the data'''
         a = XML(self.data)
         self.attr = a.attrib
         self.entries = a.getchildren()
         self.images = {}
         for child in self.entries:
-            (name, package, service) = map(lambda x:child.attrib.get(x), ['name', 'package', 'service'])
+            [name, pkg, service] = [child.get(x) for x in ['name', 'package', 'service']]
             for grandchild in child.getchildren():
-                self.images[grandchild.attrib['name']] = (name, package, service)
+                self.images[grandchild.get('name')] = (name, pkg, service)
 
 class Bundle(XMLFileBacked):
     def Index(self):
@@ -31,12 +35,12 @@ class Bundle(XMLFileBacked):
             if entry.tag == 'System':
                 self.systems[entry.attrib['name']] = entry.getchildren()
             elif entry.tag == 'Attribute':
-                self.attributes["%s.%s"%(entry.attrib['scope'], entry.attrib['name'])] = entry.getchildren()
+                self.attributes["%s.%s" % (entry.get('scope'), entry.get('name'))] = entry.getchildren()
             else:
                 self.all.append(entry)
         del self.data
 
-    def BuildBundle(self,metadata, system):
+    def BuildBundle(self, metadata, system):
         bundlename = self.name[:-4]
         b = Element('Bundle', name=bundlename)
         for entry in self.all + self.systems.get(system, []):
@@ -68,7 +72,7 @@ class bundler(Structure):
                 syslog(LOG_ERR, "Client %s requested nonexistent bundle %s"%(metadata.hostname, bundlename))
                 continue
 
-            bundle = self.bundles.entries["%s.xml"%(bundlename)].BuildBundle(metadata, system)
+            bundle = self.bundles.entries["%s.xml" % (bundlename)].BuildBundle(metadata, system)
             # now we need to populate service/package types
             for entry in bundle.getchildren():
                 if entry.tag == 'Package':
