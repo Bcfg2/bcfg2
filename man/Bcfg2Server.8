@@ -1,0 +1,26 @@
+.TH "Bcfg2Server" 1
+.SH NAME
+Bcfg2Server \- Server for client configuration specifications
+.SH SYNOPSIS
+.B Bcfg2Server
+.I [-D <pid file> ] [-d] [-v] [-C <Client>]
+.SH DESCRIPTION
+.PP
+.B Bcfg2Server
+This daemon serves configurations to clients based on the data in its 
+repository. 
+.SH OPTIONS
+.TP
+.B \-d run bcfg2 in debug mode.
+.TP 
+.B \-v run bcfg2 in verbose mode.
+.TP 
+.B \-C Statically set client. Useful for debugging problems with
+particular client's configs.
+.TP
+.B \-D Daemonize. Leave the pid in the specified pid file.
+.SH "SEE ALSO"
+.BR bcfg(1),
+.BR ValidateBcfg2Repo(8)
+.SH "BUGS"
+None currently known
