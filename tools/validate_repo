@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+from glob import glob
+from sys import argv, exit
+from validate import validate, ValidationException
+
+if __name__ == '__main__':
+    try:
+        repo = argv[1]
+        schemadir = argv[2]
+    except:
+        print "Usage: validate_repo <repo directory> <schema directory>"
+        exit(1)
+
+    # add more validation as more schemas get written
+    filesets = {'metadata':("%s/etc/metadata.xml", "%s/metadata.xsd"),
+                'bundle':("%s/bundler/*.xml", "%s/bundle.xsd"),
+                'pkglist':("%s/pkgmgr/*.xml", "%s/pkglist.xsd") }
+
+    for k, (spec, schema) in filesets.iteritems():
+        for filename in glob(spec%(repo)):
+            try:
+                validate(open(filename).read(), schema%(schemadir))
+                print "%s checks out"%(filename)
+            except ValidationException, v:
+                print "file %s fails to verify:\n%s"%(filename, v)
+            except IOError:
+                print "failed to open file %s"%(filename)
