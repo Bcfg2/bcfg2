@@ -94,8 +94,9 @@ class Debian(Toolset):
     def InstallPackage(self, entry):
         if self.setup['dryrun'] or self.setup['verbose']:
             print "Installing package %s %s"%(entry.attrib['name'], entry.attrib['version'])
-            if self.setup['dryrun']:
-                return False
+
+        if self.setup['dryrun']:
+            return False
         else:
             # implement package installation here
             rc = system("apt-get --reinstall -q=2 -y install %s=%s"%(entry.attrib['name'],entry.attrib['version']))
