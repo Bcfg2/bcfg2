@@ -39,24 +39,20 @@ class Account(Generator):
         '''Build limits entries based on current ACLs'''
         entry.text = self.repository.entries["static.limits.conf"].data
         superusers = self.repository.entries["superusers"].data.split()
-        useraccess = self.repository.entries["useraccess"].data
+        useraccess = [line.split(':') for line in self.repository.entries["useraccess"].data.split()]
         users = [user for (user, host) in useraccess if host == metadata.hostname]
-        entry.attrib.upate({'owner':'root', 'group':'root', 'perms':'0600'})
+        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
         entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in superusers + users])
         if "*" not in users:
             entry.text += "* hard maxlogins 0\n"
 
     def gen_root_keys_cb(self, entry, metadata):
         '''Build root authorized keys file based on current ACLs'''
-        data = ''
+        entry.text = ''
         superusers = self.repository.entries['superusers'].data.split()
         rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
         superusers += [user for (user, host) in rootlike if host == metadata.hostname]
-        data = ''
         for user in superusers:
-            if self.repository.entries.has_key("%s.key", user):
-                data += self.repository.entries["%s.key" % user].data
-            else:
-                self.LogError("Unable to locate key for user %s" % user)
+            if self.repository.entries.has_key("%s.key" % user):
+                entry.text += self.repository.entries["%s.key" % user].data
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
-        entry.text = data
