@@ -2,7 +2,9 @@
 # $Id: $
 
 from os import popen, system
+from popen2 import Popen4
 from re import compile
+from string import join
 
 from Toolset import Toolset
 
@@ -16,13 +18,11 @@ class Redhat(Toolset):
     onre=compile(".*on.*")
     offre=compile(".*off.*")
     xre=compile("(?P<name>\S+)\s+(?P<status>\S+)")
+    rpmcmd = "rpm --oldpackage --replacepkgs --quiet -U %s"
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.pkgtodo = []
-
-    def VerifyPackage(self, entry):
-        return False
 
     def VerifyService(self, entry):
         ckline = popen("/sbin/chkconfig --list %s"%entry.attrib['name']).readlines()
@@ -68,11 +68,50 @@ class Redhat(Toolset):
         else:
             return False
 
-    def InstallPackage(self, entry):
+    def VerifyPackage(self, entry, modlist = []):
+        instp=Popen4("rpm -qi %s-%s"%(entry.attrib['name'],entry.attrib['version']))
+        istat=instp.wait()/256
+        if istat == 0:
+            if entry.attrib.get('verify', 'true') == 'true':
+                if self.setup['quick']:
+                    return True
+                verp=Popen4("rpm --verify --nomd5 -q %s-%s"%(entry.attrib['name'],entry.attrib['version']), bufsize=16384)
+                odata=''
+                vstat=verp.poll()
+                while vstat == -1:
+                    odata+=verp.fromchild.read()
+                    vstat=verp.poll() >> 8
+                output=filter(lambda x:x,odata.split('\n'))
+                if vstat == 0:
+                    return True
+                else:
+                    if len([x for x in output if x.split()[-1] not in modlist]) == 0:
+                        return True
         return False
 
-    def Commit(self):
-        # install packages from pkgtodo
-        
-        self.pkgtodo = []
+    def InstallPackage(self, entry):
+        self.pkgtodo.append(entry)
+        return False
+
+    def Commit(self, entrystate):
+        # try single install
+        rc = system(self.rpmcmd%(join(map(lambda x:x.attrib['url'], self.pkgtodo))))
+        if rc == 0:
+            # set state == True for all just-installed packages
+            map(lambda x:entrystate[x] = True, self.pkgtodo)
+            self.pkgtodo = []
+        else:
+            # fall back to single package installs
+            oldlen = len(self.pkgtodo) + 1
+            while oldlen > len(self.pkgtodo):
+                oldlen = len(self.pkgtodo)
+                for entry in self.pkgtodo:
+                    rc = system(self.rpmcmd%(entry.attrib['url']))
+                    if rc == 0:
+                        entrystate[entry] = True
+                        self.pkgtodo.remove(entry)
+                    else:
+                        if self.setup['verbose']:
+                            print "package %s-%s failed to install"%(entry.attrib['name'], entry.attrib['version'])
+
 
