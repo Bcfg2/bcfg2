@@ -1,0 +1,52 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      metadata schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+      $Id: $
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:complexType name='ClientType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Class'>
+	<xsd:complexType>
+	  <xsd:attribute type='xsd:string' name='name' use='required'/>
+	</xsd:complexType>
+      </xsd:element>
+      <xsd:element name='Attribute'>
+	<xsd:complexType>
+	  <xsd:attribute name='name' type='xsd:string'
+	    use='required'/>
+	  <xsd:attribute name='scope' type='xsd:string'
+	    use='required'/>
+	</xsd:complexType>
+      </xsd:element>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='image' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='ClassType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Bundle'>
+	<xsd:complexType>
+	  <xsd:attribute type='xsd:string' name='name' use='required'/>
+	</xsd:complexType>
+      </xsd:element>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:element name='Metadata'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+	<xsd:element name='Client' type='ClientType'/>
+	<xsd:element name='Class' type='ClassType'/>
+      </xsd:choice>
+      <xsd:attribute name='version' type='xsd:string'/>
+    </xsd:complexType>
+  </xsd:element>
+
+</xsd:schema>
