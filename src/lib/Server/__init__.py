@@ -1,4 +1,6 @@
 # $Id: $
+'''This is the set of modules for Bcfg2.Server'''
 
-__all__ = ["Core", "Generator", "Metadata", "Types", "Generators", "Structures"] 
+__revision__ = '$Revision$'
+__all__ = ["Core", "Generator", "Metadata", "Generators", "Structures"] 
 
