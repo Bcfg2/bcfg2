@@ -37,18 +37,20 @@ class FileEntry(FileBacked):
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    specific = regcompile('(.*/)(?P<filename>[\w.]+)\.((H_(?P<hostname>\S+))|(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|(I(?P<iprio>\d+)_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))(\.(?P<op>cat|udiff))?$')
-    info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|(?P<paranoid>paranoid(\s)*)$')
+    specific = regcompile('(.*/)(?P<filename>[\w.]+)\.((H_(?P<hostname>\S+))|' +
+                          '(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|' +
+                          '(I(?P<iprio>\d+)_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))' +
+                          '(\.(?P<op>cat|udiff))?$')
+    info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
+                      'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
+                      '(?P<paranoid>paranoid(\s)*)$')
     
     def __init__(self, path):
         object.__init__(self)
         self.path = path
         self.basefiles = []
         self.deltas = []
-        self.encoding = 'ascii'
-        self.owner = 'root'
-        self.group = 'root'
-        self.perms = '0644'
+        self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
         self.paranoid = False
 
     def read_info(self, filename):
@@ -60,15 +62,15 @@ class ConfigFileEntry(object):
             else:
                 mgd = match.groupdict()
                 if mgd['owner']:
-                    self.owner = mgd['owner']
+                    self.metadata['owner'] = mgd['owner']
                 elif mgd['group']:
-                    self.group = mgd['group']
+                    self.metadata['group'] = mgd['group']
                 elif mgd['encoding']:
-                    self.encoding = mgd['encoding']
+                    self.metadata['encoding'] = mgd['encoding']
                 elif mgd['perms']:
-                    self.perms = mgd['perms']
-                    if len(self.perms) == 3:
-                        self.perms = "0%s" % (self.perms)
+                    self.metadata['perms'] = mgd['perms']
+                    if len(self.metadata['perms']) == 3:
+                        self.metadata['perms'] = "0%s" % (self.metadata['perms'])
                 elif mgd['paranoid']:
                     self.paranoid = True
 
@@ -83,7 +85,7 @@ class ConfigFileEntry(object):
 
         specmatch = self.specific.match(name)
         if specmatch == None:
-            syslog(LOG_ERR, "Failed to match file %s" % (name))
+            syslog(LOG_ERR, "Cfg: Failed to match file %s" % (name))
             return
 
         data = {}
@@ -109,7 +111,7 @@ class ConfigFileEntry(object):
         for entry in self.basefiles + self.deltas:
             if entry.name.split('/')[-1] == event.filename:
                 if action == 'changed':
-                    syslog(LOG_INFO, "File %s changed" % event.filename)
+                    syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
                     entry.HandleEvent(event)
                 elif action == 'deleted':
                     [flist.remove(entry) for flist in [self.basefiles, self.deltas] if entry in flist]
@@ -124,7 +126,7 @@ class ConfigFileEntry(object):
         try:
             basefile = [bfile for bfile in self.basefiles if metadata.Applies(bfile)][-1]
         except IndexError:
-            syslog(LOG_ERR, "Failed to locate basefile for %s" % name)
+            syslog(LOG_ERR, "Cfg: Failed to locate basefile for %s" % name)
             raise GeneratorError, ('basefile', name)
         filedata += basefile.data
 
@@ -134,11 +136,10 @@ class ConfigFileEntry(object):
         #for delta in deltas:
         #    pass
         # apply diffs, etc
-        entry.attrib.update({'owner':self.owner, 'group':self.group,
-                             'perms':self.perms, 'encoding':self.encoding})
+        entry.attrib.update(self.metadata)
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
-        if self.encoding == 'base64':
+        if self.metadata['encoding'] == 'base64':
             entry.text = b2a_base64(filedata)
         else:
             entry.text = filedata
