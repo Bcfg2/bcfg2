@@ -174,11 +174,13 @@ class Toolset(object):
         try:
             ondisk = stat(entry.get('name'))
         except OSError:
+            self.CondPrint("debug", "Directory %s does not exist" % (entry.get('name')))
             return False
         try:
             owner = getpwuid(ondisk[ST_UID])[0]
             group = getgrgid(ondisk[ST_GID])[0]
         except OSError:
+            self.CondPrint('debug', 'User resolution failing')
             owner = 'root'
             group = 'root'
         perms = stat(entry.get('name'))[ST_MODE]
@@ -187,6 +189,12 @@ class Toolset(object):
             (perms == calc_perms(S_IFDIR, entry.get('perms')))):
             return True
         else:
+            if owner != entry.get('owner'):
+                self.CondPrint("debug", "Directory %s ownership wrong" % (entry.get('name')))
+            if group != entry.get('group'):
+                self.CondPrint("debug", "Directory %s group wrong" % (entry.get('name')))
+            if perms != calc_perms(S_IFDIR, entry.get('perms')):
+                self.CondPrint("debug", "Directory %s permissions wrong" % (entry.get('name')))
             return False
 
     def InstallDirectory(self, entry):
