@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+from time import sleep
+from Bcfg2.Server.Core import Core
+
+def input():
+    try:
+        return raw_input('> ')
+    except:
+        return ''
+
+if __name__ == '__main__':
+    core = Core('/etc/bcfg2.conf')
+    while core.fam.fm.pending():
+        while core.fam.fm.pending():
+            core.fam.HandleEvent()
+        sleep(0.5)
+    cmd = input()
+    while cmd != '':
+        if cmd == 'generators':
+            for generator in core.generators:
+                print generator.__version__
+        else:
+            print "Unimplemented command %s" % cmd
+        cmd = input()
