@@ -117,31 +117,16 @@ class Debian(Toolset):
             desired[entry.attrib['name']] = entry
 
         for pkg, entry in desired.iteritems():
-            print pkg, 
             if self.states[entry]:
                 # package entry verifies
-                print "OK"
                 del all[pkg]
             else:
                 if all.has_key(pkg):
                     # wrong version
-                    print "UPDATE"
                     self.pkgwork['update'].append(entry)
                 else:
-                    print "NEW"
                     # new pkg
                     self.pkgwork['add'].append(entry)
-            
-            if all.has_key(pkg):
-                if all[pkg] != desired[pkg]:
-                    # package version is wrong
-                    self.pkgwork['update'].append(entry)
-                del all[pkg]
-                #del desired[pkg]
-            else:
-                # new package install
-                self.pkgwork['add'].append(entry)
-                #del desired[pkg]
 
         # pkgwork contains all one-way verification data now
         # all data remaining in all is extra packages
