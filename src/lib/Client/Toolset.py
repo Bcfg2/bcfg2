@@ -9,6 +9,8 @@ from sys import exc_info
 from time import asctime, localtime
 from traceback import extract_tb
 
+from elementtree.ElementTree import Element, SubElement, tostring
+
 def print_failure():
     if '-v' in argv: print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
 
@@ -85,14 +87,6 @@ class Toolset(object):
 
         for structure in self.cfg.getchildren():
             self.CheckStructure(structure)
-
-        # TwoWay: build list of "extra configs"
-        #e = self.toolset.FindElements()
-        #known = self.states.keys()
-        #for entry in e:
-        #    if not filter(lambda x:ElementMatch(x, entry), known):
-        #        self.extra.append(entry)
-        #print self.extra
 
     def CheckStructure(self, structure):
         '''Check structures with bundle verification semantics'''
