@@ -114,21 +114,30 @@ class ConfigFileEntry(object):
             if not self.specific.match('/' + event.filename):
                 syslog(LOG_INFO, 'Cfg: Suppressing event for bogus file %s' % event.filename)
                 return
-        for entry in self.basefiles + self.deltas:
-            if entry.name.split('/')[-1] == event.filename:
-                if action == 'changed':
-                    syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
-                    entry.HandleEvent(event)
-                elif action == 'exists' or action == 'created':
-                    entry.HandleEvent(event)
-                elif action == 'deleted':
-                    [flist.remove(entry) for flist in [self.basefiles, self.deltas] if entry in flist]
-                else:
-                    syslog(LOG_ERR, "Cfg: Unhandled Action '%s' for file %s" % (action, event.filename))
-                return
 
-        # This code is only reached when an event goes unhandled
-        syslog(LOG_ERR, "Cfg: Event '%s' went unhandled for file '%s'" %(action, event.filename))
+        entries = [entry for entry in self.basefiles + self.deltas if
+                   entry.name.split('/')[-1] == event.filename]
+
+        if len(entries) == 0:
+            syslog(LOG_ERR, "Cfg: Failed to match entry for spec %s" % (event.filename))
+        elif len(entries) > 1:
+            syslog(LOG_ERR, "Cfg: Matched multiple entries for spec %s" % (event.filename))
+            
+        if action == 'deleted':
+            syslog(LOG_INFO, "Cfg: Removing entry %s" % event.filename)
+            for entry in entries:
+                syslog(LOG_INFO, "Cfg: Removing entry %s" % (entry.name))
+                if entry in self.basefiles:
+                    self.basefiles.remove(entry)
+                if entry in self.deltas:
+                    self.deltas.remove(entry)
+            syslog(LOG_INFO, "Cfg: Entry deletion completed")
+        elif action in ['changed', 'exists', 'created']:
+            if action == 'changed':
+                syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
+            [entry.HandleEvent(event) for entry in entries]
+        else:
+            syslog(LOG_ERR, "Cfg: Unhandled Action %s for file %s" % (action, event.filename))
 
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
