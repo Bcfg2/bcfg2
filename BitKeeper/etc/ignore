@@ -17,3 +17,5 @@ py-compile
 debian/tmp/*
 debian/bcfg2-server/*
 build/*
+debian/*debhelper
+debian/*substvars
