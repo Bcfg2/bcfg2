@@ -2,8 +2,9 @@
 __revision__ = '$Revision$'
 
 from re import compile as regcompile
+from syslog import syslog, LOG_ERR
 
-from Bcfg2.Server.Generator import Generator, GeneratorError, DirectoryBacked, XMLFileBacked
+from Bcfg2.Server.Generator import Generator, GeneratorError, GeneratorInitError, DirectoryBacked, XMLFileBacked
 
 class PackageEntry(XMLFileBacked):
     '''PackageEntry is a set of packages and locations for a single image'''
@@ -41,7 +42,11 @@ class Pkgmgr(Generator):
 
     def __init__(self, core, datastore):
         Generator.__init__(self, core, datastore)
-        self.pkgdir = PackageDir(self.data, self.core.fam)
+        try:
+            self.pkgdir = PackageDir(self.data, self.core.fam)
+        except OSError:
+            syslog(LOG_ERR, "Pkgmgr: Failed to load package indices")
+            raise GeneratorInitError
 
     def FindHandler(self, entry):
         '''Non static mechanism of determining entry provisioning'''
@@ -57,6 +62,9 @@ class Pkgmgr(Generator):
             if pkglist.packages.has_key(pkgname):
                 entry.attrib.update(pkglist.packages[pkgname])
                 return
+        elif not self.pkgdir.has_key("%s.xml" % metadata.image):
+            syslog(LOG_ERR, "Pkgmgr: no package index for image %s" % metadata.image)
+            raise GeneratorError, ("Image", metadata.image)
         pkglist = self.pkgdir["%s.xml" % (metadata.image)]
         if pkglist.packages.has_key(pkgname):
             pkg = pkglist.packages[pkgname]
