@@ -115,7 +115,7 @@ class Debian(Toolset):
             desired[entry.attrib['name']] = entry
 
         for pkg, entry in desired.iteritems():
-            if self.states[entry]:
+            if self.states.get(entry, True):
                 # package entry verifies
                 del all[pkg]
             else:
