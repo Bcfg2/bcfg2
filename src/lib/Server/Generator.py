@@ -5,6 +5,15 @@ from elementtree.ElementTree import XML
 from syslog import syslog, LOG_ERR
 from xml.parsers.expat import ExpatError
 
+class GeneratorError(Exception):
+    '''Generator runtime error used to inform upper layers of internal generator failure'''
+    pass
+
+class GeneratorInitError(Exception):
+    '''Constructor time error that allows the upper layer to proceed in the face of
+    generator initialization failures'''
+    pass
+
 class Generator(object):
     '''This is a class that generators can be subclassed from.
     __name__, __version__, and __author__ must be set for the module
@@ -23,6 +32,9 @@ class Generator(object):
         self.core = core
         self.data = "%s/%s" % (datastore, self.__name__)
         self.external = {}
+
+    def LogError(self, msg):
+        syslog(LOG_ERR, "%s: %s" % (self.__name__, msg))
 
     def CompleteSetup(self):
         '''Read any external required publication data'''
