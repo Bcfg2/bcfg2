@@ -77,9 +77,10 @@ class MetadataStore(SingleXMLFileBacked):
         if ((image != None) and (profile != None)):
             # Client asserted profile/image
             self.clients[client] = (image, profile)
+            syslog(LOG_INFO, "Asserted metadata for %s: %s, %s" % (client, image, profile))
             clientdata = [cli for cli in self.element.findall("Client") if cli.get('name') == client]
             if len(clientdata) == 0:
-                # non-existent client
+                syslog(LOG_INFO, "Added Metadata for nonexistent client %s" % client)
                 SubElement(self.element, "Client", name=client, image=image, profile=profile)
                 self.WriteBack()
             elif len(clientdata) == 1:
@@ -87,13 +88,16 @@ class MetadataStore(SingleXMLFileBacked):
                 clientdata[0].attrib['profile'] = profile
                 clientdata[0].attrib['image'] = image
                 self.WriteBack()
-        elif self.clients.has_key(client):
-            (image, profile) = self.clients[client]
         else:
-            # default profile stuff goes here
-            (image, profile) = (self.defaults['image'], self.defaults['profile'])
-            SubElement(self.element, "Client", name=client, profile=profile, image=image)
-            self.WriteBack()
+            # no asserted metadata
+            if self.clients.has_key(client):
+                (image, profile) = self.clients[client]
+            else:
+                # default profile stuff goes here
+                (image, profile) = (self.defaults['image'], self.defaults['profile'])
+                SubElement(self.element, "Client", name=client, profile=profile, image=image)
+                self.WriteBack()
+
         if not self.profiles.has_key(profile):
             syslog(LOG_ERR, "Metadata: profile %s not defined" % profile)
             raise MetadataConsistencyError
