@@ -1,0 +1,30 @@
+1. what we aren't
+
+I feel the need to write this to describe why our approach isn't the
+same as the LDAP approach. When designing any metadata-based
+configuration management system, there is substantial temptation to
+start describing all aspects of the system that are relevant to system
+configuration. This approach leads to a few things. First, there are
+many long discussions that center around the proper representation
+for particular constructs. (ie, what attributes does a network
+interface have) The second outcome is that configuration details that
+might get used are typically included. This stems from the desire to
+have a comprehensive solution. The third, and most useful outcome is a
+large knowledge base from which many details of system configuration
+can be queried. This, in general, is a noble goal, but tends to
+require a lot of pain to get there. 
+
+Switching to a BCFG1 install involved a good amount of pain/effort in
+order to classify software components into categories dictated by our
+model. I am not sure how well a more complicated process would be
+accepted by any user community. 
+
+2. how to do better
+
+Any system will have complex portions of configuration, and
+site-specific oddities. A single, simple description scheme certainly
+won't provide the flexibility required to model complex
+interdependencies. The approach we are taking is to provide a simple
+scheme while allow arbitrary logic to be embedded. (generators) Using
+this scheme, simple configurations remain simple, and complex
+configurations are possible. 
