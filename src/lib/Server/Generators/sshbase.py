@@ -67,7 +67,12 @@ class sshbase(Generator):
         for f in self.repository.entries.keys():
             if ".pub.H_" in f:
                 h = f.split('_')[-1]
-                output += "%s,%s.mcs.anl.gov,%s %s"%(h, h, gethostbyname(h), self.repository.entries[f].data)
+                try:
+                    ip = gethostbyname(h)
+                    output += "%s,%s.mcs.anl.gov,%s %s"%(h, h, ip, self.repository.entries[f].data)
+                except:
+                    output += "%s,%s.mcs.anl.gov %s"%(h, h, self.repository.entries[f].data)
+                    syslog(LOG_ERR, "Failed to resolve host %s"%(h))
         self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self,client):
