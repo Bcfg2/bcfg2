@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from elementtree.ElementTree import XML
-from syslog import syslog, LOG_ERR
+from syslog import syslog, LOG_ERR, LOG_INFO
 from xml.parsers.expat import ExpatError
 
 class GeneratorError(Exception):
@@ -115,7 +115,7 @@ class DirectoryBacked(object):
     def AddEntry(self, name):
         '''Add new entry to data structures upon file creation'''
         if self.entries.has_key(name):
-            print "got multiple adds"
+            syslog(LOG_INFO, "got multiple adds for %s" % name)
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS') or (name[-4:] == '.swp')):
                 return
