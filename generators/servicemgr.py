@@ -10,6 +10,8 @@ class servicemgr(Generator):
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
+    __provides__ = {'Service':{'sshd':'GetService'}}
+
     def GetService(self,name,client):
         # for now sshd is on
         if name == 'sshd':
