@@ -70,30 +70,41 @@ if __name__ == '__main__':
     doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image'}
     setup = dgetopt(argv[1:], options, doptions)
 
-    # connect to bcfg2d
-    comm = comm_lib()
-    h = comm.ClientInit("bcfg2")
+    comm = None
+    if setup['file']:
+        try:
+            configfile = open(setup['file'], 'r')
+            r = configfile.read()
+            configfile.close()
+        except IOError:
+            print "Failed to read cached config file: %s" % (setup['file'])
+            sysexit(1)
+    else:
+        # connect to bcfg2d
+        comm = comm_lib()
+        h = comm.ClientInit("bcfg2")
 
-    # get probes
-    comm.SendMessage(h, "<get-probes/>")
-    data = comm.RecvMessage(h)
-    #if setup['verbose']: print data
-    probes = XML(data)
-    # execute probes
-    cpd = Element("probe-data")
-    [cpd.append(RunProbe(x)) for x in probes.findall(".//probe")]
+        # get probes
+        comm.SendMessage(h, "<get-probes/>")
+        data = comm.RecvMessage(h)
+        #if setup['verbose']: print data
+        probes = XML(data)
+        # execute probes
+        cpd = Element("probe-data")
+        [cpd.append(RunProbe(x)) for x in probes.findall(".//probe")]
     
-    # upload probe responses
-    comm.SendMessage(h, tostring(cpd))
-    r = comm.RecvMessage(h)
-    msg = Element("get-config")
-    if setup['profile']:
-        msg.attrib['profile'] = setup['profile']
-    if setup['image']:
-        msg.attrib['image'] = setup['image']
-    # get config
-    comm.SendMessage(h, tostring(msg))
-    r = comm.RecvMessage(h)
+        # upload probe responses
+        comm.SendMessage(h, tostring(cpd))
+        r = comm.RecvMessage(h)
+        msg = Element("get-config")
+        if setup['profile']:
+            msg.attrib['profile'] = setup['profile']
+        if setup['image']:
+            msg.attrib['image'] = setup['image']
+        # get config
+        comm.SendMessage(h, tostring(msg))
+        r = comm.RecvMessage(h)
+
     if setup['cache']:
         try:
             open(setup['cache'], 'w').write(r)
@@ -141,12 +152,13 @@ if __name__ == '__main__':
     else:
         client.CondPrint("verbose", "All entries correct")
 
-    # upload statistics
-    m = Element("upload-statistics")
-    stats = client.GenerateStats()
-    m.append(stats)
+    if not setup['file']:
+        # upload statistics
+        m = Element("upload-statistics")
+        stats = client.GenerateStats()
+        m.append(stats)
 
-    comm.SendMessage(h, tostring(m))
-    r = comm.RecvMessage(h)
-    # clean up
-    comm.ClientClose(h)
+        comm.SendMessage(h, tostring(m))
+        r = comm.RecvMessage(h)
+        # clean up
+        comm.ClientClose(h)
