@@ -1,9 +1,41 @@
 #!/usr/bin/python
 # $Id$
 
+from os import stat
+from stat import ST_MODE, S_ISDIR
 from syslog import syslog, LOG_ERR
 
 from Error import PublishError
+
+import _fam
+
+class fam(object):
+    '''The fam object contains alteration monitors'''
+    
+    def __init__(self):
+        self.fm = _fam.open()
+        self.users = {}
+        self.handles = {}
+
+    def fileno(self):
+        return self.fm.fileno()
+
+    def AddMonitor(self, path, obj=None):
+        m = stat(path)[ST_MODE]
+        if S_ISDIR(m):
+            h = self.fm.monitorDirectory(path, None)
+            self.handles[h.requestID()] = h
+        else:
+            h = self.fm.monitorFile(path, None)
+            self.handles[h.requestID()] = h
+        if obj != None:
+            self.users[h.requestID()] = obj
+
+    def HandleEvent(self):
+        event = self.fm.nextEvent()
+        id = event.requestID
+        if self.users.has_key(id):
+            self.users[id].HandleEvent(event)
 
 class PublishedValue(object):
     def __init__(self,owner,key,value):
@@ -19,12 +51,13 @@ class PublishedValue(object):
 class Core(object):
     def __init__(self, repository, generators):
         self.datastore = repository
+        self.fam = fam()
         self.provides = {'Service':{},'ConfigFile':{},'Packages':{}}
         self.pubspace = {}
         self.generators = []
         for generator in generators:
             g = getattr(__import__(generator),generator)
-            self.generators.append(g(self, self.datastore))
+            self.generators.append(g(self, self.datastore, self.fam))
         # we need to inventory and setup generators
         # Process generator requirements
         for g in self.generators:
@@ -53,10 +86,9 @@ class Core(object):
         raise KeyError,key
 
     def GetConfigFile(self,filename,client):
-        if self.handles.has_key(filename):
-            return self.handles[filename].Build(filename,client)
+        if self.provides['ConfigFile'].has_key(filename):
+            return self.Get('ConfigFile', filename, client)
         raise KeyError, filename
 
     def Get(self,type,name,client):
-        f = self.provides[type][name]
-        return f(name,client)
+        return self.provides[type][name](name,client)
