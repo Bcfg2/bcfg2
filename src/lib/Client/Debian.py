@@ -141,7 +141,7 @@ class Debian(Toolset):
         if rc == 0:
             # set installed to true for pkgtodo
             for pkg in self.pkgwork['add'] + self.pkgwork['update']:
-                self.states[x]=True
+                self.states[pkg]=True
             self.pkgtodo = []
             self.Refresh()
         else:
