@@ -10,7 +10,7 @@ from traceback import extract_tb
 from elementtree.ElementTree import Element, tostring
 
 from Bcfg2.Core import Core
-from Bcfg2.Metadata import Metadata, eMetadata
+from Bcfg2.Metadata import MetadataStore
 
 from sss.restriction import DataSet, Data
 from sss.server import Server
@@ -18,13 +18,12 @@ from sss.server import Server
 class BcfgServer(Server):
     __implementation__ = 'Bcfg2'
     __component__ = 'bcfg2'
-    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'GetProbes', 'probe-data':'CommitProbeData', 'add-metadata':"metadata.Add", "del-metadata":"metadata.Del", "set-metadata":"XSetMeta",'get-metadata':'metadata.Get', 'add-class':'XAddClass', "del-class":'XDelClass'}
-    __statefields__ = ['metadata']
+    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'GetProbes', 'probe-data':'CommitProbeData'}
     __validate__ = 0
         
     def __setup__(self):
-        self.metadata = DataSet("metadata", "metadata", Data, None, False)
         self.core=Core('/home/desai/data/b2',['bundler'],['sshbase','fstab','myri','cfg','pkgmgr','servicemgr'])
+        self.metadata = MetadataStore('/home/desai/data/b2/common/metadata.xml', self.core.fam)
         self.__progress__()
 
     def __progress__(self):
@@ -32,32 +31,12 @@ class BcfgServer(Server):
             self.core.fam.HandleEvent()
         return 0
 
-    def XSetMeta(self, xml, (peer,port)):
-        return self.metadata.Get(xml, (peer,port), lambda x,y:x.element.attrib.update(y))
-        
-    def XAddClass(self, xml, (peer,port)):
-        return self.metadata.Get(xml, (peer,port), self.AddClass)
-    
-    def AddClass(self, entry, attrib):
-        c = entry.attrib['class'].split(':')
-        if attrib['class'] not in c:
-            c.append(attrib['class'])
-        entry.attrib['class'] = join(c, ':')
-
-    def XDelClass(self, xml, (peer,port)):
-        return self.metadata.Get(xml, (peer,port), self.DelClass)
-    
-    def AddClass(self, entry, attrib):
-        c = entry.attrib['class'].split(':')
-        if attrib['class'] in c:
-            c.remove(attrib['class'])
-        entry.attrib['class'] = join(c, ':')
-
     def GetMetadata(self, client):
-        m = [x for x in self.metadata if x.element.attrib['client'] == client]
-        if len(m) != 1:
-            raise 'error'
-        return eMetadata(m[0].element)
+        if self.metadata.clients.has_key(client):
+            return self.metadata.clients[client]
+        else:
+            syslog(LOG_INFO, "Inserting default metadata for client %s"%(client))
+            pass
 
     def BuildConfig(self, xml, (peer,port)):
         try:
@@ -67,14 +46,18 @@ class BcfgServer(Server):
         t = time()
         config = Element("Configuration", version='2.0')
         # get metadata for host
+        m = self.GetMetadata(client)
         try:
-            m = self.GetMetadata(client)
-        except KeyError:
-            return Element("error", type='metadata fetch')
-        structures = self.core.GetStructures(m)
+            structures = self.core.GetStructures(m)
+        except:
+            self.LogFailure("GetStructures")
+            return Element("error", type='structure error')
         for s in structures:
-            self.core.BindStructure(s, m)
-            config.append(s)
+            try:
+                self.core.BindStructure(s, m)
+                config.append(s)
+            except:
+                self.LogFailure("BindStructure")
             #for x in s.getchildren():
             #    print x.attrib['name'], '\000' in tostring(x)
         syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time()-t))
@@ -86,11 +69,7 @@ class BcfgServer(Server):
             client = gethostbyaddr(peer)[0].split('.')[0]
         except herror:
             return Element("error", type='host resolution error')
-        try:
-            m = self.GetMetadata(client)
-        except:
-            syslog(LOG_ERR, "Failed to fetch metadata for %s"%(client))
-            return Element("error", type='metadata failure')
+        m = self.GetMetadata(client)
         for g in self.core.generators:
             for p in g.GetProbes(m):
                 r.append(p)
@@ -113,10 +92,8 @@ class BcfgServer(Server):
         (t,v,tb)=exc_info()
         syslog(LOG_ERR, "Unexpected failure in %s"%(failure))
         for line in extract_tb(tb):
-            errstr = '  File "%s", line %i, in %s\n    %s\n'%line
-            syslog(LOG_ERR,errstr)
-            errstr = "%s: %s\n"%(t,v)
-        syslog(LOG_ERR,errstr)
+            syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+        syslog(LOG_ERR, "%s: %s\n"%(t,v))
         del t,v,tb
 
 if __name__ == '__main__':
