@@ -3,7 +3,6 @@ __revision__ = '$Revision$'
 
 from binascii import b2a_base64
 from os import rename, system
-from socket import gethostbyname, gaierror
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
@@ -49,13 +48,11 @@ class SSHbase(Generator):
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
-        filedata = self.repository.entries['ssh_known_hosts'].data
-        try:
-            for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
-                filedata += "localhost,localhost.localdomain,127.0.0.1 %s" % (
-                    self.repository.entries[hostkey].data)
-        except gaierror:
-            self.LogError("DNS lookup failed for client %s" % client)
+        filedata = "".join([info.data for (filename, info) in self.repository.entries.iteritems()
+                            if ".pub" in filename])
+        for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
+            filedata += "localhost,localhost.localdomain,127.0.0.1 %s" % (
+                self.repository.entries[hostkey].data)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
         entry.text = filedata
 
@@ -65,7 +62,7 @@ class SSHbase(Generator):
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
-            self.GenerateKnownHosts()
+            #self.GenerateKnownHosts()
         keydata = self.repository.entries[filename].data
         perms = '0600'
         if entry.get('name')[-4:] == '.pub':
@@ -75,19 +72,6 @@ class SSHbase(Generator):
         if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
             entry.text = b2a_base64(keydata)
-
-    def GenerateKnownHosts(self):
-        '''Build the static portion of known_hosts (for all hosts)'''
-        output = ''
-        for filename, entry in self.repository.entries.iteritems():
-            if ".pub.H_" in filename:
-                hname = filename.split('_')[-1]
-                try:
-                    ipaddr = gethostbyname(hname)
-                    output += "%s,%s.mcs.anl.gov,%s %s" % (hname, hname, ipaddr, entry.data)
-                except gaierror:
-                    continue
-        self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self, client):
         '''Generate new host keys for client'''
