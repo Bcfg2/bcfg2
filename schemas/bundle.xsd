@@ -19,22 +19,38 @@
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
+  <xsd:complexType name='DirectoryType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='perms'/>
+    <xsd:attribute type='xsd:string' name='owner'/>
+    <xsd:attribute type='xsd:string' name='group'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='SymLinkType'>
+    <xsd:attribute type='xsd:string' name='to'/>
+    <xsd:attribute type='xsd:string' name='name'/>
+  </xsd:complexType>
+
   <xsd:complexType name='SystemType'>
-    <xsd:choice maxOccurs='unbounded'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Service' type='ServiceType'/>
       <xsd:element name='ConfigFile' type='ConfigFileType'/>
+      <xsd:element name='Directory' type='DirectoryType'/>
+      <xsd:element name='SymLink' type='SymLinkType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
   <xsd:element name='Bundle'>
     <xsd:complexType>
-      <xsd:choice maxOccurs='unbounded'>
+      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element type='SystemType' name='System'/>
 	<xsd:element name='Package' type='PackageType'/>
 	<xsd:element name='Service' type='ServiceType'/>
 	<xsd:element name='ConfigFile' type='ConfigFileType'/>
+	<xsd:element name='Directory' type='DirectoryType'/>
+	<xsd:element name='SymLink' type='SymLinkType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>
