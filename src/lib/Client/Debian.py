@@ -1,5 +1,5 @@
 '''This is the bcfg2 support for debian'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1.39 $'
 
 from copy import deepcopy
 from glob import glob
@@ -126,8 +126,8 @@ class Debian(Toolset):
         print "Need to remove:", self.pkgwork['remove']
         self.setup['quick'] = True
 
-        self.CondPrint('dryrun', "Packages to update: %s" % (" ".join(self.pkgwork['update'])))
-        self.CondPrint('dryrun', "Packages to add: %s" % (" ".join(self.pkgwork['add'])))
+        self.CondPrint('dryrun', "Packages to update: %s" % (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
+        self.CondPrint('dryrun', "Packages to add: %s" % (" ".join([pkg.get('name') for pkg in self.pkgwork['add']])))
         self.CondPrint('dryrun', "Packages to remove %s" % (" ".join(self.pkgwork['remove'])))
         for entry in [entry for entry in self.states if (not self.states[entry]
                                                          and (entry.tag != 'Package'))]:
@@ -177,7 +177,7 @@ class Debian(Toolset):
                     self.Refresh()
                     for pkg in packages:
                         # handle state tracking updates
-                        if self.VerifyPackage(pkg):
+                        if self.VerifyPackage(pkg, []):
                             self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
                             self.states[pkg] = True
                         else:
