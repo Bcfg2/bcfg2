@@ -52,6 +52,11 @@ class Pkgmgr(Generator):
     def LocatePackage(self, entry, metadata):
         '''Locates a package entry for particular metadata'''
         pkgname = entry.get('name')
+        if self.pkgdir.has_key("%s.xml" % metadata.hostname):
+            pkglist = self.pkgdir["%s.xml" % metadata.hostname]
+            if pkglist.packages.has_key(pkgname):
+                entry.attrib.update(pkglist.packages[pkgname])
+                return
         pkglist = self.pkgdir["%s.xml" % (metadata.image)]
         if pkglist.packages.has_key(pkgname):
             pkg = pkglist.packages[pkgname]
