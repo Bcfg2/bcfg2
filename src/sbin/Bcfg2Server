@@ -107,7 +107,7 @@ class BcfgServer(Server):
             client = gethostbyaddr(peer)[0].split('.')[0]
         except herror:
             return Element("error", type='host resolution error')
-        m = self.GetMetadata(client)
+        m = self.metadata.FetchMetadata(client)
         for g in self.core.generators:
             for p in g.GetProbes(m):
                 r.append(p)
