@@ -207,5 +207,8 @@ class ScopedXMLFile(SingleXMLFileBacked):
     def FetchRecord(self, entry, metadata):
         l = self.store[entry.tag][entry.attrib['name']]
         useful = [x for x in l if self.MatchMetadata(x[0], metadata)]
-        data = useful[-1][-1]
-        entry.attrib.update(data.attrib)
+        if not useful:
+            syslog(LOG_ERR, "Failed to FetchRecord %s:%s"%(entry.tag, entry.get('name')))
+        else:
+            data = useful[-1][-1]
+            entry.attrib.update(data.attrib)
