@@ -6,6 +6,7 @@ from stat import ST_MODE, S_ISDIR
 from syslog import syslog, LOG_ERR
 
 from Error import PublishError
+from Types import Clause
 
 import _fam
 
@@ -86,19 +87,25 @@ class Core(object):
             return self.pubspace[key].value
         raise KeyError,key
 
-    def GetEntry(self, key1, key2):
-        for d in map(lambda x:x.__provides__, self.generators):
-            if d.has_key(key1):
-                if d[key1].has_key(key2):
-                    return d[key1][key2]
-        raise KeyError, (key1, key2)
+    def GetStructures(self, metadata):
+        return reduce(lambda x,y:x+y, map(lambda x:x.Construct(metadata), self.structures))
 
-    def GetConfigFile(self,filename,metadata):
-        try:
-            self.Get("ConfigFile", filename, metadata)
-        except:
-            raise KeyError, filename
+    def BindStructure(self, structure, metadata):
+        for entry in structure.getchildren():
+            self.Bind(entry, metadata)
 
-    def Get(self,type,name,metadata):
-        return self.GetEntry(type, name)(name, metadata)
-
+    def Bind(self, entry, metadata):
+        g = [x for x in self.generators if x.__provides__.get(entry.tag, {}).has_key(entry.attrib['name'])]
+        if len(g) == 1:
+            return g[0].__provides__[entry.tag][entry.attrib['name']](entry, metadata)
+        elif len(g) > 1:
+            print "Data Integrity error for %s %s"%(entry.tag, entry.attrib['name'])
+        else:
+            for g in self.generators:
+                if hasattr(g, "FindHandler"):
+                    try:
+                        return g.FindHandler(entry)(entry, metadata)
+                    except:
+                        print g, "failed"
+            raise KeyError, (entry.tag,entry.attrib['name'])
+                
