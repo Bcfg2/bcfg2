@@ -1,0 +1,31 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      base schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+      $Id: $
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:include schemaLocation="atom.xsd"/>
+
+  <xsd:complexType name='ContainerType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Package' type='PackageType'/>
+      <xsd:element name='Service' type='ServiceType'/>
+      <xsd:element name='ConfigFile' type='ConfigFileType'/>
+    </xsd:choice>
+    <xsd:attribute name='name' type='xsd:string'/>
+  </xsd:complexType>
+
+  <xsd:element name='Base'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+	<xsd:element name='Image' type='ContainerType'/>
+	<xsd:element name='Class' type='ContainerType'/>
+      </xsd:choice>
+    </xsd:complexType>
+  </xsd:element>
+
+</xsd:schema>
