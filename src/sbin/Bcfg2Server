@@ -44,13 +44,6 @@ class BcfgServer(Server):
             self.LogFailure("Cron")
         return 0
 
-    def GetMetadata(self, client):
-        if self.metadata.clients.has_key(client):
-            return self.metadata.clients[client]
-        else:
-            syslog(LOG_INFO, "Inserting default metadata for client %s"%(client))
-            pass
-
     def BuildConfig(self, xml, (peer,port)):
         try:
             client = gethostbyaddr(peer)[0].split('.')[0]
@@ -59,7 +52,11 @@ class BcfgServer(Server):
         t = time()
         config = Element("Configuration", version='2.0')
         # get metadata for host
-        m = self.GetMetadata(client)
+        if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
+            m = self.metadata.FetchMetadata(client, image=xml.attrib['image'], profile=xml.attrib['profile'])
+        else:
+            m = self.metadata.FetchMetadata(client)
+            
         try:
             structures = self.core.GetStructures(m)
         except:

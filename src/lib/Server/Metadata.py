@@ -104,8 +104,21 @@ class MetadataStore(SingleXMLFileBacked):
             if k[:8] == 'default_':
                 self.defaults[k[8:]] = v
 
-    def FetchMetadata(self,client):
-        if self.clients.has_key(client):
+    def FetchMetadata(self,client, image=None, profile=None):
+        if ((image != None) and (profile != None)):
+            # Client asserted profile/image
+            self.clients[client] = (image,profile)
+            f = filter(lambda x:x.attrib['name'] == client, self.element.findall("Client"))
+            if len(f) == 0:
+                # non-existent client
+                SubElement(self.element, "Client", name=client, image=image, profile=profile)
+                self.WriteBack()
+            elif len(f) == 1:
+                # already existing client
+                f[0].attrib['profile'] = profile
+                f[0].attrib['image'] = image
+                self.WriteBack()
+        elif self.clients.has_key(client):
             (image,profile) = self.clients[client]
         else:
             # default profile stuff goes here
