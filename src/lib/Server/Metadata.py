@@ -4,7 +4,10 @@ __revision__ = '$Revision$'
 from elementtree.ElementTree import XML, SubElement, Element
 
 from Bcfg2.Server.Generator import SingleXMLFileBacked
-        
+
+class MetadataConsistencyError(Exception):
+    pass
+
 class Metadata(object):
     '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
     def __init__(self, all, image, classes, bundles, attributes, hostname, toolset):
@@ -89,6 +92,9 @@ class MetadataStore(SingleXMLFileBacked):
             (image, profile) = (self.defaults['image'], self.defaults['profile'])
             SubElement(self.element, "Client", name=client, profile=profile, image=image)
             self.WriteBack()
+        if not self.profiles.has_key(profile):
+            syslog(LOG_ERR, "Metadata: profile %s not defined" % profile)
+            raise MetadataConsistencyError
         prof = self.profiles[profile]
         # should we uniq here? V
         bundles = reduce(lambda x, y:x + y, [self.classes.get(cls) for cls in prof.classes])
