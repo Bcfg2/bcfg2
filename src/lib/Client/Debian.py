@@ -16,13 +16,14 @@ class Debian(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
-                     "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group']
+                     "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
+                     '/etc/apt/apt.conf']
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
         environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        system("dpkg --configure -a")
+        system("dpkg --force-confold --configure -a")
         if not self.setup['build']:
             system("dpkg-reconfigure -f noninteractive debconf < /dev/null")
         system("apt-get -q=2 -y update")
@@ -130,7 +131,7 @@ class Debian(Toolset):
     def Install(self):
         '''Correct detected misconfigurations'''
         self.CondPrint("verbose", "Installing needed configuration changes")
-        cmd = '''apt-get -o Dpkg::Options="--force-confold --force-overwrite" --reinstall -q=2 -y install %s'''
+        cmd = '''apt-get --reinstall -q=2 -y install %s'''
         print "Need to remove:", self.pkgwork['remove']
         self.setup['quick'] = True
         # need installed for bundle verification
