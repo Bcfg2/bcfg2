@@ -1,3 +1,3 @@
 # $Id: $
 
-__all__ = ["Toolset", "Debian"]
+__all__ = ["Toolset", "Debian", "Solaris", "Redhat", "Gentoo"]
