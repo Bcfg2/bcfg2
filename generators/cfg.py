@@ -152,7 +152,6 @@ class ConfigFileRepository(DirectoryBacked):
 
     def HandleEvent(self, event):
         action = event.code2str()
-        print "Got event %s %s %s"%(event.requestID, event.code2str(), event.filename)
         if event.filename[0] != '/':
             filename = "%s/%s"%(self.famID[event.requestID], event.filename)
         else:
