@@ -1,0 +1,19 @@
+$Id: $
+
+Server:
+  Service Manager (currently hardcoded)
+  Generator interface documentation
+  Statistics interface
+  Put support
+  Change notification interface
+  Revision control support
+  Paranoid mode support
+  Metadata manipulation tool
+  Default metadata/profile support
+  Generator support for periodic tasks
+
+Client:
+  Two way verification
+  Redhat support
+  Solaris support
+  Paranoid mode support
