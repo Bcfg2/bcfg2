@@ -112,7 +112,7 @@ class BcfgServer(Server):
 if __name__ == '__main__':
     if '--daemon' in argv:
         daemonize('/dev/null')
-    server = BcfgServer(configfile='/home/desai/dev/bcfg2/examples/bcfg2.conf')
+    server = BcfgServer()
     for i in range(10):
         server.__progress__()
     server.ServeForever()
