@@ -86,7 +86,7 @@ Copyright (c) University of Chicago 1999.
 
 END OF LICENSE
 -----
-Code in the apitest/ directory is copyrighted by Sandia National Laboratories.
+
 The redistribution of this source code is subject to the terms of the GNU 
 Lesser General Public License 
-(see cit/LGPL or http://www.gnu.org/licenses/lgpl.html). 
+(see /usr/share/common-licenses/LGPL). 
