@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from Generator from Generator
-from GeneratorUtils import DirectoryBacked
-from Types import ConfigFile
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.GeneratorUtils import DirectoryBacked
+from Bcfg2.Server.Types import ConfigFile
 
 class account(Generator):
     __name__ = 'account'

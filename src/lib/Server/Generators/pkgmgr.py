@@ -2,9 +2,8 @@
 
 from re import compile
 
-from Generator import Generator
-from GeneratorUtils import DirectoryBacked, XMLFileBacked
-from Types import Package
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.GeneratorUtils import DirectoryBacked, XMLFileBacked
 
 class PackageEntry(XMLFileBacked):
     __identifier__ = 'image'

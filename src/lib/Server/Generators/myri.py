@@ -2,8 +2,8 @@
 
 from socket import getaddrinfo
 
-from Generator import Generator
-from Types import ConfigFile
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.Types import ConfigFile
 
 class myri(Generator):
     __name__ = 'myri'

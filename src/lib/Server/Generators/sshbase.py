@@ -7,9 +7,9 @@ from socket import gethostbyname
 from string import strip
 from syslog import syslog, LOG_INFO
 
-from Types import ConfigFile
-from Generator import Generator
-from GeneratorUtils import DirectoryBacked
+from Bcfg2.Server.Types import ConfigFile
+from Bcfg2.Server.Generator import Generator
+from Bcfg2.Server.GeneratorUtils import DirectoryBacked
 
 from elementtree.ElementTree import Element
 
