@@ -3,7 +3,7 @@
 from elementtree.ElementTree import XML
 from time import localtime, mktime
 
-from GeneratorUtils import SingleXMLFileBacked
+from Generator import SingleXMLFileBacked
 
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 
