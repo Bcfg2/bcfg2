@@ -24,6 +24,7 @@ clean:
 	dh_testdir
 	dh_testroot
 	dh_clean 
+	python setup.py clean
 
 install: build
 	dh_testdir
