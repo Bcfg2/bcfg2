@@ -1,0 +1,76 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+build: 
+	python setup.py build
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	python setup.py install --prefix=$(PWD)/debian/tmp/usr
+
+# Build architecture-dependent files here.
+# We have nothing to do by default.
+binary-arch: build install
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+#	dh_installexamples
+	mv debian/tmp/usr/bin debian/tmp/usr/sbin
+	dh_install 
+	rm debian/tmp/usr/sbin/Bcfg2Server
+	rm -Rf debian/tmp/usr/lib/python2.3/site-packages/Bcfg2/Server
+#	chmod 600 debian/bcfg-server/etc/bcfgd.conf
+#	chmod 755 debian/bcfg*/usr/sbin/*
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit -pbcfg-server --name bcfgd -u"start 21 2 3 4 5 . stop 19 0 1 6 ."
+#	dh_installcron
+#	dh_installinfo
+	dh_installman 
+#	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+	dh_python
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install
