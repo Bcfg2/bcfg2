@@ -4,8 +4,8 @@
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
 
-from GeneratorUtils import SingleXMLFileBacked, DirectoryBacked
-from Structure import Structure
+from Bcfg2.Server.GeneratorUtils import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
+from Bcfg2.Server.Structure import Structure
 
 from elementtree.ElementTree import Element, XML, tostring
 
@@ -31,8 +31,7 @@ class bundler(Structure):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     def __init__(self, core, datastore):
         Structure.__init__(self, core, datastore)
-        self.imageinfo = ImageFile("%s/common/imageinfo.xml"%(datastore))
-        self.core.fam.AddMonitor(self.imageinfo.name, self.imageinfo)
+        self.imageinfo = ImageFile("%s/common/imageinfo.xml"%(datastore), self.core.fam)
         self.bundles = BundleSet(self.data, self.core.fam)
 
     def Construct(self, metadata):
