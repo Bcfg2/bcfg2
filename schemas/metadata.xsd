@@ -43,12 +43,25 @@
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
+  <xsd:simpleType name='ToolSetType'>
+     <xsd:restriction base="xsd:string">
+      <xsd:pattern value="rh|debian"/>                                                                                                                                             
+    </xsd:restriction>                                                                                                                                                                                                                  
+  </xsd:simpleType>                                                                                                                                                                                                                     
+ 
+  <xsd:complexType name='ImageType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='ToolSetType' name='toolset' use='required'/>
+  </xsd:complexType>
+    
+
   <xsd:element name='Metadata'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Client' type='ClientType'/>
 	<xsd:element name='Class' type='ClassType'/>
 	<xsd:element name='Profile' type='ProfileType'/>
+        <xsd:element name='Image' type='ImageType'/>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>
       <xsd:attribute type='xsd:string' name='default_image' use='required'/>
