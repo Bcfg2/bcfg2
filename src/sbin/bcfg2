@@ -143,7 +143,7 @@ class ClientState(object):
 if __name__ == '__main__':
     # parse command line options
     options =  {'v':'verbose','q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'p':'paranoid'}
-    doptions = {'b':'bundle', 'f':'file', 'c':'cache'}
+    doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image'}
     setup = dgetopt(argv[1:], options, doptions)
     print setup
 
@@ -166,8 +166,11 @@ if __name__ == '__main__':
     if setup['verbose'] : print tostring(cpd)
     comm.SendMessage(h, tostring(cpd))
     r = comm.RecvMessage(h)
+    msg = Element("get-config")
+    if setup['profile']: msg.attrib['profile'] = setup['profile']
+    if setup['image']: msg.attrib['image'] = setup['image']
     # get config
-    comm.SendMessage(h, "<get-config/>")
+    comm.SendMessage(h, tostring(msg))
     r = comm.RecvMessage(h)
     if setup['cache']:
         try:
