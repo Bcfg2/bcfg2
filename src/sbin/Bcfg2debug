@@ -1,25 +1,50 @@
 #!/usr/bin/env python
 
+__revision__ = '$Revision$'
+'''This tool loads the Bcfg2 core into an interactive debugger'''
+
 from time import sleep
 from Bcfg2.Server.Core import Core
 
 def input():
     try:
-        return raw_input('> ')
+        return raw_input('> ').split(" ")
     except:
-        return ''
+        return ['']
 
 if __name__ == '__main__':
+    settings = {}
     core = Core('/etc/bcfg2.conf')
     while core.fam.fm.pending():
         while core.fam.fm.pending():
             core.fam.HandleEvent()
         sleep(0.5)
     cmd = input()
-    while cmd != '':
-        if cmd == 'generators':
+    while cmd != ['']:
+        if cmd[0] in ['exit', 'quit']:
+            raise SystemExit, 0
+        elif cmd[0] == 'generators':
             for generator in core.generators:
                 print generator.__version__
+        elif cmd[0] == 'help':
+            print 'Commands:'
+            print 'exit - quit'
+            print 'generators - list current versions of generators'
+            print 'help - print this text'
+            print 'set <variable> <value> - set variable for later use'
+            print 'settings - display all settings'
+            print 'shell - shell out to native python interpreter'
+            print 'version - print version of this tool'
+        elif cmd[0] == 'set':
+            settings[cmd[1]] = cmd[2]
+        elif cmd[0] == 'settings':
+            for (key, value) in settings.iteritems():
+                print "%s --> %s" % (key, value)
+        elif cmd[0] == 'shell':
+            cmd = ''
+            continue
+        elif cmd[0] == 'version':
+            print 'Bcfg2debug v. %s' % __revision__
         else:
-            print "Unimplemented command %s" % cmd
+            print "Unknown command %s" % cmd[0]
         cmd = input()
