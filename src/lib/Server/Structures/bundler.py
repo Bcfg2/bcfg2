@@ -4,7 +4,7 @@
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
 
-from Bcfg2.Server.GeneratorUtils import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
+from Bcfg2.Server.Generator import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 from Bcfg2.Server.Structure import Structure
 
 from elementtree.ElementTree import Element, XML, tostring
