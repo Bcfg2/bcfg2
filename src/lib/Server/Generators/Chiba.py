@@ -1,13 +1,12 @@
-from re import compile as regcompile
-from Bcfg2.Server.Generator import Generator, DirectoryBacked, SingleXMLFileBacked
-
 '''This module configures files in a Chiba City specific way'''
 __revision__ = '$Revision$'
 
+from re import compile as regcompile
+from Bcfg2.Server.Generator import Generator, DirectoryBacked, SingleXMLFileBacked
+
 class ChibaConf(SingleXMLFileBacked):
     '''This class encapsulates all information needed for all Chiba config ops'''
-    def Index(self):
-        pass
+    pass
 
 class Chiba(Generator):
     '''the Chiba generator builds the following files:
@@ -23,7 +22,13 @@ class Chiba(Generator):
 
     mayor = regcompile("\$MAYOR")
 
+    def __init__(self, core, datastore):
+        Generator.__init__(self, core, datastore)
+        self.repo = DirectoryBacked(self.data, self.core.fam)
+        self.__provides__['ConfigFile']['/etc/fstab'] = self.build_fstab
+
     def get_mayor(self, node):
+        '''Get mayor for node'''
         if 'ccn' in node:
             return 'cct%sm.mcs.anl.gov' % ((int(node[3:]) / 32) + 1)
         elif 'ccviz' in node:
@@ -32,10 +37,6 @@ class Chiba(Generator):
             return 'cct9m.mcs.anl.gov'
         else:
             return 'ccprez.mcs.anl.gov'
-
-    def __setup__(self):
-        self.repo = DirectoryBacked(self.data, self.core.fam)
-        self.__provides__['ConfigFile']['/etc/fstab'] = self.build_fstab
 
     def build_fstab(self, entry, metadata):
         '''build fstab for chiba nodes'''
