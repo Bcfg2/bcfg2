@@ -8,10 +8,12 @@ class Generator(object):
     '''This is a class that generators can be subclassed from.
     __name__, __version__, and __author__ must be set for the module
     __provides__ is a dictionary mapping listing the entity type and name to a function name
-    __requires__ is a set of external published data needed for operation'''
+    __requires__ is a set of external published data needed for operation
+    __croninterval__ is the frequency in second with which the Cron method should be executed'''
     
     __name__ = None
     __version__ = None
+    __croninterval__ = False
     __provides__ = {}
     __requires__ = []
     
