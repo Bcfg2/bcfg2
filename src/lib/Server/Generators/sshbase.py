@@ -8,12 +8,20 @@ from string import strip
 from syslog import syslog, LOG_INFO
 
 from Bcfg2.Server.Types import ConfigFile
-from Bcfg2.Server.Generator import Generator
-from Bcfg2.Server.GeneratorUtils import DirectoryBacked
+from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
 from elementtree.ElementTree import Element
 
 class sshbase(Generator):
+    "The sshbase generator manages ssh host keys (both v1 and v2) for hosts. It also manages
+    the ssh_known_hosts file. It can integrate host keys from other management domains and
+    similarly export its keys. The repository contains files in the following formats:
+    ssh_host_key.H_(hostname)  -> the v1 host private key for (hostname)
+    ssh_host_key.pub.H_(hostname)  -> the v1 host public key for (hostname) 
+    ssh_host_(dr)sa_key.H_(hostname)  -> the v2 ssh host private key for (hostname)
+    ssh_host_(dr)sa_key.pub.H_(hostname)  -> the v2 ssh host public key for (hostname)
+    ssh_known_hosts -> the current known hosts file. this is regenerated each time a new key is generated.
+"
     __name__ = 'sshbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
