@@ -12,7 +12,21 @@ from elementtree.ElementTree import Element, XML, tostring
 
 from sss.ssslib import comm_lib
 
-from Bcfg2.Client.Debian import Debian
+def loadToolset(toolset, config, setup):
+    if toolset == 'debian':
+        if setup['verbose']:
+            print 'Selected Debian Toolset...'
+        mod = __import__("Bcfg2.Client.Debian",globals(), locals(), ['*'])
+        return mod.Debian(config, setup)
+    elif toolset == 'rh':
+        if setup['verbose']:
+            print 'Selected RedHat Toolset...'
+        mod = __import__("Bcfg2.Client.Redhat",globals(), locals(), ['*'])
+        return mod.Redhat(config, setup)
+    else:
+        print "Toolset not correctly provided by the server."
+        sysexit(1)
+        
 
 def RunProbe(probe):
     '''Execute probe'''
@@ -91,6 +105,9 @@ if __name__ == '__main__':
         print "got error from server"
         sysexit(1)
 
+    # Get toolset from server
+    toolset = cfg.get('toolset')
+
     if setup['bundle']:
         c = Element("Configuration", version='2.0')
         for child in cfg.getroot().getchildren():
@@ -98,7 +115,9 @@ if __name__ == '__main__':
                 c.append(child)
         cfg = c
 
-    client = Debian(cfg, setup)
+    # Create toolset handle
+    client = loadToolset(toolset, cfg, setup)
+
     # verify state
     client.Inventory()
 
