@@ -4,7 +4,7 @@
 from socket import gethostbyaddr, herror
 from string import split
 from syslog import syslog, LOG_INFO, LOG_ERR
-from sys import exit, exc_info
+from sys import argv, exit, exc_info
 from time import time
 from traceback import extract_tb
 from ConfigParser import ConfigParser
@@ -26,7 +26,7 @@ class BcfgServer(Server):
         
     def __setup__(self):
         c = ConfigParser()
-        c.read(['/etc/bcfg2.conf'])
+        c.read([self.kwargs.get('configfile', '/etc/bcfg2.conf')])
         repo = c.get('server','repository')
         generators = split(c.get('server','generators'),',')
         structures = split(c.get('server', 'structures'),',')
@@ -112,7 +112,7 @@ class BcfgServer(Server):
 if __name__ == '__main__':
     if '--daemon' in argv:
         daemonize('/dev/null')
-    server = BcfgServer()
+    server = BcfgServer(configfile='/home/desai/dev/bcfg2/examples/bcfg2.conf')
     for i in range(10):
         server.__progress__()
     server.ServeForever()
