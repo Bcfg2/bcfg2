@@ -174,7 +174,7 @@ class Toolset(object):
     def FindConfig(self):
         pass
         
-    def Commit(self):
+    def Commit(self, entrystate):
         '''Commit pending changes to the system. This method allows for interrelated
         operations to be executed concurrently'''
         return 
