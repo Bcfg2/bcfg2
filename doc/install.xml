@@ -8,8 +8,9 @@
       with most distributions. SSSlib, available from
       ftp://ftp.mcs.anl.gov/pub/sss/, provides communication
       abstraction. Element Tree, available from http://www.effbot.org
-      provides convenient XML handling. Bcfg2 uses FAM to coherently
-      cache files and update them when they change. 
+      provides convenient XML handling. Bcfg2 uses FAM (server-size)
+      to coherently cache repository files and update them when they
+      change.
     </para>
     <para>ElementTree can be downloaded from
     http://www.effbot.org/downloads. It can be installed by running
