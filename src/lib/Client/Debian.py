@@ -5,11 +5,10 @@ __revision__ = '$Revision$'
 from copy import deepcopy
 from os import environ, stat, system
 from popen2 import Popen4
-from string import join, split
 
 import apt_pkg
 
-from Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset
 
 def Detect():
     try:
@@ -54,7 +53,7 @@ class Debian(Toolset):
         while cstat == -1:
             output += cmd.fromchild.read()
             cstat = cmd.poll() >> 8
-        if len(filter(lambda x:x, split(output, '\n'))) > num:
+        if len([x for x in output.split('\n') if x]) > num:
             return False
         return True
 
@@ -85,7 +84,7 @@ class Debian(Toolset):
                     while cstat == -1:
                         output += cmd.fromchild.read()
                         cstat = cmd.poll()
-                    output = filter(lambda x:x, split(output, '\n'))
+                    output = [x for x in output.split('\n') if x]
                     if [x for x in output if x not in modlist]:
                         return False
                 return True
@@ -134,9 +133,11 @@ class Debian(Toolset):
         print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
-        print "%s new, %s update, %s remove" % (len(self.pkgwork['add']), len(self.pkgwork['update']), len(self.pkgwork['remove']))
+        print "%s new, %s update, %s remove" % (len(self.pkgwork['add']),
+                                                len(self.pkgwork['update']), len(self.pkgwork['remove']))
         # try single large install
-        rc = system(cmd%join(map(lambda x:"%s=%s"%(x.attrib['name'], x.attrib['version']), self.pkgwork['add'] + self.pkgwork['update'])))
+        rc = system(cmd % " ".join(["%s=%s" % (x.attrib['name'], x.attrib.get('version', 'dummy')) for x in
+                                    self.pkgwork['add'] + self.pkgwork['update']]))
         if rc == 0:
             # set installed to true for pkgtodo
             for pkg in self.pkgwork['add'] + self.pkgwork['update']:
