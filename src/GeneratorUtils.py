@@ -69,3 +69,9 @@ class XMLFileBacked(FileBacked):
 
     def __iter__(self):
         return iter(self.entries)
+
+class SingleXMLFileBacked(XMLFileBacked):
+    def __init__(self,filename,fam):
+        XMLFileBacked.__init__(self, filename)
+        fam.AddMonitor(filename, self)
+
