@@ -56,5 +56,5 @@ class Generator(object):
     def GetProbes(self, metadata):
         return []
 
-    def AcceptProbeData(self, metadata, probedata):
+    def AcceptProbeData(self, client, probedata):
         return
