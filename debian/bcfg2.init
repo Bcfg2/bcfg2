@@ -24,6 +24,9 @@ case "$1" in
     $0 stop
     $0 start
     ;;
+  force-reload)
+    true
+    ;;
   *)
     echo "Usage: bcfg2 {start|stop|restart}"
     exit 1
