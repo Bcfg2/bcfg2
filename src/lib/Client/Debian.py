@@ -217,9 +217,10 @@ class Debian(Toolset):
                             else:
                                 self.VerifyEntry(child)
                             self.CondPrint('debug', "Re-checking entry %s %s: %s" % (child.tag, child.get('name'), self.states[child]))
-                        for svc in [x for x in entry.getchildren() if x.tag == 'Service']:
-                            self.CondPrint('debug', "Restarting service %s" % (svc.get('name')))
-                            system('/etc/init.d/%s restart > /dev/null' % (svc.get('name')))
+                        if not self.setup['build']:
+                            for svc in [x.get('name') for x in entry.getchildren() if x.tag == 'Service']:
+                                self.CondPrint('debug', "Restarting service %s" % (svc))
+                                system('/etc/init.d/%s restart > /dev/null' % (svc))
             
             if [x for x in entry.getchildren() if not self.states[x]]:
                 if entry.tag == 'Bundle':
