@@ -145,10 +145,10 @@ if __name__ == '__main__':
         client.Install()
 
         client.CondPrint('verbose', "--> %s of %s config elements correct"%(client.states.values().count(True), total))
-        print "Failing Entries:"
-        for k, v in client.states.iteritems():
-            if not v:
-                print "%s:%s" % (k.tag, k.attrib['name'])
+        failed = [key for key, value in client.states.iteritems() if not value]
+        if failed:
+            client.CondPrint('verbose', "Failing Entries:")
+            [client.CondPrint('verbose', "%s:%s" % (key.tag, key.get('name'))) for key in failed]
     else:
         client.CondPrint("verbose", "All entries correct")
 
