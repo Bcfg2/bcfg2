@@ -27,13 +27,21 @@ class BcfgServer(Server):
         
     def __setup__(self):
         self.metadata = MetadataStore()
-        self.core=Core('/home/desai/data/b2',['bundler'],['sshbase','fstab','myri','cfg'])
+        self.core=Core('/home/desai/data/b2',['bundler'],['sshbase','fstab','myri','cfg','pkgmgr','servicemgr'])
         self.__progress__()
 
     def __progress__(self):
         while self.core.fam.fm.pending():
             self.core.fam.HandleEvent()
 
+    def BuildConfig(self, xml, (peer,port)):
+        # get metadata for host
+        # m = Metadata(???)
+        for s in self.core.GetStructures(m):
+            # build the actual config
+            pass
+
 if __name__ == '__main__':
     server = BcfgServer()
-
+    while server.core.fam.fm.pending():
+        server.core.fam.HandleEvent()
