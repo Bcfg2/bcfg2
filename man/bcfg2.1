@@ -1,0 +1,35 @@
+.TH "bcfg2" 1
+.SH NAME
+bcfg \- reconfigure machine based on settings in BCFG2
+.SH SYNOPSIS
+.B bcfg2
+.I [-d] [-v] [-p] [-c cache file] [-f config file] [-q] [-b bundle]
+.SH DESCRIPTION
+.PP
+.B bcfg2
+Runs the bcfg2 configuration process on the current host. This process
+consists of first fetching and executing probes, uploading probe
+results, fetching the client configuration, checking the current
+client state, attempting to install the desired configuration, and
+finally uploading statistics about the bcfg2 execution and client
+state.
+.SH OPTIONS
+.TP
+.B \-d run bcfg2 in debug mode.
+.TP 
+.B \-v run bcfg2 in verbose mode.
+.TP
+.B \-q run bcfg2 in quick mode. Package checksum verification won't be
+performed. This mode relaxes the constraints of correctness, and thus
+should only be used in safe conditions. 
+.TP 
+.B \-n run bcfg2 in dry-run mode. No changes will be made to the
+system. 
+.TP
+.B \-B run bcfg2 in build mode. Services aren't started, as the system
+may still be in miniroot.
+.SH "SEE ALSO"
+.BR Bcfg2Server(8),
+.BR Bcfg2Ctl(8)
+.SH "BUGS"
+The code is too beta to list all.
