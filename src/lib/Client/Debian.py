@@ -147,6 +147,7 @@ class Debian(Toolset):
     def Install(self):
         if self.setup['verbose'] : print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
+        print "Need to remove:", self.pkgwork['remove']
         # try single large install
         rc = system(join(map(lambda x:"%s-%s"%(x.attrib['name'], x.attrib['version']), self.pkgwork['add'] + self.pkgwork['update'])))
         if rc == 0:
