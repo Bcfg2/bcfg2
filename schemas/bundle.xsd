@@ -7,29 +7,7 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name='PackageType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='ConfigFileType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='ServiceType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='DirectoryType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='perms'/>
-    <xsd:attribute type='xsd:string' name='owner'/>
-    <xsd:attribute type='xsd:string' name='group'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='SymLinkType'>
-    <xsd:attribute type='xsd:string' name='to'/>
-    <xsd:attribute type='xsd:string' name='name'/>
-  </xsd:complexType>
+  <xsd:include schemaLocation="atom.xsd"/>
 
   <xsd:complexType name='SystemType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
