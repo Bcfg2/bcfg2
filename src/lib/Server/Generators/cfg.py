@@ -5,8 +5,7 @@ from re import compile
 from stat import S_ISDIR, ST_MODE
 from string import join
 
-from Bcfg2.Server.Generator import Generator
-from Bcfg2.Server.GeneratorUtils import DirectoryBacked, FileBacked
+from Bcfg2.Server.Generator import Generator, DirectoryBacked, FileBacked
 from Bcfg2.Server.Metadata import Metadata
 
 class FileEntry(FileBacked):

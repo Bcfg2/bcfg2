@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from Bcfg2.Server.Generator import Generator
-from Bcfg2.Server.GeneratorUtils import DirectoryBacked
+from Bcfg2.Server.Generator import Generator, DirectoryBacked
 from Bcfg2.Server.Types import ConfigFile
 
 class account(Generator):

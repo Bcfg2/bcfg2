@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from Bcfg2.Server.Generator import Generator
-from Bcfg2.Server.GeneratorUtils import SingleXMLFileBacked
+from Bcfg2.Server.Generator import Generator, SingleXMLFileBacked
 
 class ServiceList(SingleXMLFileBacked):
     pass
