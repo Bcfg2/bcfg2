@@ -1,0 +1,53 @@
+A generator is logic, embedded in bcfg2, that constructs configuration
+fragments for clients. In general, many generators are used concurrently
+inside of bcfg2. The main generators included with bcfg2 are:
+
+sshbase - manage and retain ssh keys properly across rebuilds
+cfg - a configuration file repository
+pkgmgr - provides available packages on an image by image basis
+servicemgr - manage service activations
+
+Generators are used solely for configuration file production at this
+point, hence their sole interface exists for the purpose of generating
+configuration entities. 
+
+When a client requests its configuration, the bcfg2 daemon queries all
+structuring agents for pertinent configurations. In general, this
+means that all bundles and base configuration data for the appropriate
+image are constructed. At this point, all of these are abstract, that
+is, all entities contain name and type attributes, but don't contain
+versions, or explicit file contents or status. Generators are queried
+for individual configuration elements, of the form, which version of
+package zsh should be installed on client X. 
+
+Finding the generator responsible for a configuration entity has two
+steps. First, each generator has a dispatch table (called
+generator.__provides__) This dispatch table has a key for each type of
+configuration element it handles, which in turn has keys for
+particular instances of those types. For example, the generator that
+handled configuration file /etc/ssh/sshd_config would have the
+following dispatch table entry:
+self.__provides__['ConfigFile']['/etc/ssh/sshd_config']
+The value of this key is a function that can be called to bind in
+configuration elements. (like version, owner, permissions, or file
+data) 
+
+Generators can be activated in other ways, but i would just as soon
+not admit it in public. 
+
+Probes can be created in generators to discover information about
+clients. These xml elements look like:
+<Probe source='my-generator' name='test1' interpreter='/bin/sh'>
+hostname</Probe>
+
+A generator can create as many of these as needed. Bcfg2 will query
+for these by calling a generator's GetProbes method. By default, this
+function returns an empty list, but can return an arbitrary number of
+probe elements. 
+
+These probes are forwarded to the client, where they are
+executed. Output is collected and sent back to the bcfg2 server. the
+source attribute is used to determine which data belongs to which
+generator, and the AcceptProbeData method is called for each probe
+result belonging to the generator. This data may then be used in
+constructing configuration elements for the client. 
