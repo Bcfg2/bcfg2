@@ -149,7 +149,6 @@ if __name__ == '__main__':
     options =  {'v':'verbose', 'd':'debug'}
     doptions = {'D':'daemon', 'C':'client'}
     setup = dgetopt(argv[1:], options, doptions)
-    print setup
     if setup['daemon']:
         daemonize(setup['daemon'])
     server = BcfgServer(setup=setup)
