@@ -11,6 +11,8 @@ import apt_pkg
 
 from Bcfg2.Client.Toolset import Toolset
 
+from elementtree.ElementTree import tostring
+
 class Debian(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
@@ -132,13 +134,15 @@ class Debian(Toolset):
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
         self.setup['quick'] = True
+        # need installed for bundle verification
+        installed = []
 
         # build up work queue
         work = self.pkgwork['add'] + self.pkgwork['update']
         # add non-package entries
         work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
 
-        left = len(work)
+        left = len(work) + len(self.pkgwork['remove'])
         old = left + 1
         count = 1
         
@@ -154,6 +158,8 @@ class Debian(Toolset):
 
             self.CondPrint("verbose", "Installing Non Package entries")
             for nonpkg in [ent for ent in work if ent.tag != 'Package']:
+                if nonpkg not in installed:
+                    installed.append(nonpkg)
                 self.InstallEntry(nonpkg)
                 if self.states[nonpkg]:
                     work.remove(nonpkg)
@@ -171,6 +177,8 @@ class Debian(Toolset):
                     for pkg in packages:
                         self.states[pkg] = True
                         work.remove(pkg)
+                        if pkg not in installed:
+                            installed.append(pkg)
                     self.Refresh()
                 else:
                     self.CondPrint("verbose", "Single Pass Failed")
@@ -183,6 +191,7 @@ class Debian(Toolset):
                             self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
                             self.states[pkg] = True
                             work.remove(pkg)
+                            installed.append(pkg)
                         else:
                             self.CondPrint("verbose", "Installing pkg %s version %s" %
                                            (pkg.get('name'), pkg.get('version')))
@@ -190,7 +199,30 @@ class Debian(Toolset):
                             if cmdrc == 0:
                                 self.states[pkg] = True
                                 work.remove(pkg)
+                                installed.append(pkg)
                             else:
                                 self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
 
-            left = len(work)
+            left = len(work) + len(self.pkgwork['remove'])
+
+        # now we need to check bundle deps
+        for entry in self.structures.keys():
+            if entry.tag == 'Bundle':
+                for new in installed:
+                    if new in entry.getchildren():
+                        self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name')))
+                        modfiles = [x.get('name') for x in entry.getchildren() if x.tag == 'ConfigFile']
+                        for child in entry.getchildren():
+                            if child.tag == 'Package':
+                                self.VerifyPackage(child, modfiles)
+                            else:
+                                self.VerifyEntry(child)
+                            self.CondPrint('debug', "Re-checking entry %s %s: %s" % (child.tag, child.get('name'), self.states[child]))
+                        for svc in [x for x in entry.getchildren() if x.tag == 'Service']:
+                            self.CondPrint('debug', "Restarting service %s" % (svc.get('name')))
+                            system('/etc/init.d/%s restart > /dev/null' % (svc.get('name')))
+            
+            if [x for x in entry.getchildren() if not self.states[x]]:
+                self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.name))
+            else:
+                self.structures[entry] = True
