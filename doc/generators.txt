@@ -1,15 +1,32 @@
-A generator is logic, embedded in bcfg2, that constructs configuration
-fragments for clients. In general, many generators are used concurrently
-inside of bcfg2. The main generators included with bcfg2 are:
+A generator is a module, loaded into bcfg2's address space, that can
+be called to produce configuration data for clients. The code contains
+can do anything, so any configuration pattern can be modeled. These
+are useful for a variety of tasks; we currently use this interface to
+define all of our sources of configuration logic. While this construct
+was available in bcfg1, it suffered from a variety of issues, mainly
+related to performance. The new API provides for high enough speed
+execution that the generator API is the sole provider of configuration
+data to the bcfg2 server. 
 
-sshbase - manage and retain ssh keys properly across rebuilds
-cfg - a configuration file repository
-pkgmgr - provides available packages on an image by image basis
-servicemgr - manage service activations
+Several generators have been implemented in bcfg2:
+Cfg: A basic configuration file repository
+SSHBase: A ssh key management system
+Pkgmgr: Provides information about available software
+Svcmgr: Provides information about available services, and activations
+Debconf: Generator debconf settings based on probed client data
 
-Generators are used solely for configuration file production at this
-point, hence their sole interface exists for the purpose of generating
-configuration entities. 
+Any of these generators can be enabled in bcfg2.conf, and custom
+generators can similarly be added. 
+
+Generators are during the client configuration process at two
+times. First, generators provide client-side probes. These can be used
+to determine local client state where appropriate. Generators can
+provide a list of probes for a client to execute. The data generated
+by this client execution is routed back to the source generator, which
+can then use this data to generate the client configuration. 
+
+The second function is to provide explicit values for the elements of
+a client configuration. This function is used in the following way:
 
 When a client requests its configuration, the bcfg2 daemon queries all
 structuring agents for pertinent configurations. In general, this
@@ -51,3 +68,7 @@ source attribute is used to determine which data belongs to which
 generator, and the AcceptProbeData method is called for each probe
 result belonging to the generator. This data may then be used in
 constructing configuration elements for the client. 
+
+There is a generator base class that provides skeleton methods, which
+custom generators can subclass. It is named
+Bcfg2.Server.Generator.Generator. 
