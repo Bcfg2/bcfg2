@@ -98,6 +98,8 @@ class DirectoryBacked(object):
         if self.entries.has_key(name):
             print "got multiple adds"
         else:
+            if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS')):
+                return
             self.entries[name] = self.__child__('%s/%s'%(self.name, name))
             self.entries[name].HandleEvent()
 
