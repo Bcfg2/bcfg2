@@ -163,6 +163,8 @@ class Toolset(object):
             newfile.close()
             chown(newfile.name, entry.attrib['owner'], entry.attrib['group'])
             chmod(newfile.name, CalcPerms(S_IFREG, entry.attrib['perms']))
+            if entry.attrib.get("paranoid", False) and setup.get("paranoid", False):
+                system("diff -u %s %s.new"%(entry.attrib['name'], entry.attrib['name']))
             rename(newfile.name, entry.attrib['name'])
             return True
         except (OSError, IOError), e:
