@@ -209,7 +209,7 @@ class Debian(Toolset):
             if entry.tag == 'Bundle':
                 for new in installed:
                     if new in entry.getchildren():
-                        self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name')))
+                        self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name', '???')))
                         modfiles = [x.get('name') for x in entry.getchildren() if x.tag == 'ConfigFile']
                         for child in entry.getchildren():
                             if child.tag == 'Package':
