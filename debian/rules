@@ -32,8 +32,6 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 	python setup.py install --prefix=$(PWD)/debian/tmp/usr
-	mkdir -p $(PWD)/debian/tmp/etc/init.d
-	install -m 755 bcfg2.init $(PWD)/debian/tmp/etc/init.d/bcfg2
 
 # Build architecture-dependent files here.
 # We have nothing to do by default.
@@ -56,7 +54,8 @@ binary-indep: build install
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-#	dh_installinit -pbcfg-server --name bcfgd -u"start 21 2 3 4 5 . stop 19 0 1 6 ."
+	dh_installinit -pbcfg2 --no-start -u "start 25 2 3 4 5 ."
+	dh_installinit -pbcfg2-server -u"start 21 2 3 4 5 . stop 19 0 1 6 ."
 #	dh_installcron
 #	dh_installinfo
 	dh_installman 
