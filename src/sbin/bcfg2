@@ -4,6 +4,7 @@ from os import popen, chmod, unlink
 from sys import argv, exit, exc_info
 from string import join
 from tempfile import mktemp
+from time import asctime, localtime
 from traceback import extract_tb
 
 from elementtree.ElementTree import Element, XML, tostring
@@ -138,7 +139,20 @@ class ClientState(object):
             self.InstallEntry(entry)
 
     def Commit(self):
-        self.toolset.Commit()
+        self.toolset.Commit(self.states)
+
+    def GenerateStats(self):
+        stats = Element("Statistics")
+        SubElement(stats, "Structures", good=str(len([k for k,v in self.structures.iteritems() if v])), \
+                   bad=str(len([k for k,v in self.structures.iteritems() if not v])))
+        SubElement(stats, "Entries", good=str(len([k for k,v in self.states.iteritems() if v])), \
+                   bad=str(len([k for k,v in self.states.iteritems() if not v])))
+        if len([k for k,v in self.structures.iteritems() if not v]) == 0:
+            stats.attrib['state'] = 'clean'
+        else:
+            stats.attrib['state'] = 'dirty'
+        stats.attrib['time'] = asctime(localtime())
+        return stats
 
 if __name__ == '__main__':
     # parse command line options
@@ -200,6 +214,13 @@ if __name__ == '__main__':
     for k,v in client.states.iteritems():
         if not v:
             print "%s:%s"%(k.tag, k.attrib['name'])
-    # install config
+
     # upload statistics
+    m = Element("upload-statistics")
+    stats = client.GetStats()
+    m.append(stats)
+
+    comm.SendMessage(h, tostring(stats))
+    r = comm.RecvMessage(h)
+    # clean up
     comm.ClientClose(h)
