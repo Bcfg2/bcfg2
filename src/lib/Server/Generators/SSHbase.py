@@ -106,5 +106,4 @@ class SSHbase(Generator):
                        (self.data, )+".".join(hostkey.split('.')[:-1]+['pub']+[hostkey.split('.')[-1]]))
                 self.repository.AddEntry(hostkey)
                 self.repository.AddEntry("%s.pub"%(hostkey))
-        # call the notifier for global
 
