@@ -271,17 +271,18 @@ class Toolset(object):
             return False
         parent = "/".join(entry.get('name').split('/')[:-1])
         if parent:
-            try:
-                sloc = lstat(parent)
+            for idx in xrange(len(parent.split('/')[:-1])):
+                current = '/'+'/'.join(parent.split('/')[1:2+idx])
                 try:
-                    if not S_ISDIR(sloc[ST_MODE]):
-                        unlink(parent)
-                        mkdir(parent)
+                    sloc = lstat(current)
+                    try:
+                        if not S_ISDIR(sloc[ST_MODE]):
+                            unlink(current)
+                            mkdir(current)
+                    except OSError:
+                        return False
                 except OSError:
-                    return False
-            except OSError:
-                # need to handle mkdir -p case
-                mkdir(parent)
+                    mkdir(current)
 
         # If we get here, then the parent directory should exist
         try:
