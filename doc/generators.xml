@@ -1,15 +1,17 @@
 <chapter>
     <title>Generators</title>
     
-    <para>Generators are modules are are loaded by the Bcfg2 server,
-      based on directives in <filename>/etc/bcfg2.conf</filename>. They
-      provide concrete, fully-specified configuration entries for
-      clients. This chapter documents the function and usage of generators
-      bundled with Bcfg2 releases. It also describes the interface used to
-      communicate with generators; modeles implementing this interface can
-      provide configuration elements for clients based on any
-      representation or requirements that may exist. 
-    </para>
+    <para> 
+    Generators are modules are are loaded by the Bcfg2 server,
+    based on directives in <filename>/etc/bcfg2.conf</filename>. They
+    provide concrete, fully-specified configuration entries for
+    clients. This chapter documents the function and usage of
+    generators bundled with Bcfg2 releases. It also describes the
+    interface used to communicate with generators; modeles
+    implementing this interface can provide configuration elements for
+    clients based on any representation or requirements that may
+    exist.
+  </para>
 
   <section>
     <title>Bundled Generators</title>
@@ -100,8 +102,42 @@
     </section>
 
     <section>
-      <title>Pkgmgr</title>
-      <para/>
+      <title>The Scoped XML File Group: Servicemgr</title>
+      <para>
+	The generator Servicemgr uses files formatted similarly to the
+	metadata files. It 
+	works based on a single file, which contains definitions
+	ordered by increasing specificity.
+      </para>
+
+      <example>
+	<title><filename>foo</filename></title>
+	<programlisting>
+	  <![CDATA[<Services>
+  <Class name='webserver'>
+    <Service status='on' name='httpd' port='80' protocol='tcp'>
+      <User address='0.0.0.0' mask='32'/>
+    </Service>
+  </Class>
+  <Host name='mailhost'>
+    <Service name='sendmail' status='on' protocol='tcp' port='80'>
+      <User address='0.0.0.0' mask='32'/>
+    </Service>
+  </Host>
+  <Host name='thai'>
+    <Service name='ssh' status='off'/>
+  </Host>
+  <Service name='ssh' status='on' protocol='tcp' port='22'/>
+  <Service name='ntp-server' status='on' />
+</Services>]]>
+	</programlisting>
+      </example>
+
+      <para>
+	This set of service definitions is intrepreted in the
+	following way. Webservers run httpd, the host mailhost runs
+	sendmail, and all machines run ssh, and the ntp-server. 
+      </para>
     </section>
 
   </section>
