@@ -1,0 +1,55 @@
+The Bcfg2 repository has a bunch of parts, each with different
+functions.
+
+Cfg/ -> Configuration file repository
+Pkgmgr/ -> Package indices for different images
+SSHbase/ -> SSH Key data files
+etc/ -> Single files for generators or system wide settings
+
+Adding to the repository:
+
+1. If the addition is a single package or configuration file (without
+   any associated service) it can be added to etc/base.xml. This file
+   contains single items which need to be installed on
+   clients. Entries can be nested, depending on where they should be
+   installed. Global entries go at the top level, as do containers
+   corresponding to particular Images. Items which should be on all
+   instances of an image should directly inside of the Image tag, and
+   containers for classes can also be added at this level. 
+
+<Base>
+ <ConfigFile name="/etc/passwd" />
+ <ConfigFile name="/etc/group" />
+ <Image name="debian-sarge">
+   <ConfigFile name="/etc/motd" />
+   <Class name='workstation'>
+     <Package name='gdm'/>
+   </Class>
+  </Image>
+</Base>
+
+    In the above example, /etc/passwd and group belong on all
+    machines, while /etc/motd belongs on all debian-sarge
+    machines. the package gdm belongs only on debian-sarge machines in
+    class workstation. 
+
+2. If a package is associated with a service, then it should be
+   installed as a part of a bundle. This means that the installation
+   mechanism will ensure that all components are installed properly
+   and that services are restarted when any underlying components
+   change. The bundle making process consist of the following steps:
+
+   - Create the bundle file. (look at <REPO>/Bundler/ssh.xml for an
+     example) This file contains a list of all interrelated
+     configuration items. Abstraction based on system (a grouping of
+     images) is possible in this file. Note that explicit
+     configuration data, like file contents or package versions aren't
+     specified in this file.
+
+   - Add all new configuration items into the generator
+     sources. The package list automatically contains all packages
+     available, so it shouldn't need to be changed. Config files must
+     be added to the repository in <REPO>/Cfg. Services must be
+     activated in <REPO>/etc/services.xml. 
+
+   - Activate the bundle for a class in <REPO>/etc/metadata.xml
