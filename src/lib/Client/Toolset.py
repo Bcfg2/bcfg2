@@ -106,11 +106,10 @@ class Toolset(object):
         stats = Element("Statistics")
 
         # Calculate number of total bundles and structures
-        total = len(self.structures) + len(self.states)
+        total =  len(self.states)
         stats.set('total',str(total))
         # Calculate number of good bundles and structures
-        good = len([key for key, val in self.structures.iteritems() if val]) + \
-                len([key for key, val in self.states.iteritems() if val])
+        good = len([key for key, val in self.states.iteritems() if val])
         stats.set('good', str(good))
         stats.set('version', '2.0')
         stats.set('client_version', client_version)
@@ -125,11 +124,6 @@ class Toolset(object):
         # List bad elements of the configuration
         bad_elms = SubElement(stats, "Bad")
         for elm in [key for key,val in self.states.iteritems() if not val]:
-            if elm.get('name') == None:
-                SubElement(bad_elms, elm.tag)
-            else:
-                SubElement(bad_elms, elm.tag, name=elm.get('name'))
-        for elm in [key for key,val in self.structures.iteritems() if not val]:
             if elm.get('name') == None:
                 SubElement(bad_elms, elm.tag)
             else:
