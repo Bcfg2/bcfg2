@@ -9,7 +9,7 @@ class myri(Generator):
     __name__ = 'myri'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __build__ = {'/etc/sysconfig/network-scripts/ifcfg-myri0':'build_myri'}
+    __provides__ = {'ConfigFile':{'/etc/sysconfig/network-scripts/ifcfg-myri0':'build_myri'}}
 
     filedata="DEVICE=myri0\nIPADDR=%s\nBROADCAST=140.221.69.255\nNETMASK=255.255.254.0\nNETWORK=140.221.68.0\nONBOOT=yes\nBOOTPROTO=none"
 
