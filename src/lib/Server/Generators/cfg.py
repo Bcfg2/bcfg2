@@ -117,7 +117,7 @@ class ConfigFileEntry(object):
             pass
         # apply diffs, etc
         entry.attrib.update({'owner':self.owner, 'group':self.group, 'perms':self.perms, 'encoding':self.encoding})
-        if entry.paranoid:
+        if self.paranoid:
             entry.attrib['paranoid'] = 'true'
         entry.text = filedata
 
