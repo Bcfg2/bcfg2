@@ -37,7 +37,7 @@ class FileEntry(FileBacked):
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    specific = regcompile('(.*/)(?P<filename>[\w\-.]+)\.((H_(?P<hostname>\S+))|' +
+    specific = regcompile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                           '(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|' +
                           '(I(?P<iprio>\d+)_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))' +
                           '(\.(?P<op>cat|udiff))?$')
@@ -45,9 +45,10 @@ class ConfigFileEntry(object):
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)$')
     
-    def __init__(self, path):
+    def __init__(self, path, repopath):
         object.__init__(self)
         self.path = path
+        self.repopath = repopath
         self.basefiles = []
         self.deltas = []
         self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
@@ -55,7 +56,7 @@ class ConfigFileEntry(object):
 
     def read_info(self):
         '''read in :info metadata'''
-        filename = "%s/:info" % self.path
+        filename = "%s/:info" % self.repopath
         for line in open(filename).readlines():
             match = self.info.match(line)
             if not match:
@@ -109,6 +110,10 @@ class ConfigFileEntry(object):
         action = event.code2str()
         if event.filename == ':info':
             return self.read_info()
+        if event.filename != self.path.split('/')[-1]:
+            if not self.specific.match('/' + event.filename):
+                syslog(LOG_INFO, 'Cfg: Suppressing event for bogus file %s' % event.filename)
+                return
         for entry in self.basefiles + self.deltas:
             if entry.name.split('/')[-1] == event.filename:
                 if action == 'changed':
@@ -192,8 +197,9 @@ class Cfg(Generator):
         else:
             # file entries shouldn't contain path-to-repo
             shortname = '/'+ '/'.join(name[len(self.data)+1:].split('/')[:-1])
+            repodir = '/' + '/'.join(name.split('/')[:-1])
             if not self.entries.has_key(shortname):
-                self.entries[shortname] = ConfigFileEntry(shortname)
+                self.entries[shortname] = ConfigFileEntry(shortname, repodir)
                 self.__provides__['ConfigFile'][shortname] = self.entries[shortname].GetConfigFile
             self.entries[shortname].AddEntry(name)
             self.entries[shortname].HandleEvent(event)
@@ -202,7 +208,7 @@ class Cfg(Generator):
         '''Handle FAM updates'''
         action = event.code2str()
         if self.tempfile.match(event.filename):
-            syslog(LOG_INFO, "Suppressed event for file %s" % event.filename)
+            syslog(LOG_INFO, "Cfg: Suppressed event for file %s" % event.filename)
             return
         if event.filename[0] != '/':
             filename = "%s/%s" % (self.famID[event.requestID], event.filename)
