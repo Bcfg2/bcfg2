@@ -21,7 +21,7 @@ def Detect():
 
 class Debian(Toolset):
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
-                     "/var/cache/debconf/templates.dat"]
+                     "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group']
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
@@ -108,48 +108,51 @@ class Debian(Toolset):
             return False
 
     def Inventory(self):
+        print "In Inventory::"
         Toolset.Inventory(self)
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         all = deepcopy(self.installed)
         desired = {}
-        for entry in self.cfg.findall("Package"):
+        for entry in self.cfg.findall(".//Package"):
             desired[entry.attrib['name']] = entry
 
         for pkg, entry in desired.iteritems():
+            print pkg, 
             if self.states[entry]:
                 # package entry verifies
+                print "OK"
                 del all[pkg]
             else:
                 if all.has_key(pkg):
                     # wrong version
+                    print "UPDATE"
                     self.pkgwork['update'].append(entry)
                 else:
+                    print "NEW"
                     # new pkg
                     self.pkgwork['add'].append(entry)
-                    # ???
-                    del all[pkg]
-                    
-                
-            if all.has_key[pkg]:
+            
+            if all.has_key(pkg):
                 if all[pkg] != desired[pkg]:
                     # package version is wrong
                     self.pkgwork['update'].append(entry)
                 del all[pkg]
-                del desired[pkg]
+                #del desired[pkg]
             else:
                 # new package install
                 self.pkgwork['add'].append(entry)
-                del desired[pkg]
+                #del desired[pkg]
 
         # pkgwork contains all one-way verification data now
         # all data remaining in all is extra packages
         
     def Install(self):
-        if self.setup['verbose'] : print "Installing"
+        print "Installing"
         cmd = "apt-get --reinstall -q=2 -y install %s"
         print "Need to remove:", self.pkgwork['remove']
+        print "%s new, %s update, %s remove"%(len(self.pkgwork['add']),len(self.pkgwork['update']), len(self.pkgwork['remove']))
         # try single large install
-        rc = system(join(map(lambda x:"%s-%s"%(x.attrib['name'], x.attrib['version']), self.pkgwork['add'] + self.pkgwork['update'])))
+        rc = system(cmd%join(map(lambda x:"%s=%s"%(x.attrib['name'], x.attrib['version']), self.pkgwork['add'] + self.pkgwork['update'])))
         if rc == 0:
             # set installed to true for pkgtodo
             for pkg in self.pkgwork['add'] + self.pkgwork['update']:
@@ -160,18 +163,20 @@ class Debian(Toolset):
             # do single pass installs
             system("dpkg --configure --pending")
             self.Refresh()
-            for pkg in self.pkgtodo:
+            work = self.pkgwork['add'] + self.pkgwork['update']
+            for pkg in work:
                 if self.VerifyPackage(pkg):
                     self.states[pkg] = True
-                    self.pkgtodo.remove(pkg)
-            oldlen = len(self.pkgtodo) + 1
-            while (len(self.pkgtodo) < oldlen):
-                oldlen = len(self.pkgtodo)
-                for pkg in self.pkgtodo:
-                    rc = system(cmd%(pkg.attrib['name'], pkg.attrib['user']))
+                    #self.pkgtodo.remove(pkg)
+            oldlen = len(work) + 1
+            while (len(work) < oldlen):
+                oldlen = len(work)
+                for pkg in work:
+                    print cmd%("%s=%s"%(pkg.attrib['name'], pkg.attrib['version']))
+                    rc = system(cmd%("%s=%s"%(pkg.attrib['name'], pkg.attrib['version'])))
                     if rc == 0:
                         self.states[pkg] = True
-                        self.pkgtodo.remove(pkg)
+                        work.remove(pkg)
                     else:
                         print "Failed to install package %s"%(pkg.attrib['name'])
         for entry in [x for x in self.states if not self.states[x] and x.tag != 'Package']:
