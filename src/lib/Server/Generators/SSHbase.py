@@ -51,11 +51,9 @@ class SSHbase(Generator):
         client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
         try:
-            ipaddr = gethostbyname(client)
-            # add client-specific key lines
             for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
-                filedata += "%s,%s,%s %s" % (client, "%s.mcs.anl.gov"%(client),
-                                             ipaddr, self.repository.entries[hostkey].data)
+                filedata += "localhost,localhost.localdomain,127.0.0.1 %s" % (
+                    self.repository.entries[hostkey].data)
         except gaierror:
             self.LogError("DNS lookup failed for client %s" % client)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
@@ -64,13 +62,13 @@ class SSHbase(Generator):
     def build_hk(self, entry, metadata):
         '''This binds host key data into entries'''
         client = metadata.hostname
-        filename = "%s.H_%s" % (entry.attrib['name'].split('/')[-1], client)
+        filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in self.repository.entries.keys():
             self.GenerateHostKeys(client)
             self.GenerateKnownHosts()
         keydata = self.repository.entries[filename].data
         perms = '0600'
-        if filename[-4:] == '.pub':
+        if entry.get('name')[-4:] == '.pub':
             perms = '0644'
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':perms})
         entry.text = keydata
