@@ -208,7 +208,7 @@ class Debian(Toolset):
                     if child.tag == 'Package':
                         self.VerifyPackage(child, modfiles)
                     else:
-                        self.VerifyPackage(child)
+                        self.VerifyEntry(child)
                     self.CondPrint('debug', "Re-checked entry %s %s: %s" %
                                    (child.tag, child.get('name'), self.states[child]))
                 for svc in [svc.get('name') for svc in bchildren if svc.tag == 'Service']:
