@@ -4,10 +4,14 @@ from binascii import b2a_base64
 from glob import glob
 from os import rename, stat, system
 from socket import gethostbyname
+from string import strip
+from syslog import syslog, LOG_INFO
 
 from Types import ConfigFile
 from Generator import Generator
 from GeneratorUtils import DirectoryBacked
+
+from elementtree.ElementTree import Element
 
 class sshbase(Generator):
     __name__ = 'sshbase'
@@ -70,3 +74,12 @@ class sshbase(Generator):
                 rename("%s/%s.pub"%(self.data,hostkey),"%s/"%(self.data)+".".join(hostkey.split('.')[:-1]+['pub']+hostkey.split('.')[-1]))
         # call the notifier for global
 
+    def GetProbes(self, metadata):
+        p = Element("probe", name='hostname', interpreter='/bin/sh', source='sshbase')
+        p.text = 'hostname'
+        return [p]
+
+    def AcceptProbeData(self, client, probedata):
+        p = strip(probedata.text)
+        #syslog(LOG_INFO, "Got hostname %s for client %s"%(p, client))
+        
