@@ -7,7 +7,7 @@ class Account(Generator):
     '''This module generates account config files,
     based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
-    dyn.(passwd|group) -> dynamic entries (usually acquired from yp)
+    dyn.(passwd|group) -> dynamic entries (usually acquired from yp or somesuch)
     useraccess -> users to be granted login access on some hosts
     superusers -> users to be granted root privs on all hosts
     rootlike -> users to be granted root privs on some hosts
@@ -24,7 +24,6 @@ class Account(Generator):
                                            '/root/.ssh/authorized_keys':self.gen_root_keys_cb}}
         try:
             self.repository = DirectoryBacked(self.data, self.core.fam)
-            self.ssh = DirectoryBacked("%s/ssh"%(self.data), self.core.fam)
         except:
             self.LogError("Failed to load repos: %s, %s" % (self.data, "%s/ssh" % (self.data)))
             raise GeneratorInitError
@@ -55,7 +54,9 @@ class Account(Generator):
         superusers += [user for (user, host) in rootlike if host == metadata.hostname]
         data = ''
         for user in superusers:
-            if self.ssh.entries.has_key(user):
-                data += self.ssh.entries[user].data
+            if self.repository.entries.has_key("%s.key", user):
+                data += self.repository.entries["%s.key" % user].data
+            else:
+                self.LogError("Unable to locate key for user %s" % user)
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
         entry.text = data
