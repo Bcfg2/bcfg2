@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # $Id$
 
-from syslog import syslog, LOG_ERR
+from Error import GeneratorError, PublishError
 
-class GeneratorError(Exception):
-    pass
+from syslog import syslog, LOG_ERR
 
 class Generator(object):
     '''This is a class that generators can be subclassed from.
@@ -60,9 +59,6 @@ class Generator(object):
     def Notify(self,region):
         '''Generate change notification for region'''
         pass
-
-class PublishError(Exception):
-    pass
 
 class PublishedValue(object):
     def __init__(self,owner,key,value):
