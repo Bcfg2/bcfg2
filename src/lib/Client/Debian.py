@@ -3,7 +3,7 @@ __revision__ = '$Revision: 1.39 $'
 
 from copy import deepcopy
 from glob import glob
-from os import environ, system
+from os import environ, stat, system
 from popen2 import Popen4
 
 import apt_pkg
@@ -57,17 +57,22 @@ class Debian(Toolset):
 
     def InstallService(self, entry):
         '''Install Service for entry'''
+        cmdrc = 1
         self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        try:
+            stat('/etc/init.d/%s' % entry.get('name'))
+        except OSError:
+            self.CondPrint('debug', "Init script for service %s does not exist" % entry.get('name'))
+            return False
+        
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
                 print "Disabling service %s" % (entry.get('name'))
-                return False
             else:
                 cmdrc = system("update-rc.d -f %s remove" % entry.get('name'))
         else:
             if self.setup['dryrun']:
                 print "Enabling service %s" % (entry.attrib['name'])
-                return False
             else:
                 cmdrc = system("update-rc.d %s defaults" % (entry.attrib['name']))
         if cmdrc:
