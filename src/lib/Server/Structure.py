@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This is the Structure base class'''
 __revision__ = '$Revision$'
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''This provides bundle clauses with translation functionality'''
 __revision__ = '$Revision$'
 
