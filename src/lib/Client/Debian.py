@@ -10,6 +10,8 @@ import apt_pkg
 
 from Bcfg2.Client.Toolset import Toolset
 
+from elementtree.ElementTree import tostring
+
 class Debian(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
@@ -197,8 +199,11 @@ class Debian(Toolset):
                 if cmdrc == 0:
                     self.CondPrint('verbose', "Single Pass Succeded")
                     # set all states to true and flush workqueues
-                    for pkg in packages:
-                        self.states[pkg] = True
+                    badpkgs = [entry for entry in self.states.keys() if entry.tag == 'Package'
+                               and not self.states[entry]]
+                    for entry in badpkgs:
+                        self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
+                        self.states[entry] = True
                     self.Refresh()
                 else:
                     self.CondPrint("verbose", "Single Pass Failed")
