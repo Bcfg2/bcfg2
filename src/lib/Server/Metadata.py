@@ -88,7 +88,7 @@ class MetadataStore(SingleXMLFileBacked):
             self.WriteBack()
         p = self.profiles[profile]
         # should we uniq here? V
-        bundles = reduce(lambda x, y:x + y, [self.classes.get[x] for x in p.classes])
+        bundles = reduce(lambda x, y:x + y, [self.classes.get(x) for x in p.classes])
         return Metadata(False, image, p.classes, bundles, p.attributes, client)
 
     def WriteBack(self):
