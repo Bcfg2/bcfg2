@@ -135,11 +135,11 @@ class Debian(Toolset):
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
         if self.setup['remove'] in ['all', 'packages']:
-            self.CondPrint('verbose', "Removing packages:", self.pkgwork['remove'])
+            self.CondPrint('verbose', "Removing packages:" % self.pkgwork['remove'])
             system("apt-get remove %s" % " ".join(self.pkgwork['remove']))
         else:
-            self.CondPrint('verbose', "Need to remove packages:", self.pkgwork['remove'])
-        self.CondPrint('verbose', "Need to remove services:", self.extra_services)
+            self.CondPrint('verbose', "Need to remove packages:" % self.pkgwork['remove'])
+        self.CondPrint('verbose', "Need to remove services:" % self.extra_services)
         
     def Install(self):
         '''Correct detected misconfigurations'''
