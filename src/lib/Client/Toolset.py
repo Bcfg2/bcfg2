@@ -42,10 +42,10 @@ class Toolset(object):
         self.modified = []
         self.extra = []
         if self.__important__:
-            for cfile in cfg.findall(".//ConfigFile"):
-                for name in self.__important__:
-                    if cfile.get("name") == name:
-                        self.InstallConfigFile(cfile)
+            for cfile in [cfl for cfl in cfg.findall(".//ConfigFile") if cfl.get('name') in self.__important__]:
+                self.VerifyEntry(cfile)
+                if not self.states[cfile]:
+                    self.InstallConfigFile(cfile)
 
     def CondPrint(self, state, msg):
         '''Conditionally print message'''
@@ -60,14 +60,6 @@ class Toolset(object):
             print "File %s, line %i, in %s\n   %s\n" % (line)
         print "%s: %s\n" % (ttype, value)
         del ttype, value, trace
-
-    def print_failure(self):
-        '''Display curses style failure message'''
-        self.CondPrint('verbose', "\033[60G[\033[1;31mFAILED\033[0;39m]\r")
-
-    def print_success(self):
-        '''Display curses style success message'''
-        self.CondPrint('verbose', "\033[60G[  \033[1;32mOK\033[0;39m  ]\r")
 
     # These next functions form the external API
 
@@ -93,31 +85,31 @@ class Toolset(object):
             self.modified.remove(structure)
             if structure.tag == 'Bundle':
                 # check for clobbered data
-                modlist = [x.get('name') for x in structure.getchildren() if x.tag == 'ConfigFile']
+                modlist = [cfile.get('name') for cfile in structure.getchildren() if cfile.tag == 'ConfigFile']
                 for entry in structure.getchildren():
                     self.VerifyEntry(entry, modlist)
         try:
-            state = [self.states[x] for x in structure.getchildren()]
+            state = [self.states[entry] for entry in structure.getchildren()]
             if False not in state:
                 self.structures[structure] = True
-        except KeyError, k:
-            print "State verify evidently failed for %s" % (k)
+        except KeyError, msg:
+            print "State verify evidently failed for %s" % (msg)
             self.structures[structure] = False
 
     def Install(self):
         '''Baseline Installation method based on current entry states'''
-        self.modified  =  [k for (k, v) in self.structures.iteritems() if not v]
-        for entry in [k for (k, v) in self.states.iteritems() if not v]:
-            self.InstallEntry(entry)
+        self.modified  =  [key for (key, val) in self.structures.iteritems() if not val]
+        [self.InstallEntry(key) for (key, val) in self.states.iteritems() if not val]
 
     def GenerateStats(self):
         '''Generate XML summary of execution statistics'''
         stats = Element("Statistics")
-        SubElement(stats, "Structures", good=str(len([k for k, v in self.structures.iteritems() if v])), \
-                   bad=str(len([k for k, v in self.structures.iteritems() if not v])))
-        SubElement(stats, "Entries", good=str(len([k for k, v in self.states.iteritems() if v])), \
-                   bad=str(len([k for k, v in self.states.iteritems() if not v])))
-        if len([k for k, v in self.structures.iteritems() if not v]) == 0:
+        SubElement(stats, "Structures", good=str(len([key for key, val in
+                                                      self.structures.iteritems() if val])), \
+                   bad=str(len([key for key, val in self.structures.iteritems() if not val])))
+        SubElement(stats, "Entries", good=str(len([key for key, val in self.states.iteritems() if val])), \
+                   bad=str(len([key for key, val in self.states.iteritems() if not val])))
+        if len([key for key, val in self.structures.iteritems() if not val]) == 0:
             stats.set('state', 'clean')
         else:
             stats.set('state', 'dirty')
@@ -221,7 +213,7 @@ class Toolset(object):
             chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
             chmod(entry.get('name'), entry.get('perms'))
-        except:
+        except (OSError, KeyError):
             self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
             return False
 
