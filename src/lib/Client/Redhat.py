@@ -98,7 +98,8 @@ class Redhat(Toolset):
         rc = system(self.rpmcmd%(join(map(lambda x:x.attrib['url'], self.pkgtodo))))
         if rc == 0:
             # set state == True for all just-installed packages
-            map(lambda x:entrystate[x] = True, self.pkgtodo)
+            for pkg in self.pkgtodo:
+                entrystate[x] = True
             self.pkgtodo = []
         else:
             # fall back to single package installs
