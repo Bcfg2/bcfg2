@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
-from elementtree.ElementTree import XML
+from elementtree.ElementTree import XML, Element
 
 class Debconf(Generator):
     '''Debconf takes <data>/template.dat and adds entries for
