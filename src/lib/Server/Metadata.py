@@ -1,16 +1,10 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from elementtree.ElementTree import XML, tostring, SubElement
+from elementtree.ElementTree import XML, tostring, SubElement, Element
 
 from Bcfg2.Server.Generator import SingleXMLFileBacked
         
-class ConfigurationRegion(object):
-    def __init__(self, name, scope, stype):
-        self.name = name
-        self.scope = scope
-        self.stype = stype
-
 class Metadata(object):
     '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
     def __init__(self, all, image, classes, bundles, attributes, hostname):
@@ -22,70 +16,65 @@ class Metadata(object):
         self.hostname = hostname
 
     def Applies(self, other):
-        '''Applies checks if the object associated with this metadata is relevant to
-        the metadata supplied by other'''
-        for c in self.classes:
-            if c not in other.classes:
-                return False
-        for bundle in self.bundles:
-            if bundle not in other.bundles:
-                return False
-        if (self.hostname != None) and (self.hostname != other.hostname):
+        '''Check if metadata styled object applies to current metadata'''
+        if (other.all or (other.image and (self.image == other.image)) or
+            (other.classes and (self.classes == other.classes)) or
+            (other.attributes and (self.attributes == other.attributes)) or
+            (other.hostname and (self.hostname == other.hostname))):
+            return True
+        else:
             return False
-        return True
-
-    def __str__(self):
-        return "Image:%s, classes:%s, b:%s, attr:%s, host:%s" % (self.image, self.classes,
-                                                                 self.bundles, self.attributes, self.hostname)
-
-    def __cmp__(self, other):
-        fields = ['image', 'classes', 'bundles', 'attributes', 'hostname']
-        try:
-            most1 = [x for x in range(len(fields)) if getattr(self, fields[x])][0]
-        except:
-            most1 = 0
-        try:
-            most2 = [x for x in range(len(fields)) if getattr(other, fields[x])][0]
-        except:
-            most2 = 0
-        return most1 < most2
 
 class Profile(object):
+    '''Profiles are configuration containers for sets of classes and attributes'''
     def __init__(self, xml):
         object.__init__(self)
-        self.classes = [x.attrib['name'] for x in xml.findall("Class")]
-        self.attributes = ["%s.%s" % (x.attrib['scope'], x.attrib['name']) for x in xml.findall("Attribute")]
+        self.classes = [cls.attrib['name'] for cls in xml.findall("Class")]
+        self.attributes = ["%s.%s" % (attr.attrib['scope'], attr.attrib['name']) for
+                           attr in xml.findall("Attribute")]
 
 class MetadataStore(SingleXMLFileBacked):
+    '''The MetadataStore is a filebacked xml repository that contains all setup info for all clients'''
+
+    def __init__(self, filename, fam):
+        SingleXMLFileBacked.__init__(self, filename, fam)
+        # initialize Index data to avoid race
+        self.defaults = {}
+        self.clients = {}
+        self.profiles = {}
+        self.classes = {}
+        self.element = Element("dummy")
+        
     def Index(self):
+        '''Build data structures for XML data'''
         self.element = XML(self.data)
         self.defaults = {}
         self.clients = {}
         self.profiles = {}
         self.classes = {}
-        for p in self.element.findall("Profile"):
-            self.profiles[p.attrib['name']] = Profile(p)
-        for c in self.element.findall("Client"):
-            self.clients[c.attrib['name']] = (c.attrib['image'], c.attrib['profile'])
-        for c in self.element.findall("Class"):
-            self.classes[c.attrib['name']] = [x.attrib['name'] for x in c.findall("Bundle")]
-        for (k, v) in self.element.attrib.iteritems():
-            if k[:8] == 'default_':
-                self.defaults[k[8:]] = v
+        for prof in self.element.findall("Profile"):
+            self.profiles[prof.attrib['name']] = Profile(prof)
+        for cli in self.element.findall("Client"):
+            self.clients[cli.attrib['name']] = (cli.attrib['image'], cli.attrib['profile'])
+        for cls in self.element.findall("Class"):
+            self.classes[cls.attrib['name']] = [bundle.attrib['name'] for bundle in cls.findall("Bundle")]
+        for key in [key[8:] for key in self.element.attrib if key[:8] == 'default_']:
+            self.defaults[key] = self.element.get("default_%s" % key)
 
     def FetchMetadata(self, client, image=None, profile=None):
+        '''Get metadata for client'''
         if ((image != None) and (profile != None)):
             # Client asserted profile/image
             self.clients[client] = (image, profile)
-            f = [x for x in self.element.findall("Client") if x.attrib['name'] == client]
-            if len(f) == 0:
+            clientdata = [cli for cli in self.element.findall("Client") if cli.get('name') == client]
+            if len(clientdata) == 0:
                 # non-existent client
                 SubElement(self.element, "Client", name=client, image=image, profile=profile)
                 self.WriteBack()
-            elif len(f) == 1:
+            elif len(clientdata) == 1:
                 # already existing client
-                f[0].attrib['profile'] = profile
-                f[0].attrib['image'] = image
+                clientdata[0].attrib['profile'] = profile
+                clientdata[0].attrib['image'] = image
                 self.WriteBack()
         elif self.clients.has_key(client):
             (image, profile) = self.clients[client]
@@ -94,14 +83,14 @@ class MetadataStore(SingleXMLFileBacked):
             (image, profile) = (self.defaults['image'], self.defaults['profile'])
             SubElement(self.element, "Client", name=client, profile=profile, image=image)
             self.WriteBack()
-        p = self.profiles[profile]
+        prof = self.profiles[profile]
         # should we uniq here? V
-        bundles = reduce(lambda x, y:x + y, [self.classes.get(x) for x in p.classes])
-        return Metadata(False, image, p.classes, bundles, p.attributes, client)
+        bundles = reduce(lambda x, y:x + y, [self.classes.get(cls) for cls in prof.classes])
+        return Metadata(False, image, prof.classes, bundles, prof.attributes, client)
 
     def WriteBack(self):
-        # write changes to file back to fs
-        f = open(self.name, 'w')
-        f.write(tostring(self.element))
-        f.close()
+        '''Write metadata changes back to persistent store'''
+        fout = open(self.name, 'w')
+        fout.write(tostring(self.element))
+        fout.close()
 
