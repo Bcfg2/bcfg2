@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # $Id$
 
-from Error import GeneratorError, PublishError
+from Error import GeneratorError
 
 from syslog import syslog, LOG_ERR
 
@@ -17,8 +17,8 @@ class Generator(object):
     __build__ = {}
     __requires__ = []
     
-    def __init__(self, container):
-        self.container=container
+    def __init__(self, core):
+        self.core=core
         self.data="%s/%s"%(self.__datastore__,self.__name__)
         self.PublishAll()
 
@@ -38,13 +38,13 @@ class Generator(object):
             raise GeneratorError, ("Key",filename)
 
     def Publish(self,key,value):
-        self.container.Publish(self.__name__,key,value)
+        self.core.Publish(self.__name__,key,value)
 
     def PublishAll(self):
         pass
 
     def Read(self,key):
-        self.container.ReadValue(key)
+        self.core.ReadValue(key)
 
     def ReadAll(self):
         self.external = {}
@@ -60,52 +60,3 @@ class Generator(object):
         '''Generate change notification for region'''
         pass
 
-class PublishedValue(object):
-    def __init__(self,owner,key,value):
-        self.owner=owner
-        self.key=key
-        self.value=value
-
-    def Update(self,owner,value):
-        if owner != self.owner:
-            raise PublishError, (self.key,owner)
-        self.value=value
-
-class GeneratorContainer(object):
-    def __init__(self):
-        self.pubspace={}
-        self.generators=[]
-        # we need to setup publish, read interface
-        # we need to inventory and setup generators
-        pass
-
-    def PublishValue(self,owner,key,value):
-        if not self.pubspace.has_key(key):
-            # This is a new entry
-            self.pubspace[key]=PublishedValue(owner,key,value)
-        else:
-            # This is an old entry. Update can fai
-            try:
-                self.pubspace[key].Update(owner,value)
-            except PublishError,e:
-                syslog(LOG_ERR, "Publish conflict for %s. Owner %s, Modifier %s"%(key,self.pubspace[key].owner,owner))
-
-    def ReadValue(self,key):
-        if self.pubspace.has_key(key):
-            return self.pubspace[key].value
-        raise KeyError,key
-
-    def LoadGenerators(self,genlist):
-        for generator in genlist:
-            self.generators.append(generator(self))
-        for generator in self.generators:
-            generator.CompleteSetup()
-        self.handles={}
-        for g in self.generators:
-            for f in g.__build__.keys():
-                self.handles[f]=g
-
-    def GetConfigFile(self,filename,client):
-        if self.handles.has_key(filename):
-            return self.handles[filename].Build(filename,client)
-        raise KeyError, filename
