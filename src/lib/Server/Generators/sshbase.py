@@ -5,7 +5,7 @@ __revision__ = '$Revision$'
 
 from binascii import b2a_base64
 from os import rename, system
-from socket import gethostbyname
+from socket import gethostbyname, gaierror
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
 
@@ -31,6 +31,11 @@ class sshbase(Generator):
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
+    pubkeys = ["ssh_host_dsa_key.pub.H_%s",
+                "ssh_host_rsa_key.pub.H_%s", "ssh_host_key.pub.H_%s"]
+    hostkeys = ["ssh_host_dsa_key.H_%s",
+                "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
+
     def __setup__(self):
         self.repository = DirectoryBacked(self.data, self.core.fam)
         self.__provides__ = {'ConfigFile':
@@ -47,9 +52,7 @@ class sshbase(Generator):
         client = metadata.hostname
         filedata = self.repository.entries['ssh_known_hosts'].data
         ipaddr = gethostbyname(client)
-        keylist = map(lambda x:x % (client),
-                      ["ssh_host_dsa_key.pub.H_%s",
-                       "ssh_host_rsa_key.pub.H_%s", "ssh_host_key.pub.H_%s"])
+        keylist = [x % client for x in self.pubkeys]
         for hostkey in keylist:
             filedata += "%s,%s,%s %s" % (client, "%s.mcs.anl.gov"%(client),
                                          ipaddr, self.repository.entries[hostkey].data)
@@ -82,15 +85,13 @@ class sshbase(Generator):
                 try:
                     ipaddr = gethostbyname(h)
                     output += "%s,%s.mcs.anl.gov,%s %s" % (h, h, ipaddr, entry.data)
-                except:
-                    pass
+                except gaierror:
+                    continue
         self.repository.entries['ssh_known_hosts'].data = output
 
     def GenerateHostKeys(self, client):
         '''Generate new host keys for client'''
-        keys = ["ssh_host_dsa_key.H_%s",
-                "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
-        keylist = map(lambda x:x % client, keys)
+        keylist = [x % client for x in self.hostkeys]
         for hostkey in keylist:
             if 'ssh_host_rsa_key.H_' in hostkey:
                 keytype = 'rsa'

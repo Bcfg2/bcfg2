@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-from Generator import Generator, ScopedXMLFile
-from elementtree.ElementTree import Element
+'''This generator handles MCS filesystem setup'''
+__revision__ = '$Revision$'
+
+from Bcfg2.Server.Generator import Generator, ScopedXMLFile
 
 class fs(Generator):
     '''This generator takes care of mcs filesystem setup'''

@@ -1,7 +1,8 @@
 # This is the bcfg2 support for gentoo
-# $Id: $
+'''This provides (vestigal) Gentoo support'''
+__revision__ = '$Revision$'
 
-from Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset
 
 def Detect():
     # until the code works
