@@ -1,5 +1,5 @@
 '''This is the basic toolset class for the Bcfg2 client'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1.39 $'
 
 from binascii import a2b_base64
 from grp import getgrgid, getgrnam
@@ -101,19 +101,40 @@ class Toolset(object):
         self.modified  =  [key for (key, val) in self.structures.iteritems() if not val]
         [self.InstallEntry(key) for (key, val) in self.states.iteritems() if not val]
 
-    def GenerateStats(self):
+    def GenerateStats(self, client_version):
         '''Generate XML summary of execution statistics'''
         stats = Element("Statistics")
-        SubElement(stats, "Structures", good=str(len([key for key, val in
-                                                      self.structures.iteritems() if val])), \
-                   bad=str(len([key for key, val in self.structures.iteritems() if not val])))
-        SubElement(stats, "Entries", good=str(len([key for key, val in self.states.iteritems() if val])), \
-                   bad=str(len([key for key, val in self.states.iteritems() if not val])))
+
+        # Calculate number of total bundles and structures
+        total = len(self.structures) + len(self.states)
+        stats.set('total',str(total))
+        # Calculate number of good bundles and structures
+        good = len([key for key, val in self.structures.iteritems() if val]) + \
+                len([key for key, val in self.states.iteritems() if val])
+        stats.set('good', str(good))
+        stats.set('version', '2.0')
+        stats.set('client_version', client_version)
+
+
         if len([key for key, val in self.structures.iteritems() if not val]) == 0:
             stats.set('state', 'clean')
         else:
             stats.set('state', 'dirty')
-        stats.set('time', asctime(localtime()))
+        #stats.set('time', asctime(localtime()))
+
+        # List bad elements of the configuration
+        bad_elms = SubElement(stats, "Bad")
+        for elm in [key for key,val in self.states.iteritems() if not val]:
+            if elm.get('name') == None:
+                SubElement(bad_elms, elm.tag)
+            else:
+                SubElement(bad_elms, elm.tag, name=elm.get('name'))
+        for elm in [key for key,val in self.structures.iteritems() if not val]:
+            if elm.get('name') == None:
+                SubElement(bad_elms, elm.tag)
+            else:
+                SubElement(bad_elms, elm.tag, name=elm.get('name'))
+
         return stats
 
     # the next two are dispatch functions
