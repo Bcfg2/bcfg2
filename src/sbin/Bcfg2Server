@@ -89,6 +89,7 @@ class BcfgServer(Server):
         else:
             m = self.metadata.FetchMetadata(client)
             
+        config.set('toolset', m.toolset)
         try:
             structures = self.core.GetStructures(m)
         except:
