@@ -112,18 +112,19 @@ class Store(object):
 
 class Metadata(object):
     '''The Metadata class is a container for all classes of metadata used by Bcfg2'''
-    def __init__(self, all, image, bundles, tags, hostname):
+    def __init__(self, all, image, classes, bundles, attributes, hostname):
         self.all = all
         self.image = image
+        self.classes = classes
         self.bundles = bundles
-        self.tags = tags
+        self.attributes = attributes
         self.hostname = hostname
 
     def Applies(self, other):
         '''Applies checks if the object associated with this metadata is relevant to
         the metadata supplied by other'''
-        for tag in self.tags:
-            if tag not in other.tags:
+        for c in self.classes:
+            if c not in other.classes:
                 return False
         for bundle in self.bundles:
             if bundle not in other.bundles:
