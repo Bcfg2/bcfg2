@@ -1,3 +1,9 @@
+bcfg2 (0.6pre7-1) unstable; urgency=low
+
+  * version bump
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Wed,  10 Nov 2004 10:57:22 -0600
+
 bcfg2 (0.6pre6-3) unstable; urgency=low
 
   * debian bugfixes
