@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from elementtree.ElementTree import XML
 from threading import Lock
 from time import localtime, mktime
 
 from Error import NodeConfigurationError
+from GeneratorUtils import SingleXMLFileBacked
 
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 
@@ -82,11 +84,19 @@ class Metadata(object):
             return False
         return True
 
-class eMetadata(Metadata):
-    def __init__(self, element):
-        self.all = False
-        self.image = element.attrib['image']
-        self.classes = [x.attrib['name'] for x in element.findall(".//class")]
-        self.bundles = ['ssh']
-        self.attributes = []
-        self.hostname = element.attrib['client']
+class MetadataStore(SingleXMLFileBacked):
+    def Index(self):
+        self.clients = {}
+        self.classes = {}
+        self.element = XML(self.data)
+        for c in self.element.findall("Class"):
+            self.classes[c.attrib['name']] = map(lambda x:x.attrib['name'], c.findall(".//Bundle"))
+        for client in self.element.findall('Client'):
+            attributes = map(lambda x:"%s.%s"%(x.attrib['scope'],x.attrib['name']),
+                             client.findall(".//Attribute"))
+            classes = map(lambda x:x.attrib['name'], client.findall(".//Class"))
+            bundles = reduce(lambda x,y:x+y, map(lambda z:self.classes.get(z,[]), classes),[])
+            for b in bundles:
+                if bundles.count(b) > 1: bundles.remove(b)
+            self.clients[client.attrib['name']] = Metadata(False, client.attrib['image'], classes,
+                                                           bundles, attributes, client.attrib['name'])
