@@ -1,0 +1,8 @@
+1. Thread Safety for Core and associated classes
+2. add indexing method for File/Directory Backed
+3. add metadata methods
+4. figure out contexts
+5. implement Image support in oldcfg
+6. implement cfg
+7. implement static publishing in (old)?cfg
+8. Image support
