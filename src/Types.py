@@ -14,7 +14,7 @@ class ConfigFile(object):
         if encoding == 'base64':
             self.xcontent=b2a_base64(content)
         else:
-            self.xcontent=content
+            self.xcontent=self.content
         
     def XMLSerialize(self):
         return self.format%(self.name,self.owner,self.group,self.perms,self.encoding,self.xcontent)
