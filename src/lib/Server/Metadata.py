@@ -36,6 +36,12 @@ class Metadata(object):
             return False
         return True
 
+    def __cmp__(self, other):
+        fields = ['image', 'classes', 'bundles', 'attributes', 'hostname']
+        sum1 = [x for x in len(fields) if getattr(self, fields[x])][0]
+        sum2 = [x for x in len(fields) if getattr(other, fields[x])][0]
+        return sum1 < sum2
+
 class Profile(object):
     def __init__(self, xml):
         object.__init__(self)
