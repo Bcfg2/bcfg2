@@ -36,6 +36,7 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Service' type='ServiceType'/>
 	<xsd:element name='Class' type='ContainerType'/>
+	<xsd:element name='Image' type='ContainerType'/>
 	<xsd:element name='Host' type='ContainerType'/>
 	<xsd:element name='Global' type='ContainerType'/>
       </xsd:choice>
