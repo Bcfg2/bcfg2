@@ -138,4 +138,59 @@ class SingleXMLFileBacked(XMLFileBacked):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
 
+class ScopedXMLFile(SingleXMLFileBacked):
+    __containers__ = ['Class','Host','Image']
 
+    def StoreRecord(self, metadata, entry):
+        if not self.store.has_key(entry.tag):
+            self.store[entry.tag] = {}
+        if not self.store[entry.tag].has_key(entry.attrib['name']):
+            self.store[entry.tag][entry.attrib['name']] = []
+        self.store[entry.tag][entry.attrib['name']].append((metadata, entry))
+    
+    def Index(self):
+        a = XML(self.data)
+        self.store = {}
+        for e in a.getchildren():
+            if e.tag not in self.__containers__:
+                self.StoreRecord(('Global','all'), e)
+            else:
+                m = (e.tag, e.attrib['name'])
+                for entry in e.getchildren():
+                    self.StoreRecord(m, entry)
+        # now to build the __provides__ table
+        self.__provides__ = {}
+        for key in self.store.keys():
+            self.__provides__[key] = {}
+            for j in self.store[key].keys():
+                self.__provides__[key][j] = self.FetchRecord
+                # also need to sort all leaf node lists
+                self.store[key][j].sort(self.Sort)
+
+    def Sort(self, m1, m2):
+        d = {('Global','Host'):-1,('Global','Image'):-1,("Global",'Class'):-1,
+             ('Image', 'Global'):1, ('Image', 'Image'):0, ('Image', 'Host'):1, ('Image', 'Class'):-1,
+             ('Class','Global'):1, ('Class', 'Image'):1, ('Class','Class'):0, ('Class', 'Host'): -1,
+             ('Host', 'Global'):1, ('Host', 'Image'):1, ('Host','Class'):1, ('Host','Host'):0}
+        if d.has_key((m1[0][0], m2[0][0])):
+            return d[(m1[0][0],m2[0][0])]
+
+    def MatchMetadata(self, m, metadata):
+        if m[0] == 'Global':
+            return True
+        elif m[0] == 'Image':
+            if m[1] == metadata.image:
+                return True
+        elif m[0] == 'Class':
+            if m[1] in metadata.classes:
+                return True
+        elif m[0] == 'Host':
+            if m[1] == metadata.hostname:
+                return True
+        return False
+
+    def FetchRecord(self, entry, metadata):
+        l = self.store[entry.tag][entry.attrib['name']]
+        useful = filter(lambda x:self.MatchMetadata(x[0], metadata), l)
+        data = useful[-1][-1]
+        entry.attrib.update(data.attrib)
