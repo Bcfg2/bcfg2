@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-# $Id: $
-from copy import deepcopy
-from syslog import LOG_ERR, syslog
+'''This module sets up a base list of configuration entries'''
+__revision__ = '$Revision$'
 
-from Bcfg2.Server.Generator import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
+from copy import deepcopy
+
+from Bcfg2.Server.Generator import SingleXMLFileBacked
 from Bcfg2.Server.Structure import Structure
 
-from elementtree.ElementTree import Element, XML, tostring
+from elementtree.ElementTree import Element, XML
 
 class BaseFile(SingleXMLFileBacked):
     def Index(self):
