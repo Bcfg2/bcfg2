@@ -5,6 +5,9 @@ from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlin
 from pwd import getpwuid, getpwnam
 from stat import *
 from string import join, split
+from sys import exc_info
+from time import asctime, localtime
+from traceback import extract_tb
 
 def print_failure():
     if '-v' in argv: print "\033[60G[\033[1;31mFAILED\033[0;39m]\r"
@@ -46,11 +49,118 @@ class Toolset(object):
 
     def __init__(self, cfg, setup):
         self.setup = setup
+        self.cfg = cfg
+        self.states = {}
+        self.structures = {}
+        self.modified = []
+        self.extra = []
         if self.__important__:
             for c in cfg.findall(".//ConfigFile"):
                 for name in self.__important__:
                     if c.get("name") == name:
                         self.InstallConfigFile(c)
+
+    def LogFailure(self, area, entry):
+        '''Print tracebacks in unexpected cases'''
+        print "Failure in %s for entry: %s"%(area, tostring(entry))
+        (t,v,tb) = exc_info()
+        for line in extract_tb(tb):
+            print "File %s, line %i, in %s\n   %s\n"%(line)
+        print "%s: %s\n"%(t,v)
+        del t,v,tb
+
+    # These next functions form the external API
+
+    def Inventory(self):
+        # build initial set of states
+        unexamined = map(lambda x:(x,[]), self.cfg.getchildren())
+        while unexamined:
+            (r, modlist) = unexamined.pop()
+            if r.tag not in ['Bundle', 'Independant']:
+                self.VerifyEntry(r, modlist)
+            else:
+                modlist = [x.attrib['name'] for x in r.getchildren() if x.tag == 'ConfigFile']
+                unexamined += map(lambda x:(x,modlist), r.getchildren())
+                self.structures[r] = False
+
+        for structure in self.cfg.getchildren():
+            self.CheckStructure(structure)
+
+        # TwoWay: build list of "extra configs"
+        #e = self.toolset.FindElements()
+        #known = self.states.keys()
+        #for entry in e:
+        #    if not filter(lambda x:ElementMatch(x, entry), known):
+        #        self.extra.append(entry)
+        #print self.extra
+
+    def CheckStructure(self, structure):
+        '''Check structures with bundle verification semantics'''
+        if structure in self.modified:
+            self.modified.remove(structure)
+            if structure.tag == 'Bundle':
+                # check for clobbered data
+                modlist = [x.attrib['name'] for x in structure.getchildren() if x.tag == 'ConfigFile']
+                for entry in structure.getchildren():
+                    self.VerifyEntry(entry, modlist)
+        try:
+            state = map(lambda x:self.states[x], structure.getchildren())
+            if False not in state:
+                self.structures[structure] = True
+        except KeyError, k:
+            print "State verify evidently failed for %s"%(k)
+            self.structures[structure] = False
+
+    def Install(self):
+        self.modified  =  [k for (k,v) in self.structures.iteritems() if not v]
+        for entry in [k for (k,v) in self.states.iteritems() if not v]:
+            self.InstallEntry(entry)
+
+    def Commit(self):
+        '''Commit pending changes to the system. This method allows for interrelated
+        operations to be executed concurrently'''
+        return
+
+    def GenerateStats(self):
+        '''Generate XML summary of execution statistics'''
+        stats = Element("Statistics")
+        SubElement(stats, "Structures", good=str(len([k for k,v in self.structures.iteritems() if v])), \
+                   bad=str(len([k for k,v in self.structures.iteritems() if not v])))
+        SubElement(stats, "Entries", good=str(len([k for k,v in self.states.iteritems() if v])), \
+                   bad=str(len([k for k,v in self.states.iteritems() if not v])))
+        if len([k for k,v in self.structures.iteritems() if not v]) == 0:
+            stats.attrib['state'] = 'clean'
+        else:
+            stats.attrib['state'] = 'dirty'
+        stats.attrib['time'] = asctime(localtime())
+        return stats
+
+    # the next two are dispatch functions
+
+    def VerifyEntry(self, entry, modlist = []):
+        '''Dispatch call to Verify<tagname> and save state in self.states'''
+        try:
+            method = getattr(self, "Verify%s"%(entry.tag))
+            # verify state and stash value in state
+            if entry.tag == 'Package':
+                self.states[entry] = method(entry, modlist)
+            else:
+                self.states[entry] = method(entry)
+
+            if self.setup['debug']:
+                print entry.attrib['name'], self.states[entry]
+        except:
+            self.LogFailure("Verify", entry)
+
+    def InstallEntry(self, entry):
+        '''Dispatch call to self.Install<tagname>'''
+        try:
+            method = getattr(self, "Install%s"%(entry.tag))
+            self.states[entry] = method(entry)
+        except:
+            self.LogFailure("Install", entry)
+
+    # All remaining operations implement the mechanics of POSIX cfg elements
 
     def VerifySymLink(self, entry):
         try:
@@ -171,10 +281,3 @@ class Toolset(object):
             print e
             return False
 
-    def FindConfig(self):
-        pass
-        
-    def Commit(self, entrystate):
-        '''Commit pending changes to the system. This method allows for interrelated
-        operations to be executed concurrently'''
-        return 
