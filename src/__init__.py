@@ -1,4 +1,4 @@
 # $Id: $
 
-__all__ = ["Core", "Generator"]
+__all__ = ["Core", "Generator", "Metadata"]
 
