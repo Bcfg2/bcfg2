@@ -134,7 +134,7 @@ class Toolset(object):
         if self.modified:
             mod = SubElement(stats, "Modified")
             for elm in self.modified:
-                SubElement(mod, elm.tag, elm.get('name'))
+                SubElement(mod, elm.tag, name=elm.get('name'))
         return stats
 
     # the next two are dispatch functions
