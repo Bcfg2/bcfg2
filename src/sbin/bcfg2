@@ -105,7 +105,9 @@ if __name__ == '__main__':
     correct = client.states.values().count(True)
     total = len(client.states.values())
 
-    if correct < total:
+    if ((correct < total) or client.pkgwork['remove']):
+        if client.pkgwork['remove']:
+            client.CondPrint('verbose', "Extra packages detected")
         # summarize current state
         client.CondPrint('verbose', "--> %s of %s config elements correct" % (correct, total))
 
