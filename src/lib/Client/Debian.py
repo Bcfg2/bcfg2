@@ -129,18 +129,28 @@ class Debian(Toolset):
         allsrv = []
         [allsrv.append(fname[14:]) for fname in glob("/etc/rc[12345].d/S*") if fname[14:] not in allsrv]
         csrv = self.cfg.findall(".//Service")
-        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on']
+        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
+
+    def HandleExtra(self):
+        '''Deal with extra configuration detected'''
+        if self.setup['remove'] in ['all', 'packages']:
+            self.CondPrint('verbose', "Removing packages:", self.pkgwork['remove'])
+            system("apt-get remove %s" % " ".join(self.pkgwork['remove']))
+        else:
+            self.CondPrint('verbose', "Need to remove packages:", self.pkgwork['remove'])
+        self.CondPrint('verbose', "Need to remove services:", self.extra_services)
         
     def Install(self):
         '''Correct detected misconfigurations'''
         self.CondPrint("verbose", "Installing needed configuration changes")
         cmd = '''apt-get --reinstall -q=2 --force-yes -y install %s'''
-        print "Need to remove:", self.pkgwork['remove'], self.extra_services
+        self.HandleExtra()
         self.setup['quick'] = True
-
-        self.CondPrint('dryrun', "Packages to update: %s" % (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
-        self.CondPrint('dryrun', "Packages to add: %s" % (" ".join([pkg.get('name') for pkg in self.pkgwork['add']])))
+        self.CondPrint('dryrun', "Packages to update: %s" %
+                       (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
+        self.CondPrint('dryrun', "Packages to add: %s" %
+                       (" ".join([pkg.get('name') for pkg in self.pkgwork['add']])))
         self.CondPrint('dryrun', "Packages to remove %s" % (" ".join(self.pkgwork['remove'])))
         for entry in [entry for entry in self.states if (not self.states[entry]
                                                          and (entry.tag != 'Package'))]:
