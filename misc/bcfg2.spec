@@ -14,6 +14,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
 BuildArchitectures: noarch
 Vendor: Narayan Desai <desai@mcs.anl.gov>
+Requires: elementtree, ssslib-python
 
 %description
 Bcfg2 is a configuration management tool.
@@ -22,7 +23,7 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: ssslib-python
+Requires: ssslib-python, python-fam
 
 %description -n bcfg2-server
 Bcfg2 client
