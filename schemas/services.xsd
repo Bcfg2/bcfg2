@@ -21,6 +21,7 @@
     <xsd:attribute name='status' type='xsd:string' use='required'/>
     <xsd:attribute name='port' type='xsd:string'/>
     <xsd:attribute name='protocol' type='xsd:string'/>
+    <xsd:attribute name='reload' type='xsd:string'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
