@@ -57,7 +57,7 @@ class bundler(Structure):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     def __init__(self, core, datastore):
         Structure.__init__(self, core, datastore)
-        self.imageinfo = ImageFile("%s/common/imageinfo.xml"%(datastore), self.core.fam)
+        self.imageinfo = ImageFile("%s/etc/imageinfo.xml"%(datastore), self.core.fam)
         self.bundles = BundleSet(self.data, self.core.fam)
 
     def Construct(self, metadata):
