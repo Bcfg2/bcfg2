@@ -1,7 +1,7 @@
 '''This handles authentication setup'''
 __revision__ = '$Revision$'
 
-from Bcfg2.Server.Generator import Generator, DirectoryBacked
+from Bcfg2.Server.Generator import Generator, GeneratorInitError, DirectoryBacked
 
 class Account(Generator):
     '''This module generates account config files,
@@ -19,8 +19,12 @@ class Account(Generator):
 
     def __init__(self, core, datastore):
         Generator.__init__(self, core, datastore)
-        self.repository = DirectoryBacked(self.data)
-        self.ssh = DirectoryBacked("%s/ssh"%(self.data))
+        try:
+            self.repository = DirectoryBacked(self.data, self.core.fam)
+            self.ssh = DirectoryBacked("%s/ssh"%(self.data), self.core.fam)
+        except:
+            self.LogError("Failed to load repos: %s, %s" % (self.data, "%s/ssh" % (self.data)))
+            raise GeneratorInitError
         self.__provides__['ConfigFile'] = {'/etc/passwd':self.from_yp,
                                            '/etc/group':self.from_yp,
                                            '/etc/security/limits.conf':self.gen_limits,
