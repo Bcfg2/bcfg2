@@ -100,3 +100,6 @@ pager:
 # Business Hours when we can contact you if you left a phone number.
 # 
 hours: 
+# Local Mods
+[]checkout:get
+keyword:rcs
