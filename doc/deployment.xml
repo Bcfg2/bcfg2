@@ -1,0 +1,193 @@
+<chapter>
+<title>Deploying Bcfg2</title>
+  <sect1>
+    <title>Object Oriented Configs</title>
+    <para>
+One of the most powerful and useful parts about bcfg2 metadata system
+is the ability to have truely Object Oriented configs. I have found
+that this has made me understand the machines I am managing in a whole
+new light. Instead of focusing on what is installed, I now focus on
+how machines relate to each other, or what pieces of the metadata are
+similar in their configs. To illistrate this think about the following
+example machines:
+</para>
+<itemizedlist>
+<listitem><para>A users desktop machine</para></listitem>
+<listitem><para>A multiuser compute machine</para></listitem>
+<listitem><para>A users home machine. (telecommuter)</para></listitem>
+</itemizedlist>
+<para>
+These 3 machines have 3 distinct focuses for usage, but in reality
+they can have a very similar metadata, depending on how the config is
+broken up or the view that is taken of the config. If you focus first
+on where the machines are the same it will help to build the common
+metadata. below is what all 3 machines have in common:
+</para>
+<itemizedlist>
+<listitem><para>users need to have the software they need to perform
+there work. </para></listitem>
+</itemizedlist>
+<para>
+let just encode this into metadata by creating a Class called
+common-software that contains all the common software between all 3
+machines.
+</para>
+<programlisting>
+ <![CDATA[ 
+<Class name='common-software'>
+    <Bundle ... />
+    ....
+</Class>
+]]>
+</programlisting>
+<para>
+now we need to find where they differ:
+</para>
+<variablelist>
+<varlistentry>
+<term>Desktop machines</term>
+   <listitem>
+     <itemizedlist>
+     <listitem>
+       <para>need to have a GUI interface( Xwindows or what not )</para>
+     </listitem>
+     <listitem>
+       <para>use NIS for authentification</para>
+     </listitem>
+     <listitem>
+     <para>use Autofs to mount home directories</para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+</varlistentry>
+<varlistentry>
+<term>Multiuser compute machines</term>
+   <listitem>
+     <itemizedlist>
+     <listitem>
+       <para>only accessible by SSH, No GUI interface</para>
+     </listitem>
+     <listitem>
+       <para>use NIS for authentification</para>
+     </listitem>
+     <listitem>
+     <para>use Autofs to mount home directories</para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+</varlistentry>
+<varlistentry>
+<term>Home machine</term>
+   <listitem>
+     <itemizedlist>
+     <listitem>
+     <para>need to have a GUI interface( Xwindows or what not )</para>
+     </listitem>
+     <listitem>
+     <para>use static password file</para>
+     </listitem>
+     <listitem>
+     <para>use local disk for home directories</para>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+</varlistentry>
+</variablelist> 
+<para>
+As you can see that there are common things pairwise in these configs
+that can be further exploited by the object oriented system of bcfg2
+</para>
+<programlisting>
+ <![CDATA[ 
+<Class name="Gui-Interface">
+   <Bundle ... />
+   ...
+</Class>
+<Class name="NIS-Autofs">
+   <Bundle ... />
+   ...
+</Class>
+]]>
+</programlisting>
+<para>
+now all that is left is to ensure that all needs are met and we find
+we need to make one more class:
+</para>
+<programlisting>
+ <![CDATA[ 
+<Class name="static-password-local-disk">
+   <Bundle ... />
+   ...
+</Class>
+]]>
+</programlisting>
+<para>
+Now we can mix and match these classes together to build the 3
+profiles or even build new profiles with these descrete entities. 
+</para>
+<programlisting>
+ <![CDATA[ 
+<Profile name='desktop'>
+  <Class name='common-software'/>
+  <Class name="Gui-Interface"/>
+  <Class name="NIS-Autofs">
+</Profile>
+<Profile name='computerserver'>
+  <Class name='common-software'/>
+  <Class name="NIS-Autofs">
+</Profile>
+<Profile name='home-desktop'>
+  <Class name='common-software'/>
+  <Class name="Gui-Interface"/>
+  <Class name="static-password-local-disk">
+</Profile>
+<Profile name='bare-system'>
+  <Class name='common-software'/>
+</Profile>
+]]>
+</programlisting>
+<para>
+The free form object oriented fashion in which metadata can be
+constructed is truely a double edge sword. On one hand you can build
+up a nice list of descrete entities that can compose even the most
+complicated configs, but it also allows for the creation of entities
+that could provide monolithic solutions to each machines config. It is
+all in how one views the machines and how much they are willing to
+harness the power of the OO based metadata system.
+    </para>
+  </sect1>
+  <sect1>
+   <title>Tips & Tricks</title>
+   <para/>
+  </sect1>
+  <sect1>
+    <title>An example application of bcfg2</title>
+    <para>
+ In my computing environment there are quite a diverse set of machines
+and requirements for there operation. What this meant is that I needed
+to devise a build system for machines that would allow me to easily
+customize the software and services on the machine while still being
+able to easily manage them and keep them secure. What I came up with
+that solved this problem was that the initial install needed to be the
+smallest subset of software that all machines had in common and
+install this with whatever automated install system fit the OS. The
+goal being that the OS automated installer( ie: kickstart, or
+systemimager ) would put the initial bits on disk and take care of
+hardware stuff and then as part of the postinstall process I run bcfg2
+to insure that the rest of the software and configuration occurs based
+on the machines metadata. The overall goal was met. I could now build
+any type of machine that I needed just by using the common buildsystem
+and let bcfg2 determine what was different machine to machine.  
+    </para>
+    <para>
+My current build process is centered around systemimager and
+bcfg2. I have done some small enhancements to systemimager so that
+with one floppy or cdrom any administrator can build any number of
+machine profiles automatically. This is all done with some of the new
+features that allow the encoding of the profile and image in the
+clientside command so that the back end metadata can be asserted from
+the client, which overrides the defaults specified in the metadata.xml
+file.  
+    </para>
+  </sect1>
+</chapter>
