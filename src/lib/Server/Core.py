@@ -34,6 +34,7 @@ class fam(object):
         mode = stat(path)[ST_MODE]
         if S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
+            #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
         else:
             handle = self.fm.monitorFile(path, None)
         self.handles[handle.requestID()] = handle
@@ -46,6 +47,7 @@ class fam(object):
         event = self.fm.nextEvent()
         reqid = event.requestID
         if self.users.has_key(reqid):
+            #print "dispatching event %s %s to obj %s handle :%s:" % (event.code2str(), event.filename, self.users[reqid], event.requestID)
             self.users[reqid].HandleEvent(event)
 
 class PublishedValue(object):
