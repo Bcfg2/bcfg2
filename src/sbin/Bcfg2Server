@@ -1,48 +1,51 @@
 #!/usr/bin/env python
 # $Id: $
 
+'''Bcfg2 Server'''
+__revision__ = '$Revision'
+
 from getopt import getopt, GetoptError
 from socket import gethostbyaddr, herror
-from string import join, split
 from syslog import syslog, LOG_INFO, LOG_ERR
-from sys import argv, exit, exc_info
+from sys import argv, exit as sysexit, exc_info
 from time import time
 from traceback import extract_tb
 from ConfigParser import ConfigParser
 
-from elementtree.ElementTree import Element, tostring
+from elementtree.ElementTree import Element
 
 from Bcfg2.Server.Core import Core
 from Bcfg2.Server.Metadata import MetadataStore
 
 from sss.daemonize import daemonize
-from sss.restriction import DataSet, Data
 from sss.server import Server
 
 def dgetopt(arglist, opt, vopt):
-    r = {}
-    for o in opt.values() + vopt.values():
-        r[o] = False
-    gstr = join(opt.keys()) + join([x+':' for x in vopt.keys()])
+    '''parse options into a dictionary'''
+    ret = {}
+    for optname in opt.values() + vopt.values():
+        ret[optname] = False
+    gstr = "".join(opt.keys()) + "".join([xy+':' for xy in vopt.keys()])
     try:
         (o, a) = getopt(arglist, gstr)
-    except GetoptError, g:
-        print g
+    except GetoptError, gerr:
+        print gerr
         print "bcfg2 Usage:"
-        for (k,v) in opt.iteritems():
-            print " -%s %s"%(k,v)
-        for (k,v) in  vopt.iteritems():
-            print " -%s <%s>"%(k,v)
-        exit(1)
-    for (gopt,garg) in o:
+        for arg in opt.iteritems():
+            print " -%s %s" % arg
+        for arg in  vopt.iteritems():
+            print " -%s <%s>" % arg
+        sysexit(1)
+    for (gopt, garg) in o:
         option = gopt[1:]
         if opt.has_key(option):
-            r[opt[option]] = True
+            ret[opt[option]] = True
         else:
-            r[vopt[option]] = garg
-    return r
+            ret[vopt[option]] = garg
+    return ret
 
 class BcfgServer(Server):
+    '''Bcfg2 Server Class'''
     __implementation__ = 'Bcfg2'
     __component__ = 'bcfg2'
     __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'get_probes', 'probe-data':'put_probe_data', 'upload-statistics':'HandleStats'}
@@ -53,8 +56,8 @@ class BcfgServer(Server):
         c = ConfigParser()
         c.read([self.kwargs.get('configfile', '/etc/bcfg2.conf')])
         repo = c.get('server','repository')
-        generators = split(c.get('server','generators'),',')
-        structures = split(c.get('server', 'structures'),',')
+        generators = c.get('server','generators').split(',')
+        structures = c.get('server', 'structures').split(',')
         mpath = c.get('server','metadata')
         self.core = Core(repo, structures, generators)
         self.metadata = MetadataStore("%s/metadata.xml"%(mpath), self.core.fam)
@@ -69,7 +72,8 @@ class BcfgServer(Server):
             self.LogFailure("Cron")
         return 0
 
-    def BuildConfig(self, xml, (peer,port)):
+    def BuildConfig(self, xml, (peer, port)):
+        '''Build Client Config'''
         if setup['client']:
             client = setup['client']
         else:
@@ -96,12 +100,11 @@ class BcfgServer(Server):
                 config.append(s)
             except:
                 self.LogFailure("BindStructure")
-            #for x in s.getchildren():
-            #    print x.attrib['name'], '\000' in tostring(x)
         syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time()-t))
         return config
 
-    def get_probes(self, xml, (peer,port)):
+    def get_probes(self, xml, (peer, port)):
+        '''Get Probes for Client'''
         r = Element('probes')
         try:
             client = gethostbyaddr(peer)[0].split('.')[0]
@@ -113,7 +116,8 @@ class BcfgServer(Server):
                 r.append(p)
         return r
 
-    def put_probe_data(self, xml, (peer,port)):
+    def put_probe_data(self, xml, (peer, port)):
+        '''Return Probe output to generators'''
         try:
             client = gethostbyaddr(peer)[0].split('.')[0]
         except herror:
@@ -127,20 +131,22 @@ class BcfgServer(Server):
         return Element("OK")
 
     def HandleStats(self, xml, (peer, port)):
+        '''Act on statistics upload'''
         e = xml.find(".//Statistics")
         syslog(LOG_INFO, "Client %s reported state %s"%(peer, e.attrib['state']))
         return Element("ok")
 
     def LogFailure(self, failure):
-        (t,v,tb)=exc_info()
+        '''Log Failures in unexpected cases'''
+        (t, v, tb)=exc_info()
         syslog(LOG_ERR, "Unexpected failure in %s"%(failure))
         for line in extract_tb(tb):
             syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-        syslog(LOG_ERR, "%s: %s\n"%(t,v))
-        del t,v,tb
+        syslog(LOG_ERR, "%s: %s\n"%(t, v))
+        del t, v, tb
 
 if __name__ == '__main__':
-    options =  {'v':'verbose','d':'debug'}
+    options =  {'v':'verbose', 'd':'debug'}
     doptions = {'D':'daemon', 'C':'client'}
     setup = dgetopt(argv[1:], options, doptions)
     print setup
