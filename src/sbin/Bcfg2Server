@@ -127,7 +127,8 @@ class BcfgServer(Server):
         return Element("OK")
 
     def HandleStats(self, xml, (peer, port)):
-        syslog(LOG_INFO, "Client %s reported state %s"%(peer, xml.attrib['state']))
+        e = xml.find(".//Statistics")
+        syslog(LOG_INFO, "Client %s reported state %s"%(peer, e.attrib['state']))
         return Element("ok")
 
     def LogFailure(self, failure):
