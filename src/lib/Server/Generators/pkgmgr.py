@@ -2,8 +2,7 @@
 
 from re import compile
 
-from Bcfg2.Server.Generator import Generator
-from Bcfg2.Server.GeneratorUtils import DirectoryBacked, XMLFileBacked
+from Bcfg2.Server.Generator import Generator, DirectoryBacked, XMLFileBacked
 
 class PackageEntry(XMLFileBacked):
     __identifier__ = 'image'
@@ -30,7 +29,7 @@ class PackageDir(DirectoryBacked):
     __child__ = PackageEntry
 
 class pkgmgr(Generator):
-    '''This is a generator that handles service assignments'''
+    '''This is a generator that handles package assignments'''
     __name__ = 'pkgmgr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
