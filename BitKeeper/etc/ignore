@@ -19,3 +19,4 @@ debian/bcfg2-server/*
 build/*
 debian/*debhelper
 debian/*substvars
+debian/files
