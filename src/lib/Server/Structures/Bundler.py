@@ -13,23 +13,21 @@ class ImageFile(SingleXMLFileBacked):
     '''This file contains image -> system mappings'''
     def Index(self):
         '''Build data structures out of the data'''
-        a = XML(self.data)
-        self.attr = a.attrib
-        self.entries = a.getchildren()
         self.images = {}
-        for child in self.entries:
-            [name, pkg, service] = [child.get(x) for x in ['name', 'package', 'service']]
+        for child in XML(self.data).getchildren():
+            [name, pkg, service] = [child.get(field) for field in ['name', 'package', 'service']]
             for grandchild in child.getchildren():
                 self.images[grandchild.get('name')] = (name, pkg, service)
 
 class Bundle(XMLFileBacked):
+    '''Bundles are configuration specifications (with image/translation abstraction)'''
+
     def Index(self):
-        x = XML(self.data)
-        # scan self.entries to build partial bundle fragments
+        '''Build data structures from the source data'''
         self.all = []
         self.systems = {}
         self.attributes = {}
-        for entry in x.getchildren():
+        for entry in XML(self.data).getchildren():
             if entry.tag == 'System':
                 self.systems[entry.attrib['name']] = entry.getchildren()
             elif entry.tag == 'Attribute':
@@ -39,30 +37,32 @@ class Bundle(XMLFileBacked):
         del self.data
 
     def BuildBundle(self, metadata, system):
+        '''Build a bundle for a particular client'''
         bundlename = self.name.split('/')[-1]
-        b = Element('Bundle', name=bundlename)
+        bundle = Element('Bundle', name=bundlename)
         for entry in self.all + self.systems.get(system, []):
-            b.append(deepcopy(entry))
+            bundle.append(deepcopy(entry))
         for attribute in metadata.attributes:
             for entry in self.attributes.get(attribute, []):
-                b.append(deepcopy(entry))
-        return b
+                bundle.append(deepcopy(entry))
+        return bundle
             
 class BundleSet(DirectoryBacked):
     '''The Bundler handles creation of dependent clauses based on bundle definitions'''
     __child__ = Bundle
 
 class Bundler(Structure):
+    '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     __name__ =  'Bundler'
     __version__ = '$Id$'
     
-    '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     def __init__(self, core, datastore):
         Structure.__init__(self, core, datastore)
         self.imageinfo = ImageFile("%s/etc/imageinfo.xml"%(datastore), self.core.fam)
         self.bundles = BundleSet(self.data, self.core.fam)
 
     def Construct(self, metadata):
+        '''Build all structures for client (metadata)'''
         (system, package, service) = self.GetTransInfo(metadata)
         bundleset = []
         for bundlename in metadata.bundles:
@@ -81,6 +81,7 @@ class Bundler(Structure):
         return bundleset
 
     def GetTransInfo(self, metadata):
+        '''Get Translation info for metadata.image'''
         if self.imageinfo.images.has_key(metadata.image):
             return self.imageinfo.images[metadata.image]
         else:
