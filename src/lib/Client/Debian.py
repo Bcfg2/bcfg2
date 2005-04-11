@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 from glob import glob
 from os import environ, stat, system
 from popen2 import Popen4
+from re import compile as regcompile
 
 import apt_pkg
 
@@ -17,6 +18,7 @@ class Debian(Toolset):
                      '/etc/apt/apt.conf']
     pkgtool = ('apt-get --reinstall -q=2 --force-yes -y install %s',
                ('%s=%s', ['name', 'version']))
+    svcre = regcompile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
@@ -45,7 +47,8 @@ class Debian(Toolset):
     
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
-        files = glob("/etc/rc*.d/*%s" % (entry.get('name')))
+        rawfiles = glob("/etc/rc*.d/*%s" % (entry.get('name')))
+        files = [filename for filename in rawfiles if self.svcre.match(filename).group('name') == entry.get('name')]
         if entry.get('status') == 'off':
             if files:
                 return False
@@ -102,9 +105,12 @@ class Debian(Toolset):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
         allsrv = []
-        [allsrv.append(fname[14:]) for fname in glob("/etc/rc[12345].d/S*") if fname[14:] not in allsrv]
+        [allsrv.append(self.svcre.match(fname).group('name')) for fname in
+         glob("/etc/rc[12345].d/S*") if self.svcre.match(fname).group('name') not in allsrv]
+        self.CondPrint('debug', "Found active services: %s" % allsrv)
         csrv = self.cfg.findall(".//Service")
-        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
+        [allsrv.remove(svc.get('name')) for svc in csrv if
+         svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
 
     def HandleExtra(self):
