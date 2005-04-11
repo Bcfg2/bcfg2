@@ -1,7 +1,6 @@
 '''This is the bcfg2 support for debian'''
-__revision__ = '$Revision: 1.39 $'
+__revision__ = '$Revision$'
 
-from copy import deepcopy
 from glob import glob
 from os import environ, stat, system
 from popen2 import Popen4
@@ -10,14 +9,14 @@ import apt_pkg
 
 from Bcfg2.Client.Toolset import Toolset
 
-from elementtree.ElementTree import tostring
-
 class Debian(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
                      '/etc/apt/apt.conf']
+    pkgtool = ('apt-get --reinstall -q=2 --force-yes -y install %s',
+               ('%s=%s', ['name', 'version']))
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
@@ -29,7 +28,6 @@ class Debian(Toolset):
         system("apt-get clean")
         system("apt-get -q=2 -y update")
         self.installed = {}
-        self.installed_this_run = []
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         self.extra_services = []
         self.Refresh()
@@ -101,33 +99,8 @@ class Debian(Toolset):
         return False
 
     def Inventory(self):
-        '''Inventory system status'''
-        self.CondPrint('verbose', "Inventorying system...")
-        Toolset.Inventory(self)
-        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
-        all = deepcopy(self.installed)
-        desired = {}
-        for entry in self.cfg.findall(".//Package"):
-            desired[entry.attrib['name']] = entry
-
-        for pkg, entry in desired.iteritems():
-            if self.states.get(entry, True):
-                # package entry verifies
-                del all[pkg]
-            else:
-                if all.has_key(pkg):
-                    # wrong version
-                    del all[pkg]
-                    self.pkgwork['update'].append(entry)
-                else:
-                    # new pkg
-                    self.pkgwork['add'].append(entry)
-
-
-        # pkgwork contains all one-way verification data now
-        # all data remaining in all is extra packages
-        self.pkgwork['remove'] = all.keys()
-        # now for packages
+        '''Do standard inventory plus debian extra service check'''
+        self.Inventory_Entries()
         allsrv = []
         [allsrv.append(fname[14:]) for fname in glob("/etc/rc[12345].d/S*") if fname[14:] not in allsrv]
         csrv = self.cfg.findall(".//Service")
@@ -150,112 +123,3 @@ class Debian(Toolset):
             else:
                 self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
         
-    def Install(self):
-        '''Correct detected misconfigurations'''
-        self.CondPrint("verbose", "Installing needed configuration changes")
-        cmd = '''apt-get --reinstall -q=2 --force-yes -y install %s'''
-        self.HandleExtra()
-        self.setup['quick'] = True
-        self.CondPrint('dryrun', "Packages to update: %s" %
-                       (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
-        self.CondPrint('dryrun', "Packages to add: %s" %
-                       (" ".join([pkg.get('name') for pkg in self.pkgwork['add']])))
-        self.CondPrint('dryrun', "Packages to remove %s" % (" ".join(self.pkgwork['remove'])))
-        for entry in [entry for entry in self.states if (not self.states[entry]
-                                                         and (entry.tag != 'Package'))]:
-            self.CondPrint('dryrun', "Entry %s %s updated" % (entry.tag, entry.get('name')))
-        if self.setup['dryrun']:
-            return
-
-        # build up work queue
-        work = self.pkgwork['add'] + self.pkgwork['update']
-        # add non-package entries
-        work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
-
-        left = len(work) + len(self.pkgwork['remove'])
-        old = left + 1
-        count = 1
-        
-        while ((0 < left < old) and (count < 20)):
-            self.CondPrint('verbose', "Starting pass %s" % (count))
-            self.CondPrint("verbose", "%s Entries left" % (len(work)))
-            self.CondPrint('verbose', "%s new, %s update, %s remove" %
-                           (len(self.pkgwork['add']), len(self.pkgwork['update']),
-                            len(self.pkgwork['remove'])))
-                           
-            count = count + 1
-            old = left
-
-            self.CondPrint("verbose", "Installing Non Package entries")
-            [self.InstallEntry(ent) for ent in work if ent.tag != 'Package']
-
-            packages = [pkg for pkg in work if pkg.tag == 'Package']
-            if packages:
-                # try single large install
-                self.CondPrint("verbose", "Trying single pass package install")
-                cmdrc = system(cmd % " ".join(["%s=%s" % (pkg.get('name'), pkg.get('version', 'dummy'))
-                                               for pkg in packages]))
-
-                if cmdrc == 0:
-                    self.CondPrint('verbose', "Single Pass Succeded")
-                    # set all states to true and flush workqueues
-                    badpkgs = [entry for entry in self.states.keys() if entry.tag == 'Package'
-                               and not self.states[entry]]
-                    for entry in badpkgs:
-                        self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
-                        self.states[entry] = True
-                    self.Refresh()
-                else:
-                    self.CondPrint("verbose", "Single Pass Failed")
-                    # do single pass installs
-                    system("dpkg --configure --pending")
-                    self.Refresh()
-                    for pkg in packages:
-                        # handle state tracking updates
-                        if self.VerifyPackage(pkg, []):
-                            self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
-                            self.states[pkg] = True
-                        else:
-                            self.CondPrint("verbose", "Installing pkg %s version %s" %
-                                           (pkg.get('name'), pkg.get('version')))
-                            cmdrc = system(cmd % ("%s=%s" % (pkg.get('name'), pkg.get('version'))))
-                            if cmdrc == 0:
-                                self.states[pkg] = True
-                            else:
-                                self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
-
-            for entry in [ent for ent in work if self.states[ent]]:
-                work.remove(entry)
-                self.modified.append(entry)
-            left = len(work) + len(self.pkgwork['remove'])
-
-        self.HandleBundleDeps()
-
-    def HandleBundleDeps(self):
-        '''Handle bundles depending on what has been modified'''
-        for entry in [child for child in self.structures if child.tag == 'Bundle']:
-            bchildren = entry.getchildren()
-            if [b_ent for b_ent in bchildren if b_ent in self.modified]:
-                # This bundle has been modified
-                self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name', '???')))
-                modfiles = [cfile.get('name') for cfile in bchildren if cfile.tag == 'ConfigFile']
-                for child in bchildren:
-                    if child.tag == 'Package':
-                        self.VerifyPackage(child, modfiles)
-                    else:
-                        self.VerifyEntry(child)
-                    self.CondPrint('debug', "Re-checked entry %s %s: %s" %
-                                   (child.tag, child.get('name'), self.states[child]))
-                for svc in [svc for svc in bchildren if svc.tag == 'Service']:
-                    if self.setup['build']:
-                        # stop services in miniroot
-                        system('/etc/init.d/%s stop' % svc.get('name'))
-                    else:
-                        self.CondPrint('debug', 'Restarting service %s' % svc.get('name'))
-                        system('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload')))
-            
-        for entry in self.structures:
-            if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
-                self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.get('name', "")))
-            else:
-                self.structures[entry] = True
