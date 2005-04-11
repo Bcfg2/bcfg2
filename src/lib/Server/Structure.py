@@ -19,6 +19,10 @@ class Structure(object):
 
     def Construct(self, metadata):
         '''Returns a list of configuration structure chunks for client'''
+        metadata.image # pylint hack
         return []
 
-    
+    def GetDependencies(self, metadata):
+        '''Get a list of dependencies for structures returned by Construct'''
+        metadata.image
+        return []
