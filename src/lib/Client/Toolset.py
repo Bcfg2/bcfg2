@@ -1,7 +1,8 @@
 '''This is the basic toolset class for the Bcfg2 client'''
-__revision__ = '$Revision: 1.39 $'
+__revision__ = '$Revision$'
 
 from binascii import a2b_base64
+from copy import deepcopy
 from grp import getgrgid, getgrnam
 from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlink, symlink
 from pwd import getpwuid, getpwnam
@@ -31,7 +32,8 @@ def calc_perms(initial, perms):
 class Toolset(object):
     '''The toolset class contains underlying command support and all states'''
     __important__ = []
-
+    pkgtool = ('echo', ('%s', ['name']))
+    
     def __init__(self, cfg, setup):
         '''Install initial configs, and setup state structures'''
         object.__init__(self)
@@ -40,7 +42,8 @@ class Toolset(object):
         self.states = {}
         self.structures = {}
         self.modified = []
-        self.extra = []
+        self.installed = {}
+        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         if self.__important__:
             for cfile in [cfl for cfl in cfg.findall(".//ConfigFile") if cfl.get('name') in self.__important__]:
                 self.VerifyEntry(cfile)
@@ -63,7 +66,37 @@ class Toolset(object):
 
     # These next functions form the external API
 
+    def Refresh(self):
+        '''Update based on current pkg system state'''
+        return
+
     def Inventory(self):
+        '''Inventory system status'''
+        self.CondPrint('verbose', "Inventorying system...")
+        self.Inventory_Entries(self)
+        all = deepcopy(self.installed)
+        desired = {}
+        for entry in self.cfg.findall(".//Package"):
+            desired[entry.attrib['name']] = entry
+
+        for pkg, entry in desired.iteritems():
+            if self.states.get(entry, True):
+                # package entry verifies
+                del all[pkg]
+            else:
+                if all.has_key(pkg):
+                    # wrong version
+                    del all[pkg]
+                    self.pkgwork['update'].append(entry)
+                else:
+                    # new pkg
+                    self.pkgwork['add'].append(entry)
+
+        # pkgwork contains all one-way verification data now
+        # all data remaining in all is extra packages
+        self.pkgwork['remove'] = all.keys()
+
+    def Inventory_Entries(self):
         '''Build up workqueue for installation'''
         # build initial set of states
         unexamined = [(child, []) for child in self.cfg.getchildren()]
@@ -95,11 +128,6 @@ class Toolset(object):
         except KeyError, msg:
             print "State verify evidently failed for %s" % (msg)
             self.structures[structure] = False
-
-    def Install(self):
-        '''Baseline Installation method based on current entry states'''
-        self.modified  =  [key for (key, val) in self.structures.iteritems() if not val]
-        [self.InstallEntry(key) for (key, val) in self.states.iteritems() if not val]
 
     def GenerateStats(self, client_version):
         '''Generate XML summary of execution statistics'''
@@ -142,13 +170,12 @@ class Toolset(object):
     def VerifyEntry(self, entry, modlist = []):
         '''Dispatch call to Verify<tagname> and save state in self.states'''
         try:
-            method = getattr(self, "Verify%s"%(entry.tag))
+            method = getattr(self, "Verify%s" % (entry.tag))
             # verify state and stash value in state
             if entry.tag == 'Package':
                 self.states[entry] = method(entry, modlist)
             else:
                 self.states[entry] = method(entry)
-
         except:
             self.LogFailure("Verify", entry)
 
@@ -334,3 +361,126 @@ class Toolset(object):
             print errmsg
             return False
 
+    def VerifyPackage(self, entry, modlist):
+        '''Dummy package verification method. Cannot succeed'''
+        return False
+
+    def HandleBundleDeps(self):
+        '''Handle bundles depending on what has been modified'''
+        for entry in [child for child in self.structures if child.tag == 'Bundle']:
+            bchildren = entry.getchildren()
+            if [b_ent for b_ent in bchildren if b_ent in self.modified]:
+                # This bundle has been modified
+                self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name', '???')))
+                modfiles = [cfile.get('name') for cfile in bchildren if cfile.tag == 'ConfigFile']
+                for child in bchildren:
+                    if child.tag == 'Package':
+                        self.VerifyPackage(child, modfiles)
+                    else:
+                        self.VerifyEntry(child)
+                    self.CondPrint('debug', "Re-checked entry %s %s: %s" %
+                                   (child.tag, child.get('name'), self.states[child]))
+                for svc in [svc for svc in bchildren if svc.tag == 'Service']:
+                    if self.setup['build']:
+                        # stop services in miniroot
+                        system('/etc/init.d/%s stop' % svc.get('name'))
+                    else:
+                        self.CondPrint('debug', 'Restarting service %s' % svc.get('name'))
+                        system('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload')))
+            
+        for entry in self.structures:
+            if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
+                self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.get('name', "")))
+            else:
+                self.structures[entry] = True
+
+    def HandleExtra(self):
+        '''deal with extra configuration during installation'''
+        return False
+
+    def Install(self):
+        '''Correct detected misconfigurations'''
+        self.CondPrint("verbose", "Installing needed configuration changes")
+        self.HandleExtra()
+        # use quick package ops from here on
+        self.setup['quick'] = True
+        self.CondPrint('dryrun', "Packages to update: %s" %
+                       (" ".join([pkg.get('name') for pkg in self.pkgwork['update']])))
+        self.CondPrint('dryrun', "Packages to add: %s" %
+                       (" ".join([pkg.get('name') for pkg in self.pkgwork['add']])))
+        self.CondPrint('dryrun', "Packages to remove %s" % (" ".join(self.pkgwork['remove'])))
+        for entry in [entry for entry in self.states if (not self.states[entry]
+                                                         and (entry.tag != 'Package'))]:
+            self.CondPrint('dryrun', "Entry %s %s updated" % (entry.tag, entry.get('name')))
+        if self.setup['dryrun']:
+            return
+
+        # build up work queue
+        work = self.pkgwork['add'] + self.pkgwork['update']
+        # add non-package entries
+        work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
+
+        # Counters
+        ## Packages left to install
+        left = len(work) + len(self.pkgwork['remove'])
+        ## Packages installed in previous iteration
+        old = left + 1
+        ## loop iterations performed
+        count = 1
+
+        # Installation loop
+        while ((0 < left < old) and (count < 20)):
+            # Print pass info
+            self.CondPrint('verbose', "Starting pass %s" % (count))
+            self.CondPrint("verbose", "%s Entries left" % (len(work)))
+            self.CondPrint('verbose', "%s new, %s update, %s remove" %
+                           (len(self.pkgwork['add']), len(self.pkgwork['update']),
+                            len(self.pkgwork['remove'])))
+
+            # Update counters
+            count = count + 1
+            old = left
+
+            self.CondPrint("verbose", "Installing Non Package entries")
+            [self.InstallEntry(ent) for ent in work if ent.tag != 'Package']
+
+            packages = [pkg for pkg in work if pkg.tag == 'Package']
+            if packages:
+                # try single large install
+                self.CondPrint("verbose", "Trying single pass package install")
+                cmdrc = system(self.pkgtool[0] %
+                               " ".join(self.pkgtool[1][0] % tuple([pkg.get(field) for field in self.pkgtool[1][1]])))
+
+                if cmdrc == 0:
+                    self.CondPrint('verbose', "Single Pass Succeded")
+                    # set all package states to true and flush workqueues
+                    badpkgs = [entry for entry in self.states.keys() if entry.tag == 'Package'
+                               and not self.states[entry]]
+                    for entry in badpkgs:
+                        self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
+                        self.states[entry] = True
+                    self.Refresh()
+                else:
+                    self.CondPrint("verbose", "Single Pass Failed")
+                    # do single pass installs
+                    #system("dpkg --configure --pending")
+                    self.Refresh()
+                    for pkg in packages:
+                        # handle state tracking updates
+                        if self.VerifyPackage(pkg, []):
+                            self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
+                            self.states[pkg] = True
+                        else:
+                            self.CondPrint("verbose", "Installing pkg %s version %s" %
+                                           (pkg.get('name'), pkg.get('version')))
+                            cmdrc = system(self.pkgtool[0] %
+                                           (self.pkgtool[1][0]%tuple([pkg.get(field) for field in self.pkgtool[1][1]])))
+                            if cmdrc == 0:
+                                self.states[pkg] = True
+                            else:
+                                self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
+            for entry in [ent for ent in work if self.states[ent]]:
+                work.remove(entry)
+                self.modified.append(entry)
+            left = len(work) + len(self.pkgwork['remove'])
+        self.HandleBundleDeps()
