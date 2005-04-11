@@ -100,7 +100,7 @@ class Debian(Toolset):
 
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
-        self.Inventory_Entries()
+        Toolset.Inventory(self)
         allsrv = []
         [allsrv.append(fname[14:]) for fname in glob("/etc/rc[12345].d/S*") if fname[14:] not in allsrv]
         csrv = self.cfg.findall(".//Service")
