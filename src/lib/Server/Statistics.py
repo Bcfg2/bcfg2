@@ -3,7 +3,7 @@ __revision__ = '$Revision: $'
 
 from elementtree.ElementTree import XML, SubElement, Element
 from xml.parsers.expat import ExpatError
-from syslog import syslog, LOG_INFO, LOG_ERR
+from syslog import syslog, LOG_ERR
 from time import asctime, localtime, time
 
 class Statistics(object):
@@ -21,15 +21,15 @@ class Statistics(object):
         '''Produce a pretty-printed text representation of element'''
         if element.text:
             fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-            data = (element.tag, (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()])),
+            data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
                     element.text, element.tag)
         if element._children:
             fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
-            data = (element.tag, ) + (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()]),)
-            data += tuple([self.pretty_print(x, level+2) for x in element._children]) + (element.tag, )
+            data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
+            data += tuple([self.pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
         else:
             fmt = "%s<%%s %%s/>\n" % (level * " ")
-            data = (element.tag, " ".join(["%s='%s'" % x for x in element.attrib.iteritems()]))
+            data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
         return fmt % data
 
     def WriteBack(self, force=0):
@@ -76,15 +76,15 @@ class Statistics(object):
         # The following list comprehension should be guarenteed to return at
         # most one result
         nodes = [elem for elem in self.element.findall('Node') if elem.get('name') == client]
-        nl = len(nodes)
-        if nl == 0:
+        nummatch = len(nodes)
+        if nummatch == 0:
             # Create an entry for this node
             node = SubElement(self.element, 'Node', name=client)
-        elif nl == 1 and not node_dirty:
+        elif nummatch == 1 and not node_dirty:
             # Delete old instance
             self.element.remove(nodes[0])
             node = SubElement(self.element, 'Node', name=client)
-        elif nl == 1 and node_dirty:
+        elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
             for elem in [elem for elem in node.findall('Statistics') if elem.get('state') == 'dirty']:
