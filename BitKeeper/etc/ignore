@@ -16,6 +16,7 @@ mkinstalldirs
 py-compile
 debian/tmp/*
 debian/bcfg2-server/*
+debian/bcfg2-install/*
 build/*
 debian/*debhelper
 debian/*substvars
