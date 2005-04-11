@@ -73,7 +73,7 @@ class Toolset(object):
     def Inventory(self):
         '''Inventory system status'''
         self.CondPrint('verbose', "Inventorying system...")
-        self.Inventory_Entries(self)
+        self.Inventory_Entries()
         all = deepcopy(self.installed)
         desired = {}
         for entry in self.cfg.findall(".//Package"):
