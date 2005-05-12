@@ -5,30 +5,31 @@ __revision__ = '$Revision$'
 
 from getopt import getopt, GetoptError
 from os import popen, chmod, unlink
-from sys import argv, exit as sysexit
+from sys import argv
 from tempfile import mktemp
 
 from elementtree.ElementTree import Element, XML, tostring
 
 from sss.ssslib import comm_lib
 
-def loadToolset(toolset, config, setup):
+def load_toolset(toolset, config, clientsetup):
+    '''Import client toolset modules'''
     if toolset == 'debian':
-        if setup['verbose']:
+        if clientsetup['verbose']:
             print 'Selected Debian Toolset...'
-        mod = __import__("Bcfg2.Client.Debian",globals(), locals(), ['*'])
-        return mod.Debian(config, setup)
+        mod = __import__("Bcfg2.Client.Debian", globals(), locals(), ['*'])
+        return mod.Debian(config, clientsetup)
     elif toolset == 'rh':
         if setup['verbose']:
             print 'Selected RedHat Toolset...'
-        mod = __import__("Bcfg2.Client.Redhat",globals(), locals(), ['*'])
-        return mod.Redhat(config, setup)
+        mod = __import__("Bcfg2.Client.Redhat", globals(), locals(), ['*'])
+        return mod.Redhat(config, clientsetup)
     else:
         print "Toolset not correctly provided by the server."
-        sysexit(1)
+        raise SystemExit, 1
         
 
-def RunProbe(probe):
+def run_probe(probe):
     '''Execute probe'''
     ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
     script = open(mktemp(), 'w+')
@@ -45,9 +46,9 @@ def dgetopt(arglist, opt, vopt):
     ret = {}
     for optname in opt.values() + vopt.values():
         ret[optname] = False
-    gstr = "".join(opt.keys()) + "".join([xy+':' for xy in vopt.keys()])
+    gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
     try:
-        (o, a) = getopt(arglist, gstr)
+        ginfo = getopt(arglist, gstr)
     except GetoptError, gerr:
         print gerr
         print "bcfg2 Usage:"
@@ -55,8 +56,8 @@ def dgetopt(arglist, opt, vopt):
             print " -%s %s" % arg
         for arg in  vopt.iteritems():
             print " -%s <%s>" % arg
-        sysexit(1)
-    for (gopt, garg) in o:
+        raise SystemExit, 1
+    for (gopt, garg) in ginfo[0]:
         option = gopt[1:]
         if opt.has_key(option):
             ret[opt[option]] = True
@@ -78,7 +79,7 @@ if __name__ == '__main__':
             configfile.close()
         except IOError:
             print "Failed to read cached config file: %s" % (setup['file'])
-            sysexit(1)
+            raise SystemExit, 1
     else:
         # connect to bcfg2d
         comm = comm_lib()
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         probes = XML(data)
         # execute probes
         cpd = Element("probe-data")
-        [cpd.append(RunProbe(x)) for x in probes.findall(".//probe")]
+        [cpd.append(run_probe(x)) for x in probes.findall(".//probe")]
     
         # upload probe responses
         comm.SendMessage(h, tostring(cpd))
@@ -114,10 +115,10 @@ if __name__ == '__main__':
     cfg = XML(r)
     if cfg.tag == 'error':
         print "got error from server"
-        sysexit(1)
+        raise SystemExit, 1
 
     # Get toolset from server
-    toolset = cfg.get('toolset')
+    cfg_toolset = cfg.get('toolset')
 
     if setup['bundle']:
         c = Element("Configuration", version='2.0')
@@ -127,7 +128,7 @@ if __name__ == '__main__':
         cfg = c
 
     # Create toolset handle
-    client = loadToolset(toolset, cfg, setup)
+    client = load_toolset(cfg_toolset, cfg, setup)
 
     # verify state
     client.Inventory()
