@@ -117,7 +117,8 @@ class ConfigFileEntry(object):
         '''Handle FAM updates'''
         action = event.code2str()
         if event.filename == ':info':
-            return self.read_info()
+            if action in ['changed', 'exists', 'created']:
+                return self.read_info()
         if event.filename != self.path.split('/')[-1]:
             if not self.specific.match('/' + event.filename):
                 syslog(LOG_INFO, 'Cfg: Suppressing event for bogus file %s' % event.filename)
