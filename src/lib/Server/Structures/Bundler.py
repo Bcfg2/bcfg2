@@ -46,7 +46,7 @@ class Bundle(XMLFileBacked):
             xdata = XML(self.data)
         except ExpatError, err:
             syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
-            syslog(LOG_ERR, err)
+            syslog(LOG_ERR, str(err))
             del self.data
             return
         self.all = []
@@ -56,7 +56,7 @@ class Bundle(XMLFileBacked):
             if entry.tag == 'System':
                 self.systems[entry.attrib['name']] = entry.getchildren()
             elif entry.tag == 'Attribute':
-                self.attributes["%s.%s" % (entry.get('scope'), entry.get('name'))] = entry.getchildren()
+                self.attributes[entry.get('name')] = entry.getchildren()
             else:
                 self.all.append(entry)
         del self.data
@@ -67,7 +67,8 @@ class Bundle(XMLFileBacked):
         bundle = Element('Bundle', name=bundlename)
         for entry in self.all + self.systems.get(system, []):
             bundle.append(deepcopy(entry))
-        for attribute in metadata.attributes:
+        for attribute in [aname for (scope, aname) in [item.split('.') for item in metadata.attributes]
+                          if scope == bundlename[:-4]]:
             for entry in self.attributes.get(attribute, []):
                 bundle.append(deepcopy(entry))
         return bundle
