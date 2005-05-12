@@ -448,7 +448,7 @@ class Toolset(object):
             if packages:
                 # try single large install
                 self.CondPrint("verbose", "Trying single pass package install")
-                pkglist = " ".join([self.pkgtool[1][0] % tuple([pkg.get(field) for field in self.pkgtool[1][1]])
+                pkglist = " ".join([self.pkgtool[1][0] % tuple([pkg.get(field, '') for field in self.pkgtool[1][1]])
                                     for pkg in packages])
                 self.CondPrint("debug", "Installing packages: %s" % pkglist)
                 cmdrc = system(self.pkgtool[0] % pkglist)
