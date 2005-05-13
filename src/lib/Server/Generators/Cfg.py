@@ -91,6 +91,7 @@ class ConfigFileEntry(object):
 
         if name.split('/')[-1] == self.path.split('/')[-1]:
             self.basefiles.append(FileEntry(name, True, None, [], [], [], None))
+            self.basefiles.sort()
             return
 
         specmatch = self.specific.match(name)
