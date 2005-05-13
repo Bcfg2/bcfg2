@@ -68,7 +68,7 @@ class SSHbase(Generator):
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
         self.static_skn = ''
-        for pubkey in [pubk for pubk in self.repository.entries.keys() if '.pub.H_' in pubk]:
+        for pubkey in [pubk for pubk in self.repository.entries.keys() if pubk.find('.pub.H_') != -1]:
             hostname = pubkey.split('H_')[1]
             try:
                 (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
