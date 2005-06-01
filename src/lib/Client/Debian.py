@@ -16,7 +16,7 @@ class Debian(Toolset):
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
                      '/etc/apt/apt.conf']
-    pkgtool = ('apt-get --reinstall -q=2 --force-yes -y install %s',
+    pkgtool = ('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s',
                ('%s=%s', ['name', 'version']))
     svcre = regcompile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
