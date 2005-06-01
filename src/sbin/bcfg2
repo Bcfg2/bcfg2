@@ -112,7 +112,12 @@ if __name__ == '__main__':
         except IOError:
             print "failed to write config cache file %s" % (setup['cache'])
 
-    cfg = XML(r)
+    try:
+        cfg = XML(r)
+    except:
+        print "got error from server"
+        raise SystemExit, 1
+    
     if cfg.tag == 'error':
         print "got error from server"
         raise SystemExit, 1
