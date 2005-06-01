@@ -1,7 +1,8 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
 [
 <!ENTITY concepts SYSTEM "concepts.xml">
+<!ENTITY architecture SYSTEM "architecture.xml">
 <!ENTITY install SYSTEM "install.xml">
 <!ENTITY generators SYSTEM "generators.xml">
 <!ENTITY deployment SYSTEM "deployment.xml">
@@ -23,7 +24,7 @@
       <orgname>Argonne National Laboratory</orgname>
       <orgdiv>MCS Division</orgdiv> 
     </affiliation>
-    <date>February 2, 2005</date>
+    <date>May 13, 2005</date>
     <releaseinfo>$Revision$</releaseinfo>
     <pubdate>February 2005</pubdate>
     <copyright>
@@ -49,8 +50,8 @@
 
     <revhistory>
       <revision>
-	<revnumber>0.6.4</revnumber>
-	<date>2005/02/01 11:38:27</date>
+	<revnumber>0.6.8</revnumber>
+	<date>$Date$</date>
 	<revremark>
 	  $Id$
         </revremark>
@@ -60,7 +61,7 @@
 
   <toc/>
 
-&concepts;
+&architecture;
 &install;
 &generators;
 &deployment;
