@@ -2,7 +2,7 @@
     <title>Generators</title>
     
     <para> 
-    Generators are modules are are loaded by the Bcfg2 server,
+    Generators are modules which are loaded by the Bcfg2 server,
     based on directives in <filename>/etc/bcfg2.conf</filename>. They
     provide concrete, fully-specified configuration entries for
     clients. This chapter documents the function and usage of
@@ -111,7 +111,7 @@
       </para>
 
       <example>
-	<title><filename>foo</filename></title>
+	<title><filename>services.xml</filename></title>
 	<programlisting>
 	  <![CDATA[<Services>
   <Class name='webserver'>
