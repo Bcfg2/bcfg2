@@ -216,6 +216,7 @@ class Toolset(object):
             print "Symlink %s cleanup failed" % (entry.get('name'))
         try:
             symlink(entry.get('to'), entry.get('name'))
+            return True
         except OSError:
             return False
 
@@ -378,6 +379,11 @@ class Toolset(object):
                         self.VerifyPackage(child, modfiles)
                     else:
                         self.VerifyEntry(child)
+                        if not self.states[child]:
+                            self.CondPrint('debug', "Reinstalling clobbered entry %s %s" % (child.tag,
+                                                                                            child.get('name')))
+                            self.InstallEntry(child)
+                            self.VerifyEntry(child)
                     self.CondPrint('debug', "Re-checked entry %s %s: %s" %
                                    (child.tag, child.get('name'), self.states[child]))
                 for svc in [svc for svc in bchildren if svc.tag == 'Service']:
