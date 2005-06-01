@@ -1,6 +1,7 @@
 BitKeeper/*/*
 PENDING/*
 doc/auto/*el
+doc/manual.pdf
 *pyc
 *pyo
 Makefile.in
