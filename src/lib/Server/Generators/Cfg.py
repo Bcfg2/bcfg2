@@ -33,11 +33,20 @@ class FileEntry(FileBacked):
         except IndexError:
             most2 = 0
         if most1 == most2:
-            if self.name.split('.')[-1][0] not in ['C', 'B']:
+            if self.name.split('.')[-1] in ['cat', 'diff']:
+                meta1 = self.name.split('.')[-2]
+            else:
+                meta1 = self.name.split('.')[-1]
+            if other.name.split('.')[-1] in ['cat', 'diff']:
+                meta2 = other.name.split('.')[-2]
+            else:
+                meta2 = other.name.split('.')[-1]
+
+            if meta1[0] not in ['C', 'B']:
                 return 0
             # need to tiebreak with numeric prio
-            prio1 = int(self.name.split('.')[-1][1:3])
-            prio2 = int(other.name.split('.')[-1][1:3])
+            prio1 = int(meta1[1:3])
+            prio2 = int(meta2[1:3])
             return prio1 - prio2
         else:
             return most1 - most2
