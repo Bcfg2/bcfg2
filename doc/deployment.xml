@@ -1,193 +1,323 @@
 <chapter>
-<title>Deploying Bcfg2</title>
-  <sect1>
+  <title>Deploying Bcfg2</title>
+  
+  <para>
+    Bcfg2 can be deployed in several different ways. The strategy
+    chosen varies based on the level of complexity accepted by the
+    administrators. The more literal a representation used, the less
+    powerful and reusable it is. We will describe three strategies for
+    Bcfg2 deployment, ranging from a cfengine-like deployment, to a
+    highly abstract configuration. While the abstract configuration is
+    much more powerful, the cfengine-like deployment is much easier to
+    understand and manipulate.
+  </para>
+  
+  <section>
+    <title>Simple Deployments</title>
+
+    <para>
+      The Bcfg2 server will build configurations based on a set of
+      high-level specifications that use class-based abstractions to
+      provide reusability. This approach works pretty well; however,
+      it can be hard to deploy and may be too complicated to solve
+      simple problems. 
+    </para>
+
+    <para>
+      This issue can be addressed through the use of the Bcfg2 client
+      with a static configuration specification. This method works as
+      follows: important configuration details are statically
+      specified in a file on each system. The Bcfg2 client runs
+      periodically, and ensures that all aspects of configuration
+      included in the static specification are correct. It then
+      performs any update operations needed on the client.
+    </para>
+
+    <para>
+      The format of static specifications is identical to that
+      provided by the Bcfg2 server, when it is used. It consists of a
+      series of "Bundle" and "Independent" clauses. Independent
+      clauses contain a series of configuration elements that can be
+      installed without any install time dependence on other
+      configuration elements. Bundles are series of dependent
+      clauses. This means that configuration elements may interfere
+      with one another, or that services may need to be restarted upon
+      configuration update. 
+    </para>
+
+    <para>
+      Each of these containers consists of a series of configuration
+      elements. The same elements may appear in either type of
+      clauses. These are basic types that are the same across all OS
+      ports.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>Package</term>
+	<listitem>
+	  <para>
+	    A software package. This entity includes a package name
+	    and version number. It may optionally include installation
+	    information (such as a package source URL) if one is
+	    needed.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>ConfigFile</term>
+	<listitem>
+	  <para>
+	    A configuration file. This entity includes a file path,
+	    owner, group, permissions, and file contents. 
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>SymLink</term>
+	<listitem>
+	  <para>
+	    A symbolic link. This entity includes a source and
+	    destination. 
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Service</term>
+	<listitem>
+	  <para>
+	    A service (de)activation. This controls services, a la
+	    chkconfig or update-rc.d. Services are restarted
+	    whenever co-located configuration entities are
+	    modified. This ensures that any configuration changes
+	    are flushed out to all active processes.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Directory</term>
+	<listitem>
+	  <para>
+	    A filesystem directory. This entity includes an owner,
+	    group and permissions.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </section>
+
+  <section>
+    <title>A Near-Literal Deployment</title>
+    <para>
+      The next easiest method to deploy is one where the configuration
+      specification is as simple and literal as possible. This style
+      of configuration specification can be characterized as near
+      copies of parts of the system. 
+    </para>
+
+    <para>
+      This style of deployment uses the stock generators: Cfg, Pkgmgr,
+      and Svcmgr. These manage configuration files, packages and
+      services, respectively. Copies of configuration files are placed
+      in the Cfg repository, in as generic a location as possible. 
+    </para>
+  </section>
+
+  <section>
+    <title>An Abstract Deployment</title>
+    <para/>
+  </section>
+
+  <section>
     <title>Object Oriented Configs</title>
     <para>
-One of the most powerful and useful parts about bcfg2 metadata system
-is the ability to have truely Object Oriented configs. I have found
-that this has made me understand the machines I am managing in a whole
-new light. Instead of focusing on what is installed, I now focus on
-how machines relate to each other, or what pieces of the metadata are
-similar in their configs. To illistrate this think about the following
-example machines:
-</para>
-<itemizedlist>
-<listitem><para>A users desktop machine</para></listitem>
-<listitem><para>A multiuser compute machine</para></listitem>
-<listitem><para>A users home machine. (telecommuter)</para></listitem>
-</itemizedlist>
-<para>
-These 3 machines have 3 distinct focuses for usage, but in reality
-they can have a very similar metadata, depending on how the config is
-broken up or the view that is taken of the config. If you focus first
-on where the machines are the same it will help to build the common
-metadata. below is what all 3 machines have in common:
-</para>
-<itemizedlist>
-<listitem><para>users need to have the software they need to perform
-there work. </para></listitem>
-</itemizedlist>
-<para>
-let just encode this into metadata by creating a Class called
-common-software that contains all the common software between all 3
-machines.
-</para>
-<programlisting>
- <![CDATA[ 
-<Class name='common-software'>
-    <Bundle ... />
-    ....
-</Class>
-]]>
-</programlisting>
-<para>
-now we need to find where they differ:
-</para>
-<variablelist>
-<varlistentry>
-<term>Desktop machines</term>
-   <listitem>
-     <itemizedlist>
-     <listitem>
-       <para>need to have a GUI interface( Xwindows or what not )</para>
-     </listitem>
-     <listitem>
-       <para>use NIS for authentification</para>
-     </listitem>
-     <listitem>
-     <para>use Autofs to mount home directories</para>
-     </listitem>
-    </itemizedlist>
-   </listitem>
-</varlistentry>
-<varlistentry>
-<term>Multiuser compute machines</term>
-   <listitem>
-     <itemizedlist>
-     <listitem>
-       <para>only accessible by SSH, No GUI interface</para>
-     </listitem>
-     <listitem>
-       <para>use NIS for authentification</para>
-     </listitem>
-     <listitem>
-     <para>use Autofs to mount home directories</para>
-     </listitem>
-    </itemizedlist>
-   </listitem>
-</varlistentry>
-<varlistentry>
-<term>Home machine</term>
-   <listitem>
-     <itemizedlist>
-     <listitem>
-     <para>need to have a GUI interface( Xwindows or what not )</para>
-     </listitem>
-     <listitem>
-     <para>use static password file</para>
-     </listitem>
-     <listitem>
-     <para>use local disk for home directories</para>
-     </listitem>
-    </itemizedlist>
-   </listitem>
-</varlistentry>
-</variablelist> 
-<para>
-As you can see that there are common things pairwise in these configs
-that can be further exploited by the object oriented system of bcfg2
-</para>
-<programlisting>
- <![CDATA[ 
-<Class name="Gui-Interface">
-   <Bundle ... />
-   ...
-</Class>
-<Class name="NIS-Autofs">
-   <Bundle ... />
-   ...
-</Class>
-]]>
-</programlisting>
-<para>
-now all that is left is to ensure that all needs are met and we find
-we need to make one more class:
-</para>
-<programlisting>
- <![CDATA[ 
-<Class name="static-password-local-disk">
-   <Bundle ... />
-   ...
-</Class>
-]]>
-</programlisting>
-<para>
-Now we can mix and match these classes together to build the 3
-profiles or even build new profiles with these descrete entities. 
-</para>
-<programlisting>
- <![CDATA[ 
-<Profile name='desktop'>
-  <Class name='common-software'/>
-  <Class name="Gui-Interface"/>
-  <Class name="NIS-Autofs">
-</Profile>
-<Profile name='computerserver'>
-  <Class name='common-software'/>
-  <Class name="NIS-Autofs">
-</Profile>
-<Profile name='home-desktop'>
-  <Class name='common-software'/>
-  <Class name="Gui-Interface"/>
-  <Class name="static-password-local-disk">
-</Profile>
-<Profile name='bare-system'>
-  <Class name='common-software'/>
-</Profile>
-]]>
-</programlisting>
-<para>
-The free form object oriented fashion in which metadata can be
-constructed is truely a double edge sword. On one hand you can build
-up a nice list of descrete entities that can compose even the most
-complicated configs, but it also allows for the creation of entities
-that could provide monolithic solutions to each machines config. It is
-all in how one views the machines and how much they are willing to
-harness the power of the OO based metadata system.
+      One of the most powerful and useful parts about bcfg2 metadata
+      system is the ability to have truely Object Oriented configs. I
+      have found that this has made me understand the machines I am
+      managing in a whole new light. Instead of focusing on what is
+      installed, I now focus on how machines relate to each other, or
+      what pieces of the metadata are similar in their configs. To
+      illistrate this think about the following example machines:
     </para>
-  </sect1>
-  <sect1>
-   <title>Tips & Tricks</title>
-   <para/>
-  </sect1>
-  <sect1>
+
+    <itemizedlist>
+      <listitem><para>A users desktop machine</para></listitem>
+      <listitem><para>A multiuser compute machine</para></listitem>
+      <listitem><para>A users home machine. (telecommuter)</para></listitem>
+    </itemizedlist>
+    <para>
+      These 3 machines have 3 distinct focuses for usage, but in reality
+      they can have a very similar metadata, depending on how the config is
+      broken up or the view that is taken of the config. If you focus first
+      on where the machines are the same it will help to build the common
+      metadata. below is what all 3 machines have in common:
+    </para>
+    <itemizedlist>
+      <listitem><para>users need to have the software they need to perform
+	  there work. </para></listitem>
+    </itemizedlist>
+    <para>
+      let just encode this into metadata by creating a Class called
+      common-software that contains all the common software between all 3
+      machines.
+    </para>
+    <programlisting>
+      <![CDATA[ 
+      <Class name='common-software'>
+      <Bundle ... />
+      ....
+    </Class>
+      ]]>
+    </programlisting>
+    <para>
+      now we need to find where they differ:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term>Desktop machines</term>
+	<listitem>
+	  <itemizedlist>
+	    <listitem>
+	      <para>need to have a GUI interface( Xwindows or what not )</para>
+	    </listitem>
+	    <listitem>
+	      <para>use NIS for authentification</para>
+	    </listitem>
+	    <listitem>
+	      <para>use Autofs to mount home directories</para>
+	    </listitem>
+	  </itemizedlist>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Multiuser compute machines</term>
+	<listitem>
+	  <itemizedlist>
+	    <listitem>
+	      <para>only accessible by SSH, No GUI interface</para>
+	    </listitem>
+	    <listitem>
+	      <para>use NIS for authentification</para>
+	    </listitem>
+	    <listitem>
+	      <para>use Autofs to mount home directories</para>
+	    </listitem>
+	  </itemizedlist>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Home machine</term>
+	<listitem>
+	  <itemizedlist>
+	    <listitem>
+	      <para>need to have a GUI interface( Xwindows or what not )</para>
+	    </listitem>
+	    <listitem>
+	      <para>use static password file</para>
+	    </listitem>
+	    <listitem>
+	      <para>use local disk for home directories</para>
+	    </listitem>
+	  </itemizedlist>
+	</listitem>
+      </varlistentry>
+    </variablelist> 
+    <para>
+      As you can see that there are common things pairwise in these configs
+      that can be further exploited by the object oriented system of bcfg2
+    </para>
+    <programlisting>
+      <![CDATA[ 
+      <Class name="Gui-Interface">
+      <Bundle ... />
+      ...
+    </Class>
+      <Class name="NIS-Autofs">
+      <Bundle ... />
+      ...
+    </Class>
+      ]]>
+    </programlisting>
+    <para>
+      now all that is left is to ensure that all needs are met and we find
+      we need to make one more class:
+    </para>
+    <programlisting>
+      <![CDATA[ 
+      <Class name="static-password-local-disk">
+      <Bundle ... />
+      ...
+    </Class>
+      ]]>
+    </programlisting>
+    <para>
+      Now we can mix and match these classes together to build the 3
+      profiles or even build new profiles with these descrete entities. 
+    </para>
+    <programlisting>
+      <![CDATA[ 
+      <Profile name='desktop'>
+      <Class name='common-software'/>
+      <Class name="Gui-Interface"/>
+      <Class name="NIS-Autofs">
+    </Profile>
+      <Profile name='computerserver'>
+      <Class name='common-software'/>
+      <Class name="NIS-Autofs">
+    </Profile>
+      <Profile name='home-desktop'>
+      <Class name='common-software'/>
+      <Class name="Gui-Interface"/>
+      <Class name="static-password-local-disk">
+    </Profile>
+      <Profile name='bare-system'>
+      <Class name='common-software'/>
+    </Profile>
+      ]]>
+    </programlisting>
+    <para>
+      The free form object oriented fashion in which metadata can be
+      constructed is truely a double edge sword. On one hand you can build
+      up a nice list of descrete entities that can compose even the most
+      complicated configs, but it also allows for the creation of entities
+      that could provide monolithic solutions to each machines config. It is
+      all in how one views the machines and how much they are willing to
+      harness the power of the OO based metadata system.
+    </para>
+  </section>
+  <section>
+    <title>Tips & Tricks</title>
+    <para/>
+  </section>
+  <section>
     <title>An example application of bcfg2</title>
     <para>
- In my computing environment there are quite a diverse set of machines
-and requirements for there operation. What this meant is that I needed
-to devise a build system for machines that would allow me to easily
-customize the software and services on the machine while still being
-able to easily manage them and keep them secure. What I came up with
-that solved this problem was that the initial install needed to be the
-smallest subset of software that all machines had in common and
-install this with whatever automated install system fit the OS. The
-goal being that the OS automated installer( ie: kickstart, or
-systemimager ) would put the initial bits on disk and take care of
-hardware stuff and then as part of the postinstall process I run bcfg2
-to insure that the rest of the software and configuration occurs based
-on the machines metadata. The overall goal was met. I could now build
-any type of machine that I needed just by using the common buildsystem
-and let bcfg2 determine what was different machine to machine.  
+      In my computing environment there are quite a diverse set of machines
+      and requirements for there operation. What this meant is that I needed
+      to devise a build system for machines that would allow me to easily
+      customize the software and services on the machine while still being
+      able to easily manage them and keep them secure. What I came up with
+      that solved this problem was that the initial install needed to be the
+      smallest subset of software that all machines had in common and
+      install this with whatever automated install system fit the OS. The
+      goal being that the OS automated installer( ie: kickstart, or
+      systemimager ) would put the initial bits on disk and take care of
+      hardware stuff and then as part of the postinstall process I run bcfg2
+      to insure that the rest of the software and configuration occurs based
+      on the machines metadata. The overall goal was met. I could now build
+      any type of machine that I needed just by using the common buildsystem
+      and let bcfg2 determine what was different machine to machine.  
     </para>
+
     <para>
-My current build process is centered around systemimager and
-bcfg2. I have done some small enhancements to systemimager so that
-with one floppy or cdrom any administrator can build any number of
-machine profiles automatically. This is all done with some of the new
-features that allow the encoding of the profile and image in the
-clientside command so that the back end metadata can be asserted from
-the client, which overrides the defaults specified in the metadata.xml
-file.  
+      My current build process is centered around systemimager and
+      bcfg2. I have done some small enhancements to systemimager so that
+      with one floppy or cdrom any administrator can build any number of
+      machine profiles automatically. This is all done with some of the new
+      features that allow the encoding of the profile and image in the
+      clientside command so that the back end metadata can be asserted from
+      the client, which overrides the defaults specified in the metadata.xml
+      file.  
     </para>
-  </sect1>
+  </section>
 </chapter>
