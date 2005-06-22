@@ -19,6 +19,10 @@ class PublishError(Exception):
     '''This error is raised upon publication failures'''
     pass
 
+class CoreInitError(Exception):
+    '''This error is raised when the core cannot be initialized'''
+    pass
+
 class Fam(object):
     '''The fam object is a set of callbacks for file alteration events'''
     
@@ -67,9 +71,6 @@ class PublishedValue(object):
             raise PublishError, (self.key, owner)
         self.value = value
 
-class CoreInitError(Exception):
-    pass
-
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, setup, configfile):
@@ -77,7 +78,10 @@ class Core(object):
         cfile = ConfigParser()
         cfile.read([configfile])
         self.datastore = cfile.get('server','repository')
-        self.fam = Fam()
+        try:
+            self.fam = Fam()
+        except IOError:
+            raise CoreInitError, "failed to connect to fam"
         self.pubspace = {}
         self.structures = []
         self.generators = []
