@@ -53,7 +53,10 @@ class Toolset(object):
     def CondPrint(self, state, msg):
         '''Conditionally print message'''
         if self.setup[state]:
-            print msg
+            try:
+                print msg
+            except IOError:
+                pass
 
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
