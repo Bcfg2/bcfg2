@@ -1,0 +1,38 @@
+<Reports>
+    <Report name='core_stats' good='Y' modified='Y'>
+        <Delivery mechanism='mail' type='nodes-digest'>
+            <Destination address='root@localhost'/>
+            <Destination address='user@domain.tld'/>	    
+        </Delivery>
+        <Delivery mechanism='mail' type='nodes-individual'>
+            <Destination address='user@domain.tld'/>
+        </Delivery>
+        <Delivery mechanism='rss' type='nodes-digest'>
+            <Destination address='/var/www/core_stats.rss'/>
+        </Delivery>
+        <Delivery mechanism='www' type='nodes-digest'>
+            <Destination address='/var/www/core_stats.html'/>
+        </Delivery>
+        <Machine name='.*'/>
+    </Report>
+
+    <Report name='stats_for_a_machines' good='N' modified='Y'>
+        <Delivery mechanism='mail' type='nodes-digest'>
+            <Destination address='user@domain.tld'/>
+        </Delivery>
+        <Delivery mechanism='mail' type='overview-stats'>
+            <Destination address='user@otherdomain.tld'/>
+        </Delivery>
+        <Machine name='a.*'/>
+	<Machine name='x-aim'/>
+    </Report>
+
+
+    <Report name='joey' good='N' modified='N'>
+        <Delivery mechanism='mail' type='nodes-digest'>
+            <Destination address='joey@domain.tld'/>
+        </Delivery>
+        <Machine name='beluga'/>
+	<Machine name='oculus'/>
+    </Report>
+</Reports>
