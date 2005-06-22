@@ -104,6 +104,9 @@ class MetadataStore(SingleXMLFileBacked):
         prof = self.profiles[profile]
         # should we uniq here? V
         bundles = reduce(lambda x, y:x + y, [self.classes.get(cls) for cls in prof.classes])
+        if not self.images.has_key(image):
+            syslog(LOG_ERR, "Metadata: Image %s not defined" % image)
+            raise MetadataConsistencyError
         toolset = self.images[image]
         return Metadata(False, image, prof.classes, bundles, prof.attributes, client, toolset)
 
