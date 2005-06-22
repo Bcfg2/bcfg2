@@ -1,6 +1,15 @@
 '''This is the Structure base class'''
 __revision__ = '$Revision$'
 
+class StructureError(Exception):
+    '''Structure runtime error used to inform upper layers of internal generator failure'''
+    pass
+
+class StructureInitError(Exception):
+    '''Constructor time error that allows the upper layer to proceed in the face of
+    structure initialization failures'''
+    pass
+
 class Structure(object):
     '''The Structure class is used to define patterns of data in host configurations
     Structure subtyped classes provide functions that group configurations into dependent
