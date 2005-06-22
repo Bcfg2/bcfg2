@@ -83,7 +83,11 @@ if __name__ == '__main__':
     else:
         # connect to bcfg2d
         comm = comm_lib()
-        h = comm.ClientInit("bcfg2")
+        try:
+            h = comm.ClientInit("bcfg2")
+        except:
+            print "Failed to connect to bcfg2 server"
+            raise SystemExit, 1
 
         # get probes
         comm.SendMessage(h, "<get-probes/>")
