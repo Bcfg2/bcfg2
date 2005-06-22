@@ -123,9 +123,9 @@ class Debian(Toolset):
                 self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
-                self.CondPrint("Removing services: %s" % self.extra_services)
+                self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
                 for service in self.extra_services:
-                    system("rm -f /etc/rc*.d/S*%s" % service)
+                    system("rm -f /etc/rc*.d/S??%s" % service)
             else:
                 self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
         
