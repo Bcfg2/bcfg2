@@ -52,9 +52,7 @@
       <revision>
 	<revnumber>0.6.8</revnumber>
 	<date>$Date$</date>
-	<revremark>
-	  $Id$
-        </revremark>
+	<revremark>$Id$</revremark>
       </revision>
     </revhistory>
   </bookinfo>
