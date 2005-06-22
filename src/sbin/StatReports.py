@@ -221,12 +221,23 @@ def www(reportsections,delivery,deliverytype):
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
-    statpath = "%s/statistics.xml" % c.get('server', 'metadata')#this needs
-    #to be configurable-- like options like, in case you want to read in a different file
+    configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
+    statpath = "%s/statistics.xml" % c.get('server', 'metadata')
+    try:
+        opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
+    except GetoptError,msg:
+        # print help information and exit:
+        print "%s\nUsage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]"%(msg)
+        exit(2)
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            print "Usage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]"
+            exit()
+        if o in ("-c", "--config"):
+            configpath = a
+        if o in ("-s", "--stats"):
+            statpath = a
 
-    #configpath = "%s/machine-owners.xml" % c.get('server', 'metadata')
-    configpath = "/sandbox/hagedorn/report-configuration.xml"
-    '''Reads current state regarding statistics'''
     try:
         statdata = XML(open(statpath).read())
     except (IOError, ExpatError):
