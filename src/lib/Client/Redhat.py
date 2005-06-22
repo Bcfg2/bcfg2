@@ -68,8 +68,8 @@ class Redhat(Toolset):
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
-        if not (entry.get('name') and entry.get('version')):
-            print "Can't install package, not enough data."
+        if not entry.get('version'):
+            print "Can't install package %s, not enough data." % (entry.get('name'))
             return False
         instp = Popen4("rpm -qi %s-%s" % (entry.get('name'), entry.get('version')))
         istat = instp.poll()
