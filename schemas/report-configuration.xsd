@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xml:lang="en">
 
-  <xsd:annotation>
-    <xsd:documentation>
+  <xs:annotation>
+    <xs:documentation>
       statistical report configuration schema for bcfg2
       Joey Hagedorn, Argonne National Laboratory
-    </xsd:documentation>
-  </xsd:annotation>
+    </xs:documentation>
+  </xs:annotation>
 
   <xs:element name="Reports">
     <xs:complexType>
@@ -23,13 +23,30 @@
                       </xs:complexType>
                     </xs:element>
                   </xs:sequence>
-                  <xs:attribute name="mechanism" type="xs:string" use="required" />
-                  <xs:attribute name="type" type="xs:string" use="optional" />
+                  <xs:attribute name="mechanism" type="xs:string" use="required">
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:enumeration value="mail"/>
+                        <xs:enumeration value="rss"/>
+                        <xs:enumeration value="www"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="type" type="xs:string" use="optional">
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:enumeration value="nodes-individual"/>
+                        <xs:enumeration value="nodes-digest"/>
+                        <xs:enumeration value="stats-overview"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
                 </xs:complexType>
               </xs:element>
               <xs:element minOccurs="1" maxOccurs="unbounded" name="Machine">
                 <xs:complexType>
                   <xs:attribute name="name" type="xs:string" use="required" />
+                  <!-- this can be a regular expression defined at http://docs.python.org/lib/re-syntax.html-->
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
