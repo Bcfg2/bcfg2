@@ -1,8 +1,8 @@
 <Reports>
     <Report name='core_stats' good='Y' modified='Y'>
         <Delivery mechanism='mail' type='nodes-digest'>
-            <Destination address='root@localhost'/>
-            <Destination address='user@domain.tld'/>	    
+            <Destination address='user@domain.tld'/>
+            <Destination address='user@otherdomain.tld'/>	    
         </Delivery>
         <Delivery mechanism='mail' type='nodes-individual'>
             <Destination address='user@domain.tld'/>
