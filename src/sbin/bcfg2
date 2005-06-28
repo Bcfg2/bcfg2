@@ -158,7 +158,10 @@ if __name__ == '__main__':
         failed = [key for key, value in client.states.iteritems() if not value]
         if failed:
             client.CondPrint('verbose', "Failing Entries:")
-            [client.CondPrint('verbose', "%s:%s" % (key.tag, key.get('name'))) for key in failed]
+            [client.CondPrint('verbose', "%s:%s" % (key.tag, key.get('name'))) for key in
+             failed if key.tag != 'Package']
+            [client.CondPrint('verbose', "%s:%s-%s"%(key.tag, key.get('name'),
+                                                     key.get('version', 'unset'))) for key in failed if key.tag == 'Package']
     else:
         client.CondPrint("verbose", "All entries correct")
 
