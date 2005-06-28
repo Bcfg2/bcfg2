@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 from binascii import b2a_base64
 from os import rename, system
-from socket import gethostbyname, gethostbyaddr, gaierror
+from socket import gethostbyname, gaierror
 from syslog import syslog, LOG_ERR
 
 from Bcfg2.Server.Generator import Generator, DirectoryBacked
@@ -47,7 +47,7 @@ class SSHbase(Generator):
                               '/etc/ssh/ssh_host_key':self.build_hk,
                               '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
-        self.domains = ['mcs.anl.gov', 'bgl.mcs.anl.gov', 'globus.org']
+        self.domains = ['mcs.anl.gov', 'bgl.mcs.anl.gov', 'globus.org', 'uc.teragrid.org']
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
@@ -57,8 +57,9 @@ class SSHbase(Generator):
             # need to add entry
             for domain in self.domains:
                 try:
+                    fqdn = "%s.%s" % (client, domain)
                     ipaddr = gethostbyname("%s.%s" % (client, domain))
-                    fqdn = gethostbyaddr(ipaddr)[0]
+                    self.ipcache[client] = (ipaddr, fqdn)
                     return (ipaddr, fqdn)
                 except gaierror:
                     continue
