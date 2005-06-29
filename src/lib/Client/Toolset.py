@@ -8,8 +8,9 @@ from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlin
 from pwd import getpwuid, getpwnam
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
-from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
+from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, S_ISCHR, S_ISBLK
 from sys import exc_info
+import stat as statmod
 #from time import asctime, localtime
 from traceback import extract_tb
 
@@ -372,7 +373,7 @@ class Toolset(object):
         '''Dummy package verification method. Cannot succeed'''
         return False
 
-    def VerifyPermission(self, entry):
+    def VerifyPermissions(self, entry):
         '''Verify method for abstract permission'''
         try:
             sinfo = stat(entry.get('name'))
@@ -395,9 +396,9 @@ class Toolset(object):
         except OSError:
             self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
             return False
-        for ftype in [S_ISDIR, S_ISREG]:
-            if ftype(sinfo[ST_MODE]):
-                chmod(entry.get('name'), calc_perms(ftype, entry.get('perms')))
+        for ftype in ['DIR', 'REG', 'CHR', 'BLK']:
+            if getattr(statmod, "S_IS%s" % ftype)(sinfo[ST_MODE]):
+                chmod(entry.get('name'), calc_perms(getattr(statmod, "S_IF%s" % ftype), entry.get('perms')))
                 return True
         self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
         return False
