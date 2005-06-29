@@ -17,6 +17,7 @@
       <xsd:element name='ConfigFile' type='ConfigFileType'/>
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Directory' type='DirectoryType'/>
+      <xsd:element name='Permission' type='PermissionType'/>
       <xsd:element name='Class' type='ContainerType'/>
       <xsd:element name='Image' type='ContainerType'/>
     </xsd:choice>
