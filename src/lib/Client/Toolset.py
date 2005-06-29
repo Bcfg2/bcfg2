@@ -225,6 +225,8 @@ class Toolset(object):
 
     def VerifyDirectory(self, entry):
         '''Verify Directory Entry'''
+        while len(entry.get('perms', '')) < 4:
+            entry.set('perms', '0' + entry.get('perms', ''))
         try:
             ondisk = stat(entry.get('name'))
         except OSError:
@@ -237,18 +239,19 @@ class Toolset(object):
             self.CondPrint('debug', 'User resolution failing')
             owner = 'root'
             group = 'root'
-        perms = stat(entry.get('name'))[ST_MODE]
+        perms = oct(stat(entry.get('name'))[ST_MODE])[-4:]
         if ((owner == entry.get('owner')) and
             (group == entry.get('group')) and
-            (perms == calc_perms(S_IFDIR, entry.get('perms')))):
+            (perms == entry.get('perms'))):
             return True
         else:
             if owner != entry.get('owner'):
                 self.CondPrint("debug", "Directory %s ownership wrong" % (entry.get('name')))
             if group != entry.get('group'):
                 self.CondPrint("debug", "Directory %s group wrong" % (entry.get('name')))
-            if perms != calc_perms(S_IFDIR, entry.get('perms')):
-                self.CondPrint("debug", "Directory %s permissions wrong" % (entry.get('name')))
+            if perms != entry.get('perms'):
+                self.CondPrint("debug", "Directory %s permissions wrong: are %s should be %s" %
+                               (entry.get('name'), perms, entry.get('perms')))
             return False
 
     def InstallDirectory(self, entry):
@@ -257,7 +260,7 @@ class Toolset(object):
         self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
         try:
             fmode = lstat(entry.get('name'))
-            if not S_ISDIR(fmode[0]):
+            if not S_ISDIR(fmode[ST_MODE]):
                 self.CondPrint("debug", "Found a non-directory entry at %s" % (entry.get('name')))
                 try:
                     unlink(entry.get('name'))
@@ -369,6 +372,36 @@ class Toolset(object):
         '''Dummy package verification method. Cannot succeed'''
         return False
 
+    def VerifyPermission(self, entry):
+        '''Verify method for abstract permission'''
+        try:
+            sinfo = stat(entry.get('name'))
+        except OSError:
+            self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
+            return False
+        # pad out perms if needed
+        while len(entry.get('perms', '')) < 4:
+            entry.set('perms', '0' + entry.get('perms', ''))
+        perms = oct(sinfo[ST_MODE])[-4:]
+        if perms == entry.get('perms'):
+            return True
+        else:
+            self.CondPrint('debug', "Entry %s permissions incorrect" % entry.get('name'))
+
+    def InstallPermissions(self, entry):
+        '''Install method for abstract permission'''
+        try:
+            sinfo = stat(entry.get('name'))
+        except OSError:
+            self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
+            return False
+        for ftype in [S_ISDIR, S_ISREG]:
+            if ftype(sinfo[ST_MODE]):
+                chmod(entry.get('name'), calc_perms(ftype, entry.get('perms')))
+                return True
+        self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
+        return False
+        
     def HandleBundleDeps(self):
         '''Handle bundles depending on what has been modified'''
         for entry in [child for child in self.structures if child.tag == 'Bundle']:
