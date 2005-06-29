@@ -17,6 +17,7 @@
       <xsd:element name='Directory' type='DirectoryType'/>
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Permission' type='PermissionType'/>
+      <xsd:element name='PostInstall' type='PostInstallType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
@@ -32,6 +33,7 @@
 	<xsd:element name='Directory' type='DirectoryType'/>
 	<xsd:element name='SymLink' type='SymLinkType'/>
 	<xsd:element name='Permission' type='PermissionType'/>
+	<xsd:element name='PostInstall' type='PostInstallType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>
