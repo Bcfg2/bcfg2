@@ -36,4 +36,8 @@
     <xsd:attribute type='xsd:string' name='perms' use='required'/>
   </xsd:complexType>
 
+  <xsd:complexType name='PostInstallType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
 </xsd:schema>
