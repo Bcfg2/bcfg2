@@ -31,4 +31,9 @@
     <xsd:attribute type='xsd:string' name='to' use='required'/>
   </xsd:complexType>
 
+  <xsd:complexType name='PermissionType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='perms' use='required'/>
+  </xsd:complexType>
+
 </xsd:schema>
