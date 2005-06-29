@@ -63,15 +63,11 @@ def generateReport(report, delivery, deliverytype, statdata):
 	    modified = ''
 
     if deliverytype == 'nodes-digest':
-        for destination in delivery.findall('Destination'):
-       	    toaddr = destination.attrib['address']
-	    if msg != '':
-                reportSections.append(("Bcfg Nightly Errors", "DIRTY:\n%s\nCLEAN:\n%s\nDETAILS:\n%s"%(dirty, clean, msg)))
-	    else:
-                if delivery.attrib['good'] == 'Y':
-                    reportSections.append(("Bcfg Nightly All Machines Good", "All Machines Nomnial"))
-
-
+        if msg != '':
+            reportSections.append(("Bcfg Nightly Errors", "DIRTY:\n%s\nCLEAN:\n%s\nDETAILS:\n%s"%(dirty, clean, msg)))
+        else:
+            if delivery.attrib['good'] == 'Y':
+                reportSections.append(("Bcfg Nightly All Machines Good", "All Machines Nomnial"))
 
 
     if deliverytype == 'overview-stats':
