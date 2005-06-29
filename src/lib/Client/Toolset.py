@@ -401,7 +401,11 @@ class Toolset(object):
                 return True
         self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
         return False
-        
+
+    def VerifyPostInstall(self, entry):
+        '''Postinstall verification method'''
+        return True
+
     def HandleBundleDeps(self):
         '''Handle bundles depending on what has been modified'''
         for entry in [child for child in self.structures if child.tag == 'Bundle']:
@@ -422,6 +426,8 @@ class Toolset(object):
                             self.VerifyEntry(child)
                     self.CondPrint('debug', "Re-checked entry %s %s: %s" %
                                    (child.tag, child.get('name'), self.states[child]))
+                for postinst in [entry for entry in bchildren if entry.tag == 'PostInstall']:
+                    system(postinst.get('name'))
                 for svc in [svc for svc in bchildren if svc.tag == 'Service']:
                     if self.setup['build']:
                         # stop services in miniroot
