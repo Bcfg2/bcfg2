@@ -3,14 +3,14 @@
 from glob import glob
 from sys import argv, exit
 from validate import validate, ValidationException
-from ConfigParser import ConfigParser, NoOptionError
+from ConfigParser import ConfigParser
 
 if __name__ == '__main__':
     cf = ConfigParser()
     cf.read(['/etc/bcfgd.conf'])
     try:
         repo = cf.get('server', 'repository')
-    except NoOptionError:
+    except:
         if len(argv) == 1:
             print "Usage: validate_repo <repo directory>"
             raise SystemExit, 1
