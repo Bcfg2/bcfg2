@@ -65,8 +65,8 @@ class Solaris(Toolset):
         else:
             return False
 
-    def VerifyPackage(self, entry):
-        '''Verify Package status for entry'''
+    def VerifyPackage(self, entry, modlist):
+	'''Verify Package status for entry'''
         if not (entry.get('name') and entry.get('version')):
             print "Can't verify package, not enough data."
             return False
@@ -78,28 +78,29 @@ class Solaris(Toolset):
                 if self.setup['quick']:
                     return True
                 verp = Popen4("/usr/sbin/pkgchk -n %s" % (entry.get('name')), bufsize=16384)
-                odata = ''
+                odata = verp.fromchild.read(
                 vstat = verp.poll()
                 while vstat == -1:
                     odata += verp.fromchild.read()
                     vstat = verp.poll()
-                output = [line for line in odata.split("\n") if line]
+                output = [line for line in odata.split("\n") if line.find('ERROR')]
                 if vstat == 0:
                     return True
                 else:
-                #    if len([name for name in output if name.split()[-1] not in modlist]):
-                #        return True
-                #    else:
+                    if len([name for name in output if name.split()[-1] not in modlist]):
+                        return True
+                    else:
                     self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
         return False
 
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = popen("/usr/bin/svcs -a -H -o SVC").readlines()
-        # for goodline [ x.strip() for x in openfile.readlines()]
+        allsrv = [ x.strip() for x in popen("/usr/bin/svcs -a -H -o SVC").readlines() ]
         csrv = self.cfg.findall(".//Service")
-        print csrv
+	nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
+        allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
+        self.extra_services = allsrv
 
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
