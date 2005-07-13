@@ -56,14 +56,16 @@ def generatereport(report, delivery, deliverytype, statdata):
                 except gaierror:
                     continue
 
-        if fqdncache[nodename] == "":
-            statdata.remove(node);
-            del fqdncache[nodename]
+        #if fqdncache[nodename] == "":
+            #statdata.remove(node);
+            #del fqdncache[nodename]
 
 
 
     for machine in report.findall('Machine'):
         for node in statdata.findall('Node'):
+            if fqdncache[child.get("name")] == "":
+                continue
             if node.attrib['name'] == machine.attrib['name']:
                 if deliverytype == 'nodes-digest':
                     mheader = "Machine: %s\n" % machine.attrib['name']
@@ -104,7 +106,7 @@ def generatereport(report, delivery, deliverytype, statdata):
             reportsections.append(("Bcfg Nightly Errors", \
                                        "DIRTY:\n%s\nCLEAN:\n%s\nDETAILS:\n%s" % (dirty, clean, msg)))
         else:
-            if report.attrib['good'] == 'Y':
+            if reportgood == 'Y':
                 reportsections.append(("Bcfg Nightly All Machines Good", "All Machines Nomnial"))
 
 
@@ -116,6 +118,8 @@ def generatereport(report, delivery, deliverytype, statdata):
         pattern = re.compile(regex)
         childstates = []
         for child in children:
+            if fqdncache[child.get("name")] == "":
+                continue
             if pattern.match(child.get("name")):
                 child.states = []
                 for state in child.findall("Statistics"):
