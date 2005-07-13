@@ -104,7 +104,7 @@ def generatereport(report, delivery, deliverytype, statdata):
             reportsections.append(("Bcfg Nightly Errors", \
                                        "DIRTY:\n%s\nCLEAN:\n%s\nDETAILS:\n%s" % (dirty, clean, msg)))
         else:
-            if delivery.attrib['good'] == 'Y':
+            if report.attrib['good'] == 'Y':
                 reportsections.append(("Bcfg Nightly All Machines Good", "All Machines Nomnial"))
 
 
@@ -141,8 +141,8 @@ def generatereport(report, delivery, deliverytype, statdata):
 
         removableones = []
         
-        if staleones != []:
-            print "Pinging hosts that didn't run today. Please wait"
+        #        if staleones != []:
+        #            print "Pinging hosts that didn't run today. Please wait"
         for instance in staleones:
             if os.system( 'ping -c 1 ' + fqdncache[instance[0]] + ' &>/dev/null') != 0:
                 removableones.append(instance)
