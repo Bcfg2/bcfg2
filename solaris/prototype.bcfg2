@@ -1,0 +1,19 @@
+i pkginfo=./pkginfo.bcfg2
+d none lib 0755 bin bin
+d none lib/python2.3 0755 bin bin
+d none lib/python2.3/site-packages 0755 bin bin
+d none lib/python2.3/site-packages/Bcfg2 0755 bin bin
+f none lib/python2.3/site-packages/Bcfg2/__init__.py 0644 bin bin
+d none lib/python2.3/site-packages/Bcfg2/Client 0755 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/Debian.py 0644 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/Gentoo.py 0644 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/Redhat.py 0644 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/Solaris.py 0644 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/Toolset.py 0644 bin bin
+f none lib/python2.3/site-packages/Bcfg2/Client/__init__.py 0644 bin bin
+d none bin 0755 bin bin
+f none bin/bcfg2 0755 bin bin
+d none share 0755 bin bin
+d none share/man 0755 bin bin
+d none share/man/man1 0755 bin bin
+f none share/man/man1/bcfg2.1 0444 bin bin
