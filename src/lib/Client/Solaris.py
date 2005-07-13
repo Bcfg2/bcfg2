@@ -1,5 +1,5 @@
 # This is the bcfg2 support for solaris
-'''This provides (vestigal) bcfg2 support for Solaris'''
+'''This provides bcfg2 support for Solaris'''
 __revision__ = '$Revision: 1.3 $'
 
 from os import popen, system
@@ -12,62 +12,61 @@ class Solaris(Toolset):
     pkgtool = ("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"]))
 
     def __init__(self, cfg, setup):
-	Toolset.__init__(self, cfg, setup)
-	self.cfg = cfg
-	self.pkgwork = {'add':[], 'update':[], 'remove':[]}
-	self.installed = {}
-	self.extra_services = []
-	self.Refresh()
+        Toolset.__init__(self, cfg, setup)
+        self.cfg = cfg
+        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
+        self.installed = {}
+        self.extra_services = []
+        self.Refresh()
 
     def Refresh(self):
-	'''Refresh memory hashes of packages'''
-	self.installed = {}
+        '''Refresh memory hashes of packages'''
+        self.installed = {}
 
-	# Build list of packages
-	instp = popen("/usr/bin/pkginfo -x")
-	lines = instp.readlines()
-	while (lines):
-	    l1 = lines.pop()
-	    l2 = lines.pop()
-	    name = l2.split()[0]
-	    version = l1.split()[1]
-	    self.installed[name] = version 
+        # Build list of packages
+        instp = popen("/usr/bin/pkginfo -x")
+        lines = instp.readlines()
+        while (lines):
+            l1 = lines.pop()
+            l2 = lines.pop()
+            name = l2.split()[0]
+            version = l1.split()[1]
+            self.installed[name] = version 
 
     def VerifyService(self, entry):
-	'''Verify Service status for entry'''
-	try:
-	    srvdata = popen("/usr/bin/svcs -H -o STA %s" % entry.attrib['name']).readlines()[0].split()
+        '''Verify Service status for entry'''
+        try:
+            srvdata = popen("/usr/bin/svcs -H -o STA %s" % entry.attrib['name']).readlines()[0].split()
         except IndexError:
-	    # Ocurrs when no lines are returned (service not installed)
-	    return False
+            # Ocurrs when no lines are returned (service not installed)
+            return False
 
         if entry.get('status') == 'on':
-	    return srvdata[0] == 'ON'
+            return srvdata[0] == 'ON'
         else:
-	    return srvdata[0] == 'OFF' or srvdata[0] == 'UN' or srvdata[0] == 'MNT' or srvdata[0] == 'DIS' or srvdata[0] == 'DGD'
-
+            return srvdata[0] in ['OFF', 'UN', 'MNT', 'DIS', 'DGD']
 
     def InstallService(self, entry):
-	'''Install Service entry'''
-	system("/usr/sbin/svcadm enable -r %s" % (entry.attrib['name']))
-	self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
-	if entry.attrib['status'] == 'off':
-	    if self.setup['dryrun']:
-		print "Disabling Service %s" % (entry.get('name'))
-	    else:
-		cmdrc = system("/usr/sbin/svcadm disable %s" % (entry.attrib['name']))
-	else:
-	    if self.setup['dryrun']:
-		print "Enabling Service %s" % (entry.attrib['name'])
-	    else:
-		cmdrc = system("/usr/sbin/svcadm enable %s" % (entry.attrib['name']))
-	if cmdrc == 0:
-	    return True
-	else:
-	    return False
+        '''Install Service entry'''
+        system("/usr/sbin/svcadm enable -r %s" % (entry.attrib['name']))
+        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        if entry.attrib['status'] == 'off':
+            if self.setup['dryrun']:
+                print "Disabling Service %s" % (entry.get('name'))
+            else:
+                cmdrc = system("/usr/sbin/svcadm disable %s" % (entry.attrib['name']))
+        else:
+            if self.setup['dryrun']:
+                print "Enabling Service %s" % (entry.attrib['name'])
+            else:
+                cmdrc = system("/usr/sbin/svcadm enable %s" % (entry.attrib['name']))
+        if cmdrc == 0:
+            return True
+        else:
+            return False
 
     def VerifyPackage(self, entry):
-	'''Verify Package status for entry'''
+        '''Verify Package status for entry'''
         if not (entry.get('name') and entry.get('version')):
             print "Can't verify package, not enough data."
             return False
@@ -95,25 +94,25 @@ class Solaris(Toolset):
         return False
 
     def Inventory(self):
-	'''Do standard inventory plus debian extra service check'''
-	Toolset.Inventory(self)
-	allsrv = popen("/usr/bin/svcs -a -H -o SVC").readlines()
-	# for goodline [ x.strip() for x in openfile.readlines()]
-	csrv = self.cfg.findall(".//Service")
-	print csrv
+        '''Do standard inventory plus debian extra service check'''
+        Toolset.Inventory(self)
+        allsrv = popen("/usr/bin/svcs -a -H -o SVC").readlines()
+        # for goodline [ x.strip() for x in openfile.readlines()]
+        csrv = self.cfg.findall(".//Service")
+        print csrv
 
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
-	if len(self.pkgwork) > 0:
-	    if self.setup['remove'] in ['all', 'packages']:
-		self.CondPrint('verbose', "Removing packages: %s" % (self.pkgwork['remove']))
-		system("/usr/sbin/pkgrm -n %s" % " ".join(self.pkgwork['remove']))
+        if len(self.pkgwork) > 0:
+            if self.setup['remove'] in ['all', 'packages']:
+                self.CondPrint('verbose', "Removing packages: %s" % (self.pkgwork['remove']))
+                system("/usr/sbin/pkgrm -n %s" % " ".join(self.pkgwork['remove']))
             else:
-		self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
-	if len(self.extra_services) > 0:
-	    if self.setup['remove'] in ['all', 'services']:
-		self.CondPrint('verbose', "Removing services: %s" % (self.extra_services))
-		for service in self.extra_services:
-		    system("/usr/sbin/svcadm disable %s" % service)
-	    else:
-		self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
+                self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
+                if len(self.extra_services) > 0:
+                    if self.setup['remove'] in ['all', 'services']:
+                        self.CondPrint('verbose', "Removing services: %s" % (self.extra_services))
+                        for service in self.extra_services:
+                            system("/usr/sbin/svcadm disable %s" % service)
+                    else:
+                        self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
