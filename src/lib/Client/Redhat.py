@@ -84,7 +84,7 @@ class Redhat(Toolset):
                     return True
                 verp = Popen4("rpm --verify -q %s-%s" %
                               (entry.get('name'),entry.get('version')), bufsize=16384)
-                odata = ''
+                odata = verp.fromchild.read(
                 vstat = verp.poll()
                 while vstat == -1:
                     odata += verp.fromchild.read()
