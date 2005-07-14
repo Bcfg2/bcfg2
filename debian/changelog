@@ -1,3 +1,9 @@
+bcfg2 (0.6.9.1-1) unstable; urgency=low
+
+  * minor bugfix
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu, 14 Jul 2005 09:27:04 -0500
+
 bcfg2 (0.6.9-1) unstable; urgency=low
 
   * release
