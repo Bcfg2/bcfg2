@@ -7,6 +7,7 @@ from ConfigParser import ConfigParser
 
 if __name__ == '__main__':
     cf = ConfigParser()
+    schemadir = '/usr/share/bcfg2/schemas'
     cf.read(['/etc/bcfg2.conf'])
     try:
         repo = cf.get('server', 'repository')
@@ -15,10 +16,6 @@ if __name__ == '__main__':
             print "Usage: validate_repo <repo directory>"
             raise SystemExit, 1
         repo = argv[1]
-        if len(argv) == 3:
-            schemadir = argv[2]
-        else:
-            schemadir = '/usr/share/bcfg2/schemas'
 
     # add more validation as more schemas get written
     filesets = {'metadata':("%s/etc/metadata.xml", "%s/metadata.xsd"),
