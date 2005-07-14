@@ -41,6 +41,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
 mv ${RPM_BUILD_ROOT}/usr/bin/Bcfg2Server ${RPM_BUILD_ROOT}/usr/sbin
 mv ${RPM_BUILD_ROOT}/usr/bin/ValidateBcfg2Repo ${RPM_BUILD_ROOT}/usr/sbin
 mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2 ${RPM_BUILD_ROOT}/usr/sbin
+mv ${RPM_BUILD_ROOT}/usr/bin/StatReports ${RPM_BUILD_ROOT}/usr/sbin
 install -m 755 debian/bcfg2.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2
 install -m 755 debian/bcfg2-server.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2-server
 
