@@ -7,7 +7,7 @@ from ConfigParser import ConfigParser
 
 if __name__ == '__main__':
     cf = ConfigParser()
-    cf.read(['/etc/bcfgd.conf'])
+    cf.read(['/etc/bcfg2.conf'])
     try:
         repo = cf.get('server', 'repository')
     except:
