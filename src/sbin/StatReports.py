@@ -64,7 +64,7 @@ def generatereport(report, delivery, deliverytype, statdata):
 
     for machine in report.findall('Machine'):
         for node in statdata.findall('Node'):
-            if fqdncache[child.get("name")] == "":
+            if fqdncache[node.get("name")] == "":
                 continue
             if node.attrib['name'] == machine.attrib['name']:
                 if deliverytype == 'nodes-digest':
