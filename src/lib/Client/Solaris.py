@@ -78,7 +78,7 @@ class Solaris(Toolset):
                 if self.setup['quick']:
                     return True
                 verp = Popen4("/usr/sbin/pkgchk -n %s" % (entry.get('name')), bufsize=16384)
-                odata = verp.fromchild.read(
+                odata = verp.fromchild.read()
                 vstat = verp.poll()
                 while vstat == -1:
                     odata += verp.fromchild.read()
