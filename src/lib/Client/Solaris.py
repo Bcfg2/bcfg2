@@ -90,7 +90,7 @@ class Solaris(Toolset):
                     if len([name for name in output if name.split()[-1] not in modlist]):
                         return True
                     else:
-                    self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
+                        self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
         return False
 
     def Inventory(self):
@@ -99,7 +99,7 @@ class Solaris(Toolset):
         allsrv = [ x.strip() for x in popen("/usr/bin/svcs -a -H -o SVC").readlines() ]
         csrv = self.cfg.findall(".//Service")
 	nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
-        allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
+        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
 
     def HandleExtra(self):
