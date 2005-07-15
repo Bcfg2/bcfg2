@@ -1,0 +1,24 @@
+#!/sbin/runscript
+#
+# bcfgd - bcfg configuration daemon
+#
+# 
+
+depend () {
+	need net
+}
+
+start () {
+	ebegin "Starting bcfgd"
+	start-stop-daemon --start --quiet --pidfile /var/run/bcfgd.pid \
+		--startas /usr/sbin/bcfgd.py -- --daemon=/var/run/bcfgd.pid
+	eend $? "Failed to start bcfgd"
+}
+
+stop () {
+	ebegin "Stopping bcfgd"
+	start-stop-daemon --stop --quiet --pidfile /var/run/bcfgd.pid \
+		--signal INT
+	eend $? "Failed to stop bcfgd"
+	[ -f /var/run/bcfgd.pid ] && rm -f /var/run/bcfgd.pid
+}

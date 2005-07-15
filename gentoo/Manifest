@@ -1,0 +1,4 @@
+MD5 fcc4d9ab3b8f86cc321eb4dc6d7773f2 bcfg2-0.6.9.2.ebuild 6555
+MD5 0319c0bec91a2145e4903547f985bc72 files/digest-bcfg2-0.6.9.2 64
+MD5 154ef1df1a5183456498dfec8a314fd8 files/bcfg2-client 380
+MD5 a8af18995c8bf7f1cd87aba05bd9eefa files/bcfg2-server 491
