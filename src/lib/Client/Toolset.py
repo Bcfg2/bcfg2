@@ -284,6 +284,7 @@ class Toolset(object):
             chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
             chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
+            return True
         except (OSError, KeyError):
             self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
             return False
@@ -429,7 +430,7 @@ class Toolset(object):
                                    (child.tag, child.get('name'), self.states[child]))
                 for postinst in [entry for entry in bchildren if entry.tag == 'PostInstall']:
                     system(postinst.get('name'))
-                for svc in [svc for svc in bchildren if svc.tag == 'Service']:
+                for svc in [svc for svc in bchildren if svc.tag == 'Service' and svc.get('status', 'off') == 'on']:
                     if self.setup['build']:
                         # stop services in miniroot
                         system('/etc/init.d/%s stop' % svc.get('name'))
