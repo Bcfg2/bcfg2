@@ -54,7 +54,7 @@ class Redhat(Toolset):
             if self.setup['dryrun']:
                 print "Disabling server %s" % (entry.get('name'))
             else:
-                cmdrc = system("/sbin/chkconfig --level 0123456 %s %s" % (entry.attrib['name'], entry.attrib['status']))
+                cmdrc = system("/sbin/chkconfig %s %s" % (entry.attrib['name'], entry.attrib['status']))
         else:
             if self.setup['dryrun']:
                 print "Enabling server %s" % (entry.get('name'))
