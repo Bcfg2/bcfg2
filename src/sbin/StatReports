@@ -1,206 +1,109 @@
 #!/usr/bin/env python
-
 #Jun 7 2005
-#StatReports
+#StatReports - Joey Hagedorn - hagedorn@mcs.anl.gov
+
+__revision__ = '$Revision$'
 '''Generates & distributes reports of statistic information for bcfg2'''
 
 from ConfigParser import ConfigParser
 from elementtree.ElementTree import *
 from xml.parsers.expat import ExpatError
 from xml.sax.saxutils import escape
-from smtplib import SMTP
-from time import asctime, strftime, strptime, ctime, gmtime
-from socket import gethostbyname, gethostbyaddr, gaierror
+from time import asctime, strftime, strptime, gmtime
+from socket import getfqdn
 from sys import exit, argv
 from getopt import getopt, GetoptError
-import re, string, os
+import re, os, string, libxml2, libxslt
+from tempfile import NamedTemporaryFile
+from copy import deepcopy
 
+def generatereport(rs, nr):
+    '''generatereport creates and returns an ElementTree representation
+     of a report adhering to the XML spec for intermediate reports'''
+    reportspec = deepcopy(rs)
+    nodereprt = deepcopy(nr)
 
-def generatereport(report, delivery, deliverytype, statdata):
-    '''generatereport creates and returns a report consisting
-     list of tuples contining (title,body) pairs'''
-
-
-    reportsections = []
-
-    deliverytype = delivery.get("type", default = "nodes-individual")
-    reportgood = report.get("good", default = 'Y')
-    reportmodified = report.get("modified", default = 'Y')
+    reportgood = reportspec.get("good", default = 'N')
+    reportmodified = reportspec.get("modified", default = 'Y')
 
     current_date = asctime()[:10]
-    baddata = ''
-    modified = ''
-    msg = ''
-    mheader = ''
-    dirty = ''
-    clean = ''
 
-
-    '''build fqdn cache'''
-    
-    domain_list=['mcs.anl.gov', 'bgl.mcs.anl.gov', 'anchor.anl.gov', 'globus.org']
-    fqdncache = {}
-    allnodes = statdata.findall("Node") #this code is duplicated please remove...
-    regex = string.join(map(lambda x:x.get("name"), report.findall('Machine')), '|')
+    '''build regex of all the nodes we are reporting about'''
+    regex = string.join([x.get("name") for x in \
+                         reportspec.findall('Machine')], '|')
     pattern = re.compile(regex)
-    for node in allnodes:
-        nodename = node.get("name")
-        fqdncache[nodename] = ""
-        if pattern.match(node.get("name")):
-            for domain in domain_list:
-                try:
-                    fqdn = "%s.%s" % (nodename, domain)
-                    ipaddr = gethostbyname(fqdn)
-                    fqdncache[nodename] = fqdn
-                    break
-                except gaierror:
-                    continue
-
-        #if fqdncache[nodename] == "":
-            #statdata.remove(node);
-            #del fqdncache[nodename]
 
 
+    for node in nodereprt.findall('Node'):
 
-    for machine in report.findall('Machine'):
-        for node in statdata.findall('Node'):
-            if fqdncache[node.get("name")] == "":
-                continue
-            if node.attrib['name'] == machine.attrib['name']:
-                if deliverytype == 'nodes-digest':
-                    mheader = "Machine: %s\n" % machine.attrib['name']
-                for stats in node.findall('Statistics'):
-                    if stats.attrib['state'] == 'clean' \
-                    and current_date in stats.attrib['time']:
-                        clean += "%s\n" % machine.attrib['name']
-                    if reportmodified == 'Y':
-                        for modxml in stats.findall('Modified'):
-                            if current_date in stats.attrib['time']:
-                                modified += "\n%s\n" % tostring(modxml)
-                    for bad in stats.findall('Bad'):
-                        srtd = bad.findall('*')
-                        srtd.sort(lambda x, y:cmp(tostring(x), tostring(y)))
-                        strongbad = Element("Bad")
-                        map(lambda x:strongbad.append(x), srtd)
-                        baddata += "Time Ran:%s\n%s\n" % (stats.attrib['time'], tostring(strongbad))
-                        dirty += "%s\n" % machine.attrib['name']
-                        strongbad = ''
-        if deliverytype == 'nodes-individual':
-            if baddata != '':
-                reportsections.append(("%s: Bcfg Nightly Errors" % machine.attrib['name'], \
-                                       "%s%s" % (modified, baddata)))
-            else:
-                if reportgood == 'Y':
-                    reportsections.append(("%s: Bcfg Nightly Good"%machine.attrib['name'], \
-                                           "%s%s" % (modified, baddata)))
-            baddata = ''
-            modified = ''
-        else:
-            if not (modified == '' and baddata == ''):
-                msg += "%s %s %s\n" % (mheader, modified, baddata)
-            baddata = ''
-            modified = ''
+        if node.findall('HostInfo') == [] or \
+        not pattern.match(node.get("name")) or \
+        node.findall('Statistics') == [] or \
+        node.find("HostInfo").get("fqdn") == "":#maybe issue a warning instead?
+            nodereprt.remove(node)
+            continue
 
-    if deliverytype == 'nodes-digest':
-        if msg != '':
-            reportsections.append(("Bcfg Nightly Errors", \
-                                       "DIRTY:\n%s\nCLEAN:\n%s\nDETAILS:\n%s" % (dirty, clean, msg)))
-        else:
-            if reportgood == 'Y':
-                reportsections.append(("Bcfg Nightly All Machines Good", "All Machines Nomnial"))
-
-
-
-
-    if deliverytype == 'overview-stats':
-        children = statdata.findall("Node")
-        regex = string.join(map(lambda x:x.get("name"), report.findall('Machine')), '|')
-        pattern = re.compile(regex)
-        childstates = []
-        for child in children:
-            if fqdncache[child.get("name")] == "":
-                continue
-            if pattern.match(child.get("name")):
-                child.states = []
-                for state in child.findall("Statistics"):
-                    child.states.append((child.get("name"), state.get("state"), state.get("time")))
-                if child.states != []:
-                    childstates.append(child.states[len(child.states)-1])
-                    childstates.sort(lambda x, y:cmp(x[0], y[0]))
-
-        staleones = []
-        cleanones = []
-        dirtyones = []
-        unpingableones = []
-
-        for instance in childstates:
-            if instance[1] == "dirty":
-                dirtyones.append(instance)
-            elif instance[1] == "clean":
-                cleanones.append(instance)
-            if strptime(instance[2])[0] != strptime(ctime())[0] \
-            or strptime(instance[2])[1] != strptime(ctime())[1] \
-            or strptime(instance[2])[2] != strptime(ctime())[2]:
-                staleones.append(instance)
-
-        removableones = []
+        #reduce to most recent Statistics entry
+        statisticslist = node.findall('Statistics')
+        #this line actually sorts from most recent to oldest
+        statisticslist.sort(lambda y, x: cmp(strptime(x.get("time")), \
+                                             strptime(y.get("time"))))
         
-        #        if staleones != []:
-        #            print "Pinging hosts that didn't run today. Please wait"
-        for instance in staleones:
-            if os.system( 'ping -c 1 ' + fqdncache[instance[0]] + ' &>/dev/null') != 0:
-                removableones.append(instance)
-                unpingableones.append(instance)
+        stats = statisticslist[0]
+
+        [node.remove(x) for x in node.findall('Statistics')]
+        
+
+        #add a good tag if node is good and we wnat to report such
+        if reportgood == 'Y' and stats.get('state') == 'clean':
+            SubElement(stats,"Good")
+
+        for x in stats.findall('Modified'):
+            if reportmodified == 'N' or x.getchildren() == None:
+                stats.remove(x)
+
+        for x in stats.findall('Bad'):
+            if x.getchildren() == None:
+                stats.remove(x)
+                
+        #test for staleness -if stale add Stale tag
+        if not current_date in stats.get("time"):
+            SubElement(stats,"Stale")
+            
+        node.append(stats)
+        
+    return nodereprt
 
 
-        for item in unpingableones:
-            staleones.remove(item)
 
-        statmsg = ''
-        statmsg += "SUMMARY INFORMATION:\n"
-        statmsg += "Up & Not Running Nightly:     %d\n" % len(staleones)
-        statmsg += "Unpingable:                   %d\n" % len(unpingableones)
-        statmsg += "Dirty:                        %d\n" % len(dirtyones)
-        statmsg += "Clean:                        %d\n" % len(cleanones)
-        statmsg += "---------------------------------\n"
-        #total = len(cleanones) + len(dirtyones)
-        statmsg += "Total:                        %d\n\n\n" % len(childstates)
-
-        statmsg += "\n UP AND NOT RUNNING NIGHTLY:\n"
-        for one in staleones:
-            statmsg += fqdncache[one[0]] + "\n"
-        statmsg += "\nDIRTY:\n"
-        for one in dirtyones:
-            statmsg += fqdncache[one[0]] + "\n"
-        statmsg += "\nCLEAN:\n"
-        for one in cleanones:
-            statmsg += fqdncache[one[0]] + "\n"
-        statmsg += "\nUNPINGABLE:\n"
-        for one in unpingableones:
-            statmsg += fqdncache[one[0]] + "\n"
-
-        reportsections.append(("Bcfg Nightly Errors", "%s" % (statmsg)))
-
-    return reportsections
-
-
-def mail(reportsections, delivery):
+def mail(mailbody, delivery, confi):
     '''mail mails a previously generated report'''
+
+    mailer = confi.get('statistics', 'sendmailpath')
+
+    # open a pipe to the mail program and
+    # write the data to the pipe
+    pipe = os.popen("%s -t" % mailer, 'w')
+    pipe.write(mailbody)
+    exitcode = pipe.close()
+    if exitcode:
+        print "Exit code: %s" % exitcode
+
     
-    mailer = SMTP('localhost')
-    fromaddr = "root@netzero.mcs.anl.gov"
+##     mailer = SMTP('localhost')
+##     fromaddr = "root@netzero.mcs.anl.gov"
 
-    for destination in delivery.findall('Destination'):
-        toaddr = destination.attrib['address']
-        for section in reportsections:
-            msg = "To: %s\nFrom: %s\nSubject: %s\n\n\n%s" % \
-                  (toaddr, fromaddr, section[0], section[1])
+##     for destination in delivery.findall('Destination'):
+##         toaddr = destination.attrib['address']
+##         for section in reportsections:
+##             msg = "To: %s\nFrom: %s\nSubject: %s\n\n\n%s" % \
+##                   (toaddr, fromaddr, section[0], section[1])
 
-            mailer.sendmail(fromaddr, toaddr, msg)
-    mailer.quit()
+##             mailer.sendmail(fromaddr, toaddr, msg)
+##     mailer.quit()
 
 
-def rss(reportsections, delivery, report):
+def rss(reportxml, delivery, report):
     '''rss appends a new report to the specified rss file
      keeping the last 9 articles'''
     #check and see if rss file exists
@@ -218,26 +121,19 @@ def rss(reportsections, delivery, report):
             items = []
 
         rssdata = Element("rss")
-        channel = SubElement(rss, "channel")
+        channel = SubElement(rssdata, "channel")
         rssdata.set("version", "2.0")
         chantitle = SubElement(channel, "title")
         chantitle.text = report.attrib['name']
         chanlink = SubElement(channel, "link")
         
         #this can later link to WWW report if one gets published simultaneously
-        chanlink.text = "http://www.mcs.anl.gov/"
+        chanlink.text = "http://www.mcs.anl.gov/cobalt/bcfg2"
         chandesc = SubElement(channel, "description")
         chandesc.text = "Information regarding the 10 most recent bcfg2 runs."
 
-        for section in reportsections:
-            item = SubElement(channel, "item")
-            title = SubElement(item, "title")
-            title.text = section[0]
-            description = SubElement(item, "description")
-            description.text = "<pre>"+escape(section[1])+"</pre>"
-            date = SubElement(item, "pubDate")
-            date.text = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
-            item = None
+        channel.append(XML(reportxml))
+
         if items != []:
             for item in items:
                 channel.append(item)
@@ -246,35 +142,46 @@ def rss(reportsections, delivery, report):
         fil.write(tree)
         fil.close()
 
-def www(reportsections, delivery):
-    '''www outputs report to simple HTML'''
+def www(reportxml, delivery, report):
+    '''www outputs report to'''
         
-    #check and see if rss file xists
+    #check and see if rss file xists--to link to?
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
-        
-        html = Element("HTML")
-        body = SubElement(html, "BODY")
-        for section in reportsections:
-            SubElement(body, "br")
-            item = SubElement(body, "div")
-            title = SubElement(item, "h1")
-            title.text = section[0]
-            pre = SubElement(item, "pre")
-            pre.text = section[1]
-            SubElement(body, "hr")
-            SubElement(body, "br")
 
-        fil.write(tostring(html))
+        fil.write(reportxml)
         fil.close()
 
+def pretty_print(element, level=0):
+    '''Produce a pretty-printed text representation of element'''
+    if element.text:
+        fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
+        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
+                element.text, element.tag)
+    if element._children:
+        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
+        data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
+        data += tuple([pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
+    else:
+        fmt = "%s<%%s %%s/>\n" % (level * " ")
+        data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
+    return fmt % data
 
 
 if __name__ == '__main__':
     c = ConfigParser()
-    c.read(['/etc/bcfg2.conf'])
+    #c.read(['/etc/bcfg2.conf'])
+    c.read(['/sandbox/hagedorn/bcfg2.conf'])
     configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
     statpath = "%s/statistics.xml" % c.get('server', 'metadata')
+    #hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
+    hostinfopath = "/sandbox/hagedorn/hostinfo.xml"
+    metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
+    #xsltransformpath = "/usr/share/bcfg2/xsl-transforms/"
+    #web-srcspath = "/usr/share/bcfg2/web-rprt-srcs/"
+    transformpath = "/sandbox/hagedorn/xsl-transforms/"
+    websrcspath = "/sandbox/hagedorn/web-rprt-srcs/"
+
     try:
         opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
     except GetoptError, mesg:
@@ -290,34 +197,148 @@ if __name__ == '__main__':
         if o in ("-s", "--stats"):
             statpath = a
 
-
+    '''Reads Data & Config files'''
     try:
         statsdata = XML(open(statpath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s"%(statpath))
         exit(1)
-
-    '''Reads report configuration info'''
     try:
         configdata = XML(open(configpath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s"%(configpath))
         exit(1)
+    try:
+        metadata = XML(open(metadatapath).read())
+    except (IOError, ExpatError):
+        print("StatReports: Failed to parse %s"%(metadatapath))
+        exit(1)
+    try:
+        hostinfodata = XML(open(hostinfopath).read())
+    except (IOError, ExpatError):
+        print("StatReports: Failed to parse %s"%(hostinfopath))
+        exit(1)
+
+    #Merge data from three sources
+    nodereport = Element("Report", attrib={"time" : asctime()})
+
+    #should all of the other info in Metadata be appended?
+    #What about all of the package stuff for other types of reports?
+    
+    for client in metadata.findall("Client"):
+        nodel = Element("Node", attrib={"name" : client.get("name")})
+        nodel.append(client)
+        for hostinfo in hostinfodata.findall("HostInfo"):
+            if hostinfo.get("name") == client.get("name"):
+                nodel.append(hostinfo)
+
+        for nod in statsdata.findall("Node"):
+            if nod.get("name") == client.get("name"):
+                for statel in nod.findall("Statistics"):
+                    nodel.append(statel)
+        nodereport.append(nodel)
+
 
     for reprt in configdata.findall('Report'):
+        nodereport.set("name", reprt.get("name", default="BCFG Report"))
         for deliv in reprt.findall('Delivery'):
+        #restrict data by Machines , report flags
+
             delivtype = deliv.get('type', default='nodes-digest')
             deliverymechanism = deliv.get('mechanism', default='invalid')
 
-            reportsects = generatereport(reprt, deliv, delivtype, statsdata)
+            procnodereport = generatereport(reprt, nodereport)#move outside of for loop?
             
+            #apply XSLT, different ones based on report type, and options
+
+            transform = ''
             if deliverymechanism == 'mail':
-                mail(reportsects, deliv)
+                if delivtype == 'nodes-individual':
+                    transform = 'nodes-individual-email.xsl'                    
+                elif delivtype == 'overview-stats':
+                    transform = 'overview-stats-email.xsl'
+                else:
+                    transform = 'nodes-digest-email.xsl'
             elif deliverymechanism == 'rss':
-                rss(reportsects, deliv, reprt)
+                if delivtype == 'overview-stats':
+                    transform = 'overview-stats-rss.xsl'
+                else:
+                    transform = 'nodes-digest-rss.xsl'
             elif deliverymechanism == 'www':
-                www(reportsects, deliv)
+                if delivtype == 'overview-stats':
+                    transform = 'overview-stats-html.xsl'
+                else:
+                    transform = 'nodes-digest-html.xsl'
             else:
                 print("StatReports: Invalid delivery mechanism in report-configuration!")
-            deliverymechanism = ''
-            delivtype = ''
+                exit(1)
+
+
+            #IMPORTANT to add some error checking here-parseerrors
+            try:
+                styledoc = libxml2.parseFile(transformpath+transform)
+                style = libxslt.parseStylesheetDoc(styledoc)
+            except:
+                print("StatReports: invalid XSLT transform file.")
+                exit(1)
+                
+            if deliverymechanism == 'mail':
+                if delivtype == 'nodes-individual':
+                    p2noderep = deepcopy(procnodereport)
+                    for noden in procnodereport.findall("Node"):
+                        for x in p2noderep.findall("Node"):
+                            p2noderep.remove(x)
+                        p2noderep.append(noden)
+                        tempr = NamedTemporaryFile()
+                        tempr.write(tostring(p2noderep))
+                        tempr.seek(0)
+                        doc = libxml2.parseFile(tempr.name)
+                        tempr.close()
+                        del tempr
+                        result = style.applyStylesheet(doc, None)
+                        outputstring = style.saveResultToString(result)
+                        if not outputstring == None:
+                            toastring = ''
+                            for desti in deliv.findall("Destination"):
+                                toastring = "%s%s " % (toastring, desti.get('address'))
+                            #prepend To: and From:
+                            outputstring = "To: %s\nFrom: root@%s\n%s"% (toastring, getfqdn(), outputstring)
+                            mail(outputstring, deliv, c) #call function to send
+                        doc.freeDoc()
+                        result.freeDoc()
+                    style.freeStylesheet()
+                else:
+                    tempr = NamedTemporaryFile()
+                    tempr.write(tostring(procnodereport))
+                    tempr.seek(0)
+                    doc = libxml2.parseFile(tempr.name)
+                    tempr.close()
+                    del tempr
+                    result = style.applyStylesheet(doc, None)
+                    outputstring = style.saveResultToString(result)
+                    if not outputstring == None:
+                        toastring = ''
+                        for desti in deliv.findall("Destination"):
+                            toastring = "%s%s " % (toastring, desti.get('address'))
+                        #prepend To: and From:
+                        outputstring = "To: %s\nFrom: root@%s\n%s"% (toastring, getfqdn(), outputstring)
+                        mail(outputstring, deliv, c) #call function to send
+                    style.freeStylesheet()
+                    doc.freeDoc()
+                    result.freeDoc()
+            else:
+                tempr = NamedTemporaryFile()
+                tempr.write(tostring(procnodereport))
+                tempr.seek(0)
+                doc = libxml2.parseFile(tempr.name)
+                tempr.close()
+                del tempr
+                result = style.applyStylesheet(doc, None)
+                outputstring = style.saveResultToString(result)
+                if deliverymechanism == 'rss':
+                    rss(outputstring, deliv, reprt)
+                else: # must be deliverymechanism == 'www':
+                    www(outputstring, deliv, reprt)
+                style.freeStylesheet()
+                doc.freeDoc()
+                result.freeDoc()
