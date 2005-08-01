@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+# Jul 17 2005
+#GenerateHostInfo - Joey Hagedorn - hagedorn@mcs.anl.gov
+
+__revision__ = '$Revision$'
+'''Generates hostinfo.xml at a regular interval'''
+
+from ConfigParser import ConfigParser
+from elementtree.ElementTree import *
+from xml.parsers.expat import ExpatError
+from os import system
+from socket import gethostbyname, gethostbyaddr, gaierror
+
+def buildfqdncache(domain_list, host_list):
+    '''build dictionary of hostname to fqdns'''
+    fqdncache = {}
+    for nodename in host_list:
+        fqdncache[nodename] = ""
+        for domain in domain_list:
+            try:
+                fqdn = "%s.%s" % (nodename, domain)
+                ipaddr = gethostbyname(fqdn)
+                fqdncache[nodename] = fqdn
+                break
+            except gaierror:
+                continue        
+    return fqdncache
+
+def pretty_print(element, level=0):
+    '''Produce a pretty-printed text representation of element'''
+    if element.text:
+        fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
+        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
+                element.text, element.tag)
+    if element._children:
+        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
+        data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
+        data += tuple([pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
+    else:
+        fmt = "%s<%%s %%s/>\n" % (level * " ")
+        data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
+    return fmt % data
+
+                                                                                                                
+if __name__ == '__main__':
+    c = ConfigParser()
+    c.read(['/sandbox/hagedorn/bcfg2.conf'])
+    #hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
+    hostinfopath = "/sandbox/hagedorn/hostinfo.xml"
+    metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
+    configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
+    domainlist = c.get('statistics', 'domainlist').replace("\'","").split(",")
+    sendmailpath = c.get('statistics','sendmailpath')
+    
+    metaElement =  parse(metadatapath)
+    hostlist = map(lambda x:x.get("name"), metaElement.findall("Client"))
+
+    fqdn_cache = buildfqdncache(domainlist, hostlist)
+
+
+    HostInfo = Element("HostInformation")
+    for host in hostlist:
+        record = SubElement(HostInfo, "HostInfo",
+                            attrib={"name" : host,"fqdn" : fqdn_cache[host]})
+        if system( 'ping -c 1 ' + fqdn_cache[host] + ' &>/dev/null') != 0:
+            record.set("pingable", 'N')
+        else:
+            record.set("pingable", 'Y')
+
+    fout = open(hostinfopath, 'w')
+    fout.write(pretty_print(HostInfo))
+    fout.close()
+                        
