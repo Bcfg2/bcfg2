@@ -45,8 +45,7 @@ def pretty_print(element, level=0):
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/sandbox/hagedorn/bcfg2.conf'])
-    #hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
-    hostinfopath = "/sandbox/hagedorn/hostinfo.xml"
+    hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
     metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
     configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
     domainlist = c.get('statistics', 'domainlist').replace("\'","").split(",")
