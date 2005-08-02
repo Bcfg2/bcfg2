@@ -9,7 +9,7 @@ from ConfigParser import ConfigParser
 from elementtree.ElementTree import *
 from xml.parsers.expat import ExpatError
 from xml.sax.saxutils import escape
-from time import asctime, strftime, strptime, gmtime
+from time import asctime, strftime, strptime, gmtime, time
 from socket import getfqdn
 from sys import exit, argv
 from getopt import getopt, GetoptError
@@ -89,20 +89,6 @@ def mail(mailbody, delivery, confi):
     if exitcode:
         print "Exit code: %s" % exitcode
 
-    
-##     mailer = SMTP('localhost')
-##     fromaddr = "root@netzero.mcs.anl.gov"
-
-##     for destination in delivery.findall('Destination'):
-##         toaddr = destination.attrib['address']
-##         for section in reportsections:
-##             msg = "To: %s\nFrom: %s\nSubject: %s\n\n\n%s" % \
-##                   (toaddr, fromaddr, section[0], section[1])
-
-##             mailer.sendmail(fromaddr, toaddr, msg)
-##     mailer.quit()
-
-
 def rss(reportxml, delivery, report):
     '''rss appends a new report to the specified rss file
      keeping the last 9 articles'''
@@ -170,17 +156,13 @@ def pretty_print(element, level=0):
 
 if __name__ == '__main__':
     c = ConfigParser()
-    #c.read(['/etc/bcfg2.conf'])
-    c.read(['/sandbox/hagedorn/bcfg2.conf'])
+    c.read(['/etc/bcfg2.conf'])
     configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
     statpath = "%s/statistics.xml" % c.get('server', 'metadata')
-    #hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
-    hostinfopath = "/sandbox/hagedorn/hostinfo.xml"
+    hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
     metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
-    #xsltransformpath = "/usr/share/bcfg2/xsl-transforms/"
-    #web-srcspath = "/usr/share/bcfg2/web-rprt-srcs/"
-    transformpath = "/sandbox/hagedorn/xsl-transforms/"
-    websrcspath = "/sandbox/hagedorn/web-rprt-srcs/"
+    transformpath = "/usr/share/bcfg2/xsl-transforms/"
+    web-srcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
         opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
@@ -196,6 +178,16 @@ if __name__ == '__main__':
             configpath = a
         if o in ("-s", "--stats"):
             statpath = a
+
+
+    #See if hostinfo.xml exists, and is less than 23.5 hours old
+    try:
+        hostinstat = os.stat(hostinfopath)
+        if (time() - hostinstat[9])/(60*60) > 23.5:
+            os.system('GenerateHostInfo')#Generate HostInfo needs to be in the path
+    except OSError:
+        os.system('GenerateHostInfo')#Generate HostInfo needs to be in the path
+
 
     '''Reads Data & Config files'''
     try:
@@ -216,8 +208,9 @@ if __name__ == '__main__':
     try:
         hostinfodata = XML(open(hostinfopath).read())
     except (IOError, ExpatError):
-        print("StatReports: Failed to parse %s"%(hostinfopath))
+        print("StatReports: Failed to parse %s. Is GenerateHostInfo in your path?"%(hostinfopath))
         exit(1)
+
 
     #Merge data from three sources
     nodereport = Element("Report", attrib={"time" : asctime()})
@@ -241,13 +234,15 @@ if __name__ == '__main__':
 
     for reprt in configdata.findall('Report'):
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
+
+        pnodereport = generatereport(reprt, nodereport)
+
         for deliv in reprt.findall('Delivery'):
-        #restrict data by Machines , report flags
+            procnodereport = deepcopy(pnodereport)#this might not need to be a deep copy
 
             delivtype = deliv.get('type', default='nodes-digest')
             deliverymechanism = deliv.get('mechanism', default='invalid')
 
-            procnodereport = generatereport(reprt, nodereport)#move outside of for loop?
             
             #apply XSLT, different ones based on report type, and options
 
@@ -273,8 +268,8 @@ if __name__ == '__main__':
                 print("StatReports: Invalid delivery mechanism in report-configuration!")
                 exit(1)
 
-
             #IMPORTANT to add some error checking here-parseerrors
+            #this might be sufficient
             try:
                 styledoc = libxml2.parseFile(transformpath+transform)
                 style = libxslt.parseStylesheetDoc(styledoc)
