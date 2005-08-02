@@ -160,7 +160,7 @@ class Core(object):
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
-        for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory', 'Permission', 'PostInstall']]:
+        for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory', 'Permissions', 'PostInstall']]:
             try:
                 self.Bind(entry, metadata)
             except GeneratorError:
