@@ -16,7 +16,7 @@
       <xsd:element name='ConfigFile' type='ConfigFileType'/>
       <xsd:element name='Directory' type='DirectoryType'/>
       <xsd:element name='SymLink' type='SymLinkType'/>
-      <xsd:element name='Permission' type='PermissionType'/>
+      <xsd:element name='Permissions' type='PermissionType'/>
       <xsd:element name='PostInstall' type='PostInstallType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
