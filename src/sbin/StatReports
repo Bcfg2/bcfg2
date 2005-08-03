@@ -113,7 +113,7 @@ def rss(reportxml, delivery, report):
         chantitle.text = report.attrib['name']
         chanlink = SubElement(channel, "link")
         
-        #this can later link to WWW report if one gets published simultaneously
+        #this can later link to WWW report if one gets published simultaneously?
         chanlink.text = "http://www.mcs.anl.gov/cobalt/bcfg2"
         chandesc = SubElement(channel, "description")
         chandesc.text = "Information regarding the 10 most recent bcfg2 runs."
@@ -130,8 +130,8 @@ def rss(reportxml, delivery, report):
 
 def www(reportxml, delivery, report):
     '''www outputs report to'''
-        
-    #check and see if rss file xists--to link to?
+
+    #this can later link to WWW report if one gets published simultaneously?    
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
 
@@ -235,17 +235,15 @@ if __name__ == '__main__':
     for reprt in configdata.findall('Report'):
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
 
-        pnodereport = generatereport(reprt, nodereport)
+        procnodereport = generatereport(reprt, nodereport)
 
         for deliv in reprt.findall('Delivery'):
-            procnodereport = deepcopy(pnodereport)#this might not need to be a deep copy
-
+            #is a deepcopy of procnodereport necessary?
+            
             delivtype = deliv.get('type', default='nodes-digest')
             deliverymechanism = deliv.get('mechanism', default='invalid')
 
-            
             #apply XSLT, different ones based on report type, and options
-
             transform = ''
             if deliverymechanism == 'mail':
                 if delivtype == 'nodes-individual':
@@ -291,7 +289,12 @@ if __name__ == '__main__':
                         tempr.close()
                         del tempr
                         result = style.applyStylesheet(doc, None)
-                        outputstring = style.saveResultToString(result)
+                        try:
+                            outputstring = style.saveResultToString(result)
+                        except:
+                            outputstring = None#this is a nasty hack. When the xslt transform breaks-- just blank it out
+                            #this is done due to a bug in libxslt
+                            #This needs to be fixed in future releases
                         if not outputstring == None:
                             toastring = ''
                             for desti in deliv.findall("Destination"):
