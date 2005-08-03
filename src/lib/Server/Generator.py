@@ -6,6 +6,7 @@ from syslog import syslog, LOG_ERR, LOG_INFO
 from xml.parsers.expat import ExpatError
 from os import stat
 from stat import ST_MTIME
+from re import compile as regcompile
 
 class GeneratorError(Exception):
     '''Generator runtime error used to inform upper layers of internal generator failure'''
@@ -128,7 +129,9 @@ class DirectoryBacked(object):
 
     def AddEntry(self, name):
         '''Add new entry to data structures upon file creation'''
-        if self.entries.has_key(name):
+        if name == '':
+            syslog(LOG_INFO, "got add for empty name")
+        elif self.entries.has_key(name):
             syslog(LOG_INFO, "got multiple adds for %s" % name)
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS') or (name[-4:] == '.swp')):
