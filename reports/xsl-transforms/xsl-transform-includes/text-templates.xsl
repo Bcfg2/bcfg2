@@ -1,18 +1,21 @@
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xmlns="http://www.w3.org/1999/xhtml">
 <xsl:template match="Node">   
+<xsl:if test="count(Statistics/Good)+count(Statistics/Bad)+count(Statistics/Stale)+count(Statistics/Modified) > 0">
+
 <xsl:text>
 
     </xsl:text>Node:<xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
         </xsl:text>Time Ran: <xsl:value-of select="Statistics/@time" />.
 <xsl:apply-templates select="Statistics" />
+	</xsl:if>
 </xsl:template>
   
 <xsl:template match="Statistics">
-    <xsl:apply-templates select="Stale" />
-    <xsl:apply-templates select="Good" />
-    <xsl:apply-templates select="Bad" />
-    <xsl:apply-templates select="Modified" />
+        <xsl:apply-templates select="Stale" />
+        <xsl:apply-templates select="Good" />
+        <xsl:apply-templates select="Bad" />
+        <xsl:apply-templates select="Modified" />
 </xsl:template>
 <xsl:template match="Good">
 <xsl:text>        </xsl:text>Node is clean; Everything has been satisfactorily configured.
