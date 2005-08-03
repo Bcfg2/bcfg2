@@ -13,9 +13,10 @@
 </xsl:text>Report Run @ <xsl:value-of select="@time" />
 
 SUMMARY:
-<xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node)" /> nodes were included in your report.<xsl:if test="count(/Report/Node/Statistics/Good) = 0">
-<xsl:text>
-    </xsl:text>All machines are configured to specification.
+<xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node)" /> nodes were included in your report.<xsl:text>
+</xsl:text>
+<xsl:if test="count(/Report/Node)-count(/Report/Node/Statistics/Good) = 0">
+<xsl:text>    </xsl:text>All machines are configured to specification.
 </xsl:if><xsl:if test="count(/Report/Node/Statistics/Good) > 0">
 <xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Good)" /> nodes are clean.
 </xsl:if>
