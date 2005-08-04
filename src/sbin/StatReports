@@ -23,7 +23,7 @@ def generatereport(rs, nr):
     reportspec = deepcopy(rs)
     nodereprt = deepcopy(nr)
 
-    reportgood = reportspec.get("good", default = 'N')
+    reportgood = reportspec.get("good", default = 'Y')
     reportmodified = reportspec.get("modified", default = 'Y')
 
     current_date = asctime()[:10]
