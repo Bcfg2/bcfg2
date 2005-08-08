@@ -162,7 +162,7 @@ if __name__ == '__main__':
     hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
     metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
     transformpath = "/usr/share/bcfg2/xsl-transforms/"
-    web-srcspath = "/usr/share/bcfg2/web-rprt-srcs/"
+    #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
         opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
