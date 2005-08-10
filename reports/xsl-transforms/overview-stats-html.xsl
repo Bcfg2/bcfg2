@@ -2,6 +2,13 @@
                 xmlns="http://www.w3.org/1999/xhtml">
     <xsl:output method="xml" media-type="text/html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
     <xsl:template match="Report">
+	<xsl:variable name="cleannodes" select="/Report/Node[count(Statistics/Good)>0]"/>
+	<xsl:variable name="dirtynodes" select="/Report/Node[count(Statistics/Bad)>0]"/>
+	<xsl:variable name="modifiednodes" select="/Report/Node[count(Statistics/Modified)>0]"/>
+	<xsl:variable name="stalenodes" select="/Report/Node[count(Statistics/Stale)>0]"/>
+	<xsl:variable name="unpingablenodes" select="/Report/Node[HostInfo/@pingable='N']"/>
+	<xsl:variable name="pingablenodes" select="/Report/Node[HostInfo/@pingable='Y']"/>
+
         <html>
               <head>
                     <title><xsl:value-of select="@name" /></title>
@@ -17,7 +24,7 @@
                         <h2>Summary:</h2>
 
                         <p class="indented"><xsl:value-of select="count(/Report/Node)" /> Nodes were included in your report.</p>
-                        <xsl:if test="count(/Report/Node/Statistics/Good) > 0">
+                        <xsl:if test="count($cleannodes) > 0">
                             <div class="clean">
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('goodsummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Statistics/Good)" /></a> nodes are clean.<br /></span>
                                 <div class="items" id="goodsummary"><ul class="plain">                                    
@@ -32,7 +39,7 @@
                             </div>
                          </xsl:if>
                          
-                         <xsl:if test="count(/Report/Node/Statistics/Bad) > 0">
+                         <xsl:if test="count($dirtynodes) > 0">
                             <div class="bad">
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('badsummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Statistics/Bad)" /></a> nodes are bad.<br /></span>
                                 
@@ -47,7 +54,7 @@
                             </div>
                          </xsl:if>
                         
-                        <xsl:if test="count(/Report/Node/Statistics/Modified) > 0">
+                        <xsl:if test="count($modifiednodes) > 0">
                             <div class="modified">
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('modifiedsummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Statistics/Modified)" /></a> nodes were modified in the last run. (includes both good and bad nodes)<br /></span>
                                 
@@ -62,14 +69,14 @@
                             </div>
                          </xsl:if>
                         
-                        <xsl:if test="count(/Report/Node/Statistics/Stale) > 0">
+                        <xsl:if test="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)]) > 0">
                             <div class="warning">
-                                <span class="nodelisttitle"><a href="javascript:toggleLayer('stalesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Statistics/Stale)" /></a> nodes did not run this calendar day.<br /></span>
+                                <span class="nodelisttitle"><a href="javascript:toggleLayer('stalesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)])" /></a> nodes did not run this calendar day but were pingable.<br /></span>
                                 
                                 <div class="items" id="stalesummary"><ul class="plain">
                                     <xsl:for-each select="Node">
                                         <xsl:sort select="HostInfo/@fqdn"/>
-                                        <xsl:if test="count(Statistics/Stale) > 0">
+                                        <xsl:if test="count(Statistics/Stale)-count(HostInfo[@pingable='N']) > 0">
                                             <tt><xsl:value-of select="HostInfo/@fqdn" /></tt><br/>
                                         </xsl:if>
                                     </xsl:for-each>
@@ -79,7 +86,7 @@
                          
 
                             
-                            <xsl:if test="count(/Report/Node/HostInfo[@pingable='N']) > 0">
+                            <xsl:if test="count($unpingablenodes) > 0">
                             <div class="warning">
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('unpingablesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/HostInfo[@pingable='N'])" /></a> nodes were not pingable.<br /></span>
                                 
