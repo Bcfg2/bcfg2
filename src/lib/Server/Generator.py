@@ -27,11 +27,11 @@ class Generator(object):
     __name__ = None
     __version__ = None
     __croninterval__ = False
-    __provides__ = {}
     __requires__ = []
     
     def __init__(self, core, datastore):
         object.__init__(self)
+        self.__provides__ = {}
         self.core = core
         self.data = "%s/%s" % (datastore, self.__name__)
         self.external = {}
@@ -142,6 +142,9 @@ class DirectoryBacked(object):
     def HandleEvent(self, event):
         '''Propagate fam events to underlying objects'''
         action = event.code2str()
+        if event.filename == '':
+            syslog(LOG_INFO, "Got event for blank filename")
+            return
         if action == 'exists':
             if event.filename != self.name:
                 self.AddEntry(event.filename)
