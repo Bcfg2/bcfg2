@@ -69,7 +69,7 @@ def generatereport(rs, nr):
                 stats.remove(x)
                 
         #test for staleness -if stale add Stale tag
-        if not stats.get("time").find(current_date):
+        if stats.get("time").find(current_date) == -1:
             SubElement(stats,"Stale")
             
         node.append(stats)
