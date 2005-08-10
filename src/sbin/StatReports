@@ -7,7 +7,7 @@
 for bcfg2'''
 __revision__ = '$Revision$'
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from elementtree.ElementTree import *
 from xml.parsers.expat import ExpatError
 from xml.sax.saxutils import escape
@@ -81,8 +81,10 @@ def generatereport(rs, nr):
 def mail(mailbody, confi):
     '''mail mails a previously generated report'''
 
-    mailer = confi.get('statistics', 'sendmailpath')
-
+    try:
+        mailer = confi.get('statistics', 'sendmailpath')
+    except NoSectionError, NoOptionError:
+        mailer = "/usr/sbin/sendmail"
     # open a pipe to the mail program and
     # write the data to the pipe
     pipe = os.popen("%s -t" % mailer, 'w')
