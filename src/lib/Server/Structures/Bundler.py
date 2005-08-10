@@ -89,7 +89,11 @@ class Bundler(Structure):
 
     def Construct(self, metadata):
         '''Build all structures for client (metadata)'''
-        (system, package, service) = self.GetTransInfo(metadata)
+        try:
+            (system, package, service) = self.GetTransInfo(metadata)
+        except KeyError:
+            syslog(LOG_ERR, "Failed to find translation information for image %s" % metadata.image)
+            return []
         bundleset = []
         for bundlename in metadata.bundles:
             if not self.bundles.entries.has_key("%s.xml"%(bundlename)):
