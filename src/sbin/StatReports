@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+
 #Jun 7 2005
 #StatReports - Joey Hagedorn - hagedorn@mcs.anl.gov
 
+'''StatReports Generates & distributes reports of statistic information
+for bcfg2'''
 __revision__ = '$Revision$'
-'''Generates & distributes reports of statistic information for bcfg2'''
 
 from ConfigParser import ConfigParser
 from elementtree.ElementTree import *
@@ -14,7 +16,7 @@ from socket import getfqdn
 from sys import exit, argv
 from getopt import getopt, GetoptError
 import re, os, string, libxml2, libxslt
-from tempfile import NamedTemporaryFile
+from tempfile import mktemp
 from copy import deepcopy
 
 def generatereport(rs, nr):
@@ -67,7 +69,7 @@ def generatereport(rs, nr):
                 stats.remove(x)
                 
         #test for staleness -if stale add Stale tag
-        if not current_date in stats.get("time"):
+        if not stats.get("time").find(current_date):
             SubElement(stats,"Stale")
             
         node.append(stats)
@@ -76,7 +78,7 @@ def generatereport(rs, nr):
 
 
 
-def mail(mailbody, delivery, confi):
+def mail(mailbody, confi):
     '''mail mails a previously generated report'''
 
     mailer = confi.get('statistics', 'sendmailpath')
@@ -128,7 +130,7 @@ def rss(reportxml, delivery, report):
         fil.write(tree)
         fil.close()
 
-def www(reportxml, delivery, report):
+def www(reportxml, delivery):
     '''www outputs report to'''
 
     #this can later link to WWW report if one gets published simultaneously?    
@@ -184,9 +186,9 @@ if __name__ == '__main__':
     try:
         hostinstat = os.stat(hostinfopath)
         if (time() - hostinstat[9])/(60*60) > 23.5:
-            os.system('GenerateHostInfo')#Generate HostInfo needs to be in the path
+            os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
     except OSError:
-        os.system('GenerateHostInfo')#Generate HostInfo needs to be in the path
+        os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
     '''Reads Data & Config files'''
@@ -263,8 +265,9 @@ if __name__ == '__main__':
                 else:
                     transform = 'nodes-digest-html.xsl'
             else:
-                print("StatReports: Invalid delivery mechanism in report-configuration!")
+                print("StatReports: Invalid delivery mechanism in report-config")
                 exit(1)
+
 
             #IMPORTANT to add some error checking here-parseerrors
             #this might be sufficient
@@ -279,64 +282,92 @@ if __name__ == '__main__':
                 if delivtype == 'nodes-individual':
                     p2noderep = deepcopy(procnodereport)
                     for noden in procnodereport.findall("Node"):
-                        for x in p2noderep.findall("Node"):
-                            p2noderep.remove(x)
+                        [p2noderep.remove(y) for y in p2noderep.findall("Node")]
                         p2noderep.append(noden)
-                        tempr = NamedTemporaryFile()
+                        tempfilename = mktemp()
+                        tempr = open(tempfilename, "w+")
                         tempr.write(tostring(p2noderep))
                         tempr.seek(0)
-                        doc = libxml2.parseFile(tempr.name)
+                        doc = libxml2.parseFile(tempfilename)
+                        result = style.applyStylesheet(doc, None)
                         tempr.close()
                         del tempr
-                        result = style.applyStylesheet(doc, None)
                         try:
-                            outputstring = style.saveResultToString(result)
+                            tempfilename = mktemp()
+                            tempr = open(tempfilename, "w+")
+                            style.saveResultToFile(tempr, result)
+                            tempr.seek(0)
+                            outputstring = tempr.read()
                         except:
                             outputstring = None#this is a nasty hack. When the xslt transform breaks-- just blank it out
                             #this is done due to a bug in libxslt
                             #This needs to be fixed in future releases
+
+                        tempr.close()
+                        del tempr
+                        
                         if not outputstring == None:
                             toastring = ''
                             for desti in deliv.findall("Destination"):
-                                toastring = "%s%s " % (toastring, desti.get('address'))
+                                toastring = "%s%s " % \
+                                            (toastring, desti.get('address'))
                             #prepend To: and From:
-                            outputstring = "To: %s\nFrom: root@%s\n%s"% (toastring, getfqdn(), outputstring)
-                            mail(outputstring, deliv, c) #call function to send
+                            outputstring = "To: %s\nFrom: root@%s\n%s"% \
+                                           (toastring, getfqdn(), outputstring)
+                            mail(outputstring, c) #call function to send
                         doc.freeDoc()
                         result.freeDoc()
                     style.freeStylesheet()
                 else:
-                    tempr = NamedTemporaryFile()
+                    tempfilename = mktemp()
+                    tempr = open(tempfilename, "w+")
                     tempr.write(tostring(procnodereport))
                     tempr.seek(0)
-                    doc = libxml2.parseFile(tempr.name)
+                    doc = libxml2.parseFile(tempfilename)
+                    result = style.applyStylesheet(doc, None)
                     tempr.close()
                     del tempr
-                    result = style.applyStylesheet(doc, None)
-                    outputstring = style.saveResultToString(result)
+                    tempfilename = mktemp()
+                    tempr = open(tempfilename, "w+")
+                    style.saveResultToFile(tempr, result)
+                    tempr.seek(0)
+                    outputstring = tempr.read()
+                    tempr.close()
+                    del tempr
+
                     if not outputstring == None:
                         toastring = ''
                         for desti in deliv.findall("Destination"):
-                            toastring = "%s%s " % (toastring, desti.get('address'))
+                            toastring = "%s%s " % \
+                                        (toastring, desti.get('address'))
                         #prepend To: and From:
-                        outputstring = "To: %s\nFrom: root@%s\n%s"% (toastring, getfqdn(), outputstring)
-                        mail(outputstring, deliv, c) #call function to send
+                        outputstring = "To: %s\nFrom: root@%s\n%s"% \
+                                       (toastring, getfqdn(), outputstring)
+                        mail(outputstring, c) #call function to send
                     style.freeStylesheet()
                     doc.freeDoc()
                     result.freeDoc()
             else:
-                tempr = NamedTemporaryFile()
+                tempfilename = mktemp()
+                tempr = open(tempfilename, "w+")
                 tempr.write(tostring(procnodereport))
                 tempr.seek(0)
-                doc = libxml2.parseFile(tempr.name)
+                doc = libxml2.parseFile(tempfilename)
+                result = style.applyStylesheet(doc, None)
                 tempr.close()
                 del tempr
-                result = style.applyStylesheet(doc, None)
-                outputstring = style.saveResultToString(result)
+                tempfilename = mktemp()
+                tempr = open(tempfilename, "w+")
+                style.saveResultToFile(tempr, result)
+                tempr.seek(0)
+                outputstring = tempr.read()
+                tempr.close()
+                del tempr
+
                 if deliverymechanism == 'rss':
                     rss(outputstring, deliv, reprt)
                 else: # must be deliverymechanism == 'www':
-                    www(outputstring, deliv, reprt)
+                    www(outputstring, deliv)
                 style.freeStylesheet()
                 doc.freeDoc()
                 result.freeDoc()
