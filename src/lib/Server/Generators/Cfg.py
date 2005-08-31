@@ -56,8 +56,7 @@ class ConfigFileEntry(object):
     all data for all clients.'''
     specific = regcompile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                           '(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|' +
-                          '(I_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))' +
-                          '(\.(?P<op>cat|udiff))?$')
+                          '(I_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))$')
     info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)$')
@@ -95,6 +94,8 @@ class ConfigFileEntry(object):
 
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''
+        delta = False
+        oldname = name
         if name[-5:] == ':info':
             return self.read_info()
 
@@ -102,6 +103,11 @@ class ConfigFileEntry(object):
             self.basefiles.append(FileEntry(name, True, None, [], [], [], None))
             self.basefiles.sort()
             return
+
+        if name.split('/')[-1].split('.')[-1] in ['cat']:
+            delta = True
+            oldname = name
+            name = name[:-4]
 
         specmatch = self.specific.match(name)
         if specmatch == None:
@@ -113,10 +119,10 @@ class ConfigFileEntry(object):
             if value != None:
                 data[item] = value
 
-        cfile = FileEntry(name, False, data.get('image', None), data.get('class', []),
+        cfile = FileEntry(oldname, False, data.get('image', None), data.get('class', []),
                           data.get('bundle', []), data.get('attr', []), data.get('hostname', None))
 
-        if specmatch.group("op") != None:
+        if delta:
             self.deltas.append(cfile)
             self.deltas.sort()
         else:
@@ -170,12 +176,20 @@ class ConfigFileEntry(object):
             raise GeneratorError, ('basefile', name)
         filedata += basefile.data
 
-        # find applicable deltas
-        #deltas = [x for x in self.deltas if x.Applies(metadata)]
-        # filter for more specific
-        #for delta in deltas:
-        #    pass
-        # apply diffs, etc
+        for delta in [x for x in self.deltas if metadata.Applies(x)]:
+            # find applicable deltas
+            lines = filedata.split('\n')
+            if not lines[-1]:
+                lines = lines[:-1]
+            dlines = [dline for dline in delta.data.split('\n') if dline]
+            for line in dlines:
+                if line[0] == '-':
+                    if line[1:] in lines:
+                        lines.remove(line[1:])
+                else:
+                    lines.append(line[1:])
+            filedata = "\n".join(lines) + "\n"
+            
         entry.attrib.update(self.metadata)
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
@@ -256,7 +270,8 @@ class Cfg(Generator):
                 else:
                     self.LogError("Ignoring event for %s"%(configfile))
         elif action == 'deleted':
-            self.entries[configfile].HandleEvent(event)
+            if self.entries.has_key(configfile):
+                self.entries[configfile].HandleEvent(event)
         elif action in ['exists', 'endExist']:
             pass
         else:
