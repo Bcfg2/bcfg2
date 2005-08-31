@@ -21,7 +21,7 @@ class PackageEntry(XMLFileBacked):
                 if pkg.attrib.has_key("simplefile"):
                     self.packages[pkg.get('name')] = deepcopy(pkg.attrib)
                     # most attribs will be set from pkg
-                    self.packages[pkg.get('name')]['uri'] = location.attrib['uri']
+                    self.packages[pkg.get('name')]['uri'] = "%s/%s" % (location.get('uri'), pkg.get('simplefile'))
                 elif pkg.attrib.has_key("file"):
                     mdata = self.rpm.match(pkg.get('file'))
                     if not mdata:
@@ -29,8 +29,8 @@ class PackageEntry(XMLFileBacked):
                         continue
                     pkgname = mdata.group('name')
                     self.packages[pkgname] = mdata.groupdict()
-                    self.packages[pkgname]['file'] = pkg.attrib['file']
-                    self.packages[pkgname]['uri'] = location.attrib['uri']
+                    self.packages[pkgname]['file'] = pkg.get('file')
+                    self.packages[pkgname]['uri'] = location.get('uri')
                     self.packages[pkgname]['type'] = 'rpm'
                 else:
                     self.packages[pkg.get('name')] = pkg.attrib
