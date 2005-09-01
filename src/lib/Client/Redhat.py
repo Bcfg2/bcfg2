@@ -23,10 +23,10 @@ class Redhat(Toolset):
         self.installed = {}
 
         # Build list of packages
-        instp = popen("rpm -qa --qf '%{NAME} %{VERSION}\n'")
+        instp = popen("rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n'")
         for line in instp:
             [name, version] = line.split(' ')
-            self.installed[name] = version
+            self.installed[name] = version[:-1]
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -71,31 +71,32 @@ class Redhat(Toolset):
         if not entry.get('version'):
             print "Can't install package %s, not enough data." % (entry.get('name'))
             return False
-        instp = Popen4("rpm -qi %s-%s" % (entry.get('name'), entry.get('version')))
-        istat = instp.poll()
-        while istat == -1:
-            instp.fromchild.read()
-            istat = instp.poll()
-        if istat != 0:
-            self.CondPrint('debug', "Package %s version incorrect" % entry.get('name'))
+        if self.installed.has_key(entry.get('name')):
+            if entry.get('version') == self.installed[entry.get('name')]:
+                if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')):
+                    return True
+            else:
+                self.CondPrint('debug', "Package %s: wrong version installed. want %s have %s" %
+                               (entry.get('name'), entry.get('version'), self.installed[entry.get('name')]))
+                return False
         else:
-            if entry.attrib.get('verify', 'true') == 'true':
-                if self.setup['quick']:
-                    return True
-                verp = Popen4("rpm --verify -q %s-%s" %
-                              (entry.get('name'),entry.get('version')), bufsize=16384)
-                odata = verp.fromchild.read()
-                vstat = verp.poll()
-                while vstat == -1:
-                    odata += verp.fromchild.read()
-                    vstat = verp.poll()
-                output = [line for line in odata.split("\n") if line]
-                if vstat == 0:
-                    return True
-                else:
-                    if len([name for name in output if name.split()[-1] not in modlist]):
-                        return True
-                    else:
-                        self.CondPrint('debug',
-                                       "Package %s content verification failed" % entry.get('name'))
+            self.CondPrint('debug', "Package %s: not installed" % (entry.get('name')))
+            return False
+
+        verp = Popen4("rpm --verify -q %s-%s" %
+                      (entry.get('name'),entry.get('version')), bufsize=16384)
+        odata = verp.fromchild.read()
+        vstat = verp.poll()
+        while vstat == -1:
+            odata += verp.fromchild.read()
+            vstat = verp.poll()
+            output = [line for line in odata.split("\n") if line]
+        if vstat == 0:
+            return True
+        else:
+            if len([name for name in output if name.split()[-1] not in modlist]):
+                return True
+            else:
+                self.CondPrint('debug',
+                               "Package %s content verification failed" % entry.get('name'))
         return False
