@@ -43,10 +43,10 @@ logging: none
 # BitMover can be reached in the United States at 415-401-8808
 # during business hours (PST) or via email at sales@bitmover.com.
 # Thanks!
-license: BKL64316b50042d76d002001200ffff0000000000
-licsign1: YgAAAo0AAAADgAAAANNJBZilreDONKXhWoVcoL2P7QsTztG6qkos/MlHf4bhn/Mh
-licsign2: ND//we8MEOqldAI/6pZlOpXG47bSm2Ze+N/2GPwyI2gUZ+MCipKFygAVdp/SXxub
-licsign3: 2SukkkX5b6cr6OUmdQtwgah4D1OFvuzycaxxamb5U8HDhN+FpPAv3n6ECzmW
+license: BKL644b8a08042d76d002001200ffff0000000000
+licsign1: YgAAAo4AAAADgQAAAAHe3zJ+0lROWdAnmkBSoOG624CpUbPSkPg77FinXstQ6mJB
+licsign2: QCELPUhHVG39z001gPclttlyeUYzEtE6f70WXGYKAOmWa/vl/w9VhOBCbQ2IwfXD
+licsign3: g6HYc3vcyYCWT/2skxNB1IGpS8yJHrVzjdCdnOb1yT9sYYqx3KD5F/H4yWgJ+g==
 # 
 # If this field is set, all checkins will appear to be made by this user,
 # in effect making this a single user package.  Single user packages are
