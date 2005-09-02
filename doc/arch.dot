@@ -1,5 +1,0 @@
-digraph bcfg2 {
-	node [shape = rectangle];
-	"Core\n- File Alteration Monitor\n- Metadata Store\n- Notification Mechanism" -> ;
-}
-
