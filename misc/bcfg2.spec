@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.6.9.3pre3
+%define version 0.6.10pre1
 %define release 1
 %define pythonversion 2.2
 
@@ -55,7 +55,8 @@ rm -rf $RPM_BUILD_ROOT
 /usr/sbin/StatReports
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/Server/*
 /usr/share/bcfg2/schemas/*
-/usr/share/bcfg2/reports/*
+/usr/share/bcfg2/xsl-transforms/*
+/usr/share/bcfg2/web-rpts-srcs/*
 /usr/share/man/man8/*
 /etc/init.d/bcfg2-server
 
