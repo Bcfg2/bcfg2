@@ -4,7 +4,7 @@
 __revision__ = '$Revision$'
 
 from getopt import getopt, GetoptError
-from os import popen, chmod, unlink
+from os import popen, chmod, unlink, _exit
 from signal import signal, SIGINT
 from sys import argv
 from tempfile import mktemp
@@ -15,7 +15,7 @@ from sss.ssslib import comm_lib
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
-    raise SystemExit, 1
+    raise _exit(1)
 
 def load_toolset(toolset, config, clientsetup):
     '''Import client toolset modules'''
