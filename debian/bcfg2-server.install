@@ -1,6 +1,7 @@
 debian/bcfg2-install/usr/bin/Bcfg2Server usr/sbin
 debian/bcfg2-install/usr/bin/ValidateBcfg2Repo usr/sbin
 debian/bcfg2-install/usr/bin/StatReports usr/sbin
+debian/bcfg2-install/usr/bin/GenerateHostInfo usr/sbin
 debian/bcfg2-install/usr/lib/python2.3/site-packages/Bcfg2/Server/* usr/lib/python2.3/site-packages/Bcfg2/Server
-debian/bcfg2-install/usr/share/bcfg2/schemas/* usr/share/bcfg2/schemas
+debian/bcfg2-install/usr/share/bcfg2/* usr/share/bcfg2/
 debian/bcfg2-install/usr/share/man/man8/* usr/share/man/man8
