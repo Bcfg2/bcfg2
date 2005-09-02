@@ -5,12 +5,17 @@ __revision__ = '$Revision$'
 
 from getopt import getopt, GetoptError
 from os import popen, chmod, unlink
+from signal import signal, SIGINT
 from sys import argv
 from tempfile import mktemp
 
 from elementtree.ElementTree import Element, XML, tostring
 
 from sss.ssslib import comm_lib
+
+def cb_sigint_handler(signum, frame):
+    '''Exit upon CTRL-C'''
+    raise SystemExit, 1
 
 def load_toolset(toolset, config, clientsetup):
     '''Import client toolset modules'''
@@ -67,6 +72,7 @@ def dgetopt(arglist, opt, vopt):
 
 if __name__ == '__main__':
     # parse command line options
+    signal(SIGINT, cb_sigint_handler)
     options =  {'v':'verbose', 'q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'P':'paranoid'}
     doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image', 'r':'remove'}
     setup = dgetopt(argv[1:], options, doptions)
@@ -154,14 +160,16 @@ if __name__ == '__main__':
         # install incorrect aspects of configuration
         client.Install()
 
-        client.CondPrint('verbose', "--> %s of %s config elements correct"%(client.states.values().count(True), total))
+        client.CondPrint('verbose', "--> %s of %s config elements correct" %
+                         (client.states.values().count(True), total))
         failed = [key for key, value in client.states.iteritems() if not value]
         if failed:
             client.CondPrint('verbose', "Failing Entries:")
             [client.CondPrint('verbose', "%s:%s" % (key.tag, key.get('name'))) for key in
              failed if key.tag != 'Package']
-            [client.CondPrint('verbose', "%s:%s-%s"%(key.tag, key.get('name'),
-                                                     key.get('version', 'unset'))) for key in failed if key.tag == 'Package']
+            [client.CondPrint('verbose', "%s:%s-%s" %
+                              (key.tag, key.get('name'), key.get('version', 'unset')))
+             for key in failed if key.tag == 'Package']
     else:
         client.CondPrint("verbose", "All entries correct")
 
