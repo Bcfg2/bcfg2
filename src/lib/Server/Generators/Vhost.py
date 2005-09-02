@@ -1,5 +1,5 @@
 '''This module manages vhost files for bcfg2'''
-__revision__ = '$Revision: 1.48 $'
+__revision__ = '$Revision: $'
 #-------------------------------------------
 # Script Name: vhost.py 
 # Script Version: 1.0
@@ -35,7 +35,8 @@ class VhostFile(SingleXMLFileBacked):
 
     def Index(self):
         self.store = XML(self.data)
-        self.http = open('/mnt/bcfg2/Vhost/default.httpd', 'r').readlines()
+        # this isnt file backed yet
+        self.http = open('/disks/bcfg2/Vhost/default.httpd', 'r').readlines()
         for server in self.store.findall("server"):
             for vhost in server.findall("vhost"):
                 name = vhost.get('name')
