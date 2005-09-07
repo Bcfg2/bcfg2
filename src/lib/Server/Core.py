@@ -223,3 +223,20 @@ class Core(object):
             syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n' % line)
         syslog(LOG_ERR, "%s: %s\n"%(trace, val))
         del trace, val, trb
+
+    def Service(self):
+        '''Perform periodic update tasks'''
+        while self.fam.fm.pending:
+            try:
+                self.fam.HandleEvent()
+            except:
+                self.LogFailure("FamEvent")
+        try:
+            self.core.RunCronTasks()
+        except:
+            self.LogFailure("Cron")
+        try:
+            self.core.stats.WriteBack()
+        except:
+            self.LogFailure("Statistics")
+            
