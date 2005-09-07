@@ -8,14 +8,13 @@ for bcfg2'''
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from elementtree.ElementTree import *
+from elementtree.ElementTree import XML, Element, SubElement, tostring
 from xml.parsers.expat import ExpatError
-from xml.sax.saxutils import escape
-from time import asctime, strftime, strptime, gmtime, time
+from time import asctime, strptime, time
 from socket import getfqdn
-from sys import exit, argv
+from sys import argv
 from getopt import getopt, GetoptError
-import re, os, string, libxml2, libxslt
+import re, os, libxml2, libxslt
 from tempfile import mktemp
 from copy import deepcopy
 
@@ -31,8 +30,8 @@ def generatereport(rs, nr):
     current_date = asctime()[:10]
 
     '''build regex of all the nodes we are reporting about'''
-    regex = string.join([x.get("name") for x in \
-                         reportspec.findall('Machine')], '|')
+    regex = '|'.join([x.get("name") for x in \
+                      reportspec.findall('Machine')])
     pattern = re.compile(regex)
 
 
@@ -83,7 +82,7 @@ def mail(mailbody, confi):
 
     try:
         mailer = confi.get('statistics', 'sendmailpath')
-    except NoSectionError, NoOptionError:
+    except (NoSectionError, NoOptionError):
         mailer = "/usr/sbin/sendmail"
     # open a pipe to the mail program and
     # write the data to the pipe
@@ -173,11 +172,11 @@ if __name__ == '__main__':
     except GetoptError, mesg:
         # print help information and exit:
         print "%s\nUsage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]" % (mesg) 
-        exit(2)
+        raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
             print "Usage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]"
-            exit()
+            raise SystemExit
         if o in ("-c", "--config"):
             configpath = a
         if o in ("-s", "--stats"):
@@ -198,22 +197,22 @@ if __name__ == '__main__':
         statsdata = XML(open(statpath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s"%(statpath))
-        exit(1)
+        raise SystemExit, 1
     try:
         configdata = XML(open(configpath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s"%(configpath))
-        exit(1)
+        raise SystemExit, 1
     try:
         metadata = XML(open(metadatapath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s"%(metadatapath))
-        exit(1)
+        raise SystemExit, 1
     try:
         hostinfodata = XML(open(hostinfopath).read())
     except (IOError, ExpatError):
         print("StatReports: Failed to parse %s. Is GenerateHostInfo in your path?"%(hostinfopath))
-        exit(1)
+        raise SystemExit, 1
 
 
     #Merge data from three sources
@@ -268,7 +267,7 @@ if __name__ == '__main__':
                     transform = 'nodes-digest-html.xsl'
             else:
                 print("StatReports: Invalid delivery mechanism in report-config")
-                exit(1)
+                raise SystemExit, 1
 
 
             #IMPORTANT to add some error checking here-parseerrors
@@ -278,7 +277,7 @@ if __name__ == '__main__':
                 style = libxslt.parseStylesheetDoc(styledoc)
             except:
                 print("StatReports: invalid XSLT transform file.")
-                exit(1)
+                raise SystemExit, 1
                 
             if deliverymechanism == 'mail':
                 if delivtype == 'nodes-individual':
@@ -293,6 +292,7 @@ if __name__ == '__main__':
                         doc = libxml2.parseFile(tempfilename)
                         result = style.applyStylesheet(doc, None)
                         tempr.close()
+                        os.unlink(tempfilename)
                         del tempr
                         try:
                             tempfilename = mktemp()
@@ -307,6 +307,7 @@ if __name__ == '__main__':
 
                         tempr.close()
                         del tempr
+                        os.unlink(tempfilename)
                         
                         if not outputstring == None:
                             toastring = ''
@@ -329,6 +330,7 @@ if __name__ == '__main__':
                     result = style.applyStylesheet(doc, None)
                     tempr.close()
                     del tempr
+                    os.unlink(tempfilename)
                     tempfilename = mktemp()
                     tempr = open(tempfilename, "w+")
                     style.saveResultToFile(tempr, result)
@@ -336,6 +338,7 @@ if __name__ == '__main__':
                     outputstring = tempr.read()
                     tempr.close()
                     del tempr
+                    os.unlink(tempfilename)
 
                     if not outputstring == None:
                         toastring = ''
@@ -358,6 +361,7 @@ if __name__ == '__main__':
                 result = style.applyStylesheet(doc, None)
                 tempr.close()
                 del tempr
+                os.unlink(tempfilename)
                 tempfilename = mktemp()
                 tempr = open(tempfilename, "w+")
                 style.saveResultToFile(tempr, result)
@@ -365,6 +369,7 @@ if __name__ == '__main__':
                 outputstring = tempr.read()
                 tempr.close()
                 del tempr
+                os.unlink(tempfilename)
 
                 if deliverymechanism == 'rss':
                     rss(outputstring, deliv, reprt)
@@ -373,3 +378,4 @@ if __name__ == '__main__':
                 style.freeStylesheet()
                 doc.freeDoc()
                 result.freeDoc()
+                
