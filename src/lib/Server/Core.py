@@ -12,6 +12,7 @@ from elementtree.ElementTree import Element
 import _fam
 
 from Bcfg2.Server.Generator import GeneratorError, GeneratorInitError
+from Bcfg2.Server.Plugin import PluginInitError
 from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
 
@@ -83,10 +84,11 @@ class Core(object):
         except IOError:
             raise CoreInitError, "failed to connect to fam"
         self.pubspace = {}
-        self.structures = []
         self.generators = []
+        self.structures = []
         self.cron = {}
         self.setup = setup
+        self.plugins = {}
         
         mpath = cfile.get('server','metadata')
         try:
@@ -97,14 +99,19 @@ class Core(object):
         self.stats = Statistics("%s/statistics.xml" % (mpath))
         
         for structure in cfile.get('server', 'structures').split(','):
-            try:
-                mod = getattr(__import__("Bcfg2.Server.Structures.%s" %
-                                         (structure)).Server.Structures, structure)
-            except ImportError:
-                syslog(LOG_ERR, "Failed to load structure %s" % (structure))
-                continue
-            struct = getattr(mod, structure)
-            self.structures.append(struct(self, self.datastore))
+            if not self.plugins.has_key(structure):
+                try:
+                    mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
+                                             (structure)).Server.Plugins, structure)
+                except ImportError:
+                    syslog(LOG_ERR, "Failed to load structure %s" % (structure))
+                    continue
+                struct = getattr(mod, structure)
+                try:
+                    self.plugins[structure] = struct(self, self.datastore)
+                    self.structures.append(self.plugins[structure])
+                except PluginInitError:
+                    syslog(LOG_ERR, "Failed to instantiate plugin %s" % structure)
 
         for generator in cfile.get('server', 'generators').split(','):
             try:
@@ -126,37 +133,11 @@ class Core(object):
                     syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
                 syslog(LOG_ERR, "%s: %s\n"%(trace, val))
                 del trace, val, trb
-        # we need to inventory and setup generators
-        # Process generator requirements
-        for gen in self.generators:
-            for prq in gen.__requires__:
-                if not self.pubspace.has_key(prq):
-                    raise GeneratorError, (gen.name, prq)
-            gen.CompleteSetup()
-
-    def PublishValue(self, owner, key, value):
-        '''Publish a shared generator value'''
-        if not self.pubspace.has_key(key):
-            # This is a new entry
-            self.pubspace[key] = PublishedValue(owner, key, value)
-        else:
-            # This is an old entry. Update can fai
-            try:
-                self.pubspace[key].Update(owner, value)
-            except PublishError:
-                syslog(LOG_ERR, "Publish conflict for %s. Owner %s, Modifier %s"%
-                       (key, self.pubspace[key].owner, owner))
-
-    def ReadValue(self, key):
-        '''Read a value published by another generator'''
-        if self.pubspace.has_key(key):
-            return self.pubspace[key].value
-        raise KeyError, key
 
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
-                      [struct.Construct(metadata) for struct in self.structures])
+                      [struct.BuildStructures(metadata) for struct in self.structures])
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
