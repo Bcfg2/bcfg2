@@ -4,11 +4,11 @@ from distutils.core import setup
 from glob import glob
 
 setup(name="Bcfg2.Server",
-      version="0.2",
+      version="0.6.12",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
-      packages=["Bcfg2", 'Bcfg2.Server', "Bcfg2.Server.Generators", "Bcfg2.Server.Structures", "Bcfg2.Client"],
+      packages=["Bcfg2", 'Bcfg2.Server', "Bcfg2.Server.Plugins", "Bcfg2.Client"],
       package_dir = {'Bcfg2':'src/lib'}, 
       scripts = ['src/sbin/Bcfg2Server', 'src/sbin/bcfg2', 'src/sbin/ValidateBcfg2Repo', 'src/sbin/StatReports', 'src/sbin/GenerateHostInfo'],
       data_files = [('share/bcfg2/schemas',
