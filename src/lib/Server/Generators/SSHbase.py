@@ -55,7 +55,11 @@ class SSHbase(Generator):
             return self.ipcache[client]
         else:
             # need to add entry
-            for domain in self.domains:
+            if self.repository.entries.has_key('domains'):
+                domains = self.repository.entries['domains'].split()
+            else:
+                domains = self.domains
+            for domain in domains:
                 try:
                     fqdn = "%s.%s" % (client, domain)
                     ipaddr = gethostbyname("%s.%s" % (client, domain))
