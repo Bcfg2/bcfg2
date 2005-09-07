@@ -97,43 +97,42 @@ class Core(object):
             raise CoreInitError, "metadata path incorrect"
         
         self.stats = Statistics("%s/statistics.xml" % (mpath))
-        
-        for structure in cfile.get('server', 'structures').split(','):
-            if not self.plugins.has_key(structure):
+
+        structures = cfile.get('server', 'structures').split(',')
+        generators = cfile.get('server', 'generators').split(',')
+
+        for plugin in structures + generators:
+            if not self.plugins.has_key(plugin):
                 try:
                     mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                              (structure)).Server.Plugins, structure)
                 except ImportError:
-                    syslog(LOG_ERR, "Failed to load structure %s" % (structure))
+                    syslog(LOG_ERR, "Failed to load plugin %s" % (plugin))
                     continue
-                struct = getattr(mod, structure)
+                struct = getattr(mod, plugin)
                 try:
                     self.plugins[structure] = struct(self, self.datastore)
-                    self.structures.append(self.plugins[structure])
                 except PluginInitError:
-                    syslog(LOG_ERR, "Failed to instantiate plugin %s" % structure)
+                    syslog(LOG_ERR, "Failed to instantiate plugin %s" % (plugin))
+                except:
+                    syslog(LOG_ERR, "Unexpected initiantiation failure for plugin %s" % (plugin))
+                    (trace, val, trb)=exc_info()
+                    for line in extract_tb(trb):
+                        syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+                        syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+                        del trace, val, trb
 
-        for generator in cfile.get('server', 'generators').split(','):
-            try:
-                mod = getattr(__import__("Bcfg2.Server.Generators.%s" %
-                                         (generator)).Server.Generators, generator)
-            except ImportError:
-                syslog(LOG_ERR, 'Failed to load generator %s' % (generator))
-                continue
-            gen = getattr(mod, generator)
-            try:
-                self.generators.append(gen(self, self.datastore))
-            except GeneratorInitError:
-                syslog(LOG_ERR, "Failed to instantiate generator %s" % gen.__name__)
-            except:
-                print "Unexpected initiantiation failure for generator %s" % gen.__name__
-                syslog(LOG_ERR, "Unexpected initiantiation failure for generator %s" % gen.__name__)
-                (trace, val, trb)=exc_info()
-                for line in extract_tb(trb):
-                    syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-                syslog(LOG_ERR, "%s: %s\n"%(trace, val))
-                del trace, val, trb
-
+        for plugin in structures:
+            if self.plugins.has_key(plugin):
+                self.structures.append(self.plugins[plugin])
+            else:
+                syslog(LOG_ERR, "Plugin %s not loaded. Not enabled as a Structure" % (plugin))
+        for plugin in generators:
+            if self.plugins.has_key(plugin):
+                self.generators.append(self.plugins[plugin])
+            else:
+                syslog(LOG_ERR, "Plugin %s not loaded. Not enabled as a Generator" % (plugin))
+                    
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
@@ -150,9 +149,9 @@ class Core(object):
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
         glist = [gen for gen in self.generators if
-                 gen.__provides__.get(entry.tag, {}).has_key(entry.get('name'))]
+                 gen.Entries.get(entry.tag, {}).has_key(entry.get('name'))]
         if len(glist) == 1:
-            return glist[0].__provides__[entry.tag][entry.get('name')](entry, metadata)
+            return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
             syslog(LOG_ERR, "%s %s served by multiple generators" % (entry.tag, entry.get('name')))
         else:
@@ -161,15 +160,6 @@ class Core(object):
                     return gen.FindHandler(entry)(entry, metadata)
             raise GeneratorError, (entry.tag, entry.get('name'))
                 
-    def RunCronTasks(self):
-        '''Run periodic tasks for generators'''
-        generators = [gen for gen in self.generators if gen.__croninterval__]
-        for generator in generators:
-            current = time()
-            if ((current - self.cron.get(generator, 0)) > generator.__croninterval__):
-                generator.Cron()
-                self.cron[generator] = current
-
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time()
@@ -212,10 +202,6 @@ class Core(object):
                 self.fam.HandleEvent()
             except:
                 self.LogFailure("FamEvent")
-        try:
-            self.core.RunCronTasks()
-        except:
-            self.LogFailure("Cron")
         try:
             self.core.stats.WriteBack()
         except:
