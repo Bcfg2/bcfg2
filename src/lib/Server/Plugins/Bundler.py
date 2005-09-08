@@ -4,8 +4,7 @@ __revision__ = '$Revision$'
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
 
-from Bcfg2.Server.Generator import SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
-from Bcfg2.Server.Plugin import Plugin
+from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 
 from elementtree.ElementTree import Element, XML
 from xml.parsers.expat import ExpatError
