@@ -8,14 +8,12 @@ from getopt import getopt, GetoptError
 from socket import gethostbyaddr, herror
 from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
 from sys import argv, exit as sysexit, exc_info
-from time import time
 from traceback import extract_tb
 
 from elementtree.ElementTree import Element
 
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
-from Bcfg2.Server.Statistics import Statistics
 
 from sss.daemonize import daemonize
 from sss.server import Server
@@ -61,13 +59,11 @@ class BcfgServer(Server):
         self.__progress__()
 
     def __progress__(self):
-        while self.core.fam.fm.pending():
-            self.core.fam.HandleEvent()
         try:
-            self.core.RunCronTasks()
+            while self.core.fam.fm.pending():
+                self.core.fam.HandleEvent()
         except:
-            self.LogFailure("Cron")
-
+            self.LogFailure("FileEvent")
         try:
             self.core.stats.WriteBack()
         except:
@@ -113,7 +109,7 @@ class BcfgServer(Server):
         except MetadataConsistencyError:
             return Element("error", type='metadata resolution error')
         for g in self.core.generators:
-            for p in g.get_probes(m):
+            for p in g.GetProbes(m):
                 r.append(p)
         return r
 
@@ -126,7 +122,7 @@ class BcfgServer(Server):
         for data in xml.findall(".//probe-data"):
             try:
                 [g] = [x for x in self.core.generators if x.__name__ == data.attrib['source']]
-                g.accept_probe_data(client, data)
+                g.ReceiveData(client, data)
             except:
                 self.LogFailure("put_probe_data")
         return Element("OK")
