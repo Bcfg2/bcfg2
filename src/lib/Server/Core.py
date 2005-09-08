@@ -11,14 +11,9 @@ from ConfigParser import ConfigParser
 from elementtree.ElementTree import Element
 import _fam
 
-from Bcfg2.Server.Generator import GeneratorError, GeneratorInitError
-from Bcfg2.Server.Plugin import PluginInitError
+from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
-
-class PublishError(Exception):
-    '''This error is raised upon publication failures'''
-    pass
 
 class CoreInitError(Exception):
     '''This error is raised when the core cannot be initialized'''
@@ -58,20 +53,6 @@ class Fam(object):
             #print "dispatching event %s %s to obj %s handle :%s:" % (event.code2str(), event.filename, self.users[reqid], event.requestID)
             self.users[reqid].HandleEvent(event)
 
-class PublishedValue(object):
-    '''This is for data shared between generators'''
-    def __init__(self, owner, key, value):
-        object.__init__(self)
-        self.owner = owner
-        self.key = key
-        self.value = value
-
-    def Update(self, owner, value):
-        '''Update the value after an ownership check succeeds'''
-        if owner != self.owner:
-            raise PublishError, (self.key, owner)
-        self.value = value
-
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, setup, configfile):
@@ -105,13 +86,13 @@ class Core(object):
             if not self.plugins.has_key(plugin):
                 try:
                     mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                             (structure)).Server.Plugins, structure)
+                                             (plugin)).Server.Plugins, plugin)
                 except ImportError:
                     syslog(LOG_ERR, "Failed to load plugin %s" % (plugin))
                     continue
                 struct = getattr(mod, plugin)
                 try:
-                    self.plugins[structure] = struct(self, self.datastore)
+                    self.plugins[plugin] = struct(self, self.datastore)
                 except PluginInitError:
                     syslog(LOG_ERR, "Failed to instantiate plugin %s" % (plugin))
                 except:
@@ -143,7 +124,7 @@ class Core(object):
         for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory', 'Permissions', 'PostInstall']]:
             try:
                 self.Bind(entry, metadata)
-            except GeneratorError:
+            except PluginExecutionError:
                 syslog(LOG_ERR, "Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
 
     def Bind(self, entry, metadata):
@@ -153,12 +134,15 @@ class Core(object):
         if len(glist) == 1:
             return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
-            syslog(LOG_ERR, "%s %s served by multiple generators" % (entry.tag, entry.get('name')))
+            generators = ", ".join([gen.__name__ for gen in glist])
+            syslog(LOG_ERR, "%s %s served by multiple generators: %s" % (entry.tag,
+                                                                         entry.get('name'), generators))
+            raise PluginExecutionError, (entry.tag, entry.get('name'))
         else:
             for gen in self.generators:
                 if hasattr(gen, "FindHandler"):
                     return gen.FindHandler(entry)(entry, metadata)
-            raise GeneratorError, (entry.tag, entry.get('name'))
+            raise PluginExecutionError, (entry.tag, entry.get('name'))
                 
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
@@ -203,7 +187,7 @@ class Core(object):
             except:
                 self.LogFailure("FamEvent")
         try:
-            self.core.stats.WriteBack()
+            self.stats.WriteBack()
         except:
             self.LogFailure("Statistics")
             
