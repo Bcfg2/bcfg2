@@ -3,8 +3,7 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from syslog import syslog, LOG_ERR
-from Bcfg2.Server.Generator import SingleXMLFileBacked
-from Bcfg2.Server.Plugin import Plugin
+from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked
 
 from elementtree.ElementTree import Element, XML
 from xml.parsers.expat import ExpatError
@@ -57,4 +56,4 @@ class Base(Plugin):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         self.base = BaseFile("%s/etc/base.xml"%(datastore), self.core.fam)
-        self.BuildStructure = self.base.BuildStructure
+        self.BuildStructures = self.base.BuildStructures
