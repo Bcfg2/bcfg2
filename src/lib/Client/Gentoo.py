@@ -10,7 +10,7 @@ from Bcfg2.Client.Toolset import Toolset
 
 class Gentoo(Toolset):
     '''This class implelements support for Gentoo binary packages and standard /etc/init.d services'''
-    pkgtool = ("/usr/bin/emerge --quiet --nospinner --usepkg --getbinpkg %s", ("%s-%s", ['name', 'version']))
+    pkgtool = {'emerge':("/usr/bin/emerge --quiet --nospinner --usepkg --getbinpkg %s", ("%s-%s", ['name', 'version']))}
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
