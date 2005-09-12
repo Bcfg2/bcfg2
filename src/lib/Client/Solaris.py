@@ -1,22 +1,27 @@
 # This is the bcfg2 support for solaris
 '''This provides bcfg2 support for Solaris'''
-__revision__ = '$Revision: 1.3 $'
+__revision__ = '$Revision$'
 
-from os import popen, system
+from os import popen, stat, system
 from popen2 import Popen4
 
 from Bcfg2.Client.Toolset import Toolset
 
 class Solaris(Toolset):
-    '''This class implelements support for SYSV packages and standard /etc/init.d services'''
-    pkgtool = ("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"]))
+    '''This class implelements support for SYSV/blastware/encap packages
+    and standard SMF services'''
+    tpkgtool = {'sysv':("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"])),
+                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
+                'encap':("/local/sbin/epkg -q %s", ("%s", ["url"]))}
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
-        self.cfg = cfg
-        self.pkgwork = {'add':[], 'update':[], 'remove':[]}
-        self.installed = {}
         self.extra_services = []
+        try:
+            stat("/opt/csw/bin/pkg-get")
+            system("/opt/csw/bin/pkg-get -U > /dev/null")
+        except OSError:
+            pass
         self.Refresh()
 
     def Refresh(self):
@@ -31,7 +36,13 @@ class Solaris(Toolset):
             l2 = lines.pop()
             name = l2.split()[0]
             version = l1.split()[1]
-            self.installed[name] = version 
+            self.installed[name] = version
+        # try to find encap packages
+        instp = popen("ls /local/encap 2>/dev/null")
+        lines = instp.readlines()
+        while (lines):
+            (name, version) = lines.pop().split('-')[:2]
+            self.installed[name] = version
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -66,16 +77,23 @@ class Solaris(Toolset):
             return False
 
     def VerifyPackage(self, entry, modlist):
-	'''Verify Package status for entry'''
+        '''Verify Package status for entry'''
         if not (entry.get('name') and entry.get('version')):
             print "Can't verify package, not enough data."
             return False
-        cmdrc = system("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))
+        if entry.get('type') in ['sysv', 'blast']:
+            cmdrc = system("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))
+        elif entry.get('type') in ['encap']:
+            try:
+                stat('/local/encap/%s-%s' % (entry.get('name'), entry.get('version')))
+                cmdrc = 0
+            except OSError:
+                cmdrc = 1
         if cmdrc != 0:
             self.CondPrint('debug', "Package %s version incorrect" % entry.get('name'))
         else:
             if entry.attrib.get('verify', 'true') == 'true':
-                if self.setup['quick']:
+                if self.setup['quick'] or entry.get('type') == 'encap':
                     return True
                 verp = Popen4("/usr/sbin/pkgchk -n %s" % (entry.get('name')), bufsize=16384)
                 odata = verp.fromchild.read()
@@ -98,7 +116,7 @@ class Solaris(Toolset):
         Toolset.Inventory(self)
         allsrv = [ x.strip() for x in popen("/usr/bin/svcs -a -H -o SVC").readlines() ]
         csrv = self.cfg.findall(".//Service")
-	nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
+        nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
         [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
 
