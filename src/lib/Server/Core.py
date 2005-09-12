@@ -100,8 +100,8 @@ class Core(object):
                     (trace, val, trb)=exc_info()
                     for line in extract_tb(trb):
                         syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-                        syslog(LOG_ERR, "%s: %s\n"%(trace, val))
-                        del trace, val, trb
+                    syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+                    del trace, val, trb
 
         for plugin in structures:
             if self.plugins.has_key(plugin):
@@ -142,6 +142,7 @@ class Core(object):
             for gen in self.generators:
                 if hasattr(gen, "FindHandler"):
                     return gen.FindHandler(entry)(entry, metadata)
+            syslog(LOG_ERR, "Failed to find handler for %s:%s" % (entry.tag, entry.get('name')))
             raise PluginExecutionError, (entry.tag, entry.get('name'))
                 
     def BuildConfiguration(self, client):
