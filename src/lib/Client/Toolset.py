@@ -495,42 +495,49 @@ class Toolset(object):
             [self.InstallEntry(ent) for ent in work if ent.tag != 'Package']
 
             packages = [pkg for pkg in work if pkg.tag == 'Package']
+            ptypes = []
+            [ptypes.append(ptype) for ptype in [pkg.get('type') for pkg in packages]
+             if pkg.get('type') not in ptypes]
             if packages:
-                # try single large install
-                self.CondPrint("verbose", "Trying single pass package install")
-                pkglist = " ".join([self.pkgtool[1][0] % tuple([pkg.get(field, '') for field in self.pkgtool[1][1]])
-                                    for pkg in packages])
-                self.CondPrint("debug", "Installing packages: %s" % pkglist)
-                cmdrc = system(self.pkgtool[0] % pkglist)
+                for pkgtype in ptypes:
+                    # try single large install
+                    self.CondPrint("verbose", "Trying single pass package install for pkgtype %s" % pkgtype)
+                    if not self.pkgtool.has_key(pkgtype):
+                        self.CondPrint("verbose", "No support for pkgtype %s" % (pkgtype))
+                        continue
+                    pkgtool = self.pkgtool[pkgtype]
+                    pkglist = " ".join([pkgtool[1][0] % tuple([pkg.get(field, '') for field in pkgtool[1][1]])
+                                        for pkg in packages if pkg.get('type') == pkgtype])
+                    self.CondPrint("debug", "Installing packages: %s" % pkglist)
+                    cmdrc = system(pkgtool[0] % pkglist)
 
-                if cmdrc == 0:
-                    self.CondPrint('verbose', "Single Pass Succeded")
-                    # set all package states to true and flush workqueues
-                    badpkgs = [entry for entry in self.states.keys() if entry.tag == 'Package'
-                               and not self.states[entry]]
-                    for entry in badpkgs:
-                        self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
-                        self.states[entry] = True
-                    self.Refresh()
-                else:
-                    self.CondPrint("verbose", "Single Pass Failed")
-                    # do single pass installs
-                    #system("dpkg --configure --pending")
-                    self.Refresh()
-                    for pkg in packages:
-                        # handle state tracking updates
-                        if self.VerifyPackage(pkg, []):
-                            self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
-                            self.states[pkg] = True
-                        else:
-                            self.CondPrint("verbose", "Installing pkg %s version %s" %
-                                           (pkg.get('name'), pkg.get('version')))
-                            cmdrc = system(self.pkgtool[0] %
-                                           (self.pkgtool[1][0]%tuple([pkg.get(field) for field in self.pkgtool[1][1]])))
-                            if cmdrc == 0:
+                    if cmdrc == 0:
+                        self.CondPrint('verbose', "Single Pass Succeded")
+                        # set all package states to true and flush workqueues
+                        badpkgs = [entry for entry in self.states.keys() if entry in pkglist
+                                   and not self.states[entry]]
+                        for entry in badpkgs:
+                            self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
+                            self.states[entry] = True
+                        self.Refresh()
+                    else:
+                        self.CondPrint("verbose", "Single Pass Failed")
+                        # do single pass installs
+                        self.Refresh()
+                        for pkg in pkglist:
+                            # handle state tracking updates
+                            if self.VerifyPackage(pkg, []):
+                                self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
                                 self.states[pkg] = True
                             else:
-                                self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
+                                self.CondPrint("verbose", "Installing pkg %s version %s" %
+                                               (pkg.get('name'), pkg.get('version')))
+                                cmdrc = system(pkgtool[0] %
+                                               (pkgtool[1][0]%tuple([pkg.get(field) for field in pkgtool[1][1]])))
+                                if cmdrc == 0:
+                                    self.states[pkg] = True
+                                else:
+                                    self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
             for entry in [ent for ent in work if self.states[ent]]:
                 work.remove(entry)
                 self.modified.append(entry)
