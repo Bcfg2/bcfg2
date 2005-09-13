@@ -506,10 +506,11 @@ class Toolset(object):
                         self.CondPrint("verbose", "No support for pkgtype %s" % (pkgtype))
                         continue
                     pkgtool = self.pkgtool[pkgtype]
-                    pkglist = " ".join([pkgtool[1][0] % tuple([pkg.get(field, '') for field in pkgtool[1][1]])
-                                        for pkg in packages if pkg.get('type') == pkgtype])
-                    self.CondPrint("debug", "Installing packages: %s" % pkglist)
-                    cmdrc = system(pkgtool[0] % pkglist)
+                    pkglist = [pkg for pkg in packages if pkg.get('type') == pkgtype]
+                    pkgargs = " ".join([pkgtool[1][0] % tuple([pkg.get(field, '') for field in pkgtool[1][1]])
+                                        for pkg in pkglist]
+                    self.CondPrint("debug", "Installing packages: %s" % pkgargs)
+                    cmdrc = system(pkgtool[0] % pkgargs)
 
                     if cmdrc == 0:
                         self.CondPrint('verbose', "Single Pass Succeded")
