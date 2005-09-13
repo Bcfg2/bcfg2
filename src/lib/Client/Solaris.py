@@ -23,7 +23,9 @@ class Solaris(Toolset):
         except OSError:
             pass
         self.Refresh()
-
+        for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
+            pkg.set('type', 'sysv')
+            
     def Refresh(self):
         '''Refresh memory hashes of packages'''
         self.installed = {}
