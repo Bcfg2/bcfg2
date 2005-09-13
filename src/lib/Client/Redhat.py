@@ -17,13 +17,18 @@ class Redhat(Toolset):
         Toolset.__init__(self, cfg, setup)
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         self.Refresh()
+        for pkg in [cpkg for cpkg in self.cfg.finall(".//Package") if not cpkg.attrib.has_key('type')]:
+            pkg.set('type', 'rpm')
+        for srv in [csrv for csrv in self.cfg.findall(".//Service") if not csrv.attrib.has_key('type')]:
+            srv.set('type', 'chkconfig')
         # relocation hack: we will define one pkgtool per relocation location
         for pkg in [cpkg for cpkg in self.cfg.findall('.//Package') if cpkg.attrib.has_key('reloc')]:
-            ptoolname = "rpm-reloc-%s" % (cpkg.get('reloc'))
+            ptoolname = "rpm-reloc-%s" % (pkg.get('reloc'))
             if not self.pkgtool.has_key(ptoolname):
-                cmd = "rpm --relocate /usr=%s --oldpackage --replacepkgs --quiet -U %%s"%(cpkg.get('reloc'))
+                cmd = "rpm --relocate %s --oldpackage --replacepkgs --quiet -U %%s"%(pkg.get('reloc'))
                 self.pkgtool[ptoolname] = (cmd, ("%s", ["url"]))
             pkg.set('type', ptoolname)
+
 
     def Refresh(self):
         '''Refresh memory hashes of packages'''
