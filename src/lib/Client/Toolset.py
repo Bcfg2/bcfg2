@@ -508,7 +508,7 @@ class Toolset(object):
                     pkgtool = self.pkgtool[pkgtype]
                     pkglist = [pkg for pkg in packages if pkg.get('type') == pkgtype]
                     pkgargs = " ".join([pkgtool[1][0] % tuple([pkg.get(field, '') for field in pkgtool[1][1]])
-                                        for pkg in pkglist]
+                                        for pkg in pkglist])
                     self.CondPrint("debug", "Installing packages: %s" % pkgargs)
                     cmdrc = system(pkgtool[0] % pkgargs)
 
