@@ -21,6 +21,7 @@
       <xsd:element name='Package' type='PackageType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='uri' use='required'/>
+    <xsd:attribute type='xsd:string' name='type' use='required'/>
   </xsd:complexType>
 
   <xsd:element name='PackageList'>
