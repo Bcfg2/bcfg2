@@ -430,7 +430,8 @@ class Toolset(object):
                                    (child.tag, child.get('name'), self.states[child]))
                 for postinst in [entry for entry in bchildren if entry.tag == 'PostInstall']:
                     system(postinst.get('name'))
-                for svc in [svc for svc in bchildren if svc.tag == 'Service' and svc.get('status', 'off') == 'on']:
+                for svc in [svc for svc in bchildren if svc.tag == 'Service' and
+                            svc.get('status', 'off') == 'on']:
                     if self.setup['build']:
                         # stop services in miniroot
                         system('/etc/init.d/%s stop' % svc.get('name'))
