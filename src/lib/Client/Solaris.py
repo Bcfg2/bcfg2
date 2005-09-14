@@ -2,18 +2,22 @@
 '''This provides bcfg2 support for Solaris'''
 __revision__ = '$Revision$'
 
+from glob import glob
 from os import popen, stat, system
 from popen2 import Popen4
+from re import compile as regcompile
 
 from Bcfg2.Client.Toolset import Toolset
 
 class Solaris(Toolset):
     '''This class implelements support for SYSV/blastware/encap packages
     and standard SMF services'''
-    tpkgtool = {'sysv':("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"])),
-                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
-                'encap':("/local/sbin/epkg -q %s", ("%s", ["url"]))}
-
+    pkgtool = {'sysv':("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"])),
+               'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
+               'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
+    splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
+    ptypes = {}
+    
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.extra_services = []
@@ -29,7 +33,7 @@ class Solaris(Toolset):
     def Refresh(self):
         '''Refresh memory hashes of packages'''
         self.installed = {}
-
+        self.ptypes = {}
         # Build list of packages
         instp = popen("/usr/bin/pkginfo -x")
         lines = instp.readlines()
@@ -39,12 +43,15 @@ class Solaris(Toolset):
             name = l2.split()[0]
             version = l1.split()[1]
             self.installed[name] = version
+            self.ptypes[name] = 'sysv'
         # try to find encap packages
-        instp = popen("ls /local/encap 2>/dev/null")
-        lines = instp.readlines()
-        while (lines):
-            (name, version) = lines.pop().split('-')[:2]
-            self.installed[name] = version
+        for pkg in glob("/local/encap/*"):
+            match = self.splitter.match(pkg)
+            if match:
+                self.installed[match.group('name')] = match.group('version')
+                self.ptypes[match.group('name')] = 'encap'
+            else:
+                print "Failed to split name %s" % pkg
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -86,11 +93,8 @@ class Solaris(Toolset):
         if entry.get('type') in ['sysv', 'blast']:
             cmdrc = system("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))
         elif entry.get('type') in ['encap']:
-            try:
-                stat('/local/encap/%s-%s' % (entry.get('name'), entry.get('version')))
-                cmdrc = 0
-            except OSError:
-                cmdrc = 1
+            cmdrc = system("/local/sbin/epkg -q -k %s-%s >/dev/null" %
+                           (entry.get('name'), entry.get('version')))
         if cmdrc != 0:
             self.CondPrint('debug', "Package %s version incorrect" % entry.get('name'))
         else:
@@ -103,7 +107,7 @@ class Solaris(Toolset):
                 while vstat == -1:
                     odata += verp.fromchild.read()
                     vstat = verp.poll()
-                output = [line for line in odata.split("\n") if line.find('ERROR')]
+                output = [line for line in odata.split("\n") if line[:5] == 'ERROR']
                 if vstat == 0:
                     return True
                 else:
@@ -116,9 +120,11 @@ class Solaris(Toolset):
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = [ x.strip() for x in popen("/usr/bin/svcs -a -H -o SVC").readlines() ]
+        allsrv = [name for name, version in [ x.strip().split() for x in
+                                              popen("/usr/bin/svcs -a -H -o SVC,STATE").readlines() ]
+                  if version != 'disabled']
         csrv = self.cfg.findall(".//Service")
-        nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
+        #nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
         [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
 
@@ -127,7 +133,12 @@ class Solaris(Toolset):
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.CondPrint('verbose', "Removing packages: %s" % (self.pkgwork['remove']))
-                system("/usr/sbin/pkgrm -n %s" % " ".join(self.pkgwork['remove']))
+                sysvrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'sysv']
+                enrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'encap']
+                if sysvrmpkgs:
+                    system("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs))
+                if enrmpkgs:
+                    system("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
                 if len(self.extra_services) > 0:
