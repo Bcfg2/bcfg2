@@ -4,10 +4,19 @@
   <section>
     <title>Quick Start</title>
 
-  <para>Example report config</para>
-  <para>put this line in cron to run nightly</para>
-  <para>wait for the mail, check your website </para>
-  <para>be sure sources are in your web directory.</para>
+  <para>Example report config:</para>
+  <para>Example Report Configuration Here</para>
+  <para>In order to run reports, you need to run the following command
+      regularly via <command>Cron</command>:
+      <command>GenerateHostInfo</command></para>
+  <para>Once configured correctly, just wait for the e-mail or check
+      look at the output html files with a web browser. You can run
+      <command>GenerateHostInfo</command> by hand if you would like
+      in order to try it out immediately. If you are trying to view a
+      HTML file and find that it doesn't work as expected, make sure
+      that the required source directory is in the same directory. They 
+      are static, but might need to be moved from /(prefix)/share/bcfg2/
+      in to the directory from which you are viewing your reports.</para>
 </section>
 
   <section>
@@ -67,7 +76,7 @@
   </section>
 
   <section>
-    <title>Reports</title>
+    <title>Reports Types</title>
     
     <para>
       There are a number of report types, and a number of delivery
@@ -171,6 +180,6 @@
 
     <para>http://docs.python.org/lib/re-syntax.html</para>
 
-    <para>How to write your own reports</para>
+    <para>Writing Custom Reports</para>
   </section>
 </chapter>
