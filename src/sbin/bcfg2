@@ -29,8 +29,13 @@ def load_toolset(toolset, config, clientsetup):
             print 'Selected RedHat Toolset...'
         mod = __import__("Bcfg2.Client.Redhat", globals(), locals(), ['*'])
         return mod.Redhat(config, clientsetup)
+    elif toolset == 'solaris':
+        if setup['verbose']:
+            print "Selected Solaris Toolset"
+        mod = __import__("Bcfg2.Client.Solaris", globals(), locals(), ['*'])
+        return mod.Solaris(config, clientsetup)
     else:
-        print "Toolset not correctly provided by the server."
+        print "Got unsupported toolset %s from server." % (toolset)
         raise SystemExit, 1
         
 
