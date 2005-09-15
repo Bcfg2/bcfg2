@@ -50,14 +50,22 @@
 </section>
 
   <section>
-    <title>Concepts -- Why to report, big picture</title>
+    <title>Concepts; Why to report</title>
 
-    <para>So you'll recive a report-- however you might get it--and
-      it'll contain any sort of info, like general net health, or specific
-      node broken packages, or... whatever. You choose. This will help you
-      correct your configuratin file, and audit things, and fix any nodes
-      that got all hosed.
-    </para>
+    <para>Reports play an important role in effectively managing systems
+      with BCFG. There are two primary functions they fulfill; providing 
+      otherwise unobtainable information, and presenting additional
+      helpful information to allow for easier admistration. Reports
+      can contain information including system statistics, discrepancies
+      between specified and actual configuration, invalid configuration,
+      and auditing information among other things.</para>
+
+    <para>The flexible XML configuration file allows reports to be configured
+      to deliver only the information that is important. Additional reports 
+      can easily be created, providing site-specific capability to manage
+      at record effiency. The capability to harvest information regarding
+      statistics, configuration, and problems in a single location should
+      prove to be powerful.</para>
   </section>
 
   <section>
@@ -172,7 +180,7 @@
       </varlistentry>
     </variablelist>
 
-    <para>Here is a list of possible delivery mechanisms.</para>
+    <para>A list of delivery mechanisms follows:</para>
 
     <variablelist>
       <varlistentry>
