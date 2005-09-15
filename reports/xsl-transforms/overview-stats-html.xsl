@@ -106,9 +106,9 @@
                 </div>
                 <br/>
                 <br/>
-            <p>
-                <a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0!</a>
-            </p>
+		<p>
+        	    <a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0!</a>
+	        </p>
             </body>
         </html>
     </xsl:template>
