@@ -3,16 +3,31 @@
 __revision__ = '$Revision$'
 
 from glob import glob
-from os import popen, stat, system
+from os import popen, stat, system, unlink
 from popen2 import Popen4
 from re import compile as regcompile
+from tempfile import mktemp
 
 from Bcfg2.Client.Toolset import Toolset
+
+noask = '''
+mail=
+instance=overwrite
+partial=nocheck
+runlevel=nocheck
+idepend=nocheck
+rdepend=nocheck
+space=ask
+setuid=nocheck
+conflict=nocheck
+action=nocheck
+basedir=default
+'''
 
 class Solaris(Toolset):
     '''This class implelements support for SYSV/blastware/encap packages
     and standard SMF services'''
-    pkgtool = {'sysv':("/usr/sbin/pkgadd -d %s -n all", ("%s", ["url"])),
+    pkgtool = {'sysv':("/usr/sbin/pkgadd %s -d %%s -n all", ("%s", ["url"])),
                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
                'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
     splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
@@ -21,6 +36,13 @@ class Solaris(Toolset):
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.extra_services = []
+        self.snames = {}
+        self.noaskname = mktemp()
+        try:
+            open(self.noaskname, 'w+').write(noask)
+            self.pkgtool['sysv'] = (self.pkgtool['sysv'][0] % ("-a %s" % (self.noaskname)), self.pkgtool['sysv'][1])
+        except:
+            self.pkgtool['sysv'] = (self.pkgtool['sysv'][0] % (""), self.pkgtool['sysv'][1])
         try:
             stat("/opt/csw/bin/pkg-get")
             system("/opt/csw/bin/pkg-get -U > /dev/null")
@@ -55,6 +77,21 @@ class Solaris(Toolset):
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
+        if not entry.attrib.has_key('FMRI'):
+            name = popen("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % entry.get('name')).read().strip()
+            if name:
+                entry.set('FMRI', name)
+            else:
+                self.CondPrint('verbose', 'Failed to locate FMRI for service %s' % entry.get('name'))
+                return False
+        if entry.get('FMRI')[:3] == 'lrc':
+            filename = entry.get('FMRI').split('/')[-1]
+            # this is a legacy service
+            gname = "/etc/rc*.d/%s" % filename
+            if glob(gname.replace('_', '.')):
+                return entry.get('status') == 'on'
+            else:
+                return entry.get('status') == 'off'
         try:
             srvdata = popen("/usr/bin/svcs -H -o STA %s" % entry.attrib['name']).readlines()[0].split()
         except IndexError:
@@ -68,18 +105,27 @@ class Solaris(Toolset):
 
     def InstallService(self, entry):
         '''Install Service entry'''
-        system("/usr/sbin/svcadm enable -r %s" % (entry.attrib['name']))
+        if not entry.attrib.has_key('status'):
+            self.CondPrint('verbose', 'Insufficient information for Service %s; cannot Install' % entry.get('name'))
+            return False
+        if not entry.attrib.has_key('FMRI'):
+            name = popen("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % entry.get('name')).read().strip()
+            if name:
+                entry.set('FMRI', name)
+            else:
+                self.CondPrint('verbose', 'Failed to locate FMRI for service %s' % entry.get('name'))
+                return False
         self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
                 print "Disabling Service %s" % (entry.get('name'))
             else:
-                cmdrc = system("/usr/sbin/svcadm disable %s" % (entry.attrib['name']))
+                cmdrc = system("/usr/sbin/svcadm disable -r %s" % (entry.attrib['FMRI']))
         else:
             if self.setup['dryrun']:
                 print "Enabling Service %s" % (entry.attrib['name'])
             else:
-                cmdrc = system("/usr/sbin/svcadm enable %s" % (entry.attrib['name']))
+                cmdrc = system("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))
         if cmdrc == 0:
             return True
         else:
@@ -87,8 +133,9 @@ class Solaris(Toolset):
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
-        if not (entry.get('name') and entry.get('version')):
-            print "Can't verify package, not enough data."
+        if not entry.get('version'):
+            self.CondPrint('verbose',
+                           "Insufficient information of Package %s; cannot Verify" % entry.get('name'))
             return False
         if entry.get('type') in ['sysv', 'blast']:
             cmdrc = system("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))
@@ -121,11 +168,19 @@ class Solaris(Toolset):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
         allsrv = [name for name, version in [ x.strip().split() for x in
-                                              popen("/usr/bin/svcs -a -H -o SVC,STATE").readlines() ]
+                                              popen("/usr/bin/svcs -a -H -o FMRI,STATE").readlines() ]
                   if version != 'disabled']
         csrv = self.cfg.findall(".//Service")
+        # need to build a service name map. services map to a fullname if they are already installed
+        for srv in csrv:
+            name = popen("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % srv.get('name')).read().strip()
+            if name:
+                srv.set('FMRI', name)
+            else:
+                self.CondPrint("verbose", "failed to locate FMRI for service %s" % srv.get('name'))
         #nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
-        [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
+        [allsrv.remove(svc.get('FMRI')) for svc in csrv if
+         svc.get('status') == 'on' and svc.get("FMRI") in allsrv]
         self.extra_services = allsrv
 
     def HandleExtra(self):
@@ -148,3 +203,10 @@ class Solaris(Toolset):
                             system("/usr/sbin/svcadm disable %s" % service)
                     else:
                         self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
+
+    def Install(self):
+        Toolset.Install(self)
+        try:
+            unlink(self.noaskname)
+        except:
+            pass
