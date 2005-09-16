@@ -329,6 +329,10 @@ class Toolset(object):
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
+        if entry.text == None:
+            self.CondPrint('verbose',
+                           "Incomplete information for ConfigFile %s. Cannot install" % (entry.get('name')))
+            return False
         self.CondPrint('verbose', "Installing ConfigFile %s" % (entry.get('name')))
 
         if self.setup['dryrun']:
@@ -497,8 +501,9 @@ class Toolset(object):
 
             packages = [pkg for pkg in work if pkg.tag == 'Package']
             ptypes = []
-            [ptypes.append(ptype) for ptype in [pkg.get('type') for pkg in packages]
-             if pkg.get('type') not in ptypes]
+            for pkg in packages:
+                if pkg.get('type') not in ptypes:
+                    ptypes.append(pkg.get('type'))
             if packages:
                 for pkgtype in ptypes:
                     # try single large install
@@ -508,9 +513,16 @@ class Toolset(object):
                         continue
                     pkgtool = self.pkgtool[pkgtype]
                     pkglist = [pkg for pkg in packages if pkg.get('type') == pkgtype]
-                    pkgargs = " ".join([pkgtool[1][0] % tuple([pkg.get(field, '') for field in pkgtool[1][1]])
+                    for field in pkgtool[1][1]:
+                        pkglist = [pkg for pkg in pkglist if pkg.attrib.has_key(field)]
+                    if not pkglist:
+                        self.CondPrint("debug", "No complete/installable packages of type %s" % pkgtype)
+                        continue
+                    pkgargs = " ".join([pkgtool[1][0] % tuple([pkg.get(field) for field in pkgtool[1][1]])
                                         for pkg in pkglist])
-                    self.CondPrint("debug", "Installing packages: %s" % pkgargs)
+
+                    self.CondPrint("debug", "Installing packages: :%s:" % pkgargs)
+                    self.CondPrint("debug", "Running command ::%s::" % (pkgtool[0] % pkgargs))
                     cmdrc = system(pkgtool[0] % pkgargs)
 
                     if cmdrc == 0:
