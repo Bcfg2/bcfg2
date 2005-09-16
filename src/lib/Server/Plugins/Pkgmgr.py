@@ -3,13 +3,15 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from re import compile as regcompile
+from syslog import syslog, LOG_ERR
 
 from Bcfg2.Server.Plugin import Plugin, PluginInitError, PluginExecutionError, DirectoryBacked, XMLFileBacked
 
 class PackageEntry(XMLFileBacked):
     '''PackageEntry is a set of packages and locations for a single image'''
     __identifier__ = 'image'
-    rpm = regcompile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$')
+    splitters = {'rpm':regcompile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$'),
+                 'encap':regcompile('^(?P<name>\w+)-(?P<version>[\w\d\.-]+).encap.*$')}
 
     def Index(self):
         '''Build internal data structures'''
@@ -22,17 +24,18 @@ class PackageEntry(XMLFileBacked):
                 if pkg.attrib.has_key("simplefile"):
                     self.packages[pkg.get('name')] = deepcopy(pkg.attrib)
                     # most attribs will be set from pkg
-                    self.packages[pkg.get('name')]['uri'] = "%s/%s" % (location.get('uri'), pkg.get('simplefile'))
+                    self.packages[pkg.get('name')]['url'] = "%s/%s" % (location.get('uri'), pkg.get('simplefile'))
                 elif pkg.attrib.has_key("file"):
-                    mdata = self.rpm.match(pkg.get('file'))
-                    if not mdata:
-                        print "failed to rpm match %s" % (pkg.get('file'))
-                        continue
-                    pkgname = mdata.group('name')
-                    self.packages[pkgname] = mdata.groupdict()
-                    self.packages[pkgname]['file'] = pkg.get('file')
-                    self.packages[pkgname]['uri'] = location.get('uri')
-                    self.packages[pkgname]['type'] = 'rpm'
+                    for ptype in self.splitters:
+                        mdata = self.splitters[ptype].match(pkg.get('file'))
+                        if not mdata:
+                            continue
+                        pkgname = mdata.group('name')
+                        self.packages[pkgname] = mdata.groupdict()
+                        self.packages[pkgname]['url'] = location.get('uri') + '/' + pkg.get('file')
+                        self.packages[pkgname]['type'] = ptype
+                        break
+                    syslog(LOG_ERR, "Failed to match pkg %s" % pkg.get('file'))
                 else:
                     self.packages[pkg.get('name')] = pkg.attrib
 
@@ -73,10 +76,6 @@ class Pkgmgr(Plugin):
             raise PluginExecutionError, ("Image", metadata.image)
         pkglist = self.pkgdir["%s.xml" % (metadata.image)]
         if pkglist.packages.has_key(pkgname):
-            pkg = pkglist.packages[pkgname]
-            if pkg.get('type', None) == 'rpm':
-                entry.attrib.update({'url':"%s/%s" % (pkg['uri'], pkg['file']), 'version':pkg['version']})
-            else:
-                entry.attrib.update(pkg)
+            entry.attrib.update(pkglist.packages[pkgname])
         else:
             raise PluginExecutionError, ("Package", pkgname)
