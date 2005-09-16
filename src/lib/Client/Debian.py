@@ -32,7 +32,7 @@ class Debian(Toolset):
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         self.extra_services = []
-        for pkg in [cpkg for cpkg in self.cfg.finall(".//Package") if not cpkg.attrib.has_key('type')]:
+        for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
             pkg.set('type', 'deb')
         self.Refresh()
 
