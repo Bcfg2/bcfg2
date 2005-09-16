@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 from socket import gethostbyname, gaierror
 from syslog import syslog, LOG_ERR
-from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, SingleXMLFileBacked, GeneratorError
+from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, SingleXMLFileBacked, PluginExecutionError
 
 class ChibaConf(SingleXMLFileBacked):
     '''This class encapsulates all information needed for all Chiba config ops'''
@@ -19,12 +19,11 @@ class Chiba(Plugin):
     __name__ = 'Chiba'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    Entries = {'ConfigFile':{}}
 
     def __init__(self, core, datastore):
-        Generator.__init__(self, core, datastore)
+        Plugin.__init__(self, core, datastore)
         self.repo = DirectoryBacked(self.data, self.core.fam)
-        self.Entries['ConfigFile']['/etc/network/interfaces'] = self.build_interfaces
+        self.Entries = {'ConfigFile': {'/etc/network/interfaces':self.build_interfaces}}
 
     def build_interfaces(self, entry, metadata):
         '''build network configs for clients'''
@@ -35,6 +34,6 @@ class Chiba(Plugin):
             myriaddr = gethostbyname("%s-myr" % metadata.hostname)
         except gaierror:
             syslog(LOG_ERR, "Failed to resolve %s-myr"% metadata.hostname)
-            raise GeneratorError, ("%s-myr" % metadata.hostname, 'lookup')
+            raise PluginExecutionError, ("%s-myr" % metadata.hostname, 'lookup')
         entry.text = self.repo.entries['interfaces-template'].data % myriaddr
 
