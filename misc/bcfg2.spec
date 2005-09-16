@@ -53,6 +53,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/sbin/Bcfg2Server
 /usr/sbin/ValidateBcfg2Repo
 /usr/sbin/StatReports
+/usr/bin/GenerateHostInfo
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/Server/*
 /usr/share/bcfg2/schemas/*
 /usr/share/bcfg2/xsl-transforms/*
