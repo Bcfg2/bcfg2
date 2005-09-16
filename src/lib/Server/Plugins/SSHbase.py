@@ -37,14 +37,18 @@ class SSHbase(Plugin):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         self.repository = DirectoryBacked(self.data, self.core.fam)
+        try:
+            prefix = open("%s/%s" % (self.data, prefix)).read().strip()
+        except IOError:
+            prefix = ''
         self.Entries = {'ConfigFile':
-                             {'/etc/ssh/ssh_known_hosts':self.build_skn, 
-                              '/etc/ssh/ssh_host_dsa_key':self.build_hk,
-                              '/etc/ssh/ssh_host_rsa_key':self.build_hk,
-                              '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
-                              '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
-                              '/etc/ssh/ssh_host_key':self.build_hk,
-                              '/etc/ssh/ssh_host_key.pub':self.build_hk}}
+                             {prefix + '/etc/ssh/ssh_known_hosts':self.build_skn, 
+                              prefix + '/etc/ssh/ssh_host_dsa_key':self.build_hk,
+                              prefix + '/etc/ssh/ssh_host_rsa_key':self.build_hk,
+                              prefix + '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
+                              prefix + '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
+                              prefix + '/etc/ssh/ssh_host_key':self.build_hk,
+                              prefix + '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
         self.domains = ['mcs.anl.gov', 'bgl.mcs.anl.gov', 'globus.org', 'uc.teragrid.org']
 
