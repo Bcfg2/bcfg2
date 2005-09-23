@@ -26,16 +26,26 @@ class PackageEntry(XMLFileBacked):
                     # most attribs will be set from pkg
                     self.packages[pkg.get('name')]['url'] = "%s/%s" % (location.get('uri'), pkg.get('simplefile'))
                 elif pkg.attrib.has_key("file"):
-                    for ptype in self.splitters:
-                        mdata = self.splitters[ptype].match(pkg.get('file'))
+                    if self.splitters.has_key(pkg.get('type')):
+                        mdata = self.splitters[pkg.get('type')].match(pkg.get('file'))
                         if not mdata:
+                            syslog(LOG_ERR, "Failed to match pkg %s" % pkg.get('file'))
                             continue
                         pkgname = mdata.group('name')
                         self.packages[pkgname] = mdata.groupdict()
                         self.packages[pkgname]['url'] = location.get('uri') + '/' + pkg.get('file')
-                        self.packages[pkgname]['type'] = ptype
-                        break
-                    syslog(LOG_ERR, "Failed to match pkg %s" % pkg.get('file'))
+                    else:
+                        derived = [(ptype, self.splitters[ptype].match(pkg.get('file')).groupdict())
+                                    for ptype in self.splitters if self.splitters[ptype].match(pkg.get('file'))]
+                        if not derived:
+                            syslog("Failed to match pkg %s" % pkg.get('file'))
+                        else:
+                            (ptype, mdata) = derived[0]
+                            print mdata
+                            pkgname = mdata['name']
+                            self.packages[pkgname] = mdata
+                            self.packages[pkgname]['url'] = location.get('uri') + '/' + pkg.get('file')
+                            self.packages[pkgname]['type'] = ptype
                 else:
                     self.packages[pkg.get('name')] = pkg.attrib
 
