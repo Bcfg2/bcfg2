@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from binascii import b2a_base64
-from os import rename, system
+from os import rename, system, popen
 from socket import gethostbyname, gaierror
 
 from Bcfg2.Server.Plugin import Plugin, DirectoryBacked
@@ -38,7 +38,7 @@ class SSHbase(Plugin):
         Plugin.__init__(self, core, datastore)
         self.repository = DirectoryBacked(self.data, self.core.fam)
         try:
-            prefix = open("%s/%s" % (self.data, prefix)).read().strip()
+            prefix = open("%s/prefix" % (self.data)).read().strip()
         except IOError:
             prefix = ''
         self.Entries = {'ConfigFile':
@@ -59,7 +59,7 @@ class SSHbase(Plugin):
         else:
             # need to add entry
             if self.repository.entries.has_key('domains'):
-                domains = self.repository.entries['domains'].split()
+                domains = self.repository.entries['domains'].data.split()
             else:
                 domains = self.domains
             for domain in domains:
@@ -70,6 +70,14 @@ class SSHbase(Plugin):
                     return (ipaddr, fqdn)
                 except gaierror:
                     continue
+                if len(domains) == 1:
+                    domain = domains[0]
+                    fqdn = "%s.%s" % (client, domain)
+                    data = popen("getent hosts %s" % (client)).read().strip().split()
+                    if data:
+                        return (data[0], fqdn)
+                    else:
+                        continue
             self.LogError("Failed to find fqdn for %s" % client)
             raise gaierror
 
