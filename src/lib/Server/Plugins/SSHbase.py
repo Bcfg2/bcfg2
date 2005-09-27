@@ -63,7 +63,10 @@ class SSHbase(Plugin):
                 return (ipaddr, client)
             except gaierror:
                 pass
-        ipaddr = popen("getent hosts %s" % client).read().strip().split()
+        try:
+            ipaddr = popen("getent hosts %s" % client).read().strip().split()
+        except:
+            ipaddr = ''
         if ipaddr:
             self.ipcache[client] = (ipaddr, client)
             return (ipaddr, client)
