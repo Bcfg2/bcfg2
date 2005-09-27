@@ -2,24 +2,25 @@
 # Jul 17 2005
 #GenerateHostInfo - Joey Hagedorn - hagedorn@mcs.anl.gov
 
-__revision__ = '$Revision$'
 '''Generates hostinfo.xml at a regular interval'''
+__revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
-from elementtree.ElementTree import *
-from xml.parsers.expat import ExpatError
+from elementtree.ElementTree import Element, SubElement, parse
 from os import system
-from socket import gethostbyname, gethostbyaddr, gaierror
+from socket import gethostbyname, gaierror
 
 def buildfqdncache(domain_list, host_list):
     '''build dictionary of hostname to fqdns'''
     fqdncache = {}
     for nodename in host_list:
+        if nodename.count('.') > 0:
+            fqdncache[nodename] = nodename
         fqdncache[nodename] = ""
         for domain in domain_list:
             try:
                 fqdn = "%s.%s" % (nodename, domain)
-                ipaddr = gethostbyname(fqdn)
+                gethostbyname(fqdn)
                 fqdncache[nodename] = fqdn
                 break
             except gaierror:
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     sendmailpath = c.get('statistics','sendmailpath')
     
     metaElement =  parse(metadatapath)
-    hostlist = map(lambda x:x.get("name"), metaElement.findall("Client"))
+    hostlist = [client.get('name') for client in metaElement.findall("Client")]
 
     fqdn_cache = buildfqdncache(domainlist, hostlist)
 
