@@ -37,7 +37,7 @@ if __name__ == '__main__':
     open(cf.get('server', 'metadata') + '/metadata.xml.new'), 'w').write(tostring(metadata))
 
     sshdir = cf.get('server', 'repository') + '/SSHbase/'
-    for key in glob(sshdir + "*key.H_*"):
+    for key in glob(sshdir + "*key*.H_*"):
         hostname = key.split('.H_')[1]
         if not hostcache.has_key(hostname):
             for dom in domainlist:
