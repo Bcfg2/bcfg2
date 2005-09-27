@@ -109,4 +109,55 @@ $ python setup.py install
     machine bcfgserver, port 8052, with the wire protocol "challenge".
     </para>
   </sect1>
+  <sect1>
+    <title>New-Style XML-RPC Deployments</title>
+
+    <para>
+      A new version of the Bcfg2 software is in testing that will
+      provide simplified and standards compliant communications
+      facilities. Instead of the use of SSSlib for communication, the
+      server and clients can use HTTPS XML-RPC instead. This has
+      required reimplementing the server and providing XML-RPC support
+      for the client, but provides drastically simplified setup for
+      new installs.
+    </para>
+
+    <para>
+      The prerequisite list now includes ElementTree, M2Crypto (for
+      SSL functions) and Python 2.2 or newer. ElementTree and M2Crypto
+      are both python modules that can be easily installed and are
+      already packaged for many Linux distributions.
+    </para>
+
+    <sect2>
+      <title>SSL Certificate Generation</title>
+
+      <para>SSL is used for channel-level data encryption. The
+      requisite SSL certificates must be generated on the server
+      side. I need to figure out how to do this.
+      </para>
+
+    </sect2>
+
+    <sect2>
+      <title>Communication Bootstrapping</title>
+
+      <para>
+	The Bcfg2 client must be able to find the server's
+	location. This is accomplished through the use of the
+	communication settings in <filename>/etc/bcfg2.conf</filename>
+	Two settings for the this section are required: protocol and
+	server url. 
+      </para>
+
+      <example>
+	<title>Bcfg2 XML-RPC Communication Settings</title>
+	<programlisting>
+	  [communication]
+	  protocol = xmlrpc/ssl
+	  url = https://localhost:9443
+	</programlisting>
+      </example>
+    </sect2>
+  </sect1>
 </chapter>
