@@ -27,7 +27,8 @@ class Metadata(object):
             (other.classes and (other.classes in self.classes)) or
             (other.attributes and (other.attributes in self.attributes)) or
             (other.bundles and (other.bundles in self.bundles)) or
-            (other.hostname and (self.hostname == other.hostname))):
+            (other.hostname and (self.hostname == other.hostname)) or
+            (other.hostname and (self.hostname.split('.')[0] == other.hostname))):
             return True
         else:
             return False
