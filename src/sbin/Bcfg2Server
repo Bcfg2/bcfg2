@@ -82,7 +82,7 @@ class BcfgServer(Server):
             client = setup['client']
         else:
             try:
-                client = gethostbyaddr(peer)[0].split('.')[0]
+                client = gethostbyaddr(peer)[0]
             except herror:
                 return Element("error", type='host resolution error')
 
@@ -101,7 +101,7 @@ class BcfgServer(Server):
         '''Get Probes for Client'''
         r = Element('probes')
         try:
-            client = gethostbyaddr(peer)[0].split('.')[0]
+            client = gethostbyaddr(peer)[0]
         except herror:
             return Element("error", type='host resolution error')
         try:
@@ -116,7 +116,7 @@ class BcfgServer(Server):
     def put_probe_data(self, xml, (peer, port)):
         '''Return Probe output to generators'''
         try:
-            client = gethostbyaddr(peer)[0].split('.')[0]
+            client = gethostbyaddr(peer)[0]
         except herror:
             return Element("error", type='host resolution error')
         for data in xml.findall(".//probe-data"):
@@ -133,7 +133,7 @@ class BcfgServer(Server):
         # Versioned stats to prevent tied client/server upgrade
         if e.get('version') >= '2.0':
             try:
-                client = gethostbyaddr(peer)[0].split('.')[0]
+                client = gethostbyaddr(peer)[0]
             except herror:
                 return Element("error", type='host resolution error')
 
