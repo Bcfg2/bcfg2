@@ -229,7 +229,7 @@ if __name__ == '__main__':
                 nodel.append(hostinfo)
 
         for nod in statsdata.findall("Node"):
-            if nod.get("name") == client.get("name"):
+            if nod.get("name") == client.get("name") or "%s." % nod.get('name') in client.get('name'):
                 for statel in nod.findall("Statistics"):
                     nodel.append(statel)
         nodereport.append(nodel)
