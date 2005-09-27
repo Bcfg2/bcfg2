@@ -31,9 +31,11 @@ class Chiba(Plugin):
         entry.attrib['group'] = 'root'
         entry.attrib['perms'] = '0644'
         try:
-            myriaddr = gethostbyname("%s-myr" % metadata.hostname)
+            myriname = "%s-myr.%s" % (metadata.hostname.split('.')[0],
+                                      ".".join(metadata.hostname.split('.')[1:]))
+            myriaddr = gethostbyname(myriname)
         except gaierror:
-            syslog(LOG_ERR, "Failed to resolve %s-myr"% metadata.hostname)
-            raise PluginExecutionError, ("%s-myr" % metadata.hostname, 'lookup')
+            syslog(LOG_ERR, "Failed to resolve %s"% myriname)
+            raise PluginExecutionError, (myriname, 'lookup')
         entry.text = self.repo.entries['interfaces-template'].data % myriaddr
 
