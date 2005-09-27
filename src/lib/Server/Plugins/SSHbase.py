@@ -50,7 +50,6 @@ class SSHbase(Plugin):
                               prefix + '/etc/ssh/ssh_host_key':self.build_hk,
                               prefix + '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
-        self.domains = ['mcs.anl.gov', 'bgl.mcs.anl.gov', 'globus.org', 'uc.teragrid.org']
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
@@ -58,28 +57,18 @@ class SSHbase(Plugin):
             return self.ipcache[client]
         else:
             # need to add entry
-            if self.repository.entries.has_key('domains'):
-                domains = self.repository.entries['domains'].data.split()
-            else:
-                domains = self.domains
-            for domain in domains:
-                try:
-                    fqdn = "%s.%s" % (client, domain)
-                    ipaddr = gethostbyname("%s.%s" % (client, domain))
-                    self.ipcache[client] = (ipaddr, fqdn)
-                    return (ipaddr, fqdn)
-                except gaierror:
-                    continue
-                if len(domains) == 1:
-                    domain = domains[0]
-                    fqdn = "%s.%s" % (client, domain)
-                    data = popen("getent hosts %s" % (client)).read().strip().split()
-                    if data:
-                        return (data[0], fqdn)
-                    else:
-                        continue
-            self.LogError("Failed to find fqdn for %s" % client)
-            raise gaierror
+            try:
+                ipaddr = gethostbyname(client)
+                self.ipcache[client] = (ipaddr, client)
+                return (ipaddr, client)
+            except gaierror:
+                pass
+        ipaddr = popen("getent hosts %s" % client).read().strip().split()
+        if ipaddr:
+            self.ipcache[client] = (ipaddr, client)
+            return (ipaddr, client)
+        self.LogError("Failed to find IP address for %s" % client)
+        raise gaierror
 
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
@@ -90,9 +79,9 @@ class SSHbase(Plugin):
                 (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
             except gaierror:
                 continue
-            self.static_skn += "%s,%s,%s %s" % (hostname, fqdn, ipaddr,
+            shortname = hostname.split('.')[0]
+            self.static_skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
                                          self.repository.entries[pubkey].data)
-            
 
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
