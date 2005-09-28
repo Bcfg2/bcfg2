@@ -7,25 +7,8 @@ __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
 from elementtree.ElementTree import Element, SubElement, parse
-from os import system
-from socket import gethostbyname, gaierror
-
-def buildfqdncache(domain_list, host_list):
-    '''build dictionary of hostname to fqdns'''
-    fqdncache = {}
-    for nodename in host_list:
-        if nodename.count('.') > 0:
-            fqdncache[nodename] = nodename
-        fqdncache[nodename] = ""
-        for domain in domain_list:
-            try:
-                fqdn = "%s.%s" % (nodename, domain)
-                gethostbyname(fqdn)
-                fqdncache[nodename] = fqdn
-                break
-            except gaierror:
-                continue        
-    return fqdncache
+from os import system, fork, execl, dup2, wait
+import sys
 
 def pretty_print(element, level=0):
     '''Produce a pretty-printed text representation of element'''
@@ -55,17 +38,37 @@ if __name__ == '__main__':
     metaElement =  parse(metadatapath)
     hostlist = [client.get('name') for client in metaElement.findall("Client")]
 
-    fqdn_cache = buildfqdncache(domainlist, hostlist)
-
-
     HostInfo = Element("HostInformation")
-    for host in hostlist:
-        record = SubElement(HostInfo, "HostInfo",
-                            attrib={"name" : host,"fqdn" : fqdn_cache[host]})
-        if system( 'ping -c 1 ' + fqdn_cache[host] + ' &>/dev/null') != 0:
-            record.set("pingable", 'N')
+    pids = {}
+    fullnames = {}
+    null = open('/dev/null', 'w+')
+    while hostlist or pids:
+        if hostlist and len(pids.keys()) < 15:
+            host = hostlist.pop()
+            pid = fork()
+            if pid == 0:
+                # in child
+                dup2(null.fileno(), sys.__stdin__.fileno())
+                dup2(null.fileno(), sys.__stdout__.fileno())
+                dup2(null.fileno(), sys.__stderr__.fileno())
+                execl('/bin/ping', 'ping', '-W', '5', '-c', '1', host)
+            else:
+                pids[pid] = host
         else:
-            record.set("pingable", 'Y')
+            try:
+                (cpid, status) = wait()
+                chost = pids[cpid]
+                del pids[cpid]
+                if status == 0:
+                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingeable='Y')
+                else:
+                    if chost.count('.') > 0:
+                        fullnames[chost.split('.')[0]] = chost
+                        hostlist.append(chost.split('.')[0])
+                    else:
+                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingeable='N')
+            except:
+                pass
 
     fout = open(hostinfopath, 'w')
     fout.write(pretty_print(HostInfo))
