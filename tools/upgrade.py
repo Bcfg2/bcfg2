@@ -34,7 +34,29 @@ if __name__ == '__main__':
                     continue
                 print hostinfo
 
-    open(cf.get('server', 'metadata') + '/metadata.xml.new'), 'w').write(tostring(metadata))
+    open(cf.get('server', 'metadata') + '/metadata.xml.new', 'w').write(tostring(metadata))
+
+    metadata = XML(open(cf.get('server', 'metadata') + '/statistics.xml').read())
+    for client in metadata.findall('.//Node'):
+        if client.get('name').count('.') == 0:
+            if hostcache.has_key(client.get('name')):
+                client.set('name', "%s.%s" % (client.get('name'), hostcache[client.get('name')]))
+                continue
+            for dom in domainlist:
+                print "resolving name %s.%s..." % (client.get('name'), dom),
+                try:
+                    hostinfo = gethostbyname(client.get('name') + '.' + dom)
+                    hostcache[client.get('name')] = dom
+                    client.set('name', "%s.%s" % (client.get('name'), dom))
+                    print ""
+                    break
+                except:
+                    print "FAILED"
+                    continue
+                print hostinfo
+
+    open(cf.get('server', 'metadata') + '/statistics.xml.new', 'w').write(tostring(metadata))
+
 
     sshdir = cf.get('server', 'repository') + '/SSHbase/'
     for key in glob(sshdir + "*key*.H_*"):
