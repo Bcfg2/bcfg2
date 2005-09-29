@@ -191,16 +191,19 @@ class Solaris(Toolset):
                 sysvrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'sysv']
                 enrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'encap']
                 if sysvrmpkgs:
-                    system("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs))
+                    if not system("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs)):
+                        [self.pkgwork['remove'].remove(pkg) for pkg in sysvrmpkgs]
                 if enrmpkgs:
-                    system("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))
+                    if not system("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs)):
+                        [self.pkgwork['remove'].remove(pkg) for pkg in enrmpkgs]
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
                 if len(self.extra_services) > 0:
                     if self.setup['remove'] in ['all', 'services']:
                         self.CondPrint('verbose', "Removing services: %s" % (self.extra_services))
                         for service in self.extra_services:
-                            system("/usr/sbin/svcadm disable %s" % service)
+                            if not system("/usr/sbin/svcadm disable %s" % service):
+                                self.extra_services.remove(service)
                     else:
                         self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
 
