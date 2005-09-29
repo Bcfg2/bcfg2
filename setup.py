@@ -4,7 +4,7 @@ from distutils.core import setup
 from glob import glob
 
 setup(name="Bcfg2.Server",
-      version="0.6.12",
+      version="0.7",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
@@ -20,5 +20,5 @@ setup(name="Bcfg2.Server",
                     ('share/bcfg2/xsl-transforms/xsl-transform-includes',
                      glob('reports/xsl-transforms/xsl-transform-includes/*.xsl')),
                     ('share/man/man1', ['man/bcfg2.1']),
-                    ('share/man/man8', ['man/Bcfg2Server.8', 'man/ValidateBcfg2Repo.8'])]
+                    ('share/man/man8', glob("man/*.8"))]
       )
