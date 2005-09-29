@@ -167,6 +167,9 @@ class Toolset(object):
             mod = SubElement(stats, "Modified")
             for elm in self.modified:
                 SubElement(mod, elm.tag, name=elm.get('name'))
+        extra = SubElement(stats, "Extra")
+        [SubElement(extra, "Service", name=svc) for svc in self.extra_services]
+        [SubElement(extra, "Package", name=pkg) for pkg in self.pkgwork['remove']]
         return stats
 
     # the next two are dispatch functions

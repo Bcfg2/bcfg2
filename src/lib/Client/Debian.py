@@ -120,14 +120,15 @@ class Debian(Toolset):
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
-                system("apt-get remove %s" % " ".join(self.pkgwork['remove']))
+                if not system("apt-get remove %s" % " ".join(self.pkgwork['remove'])):
+                    self.pkgwork['remove'] = []
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
                 self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
-                for service in self.extra_services:
-                    system("rm -f /etc/rc*.d/S??%s" % service)
+                [self.extra_services.remove(serv) for serv in self.extra_services if
+                 not system("rm -f /etc/rc*.d/S??%s" % serv)]
             else:
                 self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
         
