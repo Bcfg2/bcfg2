@@ -1,8 +1,7 @@
 '''This module configures files in a Chiba City specific way'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision:$'
 
 from socket import gethostbyname, gaierror
-from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, SingleXMLFileBacked, PluginExecutionError
 
 class ChibaConf(SingleXMLFileBacked):
@@ -35,7 +34,7 @@ class Chiba(Plugin):
                                       ".".join(metadata.hostname.split('.')[1:]))
             myriaddr = gethostbyname(myriname)
         except gaierror:
-            syslog(LOG_ERR, "Failed to resolve %s"% myriname)
+            self.LogError("Failed to resolve %s"% myriname)
             raise PluginExecutionError, (myriname, 'lookup')
         entry.text = self.repo.entries['interfaces-template'].data % myriaddr
 
