@@ -112,3 +112,22 @@ class Redhat(Toolset):
                 self.CondPrint('debug',
                                "Package %s content verification failed" % entry.get('name'))
         return False
+
+    def HandleExtra(self):
+        '''Deal with extra configuration detected'''
+        if len(self.pkgwork) > 0:
+            if self.setup['remove'] in ['all', 'packages']:
+                self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
+                if not system("rpm -q -e %s" % " ".join(self.pkgwork['remove'])):
+                    self.pkgwork['remove'] = []
+            else:
+                self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
+        if len(self.extra_services) > 0:
+            if self.setup['remove'] in ['all', 'services']:
+                self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
+                for service in self.extra_services:
+                    if not system("chkconfig %s off" % service):
+                        self.extra_services.remove(service)
+            else:
+                self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
+        
