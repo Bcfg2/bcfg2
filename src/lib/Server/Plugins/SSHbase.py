@@ -1,11 +1,12 @@
 '''This module manages ssh key files for bcfg2'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 1.56 $'
 
 from binascii import b2a_base64
 from os import rename, system, popen
 from socket import gethostbyname, gaierror
+from time import sleep
 
-from Bcfg2.Server.Plugin import Plugin, DirectoryBacked
+from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, PluginExecutionError
 
 class SSHbase(Plugin):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
@@ -26,7 +27,7 @@ class SSHbase(Plugin):
       is regenerated each time a new key is generated.
 '''
     __name__ = 'SSHbase'
-    __version__ = '$Id$'
+    __version__ = '$Id: SSHbase.py 1.56 05/09/27 16:06:14-05:00 desai@topaz.mcs.anl.gov $'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     pubkeys = ["ssh_host_dsa_key.pub.H_%s",
@@ -105,6 +106,10 @@ class SSHbase(Plugin):
             self.GenerateHostKeys(client)
             if hasattr(self, 'static_skn'):
                 del self.static_skn
+        times = 0
+        if not self.repository.entries.has_key(filename):
+            self.LogError("%s still not registered" % filename)
+            raise PluginExecutionError
         keydata = self.repository.entries[filename].data
         perms = '0600'
         if entry.get('name')[-4:] == '.pub':
@@ -128,9 +133,10 @@ class SSHbase(Plugin):
 
             if hostkey not in self.repository.entries.keys():
                 fileloc = "%s/%s" % (self.data, hostkey)
-                system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' % (fileloc, keytype, client))
-                rename("%s.pub"%(fileloc),"%s/" %
-                       (self.data, )+".".join(hostkey.split('.')[:-1]+['pub']+[hostkey.split('.')[-1]]))
+                publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
+		temploc =  "/tmp/%s" % hostkey
+                system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' % (temploc, keytype, client))
+                open(fileloc, 'w').write(open(temploc).read())
+                open(publoc, 'w').write(open("%s.pub" % temploc).read())
                 self.repository.AddEntry(hostkey)
-                self.repository.AddEntry("%s.pub"%(hostkey))
-
+                self.repository.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
