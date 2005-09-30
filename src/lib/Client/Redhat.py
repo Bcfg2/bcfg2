@@ -131,3 +131,12 @@ class Redhat(Toolset):
             else:
                 self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
         
+    def Inventory(self):
+        '''Do standard inventory plus debian extra service check'''
+        Toolset.Inventory(self)
+        allsrv = [line.split()[0] for line in popen("chkconfig --list|grep :on").readlines()]
+        self.CondPrint('debug', "Found active services: %s" % allsrv)
+        csrv = self.cfg.findall(".//Service")
+        [allsrv.remove(svc.get('name')) for svc in csrv if
+         svc.get('status') == 'on' and svc.get('name') in allsrv]
+        self.extra_services = allsrv
