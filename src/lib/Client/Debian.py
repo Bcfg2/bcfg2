@@ -31,7 +31,6 @@ class Debian(Toolset):
         system("apt-get -q=2 -y update")
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
-        self.extra_services = []
         for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
             pkg.set('type', 'deb')
         self.Refresh()
