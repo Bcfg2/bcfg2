@@ -45,6 +45,7 @@ class Toolset(object):
         self.modified = []
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
+        self.extra_services = []
         if self.__important__:
             for cfile in [cfl for cfl in cfg.findall(".//ConfigFile") if cfl.get('name') in self.__important__]:
                 self.VerifyEntry(cfile)
