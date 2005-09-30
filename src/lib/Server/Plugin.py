@@ -84,9 +84,9 @@ class FileBacked(object):
             #    else:
             #        syslog(LOG_INFO, "Updated file %s" % (self.name))
                 self.data = file(self.name).read()
-                self.Index()
             except IOError:
                 syslog(LOG_ERR, "Failed to read file %s" % (self.name))
+            self.Index()
 
     def Index(self):
         '''Update local data structures based on current file state'''
