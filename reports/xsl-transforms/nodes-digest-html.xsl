@@ -44,6 +44,12 @@
                                 <span class="nodelisttitle"><xsl:value-of select="count(/Report/Node/Statistics/Bad)" /> nodes are bad.<br /></span>
                             </div>
                          </xsl:if>
+
+                         <xsl:if test="count(/Report/Node/Statistics/Extra) > 0">
+                            <div class="extra">
+                                <span class="nodelisttitle"><xsl:value-of select="count(/Report/Node/Statistics/Extra)" /> nodes have extra configuration. (includes both good and bad nodes)<br /></span>
+                            </div>
+                         </xsl:if>
                         
                         <xsl:if test="count(/Report/Node/Statistics/Modified) > 0">
                             <div class="modified">
