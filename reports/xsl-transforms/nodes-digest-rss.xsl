@@ -26,6 +26,9 @@ SUMMARY:
 <xsl:if test="count(/Report/Node/Statistics/Bad) > 0">
 <xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Bad)" /> nodes are bad.
 </xsl:if>
+<xsl:if test="count(/Report/Node/Statistics/Extra) > 0">
+<xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Extra)" /> nodes have extra configuration. (includes both good and bad nodes)
+</xsl:if>
 <xsl:if test="count(/Report/Node/Statistics/Modified) > 0">
 <xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Modified)" /> nodes were modified in the last run. (includes both good and bad nodes)
 </xsl:if>
