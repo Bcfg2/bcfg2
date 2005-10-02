@@ -16,6 +16,7 @@
         <xsl:apply-templates select="Good" />
         <xsl:apply-templates select="Bad" />
         <xsl:apply-templates select="Modified" />
+        <xsl:apply-templates select="Extra" />
     </xsl:template>
 
     
@@ -58,6 +59,30 @@
     <xsl:template match="Modified">
         <div class="modified">
             <span class="nodelisttitle"><a href="javascript:toggleLayer('{generate-id(.)}');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(./*)" /></a> items were modified in the last run.<br /></span>
+            
+            <div class="items" id="{generate-id(.)}"><ul class="plain">
+                <xsl:apply-templates select="ConfigFile">
+                   <xsl:sort select="@name"/>
+                </xsl:apply-templates>
+                <xsl:apply-templates select="Directory">
+                   <xsl:sort select="@name"/>
+                </xsl:apply-templates>
+                <xsl:apply-templates select="Package">
+                   <xsl:sort select="@name"/>
+                </xsl:apply-templates>
+                <xsl:apply-templates select="Service">
+                   <xsl:sort select="@name"/>
+                </xsl:apply-templates>
+                <xsl:apply-templates select="SymLink">
+                   <xsl:sort select="@name"/>
+                </xsl:apply-templates>
+            </ul></div>
+        </div>
+    </xsl:template>
+
+    <xsl:template match="Extra">
+        <div class="extra">
+            <span class="nodelisttitle"><a href="javascript:toggleLayer('{generate-id(.)}');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(./*)" /></a> extra configuration elements on node.<br /></span>
             
             <div class="items" id="{generate-id(.)}"><ul class="plain">
                 <xsl:apply-templates select="ConfigFile">
