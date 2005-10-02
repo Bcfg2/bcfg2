@@ -51,6 +51,15 @@ div.clean {
     margin-left:50px;
     margin-right:50px;
     }
+div.extra {
+    border: 1px solid #006600;
+    background: #6699CC;
+    margin: 10px 0;
+    padding: 8px;
+    text-align: left;
+    margin-left:50px;
+    margin-right:50px;
+    }
 div.warning {
     border: 1px solid #CC3300;
     background: #FF9933;
