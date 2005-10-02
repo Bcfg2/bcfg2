@@ -16,6 +16,7 @@
         <xsl:apply-templates select="Good" />
         <xsl:apply-templates select="Bad" />
         <xsl:apply-templates select="Modified" />
+        <xsl:apply-templates select="Extra" />
 </xsl:template>
 <xsl:template match="Good">
 <xsl:text>        </xsl:text>Node is clean; Everything has been satisfactorily configured.
@@ -43,7 +44,30 @@
     </xsl:template>
 
 <xsl:template match="Modified">
-<xsl:text>        </xsl:text><xsl:value-of select="count(./*)" /> items were modified in the last run.
+<xsl:text>
+
+        </xsl:text><xsl:value-of select="count(./*)" /> items were modified in the last run.
+    <xsl:apply-templates select="ConfigFile">
+       <xsl:sort select="@name"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="Directory">
+       <xsl:sort select="@name"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="Package">
+       <xsl:sort select="@name"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="Service">
+       <xsl:sort select="@name"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="SymLink">
+       <xsl:sort select="@name"/>
+    </xsl:apply-templates>
+</xsl:template>
+
+<xsl:template match="Extra">
+<xsl:text>
+
+        </xsl:text><xsl:value-of select="count(./*)" /> extra configuration elements on node.
     <xsl:apply-templates select="ConfigFile">
        <xsl:sort select="@name"/>
     </xsl:apply-templates>
