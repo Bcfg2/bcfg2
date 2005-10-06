@@ -57,6 +57,7 @@
     </xsl:template>
 
     <xsl:template match="Modified">
+      <xsl:if test='count(./*) > 0'>
         <div class="modified">
             <span class="nodelisttitle"><a href="javascript:toggleLayer('{generate-id(.)}');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(./*)" /></a> items were modified in the last run.<br /></span>
             
@@ -78,9 +79,11 @@
                 </xsl:apply-templates>
             </ul></div>
         </div>
+      </xsl:if>
     </xsl:template>
 
     <xsl:template match="Extra">
+      <xsl:if test='count(./*) > 0'>
         <div class="extra">
             <span class="nodelisttitle"><a href="javascript:toggleLayer('{generate-id(.)}');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(./*)" /></a> extra configuration elements on node.<br /></span>
             
@@ -102,6 +105,7 @@
                 </xsl:apply-templates>
             </ul></div>
         </div>
+      </xsl:if>
     </xsl:template>
 
     <xsl:template match="ConfigFile">
