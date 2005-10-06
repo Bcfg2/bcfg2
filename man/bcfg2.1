@@ -33,7 +33,10 @@ system.
 .B \-B run bcfg2 in build mode. Services aren't started, as the system
 may still be in miniroot.
 .TP
-.B \-r removal mode
+.B \-r <mode> make bcfg2 remove extra configuration elements it
+detects. Mode is one of all, svcs, or pkgs. All removes all
+entries. Likewise, services and packages remove only the extra
+configuration elements of the respective type.
 .TP
 .B \-i image specify image for client
 .TP
