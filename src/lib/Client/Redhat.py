@@ -118,7 +118,7 @@ class Redhat(Toolset):
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
-                if not system("rpm -q -e %s" % " ".join(self.pkgwork['remove'])):
+                if not system("rpm --quiet -e %s" % " ".join(self.pkgwork['remove'])):
                     self.pkgwork['remove'] = []
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
