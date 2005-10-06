@@ -18,8 +18,7 @@ import base64
 from copy import deepcopy
 from elementtree.ElementTree import XML, Element, SubElement
 from socket import gethostbyname
-from Bcfg2.Server.Generator import SingleXMLFileBacked
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError
+from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, SingleXMLFileBacked
 
 class VhostFile(SingleXMLFileBacked):
     '''The Vhost file contains webserver vhost configuration elements'''
@@ -35,6 +34,7 @@ class VhostFile(SingleXMLFileBacked):
         self.vhosts = {}
 
     def Index(self):
+        '''Build vhost data structures'''
         self.meta = XML(self.data)
         self.servers = [serv.get('name') for serv in self.meta.findall('server')]
         self.vhosts = {}
