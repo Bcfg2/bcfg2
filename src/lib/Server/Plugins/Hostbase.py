@@ -68,7 +68,6 @@ class Hostbase(Plugin, DataNexus):
         if self.entries.has_key(event.filename) and not self.xdata.has_key(event.filename):
             self.xdata[event.filename] = XML(self.entries[event.filename].data)
         if [item for item in self.files if not self.entries.has_key(item)]:
-            print item
             return
         # we might be able to rebuild data more sparsely,
         # but hostbase.xml is the only one that will really change often
