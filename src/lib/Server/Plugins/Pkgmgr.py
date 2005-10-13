@@ -41,7 +41,6 @@ class PackageEntry(XMLFileBacked):
                             syslog("Failed to match pkg %s" % pkg.get('file'))
                         else:
                             (ptype, mdata) = derived[0]
-                            print mdata
                             pkgname = mdata['name']
                             self.packages[pkgname] = mdata
                             self.packages[pkgname]['url'] = location.get('uri') + '/' + pkg.get('file')
