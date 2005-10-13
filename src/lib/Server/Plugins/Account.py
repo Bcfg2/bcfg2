@@ -51,7 +51,7 @@ class Account(Plugin):
         entry.text = ''
         superusers = self.repository.entries['superusers'].data.split()
         rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
-        superusers += [user for (user, host) in rootlike if host == metadata.hostname]
+        superusers += [user for (user, host) in rootlike if host == metadata.hostname.split('.')[0]]
         for user in superusers:
             if self.repository.entries.has_key("%s.key" % user):
                 entry.text += self.repository.entries["%s.key" % user].data
