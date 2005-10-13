@@ -54,6 +54,7 @@ class BcfgServer(Server):
         try:
             self.core = Core(setup, self.kwargs.get('configfile', '/etc/bcfg2.conf'))
         except CoreInitError, msg:
+            syslog(LOG_ERR, msg)
             print msg
             raise SystemExit, 1
         self.__progress__()
