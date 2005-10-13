@@ -8,10 +8,9 @@ from os import popen, chmod, unlink, _exit
 from signal import signal, SIGINT
 from sys import argv
 from tempfile import mktemp
+from ConfigParser import ConfigParser
 
 from elementtree.ElementTree import Element, XML, tostring
-
-from sss.ssslib import comm_lib
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
@@ -92,6 +91,21 @@ if __name__ == '__main__':
             print "Failed to read cached config file: %s" % (setup['file'])
             raise SystemExit, 1
     else:
+        try:
+            cf = ConfigParser()
+            cf.read('/etc/bcfg2.conf')
+            proto = cf.get('communication', 'protocol')
+        except:
+            proto = 'sss'
+
+        if proto == 'sss':
+            from sss.ssslib import comm_lib
+        elif proto == 'xmlrpc/ssl':
+            from Bcfg2.Client.XMLRPCComm import comm_lib
+        else:
+            print "Unsupported protocol: %s" % proto
+            raise SystemExit, 1
+            
         # connect to bcfg2d
         comm = comm_lib()
         try:
