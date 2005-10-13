@@ -1,3 +1,9 @@
+bcfg2 (0.7.1pre1-1) unstable; urgency=low
+
+  * new dev version
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu, 13 Oct 2005 13:54:24 -0500
+
 bcfg2 (0.7-1) unstable; urgency=low
 
   * final release
