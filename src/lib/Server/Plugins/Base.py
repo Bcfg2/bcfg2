@@ -30,6 +30,7 @@ class Base(Plugin, SingleXMLFileBacked):
         except ExpatError:
             self.LogError("Failed to parse base.xml")
             return
+        self.store = {'all':[], 'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
         for entry in xdata.getchildren():
             if entry.tag in ['Image', 'Class']:
                 if not self.store[entry.tag].has_key(entry.get('name')):
