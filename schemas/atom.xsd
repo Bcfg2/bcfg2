@@ -24,6 +24,7 @@
 
   <xsd:complexType name='ServiceType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='type'/>
   </xsd:complexType>
 
   <xsd:complexType name='SymLinkType'>
