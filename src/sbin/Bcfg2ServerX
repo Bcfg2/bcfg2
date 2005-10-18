@@ -138,16 +138,15 @@ class Bcfg2XMLRPCServer(SSL.SSLServer,
     def get_request(self):
         '''We need to do work between requests, so we select with timeout instead of blocking in accept'''
         rsockinfo = []
-        famfd = self.Core.fam.fm.fileno()
+        famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
             try:
                 rsockinfo = select([self.socket, famfd], [], [])[0]
             except selecterror:
                 continue
             if famfd in rsockinfo:
-                print "starting fs sync...", 
-                while self.Core.fam.fm.pending():
-                    self.Core.fam.HandleEvent()
+                print "starting fs sync...",
+                self.Core.fam.Service()
                 print "done"
             if self.socket in rsockinfo:
                 return self.socket.accept()
