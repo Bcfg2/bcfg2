@@ -40,7 +40,7 @@ class Account(Plugin):
         entry.text = self.repository.entries["static.limits.conf"].data
         superusers = self.repository.entries["superusers"].data.split()
         useraccess = [line.split(':') for line in self.repository.entries["useraccess"].data.split()]
-        users = [user for (user, host) in useraccess if host == metadata.hostname]
+        users = [user for (user, host) in useraccess if host == metadata.hostname.split('.')[0]]
         entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
         entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in superusers + users])
         if "*" not in users:
