@@ -9,7 +9,6 @@ from traceback import extract_tb
 from time import time
 from ConfigParser import ConfigParser
 from elementtree.ElementTree import Element
-import _fam
 
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
@@ -19,8 +18,8 @@ class CoreInitError(Exception):
     '''This error is raised when the core cannot be initialized'''
     pass
 
-class Fam(object):
-    '''The fam object is a set of callbacks for file alteration events'''
+class FamFam(object):
+    '''The fam object is a set of callbacks for file alteration events (FAM support)'''
     
     def __init__(self):
         object.__init__(self)
@@ -32,7 +31,7 @@ class Fam(object):
         '''return fam file handle number'''
         return self.fm.fileno()
 
-    def AddMonitor(self, path, obj=None):
+    def AddMonitor(self, path, obj):
         '''add a monitor to path, installing a callback to obj.HandleEvent'''
         mode = stat(path)[ST_MODE]
         if S_ISDIR(mode):
@@ -53,6 +52,81 @@ class Fam(object):
             #print "dispatching event %s %s to obj %s handle :%s:" % (event.code2str(), event.filename, self.users[reqid], event.requestID)
             self.users[reqid].HandleEvent(event)
 
+    def Service(self):
+        '''Handle all fam work'''
+        while self.fm.pending():
+            self.HandleEvent()
+
+class GaminEvent(object):
+    '''This class provides an event analogous to python-fam events based on gamin sources'''
+    def __init__(self, request_id, filename, code):
+        action_map = {GAMCreated: 'created', GAMExists: 'exists', GAMChanged: 'changed',
+                      GAMDeleted: 'deleted', GAMEndExist: 'EndExist'}
+        self.requestID = request_id
+        self.filename = filename
+        if action_map.has_key(code):
+            self.action = action_map[code]
+
+    def code2str(self):
+        '''return static code for event'''
+        return self.action
+
+class GaminFam(object):
+    '''The fam object is a set of callbacks for file alteration events (Gamin support)'''
+    def __init__(self):
+        object.__init__(self)
+        self.mon = WatchMonitor()
+        self.handles = {}
+        self.counter = 0
+
+    def fileno(self):
+        '''return fam file handle number'''
+        return self.mon.get_fd()
+
+    def dispatch(self, path, action, request_id):
+        '''find the right object to dispatch to'''
+        if self.handles.has_key(request_id):
+            evt = GaminEvent(request_id, path, action)
+            #print "e %s %s to obj %s handle :%s:" % (evt.code2str(), evt.filename,
+            #                                         self.handles[request_id], evt.requestID)
+            self.handles[request_id].HandleEvent(evt)
+        else:
+            print "got crazy event for nonexistant handle %s" % request_id
+
+    def AddMonitor(self, path, obj):
+        '''add a monitor to path, installing a callback to obj.HandleEvent'''
+        handle = self.counter
+        self.counter += 1
+        mode = stat(path)[ST_MODE]
+        if S_ISDIR(mode):
+            self.mon.watch_directory(path, self.dispatch, handle)
+            #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
+        else:
+            self.mon.watch_file(path, self.dispatch, handle)
+        self.handles[handle] = obj
+        return handle
+
+    def HandleEvent(self):
+        '''Call Gamin, which will call the callback'''
+        self.mon.handle_one_event()
+
+    def Service(self):
+        '''Handle any pending Gamin work'''
+        while self.mon.event_pending():
+            self.mon.handle_one_event()
+
+try:
+    from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted
+    monitor = GaminFam
+except ImportError:
+    # fall back to _fam
+    try:
+        import _fam
+        monitor = FamFam
+    except ImportError:
+        print "Couldn't locate Fam module, exiting"
+        raise SystemExit, 1
+
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, setup, configfile):
@@ -61,7 +135,7 @@ class Core(object):
         cfile.read([configfile])
         self.datastore = cfile.get('server','repository')
         try:
-            self.fam = Fam()
+            self.fam = monitor()
         except IOError:
             raise CoreInitError, "failed to connect to fam"
         self.pubspace = {}
