@@ -61,8 +61,7 @@ class BcfgServer(Server):
 
     def __progress__(self):
         try:
-            while self.core.fam.fm.pending():
-                self.core.fam.HandleEvent()
+            self.core.fam.Service()
         except:
             self.LogFailure("FileEvent")
         try:
