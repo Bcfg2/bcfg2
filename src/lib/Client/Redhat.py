@@ -126,7 +126,7 @@ class Redhat(Toolset):
             if self.setup['remove'] in ['all', 'services']:
                 self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
                 for service in self.extra_services:
-                    if not system("chkconfig %s off" % service):
+                    if not system("/sbin/chkconfig %s off" % service):
                         self.extra_services.remove(service)
             else:
                 self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
