@@ -134,8 +134,16 @@ $ python setup.py install
 
       <para>SSL is used for channel-level data encryption. The
       requisite SSL certificates must be generated on the server
-      side. I need to figure out how to do this.
+      side. The following command will generate a server key:
       </para>
+      
+      <programlisting>
+openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out server.pem -keyout server.pem
+      </programlisting>
+
+      <para>This command will generate an SSL key including both an
+      RSA key and a certificate. This is suitable for use with the
+      Bcfg2 XML-RPC server.</para>
 
     </sect2>
 
