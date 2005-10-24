@@ -8,11 +8,12 @@ from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlin
 from pwd import getpwuid, getpwnam
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
-from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, S_ISCHR, S_ISBLK
+from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 from sys import exc_info
 import stat as statmod
 #from time import asctime, localtime
 from traceback import extract_tb
+from popen2 import Popen4
 
 from elementtree.ElementTree import Element, SubElement, tostring
 
@@ -29,6 +30,16 @@ def calc_perms(initial, perms):
             if pdigits[index] & num:
                 tempperms |= perm
     return tempperms
+
+def saferun(command):
+    '''Run a command in a pipe dealing with stdout buffer overloads'''
+    runpipe = Popen4(command, bufsize=16384)
+    output = runpipe.fromchild.read()
+    cmdstat = runpipe.poll()
+    while cmdstat == -1:
+        output += runpipe.fromchild.read()
+        cmdstat = runpipe.poll()
+    return (cmdstat, [line for line in output.split('\n') if line])
 
 class Toolset(object):
     '''The toolset class contains underlying command support and all states'''
