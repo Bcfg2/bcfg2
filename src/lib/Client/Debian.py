@@ -3,12 +3,11 @@ __revision__ = '$Revision$'
 
 from glob import glob
 from os import environ, stat, system
-from popen2 import Popen4
 from re import compile as regcompile
 
 import apt_pkg
 
-from Bcfg2.Client.Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset, saferun
 
 class Debian(Toolset):
     '''The Debian toolset implements package and service operations and inherits
@@ -90,13 +89,7 @@ class Debian(Toolset):
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick']:
-                    cmd = Popen4("debsums -s %s"%(entry.attrib['name']))
-                    cstat = cmd.poll()
-                    output = cmd.fromchild.read()
-                    while cstat == -1:
-                        output += cmd.fromchild.read()
-                        cstat = cmd.poll()
-                    output = [line for line in output.split('\n') if line]
+                    output = saferun("debsums -s %s" % entry.get('name'))[1]
                     if [filename for filename in output if filename not in modlist]:
                         return False
                 return True
