@@ -16,7 +16,7 @@ class comm_lib(object):
     def __init__(self):
         self.cf = ConfigParser()
         self.cf.read('/etc/bcfg2.conf')
-        location = self.cf.get("communication", "url")
+        location = self.cf.get("components", "bcfg2")
         self.proxy = ServerProxy(location, SSL_Transport())
         self.user = 'root'
         self.password = self.cf.get("communication", "password")
