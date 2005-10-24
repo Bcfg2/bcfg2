@@ -49,14 +49,15 @@ class Hostbase(Plugin, DataNexus):
             raise PluginInitError
         self.xdata = {}
         self.filedata = {}
-        self.zonetempl = Template(open(self.data + '/templates/' + 'zonetemplate.tmpl').read())
-        self.reversesoa = Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read())
-        self.named = Template(open(self.data + '/templates/' + 'namedtemplate.tmpl').read())
-        self.reverseappend = Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read())
-        self.dhcptmpl = Template(open(self.data + '/templates/' + 'dhcpd_template.tmpl').read())
+        self.templates = {'zone':Template(open(self.data + '/templates/' + 'zonetemplate.tmpl').read()),
+                          'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
+                          'named':Template(open(self.data + '/templates/' + 'namedtemplate.tmpl').read()),
+                          'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
+                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd_template.tmpl').read())}
         self.Entries['ConfigFile'] = {}
 
     def FetchFile(self, entry, metadata):
+        '''Return prebuilt file data'''
         fname = entry.get('name').split('/')[-1]
         if not self.filedata.has_key(fname):
             raise PluginExecutionError
@@ -95,7 +96,8 @@ class Hostbase(Plugin, DataNexus):
                 else:
                     ipnodes = host.findall("interface/ip")
                     zonehosts.append((host.attrib['hostname'], ipnodes[0].attrib['ip'], None, None))
-                    [zonehosts.append(("-".join([host.attrib['hostname'], namenode.attrib['name']]), ipnode.attrib['ip'], None, None))
+                    [zonehosts.append(("-".join([host.attrib['hostname'], namenode.attrib['name']]),
+                                       ipnode.attrib['ip'], None, None))
                      for ipnode in ipnodes
                      for namenode in ipnode
                      if namenode.attrib['name'] != ""]
@@ -106,10 +108,10 @@ class Hostbase(Plugin, DataNexus):
 
                 [iplist.append(ipnode.attrib['ip']) for ipnode in host.findall("interface/ip")]
             zonehosts.sort()
-            self.zonetempl.zone = zone
-            self.zonetempl.root = self.xdata['dnsdata.xml']
-            self.zonetempl.hosts = zonehosts
-            self.filedata[zone.get('domain')] = str(self.zonetempl)
+            self.templates['zone'].zone = zone
+            self.templates['zone'].root = self.xdata['dnsdata.xml']
+            self.templates['zone'].hosts = zonehosts
+            self.filedata[zone.get('domain')] = str(self.templates['zone'])
         # now all zone forward files are built
         iplist.sort()
         filelist = []
@@ -130,29 +132,29 @@ class Hostbase(Plugin, DataNexus):
                     filelist.append(".".join([temp[2], temp[1], temp[0]]))
 
         for filename in filelist:
-            self.reversesoa.inaddr = filename
-            self.reversesoa.zone = zone
-            self.reversesoa.root = self.xdata['dnsdata.xml']
-            self.filedata["%s.rev" % filename] = str(self.reversesoa)
+            self.templates['reversesoa'].inaddr = filename
+            self.templates['reversesoa'].zone = zone
+            self.templates['reversesoa'].root = self.xdata['dnsdata.xml']
+            self.filedata["%s.rev" % filename] = str(self.templates['reversesoa'])
 
-        self.named.zones = self.xdata['dnsdata.xml']
-        self.named.reverses = filelist
-        self.filedata["named.conf"] = str(self.named)
+        self.templates['named'].zones = self.xdata['dnsdata.xml']
+        self.templates['named'].reverses = filelist
+        self.filedata["named.conf"] = str(self.templates['named'])
 
         for filename in filelist:
             originlist = []
             towrite = filename.split(".")
             towrite.reverse()
             if len(towrite) > 2:
-                self.reverseappend.hosts = [(ipnode.get('ip').split('.'), host.get('hostname'),
-                                             host.get('domain'), ipnode.get('num'), ipnode.get('dnssuffix'))
-                                            for host in self.xdata['hostbase.xml']
-                                            for ipnode in host.findall('interface/ip')
-                                            if ipnode.get('ip').split('.')[:3] == towrite]
+                self.templates['reverseapp'].hosts = [(ipnode.get('ip').split('.'), host.get('hostname'),
+                                                       host.get('domain'), ipnode.get('num'), ipnode.get('dnssuffix'))
+                                                      for host in self.xdata['hostbase.xml']
+                                                      for ipnode in host.findall('interface/ip')
+                                                      if ipnode.get('ip').split('.')[:3] == towrite]
                 
-                self.reverseappend.inaddr = filename
-                self.reverseappend.fileorigin = None
-                self.filedata["%s.rev" % filename] += str(self.reverseappend)
+                self.templates['reverseapp'].inaddr = filename
+                self.templates['reverseapp'].fileorigin = None
+                self.filedata["%s.rev" % filename] += str(self.templates['reverseapp'])
             else:
                 revhosts = [(ipnode.get('ip').split('.'), host.get('hostname'), host.get('domain'),
                              ipnode.get('num'), ipnode.get('dnssuffix')) 
@@ -169,10 +171,10 @@ class Hostbase(Plugin, DataNexus):
                 for origin in originlist:
                     outputlist = [rhost for rhost in revhosts
                      if ".".join([rhost[0][2], rhost[0][1], rhost[0][0]]) == origin] 
-                    self.reverseappend.fileorigin = filename
-                    self.reverseappend.hosts = outputlist
-                    self.reverseappend.inaddr = origin
-                    self.filedata["%s.rev" % filename] += str(self.reverseappend)
+                    self.templates['reverseapp'].fileorigin = filename
+                    self.templates['reverseapp'].hosts = outputlist
+                    self.templates['reverseapp'].inaddr = origin
+                    self.filedata["%s.rev" % filename] += str(self.templates['reverseapp'])
         self.buildDHCP()
         for key in self.filedata:
             self.Entries['ConfigFile']["%s/%s" % (self.filepath, key)] = self.FetchFile
@@ -225,9 +227,9 @@ class Hostbase(Plugin, DataNexus):
                     hosts.append(hostdata)
 
         hosts.sort(lambda x, y: cmp(x[0], y[0]))
-        self.dhcptmpl.hosts = hosts
-        self.dhcptmpl.privatesubnets = privatesubnets
-        self.dhcptmpl.subnets140 = subnets140
-        self.dhcptmpl.vlans = vlanandsublist
-        self.dhcptmpl.networkroot = networkroot
-        self.filedata['/etc/dhcpd.conf'] = str(self.dhcptmpl)
+        self.templates['dhcp'].hosts = hosts
+        self.templates['dhcp'].privatesubnets = privatesubnets
+        self.templates['dhcp'].subnets140 = subnets140
+        self.templates['dhcp'].vlans = vlanandsublist
+        self.templates['dhcp'].networkroot = networkroot
+        self.filedata['/etc/dhcpd.conf'] = str(self.templates['dhcp'])
