@@ -5,9 +5,8 @@
 __revision__ = '$Revision$'
 
 from os import popen, system
-from popen2 import Popen4
 
-from Bcfg2.Client.Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset, saferun
 
 class Redhat(Toolset):
     '''This class implelements support for rpm packages and standard chkconfig services'''
@@ -73,10 +72,7 @@ class Redhat(Toolset):
             else:
                 cmdrc = system("/sbin/chkconfig %s %s" %
                             (entry.attrib['name'], entry.attrib['status']))
-        if cmdrc == 0:
-            return True
-        else:
-            return False
+        return cmdrc == 0
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
@@ -95,23 +91,13 @@ class Redhat(Toolset):
             self.CondPrint('debug', "Package %s: not installed" % (entry.get('name')))
             return False
 
-        verp = Popen4("rpm --verify -q %s-%s" %
-                      (entry.get('name'),entry.get('version')), bufsize=16384)
-        odata = verp.fromchild.read()
-        vstat = verp.poll()
-        while vstat == -1:
-            odata += verp.fromchild.read()
-            vstat = verp.poll()
-            output = [line for line in odata.split("\n") if line]
-        if vstat == 0:
-            return True
-        else:
-            if len([name for name in output if name.split()[-1] not in modlist]):
-                return True
-            else:
+        (vstat, output) = saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
+        if vstat != 0:
+            if [name for name in output if name.split()[-1] not in modlist]:
                 self.CondPrint('debug',
                                "Package %s content verification failed" % entry.get('name'))
-        return False
+                return False
+        return True
 
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
