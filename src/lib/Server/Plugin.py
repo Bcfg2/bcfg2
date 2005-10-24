@@ -30,6 +30,7 @@ class Plugin(object):
     __name__ = 'Plugin'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __rmi__ = []
 
     def __init__(self, core, datastore):
         object.__init__(self)
