@@ -10,9 +10,14 @@ from Bcfg2.Server.Plugin import Plugin, PluginInitError, PluginExecutionError, D
 class PackageEntry(XMLFileBacked):
     '''PackageEntry is a set of packages and locations for a single image'''
     __identifier__ = 'image'
-    splitters = {'rpm':regcompile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$'),
+    splitters = {'rpm':regcompile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
+                                  '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$'),
                  'encap':regcompile('^(?P<name>\w+)-(?P<version>[\w\d\.-]+).encap.*$')}
 
+    def __init__(self, filename):
+        XMLFileBacked.__init__(self, filename)
+        self.packages = {}
+        
     def Index(self):
         '''Build internal data structures'''
         XMLFileBacked.Index(self)
