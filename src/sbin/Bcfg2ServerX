@@ -3,22 +3,15 @@
 '''The XML-RPC Bcfg2 Server'''
 __revision__ = '$Revision:$'
 
-# M2Crypto
-from M2Crypto import SSL
-# /F's xmlrpcserver.py.
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCDispatcher
-from ConfigParser import ConfigParser
 from getopt import getopt, GetoptError
 from sys import argv
 from syslog import openlog, LOG_LOCAL0, syslog, LOG_INFO, LOG_ERR
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
+from Bcfg2.Server.Component import Component
 from threading import Lock
-from urlparse import urlparse
 from select import select, error as selecterror
-from xmlrpclib import Fault, dumps, loads
-import sys
-from time import time
+from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
 from elementtree.ElementTree import XML, Element, tostring
 
@@ -46,97 +39,28 @@ def dgetopt(arglist, opt, vopt):
             ret[vopt[option]] = garg
     return ret
 
-class Bcfg2XMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
-    '''Bcfg2XMLRPCRequestHandler takes care of ssl xmlrpc requests'''
-    def finish(self):
-        '''Finish HTTPS connections properly'''
-        self.request.set_shutdown(SSL.SSL_RECEIVED_SHUTDOWN | SSL.SSL_SENT_SHUTDOWN)
-        self.request.close()
-
-    def do_POST(self):
-        '''Overload do_POST to pass through client address information'''
-        try:
-            # get arguments
-            data = self.rfile.read(int(self.headers["content-length"]))
-            response = self.server._bcfg_marshaled_dispatch(data, self.client_address)
-        except: # This should only happen if the module is buggy
-            # internal error, report as HTTP server error
-            self.send_response(500)
-            self.end_headers()
-        else:
-            # got a valid XML RPC response
-            stamp1 = time()
-            self.send_response(200)
-            self.send_header("Content-type", "text/xml")
-            self.send_header("Content-length", str(len(response)))
-            self.end_headers()
-            self.wfile.write(response)
-
-            # shut down the connection
-            self.wfile.flush()
-            stamp2 = time()
-            self.connection.shutdown(1)
-            print "write time was %f seconds" % (stamp2-stamp1)
-
-class Bcfg2XMLRPCServer(SSL.SSLServer,
-                         SimpleXMLRPCDispatcher):
+class Bcfg2(Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
+    __name__ = 'bcfg2'
+    __implementation__ = 'bcfg2'
 
     def __init__(self, setup):
-        # need to get addr
-        self.setup = setup
-        self.cfile = ConfigParser()
-        if setup['configfile']:
-            cfilename = setup['configfile']
-        else:
-            cfilename = '/etc/bcfg2.conf'
-        self.cfile.read([cfilename])
-        if not self.cfile.has_section('communication'):
-            print "Configfile missing communication section"
-            raise SystemExit, 1
-        if self.cfile.get('communication', 'protocol') != 'xmlrpc/ssl':
-            print "Unsupported protocol, exiting."
-            raise SystemExit, 1
-        location = urlparse(self.cfile.get('communication', 'url'))[1].split(':')
-        location = (location[0], int(location[1]))
-        self.password = self.cfile.get('communication', 'password')
-        sslctx = SSL.Context('sslv23')
-        sslctx.load_cert_chain('server.pem')
-        sslctx.load_verify_locations('ca.pem')
-        sslctx.set_client_CA_list_from_file('ca.pem')    
-        sslctx.set_verify(SSL.verify_none, 15)
-        #sslctx.set_allow_unknown_ca(1)
-        sslctx.set_session_id_ctx('Bcfg2')
-        sslctx.set_info_callback(self.handle_sslinfo)
-        sslctx.set_tmp_dh('dh1024.pem')
-        self.logRequests = 0
-        SimpleXMLRPCDispatcher.__init__(self)
-        SSL.SSLServer.__init__(self, location, Bcfg2XMLRPCRequestHandler, sslctx)
-        syslog(LOG_INFO, "Bound to port %s" % location[1])
+        Component.__init__(self, setup)
         try:
-            self.Core = Core(setup, cfilename)
+            self.Core = Core(setup, setup['configfile'])
             self.CoreLock = Lock()
         except CoreInitError, msg:
             print msg
             raise SystemExit, 1
-        self.register_introspection_functions()
-        self.register_function(self.func2, "func2")
-        self.register_function(self.Bcfg2GetConfig, "GetConfig")
-        self.register_function(self.Bcfg2GetProbes, "GetProbes")
-        self.register_function(self.Bcfg2RecvProbeData, "RecvProbeData")
-        self.register_function(self.Bcfg2RecvStats, "RecvStats")
-
-    def func2(self, address, arg):
-        '''dummy test function'''
-        print address, arg
-        return 30 * "foo"
-
-    def handle_sslinfo(self, where, ret, ssl_ptr):
-        '''This is where we need to handle all ssl negotiation issues'''
-        pass
+        self.funcs.update({"GetConfig":self.Bcfg2GetConfig, "GetProbes":self.Bcfg2GetProbes,
+                           "RecvProbeData":self.Bcfg2RecvProbeData, "RecvStats":self.Bcfg2RecvStats})
+        for plugin in self.Core.plugins.values():
+            for method in plugin.__rmi__:
+                self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
+                                       "%s.%s" % (plugin.__name__, method))
 
     def get_request(self):
-        '''We need to do work between requests, so we select with timeout instead of blocking in accept'''
+        '''We need to do work between requests, so select with timeout instead of blocking in accept'''
         rsockinfo = []
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
@@ -145,51 +69,11 @@ class Bcfg2XMLRPCServer(SSL.SSLServer,
             except selecterror:
                 continue
             if famfd in rsockinfo:
-                print "starting fs sync...",
+                print "Running fam queue...", 
                 self.Core.fam.Service()
                 print "done"
             if self.socket in rsockinfo:
                 return self.socket.accept()
-
-    def _bcfg_marshaled_dispatch(self, data, address):
-        """Decode and dispatch XMLRPC requests. Overloaded to pass through
-        client address information
-        """
-        print "in _bcfg_marshalled_dispatch"
-
-        rawparams, method = loads(data)
-
-        if len(rawparams) < 2:
-            return dumps(Fault(2, "No Authentication Info"))
-        user = rawparams[0]
-        password = rawparams[1]
-        params = rawparams[2:]
-        # check authentication
-        print "in _bcfg_marshalled_dispatch 1: user=%s, password=%s" % (user, password)
-        if not self._authenticate_connection(method, user, password, address):
-            return dumps(Fault(3, "Authentication Failure"))
-        # generate response
-        print "in _bcfg_marshalled_dispatch 2"
-        try:
-            response = self._dispatch(method, (address, ) + params)
-            # wrap response in a singleton tuple
-            response = (response,)
-            response = dumps(response, methodresponse=1)
-        except Fault, fault:
-            print "hit error path"
-            response = dumps(fault)
-        except:
-            # report exception back to server
-            response = dumps(Fault(1,
-                                   "%s:%s" % (sys.exc_type, sys.exc_value)))
-        print "in _bcfg_marshalled_dispatch 3"
-
-        return response
-
-    def _authenticate_connection(self, method, user, password, address):
-        '''Authenticate new connection'''
-        (user, address, method)
-        return password == self.password
 
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
@@ -246,9 +130,9 @@ class Bcfg2XMLRPCServer(SSL.SSLServer,
     def Bcfg2RecvStats(self, address, stats):
         '''Act on statistics upload'''
         sdata = XML(stats)
-        e = sdata.find(".//Statistics")
+        state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
-        if e.get('version') >= '2.0':
+        if state.get('version') >= '2.0':
             try:
                 client = gethostbyaddr(address[0])[0]
             except herror:
@@ -257,7 +141,7 @@ class Bcfg2XMLRPCServer(SSL.SSLServer,
             # Update statistics
             self.Core.stats.updateStats(sdata, client)
 
-        syslog(LOG_INFO, "Client %s reported state %s"%(client, e.attrib['state']))
+        syslog(LOG_INFO, "Client %s reported state %s"%(client, state.attrib['state']))
         return "<ok/>"
 
 if __name__ == '__main__':
@@ -265,5 +149,7 @@ if __name__ == '__main__':
     options =  {'v':'verbose', 'd':'debug'}
     doptions = {'D':'daemon', 'c':'configfile', 'C':'client'}
     ssetup = dgetopt(argv[1:], options, doptions)
-    s = Bcfg2XMLRPCServer(ssetup)
+    if not ssetup['configfile']:
+        ssetup['configfile'] = '/etc/bcfg2.conf'
+    s = Bcfg2(ssetup)
     s.serve_forever()   
