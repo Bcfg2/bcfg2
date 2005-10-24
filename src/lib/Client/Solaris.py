@@ -4,11 +4,10 @@ __revision__ = '$Revision$'
 
 from glob import glob
 from os import popen, stat, system, unlink
-from popen2 import Popen4
 from re import compile as regcompile
 from tempfile import mktemp
 
-from Bcfg2.Client.Toolset import Toolset
+from Bcfg2.Client.Toolset import Toolset, saferun
 
 noask = '''
 mail=
@@ -60,10 +59,8 @@ class Solaris(Toolset):
         instp = popen("/usr/bin/pkginfo -x")
         lines = instp.readlines()
         while (lines):
-            l1 = lines.pop()
-            l2 = lines.pop()
-            name = l2.split()[0]
-            version = l1.split()[1]
+            version = lines.pop().split()[1]
+            name = lines.pop().split()[0]
             self.installed[name] = version
             self.ptypes[name] = 'sysv'
         # try to find encap packages
@@ -126,10 +123,7 @@ class Solaris(Toolset):
                 print "Enabling Service %s" % (entry.attrib['name'])
             else:
                 cmdrc = system("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))
-        if cmdrc == 0:
-            return True
-        else:
-            return False
+        return cmdrc == 0
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
@@ -148,26 +142,21 @@ class Solaris(Toolset):
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick'] or entry.get('type') == 'encap':
                     return True
-                verp = Popen4("/usr/sbin/pkgchk -n %s" % (entry.get('name')), bufsize=16384)
-                odata = verp.fromchild.read()
-                vstat = verp.poll()
-                while vstat == -1:
-                    odata += verp.fromchild.read()
-                    vstat = verp.poll()
-                output = [line for line in odata.split("\n") if line[:5] == 'ERROR']
+                (vstat, odata) = saferun("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
                 if vstat == 0:
                     return True
                 else:
+                    output = [line for line in odata if line[:5] == 'ERROR']
                     if len([name for name in output if name.split()[-1] not in modlist]):
-                        return True
-                    else:
                         self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
+                    else:
+                        return True
         return False
 
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = [name for name, version in [ x.strip().split() for x in
+        allsrv = [name for name, version in [ srvc.strip().split() for srvc in
                                               popen("/usr/bin/svcs -a -H -o FMRI,STATE").readlines() ]
                   if version != 'disabled']
         csrv = self.cfg.findall(".//Service")
@@ -208,6 +197,7 @@ class Solaris(Toolset):
                         self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
 
     def Install(self):
+        '''Local install method handling noaskfiles'''
         Toolset.Install(self)
         try:
             unlink(self.noaskname)
