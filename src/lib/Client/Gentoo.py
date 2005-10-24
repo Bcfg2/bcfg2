@@ -1,10 +1,10 @@
 '''This provides bcfg2 support for Gentoo'''
-__revision__ = '$Revision: 1.6 $'
+__revision__ = '$Revision: $'
 
 from os import popen, system, stat
 from popen2 import Popen4
 from glob import glob
-from re import compile, match
+from re import match, compile as regcompile
 
 from Bcfg2.Client.Toolset import Toolset
 
@@ -25,12 +25,13 @@ class Gentoo(Toolset):
         '''Refresh memory hashes of packages'''
         self.installed = {}
 
-        splitter = compile('([\w\-\+]+)-([\d].*)')
+        splitter = regcompile('([\w\-\+]+)-([\d].*)')
 
         # Build list of packages
-        instp =  [splitter.match(f.split('/')[-1].replace('.ebuild','')).groups() for f in glob('/var/db/pkg/*/*/*.ebuild')]
-        for name,version in instp:
-            self.installed["%s-%s" % (name, version)] = version
+        instp =  [splitter.match(fname.split('/')[-1].replace('.ebuild','')).groups()
+                  for fname in glob('/var/db/pkg/*/*/*.ebuild')]
+        for info in instp:
+            self.installed["%s-%s" % info] = info[1]
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -74,12 +75,13 @@ class Gentoo(Toolset):
         return True
 
     def VerifyPackage(self, entry, modlist):
-	'''Verify Package status for entry'''
+        '''Verify Package status for entry'''
         if not (entry.get('name') and entry.get('version')):
             print "Can't verify package, not enough data."
             return False
 
-        installed_package = popen("/usr/bin/qpkg --no-color --installed --verbose %s-%s" % (entry.get('name'), entry.get('version'))).readlines()
+        installed_package = popen("/usr/bin/qpkg --no-color --installed --verbose %s-%s" %
+                                  (entry.get('name'), entry.get('version'))).readlines()
         if installed_package:
             installed_package = installed_package[0].strip("\n").split('/')[-1]
             if installed_package != "%s-%s" % (entry.get('name'), entry.get('version')):
@@ -87,7 +89,8 @@ class Gentoo(Toolset):
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick']:
                     return True
-                verp = Popen4("/usr/bin/qpkg --no-color --check %s-%s" % (entry.get('name'), entry.get('version')), bufsize=16384)
+                verp = Popen4("/usr/bin/qpkg --no-color --check %s-%s" %
+                              (entry.get('name'), entry.get('version')), bufsize=16384)
                 odata = verp.fromchild.read()
                 vstat = verp.poll()
                 while vstat == -1:
@@ -109,7 +112,7 @@ class Gentoo(Toolset):
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = [ x.split('/')[-1] for x in glob('/etc/init.d/*')]
+        allsrv = [ srv.split('/')[-1] for srv in glob('/etc/init.d/*')]
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if svc.get('status') == 'on' and svc.get('name') in allsrv]
         self.extra_services = allsrv
