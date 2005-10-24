@@ -2,9 +2,8 @@
 __revision__ = '$Revision: 1.56 $'
 
 from binascii import b2a_base64
-from os import rename, system, popen
+from os import system, popen
 from socket import gethostbyname, gaierror
-from time import sleep
 
 from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, PluginExecutionError
 
@@ -63,7 +62,7 @@ class SSHbase(Plugin):
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except gaierror:
-                pass
+                (client)
         try:
             ipaddr = popen("getent hosts %s" % client).read().strip().split()
         except:
@@ -106,7 +105,6 @@ class SSHbase(Plugin):
             self.GenerateHostKeys(client)
             if hasattr(self, 'static_skn'):
                 del self.static_skn
-        times = 0
         if not self.repository.entries.has_key(filename):
             self.LogError("%s still not registered" % filename)
             raise PluginExecutionError
@@ -134,7 +132,7 @@ class SSHbase(Plugin):
             if hostkey not in self.repository.entries.keys():
                 fileloc = "%s/%s" % (self.data, hostkey)
                 publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
-		temploc =  "/tmp/%s" % hostkey
+                temploc =  "/tmp/%s" % hostkey
                 system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' % (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())
