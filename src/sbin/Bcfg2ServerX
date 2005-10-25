@@ -44,6 +44,8 @@ class Bcfg2(Component):
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
 
+    request_queue_size = 15
+
     def __init__(self, setup):
         Component.__init__(self, setup)
         try:
