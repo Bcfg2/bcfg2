@@ -8,7 +8,7 @@ if [ -z "$version" ] ; then
 fi
 
 bk export . /tmp/bcfg2-${version}
-bk changes -aeR > /tmp/bcfg2-${version}/ChangeLog
+bk changes -aer > /tmp/bcfg2-${version}/ChangeLog
 cd /tmp/bcfg2-${version}/doc
 make
 cd /tmp
