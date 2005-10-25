@@ -1,10 +1,12 @@
 '''XMLRPC/SSL Communication Library (following the ssslib API)'''
 __revision__ = '$Revision:$'
 
-from elementtree.ElementTree import XML, tostring
+from elementtree.ElementTree import XML
 from ConfigParser import ConfigParser
 from M2Crypto.m2xmlrpclib import ServerProxy, SSL_Transport
 from xmlrpclib import Fault
+from sys import exc_info
+from traceback import extract_tb
 
 class CommunicationError(Exception):
     '''Duplicate the sss.ssslib error API'''
@@ -43,10 +45,21 @@ class comm_lib(object):
             print "unsupported function call"
             raise CommunicationError, "foo"
         func = getattr(self.proxy, funcname)
-        try:
-            self.response = apply(func, args)
-        except Fault, msg:
-            raise CommunicationError, msg
+        for i in range(5):
+            try:
+                self.response = apply(func, args)
+                return
+            except Fault, msg:
+                raise CommunicationError, msg
+            except:
+                continue
+        (trace, val, trb) = exc_info()
+        print "Unexpected communication error after retry"
+        for line in extract_tb(trb):
+            print '  File "%s", line %i, in %s\n    %s\n' % line
+        print "%s: %s\n" % (trace, val)
+        del trace, val, trb
+        raise CommunicationError, "no connect"
 
     def RecvMessage(self, handle):
         '''Return cached response'''
