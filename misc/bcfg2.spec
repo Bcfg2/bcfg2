@@ -1,7 +1,7 @@
 %define name bcfg2
-%define version 0.7.1pre3
+%define version 0.7.1pre4
 %define release 1
-%define pythonversion 2.2
+%define pythonversion 2.3
 
 Summary: Bcfg2 Client
 Name: %{name}
@@ -67,6 +67,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/__init__.py*
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/Client/*
 /usr/share/man/man1/*
+/usr/share/man/man5/*
 /etc/init.d/bcfg2
 
 %post -n bcfg2-server
