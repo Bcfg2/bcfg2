@@ -1,0 +1,34 @@
+.TH "bcfg2.conf" 5
+.SH "NAME"
+bcfg2.conf - configuration parameters for bcfg2
+.SH "DESCRIPTION"
+.TP
+bcfg2.conf includes configuration parameters for the bcfg2 server and client. 
+.SH "SECTIONS"
+.TP
+.B [server]
+.TP
+repository=/path/to/repository
+.TP
+structures=list of enabled structures
+.TP
+bundles=list of enabled bundles
+.TP
+metadata=/path/to/metadata
+.TP
+.B [communication]
+.TP
+password=communication password
+.TP
+key=/path/to/ssl/key
+.TP
+protocol=(sss|xmlrpc/ssl)
+.TP
+.B [components]
+list of component urls
+.PP
+componentname=url
+
+.SH "SEE ALSO"
+.BR bcfg2(1),
+.BR Bcfg2Server(8)
