@@ -52,6 +52,7 @@ class comm_lib(object):
             except Fault, msg:
                 raise CommunicationError, msg
             except:
+                print "Transient communication error; retrying"
                 continue
         (trace, val, trb) = exc_info()
         print "Unexpected communication error after retry"
