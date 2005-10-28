@@ -147,7 +147,9 @@ if __name__ == '__main__':
             print "failed to write config cache file %s" % (setup['cache'])
 
     try:
+        pt = time()
         cfg = XML(r)
+        timeinfo.set('parse', str(time() - pt))
     except:
         print "got error from server"
         raise SystemExit, 1
