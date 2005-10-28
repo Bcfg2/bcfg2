@@ -8,13 +8,14 @@ from os import popen, chmod, unlink, _exit
 from signal import signal, SIGINT
 from sys import argv
 from tempfile import mktemp
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from time import time
 
 from elementtree.ElementTree import Element, XML, tostring
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
-    raise _exit(1)
+    _exit(1)
 
 def load_toolset(toolset, config, clientsetup):
     '''Import client toolset modules'''
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     options =  {'v':'verbose', 'q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'P':'paranoid'}
     doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image', 'r':'remove'}
     setup = dgetopt(argv[1:], options, doptions)
+    timeinfo = Element("Times")
 
     comm = None
     if setup['file']:
@@ -95,7 +97,7 @@ if __name__ == '__main__':
             cf = ConfigParser()
             cf.read('/etc/bcfg2.conf')
             proto = cf.get('communication', 'protocol')
-        except:
+        except (NoSectionError, NoOptionError):
             proto = 'sss'
 
         if proto == 'sss':
@@ -115,9 +117,10 @@ if __name__ == '__main__':
             raise SystemExit, 1
 
         # get probes
+        start = time()
         comm.SendMessage(h, "<get-probes/>")
         data = comm.RecvMessage(h)
-        #if setup['verbose']: print data
+        timeinfo.set('probefetch', str(time() - start))
         probes = XML(data)
         # execute probes
         cpd = Element("probe-data")
@@ -132,8 +135,10 @@ if __name__ == '__main__':
         if setup['image']:
             msg.attrib['image'] = setup['image']
         # get config
+        cstart = time()
         comm.SendMessage(h, tostring(msg))
         r = comm.RecvMessage(h)
+        timeinfo.set('config', str(time() - cstart ))
 
     if setup['cache']:
         try:
@@ -164,12 +169,16 @@ if __name__ == '__main__':
     # Create toolset handle
     client = load_toolset(cfg_toolset, cfg, setup)
 
+    istart = time()
     # verify state
     client.Inventory()
+    timeinfo.set('inventory', str(time() - istart))
 
     correct = client.states.values().count(True)
     total = len(client.states.values())
 
+    istart = time()
+    
     if ((correct < total) or client.pkgwork['remove']):
         if client.pkgwork['remove']:
             client.CondPrint('verbose', "Extra packages detected")
@@ -192,10 +201,14 @@ if __name__ == '__main__':
     else:
         client.CondPrint("verbose", "All entries correct")
 
+    timeinfo.set('install', str(time() - istart))
+    timeinfo.set('total', str(time() - start))
+
     if not setup['file']:
         # upload statistics
         m = Element("upload-statistics")
         stats = client.GenerateStats(__revision__)
+        stats.append(timeinfo)
         m.append(stats)
 
         comm.SendMessage(h, tostring(m))
