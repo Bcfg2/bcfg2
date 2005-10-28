@@ -5,13 +5,17 @@
     <title>Pre-requisites</title>
     <para>
       Bcfg2 is written in python using several modules not included
-      with most distributions. SSSlib, available from
-      ftp://ftp.mcs.anl.gov/pub/sss/, provides communication
-      abstraction. Element Tree, available from http://www.effbot.org
-      provides convenient XML handling. Bcfg2 uses FAM (server-size)
-      to coherently cache repository files and update them when they
-      change.
+      with most distributions. Element Tree, available from
+      http://www.effbot.org provides convenient XML handling.
     </para>
+    
+    <para>
+      The Bcfg2 server requires a few more packages. It uses either
+      FAM or Gamin to coherently cache repository files
+      and update them when they change. It also requires m2crypto to
+      use SSL functions.
+    </para>
+
     <para>ElementTree can be downloaded from
     http://www.effbot.org/downloads. It can be installed by running
     the setup script against the python installation. 
@@ -37,9 +41,13 @@ copying elementtree/__init__.py -> build/lib/elementtree
 $ python setup.py install
 ...
     </programlisting>
-    <para>SSSlib can be downloaded from
-    ftp://ftp.mcs.anl.gov/pub/sss. It can either be built from source
-    or prebuilt packages can be downloaded from the same location.
+
+    <para>
+      The python fam binding can be downloaded from
+      python-fam.sourceforge.net. FAM (on several linux distributions)
+      has been depricated in favor of gamin. The Bcfg server will
+      autodetect which modules are available, and use appropriate file
+      caching logic.
     </para>
   </sect1>
   <sect1>
