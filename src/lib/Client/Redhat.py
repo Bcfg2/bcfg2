@@ -106,6 +106,7 @@ class Redhat(Toolset):
                 self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
                 if not system("rpm --quiet -e %s" % " ".join(self.pkgwork['remove'])):
                     self.pkgwork['remove'] = []
+                    self.Inventory()
             else:
                 self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
         if len(self.extra_services) > 0:
@@ -120,7 +121,7 @@ class Redhat(Toolset):
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = [line.split()[0] for line in popen("chkconfig --list|grep :on").readlines()]
+        allsrv = [line.split()[0] for line in popen("/sbin/chkconfig --list|grep :on").readlines()]
         self.CondPrint('debug', "Found active services: %s" % allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if
