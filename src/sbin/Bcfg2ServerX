@@ -75,6 +75,8 @@ class Bcfg2(Component):
                 self.Core.fam.Service()
                 print "done"
             if self.socket in rsockinfo:
+                # workaround for m2crypto 0.15 bug
+                self.socket.postConnectionCheck = None
                 return self.socket.accept()
 
     def Bcfg2GetProbes(self, address):
