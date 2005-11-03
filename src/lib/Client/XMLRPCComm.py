@@ -3,8 +3,7 @@ __revision__ = '$Revision:$'
 
 from elementtree.ElementTree import XML
 from ConfigParser import ConfigParser
-from M2Crypto.m2xmlrpclib import ServerProxy, SSL_Transport
-from xmlrpclib import Fault
+from xmlrpclib import Fault, ServerProxy
 from sys import exc_info
 from traceback import extract_tb
 
@@ -19,7 +18,7 @@ class comm_lib(object):
         self.cf = ConfigParser()
         self.cf.read('/etc/bcfg2.conf')
         location = self.cf.get("components", "bcfg2")
-        self.proxy = ServerProxy(location, SSL_Transport())
+        self.proxy = ServerProxy(location)
         self.user = 'root'
         self.password = self.cf.get("communication", "password")
 
