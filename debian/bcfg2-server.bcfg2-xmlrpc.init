@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Bcfg2Server - Bcfg2 configuration daemon
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 server for configuration requests
+# 
+
+case "$1" in
+  start)
+    echo -n "Starting Bcfg2ServerX: "
+    start-stop-daemon -S /usr/sbin/Bcfg2ServerX 
+    echo "Bcfg2Server"
+    ;;
+  stop)
+    echo -n "Stopping Bcfg2Server: "
+    start-stop-daemon -K /usr/sbin/Bcfg2ServerX
+    echo done
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: bcfg2-xmlrpc-server {start|stop|restart|force-reload}"
+    exit 1
+esac
+
+exit 0
