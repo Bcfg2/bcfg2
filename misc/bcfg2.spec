@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.7.1pre6
+%define version 0.7.1
 %define release 1
 %define pythonversion 2.3
 
@@ -50,7 +50,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n bcfg2-server
 %defattr(-,root,root)
-/usr/sbin/Bcfg2Server
+/usr/sbin/Bcfg2Server*
 /usr/sbin/ValidateBcfg2Repo
 /usr/sbin/StatReports
 /usr/bin/GenerateHostInfo
