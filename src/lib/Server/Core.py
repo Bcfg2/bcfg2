@@ -145,13 +145,13 @@ class Core(object):
         self.setup = setup
         self.plugins = {}
         
-        mpath = cfile.get('server','metadata')
+        mpath = cfile.get('server','repository')
         try:
-            self.metadata = MetadataStore("%s/metadata.xml" % mpath, self.fam)
+            self.metadata = MetadataStore("%s/etc/metadata.xml" % mpath, self.fam)
         except OSError:
             raise CoreInitError, "metadata path incorrect"
         
-        self.stats = Statistics("%s/statistics.xml" % (mpath))
+        self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
         structures = cfile.get('server', 'structures').split(',')
         generators = cfile.get('server', 'generators').split(',')
