@@ -2,12 +2,12 @@ Source: bcfg2
 Section: admin
 Priority: optional
 Maintainer: Narayan Desai <desai@mcs.anl.gov>
-Build-Depends: debhelper (>= 4.0.0), python2.3-dev
+Build-Depends: debhelper (>= 4.0.0), python-dev
 Standards-Version: 3.6.1.1
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, ssslib-python, debsums, python-apt, python2.3-elementtree
+Depends: ${python:Depends}, debsums, python-apt, python-elementtree
 Description: build configuration system
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
@@ -15,7 +15,7 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ssslib-python, bcfg2, python2.3-elementtree
+Depends: ${python:Depends}, bcfg2, python-elementtree, python2.3-gamin, m2crypto
 Description: build configuration system, version two
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
