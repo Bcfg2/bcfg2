@@ -33,7 +33,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 	python setup.py install --prefix=$(PWD)/debian/bcfg2-install/usr
-	cp -f examples/bcfg2.conf ./debian/tmp/etc
+	mkdir ./debian/tmp/etc
+	cp -f examples/bcfg2.conf ./debian/tmp/etc/bcfg2.conf
 
 # Build architecture-dependent files here.
 # We have nothing to do by default.
