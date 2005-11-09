@@ -94,7 +94,7 @@ class Toolset(object):
         desired = {}
         for entry in self.cfg.findall(".//Package"):
             desired[entry.attrib['name']] = entry
-
+        self.pkgwork = {'update':[], 'add':[], 'remove':[]}
         for pkg, entry in desired.iteritems():
             if self.states.get(entry, True):
                 # package entry verifies
