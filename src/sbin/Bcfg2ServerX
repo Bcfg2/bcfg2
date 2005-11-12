@@ -13,7 +13,7 @@ from threading import Lock
 from select import select, error as selecterror
 from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
-from elementtree.ElementTree import XML, Element, tostring
+from lxml.etree import XML, Element, tostring
 
 def dgetopt(arglist, opt, vopt):
     '''parse options into a dictionary'''

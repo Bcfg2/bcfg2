@@ -15,7 +15,7 @@ import stat as statmod
 from traceback import extract_tb
 from popen2 import Popen4
 
-from elementtree.ElementTree import Element, SubElement, tostring
+from lxml.etree import Element, SubElement, tostring
 
 def calc_perms(initial, perms):
     '''This compares ondisk permissions with specified ones'''

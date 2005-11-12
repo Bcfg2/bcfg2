@@ -1,7 +1,7 @@
 '''XMLRPC/SSL Communication Library (following the ssslib API)'''
 __revision__ = '$Revision:$'
 
-from elementtree.ElementTree import XML
+from lxml.etree import XML
 from ConfigParser import ConfigParser
 from xmlrpclib import Fault, ServerProxy
 from sys import exc_info

@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from copy import deepcopy
-from elementtree.ElementTree import Element, XML
+from lxml.etree import Element, XML
 from xml.parsers.expat import ExpatError
 
 from Bcfg2.Server.Plugin import Plugin, PluginInitError, SingleXMLFileBacked

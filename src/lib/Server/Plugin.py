@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision:$'
 
-from elementtree.ElementTree import XML
+from lxml.etree import XML
 from os import stat
 from stat import ST_MTIME
 from syslog import syslog, LOG_ERR, LOG_INFO

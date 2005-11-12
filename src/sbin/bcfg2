@@ -11,7 +11,7 @@ from tempfile import mktemp
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from time import time
 
-from elementtree.ElementTree import Element, XML, tostring
+from lxml.etree import Element, XML, tostring
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''

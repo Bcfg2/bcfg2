@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from syslog import syslog, LOG_INFO
-from cElementTree import XML
+from lxml.etree import XML
 from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 

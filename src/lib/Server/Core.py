@@ -8,7 +8,7 @@ from syslog import syslog, LOG_ERR, LOG_INFO
 from traceback import extract_tb
 from time import time
 from ConfigParser import ConfigParser
-from elementtree.ElementTree import Element
+from lxml.etree import Element
 
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError

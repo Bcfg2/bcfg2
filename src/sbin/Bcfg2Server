@@ -10,7 +10,7 @@ from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
 from sys import argv, exit as sysexit, exc_info
 from traceback import extract_tb
 
-from elementtree.ElementTree import Element
+from lxml.etree import Element
 
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError

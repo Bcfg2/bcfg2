@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from posixpath import isdir
 from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
-from elementtree.ElementTree import XML
+from lxml.etree import XML
 from xml.parsers.expat import ExpatError
 from Cheetah.Template import Template
 

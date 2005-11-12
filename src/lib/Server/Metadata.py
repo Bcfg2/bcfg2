@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from elementtree.ElementTree import XML, SubElement, Element
+from lxml.etree import XML, SubElement, Element
 from syslog import syslog, LOG_ERR, LOG_INFO
 
 from Bcfg2.Server.Plugin import SingleXMLFileBacked

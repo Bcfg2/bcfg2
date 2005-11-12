@@ -3,11 +3,11 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
+from lxml.etree import Element, XML
+from xml.parsers.expat import ExpatError
 
 from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 
-from elementtree.ElementTree import Element, XML
-from xml.parsers.expat import ExpatError
 
 class ImageFile(SingleXMLFileBacked):
     '''This file contains image -> system mappings'''

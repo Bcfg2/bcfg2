@@ -16,7 +16,7 @@ __revision__ = '$Revision$'
 
 import base64
 from copy import deepcopy
-from elementtree.ElementTree import XML, Element, SubElement
+from lxml.etree import XML, Element, SubElement
 from socket import gethostbyname
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, SingleXMLFileBacked
 

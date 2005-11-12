@@ -8,7 +8,7 @@ for bcfg2'''
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from elementtree.ElementTree import XML, Element, SubElement, tostring
+from lxml.etree import XML, Element, SubElement, tostring
 from xml.parsers.expat import ExpatError
 from time import asctime, strptime, time
 from socket import getfqdn
