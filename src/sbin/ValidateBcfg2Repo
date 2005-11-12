@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
+'''ValidateBcfg2Repo checks all xml files in Bcfg2 repos against their respective XML schemas'''
+__revision__ = '0.7.3'
+
 from glob import glob
-from sys import argv, exit
-from validate import validate, ValidationException
-from ConfigParser import ConfigParser
+from lxml.etree import parse, XMLSchema
+from sys import argv
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
 if __name__ == '__main__':
     cf = ConfigParser()
@@ -11,8 +14,9 @@ if __name__ == '__main__':
     cf.read(['/etc/bcfg2.conf'])
     try:
         repo = cf.get('server', 'repository')
-    except:
+    except (NoSectionError, NoOptionError):
         if len(argv) == 1:
+            print "Repository location not specified in config file or on command line"
             print "Usage: validate_repo <repo directory>"
             raise SystemExit, 1
         repo = argv[1]
@@ -27,11 +31,17 @@ if __name__ == '__main__':
                 'services':("%s/etc/services.xml", "%s/services.xsd")}
 
     for k, (spec, schema) in filesets.iteritems():
+        schema = XMLSchema(parse(open(schema%(schemadir))))
         for filename in glob(spec%(repo)):
             try:
-                validate(open(filename).read(), schema%(schemadir))
-                print "%s checks out"%(filename)
-            except ValidationException, v:
-                print "file %s fails to verify:\n%s"%(filename, v)
+                datafile = parse(open(filename))
+            except SyntaxError:
+                print "%s ***FAILS*** to parse \t\t<----" % (filename)
+                continue
             except IOError:
-                print "failed to open file %s"%(filename)
+                print "Failed to open file %s \t\t<---" % (filename)
+                continue
+            if schema.validate(datafile):
+                print "%s checks out" % (filename)
+            else:
+                print "%s ***FAILS*** to verify \t\t<----" % (filename)
