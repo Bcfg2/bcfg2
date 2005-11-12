@@ -1,7 +1,7 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
 __revision__ = '$Revision: $'
 
-from elementtree.ElementTree import XML, SubElement, Element
+from lxml.etree import XML, SubElement, Element
 from xml.parsers.expat import ExpatError
 from syslog import syslog, LOG_ERR
 from time import asctime, localtime, time
@@ -101,3 +101,4 @@ class Statistics(object):
 
         # Set dirty
         self.dirty = 1
+        self.WriteBack()
