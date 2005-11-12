@@ -25,7 +25,7 @@ clean:
 	dh_testroot
 	dh_clean 
 	python setup.py clean
-	-rm -Rf debian/install debian/tmp debian/bcfg2-server
+	-rm -Rf debian/install debian/tmp debian/bcfg2-server debian/bcfg2
 
 install: build
 	dh_testdir
@@ -33,8 +33,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 	python setup.py install --prefix=$(PWD)/debian/bcfg2-install/usr
-	mkdir ./debian/tmp/etc
-	cp -f examples/bcfg2.conf ./debian/tmp/etc/bcfg2.conf
+	mkdir -p ./debian/bcfg2/etc
+	cp -f examples/bcfg2.conf ./debian/bcfg2/etc/bcfg2.conf
 
 # Build architecture-dependent files here.
 # We have nothing to do by default.
