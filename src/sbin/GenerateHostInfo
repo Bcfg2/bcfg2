@@ -6,8 +6,8 @@
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
-from elementtree.ElementTree import Element, SubElement, parse
-from os import system, fork, execl, dup2, wait
+from lxml.etree import Element, SubElement, parse
+from os import fork, execl, dup2, wait
 import sys
 
 def pretty_print(element, level=0):
