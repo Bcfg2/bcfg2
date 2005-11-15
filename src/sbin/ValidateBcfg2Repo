@@ -42,6 +42,7 @@ if __name__ == '__main__':
                 print "Failed to open file %s \t\t<---" % (filename)
                 continue
             if schema.validate(datafile):
-                print "%s checks out" % (filename)
+                if '-v' in argv:
+                    print "%s checks out" % (filename)
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
