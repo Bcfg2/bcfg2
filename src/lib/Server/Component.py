@@ -4,7 +4,7 @@ __revision__ = '$Revision: 1.4 $'
 from ConfigParser import ConfigParser, NoOptionError
 from cPickle import loads, dumps
 from M2Crypto import SSL
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCDispatcher
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 from select import select
 from socket import gethostname
 from sys import exc_info
@@ -13,6 +13,11 @@ from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
 from traceback import extract_tb
 from xmlrpclib import dumps, loads, Fault
 from urlparse import urlparse
+
+try:
+    from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
+except ImportError:
+    SimpleXMLRPCDispatcher = object
 
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
