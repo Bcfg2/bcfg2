@@ -5,6 +5,7 @@ __revision__ = '0.7.3'
 
 from glob import glob
 from lxml.etree import parse, XMLSchema
+from os import system
 from sys import argv
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 
@@ -37,6 +38,7 @@ if __name__ == '__main__':
                 datafile = parse(open(filename))
             except SyntaxError:
                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
+                system("xmllint %s" % filename)
                 continue
             except IOError:
                 print "Failed to open file %s \t\t<---" % (filename)
@@ -46,3 +48,4 @@ if __name__ == '__main__':
                     print "%s checks out" % (filename)
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
+                system("xmllint --schema %s %s" % (schema % schemadir, filename))
