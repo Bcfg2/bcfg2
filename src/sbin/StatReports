@@ -40,7 +40,8 @@ def generatereport(rspec, nrpt):
         #reduce to most recent Statistics entry
         statisticslist = node.findall('Statistics')
         #this line actually sorts from most recent to oldest
-        stats = statisticslist.sort(lambda y, x: cmp(strptime(x.get("time")), strptime(y.get("time"))))[0]
+        statisticslist.sort(lambda y, x: cmp(strptime(x.get("time")), strptime(y.get("time"))))
+        stats = statisticslist[0]
         
         [node.remove(item) for item in node.findall('Statistics')]
       
@@ -122,6 +123,14 @@ def www(reportxml, delivery):
         fil.write(reportxml)
         fil.close()
 
+def fileout(reportxml, delivery):
+    '''outputs to plain text file'''
+    for destination in delivery.findall('Destination'):
+        fil = open(destination.attrib['address'], 'w')
+
+        fil.write(reportxml)
+        fil.close()
+
 def pretty_print(element, level=0):
     '''Produce a pretty-printed text representation of element'''
     if element.text:
@@ -141,10 +150,10 @@ def pretty_print(element, level=0):
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
-    configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
-    statpath = "%s/statistics.xml" % c.get('server', 'metadata')
-    hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
-    metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
+    configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
+    statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
+    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
+    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
     transformpath = "/usr/share/bcfg2/xsl-transforms/"
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
@@ -244,8 +253,13 @@ if __name__ == '__main__':
             elif deliverymechanism == 'www':
                 if delivtype == 'overview-stats':
                     transform = 'overview-stats-html.xsl'
+                elif delivtype == 'times':
+                    transform = 'timing-perf-html.xsl'
                 else:
                     transform = 'nodes-digest-html.xsl'
+            elif deliverymechanism == 'null-operator':
+                fileout(tostring(ElementTree(procnodereport).getroot()),deliv)
+                break
             else:
                 print("StatReports: Invalid delivery mechanism in report-config")
                 raise SystemExit, 1
@@ -286,4 +300,3 @@ if __name__ == '__main__':
                     rss(outputstring, deliv, reprt)
                 else: # must be deliverymechanism == 'www':
                     www(outputstring, deliv)
-                
