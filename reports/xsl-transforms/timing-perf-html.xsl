@@ -2,7 +2,9 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
                 xmlns="http://www.w3.org/1999/xhtml">
     <xsl:include href="xsl-transform-includes/html-templates.xsl" />
-    <xsl:output method="xml" media-type="text/html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
+    <xsl:include href="xsl-transform-includes/main-js.xsl" />
+        <xsl:include href="xsl-transform-includes/sorttable-js.xsl" />
+    <xsl:include href="xsl-transform-includes/boxypastel-css.xsl" />    <xsl:output method="xml" media-type="text/html" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"/>
     <xsl:template match="Report">
         <html>
               <head>
@@ -10,9 +12,9 @@
                         BCFG Performance Timings
                     </title>
                     
-                    <link rel="stylesheet" type="text/css" href="web-rprt-srcs/boxypastel.css" />
-                    <script type="text/javascript" src="web-rprt-srcs/main.js" />
-                    <script type="text/javascript" src="web-rprt-srcs/sorttable.js" />
+                    <xsl:copy-of select="$boxypastel-css" />
+                    <xsl:copy-of select="$main-js" />
+                    <xsl:copy-of select="$sorttable-js" />
 
               </head>
               <body bgcolor="#ffffff">
