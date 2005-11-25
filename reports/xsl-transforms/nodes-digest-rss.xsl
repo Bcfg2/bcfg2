@@ -33,7 +33,7 @@ SUMMARY:
 <xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Modified)" /> nodes were modified in the last run. (includes both good and bad nodes)
 </xsl:if>
 <xsl:if test="count(/Report/Node/Statistics/Stale) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Stale)" /> nodes did not run this calendar day.
+<xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node/Statistics/Stale)" /> nodes did not run within the last 24 hours.
 </xsl:if>
 DETAILS:
 <xsl:apply-templates select="Node">
