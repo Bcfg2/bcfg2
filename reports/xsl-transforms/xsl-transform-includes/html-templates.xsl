@@ -30,7 +30,7 @@
     
     <xsl:template match="Stale">
         <div class="warning">
-            <span class="nodelisttitle">This node did not run on today's calendar date-- it may be out of date.</span>
+            <span class="nodelisttitle">This node did not run within the last 24 hours-- it may be out of date.</span>
         </div>
     </xsl:template>
     

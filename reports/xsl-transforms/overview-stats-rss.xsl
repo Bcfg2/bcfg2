@@ -19,7 +19,7 @@ Summary:
 <xsl:text>    </xsl:text><xsl:value-of select="count($cleannodes)" /> nodes are clean.
 <xsl:text>    </xsl:text><xsl:value-of select="count($dirtynodes)" /> nodes are dirty.
 <xsl:text>    </xsl:text><xsl:value-of select="count($modifiednodes)" /> nodes were modified in the last run. (includes both good and bad nodes)
-<xsl:text>    </xsl:text><xsl:value-of select="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)])" /> nodes did not run this calendar day but were pingable.
+<xsl:text>    </xsl:text><xsl:value-of select="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)])" /> nodes did not run withn the last 24 hours but were pingable.
 <xsl:text>    </xsl:text><xsl:value-of select="count($unpingablenodes)" /> nodes were not pingable.
 <xsl:text>    </xsl:text>----------------------------
 <xsl:text>    </xsl:text><xsl:value-of select="count(/Report/Node)" /> Total<xsl:text>

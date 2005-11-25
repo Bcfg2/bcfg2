@@ -24,7 +24,7 @@
 <xsl:text>        </xsl:text>Node is clean; Everything has been satisfactorily configured.
 </xsl:template>
 <xsl:template match="Stale">
-<xsl:text>        </xsl:text>This node did not run today-- it may be out of date.
+<xsl:text>        </xsl:text>This node did not run within the last 24 hours-- it may be out of date.
 </xsl:template>
 <xsl:template match="Bad">
 <xsl:text>        </xsl:text><xsl:value-of select="count(./*)" /> items did not verify and are considered Dirty:
