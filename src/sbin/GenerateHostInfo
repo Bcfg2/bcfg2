@@ -29,9 +29,9 @@ def pretty_print(element, level=0):
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
-    hostinfopath = "%s/hostinfo.xml" % c.get('server', 'metadata')
-    metadatapath = "%s/metadata.xml" % c.get('server', 'metadata')
-    configpath = "%s/report-configuration.xml" % c.get('server', 'metadata')
+    configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
+    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
+    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
     sendmailpath = c.get('statistics','sendmailpath')
     
     metaElement =  parse(metadatapath)
@@ -59,13 +59,13 @@ if __name__ == '__main__':
                 chost = pids[cpid]
                 del pids[cpid]
                 if status == 0:
-                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingeable='Y')
+                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
                 else:
                     if chost.count('.') > 0:
                         fullnames[chost.split('.')[0]] = chost
                         hostlist.append(chost.split('.')[0])
                     else:
-                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingeable='N')
+                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
             except:
                 pass
 
