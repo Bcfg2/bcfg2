@@ -247,4 +247,4 @@ class ScopedXMLFile(SingleXMLFileBacked):
             syslog(LOG_ERR, "Failed to FetchRecord %s:%s"%(entry.tag, entry.get('name')))
         else:
             data = useful[-1][-1]
-            entry.attrib.update(data.attrib)
+            [entry.attrib.__setitem__(x, data.attrib[x]) for x in data.attrib]
