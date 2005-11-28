@@ -8,8 +8,7 @@ for bcfg2'''
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring
-from xml.parsers.expat import ExpatError
+from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
 from time import asctime, strptime, time
 from socket import getfqdn
 from sys import argv
@@ -87,7 +86,7 @@ def rss(reportxml, delivery, report):
             items = olddoc.find("channel").findall("item")[0:9]
             fil.close()
             fil = open(destination.attrib['address'], 'w')
-        except (IOError, ExpatError):
+        except (IOError, XMLSyntaxError):
             fil = open(destination.attrib['address'], 'w')
             items = []
 
@@ -185,22 +184,22 @@ if __name__ == '__main__':
     '''Reads Data & Config files'''
     try:
         statsdata = XML(open(statpath).read())
-    except (IOError, ExpatError):
+    except (IOError, XMLSyntaxError):
         print("StatReports: Failed to parse %s"%(statpath))
         raise SystemExit, 1
     try:
         configdata = XML(open(configpath).read())
-    except (IOError, ExpatError):
+    except (IOError, XMLSyntaxError):
         print("StatReports: Failed to parse %s"%(configpath))
         raise SystemExit, 1
     try:
         metadata = XML(open(metadatapath).read())
-    except (IOError, ExpatError):
+    except (IOError, XMLSyntaxError):
         print("StatReports: Failed to parse %s"%(metadatapath))
         raise SystemExit, 1
     try:
         hostinfodata = XML(open(hostinfopath).read())
-    except (IOError, ExpatError):
+    except (IOError, XMLSyntaxError):
         print("StatReports: Failed to parse %s. Is GenerateHostInfo in your path?"%(hostinfopath))
         raise SystemExit, 1
 
