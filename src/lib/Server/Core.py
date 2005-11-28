@@ -54,8 +54,13 @@ class FamFam(object):
 
     def Service(self):
         '''Handle all fam work'''
+        count = 0
+        t1 = time()
         while self.fm.pending():
+            count += 1
             self.HandleEvent()
+        t2 = time()
+        syslog(LOG_INFO, "Processed %s fam events in %s seconds" % (count, (t2 - t1)))
 
 class GaminEvent(object):
     '''This class provides an event analogous to python-fam events based on gamin sources'''
@@ -112,9 +117,14 @@ class GaminFam(object):
 
     def Service(self):
         '''Handle any pending Gamin work'''
+        count = 0
+        t1 = time()
         while self.mon.event_pending():
+            count += 1
             self.mon.handle_one_event()
-
+        t2 = time()
+        syslog(LOG_INFO, "Processed %s gamin events in %s seconds" % (count, (t2 - t1)))
+        
 try:
     from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted
     monitor = GaminFam
