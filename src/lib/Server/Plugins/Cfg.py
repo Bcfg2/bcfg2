@@ -158,8 +158,6 @@ class ConfigFileEntry(object):
                     self.deltas.remove(entry)
             syslog(LOG_INFO, "Cfg: Entry deletion completed")
         elif action in ['changed', 'exists', 'created']:
-            if action == 'changed':
-                syslog(LOG_INFO, "Cfg: File %s changed" % event.filename)
             [entry.HandleEvent(event) for entry in entries]
         else:
             syslog(LOG_ERR, "Cfg: Unhandled Action %s for file %s" % (action, event.filename))
@@ -193,10 +191,11 @@ class ConfigFileEntry(object):
         [entry.attrib.__setitem__(x,y) for (x,y) in self.metadata.iteritems()]
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
-        if self.metadata['encoding'] == 'base64':
-            entry.text = b2a_base64(filedata)
-        else:
+        try:
             entry.text = filedata
+        except:
+            entry.text = b2a_base64(filedata)
+            entry.attrib['encoding'] = 'base64'
 
 class Cfg(Plugin):
     '''This generator in the configuration file repository for bcfg2'''
