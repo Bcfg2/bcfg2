@@ -4,8 +4,7 @@ __revision__ = '$Revision$'
 from posixpath import isdir
 from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
-from lxml.etree import XML
-from xml.parsers.expat import ExpatError
+from lxml.etree import XML, XMLSyntaxError
 from Cheetah.Template import Template
 
 class TemplateFile(FileBacked):
@@ -38,7 +37,7 @@ class CheetahProperties(SingleXMLFileBacked):
         try:
             self.properties = XML(self.data)
             del self.data
-        except ExpatError:
+        except XMLSyntaxError:
             syslog(LOG_ERR, "TCheetah: Failed to parse properties")
 
 class TCheetah(Plugin):

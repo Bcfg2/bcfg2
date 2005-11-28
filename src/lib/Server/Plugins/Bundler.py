@@ -3,8 +3,7 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
-from lxml.etree import Element, XML
-from xml.parsers.expat import ExpatError
+from lxml.etree import Element, XML, XMLSyntaxError
 
 from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 
@@ -19,7 +18,7 @@ class ImageFile(SingleXMLFileBacked):
         '''Build data structures out of the data'''
         try:
             xdata = XML(self.data)
-        except ExpatError, err:
+        except XMLSyntaxError, err:
             syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
             syslog(LOG_ERR, err)
             del self.data
@@ -43,7 +42,7 @@ class Bundle(XMLFileBacked):
         '''Build data structures from the source data'''
         try:
             xdata = XML(self.data)
-        except ExpatError, err:
+        except XMLSyntaxError, err:
             syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
             syslog(LOG_ERR, str(err))
             del self.data

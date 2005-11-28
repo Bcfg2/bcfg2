@@ -2,8 +2,7 @@
 __revision__ = '$Revision$'
 
 from copy import deepcopy
-from lxml.etree import Element, XML
-from xml.parsers.expat import ExpatError
+from lxml.etree import Element, XML, XMLSyntaxError
 
 from Bcfg2.Server.Plugin import Plugin, PluginInitError, SingleXMLFileBacked
 
@@ -27,7 +26,7 @@ class Base(Plugin, SingleXMLFileBacked):
         '''Store XML data in reasonable structures'''
         try:
             xdata = XML(self.data)
-        except ExpatError:
+        except XMLSyntaxError:
             self.LogError("Failed to parse base.xml")
             return
         self.store = {'all':[], 'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
