@@ -1,11 +1,10 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision:$'
 
-from lxml.etree import XML
+from lxml.etree import XML, XMLSyntaxError
 from os import stat
 from stat import ST_MTIME
 from syslog import syslog, LOG_ERR, LOG_INFO
-from xml.parsers.expat import ExpatError
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
@@ -158,7 +157,7 @@ class XMLFileBacked(FileBacked):
         '''Build local data structures'''
         try:
             xdata = XML(self.data)
-        except ExpatError:
+        except XMLSyntaxError:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
             return
         self.label = xdata.attrib[self.__identifier__]
@@ -194,7 +193,7 @@ class ScopedXMLFile(SingleXMLFileBacked):
         '''Build internal data structures'''
         try:
             xdata = XML(self.data)
-        except ExpatError, msg:
+        except XMLSyntaxError, msg:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
             syslog(LOG_ERR, msg)
             return
