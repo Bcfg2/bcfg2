@@ -190,7 +190,7 @@ class ConfigFileEntry(object):
                     lines.append(line[1:])
             filedata = "\n".join(lines) + "\n"
             
-        entry.attrib.update(self.metadata)
+        [entry.attrib.__setitem__(x,y) for (x,y) in self.metadata.iteritems()]
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
         if self.metadata['encoding'] == 'base64':
