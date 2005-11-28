@@ -1,8 +1,7 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
 __revision__ = '$Revision: $'
 
-from lxml.etree import XML, SubElement, Element
-from xml.parsers.expat import ExpatError
+from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from syslog import syslog, LOG_ERR
 from time import asctime, localtime, time
 
@@ -21,15 +20,16 @@ class Statistics(object):
         '''Produce a pretty-printed text representation of element'''
         if element.text:
             fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-            data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
+            data = (element.tag, (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib])),
                     element.text, element.tag)
-        if element._children:
-            fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
-            data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
-            data += tuple([self.pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
+        numchild = len(element.getchildren())
+        if numchild:
+            fmt = "%s<%%s %%s>\n" % (level*" ",) + (numchild * "%s") + "%s</%%s>\n" % (level*" ")
+            data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
+            data += tuple([self.pretty_print(entry, level+2) for entry in element.getchildren()]) + (element.tag, )
         else:
             fmt = "%s<%%s %%s/>\n" % (level * " ")
-            data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
+            data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
         return fmt % data
 
     def WriteBack(self, force=0):
@@ -52,7 +52,7 @@ class Statistics(object):
             self.element = XML(data)
             self.dirty = 0
             #syslog(LOG_INFO, "Statistics: Read in statistics.xml")
-        except (IOError, ExpatError):
+        except (IOError, XMLSyntaxError):
             syslog(LOG_ERR, "Statistics: Failed to parse %s"%(self.filename))
             self.element = Element('ConfigStatistics')
             self.WriteBack()

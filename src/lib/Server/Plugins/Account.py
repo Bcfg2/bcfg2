@@ -33,7 +33,8 @@ class Account(Plugin):
         fname = entry.attrib['name'].split('/')[-1]
         entry.text = self.repository.entries["static.%s" % (fname)].data
         entry.text += self.repository.entries["dyn.%s" % (fname)].data
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
+        perms = {'owner':'root', 'group':'root', 'perms':'0644'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
 
     def gen_limits_cb(self, entry, metadata):
         '''Build limits entries based on current ACLs'''
@@ -41,7 +42,8 @@ class Account(Plugin):
         superusers = self.repository.entries["superusers"].data.split()
         useraccess = [line.split(':') for line in self.repository.entries["useraccess"].data.split()]
         users = [user for (user, host) in useraccess if host == metadata.hostname.split('.')[0]]
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
         entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in superusers + users])
         if "*" not in users:
             entry.text += "* hard maxlogins 0\n"
@@ -55,4 +57,5 @@ class Account(Plugin):
         for user in superusers:
             if self.repository.entries.has_key("%s.key" % user):
                 entry.text += self.repository.entries["%s.key" % user].data
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0600'})
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]

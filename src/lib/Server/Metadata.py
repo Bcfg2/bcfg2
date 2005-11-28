@@ -115,15 +115,16 @@ class MetadataStore(SingleXMLFileBacked):
         '''Produce a pretty-printed text representation of element'''
         if element.text:
             fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-            data = (element.tag, (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()])),
+            data = (element.tag, (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib])),
                     element.text, element.tag)
-        if element._children:
-            fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
-            data = (element.tag, ) + (" ".join(["%s='%s'" % x for x in element.attrib.iteritems()]),)
-            data += tuple([self.pretty_print(x, level+2) for x in element._children]) + (element.tag, )
+        numchild = len(element.getchildren())
+        if numchild:
+            fmt = "%s<%%s %%s>\n" % (level*" ",) + (numchild * "%s") + "%s</%%s>\n" % (level*" ")
+            data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
+            data += tuple([self.pretty_print(entry, level+2) for entry in element.getchildren()]) + (element.tag, )
         else:
             fmt = "%s<%%s %%s/>\n" % (level * " ")
-            data = (element.tag, " ".join(["%s='%s'" % x for x in element.attrib.iteritems()]))
+            data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
         return fmt % data
 
     def WriteBack(self):
