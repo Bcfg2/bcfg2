@@ -10,6 +10,7 @@ from sys import argv
 from tempfile import mktemp
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from time import time
+from xmlrpclib import ServerProxy, Fault
 
 from lxml.etree import Element, XML, tostring
 
@@ -93,52 +94,62 @@ if __name__ == '__main__':
             print "Failed to read cached config file: %s" % (setup['file'])
             raise SystemExit, 1
     else:
-        try:
-            cf = ConfigParser()
-            cf.read('/etc/bcfg2.conf')
-            proto = cf.get('communication', 'protocol')
-        except (NoSectionError, NoOptionError):
-            proto = 'sss'
 
-        if proto == 'sss':
-            from sss.ssslib import comm_lib
-        elif proto == 'xmlrpc/ssl':
-            from Bcfg2.Client.XMLRPCComm import comm_lib
-        else:
-            print "Unsupported protocol: %s" % proto
-            raise SystemExit, 1
-            
-        # connect to bcfg2d
-        comm = comm_lib()
-        try:
-            h = comm.ClientInit("bcfg2")
-        except:
-            print "Failed to connect to bcfg2 server"
-            raise SystemExit, 1
+        cf = ConfigParser()
+        cf.read('/etc/bcfg2.conf')
+        location = cf.get("components", "bcfg2")
+        proxy = ServerProxy(location)
+        user = 'root'
+        retries = 0
+        password = cf.get("communication", "password")
 
         # get probes
         start = time()
-        comm.SendMessage(h, "<get-probes/>")
-        data = comm.RecvMessage(h)
+        for i in xrange(6):
+            try:
+                probedata = proxy.GetProbes(user, password)
+                break
+            except Fault, f:
+                print "Got Fault from server", f
+                break
+            except:
+                retries += 1
+                if i == 5:
+                    print "Failed to connect to server"
+                    raise SystemExit, 1
         timeinfo.set('probefetch', str(time() - start))
-        probes = XML(data)
+        probes = XML(probedata)
         # execute probes
-        cpd = Element("probe-data")
-        [cpd.append(run_probe(x)) for x in probes.findall(".//probe")]
+        probeinfo = [run_probe(x) for x in probes.findall(".//probe")]
     
         # upload probe responses
-        comm.SendMessage(h, tostring(cpd))
-        r = comm.RecvMessage(h)
-        msg = Element("get-config")
-        if setup['profile']:
-            msg.attrib['profile'] = setup['profile']
-        if setup['image']:
-            msg.attrib['image'] = setup['image']
-        # get config
+        for i in xrange(6):
+            try:
+                proxy.RecvProbeData(user, password, probeinfo)
+                break
+            except Fault, f:
+                print "Got Fault from server", f
+                break
+            except:
+                retries += 1
+                if i == 5:
+                    print "Failed to connect to server"
+                    raise SystemExit, 1
+
         cstart = time()
-        comm.SendMessage(h, tostring(msg))
-        r = comm.RecvMessage(h)
-        timeinfo.set('config', str(time() - cstart ))
+        for i in xrange(6):
+            try:
+                cfginfo = proxy.GetConfig(user, password, setup['image'], setup['profile'])
+                break
+            except Fault, f:
+                print "Got Fault from server", f
+                break
+            except:
+                retries += 1
+                if i == 5:
+                    print "Failed to connect to server"
+                    raise SystemExit, 1
+        timeinfo.set('config', str(time() - cstart ))        
 
     if setup['cache']:
         try:
@@ -146,13 +157,13 @@ if __name__ == '__main__':
         except IOError:
             print "failed to write config cache file %s" % (setup['cache'])
 
+    pt = time()
     try:
-        pt = time()
-        cfg = XML(r)
-        timeinfo.set('parse', str(time() - pt))
+        cfg = XML(cfginfo)
     except:
-        print "got error from server"
+        print "Server returned unparseable config"
         raise SystemExit, 1
+    timeinfo.set('parse', str(time() - pt))
     
     if cfg.tag == 'error':
         print "got error from server"
@@ -213,7 +224,17 @@ if __name__ == '__main__':
         stats.append(timeinfo)
         m.append(stats)
 
-        comm.SendMessage(h, tostring(m))
-        r = comm.RecvMessage(h)
-        # clean up
-        comm.ClientClose(h)
+
+        for i in xrange(6):
+            try:
+                stats.attrib['retries'] = str(retries)
+                probedata = proxy.RecvStats(user, password, tostring(m))
+                break
+            except Fault, f:
+                print "Got Fault from server", f
+                break
+            except:
+                retries += 1
+                if i == 5:
+                    print "Failed to connect to server"
+                    raise SystemExit, 1
