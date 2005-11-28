@@ -28,8 +28,8 @@ class TemplateFile(FileBacked):
         except:
             syslog(LOG_ERR, "TCheetah: Failed to template %s" % entry.get('name'))
             raise PluginExecutionError
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
-
+        perms = {'owner':'root', 'group':'root', 'perms':'0644'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
 
 class CheetahProperties(SingleXMLFileBacked):
     '''Class for Cheetah properties'''
