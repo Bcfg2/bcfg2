@@ -143,6 +143,12 @@ class Component(SSL.SSLServer,
         except Fault, fault:
             response = dumps(fault)
         except:
+            (trace, val, trb) = exc_info()
+            syslog(LOG_ERR, "Unexpected failure in handler")
+            for line in extract_tb(trb):
+                syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n' % line)
+            syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+            del trace, val, trb
             # report exception back to server
             response = dumps(Fault(1,
                                    "%s:%s" % (sys.exc_type, sys.exc_value)))
