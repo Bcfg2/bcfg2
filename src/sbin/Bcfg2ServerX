@@ -4,16 +4,18 @@
 __revision__ = '$Revision:$'
 
 from getopt import getopt, GetoptError
-from sys import argv
+from sys import argv, exc_info
 from syslog import openlog, LOG_LOCAL0, syslog, LOG_INFO, LOG_ERR
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
 from Bcfg2.Server.Component import Component
 from threading import Lock
 from select import select, error as selecterror
+from signal import signal, SIGINT, SIGTERM
 from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
 from lxml.etree import XML, Element, tostring
+from M2Crypto.SSL import SSLError
 
 def dgetopt(arglist, opt, vopt):
     '''parse options into a dictionary'''
@@ -48,6 +50,10 @@ class Bcfg2(Component):
 
     def __init__(self, setup):
         Component.__init__(self, setup)
+        self.shut = False
+        # set shutdown handlers for sigint and sigterm
+        signal(SIGINT, self.start_shutdown)
+        signal(SIGTERM, self.start_shutdown)
         try:
             self.Core = Core(setup, setup['configfile'])
             self.CoreLock = Lock()
@@ -66,19 +72,32 @@ class Bcfg2(Component):
         rsockinfo = []
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
+            if self.shut:
+                raise SSLError
             try:
-                rsockinfo = select([self.socket, famfd], [], [])[0]
+                rsockinfo = select([self.socket, famfd], [], [], 15)[0]
             except selecterror:
-                continue
+                raise SSLError
             if famfd in rsockinfo:
-                print "Running fam queue...", 
                 self.Core.fam.Service()
-                print "done"
             if self.socket in rsockinfo:
                 # workaround for m2crypto 0.15 bug
                 self.socket.postConnectionCheck = None
                 return self.socket.accept()
 
+    def serve_forever(self):
+        """Handle one request at a time until doomsday."""
+        while not self.shut:
+            self.handle_request()
+
+    def start_shutdown(self, signum, frame):
+        '''Shutdown on unexpected signals'''
+        self.shut = True
+
+    def handle_error(self):
+        '''Catch error path for clean exit'''
+        return False
+        
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
         peer = address[0]
@@ -98,7 +117,6 @@ class Bcfg2(Component):
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
-        print "in RecvProbeData"
         peer = address[0]
         try:
             client = gethostbyaddr(peer)[0]
@@ -156,4 +174,14 @@ if __name__ == '__main__':
     if not ssetup['configfile']:
         ssetup['configfile'] = '/etc/bcfg2.conf'
     s = Bcfg2(ssetup)
-    s.serve_forever()   
+    while not s.shut:
+        try:
+            s.serve_forever()
+        except:
+            syslog(LOG_ERR, "Unexpected serve loop failure")
+            (trace, val, trb)=exc_info()
+            for line in extract_tb(trb):
+                syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+            syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+            del trace, val, trb
+    syslog(LOG_INFO, "Shutting down")
