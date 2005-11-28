@@ -1,31 +1,30 @@
 #!/usr/bin/env python
-# $Id: $
 
-'''Bcfg2 Server'''
-__revision__ = '$Revision'
+'''The XML-RPC Bcfg2 Server'''
+__revision__ = '$Revision:$'
 
 from getopt import getopt, GetoptError
-from socket import gethostbyaddr, herror
-from syslog import openlog, syslog, LOG_INFO, LOG_ERR, LOG_LOCAL0
-from sys import argv, exit as sysexit, exc_info
-from traceback import extract_tb
-
-from lxml.etree import Element
-
+from sys import argv, exc_info
+from syslog import openlog, LOG_LOCAL0, syslog, LOG_INFO, LOG_ERR
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
-
-from sss.daemonize import daemonize
-from sss.server import Server
+from Bcfg2.Server.Component import Component
+from threading import Lock
+from select import select, error as selecterror
+from signal import signal, SIGINT, SIGTERM
+from xmlrpclib import Fault
+from socket import gethostbyaddr, herror
+from lxml.etree import XML, Element, tostring
+from M2Crypto.SSL import SSLError
 
 def dgetopt(arglist, opt, vopt):
     '''parse options into a dictionary'''
     ret = {}
     for optname in opt.values() + vopt.values():
         ret[optname] = False
-    gstr = "".join(opt.keys()) + "".join([xy+':' for xy in vopt.keys()])
+    gstr = "".join(opt.keys()) + "".join([field+':' for field in vopt.keys()])
     try:
-        (o, a) = getopt(arglist, gstr)
+        opts = getopt(arglist, gstr)[0]
     except GetoptError, gerr:
         print gerr
         print "bcfg2 Usage:"
@@ -33,8 +32,8 @@ def dgetopt(arglist, opt, vopt):
             print " -%s %s" % arg
         for arg in  vopt.iteritems():
             print " -%s <%s>" % arg
-        sysexit(1)
-    for (gopt, garg) in o:
+        raise SystemExit, 1
+    for (gopt, garg) in opts:
         option = gopt[1:]
         if opt.has_key(option):
             ret[opt[option]] = True
@@ -42,124 +41,147 @@ def dgetopt(arglist, opt, vopt):
             ret[vopt[option]] = garg
     return ret
 
-class BcfgServer(Server):
-    '''Bcfg2 Server Class'''
-    __implementation__ = 'Bcfg2'
-    __component__ = 'bcfg2'
-    __dispatch__ = {'get-config':'BuildConfig', 'get-probes':'get_probes', 'probe-data':'put_probe_data', 'upload-statistics':'HandleStats'}
-    __validate__ = 0
-        
-    def __setup__(self):
-        self.setup = self.kwargs['setup']
+class Bcfg2(Component):
+    """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
+    __name__ = 'bcfg2'
+    __implementation__ = 'bcfg2'
+
+    request_queue_size = 15
+
+    def __init__(self, setup):
+        Component.__init__(self, setup)
+        self.shut = False
+        # set shutdown handlers for sigint and sigterm
+        signal(SIGINT, self.start_shutdown)
+        signal(SIGTERM, self.start_shutdown)
         try:
-            self.core = Core(setup, self.kwargs.get('configfile', '/etc/bcfg2.conf'))
+            self.Core = Core(setup, setup['configfile'])
+            self.CoreLock = Lock()
         except CoreInitError, msg:
-            syslog(LOG_ERR, msg)
             print msg
             raise SystemExit, 1
-        self.__progress__()
+        self.funcs.update({"GetConfig":self.Bcfg2GetConfig, "GetProbes":self.Bcfg2GetProbes,
+                           "RecvProbeData":self.Bcfg2RecvProbeData, "RecvStats":self.Bcfg2RecvStats})
+        for plugin in self.Core.plugins.values():
+            for method in plugin.__rmi__:
+                self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
+                                       "%s.%s" % (plugin.__name__, method))
 
-    def __progress__(self):
-        try:
-            self.core.fam.Service()
-        except:
-            self.LogFailure("FileEvent")
-        try:
-            self.core.stats.WriteBack()
-        except:
-            self.LogFailure("Statistics")
-            
-        return 0
-
-    def __shutdown__(self):
-        # Update Statistics on shutdown
-        self.core.stats.WriteBack()
-
-    def BuildConfig(self, xml, (peer, port)):
-        '''Build Client Config'''
-        # find client info
-        if setup['client']:
-            client = setup['client']
-        else:
+    def get_request(self):
+        '''We need to do work between requests, so select with timeout instead of blocking in accept'''
+        rsockinfo = []
+        famfd = self.Core.fam.fileno()
+        while self.socket not in rsockinfo:
+            if self.shut:
+                raise SSLError
             try:
-                client = gethostbyaddr(peer)[0]
-            except herror:
-                return Element("error", type='host resolution error')
+                rsockinfo = select([self.socket, famfd], [], [], 15)[0]
+            except selecterror:
+                raise SSLError
+            if famfd in rsockinfo:
+                self.Core.fam.Service()
+            if self.socket in rsockinfo:
+                # workaround for m2crypto 0.15 bug
+                self.socket.postConnectionCheck = None
+                return self.socket.accept()
 
-        if xml.attrib.has_key("profile") and xml.attrib.has_key("image"):
+    def serve_forever(self):
+        """Handle one request at a time until doomsday."""
+        while not self.shut:
+            self.handle_request()
+
+    def start_shutdown(self, signum, frame):
+        '''Shutdown on unexpected signals'''
+        self.shut = True
+
+    def handle_error(self):
+        '''Catch error path for clean exit'''
+        return False
+        
+    def Bcfg2GetProbes(self, address):
+        '''Fetch probes for a particular client'''
+        peer = address[0]
+        resp = Element('probes')
+        try:
+            client = gethostbyaddr(peer)[0]
+        except herror:
+            raise Fault, "host resolution error"
+        try:
+            meta = self.Core.metadata.FetchMetadata(client)
+        except MetadataConsistencyError:
+            raise Fault, 'metadata resolution error'
+        for generator in self.Core.generators:
+            for probe in generator.GetProbes(meta):
+                resp.append(probe)
+        return tostring(resp)
+
+    def Bcfg2RecvProbeData(self, address, probedata):
+        '''Receive probe data from clients'''
+        peer = address[0]
+        try:
+            client = gethostbyaddr(peer)[0]
+        except herror:
+            raise Fault, "host resolution error"
+        for data in probedata:
+            try:
+                [generator] = [gen for gen in self.Core.generators if gen.__name__ == data.get('source')]
+                generator.ReceiveData(client, data)
+            except IndexError:
+                syslog(LOG_ERR, "Failed to locate plugin %s" % (data.get('source')))
+            except:
+                syslog(LOG_ERR, "Unexpected failure in probe data receipt")
+        return True
+
+    def Bcfg2GetConfig(self, address, image=False, profile=False):
+        '''Build config for a client'''
+        peer = address[0]
+        try:
+            client = gethostbyaddr(peer)[0]
+        except herror:
+            raise Fault, "host resolution error"
+        if image and profile:
             try:
                 # if metadata is provided, call FetchMetadata with settings
                 # it is screwey. i know.
-                meta = self.core.metadata.FetchMetadata(client, image=xml.attrib['image'],
-                                                        profile=xml.attrib['profile'])
+                self.Core.metadata.FetchMetadata(client, image=image, profile=profile)
             except MetadataConsistencyError:
                 syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
-                return Element("error", type='metadata error')
-        return self.core.BuildConfiguration(client)
+                return Fault, 'metadata error'
+        return tostring(self.Core.BuildConfiguration(client))
 
-    def get_probes(self, xml, (peer, port)):
-        '''Get Probes for Client'''
-        r = Element('probes')
-        try:
-            client = gethostbyaddr(peer)[0]
-        except herror:
-            return Element("error", type='host resolution error')
-        try:
-            m = self.core.metadata.FetchMetadata(client)
-        except MetadataConsistencyError:
-            return Element("error", type='metadata resolution error')
-        for g in self.core.generators:
-            for p in g.GetProbes(m):
-                r.append(p)
-        return r
-
-    def put_probe_data(self, xml, (peer, port)):
-        '''Return Probe output to generators'''
-        try:
-            client = gethostbyaddr(peer)[0]
-        except herror:
-            return Element("error", type='host resolution error')
-        for data in xml.findall(".//probe-data"):
-            try:
-                [g] = [x for x in self.core.generators if x.__name__ == data.attrib['source']]
-                g.ReceiveData(client, data)
-            except:
-                self.LogFailure("put_probe_data")
-        return Element("OK")
-
-    def HandleStats(self, xml, (peer, port)):
+    def Bcfg2RecvStats(self, address, stats):
         '''Act on statistics upload'''
-        e = xml.find(".//Statistics")
+        sdata = XML(stats)
+        state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
-        if e.get('version') >= '2.0':
+        if state.get('version') >= '2.0':
             try:
-                client = gethostbyaddr(peer)[0]
+                client = gethostbyaddr(address[0])[0]
             except herror:
-                return Element("error", type='host resolution error')
+                return Fault, 'host resolution error'
 
             # Update statistics
-            self.core.stats.updateStats(xml, client)
+            self.Core.stats.updateStats(sdata, client)
 
-        syslog(LOG_INFO, "Client %s reported state %s"%(peer, e.attrib['state']))
-        return Element("ok")
-
-    def LogFailure(self, failure):
-        '''Log Failures in unexpected cases'''
-        (t, v, tb)=exc_info()
-        syslog(LOG_ERR, "Unexpected failure in %s"%(failure))
-        for line in extract_tb(tb):
-            syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-        syslog(LOG_ERR, "%s: %s\n"%(t, v))
-        del t, v, tb
+        syslog(LOG_INFO, "Client %s reported state %s"%(client, state.attrib['state']))
+        return "<ok/>"
 
 if __name__ == '__main__':
     openlog("Bcfg2", 0, LOG_LOCAL0)
     options =  {'v':'verbose', 'd':'debug'}
-    doptions = {'D':'daemon', 'C':'client'}
-    setup = dgetopt(argv[1:], options, doptions)
-    if setup['daemon']:
-        daemonize(setup['daemon'])
-    server = BcfgServer(setup=setup)
-    for i in range(10):
-        server.__progress__()
-    server.ServeForever()
+    doptions = {'D':'daemon', 'c':'configfile', 'C':'client'}
+    ssetup = dgetopt(argv[1:], options, doptions)
+    if not ssetup['configfile']:
+        ssetup['configfile'] = '/etc/bcfg2.conf'
+    s = Bcfg2(ssetup)
+    while not s.shut:
+        try:
+            s.serve_forever()
+        except:
+            syslog(LOG_ERR, "Unexpected serve loop failure")
+            (trace, val, trb)=exc_info()
+            for line in extract_tb(trb):
+                syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+            syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+            del trace, val, trb
+    syslog(LOG_INFO, "Shutting down")
