@@ -7,7 +7,7 @@ Standards-Version: 3.6.1.1
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, debsums, python-apt, python-lxml
+Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8)
 Description: build configuration system
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
@@ -15,7 +15,7 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, bcfg2, python-lxml, python2.3-fam | python2.3-gamin, m2crypto
+Depends: ${python:Depends}, bcfg2, python-lxml (>= 0.8), python2.3-fam | python2.3-gamin, m2crypto
 Description: build configuration system, version two
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
