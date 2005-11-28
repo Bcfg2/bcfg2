@@ -83,13 +83,15 @@ class Pkgmgr(Plugin):
         if self.pkgdir.entries.has_key("%s.xml" % metadata.hostname):
             pkglist = self.pkgdir["%s.xml" % metadata.hostname]
             if pkglist.packages.has_key(pkgname):
-                entry.attrib.update(pkglist.packages[pkgname])
+                pkginfo = pkglist.packages[pkgname]
+                [entry.attrib.__setitem__(x, pkginfo[x]) for x in pkginfo]
                 return
         elif not self.pkgdir.entries.has_key("%s.xml" % metadata.image):
             self.LogError("Pkgmgr: no package index for image %s" % metadata.image)
             raise PluginExecutionError, ("Image", metadata.image)
         pkglist = self.pkgdir["%s.xml" % (metadata.image)]
         if pkglist.packages.has_key(pkgname):
-            entry.attrib.update(pkglist.packages[pkgname])
+            pkginfo = pkglist.packages[pkgname]
+            [entry.attrib.__setitem__(x, pkginfo[x]) for x in pkginfo]
         else:
             raise PluginExecutionError, ("Package", pkgname)

@@ -95,7 +95,8 @@ class SSHbase(Plugin):
         for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.repository.entries[hostkey].data)
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':'0644'})
+        permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
+        [entry.attrib.__setitem__(x, permdata[x]) for x in permdata]
 
     def build_hk(self, entry, metadata):
         '''This binds host key data into entries'''
@@ -109,14 +110,16 @@ class SSHbase(Plugin):
             self.LogError("%s still not registered" % filename)
             raise PluginExecutionError
         keydata = self.repository.entries[filename].data
-        perms = '0600'
+        permdata = {'owner':'root', 'group':'root'}
+        permdata['perms'] = '0600'
         if entry.get('name')[-4:] == '.pub':
-            perms = '0644'
-        entry.attrib.update({'owner':'root', 'group':'root', 'perms':perms})
-        entry.text = keydata
+            permdata['perms'] = '0644'
+        [entry.attrib.__setitem__(x, permdata[x]) for x in permdata]
         if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
             entry.text = b2a_base64(keydata)
+        else:
+            entry.text = keydata
 
     def GenerateHostKeys(self, client):
         '''Generate new host keys for client'''
