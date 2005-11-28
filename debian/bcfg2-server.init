@@ -10,13 +10,13 @@ PIDFILE=/var/tmp/bcfg2-xmlrpc.pid
 
 case "$1" in
   start)
-    echo -n "Starting Bcfg2ServerX: "
-    start-stop-daemon --make-pidfile --pidfile "${PIDFILE}" -b -S --startas /usr/sbin/Bcfg2ServerX 
+    echo -n "Starting Bcfg2Server: "
+    start-stop-daemon --make-pidfile --pidfile "${PIDFILE}" -b -S --startas /usr/sbin/Bcfg2Server
     echo "Bcfg2Server"
     ;;
   stop)
     echo -n "Stopping Bcfg2Server: "
-    start-stop-daemon --pidfile "${PIDFILE}" -K /usr/sbin/Bcfg2ServerX
+    start-stop-daemon --pidfile "${PIDFILE}" -K /usr/sbin/Bcfg2Server
     echo done
     ;;
   restart)
@@ -28,7 +28,7 @@ case "$1" in
     $0 start
     ;;
   *)
-    echo "Usage: bcfg2-xmlrpc-server {start|stop|restart|force-reload}"
+    echo "Usage: bcfg2-server {start|stop|restart|force-reload}"
     exit 1
 esac
 
