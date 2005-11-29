@@ -263,13 +263,8 @@ if __name__ == '__main__':
                 print("StatReports: Invalid delivery mechanism in report-config")
                 raise SystemExit, 1
 
-
-            #IMPORTANT to add some error checking here-parseerrors
-            #this might be sufficient
             try:
                 stylesheet = XSLT(parse(transformpath + transform))
-                #styledoc = libxml2.parseFile(transformpath+transform)
-                #style = libxslt.parseStylesheetDoc(styledoc)
             except:
                 print("StatReports: invalid XSLT transform file.")
                 raise SystemExit, 1
@@ -281,8 +276,10 @@ if __name__ == '__main__':
                         [reportdata.remove(y) for y in reportdata.findall("Node")]
                         reportdata.append(noden)
                 else:
-                    reportdata = procnodereport
-                outputstring = tostring(stylesheet.apply(reportdata).getroot())
+                    reportdata = deepcopy(procnodereport)
+
+                result = stylesheet.apply(ElementTree(reportdata))
+                outputstring = stylesheet.tostring(result)
                         
                 if not outputstring == None:
                     toastring = ''
