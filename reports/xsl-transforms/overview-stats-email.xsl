@@ -4,7 +4,7 @@
 <xsl:output method="text" indent="no" media-type="text/plain" />
 <xsl:template match="Report">Subject: BCFG Nightly Statistics<xsl:text>
 </xsl:text>Report Run @ <xsl:value-of select="@time" />
-<xsl:variable name="cleannodes" select="/Report/Node[count(Statistics/Good)>0]"/>
+<xsl:variable name="cleannodes" select="/Report/Node[Statistics/@state='clean']"/>
 <xsl:variable name="dirtynodes" select="/Report/Node[count(Statistics/Bad)>0]"/>
 <xsl:variable name="modifiednodes" select="/Report/Node[count(Statistics/Modified)>0]"/>
 <xsl:variable name="stalenodes" select="/Report/Node[count(Statistics/Stale)>0]"/>
