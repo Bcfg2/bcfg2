@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from copy import deepcopy
-from lxml.etree import Element, XML, XMLSyntaxError
+from lxml.etree import Element, XML, XMLSyntaxError, _Comment
 
 from Bcfg2.Server.Plugin import Plugin, PluginInitError, SingleXMLFileBacked
 
@@ -30,13 +30,15 @@ class Base(Plugin, SingleXMLFileBacked):
             self.LogError("Failed to parse base.xml")
             return
         self.store = {'all':[], 'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
-        for entry in xdata.getchildren():
+        for entry in [ent for ent in xdata.getchildren() if not isinstance(ent, _Comment)]:
             if entry.tag in ['Image', 'Class']:
                 if not self.store[entry.tag].has_key(entry.get('name')):
                     self.store[entry.tag][entry.get('name')] = {'all':[], 'Class':{}, 'Image':{}}
-                for child in entry.getchildren():
+                for child in [ent for ent in entry.getchildren() if not isinstance(ent, _Comment)]:
                     if child.tag in ['Image', 'Class']:
-                        self.store[entry.tag][entry.get('name')][child.tag][child.get('name')] = child.getchildren()
+                        self.store[entry.tag][entry.get('name')][child.tag][child.get('name')] = \
+                                                                                               [ent for ent in child.getchildren() if \
+                                                                                                not isinstance(ent, _Comment)]
                     else:
                         self.store[entry.tag][entry.get('name')]['all'].append(child)
             else:

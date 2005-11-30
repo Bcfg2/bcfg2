@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 from copy import deepcopy
 from syslog import LOG_ERR, syslog
-from lxml.etree import Element, XML, XMLSyntaxError
+from lxml.etree import Element, XML, XMLSyntaxError, _Comment
 
 from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
 
@@ -50,11 +50,13 @@ class Bundle(XMLFileBacked):
         self.all = []
         self.systems = {}
         self.attributes = {}
-        for entry in xdata.getchildren():
+        for entry in [ent for ent in xdata.getchildren() if not isinstance(ent, _Comment)]:
             if entry.tag == 'System':
-                self.systems[entry.attrib['name']] = entry.getchildren()
+                self.systems[entry.attrib['name']] = [ent for ent in entry.getchildren() \
+                                                      if not isinstance(ent, _Comment)]
             elif entry.tag == 'Attribute':
-                self.attributes[entry.get('name')] = entry.getchildren()
+                self.attributes[entry.get('name')] = [ent for ent in entry.getchildren() \
+                                                      if not isinstance(ent, _Comment)]
             else:
                 self.all.append(entry)
         del self.data
