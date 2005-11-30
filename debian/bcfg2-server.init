@@ -11,12 +11,20 @@ PIDFILE=/var/tmp/bcfg2-xmlrpc.pid
 case "$1" in
   start)
     echo -n "Starting Bcfg2Server: "
-    start-stop-daemon --make-pidfile --pidfile "${PIDFILE}" -b -S --startas /usr/sbin/Bcfg2Server
+    if [ -f "/etc/SuSE-release" ] ; then
+        /sbin/start_daemon -p "${PIDFILE}" /usr/sbin/Bcfg2Server
+    else:
+       /sbin/start-stop-daemon -p "${PIDFILE}" -b -S -x /usr/sbin/Bcfg2Server
+    fi
     echo "Bcfg2Server"
     ;;
   stop)
     echo -n "Stopping Bcfg2Server: "
-    start-stop-daemon --pidfile "${PIDFILE}" -K /usr/sbin/Bcfg2Server
+    if [ -f "/etc/SuSE-release" ] ; then
+        /sbin/killproc -p "${PIDFILE}" /usr/sbin/Bcfg2Server
+    else
+       /sbin/start-stop-daemon -p "${PIDFILE}" -K /usr/sbin/Bcfg2Server
+    fi
     echo done
     ;;
   restart)
