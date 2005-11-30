@@ -31,8 +31,8 @@ if __name__ == '__main__':
                 'imageinfo':("%s/etc/reports.xml", "%s/report-configuration.xsd"),
                 'services':("%s/etc/services.xml", "%s/services.xsd")}
 
-    for k, (spec, schema) in filesets.iteritems():
-        schema = XMLSchema(parse(open(schema%(schemadir))))
+    for k, (spec, schemaname) in filesets.iteritems():
+        schema = XMLSchema(parse(open(schemaname%(schemadir))))
         for filename in glob(spec%(repo)):
             try:
                 datafile = parse(open(filename))
@@ -48,4 +48,4 @@ if __name__ == '__main__':
                     print "%s checks out" % (filename)
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
-                system("xmllint --schema %s %s" % (schema % schemadir, filename))
+                system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
