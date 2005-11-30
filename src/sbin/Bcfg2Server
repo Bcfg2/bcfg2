@@ -12,6 +12,7 @@ from Bcfg2.Server.Component import Component
 from threading import Lock
 from select import select, error as selecterror
 from signal import signal, SIGINT, SIGTERM
+from traceback import extract_tb
 from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
 from lxml.etree import XML, Element, tostring
