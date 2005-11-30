@@ -23,7 +23,7 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: lxml, m2crypto
+Requires: lxml, M2Crypto
 
 %description -n bcfg2-server
 Bcfg2 client
