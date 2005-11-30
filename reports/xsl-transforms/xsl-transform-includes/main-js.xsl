@@ -5,7 +5,7 @@
 <xsl:output method="html" indent="no"/>
 <xsl:variable name="main-js">
 
-<script language="JavaScript"><xsl:comment>
+  <script type='text/javascript' language="JavaScript"><xsl:comment>
 function toggleLayer(whichLayer)
         {
             if (document.getElementById)
