@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision:$'
 
-from lxml.etree import XML, XMLSyntaxError
+from lxml.etree import XML, XMLSyntaxError, _Comment
 from os import stat
 from stat import ST_MTIME
 from syslog import syslog, LOG_ERR, LOG_INFO
@@ -198,12 +198,13 @@ class ScopedXMLFile(SingleXMLFileBacked):
             syslog(LOG_ERR, msg)
             return
         self.store = {}
-        for entry in xdata.getchildren():
+        for entry in [ent for ent in  xdata.getchildren() if not isinstance(ent, _Comment)]:
             if entry.tag not in self.__containers__:
                 self.StoreRecord(('Global','all'), entry)
             else:
                 name = (entry.tag, entry.get('name'))
-                [self.StoreRecord(name, child) for child in entry.getchildren()]
+                [self.StoreRecord(name, child)
+                 for child in entry.getchildren() if not isinstance(entry, _Comment)]
         # now to build the __provides__ table
         for key in self.__provides__.keys():
             del self.__provides__[key]
