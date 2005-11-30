@@ -544,11 +544,12 @@ class Toolset(object):
                     if cmdrc == 0:
                         self.CondPrint('verbose', "Single Pass Succeded")
                         # set all package states to true and flush workqueues
-                        badpkgs = [entry for entry in self.states.keys() if entry in pkglist
-                                   and not self.states[entry]]
-                        for entry in badpkgs:
+                        pkgnames = [pkg.get('name') for pkg in pkglist]
+                        for entry in [entry for entry in self.states.keys()
+                                      if entry.tag == 'Package' and entry.get('type') == pkgtype and entry.get('name') in pkgnames]:
                             self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
                             self.states[entry] = True
+                            [self.pkgwork[listname].remove(entry) for listname in ['add', 'update'] if self.pkgwork[listname].count(entry)]
                         self.Refresh()
                     else:
                         self.CondPrint("verbose", "Single Pass Failed")
