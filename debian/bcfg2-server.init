@@ -13,7 +13,7 @@ case "$1" in
     echo -n "Starting Bcfg2Server: "
     if [ -f "/etc/SuSE-release" ] ; then
         /sbin/start_daemon -p "${PIDFILE}" /usr/sbin/Bcfg2Server
-    else:
+    else
        /sbin/start-stop-daemon -p "${PIDFILE}" -b -S -x /usr/sbin/Bcfg2Server
     fi
     echo "Bcfg2Server"
