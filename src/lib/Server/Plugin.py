@@ -77,17 +77,12 @@ class FileBacked(object):
         except OSError:
             syslog(LOG_ERR, "Failed to stat file %s" % (self.name))
             
-        if self.mtime > oldmtime:
-            try:
-            #    if self.readonce == 0:
-            #        self.readonce = 1
-            #    else:
-            #        syslog(LOG_INFO, "Updated file %s" % (self.name))
-                self.data = file(self.name).read()
-            except IOError:
-                syslog(LOG_ERR, "Failed to read file %s" % (self.name))
+        try:
+            self.data = file(self.name).read()
             self.Index()
-
+        except IOError:
+            syslog(LOG_ERR, "Failed to read file %s" % (self.name))
+            
     def Index(self):
         '''Update local data structures based on current file state'''
         pass

@@ -64,10 +64,7 @@ if __name__ == '__main__':
                     for instance in generator.__provides__[key].keys():
                         print "   ", key, instance
         elif cmd[0] == 'update':
-            while core.fam.fm.pending():
-                while core.fam.fm.pending():
-                    core.fam.HandleEvent()
-                sleep(0.5)
+            core.fam.Service()
         else:
             print "Unknown command %s" % cmd[0]
         cmd = get_input()
