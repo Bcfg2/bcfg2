@@ -51,7 +51,7 @@ if __name__ == '__main__':
                 dup2(null.fileno(), sys.__stdin__.fileno())
                 dup2(null.fileno(), sys.__stdout__.fileno())
                 dup2(null.fileno(), sys.__stderr__.fileno())
-                execl('/bin/ping', 'ping', '-W', '5', '-c', '1', host)
+                execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
             else:
                 pids[pid] = host
         else:
