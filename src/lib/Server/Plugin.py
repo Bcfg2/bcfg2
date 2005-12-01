@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision:$'
 
-from lxml.etree import XML, XMLSyntaxError, _Comment
+from lxml.etree import XML, XMLSyntaxError, _Comment, tostring
 from os import stat
 from stat import ST_MTIME
 from syslog import syslog, LOG_ERR, LOG_INFO
@@ -183,6 +183,10 @@ class ScopedXMLFile(SingleXMLFileBacked):
 
     def StoreRecord(self, metadata, entry):
         '''Store scoped record based on metadata'''
+        if isinstance(entry, _Comment):
+            return
+        elif not entry.attrib.has_key('name'):
+            syslog(LOG_ERR, "Got malformed record %s" % (tostring(entry)))
         if not self.store.has_key(entry.tag):
             self.store[entry.tag] = {}
         if not self.store[entry.tag].has_key(entry.attrib['name']):

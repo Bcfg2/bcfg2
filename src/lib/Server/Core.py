@@ -14,6 +14,13 @@ from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
 from Bcfg2.Server.Statistics import Statistics
 
+def log_failure(msg):
+    syslog(LOG_ERR, "Unexpected failure in %s" % (msg))
+    (trace, val, trb) = exc_info()
+    for line in extract_tb(trb):
+        syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
+    syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+
 class CoreInitError(Exception):
     '''This error is raised when the core cannot be initialized'''
     pass
@@ -50,7 +57,10 @@ class FamFam(object):
         reqid = event.requestID
         if self.users.has_key(reqid):
             #print "dispatching event %s %s to obj %s handle :%s:" % (event.code2str(), event.filename, self.users[reqid], event.requestID)
-            self.users[reqid].HandleEvent(event)
+            try:
+                self.users[reqid].HandleEvent(event)
+            except:
+                log_failure("handling event for file %s" % (event.filename))
 
     def Service(self):
         '''Handle all fam work'''
@@ -180,12 +190,7 @@ class Core(object):
                 except PluginInitError:
                     syslog(LOG_ERR, "Failed to instantiate plugin %s" % (plugin))
                 except:
-                    syslog(LOG_ERR, "Unexpected initiantiation failure for plugin %s" % (plugin))
-                    (trace, val, trb)=exc_info()
-                    for line in extract_tb(trb):
-                        syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-                    syslog(LOG_ERR, "%s: %s\n"%(trace, val))
-                    del trace, val, trb
+                    log_failure("Unexpected initiantiation failure for plugin %s" % (plugin))
 
         for plugin in structures:
             if self.plugins.has_key(plugin):
@@ -243,7 +248,7 @@ class Core(object):
         try:
             structures = self.GetStructures(meta)
         except:
-            self.LogFailure("GetStructures")
+            log_failure("GetStructures")
             return Element("error", type='structure error')
         
         for astruct in structures:
@@ -251,18 +256,9 @@ class Core(object):
                 self.BindStructure(astruct, meta)
                 config.append(astruct)
             except:
-                self.LogFailure("BindStructure")
+                log_failure("BindStructure")
         syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time() - start))
         return config
-
-    def LogFailure(self, failure):
-        '''Log Failures in unexpected cases'''
-        (trace, val, trb) = exc_info()
-        syslog(LOG_ERR, "Unexpected failure in %s" % (failure))
-        for line in extract_tb(trb):
-            syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n' % line)
-        syslog(LOG_ERR, "%s: %s\n"%(trace, val))
-        del trace, val, trb
 
     def Service(self):
         '''Perform periodic update tasks'''
@@ -270,9 +266,9 @@ class Core(object):
             try:
                 self.fam.HandleEvent()
             except:
-                self.LogFailure("FamEvent")
+                log_failure("FamEvent")
         try:
             self.stats.WriteBack()
         except:
-            self.LogFailure("Statistics")
+            log_failure("Statistics")
             
