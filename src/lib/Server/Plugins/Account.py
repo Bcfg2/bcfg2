@@ -54,6 +54,6 @@ class Account(Plugin):
         rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
         superusers += [user for (user, host) in rootlike if host == metadata.hostname.split('.')[0]]
         rdata = self.repository.entries
-        entry.text = "".join([rdata[user] for user in superusers if rdata.has_key(user)])
+        entry.text = "".join([rdata["%s.key" % user] for user in superusers if rdata.has_key("%s.key" % user)])
         perms = {'owner':'root', 'group':'root', 'perms':'0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
