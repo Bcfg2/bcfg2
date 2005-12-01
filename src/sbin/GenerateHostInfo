@@ -16,13 +16,14 @@ def pretty_print(element, level=0):
         fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
         data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
                 element.text, element.tag)
-    if element._children:
-        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
-        data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
-        data += tuple([pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
+    children = element.getchildren()
+    if children:
+        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(children) * "%s") + "%s</%%s>\n" % (level*" ")
+        data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
+        data += tuple([pretty_print(entry, level+2) for entry in children]) + (element.tag, )
     else:
         fmt = "%s<%%s %%s/>\n" % (level * " ")
-        data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
+        data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
     return fmt % data
 
                                                                                                                 

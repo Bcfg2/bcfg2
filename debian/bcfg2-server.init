@@ -14,7 +14,7 @@ case "$1" in
     if [ -f "/etc/SuSE-release" ] ; then
         /sbin/start_daemon -p "${PIDFILE}" /usr/sbin/Bcfg2Server
     else
-       /sbin/start-stop-daemon -p "${PIDFILE}" -b -S -x /usr/sbin/Bcfg2Server
+       /sbin/start-stop-daemon --pidfile "${PIDFILE}" --make-pidfile -b -S --startas /usr/sbin/Bcfg2Server
     fi
     echo "Bcfg2Server"
     ;;
