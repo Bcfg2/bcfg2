@@ -6,7 +6,8 @@ if [ -z "$version" ] ; then
     echo "must supply version number"
     exit 1
 fi
-
+tagstr=`echo ${version} | sed -e 's/\./_/g'`
+svn copy svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/trunk svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr}
 svn export . /tmp/bcfg2-${version}
 svn log -v > /tmp/bcfg2-${version}/ChangeLog
 cd /tmp/bcfg2-${version}/doc

@@ -112,7 +112,7 @@ class DirectoryBacked(object):
         elif self.entries.has_key(name):
             syslog(LOG_INFO, "got multiple adds for %s" % name)
         else:
-            if ((name[-1] == '~') or (name[:2] == '.#') or (name == 'SCCS') or (name[-4:] == '.swp')):
+            if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
                 return
             self.entries[name] = self.__child__('%s/%s' % (self.name, name))
             self.entries[name].HandleEvent()
