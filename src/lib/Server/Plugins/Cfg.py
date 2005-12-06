@@ -191,11 +191,13 @@ class ConfigFileEntry(object):
         [entry.attrib.__setitem__(x,y) for (x,y) in self.metadata.iteritems()]
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
-        try:
-            entry.text = filedata
-        except:
+        if entry.attrib['encoding'] == 'base64':
             entry.text = b2a_base64(filedata)
-            entry.attrib['encoding'] = 'base64'
+        else:
+            try:
+                entry.text = filedata
+            except:
+                syslog(LOG_ERR, "Failed to marshall file %s. Mark it as base64" % (entry.get('name')))
 
 class Cfg(Plugin):
     '''This generator in the configuration file repository for bcfg2'''

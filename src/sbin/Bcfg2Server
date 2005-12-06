@@ -17,6 +17,7 @@ from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
 from lxml.etree import XML, Element, tostring
 from M2Crypto.SSL import SSLError
+import os, sys
 
 def dgetopt(arglist, opt, vopt):
     '''parse options into a dictionary'''
@@ -174,6 +175,23 @@ if __name__ == '__main__':
     ssetup = dgetopt(argv[1:], options, doptions)
     if not ssetup['configfile']:
         ssetup['configfile'] = '/etc/bcfg2.conf'
+    if ssetup['daemon']:
+        if os.fork() != 0:      
+            os._exit(0)         
+        os.setsid()                     # Create new session
+        pid = os.fork()
+        if pid != 0:
+            pidfile = open(ssetup['daemon'], "w")
+            pidfile.write("%i" % pid)
+            pidfile.close()
+            os._exit(0)	
+        os.chdir("/")         
+        os.umask(0)
+        null = open("/dev/null", "w+")
+        os.dup2(null.fileno(), sys.__stdin__.fileno())
+        os.dup2(null.fileno(), sys.__stdout__.fileno())
+        os.dup2(null.fileno(), sys.__stderr__.fileno())
+
     s = Bcfg2(ssetup)
     while not s.shut:
         try:

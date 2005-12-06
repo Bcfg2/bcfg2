@@ -60,11 +60,6 @@ class TCheetah(Plugin):
         '''Dispatch fetch calls to the correct object'''
         self.entries[entry.get('name')].BuildFile(entry, metadata)
 
-    def MapName(self, name):
-        '''MapName finds the object corresponding to a particular file
-        the DirShadow MapName method maps filenames literally'''
-        return name        
-
     def HandleEvent(self, event):
         '''Unified FAM event handler for DirShadow'''
         #print "got event %s %s %s" % ( event.code2str(), event.filename, event.requestID)
@@ -72,7 +67,7 @@ class TCheetah(Plugin):
         if event.filename[0] == '/':
             return
         epath = "".join([self.data, self.handles[event.requestID], event.filename])
-        identifier = self.MapName(epath[len(self.data):])
+        identifier = epath[len(self.data):]
         if action in ['exists', 'created']:
             if isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])

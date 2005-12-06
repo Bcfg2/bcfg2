@@ -142,6 +142,10 @@ class Component(SSL.SSLServer,
             response = dumps(response, methodresponse=1)
         except Fault, fault:
             response = dumps(fault)
+        except TypeError, t:
+            syslog(LOG_ERR, "Client %s called function %s with wrong argument count" %
+                   (address[0], method))
+            response = dumps(Fault(4, t.args[0]))
         except:
             (trace, val, trb) = exc_info()
             syslog(LOG_ERR, "Unexpected failure in handler")

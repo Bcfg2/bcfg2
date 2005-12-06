@@ -50,6 +50,13 @@ class SSHbase(Plugin):
                               prefix + '/etc/ssh/ssh_host_key':self.build_hk,
                               prefix + '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
+        self.__rmi__ = ['GetPubKeys']
+
+    def GetPubKeys(self, client):
+        '''Export public key data'''
+        if not hasattr(self, 'static_skn'):
+            self.cache_skn()
+        return self.static_skn
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''

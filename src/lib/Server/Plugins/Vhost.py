@@ -26,12 +26,14 @@ class VhostFile(SingleXMLFileBacked):
     sitesav = "/etc/apache2/sites-available/"
 
     def __init__(self, name, fam):
+        self.meta = Element('dummy')
         self.dispatch = {'ConfigFile':{'/etc/default/apache2':self.generateApacheDefault},
                          'Service':{'apache2':self.generateApacheSvc}}
         SingleXMLFileBacked.__init__(self, name, fam)
         self.http = open('/disks/bcfg2/Vhost/default.httpd', 'r').readlines()
         self.servers = []
         self.vhosts = {}
+
 
     def Index(self):
         '''Build vhost data structures'''
