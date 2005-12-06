@@ -78,17 +78,10 @@ class MetadataStore(SingleXMLFileBacked):
         if ((image != None) and (profile != None)):
             # Client asserted profile/image
             self.clients[client] = (image, profile)
-            syslog(LOG_INFO, "Asserted metadata for %s: %s, %s" % (client, image, profile))
-            clientdata = [cli for cli in self.element.findall("Client") if cli.get('name') == client]
-            if len(clientdata) == 0:
-                syslog(LOG_INFO, "Added Metadata for nonexistent client %s" % client)
-                SubElement(self.element, "Client", name=client, image=image, profile=profile)
-                self.WriteBack()
-            elif len(clientdata) == 1:
-                # already existing client
-                clientdata[0].attrib['profile'] = profile
-                clientdata[0].attrib['image'] = image
-                self.WriteBack()
+            syslog(LOG_INFO, "Metadata: Asserted metadata for %s: %s, %s" % (client, image, profile))
+            [self.element.remove(cli) for cli in self.element.findall("Client") if cli.get('name') == client]
+            SubElement(self.element, "Client", name=client, image=image, profile=profile)
+            self.WriteBack()
         else:
             # no asserted metadata
             if self.clients.has_key(client):
