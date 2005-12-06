@@ -34,7 +34,7 @@ install: build
 	dh_installdirs
 	python setup.py install --prefix=$(PWD)/debian/bcfg2-install/usr
 	mkdir -p ./debian/bcfg2/etc
-	cp -f examples/bcfg2.conf ./debian/bcfg2/etc/bcfg2.conf
+	install -g 0 -o 0 -m 600 examples/bcfg2.conf ./debian/bcfg2/etc/bcfg2.conf
 
 # Build architecture-dependent files here.
 # We have nothing to do by default.
@@ -63,6 +63,7 @@ binary-indep: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
+	chmod 600 debian/bcfg2/etc/bcfg2.conf
 #	dh_perl
 	dh_python
 #	dh_makeshlibs
