@@ -97,7 +97,12 @@ if __name__ == '__main__':
 
         cf = ConfigParser()
         cf.read('/etc/bcfg2.conf')
-        location = cf.get("components", "bcfg2")
+        try:
+            location = cf.get("components", "bcfg2")
+        except (NoSectionError, NoOptionError):
+            print "Can't find bcfg2 server location to connect to"
+            print "Check /etc/bcfg2.conf"
+            raise SystemExit, 1
         proxy = ServerProxy(location)
         user = 'root'
         retries = 0

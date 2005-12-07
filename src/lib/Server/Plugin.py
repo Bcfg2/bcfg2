@@ -194,7 +194,7 @@ class ScopedXMLFile(SingleXMLFileBacked):
             xdata = XML(self.data)
         except XMLSyntaxError, msg:
             syslog(LOG_ERR, "Failed to parse %s"%(self.name))
-            syslog(LOG_ERR, msg)
+            # need to add in lxml error messages, once they are supported
             return
         self.store = {}
         for entry in [ent for ent in  xdata.getchildren() if not isinstance(ent, _Comment)]:

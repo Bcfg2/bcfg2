@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from lxml.etree import XML, SubElement, Element
+from lxml.etree import XML, SubElement, Element, _Comment, tostring
 from syslog import syslog, LOG_ERR, LOG_INFO
 
 from Bcfg2.Server.Plugin import SingleXMLFileBacked
@@ -106,6 +106,8 @@ class MetadataStore(SingleXMLFileBacked):
 
     def pretty_print(self, element, level=0):
         '''Produce a pretty-printed text representation of element'''
+        if isinstance(element, _Comment):
+            return (level * " ") + tostring(element)
         if element.text:
             fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
             data = (element.tag, (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib])),
