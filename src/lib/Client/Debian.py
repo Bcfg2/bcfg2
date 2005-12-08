@@ -74,6 +74,7 @@ class Debian(Toolset):
             if self.setup['dryrun']:
                 print "Disabling service %s" % (entry.get('name'))
             else:
+                system("/etc/init.d/%s stop > /dev/null 2>&1" % (entry.get('name')))
                 cmdrc = system("update-rc.d -f %s remove" % entry.get('name'))
         else:
             if self.setup['dryrun']:

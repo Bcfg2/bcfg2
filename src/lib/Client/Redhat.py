@@ -61,6 +61,9 @@ class Redhat(Toolset):
         '''Install Service entry'''
         system("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        if not entry.get('status'):
+            print "Can't install service %s, not enough data" % (entry.get('name'))
+            return False
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
                 print "Disabling server %s" % (entry.get('name'))
