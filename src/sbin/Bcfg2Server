@@ -17,30 +17,76 @@ from xmlrpclib import Fault
 from socket import gethostbyaddr, herror
 from lxml.etree import XML, Element, tostring
 from M2Crypto.SSL import SSLError
-import os, sys
 
-def dgetopt(arglist, opt, vopt):
+def critical_error(operation):
+    '''Print tracebacks in unexpected cases'''
+    syslog(LOG_ERR, "Traceback information (please include in any bug report):")
+    (ttype, value, trace) = exc_info()
+    for line in extract_tb(trace):        
+        syslog(LOG_ERR, "File %s, line %i, in %s\n   %s" % (line))
+        syslog(LOG_ERR, "%s: %s" % (ttype, value))
+    del trace, val, trb
+    warning_error("An unexpected failure occurred in %s" % (operation) )
+
+def fatal_error(message):
+    '''Signal a fatal error'''
+    syslog(LOG_ERR, "Fatal error: %s" % (message))
+    raise SystemExit, 1
+
+def warning_error(message):
+    '''Warn about a problem but continue'''
+    syslog(LOG_ERR,"Warning: %s\n" % (message))
+           
+def usage_error(message, opt, vopt, descs, argDescs):
+    '''Die because script was called the wrong way'''
+    print "Usage error: %s" % (message)
+    print_usage(opt, vopt, descs, argDescs)
+    raise SystemExit, 2
+
+verboseMode = False
+
+def verbose(message):
+    '''Conditionally output information in verbose mode'''
+    global verboseMode
+
+    if(verboseMode == True):
+        syslog(LOG_INFO, "%s" % (message))
+
+def print_usage(opt, vopt, descs, argDescs):
+    print "Bcfg2Server usage:"
+    for arg in opt.iteritems():
+        print " -%s\t\t\t%s" % (arg[0], descs[arg[0]])
+    for arg in vopt.iteritems():
+        print " -%s %s\t%s" % (arg[0], argDescs[arg[0]], descs[arg[0]])
+
+def dgetopt(arglist, opt, vopt, descs, argDescs):
     '''parse options into a dictionary'''
+    global verboseMode
+    
     ret = {}
     for optname in opt.values() + vopt.values():
         ret[optname] = False
-    gstr = "".join(opt.keys()) + "".join([field+':' for field in vopt.keys()])
+        
+    gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
     try:
-        opts = getopt(arglist, gstr)[0]
+        ginfo = getopt(arglist, gstr)
     except GetoptError, gerr:
-        print gerr
-        print "bcfg2 Usage:"
-        for arg in opt.iteritems():
-            print " -%s %s" % arg
-        for arg in  vopt.iteritems():
-            print " -%s <%s>" % arg
-        raise SystemExit, 1
-    for (gopt, garg) in opts:
+        usage_error(gerr, opt, vopt, descs, argDescs)
+
+    for (gopt, garg) in ginfo[0]:
         option = gopt[1:]
         if opt.has_key(option):
             ret[opt[option]] = True
         else:
             ret[vopt[option]] = garg
+
+    if ret["help"] == True:
+        print_usage(opt, vopt, descs, argDescs)
+        raise SystemExit, 0
+
+    if ret["verbose"] == True:
+        verboseMode = True
+        
     return ret
 
 class Bcfg2(Component):
@@ -60,10 +106,14 @@ class Bcfg2(Component):
             self.Core = Core(setup, setup['configfile'])
             self.CoreLock = Lock()
         except CoreInitError, msg:
-            print msg
-            raise SystemExit, 1
-        self.funcs.update({"GetConfig":self.Bcfg2GetConfig, "GetProbes":self.Bcfg2GetProbes,
-                           "RecvProbeData":self.Bcfg2RecvProbeData, "RecvStats":self.Bcfg2RecvStats})
+            fatal_error(msg)
+
+        self.funcs.update({
+            "GetConfig": self.Bcfg2GetConfig,
+            "GetProbes": self.Bcfg2GetProbes,
+            "RecvProbeData": self.Bcfg2RecvProbeData,
+            "RecvStats": self.Bcfg2RecvStats
+            })
         for plugin in self.Core.plugins.values():
             for method in plugin.__rmi__:
                 self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
@@ -80,6 +130,7 @@ class Bcfg2(Component):
                 rsockinfo = select([self.socket, famfd], [], [], 15)[0]
             except selecterror:
                 raise SSLError
+            
             if famfd in rsockinfo:
                 self.Core.fam.Service()
             if self.socket in rsockinfo:
@@ -99,19 +150,26 @@ class Bcfg2(Component):
     def handle_error(self):
         '''Catch error path for clean exit'''
         return False
+
+    def resolve_client(self, client):
+        try:
+            ret = gethostbyaddr(client)[0]
+        except herror:
+            warning = "host resolution error for %s" % (client)
+            warning_error(warning)
+            raise Fault, warning        
         
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
-        peer = address[0]
+        client = resolve_client(address[0])
         resp = Element('probes')
-        try:
-            client = gethostbyaddr(peer)[0]
-        except herror:
-            raise Fault, "host resolution error"
+
         try:
             meta = self.Core.metadata.FetchMetadata(client)
         except MetadataConsistencyError:
-            raise Fault, 'metadata resolution error'
+            warning = 'metadata consistency error'
+            warning_error(warning)
+            raise Fault, warning
         for generator in self.Core.generators:
             for probe in generator.GetProbes(meta):
                 resp.append(probe)
@@ -119,36 +177,31 @@ class Bcfg2(Component):
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
-        peer = address[0]
-        try:
-            client = gethostbyaddr(peer)[0]
-        except herror:
-            raise Fault, "host resolution error"
+        client = resolve_client(address[0])
+
         for data in probedata:
             try:
                 [generator] = [gen for gen in self.Core.generators if gen.__name__ == data.get('source')]
                 generator.ReceiveData(client, data)
             except IndexError:
-                syslog(LOG_ERR, "Failed to locate plugin %s" % (data.get('source')))
+                warning_error("Failed to locate plugin %s" % (data.get('source')))
             except:
-                syslog(LOG_ERR, "Unexpected failure in probe data receipt")
+                critical_error("probe data receipt")
         return True
 
     def Bcfg2GetConfig(self, address, image=False, profile=False):
         '''Build config for a client'''
-        peer = address[0]
-        try:
-            client = gethostbyaddr(peer)[0]
-        except herror:
-            raise Fault, "host resolution error"
+        client = resolve_client(address[0])
+
         if image and profile:
             try:
                 # if metadata is provided, call FetchMetadata with settings
-                # it is screwey. i know.
+                # it is screwy. i know.
                 self.Core.metadata.FetchMetadata(client, image=image, profile=profile)
             except MetadataConsistencyError:
-                syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
-                return Fault, 'metadata error'
+                warning = 'metadata consistency error'
+                warning_error(warning)
+                raise Fault, warning
         return tostring(self.Core.BuildConfiguration(client))
 
     def Bcfg2RecvStats(self, address, stats):
@@ -157,50 +210,52 @@ class Bcfg2(Component):
         state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
         if state.get('version') >= '2.0':
-            try:
-                client = gethostbyaddr(address[0])[0]
-            except herror:
-                return Fault, 'host resolution error'
-
+            client = resolve_client(address[0])
+            
             # Update statistics
             self.Core.stats.updateStats(sdata, client)
 
-        syslog(LOG_INFO, "Client %s reported state %s"%(client, state.attrib['state']))
+        verbose("Client %s reported state %s" % 
+                (client, state.attrib['state']))
         return "<ok/>"
 
 if __name__ == '__main__':
     openlog("Bcfg2", 0, LOG_LOCAL0)
-    options =  {'v':'verbose', 'd':'debug'}
-    doptions = {'D':'daemon', 'c':'configfile', 'C':'client'}
-    ssetup = dgetopt(argv[1:], options, doptions)
+    options =  {
+        'v':'verbose',
+        'd':'debug',
+        'h':'help'
+        }
+    doptions = {
+        'D':'daemon',
+        'c':'configfile',
+        'C':'client'
+        }
+
+    descriptions = {
+        'v': "enable verbose output",
+        'd': "enable debugging output",
+        'D': "daemonise the server, storing PID",
+        'c': "set the server's config file",
+        'C': "always return the given client's config (debug only)",
+        'h': "display this usage information"
+        }
+
+    argDescriptions = {
+        'D': "<PID file>   ",
+        'c': "<config file>",
+        'C': "<client hostname>"
+        }
+    
+    ssetup = dgetopt(argv[1:], options, doptions,
+                     descriptions, argDescriptions)
     if not ssetup['configfile']:
         ssetup['configfile'] = '/etc/bcfg2.conf'
-    if ssetup['daemon']:
-        if os.fork() != 0:      
-            os._exit(0)         
-        os.setsid()                     # Create new session
-        pid = os.fork()
-        if pid != 0:
-            pidfile = open(ssetup['daemon'], "w")
-            pidfile.write("%i" % pid)
-            pidfile.close()
-            os._exit(0)	
-        os.chdir("/")         
-        os.umask(0)
-        null = open("/dev/null", "w+")
-        os.dup2(null.fileno(), sys.__stdin__.fileno())
-        os.dup2(null.fileno(), sys.__stdout__.fileno())
-        os.dup2(null.fileno(), sys.__stderr__.fileno())
-
     s = Bcfg2(ssetup)
     while not s.shut:
         try:
             s.serve_forever()
         except:
-            syslog(LOG_ERR, "Unexpected serve loop failure")
-            (trace, val, trb)=exc_info()
-            for line in extract_tb(trb):
-                syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-            syslog(LOG_ERR, "%s: %s\n"%(trace, val))
-            del trace, val, trb
+            critical_error("service loop")
+
     syslog(LOG_INFO, "Shutting down")
