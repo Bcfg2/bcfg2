@@ -9,13 +9,13 @@ import apt_pkg
 
 from Bcfg2.Client.Toolset import Toolset, saferun
 
-class Debian(Toolset):
+class ToolsetImpl(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
                      '/etc/apt/apt.conf']
-    pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s',
+    pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s >/dev/null 2>&1',
                       ('%s=%s', ['name', 'version']))}
     svcre = regcompile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
@@ -23,11 +23,11 @@ class Debian(Toolset):
         Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
         environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        system("dpkg --force-confold --configure -a")
+        system("dpkg --force-confold --configure -a > /dev/null 2>&1")
         if not self.setup['build']:
-            system("dpkg-reconfigure -f noninteractive debconf < /dev/null")
-        system("apt-get clean")
-        system("apt-get -q=2 -y update")
+            system("dpkg-reconfigure -f noninteractive debconf < /dev/null > /dev/null 2>&1")
+        system("apt-get clean > /dev/null 2>&1")
+        system("apt-get -q=2 -y update > /dev/null 2>&1")
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
@@ -75,12 +75,13 @@ class Debian(Toolset):
                 print "Disabling service %s" % (entry.get('name'))
             else:
                 system("/etc/init.d/%s stop > /dev/null 2>&1" % (entry.get('name')))
-                cmdrc = system("update-rc.d -f %s remove" % entry.get('name'))
+                cmdrc = system("/usr/sbin/update-rc.d -f %s remove > /dev/null 2>&1" %
+                               entry.get('name'))
         else:
             if self.setup['dryrun']:
                 print "Enabling service %s" % (entry.attrib['name'])
             else:
-                cmdrc = system("update-rc.d %s defaults" % (entry.attrib['name']))
+                cmdrc = system("/usr/sbin/update-rc.d %s defaults > /dev/null 2>&1" % (entry.attrib['name']))
         if cmdrc:
             return False
         return True

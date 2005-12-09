@@ -366,7 +366,10 @@ class Toolset(object):
                     except OSError:
                         return False
                 except OSError:
-                    mkdir(current)
+                    try:
+                        mkdir(current)
+                    except OSError:
+                        return False
 
         # If we get here, then the parent directory should exist
         try:
@@ -386,8 +389,11 @@ class Toolset(object):
                 system("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             rename(newfile.name, entry.get('name'))
             return True
-        except (OSError, IOError), errmsg:
-            print errmsg
+        except (OSError, IOError), err:
+            if err.errno == 13:
+                self.CondPrint('verbose', "Failed to open %s for writing" % (entry.get('name')))
+            else:
+                print err
             return False
 
     def VerifyPackage(self, entry, modlist):

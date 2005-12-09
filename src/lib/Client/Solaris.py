@@ -23,7 +23,7 @@ action=nocheck
 basedir=default
 '''
 
-class Solaris(Toolset):
+class ToolsetImpl(Toolset):
     '''This class implelements support for SYSV/blastware/encap packages
     and standard SMF services'''
     pkgtool = {'sysv':("/usr/sbin/pkgadd %s -d %%s -n all", ("%s", ["url"])),

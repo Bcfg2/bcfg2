@@ -11,171 +11,287 @@ from tempfile import mktemp
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from time import time
 from xmlrpclib import ServerProxy, Fault
-
-from lxml.etree import Element, XML, tostring
+from lxml.etree import Element, XML, tostring, XMLSyntaxError
+from time import sleep
+from sys import exc_info
+from traceback import extract_tb
+import socket
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     _exit(1)
 
+class SafeProxy:
+    '''Wrapper for proxy'''
+    def __init__(self, user, password, retries, serverUrl):
+        self.user = user
+        self.password = password
+        self.retries = retries
+        self.serverUrl = serverUrl
+        self.proxy = ServerProxy(serverUrl)
+        self.retryCount = 0
+
+    def runMethod(self, operationDescription, methodName, methodArgs):
+        method = getattr(self.proxy, methodName)
+        instanceRetries = 0
+        for i in xrange(self.retries):
+            try:
+                verbose("Attempting %s (%d of %d)" % (operationDescription, (i+1), self.retries))
+                ret = apply(method, (self.user, self.password) + methodArgs)
+                if(instanceRetries > 0):
+                    warning_error("during %s:\nRequired %d attempts to contact server (%s)" %
+                                  (instanceRetries, operationDescription, self.serverUrl))
+                verbose("%s completed successfully" % (operationDescription))
+                return ret
+            except Fault, f:
+                fatal_error("%s encountered a server error:\n%s" %
+                            (operationDescription, f))
+            except socket.error, e:
+                instanceRetries += 1
+                self.retryCount += 1
+                sleep(1.0)                
+            except:
+                critical_error(operationDescription)
+                    
+        fatal_error("%s failed:\nCould not connect to server (%s)" %
+                    (operationDescription, self.serverUrl))
+        
+
 def load_toolset(toolset, config, clientsetup):
     '''Import client toolset modules'''
-    if toolset == 'debian':
-        if clientsetup['verbose']:
-            print 'Selected Debian Toolset...'
-        mod = __import__("Bcfg2.Client.Debian", globals(), locals(), ['*'])
-        return mod.Debian(config, clientsetup)
-    elif toolset == 'rh':
-        if setup['verbose']:
-            print 'Selected RedHat Toolset...'
-        mod = __import__("Bcfg2.Client.Redhat", globals(), locals(), ['*'])
-        return mod.Redhat(config, clientsetup)
-    elif toolset == 'solaris':
-        if setup['verbose']:
-            print "Selected Solaris Toolset"
-        mod = __import__("Bcfg2.Client.Solaris", globals(), locals(), ['*'])
-        return mod.Solaris(config, clientsetup)
-    else:
-        print "Got unsupported toolset %s from server." % (toolset)
-        raise SystemExit, 1
+
+    toolsetPackages = {
+        'debian': "Bcfg2.Client.Debian",
+        'rh': "Bcfg2.Client.Redhat",
+        'solaris': "Bcfg2.Client.Solaris"
+        }
+
+    try:
+        mod = __import__(toolsetPackages[toolset], globals(), locals(), ['*'])
+    except KeyError, k:
+        fatal_error("got unsupported toolset %s from server." % (toolset))
         
+    try:
+        myToolset = mod.ToolsetImpl(config, clientsetup)
+
+        verbose("Selected %s toolset..." % (toolset))
+        return myToolset;
+    except:
+        critical_error("instantiating toolset %s" % (toolset))        
 
 def run_probe(probe):
     '''Execute probe'''
-    ret = Element("probe-data", name=probe.attrib['name'], source=probe.attrib['source'])
-    script = open(mktemp(), 'w+')
-    script.write("#!%s\n"%(probe.attrib.get('interpreter', '/bin/sh')))
-    script.write(probe.text)
-    script.close()
-    chmod(script.name, 0755)             
-    ret.text = popen(script.name).read()
-    unlink(script.name)
+    probeName = probe.attrib['name']
+    ret = Element("probe-data", probeName, source=probe.attrib['source'])
+    try:
+        script = open(mktemp(), 'w+')
+        try:
+            script.write("#!%s\n" % (probe.attrib.get('interpreter', '/bin/sh')))
+            script.write(probe.text)
+            script.close()
+            chmod(script.name, 0755)             
+            ret.text = popen(script.name).read()
+
+        finally:
+            unlink(script.name)
+    except:
+        critical_error("executing probe %s" % (probeName))
     return ret
 
-def dgetopt(arglist, opt, vopt):
+def critical_error(operation):
+    '''Print tracebacks in unexpected cases'''
+    print "Traceback information (please include in any bug report):"
+    (ttype, value, trace) = exc_info()
+    for line in extract_tb(trace):        
+        print "File %s, line %i, in %s\n   %s\n" % (line)
+        print "%s: %s\n" % (ttype, value)
+
+    fatal_error("An unexpected failure occurred in %s" % (operation) )
+
+def fatal_error(message):
+    '''Signal a fatal error'''
+    print "Fatal error: %s\n" % (message)
+    raise SystemExit, 1
+
+def warning_error(message):
+    '''Warn about a problem but continue'''
+    print "Warning: %s\n" % (message)
+
+def usage_error(message, opt, vopt, descs, argDescs):
+    '''Die because script was called the wrong way'''
+    print "Usage error: %s" % (message)
+    print_usage(opt, vopt, descs, argDescs)
+    raise SystemExit, 2
+
+verboseMode = False
+
+def verbose(message):
+    '''Conditionally output information in verbose mode'''
+    global verboseMode
+
+    if(verboseMode == True):
+        print "bcfg2: %s\n" % (message)
+
+def print_usage(opt, vopt, descs, argDescs):
+    print "bcfg2 usage:"
+    for arg in opt.iteritems():
+        print " -%s\t\t\t%s" % (arg[0], descs[arg[0]])
+    for arg in vopt.iteritems():
+        print " -%s %s\t%s" % (arg[0], argDescs[arg[0]], descs[arg[0]])
+
+def dgetopt(arglist, opt, vopt, descs, argDescs):
     '''parse options into a dictionary'''
+    global verboseMode
+    
     ret = {}
     for optname in opt.values() + vopt.values():
         ret[optname] = False
+        
     gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
     try:
         ginfo = getopt(arglist, gstr)
     except GetoptError, gerr:
-        print gerr
-        print "bcfg2 Usage:"
-        for arg in opt.iteritems():
-            print " -%s %s" % arg
-        for arg in  vopt.iteritems():
-            print " -%s <%s>" % arg
-        raise SystemExit, 1
+        usage_error(gerr, opt, vopt, descs, argDescs)
+
     for (gopt, garg) in ginfo[0]:
         option = gopt[1:]
         if opt.has_key(option):
             ret[opt[option]] = True
         else:
             ret[vopt[option]] = garg
+
+    if (ret["file"] != False) and (ret["cache"] != False):
+        usage_error("cannot use -f and -c together",
+                    opt, vopt, descs, argDescs)
+
+    if ret["help"] == True:
+        print_usage(opt, vopt, descs, argDescs)
+        raise SystemExit, 0
+
+    if ret["verbose"] == True:
+        verboseMode = True
+        
     return ret
 
 if __name__ == '__main__':
     # parse command line options
     signal(SIGINT, cb_sigint_handler)
-    options =  {'v':'verbose', 'q':'quick', 'd':'debug', 'n':'dryrun', 'B':'build', 'P':'paranoid'}
-    doptions = {'b':'bundle', 'f':'file', 'c':'cache', 'p':'profile', 'i':'image', 'r':'remove'}
-    setup = dgetopt(argv[1:], options, doptions)
+    options =  {
+        'v':'verbose',
+        'q':'quick',
+        'd':'debug',
+        'n':'dryrun',
+        'B':'build',
+        'P':'paranoid',
+        'h':'help'
+        }
+    doptions = {
+        'b':'bundle',
+        'f':'file',
+        'c':'cache',
+        'p':'profile',
+        'i':'image',
+        'r':'remove'
+        }
+    descriptions = {
+        'v': "enable verbose output",
+        'q': "disable some checksum verification",
+        'd': "enable debugging output",
+        'n': "do not actually change the system",
+        'B': "disable service control (implies -q)",
+        'P': "make automatic backups of config files",
+        'b': "only configure the given bundle",
+        'f': "configure from a file rather than querying the server",
+        'c': "store the configuration in a file",
+        'p': "assert the given profile for the client",
+        'i': "assert the given image for the client",
+        'r': "force removal of additional configuration items",
+        'h': "print this help message"
+        }
+    argumentDescriptions = {
+        'b': "<bundle name>",
+        'f': "<cache file>",
+        'c': "<cache file>",
+        'p': "<profile name>",
+        'i': "<image name>",
+        'r': "(pkgs | svcs | all)"
+        }
+    setup = dgetopt(argv[1:], options, doptions,
+                    descriptions, argumentDescriptions)
     timeinfo = Element("Times")
+
+    # begin configuration
+    start = time()
 
     comm = None
     if setup['file']:
         try:
+            verbose("reading cached configuration from %s" % (setup['file']))
             configfile = open(setup['file'], 'r')
             r = configfile.read()
             configfile.close()
         except IOError:
-            print "Failed to read cached config file: %s" % (setup['file'])
-            raise SystemExit, 1
+            fatal_error("failed to read cached configuration from: %s" % (setup['file']))
     else:
-
         cf = ConfigParser()
-        cf.read('/etc/bcfg2.conf')
         try:
+            bcfgConf = '/etc/bcfg2.conf'
+            verbose("reading setup info from %s" % (bcfgConf))
+            cf.read(bcfgConf)
             location = cf.get("components", "bcfg2")
-        except (NoSectionError, NoOptionError):
-            print "Can't find bcfg2 server location to connect to"
-            print "Check /etc/bcfg2.conf"
-            raise SystemExit, 1
-        proxy = ServerProxy(location)
-        user = 'root'
-        retries = 0
-        password = cf.get("communication", "password")
+            user = 'root'
+            password = cf.get("communication", "password")
+            proxy = SafeProxy(user, password, 6, location)
+        except:
+            fatal_error("unable to read %s" % (bcfgConf))
+        
+        probedata = proxy.runMethod("probe download", "GetProbes", ())
 
-        # get probes
-        start = time()
-        for i in xrange(6):
-            try:
-                probedata = proxy.GetProbes(user, password)
-                break
-            except Fault, f:
-                print "Got Fault from server", f
-                break
-            except:
-                retries += 1
-                if i == 5:
-                    print "Failed to connect to server"
-                    raise SystemExit, 1
         timeinfo.set('probefetch', str(time() - start))
-        probes = XML(probedata)
+        
+        try:
+            probes = XML(probedata)
+        except XMLSyntaxError, e:
+            fatal_error("server returned invalid probe information")
+            
         # execute probes
-        probeinfo = [run_probe(x) for x in probes.findall(".//probe")]
-    
-        # upload probe responses
-        for i in xrange(6):
-            try:
-                proxy.RecvProbeData(user, password, probeinfo)
-                break
-            except Fault, f:
-                print "Got Fault from server", f
-                break
-            except:
-                retries += 1
-                if i == 5:
-                    print "Failed to connect to server"
-                    raise SystemExit, 1
+        try:
+            probeinfo = [run_probe(x) for x in probes.findall(".//probe")]
+        except:
+            fatal_error("bcfg encountered an unknown error running probes")
 
+        # upload probe responses
+        proxy.runMethod("probe data upload", "RecvProbeData", (probeinfo, ))
+        
         cstart = time()
-        for i in xrange(6):
-            try:
-                cfginfo = proxy.GetConfig(user, password, setup['image'], setup['profile'])
-                break
-            except Fault, f:
-                print "Got Fault from server", f
-                break
-            except:
-                retries += 1
-                if i == 5:
-                    print "Failed to connect to server"
-                    raise SystemExit, 1
+
+        cfginfo = proxy.runMethod("configuration download", "GetConfig",
+                                  (setup['image'], setup['profile']))
+
         timeinfo.set('config', str(time() - cstart ))        
 
     if setup['cache']:
         try:
             open(setup['cache'], 'w').write(cfginfo)
         except IOError:
-            print "failed to write config cache file %s" % (setup['cache'])
+            warning_error("failed to write config cache file %s" % (setup['cache']))
 
     pt = time()
     try:
         cfg = XML(cfginfo)
-    except:
-        print "Server returned unparseable config"
-        raise SystemExit, 1
+    except XMLSyntaxError, e:
+        fatal_error("the configuration could not be parsed")
+
     timeinfo.set('parse', str(time() - pt))
     
     if cfg.tag == 'error':
-        print "got error from server"
-        raise SystemExit, 1
+        fatal_error("server error: %s" % (cfg.text))
 
     # Get toolset from server
-    cfg_toolset = cfg.get('toolset')
+    try:
+        cfg_toolset = cfg.get('toolset')
+    except:
+        fatal_error("server did not specify a toolset")
 
     if setup['bundle']:
         c = Element("Configuration", version='2.0')
@@ -211,8 +327,9 @@ if __name__ == '__main__':
         failed = [key for key, value in client.states.iteritems() if not value]
         if failed:
             client.CondPrint('verbose', "Failing Entries:")
-            [client.CondPrint('verbose', "%s:%s" % (key.tag, key.get('name'))) for key in
-             failed if key.tag != 'Package']
+            [client.CondPrint('verbose', "%s:%s" %
+                              (key.tag, key.get('name')))
+             for key in failed if key.tag != 'Package']
             [client.CondPrint('verbose', "%s:%s-%s" %
                               (key.tag, key.get('name'), key.get('version', 'unset')))
              for key in failed if key.tag == 'Package']
@@ -229,17 +346,4 @@ if __name__ == '__main__':
         stats.append(timeinfo)
         m.append(stats)
 
-
-        for i in xrange(6):
-            try:
-                stats.attrib['retries'] = str(retries)
-                probedata = proxy.RecvStats(user, password, tostring(m))
-                break
-            except Fault, f:
-                print "Got Fault from server", f
-                break
-            except:
-                retries += 1
-                if i == 5:
-                    print "Failed to connect to server"
-                    raise SystemExit, 1
+        proxy.runMethod("uploading statistics", "RecvStats", (tostring(m),))

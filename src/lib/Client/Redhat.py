@@ -8,7 +8,7 @@ from os import popen, system
 
 from Bcfg2.Client.Toolset import Toolset, saferun
 
-class Redhat(Toolset):
+class ToolsetImpl(Toolset):
     '''This class implelements support for rpm packages and standard chkconfig services'''
     pkgtool = {'rpm':("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))}
 
