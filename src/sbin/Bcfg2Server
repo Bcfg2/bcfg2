@@ -157,7 +157,7 @@ class Bcfg2(Component):
         except herror:
             warning = "host resolution error for %s" % (client)
             warning_error(warning)
-            raise Fault, warning        
+            raise Fault, (5, warning)
         
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
@@ -169,7 +169,7 @@ class Bcfg2(Component):
         except MetadataConsistencyError:
             warning = 'metadata consistency error'
             warning_error(warning)
-            raise Fault, warning
+            raise Fault, (6, warning)
         for generator in self.Core.generators:
             for probe in generator.GetProbes(meta):
                 resp.append(probe)
@@ -201,7 +201,7 @@ class Bcfg2(Component):
             except MetadataConsistencyError:
                 warning = 'metadata consistency error'
                 warning_error(warning)
-                raise Fault, warning
+                raise Fault, (6, warning)
         return tostring(self.Core.BuildConfiguration(client))
 
     def Bcfg2RecvStats(self, address, stats):
