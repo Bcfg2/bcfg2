@@ -153,7 +153,7 @@ class Bcfg2(Component):
 
     def resolve_client(self, client):
         try:
-            ret = gethostbyaddr(client)[0]
+            return gethostbyaddr(client)[0]
         except herror:
             warning = "host resolution error for %s" % (client)
             warning_error(warning)
@@ -161,7 +161,7 @@ class Bcfg2(Component):
         
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
-        client = resolve_client(address[0])
+        client = self.resolve_client(address[0])
         resp = Element('probes')
 
         try:
@@ -177,7 +177,7 @@ class Bcfg2(Component):
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
-        client = resolve_client(address[0])
+        client = self.resolve_client(address[0])
 
         for data in probedata:
             try:
@@ -191,7 +191,7 @@ class Bcfg2(Component):
 
     def Bcfg2GetConfig(self, address, image=False, profile=False):
         '''Build config for a client'''
-        client = resolve_client(address[0])
+        client = self.resolve_client(address[0])
 
         if image and profile:
             try:
@@ -210,7 +210,7 @@ class Bcfg2(Component):
         state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
         if state.get('version') >= '2.0':
-            client = resolve_client(address[0])
+            client = self.resolve_client(address[0])
             
             # Update statistics
             self.Core.stats.updateStats(sdata, client)

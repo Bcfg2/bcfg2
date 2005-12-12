@@ -3,19 +3,18 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-from getopt import getopt, GetoptError
-from os import popen, chmod, unlink, _exit
-from signal import signal, SIGINT
-from sys import argv
-from tempfile import mktemp
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from time import time
-from xmlrpclib import ServerProxy, Fault
-from lxml.etree import Element, XML, tostring, XMLSyntaxError
-from time import sleep
-from sys import exc_info
-from traceback import extract_tb
+import ConfigParser
+import getopt
+import signal
 import socket
+import sys
+import tempfile
+import time
+import traceback
+import xmlrpclib
+
+from os import popen, chmod, unlink, _exit
+from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
@@ -28,10 +27,11 @@ class SafeProxy:
         self.password = password
         self.retries = retries
         self.serverUrl = serverUrl
-        self.proxy = ServerProxy(serverUrl)
+        self.proxy = xmlrpclib.ServerProxy(serverUrl)
         self.retryCount = 0
 
     def runMethod(self, operationDescription, methodName, methodArgs):
+        '''Execute xmlrpc method call'''
         method = getattr(self.proxy, methodName)
         instanceRetries = 0
         for i in xrange(self.retries):
@@ -43,20 +43,19 @@ class SafeProxy:
                                   (instanceRetries, operationDescription, self.serverUrl))
                 verbose("%s completed successfully" % (operationDescription))
                 return ret
-            except Fault, f:
+            except xmlrpclib.Fault, f:
                 fatal_error("%s encountered a server error:\n%s" %
                             (operationDescription, f))
             except socket.error, e:
                 instanceRetries += 1
                 self.retryCount += 1
-                sleep(1.0)                
+                time.sleep(0.5)                
             except:
                 critical_error(operationDescription)
                     
         fatal_error("%s failed:\nCould not connect to server (%s)" %
                     (operationDescription, self.serverUrl))
         
-
 def load_toolset(toolset, config, clientsetup):
     '''Import client toolset modules'''
 
@@ -84,7 +83,7 @@ def run_probe(probe):
     probeName = probe.attrib['name']
     ret = Element("probe-data", probeName, source=probe.attrib['source'])
     try:
-        script = open(mktemp(), 'w+')
+        script = open(tempfile.mktemp(), 'w+')
         try:
             script.write("#!%s\n" % (probe.attrib.get('interpreter', '/bin/sh')))
             script.write(probe.text)
@@ -101,8 +100,8 @@ def run_probe(probe):
 def critical_error(operation):
     '''Print tracebacks in unexpected cases'''
     print "Traceback information (please include in any bug report):"
-    (ttype, value, trace) = exc_info()
-    for line in extract_tb(trace):        
+    (ttype, value, trace) = sys.exc_info()
+    for line in traceback.extract_tb(trace):        
         print "File %s, line %i, in %s\n   %s\n" % (line)
         print "%s: %s\n" % (ttype, value)
 
@@ -149,8 +148,8 @@ def dgetopt(arglist, opt, vopt, descs, argDescs):
         
     gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
     try:
-        ginfo = getopt(arglist, gstr)
-    except GetoptError, gerr:
+        ginfo = getopt.getopt(arglist, gstr)
+    except getopt.GetoptError, gerr:
         usage_error(gerr, opt, vopt, descs, argDescs)
 
     for (gopt, garg) in ginfo[0]:
@@ -175,7 +174,7 @@ def dgetopt(arglist, opt, vopt, descs, argDescs):
 
 if __name__ == '__main__':
     # parse command line options
-    signal(SIGINT, cb_sigint_handler)
+    signal.signal(signal.SIGINT, cb_sigint_handler)
     options =  {
         'v':'verbose',
         'q':'quick',
@@ -216,12 +215,12 @@ if __name__ == '__main__':
         'i': "<image name>",
         'r': "(pkgs | svcs | all)"
         }
-    setup = dgetopt(argv[1:], options, doptions,
+    setup = dgetopt(sys.argv[1:], options, doptions,
                     descriptions, argumentDescriptions)
     timeinfo = Element("Times")
 
     # begin configuration
-    start = time()
+    start = time.time()
 
     comm = None
     if setup['file']:
@@ -233,7 +232,7 @@ if __name__ == '__main__':
         except IOError:
             fatal_error("failed to read cached configuration from: %s" % (setup['file']))
     else:
-        cf = ConfigParser()
+        cf = ConfigParser.ConfigParser()
         try:
             bcfgConf = '/etc/bcfg2.conf'
             verbose("reading setup info from %s" % (bcfgConf))
@@ -247,7 +246,7 @@ if __name__ == '__main__':
         
         probedata = proxy.runMethod("probe download", "GetProbes", ())
 
-        timeinfo.set('probefetch', str(time() - start))
+        timeinfo.set('probefetch', str(time.time() - start))
         
         try:
             probes = XML(probedata)
@@ -263,12 +262,12 @@ if __name__ == '__main__':
         # upload probe responses
         proxy.runMethod("probe data upload", "RecvProbeData", (probeinfo, ))
         
-        cstart = time()
+        cstart = time.time()
 
         cfginfo = proxy.runMethod("configuration download", "GetConfig",
                                   (setup['image'], setup['profile']))
 
-        timeinfo.set('config', str(time() - cstart ))        
+        timeinfo.set('config', str(time.time() - cstart ))        
 
     if setup['cache']:
         try:
@@ -276,13 +275,13 @@ if __name__ == '__main__':
         except IOError:
             warning_error("failed to write config cache file %s" % (setup['cache']))
 
-    pt = time()
+    pt = time.time()
     try:
         cfg = XML(cfginfo)
     except XMLSyntaxError, e:
         fatal_error("the configuration could not be parsed")
 
-    timeinfo.set('parse', str(time() - pt))
+    timeinfo.set('parse', str(time.time() - pt))
     
     if cfg.tag == 'error':
         fatal_error("server error: %s" % (cfg.text))
@@ -303,15 +302,15 @@ if __name__ == '__main__':
     # Create toolset handle
     client = load_toolset(cfg_toolset, cfg, setup)
 
-    istart = time()
+    istart = time.time()
     # verify state
     client.Inventory()
-    timeinfo.set('inventory', str(time() - istart))
+    timeinfo.set('inventory', str(time.time() - istart))
 
     correct = client.states.values().count(True)
     total = len(client.states.values())
 
-    istart = time()
+    istart = time.time()
     
     if ((correct < total) or client.pkgwork['remove']):
         if client.pkgwork['remove']:
@@ -336,8 +335,8 @@ if __name__ == '__main__':
     else:
         client.CondPrint("verbose", "All entries correct")
 
-    timeinfo.set('install', str(time() - istart))
-    timeinfo.set('total', str(time() - start))
+    timeinfo.set('install', str(time.time() - istart))
+    timeinfo.set('total', str(time.time() - start))
 
     if not setup['file']:
         # upload statistics
