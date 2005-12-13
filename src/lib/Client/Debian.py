@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from glob import glob
-from os import environ, stat, system
+from os import environ, stat
 from re import compile as regcompile
 
 import apt_pkg
