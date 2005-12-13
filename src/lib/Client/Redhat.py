@@ -6,7 +6,7 @@ __revision__ = '$Revision$'
 
 from os import popen, system
 
-from Bcfg2.Client.Toolset import Toolset, saferun
+from Bcfg2.Client.Toolset import Toolset
 
 class ToolsetImpl(Toolset):
     '''This class implelements support for rpm packages and standard chkconfig services'''
@@ -95,7 +95,7 @@ class ToolsetImpl(Toolset):
             self.CondPrint('debug', "Package %s: not installed" % (entry.get('name')))
             return False
 
-        (vstat, output) = saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
+        (vstat, output) = self.saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
         if vstat != 0:
             if [name for name in output if name.split()[-1] not in modlist]:
                 self.CondPrint('debug',

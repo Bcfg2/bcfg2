@@ -7,7 +7,7 @@ from os import popen, stat, system, unlink
 from re import compile as regcompile
 from tempfile import mktemp
 
-from Bcfg2.Client.Toolset import Toolset, saferun
+from Bcfg2.Client.Toolset import Toolset
 
 noask = '''
 mail=
@@ -143,7 +143,7 @@ class ToolsetImpl(Toolset):
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick'] or entry.get('type') == 'encap':
                     return True
-                (vstat, odata) = saferun("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
+                (vstat, odata) = self.saferun("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
                 if vstat == 0:
                     return True
                 else:
