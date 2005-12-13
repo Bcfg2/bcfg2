@@ -31,6 +31,7 @@ class ToolsetImpl(Toolset):
                'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
     splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
     ptypes = {}
+    __name__ = 'Solaris'
     
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)

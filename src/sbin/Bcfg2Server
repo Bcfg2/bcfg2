@@ -24,9 +24,9 @@ def critical_error(operation):
     (ttype, value, trace) = exc_info()
     for line in extract_tb(trace):        
         syslog(LOG_ERR, "File %s, line %i, in %s\n   %s" % (line))
-        syslog(LOG_ERR, "%s: %s" % (ttype, value))
-    del trace, val, trb
+    syslog(LOG_ERR, "%s: %s" % (ttype, value))
     warning_error("An unexpected failure occurred in %s" % (operation) )
+    raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
 def fatal_error(message):
     '''Signal a fatal error'''
@@ -166,14 +166,18 @@ class Bcfg2(Component):
 
         try:
             meta = self.Core.metadata.FetchMetadata(client)
+            
+            for generator in self.Core.generators:
+                for probe in generator.GetProbes(meta):
+                    resp.append(probe)
+            return tostring(resp)
         except MetadataConsistencyError:
             warning = 'metadata consistency error'
             warning_error(warning)
             raise Fault, (6, warning)
-        for generator in self.Core.generators:
-            for probe in generator.GetProbes(meta):
-                resp.append(probe)
-        return tostring(resp)
+        except:
+            critical_error("determining client probes")
+
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''

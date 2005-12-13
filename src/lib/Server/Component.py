@@ -1,5 +1,5 @@
 '''Cobalt component base classes'''
-__revision__ = '$Revision: 1.4 $'
+__revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoOptionError
 from cPickle import loads, dumps

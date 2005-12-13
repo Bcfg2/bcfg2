@@ -1,5 +1,5 @@
 # This is the bcfg2 support for redhat
-# $Id: $
+# $Id$
 
 '''This is redhat client support'''
 __revision__ = '$Revision$'
@@ -10,6 +10,7 @@ from Bcfg2.Client.Toolset import Toolset, saferun
 
 class ToolsetImpl(Toolset):
     '''This class implelements support for rpm packages and standard chkconfig services'''
+    __name__ = 'Redhat'
     pkgtool = {'rpm':("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))}
 
     def __init__(self, cfg, setup):
@@ -111,21 +112,21 @@ class ToolsetImpl(Toolset):
                     self.pkgwork['remove'] = []
                     self.Inventory()
             else:
-                self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
+                self.CondDisplayList('verbose', "Need to remove packages", self.pkgwork['remove'])
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
-                self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
+                self.CondDisplayList('verbose', 'Removing services:', self.extra_services)
                 for service in self.extra_services:
                     if not system("/sbin/chkconfig %s off" % service):
                         self.extra_services.remove(service)
             else:
-                self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
+                self.CondDisplayList('verbose', 'Need to remove services:', self.extra_services)
         
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
         allsrv = [line.split()[0] for line in popen("/sbin/chkconfig --list|grep :on").readlines()]
-        self.CondPrint('debug', "Found active services: %s" % allsrv)
+        self.CondDisplayList('debug', 'Found active services:', allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if
          svc.get('status') == 'on' and svc.get('name') in allsrv]

@@ -1,5 +1,5 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from syslog import syslog, LOG_ERR

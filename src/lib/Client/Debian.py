@@ -7,32 +7,35 @@ from re import compile as regcompile
 
 import apt_pkg
 
-from Bcfg2.Client.Toolset import Toolset, saferun
+from Bcfg2.Client.Toolset import Toolset
 
 class ToolsetImpl(Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
+    __name__ = 'Debian'
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
                      '/etc/apt/apt.conf']
-    pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s >/dev/null 2>&1',
+    pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s',
                       ('%s=%s', ['name', 'version']))}
     svcre = regcompile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
     def __init__(self, cfg, setup):
         Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
+        self.CondPrint('debug', 'Configuring Debian toolset')
         environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        system("dpkg --force-confold --configure -a > /dev/null 2>&1")
+        self.saferun("dpkg --force-confold --configure -a")
         if not self.setup['build']:
-            system("dpkg-reconfigure -f noninteractive debconf < /dev/null > /dev/null 2>&1")
-        system("apt-get clean > /dev/null 2>&1")
-        system("apt-get -q=2 -y update > /dev/null 2>&1")
+            self.saferun("/usr/sbin/dpkg-reconfigure -f noninteractive debconf < /dev/null")
+        self.saferun("apt-get clean")
+        self.saferun("apt-get -q=2 -y update")
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
             pkg.set('type', 'deb')
         self.Refresh()
+        self.CondPrint('debug', 'Done configuring Debian toolset')
 
     def Refresh(self):
         '''Refresh memory hashes of packages'''
@@ -44,7 +47,6 @@ class ToolsetImpl(Toolset):
                 self.installed[pkg.Name] = pkg.CurrentVer.VerStr
 
     # implement entry (Verify|Install) ops
-    
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
         rawfiles = glob("/etc/rc*.d/*%s" % (entry.get('name')))
@@ -74,24 +76,27 @@ class ToolsetImpl(Toolset):
             if self.setup['dryrun']:
                 print "Disabling service %s" % (entry.get('name'))
             else:
-                system("/etc/init.d/%s stop > /dev/null 2>&1" % (entry.get('name')))
-                cmdrc = system("/usr/sbin/update-rc.d -f %s remove > /dev/null 2>&1" %
-                               entry.get('name'))
+                self.saferun("/etc/init.d/%s stop" % (entry.get('name')))
+                cmdrc = self.saferun("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
         else:
             if self.setup['dryrun']:
                 print "Enabling service %s" % (entry.attrib['name'])
             else:
-                cmdrc = system("/usr/sbin/update-rc.d %s defaults > /dev/null 2>&1" % (entry.attrib['name']))
+                cmdrc = self.saferun("/usr/sbin/update-rc.d %s defaults" % (entry.attrib['name']))[0]
         if cmdrc:
             return False
         return True
 
     def VerifyPackage(self, entry, modlist):
-        '''Verify Package for entry'''
+        '''Verify package for entry'''
+        if not entry.attrib.has_key('version'):
+            self.CondPrint('verbose', "Cannot verify unversioned package %s" %
+                           (entry.attrib['name']))
+            return False
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick']:
-                    output = saferun("debsums -s %s" % entry.get('name'))[1]
+                    output = self.saferun("/usr/bin/debsums -s %s" % entry.get('name'))[1]
                     if [filename for filename in output if filename not in modlist]:
                         return False
                 return True
@@ -103,7 +108,7 @@ class ToolsetImpl(Toolset):
         allsrv = []
         [allsrv.append(self.svcre.match(fname).group('name')) for fname in
          glob("/etc/rc[12345].d/S*") if self.svcre.match(fname).group('name') not in allsrv]
-        self.CondPrint('debug', "Found active services: %s" % allsrv)
+        self.CondDisplayList('debug', "Found active services:", allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if
          svc.get('status') == 'on' and svc.get('name') in allsrv]
@@ -111,18 +116,22 @@ class ToolsetImpl(Toolset):
 
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
+        if self.setup['dryrun']:
+            return
+        
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
-                self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
-                if not system("apt-get remove %s" % " ".join(self.pkgwork['remove'])):
+                self.CondDisplayList('verbose', "Removing packages", self.pkgwork['remove'])
+                if not self.saferun("apt-get remove %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
             else:
-                self.CondPrint('verbose', "Need to remove packages: %s" % self.pkgwork['remove'])
+                self.CondDisplayList('verbose', "Need to remove packages:", self.pkgwork['remove'])
+                
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
-                self.CondPrint('verbose', "Removing services: %s" % self.extra_services)
+                self.CondDisplayList('verbose', "Removing services:", self.extra_services)
                 [self.extra_services.remove(serv) for serv in self.extra_services if
-                 not system("rm -f /etc/rc*.d/S??%s" % serv)]
+                 not self.saferun("rm -f /etc/rc*.d/S??%s" % serv)[0]]
             else:
-                self.CondPrint('verbose', "Need to remove services: %s" % self.extra_services)
+                self.CondDisplayList('verbose', "Need to remove services:", self.extra_services)
         

@@ -1,5 +1,5 @@
 '''This handles authentication setup'''
-__revision__ = '$Revision: 1.28 $'
+__revision__ = '$Revision$'
 
 from Bcfg2.Server.Plugin import Plugin, PluginInitError, DirectoryBacked
 
@@ -13,7 +13,7 @@ class Account(Plugin):
     rootlike -> users to be granted root privs on some hosts
     '''
     __name__ = 'Account'
-    __version__ = '$Id: Account.py 1.28 05/11/30 17:31:55-06:00 desai@topaz.mcs.anl.gov $'
+    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

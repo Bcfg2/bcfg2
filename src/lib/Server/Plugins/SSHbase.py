@@ -1,5 +1,5 @@
 '''This module manages ssh key files for bcfg2'''
-__revision__ = '$Revision: 1.56 $'
+__revision__ = '$Revision$'
 
 from binascii import b2a_base64
 from os import system, popen
@@ -26,7 +26,7 @@ class SSHbase(Plugin):
       is regenerated each time a new key is generated.
 '''
     __name__ = 'SSHbase'
-    __version__ = '$Id: SSHbase.py 1.56 05/09/27 16:06:14-05:00 desai@topaz.mcs.anl.gov $'
+    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     pubkeys = ["ssh_host_dsa_key.pub.H_%s",

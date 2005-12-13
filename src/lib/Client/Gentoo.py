@@ -1,5 +1,5 @@
 '''This provides bcfg2 support for Gentoo'''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 from os import popen, system, stat
 from popen2 import Popen4
