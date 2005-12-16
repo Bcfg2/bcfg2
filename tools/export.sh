@@ -7,9 +7,9 @@ if [ -z "$version" ] ; then
     exit 1
 fi
 tagstr=`echo ${version} | sed -e 's/\./_/g'`
-svn copy svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/trunk svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr}
+svn copy svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/trunk svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr} -m "tagged ${tagstr} release"
 svn export . /tmp/bcfg2-${version}
-svn log -v > /tmp/bcfg2-${version}/ChangeLog
+svn log -v svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr} > /tmp/bcfg2-${version}/ChangeLog
 cd /tmp/bcfg2-${version}/doc
 make
 cd /tmp
