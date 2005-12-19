@@ -233,34 +233,18 @@ if __name__ == '__main__':
             #is a deepcopy of procnodereport necessary?
             
             delivtype = deliv.get('type', default='nodes-digest')
-            deliverymechanism = deliv.get('mechanism', default='invalid')
+            deliverymechanism = deliv.get('mechanism', default='www')
 
             #apply XSLT, different ones based on report type, and options
-            transform = ''
-            if deliverymechanism == 'mail':
-                if delivtype == 'nodes-individual':
-                    transform = 'nodes-individual-email.xsl'                    
-                elif delivtype == 'overview-stats':
-                    transform = 'overview-stats-email.xsl'
-                else:
-                    transform = 'nodes-digest-email.xsl'
-            elif deliverymechanism == 'rss':
-                if delivtype == 'overview-stats':
-                    transform = 'overview-stats-rss.xsl'
-                else:
-                    transform = 'nodes-digest-rss.xsl'
-            elif deliverymechanism == 'www':
-                if delivtype == 'overview-stats':
-                    transform = 'overview-stats-html.xsl'
-                elif delivtype == 'times':
-                    transform = 'timing-perf-html.xsl'
-                else:
-                    transform = 'nodes-digest-html.xsl'
-            elif deliverymechanism == 'null-operator':
+            if deliverymechanism == 'null-operator':
                 fileout(tostring(ElementTree(procnodereport).getroot()),deliv)
                 break
-            else:
-                print("StatReports: Invalid delivery mechanism in report-config")
+            transform = delivtype + '-' + deliverymechanism + '.xsl'
+            try:
+                os.stat(transformpath + transform)
+            except:
+                print("StatReports: Invalid report type or delivery mechanism.\n Can't find: "\
+                      + transformpath + transform)
                 raise SystemExit, 1
 
             try:
