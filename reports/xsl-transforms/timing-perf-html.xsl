@@ -28,8 +28,8 @@
                         <table id="t1" class="sortable">
                             <tr>
                                 <th class="sortable">Hostname</th>
-                                <th class="sortable">Probefetch</th>
                                 <th class="sortable">Parse</th>
+                                <th class="sortable">Probe</th>
                                 <th class="sortable">Inventory</th>
                                 <th class="sortable">Install</th>
                                 <th class="sortable">Config</th>
@@ -52,15 +52,15 @@
     
     
     <xsl:template match="Node">
-        <xsl:if test="count(Statistics/Times) > 0">
+        <xsl:if test="count(Statistics/OpStamps) > 0">
             <tr>
-                <td class="sortable"><xsl:value-of select="HostInfo/@fqdn" /></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@parse,'#.##')"/></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@probefetch,'#.##')"/></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@inventory,'#.##')"/></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@install,'#.##')"/></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@config,'#.##')"/></td>
-                <td class="sortable"><xsl:value-of select="format-number(Statistics/Times/@total,'#.##')"/></td>
+                <td class="sortable"><xsl:value-of select="HostInfo/@fqdn" /></td><!--node name-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@config_parse - Statistics/OpStamps/@config_download),'#.##')"/></td><!--parse-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@probe_upload - Statistics/OpStamps/@start),'#.##')"/></td><!--probe download-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@inventory - Statistics/OpStamps/@initialization),'#.##')"/></td><!--inventory-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@install - Statistics/OpStamps/@inventory),'#.##')"/></td><!--install-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@config_parse - Statistics/OpStamps/@probe_upload),'#.##')"/></td><!--config download & parse-->
+                <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@finished - Statistics/OpStamps/@start),'#.##')"/></td><!--Total-->
             </tr>
         </xsl:if>
     </xsl:template>
