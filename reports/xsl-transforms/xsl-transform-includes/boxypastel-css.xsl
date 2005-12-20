@@ -144,8 +144,8 @@ ul.plain {
 
 .configbox {
     position: absolute;
-    bottom: 0px;
-    right: 0px;
+    top: 1.6em;
+    right: 1px;
     padding: 1px;
     text-indent:0px;
     border: 1px solid #999;
