@@ -236,18 +236,19 @@ if __name__ == '__main__':
             deliverymechanism = deliv.get('mechanism', default='www')
 
             #apply XSLT, different ones based on report type, and options
-            if deliverymechanism == 'null-operator':
-                fileout(tostring(ElementTree(procnodereport).getroot()),deliv)
+            if deliverymechanism == 'null-operator': #Special Cases
+                fileout(tostring(ElementTree(procnodereport).getroot()), deliv)
                 break
             transform = delivtype + '-' + deliverymechanism + '.xsl'
-            try:
+
+            try: #make sure valid stylesheet is selected
                 os.stat(transformpath + transform)
             except:
                 print("StatReports: Invalid report type or delivery mechanism.\n Can't find: "\
                       + transformpath + transform)
                 raise SystemExit, 1
 
-            try:
+            try: #try to parse stylesheet
                 stylesheet = XSLT(parse(transformpath + transform))
             except:
                 print("StatReports: invalid XSLT transform file.")
