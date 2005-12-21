@@ -27,7 +27,9 @@ class PackageEntry(XMLFileBacked):
                 if location.attrib.has_key('type'):
                     pkg.set('type', location.get('type'))
                 if pkg.attrib.has_key("simplefile"):
-                    self.packages[pkg.get('name')] = deepcopy(pkg.attrib)
+                    self.packages[pkg.get('name')] = {}
+                    for key in pkg.attrib:
+                        self.packages[pkg.get('name')][key] = pkg.attrib[key]
                     # most attribs will be set from pkg
                     self.packages[pkg.get('name')]['url'] = "%s/%s" % (location.get('uri'), pkg.get('simplefile'))
                 elif pkg.attrib.has_key("file"):
