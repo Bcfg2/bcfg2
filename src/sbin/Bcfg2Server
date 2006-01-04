@@ -189,7 +189,7 @@ class Bcfg2(Component):
         resp = Element('probes')
 
         try:
-            meta = self.Core.metadata.get_metadata(client)
+            meta = self.Core.metadata.FetchMetadata(client)
             
             for generator in self.Core.generators:
                 for probe in generator.GetProbes(meta):
