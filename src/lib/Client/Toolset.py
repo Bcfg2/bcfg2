@@ -92,6 +92,8 @@ class Toolset(object):
             height, width = struct.unpack('hhhh',
                                         fcntl.ioctl(0, termios.TIOCGWINSZ,
                                                     "\000"*8))[0:2]
+            if height == 0 or width == 0:
+                return 25, 80
             return height, width
         except:
             return 25, 80    

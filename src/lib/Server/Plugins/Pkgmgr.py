@@ -41,6 +41,7 @@ class PackageEntry(XMLFileBacked):
                         pkgname = mdata.group('name')
                         self.packages[pkgname] = mdata.groupdict()
                         self.packages[pkgname]['url'] = location.get('uri') + '/' + pkg.get('file')
+                        self.packages[pkgname]['type'] = pkg.get('type')
                     else:
                         derived = [(ptype, self.splitters[ptype].match(pkg.get('file')).groupdict())
                                     for ptype in self.splitters if self.splitters[ptype].match(pkg.get('file'))]
