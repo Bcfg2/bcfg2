@@ -30,8 +30,7 @@ def generatereport(rspec, nrpt):
     pattern = re.compile( '|'.join([item.get("name") for item in reportspec.findall('Machine')]))
 
     for node in nodereprt.findall('Node'):
-        if not (node.findall("HostInfo") and node.findall("Statistics") and
-                node.find("HostInfo").get("fqdn") and pattern.match(node.get('name'))):
+        if not (node.findall("Statistics") and pattern.match(node.get('name'))):
             # don't know enough about node
             nodereprt.remove(node)
             continue
@@ -173,12 +172,12 @@ if __name__ == '__main__':
 
 
     #See if hostinfo.xml exists, and is less than 23.5 hours old
-    try:
-        hostinstat = os.stat(hostinfopath)
-        if (time() - hostinstat[9])/(60*60) > 23.5:
-            os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
-    except OSError:
-        os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
+    #try:
+        #hostinstat = os.stat(hostinfopath)
+        #if (time() - hostinstat[9])/(60*60) > 23.5:
+    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
+    #except OSError:
+    #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
     '''Reads Data & Config files'''

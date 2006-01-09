@@ -31,14 +31,14 @@ if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
-    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
+    #hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
+    clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     sendmailpath = c.get('statistics','sendmailpath')
     
-    metaElement =  parse(metadatapath)
-    hostlist = [client.get('name') for client in metaElement.findall("Client")]
+    clientElement =  parse(clientdatapath)
+    hostlist = [client.get('name') for client in clientElement.findall("Client")]
 
-    HostInfo = Element("HostInformation")
+    #HostInfo = Element("HostInformation")
     pids = {}
     fullnames = {}
     null = open('/dev/null', 'w+')
@@ -60,17 +60,19 @@ if __name__ == '__main__':
                 chost = pids[cpid]
                 del pids[cpid]
                 if status == 0:
-                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
+                    #SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
+                    clientElement.xpath("/Clients/Client[@name=%s]"%chost).set("pingable",'Y')
                 else:
                     if chost.count('.') > 0:
                         fullnames[chost.split('.')[0]] = chost
                         hostlist.append(chost.split('.')[0])
                     else:
-                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
+                        #SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
+                        clientElement.xpath("/Clients/Client[@name=%s]"%chost).set("pingable",'N')
             except:
                 pass
 
-    fout = open(hostinfopath, 'w')
-    fout.write(pretty_print(HostInfo))
+    fout = open(clientdatapath, 'w')
+    fout.write(pretty_print(clientElement))
     fout.close()
                         
