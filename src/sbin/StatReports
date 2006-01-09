@@ -152,7 +152,7 @@ if __name__ == '__main__':
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
     hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
-    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
+    clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     transformpath = "/usr/share/bcfg2/xsl-transforms/"
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
@@ -193,9 +193,9 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(configpath))
         raise SystemExit, 1
     try:
-        metadata = XML(open(metadatapath).read())
+        clientsdata = XML(open(clientsdatapath).read())
     except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s"%(metadatapath))
+        print("StatReports: Failed to parse %s"%(clientsdatapath))
         raise SystemExit, 1
     try:
         hostinfodata = XML(open(hostinfopath).read())
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     #should all of the other info in Metadata be appended?
     #What about all of the package stuff for other types of reports?
     
-    for client in metadata.findall("Client"):
+    for client in clientsdata.findall("Client"):
         nodel = Element("Node", attrib={"name" : client.get("name")})
         nodel.append(client)
         for hostinfo in hostinfodata.findall("HostInfo"):
