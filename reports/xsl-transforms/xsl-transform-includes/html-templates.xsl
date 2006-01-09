@@ -5,7 +5,7 @@
         
         <div class="nodebox" name="{HostInfo/@fqdn}">
             <span class="notebox">Time Ran: <xsl:value-of select="Statistics/@time" /></span>
-              <span class="configbox">(<xsl:value-of select="Client/@image" />/<xsl:value-of select="Client/@profile" />)</span>
+              <span class="configbox">(<xsl:value-of select="Client/@profile" />)</span>
             <h2>Node: <span class="nodename"><xsl:value-of select="HostInfo/@fqdn" /></span></h2>
                 <xsl:apply-templates select="Statistics" />
         </div>
