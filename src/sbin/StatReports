@@ -30,7 +30,8 @@ def generatereport(rspec, nrpt):
     pattern = re.compile( '|'.join([item.get("name") for item in reportspec.findall('Machine')]))
 
     for node in nodereprt.findall('Node'):
-        if not (node.findall("Statistics") and pattern.match(node.get('name'))):
+        if not (node.findall("HostInfo") and node.findall("Statistics") and
+                node.find("HostInfo").get("fqdn") and pattern.match(node.get('name'))):
             # don't know enough about node
             nodereprt.remove(node)
             continue
@@ -150,7 +151,8 @@ if __name__ == '__main__':
     c.read(['/etc/bcfg2.conf'])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
-    clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
+    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
+    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
     transformpath = "/usr/share/bcfg2/xsl-transforms/"
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
@@ -171,12 +173,12 @@ if __name__ == '__main__':
 
 
     #See if hostinfo.xml exists, and is less than 23.5 hours old
-    #try:
-        #hostinstat = os.stat(hostinfopath)
-        #if (time() - hostinstat[9])/(60*60) > 23.5:
-    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
-    #except OSError:
-    #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
+    try:
+        hostinstat = os.stat(hostinfopath)
+        if (time() - hostinstat[9])/(60*60) > 23.5:
+            os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
+    except OSError:
+        os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
     '''Reads Data & Config files'''
@@ -191,10 +193,16 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(configpath))
         raise SystemExit, 1
     try:
-        clientsdata = XML(open(clientsdatapath).read())
+        metadata = XML(open(metadatapath).read())
     except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s"%(clientsdatapath))
+        print("StatReports: Failed to parse %s"%(metadatapath))
         raise SystemExit, 1
+    try:
+        hostinfodata = XML(open(hostinfopath).read())
+    except (IOError, XMLSyntaxError):
+        print("StatReports: Failed to parse %s. Is GenerateHostInfo in your path?"%(hostinfopath))
+        raise SystemExit, 1
+
 
     #Merge data from three sources
     nodereport = Element("Report", attrib={"time" : asctime()})
@@ -202,9 +210,12 @@ if __name__ == '__main__':
     #should all of the other info in Metadata be appended?
     #What about all of the package stuff for other types of reports?
     
-    for client in clientsdata.findall("Client"):
+    for client in metadata.findall("Client"):
         nodel = Element("Node", attrib={"name" : client.get("name")})
         nodel.append(client)
+        for hostinfo in hostinfodata.findall("HostInfo"):
+            if hostinfo.get("name") == client.get("name"):
+                nodel.append(hostinfo)
 
         for nod in statsdata.findall("Node"):
             if client.get('name').find(nod.get('name')) == 0:

@@ -6,24 +6,42 @@
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
-from lxml.etree import Element, SubElement, parse, dump, tostring
+from lxml.etree import Element, SubElement, parse
 from os import fork, execl, dup2, wait
 import sys
 
+def pretty_print(element, level=0):
+    '''Produce a pretty-printed text representation of element'''
+    if element.text:
+        fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
+        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
+                element.text, element.tag)
+    children = element.getchildren()
+    if children:
+        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(children) * "%s") + "%s</%%s>\n" % (level*" ")
+        data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
+        data += tuple([pretty_print(entry, level+2) for entry in children]) + (element.tag, )
+    else:
+        fmt = "%s<%%s %%s/>\n" % (level * " ")
+        data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
+    return fmt % data
+
+                                                                                                                
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-    clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
+    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
+    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
     sendmailpath = c.get('statistics','sendmailpath')
     
-    clientElement =  parse(clientdatapath)
-    hostlist = [client.get('name') for client in clientElement.findall("Client")]
+    metaElement =  parse(metadatapath)
+    hostlist = [client.get('name') for client in metaElement.findall("Client")]
 
+    HostInfo = Element("HostInformation")
     pids = {}
     fullnames = {}
     null = open('/dev/null', 'w+')
-    
     while hostlist or pids:
         if hostlist and len(pids.keys()) < 15:
             host = hostlist.pop()
@@ -39,31 +57,20 @@ if __name__ == '__main__':
         else:
             try:
                 (cpid, status) = wait()
-            except OSError:
-                continue
-
-            chost = pids[cpid]
-            del pids[cpid]
-            if status == 0:
-                #if '-v' in sys.argv:
-                print "Alive: %s (fullname: %s):"%(chost,fullnames[chost])
-                #SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
-                clientElement.xpath("//Client[@name='%s']"%(fullnames[chost]))[0].set("pingable",'Y')
-                #also set pingtime, if you can get it
-            else:
-                if chost.count('.') > 0:
-                    fullnames[chost.split('.')[0]] = chost
-                    hostlist.append(chost.split('.')[0])
+                chost = pids[cpid]
+                del pids[cpid]
+                if status == 0:
+                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
                 else:
-                    print "Dead: %s (fullname: %s):"%(chost,fullnames[chost])
-                    
-                    #SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
-                    clientElement.xpath("//Client[@name='%s']"%(fullnames[chost]))[0].set("pingable",'N')
-                    #also set pingtime if you can get it
-                    
-    dump(clientElement.getroot())
+                    if chost.count('.') > 0:
+                        fullnames[chost.split('.')[0]] = chost
+                        hostlist.append(chost.split('.')[0])
+                    else:
+                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
+            except:
+                pass
 
-    fout = open(clientdatapath, 'w')
-    fout.write(tostring(clientElement.getroot()))
+    fout = open(hostinfopath, 'w')
+    fout.write(pretty_print(HostInfo))
     fout.close()
                         
