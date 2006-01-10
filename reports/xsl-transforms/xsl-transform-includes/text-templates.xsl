@@ -5,9 +5,9 @@
 
 <xsl:text>
 
-    </xsl:text>Node:<xsl:value-of select="Client/@name" /><xsl:text>
+    </xsl:text>Node:<xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
         </xsl:text>Time Ran: <xsl:value-of select="Statistics/@time" />.<xsl:text>
-        </xsl:text>(<xsl:value-of select="Client/@profile" />)
+        </xsl:text>(<xsl:value-of select="Client/@image" />/<xsl:value-of select="Client/@profile" />)
 <xsl:apply-templates select="Statistics" />
 	</xsl:if>
 </xsl:template>

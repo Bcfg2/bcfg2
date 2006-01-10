@@ -3,10 +3,10 @@
       <xsl:template match="Node">
 	<xsl:if test="count(Statistics/Good)+count(Statistics/Bad)+count(Statistics/Extra)+count(Statistics/Modified)+count(Statistics/Stale) > 0">
         
-        <div class="nodebox" name="{Client/@name}">
+        <div class="nodebox" name="{HostInfo/@fqdn}">
             <span class="notebox">Time Ran: <xsl:value-of select="Statistics/@time" /></span>
-              <span class="configbox">(<xsl:value-of select="Client/@profile" />)</span>
-            <h2>Node: <span class="nodename"><xsl:value-of select="Client/@name" /></span></h2>
+              <span class="configbox">(<xsl:value-of select="Client/@image" />/<xsl:value-of select="Client/@profile" />)</span>
+            <h2>Node: <span class="nodename"><xsl:value-of select="HostInfo/@fqdn" /></span></h2>
                 <xsl:apply-templates select="Statistics" />
         </div>
 	</xsl:if>
