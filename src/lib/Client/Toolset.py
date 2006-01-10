@@ -139,7 +139,7 @@ class Toolset(object):
 
         if ((self.states.values().count(False) > 0) and
             not self.pkgwork['remove']):
-            self.CondPrint('All entries correct.')
+            self.CondPrint('verbose', 'All entries correct.')
             
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
