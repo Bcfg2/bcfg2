@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.7.4pre5
+%define version 0.7.4
 %define release 1
 %define pythonversion 2.3
 
