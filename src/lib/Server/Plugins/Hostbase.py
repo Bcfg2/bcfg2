@@ -2,9 +2,12 @@
 __revision__ = '$Revision$'
 
 from syslog import syslog, LOG_INFO
-from lxml.etree import XML
+from lxml.etree import XML, SubElement
 from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
+from time import strftime
+from sets import Set
+import re
 
 class DataNexus(DirectoryBacked):
     '''DataNexus is an object that watches multiple files and
@@ -39,7 +42,7 @@ class Hostbase(Plugin, DataNexus):
 
     def __init__(self, core, datastore):
         self.ready = False
-        files = ['dnsdata.xml', 'hostbase.xml', 'networks.xml']
+        files = ['zones.xml', 'hostbase.xml', 'hostbase-dns.xml', 'hostbase-dhcp.xml']
         Plugin.__init__(self, core, datastore)
         try:
             DataNexus.__init__(self, datastore + '/Hostbase/data',
@@ -49,11 +52,15 @@ class Hostbase(Plugin, DataNexus):
             raise PluginInitError
         self.xdata = {}
         self.filedata = {}
+        self.dnsservers = ['scotty.mcs.anl.gov']
+        self.dhcpservers = ['thwap.mcs.anl.gov', 'squeak.mcs.anl.gov']
         self.templates = {'zone':Template(open(self.data + '/templates/' + 'zonetemplate.tmpl').read()),
                           'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
                           'named':Template(open(self.data + '/templates/' + 'namedtemplate.tmpl').read()),
                           'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
-                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd_template.tmpl').read())}
+                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd_template.tmpl').read()),
+                          'hosts':Template(open(self.data + '/templates/' + 'hosts.tmpl').read()),
+                          'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read())}
         self.Entries['ConfigFile'] = {}
 
     def FetchFile(self, entry, metadata):
@@ -65,8 +72,38 @@ class Hostbase(Plugin, DataNexus):
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
         entry.text = self.filedata[fname]
 
+    def BuildStructures(self, metadata):
+        '''Build hostbase bundle'''
+        if metadata.hostname in self.dnsservers or metadata.hostname in self.dhcpservers:
+            output = []
+            if metadata.hostname in self.dnsservers:
+                dnsbundle = XML(self.entries['hostbase-dns.xml'].data)
+                for configfile in self.Entries['ConfigFile']:
+                    if re.search('/etc/bind/', configfile):
+                        SubElement(dnsbundle, "ConfigFile", name=configfile)
+                output.append(dnsbundle)
+            if metadata.hostname in self.dhcpservers:
+                dhcpbundle = XML(self.entries['hostbase-dhcp.xml'].data)
+                output.append(dhcpbundle)
+            return output
+        else: 
+            return []
+
     def rebuildState(self, event):
         '''Pre-cache all state information for hostbase config files'''
+        def get_serial(zone):
+            '''I think this does the zone file serial number hack but whatever'''
+            todaydate = (strftime('%Y%m%d'))
+            try:
+                if todaydate == zone.get('serial')[:8]:
+                    serial = atoi(zone.get('serial')) + 1
+                else:
+                    serial = atoi(todaydate) * 100
+                return str(serial)
+            except (KeyError):
+                serial = atoi(todaydate) * 100
+                return str(serial)
+
         if self.entries.has_key(event.filename) and not self.xdata.has_key(event.filename):
             self.xdata[event.filename] = XML(self.entries[event.filename].data)
         if [item for item in self.files if not self.entries.has_key(item)]:
@@ -74,163 +111,293 @@ class Hostbase(Plugin, DataNexus):
         # we might be able to rebuild data more sparsely,
         # but hostbase.xml is the only one that will really change often
         # rebuild zoneinfo
-        iplist = []
-        for zone in self.xdata['dnsdata.xml']:
+        hosts = {}
+        zones = self.xdata['zones.xml']
+        hostbase = self.xdata['hostbase.xml']
+        ## this now gets all hosts associated with the zone file being initialized
+        ## all ip addresses and cnames are grabbed from each host and passed to the appropriate template
+        for zone in zones:
+            hosts[zone.get('domain')] = []
+        for host in hostbase:
+            if host.get('domain') in hosts:
+                hosts[host.get('domain')].append(host)
+        for zone in zones:
             zonehosts = []
-            for host in [host for host in self.xdata['hostbase.xml']
-                         if host.get('domain') == zone.get('domain')]:
-                hostname = host.get('hostname')
-                if zone.get('domain') == 'mcs.anl.gov':
-                    ## special cases for the mcs.anl.gov domain
-                    ## all machines have a "-eth" entry as well as an entry identifying their subnet
-                    ## they also have their mail exchangers after every address
-                    ipnodes = host.findall("interface/ip")
-                    zonehosts.append((hostname, ipnodes[0].attrib['ip'], ipnodes[0].findall("name/mx"), None))
-                    [zonehosts.append(("-".join([hostname, ipnode.attrib['dnssuffix']]), \
-                                       ipnode.attrib['ip'], ipnode.findall("name/mx"), None))
-                     for ipnode in ipnodes]
-                    [zonehosts.append(("-".join([hostname, namenode.attrib['name']]), \
-                                       ipnode.attrib['ip'], namenode.findall("mx"), None))
-                     for ipnode in ipnodes
-                     for namenode in ipnode
-                     if namenode.attrib['name'] != ""]
-                else:
-                    ipnodes = host.findall("interface/ip")
-                    zonehosts.append((host.attrib['hostname'], ipnodes[0].attrib['ip'], None, None))
-                    [zonehosts.append(("-".join([host.attrib['hostname'], namenode.attrib['name']]),
-                                       ipnode.attrib['ip'], None, None))
-                     for ipnode in ipnodes
-                     for namenode in ipnode
-                     if namenode.attrib['name'] != ""]
+            for host in hosts[zone.get('domain')]:
+                hostname = host.attrib['hostname']
+                ipnodes = host.findall("interface/ip")
+                #gets all the forward look up stuff
+                [zonehosts.append((namenode.get('name').split(".")[0], ipnode.get('ip'),
+                                   namenode.findall('mx')))
+                 for ipnode in ipnodes
+                 for namenode in ipnode]
+                #gets cname stuff
+                [zonehosts.append((cnamenode.get('cname') + '.', namenode.get('name').split('.')[0],  None))
+                 for namenode in host.findall("interface/ip/name")
+                 for cnamenode in namenode.findall("cname")
+                 if (cnamenode.get('cname').split(".")[0], namenode.get('name').split('.')[0],  None) not in zonehosts
+                 and cnamenode.get('cname') is not None]
 
-                [zonehosts.append((host.attrib['hostname'], None, None, cnamenode.attrib['cname']))
-                 for cnamenode in host.findall("interface/ip/name/cname")
-                 if cnamenode.attrib['cname'] != ""]
-
-                [iplist.append(ipnode.attrib['ip']) for ipnode in host.findall("interface/ip")]
             zonehosts.sort()
             self.templates['zone'].zone = zone
-            self.templates['zone'].root = self.xdata['dnsdata.xml']
+            self.templates['zone'].root = zones
             self.templates['zone'].hosts = zonehosts
             self.filedata[zone.get('domain')] = str(self.templates['zone'])
+            self.Entries['ConfigFile']["%s/%s" % (self.filepath, zone.get('domain'))] = self.FetchFile
         # now all zone forward files are built
-        iplist.sort()
         filelist = []
-        temp = None
-        for x in range(len(iplist)-1):
-            addressparts = iplist[x].split(".")
-            if addressparts[:3] != iplist[x+1].split(".")[:3] and addressparts[:2] == iplist[x+1].split(".")[:2] \
-            and ".".join([addressparts[1], addressparts[0]]) not in filelist:
-                filelist.append(".".join([addressparts[1], addressparts[0]]))
-            elif addressparts[:3] != iplist[x+1].split(".")[:3] and \
-            addressparts[:2] != iplist[x+1].split(".")[:2] and \
-            ".".join([addressparts[1], addressparts[0]]) not in filelist:
-                filelist.append(".".join([addressparts[2], addressparts[1], addressparts[0]]))
-            if x+1 == len(iplist) - 1:
-                temp = iplist[x+1].split(".")
-                if ".".join([temp[2], temp[1], temp[0]]) not in filelist \
-                and ".".join([temp[1], temp[0]]) not in filelist:
-                    filelist.append(".".join([temp[2], temp[1], temp[0]]))
-
+        three_subnet = [ip.get('ip').rstrip('0123456789').rstrip('.')
+                        for ip in hostbase.findall('host/interface/ip')]
+        three_subnet_set = Set(three_subnet)
+        two_subnet = [subnet.rstrip('0123456789').rstrip('.')
+                      for subnet in three_subnet_set]
+        two_subnet_set = Set(two_subnet)
+        filelist = [each for each in two_subnet_set
+                    if two_subnet.count(each) > 1]
+        [filelist.append(each) for each in three_subnet_set
+         if each.rstrip('0123456789').rstrip('.') not in filelist]
+        
+        reversenames = []
         for filename in filelist:
-            self.templates['reversesoa'].inaddr = filename
+            towrite = filename.split('.')
+            towrite.reverse()
+            reversename = '.'.join(towrite)
+            self.templates['reversesoa'].inaddr = reversename
             self.templates['reversesoa'].zone = zone
-            self.templates['reversesoa'].root = self.xdata['dnsdata.xml']
-            self.filedata["%s.rev" % filename] = str(self.templates['reversesoa'])
+            self.templates['reversesoa'].root = self.xdata['zones.xml']
+            self.filedata['%s.rev' % reversename] = str(self.templates['reversesoa'])
+            reversenames.append(reversename)
 
-        self.templates['named'].zones = self.xdata['dnsdata.xml']
-        self.templates['named'].reverses = filelist
+        self.templates['named'].zones = self.xdata['zones.xml']
+        self.templates['named'].reverses = reversenames
         self.filedata["named.conf"] = str(self.templates['named'])
+        self.Entries['ConfigFile']["%s/%s" % (self.filepath, 'named.conf')] = self.FetchFile
 
-        for filename in filelist:
+        reversenames.sort()
+        for filename in reversenames:
             originlist = []
+            reversehosts = []
             towrite = filename.split(".")
             towrite.reverse()
             if len(towrite) > 2:
-                self.templates['reverseapp'].hosts = [(ipnode.get('ip').split('.'), host.get('hostname'),
-                                                       host.get('domain'), ipnode.get('num'), ipnode.get('dnssuffix'))
-                                                      for host in self.xdata['hostbase.xml']
-                                                      for ipnode in host.findall('interface/ip')
-                                                      if ipnode.get('ip').split('.')[:3] == towrite]
-                
+                [reversehosts.append((ipnode.attrib['ip'].split("."), host.attrib['hostname'],
+                                      host.attrib['domain'], ipnode.get('num'), None))
+                 for host in self.xdata['hostbase.xml']
+                 for ipnode in host.findall("interface/ip")
+                 if ipnode.attrib['ip'].split(".")[:3] == towrite]
+                self.templates['reverseapp'].hosts = reversehosts
                 self.templates['reverseapp'].inaddr = filename
                 self.templates['reverseapp'].fileorigin = None
                 self.filedata["%s.rev" % filename] += str(self.templates['reverseapp'])
             else:
-                revhosts = [(ipnode.get('ip').split('.'), host.get('hostname'), host.get('domain'),
-                             ipnode.get('num'), ipnode.get('dnssuffix')) 
-                            for host in self.xdata['hostbase.xml']
-                            for ipnode in host.findall("interface/ip")
-                            if ipnode.get('ip').split(".")[:2] == towrite]
+                [reversehosts.append((ipnode.attrib['ip'].split("."), host.attrib['hostname'],
+                                      host.attrib['domain'], ipnode.get('num'), None))
+                 for host in self.xdata['hostbase.xml']
+                 for ipnode in host.findall("interface/ip")
+                 if ipnode.attrib['ip'].split(".")[:2] == towrite]
 
                 [originlist.append(".".join([reversehost[0][2], reversehost[0][1], reversehost[0][0]]))
-                 for reversehost in revhosts
+                 for reversehost in reversehosts
                  if ".".join([reversehost[0][2], reversehost[0][1], reversehost[0][0]]) not in originlist]
 
-                revhosts.sort()
+                reversehosts.sort()
                 originlist.sort()
                 for origin in originlist:
-                    outputlist = [rhost for rhost in revhosts
-                     if ".".join([rhost[0][2], rhost[0][1], rhost[0][0]]) == origin] 
+                    outputlist = []
+                    [outputlist.append(reversehost)
+                     for reversehost in reversehosts
+                     if ".".join([reversehost[0][2], reversehost[0][1], reversehost[0][0]]) == origin] 
                     self.templates['reverseapp'].fileorigin = filename
                     self.templates['reverseapp'].hosts = outputlist
                     self.templates['reverseapp'].inaddr = origin
                     self.filedata["%s.rev" % filename] += str(self.templates['reverseapp'])
+            self.Entries['ConfigFile']["%s/%s.rev" % (self.filepath, filename)] = self.FetchFile
         self.buildDHCP()
-        for key in self.filedata:
-            self.Entries['ConfigFile']["%s/%s" % (self.filepath, key)] = self.FetchFile
+        self.buildHosts()
+        self.buildHostsLPD()
+        self.buildPrinters()
+        self.buildNetgroups()
 
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
-        if 'networks.xml' not in self.xdata.keys():
-            print "not running before networks is cached"
-            return
-        networkroot = self.xdata['networks.xml']
         if 'hostbase.xml' not in self.xdata.keys():
             print "not running before hostbase is cached"
             return
         hostbase = self.xdata['hostbase.xml']
-        vlanandsublist = []
-        subnets = networkroot.findall("subnet")
-        for vlan in networkroot.findall("vlan"):
-            vlansubs = vlan.findall("subnet")
-            vlansubs.sort(lambda x, y: cmp(x.get("address"), y.get("address")))
-            vlanandsublist.append((vlan, vlansubs))
+        dhcphosts = [host for host in hostbase if host.find('dhcp').get('dhcp') == 'y'
+                     and host.find("interface").attrib['mac'] != 'float'
+                     and host.find("interface").attrib['mac'] != ""
+                     and host.find("interface").attrib['mac'] != "unknown"]
 
-        subnets140 = [subnet for subnet in subnets if subnet.attrib['address'].split(".")[0] == "140"]
-        privatesubnets = [subnet for subnet in subnets if subnet.attrib['address'].split(".")[0] != "140"]
-        subnets140.sort(lambda x, y: cmp(x.get("address"), y.get("address")))
-        privatesubnets.sort(lambda x, y: cmp(x.get("address"), y.get("address")))
-
-        dhcphosts = [host for host in hostbase if host.get('dhcp') == 'y' \
-                     and host.find("interface").get('mac') != 'float' \
-                     and host.find("interface").get('mac') != ""]
-
+        numips = 0
         hosts = []
         for host in dhcphosts:
             if len(host.findall("interface")) == 1 and len(host.findall("interface/ip")) == 1:
-                hosts.append([host.get('hostname'), host.get('domain'), \
-                              host.find("interface").get('mac'), \
-                              host.find("interface/ip").get('ip')])
-            elif len(host.findall("interface")) > 1:
+                hosts.append([host.attrib['hostname'], host.attrib['domain'], \
+                            host.find("interface").attrib['mac'], \
+                            host.find("interface/ip").attrib['ip']])
+            else:
                 count = 0
-                for interface in host.findall("interface"):
+                for interface in host.findall('interface'):
                     if count == 0 and interface.find("ip") is not None:
-                        hostdata = [host.get('hostname'), host.get('domain'), \
-                                    interface.get('mac'), interface.find("ip").get('ip')]
+                        hostdata = [host.attrib['hostname'], host.attrib['domain'],
+                                    interface.attrib['mac'], interface.find("ip").attrib['ip']]
                     elif count != 0 and interface.find("ip") is not None:
-                        hostdata = [host.get('hostname'), "-".join([host.get('domain'), str(count)]), \
-                                    interface.get('mac'), interface.find("ip").get('ip')]
+                        hostdata = [host.attrib['hostname'], "-".join([host.attrib['domain'], str(count)]),
+                                    interface.attrib['mac'], interface.find("ip").attrib['ip']]
                     if len(interface.findall("ip")) > 1:
-                        for ipnode in interface.findall("ip")[1:]:
-                            hostdata[3] = ", ".join([hostdata[3], ipnode.get('ip')])
+                        for ip in interface.findall("ip")[1:]:
+                            hostdata[3] = ", ".join([hostdata[3], ip.attrib['ip']])
                     count += 1
                     hosts.append(hostdata)
+            
+            numips += len(host.findall("interface/ip"))
 
         hosts.sort(lambda x, y: cmp(x[0], y[0]))
         self.templates['dhcp'].hosts = hosts
-        self.templates['dhcp'].privatesubnets = privatesubnets
-        self.templates['dhcp'].subnets140 = subnets140
-        self.templates['dhcp'].vlans = vlanandsublist
-        self.templates['dhcp'].networkroot = networkroot
-        self.filedata['/etc/dhcpd.conf'] = str(self.templates['dhcp'])
+        self.templates['dhcp'].numips = numips
+        self.templates['dhcp'].timecreated = strftime("%a %b %d %H:%M:%S %Z %Y")
+        self.filedata['dhcpd.conf'] = str(self.templates['dhcp'])
+        self.Entries['ConfigFile']['/etc/dhcpd.conf'] = self.FetchFile
+
+    def buildHosts(self):
+        '''This will rebuild the hosts file to include all important machines'''
+        hostbase = self.xdata['hostbase.xml']
+        domains = [host.get('domain') for host in hostbase]
+        domains_set = Set(domains)
+        domain_data = [(domain, domains.count(domain)) for domain in domains_set]
+        domain_data.sort()
+        ips = [(ip, host) for host in hostbase.findall('host')
+               for ip in host.findall("interface/ip")]
+        three_octets = [ip[0].get('ip').rstrip('0123456789').rstrip('.')
+                        for ip in ips]
+        three_octets_set = list(Set(three_octets))
+        three_sort = [tuple([int(num) for num in each.split('.')]) for each in three_octets_set]
+        three_sort.sort()
+        three_octets_set = ['.'.join([str(num) for num in each]) for each in three_sort]
+        three_octets_data = [(octet, three_octets.count(octet))
+                             for octet in three_octets_set]
+        append_data = [(subnet, [ip for ip in ips \
+                                 if ip[0].get('ip').rstrip("0123456789").rstrip('.')
+                                 == subnet[0]]) for subnet in three_octets_data]
+        for each in append_data:
+            each[1].sort(lambda x, y: cmp(int(x[0].get('ip').split('.')[-1]), int(y[0].get('ip').split('.')[-1])))
+        two_octets = [ip.rstrip('0123456789').rstrip('.') for ip in three_octets]
+        two_octets_set = list(Set(two_octets))
+        two_sort = [tuple([int(num) for num in each.split('.')]) for each in two_octets_set]
+        two_sort.sort()
+        two_octets_set = ['.'.join([str(num) for num in each]) for each in two_sort]
+        two_octets_data = [(octet, two_octets.count(octet)) for octet in two_octets_set]
+        self.templates['hosts'].domain_data = domain_data
+        self.templates['hosts'].three_octets_data = three_octets_data
+        self.templates['hosts'].two_octets_data = two_octets_data
+        self.templates['hosts'].three_octets = len(three_octets)
+        self.templates['hosts'].timecreated = strftime("%a %b %d %H:%M:%S %Z %Y")
+        self.filedata['hosts'] = str(self.templates['hosts'])
+        for subnet in append_data:
+            self.templates['hostsapp'].ips = subnet[1]
+            self.templates['hostsapp'].subnet = subnet[0]
+            self.filedata['hosts'] += str(self.templates['hostsapp'])
+        self.Entries['ConfigFile']['/mcs/etc/hosts'] = self.FetchFile
+
+
+    def buildPrinters(self):
+        '''this will rebuild the printers.data file used in
+        our local printers script'''
+        header = """#  This file is automatically generated. DO NOT EDIT IT!
+#  This datafile is for use with /mcs/bin/printers.
+#
+Name            Room        User          Type                      Notes
+==============  ==========  ============  ========================  ====================
+"""
+
+        printers = [host for host in self.xdata['hostbase.xml']
+                    if host.find('whatami').get('whatami') == "printer"
+                    and host.get('domain') == 'mcs.anl.gov']
+        self.filedata['printers.data'] = header
+        output_list = []
+        for printer in printers:
+            if printer.find('printq').get('printq'):
+                for printq in re.split(',[ ]*', printer.find('printq').get('printq')):
+                    output_list.append((printq, printer.find('room').get('room'), printer.find('user').get('user'),
+                                        printer.find('model').get('model'), printer.find('note').get('note')))
+        output_list.sort()
+        for printer in output_list:
+            self.filedata['printers.data'] += ("%-16s%-12s%-14s%-26s%s\n" % printer)
+        self.Entries['ConfigFile']['/mcs/etc/printers.data'] = self.FetchFile
+
+    def buildHostsLPD(self):
+        '''this rebuilds the hosts.lpd file'''
+        header = """+@machines
++@all-machines
+achilles.ctd.anl.gov
+raven.ops.anl.gov
+seagull.hr.anl.gov
+parrot.ops.anl.gov
+condor.ops.anl.gov
+delphi.esh.anl.gov
+anlcv1.ctd.anl.gov
+anlvms.ctd.anl.gov
+olivia.ctd.anl.gov\n\n"""
+
+        hostbase = self.xdata['hostbase.xml']
+        redmachines = [".".join([host.get('hostname'), host.get('domain')])
+                       for host in hostbase if host.find('netgroup').get('netgroup') == 'red']
+        winmachines = [".".join([host.get('hostname'), host.get('domain')])
+                       for host in hostbase if host.find('netgroup').get('netgroup') == 'win']
+        redmachines += [name.get('name') for host in hostbase
+                        for name in host.findall('interface/ip/name')
+                        if host.find('netgroup').get('netgroup') == 'red' and name.get('only') != 'no']
+        winmachines += [name.get('name') for host in hostbase
+                        for name in host.findall('interface/ip/name')
+                        if host.find('netgroup').get('netgroup') == 'win' and name.get('only') != 'no']
+        redmachines.sort()
+        winmachines.sort()
+        self.filedata['hosts.lpd'] = header
+        for machine in redmachines:
+            self.filedata['hosts.lpd'] += machine + "\n"
+        self.filedata['hosts.lpd'] += "\n"
+        for machine in winmachines:
+            self.filedata['hosts.lpd'] += machine + "\n"
+        self.Entries['ConfigFile']['/mcs/etc/hosts.lpd'] = self.FetchFile
+
+    def buildNetgroups(self):
+        '''this rebuilds the many different files that will eventually
+        get post processed and converted into a ypmap for netgroups'''
+        header = """###################################################################
+#  This file lists hosts in the '%s' machine netgroup, it is
+#  automatically generated. DO NOT EDIT THIS FILE! To update
+#  the hosts in this file, edit hostbase and do a 'make nets'
+#  in /mcs/adm/hostbase.
+#
+#  Number of hosts in '%s' machine netgroup: %i
+#\n\n"""
+
+        netgroups = {}
+        for host in self.xdata['hostbase.xml']:
+            if host.find('netgroup').get('netgroup') == "" or host.find('netgroup').get('netgroup')== 'none':
+                continue
+            if host.find('netgroup').get('netgroup') not in netgroups:
+                netgroups.update({host.find('netgroup').get('netgroup') :
+                                  [".".join([host.get('hostname'), host.get('domain')])]})
+            else:
+                netgroups[host.find('netgroup').get('netgroup')].append(".".join([host.get('hostname'),
+                                                                                  host.get('domain')]))
+
+            for name in host.findall('interface/ip/name'):
+                if name.get('only') != 'no':
+                    netgroups[host.find('netgroup').get('netgroup')].append(name.get('name'))
+
+        for netgroup in netgroups:
+            self.filedata["%s-machines" % netgroup] = header % (netgroup, netgroup, len(netgroups[netgroup]))
+            netgroups[netgroup].sort()
+            for each in netgroups[netgroup]:
+                self.filedata["%s-machines" % netgroup] += each + "\n"
+            self.Entries['ConfigFile']["/var/yp/netgroups/%s-machines" % netgroup] = self.FetchFile
+
+    def dumpXML(self):
+        '''this just dumps the info in the hostbase.xml file to be used
+        with external programs'''
+        self.filedata['hostbase.xml'] = self.xdata['hostbase.xml']
+        self.Entries['ConfigFile']['/etc/hostbase.xml'] = self.FetchFile
+

@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from binascii import a2b_base64
 from copy import deepcopy
 from grp import getgrgid, getgrnam
-from os import chown, chmod, lstat, mkdir, stat, system, unlink, rename, readlink, symlink
+from os import chown, chmod, lstat, mkdir, stat, unlink, rename, readlink, symlink
 from pwd import getpwuid, getpwnam
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
@@ -87,6 +87,7 @@ class Toolset(object):
                 pass
 
     def get_height_width(self):
+        '''Get Terminal information'''
         try:
             import termios, struct, fcntl
             height, width = struct.unpack('hhhh',
@@ -99,6 +100,7 @@ class Toolset(object):
             return 25, 80    
 
     def FormattedCondPrint(self, state, items):
+        '''Formatted conditional print'''
         items.sort()
         screenWidth = self.width - len("%s[%s]:" % (self.__name__, state))
         columnWidth = 1
@@ -121,11 +123,13 @@ class Toolset(object):
             self.CondPrint(state, lineText.rstrip())
 
     def CondDisplayList(self, state, title, items):
+        '''Conditionally print a list of data'''
         self.CondPrint(state, title)
         self.FormattedCondPrint(state, items)
         self.CondPrint(state, '')
             
     def CondDisplayState(self, state, phase):
+        '''Conditionally print tracing information'''
         self.CondPrint(state, 'Phase: %s' % phase)
         self.CondPrint(state, 'Correct entries:\t%d'
                        % self.states.values().count(True))
@@ -625,17 +629,19 @@ class Toolset(object):
 
                     self.CondPrint("debug", "Installing packages: :%s:" % pkgargs)
                     self.CondPrint("debug", "Running command ::%s::" % (pkgtool[0] % pkgargs))
-                    (cmdrc, cmdoutput) = self.saferun(pkgtool[0] % pkgargs)
+                    cmdrc = self.saferun(pkgtool[0] % pkgargs)[0]
 
                     if cmdrc == 0:
                         self.CondPrint('verbose', "Single Pass Succeded")
                         # set all package states to true and flush workqueues
                         pkgnames = [pkg.get('name') for pkg in pkglist]
                         for entry in [entry for entry in self.states.keys()
-                                      if entry.tag == 'Package' and entry.get('type') == pkgtype and entry.get('name') in pkgnames]:
+                                      if entry.tag == 'Package' and entry.get('type') == pkgtype
+                                      and entry.get('name') in pkgnames]:
                             self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
                             self.states[entry] = True
-                            [self.pkgwork[listname].remove(entry) for listname in ['add', 'update'] if self.pkgwork[listname].count(entry)]
+                            [self.pkgwork[listname].remove(entry) for listname in ['add', 'update']
+                             if self.pkgwork[listname].count(entry)]
                         self.Refresh()
                     else:
                         self.CondPrint("verbose", "Single Pass Failed")
@@ -649,10 +655,10 @@ class Toolset(object):
                             else:
                                 self.CondPrint("verbose", "Installing pkg %s version %s" %
                                                (pkg.get('name'), pkg.get('version')))
-                                (cmdrc, cmdoutput) = self.saferun(pkgtool[0] %
-                                               (pkgtool[1][0] %
-                                                tuple([pkg.get(field) for field in pkgtool[1][1]])))
-                                if cmdrc == 0:
+                                cmdrc = self.saferun(pkgtool[0] %
+                                                     (pkgtool[1][0] %
+                                                      tuple([pkg.get(field) for field in pkgtool[1][1]])))
+                                if cmdrc[0] == 0:
                                     self.states[pkg] = True
                                 else:
                                     self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))

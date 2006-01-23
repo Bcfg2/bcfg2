@@ -1,7 +1,6 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-from binascii import b2a_base64
 from os import stat
 from re import compile as regcompile
 from stat import S_ISDIR, ST_MODE
@@ -9,54 +8,73 @@ from syslog import syslog, LOG_INFO, LOG_ERR
 
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked
 
+import binascii
+import exceptions
+
+specific = regcompile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
+                      '(G(?P<prio>\d+)_(?P<group>\S+)))$')
+
+class SpecificityError(Exception):
+    '''Thrown in case of filename parse failure'''
+    pass
+
 class FileEntry(FileBacked):
     '''The File Entry class pertains to the config files contained in a particular directory.
     This includes :info, all base files and deltas'''
-    
-    def __init__(self, name, all, image, classes, bundles, attribs, hostname):
+
+    def __init__(self, myid, name):
         FileBacked.__init__(self, name)
-        self.all = all
-        self.image = image
-        self.bundles = bundles
-        self.classes = classes
-        self.attributes = attribs
-        self.hostname = hostname
+        self.name = name
+        self.identity = myid
+        self.all = False
+        self.hostname = False
+        self.group = False
+        self.op = False
+        self.prio = False
+        if name.split('.')[-1] in ['cat', 'diff']:
+            self.op = name.split('.')[-1]
+            name = name[:-(len(self.op) + 1)]
+        if self.name.split('/')[-1] == myid.split('/')[-1]:
+            self.all = True
+        else:
+            data = specific.match(name)
+            if not data:
+                syslog(LOG_ERR, "Cfg: Failed to match %s" % name)
+                raise SpecificityError
+            if data.group('hostname') != None:
+                self.hostname = data.group('hostname')
+            else:
+                self.group = data.group('group')
+                self.prio = int(data.group('prio'))
 
     def __cmp__(self, other):
-        fields = ['all', 'image', 'classes', 'bundles', 'attributes', 'hostname']
-        try:
-            most1 = [index for index in range(len(fields)) if getattr(self, fields[index])][0]
-        except IndexError:
-            most1 = 0
-        try:
-            most2 = [index for index in range(len(fields)) if getattr(other, fields[index])][0]
-        except IndexError:
-            most2 = 0
-        if most1 == most2:
-            if self.name.split('.')[-1] in ['cat', 'diff']:
-                meta1 = self.name.split('.')[-2]
+        data = [[getattr(self, field) for field in ['all', 'group', 'hostname']],
+                [getattr(other, field) for field in ['all', 'group', 'hostname']]]
+        for index in range(3):
+            if data[0][index] and not data[1][index]:
+                return -1
+            elif data[1][index] and not data[0][index]:
+                return 1
+            elif data[0][index] and data[1][index]:
+                if hasattr(self, 'prio')  and hasattr(other, 'prio'):
+                    return self.prio - other.prio
+                else:
+                    return 0
             else:
-                meta1 = self.name.split('.')[-1]
-            if other.name.split('.')[-1] in ['cat', 'diff']:
-                meta2 = other.name.split('.')[-2]
-            else:
-                meta2 = other.name.split('.')[-1]
+                pass
+        syslog(LOG_ERR, "Cfg: Critical: Ran off of the end of the world sorting %s" % (self.name))
 
-            if meta1[0] not in ['C', 'B']:
-                return 0
-            # need to tiebreak with numeric prio
-            prio1 = int(meta1[1:3])
-            prio2 = int(meta2[1:3])
-            return prio1 - prio2
+    def applies(self, metadata):
+        '''Predicate if fragment matches client metadata'''
+        if self.all or (self.hostname == metadata.hostname) or \
+           (self.group in metadata.groups):
+            return True
         else:
-            return most1 - most2
+            return False
 
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    specific = regcompile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
-                          '(B(?P<bprio>\d+)_(?P<bundle>\S+))|(A(?P<aprio>\d+)_(?P<attr>\S+))|' +
-                          '(I_(?P<image>\S+))|(C(?P<cprio>\d+)_(?P<class>\S+)))$')
     info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)$')
@@ -65,8 +83,7 @@ class ConfigFileEntry(object):
         object.__init__(self)
         self.path = path
         self.repopath = repopath
-        self.basefiles = []
-        self.deltas = []
+        self.fragments = []
         self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
         self.paranoid = False
 
@@ -94,40 +111,14 @@ class ConfigFileEntry(object):
 
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''
-        delta = False
-        oldname = name
         if name[-5:] == ':info':
             return self.read_info()
 
-        if name.split('/')[-1] == self.path.split('/')[-1]:
-            self.basefiles.append(FileEntry(name, True, None, [], [], [], None))
-            self.basefiles.sort()
+        try:
+            self.fragments.append(FileEntry(self.path, name))
+            self.fragments.sort()
+        except SpecificityError:
             return
-
-        if name.split('/')[-1].split('.')[-1] in ['cat']:
-            delta = True
-            oldname = name
-            name = name[:-4]
-
-        specmatch = self.specific.match(name)
-        if specmatch == None:
-            syslog(LOG_ERR, "Cfg: Failed to match file %s" % (name))
-            return
-
-        data = {}
-        for item, value in specmatch.groupdict().iteritems():
-            if value != None:
-                data[item] = value
-
-        cfile = FileEntry(oldname, False, data.get('image', None), data.get('class', []),
-                          data.get('bundle', []), data.get('attr', []), data.get('hostname', None))
-
-        if delta:
-            self.deltas.append(cfile)
-            self.deltas.sort()
-        else:
-            self.basefiles.append(cfile)
-            self.basefiles.sort()
 
     def HandleEvent(self, event):
         '''Handle FAM updates'''
@@ -136,11 +127,11 @@ class ConfigFileEntry(object):
             if action in ['changed', 'exists', 'created']:
                 return self.read_info()
         if event.filename != self.path.split('/')[-1]:
-            if not self.specific.match('/' + event.filename):
+            if not specific.match('/' + event.filename):
                 syslog(LOG_INFO, 'Cfg: Suppressing event for bogus file %s' % event.filename)
                 return
 
-        entries = [entry for entry in self.basefiles + self.deltas if
+        entries = [entry for entry in self.fragments if
                    entry.name.split('/')[-1] == event.filename]
 
         if len(entries) == 0:
@@ -152,10 +143,8 @@ class ConfigFileEntry(object):
             syslog(LOG_INFO, "Cfg: Removing entry %s" % event.filename)
             for entry in entries:
                 syslog(LOG_INFO, "Cfg: Removing entry %s" % (entry.name))
-                if entry in self.basefiles:
-                    self.basefiles.remove(entry)
-                if entry in self.deltas:
-                    self.deltas.remove(entry)
+                self.fragments.remove(entry)
+                self.fragments.sort()
             syslog(LOG_INFO, "Cfg: Entry deletion completed")
         elif action in ['changed', 'exists', 'created']:
             [entry.HandleEvent(event) for entry in entries]
@@ -168,13 +157,13 @@ class ConfigFileEntry(object):
         filedata = ""
         # first find basefile
         try:
-            basefile = [bfile for bfile in self.basefiles if metadata.Applies(bfile)][-1]
+            basefile = [bfile for bfile in self.fragments if bfile.applies(metadata) and not bfile.op][-1]
         except IndexError:
             syslog(LOG_ERR, "Cfg: Failed to locate basefile for %s" % name)
             raise PluginExecutionError, ('basefile', name)
         filedata += basefile.data
 
-        for delta in [x for x in self.deltas if metadata.Applies(x)]:
+        for delta in [delta for delta in self.fragments if delta.applies(metadata) and delta.op]:
             # find applicable deltas
             lines = filedata.split('\n')
             if not lines[-1]:
@@ -188,15 +177,15 @@ class ConfigFileEntry(object):
                     lines.append(line[1:])
             filedata = "\n".join(lines) + "\n"
             
-        [entry.attrib.__setitem__(x,y) for (x,y) in self.metadata.iteritems()]
+        [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
         if entry.attrib['encoding'] == 'base64':
-            entry.text = b2a_base64(filedata)
+            entry.text = binascii.b2a_base64(filedata)
         else:
             try:
                 entry.text = filedata
-            except:
+            except exceptions.AttributeError:
                 syslog(LOG_ERR, "Failed to marshall file %s. Mark it as base64" % (entry.get('name')))
 
 class Cfg(Plugin):

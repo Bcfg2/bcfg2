@@ -8,8 +8,8 @@
 <xsl:variable name="dirtynodes" select="/Report/Node[count(Statistics/Bad)>0]"/>
 <xsl:variable name="modifiednodes" select="/Report/Node[count(Statistics/Modified)>0]"/>
 <xsl:variable name="stalenodes" select="/Report/Node[count(Statistics/Stale)>0]"/>
-<xsl:variable name="unpingablenodes" select="/Report/Node[HostInfo/@pingable='N']"/>
-<xsl:variable name="pingablenodes" select="/Report/Node[HostInfo/@pingable='Y']"/>
+<xsl:variable name="unpingablenodes" select="/Report/Node[Client/@pingable='N']"/>
+<xsl:variable name="pingablenodes" select="/Report/Node[Client/@pingable='Y']"/>
 
 Summary:
 <xsl:text>    </xsl:text><xsl:value-of select="count($cleannodes)" /> nodes are clean.
@@ -26,9 +26,9 @@ Summary:
 <xsl:if test="count($cleannodes) > 0">
 CLEAN:
 <xsl:for-each select="Node">
-<xsl:sort select="HostInfo/@fqdn"/>
+<xsl:sort select="Client/@name"/>
 <xsl:if test="count(Statistics/Good) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
+<xsl:text>    </xsl:text><xsl:value-of select="Client/@name" /><xsl:text>
 </xsl:text>
 </xsl:if>
 </xsl:for-each><xsl:text>
@@ -38,9 +38,9 @@ CLEAN:
 <xsl:if test="count($dirtynodes) > 0">
 DIRTY:
 <xsl:for-each select="Node">
-<xsl:sort select="HostInfo/@fqdn"/>
+<xsl:sort select="Client/@name"/>
 <xsl:if test="count(Statistics/Bad) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
+<xsl:text>    </xsl:text><xsl:value-of select="Client/@name" /><xsl:text>
 </xsl:text>
 </xsl:if>
 </xsl:for-each><xsl:text>
@@ -50,9 +50,9 @@ DIRTY:
 <xsl:if test="count($modifiednodes) > 0">
 MODIFIED:
 <xsl:for-each select="Node">
-<xsl:sort select="HostInfo/@fqdn"/>
+<xsl:sort select="Client/@name"/>
 <xsl:if test="count(Statistics/Modified) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
+<xsl:text>    </xsl:text><xsl:value-of select="Client/@name" /><xsl:text>
 </xsl:text>
 </xsl:if>
 </xsl:for-each><xsl:text>
@@ -63,9 +63,9 @@ MODIFIED:
 <xsl:if test="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)]) > 0">
 STALE:
 <xsl:for-each select="Node">
-<xsl:sort select="HostInfo/@fqdn"/>
-<xsl:if test="count(Statistics/Stale)-count(HostInfo[@pingable='N']) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
+<xsl:sort select="Client/@name"/>
+<xsl:if test="count(Statistics/Stale)-count(Client[@pingable='N']) > 0">
+<xsl:text>    </xsl:text><xsl:value-of select="Client/@name" /><xsl:text>
 </xsl:text>
 </xsl:if>
 </xsl:for-each><xsl:text>
@@ -76,9 +76,9 @@ STALE:
 <xsl:if test="count($unpingablenodes) > 0">
 UNPINGABLE:
 <xsl:for-each select="Node">
-<xsl:sort select="HostInfo/@fqdn"/>
-<xsl:if test="count(HostInfo[@pingable='N']) > 0">
-<xsl:text>    </xsl:text><xsl:value-of select="HostInfo/@fqdn" /><xsl:text>
+<xsl:sort select="Client/@name"/>
+<xsl:if test="count(Client[@pingable='N']) > 0">
+<xsl:text>    </xsl:text><xsl:value-of select="Client/@name" /><xsl:text>
 </xsl:text>
 </xsl:if>
 </xsl:for-each><xsl:text>

@@ -1,0 +1,165 @@
+<chapter>
+<title>Developing for Bcfg2</title>
+
+  <para>
+    While the Bcfg2 server provides a good interface for representing
+    general system configurations, its plugin interface offers the
+    ability to implement configuration interfaces and representation
+    tailored to problems encountered by a particular site. This
+    chapter describes what plugins are good for, what they can do, and
+    how to implement them.
+  </para>
+  
+  <section>
+    <title>Bcfg2 Plugins</title>
+
+    <para>
+      Bcfg2 plugins are loadable python modules that the Bcfg2 server
+      loads at initialization time. These plugins can contribute to
+      the functions already offered by the Bcfg2 server or can extend
+      its functionality. In general, plugins will provide some portion
+      of the configuration for clients, with a data representation
+      that is tuned for a set of common tasks. Much of the core
+      functionality of Bcfg2 is implemented by several plugins,
+      however, they are not special in any way; new plugins could
+      easily supplant one or all of them. 
+    </para>
+
+    <table>
+      <title>Bcfg2 Plugin Functions</title>
+      <tgroup cols='2'>
+	<colspec colnum='1'/>
+	<colspec colnum='2'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>Probes</entry><entry>Plugins can send executable
+	  code to clients, where local contributions to configuration
+	  state can be gathered.</entry></row>
+	  <row><entry>Abstract Configuration Structures</entry>
+	    <entry>A plugin can define new groups of interdependent
+	    and independent configuration entities</entry></row>
+	  <row><entry>Literal Configuration Entities</entry>
+	    <entry>Plugins can provide literal configuration entity
+	    information.</entry></row>
+	  <row><entry>XML-RPC Functions</entry>
+	    <entry>Plugins can expose a set of functions through the
+	    Bcfg2 server's authenticated XML-RPC interface.</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
+  </section>
+
+  <section>
+    <title>Writing Bcfg2 Plugins</title>
+
+    <para>
+      Bcfg2 plugins are python classes that subclass from
+      Bcfg2.Server.Plugin.Plugin. Several plugin-specific values must
+      be set in the new plugin. These values dictate how the new
+      plugin will behave with respect to the above four functions.
+    </para>
+
+
+    <table>
+      <title>Bcfg2 Plugin Members</title>
+      <tgroup cols='3'>
+	<colspec colnum='1' colwidth='1*'/>
+	<colspec colnum='2' colwidth='3*'/>
+	<colspec colnum='3' colwidth='2*'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry><entry>Format</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>__name__</entry><entry>The name of the
+	      plugin</entry><entry>string</entry>
+	  </row>
+	  <row><entry>__version__</entry>
+	    <entry>The plugin version (generally tied to revctl
+	    keyword expansion).</entry><entry>string</entry></row>
+	  <row><entry>__author__</entry>
+	    <entry>The plugin author.</entry><entry>string</entry></row>
+	  <row><entry>__rmi__</entry>
+	    <entry>Set of functions to be exposed as XML-RPC
+	    functions</entry>
+	    <entry>List of function names (strings)</entry></row>
+	  <row><entry>Entries</entry><entry>Multidimentional
+	  dictionary of keys that point to the function used to bind
+	  literal contents for a given configuration
+	  entity.</entry><entry>Dictionary of
+	  ConfigurationEntityType, Name keys and function reference
+	  values</entry></row>
+	  <row><entry>BuildStructures</entry><entry>Function that
+	  returns a list of the structures for a given
+	  client</entry><entry>Member function</entry></row>
+	  <row><entry>GetProbes</entry><entry>Function that returns a
+	  list of probes that a given client should
+	  execute</entry><entry>Member function</entry></row>
+	  <row><entry>ReceiveData</entry><entry>Function that accepts
+	  the probe results for a given client.</entry><entry>Member
+	  function</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+    
+    <section>
+      <title>An Example Plugin</title>
+
+      <example>
+	<title>A Simple Plugin</title>
+      <programlisting>import socket, Bcfg2.Server.Plugin
+
+class Chiba(Bcfg2.Server.Plugin.Plugin):
+    '''the Chiba plugin builds the following files:
+      -> /etc/network/interfaces'''
+
+    __name__ = 'Chiba'
+    __version__ = '$Id: chiba.py 1702 2006-01-19 20:20:51Z desai '
+    __author__ = 'bcfg-dev@mcs.anl.gov'
+    Entries = {'ConfigFile':{}}
+
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        self.repo = Bcfg2.Server.Plugin.DirectoryBacked(self.data, 
+	  self.core.fam)
+        self.Entries['ConfigFile']['/etc/network/interfaces'] \ 
+	  = self.build_interfaces
+
+    def build_interfaces(self, entry, metadata):
+        '''build network configs for clients'''
+        entry.attrib['owner'] = 'root'
+        entry.attrib['group'] = 'root'
+        entry.attrib['perms'] = '0644'
+        try:
+            myriaddr = socket.gethostbyname("%s-myr" % \
+	  metadata.hostname)
+        except socket.gaierror:
+            self.LogError("Failed to resolve %s-myr"% metadata.hostname)
+            raise Bcfg2.Server.Plugin.PluginExecutionError, ("%s-myr" \
+            % metadata.hostname, 'lookup')
+        entry.text = self.repo.entries['interfaces-template'].data % \
+	  myriaddr
+      </programlisting>
+    </example>
+
+    <para>
+	Bcfg2 server plugins must subclass the
+	Bcfg2.Server.Plugin.Plugin class. Plugin constructors must
+	take two arguments: an instance of a Bcfg2.Core object, and a
+	location for a datastore. __name__, __version__, __author__,
+	and Entries are used to describe what the plugin is and how it
+	works. Entries describes a set of configuration entries that
+	can be provided by the generator, and a set of handlers that
+	can bind in the proper data. build_interfaces is an example of
+	a handler. It gets client metadata and an configuration entry
+	passed in, and binds data into entry as appropriate. This
+	results in a <filename>/etc/network/interfaces</filename> file
+	that has static information derived from DNS for a given host.
+    </para>
+
+    </section>
+
+  </section>
+</chapter>

@@ -1,23 +1,20 @@
 '''This generator provides service mappings'''
 __revision__ = '$Revision$'
 
-from Bcfg2.Server.Plugin import Plugin, ScopedXMLFile, PluginInitError
+import Bcfg2.Server.Plugin
 
-class Svcmgr(Plugin):
+class SNode(Bcfg2.Server.Plugin.LNode):
+    '''SNode has a list of services available at a particular group intersection'''
+    __leaf__ = './Service'
+    
+class SvcSrc(Bcfg2.Server.Plugin.XMLSrc):
+    '''SvcSrc files contain prioritized service definitions'''
+    __node__ = SNode
+            
+class Svcmgr(Bcfg2.Server.Plugin.XMLPrioDir):
     '''This is a generator that handles service assignments'''
     __name__ = 'Svcmgr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
-        try:
-            self.svc = ScopedXMLFile("%s/etc/services.xml"%(datastore), self.core.fam)
-        except OSError:
-            self.LogError("Failed to load service definition file")
-            raise PluginInitError
-        self.Entries = self.svc.__provides__
-
-
-
-
+    __child__ = SvcSrc
+    __element__ = 'Service'

@@ -1,0 +1,154 @@
+#!/usr/bin/python -i
+'''This tool loads the Bcfg2 core into an interactive debugger'''
+__revision__ = '$Revision$'
+
+from sys import argv
+from time import sleep
+from Bcfg2.Server.Core import Core, CoreInitError
+from lxml.etree import tostring
+
+def print_tabular(rows):
+    '''print data in tabular format'''
+    cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 for index in xrange(len(rows[0]))])
+    fstring = (" %%-%ss |" * len(cmax)) % cmax
+    fstring = ('|'.join([" %%-%ss "] * len(cmax))) % cmax
+    print fstring % rows[0]
+    print (sum(cmax)  + (len(cmax) * 2) + (len(cmax) - 1)) * '='
+    for row in rows[1:]:
+        print fstring % row
+
+def get_input():
+    '''read commands from stdin'''
+    try:
+        return raw_input('> ').split(" ")
+    except:
+        return ['']
+
+def do_build(cmd, core):
+    '''build client configuration'''
+    if len(cmd) == 3:
+        output = open(cmd[2], 'w')
+        output.write(tostring(core.BuildConfiguration(cmd[1])))
+        output.close()
+    else:
+        print 'Usage: build <hostname> <output file>'
+
+def do_bundles(cmd, core):
+    '''print out group/bundle info'''
+    data = [('Group', 'Bundles')]
+    groups = core.metadata.groups.keys()
+    groups.sort()
+    for group in groups:
+        data.append((group, ','.join(core.metadata.groups[group][0])))
+    print_tabular(data)
+
+def do_clients(cmd, core):
+    '''print out client info'''
+    data = [('Client', 'Profile')]
+    clist = core.metadata.clients.keys()
+    clist.sort()
+    for client in clist:
+        data.append((client, core.metadata.clients[client]))
+    print_tabular(data)
+
+def do_help(cmd, core):
+    '''print out usage info'''
+    print 'Commands:'
+    print 'build <hostname> <filename> - build config for hostname, writing to filename'
+    print 'bundles - print out group/bundle information'
+    print 'clients - print out client/profile information'
+    print 'debug - shell out to native python interpreter'
+    print 'generators - list current versions of generators'
+    print 'groups - list groups'
+    print 'help - print this text'
+    print 'mappings <type*> <name*>- print generator mappings for optional type and name'
+    print 'quit'
+    print 'update - process pending file events'
+    print 'version - print version of this tool'
+
+def do_generators(cmd, core):
+    '''print out generator info'''
+    for generator in core.generators:
+        print generator.__version__
+
+def do_groups(cmd, core):
+    '''print out group info'''
+    data = [("Groups", "Profile", "Category", "Contains")]
+    grouplist = core.metadata.groups.keys()
+    grouplist.sort()
+    for group in grouplist:
+        if group in core.metadata.profiles:
+            prof = 'yes'
+        else:
+            prof = 'no'
+        if core.metadata.categories.has_key(group):
+            cat = core.metadata.categories[group]
+        else:
+            cat = ''
+        gdata = [grp for grp in core.metadata.groups[group][1]]
+        gdata.remove(group)
+        data.append((group, prof, cat, ','.join(gdata)))
+    print_tabular(data)
+
+def do_mappings(cmd, core):
+    '''print out mapping info'''
+    # dump all mappings unless type specified
+    data = [('Plugin', 'Type', 'Name')]
+    for generator in core.generators:
+        if len(cmd) == 1:
+            etypes = generator.Entries.keys()
+        elif len(cmd) > 1:
+            etypes = [cmd[1]]
+        if len(cmd) == 3:
+            interested = [(etype, [cmd[2]]) for etype in etypes]
+        else:
+            interested = [(etype, generator.Entries[etype].keys()) for etype in etypes
+                          if generator.Entries.has_key(etype)]
+        if [etype for (etype, names) in interested
+            if generator.Entries.has_key(etype) and [name for name in names
+                                                     if generator.Entries[etype].has_key(name)]]:
+            for (etype, names) in interested:
+                for name in names:
+                    if generator.Entries.has_key(etype) and generator.Entries[etype].has_key(name):
+                        data.append((generator.__name__, etype, name))
+    print_tabular(data)
+
+def do_quit(cmd, core):
+    '''exit program'''
+    raise SystemExit, 0
+
+def do_update(cmd, core):
+    '''Process pending fs events'''
+    core.fam.Service()
+
+def do_version(cmd, core):
+    '''print out code version'''
+    print __revision__
+        
+if __name__ == '__main__':
+    dispatch = {'build': do_build, 'bundles': do_bundles, 'clients': do_clients,
+                'generators': do_generators, 'groups': do_groups,
+                'help': do_help, 'mappings': do_mappings, 'quit': do_quit,
+                'update': do_update, 'version': do_version}
+    if '-c' in argv:
+        cfile = argv[-1]
+    else:
+        cfile = '/etc/bcfg2.conf'
+    try:
+        bcore = Core({}, cfile)
+    except CoreInitError, msg:
+        print "Core load failed because %s" % msg
+        raise SystemExit, 1
+    for i in range(25):
+        bcore.fam.Service()
+        sleep(0.5)
+    ucmd = get_input()
+    while True:
+        if ucmd[0] == 'debug':
+            break
+        else:
+            if dispatch.has_key(ucmd[0]):
+                dispatch[ucmd[0]](ucmd, bcore)
+            else:
+                print "Unknown command %s" % ucmd[0]
+        ucmd = get_input()

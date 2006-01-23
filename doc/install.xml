@@ -5,8 +5,8 @@
     <title>Pre-requisites</title>
     <para>
       Bcfg2 is written in python using several modules not included
-      with most distributions. Element Tree, available from
-      http://www.effbot.org provides convenient XML handling.
+      with most distributions. lxml provides convenient xml
+      handling. M2crypto wraps openssl calls for https support. 
     </para>
     
     <para>
@@ -16,125 +16,95 @@
       use SSL functions.
     </para>
 
-    <para>ElementTree can be downloaded from
-    http://www.effbot.org/downloads. It can be installed by running
-    the setup script against the python installation. 
+    <para>lxml is required for xml parsing. It can be downloaded from
+    http://www.codespeak.net/lxml. It, in turn, requires libxml2,
+    libxslt, and pyrex. 
     </para>
-
-    <programlisting>$ python setup.py build
-running build
-running build_py
-creating build
-creating build/lib
-creating build/lib/elementtree
-copying elementtree/ElementInclude.py -> build/lib/elementtree
-copying elementtree/ElementPath.py -> build/lib/elementtree
-copying elementtree/ElementTree.py -> build/lib/elementtree
-copying elementtree/HTMLTreeBuilder.py -> build/lib/elementtree
-copying elementtree/SgmlopXMLTreeBuilder.py -> build/lib/elementtree
-copying elementtree/SimpleXMLTreeBuilder.py -> build/lib/elementtree
-copying elementtree/SimpleXMLWriter.py -> build/lib/elementtree
-copying elementtree/TidyHTMLTreeBuilder.py -> build/lib/elementtree
-copying elementtree/TidyTools.py -> build/lib/elementtree
-copying elementtree/XMLTreeBuilder.py -> build/lib/elementtree
-copying elementtree/__init__.py -> build/lib/elementtree
-$ python setup.py install
-...
-    </programlisting>
-
+    
     <para>
       The python fam binding can be downloaded from
       python-fam.sourceforge.net. FAM (on several linux distributions)
       has been depricated in favor of gamin. The Bcfg server will
       autodetect which modules are available, and use appropriate file
-      caching logic.
+      caching logic. It can be installed by running the setup.py script.
     </para>
-  </sect1>
-  <sect1>
-    <title>Bcfg2 Installation</title>
-    <para>
-    </para>
+
+    <table>
+      <title>Bcfg2 Software Prerequisites</title>
+      <tgroup cols='3'>
+	<colspec colnum='1' colwidth='2*'/>
+	<colspec colnum='2' colwidth='5*'/>
+	<colspec colnum='3' colwidth='8*'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry><entry>URL</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>lxml</entry><entry>XML
+	  Processing</entry><entry><ulink
+	  url="http://codespeak.net/lxml"/></entry></row>
+	  <row><entry>pyrex</entry><entry>C to Python language
+	  interoperability (needed for lxml)</entry><entry><ulink
+	  url="http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex"/></entry></row>
+	  <row><entry>M2Crypto</entry>
+	    <entry>OpenSSL bindings for Python</entry><entry><ulink
+	    url="http://wiki.osafoundation.org/bin/view/Projects/MeTooCrypto"/></entry></row>
+	  <row><entry>Swig</entry>
+	    <entry>C to Python language interoperability (needed for
+	    M2Crypto)</entry><entry><ulink
+	    url="http://www.swig.org"/></entry></row>
+	  <row><entry>Fam</entry><entry>File Alteration
+	  Monitor</entry><entry><ulink
+	  url="http://oss.sgi.com"/></entry></row>
+	  <row><entry>Gamin</entry><entry>Alternate File Alteration
+	      Monitor</entry><entry><ulink
+	      url="http://www.gnome.org/~veillard/gamin/"/></entry></row>
+	  <row><entry>Python-fam</entry><entry>Python bindings for fam
+	  (not needed with
+	  gamin)</entry><entry><ulink url="http://python-fam.sourceforge.net"/></entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
   </sect1>
   <sect1>
     <title>Bcfg2 Initial Setup and Testing</title>
     <para>Once the Bcfg2 software is installed, the configuration file
     and repository must be created. The example configuration file in
     <filename>bcfg2/examples/bcfg2.conf</filename> can be used, with
-    minor modifications. 
+    minor modifications.  This should be placed in
+    <filename>/etc/bcfg2.conf</filename>. If it is placed in another
+    location, each program takes a command line argument to specify
+    its alternate location. 
     </para>
+
     <example>
-      <title>bcfg2.conf</title>
+      <title>/etc/bcfg2.conf</title>
       <programlisting>[server]
-	repository = /disks/bcfg2
-	structures = Bundler,Base
-	generators = SSHbase,Cfg,Pkgmgr,Svcmgr
-	metadata = /disks/bcfg2/etc
-      </programlisting>
+repository = /disks/bcfg2
+structures = Bundler,Base
+generators = SSHbase,Cfg,Pkgmgr,Svcmgr</programlisting>
     </example>
-    <para>This configuration file sets the location of the
+
+    <para>
+      This configuration file sets the top level location of the
       configuration repository. It also activates two structures, and
-      four generators. Structures are components that generate
-      abstract configuration fragments. These are the form of the
-      configuration. Generators provide client-specific values for
-      each configuration settings contained in all abstract
-      configuration fragments. Both of these are described in Section
-      ???.</para>
-  </sect1>
-  <sect1>
-    <title>Daemon Configuration</title> 
-    <para>Bcfg2 uses SSSlib, the
-      communication libraries from the Scalable Systems Software project
-      for communication abstraction. This library provides a unified
-      messaging interface on top of several wire protocols with
-      different authentication and encryption mechanisms. The default
-      protocol is "challenge" which is a challenge response protocol
-      with no data encryption. (SSL protection will be configured
-      later). SSSlib also includes service location functionality;
-      this allows software to locate components by name, regardless of
-      their respective network locations. This function is provided
-      with both static and dynamic implementations. Static component
-      location setup will be sufficient for most Bcfg2 deployments.
-    </para>
-
-    <para>
-      Static component lookups depend on the file
-      <filename>/etc/sss.conf</filename>. This file contains
-      information about static service locations. This file must be
-      the same on the server and all clients for communication to work
-      properly. A location definition for the bcfg2 component will
-      allow all clients to find and connect to it. 
-    </para>
-    <example>
-      <title>/etc/sss.conf</title>
-      <programlisting>
-	<![CDATA[	<locations>
-	  <location component="bcfg2" host="bcfgserver"
-	  port="8052" protocol="challenge" schema_version="1.0" tier="1"/>
-	</locations>]]>
-      </programlisting>
-    </example>
-    <para>This allows SSSlib to locate the bcfg2 component on the
-    machine bcfgserver, port 8052, with the wire protocol "challenge".
+      four generators. Both structures and generators are instances of
+      Bcfg2 server plugins. Structures generate abstract configuration
+      fragments. These form the inventory of the
+      configuration. Generators provide client-specific literal values
+      for each configuration entity contained in the abstract
+      configuration.
     </para>
   </sect1>
+
   <sect1>
-    <title>New-Style XML-RPC Deployments</title>
+    <title>Daemon Configuration</title>
 
     <para>
-      A new version of the Bcfg2 software is in testing that will
-      provide simplified and standards compliant communications
-      facilities. Instead of the use of SSSlib for communication, the
-      server and clients can use HTTPS XML-RPC instead. This has
-      required reimplementing the server and providing XML-RPC support
-      for the client, but provides drastically simplified setup for
-      new installs.
-    </para>
-
-    <para>
-      The prerequisite list now includes ElementTree, M2Crypto (for
-      SSL functions) and Python 2.2 or newer. ElementTree and M2Crypto
-      are both python modules that can be easily installed and are
-      already packaged for many Linux distributions.
+      Bcfg2 uses XML-RPC over HTTPS for all communications. 
+      All communications occur over this transport. HTTPS provides
+      data security, while an embedded username and password provide
+      authentication. 
     </para>
 
     <sect2>
@@ -146,33 +116,40 @@ $ python setup.py install
       </para>
       
       <programlisting>
-openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out server.pem -keyout server.pem
+openssl req -x509 -nodes -days 1000 -newkey rsa:1024 \
+	-out bcfg2.key -keyout bcfg2.key
       </programlisting>
 
-      <para>This command will generate an SSL key including both an
-      RSA key and a certificate. This is suitable for use with the
-      Bcfg2 XML-RPC server.</para>
+      <para>
+	This command will generate an SSL key including both an
+	RSA key and a certificate. This is suitable for use with the
+	Bcfg2 server. The path to this key should be put in the
+	bcfg2 configuration file in section communication, setting
+	key. 
+      </para>
 
     </sect2>
 
     <sect2>
-      <title>Communication Bootstrapping</title>
+      <title>Client Communication Setup</title>
 
       <para>
 	The Bcfg2 client must be able to find the server's
 	location. This is accomplished through the use of the
 	communication settings in <filename>/etc/bcfg2.conf</filename>
-	Two settings for the this section are required: protocol and
-	server url. 
+	Several settings must be included in this file: the server
+	url, a username and a password. 
       </para>
 
       <example>
-	<title>Bcfg2 XML-RPC Communication Settings</title>
-	<programlisting>
-	  [communication]
-	  protocol = xmlrpc/ssl
-	  url = https://localhost:9443
-	</programlisting>
+	<title>/etc/bcfg2.conf</title>
+	<programlisting>[communication]
+protocol = xmlrpc/ssl
+password = pwd
+user = root
+	  
+[components]
+bcfg2 = https://bcfg2server:8765</programlisting>
       </example>
     </sect2>
   </sect1>

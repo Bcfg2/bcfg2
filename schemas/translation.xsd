@@ -4,7 +4,7 @@
     <xsd:documentation>
       translation image info schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id: $
+      $Id$
     </xsd:documentation>
   </xsd:annotation>
   

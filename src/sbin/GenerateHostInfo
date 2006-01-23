@@ -6,42 +6,30 @@
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
-from lxml.etree import Element, SubElement, parse
-from os import fork, execl, dup2, wait
+from lxml.etree import Element, SubElement, parse, tostring
+from os import fork, execl, dup2, wait, uname
 import sys
 
-def pretty_print(element, level=0):
-    '''Produce a pretty-printed text representation of element'''
-    if element.text:
-        fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
-                element.text, element.tag)
-    children = element.getchildren()
-    if children:
-        fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(children) * "%s") + "%s</%%s>\n" % (level*" ")
-        data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
-        data += tuple([pretty_print(entry, level+2) for entry in children]) + (element.tag, )
-    else:
-        fmt = "%s<%%s %%s/>\n" % (level * " ")
-        data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
-    return fmt % data
-
-                                                                                                                
 if __name__ == '__main__':
     c = ConfigParser()
     c.read(['/etc/bcfg2.conf'])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-    hostinfopath = "%s/etc/hostinfo.xml" % c.get('server', 'repository')
-    metadatapath = "%s/etc/metadata.xml" % c.get('server', 'repository')
+    clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     sendmailpath = c.get('statistics','sendmailpath')
     
-    metaElement =  parse(metadatapath)
-    hostlist = [client.get('name') for client in metaElement.findall("Client")]
+    clientElement =  parse(clientdatapath)
+    hostlist = [client.get('name') for client in clientElement.findall("Client")]
 
-    HostInfo = Element("HostInformation")
     pids = {}
     fullnames = {}
     null = open('/dev/null', 'w+')
+
+
+    #use uname to detect OS and use -t for darwin and -w for linux
+    #/bin/ping on linux /sbin/ping on os x
+    osname = uname()[0]
+
+    
     while hostlist or pids:
         if hostlist and len(pids.keys()) < 15:
             host = hostlist.pop()
@@ -51,26 +39,39 @@ if __name__ == '__main__':
                 dup2(null.fileno(), sys.__stdin__.fileno())
                 dup2(null.fileno(), sys.__stdout__.fileno())
                 dup2(null.fileno(), sys.__stderr__.fileno())
-                execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
+                if osname == 'Linux':
+                    execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
+                elif osname == 'Darwin':
+                    execl('/sbin/ping', 'ping', '-t', '5', '-c', '1', host)
+                elif osname == 'SunOS':
+                    execl('/usr/sbin/ping', 'ping', host, '56', '1')
+                else: #default
+                    execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
             else:
                 pids[pid] = host
         else:
             try:
                 (cpid, status) = wait()
-                chost = pids[cpid]
-                del pids[cpid]
-                if status == 0:
-                    SubElement(HostInfo, "HostInfo", name=chost, fqdn=chost, pingable='Y')
-                else:
-                    if chost.count('.') > 0:
-                        fullnames[chost.split('.')[0]] = chost
-                        hostlist.append(chost.split('.')[0])
-                    else:
-                        SubElement(HostInfo, "HostInfo", name=fullnames[chost], fqdn=fullnames[chost], pingable='N')
-            except:
-                pass
+            except OSError:
+                continue
+            chost = pids[cpid]
+            del pids[cpid]
+            if status == 0:
+                try:
+                    clientElement.xpath("//Client[@name='%s']"%chost)[0].set("pingable",'Y')
+                except:#i think this is for a problem with aliases?
+                    clientElement.xpath("//Client[@name='%s']"%fullnames[chost])[0].set("pingable",'Y')
+                #also set pingtime, if you can get it
 
-    fout = open(hostinfopath, 'w')
-    fout.write(pretty_print(HostInfo))
+            else:
+                if chost.count('.') > 0:
+                    fullnames[chost.split('.')[0]] = chost
+                    hostlist.append(chost.split('.')[0])
+                else:
+                    clientElement.xpath("//Client[@name='%s']"%(fullnames[chost]))[0].set("pingable",'N')
+                    #also set pingtime if you can get it
+
+    fout = open(clientdatapath, 'w')
+    fout.write(tostring(clientElement.getroot()))
     fout.close()
                         

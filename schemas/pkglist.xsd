@@ -4,7 +4,7 @@
     <xsd:documentation>
       package list schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id: $
+      $Id$
     </xsd:documentation>
   </xsd:annotation>
   
@@ -16,20 +16,21 @@
     <xsd:attribute type='xsd:string' name='simplefile'/>
   </xsd:complexType>
 
-  <xsd:complexType name='LocationType'>
+  <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='uri' use='required'/>
-    <xsd:attribute type='xsd:string' name='type' use='required'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
   <xsd:element name='PackageList'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Location' type='LocationType'/>
+	<xsd:element name='Group' type='GroupType'/>
       </xsd:choice>
-      <xsd:attribute name='image' type='xsd:string' use='required'/>
+      <xsd:attribute name='priority' type='xsd:integer' use='required'/>
+      <xsd:attribute name='type' type='xsd:string' use='required'/>
+      <xsd:attribute name='uri' type='xsd:string' use='optional'/>
     </xsd:complexType>
   </xsd:element>
 

@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.7.4
+%define version 0.8.0
 %define release 1
 %define pythonversion 2.3
 
@@ -38,9 +38,7 @@ python%{pythonversion} setup.py build
 python%{pythonversion} setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
-mv ${RPM_BUILD_ROOT}/usr/bin/Bcfg2Server ${RPM_BUILD_ROOT}/usr/sbin
-mv ${RPM_BUILD_ROOT}/usr/bin/ValidateBcfg2Repo ${RPM_BUILD_ROOT}/usr/sbin
-mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2 ${RPM_BUILD_ROOT}/usr/sbin
+mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2* ${RPM_BUILD_ROOT}/usr/sbin
 mv ${RPM_BUILD_ROOT}/usr/bin/StatReports ${RPM_BUILD_ROOT}/usr/sbin
 install -m 755 debian/bcfg2.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2
 install -m 755 debian/bcfg2-server.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2-server
@@ -50,8 +48,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n bcfg2-server
 %defattr(-,root,root)
-/usr/sbin/Bcfg2Server*
-/usr/sbin/ValidateBcfg2Repo
+/usr/sbin/bcfg2-server
+/usr/sbin/bcfg2-repo-validate
+/usr/sbin/bcfg2-info
 /usr/sbin/StatReports
 /usr/bin/GenerateHostInfo
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/Server/*

@@ -1,122 +1,36 @@
 '''This provides bundle clauses with translation functionality'''
 __revision__ = '$Revision$'
 
-from copy import deepcopy
-from syslog import LOG_ERR, syslog
-from lxml.etree import Element, XML, XMLSyntaxError, _Comment
+import Bcfg2.Server.Plugin
+import copy
+import lxml.etree
 
-from Bcfg2.Server.Plugin import Plugin, SingleXMLFileBacked, XMLFileBacked, DirectoryBacked
-
-
-class ImageFile(SingleXMLFileBacked):
-    '''This file contains image -> system mappings'''
-    def __init__(self, filename, fam):
-        self.images = {}
-        SingleXMLFileBacked.__init__(self, filename, fam)
-    
-    def Index(self):
-        '''Build data structures out of the data'''
-        try:
-            xdata = XML(self.data)
-        except XMLSyntaxError, err:
-            syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
-            syslog(LOG_ERR, err)
-            del self.data
-            return
-        self.images = {}
-        for child in xdata.getchildren():
-            [name, pkg, service] = [child.get(field) for field in ['name', 'package', 'service']]
-            for grandchild in child.getchildren():
-                self.images[grandchild.get('name')] = (name, pkg, service)
-
-class Bundle(XMLFileBacked):
-    '''Bundles are configuration specifications (with image/translation abstraction)'''
-
-    def __init__(self, filename):
-        self.all = []
-        self.attributes = {}
-        self.systems = {}
-        XMLFileBacked.__init__(self, filename)
-
-    def Index(self):
-        '''Build data structures from the source data'''
-        try:
-            xdata = XML(self.data)
-        except XMLSyntaxError, err:
-            syslog(LOG_ERR, "Failed to parse file %s" % (self.name))
-            syslog(LOG_ERR, str(err))
-            del self.data
-            return
-        self.all = []
-        self.systems = {}
-        self.attributes = {}
-        for entry in [ent for ent in xdata.getchildren() if not isinstance(ent, _Comment)]:
-            if entry.tag == 'System':
-                self.systems[entry.attrib['name']] = [ent for ent in entry.getchildren() \
-                                                      if not isinstance(ent, _Comment)]
-            elif entry.tag == 'Attribute':
-                self.attributes[entry.get('name')] = [ent for ent in entry.getchildren() \
-                                                      if not isinstance(ent, _Comment)]
-            else:
-                self.all.append(entry)
-        del self.data
-
-    def BuildBundle(self, metadata, system):
-        '''Build a bundle for a particular client'''
-        bundlename = self.name.split('/')[-1]
-        bundle = Element('Bundle', name=bundlename)
-        for entry in self.all + self.systems.get(system, []):
-            bundle.append(deepcopy(entry))
-        for attribute in [aname for (scope, aname) in [item.split('.') for item in metadata.attributes]
-                          if scope == bundlename[:-4]]:
-            for entry in self.attributes.get(attribute, []):
-                bundle.append(deepcopy(entry))
-        return bundle
-            
-class BundleSet(DirectoryBacked):
-    '''The Bundler handles creation of dependent clauses based on bundle definitions'''
-    __child__ = Bundle
-
-class Bundler(Plugin):
+class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     __name__ =  'Bundler'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __child__ = Bcfg2.Server.Plugin.StructFile
     
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
-        self.imageinfo = ImageFile("%s/etc/imageinfo.xml"%(datastore), self.core.fam)
-        self.bundles = BundleSet(self.data, self.core.fam)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        try:
+            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
+        except OSError:
+            self.LogError("Failed to load Bundle repository")
+            raise Bcfg2.Server.Plugin.PluginInitError
 
     def BuildStructures(self, metadata):
         '''Build all structures for client (metadata)'''
-        try:
-            (system, package, service) = self.GetTransInfo(metadata)
-        except KeyError:
-            syslog(LOG_ERR, "Failed to find translation information for image %s" % metadata.image)
-            return []
         bundleset = []
         for bundlename in metadata.bundles:
-            if not self.bundles.entries.has_key("%s.xml"%(bundlename)):
-                syslog(LOG_ERR, "Client %s requested nonexistent bundle %s"%(metadata.hostname, bundlename))
+            if not self.entries.has_key("%s.xml"%(bundlename)):
+                self.LogError("Client %s requested nonexistent bundle %s" % \
+                              (metadata.hostname, bundlename))
                 continue
-
-            bundle = self.bundles.entries["%s.xml" % (bundlename)].BuildBundle(metadata, system)
-            # now we need to populate service/package types
-            for entry in bundle.getchildren():
-                if entry.tag == 'Package':
-                    entry.attrib['type'] = package
-                elif entry.tag == 'Service':
-                    entry.attrib['type'] = service
+            bundle = lxml.etree.Element('Bundle', name=bundlename)
+            [bundle.append(copy.deepcopy(item))
+             for item in self.entries["%s.xml" % (bundlename)].Match(metadata)]
             bundleset.append(bundle)
         return bundleset
-
-    def GetTransInfo(self, metadata):
-        '''Get Translation info for metadata.image'''
-        if self.imageinfo.images.has_key(metadata.image):
-            return self.imageinfo.images[metadata.image]
-        else:
-            raise KeyError, metadata.image
-
-    
 

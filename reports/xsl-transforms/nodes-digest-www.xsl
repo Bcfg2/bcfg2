@@ -10,8 +10,8 @@
         <xsl:variable name="dirtynodes" select="/Report/Node[count(Statistics/Bad)>0]"/>
         <xsl:variable name="modifiednodes" select="/Report/Node[count(Statistics/Modified)>0]"/>
         <xsl:variable name="stalenodes" select="/Report/Node[count(Statistics/Stale)>0]"/>
-        <xsl:variable name="unpingablenodes" select="/Report/Node[HostInfo/@pingable='N']"/>
-        <xsl:variable name="pingablenodes" select="/Report/Node[HostInfo/@pingable='Y']"/>
+        <xsl:variable name="unpingablenodes" select="/Report/Node[Client/@pingable='N']"/>
+        <xsl:variable name="pingablenodes" select="/Report/Node[Client/@pingable='Y']"/>
     
         <html>
               <head>
@@ -48,10 +48,10 @@
                                 <div class="items" id="goodsummary"><ul class="plain">                                    
                                     
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
+                                        <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Good) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -64,10 +64,10 @@
                                 
                                 <div class="items" id="badsummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
+                                        <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Bad) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -79,10 +79,10 @@
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('extrasummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Statistics/Extra)" /></a> nodes have extra configuration. (includes both good and bad nodes)<br /></span>
                                 <div class="items" id="extrasummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
+                                        <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Extra) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -96,10 +96,10 @@
                                 
                                 <div class="items" id="modifiedsummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
+                                        <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Modified) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -111,10 +111,10 @@
                                 <span class="nodelisttitle"><a href="javascript:toggleLayer('vstalesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count($stalenodes[count(.|$pingablenodes)= count($pingablenodes)])" /></a> nodes did not run within the last 24 hours but were pingable.<br /></span>
                                 <div class="items" id="vstalesummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
-                                        <xsl:if test="count(Statistics/Stale)-count(HostInfo[@pingable='N']) > 0">
+                                        <xsl:sort select="Client/@name"/>
+                                        <xsl:if test="count(Statistics/Stale)-count(Client[@pingable='N']) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -127,10 +127,10 @@
                                 
                                 <div class="items" id="stalesummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
+                                        <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Stale) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -138,16 +138,16 @@
                             </div>
                          </xsl:if>
 
-                        <xsl:if test="count(/Report/Node[HostInfo/@pingable='N']) > 0">
+                        <xsl:if test="count(/Report/Node[Client/@pingable='N']) > 0">
                             <div class="down">
-                                <span class="nodelisttitle"><a href="javascript:toggleLayer('unpingablesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/HostInfo[@pingable='N'])" /></a> nodes were down.<br /></span>
+                                <span class="nodelisttitle"><a href="javascript:toggleLayer('unpingablesummary');" title="Click to Expand" class="commentLink"><xsl:value-of select="count(/Report/Node/Client[@pingable='N'])" /></a> nodes were down.<br /></span>
                                 
                                 <div class="items" id="unpingablesummary"><ul class="plain">
                                     <xsl:for-each select="Node">
-                                        <xsl:sort select="HostInfo/@fqdn"/>
-                                        <xsl:if test="count(HostInfo[@pingable='N']) > 0">
+                                        <xsl:sort select="Client/@name"/>
+                                        <xsl:if test="count(Client[@pingable='N']) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{HostInfo/@fqdn}"><xsl:value-of select="HostInfo/@fqdn" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>

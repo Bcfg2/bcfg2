@@ -6,28 +6,28 @@
 # description: bcfg2 server for configuration requests
 # 
 
-PIDFILE=/var/tmp/bcfg2-xmlrpc.pid
+PIDFILE=/var/tmp/bcfg2-server.pid
 
 case "$1" in
   start)
-    echo -n "Starting Bcfg2Server: "
+    echo -n "Starting bcfg2-server: "
     if [ -f "/etc/SuSE-release" ] ; then
-        /sbin/start_daemon -p "${PIDFILE}" /usr/sbin/Bcfg2Server
+        /sbin/start_daemon -p "${PIDFILE}" /usr/sbin/bcfg2-server
     elif [ -f "/etc/redhat-release" ]; then
-       /usr/sbin/Bcfg2Server -D "${PIDFILE}"
+       /usr/sbin/bcfg2-server -D "${PIDFILE}"
     else
-       /sbin/start-stop-daemon --pidfile "${PIDFILE}" --make-pidfile -b -S --startas /usr/sbin/Bcfg2Server
+       /sbin/start-stop-daemon --pidfile "${PIDFILE}" --make-pidfile -b -S --startas /usr/sbin/bcfg2-server
     fi
-    echo "Bcfg2Server"
+    echo "bcfg2-server"
     ;;
   stop)
-    echo -n "Stopping Bcfg2Server: "
+    echo -n "Stopping bcfg2-server: "
     if [ -f "/etc/SuSE-release" ] ; then
-        /sbin/killproc -p "${PIDFILE}" /usr/sbin/Bcfg2Server
+        /sbin/killproc -p "${PIDFILE}" /usr/sbin/bcfg2-server
     elif [ -f "/etc/redhat-release" ]; then
        kill -INT `cat ${PIDFILE}`
     else
-       /sbin/start-stop-daemon -p "${PIDFILE}" -K /usr/sbin/Bcfg2Server
+       /sbin/start-stop-daemon -p "${PIDFILE}" -K /usr/sbin/bcfg2-server
     fi
     echo done
     ;;

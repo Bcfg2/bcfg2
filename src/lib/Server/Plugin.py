@@ -1,10 +1,12 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
-from lxml.etree import XML, XMLSyntaxError, _Comment, tostring
-from os import stat
-from stat import ST_MTIME
-from syslog import syslog, LOG_ERR, LOG_INFO
+import lxml.etree
+import os
+import stat
+import syslog
+
+from lxml.etree import XML, XMLSyntaxError
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
@@ -39,7 +41,7 @@ class Plugin(object):
 
     def LogError(self, msg):
         '''Log error message tagged with Plugin name'''
-        syslog(LOG_ERR, "%s: %s" % (self.__name__, msg))
+        syslog.syslog(syslog.LOG_ERR, "%s: %s" % (self.__name__, msg))
 
     def BuildStructures(self, metadata):
         '''Build a set of structures tailored to the client metadata'''
@@ -73,15 +75,15 @@ class FileBacked(object):
         '''Read file upon update'''
         oldmtime = self.mtime
         try:
-            self.mtime = stat(self.name)[ST_MTIME]
+            self.mtime = os.stat(self.name)[stat.ST_MTIME]
         except OSError:
-            syslog(LOG_ERR, "Failed to stat file %s" % (self.name))
+            syslog.syslog(syslog.LOG_ERR, "Failed to stat file %s" % (self.name))
             
         try:
             self.data = file(self.name).read()
             self.Index()
         except IOError:
-            syslog(LOG_ERR, "Failed to read file %s" % (self.name))
+            syslog.syslog(syslog.LOG_ERR, "Failed to read file %s" % (self.name))
             
     def Index(self):
         '''Update local data structures based on current file state'''
@@ -108,9 +110,9 @@ class DirectoryBacked(object):
     def AddEntry(self, name):
         '''Add new entry to data structures upon file creation'''
         if name == '':
-            syslog(LOG_INFO, "got add for empty name")
+            syslog.syslog(syslog.LOG_INFO, "got add for empty name")
         elif self.entries.has_key(name):
-            syslog(LOG_INFO, "got multiple adds for %s" % name)
+            syslog.syslog(syslog.LOG_INFO, "got multiple adds for %s" % name)
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
                 return
@@ -121,7 +123,7 @@ class DirectoryBacked(object):
         '''Propagate fam events to underlying objects'''
         action = event.code2str()
         if event.filename == '':
-            syslog(LOG_INFO, "Got event for blank filename")
+            syslog.syslog(syslog.LOG_INFO, "Got event for blank filename")
             return
         if action == 'exists':
             if event.filename != self.name:
@@ -153,7 +155,7 @@ class XMLFileBacked(FileBacked):
         try:
             xdata = XML(self.data)
         except XMLSyntaxError:
-            syslog(LOG_ERR, "Failed to parse %s"%(self.name))
+            syslog.syslog(syslog.LOG_ERR, "Failed to parse %s"%(self.name))
             return
         self.label = xdata.attrib[self.__identifier__]
         self.entries = xdata.getchildren()
@@ -167,83 +169,141 @@ class SingleXMLFileBacked(XMLFileBacked):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
 
-class ScopedXMLFile(SingleXMLFileBacked):
-    '''Scoped XML files are coherent files with Metadata structured data'''
-    __containers__ = ['Class', 'Host', 'Image']
+class StructFile(XMLFileBacked):
+    '''This file contains a set of structure file formatting logic'''
+    def __init__(self, name):
+        XMLFileBacked.__init__(self, name)
+        self.fragments = {}
 
-    def __init__(self, filename, fam):
-        self.store = {}
-        self.__provides__ = {}
-        SingleXMLFileBacked.__init__(self, filename, fam)
-
-    def StoreRecord(self, metadata, entry):
-        '''Store scoped record based on metadata'''
-        if isinstance(entry, _Comment):
-            return
-        elif not entry.attrib.has_key('name'):
-            syslog(LOG_ERR, "Got malformed record %s" % (tostring(entry)))
-        if not self.store.has_key(entry.tag):
-            self.store[entry.tag] = {}
-        if not self.store[entry.tag].has_key(entry.attrib['name']):
-            self.store[entry.tag][entry.attrib['name']] = []
-        self.store[entry.tag][entry.attrib['name']].append((metadata, entry))
-    
     def Index(self):
         '''Build internal data structures'''
         try:
-            xdata = XML(self.data)
-        except XMLSyntaxError, msg:
-            syslog(LOG_ERR, "Failed to parse %s"%(self.name))
-            # need to add in lxml error messages, once they are supported
+            xdata = lxml.etree.XML(self.data)
+        except lxml.etree.XMLSyntaxError:
+            syslog.syslog(syslog.LOG_ERR, "Failed to parse file %s" % self.name)
             return
-        self.store = {}
-        for entry in [ent for ent in  xdata.getchildren() if not isinstance(ent, _Comment)]:
-            if entry.tag not in self.__containers__:
-                self.StoreRecord(('Global','all'), entry)
-            else:
-                name = (entry.tag, entry.get('name'))
-                [self.StoreRecord(name, child)
-                 for child in entry.getchildren() if not isinstance(entry, _Comment)]
-        # now to build the __provides__ table
-        for key in self.__provides__.keys():
-            del self.__provides__[key]
-        for key in self.store.keys():
-            self.__provides__[key] = {}
-            for name in self.store[key].keys():
-                self.__provides__[key][name] = self.FetchRecord
-                # also need to sort all leaf node lists
-                self.store[key][name].sort(self.Sort)
+        self.fragments = {}
+        work = {lambda x:True: xdata.getchildren()}
+        while work:
+            (predicate, worklist) = work.popitem()
+            self.fragments[predicate] = [item for item in worklist if item.tag != 'Group'
+                                         and not isinstance(item, lxml.etree._Comment)]
+            for group in [item for item in worklist if item.tag == 'Group']:
+                # if only python had forceable early-binding
+                newpred = eval("lambda x:'%s' in x.groups and predicate(x)" % (group.get('name')),
+                               {'predicate':predicate})
+                work[newpred] = group.getchildren()
 
-    def Sort(self, meta1, meta2):
-        '''Sort based on specificity'''
-        order = ['Global', 'Image', 'Profile', 'Class', 'Host']
-        return order.index(meta1[0][0]) - order.index(meta2[0][0])
+    def Match(self, metadata):
+        '''Return matching fragments of independant'''
+        return reduce(lambda x, y:x+y, [frag for (pred, frag) in self.fragments.iteritems()
+                                       if pred(metadata)])
 
-    def MatchMetadata(self, mdata, metadata):
-        '''Match internal metadata representation against metadata'''
-        (mtype, mvalue) = mdata
-        if mtype == 'Global':
-            return True
-        elif mtype == 'Profile':
-            if mvalue == metadata.profile:
-                return True
-        elif mtype == 'Image':
-            if mvalue == metadata.image:
-                return True
-        elif mtype == 'Class':
-            if mvalue in metadata.classes:
-                return True
-        elif mtype == 'Host':
-            if mvalue == metadata.hostname:
-                return True
-        return False
-
-    def FetchRecord(self, entry, metadata):
-        '''Build a data for specified metadata'''
-        dlist = self.store[entry.tag][entry.get('name')]
-        useful = [ent for ent in dlist if self.MatchMetadata(ent[0], metadata)]
-        if not useful:
-            syslog(LOG_ERR, "Failed to FetchRecord %s:%s"%(entry.tag, entry.get('name')))
+class LNode:
+    '''LNodes provide lists of things available at a particular group intersection'''
+    raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
+           'Group':"lambda x:'%s' in x.groups and predicate(x)"}
+    __leaf__ = './Child'
+    
+    def __init__(self, data, plist, parent=None):
+        self.data = data
+        self.contents = {}
+        if parent == None:
+            self.predicate = lambda x:True
         else:
-            data = useful[-1][-1]
-            [entry.attrib.__setitem__(x, data.attrib[x]) for x in data.attrib]
+            predicate = parent.predicate
+            if data.tag in self.raw.keys():
+                self.predicate = eval(self.raw[data.tag] % (data.get('name')), {'predicate':predicate})
+            else:
+                print data.tag
+                raise Exception
+        mytype = self.__class__
+        self.children = [mytype(child, plist, self) for child in data.getchildren()
+                         if child.tag in ['Group', 'Client']]
+        for leaf in data.findall(self.__leaf__):
+            self.contents[leaf.get('name')] = leaf.attrib
+            if leaf.get('name') not in plist:
+                plist.append(leaf.get('name'))
+
+    def Match(self, metadata, data):
+        '''Return a dictionary of package mappings'''
+        if self.predicate(metadata):
+            data.update(self.contents)
+            for child in self.children:
+                child.Match(metadata, data)
+
+class XMLSrc(XMLFileBacked):
+    '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
+    __node__ = LNode
+
+    def __init__(self, filename):
+        XMLFileBacked.__init__(self, filename)
+        self.names = []
+        self.cache = None
+        self.pnode = None
+        self.priority = '1000'
+    
+    def Index(self):
+        self.names = []
+        xdata = XML(self.data)
+        self.pnode = self.__node__(xdata, self.names)
+        self.cache = None
+        self.priority = xdata.attrib['priority']
+
+    def Cache(self, metadata):
+        '''Build a package dict for a given host'''
+        if self.cache == None or self.cache[0] != metadata:
+            cache = (metadata, {})
+            if self.pnode == None:
+                syslog.syslog(syslog.LOG_ERR,
+                              "Cache method called early for %s; forcing data load" % (self.name))
+                self.HandleEvent()
+                return
+            self.pnode.Match(metadata, cache[1])
+            self.cache = cache
+
+class XMLPrioDir(Plugin, DirectoryBacked):
+    '''This is a generator that handles package assignments'''
+    __name__ = 'XMLPrioDir'
+    __child__ = XMLSrc
+    __element__ = 'Dummy'
+
+    def __init__(self, core, datastore):
+        Plugin.__init__(self, core, datastore)
+        self.Entries[self.__element__] = {}
+        try:
+            DirectoryBacked.__init__(self, self.data, self.core.fam)
+        except OSError:
+            self.LogError("Failed to load %s indices" % (self.__element__.lower()))
+            raise PluginInitError
+
+    def HandleEvent(self, event):
+        '''Handle events and update dispatch table'''
+        DirectoryBacked.HandleEvent(self, event)
+        for src in self.entries.values():
+            for child in src.names:
+                self.Entries[self.__element__][child] = self.BindEntry
+
+    def BindEntry(self, entry, metadata):
+        '''Check package lists of package entries'''
+        [src.Cache(metadata) for src in self.entries.values()]
+        name = entry.get('name')
+        if not src.cache:
+            self.LogError("Called before data loaded")
+            raise PluginExecutionError
+        matching = [src for src in self.entries.values()
+                    if src.cache[1].has_key(name)]
+        if len(matching) == 0:
+            raise PluginExecutionError
+        elif len(matching) == 1:
+            index = 0
+        else:
+            prio = [int(src.priority) for src in matching]
+            if prio.count(max(prio)) > 1:
+                self.LogError("Found multiple %s sources with same priority for %s, pkg %s" %
+                              (self.__element__.lower(), metadata.hostname, entry.get('name')))
+                raise PluginExecutionError
+            index = prio.index(max(prio))
+
+        data = matching[index].cache[1][name]
+        [entry.attrib.__setitem__(key, data[key]) for key in data.keys()]

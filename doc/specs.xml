@@ -1,0 +1,501 @@
+<chapter>
+  <title>Writing Bcfg2 Specifications</title>
+  
+  <para>
+    The Bcfg2 specification is a set of directives that describe how
+    hosts should be configured. This information is used to generate
+    client configurations. This section describes the steps taken in 
+    during the composition of bcfg2 specifications. 
+  </para>
+
+  <orderedlist>
+    <listitem>
+      <para>
+	All parts of the specification will correspond to some
+	subset of the clients that bcfg2 has record of. Find or create a
+	group corresponding to the target of this specification.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+	Add each new configuration entry to the "abstract
+	configuration" for the target group. This can be done in one
+	of two ways. If the new configuration has to do with a
+	service, or some other piece of inter-dependent configuration,
+	write a bundle. If not, add the extra configuration entries to
+	the base. 
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+	Add configuration data for the above entries that apply only
+	to the target group.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+	Verify that clients not in the target group remain unaffected
+	by these changes. 
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+	Re-validate the bcfg2 repository by running 
+	<command>bcfg2-repo-validate</command>.
+      </para>
+    </listitem>
+  </orderedlist>
+
+  <section>
+    <title>Interacting with Client Groups in Bcfg2</title>
+
+    <para>
+      Bcfg2 uses an aspect based classing mechanism to describe
+      configuration patterns in its specifications. The Bcfg2 metadata
+      mechanism has two types of information, client metadata and
+      group metadata. Client metadata describes what top level group a
+      client is associated. Its configuration is derived from a
+      combination of its host information and this group. Group
+      definitions describe groups in terms of what bundles they
+      include and other groups they include. Groups have a set of
+      properties that describe how they can be used. 
+    </para>
+
+    <table>
+      <title>Bcfg2 Group Parameters</title>
+      <tgroup cols='3'>
+	<colspec colnum='1' colwidth='1*'/>
+	<colspec colnum='2' colwidth='7*'/>
+	<colspec colnum='3' colwidth='2*'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry>
+	    <entry>Values</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>profile</entry><entry>If a client can be
+	  directly associated with this group</entry><entry>(True|False*)</entry></row>
+	  <row><entry>public</entry><entry>If a client can freely
+	  associate itself with this group</entry><entry>(True|False*)</entry></row>
+	  <row><entry>toolset</entry>
+	    <entry>Describes which client-side logic should be used to
+	    make configuration
+	    changes</entry><entry>(rh|debian|solaris)</entry></row>
+	  <row><entry>category</entry>
+	    <entry>A group can only contain one instance of a group of
+	    any category. This provides the basis for representing
+	    groups which are conjugates of one another in a rigorous
+	    way. It also provides the basis for negation.</entry><entry>string</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+  </section>
+
+  <para>
+    When a client's configuration is generated, its metadata is the
+    fetched. This includes a list of all groups recursively
+    dereferenced, and all bundles included by those groups. This
+    collection has already been processed using the group category
+    rules, so only one instance from each group category is
+    included. This metadata is used throughout the rest of the
+    configuration generation process; it defines the client's abstract
+    configuration and specifies all literal contents of all
+    configuration entities. 
+  </para>
+
+  <section>
+    <title>Adding to the Abstract Configuration</title>
+
+    <para>
+      When writing bcfg2 specification, administrators primarily
+      perform one of two operations: addition of new configuration
+      entities or the modification of existing entries. If new
+      entities need to be added, then they must be added to the
+      abstract configuration. This is the inventory of configuration
+      entities that should be installed on a client. Two plugins
+      provide the basis for the abstract configuration, the bundler
+      and base. The bundler builds descriptions of interrelated
+      configuration entities. These are typically used for the
+      representation of services, or other complex groups of
+      entities. Base provides a laundry list of configuration entities
+      that need to be installed on hosts. These entities are
+      independent from one another, and can be installed individually
+      without worrying about the impact on other entities.
+    </para>
+
+    <para>
+      Entities in the abstract configuration (and correspondingly in
+      the literal configuration) can have one of several types. In the
+      abstract configuration, each of these entities only has a tag
+      and the name attribute set. 
+    </para>
+
+    <table>
+      <title>Bcfg2 Configuration Entity Types</title>
+      <tgroup cols='2'>
+	<colspec colnum='1'/>
+	<colspec colnum='2'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>Package</entry><entry>Software Package</entry></row>
+	  <row><entry>ConfigFile</entry><entry>Configuration File</entry></row>
+	  <row><entry>Service</entry>
+	    <entry>Persistent system services and daemons</entry></row>
+	  <row><entry>Directory</entry><entry>Filesystem Directories</entry></row>
+	  <row><entry>SymLink</entry><entry>Symbolic links</entry></row>
+	  <row><entry>Permissions</entry>
+	    <entry>The permissions (not contents) of a POSIX path</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <section>
+      <title>Writing Bundles</title>
+    
+      <para>
+	Bundles consist of a set of configuration entities. These
+	entities are grouped together due to a configuration-time
+	interdependency. Basic services tend to be the simplest
+	example of these: they consist of some software package(s)
+	some configuration files and an indication that some service
+	should be activated. If any of these pieces are installed or
+	updated, all should be re-checked and any associated services
+	should be restarted. 
+      </para>
+
+      <para>
+	Bundles can also contain conditonal entries that are only used
+	for hosts in some particular groups. This is useful when a
+	service name varies from platform to platform. A group is
+	defined for each platform, hence a different service can be
+	associated with the bundle for clients in the different
+	groups. Conditional additions can also add extra functionality
+	to services as needed. This has proven useful in the case of
+	configuring webservers; php and ssl can be configured as extra
+	features that some webservers have and others do not. At the
+	same time, all configuration-time interdependencies are
+	maintained. 
+      </para>
+    </section>
+
+    <section>
+      <title>Using Base</title>
+
+      <para>
+	The Base plugin provides a mechanism to add independent
+	configuration entities to a client's abstract
+	configuration. All files in the Base/ subdirectory of the
+	respository are processed, and all entries that fall within
+	the scope of the client metadata are included in its abstract
+	configuration.  These files are similar to those used by the
+	Bundler, Svcmgr, and Pkgmgr, without the need for
+	prioritization used by the later two.
+      </para>
+      </section>
+  </section>
+
+  <section>
+    <title>Adding to the Literal Configuration</title>
+    
+    <para>
+      During the construction of the literal configuration, first the
+      abstract configuration is built, and then explicit data is bound
+      in to each entity. The previous section describes how the first
+      stage works, and this section describes the second stage. Each
+      entity will be served by one plugin. This plugin will decide
+      what explicit data should be bound in to a particular entity for
+      a given client. Each of these plugins has a specific area of the
+      configuration repository, corresponding to its name. This
+      section describes how several of the basic plugins works.
+    </para>
+
+    <section>
+      <title>Cfg</title>
+      <para>
+	The Cfg plugin provides a configuration file repository that
+	uses literal file contents to provide client-tailored
+	configuration file entries. It chooses which data to provide
+	for a given client based on the aspect-based metadata system
+	used for high-level client configuration.
+      </para>
+      <para>
+	The Cfg repository is structured much like the filesystem
+	hierarchy being configured. Each configuration file being
+	served has a corresponding directory in the configuration
+	repository. These directories have the same relative path as
+	the absolute path of the configuration file on the target
+	system. For example, if Cfg was serving data for the
+	configuration file <filename>/etc/services</filename>, then
+	its directory would be in the relative path
+	<filename>./etc/services</filename> inside of the Cfg
+	repository. 
+      </para>
+      <para>
+	Inside of this file-specific directory, three types of files
+	may exist. Base files are complete instances of configuration
+	file. Deltas are differences between a base file and the
+	target file contents. Base files and deltas are tagged with
+	metadata specifiers, which describe which groups of clients
+	the fragment pertains to. Configuration files are constructed
+	by finding the most specific base file and applying any more
+	specific deltas.
+      </para>
+      <para>
+	Specifiers are embedded in fragment filenames. For example, in
+	the fragment <filename>services.G99_webserver</filename>,
+	"G99_webserver" is the specifier. This specifier applies to
+	the group (G) webserver with a priority of 99. Files can also
+	be tagged with a host-specific (H) specifier.Global files are
+	the least specific. Priorities are used as to break ties.
+      </para>
+      <para>
+	Info files, named <filename>:info</filename> are used to
+	specify target configuration file metadata, such as owner,
+	group and permissions. If no <filename>:info</filename> is
+	provided, targets are installed with default
+	information. Default metadata is root ownership, root group
+	memberships, and 0644 file permissions.
+      </para>
+      <example>
+	<title>Cfg/filepath/:info</title>
+	<programlisting>	  owner:root
+	  group:root
+	  perms:0755</programlisting>
+      </example>
+
+      <example>
+	<title>Cfg/etc/passwd/</title>
+	<programlisting>	  $ ls
+	  :info            passwd	  passwd.G99_chiba-login
+	  passwd.H_bio-debian  passwd.H_cvstest   passwd.H_foxtrot  
+	  passwd.H_reboot  passwd.H_rudy2    passwd.G98_netserv
+	  passwd.G99_tacacs-server.cat  passwd.H_adenine</programlisting>
+      </example>
+      
+      <para>
+	In the previous example, there exists files with each of the
+	characteristics mentioned above. All files ending in ".cat"
+	are deltas; ones with ".H_" are host specific files. There
+	exists a base file, a <filename>:info</filename> file, two
+	class-specified base files, and a bundle-specified base file.
+      </para>
+    </section>
+
+    <section>
+      <title>Pkgmgr</title>
+
+      <para>
+	The Pkgmgr plugin is responsible for providing package version
+	and installation information. In the case of each "Package"
+	entity in the configuration, it binds in information needed to
+	detect, verify and install the package. It has a similar
+	format to the files used by Base and Bundler, but with a few
+	differences. First, each file has a priority. This allows the
+	same entity to be served by multiple files. The priorities can
+	be used to disambiguate in the case that multiple files serve
+	data for the same package. The other difference is that
+	automatic deriviation of package information from the file
+	attribute. The Pkgmgr has a set of regexes that can split
+	package names for several formats. The filenames are used to
+	construct installation URLs, and set several important fields
+	like package name and version. 
+      </para>
+    </section>
+    <section>
+      <title>Svcmgr</title>
+
+      <para>
+	The Svcmgr plugin describes where services should be active
+	and inactive. Its files have a similar form to those used by
+	the Pkgmgr. Several files in the Svcmgr repository can contain
+	overlapping definitions, and a per-file priority is used to
+	determine precedence, the highest priority file serving data
+	for a particular service wins, on a service by service basis.
+      </para>
+
+      <para>
+	These files also have a similar set of semantics to those used
+	by the Pkgmgr. Entries in the top level element (Services) are
+	global definitions. Group elements describe additional
+	conditions that must be matched for that definition to
+	supercede less specific ones. Deeply nested definitions must
+	have their parent condition matched, plus all parent
+	conditions as well. For example, the following declaration
+	turns ssh on by default, disables it if the client is a part
+	of group a, and reenables it if the client is a part of both
+	groups a and b.
+      </para>
+
+            <example>
+	<title>Svcmgr/ssh.xml</title>
+	<programlisting><![CDATA[<Services priority='0'>
+  <Service name='ssh' status='on'/>
+  <Group name='a'>
+    <Service name='ssh' status='off'/>
+    <Group name='b'>
+      <Service name='ssh' status='on'/>
+    </Group>
+  </Group>
+</Services>]]></programlisting>
+      </example>
+
+      <para>
+	The files used by this plugin can be structured in a number of
+	ways. The most common method is to use one large file, but
+	this can be inconvenience due to the large size of the
+	file. The data can also be split up using any convenient
+	mechanism: per-service, per-administrator, etc.
+      </para>
+    </section>
+    <section>
+      <title>SSHbase</title>
+
+      <para>
+	The SSHbase plugin implements ssh public and private key
+	management functionality. This means that a central record of
+	ssh host keys is maintained. Also, a correct ssh_known_hosts
+	file is maintained. This means that the keys for new hosts are
+	added to this configuration, and also that a correct line for
+	localhost is created. SSHbase will generate a new key for any
+	hosts that doesn't already have a key stored in the
+	repository, so it should be pre-seeded with the keys (public
+	and private) of pre-existing clients.
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Checking Group-External Clients for Unintended
+    Changes</title>
+
+    <para>
+      Any configuration change will apply to some set of clients.
+      Often, repository changes can have unintended consequences to
+      clients not included in the target group. To address this issue,
+      consider the changes performed, and if they can affect clients
+      in unexpected ways.
+    </para>
+
+  </section>
+
+  <section>
+    <title>Validating the Bcfg2 Repository</title>
+    
+    <para>
+      Bcfg2 includes a repository validation tool that will check all
+      XML files in the repository against included XML schemas. It is
+      critical to run this command,
+      <command>bcfg2-repo-valdate</command> after any modifications to
+      XML files. If all files validate properly, then no output will
+      be returned. It takes a "-v" option that prints out  a line for
+      each file that is validated. This can be used to ensure that all
+      files are checked. 
+    </para>
+  </section>
+
+  <section>
+    <title>Annotated Configuration Examples</title>
+
+    <para>
+      In addition to the description of the abstract process
+      above, we present several examples of the thought process and
+      actions taken to achieve a particular configuration goal. These
+      will start simple, but become more complex.
+    </para>
+
+    <section>
+      <title>Configuring /etc/motd on all hosts</title>
+
+      <para>The goal for this example is to install a uniform copy of
+      a specified <filename>/etc/motd</filename> on all hosts.</para>
+
+      <orderedlist>
+	<listitem><para>
+	    In this case, the target group is global, since we want
+	    this version of <filename>/etc/motd</filename>. As
+	    mentioned earlier, the global group is handled specially,
+	    so that all new clients, even newly created ones, are in it.
+	  </para></listitem>
+	<listitem><para>
+	    Since <filename>/etc/motd</filename> is not interdependent
+	    with any other configuration entities, it can be installed
+	    using Base instead of using Bundler. The ConfigFile
+	    entity should be placed in the globally scoped section of
+	    a base file. This adds the configuration file to the
+	    abstract configuration.
+	  </para></listitem>
+	<listitem><para>
+	    A file with the correct contents for
+	    <filename>/etc/motd</filename> should be installed in the
+	    Cfg repository area as a global file. This will provide
+	    the right literal configuration specification for each
+	    client.
+	  </para></listitem>
+	<listitem><para>
+	    Since this change is globally scoped, there are not any
+	    clients that shoud not be affected.
+	</para></listitem>
+	<listitem><para>
+	    Finally, <command>bcfg2-repo-validate</command> should be
+	    run to catch typos. 
+	  </para></listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Configuring NTP for a network</title>
+      
+      <para>
+	The goal for this example is to configure NTP for an entire
+	network. This means several things. All clients should run NTP
+	as clients. One client should run NTP as a server, and
+	ntp clients should use it instead of an external server.
+      </para>
+
+      <orderedlist>
+	<listitem><para>
+	    Two discrete groups are used for the different parts of
+	    the desired configuration state. The first is the global
+	    group, handling the "all clients run ntp" part of the
+	    configuration specification. The other part corresponds to
+	    a new group "ntp-server", which contains only clients that
+	    should function as an ntp server.
+	  </para></listitem>
+	<listitem><para>
+	    This configuration specification describes configuration
+	    entities that have interdependencies, so a bundle should
+	    be used. This bundle should contain the ntp software, the
+	    ntp configuration file, and the ntpd service.
+	  </para></listitem>
+	<listitem><para>
+	    The literal portions of three different configuration
+	    entities need to be represented. First, the Pkgmgr needs
+	    to be configured to bind a package entity named ntp. Next,
+	    the Svcmgr needs to have a global declaration that the
+	    service ntpd should be on. Finally, two different
+	    configuration files should be added to Cfg. The global
+	    version of <filename>/etc/ntp.conf</filename> should have
+	    an ntp configuration that points hosts at the local ntp
+	    server. The group "ntp-server" specific version of this
+	    file should have the proper configuration for local ntp
+	    servers. 
+	  </para></listitem>
+	<listitem><para>
+	    A quick inspection of these configuration changes show
+	    only minor possibilities for bad interactions. All
+	    machines should run ntp, and the only scope where bad
+	    interactions can occur is on ntp servers. 
+	    </para></listitem>
+	<listitem><para>
+	    Finally, run <command>bcfg2-repo-validate</command>. It
+	    will validate the new bundle that has been added, and
+	    changes to the Svcmgr and Pkgmgr indices. 
+	  </para></listitem>
+      </orderedlist>
+    </section>
+
+    <!-- <para>Need more examples here</para> -->
+
+  </section>
+</chapter>

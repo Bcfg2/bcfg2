@@ -1,20 +1,39 @@
-bcfg2 (0.7.4-1) unstable; urgency=low
+bcfg2 (0.8.0-1) unstable; urgency=low
 
-  * final release
+  * New upstream release
 
- -- Narayan Desai <desai@mcs.anl.gov>  Mon, 16 Jan 2006 10:52:13 -0600
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri, 20 Jan 2006 15:53:30 -0600
 
-bcfg2 (0.7.4pre5-1) unstable; urgency=low
+bcfg2 (0.8.0pre5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Mon, 16 Jan 2006 12:11:09 -0600
+
+bcfg2 (0.8.0pre4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Wed, 11 Jan 2006 16:04:53 -0600
+
+bcfg2 (0.8.0pre3-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Tue, 10 Jan 2006 15:05:48 -0600
+
+bcfg2 (0.8.0pre2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri,  6 Jan 2006 14:18:36 -0600
+
+bcfg2 (0.8.0pre1-1) unstable; urgency=low
 
   * new upstream
+  * major repository format change
 
- -- Narayan Desai <desai@mcs.anl.gov>  Tue, 10 Jan 2006 14:56:21 -0600
-
-bcfg2 (0.7.4pre4-1) unstable; urgency=low
-
-  * new upstream
-
- -- Narayan Desai <desai@mcs.anl.gov>  Thu,  5 Jan 2006 10:43:16 -0600
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu,  5 Jan 2006 10:47:04 -0600
 
 bcfg2 (0.7.4pre3-1) unstable; urgency=low
 

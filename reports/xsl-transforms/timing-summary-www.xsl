@@ -36,7 +36,7 @@
                                 <th class="sortable">Total</th>
                             </tr>                     
                             <xsl:apply-templates select="Node">
-                                <xsl:sort select="HostInfo/@fqdn" order="ascending"/>
+                                <xsl:sort select="Client/@name" order="ascending"/>
                                 <xsl:sort select="@name"/>
                             </xsl:apply-templates>
                         </table>
@@ -54,7 +54,7 @@
     <xsl:template match="Node">
         <xsl:if test="count(Statistics/OpStamps) > 0">
             <tr>
-                <td class="sortable"><xsl:value-of select="HostInfo/@fqdn" /></td><!--node name-->
+                <td class="sortable"><xsl:value-of select="Client/@name" /></td><!--node name-->
                 <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@config_parse - Statistics/OpStamps/@config_download),'#.##')"/></td><!--parse-->
                 <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@probe_upload - Statistics/OpStamps/@start),'#.##')"/></td><!--probe download-->
                 <td class="sortable"><xsl:value-of select="format-number(number(Statistics/OpStamps/@inventory - Statistics/OpStamps/@initialization),'#.##')"/></td><!--inventory-->

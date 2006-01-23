@@ -4,69 +4,44 @@
     <xsd:documentation>
       metadata schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id: $
+      $Id$
     </xsd:documentation>
   </xsd:annotation>
   
-  <xsd:complexType name='ClientType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='image' use='required'/>
-    <xsd:attribute type='xsd:string' name='profile' use='required'/>
-  </xsd:complexType>
+  <xsd:simpleType name='toolsetType'>
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="rh|debian|solaris"/>
+    </xsd:restriction>
+  </xsd:simpleType>
 
-  <xsd:complexType name='ProfileType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Class'>
-	<xsd:complexType>
-	  <xsd:attribute type='xsd:string' name='name' use='required'/>
-	</xsd:complexType>
-      </xsd:element>
-      <xsd:element name='Attribute'>
-	<xsd:complexType>
-	  <xsd:attribute name='name' type='xsd:string' use='required'/>
-	  <xsd:attribute name='scope' type='xsd:string' use='required'/>
-	</xsd:complexType>
-      </xsd:element>
-    </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='public' use='required'/>
-  </xsd:complexType>
+  <xsd:simpleType name='booleanType'>
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="true|false"/>
+    </xsd:restriction>
+  </xsd:simpleType>
 
-  <xsd:complexType name='ClassType'>
+  <xsd:complexType name='groupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Bundle'>
 	<xsd:complexType>
 	  <xsd:attribute type='xsd:string' name='name' use='required'/>
 	</xsd:complexType>
       </xsd:element>
+      <xsd:element name='Group' type='groupType'/>
     </xsd:choice>
+    <xsd:attribute type='booleanType' name='profile' use='optional'/>
+    <xsd:attribute type='booleanType' name='public' use='optional'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
-  <xsd:simpleType name='ToolSetType'>
-     <xsd:restriction base="xsd:string">
-      <xsd:pattern value="rh|debian|solaris"/>                                                                                                                                             
-    </xsd:restriction>                                                                                                                                                                                                                  
-  </xsd:simpleType>                                                                                                                                                                                                                     
- 
-  <xsd:complexType name='ImageType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='ToolSetType' name='toolset' use='required'/>
+    <xsd:attribute type='toolsetType' name='toolset' use='optional'/>
+    <xsd:attribute type='xsd:string' name='category' use='optional'/>
   </xsd:complexType>
     
-
-  <xsd:element name='Metadata'>
+  <xsd:element name='Groups'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Client' type='ClientType'/>
-	<xsd:element name='Class' type='ClassType'/>
-	<xsd:element name='Profile' type='ProfileType'/>
-        <xsd:element name='Image' type='ImageType'/>
+	<xsd:element name='Group' type='groupType'/>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>
-      <xsd:attribute type='xsd:string' name='default_image' use='required'/>
-      <xsd:attribute type='xsd:string' name='default_profile' use='required'/>
     </xsd:complexType>
   </xsd:element>
-
 </xsd:schema>

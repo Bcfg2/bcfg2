@@ -25,8 +25,7 @@
   <xsd:element name='Bundle'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element type='GroupType' name='System'/>
-	<xsd:element type='GroupType' name='Attribute'/>
+	<xsd:element type='GroupType' name='Group'/>
 	<xsd:element name='Package' type='PackageType'/>
 	<xsd:element name='Service' type='ServiceType'/>
 	<xsd:element name='ConfigFile' type='ConfigFileType'/>
@@ -34,6 +33,7 @@
 	<xsd:element name='SymLink' type='SymLinkType'/>
 	<xsd:element name='Permission' type='PermissionType'/>
 	<xsd:element name='PostInstall' type='PostInstallType'/>
+	<xsd:element name='Group' type='GroupType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>

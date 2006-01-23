@@ -1,11 +1,208 @@
 <chapter>
-  <title>The BCFG2 Reporting System</title>
+  <title>BCFG2 Reports</title>
+
+  <para>
+    Reports play an important role in effectively managing systems
+    with BCFG. There are two primary functions they fulfill; providing
+    otherwise unobtainable information, and presenting additional
+    helpful information to allow for easier admistration. Reports
+    can contain information including system statistics, discrepancies
+    between specified and actual configuration, invalid configuration,
+    and auditing information among other things.
+  </para>
+
+  <para>
+    The flexible XML configuration file allows reports to be configured
+    to deliver only the information that is important. Additional reports 
+    can easily be created, providing site-specific capability to manage
+    at record effiency. The capability to harvest information regarding
+    statistics, configuration, and problems in a single location should
+    prove to be powerful.
+  </para>
+
+  <section>
+    <title>How it all works</title>
+
+    <para>
+      The BCFG2 Reporting System consists of a number of elements. The
+      core is the <command>StatReports</command>
+      Executable. <command>StatReports</command> reads a default
+      configuration file (or a config file specified on the command
+      line) then prepares and delivers the reports specified in the
+      configuration file. It is expected that this executable will be
+      run by the adminstrator periodically via <command>cron</command>
+      or similar facilty. The executable can also be run manually on
+      demand for a special sort of report that needs to be generated
+      immediately.
+    </para>
+    
+    <para>
+      <command>StatReports</command> gets the data it reports from a
+      number of sources. <filename>Metadata/clients.xml</filename>
+      contains information about if a host is currently pingable or
+      not, and a mapping of short hostnames to
+      FQDNs. <command>GenerateHostInfo</command> will be run
+      automatically by <command>StatReports</command> if the
+      <filename>Metadata/clients.xml</filename> file is older than
+      23.5 hours. This number is chosen, because it is likely an
+      administrator will recieve reports daily about the status of
+      hosts and if they had run BCFG the previous night. It is
+      possible to execute <command>GenerateHostInfo</command> to
+      update the <filename>Metadata/clients.xml</filename> file at any
+      interval via cron, but it does take some time to complete, so be
+      sure to give it a few minutes. This will only likely be of use
+      if your BCFG clients are set to update more often than nightly
+      and you would like reports after each run.
+    </para>
+    
+    <para>
+      The next place <command>StatReports</command> gets data from is the
+      <filename>statistics.xml</filename>
+      file. This file is maintained by bcfgd, and is updated whenever a
+      client updates, therefore is always up to date, and no
+      maintainence is required on this file.
+    </para>
+    
+    <para>
+      Finally <command>StatReports</command> is able to get information
+      out of the <filename>Metadata/groups.xml</filename> file as well.
+      This allows reports to describe the configured profile for each client.
+    </para>	
+  </section>
+
+  <section>
+    <title>Report Types</title>
+    
+    <para>
+      There are a number of report types, and a number of delivery
+      styles. It is expected that reports be laid out around a group
+      of machines. For any group of machines it can be defined that
+      there be any number of reports generated, with different
+      options. For each of those reports, each can be delivered by
+      Mail, WWW, or via RSS (or any combination of the three.) In the
+      future, additional report types will be added, and if necessary,
+      additional types of deliveries will be created. Tables
+      describing report types and report delivery mechanisms follow.
+    </para>
+
+    <table>
+      <title>Bcfg2 Report Types</title>
+      <tgroup cols='2'>
+	<colspec colnum='1' colwidth='1*'/>
+	<colspec colnum='2' colwidth='4*'/>
+	<thead>
+	  <row><entry>Report Type</entry><entry>Description</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>Overview-Stats</entry>
+	    <entry>
+	      <para>
+		This report provides informatoin about a large number of
+		machines and their states. It is often found to be useful
+		when the group of machines it is connected with is simply
+		All Nodes, which gives an overall outlook on your
+		network's health. It makes sense to get this report via
+		any mechanism
+	      </para>
+	    </entry></row>
+	  <row><entry>Nodes-Digest</entry>
+	    <entry>
+	      <para>
+		This report includes details about each node,
+		specifically what packages, files, etc are broken, and
+		other node specific info. It makes sense to recieve
+		this via any mechanism
+	      </para>
+	    </entry></row>
+	  <row><entry>Nodes-Individual</entry>
+	    <entry>
+	      <para>
+		This report includes details about each node, but
+		information is separated in to separate sections (such
+		as separate e-mails or RSS articles) before
+		sending. This works well with e-mail filters and error
+		detection. Currently WWW is not a supported delivery
+		mechanism for this type of report, because it is not
+		completely clear how such a report could be used.
+	      </para>
+	    </entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <table>
+      <title>Bcfg2 Report Delivery Mechanisms</title>
+      <tgroup cols='2'>
+	<colspec colnum='1' colwidth='1*'/>
+	<colspec colnum='2' colwidth='3*'/>
+	<thead>
+	  <row><entry>Name</entry><entry>Description</entry></row>
+	</thead>
+	<tbody>
+	  <row><entry>www</entry><entry>XHTML file</entry></row>
+	  <row><entry>rss</entry><entry>An RSS file <comment>(links do
+	  not point at real web links, since they may not exist)</comment></entry></row>
+	  <row><entry>mail</entry><entry>A plaintext email
+	  message</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
+  </section>
+
+  <section>
+    <title>Configuration</title>
+    
+    <para>The <filename>report-configuration.xml</filename> file is the
+      standard file that is used
+      whenever the <command>StatReports</command> executable is run without any
+      command line arguments. Alternate configuration files, formatted 
+      identically, can be used instead with the -c flag. This can be useful
+      for running different types of reports at different intervals. For
+      example:</para>
+    <programlisting>
+      Run this hourly: StatReports -c WebAndRssReport-config.xml
+      Run this daily: StatReports -c emailReports-config.xml
+    </programlisting>
+
+    <para>The <filename>report-configuration.xml</filename>
+      file is structured with a root
+      <![CDATA[<Reports/>]]> tag at the top level. Within this tag any number
+      of
+      <![CDATA[<Report/>]]> tags can be inserted. Each report is structured 
+      around a group of machines. <![CDATA[<Machine/>]]> tags may individually
+      reference a machine by hostname (not FQDN), or also by a Python Regular
+      Expression. More information can be found about such Regexes at:
+      <ulink url="http://docs.python.org/lib/re-syntax.html"/>.</para>
+
+    <para>Any number of <![CDATA[<Delivery/>]]> elements can be made for a 
+      given
+      report. A delivery consists of a mechanism and a type.
+      The mechanism would be 
+      something like Mail or Web, and they type would reference the content
+      of the report. Some are tailored to overall machine health, while
+      others could be best fit for auditing purposes</para>
+
+    <para>Finally, each <![CDATA[<Delivery/>]]> contains one or more
+      <![CDATA[<Destination/>]]> tags. In the
+      case of an RSS or WWW report, the destination should be a complete path
+      to the output file. In e-mail based reports the destination should be
+      a complete e-mail address.</para>
+
+  </section>
 
   <section>
     <title>Reporting Quick Start</title>
 
+    <para>
+      This configuration will generate two separate reports and
+      deliver them a number of different ways. For more information on
+      exactly what each section does, please refer to the
+      Configuration section above.
+    </para>
+
   <example>
-  <title><filename>report-configuration.xml</filename></title>
+  <title><filename>etc/report-configuration.xml</filename></title>
   <programlisting><![CDATA[<Reports>
       <Report name='core_stats' good='Y' modified='Y'>
           <Delivery mechanism='mail' type='nodes-digest'>
@@ -32,233 +229,13 @@
   </programlisting>
   </example>
 
-  <para>This configuration will generate two separate reports and deliver
-    them a number of different ways. For more information on exactly what 
-    each section does, please refer to the Configuration section below</para>
+  <para>
+      Once configured correctly, just wait for the e-mail or check
+      look at the output html files with a web browser. You can run
+      <command>StatReports</command> by hand if you would like
+      in order to try it out immediately. 
+    </para>
 
-  <para>In order to run reports, you need to run the following command
-    regularly via <command>Cron</command>:
-    <command>GenerateHostInfo</command></para>
-  <para>Once configured correctly, just wait for the e-mail or check
-    look at the output html files with a web browser. You can run
-    <command>GenerateHostInfo</command> by hand if you would like
-    in order to try it out immediately. If you are trying to view a
-    HTML file and find that it doesn't work as expected, make sure
-    that the required source directory is in the same directory. They 
-    are static, but might need to be moved from <![CDATA[prefix]]>/share/bcfg2/
-    in to the directory from which you are viewing your reports.</para>
 </section>
 
-  <section>
-    <title>Concepts; Why to report</title>
-
-    <para>Reports play an important role in effectively managing systems
-      with BCFG. There are two primary functions they fulfill; providing 
-      otherwise unobtainable information, and presenting additional
-      helpful information to allow for easier admistration. Reports
-      can contain information including system statistics, discrepancies
-      between specified and actual configuration, invalid configuration,
-      and auditing information among other things.</para>
-
-    <para>The flexible XML configuration file allows reports to be configured
-      to deliver only the information that is important. Additional reports 
-      can easily be created, providing site-specific capability to manage
-      at record effiency. The capability to harvest information regarding
-      statistics, configuration, and problems in a single location should
-      prove to be powerful.</para>
-  </section>
-
-  <section>
-    <title>How it all works</title>
-
-    <para>The BCFG2 Reporting System consists of a number of
-      elements. The core is the <command>StatReports</command>
-      Executable. <command>StatReports</command> reads
-      a default configuration file (or a config file specified on the
-      command line) then prepares and delivers the reports specified in
-      the configuration file. It is expected that this executable will be
-      run by the adminstrator periodically via <command>cron</command>
-      or similar
-      facilty. The executable can also be run manually on demand for a
-      special sort of report that needs to be generated immediately.
-    </para>
-    
-    <para>
-      <command>StatReports</command> gets the data it reports from a number of
-      sources. The <filename>hostinfo.xml</filename> 
-      file is specific to the reporting system
-      and generated by the executable python script <command>GenerateHostInfo
-      </command>. 
-      <filename>Hostinfo.xml</filename> contains information about if a
-      host is currently
-      pingable or not, and a mapping of short hostnames to
-      FQDNs. <command>GenerateHostInfo</command> will be run automatically
-      by <command>StatReports</command> if the <filename>hostinfo.xml</filename>
-      file is older than 23.5 hours. This number is
-      chosen, because it is likely an administrator will recieve reports
-      daily about the status of hosts and if they had run BCFG the
-      previous night. It is possible to execute
-      <command>GenerateHostInfo</command> to update the
-      <filename>hostinfo.xml</filename> file at any interval via cron,
-      but it does take
-      some time to complete, so be sure to give it a few minutes. This
-      will only likely be of use if your BCFG clients are set to update
-      more often than nightly and you would like reports after each run.
-    </para>
-    
-    <para>
-      The next place <command>StatReports</command> gets data from is the
-      <filename>statistics.xml</filename>
-      file. This file is maintained by bcfgd, and is updated whenever a
-      client updates, therefore is always up to date, and no
-      maintainence is required on this file.
-    </para>
-    
-    <para>
-      Finally <command>StatReports</command> is able to get any information
-      out of the <filename>metadata.xml</filename> file.
-      This will likely be most useful in the future
-      where the range of reports will include auditing style reports,
-      that must include configuration information.
-    </para>	
-  </section>
-
-  <section>
-    <title>Report Types</title>
-    
-    <para>
-      There are a number of report types, and a number of delivery
-      styles. It is expected that reports be laid out around a group
-      of machines. For any group of machines it can be defined that
-      there be any number of reports generated, with different
-      options. For each of those reports, each can be delivered by
-      Mail, WWW, or via RSS (or any combination of the three.) In the
-      future, additional report types will be added, and if necessary,
-      additional types of deliveries will be created.
-    </para>
-
-    <para>Here is a list of the report types currently defined.</para>
-
-    <variablelist>
-      <varlistentry>
-	<term>Overview-Stats</term>
-	<listitem>
-	  <para>
-	    This report provides informatoin about a large number of
-	    machines and their states. It is often found to be useful
-	    when the group of machines it is connected with is simply
-	    All Nodes, which gives an overall outlook on your
-	    network's health. It makes sense to get this report via
-	    any mechanism
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Nodes-Digest</term>
-	<listitem>
-	  <para>
-	    This is a report that includes details about each node,
-	    specifically what packages, files, etc are broken, and
-	    other node specific info. It makes sense to recieve this
-	    via any mechanism
-	    </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Nodes-Individual</term>
-	<listitem>
-	  <para>
-	    This report includes details about each node, but
-	    information is separated in to separate sections (such as
-	    separate e-mails or RSS articles) before sending. This
-	    works well with e-mail filters and error
-	    detection. Currently WWW is not a supported delivery
-	    mechanism for this type of report, because it is not
-	    completely clear how such a report could be used.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-
-    <para>A list of delivery mechanisms follows:</para>
-
-    <variablelist>
-      <varlistentry>
-	<term>www</term>
-	<listitem>
-	  <para>
-	    This delivery produces HTML reports which can be delivered
-	    via the WWW. it is important that you copy the directory:
-	    <![CDATA[<prefix>]]>/share/bcfg2/reports/web-rprt-srcs in to the
-	    same directory as you will be serving web pages from. It
-	    includes CSS and JavaScript files necessary to properly
-	    view the WWW files.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>rss</term>
-	<listitem>
-	  <para>
-	    This delivery type also should be written to some area
-	    that is likely web accessable. It is plain RSS-- One
-	    Caveat-- the "Article Link" does not actually point to any
-	    web information, because it is not clear that a
-	    corresponding web page exists for any given RSS article.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>mail</term>
-	<listitem>
-	  <para>
-	    Mail is simple plaintext e-mail that is sent to the
-	    specified recipients directly from the machine on which
-	    BCFG is running by opening a pipe to sendmail.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-  </section>
-
-  <section>
-    <title>Configuration</title>
-    
-    <para>The <filename>report-configuration.xml</filename> file is the
-      standard file that is used
-      whenever the <command>StatReports</command> executable is run without any
-      command line arguments. Alternate configuration files, formatted 
-      identically, can be used instead with the -c flag. This can be useful
-      for running different types of reports at different intervals. For
-      example:</para>
-    <programlisting>
-      Run this hourly: StatReports -c WebAndRssReport-config.xml
-      Run this daily: StatReports -c emailReports-config.xml
-    </programlisting>
-
-    <para>The <filename>report-configuration.xml</filename>
-      file is structured with a root
-      <![CDATA[<Reports/>]]> tag at the top level. Within this tag any number
-      of
-      <![CDATA[<Report/>]]> tags can be inserted. Each report is structured 
-      around a group of machines. <![CDATA[<Machine/>]]> tags may individually
-      reference a machine by hostname (not FQDN), or also by a Python Regular
-      Expression. More information can be found about such Regexes at:
-      http://docs.python.org/lib/re-syntax.html.</para>
-
-    <para>Any number of <![CDATA[<Delivery/>]]> elements can be made for a 
-      given
-      report. A delivery consists of a mechanism and a type.
-      The mechanism would be 
-      something like Mail or Web, and they type would reference the content
-      of the report. Some are tailored to overall machine health, while
-      others could be best fit for auditing purposes</para>
-
-    <para>Finally, each <![CDATA[<Delivery/>]]> contains one or more
-      <![CDATA[<Destination/>]]> tags. In the
-      case of an RSS or WWW report, the destination should be a complete path
-      to the output file. In e-mail based reports the destination should be
-      a complete e-mail address.</para>
-
-  </section>
 </chapter>

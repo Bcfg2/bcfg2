@@ -5,7 +5,6 @@ from ConfigParser import ConfigParser, NoOptionError
 from cPickle import loads, dumps
 from M2Crypto import SSL
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
-from select import select
 from socket import gethostname
 from sys import exc_info
 import sys

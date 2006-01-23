@@ -4,7 +4,7 @@
     <xsd:documentation>
       services schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id: $
+      $Id$
     </xsd:documentation>
   </xsd:annotation>
 
@@ -35,11 +35,10 @@
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Service' type='ServiceType'/>
-	<xsd:element name='Class' type='ContainerType'/>
-	<xsd:element name='Image' type='ContainerType'/>
+	<xsd:element name='Group' type='ContainerType'/>
 	<xsd:element name='Host' type='ContainerType'/>
-	<xsd:element name='Global' type='ContainerType'/>
       </xsd:choice>
+      <xsd:attribute name='priority' type='xsd:integer'/>
     </xsd:complexType>
   </xsd:element>
   

@@ -72,7 +72,7 @@
       </listitem>
       <listitem>
 	<para>
-	  Generators and administrative applications.
+	  Plugins and administrative applications.
 	</para>
       </listitem>
       <listitem>
@@ -103,6 +103,12 @@
     <para>The operation of the Bcfg2 client is intended to be as
       simple as possible. The normal configuration process consists of
       four main steps:</para>
+
+<!--     <procedure> -->
+<!--       <title>Bcfg2 Client Execution Process</title> -->
+
+<!--       <step>foo</step> -->
+<!--     </procedure> -->
 
     <variablelist>
       <varlistentry>
@@ -316,18 +322,18 @@
 	      literal configuration information. After the abstract
 	      configuration is created, each configuration entry must
 	      be bound to a client-specific value. The Bcfg2 server
-	      uses generators to provide these client-specific bindings.
+	      uses plugins to provide these client-specific bindings.
 	    </para>
 
 	    <para>
 	      The Bcfg2 server core contains a dispatch table that
-	      describes which generator can handle requests of a
-	      particular type. The responsible generator is located
+	      describes which plugins can handle requests of a
+	      particular type. The responsible plugin is located
 	      for each entry. It is called, passing in the
 	      configuration entry and the client's metadata. The
-	      behavior of generators is explicitly undefined, so as to
-	      allow maximum flexibility. The behavior of the stock
-	      generators is documented elsewhere in this manual.
+	      behavior of plugins is explicitly undefined, so as to
+	      allow maximum flexibility. The behaviors of the stock
+	      plugins are documented elsewhere in this manual.
 	    </para>
 
 	    <para>

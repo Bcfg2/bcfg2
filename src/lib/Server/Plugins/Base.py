@@ -1,62 +1,31 @@
 '''This module sets up a base list of configuration entries'''
 __revision__ = '$Revision$'
 
-from copy import deepcopy
-from lxml.etree import Element, XML, XMLSyntaxError, _Comment
+import Bcfg2.Server.Plugin
+import copy
+import lxml.etree
 
-from Bcfg2.Server.Plugin import Plugin, PluginInitError, SingleXMLFileBacked
-
-class Base(Plugin, SingleXMLFileBacked):
+class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
     '''This Structure is good for the pile of independent configs needed for most actual systems'''
     __name__ =  'Base'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __child__ = Bcfg2.Server.Plugin.StructFile
     
     '''base creates independent clauses based on client metadata'''
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
-        self.store = {'all':[], 'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        self.fragements = {}
         try:
-            SingleXMLFileBacked.__init__(self, "%s/etc/base.xml"%(datastore), self.core.fam)
+            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.LogError("Failed to load base.xml")
-            raise PluginInitError
+            self.LogError("Failed to load Base repository")
+            raise Bcfg2.Server.Plugin.PluginInitError
         
-    def Index(self):
-        '''Store XML data in reasonable structures'''
-        try:
-            xdata = XML(self.data)
-        except XMLSyntaxError:
-            self.LogError("Failed to parse base.xml")
-            return
-        self.store = {'all':[], 'Class':{'all':[]}, 'Image':{'all':[]}, 'all':[]}
-        for entry in [ent for ent in xdata.getchildren() if not isinstance(ent, _Comment)]:
-            if entry.tag in ['Image', 'Class']:
-                if not self.store[entry.tag].has_key(entry.get('name')):
-                    self.store[entry.tag][entry.get('name')] = {'all':[], 'Class':{}, 'Image':{}}
-                for child in [ent for ent in entry.getchildren() if not isinstance(ent, _Comment)]:
-                    if child.tag in ['Image', 'Class']:
-                        self.store[entry.tag][entry.get('name')][child.tag][child.get('name')] = \
-                                                                                               [ent for ent in child.getchildren() if \
-                                                                                                not isinstance(ent, _Comment)]
-                    else:
-                        self.store[entry.tag][entry.get('name')]['all'].append(child)
-            else:
-                self.store['all'].append(child)
-
     def BuildStructures(self, metadata):
         '''Build structures for client described by metadata'''
-        ret = Element("Independant", version='2.0')
-        [ret.append(deepcopy(entry)) for entry in self.store['all']]
-        idata = self.store['Image'].get(metadata.image, {'all':[], 'Class':{}})
-        for entry in idata['all']:
-            ret.append(deepcopy(entry))
-        for cls in metadata.classes:
-            for entry in idata['Class'].get(cls, []):
-                ret.append(deepcopy(entry))
-            cdata = self.store['Class'].get(cls, {'all':[], 'Image':{}})
-            for entry in cdata['all']:
-                ret.append(deepcopy(entry))
-            for entry in cdata['Image'].get(metadata.image, []):
-                ret.append(deepcopy(entry))
+        ret = lxml.etree.Element("Independant", version='2.0')
+        fragments = reduce(lambda x, y: x+y,
+                           [base.Match(metadata) for base in self.entries.values()])
+        [ret.append(copy.deepcopy(frag)) for frag in fragments]
         return [ret]

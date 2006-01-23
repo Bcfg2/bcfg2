@@ -4,7 +4,7 @@
     <xsd:documentation>
       base schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id: $
+      $Id$
     </xsd:documentation>
   </xsd:annotation>
   
@@ -18,8 +18,7 @@
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Directory' type='DirectoryType'/>
       <xsd:element name='Permissions' type='PermissionType'/>
-      <xsd:element name='Class' type='ContainerType'/>
-      <xsd:element name='Image' type='ContainerType'/>
+      <xsd:element name='Group' type='ContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
@@ -27,8 +26,7 @@
   <xsd:element name='Base'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Image' type='ContainerType'/>
-	<xsd:element name='Class' type='ContainerType'/>
+	<xsd:element name='Group' type='ContainerType'/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

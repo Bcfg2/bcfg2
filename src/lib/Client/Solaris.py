@@ -83,7 +83,7 @@ class ToolsetImpl(Toolset):
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
         if not entry.attrib.has_key('FMRI'):
-            (rc, name) = self.saferun("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % entry.get('name'))
+            name = self.saferun("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % entry.get('name'))[1]
             if name:
                 entry.set('FMRI', name[0])
             else:

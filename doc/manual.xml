@@ -1,40 +1,51 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
 [
-<!ENTITY concepts SYSTEM "concepts.xml">
 <!ENTITY architecture SYSTEM "architecture.xml">
 <!ENTITY install SYSTEM "install.xml">
-<!ENTITY generators SYSTEM "generators.xml">
+<!ENTITY specification SYSTEM "specs.xml">
 <!ENTITY deployment SYSTEM "deployment.xml">
+<!ENTITY development SYSTEM "development.xml">
 <!ENTITY reports SYSTEM "reports.xml">
 ]>
 <book id="bcfg2">
   <bookinfo>
     <title>Bcfg2 Manual</title>
-    <author>
-      <firstname>Narayan</firstname>
-      <surname>Desai</surname>
-      <email>desai@mcs.anl.gov</email>
-    </author>
-    <author>
-      <firstname>Rick</firstname>
-      <surname>Bradshaw</surname>
-      <email>bradshaw@mcs.anl.gov</email>
-    </author>
-    <author>
-      <firstname>Joey</firstname>
-      <surname>Hagedorn</surname>
-      <email>hagedorn@mcs.anl.gov</email>
-    </author>
-    <affiliation>
-      <orgname>Argonne National Laboratory</orgname>
-      <orgdiv>MCS Division</orgdiv> 
-    </affiliation>
+    <authorgroup>
+      <author>
+	<firstname>Narayan</firstname>
+	<surname>Desai</surname>
+	<email>desai@mcs.anl.gov</email>
+	<affiliation>
+	  <orgname>Argonne National Laboratory</orgname>
+	  <orgdiv>MCS Division</orgdiv> 
+	</affiliation>
+      </author>
+      <author>
+	<firstname>Rick</firstname>
+	<surname>Bradshaw</surname>
+	<email>bradshaw@mcs.anl.gov</email>
+	<affiliation>
+	  <orgname>Argonne National Laboratory</orgname>
+	  <orgdiv>MCS Division</orgdiv> 
+	</affiliation>
+      </author>
+      <author>
+	<firstname>Joey</firstname>
+	<surname>Hagedorn</surname>
+	<email>hagedorn@mcs.anl.gov</email>
+	<affiliation>
+	  <orgname>Argonne National Laboratory</orgname>
+	  <orgdiv>MCS Division</orgdiv> 
+	</affiliation>
+      </author>
+    </authorgroup>
     <date>September 2, 2005</date>
+    <edition>Manual for version 0.8.0</edition>
     <releaseinfo>$Revision$</releaseinfo>
-    <pubdate>September 2005</pubdate>
+    <pubdate>January 2006</pubdate>
     <copyright>
-      <year>2005</year>
+      <year>2005-2006</year>
       <holder>Argonne National Laboratory</holder>
     </copyright> 
     
@@ -56,18 +67,17 @@
 
     <revhistory>
       <revision>
-	<revnumber>0.7.1pre6</revnumber>
+	<revnumber>0.8.0</revnumber>
 	<date>$Date$</date>
 	<revremark>$Id$</revremark>
       </revision>
     </revhistory>
   </bookinfo>
 
-  <toc/>
-
 &architecture;
 &install;
-&generators;
+&specification;
 &deployment;
+&development;
 &reports;
 </book>

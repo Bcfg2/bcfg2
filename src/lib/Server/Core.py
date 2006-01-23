@@ -11,8 +11,10 @@ from ConfigParser import ConfigParser
 from lxml.etree import Element
 
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
-from Bcfg2.Server.Metadata import MetadataStore, MetadataConsistencyError
+
 from Bcfg2.Server.Statistics import Statistics
+
+import Bcfg2.Server.Metadata
 
 def log_failure(msg):
     syslog(LOG_ERR, "Unexpected failure in %s" % (msg))
@@ -210,7 +212,7 @@ class Core(object):
         
         mpath = cfile.get('server','repository')
         try:
-            self.metadata = MetadataStore("%s/etc/metadata.xml" % mpath, self.fam)
+            self.metadata = Bcfg2.Server.Metadata.Metadata(self.fam, mpath)
         except OSError:
             raise CoreInitError, "metadata path incorrect"
         
@@ -269,21 +271,15 @@ class Core(object):
             generators = ", ".join([gen.__name__ for gen in glist])
             syslog(LOG_ERR, "%s %s served by multiple generators: %s" % (entry.tag,
                                                                          entry.get('name'), generators))
-            raise PluginExecutionError, (entry.tag, entry.get('name'))
-        else:
-            for gen in self.generators:
-                if hasattr(gen, "FindHandler"):
-                    return gen.FindHandler(entry)(entry, metadata)
-            syslog(LOG_ERR, "Failed to find handler for %s:%s" % (entry.tag, entry.get('name')))
-            raise PluginExecutionError, (entry.tag, entry.get('name'))
+        raise PluginExecutionError, (entry.tag, entry.get('name'))
                 
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time()
         config = Element("Configuration", version='2.0')
         try:
-            meta = self.metadata.FetchMetadata(client)
-        except MetadataConsistencyError:
+            meta = self.metadata.get_metadata(client)
+        except Bcfg2.Server.Metadata.MetadataConsistencyError:
             syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
             return Element("error", type='metadata error')
 
