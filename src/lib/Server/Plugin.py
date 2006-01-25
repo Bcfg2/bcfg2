@@ -1,12 +1,11 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import lxml.etree
-import os
-import stat
-import syslog
+import logging, lxml.etree, os, stat
 
 from lxml.etree import XML, XMLSyntaxError
+
+logger = logging.getLogger('Bcfg2.Plugin')
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
@@ -38,10 +37,7 @@ class Plugin(object):
         self.Entries = {}
         self.core = core
         self.data = "%s/%s" % (datastore, self.__name__)
-
-    def LogError(self, msg):
-        '''Log error message tagged with Plugin name'''
-        syslog.syslog(syslog.LOG_ERR, "%s: %s" % (self.__name__, msg))
+        self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.__name__))
 
     def BuildStructures(self, metadata):
         '''Build a set of structures tailored to the client metadata'''
@@ -77,13 +73,13 @@ class FileBacked(object):
         try:
             self.mtime = os.stat(self.name)[stat.ST_MTIME]
         except OSError:
-            syslog.syslog(syslog.LOG_ERR, "Failed to stat file %s" % (self.name))
+            logger.error("Failed to stat file %s" % (self.name))
             
         try:
             self.data = file(self.name).read()
             self.Index()
         except IOError:
-            syslog.syslog(syslog.LOG_ERR, "Failed to read file %s" % (self.name))
+            logger.error("Failed to read file %s" % (self.name))
             
     def Index(self):
         '''Update local data structures based on current file state'''
@@ -110,9 +106,9 @@ class DirectoryBacked(object):
     def AddEntry(self, name):
         '''Add new entry to data structures upon file creation'''
         if name == '':
-            syslog.syslog(syslog.LOG_INFO, "got add for empty name")
+            logger.info("got add for empty name")
         elif self.entries.has_key(name):
-            syslog.syslog(syslog.LOG_INFO, "got multiple adds for %s" % name)
+            logger.info("got multiple adds for %s" % name)
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
                 return
@@ -123,7 +119,7 @@ class DirectoryBacked(object):
         '''Propagate fam events to underlying objects'''
         action = event.code2str()
         if event.filename == '':
-            syslog.syslog(syslog.LOG_INFO, "Got event for blank filename")
+            logger.info("Got event for blank filename")
             return
         if action == 'exists':
             if event.filename != self.name:
@@ -155,7 +151,7 @@ class XMLFileBacked(FileBacked):
         try:
             xdata = XML(self.data)
         except XMLSyntaxError:
-            syslog.syslog(syslog.LOG_ERR, "Failed to parse %s"%(self.name))
+            logger.error("Failed to parse %s"%(self.name))
             return
         self.label = xdata.attrib[self.__identifier__]
         self.entries = xdata.getchildren()
@@ -180,7 +176,7 @@ class StructFile(XMLFileBacked):
         try:
             xdata = lxml.etree.XML(self.data)
         except lxml.etree.XMLSyntaxError:
-            syslog.syslog(syslog.LOG_ERR, "Failed to parse file %s" % self.name)
+            logger.error("Failed to parse file %s" % self.name)
             return
         self.fragments = {}
         work = {lambda x:True: xdata.getchildren()}
@@ -255,8 +251,7 @@ class XMLSrc(XMLFileBacked):
         if self.cache == None or self.cache[0] != metadata:
             cache = (metadata, {})
             if self.pnode == None:
-                syslog.syslog(syslog.LOG_ERR,
-                              "Cache method called early for %s; forcing data load" % (self.name))
+                logger.error("Cache method called early for %s; forcing data load" % (self.name))
                 self.HandleEvent()
                 return
             self.pnode.Match(metadata, cache[1])
@@ -274,7 +269,7 @@ class XMLPrioDir(Plugin, DirectoryBacked):
         try:
             DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.LogError("Failed to load %s indices" % (self.__element__.lower()))
+            self.logger.error("Failed to load %s indices" % (self.__element__.lower()))
             raise PluginInitError
 
     def HandleEvent(self, event):
@@ -289,7 +284,7 @@ class XMLPrioDir(Plugin, DirectoryBacked):
         [src.Cache(metadata) for src in self.entries.values()]
         name = entry.get('name')
         if not src.cache:
-            self.LogError("Called before data loaded")
+            self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in self.entries.values()
                     if src.cache[1].has_key(name)]
@@ -300,8 +295,8 @@ class XMLPrioDir(Plugin, DirectoryBacked):
         else:
             prio = [int(src.priority) for src in matching]
             if prio.count(max(prio)) > 1:
-                self.LogError("Found multiple %s sources with same priority for %s, pkg %s" %
-                              (self.__element__.lower(), metadata.hostname, entry.get('name')))
+                self.logger.error("Found multiple %s sources with same priority for %s, pkg %s" %
+                                  (self.__element__.lower(), metadata.hostname, entry.get('name')))
                 raise PluginExecutionError
             index = prio.index(max(prio))
 

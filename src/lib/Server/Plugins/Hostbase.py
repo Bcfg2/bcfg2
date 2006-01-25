@@ -1,13 +1,16 @@
 '''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
 __revision__ = '$Revision$'
 
-from syslog import syslog, LOG_INFO
 from lxml.etree import XML, SubElement
 from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
 from sets import Set
 import re
+
+import logging
+
+logger = logging.getLogger('Bcfg2.Plugins.Hostbase')
 
 class DataNexus(DirectoryBacked):
     '''DataNexus is an object that watches multiple files and
@@ -23,7 +26,7 @@ class DataNexus(DirectoryBacked):
         action = event.code2str()
         if action in ['exists', 'created']:
             if (event.filename != self.name) and (event.filename not in self.files):
-                syslog(LOG_INFO, "%s:Got event for unexpected file %s" % (self.__name__, event.filename))
+                logger.info("%s:Got event for unexpected file %s" % (self.__name__, event.filename))
                 return
         DirectoryBacked.HandleEvent(self, event)
         if action != 'endExist' and event.filename != self.name:
@@ -48,7 +51,7 @@ class Hostbase(Plugin, DataNexus):
             DataNexus.__init__(self, datastore + '/Hostbase/data',
                                files, self.core.fam)
         except:
-            self.LogError("Failed to load data directory")
+            logger.error("Failed to load data directory")
             raise PluginInitError
         self.xdata = {}
         self.filedata = {}
@@ -96,12 +99,12 @@ class Hostbase(Plugin, DataNexus):
             todaydate = (strftime('%Y%m%d'))
             try:
                 if todaydate == zone.get('serial')[:8]:
-                    serial = atoi(zone.get('serial')) + 1
+                    serial = int(zone.get('serial')) + 1
                 else:
-                    serial = atoi(todaydate) * 100
+                    serial = int(todaydate) * 100
                 return str(serial)
             except (KeyError):
-                serial = atoi(todaydate) * 100
+                serial = int(todaydate) * 100
                 return str(serial)
 
         if self.entries.has_key(event.filename) and not self.xdata.has_key(event.filename):

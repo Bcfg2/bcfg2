@@ -1,13 +1,9 @@
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 
-from binascii import b2a_base64
-from os import system, popen
-from socket import gethostbyname, gaierror
+import binascii, os, socket, Bcfg2.Server.Plugin
 
-from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, PluginExecutionError
-
-class SSHbase(Plugin):
+class SSHbase(Bcfg2.Server.Plugin.Plugin):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
     for hosts.  It also manages the ssh_known_hosts file. It can
     integrate host keys from other management domains and similarly
@@ -35,8 +31,8 @@ class SSHbase(Plugin):
                 "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
 
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
-        self.repository = DirectoryBacked(self.data, self.core.fam)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
         try:
             prefix = open("%s/prefix" % (self.data)).read().strip()
         except IOError:
@@ -65,20 +61,20 @@ class SSHbase(Plugin):
         else:
             # need to add entry
             try:
-                ipaddr = gethostbyname(client)
+                ipaddr = socket.gethostbyname(client)
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
-            except gaierror:
-                (client)
+            except socket.gaierror:
+                pass
         try:
-            ipaddr = popen("getent hosts %s" % client).read().strip().split()
+            ipaddr = os.popen("getent hosts %s" % client).read().strip().split()
         except:
             ipaddr = ''
         if ipaddr:
             self.ipcache[client] = (ipaddr, client)
             return (ipaddr, client)
-        self.LogError("Failed to find IP address for %s" % client)
-        raise gaierror
+        self.logger.error("Failed to find IP address for %s" % client)
+        raise socket.gaierror
 
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
@@ -87,7 +83,7 @@ class SSHbase(Plugin):
             hostname = pubkey.split('H_')[1]
             try:
                 (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
-            except gaierror:
+            except socket.gaierror:
                 continue
             shortname = hostname.split('.')[0]
             self.static_skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
@@ -114,8 +110,8 @@ class SSHbase(Plugin):
             if hasattr(self, 'static_skn'):
                 del self.static_skn
         if not self.repository.entries.has_key(filename):
-            self.LogError("%s still not registered" % filename)
-            raise PluginExecutionError
+            self.logger.error("%s still not registered" % filename)
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         keydata = self.repository.entries[filename].data
         permdata = {'owner':'root', 'group':'root'}
         permdata['perms'] = '0600'
@@ -124,7 +120,7 @@ class SSHbase(Plugin):
         [entry.attrib.__setitem__(x, permdata[x]) for x in permdata]
         if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
-            entry.text = b2a_base64(keydata)
+            entry.text = binascii.b2a_base64(keydata)
         else:
             entry.text = keydata
 
@@ -143,7 +139,8 @@ class SSHbase(Plugin):
                 fileloc = "%s/%s" % (self.data, hostkey)
                 publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
                 temploc =  "/tmp/%s" % hostkey
-                system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' % (temploc, keytype, client))
+                os.system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' %
+                          (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())
                 self.repository.AddEntry(hostkey)

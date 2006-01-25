@@ -3,22 +3,15 @@
 '''The XML-RPC Bcfg2 Server'''
 __revision__ = '$Revision$'
 
-from getopt import getopt, GetoptError
-from sys import argv, exc_info
-from syslog import openlog, LOG_LOCAL0, syslog, LOG_INFO, LOG_ERR
 from Bcfg2.Server.Core import Core, CoreInitError
 from Bcfg2.Server.Metadata import MetadataConsistencyError
-from Bcfg2.Server.Component import Component
-from threading import Lock
-from select import select, error as selecterror
-from signal import signal, SIGINT, SIGTERM
-from traceback import extract_tb
 from xmlrpclib import Fault
-from socket import gethostbyaddr, herror
 from lxml.etree import XML, Element, tostring
-from M2Crypto.SSL import SSLError
 
-import os, sys
+import getopt, logging, os, select, signal, socket, sys
+import Bcfg2.Logging, Bcfg2.Server.Component, M2Crypto.SSL
+
+logger = logging.getLogger('bcfg2-server')
 
 def daemonize(filename):
     '''Do the double fork/setsession dance'''
@@ -41,61 +34,33 @@ def daemonize(filename):
     os.dup2(null.fileno(), sys.__stdout__.fileno())
     os.dup2(null.fileno(), sys.__stderr__.fileno())
 
-
 def critical_error(operation):
-    '''Print tracebacks in unexpected cases'''
-    syslog(LOG_ERR, "Traceback information (please include in any bug report):")
-    (ttype, value, trace) = exc_info()
-    for line in extract_tb(trace):        
-        syslog(LOG_ERR, "File %s, line %i, in %s\n   %s" % (line))
-    syslog(LOG_ERR, "%s: %s" % (ttype, value))
-    warning_error("An unexpected failure occurred in %s" % (operation) )
+    '''Log and err, traceback and return an xmlrpc fault to client'''
+    logger.error(operation, exc_info=1)
     raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
 def fatal_error(message):
     '''Signal a fatal error'''
-    syslog(LOG_ERR, "Fatal error: %s" % (message))
+    logger.critical("Fatal error: %s" % (message))
     raise SystemExit, 1
 
-def warning_error(message):
-    '''Warn about a problem but continue'''
-    syslog(LOG_ERR,"Warning: %s\n" % (message))
-           
-def usage_error(message, opt, vopt, descs, argDescs):
-    '''Die because script was called the wrong way'''
-    print "Usage error: %s" % (message)
-    print_usage(opt, vopt, descs, argDescs)
+def usage(message, opts, vopts, odescs, vargDescs):
+    logger.critical(message)
+    [logger.critical(" -%s\t\t\t%s" % (arg, odescs[arg])) for arg in opts]
+    [logger.critical(" -%s %s\t%s" % (arg, vargDescs[arg], odescs[arg])) for arg in vopts]
     raise SystemExit, 2
-
-verboseMode = False
-
-def verbose(message):
-    '''Conditionally output information in verbose mode'''
-    global verboseMode
-
-    if(verboseMode == True):
-        syslog(LOG_INFO, "%s" % (message))
-
-def print_usage(opt, vopt, descs, argDescs):
-    print "bcfg2-server usage:"
-    for arg in opt.iteritems():
-        print " -%s\t\t\t%s" % (arg[0], descs[arg[0]])
-    for arg in vopt.iteritems():
-        print " -%s %s\t%s" % (arg[0], argDescs[arg[0]], descs[arg[0]])
 
 def dgetopt(arglist, opt, vopt, descs, argDescs):
     '''parse options into a dictionary'''
-    global verboseMode
-    
     ret = {}
     for optname in opt.values() + vopt.values():
         ret[optname] = False
         
     gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
     try:
-        ginfo = getopt(arglist, gstr)
-    except GetoptError, gerr:
-        usage_error(gerr, opt, vopt, descs, argDescs)
+        ginfo = getopt.getopt(arglist, gstr)
+    except getopt.GetoptError, gerr:
+        usage("Usage error: %s" % gett, opt, vopt, descs, argsDescs)
 
     for (gopt, garg) in ginfo[0]:
         option = gopt[1:]
@@ -105,15 +70,11 @@ def dgetopt(arglist, opt, vopt, descs, argDescs):
             ret[vopt[option]] = garg
 
     if ret["help"] == True:
-        print_usage(opt, vopt, descs, argDescs)
-        raise SystemExit, 0
+        print_usage("Usage information", opt, vopt, descs, argDescs)
 
-    if ret["verbose"] == True:
-        verboseMode = True
-        
     return ret
 
-class Bcfg2(Component):
+class Bcfg2(Bcfg2.Server.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
@@ -121,14 +82,13 @@ class Bcfg2(Component):
     request_queue_size = 15
 
     def __init__(self, setup):
-        Component.__init__(self, setup)
+        Bcfg2.Server.Component.Component.__init__(self, setup)
         self.shut = False
         # set shutdown handlers for sigint and sigterm
-        signal(SIGINT, self.start_shutdown)
-        signal(SIGTERM, self.start_shutdown)
+        signal.signal(signal.SIGINT, self.start_shutdown)
+        signal.signal(signal.SIGTERM, self.start_shutdown)
         try:
             self.Core = Core(setup, setup['configfile'])
-            self.CoreLock = Lock()
         except CoreInitError, msg:
             fatal_error(msg)
 
@@ -149,11 +109,11 @@ class Bcfg2(Component):
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
             if self.shut:
-                raise SSLError
+                raise M2Crypto.SSL.SSLError
             try:
-                rsockinfo = select([self.socket, famfd], [], [], 15)[0]
-            except selecterror:
-                raise SSLError
+                rsockinfo = select.select([self.socket, famfd], [], [], 15)[0]
+            except select.error:
+                raise M2Crypto.SSL.SSLError
             
             if famfd in rsockinfo:
                 self.Core.fam.Service()
@@ -179,10 +139,10 @@ class Bcfg2(Component):
         if self.setup['client']:
             return self.setup['client']
         try:
-            return gethostbyaddr(client)[0]
-        except herror:
+            return socket.gethostbyaddr(client)[0]
+        except socket.herror:
             warning = "host resolution error for %s" % (client)
-            warning_error(warning)
+            self.logger.warning(warning)
             raise Fault, (5, warning)
         
     def Bcfg2GetProbes(self, address):
@@ -199,11 +159,10 @@ class Bcfg2(Component):
             return tostring(resp)
         except MetadataConsistencyError:
             warning = 'metadata consistency error'
-            warning_error(warning)
+            self.logger.warning(warning)
             raise Fault, (6, warning)
         except:
-            critical_error("determining client probes")
-
+            critical_error("error determining client probes")
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
@@ -214,9 +173,9 @@ class Bcfg2(Component):
                 [generator] = [gen for gen in self.Core.generators if gen.__name__ == data.get('source')]
                 generator.ReceiveData(client, data)
             except IndexError:
-                warning_error("Failed to locate plugin %s" % (data.get('source')))
+                self.logger.warning("Failed to locate plugin %s" % (data.get('source')))
             except:
-                critical_error("probe data receipt")
+                critical_error('error in probe data receipt')
         return True
 
     def Bcfg2GetConfig(self, address, image=False, profile=False):
@@ -228,7 +187,7 @@ class Bcfg2(Component):
                 self.Core.metadata.set_group(client, profile)
             except MetadataConsistencyError:
                 warning = 'metadata consistency error'
-                warning_error(warning)
+                self.logger.warning(warning)
                 raise Fault, (6, warning)
         return tostring(self.Core.BuildConfiguration(client))
 
@@ -243,12 +202,12 @@ class Bcfg2(Component):
             # Update statistics
             self.Core.stats.updateStats(sdata, client)
 
-        syslog(LOG_INFO, "Client %s reported state %s" % 
-               (client, state.attrib['state']))
+        self.logger.info("Client %s reported state %s" % 
+                         (client, state.attrib['state']))
         return "<ok/>"
 
 if __name__ == '__main__':
-    openlog("Bcfg2", 0, LOG_LOCAL0)
+    Bcfg2.Logging.setup_logging()
     options =  {
         'v':'verbose',
         'd':'debug',
@@ -275,7 +234,7 @@ if __name__ == '__main__':
         'C': "<client hostname>"
         }
     
-    ssetup = dgetopt(argv[1:], options, doptions,
+    ssetup = dgetopt(sys.argv[1:], options, doptions,
                      descriptions, argDescriptions)
     if ssetup['daemon']:
         daemonize(ssetup['daemon'])
@@ -286,6 +245,5 @@ if __name__ == '__main__':
         try:
             s.serve_forever()
         except:
-            critical_error("service loop")
-
-    syslog(LOG_INFO, "Shutting down")
+            critical_error('error in service loop')
+    logger.info("Shutting down")

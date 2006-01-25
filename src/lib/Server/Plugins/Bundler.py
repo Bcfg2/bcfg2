@@ -1,9 +1,7 @@
 '''This provides bundle clauses with translation functionality'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugin
-import copy
-import lxml.etree
+import copy, lxml.etree, Bcfg2.Server.Plugin
 
 class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
@@ -17,7 +15,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
         try:
             Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.LogError("Failed to load Bundle repository")
+            self.logger.error("Failed to load Bundle repository")
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def BuildStructures(self, metadata):
@@ -25,8 +23,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
         bundleset = []
         for bundlename in metadata.bundles:
             if not self.entries.has_key("%s.xml"%(bundlename)):
-                self.LogError("Client %s requested nonexistent bundle %s" % \
-                              (metadata.hostname, bundlename))
+                self.logger.error("Client %s requested nonexistent bundle %s" % \
+                                  (metadata.hostname, bundlename))
                 continue
             bundle = lxml.etree.Element('Bundle', name=bundlename)
             [bundle.append(copy.deepcopy(item))

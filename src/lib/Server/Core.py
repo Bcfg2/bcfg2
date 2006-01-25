@@ -1,27 +1,13 @@
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
 __revision__ = '$Revision$'
 
-from os import stat
-from stat import ST_MODE, S_ISDIR
-from sys import exc_info
-from syslog import syslog, LOG_ERR, LOG_INFO
-from traceback import extract_tb
 from time import time
-from ConfigParser import ConfigParser
-from lxml.etree import Element
-
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
-
 from Bcfg2.Server.Statistics import Statistics
 
-import Bcfg2.Server.Metadata
+import logging, lxml.etree, os, stat, Bcfg2.Server.Metadata, ConfigParser
 
-def log_failure(msg):
-    syslog(LOG_ERR, "Unexpected failure in %s" % (msg))
-    (trace, val, trb) = exc_info()
-    for line in extract_tb(trb):
-        syslog(LOG_ERR, '  File "%s", line %i, in %s\n    %s\n'%line)
-    syslog(LOG_ERR, "%s: %s\n"%(trace, val))
+logger = logging.getLogger('Bcfg2.Core')
 
 class CoreInitError(Exception):
     '''This error is raised when the core cannot be initialized'''
@@ -42,8 +28,8 @@ class FamFam(object):
 
     def AddMonitor(self, path, obj):
         '''add a monitor to path, installing a callback to obj.HandleEvent'''
-        mode = stat(path)[ST_MODE]
-        if S_ISDIR(mode):
+        mode = os.stat(path)[stat.ST_MODE]
+        if stat.S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
             #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
         else:
@@ -62,7 +48,7 @@ class FamFam(object):
             try:
                 self.users[reqid].HandleEvent(event)
             except:
-                log_failure("handling event for file %s" % (event.filename))
+                logger.error("handling event for file %s" % (event.filename), exc_info=1)
 
     def Service(self):
         '''Handle all fam work'''
@@ -94,10 +80,10 @@ class FamFam(object):
                 try:
                     self.users[event.requestID].HandleEvent(event)
                 except:
-                    log_failure("handling event for file %s" % (event.filename))
+                    logger.error("handling event for file %s" % (event.filename), exc_info=1)
         end = time()
-        syslog(LOG_INFO, "Processed %s fam events in %03.03f seconds. %s coalesced" %
-               (count, (end - start), collapsed))
+        logger.info("Processed %s fam events in %03.03f seconds. %s coalesced" %
+                    (count, (end - start), collapsed))
 
 class GaminEvent(object):
     '''This class provides an event analogous to python-fam events based on gamin sources'''
@@ -134,8 +120,8 @@ class GaminFam(object):
         '''add a monitor to path, installing a callback to obj.HandleEvent'''
         handle = self.counter
         self.counter += 1
-        mode = stat(path)[ST_MODE]
-        if S_ISDIR(mode):
+        mode = os.stat(path)[stat.ST_MODE]
+        if stat.S_ISDIR(mode):
             self.mon.watch_directory(path, self.queue, handle)
             #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
         else:
@@ -173,12 +159,13 @@ class GaminFam(object):
                 try:
                     self.handles[event.requestID].HandleEvent(event)
                 except:
-                    log_failure("handling of gamin event for %s" % (event.filename))
+                    logger.error("error in handling of gamin event for %s" % (event.filename), exc_info=1)
             else:
-                syslog(LOG_INFO, "Got event for unexpected id %s, file %s" % (event.requestID, event.filename))
+                logger.info("Got event for unexpected id %s, file %s" %
+                            (event.requestID, event.filename))
         end = time()
-        syslog(LOG_INFO, "Processed %s gamin events in %03.03f seconds. %s collapsed" %
-               (count, (end - start), collapsed))
+        logger.info("Processed %s gamin events in %03.03f seconds. %s collapsed" %
+                    (count, (end - start), collapsed))
         
 try:
     from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted
@@ -196,7 +183,7 @@ class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, setup, configfile):
         object.__init__(self)
-        cfile = ConfigParser()
+        cfile = ConfigParser.ConfigParser()
         cfile.read([configfile])
         self.datastore = cfile.get('server','repository')
         try:
@@ -227,26 +214,26 @@ class Core(object):
                     mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                              (plugin)).Server.Plugins, plugin)
                 except ImportError:
-                    syslog(LOG_ERR, "Failed to load plugin %s" % (plugin))
+                    logger.error("Failed to load plugin %s" % (plugin))
                     continue
                 struct = getattr(mod, plugin)
                 try:
                     self.plugins[plugin] = struct(self, self.datastore)
                 except PluginInitError:
-                    syslog(LOG_ERR, "Failed to instantiate plugin %s" % (plugin))
+                    logger.error("Failed to instantiate plugin %s" % (plugin))
                 except:
-                    log_failure("Unexpected initiantiation failure for plugin %s" % (plugin))
+                    logger.error("Unexpected initiantiation failure for plugin %s" % (plugin), exc_info=1)
 
         for plugin in structures:
             if self.plugins.has_key(plugin):
                 self.structures.append(self.plugins[plugin])
             else:
-                syslog(LOG_ERR, "Plugin %s not loaded. Not enabled as a Structure" % (plugin))
+                logger.error("Plugin %s not loaded. Not enabled as a Structure" % (plugin))
         for plugin in generators:
             if self.plugins.has_key(plugin):
                 self.generators.append(self.plugins[plugin])
             else:
-                syslog(LOG_ERR, "Plugin %s not loaded. Not enabled as a Generator" % (plugin))
+                logger.error("Plugin %s not loaded. Not enabled as a Generator" % (plugin))
                     
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
@@ -259,7 +246,7 @@ class Core(object):
             try:
                 self.Bind(entry, metadata)
             except PluginExecutionError:
-                syslog(LOG_ERR, "Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
+                logger.error("Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
 
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
@@ -269,34 +256,34 @@ class Core(object):
             return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
             generators = ", ".join([gen.__name__ for gen in glist])
-            syslog(LOG_ERR, "%s %s served by multiple generators: %s" % (entry.tag,
-                                                                         entry.get('name'), generators))
+            logger.error("%s %s served by multiple generators: %s" % (entry.tag,
+                                                                           entry.get('name'), generators))
         raise PluginExecutionError, (entry.tag, entry.get('name'))
                 
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time()
-        config = Element("Configuration", version='2.0')
+        config = lxml.etree.Element("Configuration", version='2.0')
         try:
             meta = self.metadata.get_metadata(client)
         except Bcfg2.Server.Metadata.MetadataConsistencyError:
-            syslog(LOG_ERR, "Metadata consistency error for client %s" % client)
-            return Element("error", type='metadata error')
+            logger.error("Metadata consistency error for client %s" % client)
+            return lxml.etree.Element("error", type='metadata error')
 
         config.set('toolset', meta.toolset)
         try:
             structures = self.GetStructures(meta)
         except:
-            log_failure("GetStructures")
-            return Element("error", type='structure error')
+            logger.error("error in GetStructures", exc_info=1)
+            return lxml.etree.Element("error", type='structure error')
         
         for astruct in structures:
             try:
                 self.BindStructure(astruct, meta)
                 config.append(astruct)
             except:
-                log_failure("BindStructure")
-        syslog(LOG_INFO, "Generated config for %s in %s seconds"%(client, time() - start))
+                logger.error("error in BindStructure", exc_info=1)
+        logger.info("Generated config for %s in %s seconds"%(client, time() - start))
         return config
 
     def Service(self):
@@ -305,9 +292,9 @@ class Core(object):
             try:
                 self.fam.HandleEvent()
             except:
-                log_failure("FamEvent")
+                logger.error("error in FamEvent", exc_info=1)
         try:
             self.stats.WriteBack()
         except:
-            log_failure("Statistics")
+            logger.error("error in Statistics", exc_info=1)
             

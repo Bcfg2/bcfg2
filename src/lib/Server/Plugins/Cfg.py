@@ -1,29 +1,23 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-from os import stat
-from re import compile as regcompile
-from stat import S_ISDIR, ST_MODE
-from syslog import syslog, LOG_INFO, LOG_ERR
+import binascii, exceptions, logging, os, re, stat, Bcfg2.Server.Plugin
 
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked
+logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
-import binascii
-import exceptions
-
-specific = regcompile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
+specific = re.compile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                       '(G(?P<prio>\d+)_(?P<group>\S+)))$')
 
 class SpecificityError(Exception):
     '''Thrown in case of filename parse failure'''
     pass
 
-class FileEntry(FileBacked):
+class FileEntry(Bcfg2.Server.Plugin.FileBacked):
     '''The File Entry class pertains to the config files contained in a particular directory.
     This includes :info, all base files and deltas'''
 
     def __init__(self, myid, name):
-        FileBacked.__init__(self, name)
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         self.name = name
         self.identity = myid
         self.all = False
@@ -39,7 +33,7 @@ class FileEntry(FileBacked):
         else:
             data = specific.match(name)
             if not data:
-                syslog(LOG_ERR, "Cfg: Failed to match %s" % name)
+                logger.error("Failed to match %s" % name)
                 raise SpecificityError
             if data.group('hostname') != None:
                 self.hostname = data.group('hostname')
@@ -62,7 +56,7 @@ class FileEntry(FileBacked):
                     return 0
             else:
                 pass
-        syslog(LOG_ERR, "Cfg: Critical: Ran off of the end of the world sorting %s" % (self.name))
+        logger.critical("Ran off of the end of the world sorting %s" % (self.name))
 
     def applies(self, metadata):
         '''Predicate if fragment matches client metadata'''
@@ -75,7 +69,7 @@ class FileEntry(FileBacked):
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    info = regcompile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
+    info = re.compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)$')
     
@@ -128,28 +122,28 @@ class ConfigFileEntry(object):
                 return self.read_info()
         if event.filename != self.path.split('/')[-1]:
             if not specific.match('/' + event.filename):
-                syslog(LOG_INFO, 'Cfg: Suppressing event for bogus file %s' % event.filename)
+                logger.info('Suppressing event for bogus file %s' % event.filename)
                 return
 
         entries = [entry for entry in self.fragments if
                    entry.name.split('/')[-1] == event.filename]
 
         if len(entries) == 0:
-            syslog(LOG_ERR, "Cfg: Failed to match entry for spec %s" % (event.filename))
+            logger.error("Failed to match entry for spec %s" % (event.filename))
         elif len(entries) > 1:
-            syslog(LOG_ERR, "Cfg: Matched multiple entries for spec %s" % (event.filename))
+            logger.error("Matched multiple entries for spec %s" % (event.filename))
             
         if action == 'deleted':
-            syslog(LOG_INFO, "Cfg: Removing entry %s" % event.filename)
+            logger.info("Removing entry %s" % event.filename)
             for entry in entries:
-                syslog(LOG_INFO, "Cfg: Removing entry %s" % (entry.name))
+                logger.info("Removing entry %s" % (entry.name))
                 self.fragments.remove(entry)
                 self.fragments.sort()
-            syslog(LOG_INFO, "Cfg: Entry deletion completed")
+            logger.info("Entry deletion completed")
         elif action in ['changed', 'exists', 'created']:
             [entry.HandleEvent(event) for entry in entries]
         else:
-            syslog(LOG_ERR, "Cfg: Unhandled Action %s for file %s" % (action, event.filename))
+            logger.error("Unhandled Action %s for file %s" % (action, event.filename))
 
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
@@ -159,8 +153,8 @@ class ConfigFileEntry(object):
         try:
             basefile = [bfile for bfile in self.fragments if bfile.applies(metadata) and not bfile.op][-1]
         except IndexError:
-            syslog(LOG_ERR, "Cfg: Failed to locate basefile for %s" % name)
-            raise PluginExecutionError, ('basefile', name)
+            logger.error("Failed to locate basefile for %s" % name)
+            raise Bcfg2.Server.Plugin.PluginExecutionError, ('basefile', name)
         filedata += basefile.data
 
         for delta in [delta for delta in self.fragments if delta.applies(metadata) and delta.op]:
@@ -186,17 +180,17 @@ class ConfigFileEntry(object):
             try:
                 entry.text = filedata
             except exceptions.AttributeError:
-                syslog(LOG_ERR, "Failed to marshall file %s. Mark it as base64" % (entry.get('name')))
+                logger.error("Failed to marshall file %s. Mark it as base64" % (entry.get('name')))
 
-class Cfg(Plugin):
+class Cfg(Bcfg2.Server.Plugin.Plugin):
     '''This generator in the configuration file repository for bcfg2'''
     __name__ = 'Cfg'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    tempfile = regcompile("^.*~$|^.*\.swp")
+    tempfile = re.compile("^.*~$|^.*\.swp")
 
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         self.entries = {}
         self.Entries = {'ConfigFile':{}}
         self.famID = {}
@@ -209,9 +203,9 @@ class Cfg(Plugin):
         '''Add new directory to FAM structures'''
         if name not in self.directories:
             try:
-                stat(name)
+                os.stat(name)
             except OSError:
-                self.LogError("Failed to open directory %s" % (name))
+                logger.error("Failed to open directory %s" % (name))
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.famID[reqid] = name
@@ -220,11 +214,11 @@ class Cfg(Plugin):
     def AddEntry(self, name, event):
         '''Add new entry to FAM structures'''
         try:
-            sdata = stat(name)[ST_MODE]
+            sdata = os.stat(name)[stat.ST_MODE]
         except OSError:
             return
 
-        if S_ISDIR(sdata):
+        if stat.S_ISDIR(sdata):
             self.AddDirectoryMonitor(name)
         else:
             # file entries shouldn't contain path-to-repo
@@ -240,7 +234,7 @@ class Cfg(Plugin):
         '''Handle FAM updates'''
         action = event.code2str()
         if self.tempfile.match(event.filename):
-            syslog(LOG_INFO, "Cfg: Suppressed event for file %s" % event.filename)
+            logger.info("Suppressed event for file %s" % event.filename)
             return
         if event.filename[0] != '/':
             filename = "%s/%s" % (self.famID[event.requestID], event.filename)
@@ -258,11 +252,11 @@ class Cfg(Plugin):
                 if filename != self.data:
                     self.AddEntry(filename, event)
                 else:
-                    self.LogError("Ignoring event for %s"%(configfile))
+                    logger.error("Ignoring event for %s"%(configfile))
         elif action == 'deleted':
             if self.entries.has_key(configfile):
                 self.entries[configfile].HandleEvent(event)
         elif action in ['exists', 'endExist']:
             pass
         else:
-            self.LogError("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
+            logger.error("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))

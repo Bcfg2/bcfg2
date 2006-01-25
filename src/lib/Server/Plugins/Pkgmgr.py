@@ -1,9 +1,9 @@
 '''This module implements a package management scheme for all images'''
 __revision__ = '$Revision$'
 
-import re
-from syslog import syslog, LOG_ERR
-import Bcfg2.Server.Plugin
+import logging, re, Bcfg2.Server.Plugin
+
+logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
 class PNode(Bcfg2.Server.Plugin.LNode):
     '''PNode has a list of packages available at a particular group intersection'''
@@ -29,7 +29,7 @@ class PNode(Bcfg2.Server.Plugin.LNode):
                 if self.splitters.has_key(pkg.get('type')):
                     mdata = self.splitters[pkg.get('type')].match(pkg.get('file'))
                     if not mdata:
-                        syslog(LOG_ERR, "Pkgmgr: Failed to match pkg %s" % pkg.get('file'))
+                        logger.error("Failed to match pkg %s" % pkg.get('file'))
                         continue
                     pkgname = mdata.group('name')
                     self.contents[pkgname] = mdata.groupdict()

@@ -1,14 +1,13 @@
 '''This module configures files in a Chiba City specific way'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
-from socket import gethostbyname, gaierror
-from Bcfg2.Server.Plugin import Plugin, DirectoryBacked, SingleXMLFileBacked, PluginExecutionError
+import socket, Bcfg2.Server.Plugin
 
-class ChibaConf(SingleXMLFileBacked):
+class ChibaConf(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     '''This class encapsulates all information needed for all Chiba config ops'''
     pass
 
-class Chiba(Plugin):
+class Chiba(Bcfg2.Server.Plugin.Plugin):
     '''the Chiba generator builds the following files:
       -> /etc/fstab
       -> /etc/network/interfaces
@@ -20,8 +19,8 @@ class Chiba(Plugin):
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
-        self.repo = DirectoryBacked(self.data, self.core.fam)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        self.repo = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
         self.Entries = {'ConfigFile': {'/etc/network/interfaces':self.build_interfaces}}
 
     def build_interfaces(self, entry, metadata):
@@ -32,9 +31,9 @@ class Chiba(Plugin):
         try:
             myriname = "%s-myr.%s" % (metadata.hostname.split('.')[0],
                                       ".".join(metadata.hostname.split('.')[1:]))
-            myriaddr = gethostbyname(myriname)
-        except gaierror:
-            self.LogError("Failed to resolve %s"% myriname)
-            raise PluginExecutionError, (myriname, 'lookup')
+            myriaddr = socket.gethostbyname(myriname)
+        except socket.gaierror:
+            self.logger.error("Failed to resolve %s"% myriname)
+            raise Bcfg2.Server.Plugin.PluginExecutionError, (myriname, 'lookup')
         entry.text = self.repo.entries['interfaces-template'].data % myriaddr
 

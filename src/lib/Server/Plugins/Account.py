@@ -1,9 +1,9 @@
 '''This handles authentication setup'''
 __revision__ = '$Revision$'
 
-from Bcfg2.Server.Plugin import Plugin, PluginInitError, DirectoryBacked
+import Bcfg2.Server.Plugin
 
-class Account(Plugin):
+class Account(Bcfg2.Server.Plugin.Plugin):
     '''This module generates account config files,
     based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
@@ -17,16 +17,16 @@ class Account(Plugin):
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         self.Entries = {'ConfigFile':{'/etc/passwd':self.from_yp_cb,
                                            '/etc/group':self.from_yp_cb,
                                            '/etc/security/limits.conf':self.gen_limits_cb,
                                            '/root/.ssh/authorized_keys':self.gen_root_keys_cb}}
         try:
-            self.repository = DirectoryBacked(self.data, self.core.fam)
+            self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
         except:
-            self.LogError("Failed to load repos: %s, %s" % (self.data, "%s/ssh" % (self.data)))
-            raise PluginInitError
+            self.logger.error("Failed to load repos: %s, %s" % (self.data, "%s/ssh" % (self.data)))
+            raise Bcfg2.Server.Plugin.PluginInitError
 
     def from_yp_cb(self, entry, metadata):
         '''Build password file from cached yp data'''

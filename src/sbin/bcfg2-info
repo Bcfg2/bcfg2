@@ -2,10 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-from sys import argv
-from time import sleep
-from Bcfg2.Server.Core import Core, CoreInitError
-from lxml.etree import tostring
+import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core
 
 def print_tabular(rows):
     '''print data in tabular format'''
@@ -28,7 +25,7 @@ def do_build(cmd, core):
     '''build client configuration'''
     if len(cmd) == 3:
         output = open(cmd[2], 'w')
-        output.write(tostring(core.BuildConfiguration(cmd[1])))
+        output.write(lxml.etree.tostring(core.BuildConfiguration(cmd[1])))
         output.close()
     else:
         print 'Usage: build <hostname> <output file>'
@@ -126,29 +123,36 @@ def do_version(cmd, core):
     print __revision__
         
 if __name__ == '__main__':
+    Bcfg2.Logging.setup_logging(to_syslog=False)
+    logger = logging.getLogger('bcfg2-info')
     dispatch = {'build': do_build, 'bundles': do_bundles, 'clients': do_clients,
                 'generators': do_generators, 'groups': do_groups,
                 'help': do_help, 'mappings': do_mappings, 'quit': do_quit,
                 'update': do_update, 'version': do_version}
-    if '-c' in argv:
-        cfile = argv[-1]
+    if '-c' in sys.argv:
+        cfile = sys.argv[-1]
     else:
         cfile = '/etc/bcfg2.conf'
     try:
-        bcore = Core({}, cfile)
-    except CoreInitError, msg:
+        bcore = Bcfg2.Server.Core.Core({}, cfile)
+    except Bcfg2.Server.Core.CoreInitError, msg:
         print "Core load failed because %s" % msg
         raise SystemExit, 1
     for i in range(25):
         bcore.fam.Service()
-        sleep(0.5)
+        time.sleep(0.5)
     ucmd = get_input()
     while True:
         if ucmd[0] == 'debug':
             break
         else:
             if dispatch.has_key(ucmd[0]):
-                dispatch[ucmd[0]](ucmd, bcore)
+                try:
+                    dispatch[ucmd[0]](ucmd, bcore)
+                except SystemExit, code:
+                    raise SystemExit, code
+                except:
+                    logger.error("command failure", exc_info=1)
             else:
                 print "Unknown command %s" % ucmd[0]
         ucmd = get_input()

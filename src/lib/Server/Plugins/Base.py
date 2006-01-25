@@ -19,7 +19,7 @@ class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
         try:
             Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.LogError("Failed to load Base repository")
+            self.logger.error("Failed to load Base repository")
             raise Bcfg2.Server.Plugin.PluginInitError
         
     def BuildStructures(self, metadata):

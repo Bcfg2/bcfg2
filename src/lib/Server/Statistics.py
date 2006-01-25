@@ -2,8 +2,9 @@
 __revision__ = '$Revision$'
 
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
-from syslog import syslog, LOG_ERR
 from time import asctime, localtime, time
+
+import logging
 
 class Statistics(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
@@ -15,6 +16,7 @@ class Statistics(object):
         self.dirty = 0
         self.lastwrite = 0
         self.ReadFromFile()
+        self.logger = logging.getLogger('Bcfg2.Server.Statistics')
 
     def pretty_print(self, element, level=0):
         '''Produce a pretty-printed text representation of element'''
@@ -53,11 +55,10 @@ class Statistics(object):
             self.dirty = 0
             #syslog(LOG_INFO, "Statistics: Read in statistics.xml")
         except (IOError, XMLSyntaxError):
-            syslog(LOG_ERR, "Statistics: Failed to parse %s"%(self.filename))
+            self.logger.error("Failed to parse %s"%(self.filename))
             self.element = Element('ConfigStatistics')
             self.WriteBack()
             self.dirty = 0
-
 
     def updateStats(self, xml, client):
         '''Updates the statistics of a current node with new data'''
@@ -91,7 +92,7 @@ class Statistics(object):
                 node.remove(elem)
         else:
             # Shouldn't be reached
-            syslog(LOG_ERR, "Statistics: Duplicate node entry for %s"%(client))
+            self.logger.error("Duplicate node entry for %s"%(client))
 
         # Set current time for stats
         newstat.set('time', asctime(localtime()))

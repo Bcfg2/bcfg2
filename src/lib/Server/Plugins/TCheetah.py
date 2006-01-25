@@ -2,10 +2,13 @@
 __revision__ = '$Revision$'
 
 from posixpath import isdir
-from syslog import syslog, LOG_ERR
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
 from lxml.etree import XML, XMLSyntaxError
 from Cheetah.Template import Template
+
+import logging
+
+logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
 class TemplateFile(FileBacked):
     '''Template file creates Cheetah template structures for the loaded file'''
@@ -25,7 +28,7 @@ class TemplateFile(FileBacked):
         try:
             entry.text = str(self.template)
         except:
-            syslog(LOG_ERR, "TCheetah: Failed to template %s" % entry.get('name'))
+            logger.error("Failed to template %s" % entry.get('name'))
             raise PluginExecutionError
         perms = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
@@ -38,7 +41,7 @@ class CheetahProperties(SingleXMLFileBacked):
             self.properties = XML(self.data)
             del self.data
         except XMLSyntaxError:
-            syslog(LOG_ERR, "TCheetah: Failed to parse properties")
+            logger.error("Failed to parse properties")
 
 class TCheetah(Plugin):
     '''The TCheetah generator implements a templating mechanism for configuration files'''
@@ -80,7 +83,6 @@ class TCheetah(Plugin):
                     self.entries[identifier].HandleEvent(event)
                     self.Entries['ConfigFile'][identifier] = self.BuildEntry
                     #except:
-                    #   syslog(LOG_ERR, "TCheetah: bad format for file %s" % identifier)
         elif action == 'changed':
             if self.entries.has_key(identifier):
                 self.entries[identifier].HandleEvent(event)

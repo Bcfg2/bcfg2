@@ -1,9 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from syslog import syslog, LOG_ERR, LOG_INFO
-
-import lxml.etree, os, time, threading
+import logging, lxml.etree, os, time
 
 class MetadataConsistencyError(Exception):
     '''This error gets raised when metadata is internally inconsistent'''
@@ -41,6 +39,7 @@ class Metadata:
         self.categories = {}
         self.clientdata = None
         self.default = None
+        self.logger = logging.getLogger('Bcfg2.Server.Metadata')
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
@@ -52,7 +51,7 @@ class Metadata:
         try:
             xdata = lxml.etree.parse("%s/%s" % (self.data, filename))
         except lxml.etree.XMLSyntaxError:
-            syslog(LOG_ERR, 'Metadata: Failed to parse %s' % (filename))
+            self.logger.error('Failed to parse %s' % (filename))
             return
         if filename == 'clients.xml':
             self.clients = {}
@@ -106,9 +105,9 @@ class Metadata:
             real = self.groups.keys()
             for client in self.clients.keys():
                 if self.clients[client] not in real or self.clients[client] not in self.profiles:
-                    syslog(LOG_ERR, "Metadata: Client %s set as nonexistant or incomplete group %s" \
-                           % (client, self.clients[client]))
-                    syslog(LOG_ERR, "Metadata: Removing client mapping for %s" % (client))
+                    self.logger.error("Client %s set as nonexistant or incomplete group %s" \
+                                      % (client, self.clients[client]))
+                    self.logger.error("Removing client mapping for %s" % (client))
                     del self.clients[client]
 
     def set_group(self, client, group):
@@ -116,12 +115,10 @@ class Metadata:
         if False in self.states.values():
             raise MetadataRuntimeError
         if group not in self.public:
-            syslog(LOG_ERR, "Metadata: Failed to set client %s to private group %s" % (client,
-                                                                                           group))
+            self.logger.error("Failed to set client %s to private group %s" % (client, group))
             raise MetadataConsistencyError
         if self.clients.has_key(client):
-            syslog(LOG_INFO, "Metadata: Changing %s group from %s to %s" % (client,
-                                                                                self.clients[client], group))
+            self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], group))
             cli = self.clientdata.xpath('/Clients/Client[@name="%s"]' % (client))
             cli[0].set('group', group)
         else:
@@ -134,7 +131,7 @@ class Metadata:
         try:
             datafile = open("%s/%s" % (self.data, 'clients.xml'), 'w')
         except IOError:
-            syslog(LOG_ERR, "Metadata: Failed to write clients.xml")
+            self.logger.error("Failed to write clients.xml")
             raise MetadataRuntimeError
         datafile.write(lxml.etree.tostring(self.clientdata))
         datafile.close()
@@ -145,10 +142,10 @@ class Metadata:
         if len(tgroups) == 1:
             return tgroups[0]
         elif len(tgroups) == 0:
-            syslog(LOG_ERR, "Metadata: Couldn't find toolset for client %s" % (client))
+            self.logger.error("Couldn't find toolset for client %s" % (client))
             raise MetadataConsistencyError
         else:
-            syslog(LOG_ERR, "Metadata: Got goofy toolset result for client %s" % (client))
+            self.logger.error("Got goofy toolset result for client %s" % (client))
             raise MetadataConsistencyError
 
     def get_config_template(self, client):
@@ -163,14 +160,14 @@ class Metadata:
             [bundles, groups] = self.groups[self.clients[client]]
         else:
             if self.default == None:
-                syslog(LOG_ERR, "Cannot set group for client %s; no default group set" % (client))
+                self.logger.error("Cannot set group for client %s; no default group set" % (client))
                 raise MetadataConsistencyError
             [bundles, groups] = self.groups[self.default]
         toolinfo = [self.toolsets[group] for group in groups if self.toolsets.has_key(group)]
         if len(toolinfo) > 1:
-            syslog(LOG_ERR, "Metadata: Found multiple toolsets for client %s; choosing one" % (client))
+            self.logger.error("Found multiple toolsets for client %s; choosing one" % (client))
         elif len(toolinfo) == 0:
-            syslog(LOG_ERR, "Metadata: Cannot determine toolset for client %s" % (client))
+            self.logger.error("Cannot determine toolset for client %s" % (client))
             raise MetadataConsistencyError
         toolset = toolinfo[0]
         return ClientMetadata(client, groups, bundles, toolset)
