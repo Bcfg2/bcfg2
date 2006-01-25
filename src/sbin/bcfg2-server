@@ -45,6 +45,7 @@ def fatal_error(message):
     raise SystemExit, 1
 
 def usage(message, opts, vopts, odescs, vargDescs):
+    '''print usage message'''
     logger.critical(message)
     [logger.critical(" -%s\t\t\t%s" % (arg, odescs[arg])) for arg in opts]
     [logger.critical(" -%s %s\t%s" % (arg, vargDescs[arg], odescs[arg])) for arg in vopts]
@@ -60,7 +61,7 @@ def dgetopt(arglist, opt, vopt, descs, argDescs):
     try:
         ginfo = getopt.getopt(arglist, gstr)
     except getopt.GetoptError, gerr:
-        usage("Usage error: %s" % gett, opt, vopt, descs, argsDescs)
+        usage("Usage error: %s" % gerr, opt, vopt, descs, argDescs)
 
     for (gopt, garg) in ginfo[0]:
         option = gopt[1:]
@@ -70,11 +71,11 @@ def dgetopt(arglist, opt, vopt, descs, argDescs):
             ret[vopt[option]] = garg
 
     if ret["help"] == True:
-        print_usage("Usage information", opt, vopt, descs, argDescs)
+        usage("Usage information", opt, vopt, descs, argDescs)
 
     return ret
 
-class Bcfg2(Bcfg2.Server.Component.Component):
+class Bcfg2Serv(Bcfg2.Server.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
@@ -240,7 +241,7 @@ if __name__ == '__main__':
         daemonize(ssetup['daemon'])
     if not ssetup['configfile']:
         ssetup['configfile'] = '/etc/bcfg2.conf'
-    s = Bcfg2(ssetup)
+    s = Bcfg2Serv(ssetup)
     while not s.shut:
         try:
             s.serve_forever()
