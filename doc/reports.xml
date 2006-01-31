@@ -202,7 +202,7 @@
     </para>
 
   <example>
-  <title><filename>etc/report-configuration.xml</filename></title>
+  <title>etc/report-configuration.xml</title>
   <programlisting><![CDATA[<Reports>
       <Report name='core_stats' good='Y' modified='Y'>
           <Delivery mechanism='mail' type='nodes-digest'>
@@ -235,7 +235,15 @@
       <command>StatReports</command> by hand if you would like
       in order to try it out immediately. 
     </para>
-
-</section>
-
+    
+    <mediaobject>
+      <imageobject>
+	<imagedata fileref='./images/composed.tif'/>
+      </imageobject>
+      
+      <caption>
+	<para>Examples of the performance and overview reports.</para>
+      </caption>
+    </mediaobject>
+  </section>
 </chapter>

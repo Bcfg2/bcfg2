@@ -241,7 +241,10 @@ class XMLSrc(XMLFileBacked):
     
     def Index(self):
         self.names = []
-        xdata = XML(self.data)
+        try:
+            xdata = lxml.etree.XML(self.data)
+        except lxml.etree.XMLSyntaxError:
+            logger.error("Failed to parse file %s" % ( self.name))
         self.pnode = self.__node__(xdata, self.names)
         self.cache = None
         self.priority = xdata.attrib['priority']

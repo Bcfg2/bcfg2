@@ -90,7 +90,10 @@ class Component(SSL.SSLServer,
         self.logRequests = 0
         # setup unhandled request syslog handling
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-        SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
+        try:
+            SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
+        except socket.error, serr:
+            self.logger.error("Failed to bind to location %s" % (location,), exc_info=1)
         self.port = self.socket.socket.getsockname()[1]
         self.logger.info("Bound to port %s" % self.port)
         self.funcs.update({'HandleEvents':self.HandleEvents,
