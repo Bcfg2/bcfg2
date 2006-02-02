@@ -110,6 +110,7 @@ class ToolsetImpl(Toolset):
                 self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
                 if not system("rpm --quiet -e %s" % " ".join(self.pkgwork['remove'])):
                     self.pkgwork['remove'] = []
+                    self.Refresh()
                     self.Inventory()
             else:
                 self.CondDisplayList('verbose', "Need to remove packages", self.pkgwork['remove'])
