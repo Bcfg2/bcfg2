@@ -3,24 +3,24 @@
 '''bcfg2-repo-validate checks all xml files in Bcfg2 repos against their respective XML schemas'''
 __revision__ = '$Revision$'
 
-from glob import glob
-from lxml.etree import parse, XMLSchema
-from os import system
-from sys import argv
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+import glob, lxml.etree, os, sys, ConfigParser
 
 if __name__ == '__main__':
-    cf = ConfigParser()
+    cf = ConfigParser.ConfigParser()
     schemadir = '/usr/share/bcfg2/schemas'
-    if len(argv) > 1:
-        repo = argv[1]
+    verbose = False
+    if '-v' in sys.argv:
+        verbose = True
+        sys.argv.remove('-v')
+    if len(sys.argv) > 1:
+        repo = sys.argv[1]
     else:
         cf.read(['/etc/bcfg2.conf'])
         try:
             repo = cf.get('server', 'repository')
-        except (NoSectionError, NoOptionError):
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             print "Repository location not specified in config file or on command line"
-            print "Usage: bcfg2-repo-validate <repo directory>"
+            print "Usage: bcfg2-repo-validate [-v] <repo directory>"
             raise SystemExit, 1
 
     # add more validation as more schemas get written
@@ -34,23 +34,25 @@ if __name__ == '__main__':
 
     for k, (spec, schemaname) in filesets.iteritems():
         try:
-            schema = XMLSchema(parse(open(schemaname%(schemadir))))
+            if verbose:
+                print "Processing schema %s" % (schemaname % (schemadir))
+            schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
         except:
             print "Failed to process schema %s" % (schemaname%(schemadir))
             continue
-        for filename in glob(spec%(repo)):
+        for filename in glob.glob(spec%(repo)):
             try:
-                datafile = parse(open(filename))
+                datafile = lxml.etree.parse(open(filename))
             except SyntaxError:
                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
-                system("xmllint %s" % filename)
+                os.system("xmllint %s" % filename)
                 continue
             except IOError:
                 print "Failed to open file %s \t\t<---" % (filename)
                 continue
             if schema.validate(datafile):
-                if '-v' in argv:
+                if verbose:
                     print "%s checks out" % (filename)
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
-                system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
+                os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
