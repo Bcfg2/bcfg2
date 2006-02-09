@@ -255,7 +255,9 @@
 	group and permissions. If no <filename>:info</filename> is
 	provided, targets are installed with default
 	information. Default metadata is root ownership, root group
-	memberships, and 0644 file permissions.
+	memberships, and 0644 file permissions. This file can also
+	contain an encoding parameter (ascii|base64) and a paranoid
+	flag that causes diffs to be logged on clients. 
       </para>
       <example>
 	<title>Cfg/filepath/:info</title>
@@ -301,6 +303,28 @@
 	construct installation URLs, and set several important fields
 	like package name and version. 
       </para>
+
+      <table>
+	<title>Package Entity Attributes</title>
+	<tgroup cols='2'>
+	  <colspec colnum='1' colwidth='1*'/>
+	  <colspec colnum='2' colwidth='3*'/>
+	  <thead>
+	    <row><entry>Name</entry><entry>Description</entry></row>
+	  </thead>
+	  <tbody>
+	    <row><entry>name</entry><entry>Package Name</entry></row>
+	    <row><entry>version</entry><entry>Package Version</entry></row>
+	    <row><entry>uri</entry>
+	      <entry>URL-style location of file repository (typically http)</entry></row>
+	    <row><entry>file</entry><entry>Package file name. Several
+	    other attributes (name, version, url) can be automatically
+	    defined based on regexes definied in the Pkgmgr plugin.</entry></row>
+	    <row><entry>simplefile</entry><entry>Package file name. No
+	    name parsing is performed, so no extra fields get set</entry></row>
+	  </tbody>
+	</tgroup>
+      </table>
     </section>
     <section>
       <title>Svcmgr</title>
