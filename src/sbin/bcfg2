@@ -9,12 +9,13 @@ from signal import signal, SIGINT
 from sys import argv
 from tempfile import mktemp
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-from xmlrpclib import ServerProxy, Fault
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
-from time import sleep, time
+from time import time
 from sys import exc_info
 from traceback import extract_tb
-import socket
+
+import xmlrpclib
+import Bcfg2.Client.Proxy
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
@@ -26,53 +27,6 @@ def if_then(cond, value_if, value_else):
         return value_if
     else:
         return value_else
-
-class SafeProxy:
-    '''Wrapper for proxy'''
-    def __init__(self, setup, client): 
-        self.retryCount = 0
-        self.client = client
-        self.setup = setup
-        try:
-            self.proxy = ServerProxy(self.setup["server"])
-        except IOError, io_error:
-            self.client.fatal_error("Invalid server URL %s: %s" %
-                                    (self.setup["server"], io_error))
-        except:
-            self.client.critical_error("initialising XML-RPC")
-
-    def run_method(self, operation_desc, method_name, method_args):
-        ''' Perform an XMLRPC invocation against the server'''
-        method = getattr(self.proxy, method_name)
-        instance_retries = 0
-        for i in xrange(int(self.setup["retries"])):
-            try:
-                self.client.cond_print("debug", "Attempting %s (%d of %d)" %
-                                      (operation_desc,(i+1),
-                                       int(self.setup["retries"])))
-                ret = apply(method, (self.setup['user'],
-                                     self.setup['password']) + method_args)
-                if instance_retries > 0:
-                    self.client.warning_error(
-                        "during %s:\nRequired %d attempts to contact server (%s)"
-                        % (operation_desc, instance_retries,
-                           self.setup["server"]))
-                self.client.cond_print("debug", "%s completed successfully" %
-                                      (operation_desc))
-                return ret
-            except Fault, fault:
-                self.client.fatal_error("%s encountered a server error:\n%s" %
-                                        (operation_desc, fault))
-            except socket.error:
-                instance_retries += 1
-                self.retryCount += 1
-                sleep(1.0)                
-            except:
-                self.client.critical_error(operation_desc)
-
-        self.client.fatal_error("%s failed:\nCould not connect to server (%s)" %
-                                (operation_desc, self.setup["server"]))
-        
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -354,7 +308,7 @@ class Client:
                                  % (self.setup['file']))
         else:
             # retrieve config from server
-            proxy = SafeProxy(self.setup, self)
+            proxy = Bcfg2.Client.Proxy.SafeProxy(self.setup, self)
         
             probe_data = proxy.run_method("probe download", "GetProbes", ())
 
