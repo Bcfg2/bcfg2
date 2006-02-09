@@ -10,7 +10,7 @@ class CobaltComponentError(Exception):
 class SafeProxy:
     '''Wrapper for proxy'''
     _cfile = ConfigParser.ConfigParser()
-    _cfile.read(['/etc/cobalt.conf'])
+    _cfile.read(['/etc/bcfg2.conf'])
     _components = _cfile._sections['components']
     _authinfo = ('root', _cfile.get('communication', 'password'))
     _retries = 4
