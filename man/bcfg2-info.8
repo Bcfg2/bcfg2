@@ -3,12 +3,19 @@
 bcfg2-info \- Creates a local version of the bcfg2 server core for
 state observation
 .SH SYNOPSIS
-.B bcfg2-info
+.B bcfg2-info [-c <config file>]
 .SH DESCRIPTION
 .PP
 .B bcfg2-info
 Instantiate an instance of the Bcfg2 core for data examination and
 debugging purposes.
+.SH OPTIONS
+.PP
+.B "\-c <config file>"
+.RS
+Specify an alternative location for bcfg2.conf. (Default
+/etc/bcfg2.conf)
+.RE
 .SH "SEE ALSO"
 .BR bcfg2(1),
 .BR bcfg2-server(8)

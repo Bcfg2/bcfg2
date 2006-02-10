@@ -10,15 +10,24 @@ bcfg2-server \- Server for client configuration specifications
 This daemon serves configurations to clients based on the data in its 
 repository. 
 .SH OPTIONS
-.TP
-.B \-d run bcfg2 in debug mode.
-.TP 
-.B \-v run bcfg2 in verbose mode.
-.TP 
-.B \-C Statically set client. Useful for debugging problems with
+.PP
+.B \-d 
+.RS
+Run bcfg2 in debug mode.
+.RE
+.B \-v
+.RS
+Run bcfg2 in verbose mode.
+.RE
+.B "\-C <client>" 
+.RS
+Statically set client. Useful for debugging problems with
 particular client's configs.
-.TP
-.B \-D Daemonize, placing the program pid in the specified pidfile
+.RE
+.B \-D 
+.RS
+Daemonize, placing the program pid in the specified pidfile.
+.RE
 .SH "SEE ALSO"
 .BR bcfg2(1),
 .BR bcfg2-repo-validate(8)

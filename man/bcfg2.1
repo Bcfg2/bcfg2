@@ -15,42 +15,49 @@ client state, attempting to install the desired configuration, and
 finally uploading statistics about the bcfg2 execution and client
 state.
 .SH OPTIONS
-.TP
-.B \-d run bcfg2 in debug mode.
-.TP 
-.B \-v run bcfg2 in verbose mode.
-.TP 
-.B \-P run bcfg2 in paranoid mode. Diffs will be logged for
+.PP
+.B "\-d" 
+.RS
+Run bcfg2 in debug mode.
+.RE 
+.B "\-v"
+.RS
+Run bcfg2 in verbose mode.
+.RE
+.B "\-b <bundle>"
+.RS
+Run bcfg2 against only one bundle in the configuration. 
+.RE
+.B "\-P" 
+.RS
+Run bcfg2 in paranoid mode. Diffs will be logged for
 configuration files marked as paranoid by the Bcfg2 server.
-.TP
-.B \-q run bcfg2 in quick mode. Package checksum verification won't be
+.RE
+.B "\-q"
+.RS
+Run bcfg2 in quick mode. Package checksum verification won't be
 performed. This mode relaxes the constraints of correctness, and thus
 should only be used in safe conditions. 
-.TP 
-.B \-n run bcfg2 in dry-run mode. No changes will be made to the
+.RE
+.B "\-n"
+.RS
+Run bcfg2 in dry-run mode. No changes will be made to the
 system. 
-.TP
-.B \-B run bcfg2 in build mode. Services aren't started, as the system
+.RE
+.B "\-B"
+.RS 
+Run bcfg2 in build mode. Services aren't started, as the system
 may still be in miniroot.
-.TP
-.B \-r <mode> make bcfg2 remove extra configuration elements it
-detects. Mode is one of all, svcs, or pkgs. All removes all
-entries. Likewise, services and packages remove only the extra
-configuration elements of the respective type.
-.TP
-.B \-i image specify image for client
-.TP
-.B \-p profile specify profile for client
-.TP
-Remove extra configuration located by two way verification. Removal
-mode is one of all, packages, or services. (Services are currently
-unimplemented under Debian. Nothing is currently supported under redhat)
-.B \-p <profile> assert profile for client.
-.TP
-.B \-i <image> assert image for client.
+.RE
+.B "\-r <mode>" 
+.RS
+Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, svcs, or pkgs. All removes all entries. Likewise, services and packages remove only the extra configuration elements of the respective type.
+.RE
+.B "\-p <profile>" 
+.RS
+Assert a profile for the current client.
+.RE
 .SH "SEE ALSO"
-.BR Bcfg2Server(8),
-.BR Bcfg2Ctl(8)
+.BR bcfg2-server(8),
+.BR bcfg2-info(8)
 .SH "BUGS"
-Two way removal mode is only implemented for packages under
-Debian. All other types are not yet implemented.
