@@ -6,30 +6,32 @@ import sys
 important = {'Package':['name', 'version'],
              'Service':['name', 'status'],
              'Directory':['name', 'owner', 'group', 'perms'],
-             'SymLink':['name', 'owner', 'from'],
-             'ConfigFile':['name', 'owner', 'group', 'perms']}
+             'SymLink':['name', 'to'],
+             'ConfigFile':['name', 'owner', 'group', 'perms'],
+             'Permissions':['name', 'perms'],
+             'PostInstall':['name']}
 
 def compare(new, old):
-    for i in range(2): #this is hardcoded.. may be a better looping
-    method
+    for i in range(2): #this is hardcoded.. may be a better looping method
         for child in new.getchildren():
-            equiv = old.xpath('%s[@name="%s"]' % (child.tag,
-            child.get('name')))
+            equiv = old.xpath('%s[@name="%s"]' % (child.tag, child.get('name')))
             if not important.has_key(child.tag):
                 print "tag type %s not handled" % (child.tag)
                 continue
             if len(equiv) == 0:
-                print "didn't find matching %s %s" % (child.tag,
-                child.get('name'))
+                print "didn't find matching %s %s" % (child.tag, child.get('name'))
                 continue
             elif len(equiv) >= 1:
                 if child.tag == 'ConfigFile':
                     if child.text != equiv[0].text:
                         continue
-                if [child.get(field) for field in
-                important[child.tag]] == \
-                   [equiv[0].get(field) for field in
-                   important[child.tag]]:
+                if [child.get(field) for field in important[child.tag]] == \
+                   [equiv[0].get(field) for field in important[child.tag]]:
+                    new.remove(child)
+                    old.remove(equiv[0])
+                else:
+                    print "+", lxml.etree.tostring(child),
+                    print "-", lxml.etree.tostring(equiv[0]),
     if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
         return True
     if new.tag == 'Independant':
