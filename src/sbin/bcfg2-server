@@ -9,7 +9,7 @@ from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
 import getopt, logging, os, select, signal, socket, sys
-import Bcfg2.Logging, Bcfg2.Server.Component, M2Crypto.SSL
+import Bcfg2.Logging, Bcfg2.Server.Component
 
 logger = logging.getLogger('bcfg2-server')
 
@@ -110,31 +110,16 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
             if self.shut:
-                raise M2Crypto.SSL.SSLError
+                raise socket.error
             try:
                 rsockinfo = select.select([self.socket, famfd], [], [], 15)[0]
             except select.error:
-                raise M2Crypto.SSL.SSLError
+                continue
             
             if famfd in rsockinfo:
                 self.Core.fam.Service()
             if self.socket in rsockinfo:
-                # workaround for m2crypto 0.15 bug
-                self.socket.postConnectionCheck = None
                 return self.socket.accept()
-
-    def serve_forever(self):
-        """Handle one request at a time until doomsday."""
-        while not self.shut:
-            self.handle_request()
-
-    def start_shutdown(self, signum, frame):
-        '''Shutdown on unexpected signals'''
-        self.shut = True
-
-    def handle_error(self):
-        '''Catch error path for clean exit'''
-        return False
 
     def resolve_client(self, client):
         if self.setup['client']:
@@ -208,7 +193,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         return "<ok/>"
 
 if __name__ == '__main__':
-    Bcfg2.Logging.setup_logging()
+    Bcfg2.Logging.setup_logging('bcfg2-server')
     options =  {
         'v':'verbose',
         'd':'debug',

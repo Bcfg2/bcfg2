@@ -1,20 +1,15 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision$'
 
-from M2Crypto import SSL
+import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
+import BaseHTTPServer, Cobalt.Proxy, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
 
-import cPickle, logging, socket, urlparse, xmlrpclib, ConfigParser, SimpleXMLRPCServer
+log = logging.getLogger('Component')
 
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
-    def __init__(self, request, client_address, server):
-        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self,
-                                                               request, client_address, server)
-        self.logger = logging.getLogger('Bcfg2.Server.Handler')
-    
     def finish(self):
         '''Finish HTTPS connections properly'''
-        self.request.set_shutdown(SSL.SSL_RECEIVED_SHUTDOWN | SSL.SSL_SENT_SHUTDOWN)
         self.request.close()
 
     def do_POST(self):
@@ -25,7 +20,7 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             response = self.server._cobalt_marshalled_dispatch(data, self.client_address)
         except: # This should only happen if the module is buggy
             # internal error, report as HTTP server error
-            self.logger.error("Unexpected failure in handler", exc_info=1)
+            log.error("Unexcepted handler failure in do_POST", exc_info=1)
             self.send_response(500)
             self.end_headers()
         else:
@@ -38,24 +33,45 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
             # shut down the connection
             self.wfile.flush()
-            self.connection.shutdown(1)
+            self.connection.shutdown()
 
-class Component(SSL.SSLServer,
+    def setup(self):
+        self.connection = self.request
+        self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
+        self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
+
+class SSLServer(BaseHTTPServer.HTTPServer):
+    '''This class encapsulates all of the ssl server stuff'''
+    def __init__(self, address, keyfile, handler):
+        SocketServer.BaseServer.__init__(self, address, handler)
+        ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+        ctxt.use_privatekey_file (keyfile)
+        ctxt.use_certificate_file(keyfile)
+        self.socket = OpenSSL.SSL.Connection(ctxt,
+                                             socket.socket(self.address_family, self.socket_type))
+        self.server_bind()
+        self.server_activate()
+
+class Component(SSLServer,
                 SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """Cobalt component providing XML-RPC access"""
     __name__ = 'Component'
     __implementation__ = 'Generic'
     __statefields__ = []
+    async_funcs = ['assert_location']
 
     def __init__(self, setup):
         # need to get addr
         self.setup = setup
+        self.shut = False
+        signal.signal(signal.SIGINT, self.start_shutdown)
+        signal.signal(signal.SIGTERM, self.start_shutdown)
+        self.logger = logging.getLogger('Component')
         self.cfile = ConfigParser.ConfigParser()
-        self.logger = logging.getLogger('Bcfg2.Server')
         if setup['configfile']:
             cfilename = setup['configfile']
         else:
-            cfilename = '/etc/cobalt.conf'
+            cfilename = '/etc/bcfg2.conf'
         self.cfile.read([cfilename])
         if not self.cfile.has_section('communication'):
             print "Configfile missing communication section"
@@ -64,48 +80,35 @@ class Component(SSL.SSLServer,
         if not self.cfile.has_section('components'):
             print "Configfile missing components section"
             raise SystemExit, 1
-        
         if self.cfile._sections['components'].has_key(self.__name__):
             self.static = True
             location = urlparse.urlparse(self.cfile.get('components', self.__name__))[1].split(':')
             location = (location[0], int(location[1]))
         else:
             location = (socket.gethostname(), 0)
-
-        self.password = self.cfile.get('communication', 'password')
-        sslctx = SSL.Context('sslv23')
         try:
             keyfile = self.cfile.get('communication', 'key')
         except ConfigParser.NoOptionError:
             print "No key specified in cobalt.conf"
             raise SystemExit, 1
-        sslctx.load_cert_chain(keyfile)
-        #sslctx.load_verify_locations('ca.pem')
-        #sslctx.set_client_CA_list_from_file('ca.pem')    
-        sslctx.set_verify(SSL.verify_none, 15)
-        #sslctx.set_allow_unknown_ca(1)
-        sslctx.set_session_id_ctx(self.__name__)
-        sslctx.set_info_callback(self.handle_sslinfo)
-        #sslctx.set_tmp_dh('dh1024.pem')
-        self.logRequests = 0
-        # setup unhandled request syslog handling
+
+        self.password = self.cfile.get('communication', 'password')
+
+        SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-        try:
-            SSL.SSLServer.__init__(self, location, CobaltXMLRPCRequestHandler, sslctx)
-        except socket.error, serr:
-            self.logger.error("Failed to bind to location %s" % (location,), exc_info=1)
-        self.port = self.socket.socket.getsockname()[1]
+        self.logRequests = 1
+        self.port = self.socket.getsockname()[1]
+        self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)
         self.funcs.update({'HandleEvents':self.HandleEvents,
-                           'system.listMethods':self.system_listMethods})
+                           'system.listMethods':self.addr_system_listMethods})
+        self.atime = 0
+        self.assert_location()
+        atexit.register(self.deassert_location)
 
     def HandleEvents(self, address, event_list):
         '''Default event handler'''
         return True
-
-    def handle_sslinfo(self, where, ret, ssl_ptr):
-        '''This is where we need to handle all ssl negotiation issues'''
-        pass
 
     def _cobalt_marshalled_dispatch(self, data, address):
         """Decode and dispatch XMLRPC requests. Overloaded to pass through
@@ -133,12 +136,13 @@ class Component(SSL.SSLServer,
             response = xmlrpclib.dumps(fault)
         except TypeError, terror:
             self.logger.error("Client %s called function %s with wrong argument count" %
-                   (address[0], method))
+                           (address[0], method), exc_info=1)
             response = xmlrpclib.dumps(xmlrpclib.Fault(4, terror.args[0]))
         except:
-            self.logger.error("Unexpected failure in handler", exc_info=1)
+            self.logger.error("Unexpected handler failure", exc_info=1)
             # report exception back to server
-            response = xmlrpclib.dumps(xmlrpclib.Fault(1, "handler failure"))
+            response = xmlrpclib.dumps(xmlrpclib.Fault(1,
+                                   "%s:%s" % (sys.exc_type, sys.exc_value)))
         return response
 
     def _authenticate_connection(self, method, user, password, address):
@@ -169,6 +173,55 @@ class Component(SSL.SSLServer,
             for field in self.__statefields__:
                 setattr(self, field, loaddata[self.__statefields__.index(field)])
                 
-    def system_listMethods(self, address):
+    def addr_system_listMethods(self, address):
         """get rid of the address argument and call the underlying dispatcher method"""
         return SimpleXMLRPCServer.SimpleXMLRPCDispatcher.system_listMethods(self)
+
+    def get_request(self):
+        '''We need to do work between requests, so select with timeout instead of blocking in accept'''
+        rsockinfo = []
+        while self.socket not in rsockinfo:
+            if self.shut:
+                raise socket.error
+            for funcname in self.async_funcs:
+                func = getattr(self, funcname, False)
+                if callable(func):
+                    func()
+                else:
+                    self.logger.error("Cannot call uncallable method %s" % (funcname))
+            try:
+                rsockinfo = select.select([self.socket], [], [], 10)[0]
+            except select.error:
+                continue
+            if self.socket in rsockinfo:
+                return self.socket.accept()
+
+    def assert_location(self):
+        '''Assert component location with slp'''
+        if self.__name__ == 'service-location' or self.static:
+            return
+        if (time.time() - self.atime) > 240:
+            slp = Cobalt.Proxy.service_location()
+            slp.AssertService({'tag':'location', 'name':self.__name__, 'url':self.url})
+            self.atime = time.time()
+
+    def deassert_location(self):
+        '''remove registration from slp'''
+        if self.__name__ == 'service-location' or self.static:
+            return
+        slp = Cobalt.Proxy.service_location()
+        try:
+            slp.DeassertService([{'tag':'location', 'name':self.__name__, 'url':self.url}])
+        except xmlrpclib.Fault, fault:
+            if fault.faultCode == 11:
+                self.logger.error("Failed to deregister self; no matching component")
+
+    def serve_forever(self):
+        """Handle one request at a time until doomsday."""
+        while not self.shut:
+            self.handle_request()
+
+    def start_shutdown(self, signum, frame):
+        '''Shutdown on unexpected signals'''
+        self.shut = True
+
