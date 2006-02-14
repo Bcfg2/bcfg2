@@ -347,7 +347,6 @@ class Toolset(object):
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
-        exists = False
         self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
         try:
             fmode = lstat(entry.get('name'))
@@ -359,10 +358,11 @@ class Toolset(object):
                     self.CondPrint('verbose', "Failed to unlink %s" % (entry.get('name')))
                     return False
             else:
+                self.CondPrint("debug", "Found a pre-existing directory at %s" % (entry.get('name')))
                 exists = True
         except OSError:
             # stat failed
-            pass
+            exists = False
 
         if not exists:
             try:
