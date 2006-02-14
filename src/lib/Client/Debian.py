@@ -122,7 +122,7 @@ class ToolsetImpl(Toolset):
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.CondDisplayList('verbose', "Removing packages", self.pkgwork['remove'])
-                if not self.saferun("apt-get remove %s" % " ".join(self.pkgwork['remove']))[0]:
+                if not self.saferun("apt-get remove -y --force-yes %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
             else:
                 self.CondDisplayList('verbose', "Need to remove packages:", self.pkgwork['remove'])
