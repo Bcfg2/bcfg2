@@ -96,7 +96,7 @@ class Component(SSLServer,
 
         SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-        self.logRequests = 1
+        self.logRequests = 0
         self.port = self.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)
