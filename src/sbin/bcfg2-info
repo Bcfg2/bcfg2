@@ -123,7 +123,7 @@ def do_version(cmd, core):
     print __revision__
         
 if __name__ == '__main__':
-    Bcfg2.Logging.setup_logging(to_syslog=False)
+    Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
     dispatch = {'build': do_build, 'bundles': do_bundles, 'clients': do_clients,
                 'generators': do_generators, 'groups': do_groups,

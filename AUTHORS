@@ -1,0 +1,10 @@
+- Narayan Desai <desai@mcs.anl.gov> has written most of bcfg2, including all parts not 
+  explicitly mentioned in this file
+- Joey Hagedorn <hagedorn@mcs.anl.gov> has written the reporting subsystem, including
+  StatReports, GenerateHostinfo, and the xslt, css and javascript associated with it.
+- Ed Smith <esmith4@inf.ed.ac.uk> has done substantial hardening of the bcfg client and 
+  server and implemented a common logging infrastructure.
+- Rick Bradshaw <bradshaw@mcs.anl.gov> has written several of the tools included in the 
+  tools/ subdirectory
+- Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written the Hostbase plugin
+- Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written the VHost plugin
