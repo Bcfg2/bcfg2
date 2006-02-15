@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.8.1pre1
+%define version 0.8.1pre3
 %define release 1
 %define pythonversion 2.3
 
@@ -23,7 +23,7 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: lxml, M2Crypto
+Requires: lxml, pyopenssl
 
 %description -n bcfg2-server
 Bcfg2 client
