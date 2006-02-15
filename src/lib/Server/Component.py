@@ -2,7 +2,9 @@
 __revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
-import BaseHTTPServer, Cobalt.Proxy, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
+import BaseHTTPServer, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
+
+import Bcfg2.Client.Proxy as Proxy
 
 log = logging.getLogger('Component')
 
@@ -201,7 +203,7 @@ class Component(SSLServer,
         if self.__name__ == 'service-location' or self.static:
             return
         if (time.time() - self.atime) > 240:
-            slp = Cobalt.Proxy.service_location()
+            slp = Proxy.service_location()
             slp.AssertService({'tag':'location', 'name':self.__name__, 'url':self.url})
             self.atime = time.time()
 
@@ -209,7 +211,7 @@ class Component(SSLServer,
         '''remove registration from slp'''
         if self.__name__ == 'service-location' or self.static:
             return
-        slp = Cobalt.Proxy.service_location()
+        slp = Proxy.service_location()
         try:
             slp.DeassertService([{'tag':'location', 'name':self.__name__, 'url':self.url}])
         except xmlrpclib.Fault, fault:
