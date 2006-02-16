@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, os, stat
+import logging, lxml.etree, time
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -63,18 +63,11 @@ class FileBacked(object):
         object.__init__(self)
         self.data = ''
         self.name = name
-        self.mtime = 0
         #self.readonce = 0
         #self.HandleEvent()
 
     def HandleEvent(self, event=None):
         '''Read file upon update'''
-        oldmtime = self.mtime
-        try:
-            self.mtime = os.stat(self.name)[stat.ST_MTIME]
-        except OSError:
-            logger.error("Failed to stat file %s" % (self.name))
-            
         try:
             self.data = file(self.name).read()
             self.Index()
@@ -192,8 +185,11 @@ class StructFile(XMLFileBacked):
 
     def Match(self, metadata):
         '''Return matching fragments of independant'''
-        return reduce(lambda x, y:x+y, [frag for (pred, frag) in self.fragments.iteritems()
-                                       if pred(metadata)])
+        matching = [frag for (pred, frag) in self.fragments.iteritems() if pred(metadata)]
+        if matching:
+            return reduce(lambda x, y:x+y, matching)
+        logger.error("File %s got null match" % (self.name))
+        return []
 
 class LNode:
     '''LNodes provide lists of things available at a particular group intersection'''
@@ -211,7 +207,6 @@ class LNode:
             if data.tag in self.raw.keys():
                 self.predicate = eval(self.raw[data.tag] % (data.get('name')), {'predicate':predicate})
             else:
-                print data.tag
                 raise Exception
         mytype = self.__class__
         self.children = [mytype(child, plist, self) for child in data.getchildren()
@@ -238,16 +233,24 @@ class XMLSrc(XMLFileBacked):
         self.cache = None
         self.pnode = None
         self.priority = '1000'
-    
-    def Index(self):
+
+    def HandleEvent(self, event=None):
+        '''Read file upon update'''
+        try:
+            data = file(self.name).read()
+        except IOError:
+            logger.error("Failed to read file %s" % (self.name))
+            return
         self.names = []
         try:
-            xdata = lxml.etree.XML(self.data)
+            xdata = lxml.etree.XML(data)
         except lxml.etree.XMLSyntaxError:
-            logger.error("Failed to parse file %s" % ( self.name))
+            logger.error("Failed to parse file %s" % (self.name))
+            return
         self.pnode = self.__node__(xdata, self.names)
         self.cache = None
-        self.priority = xdata.attrib['priority']
+        self.priority = xdata.get('priority')
+        del xdata, data
 
     def Cache(self, metadata):
         '''Build a package dict for a given host'''
