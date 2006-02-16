@@ -1,15 +1,9 @@
 '''This is the bcfg2 support for debian'''
 __revision__ = '$Revision$'
 
-from glob import glob
-from os import environ, stat
-from re import compile as regcompile
+import apt_pkg, glob, os, re, sys, Bcfg2.Client.Toolset
 
-import apt_pkg
-
-from Bcfg2.Client.Toolset import Toolset
-
-class ToolsetImpl(Toolset):
+class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
     __name__ = 'Debian'
@@ -18,13 +12,16 @@ class ToolsetImpl(Toolset):
                      '/etc/apt/apt.conf']
     pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s',
                       ('%s=%s', ['name', 'version']))}
-    svcre = regcompile("/etc/.*/[SK]\d\d(?P<name>\S+)")
+    svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
     def __init__(self, cfg, setup):
-        Toolset.__init__(self, cfg, setup)
+        Bcfg2.Client.Toolset.Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
         self.CondPrint('debug', 'Configuring Debian toolset')
-        environ["DEBIAN_FRONTEND"] = 'noninteractive'
+        os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
+        # dup /dev/null on top of stdin
+        null = open('/dev/null', 'w+')
+        os.dup2(null.fileno(), sys.__stdin__.fileno())
         self.saferun("dpkg --force-confold --configure -a")
         if not self.setup['build']:
             self.saferun("/usr/sbin/dpkg-reconfigure -f noninteractive debconf < /dev/null")
@@ -49,7 +46,7 @@ class ToolsetImpl(Toolset):
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
-        rawfiles = glob("/etc/rc*.d/*%s" % (entry.get('name')))
+        rawfiles = glob.glob("/etc/rc*.d/*%s" % (entry.get('name')))
         files = [filename for filename in rawfiles if self.svcre.match(filename).group('name') == entry.get('name')]
         if entry.get('status') == 'off':
             if files:
@@ -67,7 +64,7 @@ class ToolsetImpl(Toolset):
         cmdrc = 1
         self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
         try:
-            stat('/etc/init.d/%s' % entry.get('name'))
+            os.stat('/etc/init.d/%s' % entry.get('name'))
         except OSError:
             self.CondPrint('debug', "Init script for service %s does not exist" % entry.get('name'))
             return False
@@ -104,10 +101,10 @@ class ToolsetImpl(Toolset):
 
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
-        Toolset.Inventory(self)
+        Bcfg2.Client.Toolset.Toolset.Inventory(self)
         allsrv = []
         [allsrv.append(self.svcre.match(fname).group('name')) for fname in
-         glob("/etc/rc[12345].d/S*") if self.svcre.match(fname).group('name') not in allsrv]
+         glob.glob("/etc/rc[12345].d/S*") if self.svcre.match(fname).group('name') not in allsrv]
         self.CondDisplayList('debug', "Found active services:", allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if

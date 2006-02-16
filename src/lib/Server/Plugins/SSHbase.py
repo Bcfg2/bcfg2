@@ -95,7 +95,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
         if not hasattr(self, 'static_skn'):
             self.cache_skn()
         entry.text = self.static_skn
-        for hostkey in [keytmpl % client for keytmpl in self.pubkeys]:
+        for hostkey in [keytmpl % client for keytmpl in self.pubkeys \
+                        if self.repository.entries.has_key(keytmpl % client)]:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.repository.entries[hostkey].data)
         permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
