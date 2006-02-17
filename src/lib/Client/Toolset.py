@@ -1,21 +1,18 @@
 '''This is the basic toolset class for the Bcfg2 client'''
 __revision__ = '$Revision$'
 
-from binascii import a2b_base64
-from copy import deepcopy
 from grp import getgrgid, getgrnam
-from os import chown, chmod, lstat, mkdir, stat, unlink, rename, readlink, symlink
+from os import unlink, rename, readlink, symlink
 from pwd import getpwuid, getpwnam
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 from sys import exc_info
 import stat as statmod
-from math import floor, ceil
-#from time import asctime, localtime
 from traceback import extract_tb
-from popen2 import Popen4
 from lxml.etree import Element, SubElement, tostring
+
+import binascii, copy, math, os, popen2
 
 def calc_perms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -59,7 +56,7 @@ class Toolset(object):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
         self.CondPrint('debug', '> %s' % command)
 
-        runpipe = Popen4(command, bufsize=16384)
+        runpipe = popen2.Popen4(command, bufsize=16384)
         output = runpipe.fromchild.read()
         if len(output) > 0:
             self.CondPrint('debug', '< %s' % output)
@@ -80,7 +77,7 @@ class Toolset(object):
                 prefix = "%s[%s]: " % (self.__name__, state)
                 line_len = self.width-len(prefix)
                 for line in msg.split('\n'):
-                    inner_lines = int(floor(float(len(line)) / line_len))+1
+                    inner_lines = int(math.floor(float(len(line)) / line_len))+1
                     for i in xrange(inner_lines):
                         print "%s%s" % (prefix, line[i*line_len:(i+1)*line_len])
             except IOError:
@@ -109,8 +106,8 @@ class Toolset(object):
                 columnWidth = len(item)
         columnWidth += 1
 
-        columns = int(floor(float(screenWidth) / columnWidth))
-        lines = int(ceil(float(len(items)) / columns))
+        columns = int(math.floor(float(screenWidth) / columnWidth))
+        lines = int(math.ceil(float(len(items)) / columns))
 
         for lineNumber in xrange(lines):
             lineItems = []
@@ -164,7 +161,7 @@ class Toolset(object):
         '''Inventory system status'''
         self.CondPrint('verbose', "Inventorying system...")
         self.Inventory_Entries()
-        all = deepcopy(self.installed)
+        all = copy.deepcopy(self.installed)
         desired = {}
         for entry in self.cfg.findall(".//Package"):
             desired[entry.attrib['name']] = entry
@@ -297,7 +294,7 @@ class Toolset(object):
         '''Install SymLink Entry'''
         self.CondPrint('verbose', "Installing Symlink %s" % (entry.get('name')))
         try:
-            fmode = lstat(entry.get('name'))[ST_MODE]
+            fmode = os.lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
                 self.CondPrint('debug', "Non-directory entry already exists at %s" % (entry.get('name')))
                 unlink(entry.get('name'))
@@ -319,7 +316,7 @@ class Toolset(object):
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
         try:
-            ondisk = stat(entry.get('name'))
+            ondisk = os.stat(entry.get('name'))
         except OSError:
             self.CondPrint("debug", "Directory %s does not exist" % (entry.get('name')))
             return False
@@ -330,7 +327,7 @@ class Toolset(object):
             self.CondPrint('debug', 'User resolution failing')
             owner = 'root'
             group = 'root'
-        perms = oct(stat(entry.get('name'))[ST_MODE])[-4:]
+        perms = oct(os.stat(entry.get('name'))[ST_MODE])[-4:]
         if ((owner == entry.get('owner')) and
             (group == entry.get('group')) and
             (perms == entry.get('perms'))):
@@ -349,7 +346,7 @@ class Toolset(object):
         '''Install Directory Entry'''
         self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
         try:
-            fmode = lstat(entry.get('name'))
+            fmode = os.lstat(entry.get('name'))
             if not S_ISDIR(fmode[ST_MODE]):
                 self.CondPrint("debug", "Found a non-directory entry at %s" % (entry.get('name')))
                 try:
@@ -366,14 +363,14 @@ class Toolset(object):
 
         if not exists:
             try:
-                mkdir(entry.get('name'))
+                os.mkdir(entry.get('name'))
             except OSError:
                 self.CondPrint('debug', 'Failed to create directory %s' % (entry.get('name')))
                 return False
         try:
-            chown(entry.get('name'),
+            os.chown(entry.get('name'),
                   getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
-            chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
+            os.chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
             self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
@@ -383,7 +380,7 @@ class Toolset(object):
         '''Install ConfigFile Entry'''
         filename = entry.get('name')
         try:
-            ondisk = stat(filename)
+            ondisk = os.stat(filename)
         except OSError:
             self.CondPrint('debug', "File %s doesn't exist" % (filename))
             return False
@@ -399,9 +396,9 @@ class Toolset(object):
             self.CondPrint('debug', "Owner/Group failure for %s: %s, %s" %
                            (filename, ondisk[ST_UID], ondisk[ST_GID]))
             return False
-        perms = stat(filename)[ST_MODE]
+        perms = os.stat(filename)[ST_MODE]
         if entry.get('encoding', 'ascii') == 'base64':
-            tempdata = a2b_base64(entry.text)
+            tempdata = binascii.a2b_base64(entry.text)
         else:
             tempdata = entry.text
 
@@ -429,36 +426,40 @@ class Toolset(object):
             return False
         parent = "/".join(entry.get('name').split('/')[:-1])
         if parent:
-            for idx in xrange(len(parent.split('/')[:-1])):
-                current = '/'+'/'.join(parent.split('/')[1:2+idx])
-                try:
-                    sloc = lstat(current)
+            try:
+                os.lstat(parent)
+            except:
+                self.CondPrint('debug', 'Creating parent path for config file %s' % (entry.get('name')))
+                for idx in xrange(len(parent.split('/')[:-1])):
+                    current = '/'+'/'.join(parent.split('/')[1:2+idx])
                     try:
-                        if not S_ISDIR(sloc[ST_MODE]):
-                            unlink(current)
-                            mkdir(current)
+                        sloc = os.lstat(current)
+                        try:
+                            if not S_ISDIR(sloc[ST_MODE]):
+                                unlink(current)
+                                os.mkdir(current)
+                        except OSError:
+                            return False
                     except OSError:
-                        return False
-                except OSError:
-                    try:
-                        mkdir(current)
-                    except OSError:
-                        return False
+                        try:
+                            os.mkdir(current)
+                        except OSError:
+                            return False
 
         # If we get here, then the parent directory should exist
         try:
             newfile = open("%s.new"%(entry.get('name')), 'w')
             if entry.get('encoding', 'ascii') == 'base64':
-                filedata = a2b_base64(entry.text)
+                filedata = binascii.a2b_base64(entry.text)
             else:
                 filedata = entry.text
             newfile.write(filedata)
             newfile.close()
             try:
-                chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+                os.chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
             except KeyError:
-                chown(newfile.name, 0, 0)
-            chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
+                os.chown(newfile.name, 0, 0)
+            os.chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
                 self.saferun("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             rename(newfile.name, entry.get('name'))
@@ -477,7 +478,7 @@ class Toolset(object):
     def VerifyPermissions(self, entry):
         '''Verify method for abstract permission'''
         try:
-            sinfo = stat(entry.get('name'))
+            sinfo = os.stat(entry.get('name'))
         except OSError:
             self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
             return False
@@ -494,13 +495,13 @@ class Toolset(object):
     def InstallPermissions(self, entry):
         '''Install method for abstract permission'''
         try:
-            sinfo = stat(entry.get('name'))
+            sinfo = os.stat(entry.get('name'))
         except OSError:
             self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
             return False
         for ftype in ['DIR', 'REG', 'CHR', 'BLK']:
             if getattr(statmod, "S_IS%s" % ftype)(sinfo[ST_MODE]):
-                chmod(entry.get('name'), calc_perms(getattr(statmod, "S_IF%s" % ftype), entry.get('perms')))
+                os.chmod(entry.get('name'), calc_perms(getattr(statmod, "S_IF%s" % ftype), entry.get('perms')))
                 return True
         self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
         return False
