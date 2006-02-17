@@ -1,3 +1,9 @@
+bcfg2 (0.8.1pre4-1) unstable; urgency=low
+
+  * new upstream
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri, 17 Feb 2006 13:02:37 -0600
+
 bcfg2 (0.8.1pre3-1) unstable; urgency=low
 
   * packaging updates
