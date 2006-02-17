@@ -1,18 +1,11 @@
 '''This is the basic toolset class for the Bcfg2 client'''
 __revision__ = '$Revision$'
 
-from grp import getgrgid, getgrnam
-from os import unlink, rename, readlink, symlink
-from pwd import getpwuid, getpwnam
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
-from sys import exc_info
-import stat as statmod
-from traceback import extract_tb
-from lxml.etree import Element, SubElement, tostring
 
-import binascii, copy, math, os, popen2
+import binascii, copy, grp, lxml.etree, math, os, popen2, pwd, stat, sys, traceback
 
 def calc_perms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -144,9 +137,9 @@ class Toolset(object):
             
     def LogFailure(self, area, entry):
         '''Print tracebacks in unexpected cases'''
-        print "Failure in %s for entry: %s" % (area, tostring(entry))
-        (ttype, value, trace) = exc_info()
-        for line in extract_tb(trace):
+        print "Failure in %s for entry: %s" % (area, lxml.etree.tostring(entry))
+        (ttype, value, trace) = sys.exc_info()
+        for line in traceback.extract_tb(trace):
             print "File %s, line %i, in %s\n   %s\n" % (line)
         print "%s: %s\n" % (ttype, value)
         del ttype, value, trace
@@ -218,7 +211,7 @@ class Toolset(object):
 
     def GenerateStats(self, client_version):
         '''Generate XML summary of execution statistics'''
-        stats = Element("Statistics")
+        stats = lxml.etree.Element("Statistics")
 
         # Calculate number of total bundles and structures
         total =  len(self.states)
@@ -240,20 +233,20 @@ class Toolset(object):
 
         # List bad elements of the configuration
         if dirty:
-            bad_elms = SubElement(stats, "Bad")
+            bad_elms = lxml.etree.SubElement(stats, "Bad")
             for elm in [key for key, val in self.states.iteritems() if not val]:
                 if elm.get('name') == None:
-                    SubElement(bad_elms, elm.tag)
+                    lxml.etree.SubElement(bad_elms, elm.tag)
                 else:
-                    SubElement(bad_elms, elm.tag, name=elm.get('name'))
+                    lxml.etree.SubElement(bad_elms, elm.tag, name=elm.get('name'))
         if self.modified:
-            mod = SubElement(stats, "Modified")
+            mod = lxml.etree.SubElement(stats, "Modified")
             for elm in self.modified:
-                SubElement(mod, elm.tag, name=elm.get('name'))
+                lxml.etree.SubElement(mod, elm.tag, name=elm.get('name'))
         if self.extra_services + self.pkgwork['remove']:
-            extra = SubElement(stats, "Extra")
-            [SubElement(extra, "Service", name=svc) for svc in self.extra_services]
-            [SubElement(extra, "Package", name=pkg) for pkg in self.pkgwork['remove']]
+            extra = lxml.etree.SubElement(stats, "Extra")
+            [lxml.etree.SubElement(extra, "Service", name=svc) for svc in self.extra_services]
+            [lxml.etree.SubElement(extra, "Package", name=pkg) for pkg in self.pkgwork['remove']]
         return stats
 
     # the next two are dispatch functions
@@ -283,7 +276,7 @@ class Toolset(object):
     def VerifySymLink(self, entry):
         '''Verify SymLink Entry'''
         try:
-            sloc = readlink(entry.get('name'))
+            sloc = os.readlink(entry.get('name'))
             if sloc == entry.get('to'):
                 return True
             return False
@@ -297,16 +290,16 @@ class Toolset(object):
             fmode = os.lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
                 self.CondPrint('debug', "Non-directory entry already exists at %s" % (entry.get('name')))
-                unlink(entry.get('name'))
+                os.unlink(entry.get('name'))
             elif S_ISDIR(fmode):
                 self.CondPrint('debug', "Directory entry already exists at %s" % (entry.get('name')))
                 self.saferun("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
             else:
-                unlink(entry.get('name'))
+                os.unlink(entry.get('name'))
         except OSError:
             print "Symlink %s cleanup failed" % (entry.get('name'))
         try:
-            symlink(entry.get('to'), entry.get('name'))
+            os.symlink(entry.get('to'), entry.get('name'))
             return True
         except OSError:
             return False
@@ -321,8 +314,8 @@ class Toolset(object):
             self.CondPrint("debug", "Directory %s does not exist" % (entry.get('name')))
             return False
         try:
-            owner = getpwuid(ondisk[ST_UID])[0]
-            group = getgrgid(ondisk[ST_GID])[0]
+            owner = pwd.getpwuid(ondisk[ST_UID])[0]
+            group = grp.getgrgid(ondisk[ST_GID])[0]
         except OSError:
             self.CondPrint('debug', 'User resolution failing')
             owner = 'root'
@@ -350,7 +343,7 @@ class Toolset(object):
             if not S_ISDIR(fmode[ST_MODE]):
                 self.CondPrint("debug", "Found a non-directory entry at %s" % (entry.get('name')))
                 try:
-                    unlink(entry.get('name'))
+                    os.unlink(entry.get('name'))
                 except OSError:
                     self.CondPrint('verbose', "Failed to unlink %s" % (entry.get('name')))
                     return False
@@ -369,7 +362,7 @@ class Toolset(object):
                 return False
         try:
             os.chown(entry.get('name'),
-                  getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+                  pwd.getpwnam(entry.get('owner'))[2], grp.getgrnam(entry.get('group'))[2])
             os.chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
@@ -390,8 +383,8 @@ class Toolset(object):
             self.CondPrint('debug', "Failed to read %s" % (filename))
             return False
         try:
-            owner = getpwuid(ondisk[ST_UID])[0]
-            group = getgrgid(ondisk[ST_GID])[0]
+            owner = pwd.getpwuid(ondisk[ST_UID])[0]
+            group = grp.getgrgid(ondisk[ST_GID])[0]
         except KeyError:
             self.CondPrint('debug', "Owner/Group failure for %s: %s, %s" %
                            (filename, ondisk[ST_UID], ondisk[ST_GID]))
@@ -436,7 +429,7 @@ class Toolset(object):
                         sloc = os.lstat(current)
                         try:
                             if not S_ISDIR(sloc[ST_MODE]):
-                                unlink(current)
+                                os.unlink(current)
                                 os.mkdir(current)
                         except OSError:
                             return False
@@ -456,13 +449,14 @@ class Toolset(object):
             newfile.write(filedata)
             newfile.close()
             try:
-                os.chown(newfile.name, getpwnam(entry.get('owner'))[2], getgrnam(entry.get('group'))[2])
+                os.chown(newfile.name, pwd.getpwnam(entry.get('owner'))[2],
+                         grp.getgrnam(entry.get('group'))[2])
             except KeyError:
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
                 self.saferun("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
-            rename(newfile.name, entry.get('name'))
+            os.rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), err:
             if err.errno == 13:
@@ -500,8 +494,8 @@ class Toolset(object):
             self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
             return False
         for ftype in ['DIR', 'REG', 'CHR', 'BLK']:
-            if getattr(statmod, "S_IS%s" % ftype)(sinfo[ST_MODE]):
-                os.chmod(entry.get('name'), calc_perms(getattr(statmod, "S_IF%s" % ftype), entry.get('perms')))
+            if getattr(stat, "S_IS%s" % ftype)(sinfo[ST_MODE]):
+                os.chmod(entry.get('name'), calc_perms(getattr(stat, "S_IF%s" % ftype), entry.get('perms')))
                 return True
         self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
         return False

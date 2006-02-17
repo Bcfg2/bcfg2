@@ -120,6 +120,7 @@ class ToolsetImpl(Toolset):
                 for service in self.extra_services:
                     if not system("/sbin/chkconfig --level 123456 %s off" % service):
                         self.extra_services.remove(service)
+                    self.CondPrint('verbose', "Failed to remove service %s" % (service))
             else:
                 self.CondDisplayList('verbose', 'Need to remove services:', self.extra_services)
         
