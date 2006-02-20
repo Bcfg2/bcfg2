@@ -90,3 +90,8 @@ class process_manager(ComponentProxy):
     '''process manager specific component proxy'''
     name = 'process-manager'
     methods = ['CreateProcessGroup', 'GetProcessGroup']
+
+class bcfg2(ComponentProxy):
+    '''bcfg2 client code'''
+    name = 'bcfg2'
+    methods = ['AssertProfile', 'GetConfig', 'GetProbes', 'RecvProbeData', 'RecvStats']
