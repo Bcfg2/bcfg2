@@ -308,9 +308,9 @@ class Client:
                                  % (self.setup['file']))
         else:
             # retrieve config from server
-            proxy = Bcfg2.Client.Proxy.SafeProxy(self.setup, self)
+            proxy = Bcfg2.Client.Proxy.SafeProxy('bcfg2')
         
-            probe_data = proxy.run_method("probe download", "GetProbes", ())
+            probe_data = proxy.run_method("GetProbes", ())
 
             times['probe_download'] = time()
         
@@ -329,14 +329,12 @@ class Client:
                 self.critical_error("executing probes")
 
             # upload probe responses
-            proxy.run_method("probe data upload", "RecvProbeData",
-                             (probe_info, ))
+            proxy.run_method("RecvProbeData", (probe_info, ))
         
             times['probe_upload'] = time()
 
-            rawconfig = proxy.run_method("configuration download", "GetConfig",
-                                          (self.setup['image'],
-                                           self.setup['profile']))
+            rawconfig = proxy.run_method("GetConfig", (self.setup['image'],
+                                                       self.setup['profile']))
 
             times['config_download'] = time()
 
@@ -404,9 +402,7 @@ class Client:
             stats.append(timeinfo)
             feedback.append(stats)
 
-            proxy.run_method("uploading statistics",
-                             "RecvStats", (tostring(feedback),))
-
+            proxy.run_method("RecvStats", (tostring(feedback),))
 
 if __name__ == '__main__':
     signal(SIGINT, cb_sigint_handler)
