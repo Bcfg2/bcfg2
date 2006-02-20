@@ -94,6 +94,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             fatal_error(msg)
 
         self.funcs.update({
+            "AssertProfile": self.Bcfg2AssertProfile, 
             "GetConfig": self.Bcfg2GetConfig,
             "GetProbes": self.Bcfg2GetProbes,
             "RecvProbeData": self.Bcfg2RecvProbeData,
@@ -164,17 +165,20 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
                 critical_error('error in probe data receipt')
         return True
 
+    def Bcfg2AssertProfile(self, address, profile):
+        '''Set profile for a client'''
+        client = self.resolve_client(address[0])
+        try:
+            self.Core.metadata.set_group(client, profile)
+        except MetadataConsistencyError:
+            warning = 'metadata consistency error'
+            self.logger.warning(warning)
+            raise Fault, (6, warning)
+        return True
+
     def Bcfg2GetConfig(self, address, image=False, profile=False):
         '''Build config for a client'''
         client = self.resolve_client(address[0])
-
-        if image and profile:
-            try:
-                self.Core.metadata.set_group(client, profile)
-            except MetadataConsistencyError:
-                warning = 'metadata consistency error'
-                self.logger.warning(warning)
-                raise Fault, (6, warning)
         return tostring(self.Core.BuildConfiguration(client))
 
     def Bcfg2RecvStats(self, address, stats):
