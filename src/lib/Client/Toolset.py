@@ -222,8 +222,7 @@ class Toolset(object):
         stats.set('version', '2.0')
         stats.set('client_version', client_version)
 
-
-        if len([key for key, val in self.structures.iteritems() if not val]) == 0:
+        if len([key for key, val in self.states.iteritems() if not val]) == 0:
             stats.set('state', 'clean')
             dirty = 0
         else:
