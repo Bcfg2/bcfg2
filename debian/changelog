@@ -1,3 +1,9 @@
+bcfg2 (0.8.1pre5-2) unstable; urgency=low
+
+  * Fix a few client side bugs
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Mon, 20 Feb 2006 16:35:50 -0600
+
 bcfg2 (0.8.1pre4-1) unstable; urgency=low
 
   * new upstream
