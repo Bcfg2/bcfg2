@@ -16,6 +16,13 @@ def cb_sigint_handler(signum, frame):
 class Client:
     ''' The main bcfg2 client class '''
     def __init__(self, args):
+        level = 30
+        if '-v' in sys.argv:
+            level = 20
+        if '-d' in sys.argv:
+            level = 0
+        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
+        self.logger = logging.getLogger('bcfg2')
         self.toolset = None
         self.config = None
         self.options = {
@@ -89,16 +96,8 @@ class Client:
             'password': '<password>  ',
             'retries': '<number of retries>'            
             }
-
         self.setup = {} 
         self.get_setup(args)
-        level = 30
-        if self.setup['verbose']:
-            level = 20
-        if self.setup['debug']:
-            level = 0
-        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
-        self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
 
     def load_toolset(self, toolset_name):

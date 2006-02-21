@@ -65,7 +65,7 @@ class Toolset(object):
 
     def CondDisplayState(self, phase):
         '''Conditionally print tracing information'''
-        self.logger.info('Phase: %s' % phase)
+        self.logger.info('\nPhase: %s' % phase)
         self.logger.info('Correct entries:\t%d' % self.states.values().count(True))
         self.logger.info('Incorrect entries:\t%d' % self.states.values().count(False))
         self.logger.info('Total managed entries:\t%d' % len(self.states.values()))

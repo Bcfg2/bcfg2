@@ -46,7 +46,7 @@ class TermiosFormatter(logging.Formatter):
                 self.width = 80
         else:
             # output to a pipe
-            self.width = sys.maxint
+            self.width = 32768
 
     def format(self, record):
         '''format a record for display'''
@@ -59,22 +59,21 @@ class TermiosFormatter(logging.Formatter):
                 else:
                     inner_lines = int(math.floor(float(len(line)) / line_len))+1
                     for i in xrange(inner_lines):
-                        returns.append("%s: %s" % (record.name, line[i*line_len:(i+1)*line_len]))
+                        returns.append("%s" % (line[i*line_len:(i+1)*line_len]))
         elif type(record.msg) == types.ListType:
             record.msg.sort()
-            msgwidth = self.width - len(record.name) - 2
+            msgwidth = self.width
             columnWidth = max([len(item) for item in record.msg])
             columns = int(math.floor(float(msgwidth) / (columnWidth+2)))
             lines = int(math.ceil(float(len(record.msg)) / columns))
             for lineNumber in xrange(lines):
                 indices = [idx for idx in [(colNum * lines) + lineNumber
                                            for colNum in range(columns)] if idx < len(record.msg)]
-                format = record.name + ':' + (len(indices) * (" %%-%ds " % columnWidth))
+                format = (len(indices) * (" %%-%ds " % columnWidth))
                 returns.append(format % tuple([record.msg[idx] for idx in indices]))
         elif type(record.msg) == lxml.etree._Element:
             returns.append(str(xml_print(record.msg)))
         else:
-            returns.append("Got unsupported type %s" % (str(type(record.msg))))
             returns.append(record.name + ':' + str(record.msg))
         if record.exc_info:
             returns.append(self.formatException(record.exc_info))
