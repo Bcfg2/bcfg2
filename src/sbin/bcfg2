@@ -6,8 +6,8 @@ __revision__ = '$Revision$'
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
-import getopt, os, signal, sys, tempfile, time, traceback
-import Bcfg2.Client.Proxy
+import getopt, logging, os, signal, sys, tempfile, time, traceback
+import Bcfg2.Client.Proxy, Bcfg2.Logging
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
@@ -49,7 +49,6 @@ class Client:
             'f': 'file',
             'c': 'cache',
             'p': 'profile',
-            'i': 'image',
             'r': 'remove',
             'h': 'help',
             's': 'setup',
@@ -83,7 +82,6 @@ class Client:
             'file': "<cache file>",
             'cache': "<cache file>",
             'profile': "<profile name>",
-            'image': "<image name>",
             'remove': "(pkgs | svcs | all)",
             'setup': "<setup file>",
             'server': '<hostname>   ',
@@ -94,14 +92,14 @@ class Client:
 
         self.setup = {} 
         self.get_setup(args)
-        self.cond_print_setup('debug')
-
-    def cond_print_setup(self, state):
-        ''' Display the clients current setup information '''
-        for (key, value) in self.setup.iteritems():
-            if self.setup[key]:            
-                self.cond_print(state, "%s => %s" % (key, value))
-
+        level = 30
+        if self.setup['verbose']:
+            level = 20
+        if self.setup['debug']:
+            level = 0
+        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
+        self.logger = logging.getLogger('bcfg2')
+        self.logger.debug(self.setup)
 
     def load_toolset(self, toolset_name):
         '''Import client toolset modules'''
@@ -126,8 +124,7 @@ class Client:
         try:
             self.toolset = mod.ToolsetImpl(self.config, self.setup)
             
-            self.cond_print('debug', "Selected %s toolset..." %
-                            (toolset_name))
+            self.logger.debug("Selected %s toolset..." % (toolset_name))
         except:
             self.critical_error("instantiating toolset %s" %
                                 (toolset_name))        
@@ -166,21 +163,12 @@ class Client:
         print "Fatal error: %s" % (message)
         raise SystemExit, 1
 
-    def warning_error(self, message):
-        '''Warn about a problem but continue'''
-        print "Warning: %s" % (message)
-
     def usage_error(self, message):
         '''Die because script was called the wrong way'''
         print "Usage error: %s" % (message)
         self.print_usage()
         raise SystemExit, 2
 
-    def cond_print(self, state, message):
-        '''Output debugging information'''
-        if self.setup[state]:
-            print "bcfg2[%s]: %s" % (state, message)
-        
     def print_usage(self):
         ''' Display usage information for bcfg2 '''
         print "bcfg2 usage:"
@@ -206,7 +194,7 @@ class Client:
             'retries': ('communicaton', 'retries')
             }
 
-        self.cond_print_setup('debug')
+        self.logger.debug(self.setup)
 
         config_parser = None        
 
@@ -214,8 +202,8 @@ class Client:
             try:
                 if not (ret.has_key(key) and ret[key]):
                     if config_parser == None:
-                        self.cond_print('debug', "no %s provided, reading setup info from %s" %
-                                       (key, setup_file))
+                        self.logger.debug("no %s provided, reading setup info from %s" %
+                                          (key, setup_file))
                         config_parser = ConfigParser()
                         config_parser.read(setup_file)
                     try:
@@ -282,8 +270,8 @@ class Client:
         if self.setup['file']:
             # read config from file
             try:
-                self.cond_print('debug', "reading cached configuration from %s" %
-                               (self.setup['file']))
+                self.logger.debug("reading cached configuration from %s" %
+                                  (self.setup['file']))
                 configfile = open(self.setup['file'], 'r')
                 rawconfig = configfile.read()
                 configfile.close()
@@ -329,8 +317,8 @@ class Client:
                 open(self.setup['cache'], 'w').write(rawconfig)
                 os.chmod(self.setup['cache'], 33152)
             except IOError:
-                self.warning_error("failed to write config cache file %s" %
-                                   (self.setup['cache']))
+                self.logger.warning("failed to write config cache file %s" %
+                                    (self.setup['cache']))
             times['caching'] = time.time()
             
         try:
@@ -369,12 +357,12 @@ class Client:
         times['inventory'] = time.time()
     
         # summarize current state
-        self.toolset.CondDisplayState('verbose', 'initial')
+        self.toolset.CondDisplayState('initial')
 
         # install incorrect aspects of configuration
         self.toolset.Install()
 
-        self.toolset.CondDisplayState('verbose', "final")
+        self.toolset.CondDisplayState('final')
 
         times['install'] = time.time()
         times['finished'] = time.time()

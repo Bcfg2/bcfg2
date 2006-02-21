@@ -61,7 +61,7 @@ class ToolsetImpl(Toolset):
     def InstallService(self, entry):
         '''Install Service entry'''
         system("/sbin/chkconfig --add %s"%(entry.attrib['name']))
-        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        self.logger.info("Installing Service %s" % (entry.get('name')))
         if not entry.get('status'):
             print "Can't install service %s, not enough data" % (entry.get('name'))
             return False
@@ -88,18 +88,17 @@ class ToolsetImpl(Toolset):
                 if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')):
                     return True
             else:
-                self.CondPrint('debug', "Package %s: wrong version installed. want %s have %s" %
-                               (entry.get('name'), entry.get('version'), self.installed[entry.get('name')]))
+                self.logger.debug("Package %s: wrong version installed. want %s have %s" %
+                                  (entry.get('name'), entry.get('version'), self.installed[entry.get('name')]))
                 return False
         else:
-            self.CondPrint('debug', "Package %s: not installed" % (entry.get('name')))
+            self.logger.debug("Package %s: not installed" % (entry.get('name')))
             return False
 
         (vstat, output) = self.saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
         if vstat != 0:
             if [name for name in output if name.split()[-1] not in modlist]:
-                self.CondPrint('debug',
-                               "Package %s content verification failed" % entry.get('name'))
+                self.logger.debug("Package %s content verification failed" % entry.get('name'))
                 return False
         return True
 
@@ -107,28 +106,32 @@ class ToolsetImpl(Toolset):
         '''Deal with extra configuration detected'''
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
-                self.CondPrint('verbose', "Removing packages: %s" % self.pkgwork['remove'])
+                self.logger.info("Removing packages: %s" % self.pkgwork['remove'])
                 if not system("rpm --quiet -e %s" % " ".join(self.pkgwork['remove'])):
                     self.pkgwork['remove'] = []
                     self.Refresh()
                     self.Inventory()
             else:
-                self.CondDisplayList('verbose', "Need to remove packages", self.pkgwork['remove'])
+                self.logger.info("Need to remove packages:")
+                self.logger.info(self.pkgwork['remove'])
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
-                self.CondDisplayList('verbose', 'Removing services:', self.extra_services)
+                self.logger.info('Removing services:')
+                self.logger.info(self.extra_services)
                 for service in self.extra_services:
                     if not system("/sbin/chkconfig --level 123456 %s off" % service):
                         self.extra_services.remove(service)
-                    self.CondPrint('verbose', "Failed to remove service %s" % (service))
+                    self.logger.info("Failed to remove service %s" % (service))
             else:
-                self.CondDisplayList('verbose', 'Need to remove services:', self.extra_services)
+                self.logger.info('Need to remove services:')
+                self.logger.info(self.extra_services)
         
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
         allsrv = [line.split()[0] for line in popen("/sbin/chkconfig --list|grep :on").readlines()]
-        self.CondDisplayList('debug', 'Found active services:', allsrv)
+        self.logger.debug('Found active services:')
+        self.logger.debug(allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if
          svc.get('status') == 'on' and svc.get('name') in allsrv]

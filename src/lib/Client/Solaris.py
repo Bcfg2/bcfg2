@@ -87,7 +87,7 @@ class ToolsetImpl(Toolset):
             if name:
                 entry.set('FMRI', name[0])
             else:
-                self.CondPrint('verbose', 'Failed to locate FMRI for service %s' % entry.get('name'))
+                self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
                 return False
         if entry.get('FMRI')[:3] == 'lrc':
             filename = entry.get('FMRI').split('/')[-1]
@@ -111,16 +111,16 @@ class ToolsetImpl(Toolset):
     def InstallService(self, entry):
         '''Install Service entry'''
         if not entry.attrib.has_key('status'):
-            self.CondPrint('verbose', 'Insufficient information for Service %s; cannot Install' % entry.get('name'))
+            self.logger.info('Insufficient information for Service %s; cannot Install' % entry.get('name'))
             return False
         if not entry.attrib.has_key('FMRI'):
             name = self.saferun("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % entry.get('name'))[1]
             if name:
                 entry.set('FMRI', name[0])
             else:
-                self.CondPrint('verbose', 'Failed to locate FMRI for service %s' % entry.get('name'))
+                self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
                 return False
-        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        self.logger.info("Installing Service %s" % (entry.get('name')))
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
                 print "Disabling Service %s" % (entry.get('name'))
@@ -136,8 +136,7 @@ class ToolsetImpl(Toolset):
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
         if not entry.get('version'):
-            self.CondPrint('verbose',
-                           "Insufficient information of Package %s; cannot Verify" % entry.get('name'))
+            self.logger.info("Insufficient information of Package %s; cannot Verify" % entry.get('name'))
             return False
         if entry.get('type') in ['sysv', 'blast'] or entry.get('type')[:4] == 'sysv':
             cmdrc = self.saferun("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))[0]
@@ -145,7 +144,7 @@ class ToolsetImpl(Toolset):
             cmdrc = self.saferun("/local/sbin/epkg -q -k %s-%s >/dev/null" %
                                  (entry.get('name'), entry.get('version')))[0]
         if cmdrc != 0:
-            self.CondPrint('debug', "Package %s version incorrect" % entry.get('name'))
+            self.logger.debug("Package %s version incorrect" % entry.get('name'))
         else:
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick'] or entry.get('type') == 'encap':
@@ -156,7 +155,7 @@ class ToolsetImpl(Toolset):
                 else:
                     output = [line for line in odata if line[:5] == 'ERROR']
                     if len([name for name in output if name.split()[-1] not in modlist]):
-                        self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
+                        self.logger.debug("Package %s content verification failed" % (entry.get('name')))
                     else:
                         return True
         return False
@@ -174,7 +173,7 @@ class ToolsetImpl(Toolset):
             if name:
                 srv.set('FMRI', name[0])
             else:
-                self.CondPrint("verbose", "failed to locate FMRI for service %s" % srv.get('name'))
+                self.logger.info("Failed to locate FMRI for service %s" % srv.get('name'))
         #nsrv = [ r for r in [ popen("/usr/bin/svcs -H -o FMRI %s " % s).read().strip() for s in csrv ] if r ]
         [allsrv.remove(svc.get('FMRI')) for svc in csrv if
          svc.get('status') == 'on' and svc.get("FMRI") in allsrv]
@@ -184,7 +183,7 @@ class ToolsetImpl(Toolset):
         '''Deal with extra configuration detected'''
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
-                self.CondPrint('verbose', "Removing packages: %s" % (self.pkgwork['remove']))
+                self.logger.info("Removing packages: %s" % (self.pkgwork['remove']))
                 sysvrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'sysv']
                 enrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'encap']
                 if sysvrmpkgs:
@@ -194,15 +193,15 @@ class ToolsetImpl(Toolset):
                     if not self.saferun("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
                         [self.pkgwork['remove'].remove(pkg) for pkg in enrmpkgs]
             else:
-                self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
+                self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
                 if len(self.extra_services) > 0:
                     if self.setup['remove'] in ['all', 'services']:
-                        self.CondPrint('verbose', "Removing services: %s" % (self.extra_services))
+                        self.logger.info("Removing services: %s" % (self.extra_services))
                         for service in self.extra_services:
                             if not self.saferun("/usr/sbin/svcadm disable %s" % service)[0]:
                                 self.extra_services.remove(service)
                     else:
-                        self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
+                        self.logger.info("Need to remove services: %s" % (self.extra_services))
 
     def Install(self):
         '''Local install method handling noaskfiles'''

@@ -5,9 +5,9 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, grp, lxml.etree, math, os, popen2, pwd, stat, sys, traceback
+import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat
 
-def calc_perms(initial, perms):
+def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
     pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}, {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
              {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP}, {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}]
@@ -36,9 +36,9 @@ class Toolset(object):
         self.structures = {}
         self.modified = []
         self.installed = {}
+        self.logger = logging.getLogger('Toolset')
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         self.extra_services = []
-        (self.height, self.width) = self.get_height_width()
         if self.__important__:
             for cfile in [cfl for cfl in cfg.findall(".//ConfigFile") if cfl.get('name') in self.__important__]:
                 self.VerifyEntry(cfile)
@@ -47,103 +47,33 @@ class Toolset(object):
 
     def saferun(self, command):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
-        self.CondPrint('debug', '> %s' % command)
+        self.logger.debug('> %s' % command)
 
         runpipe = popen2.Popen4(command, bufsize=16384)
         output = runpipe.fromchild.read()
         if len(output) > 0:
-            self.CondPrint('debug', '< %s' % output)
+            self.logger.debug('< %s' % output)
         cmdstat = runpipe.poll()
         while cmdstat == -1:
             moreOutput = runpipe.fromchild.read()
             if len(moreOutput) > 0:                
-                self.CondPrint('debug', '< %s' % moreOutput)
+                self.logger.debug('< %s' % moreOutput)
             output += moreOutput
             cmdstat = runpipe.poll()
 
         return (cmdstat, [line for line in output.split('\n') if line])
 
-    def CondPrint(self, state, msg):
-        '''Conditionally print message'''
-        if self.setup[state]:
-            try:
-                prefix = "%s[%s]: " % (self.__name__, state)
-                line_len = self.width-len(prefix)
-                for line in msg.split('\n'):
-                    inner_lines = int(math.floor(float(len(line)) / line_len))+1
-                    for i in xrange(inner_lines):
-                        print "%s%s" % (prefix, line[i*line_len:(i+1)*line_len])
-            except IOError:
-                pass
-
-    def get_height_width(self):
-        '''Get Terminal information'''
-        try:
-            import termios, struct, fcntl
-            height, width = struct.unpack('hhhh',
-                                        fcntl.ioctl(0, termios.TIOCGWINSZ,
-                                                    "\000"*8))[0:2]
-            if height == 0 or width == 0:
-                return 25, 80
-            return height, width
-        except:
-            return 25, 80    
-
-    def FormattedCondPrint(self, state, items):
-        '''Formatted conditional print'''
-        items.sort()
-        screenWidth = self.width - len("%s[%s]:" % (self.__name__, state))
-        columnWidth = 1
-        for item in items:
-            if len(item) > columnWidth:
-                columnWidth = len(item)
-        columnWidth += 1
-
-        columns = int(math.floor(float(screenWidth) / columnWidth))
-        lines = int(math.ceil(float(len(items)) / columns))
-
-        for lineNumber in xrange(lines):
-            lineItems = []
-            for columnNumber in xrange(columns):
-                itemNumber = int(columnNumber*lines + lineNumber)
-                if itemNumber < len(items):
-                    lineItems.append(items[itemNumber]) 
-            format = "%%-%ss" % columnWidth
-            lineText = "".join([format % item for item in lineItems])
-            self.CondPrint(state, lineText.rstrip())
-
-    def CondDisplayList(self, state, title, items):
-        '''Conditionally print a list of data'''
-        self.CondPrint(state, title)
-        self.FormattedCondPrint(state, items)
-        self.CondPrint(state, '')
-            
-    def CondDisplayState(self, state, phase):
+    def CondDisplayState(self, phase):
         '''Conditionally print tracing information'''
-        self.CondPrint(state, 'Phase: %s' % phase)
-        self.CondPrint(state, 'Correct entries:\t%d'
-                       % self.states.values().count(True))
-        self.CondPrint(state, 'Incorrect entries:\t%d' %
-                       self.states.values().count(False))
-        self.CondPrint(state, 'Total managed entries:\t%d' %
-                       len(self.states.values()))
-        self.CondPrint(state, 'Unmanaged entries:\t%d' %
-                       len(self.pkgwork['remove']))
-        self.CondPrint(state, '')                 
+        self.logger.info('Phase: %s' % phase)
+        self.logger.info('Correct entries:\t%d' % self.states.values().count(True))
+        self.logger.info('Incorrect entries:\t%d' % self.states.values().count(False))
+        self.logger.info('Total managed entries:\t%d' % len(self.states.values()))
+        self.logger.info('Unmanaged entries:\t%d' % len(self.pkgwork['remove']))
 
-        if ((self.states.values().count(False) > 0) and
-            not self.pkgwork['remove']):
-            self.CondPrint('verbose', 'All entries correct.')
+        if ((self.states.values().count(False) > 0) and not self.pkgwork['remove']):
+            self.logger.info('All entries correct.')
             
-    def LogFailure(self, area, entry):
-        '''Print tracebacks in unexpected cases'''
-        print "Failure in %s for entry: %s" % (area, lxml.etree.tostring(entry))
-        (ttype, value, trace) = sys.exc_info()
-        for line in traceback.extract_tb(trace):
-            print "File %s, line %i, in %s\n   %s\n" % (line)
-        print "%s: %s\n" % (ttype, value)
-        del ttype, value, trace
-
     # These next functions form the external API
 
     def Refresh(self):
@@ -152,7 +82,7 @@ class Toolset(object):
 
     def Inventory(self):
         '''Inventory system status'''
-        self.CondPrint('verbose', "Inventorying system...")
+        self.logger.info("Inventorying system...")
         self.Inventory_Entries()
         all = copy.deepcopy(self.installed)
         desired = {}
@@ -260,7 +190,7 @@ class Toolset(object):
             else:
                 self.states[entry] = method(entry)
         except:
-            self.LogFailure("Verify", entry)
+            self.logger.error("Failure in VerifyEntry", exc_info=1)
 
     def InstallEntry(self, entry):
         '''Dispatch call to self.Install<tagname>'''
@@ -268,7 +198,7 @@ class Toolset(object):
             method = getattr(self, "Install%s"%(entry.tag))
             self.states[entry] = method(entry)
         except:
-            self.LogFailure("Install", entry)
+            self.logger.error("Failure in InstallEntry", exc_info=1)
 
     # All remaining operations implement the mechanics of POSIX cfg elements
 
@@ -284,19 +214,19 @@ class Toolset(object):
 
     def InstallSymLink(self, entry):
         '''Install SymLink Entry'''
-        self.CondPrint('verbose', "Installing Symlink %s" % (entry.get('name')))
+        self.logger.info("Installing Symlink %s" % (entry.get('name')))
         try:
             fmode = os.lstat(entry.get('name'))[ST_MODE]
             if S_ISREG(fmode) or S_ISLNK(fmode):
-                self.CondPrint('debug', "Non-directory entry already exists at %s" % (entry.get('name')))
+                self.logger.debug("Non-directory entry already exists at %s" % (entry.get('name')))
                 os.unlink(entry.get('name'))
             elif S_ISDIR(fmode):
-                self.CondPrint('debug', "Directory entry already exists at %s" % (entry.get('name')))
+                self.logger.debug("Directory entry already exists at %s" % (entry.get('name')))
                 self.saferun("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
             else:
                 os.unlink(entry.get('name'))
         except OSError:
-            print "Symlink %s cleanup failed" % (entry.get('name'))
+            self.logger.info("Symlink %s cleanup failed" % (entry.get('name')))
         try:
             os.symlink(entry.get('to'), entry.get('name'))
             return True
@@ -310,13 +240,13 @@ class Toolset(object):
         try:
             ondisk = os.stat(entry.get('name'))
         except OSError:
-            self.CondPrint("debug", "Directory %s does not exist" % (entry.get('name')))
+            self.logger.debug("Directory %s does not exist" % (entry.get('name')))
             return False
         try:
             owner = pwd.getpwuid(ondisk[ST_UID])[0]
             group = grp.getgrgid(ondisk[ST_GID])[0]
         except OSError:
-            self.CondPrint('debug', 'User resolution failing')
+            self.logger.error('User resolution failing')
             owner = 'root'
             group = 'root'
         perms = oct(os.stat(entry.get('name'))[ST_MODE])[-4:]
@@ -326,28 +256,28 @@ class Toolset(object):
             return True
         else:
             if owner != entry.get('owner'):
-                self.CondPrint("debug", "Directory %s ownership wrong" % (entry.get('name')))
+                self.logger.debug("Directory %s ownership wrong" % (entry.get('name')))
             if group != entry.get('group'):
-                self.CondPrint("debug", "Directory %s group wrong" % (entry.get('name')))
+                self.logger.debug("Directory %s group wrong" % (entry.get('name')))
             if perms != entry.get('perms'):
-                self.CondPrint("debug", "Directory %s permissions wrong: are %s should be %s" %
+                self.logger.debug("Directory %s permissions wrong: are %s should be %s" %
                                (entry.get('name'), perms, entry.get('perms')))
             return False
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
-        self.CondPrint('verbose', "Installing Directory %s" % (entry.get('name')))
+        self.logger.info("Installing Directory %s" % (entry.get('name')))
         try:
             fmode = os.lstat(entry.get('name'))
             if not S_ISDIR(fmode[ST_MODE]):
-                self.CondPrint("debug", "Found a non-directory entry at %s" % (entry.get('name')))
+                self.logger.debug("Found a non-directory entry at %s" % (entry.get('name')))
                 try:
                     os.unlink(entry.get('name'))
                 except OSError:
-                    self.CondPrint('verbose', "Failed to unlink %s" % (entry.get('name')))
+                    self.logger.info("Failed to unlink %s" % (entry.get('name')))
                     return False
             else:
-                self.CondPrint("debug", "Found a pre-existing directory at %s" % (entry.get('name')))
+                self.logger.debug("Found a pre-existing directory at %s" % (entry.get('name')))
                 exists = True
         except OSError:
             # stat failed
@@ -357,15 +287,15 @@ class Toolset(object):
             try:
                 os.mkdir(entry.get('name'))
             except OSError:
-                self.CondPrint('debug', 'Failed to create directory %s' % (entry.get('name')))
+                self.logger.error('Failed to create directory %s' % (entry.get('name')))
                 return False
         try:
             os.chown(entry.get('name'),
                   pwd.getpwnam(entry.get('owner'))[2], grp.getgrnam(entry.get('group'))[2])
-            os.chmod(entry.get('name'), calc_perms(S_IFDIR, entry.get('perms')))
+            os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
-            self.CondPrint('debug', 'Permission fixup failed for %s' % (entry.get('name')))
+            self.logger.error('Permission fixup failed for %s' % (entry.get('name')))
             return False
 
     def VerifyConfigFile(self, entry):
@@ -374,19 +304,19 @@ class Toolset(object):
         try:
             ondisk = os.stat(filename)
         except OSError:
-            self.CondPrint('debug', "File %s doesn't exist" % (filename))
+            self.logger.debug("File %s doesn't exist" % (filename))
             return False
         try:
             data = open(filename).read()
         except IOError:
-            self.CondPrint('debug', "Failed to read %s" % (filename))
+            self.logger.debug("Failed to read %s" % (filename))
             return False
         try:
             owner = pwd.getpwuid(ondisk[ST_UID])[0]
             group = grp.getgrgid(ondisk[ST_GID])[0]
         except KeyError:
-            self.CondPrint('debug', "Owner/Group failure for %s: %s, %s" %
-                           (filename, ondisk[ST_UID], ondisk[ST_GID]))
+            self.logger.debug("Owner/Group failure for %s: %s, %s" %
+                              (filename, ondisk[ST_UID], ondisk[ST_GID]))
             return False
         perms = os.stat(filename)[ST_MODE]
         if entry.get('encoding', 'ascii') == 'base64':
@@ -395,24 +325,24 @@ class Toolset(object):
             tempdata = entry.text
 
         if ((data == tempdata) and (owner == entry.get('owner')) and
-            (group == entry.get('group')) and (perms == calc_perms(S_IFREG, entry.get('perms')))):
+            (group == entry.get('group')) and (perms == calcPerms(S_IFREG, entry.get('perms')))):
             return True
         else:
             if data != tempdata:
-                self.CondPrint('debug', "File %s contents wrong" % (filename))
+                self.logger.debug("File %s contents wrong" % (filename))
             elif ((owner != entry.get('owner')) or (group != entry.get('group'))):
-                self.CondPrint('debug', 'File %s ownership wrong' % (filename))
-            elif perms != calc_perms(S_IFREG, entry.get('perms')):
-                self.CondPrint('debug', 'File %s permissions wrong' % (filename))
+                self.logger.debug('File %s ownership wrong' % (filename))
+            elif perms != calcPerms(S_IFREG, entry.get('perms')):
+                self.logger.debug('File %s permissions wrong' % (filename))
             return False
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
         if entry.text == None:
-            self.CondPrint('verbose',
-                           "Incomplete information for ConfigFile %s. Cannot install" % (entry.get('name')))
+            self.logger.error(
+                "Incomplete information for ConfigFile %s. Cannot install" % (entry.get('name')))
             return False
-        self.CondPrint('verbose', "Installing ConfigFile %s" % (entry.get('name')))
+        self.logger.info("Installing ConfigFile %s" % (entry.get('name')))
 
         if self.setup['dryrun']:
             return False
@@ -421,7 +351,7 @@ class Toolset(object):
             try:
                 os.lstat(parent)
             except:
-                self.CondPrint('debug', 'Creating parent path for config file %s' % (entry.get('name')))
+                self.logger.debug('Creating parent path for config file %s' % (entry.get('name')))
                 for idx in xrange(len(parent.split('/')[:-1])):
                     current = '/'+'/'.join(parent.split('/')[1:2+idx])
                     try:
@@ -452,14 +382,14 @@ class Toolset(object):
                          grp.getgrnam(entry.get('group'))[2])
             except KeyError:
                 os.chown(newfile.name, 0, 0)
-            os.chmod(newfile.name, calc_perms(S_IFREG, entry.get('perms')))
+            os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
                 self.saferun("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             os.rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), err:
             if err.errno == 13:
-                self.CondPrint('verbose', "Failed to open %s for writing" % (entry.get('name')))
+                self.logger.info("Failed to open %s for writing" % (entry.get('name')))
             else:
                 print err
             return False
@@ -473,7 +403,7 @@ class Toolset(object):
         try:
             sinfo = os.stat(entry.get('name'))
         except OSError:
-            self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
+            self.logger.debug("Entry %s doesn't exist" % entry.get('name'))
             return False
         # pad out perms if needed
         while len(entry.get('perms', '')) < 4:
@@ -482,7 +412,7 @@ class Toolset(object):
         if perms == entry.get('perms'):
             return True
 
-        self.CondPrint('debug', "Entry %s permissions incorrect" % entry.get('name'))
+        self.logger.debug("Entry %s permissions incorrect" % entry.get('name'))
         return False
     
     def InstallPermissions(self, entry):
@@ -490,13 +420,13 @@ class Toolset(object):
         try:
             sinfo = os.stat(entry.get('name'))
         except OSError:
-            self.CondPrint('debug', "Entry %s doesn't exist" % entry.get('name'))
+            self.logger.debug("Entry %s doesn't exist" % entry.get('name'))
             return False
         for ftype in ['DIR', 'REG', 'CHR', 'BLK']:
             if getattr(stat, "S_IS%s" % ftype)(sinfo[ST_MODE]):
-                os.chmod(entry.get('name'), calc_perms(getattr(stat, "S_IF%s" % ftype), entry.get('perms')))
+                os.chmod(entry.get('name'), calcPerms(getattr(stat, "S_IF%s" % ftype), entry.get('perms')))
                 return True
-        self.CondPrint('verbose', "Entry %s has unknown file type" % entry.get('name'))
+        self.logger.info("Entry %s has unknown file type" % entry.get('name'))
         return False
 
     def VerifyPostInstall(self, entry):
@@ -509,7 +439,7 @@ class Toolset(object):
             bchildren = entry.getchildren()
             if [b_ent for b_ent in bchildren if b_ent in self.modified]:
                 # This bundle has been modified
-                self.CondPrint('verbose', "%s %s needs update" % (entry.tag, entry.get('name', '???')))
+                self.logger.info("%s %s needs update" % (entry.tag, entry.get('name', '???')))
                 modfiles = [cfile.get('name') for cfile in bchildren if cfile.tag == 'ConfigFile']
                 for child in bchildren:
                     if child.tag == 'Package':
@@ -517,12 +447,12 @@ class Toolset(object):
                     else:
                         self.VerifyEntry(child)
                         if not self.states[child]:
-                            self.CondPrint('debug', "Reinstalling clobbered entry %s %s" % (child.tag,
-                                                                                            child.get('name')))
+                            self.logger.debug("Reinstalling clobbered entry %s %s" % (child.tag,
+                                                                                      child.get('name')))
                             self.InstallEntry(child)
                             self.VerifyEntry(child)
-                    self.CondPrint('debug', "Re-checked entry %s %s: %s" %
-                                   (child.tag, child.get('name'), self.states[child]))
+                    self.logger.debug("Re-checked entry %s %s: %s" %
+                                      (child.tag, child.get('name'), self.states[child]))
                 for postinst in [entry for entry in bchildren if entry.tag == 'PostInstall']:
                     self.saferun(postinst.get('name'))
                 for svc in [svc for svc in bchildren if svc.tag == 'Service' and
@@ -531,12 +461,12 @@ class Toolset(object):
                         # stop services in miniroot
                         self.saferun('/etc/init.d/%s stop' % svc.get('name'))
                     else:
-                        self.CondPrint('debug', 'Restarting service %s' % svc.get('name'))
+                        self.logger.debug('Restarting service %s' % svc.get('name'))
                         self.saferun('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload')))
             
         for entry in self.structures:
             if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
-                self.CondPrint('verbose', "%s %s incomplete" % (entry.tag, entry.get('name', "")))
+                self.logger.info("%s %s incomplete" % (entry.tag, entry.get('name', "")))
             else:
                 self.structures[entry] = True
 
@@ -547,28 +477,29 @@ class Toolset(object):
     def Install(self):
         '''Correct detected misconfigurations'''
         if self.setup['dryrun']:
-            self.CondPrint("verbose", "Dry-run mode: no changes will be made")
+            self.logger.info("Dry-run mode: no changes will be made")
         else:
-            self.CondPrint("verbose", "Updating the system")
-        self.CondPrint("verbose", "")
+            self.logger.info("Updating the system")
+        self.logger.info("")
         self.HandleExtra()
-        # use quick package ops from here on
-        self.setup['quick'] = True
 
-        self.CondDisplayList('dryrun', "Packages to update:",
-                             [pkg.get('name') for pkg in self.pkgwork['update']])
-        self.CondDisplayList('dryrun', "Packages to add:",
-                       [pkg.get('name') for pkg in self.pkgwork['add']])
-        self.CondDisplayList('dryrun', "Packages to remove:",
-                             self.pkgwork['remove'])
-        self.CondDisplayList('dryrun', "Entries to update:",
-                             ["%s: %s" % (entry.tag, entry.get('name'))
+        if self.setup['dryrun']:
+            self.logger.info("Packages to update:")
+            self.logger.info([pkg.get('name') for pkg in self.pkgwork['update']])
+            self.logger.info("Packages to add:")
+            self.logger.info([pkg.get('name') for pkg in self.pkgwork['add']])
+            self.logger.info("Packages to remove:")
+            self.logger.info(self.pkgwork['remove'])
+            self.logger.info("Entries to update:")
+            self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
                               for entry in self.states if not (self.states[entry]
                                                                or entry.tag == 'Package')])
-        self.CondDisplayList('dryrun', "Services to remove:", self.extra_services)
-                             
-        if self.setup['dryrun']:
+            self.logger.info("Services to remove:")
+            self.logger.info(self.extra_services)
             return
+        
+        # use quick package ops from here on
+        self.setup['quick'] = True
 
         # build up work queue
         work = self.pkgwork['add'] + self.pkgwork['update']
@@ -586,9 +517,9 @@ class Toolset(object):
         # Installation loop
         while ((0 < left < old) and (count < 20)):
             # Print pass info
-            self.CondPrint('verbose', "Starting pass %s" % (count))
-            self.CondPrint("verbose", "%s Entries left" % (len(work)))
-            self.CondPrint('verbose', "%s new, %s update, %s remove" %
+            self.logger.info("Starting pass %s" % (count))
+            self.logger.info("%s Entries left" % (len(work)))
+            self.logger.info("%s new, %s update, %s remove" %
                            (len(self.pkgwork['add']), len(self.pkgwork['update']),
                             len(self.pkgwork['remove'])))
 
@@ -596,7 +527,7 @@ class Toolset(object):
             count = count + 1
             old = left
 
-            self.CondPrint("verbose", "Installing non-package entries")
+            self.logger.info("Installing non-package entries")
             [self.InstallEntry(ent) for ent in work if ent.tag != 'Package']
 
             packages = [pkg for pkg in work if pkg.tag == 'Package']
@@ -607,55 +538,55 @@ class Toolset(object):
             if packages:
                 for pkgtype in ptypes:
                     # try single large install
-                    self.CondPrint("verbose", "Trying single pass package install for pkgtype %s" % pkgtype)
+                    self.logger.info("Trying single pass package install for pkgtype %s" % pkgtype)
                     if not self.pkgtool.has_key(pkgtype):
-                        self.CondPrint("verbose", "No support for pkgtype %s" % (pkgtype))
+                        self.logger.info("No support for pkgtype %s" % (pkgtype))
                         continue
                     pkgtool = self.pkgtool[pkgtype]
                     pkglist = [pkg for pkg in packages if pkg.get('type') == pkgtype]
                     for field in pkgtool[1][1]:
                         pkglist = [pkg for pkg in pkglist if pkg.attrib.has_key(field)]
                     if not pkglist:
-                        self.CondPrint("debug", "No complete/installable packages of type %s" % pkgtype)
+                        self.logger.debug("No complete/installable packages of type %s" % pkgtype)
                         continue
                     pkgargs = " ".join([pkgtool[1][0] % tuple([pkg.get(field) for field in pkgtool[1][1]])
                                         for pkg in pkglist])
 
-                    self.CondPrint("debug", "Installing packages: :%s:" % pkgargs)
-                    self.CondPrint("debug", "Running command ::%s::" % (pkgtool[0] % pkgargs))
+                    self.logger.debug("Installing packages: :%s:" % pkgargs)
+                    self.logger.debug("Running command ::%s::" % (pkgtool[0] % pkgargs))
                     cmdrc = self.saferun(pkgtool[0] % pkgargs)[0]
 
                     if cmdrc == 0:
-                        self.CondPrint('verbose', "Single Pass Succeded")
+                        self.logger.info("Single Pass Succeded")
                         # set all package states to true and flush workqueues
                         pkgnames = [pkg.get('name') for pkg in pkglist]
                         for entry in [entry for entry in self.states.keys()
                                       if entry.tag == 'Package' and entry.get('type') == pkgtype
                                       and entry.get('name') in pkgnames]:
-                            self.CondPrint('debug', 'Setting state to true for pkg %s' % (entry.get('name')))
+                            self.logger.debug('Setting state to true for pkg %s' % (entry.get('name')))
                             self.states[entry] = True
                             [self.pkgwork[listname].remove(entry) for listname in ['add', 'update']
                              if self.pkgwork[listname].count(entry)]
                         self.Refresh()
                     else:
-                        self.CondPrint("verbose", "Single Pass Failed")
+                        self.logger.error("Single Pass Failed")
                         # do single pass installs
                         self.Refresh()
                         for pkg in pkglist:
                             # handle state tracking updates
                             if self.VerifyPackage(pkg, []):
-                                self.CondPrint("verbose", "Forcing state to true for pkg %s" % (pkg.get('name')))
+                                self.logger.info("Forcing state to true for pkg %s" % (pkg.get('name')))
                                 self.states[pkg] = True
                             else:
-                                self.CondPrint("verbose", "Installing pkg %s version %s" %
-                                               (pkg.get('name'), pkg.get('version')))
+                                self.logger.info("Installing pkg %s version %s" %
+                                                 (pkg.get('name'), pkg.get('version')))
                                 cmdrc = self.saferun(pkgtool[0] %
                                                      (pkgtool[1][0] %
                                                       tuple([pkg.get(field) for field in pkgtool[1][1]])))
                                 if cmdrc[0] == 0:
                                     self.states[pkg] = True
                                 else:
-                                    self.CondPrint('verbose', "Failed to install package %s" % (pkg.get('name')))
+                                    self.logger.error("Failed to install package %s" % (pkg.get('name')))
             for entry in [ent for ent in work if self.states[ent]]:
                 work.remove(entry)
                 self.modified.append(entry)

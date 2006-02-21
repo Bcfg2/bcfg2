@@ -17,7 +17,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
     def __init__(self, cfg, setup):
         Bcfg2.Client.Toolset.Toolset.__init__(self, cfg, setup)
         self.cfg = cfg
-        self.CondPrint('debug', 'Configuring Debian toolset')
+        self.logger.debug('Configuring Debian toolset')
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         # dup /dev/null on top of stdin
         null = open('/dev/null', 'w+')
@@ -32,7 +32,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
             pkg.set('type', 'deb')
         self.Refresh()
-        self.CondPrint('debug', 'Done configuring Debian toolset')
+        self.logger.debug('Done configuring Debian toolset')
 
     def Refresh(self):
         '''Refresh memory hashes of packages'''
@@ -62,11 +62,11 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
     def InstallService(self, entry):
         '''Install Service for entry'''
         cmdrc = 1
-        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        self.logger.info("Installing Service %s" % (entry.get('name')))
         try:
             os.stat('/etc/init.d/%s' % entry.get('name'))
         except OSError:
-            self.CondPrint('debug', "Init script for service %s does not exist" % entry.get('name'))
+            self.logger.debug("Init script for service %s does not exist" % entry.get('name'))
             return False
         
         if entry.attrib['status'] == 'off':
@@ -87,8 +87,8 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
         if not entry.attrib.has_key('version'):
-            self.CondPrint('verbose', "Cannot verify unversioned package %s" %
-                           (entry.attrib['name']))
+            self.logger.info("Cannot verify unversioned package %s" %
+                             (entry.attrib['name']))
             return False
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
@@ -105,7 +105,8 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         allsrv = []
         [allsrv.append(self.svcre.match(fname).group('name')) for fname in
          glob.glob("/etc/rc[12345].d/S*") if self.svcre.match(fname).group('name') not in allsrv]
-        self.CondDisplayList('debug', "Found active services:", allsrv)
+        self.logger.debug("Found active services:")
+        self.logger.debug(allsrv)
         csrv = self.cfg.findall(".//Service")
         [allsrv.remove(svc.get('name')) for svc in csrv if
          svc.get('status') == 'on' and svc.get('name') in allsrv]
@@ -118,17 +119,21 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
-                self.CondDisplayList('verbose', "Removing packages", self.pkgwork['remove'])
+                self.logger.info('Removing packages:')
+                self.logger.info(self.pkgwork['remove'])
                 if not self.saferun("apt-get remove -y --force-yes %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
             else:
-                self.CondDisplayList('verbose', "Need to remove packages:", self.pkgwork['remove'])
+                self.logger.info("Need to remove packages:")
+                self.logger.info(self.pkgwork['remove'])
                 
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
-                self.CondDisplayList('verbose', "Removing services:", self.extra_services)
+                self.logger.info('Removing services:')
+                self.logger.info(self.extra_services)
                 [self.extra_services.remove(serv) for serv in self.extra_services if
                  not self.saferun("rm -f /etc/rc*.d/S??%s" % serv)[0]]
             else:
-                self.CondDisplayList('verbose', "Need to remove services:", self.extra_services)
+                self.logger.info('Need to remove services:')
+                self.logger.info(self.extra_services)
         

@@ -53,11 +53,11 @@ class Gentoo(Toolset):
     def InstallService(self, entry):
         '''Install Service entry'''
         
-        self.CondPrint('verbose', "Installing Service %s" % (entry.get('name')))
+        self.logger.info("Installing Service %s" % (entry.get('name')))
         try:
             stat('/etc/init.d/%s' % entry.get('name'))
         except OSError:
-            self.CondPrint('debug', "Init script for service %s does not exist" % entry.get('name'))
+            self.logger.debug("Init script for service %s does not exist" % entry.get('name'))
             return False
         
         if entry.attrib['status'] == 'off':
@@ -85,7 +85,7 @@ class Gentoo(Toolset):
         if installed_package:
             installed_package = installed_package[0].strip("\n").split('/')[-1]
             if installed_package != "%s-%s" % (entry.get('name'), entry.get('version')):
-                self.CondPrint('debug', "Package %s-%s version incorrect" % (entry.get('name'), entry.get('version')))
+                self.logger.debug("Package %s-%s version incorrect" % (entry.get('name'), entry.get('version')))
             if entry.attrib.get('verify', 'true') == 'true':
                 if self.setup['quick']:
                     return True
@@ -104,7 +104,7 @@ class Gentoo(Toolset):
                 else:
                     for line in output[1:-1]:
                         if line.split()[0] not in modlist:
-                            self.CondPrint('debug', "Package %s content verification failed" % (entry.get('name')))
+                            self.logger.debug("Package %s content verification failed" % (entry.get('name')))
                             return False
                     return True
         return False
@@ -121,14 +121,14 @@ class Gentoo(Toolset):
         '''Deal with extra configuration detected'''
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
-                self.CondPrint('verbose', "Removing packages: %s" % (self.pkgwork['remove']))
+                self.logger.info("Removing packages: %s" % (self.pkgwork['remove']))
                 system("/usr/bin/emerge --quiet --nospinner unmerge %s" % " ".join(self.pkgwork['remove']))
             else:
-                self.CondPrint('verbose', "Need to remove packages: %s" % (self.pkgwork['remove']))
+                self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
                 if len(self.extra_services) > 0:
                     if self.setup['remove'] in ['all', 'services']:
-                        self.CondPrint('verbose', "Removing services: %s" % (self.extra_services))
+                        self.logger.info("Removing services: %s" % (self.extra_services))
                         for service in self.extra_services:
                             system("/sbin/rc-update del %s" % service)
                     else:
-                        self.CondPrint('verbose', "Need to remove services: %s" % (self.extra_services))
+                        self.logger.info("Need to remove services: %s" % (self.extra_services))
