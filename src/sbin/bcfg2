@@ -327,6 +327,7 @@ class Client:
         if self.setup['cache']:
             try:
                 open(self.setup['cache'], 'w').write(rawconfig)
+                os.chmod(self.setup['cache'], 33152)
             except IOError:
                 self.warning_error("failed to write config cache file %s" %
                                    (self.setup['cache']))
