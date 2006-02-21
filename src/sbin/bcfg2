@@ -3,29 +3,15 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-from getopt import getopt, GetoptError
-from os import popen, chmod, unlink, _exit
-from signal import signal, SIGINT
-from sys import argv
-from tempfile import mktemp
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
-from time import time
-from sys import exc_info
-from traceback import extract_tb
 
+import getopt, os, signal, sys, tempfile, time, traceback
 import Bcfg2.Client.Proxy
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
-    _exit(1)
-
-def if_then(cond, value_if, value_else):
-    ''' Replacement for ternary operator '''
-    if cond == True:
-        return value_if
-    else:
-        return value_else
+    os._exit(1)
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -108,7 +94,6 @@ class Client:
 
         self.setup = {} 
         self.get_setup(args)
-
         self.cond_print_setup('debug')
 
     def cond_print_setup(self, state):
@@ -152,16 +137,16 @@ class Client:
         probe_name = probe.attrib['name']
         ret = Element("probe-data", probe_name, source=probe.attrib['source'])
         try:
-            script = open(mktemp(), 'w+')
+            script = open(tempfile.mktemp(), 'w+')
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))
                 script.write(probe.text)
                 script.close()
-                chmod(script.name, 0755)             
-                ret.text = popen(script.name).read()                
+                os.chmod(script.name, 0755)             
+                ret.text = os.popen(script.name).read()                
             finally:
-                unlink(script.name)
+                os.unlink(script.name)
         except:
             self.critical_error("executing probe %s" % (probe_name))
         return ret
@@ -169,8 +154,8 @@ class Client:
     def critical_error(self, operation):
         '''Print tracebacks in unexpected cases'''
         print "Traceback information (please include in any bug report):"
-        (ttype, value, trace) = exc_info()
-        for line in extract_tb(trace):        
+        (ttype, value, trace) = sys.exc_info()
+        for line in traceback.extract_tb(trace):        
             print "File %s, line %i, in %s\n   %s\n" % (line)
             print "%s: %s\n" % (ttype, value)
 
@@ -255,15 +240,15 @@ class Client:
 
         for option in self.options.keys():
             self.setup[option] = False
-        
-        gstr = "".join([self.options[option] +
-                        if_then(self.argumentDescriptions.has_key(option),
-                                ':', '')
-                        for option in self.options.keys()])
+
+        gstr = "".join([self.options[option] for option in self.options if
+                        option not in self.argumentDescriptions] +
+                       ["%s:" % (self.options[option]) for option in self.options if
+                        option in self.argumentDescriptions])
 
         try:
-            ginfo = getopt(args, gstr)
-        except GetoptError, gerr:
+            ginfo = getopt.getopt(args, gstr)
+        except getopt.GetoptError, gerr:
             self.usage_error(gerr)
 
         for (gopt, garg) in ginfo[0]:
@@ -292,7 +277,7 @@ class Client:
         times = {}
 
         # begin configuration
-        times['start'] = time()
+        times['start'] = time.time()
 
         if self.setup['file']:
             # read config from file
@@ -314,7 +299,7 @@ class Client:
         
             probe_data = proxy.GetProbes()
 
-            times['probe_download'] = time()
+            times['probe_download'] = time.time()
         
             try:
                 probes = XML(probe_data)
@@ -333,11 +318,11 @@ class Client:
             # upload probe responses
             proxy.RecvProbeData(probe_info)
         
-            times['probe_upload'] = time()
+            times['probe_upload'] = time.time()
 
             rawconfig = proxy.GetConfig()
 
-            times['config_download'] = time()
+            times['config_download'] = time.time()
 
         if self.setup['cache']:
             try:
@@ -345,7 +330,7 @@ class Client:
             except IOError:
                 self.warning_error("failed to write config cache file %s" %
                                    (self.setup['cache']))
-            times['caching'] = time()
+            times['caching'] = time.time()
             
         try:
             self.config = XML(rawconfig)
@@ -353,7 +338,7 @@ class Client:
             self.fatal_error("the configuration could not be parsed: %s" %
                              (syntax_error))
 
-        times['config_parse'] = time()
+        times['config_parse'] = time.time()
     
         if self.config.tag == 'error':
             self.fatal_error("server error: %s" % (self.config.text))
@@ -375,12 +360,12 @@ class Client:
         # Create toolset handle
         self.load_toolset(toolset_name)
 
-        times['initialization'] = time()
+        times['initialization'] = time.time()
         
         # verify state
         self.toolset.Inventory()
 
-        times['inventory'] = time()
+        times['inventory'] = time.time()
     
         # summarize current state
         self.toolset.CondDisplayState('verbose', 'initial')
@@ -390,8 +375,8 @@ class Client:
 
         self.toolset.CondDisplayState('verbose', "final")
 
-        times['install'] = time()
-        times['finished'] = time()
+        times['install'] = time.time()
+        times['finished'] = time.time()
 
         if not self.setup['file']:
             # upload statistics
@@ -406,5 +391,5 @@ class Client:
             proxy.RecvStats(tostring(feedback))
 
 if __name__ == '__main__':
-    signal(SIGINT, cb_sigint_handler)
-    Client(argv[1:]).run()
+    signal.signal(signal.SIGINT, cb_sigint_handler)
+    Client(sys.argv[1:]).run()
