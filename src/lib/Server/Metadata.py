@@ -112,6 +112,7 @@ class Metadata:
 
     def set_group(self, client, group):
         '''Set group parameter for provided client'''
+        self.logger.info("Asserting client %s profile to %s" % (client, group))
         if False in self.states.values():
             raise MetadataRuntimeError
         if group not in self.public:
