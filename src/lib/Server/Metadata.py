@@ -122,7 +122,7 @@ class Metadata:
             cli = self.clientdata.xpath('/Clients/Client[@name="%s"]' % (client))
             cli[0].set('group', group)
         else:
-            lxml.etree.SubElement(self.clientdata.getroot(), 'Client', name=client, group=group)
+            lxml.etree.SubElement(self.clientdata.getroot(), 'Client', name=client, profile=group)
         self.clients[client] = group
         self.write_back_clients()
 
@@ -133,7 +133,7 @@ class Metadata:
         except IOError:
             self.logger.error("Failed to write clients.xml")
             raise MetadataRuntimeError
-        datafile.write(lxml.etree.tostring(self.clientdata))
+        datafile.write(lxml.etree.tostring(self.clientdata.getroot()))
         datafile.close()
 
     def find_toolset(self, client):
