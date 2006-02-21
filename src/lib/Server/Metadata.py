@@ -110,21 +110,21 @@ class Metadata:
                     self.logger.error("Removing client mapping for %s" % (client))
                     del self.clients[client]
 
-    def set_group(self, client, group):
+    def set_profile(self, client, profile):
         '''Set group parameter for provided client'''
-        self.logger.info("Asserting client %s profile to %s" % (client, group))
+        self.logger.info("Asserting client %s profile to %s" % (client, profile))
         if False in self.states.values():
             raise MetadataRuntimeError
-        if group not in self.public:
-            self.logger.error("Failed to set client %s to private group %s" % (client, group))
+        if profile not in self.public:
+            self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
         if self.clients.has_key(client):
-            self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], group))
+            self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
             cli = self.clientdata.xpath('/Clients/Client[@name="%s"]' % (client))
-            cli[0].set('group', group)
+            cli[0].set('profile', profile)
         else:
-            lxml.etree.SubElement(self.clientdata.getroot(), 'Client', name=client, profile=group)
-        self.clients[client] = group
+            lxml.etree.SubElement(self.clientdata.getroot(), 'Client', name=client, profile=profile)
+        self.clients[client] = profile
         self.write_back_clients()
 
     def write_back_clients(self):

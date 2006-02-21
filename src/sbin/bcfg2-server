@@ -169,7 +169,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         '''Set profile for a client'''
         client = self.resolve_client(address[0])
         try:
-            self.Core.metadata.set_group(client, profile)
+            self.Core.metadata.set_profile(client, profile)
         except MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
