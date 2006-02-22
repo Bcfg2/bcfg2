@@ -66,6 +66,9 @@ class FamFam(object):
         unique = []
         bookkeeping = []
         for event in rawevents:
+            if event.filename.split('/')[-1] == '.svn':
+                # ignore svn directories
+                continue
             if event.code2str() != 'changed':
                 # process all non-change events
                 unique.append(event)
@@ -144,6 +147,9 @@ class GaminFam(object):
         unique = []
         bookkeeping = []
         for event in self.events:
+            if event.filename.split('/')[-1] == '.svn':
+                # skip svn directories
+                continue
             if event.code2str() != 'changed':
                 # process all non-change events
                 unique.append(event)
