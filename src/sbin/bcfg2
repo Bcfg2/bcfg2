@@ -89,7 +89,7 @@ class Client:
             'file': "<cache file>",
             'cache': "<cache file>",
             'profile': "<profile name>",
-            'remove': "(pkgs | svcs | all)",
+            'remove': "(packages | services | all)",
             'setup': "<setup file>",
             'server': '<hostname>   ',
             'user': '<user name>  ',
