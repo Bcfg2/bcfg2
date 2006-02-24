@@ -6,13 +6,13 @@
     <para>
       Bcfg2 is written in python using several modules not included
       with most distributions. lxml provides convenient xml
-      handling. M2crypto wraps openssl calls for https support. 
+      handling. 
     </para>
     
     <para>
       The Bcfg2 server requires a few more packages. It uses either
       FAM or Gamin to coherently cache repository files
-      and update them when they change. It also requires m2crypto to
+      and update them when they change. It also requires pyOpenSSL to
       use SSL functions.
     </para>
 
@@ -45,13 +45,9 @@
 	  <row><entry>pyrex</entry><entry>C to Python language
 	  interoperability (needed for lxml)</entry><entry><ulink
 	  url="http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex"/></entry></row>
-	  <row><entry>M2Crypto</entry>
+	  <row><entry>pyOpenSSL</entry>
 	    <entry>OpenSSL bindings for Python</entry><entry><ulink
-	    url="http://wiki.osafoundation.org/bin/view/Projects/MeTooCrypto"/></entry></row>
-	  <row><entry>Swig</entry>
-	    <entry>C to Python language interoperability (needed for
-	    M2Crypto)</entry><entry><ulink
-	    url="http://www.swig.org"/></entry></row>
+	    url="http://pyopenssl.sourceforge.net/"/></entry></row>
 	  <row><entry>Fam</entry><entry>File Alteration
 	  Monitor</entry><entry><ulink
 	  url="http://oss.sgi.com"/></entry></row>
