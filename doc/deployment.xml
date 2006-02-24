@@ -87,7 +87,7 @@
     <title>An example application of bcfg2</title>
     <para>
       In my computing environment there are quite a diverse set of machines
-      and requirements for there operation. What this meant is that I needed
+      and requirements for their operation. What this meant was that I needed
       to devise a build system for machines that would allow me to easily
       customize the software and services on the machine while still being
       able to easily manage them and keep them secure. What I came up with

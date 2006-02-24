@@ -110,100 +110,101 @@
 <!--       <step>foo</step> -->
 <!--     </procedure> -->
 
-    <variablelist>
-      <varlistentry>
-	<term>Probe Execution</term>
-	<listitem>
-	  <para>During the probe execution stage, the client connects to
-	    the server and downloads a series of probes to execute. These
-	    probes reveal local facts to the Bcfg2 server. For example, a
-	    probe could discover the type of video card in a system. The
-	    Bcfg2 client returns this data to the server, where it can
-	    influence the client configuration generation
-	    process. </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Configuration Download and Inventory</term>
-	<listitem>
-	  <para>The Bcfg2 client now downloads a configuration
+    <orderedlist>
+      <listitem>
+	<para>Probe Execution</para>
+	<para>During the probe execution stage, the client connects to
+	  the server and downloads a series of probes to execute. These
+	  probes reveal local facts to the Bcfg2 server. For example, a
+	  probe could discover the type of video card in a system. The
+	  Bcfg2 client returns this data to the server, where it can
+	  influence the client configuration generation
+	  process. 
+	</para>
+      </listitem>
+      <listitem>
+	<para>Configuration Download and Inventory</para>
+	<para>
+	  The Bcfg2 client now downloads a configuration
 	  specification from the Bcfg2 server. The configuration
 	  describes the complete target state of the machine. That is,
 	  all aspects of client configuration should be represented in
 	  this specification. For example, all software packages and
 	  services should be represented in the configuration
-	  specification. </para>
+	  specification. 
+	</para>
 	  
-	  <para>The client now performs a local system inventory. This
+	<para>
+	  The client now performs a local system inventory. This
 	  process consists of verifying each entry present in the
 	  configuration specification. After this check is completed,
 	  heuristic checks for configuration not included in the
 	  configuration specification. We refer to this inventory
 	  process as 2-way validation, as first we verify that the
 	  client contains all configuration that is included in the
-	  specification, then we check of the client has any extra
+	  specification, then we check if the client has any extra
 	  configuration that isn't present. This provides a fairly
-	  rigorous notion of client configuration congruence.  </para>
+	  rigorous notion of client configuration congruence.  
+	</para>
 
-	  <para>Once the 2-way verification process has been
+	<para>
+	  Once the 2-way verification process has been
 	  performed, the client has built a list of all configuration
 	  entries that are out of spec. This list has two parts:
 	  specified configuration that is incorrect (or missing) and
-	  unspecified configuration that should be removed.</para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Configuration Update</term>
-	<listitem>
-	  <para>
-	    The client now attempts to update its configuration to
-	    match the specification. Depending on options, changes may
-	    not (or only partially) be performed. First, if extra
-	    configuration correction is enabled, extra configuration can
-	    be removed. Then the remaining changes are processed. The
-	    Bcfg2 client loops while progress is made in the correction
-	    of these incorrect configuration entries. This loop results
-	    in the client being able to accomplish all it will be able
-	    to during one execution. Once all entries are fixed, or no
-	    progress is being made, the loop terminates.
-	  </para>
+	  unspecified configuration that should be removed.
+	</para>
+      </listitem>
+      <listitem>
+	<para>Configuration Update</para>
+	<para>
+	  The client now attempts to update its configuration to
+	  match the specification. Depending on options, changes may
+	  not (or only partially) be performed. First, if extra
+	  configuration correction is enabled, extra configuration can
+	  be removed. Then the remaining changes are processed. The
+	  Bcfg2 client loops while progress is made in the correction
+	  of these incorrect configuration entries. This loop results
+	  in the client being able to accomplish all it will be able
+	  to during one execution. Once all entries are fixed, or no
+	  progress is being made, the loop terminates.
+	</para>
 	  
-	  <para>
-	    Once all configuration changes that can be performed
-	    have been, bundle dependencies are handled. Bundles
-	    groupings result in two different behaviors. Entries are
-	    assumed to be inter-dependant. To address this, the client
-	    re-verifies each entry in any bundle containing an updates
-	    configuration entry. Also, services contained in modified
-	    bundles are restarted.  
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Statistics Upload</term>
-	<listitem>
-	  <para>Once the reconfiguration process has concluded, the
+	<para>
+	  Once all configuration changes that can be performed have
+	  been, bundle dependencies are handled. Bundle groupings
+	  result in two different behaviors. Contained entries are
+	  assumed to be inter-dependant. To address this, the client
+	  re-verifies each entry in any bundle containing an updates
+	  configuration entry. Also, services contained in modified
+	  bundles are restarted.
+	</para>
+      </listitem>
+      <listitem>
+	<para>Statistics Upload</para>
+	<para>
+	  Once the reconfiguration process has concluded, the
 	  client reports information back to the server about the
 	  actions it performed during the reconfiguration
 	  process. Statistics function as a detailed return code from
 	  the client. The server stores statistics
 	  information. Information included in this statistics update
-	  includes (but is not limited to):</para>
+	  includes (but is not limited to):
+	</para>
 
-	  <itemizedlist>
-	    <listitem>
-	      <para>Overall client status (clean/dirty)</para>
-	    </listitem>
-	    <listitem>
-	      <para>List of modified configuration entries</para>
-	    </listitem>
-	    <listitem>
-	      <para>List of uncorrectable configuration entries</para>
-	    </listitem>
-	  </itemizedlist>
-	</listitem>
-      </varlistentry>
-    </variablelist>
+	<itemizedlist>
+	  <listitem>
+	    <para>Overall client status (clean/dirty)</para>
+	  </listitem>
+	  <listitem>
+	    <para>List of modified configuration entries</para>
+	  </listitem>
+	  <listitem>
+	    <para>List of uncorrectable configuration entries</para>
+	  </listitem>
+	</itemizedlist>
+      </listitem>
+    </orderedlist>
 
     <section>
       <title>Architecture Abstraction</title>
@@ -213,12 +214,12 @@
 	apt-get are both supported, allowing operation of Debian,
 	Redhat, SUSE, and Mandriva systems. The client toolset is
 	specified in the configuration specification. The client merely
-	includes a series of libraries while describe how to interact
+	includes a series of libraries which describe how to interact
 	with the system tools on a particular platform.
       </para>
 
       <para>
-	Three of the libraries exist. There is the base set of
+	Three of the libraries exist. There is a base set of
 	functions, which contain definitions describing how to perform
 	POSIX operations. Support for configuration files,
 	directories, and symlinks are included here. Two other
@@ -259,9 +260,10 @@
     <para>
       The Bcfg2 server takes information from two sources when
       generating client configuration specifications. The first is a
-      pool of metadata that describes clients as members of an aspect
-      based classing system. The other is a file system repository
-      that contains mappings from metadata to literal
+      pool of metadata that describes clients as members of an
+      aspect-based classing system. That is, clients are defined in
+      terms of aspects of their behavior. The other is a file system
+      repository that contains mappings from metadata to literal
       configuration. These are combined to form the literal
       configuration specifications for clients.
     </para>
@@ -276,77 +278,71 @@
 	client. This process consists of the following steps:
       </para>
 
-      <variablelist>
-	<varlistentry>
-	  <term>Metadata Lookup</term>
-	  <listitem>
-	    <para>
-	      The server uses the client's IP address to initiate the
-	      metadata lookup. This initial metadata consists of a
-	      (profile, image) tuple. If the client already has
-	      metadata registered, then it is used. If not, then
-	      default values are used and stored for future use.
-	    </para>
-	    
-	    <para>
-	      This metadata tuple is expanded using some profile and
-	      class definitions also included in the metadata. The end
-	      result of this process is metadata consisting of
-	      hostname, profile, image, a list of classes, a list of
-	      attributes and a list of bundles.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term>Abstract Configuration Construction</term>
-	  <listitem>
-	    <para>
-	      Once the server has the client metadata, it is used to
-	      create an abstract configuration. An abstract
-	      configuration contains all of the configuration elements
-	      that will exist in the final specification without any
-	      specifics. All entries will be typed (ie the tagname
-	      will be one of Package, ConfigurationFile, Service,
-	      Symlink, or Directory) and will include a name. These
-	      configuration entries are grouped into bundles, which
-	      document installation time interdependencies.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term>Configuration Binding</term>
-	  <listitem>
-	    <para>
-	      The abstract configuration determines the structure of
-	      the client configuration, however, it doesn't contain
-	      literal configuration information. After the abstract
-	      configuration is created, each configuration entry must
-	      be bound to a client-specific value. The Bcfg2 server
-	      uses plugins to provide these client-specific bindings.
-	    </para>
+      <orderedlist>
+	<listitem>
+	  <para>Metadata Lookup</para>
+	  <para>
+	    The server uses the client's IP address to initiate the
+	    metadata lookup. This initial metadata consists of a
+	    (profile, image) tuple. If the client already has
+	    metadata registered, then it is used. If not, then
+	    default values are used and stored for future use.
+	  </para>
+	  
+	  <para>
+	    This metadata tuple is expanded using some profile and
+	    class definitions also included in the metadata. The end
+	    result of this process is metadata consisting of
+	    hostname, profile, image, a list of classes, a list of
+	    attributes and a list of bundles.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Abstract Configuration Construction</para>
+	  <para>
+	    Once the server has the client metadata, it is used to
+	    create an abstract configuration. An abstract
+	    configuration contains all of the configuration elements
+	    that will exist in the final specification without any
+	    specifics. All entries will be typed (ie the tagname
+	    will be one of Package, ConfigurationFile, Service,
+	    Symlink, or Directory) and will include a name. These
+	    configuration entries are grouped into bundles, which
+	    document installation time interdependencies.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Configuration Binding</para>
+	  <para>
+	    The abstract configuration determines the structure of
+	    the client configuration, however, it doesn't contain
+	    literal configuration information. After the abstract
+	    configuration is created, each configuration entry must
+	    be bound to a client-specific value. The Bcfg2 server
+	    uses plugins to provide these client-specific bindings.
+	  </para>
 
-	    <para>
-	      The Bcfg2 server core contains a dispatch table that
-	      describes which plugins can handle requests of a
-	      particular type. The responsible plugin is located
-	      for each entry. It is called, passing in the
-	      configuration entry and the client's metadata. The
-	      behavior of plugins is explicitly undefined, so as to
-	      allow maximum flexibility. The behaviors of the stock
-	      plugins are documented elsewhere in this manual.
-	    </para>
+	  <para>
+	    The Bcfg2 server core contains a dispatch table that
+	    describes which plugins can handle requests of a
+	    particular type. The responsible plugin is located
+	    for each entry. It is called, passing in the
+	    configuration entry and the client's metadata. The
+	    behavior of plugins is explicitly undefined, so as to
+	    allow maximum flexibility. The behaviors of the stock
+	    plugins are documented elsewhere in this manual.
+	  </para>
 
-	    <para>
-	      Once this binding process is completed, the server has a
-	      literal, client-specific configuration
-	      specification. This specification is complete and
-	      comprehensive; the client doesn't need to process it at
-	      all in order to use it. It also represents the totality
-	      of the configuration specified for the client.	   
-	    </para>
-	  </listitem>
-	</varlistentry>
-      </variablelist>	    
+	  <para>
+	    Once this binding process is completed, the server has a
+	    literal, client-specific configuration
+	    specification. This specification is complete and
+	    comprehensive; the client doesn't need to process it at
+	    all in order to use it. It also represents the totality
+	    of the configuration specified for the client.	   
+	  </para>
+	</listitem>
+      </orderedlist>
     </section>
   </section>
 
@@ -367,9 +363,11 @@
 	<para>
 	  A small list of configuration element types can be defined,
 	  each of which can have a set of defined semantics. This
-	  allows the server to have a well-formed notion of
+	  allows the server to have a well-formed model of
 	  client-side operations. Without a static lexicon with
-	  defined semantics, this isn't possible. 
+	  defined semantics, this isn't possible. This allows the
+	  server, for example, to record the update of a package as a
+	  coherent event. 
 	</para>
       </listitem>
       <listitem>

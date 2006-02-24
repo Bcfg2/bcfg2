@@ -4,8 +4,8 @@
   <para>
     The Bcfg2 specification is a set of directives that describe how
     hosts should be configured. This information is used to generate
-    client configurations. This section describes the steps taken in 
-    during the composition of bcfg2 specifications. 
+    client configurations. This section describes the steps taken
+    during the composition of bcfg2 specifications.
   </para>
 
   <orderedlist>
@@ -50,15 +50,17 @@
     <title>Interacting with Client Groups in Bcfg2</title>
 
     <para>
-      Bcfg2 uses an aspect based classing mechanism to describe
-      configuration patterns in its specifications. The Bcfg2 metadata
+      Bcfg2 uses an aspect-based classing mechanism to describe
+      configuration patterns in its specifications. Each class
+      describes particular aspects of client configurations. The Bcfg2 metadata
       mechanism has two types of information, client metadata and
       group metadata. Client metadata describes what top level group a
-      client is associated. Its configuration is derived from a
+      client is associated with. Its configuration is derived from a
       combination of its host information and this group. Group
       definitions describe groups in terms of what bundles they
       include and other groups they include. Groups have a set of
-      properties that describe how they can be used. 
+      properties that describe how they can be used. (Starred values
+      are defaults)
     </para>
 
     <table>
@@ -81,7 +83,7 @@
 	    make configuration
 	    changes</entry><entry>(rh|debian|solaris)</entry></row>
 	  <row><entry>category</entry>
-	    <entry>A group can only contain one instance of a group of
+	    <entry>A group can only contain one instance of a group in
 	    any category. This provides the basis for representing
 	    groups which are conjugates of one another in a rigorous
 	    way. It also provides the basis for negation.</entry><entry>string</entry></row>
@@ -91,7 +93,7 @@
   </section>
 
   <para>
-    When a client's configuration is generated, its metadata is the
+    When a client's configuration is generated, its metadata is
     fetched. This includes a list of all groups recursively
     dereferenced, and all bundles included by those groups. This
     collection has already been processed using the group category
@@ -99,7 +101,7 @@
     included. This metadata is used throughout the rest of the
     configuration generation process; it defines the client's abstract
     configuration and specifies all literal contents of all
-    configuration entities. 
+    configuration entities.
   </para>
 
   <section>
@@ -269,10 +271,10 @@
       <example>
 	<title>Cfg/etc/passwd/</title>
 	<programlisting>	  $ ls
-	  :info            passwd	  passwd.G99_chiba-login
-	  passwd.H_bio-debian  passwd.H_cvstest   passwd.H_foxtrot  
-	  passwd.H_reboot  passwd.H_rudy2    passwd.G98_netserv
-	  passwd.G99_tacacs-server.cat  passwd.H_adenine</programlisting>
+	  passwd.H_adenine     passwd            passwd.G99_chiba
+	  passwd.H_bio-debian  passwd.H_cvstest  passwd.H_foxtrot  
+	  passwd.H_reboot      passwd.H_rudy2    passwd.G98_netserv
+	  passwd.G99_tacacs-server.cat           :info</programlisting>
       </example>
       
       <para>
@@ -295,13 +297,13 @@
 	format to the files used by Base and Bundler, but with a few
 	differences. First, each file has a priority. This allows the
 	same entity to be served by multiple files. The priorities can
-	be used to disambiguate in the case that multiple files serve
+	be used to break ties in the case that multiple files serve
 	data for the same package. The other difference is that
 	automatic deriviation of package information from the file
-	attribute. The Pkgmgr has a set of regexes that can split
-	package names for several formats. The filenames are used to
-	construct installation URLs, and set several important fields
-	like package name and version. 
+	attribute. The Pkgmgr has a set of regular expressions that
+	can split package names for several formats. The filenames are
+	used to construct installation URLs, and set several important
+	fields like package name and version.
       </para>
 
       <table>
@@ -319,9 +321,11 @@
 	      <entry>URL-style location of file repository (typically http)</entry></row>
 	    <row><entry>file</entry><entry>Package file name. Several
 	    other attributes (name, version, url) can be automatically
-	    defined based on regexes definied in the Pkgmgr plugin.</entry></row>
+	    defined based on regular expressions definied in the
+	    Pkgmgr plugin.</entry></row>
 	    <row><entry>simplefile</entry><entry>Package file name. No
-	    name parsing is performed, so no extra fields get set</entry></row>
+	    name parsing is performed, so no extra fields get
+	    set</entry></row>
 	  </tbody>
 	</tgroup>
       </table>
@@ -348,7 +352,8 @@
 	conditions as well. For example, the following declaration
 	turns ssh on by default, disables it if the client is a part
 	of group a, and reenables it if the client is a part of both
-	groups a and b.
+	groups a and b. Group nesting provides a conjunctive
+	function. 
       </para>
 
             <example>
@@ -436,7 +441,7 @@
 
       <orderedlist>
 	<listitem><para>
-	    In this case, the target group is global, since we want
+	    In this case, the target group is all clients, since we want
 	    this version of <filename>/etc/motd</filename>. As
 	    mentioned earlier, the global group is handled specially,
 	    so that all new clients, even newly created ones, are in it.
@@ -458,7 +463,7 @@
 	  </para></listitem>
 	<listitem><para>
 	    Since this change is globally scoped, there are not any
-	    clients that shoud not be affected.
+	    clients that should not be affected.
 	</para></listitem>
 	<listitem><para>
 	    Finally, <command>bcfg2-repo-validate</command> should be
@@ -472,9 +477,10 @@
       
       <para>
 	The goal for this example is to configure NTP for an entire
-	network. This means several things. All clients should run NTP
-	as clients. One client should run NTP as a server, and
-	ntp clients should use it instead of an external server.
+	network. This implies several things. All clients should run
+	NTP as clients. Some hosts should run NTP as a server, and
+	other hosts should use local NTP service instead of an
+	external server.
       </para>
 
       <orderedlist>

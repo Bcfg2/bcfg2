@@ -40,19 +40,18 @@
       <command>StatReports</command> gets the data it reports from a
       number of sources. <filename>Metadata/clients.xml</filename>
       contains information about if a host is currently pingable or
-      not, and a mapping of short hostnames to
-      FQDNs. <command>GenerateHostInfo</command> will be run
+      not. <command>GenerateHostInfo</command> will be run
       automatically by <command>StatReports</command> if the
       <filename>Metadata/clients.xml</filename> file is older than
-      23.5 hours. This number is chosen, because it is likely an
-      administrator will recieve reports daily about the status of
-      hosts and if they had run BCFG the previous night. It is
-      possible to execute <command>GenerateHostInfo</command> to
-      update the <filename>Metadata/clients.xml</filename> file at any
-      interval via cron, but it does take some time to complete, so be
-      sure to give it a few minutes. This will only likely be of use
-      if your BCFG clients are set to update more often than nightly
-      and you would like reports after each run.
+      23.5 hours. We chose this interval due to our normal use of
+      reports; clients run bcfg2, in general, once a day after which
+      reports are delivered to administrators.  It is possible to
+      execute <command>GenerateHostInfo</command> to update the
+      <filename>Metadata/clients.xml</filename> file at any interval
+      via cron, but it does take some time to complete, so be sure to
+      give it a few minutes. This will only likely be of use if your
+      BCFG clients are set to update more often than nightly and you
+      would like reports after each run.
     </para>
     
     <para>
@@ -60,7 +59,7 @@
       <filename>statistics.xml</filename>
       file. This file is maintained by bcfgd, and is updated whenever a
       client updates, therefore is always up to date, and no
-      maintainence is required on this file.
+      maintainance is required on this file.
     </para>
     
     <para>
@@ -97,7 +96,7 @@
 	  <row><entry>Overview-Stats</entry>
 	    <entry>
 	      <para>
-		This report provides informatoin about a large number of
+		This report provides information about a large number of
 		machines and their states. It is often found to be useful
 		when the group of machines it is connected with is simply
 		All Nodes, which gives an overall outlook on your
@@ -230,10 +229,10 @@
   </example>
 
   <para>
-      Once configured correctly, just wait for the e-mail or check
-      look at the output html files with a web browser. You can run
-      <command>StatReports</command> by hand if you would like
-      in order to try it out immediately. 
+      Once configured correctly, just wait for the e-mail or view the
+      outputed html files with a web browser. You can run
+      <command>StatReports</command> by hand if you would like in
+      order to try it out immediately.
     </para>
     
     <mediaobject>
