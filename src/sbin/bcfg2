@@ -6,7 +6,7 @@ __revision__ = '$Revision$'
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
-import getopt, logging, os, signal, sys, tempfile, time, traceback
+import getopt, logging, os, signal, sys, tempfile, time, traceback, xmlrpclib
 import Bcfg2.Client.Proxy, Bcfg2.Logging
 
 def cb_sigint_handler(signum, frame):
@@ -285,8 +285,12 @@ class Client:
 
             if self.setup['profile']:
                 proxy.AssertProfile(self.setup['profile'])
-        
-            probe_data = proxy.GetProbes()
+
+            try:
+                probe_data = proxy.GetProbes()
+            except xmlrpclib.Fault:
+                self.logger.error("Failed to download probes from bcfg2")
+                raise SystemExit, 1
 
             times['probe_download'] = time.time()
         
@@ -309,7 +313,11 @@ class Client:
         
             times['probe_upload'] = time.time()
 
-            rawconfig = proxy.GetConfig()
+            try:
+                rawconfig = proxy.GetConfig()
+            except xmlrpclib.Fault:
+                self.logger.error("Failed to download configuration from bcfg2")
+                raise SystemExit, 2
 
             times['config_download'] = time.time()
 
@@ -378,7 +386,11 @@ class Client:
             stats.append(timeinfo)
             feedback.append(stats)
 
-            proxy.RecvStats(tostring(feedback))
+            try:
+                proxy.RecvStats(tostring(feedback))
+            except xmlrpclib.Fault:
+                self.logger.error("Failed to upload configuration statistics")
+                raise SystemExit, 2
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)

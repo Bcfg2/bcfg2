@@ -52,7 +52,7 @@ class SafeProxy:
                 time.sleep(0.5)                
             except:
                 break
-        self.log.error("%s failed:\nCould not connect to %s" % (method_name, self.component))
+        raise xmlrpclib.Fault(20, 'Server Failure')
         
     def __get_location(self, name):
         '''Perform component location lookups if needed'''
