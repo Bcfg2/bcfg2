@@ -23,7 +23,7 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: lxml, pyopenssl
+Requires: lxml, pyOpenSSL
 
 %description -n bcfg2-server
 Bcfg2 client
@@ -62,7 +62,7 @@ rm -rf $RPM_BUILD_ROOT
 %files -n bcfg2
 %defattr(-,root,root)
 /usr/sbin/bcfg2
-/usr/lib/python%{pythonversion}/site-packages/Bcfg2/__init__.py*
+/usr/lib/python%{pythonversion}/site-packages/Bcfg2/*.py*
 /usr/lib/python%{pythonversion}/site-packages/Bcfg2/Client/*
 /usr/share/man/man1/*
 /usr/share/man/man5/*
