@@ -99,6 +99,8 @@ class Client:
         self.setup = {} 
         self.get_setup(args)
         self.logger.debug(self.setup)
+        if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
+            self.logger.error("Got unknown argument %s for -r" % (self.setup['remove'])
 
     def load_toolset(self, toolset_name):
         '''Import client toolset modules'''
