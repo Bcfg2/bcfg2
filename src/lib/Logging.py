@@ -61,6 +61,8 @@ class TermiosFormatter(logging.Formatter):
                     for i in xrange(inner_lines):
                         returns.append("%s" % (line[i*line_len:(i+1)*line_len]))
         elif type(record.msg) == types.ListType:
+            if not record.msg:
+                return ''
             record.msg.sort()
             msgwidth = self.width
             columnWidth = max([len(item) for item in record.msg])
@@ -111,17 +113,17 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='lo
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
         return 
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    # tell the handler to use this format
-    console.setFormatter(TermiosFormatter())
-    syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
-    syslog.setLevel(logging.DEBUG)
-    syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
     # add the handler to the root logger
     if to_console:
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        # tell the handler to use this format
+        console.setFormatter(TermiosFormatter())
         logging.root.addHandler(console)
     if to_syslog:
+        syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+        syslog.setLevel(logging.DEBUG)
+        syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(syslog)
     logging.root.setLevel(level)
     logging.already_setup = True
