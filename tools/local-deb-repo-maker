@@ -1,28 +1,10 @@
-#!/bin/sh
+#!/bin/bash
+# now build the Package files for everything in the sarge repo
 
-HOSTNAME=`/bin/hostname`
+cd /disks/debian
+dpkg-scanpackages sarge /dev/null > sarge/Packages
+cd sarge
+gzip -c Packages > Packages.gz
 
-#this is to pull the mplayer/avi stuff.
-if [ ${HOSTNAME} == "debian-test" ]; then
-    cd /tmp
-    ncftpget ftp://ftp.nerim.net/debian-marillat/dists/stable/main/binary-i386/Packages
-    grep Package: Packages | awk '{print "ncftpget ftp://ftp.nerim.net/debian-marillat/dists/stable/main/binary-i386/" $2"\\*"}' > marillat-sync
-    cd /sandbox/woody/
-    sh /tmp/marillat-sync
-    cd /sandbox
-    dpkg-scanpackages woody /dev/null > woody/Packages
-    cd woody
-    gzip -c Packages > Packages.gz
-elif [ ${HOSTNAME} == "wonkarific.mcs.anl.gov" ]; then
-#this is to pull the testing stuff.
-    
-    cd /tmp
-    ncftpget ftp://ftp.nerim.net/debian-marillat/dists/testing/main/binary-i386/Packages
-    grep Package: Packages | awk '{print "ncftpget ftp://ftp.nerim.net/debian-marillat/dists/testing/main/binary-i386/" $2"\\*"}' > marillat-sync
-    cd /sandbox/sarge/
-    sh /tmp/marillat-sync
-    cd /sandbox
-    dpkg-scanpackages sarge /dev/null > sarge/Packages
-    cd sarge
-    gzip -c Packages > Packages.gz
-fi
+
+
