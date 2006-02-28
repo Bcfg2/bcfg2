@@ -1,7 +1,7 @@
 '''Bcfg2 logging support'''
 __revision__ = '$Revision$'
 
-import copy, fcntl, logging, logging.handlers, lxml.etree, math, struct, sys, termios, types
+import copy, fcntl, logging, logging.handlers, lxml.etree, math, socket, struct, sys, termios, types
 
 def print_attributes(attrib):
     ''' Add the attributes for an element'''
@@ -102,13 +102,21 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                 newrec = copy.deepcopy(record)
                 newrec.msg = msgdata[start:start+250]
                 newrec.exc_info = error
-                logging.handlers.SysLogHandler.emit(self, newrec)
+                try:
+                    self.socket.send(self.format(newrec))
+                except:
+                    self.socket.connect(self.address)
+                    continue
                 # only send the traceback once
                 error = None
                 start += 250
         else:
-            logging.handlers.SysLogHandler.emit(self, newrec)
-    
+            try:
+                self.socket.send(self.format(newrec))
+            except socket.error:
+                self.socket.connect(self.address)
+                self.socket.send(self.format(newrec))
+                
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
