@@ -92,25 +92,19 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         '''chunk and deliver records'''
         record.name = self.procname
         if str(record.msg) > 250:
-            start = 0
-            error = None
-            if record.exc_info:
-                error = record.exc_info
-                record.exc_info = None
-            msgdata = str(record.msg)
-            while start < len(msgdata):
+            msgs = []
+            error = record.exc_info
+            msgdata = record.msg
+            while msgdata:
                 newrec = copy.deepcopy(record)
-                newrec.msg = msgdata[start:start+250]
-                newrec.exc_info = error
-                try:
-                    self.socket.send(self.format(newrec))
-                except:
-                    self.socket.connect(self.address)
-                    continue
-                # only send the traceback once
-                error = None
-                start += 250
+                newrec.msg = msgdata[:250]
+                msgs.append(newrec)
+                msgdata = msgdata[250:]
+            msgs[0].exc_info = error
         else:
+            msgs = [record]
+        while msgs:
+            newrec = msgs.pop()
             try:
                 self.socket.send(self.format(newrec))
             except socket.error:
@@ -129,9 +123,12 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='lo
         console.setFormatter(TermiosFormatter())
         logging.root.addHandler(console)
     if to_syslog:
-        syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
-        syslog.setLevel(logging.DEBUG)
-        syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
-        logging.root.addHandler(syslog)
+        try:
+            syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+            syslog.setLevel(logging.DEBUG)
+            syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
+            logging.root.addHandler(syslog)
+        except socket.error:
+            logging.root.error("failed to activate syslogging")
     logging.root.setLevel(level)
     logging.already_setup = True
