@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat
+import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
