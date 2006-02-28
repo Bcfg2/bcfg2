@@ -71,13 +71,13 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
-                print "Disabling service %s" % (entry.get('name'))
+                self.logger.info("Disabling service %s" % (entry.get('name')))
             else:
                 self.saferun("/etc/init.d/%s stop" % (entry.get('name')))
                 cmdrc = self.saferun("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
         else:
             if self.setup['dryrun']:
-                print "Enabling service %s" % (entry.attrib['name'])
+                self.logger.info("Enabling service %s" % (entry.attrib['name']))
             else:
                 cmdrc = self.saferun("/usr/sbin/update-rc.d %s defaults" % (entry.attrib['name']))[0]
         if cmdrc:

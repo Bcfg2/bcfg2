@@ -21,6 +21,24 @@ def calcPerms(initial, perms):
                 tempperms |= perm
     return tempperms
 
+class readonlypipe(popen2.Popen4):
+    '''This pipe sets up stdin --> /dev/null'''
+    def __init__(self, cmd, bufsize=-1):
+        popen2._cleanup()
+        c2pread, c2pwrite = os.pipe()
+        null = open('/dev/null', 'w+')
+        self.pid = os.fork()
+        if self.pid == 0:
+            # Child
+            os.dup2(null.fileno(), sys.__stdin__.fileno())
+            #os.dup2(p2cread, 0)
+            os.dup2(c2pwrite, 1)
+            os.dup2(c2pwrite, 2)
+            self._run_child(cmd)
+        os.close(c2pwrite)
+        self.fromchild = os.fdopen(c2pread, 'r', bufsize)
+        popen2._active.append(self)
+
 class Toolset(object):
     '''The toolset class contains underlying command support and all states'''
     __important__ = []
@@ -49,12 +67,11 @@ class Toolset(object):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
         self.logger.debug('> %s' % command)
 
-        runpipe = popen2.Popen4(command, bufsize=16384)
-        output = runpipe.fromchild.read()
-        if len(output) > 0:
-            self.logger.debug('< %s' % output)
-        cmdstat = runpipe.poll()
+        runpipe = readonlypipe(command, bufsize=16384)
+        output = ''
+        cmdstat = -1
         while cmdstat == -1:
+            runpipe.fromchild.flush()
             moreOutput = runpipe.fromchild.read()
             if len(moreOutput) > 0:                
                 self.logger.debug('< %s' % moreOutput)

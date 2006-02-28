@@ -4,8 +4,6 @@
 '''This is redhat client support'''
 __revision__ = '$Revision$'
 
-from os import popen, system
-
 from Bcfg2.Client.Toolset import Toolset
 
 class ToolsetImpl(Toolset):
@@ -33,17 +31,14 @@ class ToolsetImpl(Toolset):
     def Refresh(self):
         '''Refresh memory hashes of packages'''
         self.installed = {}
-
-        # Build list of packages
-        instp = popen("rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n'")
-        for line in instp:
+        for line in self.saferun("rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n'")[1]:
             [name, version] = line.split(' ')
             self.installed[name] = version[:-1]
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
         try:
-            srvdata = popen("/sbin/chkconfig --list %s"%entry.attrib['name']).readlines()[0].split()
+            srvdata = self.saferun("/sbin/chkconfig --list %s"%entry.attrib['name'])[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             return False
@@ -60,28 +55,29 @@ class ToolsetImpl(Toolset):
     
     def InstallService(self, entry):
         '''Install Service entry'''
-        system("/sbin/chkconfig --add %s"%(entry.attrib['name']))
+        self.saferun("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
         if not entry.get('status'):
-            print "Can't install service %s, not enough data" % (entry.get('name'))
+            self.logger.error("Can't install service %s, not enough data" % (entry.get('name')))
             return False
         if entry.attrib['status'] == 'off':
             if self.setup['dryrun']:
-                print "Disabling server %s" % (entry.get('name'))
+                self.logger.info("Disabling server %s" % (entry.get('name')))
             else:
-                cmdrc = system("/sbin/chkconfig %s %s" % (entry.attrib['name'], entry.attrib['status']))
+                cmdrc = self.saferun("/sbin/chkconfig %s %s" % (entry.attrib['name'],
+                                                                entry.attrib['status']))[0]
         else:
             if self.setup['dryrun']:
-                print "Enabling server %s" % (entry.get('name'))
+                self.logger.info("Enabling server %s" % (entry.get('name')))
             else:
-                cmdrc = system("/sbin/chkconfig %s %s" %
-                            (entry.attrib['name'], entry.attrib['status']))
+                cmdrc = self.saferun("/sbin/chkconfig %s %s" %
+                            (entry.attrib['name'], entry.attrib['status']))[0]
         return cmdrc == 0
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
         if not entry.get('version'):
-            print "Can't install package %s, not enough data." % (entry.get('name'))
+            self.logger.error("Can't install package %s, not enough data." % (entry.get('name')))
             return False
         if self.installed.has_key(entry.get('name')):
             if entry.get('version') == self.installed[entry.get('name')]:
@@ -107,7 +103,7 @@ class ToolsetImpl(Toolset):
         if len(self.pkgwork) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.logger.info("Removing packages: %s" % self.pkgwork['remove'])
-                if not system("rpm --quiet -e %s" % " ".join(self.pkgwork['remove'])):
+                if not self.saferun("rpm --quiet -e %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
                     self.Refresh()
                     self.Inventory()
@@ -119,7 +115,7 @@ class ToolsetImpl(Toolset):
                 self.logger.info('Removing services:')
                 self.logger.info(self.extra_services)
                 for service in self.extra_services:
-                    if not system("/sbin/chkconfig --level 123456 %s off" % service):
+                    if not self.saferun("/sbin/chkconfig --level 123456 %s off" % service)[0]:
                         self.extra_services.remove(service)
                     self.logger.info("Failed to remove service %s" % (service))
             else:
@@ -129,7 +125,7 @@ class ToolsetImpl(Toolset):
     def Inventory(self):
         '''Do standard inventory plus debian extra service check'''
         Toolset.Inventory(self)
-        allsrv = [line.split()[0] for line in popen("/sbin/chkconfig --list|grep :on").readlines()]
+        allsrv = [line.split()[0] for line in self.saferun("/sbin/chkconfig --list|grep :on")[1]]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         csrv = self.cfg.findall(".//Service")
