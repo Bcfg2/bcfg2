@@ -117,7 +117,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         if self.setup['dryrun']:
             return
         
-        if len(self.pkgwork) > 0:
+        if len(self.pkgwork['remove']) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.logger.info('Removing packages:')
                 self.logger.info(self.pkgwork['remove'])
