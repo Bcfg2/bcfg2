@@ -32,8 +32,7 @@ class ToolsetImpl(Toolset):
         '''Refresh memory hashes of packages'''
         self.installed = {}
         for line in self.saferun("rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n'")[1]:
-            [name, version] = line.split(' ')
-            self.installed[name] = version[:-1]
+            [self.installed.update({name:version}) for (name, version) in line.split(' ')]
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''

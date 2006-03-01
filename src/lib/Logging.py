@@ -110,7 +110,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             except socket.error:
                 self.socket.connect(self.address)
                 self.socket.send(self.format(newrec))
-                
+
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
