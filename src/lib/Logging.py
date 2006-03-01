@@ -105,11 +105,13 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             msgs = [record]
         while msgs:
             newrec = msgs.pop()
+            msg = self.log_format_string % (self.encodePriority(self.facility,
+                                                                newrec.levelname.lower()), self.format(newrec))
             try:
-                self.socket.send(self.format(newrec))
+                self.socket.send(msg)
             except socket.error:
                 self.socket.connect(self.address)
-                self.socket.send(self.format(newrec))
+                self.socket.send(msg)
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
     '''setup logging for bcfg2 software'''
