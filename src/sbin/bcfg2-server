@@ -197,7 +197,11 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         return "<ok/>"
 
 if __name__ == '__main__':
-    Bcfg2.Logging.setup_logging('bcfg2-server')
+    if '-D' in sys.argv:
+        Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False)
+    else:
+        Bcfg2.Logging.setup_logging('bcfg2-server')
+        
     options =  {
         'v':'verbose',
         'd':'debug',
