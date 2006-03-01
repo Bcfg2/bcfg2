@@ -32,7 +32,8 @@ class ToolsetImpl(Toolset):
         '''Refresh memory hashes of packages'''
         self.installed = {}
         for line in self.saferun("rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n'")[1]:
-            [self.installed.update({name:version}) for (name, version) in line.split(' ')]
+            (name, version) = line.split()
+            self.installed[name] = version
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -99,7 +100,7 @@ class ToolsetImpl(Toolset):
 
     def HandleExtra(self):
         '''Deal with extra configuration detected'''
-        if len(self.pkgwork) > 0:
+        if len(self.pkgwork['remove']) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.logger.info("Removing packages: %s" % self.pkgwork['remove'])
                 if not self.saferun("rpm --quiet -e %s" % " ".join(self.pkgwork['remove']))[0]:

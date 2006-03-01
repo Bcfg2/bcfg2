@@ -501,18 +501,23 @@ class Toolset(object):
         self.HandleExtra()
 
         if self.setup['dryrun']:
-            self.logger.info("Packages to update:")
-            self.logger.info([pkg.get('name') for pkg in self.pkgwork['update']])
-            self.logger.info("Packages to add:")
-            self.logger.info([pkg.get('name') for pkg in self.pkgwork['add']])
-            self.logger.info("Packages to remove:")
-            self.logger.info(self.pkgwork['remove'])
-            self.logger.info("Entries to update:")
-            self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
-                              for entry in self.states if not (self.states[entry]
-                                                               or entry.tag == 'Package')])
-            self.logger.info("Services to remove:")
-            self.logger.info(self.extra_services)
+            if self.pkgwork['update']:
+                self.logger.info("Packages to update:")
+                self.logger.info([pkg.get('name') for pkg in self.pkgwork['update']])
+            if self.pkgwork['add']:
+                self.logger.info("Packages to add:")
+                self.logger.info([pkg.get('name') for pkg in self.pkgwork['add']])
+            if self.pkgwork['remove']:
+                self.logger.info("Packages to remove:")
+                self.logger.info(self.pkgwork['remove'])
+            if [entry for entry in self.states if not (self.states[entry] or entry.tag == 'Package')]:
+                self.logger.info("Entries to update:")
+                self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
+                                  for entry in self.states if not (self.states[entry]
+                                                                   or entry.tag == 'Package')])
+            if self.extra_services:
+                self.logger.info("Services to remove:")
+                self.logger.info(self.extra_services)
             return
         
         # use quick package ops from here on
