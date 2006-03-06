@@ -17,7 +17,8 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-build: 
+build:
+	debian/version-hacker.sh 
 	python setup.py build
 
 clean:
