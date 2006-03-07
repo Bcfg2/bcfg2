@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''This script generates graphviz diagrams using bcfg2 metadata'''
-__revision__ = '$Revision $'
+__revision__ = '$Revision$'
 
 import lxml.etree, sys
 
