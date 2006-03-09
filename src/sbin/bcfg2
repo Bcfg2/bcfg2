@@ -349,7 +349,7 @@ class Client:
 
         if self.setup['bundle']:
             replacement_xml = Element("Configuration", version='2.0')
-            for child in self.config.getroot().getchildren():
+            for child in self.config.getchildren():
                 if ((child.tag == 'Bundle') and
                     (child.attrib['name'] == self.setup['bundle'])):
                     replacement_xml.append(child)
@@ -376,7 +376,7 @@ class Client:
         times['install'] = time.time()
         times['finished'] = time.time()
 
-        if not self.setup['file']:
+        if not self.setup['file'] and not self.setup['bundle']:
             # upload statistics
             feedback = Element("upload-statistics")
             timeinfo = Element("OpStamps")

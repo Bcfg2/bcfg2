@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
+import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys, ConfigParser, cStringIO
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -62,6 +62,27 @@ class Toolset(object):
                 self.VerifyEntry(cfile)
                 if not self.states[cfile]:
                     self.InstallConfigFile(cfile)
+        self.statistics = lxml.etree.Element("Statistics")
+        # handle $Revision string processing here
+        cfp = ConfigParser.ConfigParser()
+        cfp.read('/etc/bcfg2.conf')
+        initial = ''
+        try:
+            initial = cfp.get('Specification', 'Revision')
+        except ConfigParser.NoOptionError:
+            pass
+        self.statistics.set('initial', initial)
+        goal = ''
+        upstream = [cfl for cfl in cfg.findall(".//ConfigFile") if cfg.get('name') == '/etc/bcfg2.conf']
+        if upstream:
+            cfp = ConfigParser.ConfigParser()
+            cfp.readfp(cStringIO.StringIO(upstream[0].text))
+            try:
+                goal = cfp.get('Specification', 'Revision')
+            except ConfigParser.NoOptionError:
+                pass
+        if goal != initial:
+            self.logger.info("Specification revision: %s should be upgraded to %s" % (initial, goal))
 
     def saferun(self, command):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
@@ -86,7 +107,8 @@ class Toolset(object):
         self.logger.info('Correct entries:\t%d' % self.states.values().count(True))
         self.logger.info('Incorrect entries:\t%d' % self.states.values().count(False))
         self.logger.info('Total managed entries:\t%d' % len(self.states.values()))
-        self.logger.info('Unmanaged entries:\t%d' % len(self.pkgwork['remove']))
+        if not self.setup['bundle']:
+            self.logger.info('Unmanaged entries:\t%d' % len(self.pkgwork['remove']))
 
         if ((self.states.values().count(False) > 0) and not self.pkgwork['remove']):
             self.logger.info('All entries correct.')
@@ -541,9 +563,12 @@ class Toolset(object):
             # Print pass info
             self.logger.info("Starting pass %s" % (count))
             self.logger.info("%s Entries left" % (len(work)))
-            self.logger.info("%s new, %s update, %s remove" %
-                           (len(self.pkgwork['add']), len(self.pkgwork['update']),
-                            len(self.pkgwork['remove'])))
+            if self.setup['bundle']:
+                self.logger.info("%s new, %s update" % (len(self.pkgwork['add']), len(self.pkgwork['update'])))
+            else:
+                self.logger.info("%s new, %s update, %s remove" %
+                                 (len(self.pkgwork['add']), len(self.pkgwork['update']),
+                                  len(self.pkgwork['remove'])))
 
             # Update counters
             count = count + 1

@@ -124,8 +124,9 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
                 if not self.saferun("apt-get remove -y --force-yes %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
             else:
-                self.logger.info("Need to remove packages:")
-                self.logger.info(self.pkgwork['remove'])
+                if not self.setup['bundle']:
+                    self.logger.info("Need to remove packages:")
+                    self.logger.info(self.pkgwork['remove'])
                 
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
@@ -134,6 +135,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
                 [self.extra_services.remove(serv) for serv in self.extra_services if
                  not self.saferun("rm -f /etc/rc*.d/S??%s" % serv)[0]]
             else:
-                self.logger.info('Need to remove services:')
-                self.logger.info(self.extra_services)
+                if not self.setup['bundle']:
+                    self.logger.info('Need to remove services:')
+                    self.logger.info(self.extra_services)
         

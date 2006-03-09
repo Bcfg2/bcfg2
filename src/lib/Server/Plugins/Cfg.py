@@ -105,7 +105,12 @@ class ConfigFileEntry(object):
 
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''
-        if name[-5:] == ':info':
+        basename = name.split('/')[-1]
+        rbasename = self.repopath.split('/')[-1]
+        if not ((basename == ':info') or (basename[:len(rbasename)] == rbasename)):
+                logger.error("Confused about file %s; ignoring" % (name))
+                return
+        if basename == ':info':
             return self.read_info()
 
         try:
