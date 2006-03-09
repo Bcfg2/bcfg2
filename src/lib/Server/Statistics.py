@@ -15,8 +15,8 @@ class Statistics(object):
         self.element = Element('Dummy')
         self.dirty = 0
         self.lastwrite = 0
-        self.ReadFromFile()
         self.logger = logging.getLogger('Bcfg2.Server.Statistics')
+        self.ReadFromFile()
 
     def pretty_print(self, element, level=0):
         '''Produce a pretty-printed text representation of element'''
@@ -55,7 +55,7 @@ class Statistics(object):
             self.dirty = 0
             #syslog(LOG_INFO, "Statistics: Read in statistics.xml")
         except (IOError, XMLSyntaxError):
-            self.logger.error("Failed to parse %s"%(self.filename))
+            self.logger.error("Creating new statistics file %s"%(self.filename))
             self.element = Element('ConfigStatistics')
             self.WriteBack()
             self.dirty = 0
