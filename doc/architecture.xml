@@ -427,4 +427,127 @@
       </para>
     </section>
   </section>
+
+  <section>
+    <title>Design Considerations</title>
+
+    <para>
+      This section will discuss several aspects of the design of
+      bcfg2, and the particular use cases that motivated
+      them. Initially, this will consist of a discussion of the system
+      metadata, and the intended usage model for package indices as
+      well. 
+    </para>
+
+    <section>
+      <title>System Metadata</title>
+
+      <para>
+	Bcfg2 system metadata describes the underlying patterns in
+	system configurations. It describes commonalities and
+	differences between these specifications in a rigorous way. The
+	groups used by bcfg2's metadata are responsible for
+	differentiating clients from one another, and building
+	collections of allocatable configuration.
+      </para>
+
+      <para>
+	The Bcfg2 metadata system has been designed with several
+	high-level goals in mind. Flexibility and precision are
+	paramount concerns; no configuration should be undescribable
+	using the constructs present in the bcfg2 repository. We have
+	found (generally the hard way) that any assumptions about the
+	inherent simplicity of configuration patterns tend to be
+	wrong, so obscenely complex configurations must be
+	representable, even if these requirements seem illogical
+	during the implementation. 
+      </para>
+
+      <para>
+	In particular, we wanted to streamline several operations that
+	commonly occurred in our environment. 
+      </para>
+      
+      <orderedlist>
+	<listitem>
+	  <para>Copying one node's profile to another
+	  node.</para>
+
+	  <para>
+	    In many environments, many nodes are instances of a common
+	    configuration specification. They all have similar roles
+	    and software. In our environment, desktop machines were
+	    the best example of this. Other than strictly per-host
+	    configuration like SSH keys, all desktop machines use a
+	    common configuration specification. This trivializes the
+	    process of creating a new desktop machine.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Creating a specialized version of a
+	  currently existing profile. 
+	  </para>
+
+	  <para>
+	    In environments with highly varied configurations,
+	    departmental infrastructure being a good example, "another
+	    machine like X but with extra software" is a common
+	    requirement. For this reason, it must be trivially
+	    possible to inherit most of a configuration specification
+	    from some more generic source, while being able to
+	    describe overriding aspects in a convenient fashion.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Compose several pre-existing configuration aspects to
+	    create a new profile.
+	  </para>
+
+	  <para>
+	    The ability to compose configuration aspects allows the
+	    easy creation of new profiles based on a series of
+	    predefined set of configuration specification
+	    fragments. The end result is more agility in environments
+	    where change is the norm.
+	  </para>
+	</listitem>
+      </orderedlist>
+
+      <para>
+	In order for a classing system to be comprehensive, it must be
+	usable in complex ways. The Bcfg2 metadata system has
+	constructs that map cleanly to first-order logic. This implies
+	that any complex configuration pattern can be represented (at
+	all) by the metadata, as first-order logic is provably
+	comprehensive. (There is a discussion later in the document
+	describing the metadata system in detail, and showing how it
+	corresponds to first-order logic)
+      </para>
+
+      <para>
+	These use cases motivate several of the design decisions that
+	we made:
+      </para>
+
+      <orderedlist>
+	<listitem>
+	  <para>
+	    There must be a many to one correspondence between clients
+	    and groups. Membership in a given profile group must imbue
+	    a client with all of its configuration properties. 
+	  </para>
+	  </listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Package Management</title>
+
+      <para>
+	The interface provided in the bcfg2 repository for package
+	specification was designed with automation in mind. The goal
+	was to 
+    </section>
+  </section>
 </chapter>
