@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys, ConfigParser, cStringIO
+import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -63,26 +63,6 @@ class Toolset(object):
                 if not self.states[cfile]:
                     self.InstallConfigFile(cfile)
         self.statistics = lxml.etree.Element("Statistics")
-        # handle $Revision string processing here
-        cfp = ConfigParser.ConfigParser()
-        cfp.read('/etc/bcfg2.conf')
-        initial = ''
-        try:
-            initial = cfp.get('Specification', 'Revision')
-        except ConfigParser.NoOptionError:
-            pass
-        self.statistics.set('initial', initial)
-        goal = ''
-        upstream = [cfl for cfl in cfg.findall(".//ConfigFile") if cfg.get('name') == '/etc/bcfg2.conf']
-        if upstream:
-            cfp = ConfigParser.ConfigParser()
-            cfp.readfp(cStringIO.StringIO(upstream[0].text))
-            try:
-                goal = cfp.get('Specification', 'Revision')
-            except ConfigParser.NoOptionError:
-                pass
-        if goal != initial:
-            self.logger.info("Specification revision: %s should be upgraded to %s" % (initial, goal))
 
     def saferun(self, command):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
@@ -180,7 +160,7 @@ class Toolset(object):
 
     def GenerateStats(self, client_version):
         '''Generate XML summary of execution statistics'''
-        stats = lxml.etree.Element("Statistics")
+        stats = self.statistics
 
         # Calculate number of total bundles and structures
         total =  len(self.states)
@@ -190,6 +170,7 @@ class Toolset(object):
         stats.set('good', str(good))
         stats.set('version', '2.0')
         stats.set('client_version', client_version)
+        stats.set('revision', self.cfg.get('revision'))
 
         if len([key for key, val in self.states.iteritems() if not val]) == 0:
             stats.set('state', 'clean')

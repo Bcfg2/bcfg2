@@ -279,7 +279,7 @@ class Core(object):
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time()
-        config = lxml.etree.Element("Configuration", version='2.0')
+        config = lxml.etree.Element("Configuration", version='2.0', revision=self.revision)
         try:
             meta = self.metadata.get_metadata(client)
         except Bcfg2.Server.Metadata.MetadataConsistencyError:
