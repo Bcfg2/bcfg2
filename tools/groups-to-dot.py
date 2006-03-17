@@ -42,13 +42,14 @@ if __name__ == '__main__':
         bundles.sort()
         for bundle in bundles:
             dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' % (bundle, bundle))
-        
+    gseen = []
     for group in groups.findall('Group'):
         color = categories[group.get('category', 'default')]
         if group.get('profile', 'false') == 'true':
             style="filled, bold"
         else:
             style = "filled"
+        gseen.append(group.get('name'))
         dotpipe.tochild.write('\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' %
                               (group.get('name'), group.get('name'), style, color))
         if '-b' in sys.argv:
@@ -58,6 +59,10 @@ if __name__ == '__main__':
         
     for group in groups.findall('Group'):
         for parent in group.findall('Group'):
+            if parent.get('name') not in gseen:
+                dotpipe.tochild.write('\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n' %
+                                      (parent.get('name'), parent.get('name')))
+                gseen.append(parent.get("name"))
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
     dotpipe.tochild.write("\tsubgraph cluster_key {\n")
