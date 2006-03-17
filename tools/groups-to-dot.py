@@ -41,7 +41,7 @@ if __name__ == '__main__':
          if bund.get('name') not in bundles]
         bundles.sort()
         for bundle in bundles:
-            dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="rect"];\n''' % (bundle, bundle))
+            dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' % (bundle, bundle))
         
     for group in groups.findall('Group'):
         color = categories[group.get('category', 'default')]
@@ -60,6 +60,10 @@ if __name__ == '__main__':
         for parent in group.findall('Group'):
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
+    dotpipe.tochild.write("\tsubgraph key {\n")
+    dotpipe.tochild.write('''\tBundle [ shape="septagon" ];\n''')
+    dotpipe.tochild.write('''\tGroup [shape="ellipse"];\n''')
+    dotpipe.tochild.write("\t}\n")
     dotpipe.tochild.write("}\n")
     dotpipe.tochild.close()
     data = dotpipe.fromchild.read()
