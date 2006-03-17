@@ -87,6 +87,7 @@ class FamFam(object):
         end = time()
         logger.info("Processed %s fam events in %03.03f seconds. %s coalesced" %
                     (count, (end - start), collapsed))
+        return count
 
 class GaminEvent(object):
     '''This class provides an event analogous to python-fam events based on gamin sources'''
@@ -172,6 +173,7 @@ class GaminFam(object):
         end = time()
         logger.info("Processed %s gamin events in %03.03f seconds. %s collapsed" %
                     (count, (end - start), collapsed))
+        return count
         
 try:
     from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted
@@ -202,6 +204,11 @@ class Core(object):
         self.cron = {}
         self.setup = setup
         self.plugins = {}
+        try:
+            self.svn = cfile.get('server', 'svn') == 'yes'
+        except:
+            self.svn = False
+        self.revision = '-1'
         
         mpath = cfile.get('server','repository')
         try:
@@ -253,6 +260,9 @@ class Core(object):
                 self.Bind(entry, metadata)
             except PluginExecutionError:
                 logger.error("Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
+            except:
+                logger.error("Unexpected failure in BindStructure: %s %s" % (entry.tag, entry.get('name')),
+                             exc_info=1)
 
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
@@ -296,7 +306,8 @@ class Core(object):
         '''Perform periodic update tasks'''
         while self.fam.fm.pending:
             try:
-                self.fam.HandleEvent()
+                if self.fam.HandleEvent() and self.svn:
+                    self.read_svn_revision()
             except:
                 logger.error("error in FamEvent", exc_info=1)
         try:
@@ -304,3 +315,8 @@ class Core(object):
         except:
             logger.error("error in Statistics", exc_info=1)
             
+    def read_svn_revision(self):
+        '''Read svn revision information for the bcfg2 repository'''
+        revline = [line.split(': ')[1].strip() for line in os.popen("svn info %s" % (self.datastore)).readlines() if
+                   line[:9] == 'Revision:'][-1]
+        self.revision = revline
