@@ -5,12 +5,12 @@ __revision__ = '$Revision$'
 
 import lxml.etree, sys, popen2
 
-colors = ['aquamarine', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegreen', 'midnightblue',
-          'lightblue', 'limegreen']
+colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegreen', 
+          'orange1', 'limegreen']
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print "Usage groups-to-dot.py [-h] -o <outputfile> <metadatadir>"
+        print "Usage groups-to-dot.py [-b] [-h] -o <outputfile> <metadatadir>"
         raise SystemExit, 1
     groups = lxml.etree.parse(sys.argv[-1] + '/groups.xml').getroot()
     clients = lxml.etree.parse(sys.argv[-1] + '/clients.xml').getroot()
@@ -23,8 +23,8 @@ if __name__ == '__main__':
                 categories[group.get('category')] = colors.pop()
         
     dotpipe.tochild.write("digraph groups {\n")
+    dotpipe.tochild.write('\trankdir="LR";\n')
     if '-h' in sys.argv:
-        dotpipe.tochild.write('\trankdir="LR";\n')
         for client in clients.findall('Client'):
             if instances.has_key(client.get('profile')):
                 instances[client.get('profile')].append(client.get('name'))
@@ -60,9 +60,14 @@ if __name__ == '__main__':
         for parent in group.findall('Group'):
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
-    dotpipe.tochild.write("\tsubgraph key {\n")
+    dotpipe.tochild.write("\tsubgraph cluster_key {\n")
+    dotpipe.tochild.write('''\tstyle="filled";\n''')
+    dotpipe.tochild.write('''\tcolor="lightblue";\n''')
     dotpipe.tochild.write('''\tBundle [ shape="septagon" ];\n''')
     dotpipe.tochild.write('''\tGroup [shape="ellipse"];\n''')
+    dotpipe.tochild.write('''\tProfile [style="bold", shape="ellipse"];\n''')
+    dotpipe.tochild.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
+    dotpipe.tochild.write('''\tlabel="Key";\n''')
     dotpipe.tochild.write("\t}\n")
     dotpipe.tochild.write("}\n")
     dotpipe.tochild.close()
