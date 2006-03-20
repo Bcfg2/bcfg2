@@ -9,7 +9,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
     __name__ = 'Debian'
     __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
                      "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
-                     '/etc/apt/apt.conf']
+                     '/etc/apt/apt.conf', '/etc/dpkg/dpkg.cfg']
     pkgtool = {'deb':('DEBIAN_FRONTEND=noninteractive apt-get --reinstall -q=2 --force-yes -y install %s',
                       ('%s=%s', ['name', 'version']))}
     svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
