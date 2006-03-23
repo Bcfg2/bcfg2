@@ -7,7 +7,11 @@ from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
 import getopt, logging, os, signal, sys, tempfile, time, traceback, xmlrpclib
-import Bcfg2.Client.Proxy, Bcfg2.Logging
+try:
+    import Bcfg2.Client.Proxy, Bcfg2.Logging
+except KeyError:
+    print "Could not read options from configuration file"
+    raise SystemExit, 1
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
