@@ -547,7 +547,10 @@
       <para>
 	The interface provided in the bcfg2 repository for package
 	specification was designed with automation in mind. The goal
-	was to 
+	was to support an append only interface to the repository, so
+	that users do not need to continuously re-write already
+	existing bits of specification.
+      </para>
     </section>
   </section>
 </chapter>
