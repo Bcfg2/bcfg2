@@ -47,10 +47,12 @@ class SafeProxy:
             except xmlrpclib.Fault:
                 self.log.debug("Operation %s completed with fault" % (method_name))
                 raise
-            except socket.error:
-                self.log.debug("Attempting %s (%d of %d) failed" % (method_name, (irs+1), self._retries))
+            except socket.error, serr:
+                self.log.debug("Attempting %s (%d of %d) failed because %s" % (method_name, (irs+1),
+                                                                               self._retries, serr))
                 time.sleep(0.5)                
             except:
+                self.log.error("Unknown failure", exc_info=1)
                 break
         raise xmlrpclib.Fault(20, 'Server Failure')
         

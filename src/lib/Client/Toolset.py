@@ -211,6 +211,7 @@ class Toolset(object):
                 self.states[entry] = method(entry)
         except:
             self.logger.error("Failure in VerifyEntry", exc_info=1)
+            self.logger.error("Entry: %s" % (lxml.etree.tostring(entry)))
 
     def InstallEntry(self, entry):
         '''Dispatch call to self.Install<tagname>'''
