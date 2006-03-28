@@ -16,17 +16,19 @@
     <xsd:attribute type='xsd:string' name='simplefile'/>
   </xsd:complexType>
 
-  <xsd:complexType name='GroupType'>
+  <xsd:complexType name='ContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
+      <xsd:element name='Group' type='ContainerType'/>
+      <xsd:element name='Host' type='ContainerType'/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
 
   <xsd:element name='PackageList'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Group' type='GroupType'/>
+	<xsd:element name='Group' type='ContainerType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attribute name='type' type='xsd:string' use='required'/>
