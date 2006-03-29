@@ -83,7 +83,11 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     request_queue_size = 15
 
     def __init__(self, setup):
-        Bcfg2.Server.Component.Component.__init__(self, setup)
+        try:
+            Bcfg2.Server.Component.Component.__init__(self, setup)
+        except Bcfg2.Server.Component.ComponentInitError:
+            self.shut = True
+            return
         self.shut = False
         # set shutdown handlers for sigint and sigterm
         signal.signal(signal.SIGINT, self.start_shutdown)

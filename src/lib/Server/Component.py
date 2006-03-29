@@ -8,6 +8,10 @@ import Bcfg2.Client.Proxy as Proxy
 
 log = logging.getLogger('Component')
 
+class ComponentInitError(Exception):
+    '''Raised in case of component initialization failure'''
+    pass
+
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
     def finish(self):
@@ -96,7 +100,11 @@ class Component(SSLServer,
 
         self.password = self.cfile.get('communication', 'password')
 
-        SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
+        try:
+            SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
+        except:
+            self.logger.error("Failed to load ssl key %s" % (keyfile))
+            raise ComponentInitError
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
         self.logRequests = 0
         self.port = self.socket.getsockname()[1]
