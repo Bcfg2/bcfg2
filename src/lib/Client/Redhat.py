@@ -38,7 +38,7 @@ class ToolsetImpl(Toolset):
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
         try:
-            srvdata = self.saferun("/sbin/chkconfig --list %s"%entry.attrib['name'])[1][0].split()
+            srvdata = self.saferun('/sbin/chkconfig --list %s | grep -v "unknown service"'%entry.attrib['name'])[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             return False
