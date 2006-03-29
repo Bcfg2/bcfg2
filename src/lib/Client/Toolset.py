@@ -305,6 +305,28 @@ class Toolset(object):
             exists = False
 
         if not exists:
+            parent = "/".join(entry.get('name').split('/')[:-1])
+            if parent:
+                try:
+                    os.lstat(parent)
+                except:
+                    self.logger.debug('Creating parent path for directory %s' % (entry.get('name')))
+                    for idx in xrange(len(parent.split('/')[:-1])):
+                        current = '/'+'/'.join(parent.split('/')[1:2+idx])
+                        try:
+                            sloc = os.lstat(current)
+                            try:
+                                if not S_ISDIR(sloc[ST_MODE]):
+                                    os.unlink(current)
+                                    os.mkdir(current)
+                            except OSError:
+                                return False
+                        except OSError:
+                            try:
+                                os.mkdir(current)
+                            except OSError:
+                                return False
+
             try:
                 os.mkdir(entry.get('name'))
             except OSError:
