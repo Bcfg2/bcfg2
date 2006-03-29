@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
-name="cobalt"
-repo="https://svn.mcs.anl.gov/repos/${name}"
+name="bcfg2"
+repo="https://svn.mcs.anl.gov/repos/bcfg2"
 version="${1}"
 expath="/tmp/${name}-${version}/"
 tarname="/tmp/${name}-${version}.tar.gz"
