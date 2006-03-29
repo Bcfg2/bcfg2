@@ -11,7 +11,7 @@ if [ -z "$version" ] ; then
     exit 1
 fi
 tagstr=`echo ${version} | sed -e 's/\./_/g'`
-svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
+svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${version} release"
 svn export . "${expath}"
 svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
 cd "${expath}"/doc && make
