@@ -94,6 +94,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         if str(record.msg) > 250:
             msgs = []
             error = record.exc_info
+            record.exc_info = None
             msgdata = record.msg
             while msgdata:
                 newrec = copy.deepcopy(record)

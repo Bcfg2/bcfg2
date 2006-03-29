@@ -304,12 +304,9 @@ class Core(object):
 
     def Service(self):
         '''Perform periodic update tasks'''
-        while self.fam.fm.pending:
-            try:
-                if self.fam.HandleEvent() and self.svn:
-                    self.read_svn_revision()
-            except:
-                logger.error("error in FamEvent", exc_info=1)
+        count = self.fam.Service()
+        if count and self.svn:
+            self.read_svn_revision()
         try:
             self.stats.WriteBack()
         except:
