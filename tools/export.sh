@@ -1,20 +1,23 @@
 #!/usr/bin/env sh
 
+name="cobalt"
+repo="https://svn.mcs.anl.gov/repos/${name}"
 version="${1}"
+expath="/tmp/${name}-${version}/"
+tarname="/tmp/${name}-${version}.tar.gz"
 
 if [ -z "$version" ] ; then
     echo "must supply version number"
     exit 1
 fi
 tagstr=`echo ${version} | sed -e 's/\./_/g'`
-svn copy svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/trunk svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr} -m "tagged ${tagstr} release"
-svn export . /tmp/bcfg2-${version}
-svn log -v svn+ssh://terra.mcs.anl.gov/home/desai/svn/bcfg/tags/bcfg2_${tagstr} > /tmp/bcfg2-${version}/ChangeLog
-cd /tmp/bcfg2-${version}/doc
-make
+svn copy "${repo}/trunk" "${repo}/tags/${name}_${tagstr}" -m "tagged ${tagstr} release"
+svn export . "${expath}"
+svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
+cd "${expath}"/doc && make
 cd /tmp
-filename="/tmp/bcfg2-${version}.tar.gz"
-tar czf "${filename}" bcfg2-${version}
-gpg --armor --output "${filename}".gpg --detach-sig "${filename}"
-scp /tmp/bcfg2-${version}.tar.gz* terra.mcs.anl.gov:/nfs/ftp/pub/bcfg
-scp /tmp/bcfg2-${version}.tar.gz* terra.mcs.anl.gov:/nfs/www-space-004/cobalt/bcfg2
+
+tar czf "${tarname}" "${name}-${version}"
+gpg --armor --output "${tarname}".gpg --detach-sig "${tarname}"
+scp "${tarname}"* terra.mcs.anl.gov:/nfs/ftp/pub/bcfg
+
