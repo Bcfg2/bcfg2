@@ -206,9 +206,10 @@ class Core(object):
         self.plugins = {}
         try:
             self.svn = cfile.get('server', 'svn') == 'yes'
+            self.read_svn_revision()
         except:
             self.svn = False
-        self.revision = '-1'
+            self.revision = '-1'
         
         mpath = cfile.get('server','repository')
         try:
@@ -314,6 +315,10 @@ class Core(object):
             
     def read_svn_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
-        revline = [line.split(': ')[1].strip() for line in os.popen("svn info %s" % (self.datastore)).readlines() if
-                   line[:9] == 'Revision:'][-1]
-        self.revision = revline
+        try:
+            revline = [line.split(': ')[1].strip() for line in os.popen("svn info %s" % (self.datastore)).readlines() if
+                       line[:9] == 'Revision:'][-1]
+            self.revision = revline
+        except IndexError:
+            logger.error("Failed to read svn info; disabling svn support")
+            self.svn = False
