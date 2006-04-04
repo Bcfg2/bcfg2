@@ -51,7 +51,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Good) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -67,7 +67,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Bad) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -82,7 +82,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Extra) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -99,7 +99,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Modified) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -114,7 +114,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Stale)-count(Client[@pingable='N']) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -130,7 +130,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Statistics/Stale) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>
@@ -147,7 +147,7 @@
                                         <xsl:sort select="Client/@name"/>
                                         <xsl:if test="count(Client[@pingable='N']) > 0">
                                             <li><b>Node: </b>
-                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt></li>
+                                            <tt><a href="#{Client/@name}"><xsl:value-of select="Client/@name" /></a></tt><span class="mini-date"><xsl:value-of select="Statistics/@time" /></span></li>
                                         </xsl:if>
                                     </xsl:for-each>
                                 </ul></div>

@@ -6,7 +6,19 @@
         <div class="nodebox" name="{Client/@name}">
             <span class="notebox">Time Ran: <xsl:value-of select="Statistics/@time" /></span>
               <span class="configbox">(<xsl:value-of select="Client/@profile" />)</span>
-            <h2>Node: <span class="nodename"><xsl:value-of select="Client/@name" /></span></h2>
+            
+            <table class="invisitable">
+            <tr><td width="43%"><h2>Node: <span class="nodename"><xsl:value-of select="Client/@name" /></span></h2></td>
+            <td width="23%"><xsl:if test="Statistics/@revision &gt; -1" > Revision: <xsl:value-of select="Statistics/@revision" /></xsl:if></td>
+            
+            
+            <td width="33%"><div class="statusborder">
+            <div class="greenbar" style="width: {((Statistics/@good) div (Statistics/@total))*100}%;"><xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text></div>
+            <div class="redbar" style="width: {(((Statistics/@total)-(Statistics/@good)) div (Statistics/@total))*100}%;"><xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text></div>
+            </div>
+            </td></tr>
+            </table>
+            
                 <xsl:apply-templates select="Statistics" />
         </div>
 	</xsl:if>

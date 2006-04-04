@@ -112,15 +112,48 @@ div.header {
     text-indent:50px;
     position:relative;
     }
+/*Divs For Statusbar*/
+div.redbar {
+    border: 0px solid #660000;
+    background: #FF6666;
+    margin: 0px;
+    float: left;
+    }
     
+div.greenbar {
+    border: 0px solid #006600;
+    background: #66FF66;
+    margin: 0px;
+    float: left;
+    }
+div.statusborder {
+    border: 1px solid #000000;
+    background: #FF6666;
+    margin: 0px;
+    float: right;
+    width: 100%;
+    }
+    /*invisitable*/
+table.invisitable {
+    width: 100%;
+    border: 0px;
+    cell-padding: 0px;
+    padding: 0px;
+    border-width: 0px;
+    }
 /*Spans*/
-.nodename {
+span.nodename {
     font-style: italic;
     }
-.nodelisttitle {
+span.nodelisttitle {
     font-size: 14px;
     }
-    
+span.mini-date {
+    font-size: 10px;
+    position: absolute;
+    right: 65px;
+    }
+
 h2	{
     font-size: 16px;
     color: #000;
