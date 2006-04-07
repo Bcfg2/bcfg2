@@ -301,7 +301,7 @@ class XMLPrioDir(Plugin, DirectoryBacked):
         else:
             prio = [int(src.priority) for src in matching]
             if prio.count(max(prio)) > 1:
-                self.logger.error("Found multiple %s sources with same priority for %s, pkg %s" %
+                self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
                                   (self.__element__.lower(), metadata.hostname, entry.get('name')))
                 raise PluginExecutionError
             index = prio.index(max(prio))

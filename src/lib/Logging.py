@@ -76,7 +76,7 @@ class TermiosFormatter(logging.Formatter):
         elif type(record.msg) == lxml.etree._Element:
             returns.append(str(xml_print(record.msg)))
         else:
-            returns.append(record.name + ':' + str(record.msg))
+            returns.append(str(record.msg))
         if record.exc_info:
             returns.append(self.formatException(record.exc_info))
         return '\n'.join(returns)
