@@ -31,6 +31,7 @@
     </xsd:choice>
     <xsd:attribute type='booleanType' name='profile' use='optional'/>
     <xsd:attribute type='booleanType' name='public' use='optional'/>
+    <xsd:attribute type='booleanType' name='default' use='optional'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='toolsetType' name='toolset' use='optional'/>
     <xsd:attribute type='xsd:string' name='category' use='optional'/>
