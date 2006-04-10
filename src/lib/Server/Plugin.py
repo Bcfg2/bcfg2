@@ -191,13 +191,14 @@ class StructFile(XMLFileBacked):
         logger.error("File %s got null match" % (self.name))
         return []
 
-class LNode:
+class INode:
     '''LNodes provide lists of things available at a particular group intersection'''
     raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
            'Group':"lambda x:'%s' in x.groups and predicate(x)"}
-    __leaf__ = './Child'
+    containers = ['Group', 'Client']
+    ignore = []
     
-    def __init__(self, data, plist, parent=None):
+    def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
         if parent == None:
@@ -209,30 +210,46 @@ class LNode:
             else:
                 raise Exception
         mytype = self.__class__
-        self.children = [mytype(child, plist, self) for child in data.getchildren()
-                         if child.tag in ['Group', 'Client']]
-        for leaf in data.findall(self.__leaf__):
-            self.contents[leaf.get('name')] = leaf.attrib
-            if leaf.get('name') not in plist:
-                plist.append(leaf.get('name'))
+        self.children = []
+        for item in data.getchildren():
+            if item.tag in self.ignore:
+                continue
+            elif item.tag in self.containers:
+                self.children.append(mytype(item, idict, self))
+            else:
+                try:
+                    self.contents[item.tag][item.get('name')] = item.attrib
+                except KeyError:
+                    self.contents[item.tag] = {item.get('name'):item.attrib}
+                if item.text:
+                    self.contents[item.tag]['__text__'] = item.text
+                try:
+                    idict[item.tag].append(item.get('name'))
+                except KeyError:
+                    idict[item.tag] = [item.get('name')]
 
     def Match(self, metadata, data):
         '''Return a dictionary of package mappings'''
         if self.predicate(metadata):
-            data.update(self.contents)
+            for key in self.contents:
+                try:
+                    data[key].update(self.contents[key])
+                except:
+                    data[key] = {}
+                    data[key].update(self.contents[key])
             for child in self.children:
                 child.Match(metadata, data)
 
 class XMLSrc(XMLFileBacked):
     '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
-    __node__ = LNode
+    __node__ = INode
 
     def __init__(self, filename):
         XMLFileBacked.__init__(self, filename)
-        self.names = []
+        self.items = {}
         self.cache = None
         self.pnode = None
-        self.priority = '1000'
+        self.priority = -1
 
     def HandleEvent(self, event=None):
         '''Read file upon update'''
@@ -241,15 +258,18 @@ class XMLSrc(XMLFileBacked):
         except IOError:
             logger.error("Failed to read file %s" % (self.name))
             return
-        self.names = []
+        self.items = {}
         try:
             xdata = lxml.etree.XML(data)
         except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse file %s" % (self.name))
             return
-        self.pnode = self.__node__(xdata, self.names)
+        self.pnode = self.__node__(xdata, self.items)
         self.cache = None
-        self.priority = xdata.get('priority')
+        try:
+            self.priority = int(xdata.get('priority'))
+        except:
+            logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
         del xdata, data
 
     def Cache(self, metadata):
@@ -263,27 +283,29 @@ class XMLSrc(XMLFileBacked):
             self.pnode.Match(metadata, cache[1])
             self.cache = cache
 
-class XMLPrioDir(Plugin, DirectoryBacked):
+class PrioDir(Plugin, DirectoryBacked):
     '''This is a generator that handles package assignments'''
-    __name__ = 'XMLPrioDir'
+    __name__ = 'PrioDir'
     __child__ = XMLSrc
-    __element__ = 'Dummy'
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
-        self.Entries[self.__element__] = {}
         try:
             DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.logger.error("Failed to load %s indices" % (self.__element__.lower()))
+            self.logger.error("Failed to load %s indices" % (self.__name__))
             raise PluginInitError
 
     def HandleEvent(self, event):
         '''Handle events and update dispatch table'''
         DirectoryBacked.HandleEvent(self, event)
         for src in self.entries.values():
-            for child in src.names:
-                self.Entries[self.__element__][child] = self.BindEntry
+            for itype, children in src.items.iteritems():
+                for child in children:
+                    try:
+                        self.Entries[itype][child] = self.BindEntry
+                    except KeyError:
+                        self.Entries[itype] = {child: self.BindEntry}
 
     def BindEntry(self, entry, metadata):
         '''Check package lists of package entries'''
@@ -293,7 +315,7 @@ class XMLPrioDir(Plugin, DirectoryBacked):
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in self.entries.values()
-                    if src.cache[1].has_key(name)]
+                    if src.cache[1].has_key(entry.tag) and src.cache[1][entry.tag].has_key(name)]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
@@ -302,9 +324,12 @@ class XMLPrioDir(Plugin, DirectoryBacked):
             prio = [int(src.priority) for src in matching]
             if prio.count(max(prio)) > 1:
                 self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
-                                  (self.__element__.lower(), metadata.hostname, entry.get('name')))
+                                  (entry.tag.lower(), metadata.hostname, entry.get('name')))
                 raise PluginExecutionError
             index = prio.index(max(prio))
 
-        data = matching[index].cache[1][name]
+        data = matching[index].cache[1][entry.tag][name]
         [entry.attrib.__setitem__(key, data[key]) for key in data.keys()]
+        if data.has_key('__text__'):
+            del entry.attrib['__text__']
+            entry.text = data['__text__']

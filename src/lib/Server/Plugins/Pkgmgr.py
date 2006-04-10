@@ -5,24 +5,29 @@ import logging, re, Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
-class PNode(Bcfg2.Server.Plugin.LNode):
+class PNode(Bcfg2.Server.Plugin.INode):
     '''PNode has a list of packages available at a particular group intersection'''
     splitters = {'rpm':re.compile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$'),
                  'encap':re.compile('^(?P<name>\w+)-(?P<version>[\w\d\.-]+).encap.*$')}
+    ignore = ['Package']
     
-    def __init__(self, data, plist, parent=None):
+    def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
+        if not pdict.has_key('Package'):
+            pdict['Package'] = []
         for child in data.getchildren():
             for attr in [key for key in data.attrib.keys() if key != 'name' and not child.attrib.has_key(key)]:
                 child.set(attr, data.get(attr))
-        Bcfg2.Server.Plugin.LNode.__init__(self, data, plist, parent)
+        Bcfg2.Server.Plugin.INode.__init__(self, data, pdict, parent)
+        if not self.contents.has_key('Package'):
+            self.contents['Package'] = {}
         for pkg in data.findall('./Package'):
-            if pkg.attrib.has_key('name') and pkg.get('name') not in plist:
-                plist.append(pkg.get('name'))
+            if pkg.attrib.has_key('name') and pkg.get('name') not in pdict['Package']:
+                pdict['Package'].append(pkg.get('name'))
             if pkg.attrib.has_key('simplefile'):
                 pkg.set('url', "%s/%s" % (pkg.get('uri'), pkg.get('simplefile')))
-                self.contents[pkg.get('name')] = pkg.attrib
+                self.contents['Package'][pkg.get('name')] = pkg.attrib
             else:
                 if pkg.attrib.has_key('file'):
                     pkg.set('url', '%s/%s' % (pkg.get('uri'), pkg.get('file')))
@@ -32,20 +37,20 @@ class PNode(Bcfg2.Server.Plugin.LNode):
                         logger.error("Failed to match pkg %s" % pkg.get('file'))
                         continue
                     pkgname = mdata.group('name')
-                    self.contents[pkgname] = mdata.groupdict()
+                    self.contents['Package'][pkgname] = mdata.groupdict()
                     if pkg.attrib.get('file'):
-                        self.contents[pkgname]['url'] = pkg.get('url')
-                        self.contents[pkgname]['type'] = pkg.get('type')
-                    if pkgname not in plist:
-                        plist.append(pkgname)
+                        self.contents['Package'][pkgname]['url'] = pkg.get('url')
+                        self.contents['Package'][pkgname]['type'] = pkg.get('type')
+                    if pkgname not in pdict['Package']:
+                        pdict['Package'].append(pkgname)
                 else:
-                    self.contents[pkg.get('name')] = pkg.attrib
+                    self.contents['Package'][pkg.get('name')] = pkg.attrib
 
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
     '''PkgSrc files contain a PNode hierarchy that returns matching package entries'''
     __node__ = PNode
 
-class Pkgmgr(Bcfg2.Server.Plugin.XMLPrioDir):
+class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     '''This is a generator that handles package assignments'''
     __name__ = 'Pkgmgr'
     __version__ = '$Id$'
