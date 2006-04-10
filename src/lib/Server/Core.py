@@ -256,7 +256,7 @@ class Core(object):
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
-        for entry in [child for child in structure.getchildren() if child.tag not in ['SymLink', 'Directory', 'Permissions', 'PostInstall']]:
+        for entry in [child for child in structure.getchildren() if child.tag not in ['PostInstall']]:
             try:
                 self.Bind(entry, metadata)
             except PluginExecutionError:
