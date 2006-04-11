@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 
 import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core
 
-def print_tabular(rows):
+def printTabular(rows):
     '''print data in tabular format'''
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 for index in xrange(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
@@ -14,14 +14,14 @@ def print_tabular(rows):
     for row in rows[1:]:
         print fstring % row
 
-def get_input():
+def getInput():
     '''read commands from stdin'''
     try:
         return raw_input('> ').split(" ")
     except:
         return ['']
 
-def do_build(cmd, core):
+def doBuild(cmd, core):
     '''build client configuration'''
     if len(cmd) == 3:
         output = open(cmd[2], 'w')
@@ -30,25 +30,25 @@ def do_build(cmd, core):
     else:
         print 'Usage: build <hostname> <output file>'
 
-def do_bundles(cmd, core):
+def doBundles(_, core):
     '''print out group/bundle info'''
     data = [('Group', 'Bundles')]
     groups = core.metadata.groups.keys()
     groups.sort()
     for group in groups:
         data.append((group, ','.join(core.metadata.groups[group][0])))
-    print_tabular(data)
+    printTabular(data)
 
-def do_clients(cmd, core):
+def doClients(_, core):
     '''print out client info'''
     data = [('Client', 'Profile')]
     clist = core.metadata.clients.keys()
     clist.sort()
     for client in clist:
         data.append((client, core.metadata.clients[client]))
-    print_tabular(data)
+    printTabular(data)
 
-def do_help(cmd, core):
+def doHelp(_, _):
     '''print out usage info'''
     print 'Commands:'
     print 'build <hostname> <filename> - build config for hostname, writing to filename'
@@ -63,12 +63,12 @@ def do_help(cmd, core):
     print 'update - process pending file events'
     print 'version - print version of this tool'
 
-def do_generators(cmd, core):
+def doGenerators(_, core):
     '''print out generator info'''
     for generator in core.generators:
         print generator.__version__
 
-def do_groups(cmd, core):
+def doGroups(_, core):
     '''print out group info'''
     data = [("Groups", "Profile", "Category", "Contains")]
     grouplist = core.metadata.groups.keys()
@@ -85,9 +85,9 @@ def do_groups(cmd, core):
         gdata = [grp for grp in core.metadata.groups[group][1]]
         gdata.remove(group)
         data.append((group, prof, cat, ','.join(gdata)))
-    print_tabular(data)
+    printTabular(data)
 
-def do_mappings(cmd, core):
+def doMappings(cmd, core):
     '''print out mapping info'''
     # dump all mappings unless type specified
     data = [('Plugin', 'Type', 'Name')]
@@ -108,27 +108,27 @@ def do_mappings(cmd, core):
                 for name in names:
                     if generator.Entries.has_key(etype) and generator.Entries[etype].has_key(name):
                         data.append((generator.__name__, etype, name))
-    print_tabular(data)
+    printTabular(data)
 
-def do_quit(cmd, core):
+def doQuit(cmd, core):
     '''exit program'''
     raise SystemExit, 0
 
-def do_update(cmd, core):
+def doUpdate(_, core):
     '''Process pending fs events'''
     core.fam.Service()
 
-def do_version(cmd, core):
+def doVersion(_, _):
     '''print out code version'''
     print __revision__
         
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
-    dispatch = {'build': do_build, 'bundles': do_bundles, 'clients': do_clients,
-                'generators': do_generators, 'groups': do_groups,
-                'help': do_help, 'mappings': do_mappings, 'quit': do_quit,
-                'update': do_update, 'version': do_version}
+    dispatch = {'build': doBuild, 'bundles': doBundles, 'clients': doClients,
+                'generators': doGenerators, 'groups': doGroups,
+                'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
+                'update': doUpdate, 'version': doVersion}
     if '-c' in sys.argv:
         cfile = sys.argv[-1]
     else:
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     for i in range(25):
         bcore.fam.Service()
         time.sleep(0.5)
-    ucmd = get_input()
+    ucmd = getInput()
     while True:
         if ucmd[0] == 'debug':
             break
@@ -155,4 +155,4 @@ if __name__ == '__main__':
                     logger.error("command failure", exc_info=1)
             else:
                 print "Unknown command %s" % ucmd[0]
-        ucmd = get_input()
+        ucmd = getInput()
