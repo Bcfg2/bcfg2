@@ -3,10 +3,11 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
-import getopt, logging, os, signal, sys, tempfile, time, traceback, xmlrpclib
+import logging, os, signal, sys, tempfile, time, traceback, xmlrpclib
+import Bcfg2.Options
+
 try:
     import Bcfg2.Client.Proxy, Bcfg2.Logging
 except KeyError:
@@ -19,7 +20,7 @@ def cb_sigint_handler(signum, frame):
 
 class Client:
     ''' The main bcfg2 client class '''
-    def __init__(self, args):
+    def __init__(self):
         level = 30
         if '-v' in sys.argv:
             level = 20
@@ -29,82 +30,53 @@ class Client:
         self.logger = logging.getLogger('bcfg2')
         self.toolset = None
         self.config = None
-        self.options = {
-            'verbose': 'v',
-            'quick': 'q',
-            'debug': 'd',
-            'dryrun': 'n',
-            'build': 'B',
-            'paranoid': 'P',
-            'bundle': 'b',
-            'file': 'f',
-            'cache': 'c',
-            'profile': 'p',
-            'image': 'i',
-            'remove': 'r',
-            'help': 'h',
-            'setup': 's',
-            'server': 'S',
-            'user': 'u',
-            'password': 'x',
-            'retries': 'R'
+
+        optinfo = {
+            # 'optname': (('-a', argdesc, optdesc),
+            #                  env, cfpath, default, boolean)),
+            'verbose':(('-v', False,"enable verbose output"),
+                       False, False, False, True),
+            'quick':(('-q', False, "disable some checksum verification"),
+                     False, False, False, True),
+            'debug':(('-d', False, "enable debugging output"),
+                     False, False, False, True),
+            'dryrun':(('-n', False, "do not actually change the system"),
+                      False, False, False, True),
+            'build': (('-B', False, "run in build mode"),
+                      False, False, False, True),
+            'paranoid':(('-P', False, "make automatic backups of config files"),
+                        False, False, False, True),
+            'bundle':(('-b', '<bundle>', "only configure the given bundle"),
+                      False, False, False, False),
+            'file': (('-f', "<configspec>", "configure from a file rather than querying the server"),
+                     False, False, False, False),
+            'cache': (('-c', "<configspec>", "store the configuration in a file"),
+                      False, False, False, False),
+            'profile': (('-p', '<profile>', "assert the given profile for the host"),
+                        False, False, False, False),
+            'remove': (('-r', '(packages|services|all)', "force removal of additional configuration items"),
+                       False, False, False, False),
+            'help': (('-h', False, "print this help message"),
+                     False, False, False, False),
+            'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
+                      False, False, '/etc/bcfg2.conf', False),
+            'server': (('-S', '<server url>', 'the server hostname to connect to'),
+                       False, ('components', 'bcfg2'), 'https://localhost:6789', False),
+            'user': (('-u', '<user>', 'the user to provide for authentication'),
+                     False, ('communication', 'user'), 'root', False),
+            'password': (('-x', '<password>', 'the password to provide for authentication'),
+                         False, ('communication', 'password'), 'password', False),
+            'retries': (('-R', '<numretries>', 'the number of times to retry network communication'),
+                        False, ('communication', 'retries'), '3', False),
             }
-        self.argOptions = {
-            'v': 'verbose',
-            'q': 'quick',
-            'd': 'debug',
-            'n': 'dryrun',
-            'B': 'build',
-            'P': 'paranoid',
-            'b': 'bundle',
-            'f': 'file',
-            'c': 'cache',
-            'p': 'profile',
-            'r': 'remove',
-            'h': 'help',
-            's': 'setup',
-            'S': 'server',
-            'u': 'user',
-            'x': 'password',
-            'R': 'retries'
-            }
-        self.descriptions = {
-            'verbose': "enable verbose output",
-            'quick': "disable some checksum verification",
-            'debug': "enable debugging output",
-            'dryrun': "do not actually change the system",
-            'build': "disable service control (implies -q)",
-            'paranoid': "make automatic backups of config files",
-            'bundle': "only configure the given bundle",
-            'file': "configure from a file rather than querying the server",
-            'cache': "store the configuration in a file",
-            'image': "assert the given image for the host",
-            'profile': "assert the given profile for the host",
-            'remove': "force removal of additional configuration items",
-            'help': "print this help message",
-            'setup': "use given setup file (default /etc/bcfg2.conf)",
-            'server': 'the server hostname to connect to',
-            'user': 'the user to provide for authentication',
-            'password': 'the password to use',
-            'retries': 'the number of times to retry network communication'            
-            }
-        self.argumentDescriptions = {
-            'bundle': "<bundle name>",
-            'file': "<cache file>",
-            'cache': "<cache file>",
-            'profile': "<profile name>",
-            'remove': "(packages | services | all)",
-            'setup': "<setup file>",
-            'server': '<hostname>   ',
-            'user': '<user name>  ',
-            'password': '<password>  ',
-            'retries': '<number of retries>'            
-            }
-        self.setup = {} 
-        self.get_setup(args)
+
+        self.setup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()
         self.logger.debug(self.setup)
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
+        if (self.setup["file"] != False) and (self.setup["cache"] != False):
+            print "cannot use -f and -c together"
+            raise SystemExit, 1
 
     def load_toolset(self, toolset_name):
         '''Import client toolset modules'''
@@ -168,103 +140,6 @@ class Client:
         print "Fatal error: %s" % (message)
         raise SystemExit, 1
 
-    def usage_error(self, message):
-        '''Die because script was called the wrong way'''
-        print "Usage error: %s" % (message)
-        self.print_usage()
-        raise SystemExit, 2
-
-    def print_usage(self):
-        ''' Display usage information for bcfg2 '''
-        print "bcfg2 usage:"
-        for arg in self.options.iteritems():
-            if self.argumentDescriptions.has_key(arg[0]):
-                print " -%s %s\t%s" % (arg[1],
-                                       self.argumentDescriptions[arg[0]],
-                                       self.descriptions[arg[0]])
-            else:
-                print " -%s\t\t\t%s" % (arg[1], self.descriptions[arg[0]])
-
-    def fill_setup_from_file(self, setup_file, ret):
-        ''' Read any missing configuration information from a file'''
-        default = {
-            'server': 'http://localhost:6789/',
-            'user': 'root',
-            'retries': '6'
-            }
-        config_locations = {
-            'server': ('components', 'bcfg2'),
-            'user': ('communication', 'user'),
-            'password': ('communication', 'password'),
-            'retries': ('communicaton', 'retries')
-            }
-
-        self.logger.debug(self.setup)
-
-        config_parser = None        
-
-        for (key, (section, option)) in config_locations.iteritems():
-            try:
-                if not (ret.has_key(key) and ret[key]):
-                    if config_parser == None:
-                        self.logger.debug("no %s provided, reading setup info from %s" %
-                                          (key, setup_file))
-                        config_parser = ConfigParser()
-                        config_parser.read(setup_file)
-                    try:
-                        ret[key] = config_parser.get(section, option)
-                    except (NoSectionError, NoOptionError):
-                        if default.has_key(key):
-                            ret[key] = default[key]
-                        else:
-                            self.fatal_error(
-                                "%s does not contain a value for %s (in %s)"  %
-                                (setup_file, option, section))
-            except IOError, io_error:
-                self.fatal_error("unable to read %s: %s" %
-                                 (setup_file, io_error))
-            except SystemExit:
-                raise
-            except:
-                self.critical_error("reading config file")            
-
-    def get_setup(self, args):
-        '''parse options into a dictionary'''
-
-        for option in self.options.keys():
-            self.setup[option] = False
-
-        gstr = "".join([self.options[option] for option in self.options if
-                        option not in self.argumentDescriptions] +
-                       ["%s:" % (self.options[option]) for option in self.options if
-                        option in self.argumentDescriptions])
-
-        try:
-            ginfo = getopt.getopt(args, gstr)
-        except getopt.GetoptError, gerr:
-            self.usage_error(gerr)
-
-        for (gopt, garg) in ginfo[0]:
-            option = self.argOptions[gopt[1:]]
-            if self.argumentDescriptions.has_key(option):
-                self.setup[option] = garg
-            else:
-                self.setup[option] = True
-
-        if (self.setup["file"] != False) and (self.setup["cache"] != False):
-            self.usage_error("cannot use -f and -c together")
-
-        if self.setup["help"] == True:
-            self.print_usage()
-            raise SystemExit, 0
-
-        if self.setup["setup"]:
-            setup_file = self.setup["setup"]
-        else:
-            setup_file = '/etc/bcfg2.conf'
-
-        self.fill_setup_from_file(setup_file, self.setup)
-        
     def run(self):
         ''' Perform client execution phase '''
         times = {}
@@ -398,4 +273,4 @@ class Client:
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
-    Client(sys.argv[1:]).run()
+    Client().run()

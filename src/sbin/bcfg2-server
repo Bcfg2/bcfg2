@@ -8,8 +8,8 @@ from Bcfg2.Server.Metadata import MetadataConsistencyError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import getopt, logging, os, select, signal, socket, sys
-import Bcfg2.Logging, Bcfg2.Server.Component
+import logging, os, select, signal, socket, sys
+import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Server.Component
 
 logger = logging.getLogger('bcfg2-server')
 
@@ -39,42 +39,6 @@ def critical_error(operation):
     logger.error(operation, exc_info=1)
     raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
-def fatal_error(message):
-    '''Signal a fatal error'''
-    logger.critical("Fatal error: %s" % (message))
-    raise SystemExit, 1
-
-def usage(message, opts, vopts, odescs, vargDescs):
-    '''print usage message'''
-    logger.critical(message)
-    [logger.critical(" -%s\t\t\t%s" % (arg, odescs[arg])) for arg in opts]
-    [logger.critical(" -%s %s\t%s" % (arg, vargDescs[arg], odescs[arg])) for arg in vopts]
-    raise SystemExit, 2
-
-def dgetopt(arglist, opt, vopt, descs, argDescs):
-    '''parse options into a dictionary'''
-    ret = {}
-    for optname in opt.values() + vopt.values():
-        ret[optname] = False
-        
-    gstr = "".join(opt.keys()) + "".join([optionkey + ':' for optionkey in vopt.keys()])
-    try:
-        ginfo = getopt.getopt(arglist, gstr)
-    except getopt.GetoptError, gerr:
-        usage("Usage error: %s" % gerr, opt, vopt, descs, argDescs)
-
-    for (gopt, garg) in ginfo[0]:
-        option = gopt[1:]
-        if opt.has_key(option):
-            ret[opt[option]] = True
-        else:
-            ret[vopt[option]] = garg
-
-    if ret["help"] == True:
-        usage("Usage information", opt, vopt, descs, argDescs)
-
-    return ret
-
 class Bcfg2Serv(Bcfg2.Server.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
@@ -85,17 +49,18 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def __init__(self, setup):
         try:
             Bcfg2.Server.Component.Component.__init__(self, setup)
+            self.shut = False
         except Bcfg2.Server.Component.ComponentInitError:
             self.shut = True
-            return
-        self.shut = False
+
         # set shutdown handlers for sigint and sigterm
         signal.signal(signal.SIGINT, self.start_shutdown)
         signal.signal(signal.SIGTERM, self.start_shutdown)
         try:
             self.Core = Core(setup, setup['configfile'])
         except CoreInitError, msg:
-            fatal_error(msg)
+            logger.critical("Fatal error: %s" % (msg))
+            raise SystemExit, 1
 
         self.funcs.update({
             "AssertProfile": self.Bcfg2AssertProfile, 
@@ -205,39 +170,25 @@ if __name__ == '__main__':
         Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False)
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server')
-        
-    options =  {
-        'v':'verbose',
-        'd':'debug',
-        'h':'help'
-        }
-    doptions = {
-        'D':'daemon',
-        'c':'configfile',
-        'C':'client'
-        }
 
-    descriptions = {
-        'v': "enable verbose output",
-        'd': "enable debugging output",
-        'D': "daemonise the server, storing PID",
-        'c': "set the server's config file",
-        'C': "always return the given client's config (debug only)",
-        'h': "display this usage information"
-        }
-
-    argDescriptions = {
-        'D': "<PID file>   ",
-        'c': "<config file>",
-        'C': "<client hostname>"
+    optinfo = {
+        'verbose': (('-v', False, 'enable verbose output'),
+                    False, False, False, True),
+        'debug': (('-d', False, 'enable debugging output'),
+                  False, False, False, True),
+        'help': (('-h', False, 'display this usage information'),
+                 False, False, False, True),
+        'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
+                   False, False, False, False),
+        'configfile': (('-C', '<conffile>', 'use this config file'),
+                       False, False, '/etc/bcfg2.conf', False),
+        'client': (('-c', '<client>', 'hard set the client name (for debugging)'),
+                   False, False, False, False)
         }
     
-    ssetup = dgetopt(sys.argv[1:], options, doptions,
-                     descriptions, argDescriptions)
+    ssetup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()
     if ssetup['daemon']:
         daemonize(ssetup['daemon'])
-    if not ssetup['configfile']:
-        ssetup['configfile'] = '/etc/bcfg2.conf'
     s = Bcfg2Serv(ssetup)
     while not s.shut:
         try:
