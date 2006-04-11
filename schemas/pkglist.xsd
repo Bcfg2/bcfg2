@@ -25,15 +25,23 @@
     <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
 
+  <xsd:simpleType name='PackageTypeType'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='deb' />
+      <xsd:enumeration value='rpm' />
+      <xsd:enumeration value='encap' />
+      <xsd:enumeration value='sysv' />
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:element name='PackageList'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Group' type='ContainerType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
-      <xsd:attribute name='type' type='xsd:string' use='required'/>
+      <xsd:attribute name='type' use='optional' type='PackageTypeType' />
       <xsd:attribute name='uri' type='xsd:string' use='optional'/>
     </xsd:complexType>
   </xsd:element>
-
 </xsd:schema>
