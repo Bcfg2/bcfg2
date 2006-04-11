@@ -31,7 +31,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
             else:
                 if pkg.attrib.has_key('file'):
                     pkg.set('url', '%s/%s' % (pkg.get('uri'), pkg.get('file')))
-                if self.splitters.has_key(pkg.get('type')):
+                if self.splitters.has_key(pkg.get('type')) and pkg.get('file') != None:
                     mdata = self.splitters[pkg.get('type')].match(pkg.get('file'))
                     if not mdata:
                         logger.error("Failed to match pkg %s" % pkg.get('file'))

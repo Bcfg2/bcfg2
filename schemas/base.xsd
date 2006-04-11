@@ -12,12 +12,12 @@
 
   <xsd:complexType name='ContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Package' type='PackageType'/>
-      <xsd:element name='Service' type='ServiceType'/>
-      <xsd:element name='ConfigFile' type='ConfigFileType'/>
-      <xsd:element name='SymLink' type='SymLinkType'/>
-      <xsd:element name='Directory' type='DirectoryType'/>
-      <xsd:element name='Permissions' type='PermissionType'/>
+      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Service' type='StructureEntry'/>
+      <xsd:element name='ConfigFile' type='StructureEntry'/>
+      <xsd:element name='SymLink' type='StructureEntry'/>
+      <xsd:element name='Directory' type='StructureEntry'/>
+      <xsd:element name='Permissions' type='StructureEntry'/>
       <xsd:element name='Group' type='ContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>

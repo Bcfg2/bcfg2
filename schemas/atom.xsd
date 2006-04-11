@@ -7,39 +7,8 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name='ConfigFileType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='DirectoryType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='perms'/>
-    <xsd:attribute type='xsd:string' name='owner'/>
-    <xsd:attribute type='xsd:string' name='group'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='PackageType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='reloc' use='optional'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='ServiceType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='type'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='SymLinkType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='to' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='PermissionType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='perms' use='required'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='PostInstallType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  <xsd:complexType name='StructureEntry'>
+    <xsd:attribute type='xsd:string' name='name' use='reqiured'/>
   </xsd:complexType>
 
 </xsd:schema>

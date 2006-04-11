@@ -8,31 +8,25 @@
     </xsd:documentation>
   </xsd:annotation>
   
+  <xsd:include schemaLocation="types.xsd"/>
+
   <xsd:complexType name='PackageType'>
     <xsd:attribute type='xsd:string' name='name'/>
     <xsd:attribute type='xsd:string' name='version'/>
     <xsd:attribute type='xsd:string' name='file'/>
     <xsd:attribute type='xsd:string' name='verify'/>
     <xsd:attribute type='xsd:string' name='simplefile'/>
+    <xsd:attribute type='xsd:string' name='reloc'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Group' type='ContainerType'/>
-      <xsd:element name='Host' type='ContainerType'/>
+      <xsd:element name='Client' type='ContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
-
-  <xsd:simpleType name='PackageTypeType'>
-    <xsd:restriction base='xsd:string'>
-      <xsd:enumeration value='deb' />
-      <xsd:enumeration value='rpm' />
-      <xsd:enumeration value='encap' />
-      <xsd:enumeration value='sysv' />
-    </xsd:restriction>
-  </xsd:simpleType>
 
   <xsd:element name='PackageList'>
     <xsd:complexType>
@@ -40,7 +34,7 @@
 	<xsd:element name='Group' type='ContainerType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
-      <xsd:attribute name='type' use='optional' type='PackageTypeType' />
+      <xsd:attribute name='type' use='optional' type='PackageTypeEnum' />
       <xsd:attribute name='uri' type='xsd:string' use='optional'/>
     </xsd:complexType>
   </xsd:element>
