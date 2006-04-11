@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 name="bcfg2"
-repo="https://svn.mcs.anl.gov/repos/bcfg2"
+repo="https://svn.mcs.anl.gov/repos/bcfg"
 version="${1}"
 expath="/tmp/${name}-${version}/"
 tarname="/tmp/${name}-${version}.tar.gz"

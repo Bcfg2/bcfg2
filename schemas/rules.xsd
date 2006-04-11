@@ -45,8 +45,8 @@
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Permissions' type='PermissionsType'/>
-      <xsd:element name='Group' type='ContainerType'/>
-      <xsd:element name='Client' type='ContainerType'/>
+      <xsd:element name='Group' type='RContainerType'/>
+      <xsd:element name='Client' type='RContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
   </xsd:complexType>
