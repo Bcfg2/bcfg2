@@ -9,7 +9,7 @@ __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
-from time import asctime, strptime, time
+from time import asctime, strptime
 from socket import getfqdn
 from sys import argv
 from getopt import getopt, GetoptError

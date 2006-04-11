@@ -18,7 +18,7 @@ def getInput():
     '''read commands from stdin'''
     try:
         return raw_input('> ').split(" ")
-    except:
+    except KeyboardInterrupt:
         return ['']
 
 def doBuild(cmd, core):
@@ -48,7 +48,7 @@ def doClients(_, core):
         data.append((client, core.metadata.clients[client]))
     printTabular(data)
 
-def doHelp(_, _):
+def doHelp(_, dummy):
     '''print out usage info'''
     print 'Commands:'
     print 'build <hostname> <filename> - build config for hostname, writing to filename'
@@ -118,7 +118,7 @@ def doUpdate(_, core):
     '''Process pending fs events'''
     core.fam.Service()
 
-def doVersion(_, _):
+def doVersion(_, dummy):
     '''print out code version'''
     print __revision__
         

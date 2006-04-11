@@ -6,7 +6,7 @@
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser
-from lxml.etree import Element, SubElement, parse, tostring
+from lxml.etree import parse, tostring
 from os import fork, execl, dup2, wait, uname
 import sys
 
