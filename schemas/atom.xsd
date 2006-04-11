@@ -8,7 +8,7 @@
   </xsd:annotation>
 
   <xsd:complexType name='StructureEntry'>
-    <xsd:attribute type='xsd:string' name='name' use='reqiured'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
 </xsd:schema>
