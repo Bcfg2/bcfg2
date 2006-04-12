@@ -1,0 +1,27 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      string enumeration definitions for bcfg2
+      Narayan Desai, Argonne National Laboratory
+      $Id$
+    </xsd:documentation>
+  </xsd:annotation>
+
+    <xsd:simpleType name='PackageTypeEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='deb' />
+      <xsd:enumeration value='rpm' />
+      <xsd:enumeration value='encap' />
+      <xsd:enumeration value='sysv' />
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='StatusEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='on'/>
+      <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+</xsd:schema>
