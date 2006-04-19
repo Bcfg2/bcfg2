@@ -33,6 +33,7 @@ if __name__ == '__main__':
                 'imageinfo':("%s/etc/reports.xml", "%s/report-configuration.xsd"),
                 'services':("%s/Svcmgr/*.xml", "%s/services.xsd")}
 
+    failures  = 0
     for k, (spec, schemaname) in filesets.iteritems():
         try:
             if verbose:
@@ -40,6 +41,7 @@ if __name__ == '__main__':
             schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
         except:
             print "Failed to process schema %s" % (schemaname%(schemadir))
+            failures += 1
             continue
         for filename in glob.glob(spec%(repo)):
             try:
@@ -47,9 +49,11 @@ if __name__ == '__main__':
             except SyntaxError:
                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
                 os.system("xmllint %s" % filename)
+                failures += 1
                 continue
             except IOError:
                 print "Failed to open file %s \t\t<---" % (filename)
+                failures += 1
                 continue
             if schema.validate(datafile):
                 if verbose:
@@ -57,3 +61,5 @@ if __name__ == '__main__':
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
                 os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
+                failures += 1
+    raise SystemExit, failures
