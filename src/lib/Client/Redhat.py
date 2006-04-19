@@ -45,7 +45,10 @@ class ToolsetImpl(Toolset):
         if entry.attrib['type'] == 'xinetd':
             return entry.attrib['status'] == srvdata[1]
 
-        onlevels = [level.split(':')[0] for level in srvdata[1:] if level.split(':')[1] == 'on']
+        try:
+            onlevels = [level.split(':')[0] for level in srvdata[1:] if level.split(':')[1] == 'on']
+        except IndexError:
+            onlevels = []
 
         # chkconfig/init.d service
         if entry.get('status') == 'on':
