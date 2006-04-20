@@ -1,5 +1,5 @@
 '''Cobalt proxy provides client access to cobalt components'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
 import logging, socket, time, xmlrpclib, ConfigParser
 
@@ -63,7 +63,8 @@ class SafeProxy:
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
-        raise xmlrpclib.Fault(20, 'Server Failure')
+        self.log.error("%s failed:\nCould not connect to %s" % (methodName, self.component))
+        raise xmlrpclib.Fault(20, "Server Failure")
         
     def __get_location(self, name):
         '''Perform component location lookups if needed'''
