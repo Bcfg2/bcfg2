@@ -56,13 +56,16 @@ class SafeProxy:
             except xmlrpclib.Fault:
                 self.log.debug("Operation %s completed with fault" % (methodName))
                 raise
+            except socket.sslerror:
+                self.log.error("Attempt %d of %d failed due to SSL negotiation failure" %
+                               ((irs + 1), self._retries))
             except socket.error, serr:
                 self.log.debug("Attempting %s (%d of %d) failed because %s" % (methodName, (irs+1),
                                                                                self._retries, serr))
-                time.sleep(0.5)                
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
+            time.sleep(0.5)
         self.log.error("%s failed:\nCould not connect to %s" % (methodName, self.component))
         raise xmlrpclib.Fault(20, "Server Failure")
         
