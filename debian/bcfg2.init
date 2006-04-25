@@ -5,6 +5,8 @@
 # chkconfig: 2345 19 81
 # description: bcfg2 client for configuration requests
 # 
+BCFG2_OPTIONS="-nq"
+test -f "/etc/default/bcfg2" ]  && . /etc/default/bcfg2
 
 case "$1" in
   start)
@@ -13,7 +15,7 @@ case "$1" in
       echo "bcfg2 does not need to run."
     else
       echo -n "Running bcfg: "
-      /usr/sbin/bcfg2 -q 
+      /usr/sbin/bcfg2 $BCFG2_OPTIONS
       echo "bcfg2"
     fi
     ;;
