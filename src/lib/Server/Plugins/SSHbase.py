@@ -48,7 +48,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
         self.ipcache = {}
         self.__rmi__ = ['GetPubKeys']
 
-    def GetPubKeys(self, client):
+    def GetPubKeys(self, _):
         '''Export public key data'''
         if not hasattr(self, 'static_skn'):
             self.cache_skn()
@@ -65,16 +65,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
-                pass
-        try:
-            ipaddr = os.popen("getent hosts %s" % client).read().strip().split()
-        except:
-            ipaddr = ''
-        if ipaddr:
-            self.ipcache[client] = (ipaddr, client)
-            return (ipaddr, client)
-        self.logger.error("Failed to find IP address for %s" % client)
-        raise socket.gaierror
+                ipaddr = os.popen("getent hosts %s" % client).read().strip().split()
+                if ipaddr:
+                    self.ipcache[client] = (ipaddr, client)
+                    return (ipaddr, client)
+                self.logger.error("Failed to find IP address for %s" % client)
+                raise socket.gaierror
 
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
@@ -100,7 +96,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.repository.entries[hostkey].data)
         permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
-        [entry.attrib.__setitem__(x, permdata[x]) for x in permdata]
+        [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
     def build_hk(self, entry, metadata):
         '''This binds host key data into entries'''
@@ -118,7 +114,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
         permdata['perms'] = '0600'
         if entry.get('name')[-4:] == '.pub':
             permdata['perms'] = '0644'
-        [entry.attrib.__setitem__(x, permdata[x]) for x in permdata]
+        [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
         if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
             entry.text = binascii.b2a_base64(keydata)
@@ -146,3 +142,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())
                 self.repository.AddEntry(hostkey)
                 self.repository.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
+                try:
+                    os.unlink(fileloc)
+                    os.unlink(publoc)
+                except OSError:
+                    self.logger.error("Failed to unlink temporary ssh keys")
