@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, time
+import logging, lxml.etree
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -39,15 +39,15 @@ class Plugin(object):
         self.data = "%s/%s" % (datastore, self.__name__)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.__name__))
 
-    def BuildStructures(self, metadata):
+    def BuildStructures(self, _):
         '''Build a set of structures tailored to the client metadata'''
         return []
 
-    def GetProbes(self, metadata):
+    def GetProbes(self, _):
         '''Return a set of probes for execution on client'''
         return []
 
-    def ReceiveData(self, metadata, data):
+    def ReceiveData(self, _, dummy):
         '''Receive probe results pertaining to client'''
         pass
 
@@ -66,7 +66,7 @@ class FileBacked(object):
         #self.readonce = 0
         #self.HandleEvent()
 
-    def HandleEvent(self, event=None):
+    def HandleEvent(self, _=None):
         '''Read file upon update'''
         try:
             self.data = file(self.name).read()
@@ -251,7 +251,7 @@ class XMLSrc(XMLFileBacked):
         self.pnode = None
         self.priority = -1
 
-    def HandleEvent(self, event=None):
+    def HandleEvent(self, _=None):
         '''Read file upon update'''
         try:
             data = file(self.name).read()
@@ -268,7 +268,7 @@ class XMLSrc(XMLFileBacked):
         self.cache = None
         try:
             self.priority = int(xdata.get('priority'))
-        except:
+        except (ValueError, TypeError):
             logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
         del xdata, data
 
@@ -315,7 +315,8 @@ class PrioDir(Plugin, DirectoryBacked):
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in self.entries.values()
-                    if src.cache[1].has_key(entry.tag) and src.cache[1][entry.tag].has_key(name)]
+                    if src.cache and src.cache[1].has_key(entry.tag)
+                    and src.cache[1][entry.tag].has_key(name)]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
