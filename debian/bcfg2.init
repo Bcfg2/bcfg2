@@ -6,7 +6,7 @@
 # description: bcfg2 client for configuration requests
 # 
 BCFG2_OPTIONS="-nq"
-test -f "/etc/default/bcfg2" ]  && . /etc/default/bcfg2
+test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
 
 case "$1" in
   start)
