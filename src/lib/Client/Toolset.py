@@ -90,7 +90,7 @@ class Toolset(object):
         if not self.setup['bundle']:
             self.logger.info('Unmanaged entries:\t%d' % len(self.pkgwork['remove']))
 
-        if ((self.states.values().count(False) > 0) and not self.pkgwork['remove']):
+        if ((self.states.values().count(False) == 0) and not self.pkgwork['remove']):
             self.logger.info('All entries correct.')
             
     # These next functions form the external API
