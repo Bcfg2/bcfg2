@@ -21,13 +21,6 @@ def cb_sigint_handler(signum, frame):
 class Client:
     ''' The main bcfg2 client class '''
     def __init__(self):
-        level = 30
-        if '-v' in sys.argv:
-            level = 20
-        if '-d' in sys.argv:
-            level = 0
-        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
-        self.logger = logging.getLogger('bcfg2')
         self.toolset = None
         self.config = None
 
@@ -71,6 +64,13 @@ class Client:
             }
 
         self.setup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()
+        level = 30
+        if self.setup['verbose']:
+            level = 20
+        if self.setup['debug']:
+            level = 0
+        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
+        self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))

@@ -184,7 +184,7 @@ class ConfigFileEntry(object):
         else:
             try:
                 entry.text = filedata
-            except exceptions.AttributeError:
+            except:
                 logger.error("Failed to marshall file %s. Mark it as base64" % (entry.get('name')))
 
 class Cfg(Bcfg2.Server.Plugin.Plugin):
