@@ -85,6 +85,8 @@ class ToolsetImpl(Toolset):
         if self.installed.has_key(entry.get('name')):
             if entry.get('version') == self.installed[entry.get('name')]:
                 if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')):
+                    if entry.get('verify', 'true') == 'false':
+                        self.logger.debug("Skipping checksum verification for package %s" % (entry.get('name')))
                     return True
             else:
                 self.logger.debug("Package %s: wrong version installed. want %s have %s" %

@@ -229,6 +229,8 @@ class Toolset(object):
             sloc = os.readlink(entry.get('name'))
             if sloc == entry.get('to'):
                 return True
+            self.logger.debug("Symlink %s points to %s, should be %s" % (entry.get('name'),
+                                                                         sloc, entry.get('to')))
             return False
         except OSError:
             return False
@@ -437,7 +439,7 @@ class Toolset(object):
                 print err
             return False
 
-    def VerifyPackage(self, entry, modlist):
+    def VerifyPackage(self, _, dummy):
         '''Dummy package verification method. Cannot succeed'''
         return False
 
@@ -472,7 +474,7 @@ class Toolset(object):
         self.logger.info("Entry %s has unknown file type" % entry.get('name'))
         return False
 
-    def VerifyPostInstall(self, entry):
+    def VerifyPostInstall(self, _):
         '''Postinstall verification method'''
         return True
 
