@@ -41,6 +41,8 @@ class PNode(Bcfg2.Server.Plugin.INode):
                     if pkg.attrib.get('file'):
                         self.contents['Package'][pkgname]['url'] = pkg.get('url')
                         self.contents['Package'][pkgname]['type'] = pkg.get('type')
+                        if pkg.get('verify'):
+                            self.contents['Package'][pkgname]['verify'] = pkg.get('verify')
                     if pkgname not in pdict['Package']:
                         pdict['Package'].append(pkgname)
                 else:

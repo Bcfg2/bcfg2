@@ -1,7 +1,7 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-import binascii, exceptions, logging, os, re, stat, Bcfg2.Server.Plugin
+import binascii, logging, os, re, stat, tempfile, Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
@@ -108,8 +108,8 @@ class ConfigFileEntry(object):
         basename = name.split('/')[-1]
         rbasename = self.repopath.split('/')[-1]
         if not ((basename == ':info') or (basename[:len(rbasename)] == rbasename)):
-                logger.error("Confused about file %s; ignoring" % (name))
-                return
+            logger.error("Confused about file %s; ignoring" % (name))
+            return
         if basename == ':info':
             return self.read_info()
 
@@ -122,6 +122,7 @@ class ConfigFileEntry(object):
     def HandleEvent(self, event):
         '''Handle FAM updates'''
         action = event.code2str()
+        #logger.debug("Got event %s for %s" % (action, event.filename))
         if event.filename == ':info':
             if action in ['changed', 'exists', 'created']:
                 return self.read_info()
@@ -161,20 +162,36 @@ class ConfigFileEntry(object):
             logger.error("Failed to locate basefile for %s" % name)
             raise Bcfg2.Server.Plugin.PluginExecutionError, ('basefile', name)
         filedata += basefile.data
+        #logger.debug("Used basefile %s" % (basefile.name))
 
         for delta in [delta for delta in self.fragments if delta.applies(metadata) and delta.op]:
-            # find applicable deltas
-            lines = filedata.split('\n')
-            if not lines[-1]:
-                lines = lines[:-1]
-            dlines = [dline for dline in delta.data.split('\n') if dline]
-            for line in dlines:
-                if line[0] == '-':
-                    if line[1:] in lines:
-                        lines.remove(line[1:])
-                else:
-                    lines.append(line[1:])
-            filedata = "\n".join(lines) + "\n"
+            if delta.op == 'cat':
+                lines = filedata.split('\n')
+                if not lines[-1]:
+                    lines = lines[:-1]
+                dlines = [dline for dline in delta.data.split('\n') if dline]
+                for line in dlines:
+                    if line[0] == '-':
+                        if line[1:] in lines:
+                            lines.remove(line[1:])
+                    else:
+                        lines.append(line[1:])
+                filedata = "\n".join(lines) + "\n"
+            elif delta.op == 'diff':
+                basefile = open(tempfile.mktemp(), 'w')
+                basefile.write(filedata)
+                basefile.close()
+                dfile = open(tempfile.mktemp(), 'w')
+                dfile.write(delta.data)
+                dfile.close()
+                ret = os.system("patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
+                output = open(basefile.name, 'r').read()
+                [os.unlink(fname) for fname in [basefile.name, dfile.name]]
+                if ret >> 8 != 0:
+                    raise Bcfg2.Server.Plugin.PluginExecutionError, ('delta', delta)
+                filedata = output
+            else:
+                logger.error("Unknown delta type %s" % (delta.op))
             
         [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
         if self.paranoid:
