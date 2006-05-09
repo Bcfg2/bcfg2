@@ -30,6 +30,16 @@ def doBuild(cmd, core):
     else:
         print 'Usage: build <hostname> <output file>'
 
+def doBuildFile(cmd, core):
+    '''build a config file for client'''
+    if len(cmd) == 3:
+        entry = lxml.etree.Element('ConfigFile', name=cmd[1])
+        metadata = core.metadata.get_metadata(cmd[2])
+        core.Bind(entry, metadata)
+        print lxml.etree.tostring(entry)
+    else:
+        print 'Usage: buildfile filename hostname'
+
 def doBundles(_, core):
     '''print out group/bundle info'''
     data = [('Group', 'Bundles')]
@@ -52,6 +62,7 @@ def doHelp(_, dummy):
     '''print out usage info'''
     print 'Commands:'
     print 'build <hostname> <filename> - build config for hostname, writing to filename'
+    print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
     print 'bundles - print out group/bundle information'
     print 'clients - print out client/profile information'
     print 'debug - shell out to native python interpreter'
@@ -125,8 +136,8 @@ def doVersion(_, dummy):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
-    dispatch = {'build': doBuild, 'bundles': doBundles, 'clients': doClients,
-                'generators': doGenerators, 'groups': doGroups,
+    dispatch = {'build': doBuild, 'buildfile': doBuildFile,  'bundles': doBundles,
+                'clients': doClients, 'generators': doGenerators, 'groups': doGroups,
                 'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
                 'update': doUpdate, 'version': doVersion}
     if '-c' in sys.argv:
