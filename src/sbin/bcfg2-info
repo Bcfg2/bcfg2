@@ -20,6 +20,28 @@ def getInput():
         return raw_input('> ').split(" ")
     except KeyboardInterrupt:
         return ['']
+def doShowentries(cmd, core):
+    '''show abstract configuration entries for a given host'''
+    if len(cmd) not in [2, 3]:
+        print "Usage: showentries <hostname> <type>"
+        return
+    try:
+        meta = core.metadata.get_metadata(cmd[1])
+    except:
+        print "Unable to find metadata for host %s" % cmd[1]
+        return
+    structures = core.GetStructures(meta)
+    output = [('entrytype', 'name')]
+    if len(cmd) == 2:
+        for item in structures:
+            for child in item.getchildren():
+                output.append((child.tag, child.get('name')))
+    if len(cmd) == 3:
+        for item in structures:
+            for child in item.getchildren():
+                if child.tag == cmd[2]:
+                    output.append((child.tag, child.get('name')))
+    printTabular(output)
 
 def doBuild(cmd, core):
     '''build client configuration'''
@@ -71,6 +93,7 @@ def doHelp(_, dummy):
     print 'help - print this text'
     print 'mappings <type*> <name*>- print generator mappings for optional type and name'
     print 'quit'
+    print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
     print 'update - process pending file events'
     print 'version - print version of this tool'
 
@@ -139,7 +162,7 @@ if __name__ == '__main__':
     dispatch = {'build': doBuild, 'buildfile': doBuildFile,  'bundles': doBundles,
                 'clients': doClients, 'generators': doGenerators, 'groups': doGroups,
                 'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
-                'update': doUpdate, 'version': doVersion}
+                'showentries': doShowentries, 'update': doUpdate, 'version': doVersion}
     if '-c' in sys.argv:
         cfile = sys.argv[-1]
     else:
