@@ -8,3 +8,4 @@
   tools/ subdirectory
 - Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written the Hostbase plugin
 - Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written the VHost plugin
+- Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function in bcfg2-info
