@@ -157,7 +157,9 @@ class ConfigFileEntry(object):
         filedata = ""
         # first find basefile
         try:
-            basefile = [bfile for bfile in self.fragments if bfile.applies(metadata) and not bfile.op][-1]
+            basefiles = [bfile for bfile in self.fragments if bfile.applies(metadata) and not bfile.op]
+            basefiles.sort()
+            basefile = basefiles[-1]
         except IndexError:
             logger.error("Failed to locate basefile for %s" % name)
             raise Bcfg2.Server.Plugin.PluginExecutionError, ('basefile', name)
