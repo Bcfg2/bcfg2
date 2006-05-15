@@ -200,6 +200,8 @@ class ConfigFileEntry(object):
             entry.attrib['paranoid'] = 'true'
         if entry.attrib['encoding'] == 'base64':
             entry.text = binascii.b2a_base64(filedata)
+        if filedata == '':
+            entry.set('empty', 'true')
         else:
             try:
                 entry.text = filedata

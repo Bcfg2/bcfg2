@@ -366,6 +366,8 @@ class Toolset(object):
         perms = os.stat(filename)[ST_MODE]
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = binascii.a2b_base64(entry.text)
+        elif entry.get('empty', 'false') == 'true':
+            tempdata = ''
         else:
             tempdata = entry.text
 
@@ -383,7 +385,7 @@ class Toolset(object):
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
-        if entry.text == None:
+        if entry.text == None and entry.get('empty', 'false') != 'true':
             self.logger.error(
                 "Incomplete information for ConfigFile %s. Cannot install" % (entry.get('name')))
             return False
@@ -418,6 +420,8 @@ class Toolset(object):
             newfile = open("%s.new"%(entry.get('name')), 'w')
             if entry.get('encoding', 'ascii') == 'base64':
                 filedata = binascii.a2b_base64(entry.text)
+            elif entry.get('empty', 'false') == 'true':
+                filedata = ''
             else:
                 filedata = entry.text
             newfile.write(filedata)
