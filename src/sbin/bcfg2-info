@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core
+import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core, Bcfg2.Server.Metadata
 
 def printTabular(rows):
     '''print data in tabular format'''
@@ -27,7 +27,7 @@ def doShowentries(cmd, core):
         return
     try:
         meta = core.metadata.get_metadata(cmd[1])
-    except:
+    except Bcfg2.Server.Metadata.MetadataConsistencyError:
         print "Unable to find metadata for host %s" % cmd[1]
         return
     structures = core.GetStructures(meta)
