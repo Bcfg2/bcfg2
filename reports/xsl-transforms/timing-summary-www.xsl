@@ -11,6 +11,9 @@
                     <title>
                         BCFG Performance Timings
                     </title>
+                    <xsl:if test="count(/Report/@refresh-time) > 0">
+			<META HTTP-EQUIV="Refresh" CONTENT="{@refresh-time}"/>
+                    </xsl:if>
                     
                     <xsl:copy-of select="$boxypastel-css" />
                     <xsl:copy-of select="$main-js" />

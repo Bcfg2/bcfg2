@@ -21,7 +21,9 @@
                             <xsl:otherwise>BCFG Nightly Errors (<xsl:value-of select="@name" />)</xsl:otherwise>
                         </xsl:choose>
                     </title>
-                    
+                    <xsl:if test="count(/Report/@refresh-time) > 0">
+			<META HTTP-EQUIV="Refresh" CONTENT="{@refresh-time}"/>
+                    </xsl:if>
                     <xsl:copy-of select="$boxypastel-css" />
                     <xsl:copy-of select="$main-js" />
               </head>

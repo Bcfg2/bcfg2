@@ -198,7 +198,6 @@ if __name__ == '__main__':
 
     #Merge data from three sources
     nodereport = Element("Report", attrib={"time" : asctime()})
-
     #should all of the other info in Metadata be appended?
     #What about all of the package stuff for other types of reports?
     
@@ -216,6 +215,10 @@ if __name__ == '__main__':
     for reprt in configdata.findall('Report'):
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
 
+        if reprt.get('refresh-time') != None:
+            nodereport.set("refresh-time",reprt.get("refresh-time", default="600"))
+
+        
         procnodereport = generatereport(reprt, nodereport)
 
         for deliv in reprt.findall('Delivery'):
