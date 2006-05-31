@@ -1,5 +1,5 @@
 <Reports>
-    <Report name='core_stats' good='Y' modified='Y'>
+    <Report name='core_stats' good='Y' modified='Y' refresh-time='3600'>
         <Delivery mechanism='mail' type='nodes-digest'>
             <Destination address='user@domain.tld'/>
             <Destination address='user@otherdomain.tld'/>	    
