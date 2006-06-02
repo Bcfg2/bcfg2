@@ -51,13 +51,45 @@ class SSLServer(BaseHTTPServer.HTTPServer):
     def __init__(self, address, keyfile, handler):
         SocketServer.BaseServer.__init__(self, address, handler)
         ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        ctxt.use_privatekey_file (keyfile)
-        ctxt.use_certificate_file(keyfile)
+        ctxt.use_privatekey_file ('/tmp/keys/server.pkey')
+        ctxt.use_certificate_file('/tmp/keys/server.cert')
+        ctxt.load_verify_locations('/tmp/keys/CA.cert')
+        ctxt.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_cb)
         self.socket = OpenSSL.SSL.Connection(ctxt,
                                              socket.socket(self.address_family, self.socket_type))
         self.server_bind()
         self.server_activate()
 
+    def verify_cb(self, conn, cert, errnum, depth, ok):
+        '''handle cerificate verification'''
+        print "here"
+        print 'Got cert: %s' % (cert.get_subject())
+        print cert.get_pubkey()
+        return ok
+
+
+#         print cert.subject_name_hash()
+#         
+#         print dir(cert.get_pubkey())
+#         return ok
+
+    def handle_request(self):
+        """Handle one request, possibly blocking."""
+        try:
+            request, client_address = self.get_request()
+        except socket.error:
+            return
+        if self.verify_request(request, client_address):
+            try:
+                self.process_request(request, client_address)
+            except Exception, err:
+                print err
+                if err[0][0][0] == 'SSL routines':
+                    log.error("%s from %s" % (err[0][0][2], client_address[0]))
+                else:
+                    log.error("Unknown socket I/O failure from %s" % (client_address[0]), exc_info=1)
+                self.close_request(request)
+                
 class Component(SSLServer,
                 SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """Cobalt component providing XML-RPC access"""
@@ -93,7 +125,8 @@ class Component(SSLServer,
         else:
             location = (socket.gethostname(), 0)
         try:
-            keyfile = self.cfile.get('communication', 'key')
+            #keyfile = self.cfile.get('communication', 'key')
+            keyfile = '/tmp/keys/server.pkey'
         except ConfigParser.NoOptionError:
             print "No key specified in cobalt.conf"
             raise SystemExit, 1
@@ -103,7 +136,7 @@ class Component(SSLServer,
         try:
             SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         except:
-            self.logger.error("Failed to load ssl key %s" % (keyfile))
+            self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
             raise ComponentInitError
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
         self.logRequests = 0

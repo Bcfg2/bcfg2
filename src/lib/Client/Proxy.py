@@ -1,11 +1,19 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, time, xmlrpclib, ConfigParser
+import logging, socket, time, xmlrpclib, ConfigParser, httplib
 
 class CobaltComponentError(Exception):
     '''This error signals component connection errors'''
     pass
+
+class SafeTransport(xmlrpclib.Transport):
+    """Handles an HTTPS transaction to an XML-RPC server."""
+    def make_connection(self, host):
+        # create a HTTPS connection object from a host descriptor
+        # host may be a string, or a (host, x509-dict) tuple
+        host, extra_headers, x509 = self.get_host_info(host)
+        return httplib.HTTPS(host, None, '/tmp/keys/client.pkey', '/tmp/keys/client.cert')
 
 class SafeProxy:
     '''Wrapper for proxy'''
@@ -32,7 +40,7 @@ class SafeProxy:
         else:
             address = self.__get_location(component)
         try:
-            self.proxy = xmlrpclib.ServerProxy(address)
+            self.proxy = xmlrpclib.ServerProxy(address, transport=SafeTransport())
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError
