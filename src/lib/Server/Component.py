@@ -67,12 +67,6 @@ class SSLServer(BaseHTTPServer.HTTPServer):
         print cert.get_pubkey()
         return ok
 
-
-#         print cert.subject_name_hash()
-#         
-#         print dir(cert.get_pubkey())
-#         return ok
-
     def handle_request(self):
         """Handle one request, possibly blocking."""
         try:
@@ -83,10 +77,11 @@ class SSLServer(BaseHTTPServer.HTTPServer):
             try:
                 self.process_request(request, client_address)
             except Exception, err:
-                print err
-                if err[0][0][0] == 'SSL routines':
-                    log.error("%s from %s" % (err[0][0][2], client_address[0]))
-                else:
+                print err, type(err)
+                try:
+                    if err[0][0][0] == 'SSL routines':
+                        log.error("%s from %s" % (err[0][0][2], client_address[0]))
+                except:
                     log.error("Unknown socket I/O failure from %s" % (client_address[0]), exc_info=1)
                 self.close_request(request)
                 

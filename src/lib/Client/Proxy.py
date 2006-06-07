@@ -1,11 +1,83 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, time, xmlrpclib, ConfigParser, httplib
+import logging, socket, time, xmlrpclib, ConfigParser, httplib, OpenSSL
 
 class CobaltComponentError(Exception):
     '''This error signals component connection errors'''
     pass
+
+def verify_cb(conn, cert, errnum, depth, ok):
+    print 'Got certificate: %s' % cert.get_subject()
+    return ok
+
+class poSSLFile:
+    def __init__(self, sock, master):
+        self.sock = sock
+        self.master = master
+        self.read = self.sock.read
+        self.master.count += 1
+
+    def close(self):
+        self.master.count -= 1
+        if not self.master.count:
+            self.sock.close()
+
+    def readline(self):
+        data = ''
+        char = self.read(1)
+        while char != '\n':
+            data += char
+            char = self.read(1)
+        print data
+        return data
+
+    def read(self, size=None):
+        print "in read"
+        if size:
+            data = ''
+            while not data:
+                try:
+                    data = self.sock.read(size)
+                except ZeroReturnError:
+                    print "caught ssl error; retrying"
+            return data
+
+class pSockMaster:
+    def __init__(self, connection):
+        self._connection = connection
+        self.sendall = self._connection.send
+        self.count = 1
+
+    def makefile(self, mode, bufsize=None):
+        return poSSLFile(self._connection, self)
+
+    def close(self):
+        self.count -= 1
+        if not self.count:
+            self._connection.close()
+            
+class PHTTPSConnection(httplib.HTTPSConnection):
+    "This class allows communication via SSL."
+
+    def __init__(self, host, port=None, key_file=None, cert_file=None,
+                 strict=None):
+        httplib.HTTPSConnection.__init__(self, host, port, strict)
+        self.ctx = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
+        self.ctx.set_verify(OpenSSL.SSL.VERIFY_PEER, verify_cb)
+        self.ctx.use_privatekey_file ('/tmp/keys/client.pkey')
+        self.ctx.use_certificate_file('/tmp/keys/client.cert')
+        self.ctx.load_verify_locations('/tmp/keys/CA.cert')
+
+    def connect(self):
+        "Connect to a host on a given (SSL) port."
+        self._sock = OpenSSL.SSL.Connection(self.ctx,
+                                           socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+        self._sock.connect((self.host, self.port))
+        self.sock = pSockMaster(self._sock)
+
+class PHTTPS(httplib.HTTPS):
+    _connection_class = PHTTPSConnection
 
 class SafeTransport(xmlrpclib.Transport):
     """Handles an HTTPS transaction to an XML-RPC server."""
@@ -13,7 +85,31 @@ class SafeTransport(xmlrpclib.Transport):
         # create a HTTPS connection object from a host descriptor
         # host may be a string, or a (host, x509-dict) tuple
         host, extra_headers, x509 = self.get_host_info(host)
-        return httplib.HTTPS(host, None, '/tmp/keys/client.pkey', '/tmp/keys/client.cert')
+        return PHTTPS(host, None, '/tmp/keys/client.pkey', '/tmp/keys/client.cert')
+
+    def _parse_response(self, file, sock):
+        # read response from input file/socket, and parse it
+
+        p, u = self.getparser()
+
+        while 1:
+            if sock:
+                response = sock.recv(1024)
+            else:
+                try:
+                    response = file.read(1024)
+                except OpenSSL.SSL.ZeroReturnError:
+                    break
+            if not response:
+                break
+            if self.verbose:
+                print "body:", repr(response)
+            p.feed(response)
+
+        file.close()
+        p.close()
+
+        return u.close()
 
 class SafeProxy:
     '''Wrapper for proxy'''
