@@ -21,7 +21,7 @@ def getInput():
     except KeyboardInterrupt:
         return ['']
     except EOFError:
-        return [None]
+        return ['quit']
     
 def doShowentries(cmd, core):
     '''show abstract configuration entries for a given host'''
@@ -180,8 +180,6 @@ if __name__ == '__main__':
         time.sleep(0.5)
     while True:
         ucmd = getInput()
-        if ucmd[0] == None:
-            ucmd[0] = 'quit'
         if ucmd[0] == 'debug':
             break
         else:
