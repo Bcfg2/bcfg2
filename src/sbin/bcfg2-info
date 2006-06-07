@@ -20,6 +20,9 @@ def getInput():
         return raw_input('> ').split(" ")
     except KeyboardInterrupt:
         return ['']
+    except EOFError:
+        return [None]
+    
 def doShowentries(cmd, core):
     '''show abstract configuration entries for a given host'''
     if len(cmd) not in [2, 3]:
@@ -175,8 +178,10 @@ if __name__ == '__main__':
     for i in range(25):
         bcore.fam.Service()
         time.sleep(0.5)
-    ucmd = getInput()
     while True:
+        ucmd = getInput()
+        if ucmd[0] == None:
+            ucmd[0] = 'quit'
         if ucmd[0] == 'debug':
             break
         else:
@@ -188,5 +193,4 @@ if __name__ == '__main__':
                 except:
                     logger.error("command failure", exc_info=1)
             else:
-                print "Unknown command %s" % ucmd[0]
-        ucmd = getInput()
+                print "Unknown command: %s" % ucmd[0]
