@@ -39,11 +39,14 @@ class Statistics(object):
         if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time()) ) \
                 or force:
             #syslog(LOG_INFO, "Statistics: Updated statistics.xml")
-            fout = open(self.filename, 'w')
-            fout.write(self.pretty_print(self.element))
-            fout.close()
-            self.dirty = 0
-            self.lastwrite = time()
+            try:
+                fout = open(self.filename, 'w')
+                fout.write(self.pretty_print(self.element))
+                fout.close()
+                self.dirty = 0
+                self.lastwrite = time()
+            except IOError:
+                self.logger.error("Failed to open %s for writing" % (self.filename))
 
     def ReadFromFile(self):
         '''Reads current state regarding statistics'''
