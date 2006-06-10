@@ -32,7 +32,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
+        try:
+            self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
+        except OSError, ioerr:
+            self.logger.error("Failed to load SSHbase repository from %s" % (self.data))
+            self.logger.error(ioerr)
+            raise Bcfg2.Server.Plugin.PluginInitError
         try:
             prefix = open("%s/prefix" % (self.data)).read().strip()
         except IOError:
