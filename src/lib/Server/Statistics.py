@@ -41,12 +41,13 @@ class Statistics(object):
             #syslog(LOG_INFO, "Statistics: Updated statistics.xml")
             try:
                 fout = open(self.filename, 'w')
+            except IOError, ioerr:
+                self.logger.error("Failed to open %s for writing: %s" % (self.filename, ioerr))
+            else:
                 fout.write(self.pretty_print(self.element))
                 fout.close()
                 self.dirty = 0
                 self.lastwrite = time()
-            except IOError:
-                self.logger.error("Failed to open %s for writing" % (self.filename))
 
     def ReadFromFile(self):
         '''Reads current state regarding statistics'''
