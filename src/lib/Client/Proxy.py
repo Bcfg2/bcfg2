@@ -1,7 +1,7 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, time, xmlrpclib, ConfigParser, httplib, OpenSSL
+import logging, socket, time, xmlrpclib, ConfigParser, httplib
 
 class CobaltComponentError(Exception):
     '''This error signals component connection errors'''
