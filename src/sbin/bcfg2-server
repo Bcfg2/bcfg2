@@ -51,7 +51,8 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             Bcfg2.Server.Component.Component.__init__(self, setup)
             self.shut = False
         except Bcfg2.Server.Component.ComponentInitError:
-            self.shut = True
+            logger.critical("Failed to setup server")
+            raise SystemExit, 1
 
         # set shutdown handlers for sigint and sigterm
         signal.signal(signal.SIGINT, self.start_shutdown)

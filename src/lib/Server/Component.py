@@ -24,6 +24,8 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             # get arguments
             data = self.rfile.read(int(self.headers["content-length"]))
             response = self.server._cobalt_marshalled_dispatch(data, self.client_address)
+        except OpenSSL.SSL.SysCallError:
+            log.error("Client %s unexpectedly closed connection" % (self.client_address[0]))
         except: # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             log.error("Unexcepted handler failure in do_POST", exc_info=1)
@@ -51,9 +53,10 @@ class SSLServer(BaseHTTPServer.HTTPServer):
     def __init__(self, address, keyfile, handler):
         SocketServer.BaseServer.__init__(self, address, handler)
         ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        ctxt.use_privatekey_file ('/tmp/keys/server.pkey')
-        ctxt.use_certificate_file('/tmp/keys/server.cert')
-        ctxt.load_verify_locations('/tmp/keys/CA.cert')
+        print keyfile
+        ctxt.use_privatekey_file (keyfile)
+        ctxt.use_certificate_file(keyfile)
+        #ctxt.load_verify_locations('/tmp/keys/CA.cert')
         ctxt.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_cb)
         self.socket = OpenSSL.SSL.Connection(ctxt,
                                              socket.socket(self.address_family, self.socket_type))
@@ -77,11 +80,12 @@ class SSLServer(BaseHTTPServer.HTTPServer):
             try:
                 self.process_request(request, client_address)
             except Exception, err:
-                print err, type(err)
-                try:
-                    if err[0][0][0] == 'SSL routines':
+                if isinstance(err, OpenSSL.SSL.Error):
+                    if isinstance(err, OpenSSL.SSL.SysCallError):
+                        log.error("Client %s unexpectedly closed connection" % (client_address[0]))
+                    else:
                         log.error("%s from %s" % (err[0][0][2], client_address[0]))
-                except:
+                else:
                     log.error("Unknown socket I/O failure from %s" % (client_address[0]), exc_info=1)
                 self.close_request(request)
                 
@@ -120,8 +124,8 @@ class Component(SSLServer,
         else:
             location = (socket.gethostname(), 0)
         try:
-            #keyfile = self.cfile.get('communication', 'key')
-            keyfile = '/tmp/keys/server.pkey'
+            keyfile = self.cfile.get('communication', 'key')
+            #keyfile = '/tmp/keys/server.pkey'
         except ConfigParser.NoOptionError:
             print "No key specified in cobalt.conf"
             raise SystemExit, 1

@@ -15,7 +15,7 @@ class poSSLFile:
     def __init__(self, sock, master):
         self.sock = sock
         self.master = master
-        self.read = self.sock.read
+        #self.read = self.sock.read
         self.master.count += 1
 
     def close(self):
@@ -24,6 +24,7 @@ class poSSLFile:
             self.sock.close()
 
     def readline(self):
+        print "in readline"
         data = ''
         char = self.read(1)
         while char != '\n':
@@ -33,14 +34,18 @@ class poSSLFile:
         return data
 
     def read(self, size=None):
-        print "in read"
+        print "in read", size
         if size:
             data = ''
             while not data:
                 try:
                     data = self.sock.read(size)
-                except ZeroReturnError:
-                    print "caught ssl error; retrying"
+                except OpenSSL.SSL.ZeroReturnError:
+                    break
+            return data
+        else:
+            print "no size"
+            data = self.sock.read()
             return data
 
 class pSockMaster:
@@ -56,7 +61,7 @@ class pSockMaster:
         self.count -= 1
         if not self.count:
             self._connection.close()
-            
+
 class PHTTPSConnection(httplib.HTTPSConnection):
     "This class allows communication via SSL."
 
@@ -76,10 +81,14 @@ class PHTTPSConnection(httplib.HTTPSConnection):
         self._sock.connect((self.host, self.port))
         self.sock = pSockMaster(self._sock)
 
+    def send(self, msg):
+        print "sending message %s" % (msg)
+        self._sock.sendall(msg)
+
 class PHTTPS(httplib.HTTPS):
     _connection_class = PHTTPSConnection
 
-class SafeTransport(xmlrpclib.Transport):
+class OSSafeTransport(xmlrpclib.Transport):
     """Handles an HTTPS transaction to an XML-RPC server."""
     def make_connection(self, host):
         # create a HTTPS connection object from a host descriptor
@@ -136,7 +145,7 @@ class SafeProxy:
         else:
             address = self.__get_location(component)
         try:
-            self.proxy = xmlrpclib.ServerProxy(address, transport=SafeTransport())
+            self.proxy = xmlrpclib.ServerProxy(address, transport=xmlrpclib.SafeTransport())
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError
