@@ -22,7 +22,11 @@ if __name__ == '__main__':
             if not categories.has_key(group.get('category')):
                 categories[group.get('category')] = colors.pop()
         
-    dotpipe.tochild.write("digraph groups {\n")
+    try:
+        dotpipe.tochild.write("digraph groups {\n")
+    except:
+        print "write to dot process failed. Is graphviz installed?"
+        raise SystemExit, 1
     dotpipe.tochild.write('\trankdir="LR";\n')
     if '-h' in sys.argv:
         for client in clients.findall('Client'):
