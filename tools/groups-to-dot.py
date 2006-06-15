@@ -10,11 +10,14 @@ colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegree
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print "Usage groups-to-dot.py [-b] [-h] -o <outputfile> <metadatadir>"
+        print "Usage groups-to-dot.py [-r] [-b] [-h] -o <outputfile> <metadatadir>"
         raise SystemExit, 1
     groups = lxml.etree.parse(sys.argv[-1] + '/groups.xml').getroot()
     clients = lxml.etree.parse(sys.argv[-1] + '/clients.xml').getroot()
-    dotpipe = popen2.Popen4("dot -Tpng")
+    if '-r' in sys.argv:
+        dotpipe = popen2.Popen4("dd 2>/dev/null")
+    else:
+        dotpipe = popen2.Popen4("dot -Tpng")
     categories = {'default':'grey83'}
     instances = {}
     for group in groups.findall('Group'):
