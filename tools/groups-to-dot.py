@@ -15,7 +15,7 @@ if __name__ == '__main__':
     groups = lxml.etree.parse(sys.argv[-1] + '/groups.xml').getroot()
     clients = lxml.etree.parse(sys.argv[-1] + '/clients.xml').getroot()
     if '-r' in sys.argv:
-        dotpipe = popen2.Popen4("dd 2>/dev/null")
+        dotpipe = popen2.Popen4("dd bs=4M 2>/dev/null")
     else:
         dotpipe = popen2.Popen4("dot -Tpng")
     categories = {'default':'grey83'}
