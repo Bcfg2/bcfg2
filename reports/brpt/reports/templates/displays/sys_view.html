@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load django_templating_sigh %}
+
+{% block title %}System-View Display{% endblock %}
+{% block pagebanner %}
+  <div class="header">
+      <h1>BCFG Performance Timings</h1>
+      <span class="notebox">Report Run @ {% now "F j, Y P"%}</span>
+  </div>
+  <br/>
+{% endblock %}
+{% block content %}
+  {% include "displays/summary-block.html" %}
+  {% for client in client_list %}
+    {% set_interaction "foo" %}
+    {% include "clients/client-nodebox.html" %}
+  {% endfor %}
+{% endblock %}

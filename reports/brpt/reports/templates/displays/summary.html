@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Display Index Listing{% endblock %}
+{% block pagebanner %}
+  <div class="header">
+      <h1>BCFG Clients Summary</h1>
+      <span class="notebox">Report Run @ {% now "F j, Y P"%}</span>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block content %}
+  {% include "displays/summary-block-direct-links.html" %}
+{% endblock %}

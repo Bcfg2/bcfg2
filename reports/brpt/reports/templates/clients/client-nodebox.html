@@ -1,0 +1,62 @@
+{% if client %}
+        <a name="{{client.name}}"></a>
+        <div class="nodebox" name="{{client.name}}">
+            <span class="notebox">Time Ran: {{interaction.timestamp}}</span>
+              <span class="configbox">(-Insert Profile Name Here-)</span>
+            
+            <table class="invisitable">
+            <tr><td width="43%"><h2>Node: <span class="nodename">
+	    <a href="/clients/{{client.name}}/{{interaction.id}}">{{client.name}}</a></span></h2></td>
+            <td width="23%">
+	    {% if interaction.repo_revision %}Revision: {{interaction.repo_revision}}{% endif %}
+	    </td>
+            <td width="33%"><div class="statusborder">
+	        <div class="greenbar" style="width: {{interaction.percentgood}}%;">&nbsp;</div>
+		<div class="redbar" style="width: {{interaction.percentbad}}%;">&nbsp;</div>
+            </div>
+            </td></tr>
+            </table>
+	    {% if interaction.isclean %}
+            <div class="clean">
+	        <span class="nodelisttitle">Node is clean; Everything has been satisfactorily configured.</span>
+	    </div>
+	    {% endif %}
+	    {% if interaction.isstale %}
+	    <div class="warning">
+	        <span class="nodelisttitle">This node did not run within the last 24 hours-- it may be out of date.</span>
+	    </div>
+	    {% endif %}
+	    {% if interaction.bad_items.all %}
+	    <div class="bad">
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-bad');" title="Click to expand" class="commentLink">{{interaction.bad_items.count}}</a> items did not verify and are considered Dirty.<br /></span>
+		<div class="items" id="{{client.name}}-bad"><ul class="plain">
+		{% for bad in interaction.bad_items.all %} {% comment %}HOWDOI?  order_by('kind', 'name'){% endcomment %}
+		    <li><strong>{{bad.kind}}: </strong><tt>{{bad.name}}</tt></li>
+		{% endfor %}
+		</ul></div>
+	    </div>
+	{% endif %}
+	{% if interaction.modified_items.all %}
+	    <div class="modified">
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-modified');" title="Click to expand" class="commentLink">{{interaction.modified_items.count}}</a> items were modified in the last run.<br /></span>
+		<div class="items" id="{{client.name}}-modified"><ul class="plain">
+		{% for modified in interaction.modified_items.all %} {% comment %}HOWDOI?  order_by('kind', 'name'){% endcomment %}
+		    <li><strong>{{modified.kind}}: </strong><tt>{{modified.name}}</tt></li>
+		{% endfor %}
+		</ul></div>
+	    </div>
+	{% endif %}
+	{% if interaction.extra_items.all %}
+	    <div class="extra">
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-extra');" title="Click to expand" class="commentLink">{{interaction.extra_items.count}}</a> extra configuration elements on the node.<br /></span>
+		<div class="items" id="{{client.name}}-extra"><ul class="plain">
+		{% for extra in interaction.extra_items.all %} {% comment %}HOWDOI?  order_by('kind', 'name'){% endcomment %}
+		    <li><strong>{{extra.kind}}: </strong><tt>{{extra.name}}</tt></li>
+		{% endfor %}
+		</ul></div>
+	    </div>
+	{% endif %}
+        </div>
+{% else %}
+    <p>No record could be found for this client.</p>
+{% endif %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Client Index Listing{% endblock %}
+
+{% block content %}
+{% if client_list %}
+    <ul>
+    {% for client in client_list %}
+        <li><a href="{{client.name}}/">{{ client.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No client records are available.</p>
+{% endif %}
+{% endblock %}

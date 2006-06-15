@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Display Index Listing{% endblock %}
+{% block pagebanner %}
+  <div class="header">
+      <h1>BCFG Display Index</h1>
+      {% comment %} <span class="notebox">Report Run @ {% now "F j, Y P"%}</span>{% endcomment %}
+  </div>
+  <br/>
+{% endblock %}
+
+{% block content %}
+<ul>
+<li><a href="/displays/sys-view/">System View</a></li>
+<li><a href="/displays/summary/">Summary Only</a></li>
+<li><a href="/displays/timing/">Timing</a></li>
+</ul>
+{% endblock %}
