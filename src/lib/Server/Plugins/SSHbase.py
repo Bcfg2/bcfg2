@@ -148,7 +148,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 self.repository.AddEntry(hostkey)
                 self.repository.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
                 try:
-                    os.unlink(fileloc)
-                    os.unlink(publoc)
+                    os.unlink(temploc)
+                    os.unlink("%s.pub" % temploc)
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
