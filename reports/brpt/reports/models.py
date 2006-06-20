@@ -10,7 +10,24 @@ KIND_CHOICES = (
     ('Directory', 'Directory'),
     ('Permissions','Permissions'),
 )
-
+REASON_CHOICES = (
+    ('', 'No Reason'),
+    ('O','Owner'),
+    ('P','Permissions'),
+    ('E','Existence'),
+    ('C','Content'),
+    ('OP','Owner, Permissions'),
+    ('OE','Owner, Existence'),
+    ('OC','Owner, Content'),
+    ('PE','Permissions, Existence'),
+    ('PC','Permissions, Content'),
+    ('EC','Existence, Content'),
+    ('OPE','Owner, Permissions, Existence'),
+    ('OPC','Owner, Permissions, Content'),
+    ('OEC','Owner, Existence, Content'),
+    ('PEC','Permissions, Existence, Content'),
+    ('OPEC','Owner, Permissions, Existence, Content'),
+)
 class Client(models.Model):
     #This exists for clients that are no longer in the repository even! (timeless)
     creation = models.DateTimeField()
@@ -88,37 +105,40 @@ class Interaction(models.Model):
 
 
 class Modified(models.Model):
-    interaction = models.ForeignKey(Interaction, related_name="modified_items", edit_inline=models.STACKED)
+    interactions = models.ManyToManyField(Interaction, related_name="modified_items")
     name = models.CharField(maxlength=128, core=True)#name of modified thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    how = models.CharField(maxlength=256)
+    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
+    reason = models.TextField(maxlength=1280)
     def __str__(self):
         return self.name
  
 
     
 class Extra(models.Model):
-    interaction = models.ForeignKey(Interaction, related_name="extra_items", edit_inline=models.STACKED)
+    interactions = models.ManyToManyField(Interaction, related_name="extra_items")
     name = models.CharField(maxlength=128, core=True)#name of Extra thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    why = models.CharField(maxlength=256)#current state of some thing...
+    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
+    reason = models.TextField(maxlength=1280)
     def __str__(self):
         return self.name
  
 
     
 class Bad(models.Model):
-    interaction = models.ForeignKey(Interaction, related_name="bad_items", edit_inline=models.STACKED)
+    interactions = models.ManyToManyField(Interaction, related_name="bad_items")
     name = models.CharField(maxlength=128, core=True)#name of bad thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    reason = models.CharField(maxlength=256)#that its bad...
+    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
+    reason = models.TextField(maxlength=1280)
     def __str__(self):
         return self.name
  
 
 #performance metrics, models a performance-metric-item
 class Performance(models.Model):
-    interaction = models.ForeignKey(Interaction, related_name="performance_items", edit_inline=models.STACKED)
+    interaction = models.ManyToManyField(Interaction, related_name="performance_items")
     metric = models.CharField(maxlength=128, core=True)
     value = models.FloatField(max_digits=32, decimal_places=16)
     def __str__(self):
