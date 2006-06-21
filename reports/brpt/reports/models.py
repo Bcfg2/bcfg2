@@ -3,6 +3,7 @@ from django.db import models
 from datetime import datetime, timedelta
 # Create your models here.
 KIND_CHOICES = (
+    #These are the kinds of config elements
     ('ConfigFile', 'ConfigFile'),
     ('Package', 'Package'),
     ('Service', 'Service'),
@@ -11,6 +12,7 @@ KIND_CHOICES = (
     ('Permissions','Permissions'),
 )
 REASON_CHOICES = (
+    #these are the possible reasons there can be a problem with a node:
     ('', 'No Reason'),
     ('O','Owner'),
     ('P','Permissions'),
@@ -81,7 +83,7 @@ class Interaction(models.Model):
             return False
         
     def isstale(self):
-        if (self == self.client.interactions.order_by('-timestamp')[0]):#Is Mostrecent
+        if (self == self.client.interactions.latest('timestamp')):#Is Mostrecent
             if(datetime.now()-self.timestamp > timedelta(hours=25) ):
                 return True
             else:
@@ -100,6 +102,8 @@ class Interaction(models.Model):
         list_display = ('client', 'timestamp', 'state')
         list_filter = ['client', 'timestamp']
         pass
+    class Meta:
+        get_latest_by = 'timestamp'
     
 
 

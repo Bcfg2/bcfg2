@@ -21,7 +21,7 @@ def client_detail(request, hostname = -1, pk = -1):
         interaction = client.interactions.latest('timestamp')
     else:
         interaction = client.interactions.get(pk=pk)
-        
+
     return render_to_response('clients/detail.html',{'client': client, 'interaction': interaction})
 
 def display_sys_view(request):
@@ -41,40 +41,47 @@ def display_timing(request):
     stats_list = []
     #if we have stats for a client, go ahead and add it to the list(wrap in TRY)
     for client in client_list:#Go explicitly to an interaction ID! (new item in dictionary)
-        performance_items = client.interactions.order_by('-timestamp')[0].performance_items#allow this to be selectable(hist)
+#        performance_items = client.interactions.latest().performance_items.all()#allow this to be selectable(hist)
+        d = {}
+        #Best List Comprehension Ever!
+        [d.update({x:y}) for x,y in [a.values() for a in client.interactions.latest().performance_items.all().values('metric','value')]]
         dict_unit = {}
+        
         try:
             dict_unit["name"] = client.name #node name
         except:
             dict_unit["name"] = "n/a"
         try:
-            dict_unit["parse"] = performance_items.get(metric="config_parse").value - performance_items.get(metric="config_download").value #parse
+            dict_unit["parse"] = d["config_parse"] - d["config_download"] #parse
         except:
             dict_unit["parse"] = "n/a"
         try:
-            dict_unit["probe"] = performance_items.get(metric="probe_upload").value - performance_items.get(metric="start").value #probe
+            dict_unit["probe"] = d["probe_upload"] - d["start"] #probe
         except:
             dict_unit["probe"] = "n/a"
         try:
-            dict_unit["inventory"] = performance_items.get(metric="inventory").value - performance_items.get(metric="initialization").value #inventory
+            dict_unit["inventory"] = d["inventory"] - d["initialization"] #inventory
         except:
             dict_unit["inventory"] = "n/a"
         try:
-            dict_unit["install"] = performance_items.get(metric="install").value - performance_items.get(metric="inventory").value #install
+            dict_unit["install"] = d["install"] - d["inventory"] #install
         except:
             dict_unit["install"] = "n/a"
         try:
-            dict_unit["config"] = performance_items.get(metric="config_parse").value - performance_items.get(metric="probe_upload").value#config download & parse
+            dict_unit["config"] = d["config_parse"] - d["probe_upload"]#config download & parse
         except:
             dict_unit["config"] = "n/a"
         try:
-            dict_unit["total"] = performance_items.get(metric="finished").value - performance_items.get(metric="start").value #total
+            dict_unit["total"] = d["finished"] - d["start"] #total
         except:
             dict_unit["total"] = "n/a"
 
         #make sure all is formatted as such: #.##
         stats_list.append(dict_unit)
 
+    from django.db import connection
+    for q in connection.queries:
+        print q
 
     return render_to_response('displays/timing.html',{'client_list': client_list, 'stats_list': stats_list})
 
@@ -83,6 +90,7 @@ def display_index(request):
 
 def prepare_client_lists(request):
     client_list = Client.objects.all().order_by('name')#change this to order by interaction's state
+    client_interaction_dict = {}
     clean_client_list = []
     bad_client_list = []
     extra_client_list = []
@@ -92,6 +100,7 @@ def prepare_client_lists(request):
     down_client_list = []
     for client in client_list:#but we need clientlist for more than just this loop
         i = client.interactions.latest('timestamp')
+        client_interaction_dict[client.id] = i
 #        if i.state == 'good':
         if i.isclean():
             clean_client_list.append(client)
@@ -105,6 +114,7 @@ def prepare_client_lists(request):
                 stale_all_client_list.append(client)
         if not i.pingable:
             down_client_list.append(client)
+        
         if len(i.modified_items.all()) > 0:
             modified_client_list.append(client)
         if len(i.extra_items.all()) > 0:
@@ -112,6 +122,7 @@ def prepare_client_lists(request):
 
     #if the list is empty set it to None?
     return {'client_list': client_list,
+            'client_interaction_dict':client_interaction_dict,
             'clean_client_list': clean_client_list,
             'bad_client_list': bad_client_list,
             'extra_client_list': extra_client_list,
