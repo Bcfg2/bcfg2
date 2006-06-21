@@ -231,6 +231,7 @@ class Toolset(object):
                 return True
             self.logger.debug("Symlink %s points to %s, should be %s" % (entry.get('name'),
                                                                          sloc, entry.get('to')))
+            entry.set('current_to', sloc)
             return False
         except OSError:
             return False
@@ -263,7 +264,9 @@ class Toolset(object):
         try:
             ondisk = os.stat(entry.get('name'))
         except OSError:
-            self.logger.debug("Directory %s does not exist" % (entry.get('name')))
+            entry.set('current_exists', 'false')
+            self.logger.debug("%s %s does not exist" %
+                              (entry.tag, entry.get('name')))
             return False
         try:
             owner = pwd.getpwuid(ondisk[ST_UID])[0]
@@ -279,12 +282,15 @@ class Toolset(object):
             return True
         else:
             if owner != entry.get('owner'):
-                self.logger.debug("Directory %s ownership wrong" % (entry.get('name')))
+                entry.set('current_owner', owner)
+                self.logger.debug("%s %s ownership wrong" % (entry.tag, entry.get('name')))
             if group != entry.get('group'):
-                self.logger.debug("Directory %s group wrong" % (entry.get('name')))
+                entry.set('current_group', group)
+                self.logger.debug("%s %s group wrong" % (entry.tag, entry.get('name')))
             if perms != entry.get('perms'):
-                self.logger.debug("Directory %s permissions wrong: are %s should be %s" %
-                               (entry.get('name'), perms, entry.get('perms')))
+                entry.set('current_perms', perms)
+                self.logger.debug("%s %s permissions wrong: are %s should be %s" %
+                               (entry.tag, entry.get('name'), perms, entry.get('perms')))
             return False
 
     def InstallDirectory(self, entry):
@@ -345,25 +351,8 @@ class Toolset(object):
 
     def VerifyConfigFile(self, entry):
         '''Install ConfigFile Entry'''
-        filename = entry.get('name')
-        try:
-            ondisk = os.stat(filename)
-        except OSError:
-            self.logger.debug("File %s doesn't exist" % (filename))
-            return False
-        try:
-            data = open(filename).read()
-        except IOError:
-            self.logger.debug("Failed to read %s" % (filename))
-            return False
-        try:
-            owner = pwd.getpwuid(ondisk[ST_UID])[0]
-            group = grp.getgrgid(ondisk[ST_GID])[0]
-        except KeyError:
-            self.logger.debug("Owner/Group failure for %s: %s, %s" %
-                              (filename, ondisk[ST_UID], ondisk[ST_GID]))
-            return False
-        perms = os.stat(filename)[ST_MODE]
+        # configfile verify is permissions check + content check
+        permissionStatus = self.VerifyDirectory(entry)
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = binascii.a2b_base64(entry.text)
         elif entry.get('empty', 'false') == 'true':
@@ -371,17 +360,13 @@ class Toolset(object):
         else:
             tempdata = entry.text
 
-        if ((data == tempdata) and (owner == entry.get('owner')) and
-            (group == entry.get('group')) and (perms == calcPerms(S_IFREG, entry.get('perms')))):
-            return True
-        else:
-            if data != tempdata:
-                self.logger.debug("File %s contents wrong" % (filename))
-            elif ((owner != entry.get('owner')) or (group != entry.get('group'))):
-                self.logger.debug('File %s ownership wrong' % (filename))
-            elif perms != calcPerms(S_IFREG, entry.get('perms')):
-                self.logger.debug('File %s permissions wrong' % (filename))
+        try:
+            content = open(entry.get('name')).read()
+        except IOError:
+            # file does not exist
             return False
+        contentStatus = content == tempdata
+        return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
@@ -460,7 +445,7 @@ class Toolset(object):
         perms = oct(sinfo[ST_MODE])[-4:]
         if perms == entry.get('perms'):
             return True
-
+        entry.get('current_perms', perms)
         self.logger.debug("Entry %s permissions incorrect" % entry.get('name'))
         return False
     
