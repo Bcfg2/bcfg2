@@ -94,7 +94,7 @@ class Interaction(models.Model):
                 return True
             else:
                 return False
-                
+                    
 
     class Admin:
         list_display = ('client', 'timestamp', 'state')

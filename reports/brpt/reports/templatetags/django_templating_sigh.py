@@ -18,7 +18,7 @@ class SetInteraction(template.Node):
     def __init__(self, times):
         self.times = times#do soemthing to select different interaction with host
     def render(self, context):
-        context['interaction'] = context['client'].interactions.order_by('-timestamp')[0]
+        context['interaction'] = context['client'].interactions.latest('timestamp')
         return ''
 
 register.tag('set_interaction', set_interaction)

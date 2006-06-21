@@ -18,7 +18,7 @@ def client_detail(request, hostname = -1, pk = -1):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
     client = get_object_or_404(Client, name=hostname)
     if(pk == -1):
-        interaction = client.interactions.order_by('-timestamp')[0]
+        interaction = client.interactions.latest('timestamp')
     else:
         interaction = client.interactions.get(pk=pk)
         
@@ -91,7 +91,7 @@ def prepare_client_lists(request):
     stale_all_client_list = []
     down_client_list = []
     for client in client_list:#but we need clientlist for more than just this loop
-        i = client.interactions.order_by('-timestamp')[0]
+        i = client.interactions.latest('timestamp')
 #        if i.state == 'good':
         if i.isclean():
             clean_client_list.append(client)
