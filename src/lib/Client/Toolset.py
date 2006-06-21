@@ -158,7 +158,7 @@ class Toolset(object):
             print "State verify evidently failed for %s" % (msg)
             self.structures[structure] = False
 
-    def GenerateStats(self, client_version):
+    def GenerateStats(self, clientVersion):
         '''Generate XML summary of execution statistics'''
         stats = self.statistics
 
@@ -169,7 +169,7 @@ class Toolset(object):
         good = len([key for key, val in self.states.iteritems() if val])
         stats.set('good', str(good))
         stats.set('version', '2.0')
-        stats.set('client_version', client_version)
+        stats.set('client_version', clientVersion)
         stats.set('revision', self.cfg.get('revision', '-1'))
 
         if len([key for key, val in self.states.iteritems() if not val]) == 0:
@@ -523,6 +523,26 @@ class Toolset(object):
         '''deal with extra configuration during installation'''
         return False
 
+    def displayWork(self):
+        '''Display all entries that will be upgraded'''
+        if self.pkgwork['update']:
+            self.logger.info("Packages to update:")
+            self.logger.info([pkg.get('name') for pkg in self.pkgwork['update']])
+        if self.pkgwork['add']:
+            self.logger.info("Packages to add:")
+            self.logger.info([pkg.get('name') for pkg in self.pkgwork['add']])
+        if self.pkgwork['remove']:
+            self.logger.info("Packages to remove:")
+            self.logger.info(self.pkgwork['remove'])
+        if [entry for entry in self.states if not (self.states[entry] or entry.tag == 'Package')]:
+            self.logger.info("Entries to update:")
+            self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
+                              for entry in self.states if not (self.states[entry]
+                                                               or entry.tag == 'Package')])
+        if self.extra_services:
+            self.logger.info("Services to remove:")
+            self.logger.info(self.extra_services)
+
     def Install(self):
         '''Correct detected misconfigurations'''
         if self.setup['dryrun']:
@@ -532,24 +552,9 @@ class Toolset(object):
         self.logger.info("")
         self.HandleExtra()
 
+        if self.setup['dryrun'] or self.setup['debug']:
+            self.displayWork()
         if self.setup['dryrun']:
-            if self.pkgwork['update']:
-                self.logger.info("Packages to update:")
-                self.logger.info([pkg.get('name') for pkg in self.pkgwork['update']])
-            if self.pkgwork['add']:
-                self.logger.info("Packages to add:")
-                self.logger.info([pkg.get('name') for pkg in self.pkgwork['add']])
-            if self.pkgwork['remove']:
-                self.logger.info("Packages to remove:")
-                self.logger.info(self.pkgwork['remove'])
-            if [entry for entry in self.states if not (self.states[entry] or entry.tag == 'Package')]:
-                self.logger.info("Entries to update:")
-                self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
-                                  for entry in self.states if not (self.states[entry]
-                                                                   or entry.tag == 'Package')])
-            if self.extra_services:
-                self.logger.info("Services to remove:")
-                self.logger.info(self.extra_services)
             return
         
         # use quick package ops from here on
