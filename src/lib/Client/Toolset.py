@@ -271,7 +271,7 @@ class Toolset(object):
         try:
             owner = pwd.getpwuid(ondisk[ST_UID])[0]
             group = grp.getgrgid(ondisk[ST_GID])[0]
-        except OSError:
+        except (OSError, KeyError):
             self.logger.error('User resolution failing')
             owner = 'root'
             group = 'root'
