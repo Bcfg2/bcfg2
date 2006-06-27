@@ -34,7 +34,7 @@ class Client(models.Model):
     #This exists for clients that are no longer in the repository even! (timeless)
     creation = models.DateTimeField()
     name = models.CharField(maxlength=128, core=True)
-    current_interaction = models.ForeignKey('Interaction')
+    current_interaction = models.ForeignKey('Interaction', null=True,blank=True, related_name="parent_client")
     
     def __str__(self):
         return self.name
@@ -99,7 +99,7 @@ class Interaction(models.Model):
             return False
         
     def isstale(self):
-        if (self == self.client.interactions.latest('timestamp')):#Is Mostrecent
+        if (self == self.client.current_interaction):#Is Mostrecent
             if(datetime.now()-self.timestamp > timedelta(hours=25) ):
                 return True
             else:
@@ -112,11 +112,10 @@ class Interaction(models.Model):
                 return True
             else:
                 return False
-    def _post_save(self):
-        self.client.latest_interaction = self.client.interactions.latest()
-        self.client.save()
-        #do i need to save the self.client manually?
-        
+    def save(self):
+        super(Interaction,self).save() #call the real save...
+        self.client.current_interaction = self.client.interactions.latest()
+        self.client.save()#do i need to save the self.client manually?
             
     objects = InteractiveManager()
 

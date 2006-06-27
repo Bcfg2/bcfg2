@@ -64,6 +64,8 @@ if __name__ == '__main__':
     for node in statsdata.findall('Node'):
         #if client_rec.name == node.get('name'):
         (client_rec, cr_created) = Client.objects.get_or_create(name=node.get('name'), defaults={'name': node.get('name'), 'creation': datetime.now()})
+#        if cr_created:
+#            client_rec.save()
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
             (interaction_rec, ir_created) = Interaction.objects.get_or_create(client=client_rec.id,timestamp=datetime(t[0],t[1],t[2],t[3],t[4],t[5]),
@@ -74,6 +76,8 @@ if __name__ == '__main__':
                                                                                         'client_version':statistics.get('client_version'),
                                                                                         'goodcount':statistics.get('good', default="unknown"),
                                                                                         'totalcount':statistics.get('total', default="unknown")})
+#            if ir_created:
+#                interaction_rec.save()
             for bad in statistics.findall('Bad'):
                 for ele in bad.getchildren():
                     (ele_rec, er_created) = Bad.objects.get_or_create(name=ele.get('name'), kind=ele.tag,
@@ -81,6 +85,9 @@ if __name__ == '__main__':
                                                                                 'kind':ele.tag,
                                                                                 'problemcode':'',
                                                                                 'reason':'Unknown'})
+#                    if er_created:
+#                        ele_rec.save()
+                        
                 if not ele_rec in interaction_rec.bad_items.all():
                     interaction_rec.bad_items.add(ele_rec)
 
@@ -91,6 +98,8 @@ if __name__ == '__main__':
                                                                                      'kind':ele.tag,
                                                                                      'problemcode':'',
                                                                                      'reason':'Unknown'})
+ #                   if er_created:
+ #                       ele_rec.save()
                 if not ele_rec in interaction_rec.modified_items.all():
                     interaction_rec.modified_items.add(ele_rec)
 
@@ -101,6 +110,9 @@ if __name__ == '__main__':
                                                                                   'kind':ele.tag,
                                                                                   'problemcode':'',
                                                                                   'reason':'Unknown'})
+ #                   if er_created:
+ #                       ele_rec.save()
+                        
                 if not ele_rec in interaction_rec.extra_items.all():
                     interaction_rec.extra_items.add(ele_rec)
                                 

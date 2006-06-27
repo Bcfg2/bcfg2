@@ -18,7 +18,7 @@ def client_detail(request, hostname = -1, pk = -1):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
     client = get_object_or_404(Client, name=hostname)
     if(pk == -1):
-        interaction = client.interactions.latest('timestamp')
+        interaction = client.current_interaction
     else:
         interaction = client.interactions.get(pk=pk)
 
@@ -55,7 +55,7 @@ def display_timing(request):
         #performance_items = client.interactions.latest().performance_items.all()#allow this to be selectable(hist)
         d = {}
         #[d.update({x:y}) for x,y in [a.values() for a in client.interactions.latest().performance_items.all().values('metric','value')]]
-        [d.update({x["metric"]:x["value"]}) for x in client.interactions.latest().performance_items.all().values('metric','value')]
+        [d.update({x["metric"]:x["value"]}) for x in client.current_interaction.performance_items.all().values('metric','value')]
         dict_unit = {}
         
         try:
