@@ -33,7 +33,9 @@ REASON_CHOICES = (
 class Client(models.Model):
     #This exists for clients that are no longer in the repository even! (timeless)
     creation = models.DateTimeField()
-    name = models.CharField(maxlength=128)
+    name = models.CharField(maxlength=128, core=True)
+    current_interaction = models.ForeignKey('Interaction')
+    
     def __str__(self):
         return self.name
 
@@ -54,6 +56,20 @@ class Repository(models.Model):
     def __str__(self):
         return self.timestamp
 
+class InteractiveManager(models.Manager):
+    def interaction_per_client(self, maxdate):
+        from django.db import connection
+        cursor = connection.cursor()
+        if maxdate == 'now':
+            cursor.execute("select id, client_id, MAX(timestamp) AS maxtimestamp from reports_interaction GROUP BY client_id")
+        else:
+            cursor.execute("select id, client_id, timestamp, MAX(timestamp) AS maxtimestamp from reports_interaction where timestamp < %s GROUP BY client_id", [maxdate])
+        #rows = cursor.fetchall()
+        #return rows
+        in_idents = [item[0] for item in cursor.fetchall()]
+        return self.filter(id__in = in_idents)
+
+        '2006-01-01 00:00:00'
 
 #models each client-interaction
 class Interaction(models.Model):
@@ -96,7 +112,13 @@ class Interaction(models.Model):
                 return True
             else:
                 return False
-                    
+    def _post_save(self):
+        self.client.latest_interaction = self.client.interactions.latest()
+        self.client.save()
+        #do i need to save the self.client manually?
+        
+            
+    objects = InteractiveManager()
 
     class Admin:
         list_display = ('client', 'timestamp', 'state')
@@ -104,8 +126,6 @@ class Interaction(models.Model):
         pass
     class Meta:
         get_latest_by = 'timestamp'
-    
-
 
 
 class Modified(models.Model):

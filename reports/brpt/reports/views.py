@@ -3,7 +3,7 @@
 from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-from brpt.reports.models import Client, Interaction, Bad, Modified, Extra
+from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance
 from datetime import datetime
     
 
@@ -26,10 +26,21 @@ def client_detail(request, hostname = -1, pk = -1):
 
 def display_sys_view(request):
     client_lists = prepare_client_lists(request)
+
+    from django.db import connection
+    for q in connection.queries:
+        print q
+
+
     return render_to_response('displays/sys_view.html', client_lists)
 
 def display_summary(request):
     client_lists = prepare_client_lists(request)
+
+    from django.db import connection
+    for q in connection.queries:
+        print q
+
     return render_to_response('displays/summary.html', client_lists)
 
 def display_timing(request):
@@ -41,10 +52,10 @@ def display_timing(request):
     stats_list = []
     #if we have stats for a client, go ahead and add it to the list(wrap in TRY)
     for client in client_list:#Go explicitly to an interaction ID! (new item in dictionary)
-#        performance_items = client.interactions.latest().performance_items.all()#allow this to be selectable(hist)
+        #performance_items = client.interactions.latest().performance_items.all()#allow this to be selectable(hist)
         d = {}
-        #Best List Comprehension Ever!
-        [d.update({x:y}) for x,y in [a.values() for a in client.interactions.latest().performance_items.all().values('metric','value')]]
+        #[d.update({x:y}) for x,y in [a.values() for a in client.interactions.latest().performance_items.all().values('metric','value')]]
+        [d.update({x["metric"]:x["value"]}) for x in client.interactions.latest().performance_items.all().values('metric','value')]
         dict_unit = {}
         
         try:
@@ -79,9 +90,16 @@ def display_timing(request):
         #make sure all is formatted as such: #.##
         stats_list.append(dict_unit)
 
+
+
     from django.db import connection
     for q in connection.queries:
         print q
+
+
+
+
+
 
     return render_to_response('displays/timing.html',{'client_list': client_list, 'stats_list': stats_list})
 
@@ -98,26 +116,28 @@ def prepare_client_lists(request):
     stale_up_client_list = []
     stale_all_client_list = []
     down_client_list = []
-    for client in client_list:#but we need clientlist for more than just this loop
-        i = client.interactions.latest('timestamp')
-        client_interaction_dict[client.id] = i
-#        if i.state == 'good':
-        if i.isclean():
+
+    [client_interaction_dict.__setitem__(x.client_id,x) for x in Interaction.objects.interaction_per_client('now')]# or you can specify a time like this: '2007-01-01 00:00:00'
+    
+    for client in client_list:
+        #i = client_interaction_dict[client.id]
+
+        if client_interaction_dict[client.id].isclean():
             clean_client_list.append(client)
         else:
             bad_client_list.append(client)
-        if i.isstale():
-            if i.pingable:
+        if client_interaction_dict[client.id].isstale():
+            if client_interaction_dict[client.id].pingable:
                 stale_up_client_list.append(client)
                 stale_all_client_list.append(client)                
             else:
                 stale_all_client_list.append(client)
-        if not i.pingable:
+        if not client_interaction_dict[client.id].pingable:
             down_client_list.append(client)
         
-        if len(i.modified_items.all()) > 0:
+        if len(client_interaction_dict[client.id].modified_items.all()) > 0:
             modified_client_list.append(client)
-        if len(i.extra_items.all()) > 0:
+        if len(client_interaction_dict[client.id].extra_items.all()) > 0:
             extra_client_list.append(client)
 
     #if the list is empty set it to None?
