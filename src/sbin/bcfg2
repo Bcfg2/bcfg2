@@ -5,7 +5,7 @@ __revision__ = '$Revision$'
 
 from lxml.etree import Element, XML, tostring, XMLSyntaxError
 
-import logging, os, signal, sys, tempfile, time, traceback, xmlrpclib
+import logging, os, signal, tempfile, time, xmlrpclib
 import Bcfg2.Options
 
 try:
@@ -81,7 +81,7 @@ class Client:
             print "cannot use -n and -r together"
             raise SystemExit, 1
 
-    def load_toolset(self, toolset_name):
+    def load_toolset(self, toolsetName):
         '''Import client toolset modules'''
         
         toolset_packages = {
@@ -90,24 +90,26 @@ class Client:
             'solaris': "Bcfg2.Client.Solaris"
             }
 
-        if toolset_packages.has_key(toolset_name):
-            toolset_class = toolset_packages[toolset_name]
+        if toolset_packages.has_key(toolsetName):
+            toolset_class = toolset_packages[toolsetName]
         else:
-            toolset_class = toolset_name
+            toolset_class = toolsetName
 
         try:
             mod = __import__(toolset_class, globals(), locals(), ['*'])
+        except ImportError:
+            self.fatal_error("Failed to load server-specified toolset: %s" % (toolsetName))
         except:
-            self.fatal_error("got unsupported toolset %s from server."
-                             % (toolset_name))
-                
+            self.logger.error("Failed to import toolset %s" % (toolsetName), exc_info=1)
+            self.fatal_error("Cannot continue")
+            
         try:
             self.toolset = mod.ToolsetImpl(self.config, self.setup)
             
-            self.logger.debug("Selected %s toolset..." % (toolset_name))
+            self.logger.debug("Selected %s toolset..." % (toolsetName))
         except:
-            self.critical_error("instantiating toolset %s" %
-                                (toolset_name))        
+            self.logger.error("Failed to instantiate toolset: %s" % (toolsetName), exc_info=1)
+            raise SystemExit, 1
 
     def run_probe(self, probe):
         '''Execute probe'''
@@ -125,22 +127,13 @@ class Client:
             finally:
                 os.unlink(script.name)
         except:
-            self.critical_error("executing probe %s" % (probe_name))
+            self.logger.error("Failed to execute probe: %s" % (probe_name), exc_info=1)
+            raise SystemExit, 1
         return ret
-
-    def critical_error(self, operation):
-        '''Print tracebacks in unexpected cases'''
-        print "Traceback information (please include in any bug report):"
-        (ttype, value, trace) = sys.exc_info()
-        for line in traceback.extract_tb(trace):        
-            print "File %s, line %i, in %s\n   %s\n" % (line)
-            print "%s: %s\n" % (ttype, value)
-
-        self.fatal_error("An unexpected failure occurred in %s" % (operation) )
 
     def fatal_error(self, message):
         '''Signal a fatal error'''
-        print "Fatal error: %s" % (message)
+        self.logger.error("Fatal error: %s" % (message))
         raise SystemExit, 1
 
     def run(self):
@@ -188,7 +181,8 @@ class Client:
                 probe_info = [self.run_probe(probe)
                               for probe in probes.findall(".//probe")]
             except:
-                self.critical_error("executing probes")
+                self.logger.error("Failed to Execute probes")
+                raise SystemExit, 1
 
             # upload probe responses
             proxy.RecvProbeData(probe_info)
@@ -225,7 +219,7 @@ class Client:
 
         # Get toolset from server
         try:
-            toolset_name = self.config.get('toolset')
+            toolsetName = self.config.get('toolset')
         except:
             self.fatal_error("server did not specify a toolset")
 
@@ -238,7 +232,7 @@ class Client:
             self.config = replacement_xml
 
         # Create toolset handle
-        self.load_toolset(toolset_name)
+        self.load_toolset(toolsetName)
 
         times['initialization'] = time.time()
         
