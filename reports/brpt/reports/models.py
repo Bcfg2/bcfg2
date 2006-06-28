@@ -57,10 +57,13 @@ class Repository(models.Model):
         return self.timestamp
 
 class InteractiveManager(models.Manager):
-    def interaction_per_client(self, maxdate):
+
+    '''returns most recent interaction as of specified timestamp in format:
+    '2006-01-01 00:00:00' or 'now' or None->'now'  '''
+    def interaction_per_client(self, maxdate = None):
         from django.db import connection
         cursor = connection.cursor()
-        if maxdate == 'now':
+        if (maxdate == 'now' or maxdate == None): 
             cursor.execute("select id, client_id, MAX(timestamp) AS maxtimestamp from reports_interaction GROUP BY client_id")
         else:
             cursor.execute("select id, client_id, timestamp, MAX(timestamp) AS maxtimestamp from reports_interaction where timestamp < %s GROUP BY client_id", [maxdate])
@@ -159,6 +162,35 @@ class Bad(models.Model):
         return self.name
  
 
+class PerformanceManager(models.Manager):
+
+    #Date format for maxdate: '2006-01-01 00:00:00'            
+    def performance_per_client(self, maxdate = None):
+        from django.db import connection
+        cursor = connection.cursor()
+        if (maxdate == 'now' or maxdate == None):
+            cursor.execute("SELECT reports_client.name, reports_performance.metric, reports_performance.value "+
+            "FROM reports_performance, reports_performance_interaction, reports_client WHERE ( "+
+            "reports_client.current_interaction_id = reports_performance_interaction.interaction_id AND "+
+            "reports_performance.id = reports_performance_interaction.performance_id)")
+        else:
+            cursor.execute("SELECT reports_client.name, reports_performance.metric, reports_performance.value, "+
+            "MAX(reports_interaction.timestamp) FROM reports_performance, reports_performance_interaction, "+
+            "reports_interaction, reports_client WHERE reports_interaction.id = "+
+            "reports_performance_interaction.interaction_id AND reports_client.id = "+
+            "reports_interaction.client_id AND reports_performance.id = "+
+            "reports_performance_interaction.performance_id AND reports_interaction.timestamp < %s GROUP BY "+
+            "reports_performance.id", [maxdate])
+
+        results = {}
+        for row in cursor.fetchall():
+            try:
+                results[row[0]].__setitem__(row[1],row[2])
+            except KeyError:
+                results[row[0]] = {row[1]:row[2]}
+                                
+        return results
+    
 #performance metrics, models a performance-metric-item
 class Performance(models.Model):
     interaction = models.ManyToManyField(Interaction, related_name="performance_items")
@@ -167,5 +199,5 @@ class Performance(models.Model):
     def __str__(self):
         return self.metric
  
-
+    objects = PerformanceManager()
  

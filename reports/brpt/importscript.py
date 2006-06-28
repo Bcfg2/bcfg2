@@ -76,8 +76,6 @@ if __name__ == '__main__':
                                                                                         'client_version':statistics.get('client_version'),
                                                                                         'goodcount':statistics.get('good', default="unknown"),
                                                                                         'totalcount':statistics.get('total', default="unknown")})
-#            if ir_created:
-#                interaction_rec.save()
             for bad in statistics.findall('Bad'):
                 for ele in bad.getchildren():
                     (ele_rec, er_created) = Bad.objects.get_or_create(name=ele.get('name'), kind=ele.tag,
@@ -85,11 +83,9 @@ if __name__ == '__main__':
                                                                                 'kind':ele.tag,
                                                                                 'problemcode':'',
                                                                                 'reason':'Unknown'})
-#                    if er_created:
-#                        ele_rec.save()
                         
-                if not ele_rec in interaction_rec.bad_items.all():
-                    interaction_rec.bad_items.add(ele_rec)
+                    if not ele_rec in interaction_rec.bad_items.all():
+                        interaction_rec.bad_items.add(ele_rec)
 
             for modified in statistics.findall('Modified'):
                 for ele in modified.getchildren():
@@ -98,10 +94,8 @@ if __name__ == '__main__':
                                                                                      'kind':ele.tag,
                                                                                      'problemcode':'',
                                                                                      'reason':'Unknown'})
- #                   if er_created:
- #                       ele_rec.save()
-                if not ele_rec in interaction_rec.modified_items.all():
-                    interaction_rec.modified_items.add(ele_rec)
+                    if not ele_rec in interaction_rec.modified_items.all():
+                        interaction_rec.modified_items.add(ele_rec)
 
             for extra in statistics.findall('Extra'):
                 for ele in extra.getchildren():
@@ -110,11 +104,9 @@ if __name__ == '__main__':
                                                                                   'kind':ele.tag,
                                                                                   'problemcode':'',
                                                                                   'reason':'Unknown'})
- #                   if er_created:
- #                       ele_rec.save()
                         
-                if not ele_rec in interaction_rec.extra_items.all():
-                    interaction_rec.extra_items.add(ele_rec)
+                    if not ele_rec in interaction_rec.extra_items.all():
+                        interaction_rec.extra_items.add(ele_rec)
                                 
                         #try to find extra element with given name and type and problemcode and reason
                         #if ones doesn't exist create it
@@ -122,12 +114,14 @@ if __name__ == '__main__':
                         #if one is not associated, associate it
 
 
-
-'''
-
-probefetch='22.5812318325' config='13.1471130848' parse='0.104132890701' inventory='0.685513019562' install='0.487507104874' total='304.099304914'
-
-'''
+            for times in statistics.findall('OpStamps'):
+                for tags in times.items():
+                    (time_rec, tr_created) = Performance.objects.get_or_create(metric=tags[0], value=tags[1],
+                                                                               defaults={'metric':tags[0],
+                                                                                         'value':tags[1]})
+                    if not ele_rec in interaction_rec.extra_items.all():
+                        interaction_rec.performance_items.add(time_rec)
+                    
 
 
 #print Client.objects.all().order_by('-name')[0].name

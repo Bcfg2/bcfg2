@@ -14,13 +14,13 @@ def client_index(request):
     client_list = Client.objects.all().order_by('name')
     return render_to_response('clients/index.html',{'client_list': client_list})
 
-def client_detail(request, hostname = -1, pk = -1):
+def client_detail(request, hostname = None, pk = None):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
     client = get_object_or_404(Client, name=hostname)
-    if(pk == -1):
+    if(pk == None):
         interaction = client.current_interaction
     else:
-        interaction = client.interactions.get(pk=pk)
+        interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
 
     return render_to_response('clients/detail.html',{'client': client, 'interaction': interaction})
 
@@ -43,47 +43,52 @@ def display_summary(request):
 
     return render_to_response('displays/summary.html', client_lists)
 
-def display_timing(request):
+def display_timing(request, timestamp = None):
     #We're going to send a list of dictionaries. Each dictionary will be a row in the table
     #+------+-------+----------------+-----------+---------+----------------+-------+
     #| name | parse | probe download | inventory | install | cfg dl & parse | total |
     #+------+-------+----------------+-----------+---------+----------------+-------+
-    client_list = Client.objects.all().order_by('-name')
+    client_list = Client.objects.all().order_by('name')
     stats_list = []
-    #if we have stats for a client, go ahead and add it to the list(wrap in TRY)
+    #Try to parse timestamp, if it has an @ symbol, replace it with a space and pass it.
+    #sanity check it too.
+    #else, justcall it with nothing....
+    #use a popup calendar !
+    results = Performance.objects.performance_per_client('2006-07-07 00:00:00')
+
     for client in client_list:#Go explicitly to an interaction ID! (new item in dictionary)
-        #performance_items = client.interactions.latest().performance_items.all()#allow this to be selectable(hist)
-        d = {}
-        #[d.update({x:y}) for x,y in [a.values() for a in client.interactions.latest().performance_items.all().values('metric','value')]]
-        [d.update({x["metric"]:x["value"]}) for x in client.current_interaction.performance_items.all().values('metric','value')]
+        try:
+            d = results[client.name]
+        except KeyError:
+            d = {}
+
         dict_unit = {}
-        
         try:
             dict_unit["name"] = client.name #node name
         except:
             dict_unit["name"] = "n/a"
         try:
-            dict_unit["parse"] = d["config_parse"] - d["config_download"] #parse
+            dict_unit["parse"] = round(d["config_parse"] - d["config_download"],4) #parse
         except:
             dict_unit["parse"] = "n/a"
         try:
-            dict_unit["probe"] = d["probe_upload"] - d["start"] #probe
+            dict_unit["probe"] = round(d["probe_upload"] - d["start"],4) #probe
         except:
             dict_unit["probe"] = "n/a"
         try:
-            dict_unit["inventory"] = d["inventory"] - d["initialization"] #inventory
+            dict_unit["inventory"] = round(d["inventory"] - d["initialization"],4) #inventory
         except:
             dict_unit["inventory"] = "n/a"
         try:
-            dict_unit["install"] = d["install"] - d["inventory"] #install
+            dict_unit["install"] = round(d["install"] - d["inventory"],4) #install
         except:
             dict_unit["install"] = "n/a"
         try:
-            dict_unit["config"] = d["config_parse"] - d["probe_upload"]#config download & parse
+            dict_unit["config"] = round(d["config_parse"] - d["probe_upload"],4)#config download & parse
         except:
             dict_unit["config"] = "n/a"
         try:
-            dict_unit["total"] = d["finished"] - d["start"] #total
+            dict_unit["total"] = round(d["finished"] - d["start"],4) #total
         except:
             dict_unit["total"] = "n/a"
 
