@@ -183,15 +183,27 @@ class Toolset(object):
         # List bad elements of the configuration
         if dirty:
             bad_elms = lxml.etree.SubElement(stats, "Bad")
-            for elm in [key for key, val in self.states.iteritems() if not val]:
-                if elm.get('name') == None:
-                    lxml.etree.SubElement(bad_elms, elm.tag)
-                else:
-                    lxml.etree.SubElement(bad_elms, elm.tag, name=elm.get('name'))
+            for ent in [key for key, val in self.states.iteritems() if not val]:
+                newent = lxml.etree.SubElement(bad_elms, ent.tag, name=ent.get('name', 'None'))
+                for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
+                    newent.set(field, ent.get(field))
+                    del ent.attrib[field]
+                failures = [key for key in ent.attrib if key[:8] == 'current_']
+                for fail in failures:
+                    for field in [fail, fail[8:]]:
+                        print ent.get('name'), field
+                        newent.set(field, ent.get(field))
         if self.modified:
             mod = lxml.etree.SubElement(stats, "Modified")
-            for elm in self.modified:
-                lxml.etree.SubElement(mod, elm.tag, name=elm.get('name'))
+            for ent in self.modified:
+                newent = lxml.etree.SubElement(mod, ent.tag, name=ent.get('name'))
+                for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
+                    newent.set(field, ent.get(field))
+                    del ent.attrib[field]
+                failures = [key for key in ent.attrib if key[:8] == 'current_']
+                for fail in failures:
+                    for field in [fail, fail[8:]]:
+                        newent.set(field, ent.get(field))
         if self.extra_services + self.pkgwork['remove']:
             extra = lxml.etree.SubElement(stats, "Extra")
             [lxml.etree.SubElement(extra, "Service", name=svc) for svc in self.extra_services]
