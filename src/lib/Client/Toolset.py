@@ -191,8 +191,10 @@ class Toolset(object):
                 failures = [key for key in ent.attrib if key[:8] == 'current_']
                 for fail in failures:
                     for field in [fail, fail[8:]]:
-                        print ent.get('name'), field
                         newent.set(field, ent.get(field))
+                #if ent.tag not in ['Package', 'Service', 'SymLink', 'ConfigFile']:
+                #    print lxml.etree.tostring(ent)
+                #    print lxml.etree.tostring(newent)
         if self.modified:
             mod = lxml.etree.SubElement(stats, "Modified")
             for ent in self.modified:
@@ -246,6 +248,7 @@ class Toolset(object):
             entry.set('current_to', sloc)
             return False
         except OSError:
+            entry.set('current_exists', 'false')
             return False
 
     def InstallSymLink(self, entry):
@@ -450,6 +453,7 @@ class Toolset(object):
             sinfo = os.stat(entry.get('name'))
         except OSError:
             self.logger.debug("Entry %s doesn't exist" % entry.get('name'))
+            entry.set('current_exists', 'false')
             return False
         # pad out perms if needed
         while len(entry.get('perms', '')) < 4:
@@ -457,8 +461,8 @@ class Toolset(object):
         perms = oct(sinfo[ST_MODE])[-4:]
         if perms == entry.get('perms'):
             return True
-        entry.get('current_perms', perms)
         self.logger.debug("Entry %s permissions incorrect" % entry.get('name'))
+        entry.set('current_perms', perms)
         return False
     
     def InstallPermissions(self, entry):
