@@ -208,8 +208,10 @@ class Toolset(object):
                         newent.set(field, ent.get(field))
         if self.extra_services + self.pkgwork['remove']:
             extra = lxml.etree.SubElement(stats, "Extra")
-            [lxml.etree.SubElement(extra, "Service", name=svc) for svc in self.extra_services]
-            [lxml.etree.SubElement(extra, "Package", name=pkg) for pkg in self.pkgwork['remove']]
+            [lxml.etree.SubElement(extra, "Service", name=svc, current_status='on')
+             for svc in self.extra_services]
+            [lxml.etree.SubElement(extra, "Package", name=pkg,
+                                   current_version=self.installed[pkg]) for pkg in self.pkgwork['remove']]
         return stats
 
     # the next two are dispatch functions

@@ -50,6 +50,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         files = [filename for filename in rawfiles if self.svcre.match(filename).group('name') == entry.get('name')]
         if entry.get('status') == 'off':
             if files:
+                entry.set('current_status', 'on')
                 return False
             else:
                 return True
@@ -57,6 +58,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
             if files:
                 return True
             else:
+                entry.set('current_status', 'off')
                 return False
 
     def InstallService(self, entry):
@@ -97,6 +99,10 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
                     if [filename for filename in output if filename not in modlist]:
                         return False
                 return True
+            else:
+                entry.set('current_version', self.installed[entry.get('name')])
+                return False
+        entry.set('current_version', 'None')
         return False
 
     def Inventory(self):

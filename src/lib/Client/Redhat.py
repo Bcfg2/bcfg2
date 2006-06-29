@@ -38,9 +38,11 @@ class ToolsetImpl(Toolset):
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
         try:
-            srvdata = self.saferun('/sbin/chkconfig --list %s | grep -v "unknown service"'%entry.attrib['name'])[1][0].split()
+            srvdata = self.saferun('/sbin/chkconfig --list %s | grep -v "unknown service"'
+                                   % entry.attrib['name'])[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
+            entry.set('current_status', 'off')
             return False
         if entry.attrib['type'] == 'xinetd':
             return entry.attrib['status'] == srvdata[1]
@@ -52,10 +54,17 @@ class ToolsetImpl(Toolset):
 
         # chkconfig/init.d service
         if entry.get('status') == 'on':
-            return len(onlevels) > 0
+            status = len(onlevels) > 0
         else:
-            return len(onlevels) == 0
-    
+            status = len(onlevels) == 0
+
+        if not status:
+            if entry.get('status') == 'on':
+                entry.set('current_status', 'off')
+            else:
+                entry.set('current_status', 'on')
+        return status
+
     def InstallService(self, entry):
         '''Install Service entry'''
         self.saferun("/sbin/chkconfig --add %s"%(entry.attrib['name']))
@@ -91,9 +100,11 @@ class ToolsetImpl(Toolset):
             else:
                 self.logger.debug("Package %s: wrong version installed. want %s have %s" %
                                   (entry.get('name'), entry.get('version'), self.installed[entry.get('name')]))
+                entry.set('current_version', self.installed[entry.get('name')])
                 return False
         else:
             self.logger.debug("Package %s: not installed" % (entry.get('name')))
+            entry.set('current_version', 'None')
             return False
 
         (vstat, output) = self.saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
