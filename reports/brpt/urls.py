@@ -12,7 +12,8 @@ urlpatterns = patterns('',
 
     (r'^displays/sys-view/$','brpt.reports.views.display_sys_view'),
     (r'^displays/summary/$','brpt.reports.views.display_summary'),
-    (r'^displays/timing/$','brpt.reports.views.display_timing'),
+    (r'^displays/timing/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','brpt.reports.views.display_timing'),
+    (r'^displays/timing/$','brpt.reports.views.display_timing'),                       
     (r'^displays/$','brpt.reports.views.display_index'),
 
     # Uncomment this for admin:

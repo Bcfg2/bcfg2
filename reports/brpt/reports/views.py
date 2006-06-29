@@ -50,12 +50,13 @@ def display_timing(request, timestamp = None):
     #+------+-------+----------------+-----------+---------+----------------+-------+
     client_list = Client.objects.all().order_by('name')
     stats_list = []
-    #Try to parse timestamp, if it has an @ symbol, replace it with a space and pass it.
-    #sanity check it too.
-    #else, justcall it with nothing....
-    #use a popup calendar !
-    results = Performance.objects.performance_per_client('2006-07-07 00:00:00')
 
+    if not timestamp == None:
+        results = Performance.objects.performance_per_client(timestamp.replace("@"," "))
+    else:
+        results = Performance.objects.performance_per_client()
+        timestamp = datetime.now().isoformat('@')
+        
     for client in client_list:#Go explicitly to an interaction ID! (new item in dictionary)
         try:
             d = results[client.name]
@@ -92,21 +93,13 @@ def display_timing(request, timestamp = None):
         except:
             dict_unit["total"] = "n/a"
 
-        #make sure all is formatted as such: #.##
         stats_list.append(dict_unit)
 
-
-
-    from django.db import connection
-    for q in connection.queries:
-        print q
-
-
-
-
-
-
-    return render_to_response('displays/timing.html',{'client_list': client_list, 'stats_list': stats_list})
+    return render_to_response('displays/timing.html',{'client_list': client_list,
+                                                      'stats_list': stats_list,
+                                                      'timestamp' : timestamp,
+                                                      'timestamp_date' : timestamp[:10],
+                                                      'timestamp_time' : timestamp[11:19]})
 
 def display_index(request):
     return render_to_response('displays/index.html')
