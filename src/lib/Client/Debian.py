@@ -102,7 +102,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
             else:
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False
-        entry.set('current_version', 'None')
+        entry.set('current_exists', 'false')
         return False
 
     def Inventory(self):

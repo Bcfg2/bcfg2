@@ -104,7 +104,7 @@ class ToolsetImpl(Toolset):
                 return False
         else:
             self.logger.debug("Package %s: not installed" % (entry.get('name')))
-            entry.set('current_version', 'None')
+            entry.set('current_exists', 'false')
             return False
 
         (vstat, output) = self.saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
