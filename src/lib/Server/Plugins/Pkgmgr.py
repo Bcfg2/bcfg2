@@ -7,8 +7,8 @@ logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
 class PNode(Bcfg2.Server.Plugin.INode):
     '''PNode has a list of packages available at a particular group intersection'''
-    splitters = {'rpm':re.compile('^(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
-                                  '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\w+)\.rpm$'),
+    splitters = {'rpm':re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
+                                  '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
                  'encap':re.compile('^(?P<name>\w+)-(?P<version>[\w\d\.-]+).encap.*$')}
     ignore = ['Package']
     
@@ -30,7 +30,14 @@ class PNode(Bcfg2.Server.Plugin.INode):
                 self.contents['Package'][pkg.get('name')] = pkg.attrib
             else:
                 if pkg.attrib.has_key('file'):
-                    pkg.set('url', '%s/%s' % (pkg.get('uri'), pkg.get('file')))
+                    if pkg.attrib.has_key('multiarch'):
+                        archs = pkg.get('multiarch').split()
+                        srcs = pkg.get('srcs', pkg.get('multiarch')).split()
+                        url = ' '.join(["%s/%s" % (pkg.get('uri'), pkg.get('file') % (srcs[idx], archs[idx]))
+                                        for idx in range(len(archs))])
+                        pkg.set('url', url)
+                    else:
+                        pkg.set('url', '%s/%s' % (pkg.get('uri'), pkg.get('file')))
                 if self.splitters.has_key(pkg.get('type')) and pkg.get('file') != None:
                     mdata = self.splitters[pkg.get('type')].match(pkg.get('file'))
                     if not mdata:
@@ -43,6 +50,8 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         self.contents['Package'][pkgname]['type'] = pkg.get('type')
                         if pkg.get('verify'):
                             self.contents['Package'][pkgname]['verify'] = pkg.get('verify')
+                        if pkg.get('multiarch'):
+                            self.contents['Package'][pkgname]['multiarch'] = pkg.get('multiarch')
                     if pkgname not in pdict['Package']:
                         pdict['Package'].append(pkgname)
                 else:

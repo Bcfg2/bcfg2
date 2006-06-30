@@ -17,6 +17,8 @@
     <xsd:attribute type='xsd:string' name='verify'/>
     <xsd:attribute type='xsd:string' name='simplefile'/>
     <xsd:attribute type='xsd:string' name='reloc'/>
+    <xsd:attribute type='xsd:string' name='multiarch'/>
+    <xsd:attribute type='xsd:string' name='srcs'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
@@ -36,6 +38,8 @@
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attribute name='type' use='optional' type='PackageTypeEnum' />
       <xsd:attribute name='uri' type='xsd:string' use='optional'/>
+      <xsd:attribute type='xsd:string' name='multiarch'/>
+      <xsd:attribute type='xsd:string' name='srcs'/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

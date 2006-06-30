@@ -93,6 +93,19 @@ class ToolsetImpl(Toolset):
             return False
         if self.installed.has_key(entry.get('name')):
             if entry.get('version') == self.installed[entry.get('name')]:
+                if entry.get('multiarch'):
+                    archs = entry.get('multiarch').split()
+                    info = self.saferun('rpm -q %s --qf "%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n"' % (entry.get('name')))[1]
+                    while info:
+                        (_, vers, arch) = info.pop()
+                        if arch in archs:
+                            archs.remove(arch)
+                        else:
+                            self.logger.error("Got pkg install for Package %s: arch %s" % (entry.get('name'), arch))
+                            return False
+                    if archs:
+                        self.logger.error("Package %s not installed for arch: %s" % (entry.get('name'), archs))
+                        return False
                 if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')):
                     if entry.get('verify', 'true') == 'false':
                         self.logger.debug("Skipping checksum verification for package %s" % (entry.get('name')))
