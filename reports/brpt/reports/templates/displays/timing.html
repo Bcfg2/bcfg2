@@ -15,16 +15,17 @@
   <br/>
 <div>
 <span class="mini-date">
+
+<b>Enter date or use calendar popup: </b>
 <form name="timestamp-select">
 <input type="text" name="date1" value="{{timestamp_date}}" size=10>@
-<!--#If there is a timestamp-date and timestamp-time, set it to that, otherwise, now-->
 <input type="text" name="time" value="{{timestamp_time}}" size=8>
 <a href="" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
    name="anchor1" ID="anchor1">Calendar</A>
 <input type="button" name="go" value="Go" onClick="location.href='/displays/timing/'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
  | <input type="button" name="now" value="Now" onClick="location.href='/displays/timing/';"/>
 </form>
-</span><br/><br/></div>
+</span><br/><br/><br/></div>
   <center>
       <table id="t1" class="sortable">
           <tr>

@@ -11,25 +11,7 @@ KIND_CHOICES = (
     ('Directory', 'Directory'),
     ('Permissions','Permissions'),
 )
-REASON_CHOICES = (
-    #these are the possible reasons there can be a problem with a node:
-    ('', 'No Reason'),
-    ('O','Owner'),
-    ('P','Permissions'),
-    ('E','Existence'),
-    ('C','Content'),
-    ('OP','Owner, Permissions'),
-    ('OE','Owner, Existence'),
-    ('OC','Owner, Content'),
-    ('PE','Permissions, Existence'),
-    ('PC','Permissions, Content'),
-    ('EC','Existence, Content'),
-    ('OPE','Owner, Permissions, Existence'),
-    ('OPC','Owner, Permissions, Content'),
-    ('OEC','Owner, Existence, Content'),
-    ('PEC','Permissions, Existence, Content'),
-    ('OPEC','Owner, Permissions, Existence, Content'),
-)
+
 class Client(models.Model):
     #This exists for clients that are no longer in the repository even! (timeless)
     creation = models.DateTimeField()
@@ -129,39 +111,48 @@ class Interaction(models.Model):
     class Meta:
         get_latest_by = 'timestamp'
 
+class Reason(models.Model):
+    owner = models.TextField(maxlength=128, blank=True)
+    current_owner = models.TextField(maxlength=128, blank=True)
+    group = models.TextField(maxlength=128, blank=True)
+    current_group = models.TextField(maxlength=128, blank=True)
+    perms =  models.IntegerField(blank=True)
+    current_perms = models.IntegerField(blank=True)
+    status = models.TextField(maxlength=3, blank=True)#on/off/(None)
+    current_status = models.TextField(maxlength=1, blank=True)#on/off/(None)
+    to = models.TextField(maxlength=256, blank=True)
+    current_to = models.TextField(maxlength=256, blank=True)
+    version = models.TextField(maxlength=128, blank=True)
+    current_version = models.TextField(maxlength=128, blank=True)
+    current_exists = models.BooleanField()#False means its missing!, only display if its False, true is default..
+    current_diff = models.TextField(maxlength=1280, blank=True) #diff
+    def _str_(self):
+        return "Reason"
 
 class Modified(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="modified_items")
     name = models.CharField(maxlength=128, core=True)#name of modified thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
-    reason = models.TextField(maxlength=1280)
+    reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
- 
-
-    
+   
 class Extra(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="extra_items")
     name = models.CharField(maxlength=128, core=True)#name of Extra thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
-    reason = models.TextField(maxlength=1280)
+    reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
- 
-
     
 class Bad(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="bad_items")
     name = models.CharField(maxlength=128, core=True)#name of bad thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
-    problemcode = models.CharField(maxlength=8, choices=REASON_CHOICES)
-    reason = models.TextField(maxlength=1280)
+    reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
  
-
 class PerformanceManager(models.Manager):
 
     #Date format for maxdate: '2006-01-01 00:00:00'            
