@@ -91,6 +91,10 @@ class ToolsetImpl(Toolset):
         if not entry.get('version'):
             self.logger.error("Can't install package %s, not enough data." % (entry.get('name')))
             return False
+        rpm_options = []
+        if entry.get('verify', 'false') == 'nomtime':
+            self.logger.debug("Skipping mtime verification for package %s" % (entry.get('name')))
+            rpm_options.append("--nomtime")
         if self.installed.has_key(entry.get('name')):
             if entry.get('version') == self.installed[entry.get('name')]:
                 if entry.get('multiarch'):
@@ -120,7 +124,7 @@ class ToolsetImpl(Toolset):
             entry.set('current_exists', 'false')
             return False
 
-        (vstat, output) = self.saferun("rpm --verify -q %s-%s" % (entry.get('name'), entry.get('version')))
+        (vstat, output) = self.saferun("rpm --verify -q %s %s-%s" % (" ".join(rpm_options), entry.get('name'), entry.get('version')))
         if vstat != 0:
             if [name for name in output if name.split()[-1] not in modlist]:
                 self.logger.debug("Package %s content verification failed" % entry.get('name'))
