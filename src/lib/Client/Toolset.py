@@ -192,6 +192,8 @@ class Toolset(object):
                 for fail in failures:
                     for field in [fail, fail[8:]]:
                         newent.set(field, ent.get(field))
+                if 'severity' in ent.attrib:
+                    newent.set('severity', ent.get('severity'))
                 #if ent.tag not in ['Package', 'Service', 'SymLink', 'ConfigFile']:
                 #    print lxml.etree.tostring(ent)
                 #    print lxml.etree.tostring(newent)
@@ -206,6 +208,8 @@ class Toolset(object):
                 for fail in failures:
                     for field in [fail, fail[8:]]:
                         newent.set(field, ent.get(field))
+                if 'severity' in ent.attrib:
+                    newent.set('severity', ent.get('severity'))
         if self.extra_services + self.pkgwork['remove']:
             extra = lxml.etree.SubElement(stats, "Extra")
             [lxml.etree.SubElement(extra, "Service", name=svc, current_status='on')
