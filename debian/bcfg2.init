@@ -5,7 +5,7 @@
 # chkconfig: 2345 19 81
 # description: bcfg2 client for configuration requests
 # 
-BCFG2_OPTIONS="-nq"
+BCFG2_OPTIONS="-q"
 test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
 
 case "$1" in
