@@ -2,10 +2,17 @@
 
 The bcfg2-encap-bootstrap package is a method for getting bcfg2 (as a 
 client), including all dependencies, up and running on a new platform as
-quickly as possible.
+quickly as possible (from source).
 
-It is available from:
- * http://www.pobox.com/users/dclark/bcfg2/bcfg2-encap-bootstrap
+You can view this document with glorious Trac Wiki formatting at:
+ * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapHowto
+(Although that version may be out of date)
+
+You can obtain the latest version of the code from bcfg2 svn:
+ * `svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/encap`
+
+Or browse the latest version on the web via:
+ * http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap
 
 Using the encap package manager it automatically downloads, builds and
 creates encap packages for bcfg2 and dependencies to `/usr/local/encap`, and
@@ -59,20 +66,24 @@ system. For commercial operating systems, these can be obtained from:
 Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
-|| OS        || Vendor || Version || Arch  || GCC   || By || With ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1  ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1  ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.2  ||
+|| OS        || Vendor || Version || Arch  || GCC   || By || With VERSION  ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1/0.8.2pre6 ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1/0.8.2pre6 ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.2/0.8.2pre7 ||
 
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
-If you bootstrap a platform not listed above, please send email to Daniel
-Clark <mailto:dclark@member.fsf.org> so that platform can be added to the
-list. If you modified any of the files in this package to be able to 
-bootstrap the new platform, please include either diffs or a tarball of your
-modified version so your changes can be incorporated into a new release. Any
-other notes, such as where you got the GNU binaries or any issues people
-should be aware of, would be appreciated. 
+If you bootstrap a platform not listed above, please add a comment to:
+ * http://trac.mcs.anl.gov/projects/bcfg2/ticket/74
+so that platform can be added to the list. 
+
+If you modified any of the files in this package to be able to bootstrap the
+new platform, please include either diffs or a tarball of your modified
+version in a new ticket so your changes can be incorporated into a new
+release. 
+
+Any other notes, such as where you got the GNU binaries or any issues people
+should be aware of, would also be appreciated. 
 
 You may want to scan all of the bootstrapped binaries and libraries with
 `ldd` (or equivalent) to make sure there are no dependencies on libraries
@@ -97,5 +108,9 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
    libraries and binaries are not stripped, and there is a lot of
    pruning that can be done of individual packages.
 
+ 0.2::
+ * Updated bcfg2 to 0.8.2pre7
+ * Updated README to point to mcs.anl.gov resources
+ 
 == Documentation Version ==
 $Id$
