@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-0.8.2pre6"
+	pkgspec="bcfg2-0.8.2pre7"
 >
 
 <environment
@@ -46,7 +46,7 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre6.tar.gz"
+url="ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre7.tar.gz"
 >
 
 <configure>

@@ -59,10 +59,10 @@ system. For commercial operating systems, these can be obtained from:
 Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
-|| OS        || Vendor || Version || Arch  || GCC   || By ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc ||
+|| OS        || Vendor || Version || Arch  || GCC   || By || With ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1  ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1  ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.2  ||
 
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
