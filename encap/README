@@ -1,0 +1,101 @@
+= Encap based bootstrap for bcfg2 and complete bcfg2 client toolchain =
+
+The bcfg2-encap-bootstrap package is a method for getting bcfg2 (as a 
+client), including all dependencies, up and running on a new platform as
+quickly as possible.
+
+It is available from:
+ * http://www.pobox.com/users/dclark/bcfg2/bcfg2-encap-bootstrap
+
+Using the encap package manager it automatically downloads, builds and
+creates encap packages for bcfg2 and dependencies to `/usr/local/encap`, and
+installs symbolic links to these packages from `/usr/local` (the usual encap
+thing). 
+
+It attempts to be as self contained as possible; everything gets linked to
+under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
+software, which is prefixed by `b2` (`b2openssl`, `b2python` etc.).  
+
+Note that to run the bcfg2 server, you also need to install gamin, which
+supports a subset of the platforms bcfg2 client will work on, including
+GNU/Linux and FreeBSD.
+
+== Building and installing everything ==
+ 1. Make sure all of the Prerequisites (see below) are installed.
+ 1. The build user needs write access to the encap source and build 
+    directories. By default, these are `/usr/local/encap` and 
+    `/usr/local/src`. If you like to live dangerously, you can also just do 
+    the builds as `root`.
+ 1. Run `make`. This will kick off and background the entire build process. 
+    Make output will be redirected to `make.log`, and package build output 
+    will go to individual log files.
+ 1. If everything goes well, try running "`bcfg2-repo-validate`". This should 
+    not generate a python traceback :-)
+ 1. You now have *-encap-*.tar.gz encap packages you can distribute to other 
+    machines. If you don't like the OS name encap uses automatically (esp. 
+    on GNU/Linux these can be too generic), do `make rename OS=somestring`.
+
+== Prerequisites ==
+ * GNU gcc and GNU g++
+ * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
+ * epkg from http://www.encap.org/epkg/
+   * If built from source, first need all recommended libraries from web page
+
+You will need binaries of the GNU tools. For GNU and BSD based operating 
+systems, you should be able to get these via the operating system's package 
+system. For commercial operating systems, these can be obtained from:
+
+ AIX::
+ * UCLA's Public Domain Software Library for AIX at 
+   http://aixpdslib.seas.ucla.edu/aixpdslib.html 
+   (These are trivial to convert into encap packages)
+ * Bull AIX Freeware at http://www.bullfreeware.com/
+
+ Solaris::
+ * Freeware for Solaris at http://www.sunfreeware.com/
+ * Community Software for Solaris at http://www.blastwave.org/packages.php
+
+== Supported Platforms == 
+Below is a table of platforms that have been successfully bootstrapped using
+this code.
+
+|| OS        || Vendor || Version || Arch  || GCC   || By ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc ||
+
+dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
+
+If you bootstrap a platform not listed above, please send email to Daniel
+Clark <mailto:dclark@member.fsf.org> so that platform can be added to the
+list. If you modified any of the files in this package to be able to 
+bootstrap the new platform, please include either diffs or a tarball of your
+modified version so your changes can be incorporated into a new release. Any
+other notes, such as where you got the GNU binaries or any issues people
+should be aware of, would be appreciated. 
+
+You may want to scan all of the bootstrapped binaries and libraries with
+`ldd` (or equivalent) to make sure there are no dependencies on libraries
+other than those included with the base operating system and the libraries
+built as part of the bootstrap process. 
+
+On non-GNU operating systems, libgcc and libstdc++ are a run-time
+requirement. These libraries are usually distributed with gcc/g++, so the
+bootstrap system attempts to create encap packages containing those
+libraries by copying them from the build machine. To test that this worked,
+you'll want to either temporarily remove gcc/g++ from the build machine and
+make sure everything still works, or install the bcfg2-*.tar.gz encap
+packages on a "clean" machine (without a gcc/g++ install) and test on that 
+machine.
+
+Note that the doc for the encap profile format is in "man 5 encap_profile".
+
+== Release Notes ==
+ 0.1::
+ * Initial Released Version
+ * Work needs to be done to minimize size of distribution. In 0.1
+   libraries and binaries are not stripped, and there is a lot of
+   pruning that can be done of individual packages.
+
+== Documentation Version ==
+$Id$
