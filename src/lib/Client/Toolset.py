@@ -191,7 +191,11 @@ class Toolset(object):
                 failures = [key for key in ent.attrib if key[:8] == 'current_']
                 for fail in failures:
                     for field in [fail, fail[8:]]:
-                        newent.set(field, ent.get(field))
+                        try:
+                            newent.set(field, ent.get(field))
+                        except TypeError:
+                            self.logger.error("Failed to set field %s for entry %s, value" %
+                                              (field, ent.get('name'), ent.get(field)))
                 if 'severity' in ent.attrib:
                     newent.set('severity', ent.get('severity'))
                 #if ent.tag not in ['Package', 'Service', 'SymLink', 'ConfigFile']:
@@ -207,7 +211,11 @@ class Toolset(object):
                 failures = [key for key in ent.attrib if key[:8] == 'current_']
                 for fail in failures:
                     for field in [fail, fail[8:]]:
-                        newent.set(field, ent.get(field))
+                        try:
+                            newent.set(field, ent.get(field))
+                        except TypeError:
+                            self.logger.error("Failed to set field %s for entry %s, value" %
+                                              (field, ent.get('name'), ent.get(field)))
                 if 'severity' in ent.attrib:
                     newent.set('severity', ent.get('severity'))
         if self.extra_services + self.pkgwork['remove']:

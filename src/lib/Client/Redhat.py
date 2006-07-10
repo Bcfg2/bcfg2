@@ -99,7 +99,7 @@ class ToolsetImpl(Toolset):
             if entry.get('version') == self.installed[entry.get('name')]:
                 if entry.get('multiarch'):
                     archs = entry.get('multiarch').split()
-                    info = self.saferun('rpm -q %s --qf "%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n"' % (entry.get('name')))[1]
+                    info = self.saferun('rpm -q %s --qf "%%{NAME} %%{VERSION}-%%{RELEASE} %%{ARCH}\n"' % (entry.get('name')))[1]
                     while info:
                         (_, vers, arch) = info.pop()
                         if arch in archs:
