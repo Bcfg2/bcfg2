@@ -293,6 +293,11 @@ class Core(object):
         except:
             logger.error("error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
+
+        if self.plugins.has_key('Deps'):
+            # do prereq processing
+            prereqs = self.plugins['Deps'].GeneratePrereqs(structures, meta)
+            structures.append(prereqs)
         
         for astruct in structures:
             try:

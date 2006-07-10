@@ -1,0 +1,52 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      dependency schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+    </xsd:documentation>
+  </xsd:annotation>
+
+ <xsd:complexType name='StructureEntry'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Service' type='StructureEntry'/>
+      <xsd:element name='ConfigFile' type='StructureEntry'/>
+      <xsd:element name='Directory' type='StructureEntry'/>
+      <xsd:element name='SymLink' type='StructureEntry'/>
+      <xsd:element name='Permissions' type='StructureEntry'/>
+      <xsd:element name='PostInstall' type='StructureEntry'/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='GroupType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Service' type='StructureEntry'/>
+      <xsd:element name='ConfigFile' type='StructureEntry'/>
+      <xsd:element name='Directory' type='StructureEntry'/>
+      <xsd:element name='SymLink' type='StructureEntry'/>
+      <xsd:element name='Permissions' type='StructureEntry'/>
+      <xsd:element name='PostInstall' type='StructureEntry'/>
+      <xsd:element name='Group' type='GroupType'/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
+  <xsd:element name='Dependencies'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+	<xsd:element name='Package' type='StructureEntry'/>
+	<xsd:element name='Service' type='StructureEntry'/>
+	<xsd:element name='ConfigFile' type='StructureEntry'/>
+	<xsd:element name='Directory' type='StructureEntry'/>
+	<xsd:element name='SymLink' type='StructureEntry'/>
+	<xsd:element name='Permission' type='StructureEntry'/>
+	<xsd:element name='PostInstall' type='StructureEntry'/>
+	<xsd:element name='Group' type='GroupType'/>
+      </xsd:choice>
+      <xsd:attribute type='xsd:string' name='priority' use='required'/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
