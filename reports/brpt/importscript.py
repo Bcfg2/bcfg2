@@ -22,7 +22,7 @@ from lxml.etree import XML, XMLSyntaxError
 from sys import argv
 from getopt import getopt, GetoptError
 from datetime import datetime
-from time import strptime
+from time import strptime, sleep
 
 if __name__ == '__main__':
 
@@ -53,6 +53,108 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(clientspath))
         raise SystemExit, 1
 
+    from django.db import connection, backend
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT name, id from reports_client;")
+    clients = {}
+    [clients.__setitem__(a,b) for a,b in cursor.fetchall()]
+    
+    for node in statsdata.findall('Node'):
+        name = node.get('name')
+        if not clients.has_key(name):
+            cursor.execute("INSERT INTO reports_client VALUES (NULL, %s, %s, NULL)", [datetime.now(),name])
+            clients[name] = cursor.lastrowid
+#            print("Client %s added to db"%name)
+#        else:
+#            print("Client %s already exists in db"%name)
+
+
+    cursor.execute("SELECT client_id, timestamp, id from reports_interaction")
+    interactions = cursor.fetchall()
+    #interactions_slice = [x[0:2] for x in interactions]
+    interactions_hash = {}
+    [interactions_hash.__setitem__(str(x[0])+"-"+x[1].isoformat(),x[2]) for x in interactions]
+    pingability = {}
+    [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
+
+    cursor.execute("SELECT id, owner, current_owner, %s, current_group, perms, current_perms, status, current_status, %s, current_to, version, current_version, current_exists, current_diff from reports_reason"%(backend.quote_name("group"),backend.quote_name("to")))
+    reasons = cursor.fetchall()
+
+    cursor.execute("SELECT id, name, kind, reason_id from reports_bad")
+    bad_things = cursor.fetchall()
+    cursor.execute("SELECT id, name, kind, reason_id from reports_extra")
+    extra_things = cursor.fetchall()
+    cursor.execute("SELECT id, name, kind, reason_id from reports_modified")
+    modified_things = cursor.fetchall()
+    cursor.execute("SELECT id, metric, value from reports_performance")
+    performance_things = cursor.fetchall()
+
+    reasons_hash = {}
+    [reasons_hash.__setitem__(tuple(n[1:]),n[0]) for n in reasons]
+    for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
+        arguments = [r.get('owner', default=""), r.get('current_owner', default=""),
+                     r.get('group', default=""), r.get('current_group', default=""),
+                     eval(r.get('perms', default="''")), eval(r.get('current_perms', default="''")),
+                     r.get('status', default=""), r.get('current_status', default=""),
+                     r.get('to', default=""), r.get('current_to', default=""),
+                     r.get('version', default=""), r.get('current_version', default=""),
+                     eval(r.get('current_exists', default="True").capitalize()), r.get('current_diff', default="")]
+        if reasons_hash.has_key(tuple(arguments)):
+            current_reason_id = reasons_hash[tuple(arguments)]
+#            print("Reason already exists..... It's ID is: %s"%current_reason_id)
+        else:
+            cursor.execute("INSERT INTO reports_reason VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
+                           arguments)
+            current_reason_id = cursor.lastrowid
+            reasons.append([current_reason_id]+arguments)
+            reasons_hash[tuple(arguments)] = current_reason_id
+                               
+#            print("Reason inserted with id %s"%current_reason_id)
+    print "----------------REASONS SYNCED------------------"
+    for node in statsdata.findall('Node'):
+        name = node.get('name')
+        try:
+            pingability[name]
+        except KeyError:
+            pingabilty[name] = 'N'
+        for statistics in node.findall('Statistics'):
+            t = strptime(statistics.get('time'))
+            timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
+            if interactions_hash.has_key(str(clients[name]) +"-"+ timestamp.isoformat()):
+                current_interaction_id = interactions_hash[str(clients[name])+"-"+timestamp.isoformat()]
+#                print("Interaction for %s at %s with id %s already exists"%(clients[name],
+#                      datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
+            else:
+                cursor.execute("INSERT INTO reports_interaction VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s);",
+                               [clients[name],
+                                timestamp,
+                                statistics.get('state', default="unknown"),
+                                statistics.get('revision',default="unknown"),
+                                statistics.get('client_version',default="unknown"),
+                                pingability[name],
+                                statistics.get('good',default="0"),
+                                statistics.get('total',default="0")])
+                current_interaction_id = cursor.lastrowid
+                interactions.append([clients[name], timestamp, current_interaction_id])
+                interactions_hash[str(clients[name])+"-"+timestamp.isoformat()] = current_interaction_id
+#                print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
+#                      timestamp, current_interaction_id))
+
+            #insert bad children, extra children, modified children, performance items for this iteration of Client/Interaction
+
+    #use that crazy query to update all the latest client_interaction records.
+    
+            
+    connection._commit()
+    #Clients are consistent
+    for q in connection.queries:
+        print q
+
+    raise SystemExit, 0
+
+
+    #-------------------------------
     for node in statsdata.findall('Node'):
         (client_rec, cr_created) = Client.objects.get_or_create(name=node.get('name'),
                                         defaults={'name': node.get('name'), 'creation': datetime.now()})
