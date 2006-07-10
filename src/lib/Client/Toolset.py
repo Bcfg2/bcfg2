@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
+import binascii, copy, difflib, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -43,7 +43,7 @@ class Toolset(object):
     '''The toolset class contains underlying command support and all states'''
     __important__ = []
     __name__ = 'Toolset'
-    pkgtool = ('echo', ('%s', ['name']))
+    pkgtool = {'echo': ('%s', ['name'])}
     
     def __init__(self, cfg, setup):
         '''Install initial configs, and setup state structures'''
@@ -395,6 +395,9 @@ class Toolset(object):
             # file does not exist
             return False
         contentStatus = content == tempdata
+        if not contentStatus:
+            diff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), tempdata.split('\n'))])
+            entry.set("current_diff", diff)
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
