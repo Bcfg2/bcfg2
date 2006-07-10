@@ -128,12 +128,12 @@ class SafeProxy:
     try:
         _components = _cfile._sections['components']
     except KeyError:
-        print "cobalt.conf doesn't contain a valid components section"
+        print "%s doesn't contain a valid components section" % (_cfpath)
         raise SystemExit, 1
     try:
         _authinfo = ('root', _cfile.get('communication', 'password'))
     except KeyError:
-        print "cobalt.conf doesn't contain a valid communication setup"
+        print "%s doesn't contain a valid communication setup" % (_cfpath)
         raise SystemExit, 1
     _retries = 4
 
