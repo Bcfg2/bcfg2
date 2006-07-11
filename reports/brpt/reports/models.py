@@ -71,10 +71,16 @@ class Interaction(models.Model):
         return "With " + self.client.name + " @ " + self.timestamp.isoformat()
 
     def percentgood(self):
-        return (self.goodcount/self.totalcount)*100
+        if not self.totalcount == 0:
+            return (self.goodcount/self.totalcount)*100
+        else:
+            return 0
 
     def percentbad(self):
-        return (self.totalcount-self.goodcount)/(self.totalcount)
+        if not self.totalcount == 0:
+            return (self.totalcount-self.goodcount)/(self.totalcount)
+        else:
+            return 0
     
     def isclean(self):
         if (self.bad_items.count() == 0 and self.extra_items.count() == 0 and self.goodcount == self.totalcount):
@@ -116,8 +122,8 @@ class Reason(models.Model):
     current_owner = models.TextField(maxlength=128, blank=True)
     group = models.TextField(maxlength=128, blank=True)
     current_group = models.TextField(maxlength=128, blank=True)
-    perms =  models.IntegerField(blank=True)
-    current_perms = models.IntegerField(blank=True)
+    perms =  models.TextField(maxlength=4, blank=True)#because permissions might start with zero, and the db might think its octal and break
+    current_perms = models.TextField(maxlength=4,blank=True)
     status = models.TextField(maxlength=3, blank=True)#on/off/(None)
     current_status = models.TextField(maxlength=1, blank=True)#on/off/(None)
     to = models.TextField(maxlength=256, blank=True)
@@ -165,13 +171,15 @@ class PerformanceManager(models.Manager):
             "reports_client.current_interaction_id = reports_performance_interaction.interaction_id AND "+
             "reports_performance.id = reports_performance_interaction.performance_id)")
         else:
-            cursor.execute("SELECT reports_client.name, reports_performance.metric, reports_performance.value, "+
-            "MAX(reports_interaction.timestamp) FROM reports_performance, reports_performance_interaction, "+
-            "reports_interaction, reports_client WHERE reports_interaction.id = "+
-            "reports_performance_interaction.interaction_id AND reports_client.id = "+
-            "reports_interaction.client_id AND reports_performance.id = "+
-            "reports_performance_interaction.performance_id AND reports_interaction.timestamp < %s GROUP BY "+
-            "reports_performance.id", [maxdate])
+            cursor.execute("select reports_client.name, reports_performance.metric, "+
+                           "reports_performance.value from (Select reports_interaction.client_id as client_id, "+
+                           "MAX(reports_interaction.timestamp) as timestamp from reports_interaction where "+
+                           "timestamp < %s GROUP BY reports_interaction.client_id) x, reports_client, "+
+                           "reports_interaction, reports_performance, reports_performance_interaction where "+
+                           "reports_client.id = x.client_id AND x.timestamp = reports_interaction.timestamp AND "+
+                           "x.client_id = reports_interaction.client_id AND reports_performance.id = "+
+                           "reports_performance_interaction.performance_id AND "+
+                           "reports_performance_interaction.interaction_id = reports_interaction.id", [maxdate])
 
         results = {}
         for row in cursor.fetchall():
