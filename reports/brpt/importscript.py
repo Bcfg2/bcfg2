@@ -25,25 +25,29 @@ from datetime import datetime
 from time import strptime, sleep
 
 if __name__ == '__main__':
+    somewhatverbose = False
     verbose = False
     veryverbose = False
     try:
-        opts, args = getopt(argv[1:], "hvdc:s:", ["help", "verbose", "debug", "clients=", "stats="])
+        opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,"debug", "clients=", "stats="])
     except GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nStatReports.py [-h] [-v] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
+        print "%s\nUsage:\nStatReports.py [-h] [-v] [-u] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
             print "Usage:\nStatReports.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
             print "h : help; this message"
             print "v : verbose; print messages on record insertion/skip"
-            print "d : debug; print all SQL used to manipulatee database"
+            print "u : updates; print status messages as items inserted semi-verbose"
+            print "d : debug; print most SQL used to manipulate database"
             print "c : clients.xml file"
             print "s : statistics.xml file"
             raise SystemExit
         if o in ("-v", "--verbose"):
             verbose = True
+        if o in ("-u", "--updates"):
+            somewhatverbose = True
         if o in ("-d", "--debug"):
             veryverbose = True
         if o in ("-c", "--clients"):
@@ -128,7 +132,7 @@ if __name__ == '__main__':
             reasons_hash[tuple(arguments)] = current_reason_id
             if verbose:
                 print("Reason inserted with id %s"%current_reason_id)
-    if verbose:
+    if (somewhatverbose or verbose):
         print "----------------REASONS SYNCED---------------------"
     
     for node in statsdata.findall('Node'):
@@ -204,13 +208,13 @@ if __name__ == '__main__':
                     except:
                         pass
 
-    if verbose:
+    if (somewhatverbose or verbose):
         print("----------------INTERACTIONS SYNCED----------------")
     cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
     for row in cursor.fetchall():
         cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
                        [row[0],row[1]])
-    if verbose:
+    if (somewhatverbose or verbose):
         print("------------LATEST INTERACTION SET----------------")
             
     connection._commit()
@@ -220,7 +224,8 @@ if __name__ == '__main__':
             if not (q['sql'].startswith('INSERT INTO reports_bad_interactions')|
                     q['sql'].startswith('INSERT INTO reports_extra_interactions')|
                     q['sql'].startswith('INSERT INTO reports_performance_interaction')|
-                    q['sql'].startswith('INSERT INTO reports_modified_interactions')):
+                    q['sql'].startswith('INSERT INTO reports_modified_interactions')|
+                    q['sql'].startswith('UPDATE reports_client SET current_interaction_id ')):
                 print q
 
     raise SystemExit, 0
