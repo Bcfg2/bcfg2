@@ -46,11 +46,15 @@ class InteractiveManager(models.Manager):
         from django.db import connection
         cursor = connection.cursor()
         if (maxdate == 'now' or maxdate == None): 
-            cursor.execute("select id, client_id, MAX(timestamp) AS maxtimestamp from reports_interaction GROUP BY client_id")
+            cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
+                           "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
+                           "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
         else:
-            cursor.execute("select id, client_id, timestamp, MAX(timestamp) AS maxtimestamp from reports_interaction where timestamp < %s GROUP BY client_id", [maxdate])
-        #rows = cursor.fetchall()
-        #return rows
+            cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
+                           "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
+                           "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer", [maxdate])
+
+#            cursor.execute("select id, client_id, timestamp, MAX(timestamp) AS maxtimestamp from reports_interaction where timestamp < %s GROUP BY client_id", [maxdate])
         in_idents = [item[0] for item in cursor.fetchall()]
         return self.filter(id__in = in_idents)
 
@@ -139,6 +143,7 @@ class Modified(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="modified_items")
     name = models.CharField(maxlength=128, core=True)#name of modified thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
@@ -147,6 +152,7 @@ class Extra(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="extra_items")
     name = models.CharField(maxlength=128, core=True)#name of Extra thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
@@ -155,6 +161,7 @@ class Bad(models.Model):
     interactions = models.ManyToManyField(Interaction, related_name="bad_items")
     name = models.CharField(maxlength=128, core=True)#name of bad thing.
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name

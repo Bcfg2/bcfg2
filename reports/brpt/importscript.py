@@ -25,17 +25,27 @@ from datetime import datetime
 from time import strptime, sleep
 
 if __name__ == '__main__':
-
+    verbose = False
+    veryverbose = False
     try:
-        opts, args = getopt(argv[1:], "hc:s:", ["help", "clients=", "stats="])
+        opts, args = getopt(argv[1:], "hvdc:s:", ["help", "verbose", "debug", "clients=", "stats="])
     except GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nStatReports.py [-h] -c <clients-file> -s <statistics-file>" % (mesg) 
+        print "%s\nUsage:\nStatReports.py [-h] [-v] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
-            print "Usage:\nStatReports.py [-h] -c <clients-file> -s <statistics-file>"
+            print "Usage:\nStatReports.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
+            print "h : help; this message"
+            print "v : verbose; print messages on record insertion/skip"
+            print "d : debug; print all SQL used to manipulatee database"
+            print "c : clients.xml file"
+            print "s : statistics.xml file"
             raise SystemExit
+        if o in ("-v", "--verbose"):
+            verbose = True
+        if o in ("-d", "--debug"):
+            veryverbose = True
         if o in ("-c", "--clients"):
             clientspath = a
         if o in ("-s", "--stats"):
@@ -65,9 +75,11 @@ if __name__ == '__main__':
         if not clients.has_key(name):
             cursor.execute("INSERT INTO reports_client VALUES (NULL, %s, %s, NULL)", [datetime.now(),name])
             clients[name] = cursor.lastrowid
-#            print("Client %s added to db"%name)
-#        else:
-#            print("Client %s already exists in db"%name)
+            if verbose:
+                print("Client %s added to db"%name)
+        else:
+            if verbose:
+                print("Client %s already exists in db"%name)
 
 
     cursor.execute("SELECT client_id, timestamp, id from reports_interaction")
@@ -103,19 +115,21 @@ if __name__ == '__main__':
                      r.get('status', default=""), r.get('current_status', default=""),
                      r.get('to', default=""), r.get('current_to', default=""),
                      r.get('version', default=""), r.get('current_version', default=""),
-                     eval(r.get('current_exists', default="True").capitalize()), r.get('current_diff', default="")]
+                     (r.get('current_exists', default="True").capitalize()=="True"),
+                     r.get('current_diff', default="")]
         if reasons_hash.has_key(tuple(arguments)):
             current_reason_id = reasons_hash[tuple(arguments)]
-#            print("Reason already exists..... It's ID is: %s"%current_reason_id)
+            if verbose:
+                print("Reason already exists..... It's ID is: %s"%current_reason_id)
         else:
             cursor.execute("INSERT INTO reports_reason VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
                            arguments)
             current_reason_id = cursor.lastrowid
             reasons_hash[tuple(arguments)] = current_reason_id
-                               
-#            print("Reason inserted with id %s"%current_reason_id)
-
-    print "----------------REASONS SYNCED---------------------"
+            if verbose:
+                print("Reason inserted with id %s"%current_reason_id)
+    if verbose:
+        print "----------------REASONS SYNCED---------------------"
     
     for node in statsdata.findall('Node'):
         name = node.get('name')
@@ -128,8 +142,9 @@ if __name__ == '__main__':
             timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
             if interactions_hash.has_key(str(clients[name]) +"-"+ timestamp.isoformat()):
                 current_interaction_id = interactions_hash[str(clients[name])+"-"+timestamp.isoformat()]
-#                print("Interaction for %s at %s with id %s already exists"%(clients[name],
-#                      datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
+                if verbose:
+                    print("Interaction for %s at %s with id %s already exists"%(clients[name],
+                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
             else:
                 cursor.execute("INSERT INTO reports_interaction VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s);",
                                [clients[name], timestamp,
@@ -138,8 +153,9 @@ if __name__ == '__main__':
                                 statistics.get('good',default="0"), statistics.get('total',default="0")])
                 current_interaction_id = cursor.lastrowid
                 interactions_hash[str(clients[name])+"-"+timestamp.isoformat()] = current_interaction_id
-                #print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
-                #    timestamp, current_interaction_id))
+                if verbose:
+                    print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
+                        timestamp, current_interaction_id))
             for (xpath, hashname, tablename) in [('Bad/*', bad_hash, 'reports_bad'),
                                                  ('Extra/*', extra_hash, 'reports_extra'),
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
@@ -151,17 +167,23 @@ if __name__ == '__main__':
                                      x.get('status', default=""), x.get('current_status', default=""),
                                      x.get('to', default=""), x.get('current_to', default=""),
                                      x.get('version', default=""), x.get('current_version', default=""),
-                                     eval(x.get('current_exists', default="True").capitalize()), x.get('current_diff', default="")]
-                        cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s);",
-                                       [x.get('name'), x.tag, reasons_hash[tuple(arguments)]])
+                                     (x.get('current_exists', default="True").capitalize()=="True"),
+                                     x.get('current_diff', default="")]
+                        cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s, %s);",
+                                       [x.get('name'),
+                                        x.tag,
+                                        (x.get('critical', default="False").capitalize()=="True"),
+                                        reasons_hash[tuple(arguments)]])
                         item_id = cursor.lastrowid
                         hashname[(x.get('name'), x.tag)] = (item_id, current_interaction_id)
-                    #print "Bad item INSERTED having reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
-                    #                                                         hashname[(x.get('name'),x.tag)][0])                
+                    if verbose:
+                        print "Bad item INSERTED having reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
+                                                                                 hashname[(x.get('name'),x.tag)][0])                
                     else:
                         item_id = hashname[(x.get('name'), x.tag)][0]
-                        #print "Bad item exists, has reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
-                        #                                                              hashname[(x.get('name'),x.tag)][0])
+                        if verbose:
+                            print "Bad item exists, has reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
+                                                                                          hashname[(x.get('name'),x.tag)][0])
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
@@ -170,11 +192,11 @@ if __name__ == '__main__':
 
             for times in statistics.findall('OpStamps'):
                 for tags in times.items():
-                    if not performance_hash.has_key((tags[0],eval(tags[1]))):
+                    if not performance_hash.has_key((tags[0],float(tags[1]))):
                         cursor.execute("INSERT INTO reports_performance VALUES (NULL, %s, %s)",[tags[0],tags[1]])
                         performance_hash[(tags[0],tags[1])] = cursor.lastrowid
                     else:
-                        item_id = performance_hash[(tags[0],eval(tags[1]))]
+                        item_id = performance_hash[(tags[0],float(tags[1]))]
                         #already exists
                     try:
                         cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
@@ -182,172 +204,23 @@ if __name__ == '__main__':
                     except:
                         pass
 
-                
-    print("----------------INTERACTIONS SYNCED----------------")
-    connection._commit()
+    if verbose:
+        print("----------------INTERACTIONS SYNCED----------------")
     cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
     for row in cursor.fetchall():
         cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
                        [row[0],row[1]])
-        print "setting current_interaction_id for client ID %s to %s"%(row[1],row[0])
-
-    print("------------LATEST INTERACTION SET----------------")
-
-    #use that crazy query to update all the latest client_interaction records.
-    
+    if verbose:
+        print("------------LATEST INTERACTION SET----------------")
             
     connection._commit()
     #Clients are consistent
-    for q in connection.queries:
-        if not (q['sql'].startswith('INSERT INTO reports_bad_interactions')|
-                q['sql'].startswith('INSERT INTO reports_extra_interactions')|
-                q['sql'].startswith('INSERT INTO reports_performance_interaction')|
-                q['sql'].startswith('INSERT INTO reports_modified_interactions')|
-                q['sql'].startswith('UPDATE reports_client SET current_interaction_id')):
-            print q
+    if veryverbose:
+        for q in connection.queries:
+            if not (q['sql'].startswith('INSERT INTO reports_bad_interactions')|
+                    q['sql'].startswith('INSERT INTO reports_extra_interactions')|
+                    q['sql'].startswith('INSERT INTO reports_performance_interaction')|
+                    q['sql'].startswith('INSERT INTO reports_modified_interactions')):
+                print q
 
     raise SystemExit, 0
-
-
-    #-------------------------------
-    for node in statsdata.findall('Node'):
-        (client_rec, cr_created) = Client.objects.get_or_create(name=node.get('name'),
-                                        defaults={'name': node.get('name'), 'creation': datetime.now()})
-
-        for statistics in node.findall('Statistics'):
-            t = strptime(statistics.get('time'))
-            (interaction_rec, ir_created) = Interaction.objects.get_or_create(client=client_rec.id,
-                                                timestamp=datetime(t[0],t[1],t[2],t[3],t[4],t[5]),
-                                                defaults={'client':client_rec,
-                                                          'timestamp':datetime(t[0],t[1],t[2],t[3],t[4],t[5]),
-                                                          'state':statistics.get('state', default="unknown"),
-                                                          'repo_revision':statistics.get('revision', default="unknown"),
-                                                          'client_version':statistics.get('client_version'),
-                                                          'goodcount':statistics.get('good', default="unknown"),
-                                                          'totalcount':statistics.get('total', default="unknown")})
-            for bad in statistics.findall('Bad'):
-                for ele in bad.getchildren():
-                    (reason_rec, rr_created) = Reason.objects.get_or_create(owner=ele.get('owner',default=''),
-                                                        current_owner=ele.get('current_owner',default=''),
-                                                        group=ele.get('group',default=''),
-                                                        current_group=ele.get('current_group',default=''),
-                                                        perms=ele.get('perms',default=''),
-                                                        current_perms=ele.get('current_perms',default=''),
-                                                        status=ele.get('status',default=''),
-                                                        current_status=ele.get('current_status',default=''),
-                                                        to=ele.get('to',default=''),
-                                                        current_to=ele.get('current_to',default=''),
-                                                        version=ele.get('version',default=''),
-                                                        current_version=ele.get('current_version',default=''),
-                                                        current_exists=ele.get('current_exists',default='True'),
-                                                        current_diff=ele.get('current_diff',default=''),
-                                                        defaults={'owner':ele.get('owner',default=''),
-                                                                  'current_owner':ele.get('current_owner',default=''),
-                                                                  'group':ele.get('group',default=''),
-                                                                  'current_group':ele.get('current_group',default=''),
-                                                                  'perms':ele.get('perms',default=''),
-                                                                  'current_perms':ele.get('current_perms',default=''),
-                                                                  'status':ele.get('status',default=''),
-                                                                  'current_status':ele.get('current_status',default=''),
-                                                                  'to':ele.get('to',default=''),
-                                                                  'current_to':ele.get('current_to',default=''),
-                                                                  'version':ele.get('version',default=''),
-                                                                  'current_version':ele.get('current_version',default=''),
-                                                                  'current_exists':ele.get('current_exists',default='True'),
-                                                                  'current_diff':ele.get('current_diff',default='')})
-                        
-
-                    (ele_rec, er_created) = Bad.objects.get_or_create(name=ele.get('name'), kind=ele.tag,
-                                                defaults={'name':ele.get('name'),
-                                                          'kind':ele.tag,
-                                                          'reason':reason_rec})
-
-                    if not ele_rec in interaction_rec.bad_items.all():
-                        interaction_rec.bad_items.add(ele_rec)
-
-            for modified in statistics.findall('Modified'):
-                for ele in modified.getchildren():
-                    (reason_rec, rr_created) = Reason.objects.get_or_create(owner=ele.get('owner',default=''),
-                                                        current_owner=ele.get('current_owner',default=''),
-                                                        group=ele.get('group',default=''),
-                                                        current_group=ele.get('current_group',default=''),
-                                                        perms=ele.get('perms',default=''),
-                                                        current_perms=ele.get('current_perms',default=''),
-                                                        status=ele.get('status',default=''),
-                                                        current_status=ele.get('current_status',default=''),
-                                                        to=ele.get('to',default=''),
-                                                        current_to=ele.get('current_to',default=''),
-                                                        version=ele.get('version',default=''),
-                                                        current_version=ele.get('current_version',default=''),
-                                                        current_exists=ele.get('current_exists',default='True'),
-                                                        current_diff=ele.get('current_diff',default=''),
-                                                        defaults={'owner':ele.get('owner',default=''),
-                                                                  'current_owner':ele.get('current_owner',default=''),
-                                                                  'group':ele.get('group',default=''),
-                                                                  'current_group':ele.get('current_group',default=''),
-                                                                  'perms':ele.get('perms',default=''),
-                                                                  'current_perms':ele.get('current_perms',default=''),
-                                                                  'status':ele.get('status',default=''),
-                                                                  'current_status':ele.get('current_status',default=''),
-                                                                  'to':ele.get('to',default=''),
-                                                                  'current_to':ele.get('current_to',default=''),
-                                                                  'version':ele.get('version',default=''),
-                                                                  'current_version':ele.get('current_version',default=''),
-                                                                  'current_exists':ele.get('current_exists',default='True'),
-                                                                  'current_diff':ele.get('current_diff',default='')})
-                        
-
-                    (ele_rec, er_created) = Modified.objects.get_or_create(name=ele.get('name'), kind=ele.tag,
-                                                defaults={'name':ele.get('name'),
-                                                          'kind':ele.tag,
-                                                          'reason':reason_rec})
-                    if not ele_rec in interaction_rec.modified_items.all():
-                        interaction_rec.modified_items.add(ele_rec)
-
-            for extra in statistics.findall('Extra'):
-                for ele in extra.getchildren():
-                    (reason_rec, rr_created) = Reason.objects.get_or_create(owner=ele.get('owner',default=''),
-                                                        current_owner=ele.get('current_owner',default=''),
-                                                        group=ele.get('group',default=''),
-                                                        current_group=ele.get('current_group',default=''),
-                                                        perms=ele.get('perms',default=''),
-                                                        current_perms=ele.get('current_perms',default=''),
-                                                        status=ele.get('status',default=''),
-                                                        current_status=ele.get('current_status',default=''),
-                                                        to=ele.get('to',default=''),
-                                                        current_to=ele.get('current_to',default=''),
-                                                        version=ele.get('version',default=''),
-                                                        current_version=ele.get('current_version',default=''),
-                                                        current_exists=ele.get('current_exists',default='True'),
-                                                        current_diff=ele.get('current_diff',default=''),
-                                                        defaults={'owner':ele.get('owner',default=''),
-                                                                  'current_owner':ele.get('current_owner',default=''),
-                                                                  'group':ele.get('group',default=''),
-                                                                  'current_group':ele.get('current_group',default=''),
-                                                                  'perms':ele.get('perms',default=''),
-                                                                  'current_perms':ele.get('current_perms',default=''),
-                                                                  'status':ele.get('status',default=''),
-                                                                  'current_status':ele.get('current_status',default=''),
-                                                                  'to':ele.get('to',default=''),
-                                                                  'current_to':ele.get('current_to',default=''),
-                                                                  'version':ele.get('version',default=''),
-                                                                  'current_version':ele.get('current_version',default=''),
-                                                                  'current_exists':ele.get('current_exists',default='True'),
-                                                                  'current_diff':ele.get('current_diff',default='')})
-                        
-
-                    (ele_rec, er_created) = Extra.objects.get_or_create(name=ele.get('name'), kind=ele.tag,
-                                                defaults={'name':ele.get('name'),
-                                                          'kind':ele.tag,
-                                                          'reason':reason_rec})
-                        
-                    if not ele_rec in interaction_rec.extra_items.all():
-                        interaction_rec.extra_items.add(ele_rec)
-
-            for times in statistics.findall('OpStamps'):
-                for tags in times.items():
-                    (time_rec, tr_created) = Performance.objects.get_or_create(metric=tags[0], value=tags[1],
-                                                    defaults={'metric':tags[0],
-                                                              'value':tags[1]})
-                    if not ele_rec in interaction_rec.extra_items.all():
-                        interaction_rec.performance_items.add(time_rec)
