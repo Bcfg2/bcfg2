@@ -12,10 +12,11 @@ import getopt
 
 
 def run_or_die(command):
-    (status, output) = commands.getstatusoutput(command)
+    (status, stdout) = commands.getstatusoutput(command)
     if status != 0:
-        raise Exception("command '%s' failed with exit status %d and output '%s'" % (command,status,output))
-    return output
+        raise Exception("command '%s' failed with exit status %d and output '%s'" %
+                        (command, status, stdout))
+    return stdout
 
 
 def rpmblob_cmp(a, b):
@@ -52,14 +53,14 @@ def verstr_cmp(a, b):
         
 
         
-def subdivide(str):
+def subdivide(verstr):
     """subdivide takes a version or release string and attempts to subdivide it into components to facilitate sorting.  The string is divided into a two level hierarchy of sub-parts.  The upper level is subdivided by periods, and the lower level is subdivided by boundaries between digit, alpha, and other character groupings."""
     parts = []
-    """parts is a list of lists representing the subsections which make up a version string.
-example:
-    4.0.2b3 would be represented as [[4],[0],[2,'b',3]].
-"""
-    major_parts = str.split('.')
+    #parts is a list of lists representing the subsections which make up a version string.
+    #example:
+    #4.0.2b3 would be represented as [[4],[0],[2,'b',3]].
+
+    major_parts = verstr.split('.')
     for major_part in major_parts:
         minor_parts = []
         index = 0
@@ -90,7 +91,7 @@ example:
     return parts
 
 
-def get_pkgs(dir):
+def get_pkgs(dirname):
     """scan a dir of rpms and generate a pkgs structure."""
     pkgs = {}
     """
@@ -110,9 +111,9 @@ pkgs = {
   {'file':'bar-3.7j-4.mips.rpm', 'name':'bar', 'version':'3.7j', 'release':'4', 'arch':'mips'}]
 }
 """
-    rpms = [file for file in os.listdir(dir) if file.endswith('.rpm')]
+    rpms = [item for item in os.listdir(dirname) if item.endswith('.rpm')]
     for rpm in rpms:
-        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (dir, rpm)
+        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (dirname, rpm)
         output = run_or_die(cmd)
         try:
             (name, version, release, arch) = output.split()
@@ -133,17 +134,17 @@ def prune_pkgs(pkgs):
     latest_rpms = []
     for rpmblob_list in pkgs.values():
         rpmblob_list.sort(rpmblob_cmp)
-        rpmblob.reverse()
+        rpmblob_list.reverse()
         latest_rpms.append(rpmblob_list[0])
     latest_rpms.sort(rpmblob_cmp)
     return latest_rpms
 
 
-def scan_rpm_dir(dir, uri, group, priority=0, output=sys.stdout):
+def scan_rpm_dir(dirname, uri, group, priority=0, output=sys.stdout):
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
-    for rpmblob in prune_pkgs(get_pkgs(dir)):
+    for rpmblob in prune_pkgs(get_pkgs(dirname)):
         output.write('  <Package name="%s" simplefile="%s" version="%s-%s"/>\n' % (rpmblob['name'], rpmblob['file'], rpmblob['version'], rpmblob['release']))
     output.write(' </Group>\n')
     output.write('</PackageList>\n')
@@ -155,14 +156,15 @@ def usage(output=sys.stdout):
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "g:u:d:p:o:", ["group=","uir=","dir=","priority=","output="])
+        opts, args = getopt.getopt(sys.argv[1:], "g:u:d:p:o:",
+                                   ["group=", "uir=", "dir=", "priority=", "output="])
     except getopt.GetoptError:
         usage(sys.stderr)
         sys.exit(1)
 
     group = "base"
     uri = "http://localhost/rpms"
-    dir = "."
+    outputdir = "."
     priority = "0"
     output = None
 
@@ -172,7 +174,7 @@ if __name__ == "__main__":
         elif opt in ['-u', '--uri']:
             uri = arg
         elif opt in ['-d', '--dir']:
-            dir = arg
+            outputdir = arg
         elif opt in ['-p', '--priority']:
             priority = arg
         elif opt in ['-o', '--output']:
@@ -183,4 +185,4 @@ if __name__ == "__main__":
     else:
         output = file(output,"w")
 
-    scan_rpm_dir(dir, uri, group, priority, output)
+    scan_rpm_dir(outputdir, uri, group, priority, output)
