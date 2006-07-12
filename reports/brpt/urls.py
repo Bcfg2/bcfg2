@@ -17,7 +17,7 @@ urlpatterns = patterns('',
     (r'^displays/$','brpt.reports.views.display_index'),
 
     # Uncomment this for admin:
-    (r'^admin/', include('django.contrib.admin.urls')),
+    #(r'^admin/', include('django.contrib.admin.urls')),
 
 
 
