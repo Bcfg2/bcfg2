@@ -1,0 +1,186 @@
+#!/usr/bin/python
+
+'''RPM package index generator
+Jason Pepas 7/12/2006'''
+
+__revision__ = '$Id$'
+
+import os
+import sys
+import commands
+import getopt
+
+
+def run_or_die(command):
+    (status, output) = commands.getstatusoutput(command)
+    if status != 0:
+        raise Exception("command '%s' failed with exit status %d and output '%s'" % (command,status,output))
+    return output
+
+
+def rpmblob_cmp(a, b):
+    """cmp() implementation for rpmblobs, suitable for use with sort()."""
+    ret = cmp(a['name'], b['name'])
+    if ret == 0:
+        ret = verstr_cmp(a['version'], b['version'])
+        if ret == 0:
+            ret = verstr_cmp(a['release'], b['release'])
+    return ret
+
+
+def verstr_cmp(a, b):
+    """cmp() implementation for version strings, suitable for use with sort()."""
+    ret = 0
+    index = 0
+    a_parts = subdivide(a)
+    b_parts = subdivide(b)
+    while ret == 0 and index < min(len(a_parts), len(b_parts)):
+        subindex = 0
+        a_subparts = a_parts[index]
+        b_subparts = b_parts[index]
+        while ret == 0 and subindex < min(len(a_subparts), len(b_subparts)):
+            ret = cmp(a_subparts[subindex], b_subparts[subindex])
+            if ret != 0:
+                return ret
+            subindex = subindex + 1
+        if len(a_subparts) != len(b_subparts):
+            return len(a_subparts) - len(b_subparts)
+        index = index + 1
+    if len(a_parts) != len(b_parts):
+        return len(a_parts) - len(b_parts)
+    return ret
+        
+
+        
+def subdivide(str):
+    """subdivide takes a version or release string and attempts to subdivide it into components to facilitate sorting.  The string is divided into a two level hierarchy of sub-parts.  The upper level is subdivided by periods, and the lower level is subdivided by boundaries between digit, alpha, and other character groupings."""
+    parts = []
+    """parts is a list of lists representing the subsections which make up a version string.
+example:
+    4.0.2b3 would be represented as [[4],[0],[2,'b',3]].
+"""
+    major_parts = str.split('.')
+    for major_part in major_parts:
+        minor_parts = []
+        index = 0
+        while index < len(major_part):
+            # handle digit subsection
+            if major_part[index].isdigit():
+                digit_str_part = ""
+                while index < len(major_part) and major_part[index].isdigit():
+                    digit_str_part = digit_str_part + major_part[index]
+                    index = index + 1
+                digit_part = int(digit_str_part)
+                minor_parts.append(digit_part)
+            # handle alpha subsection
+            elif major_part[index].isalpha():
+                alpha_part = ""
+                while index < len(major_part) and major_part[index].isalpha():
+                    alpha_part = alpha_part + major_part[index]
+                    index = index + 1
+                minor_parts.append(alpha_part)
+            # handle other characters.  this should only be '_', but we will treat is as a subsection to keep it general.
+            elif not major_part[index].isalnum():
+                other_part = ""
+                while index < len(major_part) and not major_part[index].isalnum():
+                    other_part = other_part + major_part[index]
+                    index = index + 1
+                minor_parts.append(other_part)
+            parts.append(minor_parts)
+    return parts
+
+
+def get_pkgs(dir):
+    """scan a dir of rpms and generate a pkgs structure."""
+    pkgs = {}
+    """
+pkgs structure:
+* pkgs is a dict of package name, rpmblob list pairs:
+  pkgs = {name:[rpmblob,rpmblob...], name:[rpmblob,rpmblob...]}
+* rpmblob is a dict describing an rpm file:
+  rpmblob = {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'arch':'i386'},
+
+example:
+pkgs = {
+'foo' : [
+  {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'arch':'i386'},
+  {'file':'foo-0.2-3.i386.rpm', 'name':'foo', 'version':'0.2', 'release':'3', 'arch':'i386'}],
+'bar' : [
+  {'file':'bar-3.2a-12.mips.rpm', 'name':'bar', 'version':'3.2a', 'release':'12', 'arch':'mips'},
+  {'file':'bar-3.7j-4.mips.rpm', 'name':'bar', 'version':'3.7j', 'release':'4', 'arch':'mips'}]
+}
+"""
+    rpms = [file for file in os.listdir(dir) if file.endswith('.rpm')]
+    for rpm in rpms:
+        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (dir, rpm)
+        output = run_or_die(cmd)
+        try:
+            (name, version, release, arch) = output.split()
+        except:
+            print "cmd:", cmd
+            print "output:", output
+            raise
+        rpmblob = {'file':rpm, 'name':name, 'version':version, 'release':release, 'arch':arch}
+        if pkgs.has_key(name):
+            pkgs[name].append(rpmblob)
+        else:
+            pkgs[name] = [rpmblob]
+    return pkgs
+
+
+def prune_pkgs(pkgs):
+    """prune a pkgs structure to contain only the latest version of each package.  the result is sorted."""
+    latest_rpms = []
+    for rpmblob_list in pkgs.values():
+        rpmblob_list.sort(rpmblob_cmp)
+        rpmblob.reverse()
+        latest_rpms.append(rpmblob_list[0])
+    latest_rpms.sort(rpmblob_cmp)
+    return latest_rpms
+
+
+def scan_rpm_dir(dir, uri, group, priority=0, output=sys.stdout):
+    """the meat of this library."""
+    output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
+    output.write(' <Group name="%s">\n' % group)
+    for rpmblob in prune_pkgs(get_pkgs(dir)):
+        output.write('  <Package name="%s" simplefile="%s" version="%s-%s"/>\n' % (rpmblob['name'], rpmblob['file'], rpmblob['version'], rpmblob['release']))
+    output.write(' </Group>\n')
+    output.write('</PackageList>\n')
+
+
+def usage(output=sys.stdout):
+    output.write("Usage: %s [-g <groupname>] [-u <uri>] [-d <dir>] [-p <priority>] [-o <output>]\n" % sys.argv[0])
+
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "g:u:d:p:o:", ["group=","uir=","dir=","priority=","output="])
+    except getopt.GetoptError:
+        usage(sys.stderr)
+        sys.exit(1)
+
+    group = "base"
+    uri = "http://localhost/rpms"
+    dir = "."
+    priority = "0"
+    output = None
+
+    for opt, arg in opts:
+        if opt in ['-g', '--group']:
+            group = arg
+        elif opt in ['-u', '--uri']:
+            uri = arg
+        elif opt in ['-d', '--dir']:
+            dir = arg
+        elif opt in ['-p', '--priority']:
+            priority = arg
+        elif opt in ['-o', '--output']:
+            output = arg
+
+    if output == None:
+        output = sys.stdout
+    else:
+        output = file(output,"w")
+
+    scan_rpm_dir(dir, uri, group, priority, output)
