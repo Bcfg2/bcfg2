@@ -1,3 +1,9 @@
+bcfg2 (0.8.2-0pre8) unstable; urgency=low
+
+  * new upstream
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Wed, 12 Jul 2006 14:36:26 -0500
+
 bcfg2 (0.8.2-0pre7) unstable; urgency=low
 
   * new upstream
