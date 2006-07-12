@@ -12,11 +12,11 @@ import getopt
 
 
 def run_or_die(command):
-    (status, stdout) = commands.getstatusoutput(command)
+    (status, stdio) = commands.getstatusoutput(command)
     if status != 0:
         raise Exception("command '%s' failed with exit status %d and output '%s'" %
-                        (command, status, stdout))
-    return stdout
+                        (command, status, stdio))
+    return stdio
 
 
 def rpmblob_cmp(a, b):
@@ -133,8 +133,12 @@ def prune_pkgs(pkgs):
     """prune a pkgs structure to contain only the latest version of each package.  the result is sorted."""
     latest_rpms = []
     for rpmblob_list in pkgs.values():
-        rpmblob_list.sort(rpmblob_cmp)
-        rpmblob_list.reverse()
+        (major, minor) = sys.version_info[:2]
+        if major >= 2 and minor >= 4:
+            rpmblob_list.sort(rpmblob_cmp, reverse=True)
+        else:
+            rpmblob_list.sort(rpmblob_cmp)
+            rpmblob_list.reverse()
         latest_rpms.append(rpmblob_list[0])
     latest_rpms.sort(rpmblob_cmp)
     return latest_rpms
@@ -164,7 +168,7 @@ if __name__ == "__main__":
 
     group = "base"
     uri = "http://localhost/rpms"
-    outputdir = "."
+    rpmdir = "."
     priority = "0"
     output = None
 
@@ -174,7 +178,7 @@ if __name__ == "__main__":
         elif opt in ['-u', '--uri']:
             uri = arg
         elif opt in ['-d', '--dir']:
-            outputdir = arg
+            rpmdir = arg
         elif opt in ['-p', '--priority']:
             priority = arg
         elif opt in ['-o', '--output']:
@@ -185,4 +189,4 @@ if __name__ == "__main__":
     else:
         output = file(output,"w")
 
-    scan_rpm_dir(outputdir, uri, group, priority, output)
+    scan_rpm_dir(rpmdir, uri, group, priority, output)
