@@ -140,7 +140,7 @@ if __name__ == '__main__':
         try:
             pingability[name]
         except KeyError:
-            pingabilty[name] = 'N'
+            pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
             timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
