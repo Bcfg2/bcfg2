@@ -87,7 +87,7 @@ class Interaction(models.Model):
             return 0
     
     def isclean(self):
-        if (self.bad_items.count() == 0 and self.extra_items.count() == 0 and self.goodcount == self.totalcount):
+        if (self.bad_items.count() == 0 and self.goodcount == self.totalcount):
         #if (self.state == "good"):
             return True
         else:
