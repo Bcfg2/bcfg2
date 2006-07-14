@@ -6,16 +6,22 @@ __revision__ = '$Revision$'
 import glob, lxml.etree, os, sys, ConfigParser
 
 if __name__ == '__main__':
-    cf = ConfigParser.ConfigParser()
-    schemadir = '/usr/share/bcfg2/schemas'
     verbose = False
     if '-v' in sys.argv:
         verbose = True
         sys.argv.remove('-v')
+    cf = ConfigParser.ConfigParser()
+    cf.read(['/etc/bcfg2.conf'])
+    try:
+        prefix = cf.get('server', 'prefix')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        prefix = '/usr'
+    if verbose:
+        print "Using installation prefix %s" % (prefix)
+    schemadir = "%s/share/bcfg2/schemas" % (prefix)
     if len(sys.argv) > 1:
         repo = sys.argv[1]
     else:
-        cf.read(['/etc/bcfg2.conf'])
         try:
             repo = cf.get('server', 'repository')
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
