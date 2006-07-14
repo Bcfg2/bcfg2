@@ -159,7 +159,10 @@ class Client:
             proxy = Bcfg2.Client.Proxy.bcfg2()
 
             if self.setup['profile']:
-                proxy.AssertProfile(self.setup['profile'])
+                try:
+                    proxy.AssertProfile(self.setup['profile'])
+                except xmlrpclib.Fault:
+                    self.fatal_error("Failed to set client profile")
 
             try:
                 probe_data = proxy.GetProbes()
