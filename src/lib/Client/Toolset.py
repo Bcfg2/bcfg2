@@ -498,6 +498,9 @@ class Toolset(object):
                         self.VerifyPackage(child, modfiles)
                     else:
                         self.VerifyEntry(child)
+                        if not self.states.has_key(child):
+                            self.logger.error("Could not get state for entry %s: %s" % (child.tag, child.get('name')))
+                            continue
                         if not self.states[child]:
                             self.logger.debug("Reinstalling clobbered entry %s %s" % (child.tag,
                                                                                       child.get('name')))
