@@ -9,7 +9,7 @@ import os
 import sys
 import commands
 import getopt
-
+import re
 
 def run_or_die(command):
     (status, stdio) = commands.getstatusoutput(command)
@@ -35,6 +35,7 @@ def verstr_cmp(a, b):
     index = 0
     a_parts = subdivide(a)
     b_parts = subdivide(b)
+    prerelease_pattern = re.compile('rc|pre')
     while ret == 0 and index < min(len(a_parts), len(b_parts)):
         subindex = 0
         a_subparts = a_parts[index]
@@ -45,13 +46,23 @@ def verstr_cmp(a, b):
                 return ret
             subindex = subindex + 1
         if len(a_subparts) != len(b_subparts):
-            return len(a_subparts) - len(b_subparts)
+            # handle prerelease special case at subpart level (ie, '4.0.2rc5').
+            if len(a_subparts) > len(b_subparts) and prerelease_pattern.match(a_subparts[subindex]):
+                return -1
+            elif len(a_subparts) < len(b_subparts) and prerelease_pattern.match(b_subparts[subindex]):
+                return 1
+            else:
+                return len(a_subparts) - len(b_subparts)
         index = index + 1
     if len(a_parts) != len(b_parts):
-        return len(a_parts) - len(b_parts)
+        # handle prerelease special case at part level (ie, '4.0.2.rc5).
+        if len(a_parts) > len(b_parts) and prerelease_pattern.match(a_parts[index][0]):
+            return -1
+        elif len(a_parts) < len(b_parts) and prerelease_pattern.match(b_parts[index][0]):
+            return 1
+        else:
+            return len(a_parts) - len(b_parts)
     return ret
-        
-
         
 def subdivide(verstr):
     """subdivide takes a version or release string and attempts to subdivide it into components to facilitate sorting.  The string is divided into a two level hierarchy of sub-parts.  The upper level is subdivided by periods, and the lower level is subdivided by boundaries between digit, alpha, and other character groupings."""
