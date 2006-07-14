@@ -222,7 +222,7 @@ class Client:
 
         # Get toolset from server
         try:
-            toolsetName = self.config.get('toolset')
+            toolsetName = self.config.get('toolset', 'Toolset')
         except:
             self.fatal_error("server did not specify a toolset")
 
