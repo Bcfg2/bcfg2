@@ -65,7 +65,9 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
         else:
             [src.Cache(metadata) for src in self.entries.values()]
             
-            for entry in entries:
+            toexamine = entries[:]
+            while toexamine:
+                entry = toexamine.pop()
                 matching = [src for src in self.entries.values()
                             if src.cache and src.cache[1].has_key(entry[0])
                             and src.cache[1][entry[0]].has_key(entry[1])]
@@ -74,15 +76,16 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
                     if prio.count(max(prio)) > 1:
                         self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
                                           (entry[0].lower(), metadata.hostname, entry[1]))
-                        raise PluginExecutionError
+                        raise Bcfg2.Server.Plugin.PluginExecutionError
                     index = prio.index(max(prio))
                     matching = [matching[index]]
 
                 if not matching:
                     continue
                 elif len(matching) == 1:
-                    for prq in src.cache[1][entry[0]][entry[1]]:
-                        if prq not in prereqs:
+                    for prq in matching[0].cache[1][entry[0]][entry[1]]:
+                        if prq not in prereqs and prq not in entries:
+                            toexamine.append(prq)
                             prereqs.append(prq)
             self.cache[(entries, gdata)] = prereqs
             
