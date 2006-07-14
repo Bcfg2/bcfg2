@@ -47,18 +47,18 @@ def verstr_cmp(a, b):
             subindex = subindex + 1
         if len(a_subparts) != len(b_subparts):
             # handle prerelease special case at subpart level (ie, '4.0.2rc5').
-            if len(a_subparts) > len(b_subparts) and prerelease_pattern.match(a_subparts[subindex]):
+            if len(a_subparts) > len(b_subparts) and prerelease_pattern.match(str(a_subparts[subindex])):
                 return -1
-            elif len(a_subparts) < len(b_subparts) and prerelease_pattern.match(b_subparts[subindex]):
+            elif len(a_subparts) < len(b_subparts) and prerelease_pattern.match(str(b_subparts[subindex])):
                 return 1
             else:
                 return len(a_subparts) - len(b_subparts)
         index = index + 1
     if len(a_parts) != len(b_parts):
         # handle prerelease special case at part level (ie, '4.0.2.rc5).
-        if len(a_parts) > len(b_parts) and prerelease_pattern.match(a_parts[index][0]):
+        if len(a_parts) > len(b_parts) and prerelease_pattern.match(str(a_parts[index][0])):
             return -1
-        elif len(a_parts) < len(b_parts) and prerelease_pattern.match(b_parts[index][0]):
+        elif len(a_parts) < len(b_parts) and prerelease_pattern.match(str(b_parts[index][0])):
             return 1
         else:
             return len(a_parts) - len(b_parts)
