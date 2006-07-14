@@ -29,7 +29,7 @@ if __name__ == '__main__':
                 'bundle':("%s/Bundler/*.xml", "%s/bundle.xsd"),
                 'pkglist':("%s/Pkgmgr/*.xml", "%s/pkglist.xsd"),
                 'base':("%s/Base/*.xml", "%s/base.xsd"),
-                'base':("%s/Rules/*.xml", "%s/rules.xsd"),
+                'rules':("%s/Rules/*.xml", "%s/rules.xsd"),
                 'imageinfo':("%s/etc/reports.xml", "%s/report-configuration.xsd"),
                 'services':("%s/Svcmgr/*.xml", "%s/services.xsd"),
                 'deps':("%s/Deps/*.xml", "%s/deps.xsd")}
