@@ -379,7 +379,10 @@ class Toolset(object):
         contentStatus = content == tempdata
         if not contentStatus:
             diff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), tempdata.split('\n'))])
-            entry.set("current_diff", xml.sax.saxutils.quoteattr(diff))
+            try:
+                entry.set("current_diff", xml.sax.saxutils.quoteattr(diff))
+            except:
+                pass
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
