@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, difflib, grp, logging, lxml.etree, os, popen2, pwd, stat, sys
+import binascii, copy, difflib, grp, logging, lxml.etree, os, popen2, pwd, stat, sys, xml.sax.saxutils
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -181,43 +181,25 @@ class Toolset(object):
         #stats.set('time', asctime(localtime()))
 
         # List bad elements of the configuration
-        if dirty:
-            bad_elms = lxml.etree.SubElement(stats, "Bad")
-            for ent in [key for key, val in self.states.iteritems() if not val]:
-                newent = lxml.etree.SubElement(bad_elms, ent.tag, name=ent.get('name', 'None'))
-                for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
-                    newent.set(field, ent.get(field))
-                    del ent.attrib[field]
-                failures = [key for key in ent.attrib if key[:8] == 'current_']
-                for fail in failures:
-                    for field in [fail, fail[8:]]:
-                        try:
-                            newent.set(field, ent.get(field))
-                        except TypeError:
-                            self.logger.error("Failed to set field %s for entry %s, value" %
-                                              (field, ent.get('name'), ent.get(field)))
-                if 'severity' in ent.attrib:
-                    newent.set('severity', ent.get('severity'))
-                #if ent.tag not in ['Package', 'Service', 'SymLink', 'ConfigFile']:
-                #    print lxml.etree.tostring(ent)
-                #    print lxml.etree.tostring(newent)
-        if self.modified:
-            mod = lxml.etree.SubElement(stats, "Modified")
-            for ent in self.modified:
-                newent = lxml.etree.SubElement(mod, ent.tag, name=ent.get('name'))
-                for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
-                    newent.set(field, ent.get(field))
-                    del ent.attrib[field]
-                failures = [key for key in ent.attrib if key[:8] == 'current_']
-                for fail in failures:
-                    for field in [fail, fail[8:]]:
-                        try:
-                            newent.set(field, ent.get(field))
-                        except TypeError:
-                            self.logger.error("Failed to set field %s for entry %s, value" %
-                                              (field, ent.get('name'), ent.get(field)))
-                if 'severity' in ent.attrib:
-                    newent.set('severity', ent.get('severity'))
+        flows = [(dirty, "Bad"), (self.modified, "Modified")]
+        for (condition, tagName) in flows:
+            if condition:
+                container = lxml.etree.SubElement(stats, tagName)
+                for ent in [key for key, val in self.states.iteritems() if not val]:
+                    newent = lxml.etree.SubElement(container, ent.tag, name=ent.get('name', 'None'))
+                    for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
+                        newent.set(field, ent.get(field))
+                        del ent.attrib[field]
+                    failures = [key for key in ent.attrib if key[:8] == 'current_']
+                    for fail in failures:
+                        for field in [fail, fail[8:]]:
+                            try:
+                                newent.set(field, ent.get(field))
+                            except:
+                                self.logger.error("Failed to set field %s for entry %s, value %s" %
+                                                  (field, ent.get('name'), ent.get(field)))
+                    if 'severity' in ent.attrib:
+                        newent.set('severity', ent.get('severity'))
         if self.extra_services + self.pkgwork['remove']:
             extra = lxml.etree.SubElement(stats, "Extra")
             [lxml.etree.SubElement(extra, "Service", name=svc, current_status='on')
@@ -397,7 +379,7 @@ class Toolset(object):
         contentStatus = content == tempdata
         if not contentStatus:
             diff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), tempdata.split('\n'))])
-            entry.set("current_diff", diff)
+            entry.set("current_diff", xml.sax.saxutils.quoteattr(diff))
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
