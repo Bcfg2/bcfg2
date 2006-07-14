@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from time import asctime, localtime, time
 
-import logging
+import logging, lxml.etree
 
 class Statistics(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
@@ -18,22 +18,6 @@ class Statistics(object):
         self.logger = logging.getLogger('Bcfg2.Server.Statistics')
         self.ReadFromFile()
 
-    def pretty_print(self, element, level=0):
-        '''Produce a pretty-printed text representation of element'''
-        if element.text:
-            fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-            data = (element.tag, (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib])),
-                    element.text, element.tag)
-        numchild = len(element.getchildren())
-        if numchild:
-            fmt = "%s<%%s %%s>\n" % (level*" ",) + (numchild * "%s") + "%s</%%s>\n" % (level*" ")
-            data = (element.tag, ) + (" ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]),)
-            data += tuple([self.pretty_print(entry, level+2) for entry in element.getchildren()]) + (element.tag, )
-        else:
-            fmt = "%s<%%s %%s/>\n" % (level * " ")
-            data = (element.tag, " ".join(["%s='%s'" % (key, element.attrib[key]) for key in element.attrib]))
-        return fmt % data
-
     def WriteBack(self, force=0):
         '''Write statistics changes back to persistent store'''
         if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time()) ) \
@@ -44,7 +28,7 @@ class Statistics(object):
             except IOError, ioerr:
                 self.logger.error("Failed to open %s for writing: %s" % (self.filename, ioerr))
             else:
-                fout.write(self.pretty_print(self.element))
+                fout.write(lxml.etree.tostring(self.element))
                 fout.close()
                 self.dirty = 0
                 self.lastwrite = time()
