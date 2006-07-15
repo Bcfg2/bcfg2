@@ -66,10 +66,10 @@ system. For commercial operating systems, these can be obtained from:
 Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
-|| OS        || Vendor || Version || Arch  || GCC   || By || With VERSION  ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1/0.8.2pre6 ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1/0.8.2pre6 ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.2/0.8.2pre7 ||
+|| OS        || Vendor || Version || Arch  || GCC   || By || With VERSION   ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1/0.8.2pre6  ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1/0.8.2pre6  ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.3/0.8.2pre10 ||
 
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
@@ -111,6 +111,9 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
  0.2::
  * Updated bcfg2 to 0.8.2pre7
  * Updated README to point to mcs.anl.gov resources
+
+ 0.3::
+ * Updated bcfg2 to 0.8.2pre10
  
 == Documentation Version ==
 $Id$

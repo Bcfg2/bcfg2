@@ -26,7 +26,7 @@ PYOPENSSL = bcfg2-pyopenssl-0.6
 LIBXML2 = bcfg2-libxml2-2.6.26
 LIBXSLT = bcfg2-libxslt-1.1.17
 LXML = bcfg2-lxml-1.0.1
-BCFG2 = bcfg2-0.8.2pre7
+BCFG2 = bcfg2-0.8.2pre10
 
 .profile.e : # Clean, compile and install an encap package
 	@printf "***** START .profile.e for |$*| ***** \n"
