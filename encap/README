@@ -114,6 +114,19 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
 
  0.3::
  * Updated bcfg2 to 0.8.2pre10
- 
+
+ 0.4::
+ * Versions before this version won't work without manually fixing paths
+ * Added patches so paths actually exist, specifically:
+   * bcfg2.conf default location is /usr/local/etc
+   * epkg/encap paths changed to encap default /usr/local paths
+   * schema prefix patch (changeset 1953) applied
+   * default schema prefix changed to /usr/local/lib/bcfg2
+ * Added mirror of all packages downloaded by the profiles at 
+   http://www.pobox.com/users/dclark/mirror and made mirror default for
+   those downloads
+   * Set up automatic hourly mirror of bcfg2 ftp site *.tar.gz files
+   * Mirror of other packages is manual (but deps shouldn't change often)
+
 == Documentation Version ==
 $Id$

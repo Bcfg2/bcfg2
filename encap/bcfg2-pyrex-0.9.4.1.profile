@@ -46,7 +46,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/Pyrex-0.9.4.1.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/Pyrex-0.9.4.1.tar.gz
+     http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/Pyrex-0.9.4.1.tar.gz"
 >
 
 <configure>

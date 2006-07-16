@@ -46,7 +46,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.zlib.net/zlib-1.2.3.tar.gz"
+	url="http://www.pobox.com/users/dclark/mirror/zlib-1.2.3.tar.gz
+	     http://www.zlib.net/zlib-1.2.3.tar.gz"
 >
 
 <configure>

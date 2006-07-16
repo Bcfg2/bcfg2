@@ -46,8 +46,20 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre10.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2pre10.tar.gz
+     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre10.tar.gz"
 >
+
+<patch
+url="http://trac.mcs.anl.gov/projects/bcfg2/changeset/1953?format=diff"
+options=""
+from_dir="src/sbin"
+/>
+
+<patch
+url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1956&amp;format=raw"
+options="-p0"
+/>
 
 <configure>
 :

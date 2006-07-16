@@ -46,7 +46,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://codespeak.net/lxml/lxml-1.0.1.tgz"
+url="http://www.pobox.com/users/dclark/mirror/lxml-1.0.1.tgz
+     http://codespeak.net/lxml/lxml-1.0.1.tgz"
 >
 
 <configure>

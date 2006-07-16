@@ -46,7 +46,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.openssl.org/source/openssl-0.9.8b.tar.gz"
+	url="http://www.pobox.com/users/dclark/mirror/openssl-0.9.8b.tar.gz
+	     http://www.openssl.org/source/openssl-0.9.8b.tar.gz"
 	use_objdir="no"
 >
 

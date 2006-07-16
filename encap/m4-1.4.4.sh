@@ -26,7 +26,8 @@ cat > ${ENCAP_PKGNAME}.profile << EOF
 />
 
 <source
-	url="http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"
+	url="http://www.pobox.com/users/dclark/mirror/m4-1.4.4.tar.gz
+	     http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"
 >
 
 </source>

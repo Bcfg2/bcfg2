@@ -46,7 +46,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.python.org/ftp/python/2.4.3/Python-2.4.3.tgz"
+	url="http://www.pobox.com/users/dclark/mirror/Python-2.4.3.tgz
+	     http://www.python.org/ftp/python/2.4.3/Python-2.4.3.tgz"
 >
 
 <configure>
