@@ -133,8 +133,8 @@ Index: src/sbin/StatReports
      clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
 -    transformpath = "/usr/share/bcfg2/xsl-transforms/"
 -    #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
-+    transformpath = "/usr/local/share/bcfg2/xsl-transforms/"
-+    #websrcspath = "/usr/local/share/bcfg2/web-rprt-srcs/"
++    transformpath = "/usr/local/lib/bcfg2/share/bcfg2/xsl-transforms/"
++    #websrcspath = "/usr/local/lib/bcfg2/share/bcfg2/web-rprt-srcs/"
  
      try:
          opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
@@ -165,7 +165,7 @@ Index: src/sbin/bcfg2-repo-validate
          prefix = cf.get('server', 'prefix')
      except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
 -        prefix = '/usr'
-+        prefix = '/usr/local'
++        prefix = '/usr/local/lib/bcfg2'
      if verbose:
          print "Using installation prefix %s" % (prefix)
      schemadir = "%s/share/bcfg2/schemas" % (prefix)
