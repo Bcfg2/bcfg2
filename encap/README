@@ -128,5 +128,11 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
    * Set up automatic hourly mirror of bcfg2 ftp site *.tar.gz files
    * Mirror of other packages is manual (but deps shouldn't change often)
 
+ 0.5::
+ * Removed external download of patches as that was not working consistantly;
+   replaced with patches inline the bcfg2 .profile
+ * Added GNU patch dependancy, both for bcfg2 patches and call from Cfg.py
+ * Fixed bcfg-repo-validate so it can find xmllint (as b2xmllint)
+
 == Documentation Version ==
 $Id$
