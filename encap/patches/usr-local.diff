@@ -1,6 +1,19 @@
+Index: encap/bcfg2-0.8.2pre10.profile
+===================================================================
+--- encap/bcfg2-0.8.2pre10.profile	(revision 1958)
++++ encap/bcfg2-0.8.2pre10.profile	(working copy)
+@@ -57,7 +57,7 @@
+ />
+ 
+ <patch
+-url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1956&amp;format=raw"
++url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1959&amp;format=raw"
+ options="-p0"
+ />
+ 
 Index: src/lib/Options.py
 ===================================================================
---- src/lib/Options.py	(revision 1954)
+--- src/lib/Options.py	(revision 1957)
 +++ src/lib/Options.py	(working copy)
 @@ -5,7 +5,7 @@
  # (option, env, cfpath, default value, option desc, boolean, arg desc)
@@ -11,9 +24,22 @@ Index: src/lib/Options.py
  
  class OptionFailure(Exception):
      pass
+Index: src/lib/Server/Plugins/Cfg.py
+===================================================================
+--- src/lib/Server/Plugins/Cfg.py	(revision 1957)
++++ src/lib/Server/Plugins/Cfg.py	(working copy)
+@@ -186,7 +186,7 @@
+                 dfile = open(tempfile.mktemp(), 'w')
+                 dfile.write(delta.data)
+                 dfile.close()
+-                ret = os.system("patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
++                ret = os.system("/usr/local/bin/patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
+                 output = open(basefile.name, 'r').read()
+                 [os.unlink(fname) for fname in [basefile.name, dfile.name]]
+                 if ret >> 8 != 0:
 Index: src/lib/Server/Component.py
 ===================================================================
---- src/lib/Server/Component.py	(revision 1954)
+--- src/lib/Server/Component.py	(revision 1957)
 +++ src/lib/Server/Component.py	(working copy)
 @@ -108,7 +108,7 @@
          if setup['configfile']:
@@ -26,7 +52,7 @@ Index: src/lib/Server/Component.py
              print "Configfile missing communication section"
 Index: src/lib/Client/Solaris.py
 ===================================================================
---- src/lib/Client/Solaris.py	(revision 1954)
+--- src/lib/Client/Solaris.py	(revision 1957)
 +++ src/lib/Client/Solaris.py	(working copy)
 @@ -28,7 +28,7 @@
      and standard SMF services'''
@@ -66,7 +92,7 @@ Index: src/lib/Client/Solaris.py
                  self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
 Index: src/lib/Client/Proxy.py
 ===================================================================
---- src/lib/Client/Proxy.py	(revision 1954)
+--- src/lib/Client/Proxy.py	(revision 1957)
 +++ src/lib/Client/Proxy.py	(working copy)
 @@ -123,7 +123,7 @@
  class SafeProxy:
@@ -79,7 +105,7 @@ Index: src/lib/Client/Proxy.py
          _components = _cfile._sections['components']
 Index: src/sbin/bcfg2
 ===================================================================
---- src/sbin/bcfg2	(revision 1954)
+--- src/sbin/bcfg2	(revision 1957)
 +++ src/sbin/bcfg2	(working copy)
 @@ -51,8 +51,8 @@
                         False, False, False, False),
@@ -94,7 +120,7 @@ Index: src/sbin/bcfg2
              'user': (('-u', '<user>', 'the user to provide for authentication'),
 Index: src/sbin/GenerateHostInfo
 ===================================================================
---- src/sbin/GenerateHostInfo	(revision 1954)
+--- src/sbin/GenerateHostInfo	(revision 1957)
 +++ src/sbin/GenerateHostInfo	(working copy)
 @@ -12,7 +12,7 @@
  
@@ -107,7 +133,7 @@ Index: src/sbin/GenerateHostInfo
      sendmailpath = c.get('statistics','sendmailpath')
 Index: src/sbin/bcfg2-server
 ===================================================================
---- src/sbin/bcfg2-server	(revision 1954)
+--- src/sbin/bcfg2-server	(revision 1957)
 +++ src/sbin/bcfg2-server	(working copy)
 @@ -182,7 +182,7 @@
          'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
@@ -120,7 +146,7 @@ Index: src/sbin/bcfg2-server
          }
 Index: src/sbin/StatReports
 ===================================================================
---- src/sbin/StatReports	(revision 1954)
+--- src/sbin/StatReports	(revision 1957)
 +++ src/sbin/StatReports	(working copy)
 @@ -147,12 +147,12 @@
  
@@ -140,7 +166,7 @@ Index: src/sbin/StatReports
          opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
 Index: src/sbin/bcfg2-info
 ===================================================================
---- src/sbin/bcfg2-info	(revision 1954)
+--- src/sbin/bcfg2-info	(revision 1957)
 +++ src/sbin/bcfg2-info	(working copy)
 @@ -169,7 +169,7 @@
      if '-c' in sys.argv:
@@ -153,7 +179,7 @@ Index: src/sbin/bcfg2-info
      except Bcfg2.Server.Core.CoreInitError, msg:
 Index: src/sbin/bcfg2-repo-validate
 ===================================================================
---- src/sbin/bcfg2-repo-validate	(revision 1954)
+--- src/sbin/bcfg2-repo-validate	(revision 1957)
 +++ src/sbin/bcfg2-repo-validate	(working copy)
 @@ -11,11 +11,11 @@
          verbose = True
@@ -169,3 +195,20 @@ Index: src/sbin/bcfg2-repo-validate
      if verbose:
          print "Using installation prefix %s" % (prefix)
      schemadir = "%s/share/bcfg2/schemas" % (prefix)
+@@ -55,7 +55,7 @@
+                 datafile = lxml.etree.parse(open(filename))
+             except SyntaxError:
+                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
+-                os.system("xmllint %s" % filename)
++                os.system("/usr/local/bin/b2xmllint %s" % filename)
+                 failures = 1
+                 continue
+             except IOError:
+@@ -67,6 +67,6 @@
+                     print "%s checks out" % (filename)
+             else:
+                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
+-                os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
++                os.system("/usr/local/bin/b2xmllint --schema %s %s" % (schemaname % schemadir, filename))
+                 failures = 1
+     raise SystemExit, failures
