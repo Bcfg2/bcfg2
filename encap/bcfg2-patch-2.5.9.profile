@@ -51,6 +51,11 @@ PLATFORM_ENDIF
 	     ftp://alpha.gnu.org/gnu/diffutils/patch-2.5.9.tar.gz"
 >
 
+<configure>
+./configure \
+        --prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2"
+</configure>
+
 </source>
 
 <prepackage type="set">
