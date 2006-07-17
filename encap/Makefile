@@ -17,6 +17,7 @@ ZLIB = bcfg2-zlib-1.2.3
 LIBICONV = bcfg2-libiconv-1.9.2
 GETTEXT = bcfg2-gettext-0.14.5
 PKG-CONFIG = bcfg2-pkg-config-0.20
+PATCH = patch-2.5.9
 OPENSSL = bcfg2-openssl-0.9.8b
 LIBSTDCXX = bcfg2-libstdc++-0.1
 LIBGCC = bcfg2-libgcc-0.1
@@ -87,7 +88,8 @@ ${ZLIB}.e : ${M4}.e
 ${LIBICONV}.e : ${ZLIB}.e
 ${GETTEXT}.e : ${LIBICONV}.e
 ${PKG-CONFIG}.e : ${GETTEXT}.e
-${OPENSSL}.e : ${PKG-CONFIG}.e
+${PATCH}.e : ${PKG-CONFIG}.e
+${OPENSSL}.e : ${PATCH}.e
 ${LIBSTDCXX}.e : ${OPENSSL}.e
 ${LIBGCC}.e : ${LIBSTDCXX}.e
 ${PYTHON}.e : ${LIBGCC}.e
@@ -100,7 +102,8 @@ ${BCFG2}.e : ${LXML}.e
 
 ${LIBICONV}.ep : ${ZLIB}.ep
 ${GETTEXT}.ep : ${LIBICONV}.ep
-${OPENSSL}.ep : ${GETTEXT}.ep
+${PATCH}.ep : ${GETTEXT}.ep
+${OPENSSL}.ep : ${PATCH}.ep
 ${LIBSTDCXX}.ep : ${OPENSSL}.ep
 ${LIBGCC}.ep : ${LIBSTDCXX}.ep
 ${PYTHON}.ep : ${LIBGCC}.ep

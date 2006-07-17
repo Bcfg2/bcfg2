@@ -66,6 +66,8 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage type="set">
+mkdir bin 2>/dev/null || exit 0
+ln -sf ../lib/bcfg2/bin/xmllint bin/b2xmllint
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}

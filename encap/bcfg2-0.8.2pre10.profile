@@ -103,6 +103,7 @@ description Bcfg2 - Provides a declarative interface to system configuration
 prereq pkgspec >= bcfg2-zlib-1.2.3
 prereq pkgspec >= bcfg2-libiconv-1.9.2
 prereq pkgspec >= bcfg2-gettext-0.14.5
+prereq pkgspec >= patch-2.5.9
 prereq pkgspec >= bcfg2-openssl-0.9.8b
 prereq pkgspec >= bcfg2-libstdc++-0.1
 prereq pkgspec >= bcfg2-libgcc-0.1
