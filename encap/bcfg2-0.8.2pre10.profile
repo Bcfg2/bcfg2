@@ -50,18 +50,241 @@ url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2pre10.tar.gz
      ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre10.tar.gz"
 >
 
-<patch
-url="http://www.pobox.com/users/dclark/mirror/1953?format=diff
-     http://trac.mcs.anl.gov/projects/bcfg2/changeset/1953?format=diff"
-options=""
-from_dir="src/sbin"
-/>
+<patch options="" from_dir="src/sbin"><![CDATA[
+Index: trunk/bcfg2/src/sbin/bcfg2-repo-validate
+===================================================================
+--- trunk/bcfg2/src/sbin/bcfg2-repo-validate (revision 1947)
++++ trunk/bcfg2/src/sbin/bcfg2-repo-validate (revision 1953)
+@@ -7,14 +7,20 @@
+ 
+ if __name__ == '__main__':
+-    cf = ConfigParser.ConfigParser()
+-    schemadir = '/usr/share/bcfg2/schemas'
+     verbose = False
+     if '-v' in sys.argv:
+         verbose = True
+         sys.argv.remove('-v')
++    cf = ConfigParser.ConfigParser()
++    cf.read(['/etc/bcfg2.conf'])
++    try:
++        prefix = cf.get('server', 'prefix')
++    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
++        prefix = '/usr'
++    if verbose:
++        print "Using installation prefix %s" % (prefix)
++    schemadir = "%s/share/bcfg2/schemas" % (prefix)
+     if len(sys.argv) > 1:
+         repo = sys.argv[1]
+     else:
+-        cf.read(['/etc/bcfg2.conf'])
+         try:
+             repo = cf.get('server', 'repository')
 
-<patch
-url="http://www.pobox.com/users/dclark/mirror/usr-local.diff?rev=1960&amp;format=raw
-     http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1960&amp;format=raw"
-options="-p0"
-/>
+]]></patch>
+
+<patch options="-p0"><![CDATA[
+Index: src/lib/Options.py
+===================================================================
+--- src/lib/Options.py	(revision 1957)
++++ src/lib/Options.py	(working copy)
+@@ -5,7 +5,7 @@
+ # (option, env, cfpath, default value, option desc, boolean, arg desc)
+ # ((option, arg desc, opt desc), env, cfpath, default, boolean)
+ bootstrap = {'configfile': (('-C', '<configfile>', 'Path to config file'), 
+-                             'BCFG2_CONF', False, '/etc/bcfg2.conf',  False)}
++                             'BCFG2_CONF', False, '/usr/local/etc/bcfg2.conf',  False)}
+ 
+ class OptionFailure(Exception):
+     pass
+Index: src/lib/Server/Plugins/Cfg.py
+===================================================================
+--- src/lib/Server/Plugins/Cfg.py	(revision 1957)
++++ src/lib/Server/Plugins/Cfg.py	(working copy)
+@@ -186,7 +186,7 @@
+                 dfile = open(tempfile.mktemp(), 'w')
+                 dfile.write(delta.data)
+                 dfile.close()
+-                ret = os.system("patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
++                ret = os.system("/usr/local/bin/b2patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
+                 output = open(basefile.name, 'r').read()
+                 [os.unlink(fname) for fname in [basefile.name, dfile.name]]
+                 if ret >> 8 != 0:
+Index: src/lib/Server/Component.py
+===================================================================
+--- src/lib/Server/Component.py	(revision 1957)
++++ src/lib/Server/Component.py	(working copy)
+@@ -108,7 +108,7 @@
+         if setup['configfile']:
+             cfilename = setup['configfile']
+         else:
+-            cfilename = '/etc/bcfg2.conf'
++            cfilename = '/usr/local/etc/bcfg2.conf'
+         self.cfile.read([cfilename])
+         if not self.cfile.has_section('communication'):
+             print "Configfile missing communication section"
+Index: src/lib/Client/Solaris.py
+===================================================================
+--- src/lib/Client/Solaris.py	(revision 1957)
++++ src/lib/Client/Solaris.py	(working copy)
+@@ -28,7 +28,7 @@
+     and standard SMF services'''
+     pkgtool = {'sysv':("/usr/sbin/pkgadd %s -d %%s -n %%%%s", (("%s", ["name"]))),
+                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
+-               'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
++               'encap':("/usr/local/bin/epkg -l -q %s", ("%s", ["url"]))}
+     splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
+     ptypes = {}
+     __name__ = 'Solaris'
+@@ -71,7 +71,7 @@
+             self.installed[pkg] = version
+             self.ptypes[pkg] = 'sysv'
+         # try to find encap packages
+-        for pkg in glob("/local/encap/*"):
++        for pkg in glob("/usr/local/encap/*"):
+             match = self.splitter.match(pkg)
+             if match:
+                 self.installed[match.group('name')] = match.group('version')
+@@ -141,7 +141,7 @@
+         if entry.get('type') in ['sysv', 'blast'] or entry.get('type')[:4] == 'sysv':
+             cmdrc = self.saferun("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))[0]
+         elif entry.get('type') in ['encap']:
+-            cmdrc = self.saferun("/local/sbin/epkg -q -k %s-%s >/dev/null" %
++            cmdrc = self.saferun("/usr/local/bin/epkg -q -k %s-%s >/dev/null" %
+                                  (entry.get('name'), entry.get('version')))[0]
+         if cmdrc != 0:
+             self.logger.debug("Package %s version incorrect" % entry.get('name'))
+@@ -190,7 +190,7 @@
+                     if not self.saferun("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs))[0]:
+                         [self.pkgwork['remove'].remove(pkg) for pkg in sysvrmpkgs]
+                 if enrmpkgs:
+-                    if not self.saferun("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
++                    if not self.saferun("/usr/local/bin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
+                         [self.pkgwork['remove'].remove(pkg) for pkg in enrmpkgs]
+             else:
+                 self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
+Index: src/lib/Client/Proxy.py
+===================================================================
+--- src/lib/Client/Proxy.py	(revision 1957)
++++ src/lib/Client/Proxy.py	(working copy)
+@@ -123,7 +123,7 @@
+ class SafeProxy:
+     '''Wrapper for proxy'''
+     _cfile = ConfigParser.ConfigParser()
+-    _cfpath = '/etc/bcfg2.conf'
++    _cfpath = '/usr/local/etc/bcfg2.conf'
+     _cfile.read([_cfpath])
+     try:
+         _components = _cfile._sections['components']
+Index: src/sbin/bcfg2
+===================================================================
+--- src/sbin/bcfg2	(revision 1957)
++++ src/sbin/bcfg2	(working copy)
+@@ -51,8 +51,8 @@
+                        False, False, False, False),
+             'help': (('-h', False, "print this help message"),
+                      False, False, False, False),
+-            'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
+-                      False, False, '/etc/bcfg2.conf', False),
++            'setup': (('-C', '<configfile>', "use given config file (default /usr/local/etc/bcfg2.conf)"),
++                      False, False, '/usr/local/etc/bcfg2.conf', False),
+             'server': (('-S', '<server url>', 'the server hostname to connect to'),
+                        False, ('components', 'bcfg2'), 'https://localhost:6789', False),
+             'user': (('-u', '<user>', 'the user to provide for authentication'),
+Index: src/sbin/GenerateHostInfo
+===================================================================
+--- src/sbin/GenerateHostInfo	(revision 1957)
++++ src/sbin/GenerateHostInfo	(working copy)
+@@ -12,7 +12,7 @@
+ 
+ if __name__ == '__main__':
+     c = ConfigParser()
+-    c.read(['/etc/bcfg2.conf'])
++    c.read(['/usr/local/etc/bcfg2.conf'])
+     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
+     clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
+     sendmailpath = c.get('statistics','sendmailpath')
+Index: src/sbin/bcfg2-server
+===================================================================
+--- src/sbin/bcfg2-server	(revision 1957)
++++ src/sbin/bcfg2-server	(working copy)
+@@ -182,7 +182,7 @@
+         'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
+                    False, False, False, False),
+         'configfile': (('-C', '<conffile>', 'use this config file'),
+-                       False, False, '/etc/bcfg2.conf', False),
++                       False, False, '/usr/local/etc/bcfg2.conf', False),
+         'client': (('-c', '<client>', 'hard set the client name (for debugging)'),
+                    False, False, False, False)
+         }
+Index: src/sbin/StatReports
+===================================================================
+--- src/sbin/StatReports	(revision 1957)
++++ src/sbin/StatReports	(working copy)
+@@ -147,12 +147,12 @@
+ 
+ if __name__ == '__main__':
+     c = ConfigParser()
+-    c.read(['/etc/bcfg2.conf'])
++    c.read(['/usr/local/etc/bcfg2.conf'])
+     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
+     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
+     clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
+-    transformpath = "/usr/share/bcfg2/xsl-transforms/"
+-    #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
++    transformpath = "/usr/local/lib/bcfg2/share/bcfg2/xsl-transforms/"
++    #websrcspath = "/usr/local/lib/bcfg2/share/bcfg2/web-rprt-srcs/"
+ 
+     try:
+         opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
+Index: src/sbin/bcfg2-info
+===================================================================
+--- src/sbin/bcfg2-info	(revision 1957)
++++ src/sbin/bcfg2-info	(working copy)
+@@ -169,7 +169,7 @@
+     if '-c' in sys.argv:
+         cfile = sys.argv[-1]
+     else:
+-        cfile = '/etc/bcfg2.conf'
++        cfile = '/usr/local/etc/bcfg2.conf'
+     try:
+         bcore = Bcfg2.Server.Core.Core({}, cfile)
+     except Bcfg2.Server.Core.CoreInitError, msg:
+Index: src/sbin/bcfg2-repo-validate
+===================================================================
+--- src/sbin/bcfg2-repo-validate	(revision 1957)
++++ src/sbin/bcfg2-repo-validate	(working copy)
+@@ -11,11 +11,11 @@
+         verbose = True
+         sys.argv.remove('-v')
+     cf = ConfigParser.ConfigParser()
+-    cf.read(['/etc/bcfg2.conf'])
++    cf.read(['/usr/local/etc/bcfg2.conf'])
+     try:
+         prefix = cf.get('server', 'prefix')
+     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+-        prefix = '/usr'
++        prefix = '/usr/local/lib/bcfg2'
+     if verbose:
+         print "Using installation prefix %s" % (prefix)
+     schemadir = "%s/share/bcfg2/schemas" % (prefix)
+@@ -55,7 +55,7 @@
+                 datafile = lxml.etree.parse(open(filename))
+             except SyntaxError:
+                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
+-                os.system("xmllint %s" % filename)
++                os.system("/usr/local/bin/b2xmllint %s" % filename)
+                 failures = 1
+                 continue
+             except IOError:
+@@ -67,6 +67,6 @@
+                     print "%s checks out" % (filename)
+             else:
+                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
+-                os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
++                os.system("/usr/local/bin/b2xmllint --schema %s %s" % (schemaname % schemadir, filename))
+                 failures = 1
+     raise SystemExit, failures
+]]></patch>
 
 <configure>
 :
