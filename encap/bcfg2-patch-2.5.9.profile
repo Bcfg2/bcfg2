@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="patch-2.5.9"
+	pkgspec="bcfg2-patch-2.5.9"
 >
 
 <environment
@@ -15,7 +15,7 @@
 
 <environment
         variable="PATH"
-        value="/usr/local/bin:"
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
         type="prepend"
 />
 
@@ -28,6 +28,24 @@ PLATFORM_ELSE
 />
 PLATFORM_ENDIF
 
+<environment
+        variable="LDFLAGS"
+PLATFORM_IF_MATCH(linux)
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib"
+PLATFORM_ELSE_IF_MATCH(aix)
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/li\
+b:/usr/lib"
+PLATFORM_ELSE
+PLATFORM_ENDIF
+        type="set"
+/>
+
+<environment
+        variable="CPPFLAGS"
+        value="-I/usr/local/lib/bcfg2/include"
+        type="set"
+/>
+
 <source
 	url="http://www.pobox.com/users/dclark/mirror/patch-2.5.9.tar.gz
 	     ftp://alpha.gnu.org/gnu/diffutils/patch-2.5.9.tar.gz"
@@ -36,6 +54,8 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage type="set">
+mkdir bin 2>/dev/null || exit 0
+ln -sf ../lib/bcfg2/bin/patch bin/b2patch
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}

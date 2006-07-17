@@ -57,7 +57,7 @@ from_dir="src/sbin"
 />
 
 <patch
-url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1959&amp;format=raw"
+url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1960&amp;format=raw"
 options="-p0"
 />
 

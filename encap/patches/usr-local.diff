@@ -1,16 +1,3 @@
-Index: encap/bcfg2-0.8.2pre10.profile
-===================================================================
---- encap/bcfg2-0.8.2pre10.profile	(revision 1958)
-+++ encap/bcfg2-0.8.2pre10.profile	(working copy)
-@@ -57,7 +57,7 @@
- />
- 
- <patch
--url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1956&amp;format=raw"
-+url="http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/patches/usr-local.diff?rev=1959&amp;format=raw"
- options="-p0"
- />
- 
 Index: src/lib/Options.py
 ===================================================================
 --- src/lib/Options.py	(revision 1957)
@@ -33,7 +20,7 @@ Index: src/lib/Server/Plugins/Cfg.py
                  dfile.write(delta.data)
                  dfile.close()
 -                ret = os.system("patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
-+                ret = os.system("/usr/local/bin/patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
++                ret = os.system("/usr/local/bin/b2patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
                  output = open(basefile.name, 'r').read()
                  [os.unlink(fname) for fname in [basefile.name, dfile.name]]
                  if ret >> 8 != 0:
