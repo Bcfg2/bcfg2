@@ -1,15 +1,11 @@
-#!/usr/bin/python
-
-'''RPM package index generator
-Jason Pepas 7/12/2006'''
-
-__revision__ = '$Id$'
+#!/usr/bin/python -u
 
 import os
 import sys
 import commands
 import getopt
 import re
+
 
 def run_or_die(command):
     (status, stdio) = commands.getstatusoutput(command)
@@ -64,13 +60,14 @@ def verstr_cmp(a, b):
             return len(a_parts) - len(b_parts)
     return ret
         
+
+        
 def subdivide(verstr):
     """subdivide takes a version or release string and attempts to subdivide it into components to facilitate sorting.  The string is divided into a two level hierarchy of sub-parts.  The upper level is subdivided by periods, and the lower level is subdivided by boundaries between digit, alpha, and other character groupings."""
     parts = []
-    #parts is a list of lists representing the subsections which make up a version string.
-    #example:
-    #4.0.2b3 would be represented as [[4],[0],[2,'b',3]].
-
+    # parts is a list of lists representing the subsections which make up a version string.
+    # example:
+    # 4.0.2b3 would be represented as [[4],[0],[2,'b',3]].
     major_parts = verstr.split('.')
     for major_part in major_parts:
         minor_parts = []
@@ -102,7 +99,7 @@ def subdivide(verstr):
     return parts
 
 
-def get_pkgs(dirname):
+def get_pkgs(rpmdir):
     """scan a dir of rpms and generate a pkgs structure."""
     pkgs = {}
     """
@@ -122,9 +119,9 @@ pkgs = {
   {'file':'bar-3.7j-4.mips.rpm', 'name':'bar', 'version':'3.7j', 'release':'4', 'arch':'mips'}]
 }
 """
-    rpms = [item for item in os.listdir(dirname) if item.endswith('.rpm')]
+    rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
     for rpm in rpms:
-        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (dirname, rpm)
+        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (rpmdir, rpm)
         output = run_or_die(cmd)
         try:
             (name, version, release, arch) = output.split()
@@ -141,26 +138,65 @@ pkgs = {
 
 
 def prune_pkgs(pkgs):
-    """prune a pkgs structure to contain only the latest version of each package.  the result is sorted."""
-    latest_rpms = []
-    for rpmblob_list in pkgs.values():
+    """prune a pkgs structure to contain only the latest version of each package (includes multiarch results)."""
+    latest_pkgs = {}
+    for rpmblobs in pkgs.values():
         (major, minor) = sys.version_info[:2]
         if major >= 2 and minor >= 4:
-            rpmblob_list.sort(rpmblob_cmp, reverse=True)
+            rpmblobs.sort(rpmblob_cmp, reverse=True)
         else:
-            rpmblob_list.sort(rpmblob_cmp)
-            rpmblob_list.reverse()
-        latest_rpms.append(rpmblob_list[0])
-    latest_rpms.sort(rpmblob_cmp)
-    return latest_rpms
+            rpmblobs.sort(rpmblob_cmp)
+            rpmblobs.reverse()
+        pkg_name = rpmblobs[0]['name']
+        all_archs = [blob for blob in rpmblobs if blob['version'] == rpmblobs[0]['version'] and 
+                                                  blob['release'] == rpmblobs[0]['release']]
+        latest_pkgs[pkg_name] = all_archs
+    return latest_pkgs
 
 
-def scan_rpm_dir(dirname, uri, group, priority=0, output=sys.stdout):
+def prune_archs(pkgs):
+    """prune a pkgs structure to contain no more than one subarch per architecture for each set of packages."""
+    subarch_mapping = {'x86':['i686','i586','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
+    arch_mapping = {'i686':'x86', 'i586':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
+    pruned_pkgs = {}
+    for rpmblobs in pkgs.values():
+        pkg_name = rpmblobs[0]['name']
+        arch_sifter = {}
+        for challenger in rpmblobs:
+            arch = arch_mapping[challenger['arch']]
+            incumbent = arch_sifter.get(arch)
+            if incumbent == None:
+                arch_sifter[arch] = challenger
+            else:
+                subarchs = subarch_mapping[arch]
+                challenger_index = subarchs.index(challenger['arch'])
+                incumbent_index = subarchs.index(incumbent['arch'])
+                if challenger_index < incumbent_index:
+                    arch_sifter[arch] = challenger
+        pruned_pkgs[pkg_name] = arch_sifter.values()
+    return pruned_pkgs
+
+
+def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
-    for rpmblob in prune_pkgs(get_pkgs(dirname)):
-        output.write('  <Package name="%s" simplefile="%s" version="%s-%s"/>\n' % (rpmblob['name'], rpmblob['file'], rpmblob['version'], rpmblob['release']))
+    pkgs = prune_archs(prune_pkgs(get_pkgs(rpmdir)))
+    for rpmblobs in pkgs.values():
+        if len(rpmblobs) == 1:
+            rpmblob = rpmblobs[0]
+            output.write('  <Package name="%s" simplefile="%s" version="%s-%s"/>\n' %
+                         (rpmblob['name'], rpmblob['file'], rpmblob['version'], rpmblob['release']))
+        else:
+            rpmblob = rpmblobs[0]
+            archs = [blob['arch'] for blob in rpmblobs]
+            archs.sort()
+            multiarch_string = ' '.join(archs)
+            pattern_string = '\.(%s)\.rpm$' % '|'.join(archs) # e.g., '\.(i386|x86_64)\.rpm$'
+            pattern = re.compile(pattern_string)
+            multiarch_file = pattern.sub('.%s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%s.rpm'
+            output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s"/>\n' %
+                         (rpmblob['name'], multiarch_file, rpmblob['version'], rpmblob['release'], multiarch_string))
     output.write(' </Group>\n')
     output.write('</PackageList>\n')
 
