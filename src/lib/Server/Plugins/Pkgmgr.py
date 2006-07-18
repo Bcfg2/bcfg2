@@ -33,7 +33,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                     if pkg.attrib.has_key('multiarch'):
                         archs = pkg.get('multiarch').split()
                         srcs = pkg.get('srcs', pkg.get('multiarch')).split()
-                        url = ' '.join(["%s/%s" % (pkg.get('uri'), pkg.get('file') % (srcs[idx], archs[idx]))
+                        url = ' '.join(["%s/%s" % (pkg.get('uri'), pkg.get('file') % {'src':srcs[idx], 'arch':archs[idx]})
                                         for idx in range(len(archs))])
                         pkg.set('url', url)
                     else:
