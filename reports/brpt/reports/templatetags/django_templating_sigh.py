@@ -18,7 +18,10 @@ class SetInteraction(template.Node):
     def __init__(self, times):
         self.times = times#do soemthing to select different interaction with host
     def render(self, context):
-        context['interaction'] = context['client_interaction_dict'][context['client'].id]
+        try:
+            context['interaction'] = context['client_interaction_dict'][context['client'].id]
+        except:#I don't fully know what the implications of this are.
+            pass
         return ''
 
 register.tag('set_interaction', set_interaction)

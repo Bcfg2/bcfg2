@@ -4,8 +4,9 @@ from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance
-from datetime import datetime
-    
+from datetime import datetime, timedelta
+from time import strptime
+from django.db import connection    
 
 def index(request):
     return render_to_response('index.html')
@@ -22,28 +23,32 @@ def client_detail(request, hostname = None, pk = None):
     else:
         interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
 
+    for q in connection.queries:
+        print q
+
+
+
     return render_to_response('clients/detail.html',{'client': client, 'interaction': interaction})
 
-def display_sys_view(request):
-    client_lists = prepare_client_lists(request)
+def display_sys_view(request, timestamp = 'now'):
+    client_lists = prepare_client_lists(request, timestamp)
 
-    from django.db import connection
     for q in connection.queries:
         print q
 
 
     return render_to_response('displays/sys_view.html', client_lists)
 
-def display_summary(request):
-    client_lists = prepare_client_lists(request)
+def display_summary(request, timestamp = 'now'):
+    
+    client_lists = prepare_client_lists(request, timestamp)
 
-    from django.db import connection
     for q in connection.queries:
         print q
 
     return render_to_response('displays/summary.html', client_lists)
 
-def display_timing(request, timestamp = None):
+def display_timing(request, timestamp = 'now'):
     #We're going to send a list of dictionaries. Each dictionary will be a row in the table
     #+------+-------+----------------+-----------+---------+----------------+-------+
     #| name | parse | probe download | inventory | install | cfg dl & parse | total |
@@ -51,7 +56,7 @@ def display_timing(request, timestamp = None):
     client_list = Client.objects.all().order_by('name')
     stats_list = []
 
-    if not timestamp == None:
+    if not timestamp == 'now':
         results = Performance.objects.performance_per_client(timestamp.replace("@"," "))
     else:
         results = Performance.objects.performance_per_client()
@@ -104,41 +109,51 @@ def display_timing(request, timestamp = None):
 def display_index(request):
     return render_to_response('displays/index.html')
 
-def prepare_client_lists(request):
-    client_list = Client.objects.all().order_by('name')#change this to order by interaction's state
+def prepare_client_lists(request, timestamp = 'now'):
+    timestamp = timestamp.replace("@"," ")
+    #client_list = Client.objects.all().order_by('name')#change this to order by interaction's state
     client_interaction_dict = {}
     clean_client_list = []
     bad_client_list = []
     extra_client_list = []
     modified_client_list = []
     stale_up_client_list = []
-    stale_all_client_list = []
+    #stale_all_client_list = []
     down_client_list = []
 
-    [client_interaction_dict.__setitem__(x.client_id,x) for x in Interaction.objects.interaction_per_client('now')]# or you can specify a time like this: '2007-01-01 00:00:00'
-    
-    for client in client_list:
-        #i = client_interaction_dict[client.id]
+    cursor = connection.cursor()
 
-        if client_interaction_dict[client.id].isclean():
-            clean_client_list.append(client)
-        else:
-            bad_client_list.append(client)
-        if client_interaction_dict[client.id].isstale():
-            if client_interaction_dict[client.id].pingable:
-                stale_up_client_list.append(client)
-                stale_all_client_list.append(client)                
-            else:
-                stale_all_client_list.append(client)
-        if not client_interaction_dict[client.id].pingable:
-            down_client_list.append(client)
+    interact_queryset = Interaction.objects.interaction_per_client(timestamp)
+    # or you can specify a time like this: '2007-01-01 00:00:00'
+    [client_interaction_dict.__setitem__(x.client_id,x) for x in interact_queryset]
+    client_list = Client.objects.filter(id__in=client_interaction_dict.keys()).order_by('name')
+
+    [clean_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
+    [bad_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='dirty')])]
+    [down_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(pingable='N')])]#need to change the PINGING data structure
+
+    if (timestamp == 'now' or timestamp == None): 
+        cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
+        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetime.now() - x[1]>timedelta(days=1)])
+    else:
+        cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
+                       "WHERE timestamp < %s GROUP BY client_id", [timestamp])
+        t = strptime(timestamp,"%Y-%m-%d %H:%M:%S")
+        datetimestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
+        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetimestamp - x[1] > timedelta(days=1)])
         
-        if len(client_interaction_dict[client.id].modified_items.all()) > 0:
-            modified_client_list.append(client)
-        if len(client_interaction_dict[client.id].extra_items.all()) > 0:
-            extra_client_list.append(client)
+    [stale_up_client_list.append(x) for x in stale_all_client_list if client_interaction_dict[x.id].pingable=='Y']
 
-    #if the list is empty set it to None?
+    
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_modified_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_modified_interactions.interaction_id GROUP BY reports_client.id")
+    modified_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_extra_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_extra_interactions.interaction_id GROUP BY reports_client.id")
+    extra_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
+
     return {'client_list': client_list,
             'client_interaction_dict':client_interaction_dict,
             'clean_client_list': clean_client_list,
@@ -147,4 +162,7 @@ def prepare_client_lists(request):
             'modified_client_list': modified_client_list,
             'stale_up_client_list': stale_up_client_list,
             'stale_all_client_list': stale_all_client_list,
-            'down_client_list': down_client_list}
+            'down_client_list': down_client_list,
+            'timestamp' : timestamp,
+            'timestamp_date' : timestamp[:10],
+            'timestamp_time' : timestamp[11:19]}

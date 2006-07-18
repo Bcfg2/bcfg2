@@ -32,11 +32,11 @@ if __name__ == '__main__':
         opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,"debug", "clients=", "stats="])
     except GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nStatReports.py [-h] [-v] [-u] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
+        print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
-            print "Usage:\nStatReports.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
+            print "Usage:\nimportscript.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
             print "h : help; this message"
             print "v : verbose; print messages on record insertion/skip"
             print "u : updates; print status messages as items inserted semi-verbose"
