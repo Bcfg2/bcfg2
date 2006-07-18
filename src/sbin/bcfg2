@@ -50,7 +50,7 @@ class Client:
             'remove': (('-r', '(packages|services|all)', "force removal of additional configuration items"),
                        False, False, False, False),
             'help': (('-h', False, "print this help message"),
-                     False, False, False, False),
+                     False, False, False, True),
             'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
                       False, False, '/etc/bcfg2.conf', False),
             'server': (('-S', '<server url>', 'the server hostname to connect to'),
