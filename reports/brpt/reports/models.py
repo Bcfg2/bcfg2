@@ -76,13 +76,13 @@ class Interaction(models.Model):
 
     def percentgood(self):
         if not self.totalcount == 0:
-            return (self.goodcount/self.totalcount)*100
+            return (self.goodcount/float(self.totalcount))*100
         else:
             return 0
 
     def percentbad(self):
         if not self.totalcount == 0:
-            return (self.totalcount-self.goodcount)/(self.totalcount)
+            return ((self.totalcount-self.goodcount)/(float(self.totalcount)))*100
         else:
             return 0
     

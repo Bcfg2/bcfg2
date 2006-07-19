@@ -2,13 +2,30 @@
 
 {% block title %}Client Index Listing{% endblock %}
 
+{% block pagebanner %}
+  <div class="header">
+      <h1>Clients List</h1>
+  </div>
+  <br/>
+{% endblock %}
+
 {% block content %}
-{% if client_list %}
+{% if client_list_a %}
+<table><tr><td>
     <ul>
-    {% for client in client_list %}
+    {% for client in client_list_a %}
         <li><a href="{{client.name}}/">{{ client.name }}</a></li>
     {% endfor %}
     </ul>
+</td><td>
+    <ul>
+    {% if client_list_b %}
+      {% for client in client_list_b %}
+        <li><a href="{{client.name}}/">{{ client.name }}</a></li>
+      {% endfor %}
+    {% endif %}
+    </ul>
+</tr></tab.e>
 {% else %}
     <p>No client records are available.</p>
 {% endif %}

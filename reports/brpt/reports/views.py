@@ -3,7 +3,7 @@
 from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance
+from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
 from datetime import datetime, timedelta
 from time import strptime
 from django.db import connection    
@@ -11,9 +11,42 @@ from django.db import connection
 def index(request):
     return render_to_response('index.html')
 
+def config_item_modified(request, eyedee =None):
+    #if eyedee = None, dump with a 404
+    mod_or_bad = "Modified"
+
+    item = Modified.objects.get(id=eyedee)
+
+    #if everything is blank except current_exists, do something special
+
+    #cursor = connection.cursor()
+    #cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
+    #               "WHERE reports_client.current_interaction_id = reports_modified_interactions.interaction_id "+
+    #               "AND reports_modified_interactions.interaction_id = reports_interaction.id"+
+    #               "AND reports_modified_interactions = %s", [eyedee])
+
+    #associated_client_list = Clients.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+
+
+    return render_to_response('config_items/index.html',{'item':item,
+                                                         'mod_or_bad':mod_or_bad,
+                                                         })
+                                                         #'associated_client_list':associated_client_list})
+
+def config_item_bad(request, eyedee = None):
+    mod_or_bad = "Bad"
+    item = Bad.objects.get(id=eyedee)
+    return render_to_response('config_items/index.html',{'item':item,
+                                                         'mod_or_bad':mod_or_bad})
+
+
+
 def client_index(request):
     client_list = Client.objects.all().order_by('name')
-    return render_to_response('clients/index.html',{'client_list': client_list})
+    client_list_a = client_list[:len(client_list)/2]
+    client_list_b = client_list[len(client_list)/2:]
+    return render_to_response('clients/index.html',{'client_list_a': client_list_a,
+                                                    'client_list_b': client_list_b})
 
 def client_detail(request, hostname = None, pk = None):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
@@ -23,18 +56,16 @@ def client_detail(request, hostname = None, pk = None):
     else:
         interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
 
-    for q in connection.queries:
-        print q
-
-
+    #for q in connection.queries:
+    #    print q
 
     return render_to_response('clients/detail.html',{'client': client, 'interaction': interaction})
 
 def display_sys_view(request, timestamp = 'now'):
     client_lists = prepare_client_lists(request, timestamp)
 
-    for q in connection.queries:
-        print q
+    #for q in connection.queries:
+    #    print q
 
 
     return render_to_response('displays/sys_view.html', client_lists)
@@ -43,8 +74,8 @@ def display_summary(request, timestamp = 'now'):
     
     client_lists = prepare_client_lists(request, timestamp)
 
-    for q in connection.queries:
-        print q
+    #for q in connection.queries:
+    #    print q
 
     return render_to_response('displays/summary.html', client_lists)
 

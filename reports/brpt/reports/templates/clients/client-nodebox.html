@@ -31,7 +31,7 @@
 		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-bad');" title="Click to expand" class="commentLink">{{interaction.bad_items.count}}</a> items did not verify and are considered Dirty.<br /></span>
 		<div class="items" id="{{client.name}}-bad"><ul class="plain">
 		{% for bad in interaction.bad_items.all %} {% comment %}HOWDOI?  order_by('kind', 'name'){% endcomment %}
-		    <li><strong>{{bad.kind}}: </strong><tt>{{bad.name}}</tt></li>
+		    <li><strong>{{bad.kind}}: </strong><tt><a href="/elements/bad/{{bad.id}}">{{bad.name}}</a></tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
@@ -41,7 +41,7 @@
 		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-modified');" title="Click to expand" class="commentLink">{{interaction.modified_items.count}}</a> items were modified in the last run.<br /></span>
 		<div class="items" id="{{client.name}}-modified"><ul class="plain">
 		{% for modified in interaction.modified_items.all %} {% comment %}HOWDOI?  order_by('kind', 'name'){% endcomment %}
-		    <li><strong>{{modified.kind}}: </strong><tt>{{modified.name}}</tt></li>
+		    <li><strong>{{modified.kind}}: </strong><tt><a href="/elements/modified/{{modified.id}}">{{modified.name}}</a></tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
