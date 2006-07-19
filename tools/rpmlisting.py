@@ -184,18 +184,21 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
     pkgs = prune_archs(prune_pkgs(get_pkgs(rpmdir)))
     for rpmblobs in pkgs.values():
         if len(rpmblobs) == 1:
+            # regular pkgmgr entry
             rpmblob = rpmblobs[0]
             output.write('  <Package name="%s" simplefile="%s" version="%s-%s"/>\n' %
                          (rpmblob['name'], rpmblob['file'], rpmblob['version'], rpmblob['release']))
         else:
+            # multiarch pkgmgr entry
             rpmblob = rpmblobs[0]
             archs = [blob['arch'] for blob in rpmblobs]
             archs.sort()
             multiarch_string = ' '.join(archs)
             pattern_string = '\.(%s)\.rpm$' % '|'.join(archs) # e.g., '\.(i386|x86_64)\.rpm$'
             pattern = re.compile(pattern_string)
-            multiarch_file = pattern.sub('.%s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%s.rpm'
-            output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s"/>\n' %
+            multiarch_file = pattern.sub('.%(arch)s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%(arch)s.rpm'
+            # hack! we must include verify="nomtime" for all multiarch packages on a fedora system.
+            output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s" verify="nomtime"/>\n' %
                          (rpmblob['name'], multiarch_file, rpmblob['version'], rpmblob['release'], multiarch_string))
     output.write(' </Group>\n')
     output.write('</PackageList>\n')
