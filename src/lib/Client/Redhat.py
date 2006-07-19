@@ -101,7 +101,7 @@ class ToolsetImpl(Toolset):
                     archs = entry.get('multiarch').split()
                     info = self.saferun('rpm -q %s --qf "%%{NAME} %%{VERSION}-%%{RELEASE} %%{ARCH}\n"' % (entry.get('name')))[1]
                     while info:
-                        (_, vers, arch) = info.pop()
+                        (_, vers, arch) = info.pop().split()
                         if arch in archs:
                             archs.remove(arch)
                         else:
