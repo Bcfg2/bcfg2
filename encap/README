@@ -1,7 +1,7 @@
 = Encap based bootstrap for bcfg2 and complete bcfg2 client toolchain =
 
-The bcfg2-encap-bootstrap package is a method for getting bcfg2 (as a 
-client), including all dependencies, up and running on a new platform as
+This bootstrap code is a method for getting bcfg2 (as a client),
+including all dependencies, up and running on a new platform as
 quickly as possible (from source).
 
 You can view this document with glorious Trac Wiki formatting at:
