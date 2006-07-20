@@ -17,13 +17,13 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 DEB_PYTHON_VERSIONS = 2.3
 
 # Since cdbs is able to handle only one python package at once do things here:
-binary-install/bcfg2-server :: binary-install/%:
+#binary-install/bcfg2-server :: binary-install/%:
 # Mostly borrowed from /usr/share/cdbs/1/class/python-distutils.mk
-ifdef _cdbs_rules_debhelper
-  ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
-        dh_pysupport -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
-  else
-	dh_pycentral -pbcfg2-server
-  endif
-	dh_python -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
-endif
+#ifdef _cdbs_rules_debhelper
+#  ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+#        dh_pysupport -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+#  else
+#	dh_pycentral -pbcfg2-server
+#  endif
+#	dh_python -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+#endif
