@@ -1,16 +1,24 @@
-bcfg2 (0.8.2-0pre10) unstable; urgency=low
+bcfg2 (0.8.2-0pre12) unstable; urgency=low
 
-  [ Narayan Desai ]
   * new upstream
 
-  [ Sami Haahtinen ]
+ -- desai <desai@mcs.anl.gov>  Thu, 20 Jul 2006 16:53:52 -0500
+
+bcfg2 (0.8.2-0pre11) unstable; urgency=low
+
   * Update Debian packaging
   * Update Init Scripts
   * Move to Standards-Version 3.7.2 (no changes)
   * build with cdbs
   * Use python-central
 
- -- Sami Haahtinen <ressu@ressukka.net>  Sun, 16 Jul 2006 10:53:52 +0300
+ -- Sami Haahtinen <ressu@ressukka.net>  Mon, 17 Jul 2006 11:11:49 -0500
+
+bcfg2 (0.8.2-0pre10) unstable; urgency=low
+
+  * new upstream
+
+ -- desai <desai@mcs.anl.gov>  Sun, 16 Jul 2006 10:53:52 +0300
 
 bcfg2 (0.8.2-0pre9) unstable; urgency=low
 
