@@ -23,9 +23,15 @@ It attempts to be as self contained as possible; everything gets linked to
 under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
 software, which is prefixed by `b2` (`b2openssl`, `b2python` etc.).  
 
-Note that to run the bcfg2 server, you also need to install gamin, which
+To run the bcfg2 server, you also need to install gamin, which
 supports a subset of the platforms bcfg2 client will work on, including
 GNU/Linux and FreeBSD.
+
+When using this packaging, `/etc/bcfg2.conf` is instead
+`/usr/local/etc/bcfg2.conf`.
+
+This should be considered an alpha version. Everything compiles and seems to
+work, but it has not yet been tested with a working bcfg2 repository.
 
 == Building and installing everything ==
  1. Make sure all of the Prerequisites (see below) are installed.
@@ -133,6 +139,11 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
    replaced with patches inline the bcfg2 .profile
  * Added GNU patch dependancy, both for bcfg2 patches and call from Cfg.py
  * Fixed bcfg-repo-validate so it can find xmllint (as b2xmllint)
+ 
+ 0.6::
+ * Updated bcfg2 to 0.8.2 (released version)
+ * Removed r1953 patch from bcfg2 .profile, since that is included in 0.8.2
+ * Added alpha version warning
 
 == Documentation Version ==
 $Id$

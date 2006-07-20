@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-0.8.2pre10"
+	pkgspec="bcfg2-0.8.2"
 >
 
 <environment
@@ -46,41 +46,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2pre10.tar.gz
-     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2pre10.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2.tar.gz
+     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2.tar.gz"
 >
-
-<patch options="" from_dir="src/sbin"><![CDATA[
-Index: trunk/bcfg2/src/sbin/bcfg2-repo-validate
-===================================================================
---- trunk/bcfg2/src/sbin/bcfg2-repo-validate (revision 1947)
-+++ trunk/bcfg2/src/sbin/bcfg2-repo-validate (revision 1953)
-@@ -7,14 +7,20 @@
- 
- if __name__ == '__main__':
--    cf = ConfigParser.ConfigParser()
--    schemadir = '/usr/share/bcfg2/schemas'
-     verbose = False
-     if '-v' in sys.argv:
-         verbose = True
-         sys.argv.remove('-v')
-+    cf = ConfigParser.ConfigParser()
-+    cf.read(['/etc/bcfg2.conf'])
-+    try:
-+        prefix = cf.get('server', 'prefix')
-+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-+        prefix = '/usr'
-+    if verbose:
-+        print "Using installation prefix %s" % (prefix)
-+    schemadir = "%s/share/bcfg2/schemas" % (prefix)
-     if len(sys.argv) > 1:
-         repo = sys.argv[1]
-     else:
--        cf.read(['/etc/bcfg2.conf'])
-         try:
-             repo = cf.get('server', 'repository')
-
-]]></patch>
 
 <patch options="-p0"><![CDATA[
 Index: src/lib/Options.py
