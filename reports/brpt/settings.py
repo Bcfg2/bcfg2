@@ -1,5 +1,8 @@
 # Django settings for brpt project.
-
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+c = ConfigParser()
+c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
+sqlitedbpath = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -10,16 +13,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-#DATABASE_ENGINE = 'sqlite3'           # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-#DATABASE_NAME = '/Users/joey/anl-mcs/dev/bcfg2/reports/brpt-db'             # Or path to database file if using sqlite3.
-#DATABASE_USER = ''             # Not used with sqlite3.
-#DATABASE_PASSWORD = ''         # Not used with sqlite3.
-#DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-#DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
-DATABASE_ENGINE = 'mysql'           # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-DATABASE_NAME = 'brpt'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'brptadmin'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'sekret'         # Not used with sqlite3.
+DATABASE_ENGINE = 'sqlite3'           # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
+DATABASE_NAME = sqlitedbpath             # Or path to database file if using sqlite3.
+DATABASE_USER = ''             # Not used with sqlite3.
+DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
