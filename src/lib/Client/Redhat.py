@@ -110,7 +110,7 @@ class ToolsetImpl(Toolset):
                     if archs:
                         self.logger.error("Package %s not installed for arch: %s" % (entry.get('name'), archs))
                         return False
-                if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')):
+                if (self.setup['quick'] or (entry.get('verify', 'true') == 'false')) or entry.get('multiarch'):
                     if entry.get('verify', 'true') == 'false':
                         self.logger.debug("Skipping checksum verification for package %s" % (entry.get('name')))
                     return True
