@@ -45,11 +45,12 @@ class InteractiveManager(models.Manager):
     def interaction_per_client(self, maxdate = None):
         from django.db import connection
         cursor = connection.cursor()
-        if (maxdate == 'now' or maxdate == None): 
+        if (maxdate == 'now' or maxdate == None):
             cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
                            "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
                            "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
         else:
+            #THIS TOTALLY BREAKS WHEN you go too far back in time, when it should return 0 records. Try except it?
             cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
                            "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
                            "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer", [maxdate])

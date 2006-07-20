@@ -11,33 +11,84 @@ from django.db import connection
 def index(request):
     return render_to_response('index.html')
 
-def config_item_modified(request, eyedee =None):
+def config_item_modified(request, eyedee =None, timestamp = 'now'):
     #if eyedee = None, dump with a 404
-    mod_or_bad = "Modified"
-
+    timestamp = timestamp.replace("@"," ")
+    mod_or_bad = "modified"
+    
     item = Modified.objects.get(id=eyedee)
-
     #if everything is blank except current_exists, do something special
+    cursor = connection.cursor()
+    if timestamp == 'now':
+        cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
+                   "WHERE reports_client.current_interaction_id = reports_modified_interactions.interaction_id "+
+                   "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
+                   "AND reports_modified_interactions.modified_id = %s", [eyedee])
+        associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+    else:
+        interact_queryset = Interaction.objects.interaction_per_client(timestamp)
+        interactionlist = []
+        [interactionlist.append(x.id) for x in interact_queryset]
+        if not interactionlist == []:
+            cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
+                   "WHERE reports_modified_interactions.interaction_id IN %s "+
+                   "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
+                   "AND reports_modified_interactions.modified_id = %s", [interactionlist, eyedee])
+            associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+        else:
+            associated_client_list = []
 
-    #cursor = connection.cursor()
-    #cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
-    #               "WHERE reports_client.current_interaction_id = reports_modified_interactions.interaction_id "+
-    #               "AND reports_modified_interactions.interaction_id = reports_interaction.id"+
-    #               "AND reports_modified_interactions = %s", [eyedee])
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
 
-    #associated_client_list = Clients.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
-
+    for q in connection.queries:
+        print q
 
     return render_to_response('config_items/index.html',{'item':item,
                                                          'mod_or_bad':mod_or_bad,
-                                                         })
-                                                         #'associated_client_list':associated_client_list})
+                                                         'associated_client_list':associated_client_list,
+                                                         'timestamp' : timestamp,
+                                                         'timestamp_date' : timestamp[:10],
+                                                         'timestamp_time' : timestamp[11:19]})
+                                                    
 
-def config_item_bad(request, eyedee = None):
-    mod_or_bad = "Bad"
+def config_item_bad(request, eyedee = None, timestamp = 'now'):
+    timestamp = timestamp.replace("@"," ")
+    mod_or_bad = "bad"
     item = Bad.objects.get(id=eyedee)
+    cursor = connection.cursor()
+    if timestamp == 'now':
+        cursor.execute("select client_id from reports_interaction, reports_bad_interactions, reports_client "+
+                   "WHERE reports_client.current_interaction_id = reports_bad_interactions.interaction_id "+
+                   "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
+                   "AND reports_bad_interactions.bad_id = %s", [eyedee])
+        associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+    else:
+        interact_queryset = Interaction.objects.interaction_per_client(timestamp)
+        interactionlist = []
+        [interactionlist.append(x.id) for x in interact_queryset]
+        if not interactionlist == []:
+            cursor.execute("select client_id from reports_interaction, reports_bad_interactions, reports_client "+
+                           "WHERE reports_bad_interactions.interaction_id IN %s "+
+                           "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
+                           "AND reports_bad_interactions.bad_id = %s", [interactionlist, eyedee])
+            associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+        else:
+            associated_client_list = None
+
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
+
+
+    for q in connection.queries:
+        print q
+
     return render_to_response('config_items/index.html',{'item':item,
-                                                         'mod_or_bad':mod_or_bad})
+                                                         'mod_or_bad':mod_or_bad,
+                                                         'associated_client_list':associated_client_list,
+                                                         'timestamp' : timestamp,
+                                                         'timestamp_date' : timestamp[:10],
+                                                         'timestamp_time' : timestamp[11:19]})
 
 
 
@@ -73,7 +124,8 @@ def display_sys_view(request, timestamp = 'now'):
 def display_summary(request, timestamp = 'now'):
     
     client_lists = prepare_client_lists(request, timestamp)
-
+    #this returns timestamp and the timestamp parts
+    
     #for q in connection.queries:
     #    print q
 
