@@ -17,7 +17,7 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${source:Version})
+Depends: ${python:Depends}, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version})
 XB-Python-Version: ${python:Versions}
 Description: build configuration system, version two
  Bcfg2 is a symbolic configuration management system, 
