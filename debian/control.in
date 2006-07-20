@@ -2,12 +2,14 @@ Source: bcfg2
 Section: admin
 Priority: optional
 Maintainer: Narayan Desai <desai@mcs.anl.gov>
-Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 3.6.1.1
+Build-Depends: @cdbs@
+Standards-Version: 3.7.2.0
+XS-Python-Version: >= 2.3
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8)
+Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8), ucf, lsb-base (>= 3.1-9)
+XB-Python-Version: ${python:Versions}
 Description: build configuration system
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.
@@ -15,7 +17,8 @@ Description: build configuration system
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, bcfg2, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin
+Depends: ${python:Depends}, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${source:Version})
+XB-Python-Version: ${python:Versions}
 Description: build configuration system, version two
  Bcfg2 is a symbolic configuration management system, 
  produced at Argonne National Lab.

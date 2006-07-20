@@ -1,6 +1,6 @@
-debian/bcfg2-install/usr/bin/bcfg2-* usr/sbin
-debian/bcfg2-install/usr/bin/StatReports usr/sbin
-debian/bcfg2-install/usr/bin/GenerateHostInfo usr/sbin
-debian/bcfg2-install/usr/lib/python2.3/site-packages/Bcfg2/Server/* usr/lib/python2.3/site-packages/Bcfg2/Server
-debian/bcfg2-install/usr/share/bcfg2/* usr/share/bcfg2/
-debian/bcfg2-install/usr/share/man/man8/* usr/share/man/man8
+debian/tmp/usr/bin/bcfg2-* usr/sbin
+debian/tmp/usr/bin/StatReports usr/sbin
+debian/tmp/usr/bin/GenerateHostInfo usr/sbin
+debian/tmp/usr/lib/python*/site-packages/Bcfg2/Server/*
+debian/tmp/usr/share/bcfg2/*
+debian/tmp/usr/share/man/man8/*

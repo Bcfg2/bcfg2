@@ -1,78 +1,29 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
+# -*- mode: makefile; coding: utf-8 -*-
 
-# Uncomment this to turn on verbose mode.
-export DH_VERBOSE=1
+# Generate debian/control fron control.in with the following command:
+# DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean
 
-CFLAGS = -Wall -g
+# Comment this line if you wish to build without pycentral or pysupport
+DEB_PYTHON_SYSTEM := pycentral
+DEB_PYTHON_MODULE_PACKAGE := bcfg2
+DEB_DH_INSTALLINIT_ARGS := -n
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+
+# By default use 2.3 as the python version (follow the original behaviour)
+# This only affects the build system if built without pycentral or pysupport
+DEB_PYTHON_VERSIONS = 2.3
+
+# Since cdbs is able to handle only one python package at once do things here:
+binary-install/bcfg2-server :: binary-install/%:
+# Mostly borrowed from /usr/share/cdbs/1/class/python-distutils.mk
+ifdef _cdbs_rules_debhelper
+  ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
+        dh_pysupport -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+  else
+	dh_pycentral -pbcfg2-server
+  endif
+	dh_python -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
 endif
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-	INSTALL_PROGRAM += -s
-endif
-
-build:
-	debian/version-hacker.sh 
-	python setup.py build
-
-clean:
-	dh_testdir
-	dh_testroot
-	dh_clean 
-	python setup.py clean
-	-rm -Rf debian/install debian/tmp debian/bcfg2-server debian/bcfg2
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
-	dh_installdirs
-	python setup.py install --prefix=$(PWD)/debian/bcfg2-install/usr
-	mkdir -p ./debian/bcfg2/etc
-	install -g 0 -o 0 -m 600 examples/bcfg2.conf ./debian/bcfg2/etc/bcfg2.conf
-
-# Build architecture-dependent files here.
-# We have nothing to do by default.
-binary-arch: build install
-
-# Build architecture-independent files here.
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
-#	dh_installexamples
-	dh_install 
-#	dh_installmenu
-#	dh_installdebconf	
-#	dh_installlogrotate
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-	dh_installinit -pbcfg2 --no-start -u "start 25 2 3 4 5 ."
-	dh_installinit -pbcfg2-server -u"start 21 2 3 4 5 . stop 19 0 1 6 ."
-#	dh_installcron
-#	dh_installinfo
-	dh_installman 
-#	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-	chmod 600 debian/bcfg2/etc/bcfg2.conf
-#	dh_perl
-	dh_python
-#	dh_makeshlibs
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install

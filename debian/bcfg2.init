@@ -1,36 +1,68 @@
 #!/bin/sh
+# Start bcfg2 client on startup
 #
 # bcfg2 - bcfg2 configuration client
 #
 # chkconfig: 2345 19 81
 # description: bcfg2 client for configuration requests
-# 
+#
+### BEGIN INIT INFO
+# Provides:          bcfg2
+# Required-Start:    $network $named
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      S 0 1 6
+# Short-Description: Configuration management client
+# Description:       Bcfg2 is a configuration management system that builds
+#                    installs configuration files served by bcfg2-server
+#                    This is a client that installs the server provided
+#                    Configuration.
+### END INIT INFO
+
+# This might need some better logic
+BCFG2=/usr/sbin/bcfg2
+
 BCFG2_OPTIONS="-q"
+
+# Disabled per default
+BCFG2_ENABLED=0
+
+# Include default startup configuration if exists
 test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
+
+test "$BCFG2_ENABLED" != "0" || exit 0
+
+# Exit if bcfg2 doesn't exist and is not executable
+test -x $BCFG2 || exit 5
+
+# Include lsb functions
+. /lib/lsb/init-functions
 
 case "$1" in
   start)
+    log_begin_msg "Running configuration management client"
     if test -e /etc/donttouchme; then
       rm -f /etc/donttouchme
-      echo "bcfg2 does not need to run."
+      log_success_msg "bcfg2 does not need to run."
     else
-      echo -n "Running bcfg: "
+      log_progress_msg "bcfg2"
       /usr/sbin/bcfg2 $BCFG2_OPTIONS
-      echo "bcfg2"
+      log_end_msg $?
     fi
-    ;;
-  stop)
-    /bin/true
     ;;
   restart)
     $0 stop
     $0 start
     ;;
-  force-reload)
+  status)
+    # Since we are always OK, always return OK as status
+    exit 0
+    ;;
+  stop|force-reload)
     true
     ;;
   *)
-    echo "Usage: bcfg2 {start|stop|restart}"
+    log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
     exit 1
 esac
 

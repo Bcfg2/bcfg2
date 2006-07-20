@@ -1,0 +1,13 @@
+# Configuration options for bcfg2 client
+
+# BCFG2_OPTIONS:
+# Set the default options for Bcfg2 on startup
+#
+#BCFG2_OPTIONS="-q"
+
+# BCFG_ENABLED:
+# Should Bcfg2 be run automatically by system scripts
+#
+# Uncomment the following line to automatically start bcfg2 on startup
+#
+#BCFG2_ENABLED=1

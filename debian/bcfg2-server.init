@@ -5,39 +5,47 @@
 # chkconfig: 2345 19 81
 # description: bcfg2 server for configuration requests
 # 
+### BEGIN INIT INFO
+# Provides:          bcfg2-server
+# Required-Start:    $network
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      S 0 1 6
+# Short-Description: Configuration management Server
+# Description:       Bcfg2 is a configuration management system that builds
+#                    installs configuration files served by bcfg2-server
+### END INIT INFO
 
-PIDFILE=/var/tmp/bcfg2-server.pid
+DAEMON=/usr/sbin/bcfg2-server
+PIDFILE=/var/run/bcfg2-server.pid
+PARAMS="-D $PIDFILE"
+
+# Exit if $DAEMON doesn't exist and is not executable
+test -x $DAEMON || exit 5
+
+# Include lsb functions
+. /lib/lsb/init-functions
 
 case "$1" in
   start)
-    echo -n "Starting bcfg2-server: "
-    if [ -f "/etc/debian_version" ] ; then
-	/sbin/start-stop-daemon --pidfile "${PIDFILE}" --make-pidfile -b -S --startas /usr/sbin/bcfg2-server
-    else
-	/usr/sbin/bcfg2-server -D "${PIDFILE}"
-    fi
-    echo "bcfg2-server"
+    log_begin_msg "Starting Configuration Management Server"
+    log_progress_msg "bcfg2-server"
+    start_daemon ${DAEMON} ${PARAMS}
+    log_end_msg $?
     ;;
   stop)
-    echo -n "Stopping bcfg2-server: "
-    if [ -f "/etc/debian_version" ] ; then
-       /sbin/start-stop-daemon -p "${PIDFILE}" -K /usr/sbin/bcfg2-server
-    else
-       kill -INT `cat ${PIDFILE}`
-    fi
-    echo done
+    log_begin_msg "Stopping Configuration Management Server"
+    log_progress_msg "bcfg2-server"
+    killproc -p "${PIDFILE}" ${DAEMON}
+    log_end_msg $?
     ;;
-  restart)
+  force-reload|restart)
     $0 stop
     sleep 5
     $0 start
     ;;
-  force-reload)
-    $0 stop
-    $0 start
-    ;;
   *)
-    echo "Usage: bcfg2-server {start|stop|restart|force-reload}"
+    log_success_msg "Usage: bcfg2-server {start|stop|restart|force-reload}"
     exit 1
 esac
 
