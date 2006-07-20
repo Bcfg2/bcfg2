@@ -53,7 +53,7 @@ url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2.tar.gz
 <patch options="-p0"><![CDATA[
 Index: src/lib/Options.py
 ===================================================================
---- src/lib/Options.py	(revision 1957)
+--- src/lib/Options.py	(revision 1976)
 +++ src/lib/Options.py	(working copy)
 @@ -5,7 +5,7 @@
  # (option, env, cfpath, default value, option desc, boolean, arg desc)
@@ -66,7 +66,7 @@ Index: src/lib/Options.py
      pass
 Index: src/lib/Server/Plugins/Cfg.py
 ===================================================================
---- src/lib/Server/Plugins/Cfg.py	(revision 1957)
+--- src/lib/Server/Plugins/Cfg.py	(revision 1976)
 +++ src/lib/Server/Plugins/Cfg.py	(working copy)
 @@ -186,7 +186,7 @@
                  dfile = open(tempfile.mktemp(), 'w')
@@ -79,7 +79,7 @@ Index: src/lib/Server/Plugins/Cfg.py
                  if ret >> 8 != 0:
 Index: src/lib/Server/Component.py
 ===================================================================
---- src/lib/Server/Component.py	(revision 1957)
+--- src/lib/Server/Component.py	(revision 1976)
 +++ src/lib/Server/Component.py	(working copy)
 @@ -108,7 +108,7 @@
          if setup['configfile']:
@@ -92,7 +92,7 @@ Index: src/lib/Server/Component.py
              print "Configfile missing communication section"
 Index: src/lib/Client/Solaris.py
 ===================================================================
---- src/lib/Client/Solaris.py	(revision 1957)
+--- src/lib/Client/Solaris.py	(revision 1976)
 +++ src/lib/Client/Solaris.py	(working copy)
 @@ -28,7 +28,7 @@
      and standard SMF services'''
@@ -132,7 +132,7 @@ Index: src/lib/Client/Solaris.py
                  self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
 Index: src/lib/Client/Proxy.py
 ===================================================================
---- src/lib/Client/Proxy.py	(revision 1957)
+--- src/lib/Client/Proxy.py	(revision 1976)
 +++ src/lib/Client/Proxy.py	(working copy)
 @@ -123,7 +123,7 @@
  class SafeProxy:
@@ -145,12 +145,12 @@ Index: src/lib/Client/Proxy.py
          _components = _cfile._sections['components']
 Index: src/sbin/bcfg2
 ===================================================================
---- src/sbin/bcfg2	(revision 1957)
+--- src/sbin/bcfg2	(revision 1976)
 +++ src/sbin/bcfg2	(working copy)
 @@ -51,8 +51,8 @@
                         False, False, False, False),
              'help': (('-h', False, "print this help message"),
-                      False, False, False, False),
+                      False, False, False, True),
 -            'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
 -                      False, False, '/etc/bcfg2.conf', False),
 +            'setup': (('-C', '<configfile>', "use given config file (default /usr/local/etc/bcfg2.conf)"),
@@ -160,7 +160,7 @@ Index: src/sbin/bcfg2
              'user': (('-u', '<user>', 'the user to provide for authentication'),
 Index: src/sbin/GenerateHostInfo
 ===================================================================
---- src/sbin/GenerateHostInfo	(revision 1957)
+--- src/sbin/GenerateHostInfo	(revision 1976)
 +++ src/sbin/GenerateHostInfo	(working copy)
 @@ -12,7 +12,7 @@
  
@@ -173,7 +173,7 @@ Index: src/sbin/GenerateHostInfo
      sendmailpath = c.get('statistics','sendmailpath')
 Index: src/sbin/bcfg2-server
 ===================================================================
---- src/sbin/bcfg2-server	(revision 1957)
+--- src/sbin/bcfg2-server	(revision 1976)
 +++ src/sbin/bcfg2-server	(working copy)
 @@ -182,7 +182,7 @@
          'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
@@ -186,7 +186,7 @@ Index: src/sbin/bcfg2-server
          }
 Index: src/sbin/StatReports
 ===================================================================
---- src/sbin/StatReports	(revision 1957)
+--- src/sbin/StatReports	(revision 1976)
 +++ src/sbin/StatReports	(working copy)
 @@ -147,12 +147,12 @@
  
@@ -206,7 +206,7 @@ Index: src/sbin/StatReports
          opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
 Index: src/sbin/bcfg2-info
 ===================================================================
---- src/sbin/bcfg2-info	(revision 1957)
+--- src/sbin/bcfg2-info	(revision 1976)
 +++ src/sbin/bcfg2-info	(working copy)
 @@ -169,7 +169,7 @@
      if '-c' in sys.argv:
@@ -219,7 +219,7 @@ Index: src/sbin/bcfg2-info
      except Bcfg2.Server.Core.CoreInitError, msg:
 Index: src/sbin/bcfg2-repo-validate
 ===================================================================
---- src/sbin/bcfg2-repo-validate	(revision 1957)
+--- src/sbin/bcfg2-repo-validate	(revision 1976)
 +++ src/sbin/bcfg2-repo-validate	(working copy)
 @@ -11,11 +11,11 @@
          verbose = True
@@ -252,6 +252,21 @@ Index: src/sbin/bcfg2-repo-validate
 +                os.system("/usr/local/bin/b2xmllint --schema %s %s" % (schemaname % schemadir, filename))
                  failures = 1
      raise SystemExit, failures
+Index: reports/brpt/settings.py
+===================================================================
+--- reports/brpt/settings.py	(revision 1976)
++++ reports/brpt/settings.py	(working copy)
+@@ -1,7 +1,8 @@
+ # Django settings for brpt project.
+ from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+ c = ConfigParser()
+-c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
++c.read(['/usr/local/etc/bcfg2.conf']) # This needs to be configurable one day somehow
++                                      # Using something other than patch(1) - dclark
+ sqlitedbpath = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
+ 
+ DEBUG = True
+
 ]]></patch>
 
 <configure>
