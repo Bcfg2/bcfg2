@@ -299,7 +299,7 @@ ln -sf ../lib/bcfg2/bin/bcfg2-repo-validate bin/
 ln -sf ../lib/bcfg2/bin/bcfg2-server bin/
 mkdir share 2>/dev/null || exit 0
 mkdir share/bcfg2  2>/dev/null || exit 0
-cp ${builddir}/doc/manual.pdf share/bcfg2/
+(cp ${builddir}/doc/manual.pdf share/bcfg2/ || true)
 cp -r ${builddir}/examples share/bcfg2/
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
