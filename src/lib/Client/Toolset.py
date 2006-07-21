@@ -369,6 +369,9 @@ class Toolset(object):
         elif entry.get('empty', 'false') == 'true':
             tempdata = ''
         else:
+            if entry.text == None:
+                self.logger.error("Cannot verify incomplete ConfigFile %s" % (entry.get('name')))
+                return False
             tempdata = entry.text
 
         try:
