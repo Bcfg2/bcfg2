@@ -378,6 +378,15 @@
       </para>
     </section>
     <section>
+      <title>Rules</title>
+
+      <para>
+	The Rules plugin works like Pkgmgr and Svcmgr, but can be used
+	for any entries, including literal packages and services,
+	directories, permissions and symlinks.
+      </para>
+    </section>
+    <section>
       <title>SSHbase</title>
 
       <para>

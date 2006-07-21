@@ -40,10 +40,10 @@
 	</affiliation>
       </author>
     </authorgroup>
-    <date>September 2, 2005</date>
-    <edition>Manual for version 0.8.1</edition>
+    <date>July 21, 2006</date>
+    <edition>Manual for version 0.8.2</edition>
     <releaseinfo>$Revision$</releaseinfo>
-    <pubdate>March 2006</pubdate>
+    <pubdate>July 2006</pubdate>
     <copyright>
       <year>2005-2006</year>
       <holder>Argonne National Laboratory</holder>
@@ -72,7 +72,7 @@
 
     <revhistory>
       <revision>
-	<revnumber>0.8.1</revnumber>
+	<revnumber>0.8.2</revnumber>
 	<date>$Date$</date>
 	<revremark>$Id$</revremark>
       </revision>
