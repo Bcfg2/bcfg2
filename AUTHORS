@@ -1,3 +1,4 @@
+In chronological order:
 - Narayan Desai <desai@mcs.anl.gov> has written most of bcfg2, including all parts not 
   explicitly mentioned in this file
 - Joey Hagedorn <hagedorn@mcs.anl.gov> has written the reporting subsystem, including
@@ -9,3 +10,7 @@
 - Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written the Hostbase plugin
 - Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written the VHost plugin
 - Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function in bcfg2-info
+- Daniel Clark <dclark@member.fsf.org> has written all of the encap packaging specifications
+- Jason Pepas <cell@ices.utexas.edu> has written a rpm package list creator has contributed 
+    patches to the redhat toolset
+- Sami Haahtinen <ressu@ressukka.net> has writen debian packaging logic. 
