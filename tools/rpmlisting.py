@@ -197,8 +197,7 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
             pattern_string = '\.(%s)\.rpm$' % '|'.join(archs) # e.g., '\.(i386|x86_64)\.rpm$'
             pattern = re.compile(pattern_string)
             multiarch_file = pattern.sub('.%(arch)s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%(arch)s.rpm'
-            # hack! we must include verify="nomtime" for all multiarch packages on a fedora system.
-            output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s" verify="nomtime"/>\n' %
+            output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s"/>\n' %
                          (rpmblob['name'], multiarch_file, rpmblob['version'], rpmblob['release'], multiarch_string))
     output.write(' </Group>\n')
     output.write('</PackageList>\n')
