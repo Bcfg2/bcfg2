@@ -10,6 +10,7 @@ In chronological order:
 - Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written the Hostbase plugin
 - Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written the VHost plugin
 - Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function in bcfg2-info
+- Chris Vuletich <vuletich@mcs.anl.gov> wrote some SSL code and the verification debugging code
 - Daniel Clark <dclark@member.fsf.org> has written all of the encap packaging specifications
 - Jason Pepas <cell@ices.utexas.edu> has written a rpm package list creator has contributed 
     patches to the redhat toolset
