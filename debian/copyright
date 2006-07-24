@@ -1,11 +1,17 @@
-Upstream Authors: 
-Narayan Desai
+This package was debianized by Sami Haahtinen <ressu@debian.org>
 
-Copyright:
+It was downloaded from http://trac.mcs.anl.gov/projects/bcfg2/
+
+Upstream Author: Narayan Desai <desai@mcs.anl.gov>
+
+Copyright: 
+ 1999 - 2006: University of Chicago
+
+License:
 
 Unless otherwise specified, files are copyright by the following:
 
-Bcfg Public License
+BCFG Public License
 
 Copyright (c) University of Chicago 1999.  
 
@@ -83,10 +89,3 @@ Copyright (c) University of Chicago 1999.
    LIABLE FOR ANY DAMAGES, INCLUDING DIRECT, INCIDENTAL, SPECIAL, OR
    CONSEQUENTIAL DAMAGES RESULTING FROM EXERCISE OF THIS LICENSE AGREEMENT
    OR THE USE OF THE SOFTWARE.
-
-END OF LICENSE
------
-
-The redistribution of this source code is subject to the terms of the GNU 
-Lesser General Public License 
-(see /usr/share/common-licenses/LGPL). 
