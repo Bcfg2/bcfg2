@@ -1,8 +1,12 @@
 bcfg2 (0.8.2-1) unstable; urgency=low
 
+  [ Narayan Desai ]
   * final release
 
- -- Narayan Desai <desai@topaz.mcs.anl.gov>  Fri, 21 Jul 2006 14:14:04 -0500
+  [ Sami Haahtinen ]
+  * add cron scripts
+
+ -- Sami Haahtinen <ressu@ressukka.net>  Sat, 22 Jul 2006 23:16:11 +0300
 
 bcfg2 (0.8.2-0pre12) unstable; urgency=low
 

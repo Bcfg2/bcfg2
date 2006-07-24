@@ -11,3 +11,9 @@
 # Uncomment the following line to automatically start bcfg2 on startup
 #
 #BCFG2_ENABLED=1
+
+# BCFG2_CRON:
+# Set the frequency of cron runs.
+#
+# Can be set to off, hourly or daily
+#BCFG2_CRON=off
