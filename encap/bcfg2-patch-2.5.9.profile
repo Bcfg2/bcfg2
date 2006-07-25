@@ -15,7 +15,11 @@
 
 <environment
         variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
         type="prepend"
 />
 
@@ -33,8 +37,9 @@ PLATFORM_ENDIF
 PLATFORM_IF_MATCH(linux)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
-        value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/li\
-b:/usr/lib"
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
+PLATFORM_ELSE_IF_MATCH(solaris)
+        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE
 PLATFORM_ENDIF
         type="set"

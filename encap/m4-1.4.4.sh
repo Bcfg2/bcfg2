@@ -25,6 +25,13 @@ cat > ${ENCAP_PKGNAME}.profile << EOF
         type="prepend"
 />
 
+
+<environment
+        variable="PATH"
+        value=":/usr/sfw/bin:/usr/ccs/bin"
+        type="append"
+/>
+
 <source
 	url="http://www.pobox.com/users/dclark/mirror/m4-1.4.4.tar.gz
 	     http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"

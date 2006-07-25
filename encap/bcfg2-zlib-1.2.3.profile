@@ -15,7 +15,11 @@
 
 <environment
         variable="PATH"
-        value="/usr/local/bin:"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
         type="prepend"
 />
 
@@ -34,6 +38,8 @@ PLATFORM_IF_MATCH(linux)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
+PLATFORM_ELSE_IF_MATCH(solaris)
+        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE
 PLATFORM_ENDIF
         type="set"
@@ -44,6 +50,13 @@ PLATFORM_ENDIF
         value="-I/usr/local/lib/bcfg2/include"
         type="set"
 />
+
+PLATFORM_IF_MATCH(solaris)
+<environment
+        variable="CFLAGS"
+        type="unset"
+/>
+PLATFORM_ENDIF
 
 <source
 	url="http://www.pobox.com/users/dclark/mirror/zlib-1.2.3.tar.gz
