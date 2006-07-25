@@ -1,3 +1,12 @@
+bcfg2 (0.8.2+svn060725-1) unstable; urgency=low
+ 
+  [ Sami Haahtinen ]
+  * Initial upload to debian.
+   * add cron scripts
+   * Update control.in and copyright files in preparation for debian release
+ 
+ -- Sami Haahtinen <ressu@debian.org>  Tue, 25 Jul 2006 10:58:28 +0300
+
 bcfg2 (0.8.2-1) unstable; urgency=low
 
   [ Narayan Desai ]

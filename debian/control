@@ -1,7 +1,7 @@
 Source: bcfg2
 Section: admin
 Priority: optional
-Maintainer: Narayan Desai <desai@mcs.anl.gov>
+Maintainer: Sami Haahtinen <ressu@debian.org>
 Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 5), debhelper (>= 5.0.37.2), cdbs (>= 0.4.43), python-dev (>= 2.3.5-11), python-central (>= 0.5.0)
 Standards-Version: 3.7.2.0
 XS-Python-Version: >= 2.3
@@ -10,16 +10,22 @@ Package: bcfg2
 Architecture: all
 Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8), ucf, lsb-base (>= 3.1-9)
 XB-Python-Version: ${python:Versions}
-Description: build configuration system
- Bcfg2 is a symbolic configuration management system, 
- produced at Argonne National Lab.
- This is the client side components.
+Description: Configuration management client
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2 is the client portion of bcfg2 system which installs configuration
+ images provided by bcfg2-server
+ .
+ Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
 
 Package: bcfg2-server
 Architecture: all
 Depends: ${python:Depends}, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${source:Version})
 XB-Python-Version: ${python:Versions}
-Description: build configuration system, version two
- Bcfg2 is a symbolic configuration management system, 
- produced at Argonne National Lab.
- This is the server side component.
+Description: Configuration management server
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2-server is the server for bcfg2 clients, which generates configuration
+ sets and stores statistics of client system states.
+ .
+ Homepage: http://trac.mcs.anl.gov/projects/bcfg2/

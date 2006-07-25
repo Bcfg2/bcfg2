@@ -1,7 +1,7 @@
 Source: bcfg2
 Section: admin
 Priority: optional
-Maintainer: Narayan Desai <desai@mcs.anl.gov>
+Maintainer: Sami Haahtinen <ressu@debian.org>
 Build-Depends: @cdbs@
 Standards-Version: 3.7.2.0
 XS-Python-Version: >= 2.3
