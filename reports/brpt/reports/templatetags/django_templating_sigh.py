@@ -13,10 +13,16 @@ def set_interaction(parser, token):
         raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % tag_name
     return SetInteraction(format_string[1:-1])
 
+def sortwell(value):
+    "sorts a list(or evaluates queryset to list) of bad, extra, or modified items in the best way for presentation"
+    return sorted(sorted(list(value),lambda x,y: cmp(x.name, y.name)), lambda x,y: cmp(x.kind, y.kind))
+def sortname(value):
+    "sorts a list( or evaluates queryset) by name"
+    return sorted(list(value),lambda x,y: cmp(x.name, y.name))
                                     
 class SetInteraction(template.Node):
     def __init__(self, times):
-        self.times = times#do soemthing to select different interaction with host
+        self.times = times#do soemthing to select different interaction with host?
     def render(self, context):
         try:
             context['interaction'] = context['client_interaction_dict'][context['client'].id]
@@ -25,3 +31,5 @@ class SetInteraction(template.Node):
         return ''
 
 register.tag('set_interaction', set_interaction)
+register.filter('sortwell', sortwell)
+register.filter('sortname', sortname)

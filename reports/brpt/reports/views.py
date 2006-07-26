@@ -124,7 +124,7 @@ def display_sys_view(request, timestamp = 'now'):
 def display_summary(request, timestamp = 'now'):
     
     client_lists = prepare_client_lists(request, timestamp)
-    #this returns timestamp and the timestamp parts
+    #this returns timestamp and the timestamp parts too
     
     #for q in connection.queries:
     #    print q
