@@ -44,7 +44,7 @@ def config_item_modified(request, eyedee =None, timestamp = 'now'):
     for q in connection.queries:
         print q
 
-    return render_to_response('config_items/index.html',{'item':item,
+    return render_to_response('config_items/index.html', {'item':item,
                                                          'mod_or_bad':mod_or_bad,
                                                          'associated_client_list':associated_client_list,
                                                          'timestamp' : timestamp,
@@ -83,7 +83,7 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
     for q in connection.queries:
         print q
 
-    return render_to_response('config_items/index.html',{'item':item,
+    return render_to_response('config_items/index.html', {'item':item,
                                                          'mod_or_bad':mod_or_bad,
                                                          'associated_client_list':associated_client_list,
                                                          'timestamp' : timestamp,
@@ -96,7 +96,7 @@ def client_index(request):
     client_list = Client.objects.all().order_by('name')
     client_list_a = client_list[:len(client_list)/2]
     client_list_b = client_list[len(client_list)/2:]
-    return render_to_response('clients/index.html',{'client_list_a': client_list_a,
+    return render_to_response('clients/index.html', {'client_list_a': client_list_a,
                                                     'client_list_b': client_list_b})
 
 def client_detail(request, hostname = None, pk = None):
@@ -110,7 +110,7 @@ def client_detail(request, hostname = None, pk = None):
     #for q in connection.queries:
     #    print q
 
-    return render_to_response('clients/detail.html',{'client': client, 'interaction': interaction})
+    return render_to_response('clients/detail.html', {'client': client, 'interaction': interaction})
 
 def display_sys_view(request, timestamp = 'now'):
     client_lists = prepare_client_lists(request, timestamp)
@@ -157,33 +157,33 @@ def display_timing(request, timestamp = 'now'):
         except:
             dict_unit["name"] = "n/a"
         try:
-            dict_unit["parse"] = round(d["config_parse"] - d["config_download"],4) #parse
+            dict_unit["parse"] = round(d["config_parse"] - d["config_download"], 4) #parse
         except:
             dict_unit["parse"] = "n/a"
         try:
-            dict_unit["probe"] = round(d["probe_upload"] - d["start"],4) #probe
+            dict_unit["probe"] = round(d["probe_upload"] - d["start"], 4) #probe
         except:
             dict_unit["probe"] = "n/a"
         try:
-            dict_unit["inventory"] = round(d["inventory"] - d["initialization"],4) #inventory
+            dict_unit["inventory"] = round(d["inventory"] - d["initialization"], 4) #inventory
         except:
             dict_unit["inventory"] = "n/a"
         try:
-            dict_unit["install"] = round(d["install"] - d["inventory"],4) #install
+            dict_unit["install"] = round(d["install"] - d["inventory"], 4) #install
         except:
             dict_unit["install"] = "n/a"
         try:
-            dict_unit["config"] = round(d["config_parse"] - d["probe_upload"],4)#config download & parse
+            dict_unit["config"] = round(d["config_parse"] - d["probe_upload"], 4)#config download & parse
         except:
             dict_unit["config"] = "n/a"
         try:
-            dict_unit["total"] = round(d["finished"] - d["start"],4) #total
+            dict_unit["total"] = round(d["finished"] - d["start"], 4) #total
         except:
             dict_unit["total"] = "n/a"
 
         stats_list.append(dict_unit)
 
-    return render_to_response('displays/timing.html',{'client_list': client_list,
+    return render_to_response('displays/timing.html', {'client_list': client_list,
                                                       'stats_list': stats_list,
                                                       'timestamp' : timestamp,
                                                       'timestamp_date' : timestamp[:10],
@@ -222,7 +222,7 @@ def prepare_client_lists(request, timestamp = 'now'):
         cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
                        "WHERE timestamp < %s GROUP BY client_id", [timestamp])
         t = strptime(timestamp,"%Y-%m-%d %H:%M:%S")
-        datetimestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
+        datetimestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
         stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetimestamp - x[1] > timedelta(days=1)])
         
     [stale_up_client_list.append(x) for x in stale_all_client_list if client_interaction_dict[x.id].pingable=='Y']
