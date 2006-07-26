@@ -1,7 +1,7 @@
+'''Django models for BCFG reports'''
 from django.db import models
-#from timedelta import timedelta
 from datetime import datetime, timedelta
-# Create your models here.
+
 KIND_CHOICES = (
     #These are the kinds of config elements
     ('ConfigFile', 'ConfigFile'),
@@ -13,17 +13,18 @@ KIND_CHOICES = (
 )
 
 class Client(models.Model):
-    #This exists for clients that are no longer in the repository even! (timeless)
+    '''object representing every client we have seen stats for'''
     creation = models.DateTimeField()
     name = models.CharField(maxlength=128, core=True)
-    current_interaction = models.ForeignKey('Interaction', null=True,blank=True, related_name="parent_client")
+    current_interaction = models.ForeignKey('Interaction',
+                                            null=True, blank=True,
+                                            related_name="parent_client")
     
     def __str__(self):
         return self.name
 
     class Admin:
         pass
-
 
 class Metadata(models.Model):
     client = models.ForeignKey(Client)
@@ -34,43 +35,44 @@ class Metadata(models.Model):
     
 class Repository(models.Model):
     timestamp = models.DateTimeField()
-    #INSERT magic interface to any other config info here...
+    #INSERT magic interface to repo (SVN'd version) here
     def __str__(self):
         return self.timestamp
 
 class InteractiveManager(models.Manager):
-
     '''returns most recent interaction as of specified timestamp in format:
     '2006-01-01 00:00:00' or 'now' or None->'now'  '''
     def interaction_per_client(self, maxdate = None):
         from django.db import connection
         cursor = connection.cursor()
-        if (maxdate == 'now' or maxdate == None):
-            cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
-                           "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
-                           "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
-        else:
-            #THIS TOTALLY BREAKS WHEN you go too far back in time, when it should return 0 records. Try except it?
-            cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
-                           "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
-                           "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer", [maxdate])
 
-#            cursor.execute("select id, client_id, timestamp, MAX(timestamp) AS maxtimestamp from reports_interaction where timestamp < %s GROUP BY client_id", [maxdate])
-        in_idents = [item[0] for item in cursor.fetchall()]
+        #in order to prevent traceback when zero records are returned.
+        #this could mask unsupported database errors
+        try:
+            if (maxdate == 'now' or maxdate == None):
+                cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
+                               "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
+                               "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
+            else:
+                cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
+                               "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
+                               "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer", [maxdate])
+            in_idents = [item[0] for item in cursor.fetchall()]
+        except:
+            in_idents = []
         return self.filter(id__in = in_idents)
 
-        '2006-01-01 00:00:00'
 
-#models each client-interaction
 class Interaction(models.Model):
+    '''Models each reconfiguration operation interaction between client and server'''
     client = models.ForeignKey(Client, related_name="interactions", core=True)
     timestamp = models.DateTimeField()#Timestamp for this record
     state = models.CharField(maxlength=32)#good/bad/modified/etc
-    repo_revision = models.IntegerField()#you got it. the repo in use at time of client interaction
-    client_version = models.CharField(maxlength=32)#really simple; version of client running
-    pingable = models.BooleanField()#This is (was-pingable)status as of last attempted interaction
-    goodcount = models.IntegerField()#of good config-items we store this number, because we don't count the
-    totalcount = models.IntegerField()#of total config-items specified--grab this from metadata instead?
+    repo_revision = models.IntegerField()#repo revision at time of interaction
+    client_version = models.CharField(maxlength=32)#Client Version
+    pingable = models.BooleanField()#This needs to change
+    goodcount = models.IntegerField()#of good config-items
+    totalcount = models.IntegerField()#of total config-items
 
     def __str__(self):
         return "With " + self.client.name + " @ " + self.timestamp.isoformat()
@@ -104,14 +106,15 @@ class Interaction(models.Model):
             #Search for subsequent Interaction for this client
             #Check if it happened more than 25 hrs ago.
             if (self.client.interactions.filter(timestamp__gt=self.timestamp)
-                .order_by('timestamp')[0].timestamp - self.timestamp > timedelta(hours=25)):
+                    .order_by('timestamp')[0].timestamp -
+                    self.timestamp > timedelta(hours=25)):
                 return True
             else:
                 return False
     def save(self):
-        super(Interaction,self).save() #call the real save...
+        super(Interaction, self).save() #call the real save...
         self.client.current_interaction = self.client.interactions.latest()
-        self.client.save()#do i need to save the self.client manually?
+        self.client.save()#save again post update
             
     objects = InteractiveManager()
 
@@ -123,52 +126,57 @@ class Interaction(models.Model):
         get_latest_by = 'timestamp'
 
 class Reason(models.Model):
+    '''reason why modified or bad entry did not verify, or changed'''
     owner = models.TextField(maxlength=128, blank=True)
     current_owner = models.TextField(maxlength=128, blank=True)
     group = models.TextField(maxlength=128, blank=True)
     current_group = models.TextField(maxlength=128, blank=True)
-    perms =  models.TextField(maxlength=4, blank=True)#because permissions might start with zero, and the db might think its octal and break
-    current_perms = models.TextField(maxlength=4,blank=True)
+    perms =  models.TextField(maxlength=4, blank=True)#txt fixes typing issue
+    current_perms = models.TextField(maxlength=4, blank=True)
     status = models.TextField(maxlength=3, blank=True)#on/off/(None)
     current_status = models.TextField(maxlength=1, blank=True)#on/off/(None)
     to = models.TextField(maxlength=256, blank=True)
     current_to = models.TextField(maxlength=256, blank=True)
     version = models.TextField(maxlength=128, blank=True)
     current_version = models.TextField(maxlength=128, blank=True)
-    current_exists = models.BooleanField()#False means its missing!, only display if its False, true is default..
-    current_diff = models.TextField(maxlength=1280, blank=True) #diff
+    current_exists = models.BooleanField()#False means its missing. Default True
+    current_diff = models.TextField(maxlength=1280, blank=True)
     def _str_(self):
         return "Reason"
 
 class Modified(models.Model):
+    '''Modified configuration element'''
     interactions = models.ManyToManyField(Interaction, related_name="modified_items")
-    name = models.CharField(maxlength=128, core=True)#name of modified thing.
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    name = models.CharField(maxlength=128, core=True)
+    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
     critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
    
 class Extra(models.Model):
+    '''Extra configuration element'''
     interactions = models.ManyToManyField(Interaction, related_name="extra_items")
-    name = models.CharField(maxlength=128, core=True)#name of Extra thing.
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    name = models.CharField(maxlength=128, core=True)
+    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
     critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
     
 class Bad(models.Model):
+    '''Bad configuration element'''
     interactions = models.ManyToManyField(Interaction, related_name="bad_items")
-    name = models.CharField(maxlength=128, core=True)#name of bad thing.
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)#Service/Package/ConfgFile...
+    name = models.CharField(maxlength=128, core=True)
+    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
     critical = models.BooleanField()
     reason = models.ForeignKey(Reason)
     def __str__(self):
         return self.name
  
 class PerformanceManager(models.Manager):
-
+    '''Provides ability to effectively query for performance information
+    It is possible this should move to the view'''
     #Date format for maxdate: '2006-01-01 00:00:00'            
     def performance_per_client(self, maxdate = None):
         from django.db import connection
@@ -192,7 +200,7 @@ class PerformanceManager(models.Manager):
         results = {}
         for row in cursor.fetchall():
             try:
-                results[row[0]].__setitem__(row[1],row[2])
+                results[row[0]].__setitem__(row[1], row[2])
             except KeyError:
                 results[row[0]] = {row[1]:row[2]}
                                 
@@ -200,6 +208,7 @@ class PerformanceManager(models.Manager):
     
 #performance metrics, models a performance-metric-item
 class Performance(models.Model):
+    '''Object representing performance data for any interaction'''
     interaction = models.ManyToManyField(Interaction, related_name="performance_items")
     metric = models.CharField(maxlength=128, core=True)
     value = models.FloatField(max_digits=32, decimal_places=16)
