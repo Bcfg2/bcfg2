@@ -204,8 +204,13 @@ class Toolset(object):
             extra = lxml.etree.SubElement(stats, "Extra")
             [lxml.etree.SubElement(extra, "Service", name=svc, current_status='on')
              for svc in self.extra_services]
-            [lxml.etree.SubElement(extra, "Package", name=pkg,
-                                   current_version=self.installed[pkg]) for pkg in self.pkgwork['remove']]
+            for pkg in self.pkgwork['remove']:
+                if pkg in self.installed:
+                    lxml.etree.SubElement(extra, "Package", name=pkg,
+                                          current_version=self.installed[pkg])
+                else:
+                    lxml.etree.SubElement(extra, "Package", name=pkg)
+                    self.logger.error("Failed to find installed version of packages %s" % (pkg))
         return stats
 
     # the next two are dispatch functions
