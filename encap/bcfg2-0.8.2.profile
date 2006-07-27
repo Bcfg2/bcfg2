@@ -52,7 +52,7 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/bcfg2-0.8.2.tar.gz
+url="http://www.pobox.com/users/dclark/mirror/bcfg/bcfg2-0.8.2.tar.gz
      ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2.tar.gz"
 >
 

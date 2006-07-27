@@ -52,8 +52,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.pobox.com/users/dclark/mirror/gettext-0.14.5.tar.gz
-	     http://ftp.gnu.org/pub/gnu/gettext/gettext-0.14.5.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/gettext/gettext-0.14.5.tar.gz
+     http://ftp.gnu.org/pub/gnu/gettext/gettext-0.14.5.tar.gz"
 >
 
 <configure>

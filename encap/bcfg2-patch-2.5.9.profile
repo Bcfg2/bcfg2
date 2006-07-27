@@ -52,7 +52,7 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.pobox.com/users/dclark/mirror/patch-2.5.9.tar.gz
+	url="http://www.pobox.com/users/dclark/mirror/patch/patch-2.5.9.tar.gz
 	     ftp://alpha.gnu.org/gnu/diffutils/patch-2.5.9.tar.gz"
 >
 

@@ -52,8 +52,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.pobox.com/users/dclark/mirror/libiconv-1.9.2.tar.gz
-	     http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.9.2.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/libiconv/libiconv-1.9.2.tar.gz
+     http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.9.2.tar.gz"
 >
 
 <configure>

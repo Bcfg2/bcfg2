@@ -52,8 +52,8 @@ PLATFORM_ENDIF
 />
 
 <source
-	url="http://www.pobox.com/users/dclark/mirror/libxslt-1.1.17.tar.gz
-	     ftp://xmlsoft.org/libxml2/libxslt-1.1.17.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/libxslt/libxslt-1.1.17.tar.gz
+     ftp://xmlsoft.org/libxml2/libxslt-1.1.17.tar.gz"
 >
 
 <configure>

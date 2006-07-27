@@ -1,0 +1,3 @@
+ * Encap's author says encap packages are supposed to use the suffix
+   .ep, not .profile... should change that and also the Makefile to use some
+   sentinal file name other than .ep

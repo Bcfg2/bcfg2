@@ -52,7 +52,7 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/pkg-config-0.20.tar.gz
+url="http://www.pobox.com/users/dclark/mirror/pkg-config/pkg-config-0.20.tar.gz
      http://pkgconfig.freedesktop.org/releases/pkg-config-0.20.tar.gz"
 >
 

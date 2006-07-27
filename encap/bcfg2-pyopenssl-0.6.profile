@@ -52,7 +52,7 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/pyOpenSSL-0.6.tar.gz
+url="http://www.pobox.com/users/dclark/mirror/pyopenssl/pyOpenSSL-0.6.tar.gz
      http://umn.dl.sourceforge.net/sourceforge/pyopenssl/pyOpenSSL-0.6.tar.gz"
 >
 

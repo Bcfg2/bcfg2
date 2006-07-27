@@ -52,7 +52,7 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/libxml2-sources-2.6.26.tar.gz
+url="http://www.pobox.com/users/dclark/mirror/libxml2/libxml2-sources-2.6.26.tar.gz
      ftp://xmlsoft.org/libxml2/libxml2-sources-2.6.26.tar.gz"
 subdir="libxml2-2.6.26"
 >
