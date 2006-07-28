@@ -141,7 +141,7 @@ class ToolsetImpl(Toolset):
                     self.Refresh()
                     self.Inventory()
             else:
-                self.logger.info("Need to remove packages:")
+                self.logger.info("Found extra packages:")
                 self.logger.info(self.pkgwork['remove'])
         if len(self.extra_services) > 0:
             if self.setup['remove'] in ['all', 'services']:
@@ -152,7 +152,7 @@ class ToolsetImpl(Toolset):
                         self.extra_services.remove(service)
                     self.logger.info("Failed to remove service %s" % (service))
             else:
-                self.logger.info('Need to remove services:')
+                self.logger.info('Found extra active services:')
                 self.logger.info(self.extra_services)
         
     def Inventory(self):

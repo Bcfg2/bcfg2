@@ -132,7 +132,7 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
                     self.pkgwork['remove'] = []
             else:
                 if not self.setup['bundle']:
-                    self.logger.info("Need to remove packages:")
+                    self.logger.info("Found extra packages:")
                     self.logger.info(self.pkgwork['remove'])
                 
         if len(self.extra_services) > 0:
@@ -143,6 +143,6 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
                  not self.saferun("rm -f /etc/rc*.d/S??%s" % serv)[0]]
             else:
                 if not self.setup['bundle']:
-                    self.logger.info('Need to remove services:')
+                    self.logger.info('Found extra active services:')
                     self.logger.info(self.extra_services)
         
