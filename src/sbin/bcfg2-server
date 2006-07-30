@@ -15,6 +15,25 @@ logger = logging.getLogger('bcfg2-server')
 
 def daemonize(filename):
     '''Do the double fork/setsession dance'''
+    # Check if the pid is active
+    try:
+        pidfile = open(filename, "r")
+        oldpid = int(pidfile.readline())
+        # getpgid() will retun an IO error if all fails
+        os.getpgid(oldpid)
+        pidfile.close()
+
+        # If we got this far without exceptions, there is another instance
+        # running. Exit gracefully.
+        logger.critical("PID File (%s) exists and listed PID (%d) is active." % \
+                        (filename, oldpid) )
+        raise SystemExit, 1
+    except OSError:
+        pidfile.close()
+    except IOError: 
+        # pid file doesn't
+        pass
+
     # Fork once
     if os.fork() != 0:      
         os._exit(0)         
@@ -146,7 +165,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             raise Fault, (6, warning)
         return True
 
-    def Bcfg2GetConfig(self, address, image=False, profile=False):
+    def Bcfg2GetConfig(self, address, _=False, profile=False):
         '''Build config for a client'''
         client = self.resolve_client(address[0])
         return tostring(self.Core.BuildConfiguration(client))
@@ -172,7 +191,7 @@ if __name__ == '__main__':
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server')
 
-    optinfo = {
+    OPTINFO = {
         'verbose': (('-v', False, 'enable verbose output'),
                     False, False, False, True),
         'debug': (('-d', False, 'enable debugging output'),
@@ -187,13 +206,13 @@ if __name__ == '__main__':
                    False, False, False, False)
         }
     
-    ssetup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()
-    if ssetup['daemon']:
-        daemonize(ssetup['daemon'])
-    s = Bcfg2Serv(ssetup)
-    while not s.shut:
+    SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()
+    if SSETUP['daemon']:
+        daemonize(SSETUP['daemon'])
+    BSERV = Bcfg2Serv(SSETUP)
+    while not BSERV.shut:
         try:
-            s.serve_forever()
+            BSERV.serve_forever()
         except:
             critical_error('error in service loop')
     logger.info("Shutting down")
