@@ -40,15 +40,16 @@ test -x $BCFG2 || exit 5
 
 case "$1" in
   start)
-    log_begin_msg "Running configuration management client"
-    if test -e /etc/donttouchme; then
-      rm -f /etc/donttouchme
-      log_success_msg "bcfg2 does not need to run."
+    echo -n "Running configuration management client: "
+    ${BCFG2} ${BCFG2_OPTIONS}
+    STATUS=$?
+    if [ "$STATUS" = 0 ]
+    then
+      log_success_msg "bcfg2"
     else
-      log_progress_msg "bcfg2"
-      /usr/sbin/bcfg2 $BCFG2_OPTIONS
-      log_end_msg $?
+      log_failure_msg "bcfg2"
     fi
+    exit $STATUS
     ;;
   restart)
     $0 stop
@@ -62,7 +63,7 @@ case "$1" in
     true
     ;;
   *)
-    log_success_msg "Usage: $0 {start|stop|restart|force-reload|status}"
+    echo "Usage: $0 {start|stop|restart|force-reload|status}"
     exit 1
 esac
 

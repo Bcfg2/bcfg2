@@ -26,27 +26,61 @@ test -x $DAEMON || exit 5
 # Include lsb functions
 . /lib/lsb/init-functions
 
+# Internal variables
+BINARY=$(basename $DAEMON)
+
 case "$1" in
   start)
-    log_begin_msg "Starting Configuration Management Server"
-    log_progress_msg "bcfg2-server"
+    echo -n "Starting Configuration Management Server: "
     start_daemon ${DAEMON} ${PARAMS}
-    log_end_msg $?
+    STATUS=$?
+    if [ "$STATUS" = 0 ]
+    then
+	log_success_msg "bcfg2-server"
+    else
+	log_failure_msg "bcfg2-server"
+    fi
+    exit $STATUS
     ;;
   stop)
-    log_begin_msg "Stopping Configuration Management Server"
-    log_progress_msg "bcfg2-server"
-    killproc -p "${PIDFILE}" ${DAEMON}
-    log_end_msg $?
+    echo -n "Stopping Configuration Management Server: "
+    killproc ${BINARY}
+    STATUS=$?
+    if [ "$STATUS" = 0 ]; then
+      log_success_msg "bcfg2-server"
+      exit 0
+    else
+      log_failure_msg "bcfg2-server"
+    fi
+    exit $STATUS
     ;;
   force-reload|restart)
     $0 stop
     sleep 5
     $0 start
     ;;
+  status)
+    # Inspired by redhat /etc/init.d/functions status() call
+    PID=$(pidof -x $BINARY)
+    if [ -n "$PID" ]; then
+      echo "$BINARY (pid $PID) is running..."
+      exit 0
+    fi
+
+    if [ -f $PIDFILE ]; then
+      if [ -n "$PID" ]; then
+	echo "$BINARY dead but pid file exists..."
+	exit 1
+      fi
+    fi
+    
+    echo "$BINARY is not running"
+    exit 3
+    ;;
   *)
     log_success_msg "Usage: bcfg2-server {start|stop|restart|force-reload}"
     exit 1
+    ;;
 esac
 
 exit 0

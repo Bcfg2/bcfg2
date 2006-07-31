@@ -14,6 +14,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
 BuildArchitectures: noarch
 Vendor: Narayan Desai <desai@mcs.anl.gov>
+PreReq: lsb >= 3.0
 Requires: lxml, python
 
 %description
