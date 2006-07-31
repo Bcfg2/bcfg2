@@ -1,2 +1,6 @@
-  * Create daemontools encap, including pre/postinstall scripts for config
+  * Test daemontools encap, including postinstall scripts for config
   * Use daemontools to run the bcfg2 service under the encap packaging scheme
+    * Create bcfg2 "run" script (look at init scripts for other platforms)
+  * Modify Makefile, README, bcfg2-0.8.2.ep to work with daemontools
+  * Create .ep for daemontools doc tarball at 
+    http://www.dclark.us/mirror/daemontools/daemontools-doc-20060731.tar.gz

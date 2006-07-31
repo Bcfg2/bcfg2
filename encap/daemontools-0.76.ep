@@ -1,0 +1,292 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="daemontools-0.76"
+>
+
+<environment
+        variable="CC"
+        value="gcc"
+        type="set"
+/>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+PLATFORM_IF_MATCH(linux)
+PLATFORM_ELSE
+<environment
+        variable="MAKE"
+        value="gmake"
+        type="set"
+/>
+PLATFORM_ENDIF
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-0.76.tar.gz
+     http://cr.yp.to/daemontools/daemontools-0.76.tar.gz"
+	use_objdir="no"
+	subdir="admin/daemontools-0.76"
+>
+
+<patch options="-p1"><![CDATA[
+#
+# http://www.gluelogic.com/code/
+#
+diff -ru daemontools-0.76/src/error.h daemontools-0.76.new/src/error.h
+--- daemontools-0.76/src/error.h	2001-07-12 12:49:49.000000000 -0400
++++ daemontools-0.76.new/src/error.h	2004-01-10 06:50:37.000000000 -0500
+@@ -3,7 +3,7 @@
+ #ifndef ERROR_H
+ #define ERROR_H
+ 
+-extern int errno;
++#include <errno.h>
+ 
+ extern int error_intr;
+ extern int error_nomem;
+diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
+--- daemontools-0.76/src/svscan.c	2001-07-12 12:49:49.000000000 -0400
++++ daemontools-0.76.new/src/svscan.c	2004-02-08 01:50:27.000000000 -0500
+@@ -1,6 +1,7 @@
+ #include <unistd.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <fcntl.h>
+ #include "direntry.h"
+ #include "strerr.h"
+ #include "error.h"
+@@ -14,6 +15,11 @@
+ 
+ #define SERVICES 1000
+ 
++#ifndef SVSCANINFO
++#define SVSCANINFO ".svscan"  /* must begin with dot ('.') */
++#endif
++
++#define INFO "svscan: info: "
+ #define WARNING "svscan: warning: "
+ #define FATAL "svscan: fatal: "
+ 
+@@ -38,7 +44,7 @@
+   int i;
+   const char *args[3];
+ 
+-  if (fn[0] == '.') return;
++  if (fn[0] == '.' && str_diff(fn,SVSCANINFO)) return;
+ 
+   if (stat(fn,&st) == -1) {
+     strerr_warn4(WARNING,"unable to stat ",fn,": ",&strerr_sys);
+@@ -59,7 +65,8 @@
+     }
+     x[i].ino = st.st_ino;
+     x[i].dev = st.st_dev;
+-    x[i].pid = 0;
++    /*(fn[0]=='.' here only if SVSCANINFO; if so only supervise log/ subdir)*/
++    x[i].pid = (fn[0] != '.') ? 0 : -1;
+     x[i].pidlog = 0;
+     x[i].flaglog = 0;
+ 
+@@ -190,12 +197,39 @@
+   }
+ }
+ 
++static void open_svscan_log(void)
++{
++  const int i = numx;
++  struct stat st;
++  static char fn[] = SVSCANINFO;  /* avoid compiler warning on const string */
++
++  /* (semi-paranoid; could be moreso) */
++  if (fstat(STDIN_FILENO,&st)  != 0 && errno == EBADF)
++    (void) open("/dev/null", O_RDONLY);
++  if (fstat(STDOUT_FILENO,&st) != 0 && errno == EBADF)
++    (void) open("/dev/null", O_WRONLY);
++  if (fstat(STDERR_FILENO,&st) != 0 && errno == EBADF)
++    (void) open("/dev/null", O_WRONLY);
++
++  if (stat(fn,&st) == 0) {
++    start(fn);
++    if (i+1 == numx && x[i].pidlog != 0) {
++      (void) dup2(x[i].pi[1], STDOUT_FILENO);
++      (void) dup2(x[i].pi[1], STDERR_FILENO);
++      strerr_warn1("",0);
++      strerr_warn2(INFO,"*** Starting svscan",0);
++    }
++  }
++}
++
+ int main(int argc,char **argv)
+ {
+   if (argv[0] && argv[1])
+     if (chdir(argv[1]) == -1)
+       strerr_die4sys(111,FATAL,"unable to chdir to ",argv[1],": ");
+ 
++  open_svscan_log();
++
+   for (;;) {
+     doit();
+     sleep(5);
+
+]]></patch>
+
+<patch options="-p1"><![CDATA[
+# daemontools-0.76.sigq12.patch
+#
+# This patch adds the following signal capabilities to the
+# daemontools-0.76 "svc"/"supervise" utilities:
+#
+#  option  signal
+#  ------  -------
+#  svc -q  SIGQUIT
+#  svc -1  SIGUSR1
+#  svc -2  SIGUSR2
+#
+# Apply the patch:
+#
+#   # cd /package/admin/daemontools-0.76
+#   # patch -p1 < /path/to/this/patch
+#
+# Then (re)compile/(re)install daemontools:
+#
+#   # package/install
+#
+# Notes:
+#
+# The SIGUSR1/SIGUSR2 patch originally by Scott Gifford:
+# http://www.suspectclass.com/~sgifford/daemontools/daemontools-0.76-usr12.README
+#
+# We added SIGQUIT for the mathopd web server:
+# http://thedjbway.org/services/mathopd.html
+#
+# wcm, 2004.03.17 - 2004.03.17
+# ===
+diff -ru daemontools-0.76/src/supervise.c daemontools-0.76.sigq12/src/supervise.c
+--- daemontools-0.76/src/supervise.c	Thu Jul 12 19:49:49 2001
++++ daemontools-0.76.sigq12/src/supervise.c	Wed Mar 17 10:30:25 2004
+@@ -187,6 +187,15 @@
+ 	case 'i':
+ 	  if (pid) kill(pid,SIGINT);
+ 	  break;
++	case 'q':
++	  if (pid) kill(pid,SIGQUIT);
++	  break;
++	case '1':
++	  if (pid) kill(pid,SIGUSR1);
++	  break;
++	case '2':
++	  if (pid) kill(pid,SIGUSR2);
++	  break;
+ 	case 'p':
+ 	  flagpaused = 1;
+ 	  announce();
+diff -ru daemontools-0.76/src/svc.c daemontools-0.76.sigq12/src/svc.c
+--- daemontools-0.76/src/svc.c	Thu Jul 12 19:49:49 2001
++++ daemontools-0.76.sigq12/src/svc.c	Wed Mar 17 10:31:47 2004
+@@ -27,9 +27,9 @@
+ 
+   sig_ignore(sig_pipe);
+ 
+-  while ((opt = getopt(argc,argv,"udopchaitkx")) != opteof)
++  while ((opt = getopt(argc,argv,"udopchaitkxq12")) != opteof)
+     if (opt == '?')
+-      strerr_die1x(100,"svc options: u up, d down, o once, x exit, p pause, c continue, h hup, a alarm, i interrupt, t term, k kill");
++      strerr_die1x(100,"svc options: u up, d down, o once, x exit, p pause, c continue, h hup, a alarm, i interrupt, t term, k kill, q quit, 1 SIGUSR1, 2 SIGUSR2");
+     else
+       if (datalen < sizeof data)
+         if (byte_chr(data,datalen,opt) == datalen)
+
+]]></patch>
+
+<patch options="-p2"><![CDATA[
+diff -ur admin/daemontools-0.76-orig/src/supervise.c admin/daemontools-0.76/src/supervise.c
+--- admin/daemontools-0.76-orig/src/supervise.c	2001-07-12 12:49:27.000000000 -0400
++++ admin/daemontools-0.76/src/supervise.c	2005-12-27 16:15:41.000000000 -0500
+@@ -148,7 +148,6 @@
+ 	pidchange();
+ 	announce();
+ 	if (flagexit) return;
+-	if (flagwant && flagwantup) trystart();
+ 	break;
+       }
+     }
+@@ -165,7 +164,6 @@
+ 	  flagwant = 1;
+ 	  flagwantup = 1;
+ 	  announce();
+-	  if (!pid) trystart();
+ 	  break;
+ 	case 'o':
+ 	  flagwant = 0;
+@@ -202,6 +200,8 @@
+ 	  announce();
+ 	  break;
+       }
++
++    if (!pid && flagwant && flagwantup) trystart();
+   }
+ }
+
+]]></patch>
+
+<configure>
+:
+</configure>
+
+<build>
+./package/compile
+</build>
+
+<install>
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/src || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/src
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp command/* ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+cp package/run ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp package/commands ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp package/boot.inittab ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp package/boot.rclocal ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp package/run.inittab ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+cp package/run.rclocal ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
+</install>
+
+<clean>
+:
+</clean>
+
+</source>
+
+<prepackage>
+mkdir /usr/local/var 2>/dev/null || exit 0
+mkdir /usr/local/var/svc.d 2>/dev/null || exit 0
+mkdir /usr/local/var/multilog 2>/dev/null || exit 0
+mkdir var 2>/dev/null || exit 0
+mkdir var/encap 2>/dev/null || exit 0
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<include_file name="postinstall" mode="0755"><![CDATA[
+#!/bin/sh -e
+test -h /command || ln -s /usr/local/encap/daemontools-0.76/bin /command
+cd /usr/local/encap/daemontools-0.76 && ./package/run
+]]></include_file>
+
+<encapinfo>
+description daemontools - a collection of tools for managing UNIX services
+exclude src
+exclude package
+</encapinfo>
+
+</encap_profile>
