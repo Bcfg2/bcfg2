@@ -111,7 +111,9 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             try:
                 self.socket.send(msg)
             except socket.error:
+                self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
                 self.socket.connect(self.address)
+                self.socket.send("Reconnected to syslog")
                 self.socket.send(msg)
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
