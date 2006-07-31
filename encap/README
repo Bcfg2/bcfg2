@@ -138,13 +138,13 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
 
  0.5::
  * Removed external download of patches as that was not working consistantly;
-   replaced with patches inline the bcfg2 .profile
+   replaced with patches inline the bcfg2 encap profile (.ep file)
  * Added GNU patch dependancy, both for bcfg2 patches and call from Cfg.py
  * Fixed bcfg-repo-validate so it can find xmllint (as b2xmllint)
  
  0.6::
  * Updated bcfg2 to 0.8.2 (released version)
- * Removed r1953 patch from bcfg2 .profile, since that is included in 0.8.2
+ * Removed r1953 patch from bcfg2 profile, since that is included in 0.8.2
  * Added alpha version warning
 
  0.7::

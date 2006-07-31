@@ -2,7 +2,7 @@
 
 .PHONY : all install clean uninstall encaps rename
 .SUFFIXES : 
-.SUFFIXES : .profile .sh .installed .packaged
+.SUFFIXES : .ep .sh .installed .packaged
 
 BASEDIR = /usr/local
 ENCAPDIR = ${BASEDIR}/encap

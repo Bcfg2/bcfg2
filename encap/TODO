@@ -1,3 +1,2 @@
- * Encap's author says encap packages are supposed to use the suffix
-   .ep, not .profile... should change that and also the Makefile to use some
-   sentinal file name other than .ep
+  * Create daemontools encap, including pre/postinstall scripts for config
+  * Use daemontools to run the bcfg2 service under the encap packaging scheme
