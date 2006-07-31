@@ -2,7 +2,7 @@
 
 .PHONY : all install clean uninstall encaps rename
 .SUFFIXES : 
-.SUFFIXES : .profile .sh .e .ep
+.SUFFIXES : .profile .sh .installed .packaged
 
 BASEDIR = /usr/local
 ENCAPDIR = ${BASEDIR}/encap
@@ -29,43 +29,44 @@ LIBXSLT = bcfg2-libxslt-1.1.17
 LXML = bcfg2-lxml-1.0.1
 BCFG2 = bcfg2-0.8.2
 
-.profile.e : # Clean, compile and install an encap package
-	@printf "***** START .profile.e for |$*| ***** \n"
+.ep.installed : # Clean, compile and install an encap package
+	@printf "***** START .ep.installed for |$*| ***** \n"
 	( ${EPKG} -q -r ${ENCAPDIR}/$* || true )
 	( rm -rf ${ENCAPDIR}/$* || true )
-	( ${MKENCAP} -m /usr/local/bin/m4 -b -DUP $*.profile || true ) > $*.log 2>&1
-	( ${MKENCAP} -m /usr/local/bin/m4 -b -T $*.profile || true ) >> $*.log 2>&1
-	( ${MKENCAP} -m /usr/local/bin/m4 -b -CBI $*.profile ) >> $*.log 2>&1
+	( ${MKENCAP} -m /usr/local/bin/m4 -b -DUP $*.ep || true ) > $*.log 2>&1
+	( ${MKENCAP} -m /usr/local/bin/m4 -b -T $*.ep || true ) >> $*.log 2>&1
+	( ${MKENCAP} -m /usr/local/bin/m4 -b -CBI $*.ep ) >> $*.log 2>&1
 	${EPKG} -q -i ${ENCAPDIR}/$*
 	test -h ${BASEDIR}/var/encap/$*
-	touch $*.e
-	@printf "***** STOP .profile.e for |$*| ***** \n"
+	touch $*.installed
+	@printf "***** STOP .ep.installed for |$*| ***** \n"
 
-.sh.e : # Create and install a "fake" encap package
-	@printf "***** START .sh.e for |$*| ***** \n"
+.sh.installed : # Create and install a "fake" encap package
+	@printf "***** START .sh.installed for |$*| ***** \n"
 	( ${EPKG} -q -r ${ENCAPDIR}/$* || true )
 	( rm -rf ${ENCAPDIR}/$* || true )
+	chmod 755 ./$*.sh
 	./$*.sh
 	${EPKG} -q -i ${ENCAPDIR}/$*
 	test -h ${BASEDIR}/var/encap/$*
-	touch $*.e
-	@printf "***** STOP .sh.e for |$*| ***** \n"
+	touch $*.installed
+	@printf "***** STOP .sh.installed for |$*| ***** \n"
 
-.e.ep : # Create .tar.gz encap packages for distribution to other machines
-	@printf "***** START .e.ep for |$*| ***** \n"
+.installed.packaged : # Create .tar.gz encap packages for distribution
+	@printf "***** START .installed.packaged for |$*| ***** \n"
 	( rm ${ENCAPDIR}/$*-*.tar.gz || true )
 	( cd ${ENCAPDIR} && ${MKENCAP} -e $* || true )
 	cd ${ENCAPDIR} && ${MKENCAP} -c $*
 	mv ${ENCAPDIR}/$*-encap-*.tar.gz .
-	touch $*.ep
-	@printf "***** STOP .e.ep for |$*| ***** \n"
+	touch $*.packaged
+	@printf "***** STOP .installed.packaged for |$*| ***** \n"
 
 all :
 	( $(MAKE) install > make.log 2>&1 && $(MAKE) encaps >> make.log 2>&1 ) &
 
-install : ${EPKG} ${MKENCAP} ${BCFG2}.e
+install : ${EPKG} ${MKENCAP} ${BCFG2}.installed
 
-encaps : ${EPKG} ${MKENCAP} ${BCFG2}.ep
+encaps : ${EPKG} ${MKENCAP} ${BCFG2}.packaged
 
 rename : encaps
 	test "$${OS}x" != "x"
@@ -75,41 +76,41 @@ rename : encaps
 
 clean : 
 	( rm *.log || true )
-	( rm *.ep || true )
+	( rm *.packaged || true )
 	( rm *.gz || true )
 
 uninstall : clean
-	( rm *.e || true )
+	( rm *.installed || true )
 	( ${EPKG} -q -r ${ENCAPDIR}/bcfg2-* || true )
 	( rm -rf ${ENCAPDIR}/bcfg2-* || true )
 	( rm -rf ${BASEDIR}/lib/bcfg2 || true )
 
-${ZLIB}.e : ${M4}.e
-${LIBICONV}.e : ${ZLIB}.e
-${GETTEXT}.e : ${LIBICONV}.e
-${PKG-CONFIG}.e : ${GETTEXT}.e
-${PATCH}.e : ${PKG-CONFIG}.e
-${OPENSSL}.e : ${PATCH}.e
-${LIBSTDCXX}.e : ${OPENSSL}.e
-${LIBGCC}.e : ${LIBSTDCXX}.e
-${PYTHON}.e : ${LIBGCC}.e
-${PYREX}.e : ${PYTHON}.e
-${PYOPENSSL}.e : ${PYREX}.e
-${LIBXML2}.e : ${PYOPENSSL}.e	
-${LIBXSLT}.e : ${LIBXML2}.e
-${LXML}.e : ${LIBXSLT}.e
-${BCFG2}.e : ${LXML}.e
+${ZLIB}.installed : ${M4}.installed
+${LIBICONV}.installed : ${ZLIB}.installed
+${GETTEXT}.installed : ${LIBICONV}.installed
+${PKG-CONFIG}.installed : ${GETTEXT}.installed
+${PATCH}.installed : ${PKG-CONFIG}.installed
+${OPENSSL}.installed : ${PATCH}.installed
+${LIBSTDCXX}.installed : ${OPENSSL}.installed
+${LIBGCC}.installed : ${LIBSTDCXX}.installed
+${PYTHON}.installed : ${LIBGCC}.installed
+${PYREX}.installed : ${PYTHON}.installed
+${PYOPENSSL}.installed : ${PYREX}.installed
+${LIBXML2}.installed : ${PYOPENSSL}.installed	
+${LIBXSLT}.installed : ${LIBXML2}.installed
+${LXML}.installed : ${LIBXSLT}.installed
+${BCFG2}.installed : ${LXML}.installed
 
-${LIBICONV}.ep : ${ZLIB}.ep
-${GETTEXT}.ep : ${LIBICONV}.ep
-${PATCH}.ep : ${GETTEXT}.ep
-${OPENSSL}.ep : ${PATCH}.ep
-${LIBSTDCXX}.ep : ${OPENSSL}.ep
-${LIBGCC}.ep : ${LIBSTDCXX}.ep
-${PYTHON}.ep : ${LIBGCC}.ep
-${PYOPENSSL}.ep : ${PYTHON}.ep
-${LIBXML2}.ep : ${PYOPENSSL}.ep
-${LIBXSLT}.ep : ${LIBXML2}.ep
-${LXML}.ep : ${LIBXSLT}.ep
-${BCFG2}.ep : ${LXML}.ep
+${LIBICONV}.packaged : ${ZLIB}.packaged
+${GETTEXT}.packaged : ${LIBICONV}.packaged
+${PATCH}.packaged : ${GETTEXT}.packaged
+${OPENSSL}.packaged : ${PATCH}.packaged
+${LIBSTDCXX}.packaged : ${OPENSSL}.packaged
+${LIBGCC}.packaged : ${LIBSTDCXX}.packaged
+${PYTHON}.packaged : ${LIBGCC}.packaged
+${PYOPENSSL}.packaged : ${PYTHON}.packaged
+${LIBXML2}.packaged : ${PYOPENSSL}.packaged
+${LIBXSLT}.packaged : ${LIBXML2}.packaged
+${LXML}.packaged : ${LIBXSLT}.packaged
+${BCFG2}.packaged : ${LXML}.packaged
 

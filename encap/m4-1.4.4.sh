@@ -5,7 +5,7 @@ ENCAP_PKGNAME=m4-1.4.4
 PATH=$PATH:/usr/local/bin
 export PATH
 
-cat > ${ENCAP_PKGNAME}.profile << EOF
+cat > ${ENCAP_PKGNAME}.ep << EOF
 <?xml version="1.0"?>
 
 <encap_profile
@@ -59,16 +59,16 @@ EOF
 
 chmod 755 m4-fake
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -DUP ${ENCAP_PKGNAME}.profile || true ) \
+( ${MKENCAP} -m ${PWD}/m4-fake -b -DUP ${ENCAP_PKGNAME}.ep || true ) \
 	> ${ENCAP_PKGNAME}.log 2>&1
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -T ${ENCAP_PKGNAME}.profile || true ) \
+( ${MKENCAP} -m ${PWD}/m4-fake -b -T ${ENCAP_PKGNAME}.ep || true ) \
 	>> ${ENCAP_PKGNAME}.log 2>&1
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -CBI ${ENCAP_PKGNAME}.profile ) \
+( ${MKENCAP} -m ${PWD}/m4-fake -b -CBI ${ENCAP_PKGNAME}.ep ) \
 	>> ${ENCAP_PKGNAME}.log 2>&1
 
 rm m4-fake
-rm ${ENCAP_PKGNAME}.profile
+rm ${ENCAP_PKGNAME}.ep
 
 exit 0
