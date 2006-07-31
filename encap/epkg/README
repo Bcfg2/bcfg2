@@ -1,0 +1,23 @@
+If you can't find an epkg binary compiled with all of the extra
+libraries for your platform, you can use this Makefile (which will
+probably require a little bit of editing for platforms other than
+Solaris/x86 10) to compile it.
+
+You'll need to manually download the versions of packages you want to
+this directory, edit the Makefile to refer to those versions,
+decompress/Guntar the distributions, and then run make (or gmake on
+non-GNU platforms)
+
+All of the software is available from http://www.dclark.us/mirror (or
+google for it).
+
+Once you have a working epkg distribution, you should:
+  * cd /usr/local/encap
+  * mkencap -c epkg-x.y.z
+  * Rename the tar.gz file with the appropriate encap string
+    (i.e. mv epkg-x.y.z.tar.gz epkg-x.y.z-encap-i386-solaris10.tar.gz)
+  * Upload that file to the encap repository at:
+    http://www.encap.org/search/upload.fcgi
+  * Update the ticket at http://trac.mcs.anl.gov/projects/bcfg2/ticket/74   
+    with a quick note stating you've done the encap upload so it can be 
+    mirrored at http://www.dclark.us/mirror/epkg-contrib
