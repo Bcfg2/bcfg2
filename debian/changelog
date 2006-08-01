@@ -1,3 +1,9 @@
+bcfg2 (0.8.2+svn060731-1) unstable; urgency=low
+
+  * new packaging code 
+
+ -- Sami Haahtinen <ressu@debian.org>  Mon, 31 Jul 2006 20:58:29 -0500
+
 bcfg2 (0.8.2+svn060725-1) unstable; urgency=low
  
   [ Sami Haahtinen ]

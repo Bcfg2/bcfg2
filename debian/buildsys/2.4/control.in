@@ -2,14 +2,12 @@ Source: bcfg2
 Section: admin
 Priority: optional
 Maintainer: Sami Haahtinen <ressu@debian.org>
-Build-Depends: cdbs (>= 0.4.23-1.1), debhelper (>= 5), debhelper (>= 5.0.37.2), cdbs (>= 0.4.43), python-dev (>= 2.3.5-11), python-central (>= 0.5.0)
+Build-Depends: @cdbs@, python2.4-dev
 Standards-Version: 3.7.2.0
-XS-Python-Version: >= 2.3
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8), ucf, lsb-base (>= 3.1-9)
-XB-Python-Version: ${python:Versions}
+Depends: ${python:Depends}, debsums, python2.4-apt, python2.4-lxml (>= 0.8), ucf, lsb-base (>= 3.1)
 Description: Configuration management client
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
@@ -20,8 +18,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python-lxml (>= 0.8), python2.3-fam | python2.4-fam | python-fam | python2.3-gamin | python2.4-gamin , python-pyopenssl, libxml2-utils (>= 2.6.23), fam | gamin, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${source:Version})
-XB-Python-Version: ${python:Versions}
+Depends: ${python:Depends}, python2.4-lxml (>= 0.8), python2.4-gamin | python2.4-fam, python2.4-pyopenssl, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1), ucf, bcfg2 (= ${Source-Version})
 Description: Configuration management server
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.

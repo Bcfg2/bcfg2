@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Bcfg2Server - Bcfg2 configuration daemon
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 server for configuration requests
+# 
+
+PIDFILE=/var/tmp/bcfg2-server.pid
+
+case "$1" in
+  start)
+    echo -n "Starting bcfg2-server: "
+    if [ -f "/etc/debian_version" ] ; then
+	/sbin/start-stop-daemon --pidfile "${PIDFILE}" --make-pidfile -b -S --startas /usr/sbin/bcfg2-server
+    else
+	/usr/sbin/bcfg2-server -D "${PIDFILE}"
+    fi
+    echo "bcfg2-server"
+    ;;
+  stop)
+    echo -n "Stopping bcfg2-server: "
+    if [ -f "/etc/debian_version" ] ; then
+       /sbin/start-stop-daemon -p "${PIDFILE}" -K /usr/sbin/bcfg2-server
+    else
+       kill -INT `cat ${PIDFILE}`
+    fi
+    echo done
+    ;;
+  restart)
+    $0 stop
+    sleep 5
+    $0 start
+    ;;
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: bcfg2-server {start|stop|restart|force-reload}"
+    exit 1
+esac
+
+exit 0

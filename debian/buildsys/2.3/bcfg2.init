@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# bcfg2 - bcfg2 configuration client
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 client for configuration requests
+# 
+BCFG2_OPTIONS="-q"
+test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
+
+case "$1" in
+  start)
+    if test -e /etc/donttouchme; then
+      rm -f /etc/donttouchme
+      echo "bcfg2 does not need to run."
+    else
+      echo -n "Running bcfg: "
+      /usr/sbin/bcfg2 $BCFG2_OPTIONS
+      echo "bcfg2"
+    fi
+    ;;
+  stop)
+    /bin/true
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  force-reload)
+    true
+    ;;
+  *)
+    echo "Usage: bcfg2 {start|stop|restart}"
+    exit 1
+esac
+
+exit 0

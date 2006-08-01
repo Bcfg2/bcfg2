@@ -1,0 +1,28 @@
+Source: bcfg2
+Section: admin
+Priority: optional
+Maintainer: Sami Haahtinen <ressu@debian.org>
+Build-Depends: @cdbs@, python2.3-dev, python
+Standards-Version: 3.7.2.0
+
+Package: bcfg2
+Architecture: all
+Depends: ${python:Depends}, debsums, python-apt, python2.3-lxml (>= 0.8), ucf
+Description: Configuration management client
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2 is the client portion of bcfg2 system which installs configuration
+ images provided by bcfg2-server
+ .
+ Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
+
+Package: bcfg2-server
+Architecture: all
+Depends: ${python:Depends}, python2.3-lxml (>= 0.8), python2.3-gamin | python2.3-fam , python2.3-pyopenssl, libxml2-utils (>= 2.6.23), gamin | fam, ucf, bcfg2 (= ${Source-Version})
+Description: Configuration management server
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2-server is the server for bcfg2 clients, which generates configuration
+ sets and stores statistics of client system states.
+ .
+ Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
