@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="daemontools-doc-20060731"
+>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-doc-20060731.tar.gz"
+	use_objdir="no"
+>
+
+<configure>
+:
+</configure>
+
+<build>
+:
+</build>
+
+<install>
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/daemontools || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/daemontools
+cp -R * ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/daemontools
+</install>
+
+<clean>
+:
+</clean>
+
+</source>
+
+<prepackage>
+mkdir var 2>/dev/null || exit 0
+mkdir var/encap 2>/dev/null || exit 0
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<encapinfo>
+description daemontools-doc - documentation from daemontools websites
+</encapinfo>
+
+</encap_profile>

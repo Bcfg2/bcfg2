@@ -5,11 +5,11 @@ Solaris/x86 10) to compile it.
 
 You'll need to manually download the versions of packages you want to
 this directory, edit the Makefile to refer to those versions,
-decompress/Guntar the distributions, and then run make (or gmake on
+decompress/untar the distributions, and then run make (or gmake on
 non-GNU platforms)
 
 All of the software is available from http://www.dclark.us/mirror (or
-google for it).
+Google for it).
 
 Once you have a working epkg distribution, you should:
   * cd /usr/local/encap
