@@ -15,10 +15,14 @@ def set_interaction(parser, token):
 
 def sortwell(value):
     "sorts a list(or evaluates queryset to list) of bad, extra, or modified items in the best way for presentation"
-    return sorted(sorted(list(value),lambda x,y: cmp(x.name, y.name)), lambda x,y: cmp(x.kind, y.kind))
+    configItems = list(value)
+    sort(sort(configItems,lambda x,y: cmp(x.name, y.name)), lambda x,y: cmp(x.kind, y.kind))
+    return configItems
 def sortname(value):
     "sorts a list( or evaluates queryset) by name"
-    return sorted(list(value),lambda x,y: cmp(x.name, y.name))
+    configItems = list(value)
+    sort(configItems,lambda x,y: cmp(x.name, y.name))
+    return configItems
                                     
 class SetInteraction(template.Node):
     def __init__(self, times):
