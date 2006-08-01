@@ -3,8 +3,9 @@
 '''The XML-RPC Bcfg2 Server'''
 __revision__ = '$Revision$'
 
+import Bcfg2.Server.Metadata 
+
 from Bcfg2.Server.Core import Core, CoreInitError
-from Bcfg2.Server.Metadata import MetadataConsistencyError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
@@ -133,7 +134,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
                 for probe in generator.GetProbes(meta):
                     resp.append(probe)
             return tostring(resp)
-        except MetadataConsistencyError:
+        except Bcfg2.Server.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
@@ -159,7 +160,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         client = self.resolve_client(address[0])
         try:
             self.Core.metadata.set_profile(client, profile)
-        except MetadataConsistencyError:
+        except (Bcfg2.Server.Metadata.MetadataConsistencyError, Bcfg2.Server.Metadata.MetadataRuntimeError):
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
