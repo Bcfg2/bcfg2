@@ -38,15 +38,6 @@ esac
 
 #DEBHELPER#
 
-if [ -x "/etc/init.d/bcfg2" ]; then
-	update-rc.d bcfg2 defaults >/dev/null
-	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-		invoke-rc.d bcfg2 start || exit $?
-	else
-		/etc/init.d/bcfg2 start || exit $?
-	fi
-fi
-
 exit 0
 
 

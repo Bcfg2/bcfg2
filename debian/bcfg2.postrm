@@ -39,8 +39,4 @@ esac
 
 #DEBHELPER#
 
-if [ "$1" = "purge" ] ; then
-	update-rc.d bcfg2 remove >/dev/null || exit $?
-fi
-
 exit 0

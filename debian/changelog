@@ -1,8 +1,13 @@
-bcfg2 (0.8.2+svn060731-1) unstable; urgency=low
+bcfg2 (0.8.2+svn060801-1) unstable; urgency=low
 
   * new packaging code 
+  * Use dh_installinit to add init-script handling in post/pre scripts, invoke
+    it after compiling python modules.
+  * revert init scripts to lsb 3.0
+  * fix bcfg2-server pidfile handling.
+  * fix cron scripts
 
- -- Sami Haahtinen <ressu@debian.org>  Mon, 31 Jul 2006 20:58:29 -0500
+ -- Sami Haahtinen <ressu@debian.org>  Tue, 01 Aug 2006 09:53:19 -0500
 
 bcfg2 (0.8.2+svn060725-1) unstable; urgency=low
  
