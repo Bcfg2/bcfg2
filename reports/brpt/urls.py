@@ -17,7 +17,6 @@ urlpatterns = patterns('',
     (r'^displays/timing/$','brpt.reports.views.display_timing'),
     (r'^displays/$','brpt.reports.views.display_index'),
 
-
     (r'^elements/modified/(?P<eyedee>\d+)/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','brpt.reports.views.config_item_modified'),
     (r'^elements/modified/(?P<eyedee>\d+)/$','brpt.reports.views.config_item_modified'),
     (r'^elements/bad/(?P<eyedee>\d+)/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','brpt.reports.views.config_item_bad'),
@@ -25,14 +24,5 @@ urlpatterns = patterns('',
 
     # Uncomment this for admin:
     #(r'^admin/', include('django.contrib.admin.urls')),
-
-
-
-
-    #Remove this when not doing DEVELOPMENT
-    #and i quote:
-    #Using this method is inefficient and insecure. Do not use this in a production setting. Use this only for development.
-    (r'^site_media/(.*)$', 'django.views.static.serve', {'document_root': '/Users/joey/anl-mcs/dev/bcfg2/reports/site_media/'}),
-
 
 )
