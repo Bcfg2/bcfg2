@@ -88,7 +88,6 @@ class Interaction(models.Model):
     state = models.CharField(maxlength=32)#good/bad/modified/etc
     repo_revision = models.IntegerField()#repo revision at time of interaction
     client_version = models.CharField(maxlength=32)#Client Version
-    pingable = models.BooleanField()#This needs to change
     goodcount = models.IntegerField()#of good config-items
     totalcount = models.IntegerField()#of total config-items
 

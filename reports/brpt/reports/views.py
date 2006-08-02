@@ -6,7 +6,10 @@ from django.shortcuts import render_to_response, get_object_or_404
 from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
 from datetime import datetime, timedelta
 from time import strptime
-from django.db import connection    
+from django.db import connection
+from django.db.backends import util
+
+
 
 def index(request):
     return render_to_response('index.html')
@@ -211,13 +214,22 @@ def prepare_client_lists(request, timestamp = 'now'):
 
     if (timestamp == 'now' or timestamp == None): 
         cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
-        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetime.now() - x[1]>timedelta(days=1)])
+        results = cursor.fetchall()
+        for x in results:
+            if type(x[1]) == type(""):
+                x[1] = util.typecast_timestamp(x[1])
+        
+        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in results if datetime.now() - x[1] > timedelta(days=1)])
     else:
         cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
                        "WHERE timestamp < %s GROUP BY client_id", [timestamp])
         t = strptime(timestamp,"%Y-%m-%d %H:%M:%S")
         datetimestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
-        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetimestamp - x[1] > timedelta(days=1)])
+        results = cursor.fetchall()
+        for x in results:
+            if type(x[1]) == type(""):
+                x[1] = util.typecast_timestamp(x[1])
+        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in results if datetimestamp - x[1] > timedelta(days=1)])
         
     [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
 
