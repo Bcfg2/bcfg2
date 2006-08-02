@@ -41,9 +41,6 @@ def config_item_modified(request, eyedee =None, timestamp = 'now'):
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
 
-    for q in connection.queries:
-        print q
-
     return render_to_response('config_items/index.html', {'item':item,
                                                          'mod_or_bad':mod_or_bad,
                                                          'associated_client_list':associated_client_list,
@@ -79,10 +76,6 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
 
-
-    for q in connection.queries:
-        print q
-
     return render_to_response('config_items/index.html', {'item':item,
                                                          'mod_or_bad':mod_or_bad,
                                                          'associated_client_list':associated_client_list,
@@ -106,29 +99,16 @@ def client_detail(request, hostname = None, pk = None):
         interaction = client.current_interaction
     else:
         interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
-
-    #for q in connection.queries:
-    #    print q
-
     return render_to_response('clients/detail.html', {'client': client, 'interaction': interaction})
 
 def display_sys_view(request, timestamp = 'now'):
     client_lists = prepare_client_lists(request, timestamp)
-
-    #for q in connection.queries:
-    #    print q
-
-
     return render_to_response('displays/sys_view.html', client_lists)
 
 def display_summary(request, timestamp = 'now'):
     
     client_lists = prepare_client_lists(request, timestamp)
     #this returns timestamp and the timestamp parts too
-    
-    #for q in connection.queries:
-    #    print q
-
     return render_to_response('displays/summary.html', client_lists)
 
 def display_timing(request, timestamp = 'now'):
@@ -213,7 +193,21 @@ def prepare_client_lists(request, timestamp = 'now'):
 
     [clean_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
     [bad_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='dirty')])]
-    [down_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(pingable='N')])]#need to change the PINGING data structure
+
+    client_ping_dict = {}
+    [client_ping_dict.__setitem__(x,'Y') for x in client_interaction_dict.keys()]#unless we know otherwise...
+    
+    try:
+        cursor.execute("select reports_ping.status, x.client_id from (select client_id, MAX(endtime) "+
+                       "as timer from reports_ping GROUP BY client_id) x, reports_ping where "+
+                       "reports_ping.client_id = x.client_id AND reports_ping.endtime = x.timer")
+        [client_ping_dict.__setitem__(x[1],x[0]) for x in cursor.fetchall()]
+    except:
+        pass #This is to fix problems when you have only zero records returned
+
+    client_down_ids = [y for y in client_ping_dict.keys() if client_ping_dict[y]=='N']
+    if not client_down_ids == []:
+        [down_client_list.append(x) for x in Client.objects.filter(id__in=client_down_ids)]
 
     if (timestamp == 'now' or timestamp == None): 
         cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
@@ -225,7 +219,7 @@ def prepare_client_lists(request, timestamp = 'now'):
         datetimestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
         stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall() if datetimestamp - x[1] > timedelta(days=1)])
         
-    [stale_up_client_list.append(x) for x in stale_all_client_list if client_interaction_dict[x.id].pingable=='Y']
+    [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
 
     
     cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_modified_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_modified_interactions.interaction_id GROUP BY reports_client.id")

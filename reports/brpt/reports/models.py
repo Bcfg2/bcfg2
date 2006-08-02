@@ -11,7 +11,11 @@ KIND_CHOICES = (
     ('Directory', 'Directory'),
     ('Permissions','Permissions'),
 )
-
+PING_CHOICES = (
+    #These are possible ping states
+    ('Up (Y)', 'Y'),
+    ('Down (N)', 'N')
+)
 class Client(models.Model):
     '''object representing every client we have seen stats for'''
     creation = models.DateTimeField()
@@ -19,6 +23,7 @@ class Client(models.Model):
     current_interaction = models.ForeignKey('Interaction',
                                             null=True, blank=True,
                                             related_name="parent_client")
+    expiration = models.DateTimeField()
     
     def __str__(self):
         return self.name
@@ -27,19 +32,31 @@ class Client(models.Model):
         pass
 
 class Metadata(models.Model):
+    '''insert magical interface to client metadata here'''
     client = models.ForeignKey(Client)
     timestamp = models.DateTimeField()
-    #INSERT magic interface to Metadata HERE
     def __str__(self):
         return self.timestamp
     
 class Repository(models.Model):
+    '''insert magical interface to subversioned repository here'''
     timestamp = models.DateTimeField()
-    #INSERT magic interface to repo (SVN'd version) here
     def __str__(self):
         return self.timestamp
 
+class Ping(models.Model):
+    '''represents a ping of a client (sparsely)'''
+    client = models.ForeignKey(Client, related_name="pings")
+    starttime = models.DateTimeField()
+    endtime = models.DateTimeField()
+    status = models.CharField(maxlength=4, choices=PING_CHOICES)#up/down
+
+    class Meta:
+        get_latest_by = 'endtime'
+    
 class InteractiveManager(models.Manager):
+    '''manages interactions objects'''
+    
     '''returns most recent interaction as of specified timestamp in format:
     '2006-01-01 00:00:00' or 'now' or None->'now'  '''
     def interaction_per_client(self, maxdate = None):
@@ -47,16 +64,17 @@ class InteractiveManager(models.Manager):
         cursor = connection.cursor()
 
         #in order to prevent traceback when zero records are returned.
-        #this could mask unsupported database errors
+        #this could mask some database errors
         try:
             if (maxdate == 'now' or maxdate == None):
                 cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
-                               "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
-                               "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
+                    "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
+                    "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
             else:
                 cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
-                               "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
-                               "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer", [maxdate])
+                    "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
+                    "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer",
+                               [maxdate])
             in_idents = [item[0] for item in cursor.fetchall()]
         except:
             in_idents = []
