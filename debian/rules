@@ -27,3 +27,11 @@ ifdef DEB_PYTHON_SYSTEM
   endif
 endif
 	dh_python -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
+
+# Invoke dh_installinit after compiling python modules
+binary-install/bcfg2 ::
+	dh_installinit -p$(cdbs_curpkg) -o --no-start
+
+binary-install/bcfg2-server ::
+	dh_installinit -p$(cdbs_curpkg) -o
+
