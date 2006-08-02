@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="ostiary-3.4"
+>
+
+<environment
+        variable="CC"
+        value="gcc"
+        type="set"
+/>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+PLATFORM_IF_MATCH(linux)
+PLATFORM_ELSE
+<environment
+        variable="MAKE"
+        value="gmake"
+        type="set"
+/>
+PLATFORM_ENDIF
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
+     http://ingles.homeunix.org/software/ost/ostiary-3.4.tar.gz"
+	use_objdir="no"
+>
+
+</source>
+
+<prepackage>
+mkdir var 2>/dev/null || exit 0
+mkdir var/encap 2>/dev/null || exit 0
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<encapinfo>
+description Ostiary - Simple, Secure Remote Script Execution
+</encapinfo>
+
+</encap_profile>

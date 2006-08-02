@@ -1,0 +1,17 @@
+daemontools - http://cr.yp.to/daemontools.html
+----------------------------------------------
+D. J. Bernstein's daemontools - a collection of tools for managing
+UNIX services the same way across all UNIX platforms. May be useful to
+set up one-time run of bcfg2 client at startup, or to run ostiary.
+
+epkg - http://www.encap.org/epkg
+--------------------------------
+Mark D. Roth's epkg - an encap pacakage manager. Needed to build the
+*.ep and *.sh files, although in most cases epkg binaries for your
+platform will already exist.
+
+ostiary - http://ingles.homeunix.org/software/ost
+-------------------------------------------------
+Ray Ingles' ostiary - simple, secure remote script execution.  May be
+useful if you like/are used to being able to kick off a config update
+on a config client from a config server, like with cfengine.
