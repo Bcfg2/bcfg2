@@ -91,6 +91,7 @@ if __name__ == '__main__':
     [interactions_hash.__setitem__(str(x[0])+"-"+x[1].isoformat(),x[2]) for x in cursor.fetchall()]#possibly change str to tuple
     pingability = {}
     [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
+    
 
     cursor.execute("SELECT id, owner, current_owner, %s, current_group, perms, current_perms, status, current_status, %s, current_to, version, current_version, current_exists, current_diff from reports_reason"%(backend.quote_name("group"),backend.quote_name("to")))
     reasons_hash = {}
@@ -150,16 +151,26 @@ if __name__ == '__main__':
                     print("Interaction for %s at %s with id %s already exists"%(clients[name],
                         datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
             else:
-                cursor.execute("INSERT INTO reports_interaction VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s);",
+                cursor.execute("INSERT INTO reports_interaction VALUES (NULL, %s, %s, %s, %s, %s, %s, %s);",
                                [clients[name], timestamp,
                                 statistics.get('state', default="unknown"), statistics.get('revision',default="unknown"),
-                                statistics.get('client_version',default="unknown"), pingability[name],
+                                statistics.get('client_version',default="unknown"),
                                 statistics.get('good',default="0"), statistics.get('total',default="0")])
                 current_interaction_id = cursor.lastrowid
                 interactions_hash[str(clients[name])+"-"+timestamp.isoformat()] = current_interaction_id
                 if verbose:
                     print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
                         timestamp, current_interaction_id))
+
+            #get current ping info
+            #figure out which ones changed
+            #update ones that didn't change, just update endtime
+            #if it doesn't exist, create a new one with starttime and endtime==now
+            #if it does exist, insert new with start time equal to the previous endtime, endtime==now
+            
+            #if (somewhatverbose or verbose):
+            #    print "---------------PINGDATA SYNCED---------------------"
+
             for (xpath, hashname, tablename) in [('Bad/*', bad_hash, 'reports_bad'),
                                                  ('Extra/*', extra_hash, 'reports_extra'),
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
