@@ -77,7 +77,7 @@ if __name__ == '__main__':
     for node in statsdata.findall('Node'):
         name = node.get('name')
         if not clients.has_key(name):
-            cursor.execute("INSERT INTO reports_client VALUES (NULL, %s, %s, NULL)", [datetime.now(),name])
+            cursor.execute("INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)", [datetime.now(),name])
             clients[name] = cursor.lastrowid
             if verbose:
                 print("Client %s added to db"%name)

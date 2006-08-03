@@ -23,7 +23,7 @@ class Client(models.Model):
     current_interaction = models.ForeignKey('Interaction',
                                             null=True, blank=True,
                                             related_name="parent_client")
-    expiration = models.DateTimeField()
+    expiration = models.DateTimeField(blank=True, null=True)
     
     def __str__(self):
         return self.name
