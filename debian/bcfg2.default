@@ -2,18 +2,26 @@
 
 # BCFG2_OPTIONS:
 # Set the default options for Bcfg2 on startup
-#
+#   Default: "-q"
 #BCFG2_OPTIONS="-q"
 
-# BCFG_ENABLED:
+# BCFG2_ENABLED:
 # Should Bcfg2 be run automatically by system scripts
 #
-# Uncomment the following line to automatically start bcfg2 on startup
-#
+# Uncomment the following line to enable any of the below selections
+#   Default: 0 (disable)
 #BCFG2_ENABLED=1
+
+# BCFG2_INIT:
+# Enable bcfg2 during system bootup
+#
+# Set value to 1 to enable
+#   Default: 0 (disable)
+#BCFG2_INIT=1
 
 # BCFG2_CRON:
 # Set the frequency of cron runs.
 #
-# Can be set to off, hourly or daily
+# Can be set to off, hourly, daily or both
+#    Default: off
 #BCFG2_CRON=off

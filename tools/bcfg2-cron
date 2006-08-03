@@ -12,6 +12,9 @@ BCFG2_CRON=off
 BCFG2_ENABLED=0
 
 # Set default options
+#   This script will respect additional variables:
+#     BCFG_OPTIONS_DAILY and BCFG_OPTIONS_HOURLY are added to BCFG2_OPTIONS
+#     This allows you to run different types of passes with cron
 BCFG2_OPTIONS="-q"
 
 # bcfg2 file locations
@@ -27,16 +30,18 @@ BCFG2_CFG=/etc/bcfg2.conf
 invoke_bcfg2 () {
   # Invoke bcfg2 if enabled
   if [ ${BCFG2_ENABLED} -eq 1 ]; then
-    ${BCFG2_BIN} ${BCFG2_OPTIONS}
+    ${BCFG2_BIN} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_${RUNTYPE}}
   fi
 }
 
 case $1 in
   "--daily")
-    [ "x${BCFG2_CRON}" = "xdaily" ] && invoke_bcfg2
+    [ "x${BCFG2_CRON}" = "xdaily" -o "x${BCFG2_CRON}" = "xboth" ] && \
+            RUNTYPE=DAILY invoke_bcfg2
     ;;
   "--hourly")
-    [ "x${BCFG2_CRON}" = "xhourly" ] && invoke_bcfg2
+    [ "x${BCFG2_CRON}" = "xhourly" -o "x${BCFG2_CRON}" = "xboth"] && \
+            RUNTYPE=HOURLY invoke_bcfg2
     ;;
   *)
     echo "Usage: $0 [--daily|--hourly]"
