@@ -3,11 +3,14 @@
 __revision__ = '$Revision$'
 
 import os, sys
-try:    # Add this project to sys.path so that it's importable
-    import settings # Assumed to be in the same directory.
+try:
+    import settings
 except ImportError:
-    sys.stderr.write("Failed to locate settings.py")
-    sys.exit(1)
+    try:
+        import brpt.settings
+    except ImportError:
+        sys.stderr.write("Failed to locate settings.py. Is brpt python module installed?")
+        sys.exit(1)
 
 project_directory = os.path.dirname(settings.__file__)
 project_name = os.path.basename(project_directory)
@@ -99,15 +102,15 @@ if __name__ == '__main__':
 
     cursor.execute("SELECT id, name, kind, reason_id from reports_bad")
     bad_hash = {}
-    [bad_hash.__setitem__((n[1],n[2]),(n[0],n[3])) for n in cursor.fetchall()]
+    [bad_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
 
     cursor.execute("SELECT id, name, kind, reason_id from reports_extra")
     extra_hash = {}
-    [extra_hash.__setitem__((n[1],n[2]),(n[0],n[3])) for n in cursor.fetchall()]
+    [extra_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
 
     cursor.execute("SELECT id, name, kind, reason_id from reports_modified")
     modified_hash = {}
-    [modified_hash.__setitem__((n[1],n[2]),(n[0],n[3])) for n in cursor.fetchall()]
+    [modified_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
 
     cursor.execute("SELECT id, metric, value from reports_performance")
     performance_hash = {}
@@ -163,10 +166,10 @@ if __name__ == '__main__':
                         timestamp, current_interaction_id))
 
             #get current ping info
-            #figure out which ones changed
-            #update ones that didn't change, just update endtime
-            #if it doesn't exist, create a new one with starttime and endtime==now
-            #if it does exist, insert new with start time equal to the previous endtime, endtime==now
+            #figure out which hosts changed state
+            #update ping records for hosts that didn't change, just set endtime to now.
+            #if ping doesn't exist for given host, create a new ping record  with starttime==endtime==now
+            #if it ping does exist and host changed state, insert new ping with starttime equal to the previous endtime and endtime==now
             
             #if (somewhatverbose or verbose):
             #    print "---------------PINGDATA SYNCED---------------------"
@@ -175,30 +178,31 @@ if __name__ == '__main__':
                                                  ('Extra/*', extra_hash, 'reports_extra'),
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
                 for x in statistics.findall(xpath):
-                    if not hashname.has_key((x.get('name'), x.tag)):
-                        arguments = [x.get('owner', default=""), x.get('current_owner', default=""),
-                                     x.get('group', default=""), x.get('current_group', default=""),
-                                     x.get('perms', default=""), x.get('current_perms', default=""),
-                                     x.get('status', default=""), x.get('current_status', default=""),
-                                     x.get('to', default=""), x.get('current_to', default=""),
-                                     x.get('version', default=""), x.get('current_version', default=""),
-                                     (x.get('current_exists', default="True").capitalize()=="True"),
-                                     x.get('current_diff', default="")]
+                    arguments = [x.get('owner', default=""), x.get('current_owner', default=""),
+                                 x.get('group', default=""), x.get('current_group', default=""),
+                                 x.get('perms', default=""), x.get('current_perms', default=""),
+                                 x.get('status', default=""), x.get('current_status', default=""),
+                                 x.get('to', default=""), x.get('current_to', default=""),
+                                 x.get('version', default=""), x.get('current_version', default=""),
+                                 (x.get('current_exists', default="True").capitalize()=="True"),
+                                 x.get('current_diff', default="")]
+
+                    if not hashname.has_key((x.get('name'), x.tag, reasons_hash[tuple(arguments)])):
                         cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s, %s);",
                                        [x.get('name'),
                                         x.tag,
                                         (x.get('critical', default="False").capitalize()=="True"),
                                         reasons_hash[tuple(arguments)]])
                         item_id = cursor.lastrowid
-                        hashname[(x.get('name'), x.tag)] = (item_id, current_interaction_id)
-                    if verbose:
-                        print "Bad item INSERTED having reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
-                                                                                 hashname[(x.get('name'),x.tag)][0])                
-                    else:
-                        item_id = hashname[(x.get('name'), x.tag)][0]
+                        hashname[(x.get('name'), x.tag, reasons_hash[tuple(arguments)])] = item_id
                         if verbose:
-                            print "Bad item exists, has reason id %s and ID %s"%(hashname[(x.get('name'),x.tag)][1],
-                                                                                          hashname[(x.get('name'),x.tag)][0])
+                            print "Bad item INSERTED having reason id %s and ID %s"%(reasons_hash[tuple(arguments)],
+                                                                                     hashname[(x.get('name'),x.tag, reasons_hash[tuple(arguments)])])
+                    else:
+                        item_id = hashname[(x.get('name'), x.tag, reasons_hash[tuple(arguments)])]
+                        if verbose:
+                            print "Bad item exists, has reason id %s and ID %s"%(reasons_hash[tuple(arguments)],
+                                                                                          hashname[(x.get('name'),x.tag, reasons_hash[tuple(arguments)])])
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
