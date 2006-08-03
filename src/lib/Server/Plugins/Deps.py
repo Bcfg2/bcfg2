@@ -65,7 +65,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
         else:
             [src.Cache(metadata) for src in self.entries.values()]
             
-            toexamine = entries[:]
+            toexamine = list(entries[:])
             while toexamine:
                 entry = toexamine.pop()
                 matching = [src for src in self.entries.values()
