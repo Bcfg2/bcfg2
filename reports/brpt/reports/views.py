@@ -218,7 +218,6 @@ def prepare_client_lists(request, timestamp = 'now'):
         for x in results:
             if type(x[1]) == type(""):
                 x[1] = util.typecast_timestamp(x[1])
-        
         stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in results if datetime.now() - x[1] > timedelta(days=1)])
     else:
         cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
