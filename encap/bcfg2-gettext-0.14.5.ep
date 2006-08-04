@@ -64,6 +64,9 @@ url="http://www.pobox.com/users/dclark/mirror/gettext/gettext-0.14.5.tar.gz
 </source>
 
 <prepackage type="set">
+# Make man pages available from /usr/local/lib/bcfg2/man
+mv lib/bcfg2/share/man lib/bcfg2/
+# Other stuff...
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}

@@ -1,6 +1,6 @@
 # $Id$
 
-.PHONY : all install clean uninstall encaps rename
+.PHONY : all install clean uninstall encaps rename bcfg2only
 .SUFFIXES : 
 .SUFFIXES : .ep .sh .installed .packaged
 
@@ -83,6 +83,9 @@ uninstall : clean
 	( ${EPKG} -q -r ${ENCAPDIR}/bcfg2-* || true )
 	( rm -rf ${ENCAPDIR}/bcfg2-* || true )
 	( rm -rf ${BASEDIR}/lib/bcfg2 || true )
+
+bcfg2only :
+	$(MAKE) -t; sleep 2; touch $(BCFG2).ep; $(MAKE)
 
 ${ZLIB}.installed : ${M4}.installed
 ${LIBICONV}.installed : ${ZLIB}.installed

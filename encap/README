@@ -21,7 +21,7 @@ thing).
 
 It attempts to be as self contained as possible; everything gets linked to
 under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
-software, which is prefixed by `b2` (`b2openssl`, `b2python` etc.).  
+software, which is prefixed by `b2-` (`b2-openssl`, `b2-python` etc.).  
 
 To run the bcfg2 server, you also need to install gamin, which
 supports a subset of the platforms bcfg2 client will work on, including
@@ -52,7 +52,7 @@ work, but it has not yet been tested with a working bcfg2 repository.
  * GNU gcc and GNU g++
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * epkg (the encap package manager)
-   * Cannonical website is http://www.encap.org/epkg
+   * Canonical website is http://www.encap.org/epkg
    * Mirror of epkg binaries is available at http://www.dclark.us/mirror/
    * If built from source, first need all recommended libraries from web page
 
@@ -75,10 +75,12 @@ Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
 || OS        || Vendor || Version || Arch  || GCC   || By || With VERSION   ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.1/0.8.2pre6  ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.1/0.8.2pre6  ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.3/0.8.2pre10 ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.7/0.8.2      ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.7/0.8.2      ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.8/0.8.2      ||
 || Solaris   || Sun    || 10      || Sparc || 3.4.3 || dc || 0.7/0.8.2      ||
+|| Solaris   || Sun    || 10      || i386  || 3.4.3 || dc || 0.7/0.8.2      ||
+
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
 If you bootstrap a platform not listed above, please add a comment to:
@@ -137,10 +139,10 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
    * Mirror of other packages is manual (but deps shouldn't change often)
 
  0.5::
- * Removed external download of patches as that was not working consistantly;
+ * Removed external download of patches as that was not working consistently;
    replaced with patches inline the bcfg2 encap profile (.ep file)
- * Added GNU patch dependancy, both for bcfg2 patches and call from Cfg.py
- * Fixed bcfg-repo-validate so it can find xmllint (as b2xmllint)
+ * Added GNU patch dependency, both for bcfg2 patches and call from Cfg.py
+ * Fixed bcfg-repo-validate so it can find xmllint (as b2-xmllint)
  
  0.6::
  * Updated bcfg2 to 0.8.2 (released version)
@@ -149,6 +151,17 @@ Note that the doc for the encap profile format is in "man 5 encap_profile".
 
  0.7::
  * Added Solaris support
+
+ 0.8::
+ * Added python code to fix paths; removed inline patch & GNU patch dependency
+   * Path change happens as part of install, logged to postinstall.log
+ * Changed prefix from b2 to b2- to disambiguate from system commands  
+ * Fixes to make man pages easier to access
+ * Install tools as b2-example-tools-*
+ * Added some auxiliary tools under tools/ directory
+   * daemontools - cross-platform alternative to init scripts/cron
+   * ostiary - simple/secure daemon for kicking off a local script
+   * epkg Makefile - to build epkg when prebuilt binaries aren't available
 
 == Documentation Version ==
 $Id$

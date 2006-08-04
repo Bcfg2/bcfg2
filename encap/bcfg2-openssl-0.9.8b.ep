@@ -68,8 +68,11 @@ url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8b.tar.gz
 </source>
 
 <prepackage>
+# Make man pages available from /usr/local/lib/bcfg2/man
+mv lib/bcfg2/ssl/man lib/bcfg2/
+# Other stuff...
 mkdir bin 2>/dev/null || exit 0
-ln -sf ../lib/bcfg2/bin/openssl bin/b2openssl
+ln -sf ../lib/bcfg2/bin/openssl bin/b2-openssl
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}

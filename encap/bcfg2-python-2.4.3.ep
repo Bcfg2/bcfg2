@@ -73,9 +73,9 @@ PLATFORM_ENDIF
 <prepackage><![CDATA[
 echo /usr/local/lib/bcfg2/lib/python2.4/site-packages > lib/bcfg2/lib/python2.4/site-packages/usr-local-lib-bcfg2.pth
 mkdir bin 2>/dev/null || exit 0
-ln -sf ../lib/bcfg2/bin/idle bin/b2idle
-ln -sf ../lib/bcfg2/bin/pydoc bin/b2pydoc
-ln -sf ../lib/bcfg2/bin/python bin/b2python
+ln -sf ../lib/bcfg2/bin/idle bin/b2-idle
+ln -sf ../lib/bcfg2/bin/pydoc bin/b2-pydoc
+ln -sf ../lib/bcfg2/bin/python bin/b2-python
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}
