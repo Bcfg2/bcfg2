@@ -26,6 +26,7 @@ from sys import argv
 from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime, sleep
+from django.db import connection, backend
 
 if __name__ == '__main__':
     somewhatverbose = False
@@ -70,9 +71,7 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(clientspath))
         raise SystemExit, 1
 
-    from django.db import connection, backend
     cursor = connection.cursor()
-
     clients = {}
     cursor.execute("SELECT name, id from reports_client;")
     [clients.__setitem__(a,b) for a,b in cursor.fetchall()]
@@ -115,6 +114,11 @@ if __name__ == '__main__':
     cursor.execute("SELECT id, metric, value from reports_performance")
     performance_hash = {}
     [performance_hash.__setitem__((n[1],n[2]),n[0]) for n in cursor.fetchall()]
+
+    cursor.execute("SELECT x.client_id, reports_ping.status from (SELECT client_id, MAX(endtime) from reports_ping GROUP BY client_id) x, reports_ping WHERE x.client_id = reports_ping.client_id")
+    ping_hash = {}
+    [ping_hash.__setitem__(n[0],n[1]) for n in cursor.fetchall()]
+
     
     for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
         arguments = [r.get('owner', default=""), r.get('current_owner', default=""),
@@ -147,7 +151,7 @@ if __name__ == '__main__':
             pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
-            timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])
+            timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])#Maybe replace with django.core.db typecasts typecast_timestamp()? import from django.backends util
             if interactions_hash.has_key(str(clients[name]) +"-"+ timestamp.isoformat()):
                 current_interaction_id = interactions_hash[str(clients[name])+"-"+timestamp.isoformat()]
                 if verbose:
@@ -165,14 +169,6 @@ if __name__ == '__main__':
                     print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
                         timestamp, current_interaction_id))
 
-            #get current ping info
-            #figure out which hosts changed state
-            #update ping records for hosts that didn't change, just set endtime to now.
-            #if ping doesn't exist for given host, create a new ping record  with starttime==endtime==now
-            #if it ping does exist and host changed state, insert new ping with starttime equal to the previous endtime and endtime==now
-            
-            #if (somewhatverbose or verbose):
-            #    print "---------------PINGDATA SYNCED---------------------"
 
             for (xpath, hashname, tablename) in [('Bad/*', bad_hash, 'reports_bad'),
                                                  ('Extra/*', extra_hash, 'reports_extra'),
@@ -231,7 +227,25 @@ if __name__ == '__main__':
                        [row[0],row[1]])
     if (somewhatverbose or verbose):
         print("------------LATEST INTERACTION SET----------------")
-            
+
+    for key in pingability.keys():
+        if clients.has_key(key):
+            if ping_hash.has_key(clients[key]):
+                if ping_hash[clients[key]] == pingability[key]:
+                    cursor.execute("UPDATE reports_ping SET endtime = %s where reports_ping.client_id = %s",
+                                   [datetime.now(),clients[key]])
+                else:
+                    ping_hash[clients[key]] = pingability[key]
+                    cursor.execute("INSERT INTO reports_ping VALUES (NULL, %s, %s, %s, %s)",
+                                   [clients[key], datetime.now(), datetime.now(), pingability[key]])
+            else:
+                ping_hash[clients[key]] = pingability[key]
+                cursor.execute("INSERT INTO reports_ping VALUES (NULL, %s, %s, %s, %s)",
+                               [clients[key], datetime.now(), datetime.now(), pingability[key]])
+
+    if (somewhatverbose or verbose):
+        print "---------------PINGDATA SYNCED---------------------"
+
     connection._commit()
     #Clients are consistent
     if veryverbose:
