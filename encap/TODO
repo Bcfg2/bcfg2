@@ -1,17 +1,20 @@
-  * daemontools:
-    * Test daemontools encap, including postinstall scripts for config
-    * Use daemontools to run the bcfg2 service on bootup (once) under the 
-      encap packaging scheme
-      * Create bcfg2 "run" script (look at init scripts for other platforms)
-    * Modify Makefile, README, bcfg2-0.8.2.ep to work with daemontools
+ * daemontools:
+   * Test encap, including postinstall scripts for config
+   * Modify Makefile, README, bcfg2-0.8.2.ep to work with daemontools
+   * Create bcfg2 "run" scripts (look at init scripts for other platforms):
+     * Run bcfg2 server on bootup (configurable like debian, default off)
+     * Run bcfg2 client once on bootup (")
+     * Run bcfg2 client at specified interval (")
 
-  * ostiary:
-    * Test encap
-    * Create daemontools "run" script
-    * Integration with bcfg2 client
+ * ostiary:
+   * Test encap
+   * Create daemontools "run" script
+   * Make sure paths point to right places under /usr/local
+   * Modify Makefile, README, bcfg2-0.8.2.ep to work with ostiary
+   * Integration with bcfg2 client
 
-  * Announce to mailing list:
-    * daemontools & ostiary stuff
-    * encap support for Solaris (sparc and x86)
-    * Binary epkg archive at 
-      http://www.pobox.com/users/dclark/mirror/bcfg2-encaps
+ * Announce to mailing list:
+   * daemontools & ostiary stuff
+   * encap support for Solaris (sparc and x86)
+   * Binary epkg archive at 
+     http://www.pobox.com/users/dclark/mirror/bcfg2-encaps
