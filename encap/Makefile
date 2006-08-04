@@ -17,7 +17,6 @@ ZLIB = bcfg2-zlib-1.2.3
 LIBICONV = bcfg2-libiconv-1.9.2
 GETTEXT = bcfg2-gettext-0.14.5
 PKG-CONFIG = bcfg2-pkg-config-0.20
-PATCH = bcfg2-patch-2.5.9
 OPENSSL = bcfg2-openssl-0.9.8b
 LIBSTDCXX = bcfg2-libstdc++-0.1
 LIBGCC = bcfg2-libgcc-0.1
@@ -89,8 +88,7 @@ ${ZLIB}.installed : ${M4}.installed
 ${LIBICONV}.installed : ${ZLIB}.installed
 ${GETTEXT}.installed : ${LIBICONV}.installed
 ${PKG-CONFIG}.installed : ${GETTEXT}.installed
-${PATCH}.installed : ${PKG-CONFIG}.installed
-${OPENSSL}.installed : ${PATCH}.installed
+${OPENSSL}.installed : ${PKG-CONFIG}.installed
 ${LIBSTDCXX}.installed : ${OPENSSL}.installed
 ${LIBGCC}.installed : ${LIBSTDCXX}.installed
 ${PYTHON}.installed : ${LIBGCC}.installed
@@ -103,8 +101,7 @@ ${BCFG2}.installed : ${LXML}.installed
 
 ${LIBICONV}.packaged : ${ZLIB}.packaged
 ${GETTEXT}.packaged : ${LIBICONV}.packaged
-${PATCH}.packaged : ${GETTEXT}.packaged
-${OPENSSL}.packaged : ${PATCH}.packaged
+${OPENSSL}.packaged : ${GETTEXT}.packaged
 ${LIBSTDCXX}.packaged : ${OPENSSL}.packaged
 ${LIBGCC}.packaged : ${LIBSTDCXX}.packaged
 ${PYTHON}.packaged : ${LIBGCC}.packaged
@@ -113,4 +110,3 @@ ${LIBXML2}.packaged : ${PYOPENSSL}.packaged
 ${LIBXSLT}.packaged : ${LIBXML2}.packaged
 ${LXML}.packaged : ${LIBXSLT}.packaged
 ${BCFG2}.packaged : ${LXML}.packaged
-

@@ -7,6 +7,8 @@
 	pkgspec="daemontools-0.76"
 >
 
+<prereq package="patch-2.5.9" />
+
 <environment
         variable="CC"
         value="gcc"

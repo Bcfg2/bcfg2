@@ -56,225 +56,6 @@ url="http://www.pobox.com/users/dclark/mirror/bcfg/bcfg2-0.8.2.tar.gz
      ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.2.tar.gz"
 >
 
-<patch options="-p0"><![CDATA[
-Index: src/lib/Options.py
-===================================================================
---- src/lib/Options.py	(revision 1976)
-+++ src/lib/Options.py	(working copy)
-@@ -5,7 +5,7 @@
- # (option, env, cfpath, default value, option desc, boolean, arg desc)
- # ((option, arg desc, opt desc), env, cfpath, default, boolean)
- bootstrap = {'configfile': (('-C', '<configfile>', 'Path to config file'), 
--                             'BCFG2_CONF', False, '/etc/bcfg2.conf',  False)}
-+                             'BCFG2_CONF', False, '/usr/local/etc/bcfg2.conf',  False)}
- 
- class OptionFailure(Exception):
-     pass
-Index: src/lib/Server/Plugins/Cfg.py
-===================================================================
---- src/lib/Server/Plugins/Cfg.py	(revision 1976)
-+++ src/lib/Server/Plugins/Cfg.py	(working copy)
-@@ -186,7 +186,7 @@
-                 dfile = open(tempfile.mktemp(), 'w')
-                 dfile.write(delta.data)
-                 dfile.close()
--                ret = os.system("patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
-+                ret = os.system("/usr/local/bin/b2patch -uf %s < %s > /dev/null 2>&1"%(basefile.name, dfile.name))
-                 output = open(basefile.name, 'r').read()
-                 [os.unlink(fname) for fname in [basefile.name, dfile.name]]
-                 if ret >> 8 != 0:
-Index: src/lib/Server/Component.py
-===================================================================
---- src/lib/Server/Component.py	(revision 1976)
-+++ src/lib/Server/Component.py	(working copy)
-@@ -108,7 +108,7 @@
-         if setup['configfile']:
-             cfilename = setup['configfile']
-         else:
--            cfilename = '/etc/bcfg2.conf'
-+            cfilename = '/usr/local/etc/bcfg2.conf'
-         self.cfile.read([cfilename])
-         if not self.cfile.has_section('communication'):
-             print "Configfile missing communication section"
-Index: src/lib/Client/Solaris.py
-===================================================================
---- src/lib/Client/Solaris.py	(revision 1976)
-+++ src/lib/Client/Solaris.py	(working copy)
-@@ -28,7 +28,7 @@
-     and standard SMF services'''
-     pkgtool = {'sysv':("/usr/sbin/pkgadd %s -d %%s -n %%%%s", (("%s", ["name"]))),
-                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
--               'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
-+               'encap':("/usr/local/bin/epkg -l -q %s", ("%s", ["url"]))}
-     splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
-     ptypes = {}
-     __name__ = 'Solaris'
-@@ -71,7 +71,7 @@
-             self.installed[pkg] = version
-             self.ptypes[pkg] = 'sysv'
-         # try to find encap packages
--        for pkg in glob("/local/encap/*"):
-+        for pkg in glob("/usr/local/encap/*"):
-             match = self.splitter.match(pkg)
-             if match:
-                 self.installed[match.group('name')] = match.group('version')
-@@ -141,7 +141,7 @@
-         if entry.get('type') in ['sysv', 'blast'] or entry.get('type')[:4] == 'sysv':
-             cmdrc = self.saferun("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))[0]
-         elif entry.get('type') in ['encap']:
--            cmdrc = self.saferun("/local/sbin/epkg -q -k %s-%s >/dev/null" %
-+            cmdrc = self.saferun("/usr/local/bin/epkg -q -k %s-%s >/dev/null" %
-                                  (entry.get('name'), entry.get('version')))[0]
-         if cmdrc != 0:
-             self.logger.debug("Package %s version incorrect" % entry.get('name'))
-@@ -190,7 +190,7 @@
-                     if not self.saferun("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs))[0]:
-                         [self.pkgwork['remove'].remove(pkg) for pkg in sysvrmpkgs]
-                 if enrmpkgs:
--                    if not self.saferun("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
-+                    if not self.saferun("/usr/local/bin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
-                         [self.pkgwork['remove'].remove(pkg) for pkg in enrmpkgs]
-             else:
-                 self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
-Index: src/lib/Client/Proxy.py
-===================================================================
---- src/lib/Client/Proxy.py	(revision 1976)
-+++ src/lib/Client/Proxy.py	(working copy)
-@@ -123,7 +123,7 @@
- class SafeProxy:
-     '''Wrapper for proxy'''
-     _cfile = ConfigParser.ConfigParser()
--    _cfpath = '/etc/bcfg2.conf'
-+    _cfpath = '/usr/local/etc/bcfg2.conf'
-     _cfile.read([_cfpath])
-     try:
-         _components = _cfile._sections['components']
-Index: src/sbin/bcfg2
-===================================================================
---- src/sbin/bcfg2	(revision 1976)
-+++ src/sbin/bcfg2	(working copy)
-@@ -51,8 +51,8 @@
-                        False, False, False, False),
-             'help': (('-h', False, "print this help message"),
-                      False, False, False, True),
--            'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
--                      False, False, '/etc/bcfg2.conf', False),
-+            'setup': (('-C', '<configfile>', "use given config file (default /usr/local/etc/bcfg2.conf)"),
-+                      False, False, '/usr/local/etc/bcfg2.conf', False),
-             'server': (('-S', '<server url>', 'the server hostname to connect to'),
-                        False, ('components', 'bcfg2'), 'https://localhost:6789', False),
-             'user': (('-u', '<user>', 'the user to provide for authentication'),
-Index: src/sbin/GenerateHostInfo
-===================================================================
---- src/sbin/GenerateHostInfo	(revision 1976)
-+++ src/sbin/GenerateHostInfo	(working copy)
-@@ -12,7 +12,7 @@
- 
- if __name__ == '__main__':
-     c = ConfigParser()
--    c.read(['/etc/bcfg2.conf'])
-+    c.read(['/usr/local/etc/bcfg2.conf'])
-     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-     clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
-     sendmailpath = c.get('statistics','sendmailpath')
-Index: src/sbin/bcfg2-server
-===================================================================
---- src/sbin/bcfg2-server	(revision 1976)
-+++ src/sbin/bcfg2-server	(working copy)
-@@ -182,7 +182,7 @@
-         'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
-                    False, False, False, False),
-         'configfile': (('-C', '<conffile>', 'use this config file'),
--                       False, False, '/etc/bcfg2.conf', False),
-+                       False, False, '/usr/local/etc/bcfg2.conf', False),
-         'client': (('-c', '<client>', 'hard set the client name (for debugging)'),
-                    False, False, False, False)
-         }
-Index: src/sbin/StatReports
-===================================================================
---- src/sbin/StatReports	(revision 1976)
-+++ src/sbin/StatReports	(working copy)
-@@ -147,12 +147,12 @@
- 
- if __name__ == '__main__':
-     c = ConfigParser()
--    c.read(['/etc/bcfg2.conf'])
-+    c.read(['/usr/local/etc/bcfg2.conf'])
-     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
-     clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
--    transformpath = "/usr/share/bcfg2/xsl-transforms/"
--    #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
-+    transformpath = "/usr/local/lib/bcfg2/share/bcfg2/xsl-transforms/"
-+    #websrcspath = "/usr/local/lib/bcfg2/share/bcfg2/web-rprt-srcs/"
- 
-     try:
-         opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
-Index: src/sbin/bcfg2-info
-===================================================================
---- src/sbin/bcfg2-info	(revision 1976)
-+++ src/sbin/bcfg2-info	(working copy)
-@@ -169,7 +169,7 @@
-     if '-c' in sys.argv:
-         cfile = sys.argv[-1]
-     else:
--        cfile = '/etc/bcfg2.conf'
-+        cfile = '/usr/local/etc/bcfg2.conf'
-     try:
-         bcore = Bcfg2.Server.Core.Core({}, cfile)
-     except Bcfg2.Server.Core.CoreInitError, msg:
-Index: src/sbin/bcfg2-repo-validate
-===================================================================
---- src/sbin/bcfg2-repo-validate	(revision 1976)
-+++ src/sbin/bcfg2-repo-validate	(working copy)
-@@ -11,11 +11,11 @@
-         verbose = True
-         sys.argv.remove('-v')
-     cf = ConfigParser.ConfigParser()
--    cf.read(['/etc/bcfg2.conf'])
-+    cf.read(['/usr/local/etc/bcfg2.conf'])
-     try:
-         prefix = cf.get('server', 'prefix')
-     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
--        prefix = '/usr'
-+        prefix = '/usr/local/lib/bcfg2'
-     if verbose:
-         print "Using installation prefix %s" % (prefix)
-     schemadir = "%s/share/bcfg2/schemas" % (prefix)
-@@ -55,7 +55,7 @@
-                 datafile = lxml.etree.parse(open(filename))
-             except SyntaxError:
-                 print "%s ***FAILS*** to parse \t\t<----" % (filename)
--                os.system("xmllint %s" % filename)
-+                os.system("/usr/local/bin/b2xmllint %s" % filename)
-                 failures = 1
-                 continue
-             except IOError:
-@@ -67,6 +67,6 @@
-                     print "%s checks out" % (filename)
-             else:
-                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
--                os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
-+                os.system("/usr/local/bin/b2xmllint --schema %s %s" % (schemaname % schemadir, filename))
-                 failures = 1
-     raise SystemExit, failures
-Index: reports/brpt/settings.py
-===================================================================
---- reports/brpt/settings.py	(revision 1976)
-+++ reports/brpt/settings.py	(working copy)
-@@ -1,7 +1,8 @@
- # Django settings for brpt project.
- from ConfigParser import ConfigParser, NoSectionError, NoOptionError
- c = ConfigParser()
--c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
-+c.read(['/usr/local/etc/bcfg2.conf']) # This needs to be configurable one day somehow
-+                                      # Using something other than patch(1) - dclark
- sqlitedbpath = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
- 
- DEBUG = True
-
-]]></patch>
-
 <configure>
 :
 </configure>
@@ -297,8 +78,10 @@ Index: reports/brpt/settings.py
 
 <prepackage type="set"><![CDATA[
 mkdir bin 2>/dev/null || exit 0
-ln -sf ../lib/bcfg2/bin/GenerateHostInfo bin/
-ln -sf ../lib/bcfg2/bin/StatReports bin/
+ln -sf ../lib/bcfg2/bin/GenerateHostInfo bin/GenerateHostInfo
+ln -sf ../lib/bcfg2/bin/GenerateHostInfo bin/b2GenerateHostInfo
+ln -sf ../lib/bcfg2/bin/StatReports bin/StatReports
+ln -sf ../lib/bcfg2/bin/StatReports bin/b2StatReports
 ln -sf ../lib/bcfg2/bin/bcfg2 bin/
 ln -sf ../lib/bcfg2/bin/bcfg2-info bin/
 ln -sf ../lib/bcfg2/bin/bcfg2-repo-validate bin/
@@ -312,12 +95,194 @@ mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}
 ]]></prepackage>
 
+<include_file name="b2regexplace.py" mode="0755"><![CDATA[
+#!/usr/local/lib/bcfg2/bin/python
+
+# regexplace: regular expression search and replace
+# Stefano Spinucci
+# 2006-02-07 (rev 4)
+# Daniel Clark
+# 2006-08-03 (modified for bcfg2 encap use)
+# thanks to roadrunner.py
+# http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52553
+# for some ideas and some code
+# tested with python 2.4.3
+
+import sys, os, re, string
+
+# pupulate and return 'fileslist[]' with all files inside 'dir' matching 'regx'
+def make_files_list(dir, regx):
+
+    # if dir is not a directory, exit with error
+    if not os.path.isdir(dir):
+        sys.exit(dir + ' is not a valid dir to walk !!!')
+
+    # compile the search regexp
+    cregex=re.compile(regx)
+
+    # initialize the file list
+    fileslist = []
+
+    # loop on all files and select files matching 'regx'
+    # don't include symbolic links
+    for root, dirs, files in os.walk(dir):
+        for name in files:
+            if cregex.search(name) and name not in ("b2regexplace.sh", "b2regexplace.py", "postinstall", "postinstall.log", "bcfg2-0.8.2.ep"):
+                path = os.path.join(root, name)
+                if not os.path.islink(path):
+                    fileslist.append(path)
+
+    # return the file list
+    return fileslist[:]
+
+# in all files in 'fileslist' search the regexp 'searchregx' and replace
+# with 'replacestring'; real substitution in files only if 'simulation' = 0
+def replace_in_files(fileslist, searchregx, replacestring, simulation):
+
+    # compile regexp
+    cregex=re.compile(searchregx)
+    
+    # loop on all files
+    for xfile in fileslist:
+
+        # initialize the replace flag
+        replaceflag=0
+
+        # open file for read  
+        readlines=open(xfile,'r').readlines()
+        # intialize the list counter
+        listindex = -1
+
+        # search and replace in current file printing to the user changed lines
+        for currentline in readlines:
+
+            # increment the list counter
+            listindex = listindex + 1
+
+            # if the regexp is found
+            if cregex.search(currentline):
+
+                # make the substitution
+                f=re.sub(searchregx,replacestring,currentline)
+
+                # print the current filename, the old string and the new string
+                print '\n' + xfile
+                print '- ' + currentline ,
+                if currentline[-1:]!='\n': print '\n' ,
+                print '+ ' + f ,
+                if f[-1:]!='\n': print '\n' ,
+
+                # if substitution is real
+                if simulation == 0:
+
+                    # update the whole file variable ('readlines')
+                    readlines[listindex] = f
+                    replaceflag=1
+                            
+        # if some text was replaced
+        # overwrite the original file
+        if replaceflag==1:
+
+            # open the file for writting  
+            write_file=open(xfile,'w') 
+
+            # overwrite the file  
+            for line in readlines:
+                write_file.write(line)
+
+            # close the file
+            write_file.close()
+
+# main function
+def main():
+
+    # if parameters are wrong, exit with error
+    if len(sys.argv) < 5:
+
+        print 'Usage: regexplace.py dirname files-regexp search-regexp replace-string'
+
+        sys.exit(1)
+
+    # make the file list
+    fileslist = make_files_list(sys.argv[1], sys.argv[2])
+
+    # real execution
+    replace_in_files(fileslist, sys.argv[3], sys.argv[4], 0)        
+
+    # simulated execution
+    #replace_in_files(fileslist, sys.argv[3], sys.argv[4], 1)
+                
+            
+if __name__ == '__main__':
+    main()
+]]></include_file>
+
+<include_file name="b2regexplace.sh" mode="0755"><![CDATA[
+#!/bin/sh
+
+# This fixes paths for the bcfg2 encap packaging.
+# Do not run more than once; it does not converge.
+
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+REGEXPLACE="${BASEDIR}/b2regexplace.py"
+PYTHON="/usr/local/lib/bcfg2/bin/python"
+BINARIES="${REGEXPLACE} ${PYTHON}"
+COMPILEALL="/usr/local/lib/bcfg2/lib/python2.4/compileall.py"
+
+printf "**** Running postinstall with BASEDIR=|${BASEDIR}|...\n"
+for BINARY in ${BINARIES}; do
+    if [ ! -x ${BINARY} ]; then
+        printf "\nERROR: ${BINARY} is not executable, exiting...\n"
+        exit 1
+    fi
+done
+
+for FILE in ${COMPILEALL}; do
+    if [ ! -e ${FILE} ]; then
+        printf "\nERROR: ${FILE} does not exist, exiting...\n"
+        exit 1
+    fi
+done
+
+printf "\nRemoving bcfg2 .pyc files...\n"
+find ${BASEDIR} -type f | grep "\.pyc$" | xargs -n1 rm
+
+printf "\nFixing bcfg2 paths...\n"
+
+printf "\nReplacing \"/etc/bcfg2.conf\" with \"/usr/local/etc/bcfg2.conf\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/etc\/bcfg2.conf \/usr\/local\/etc\/bcfg2.conf
+
+printf "\nReplacing \"/local/sbin/epkg\" with \"/usr/local/bin/epkg\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/local\/sbin\/epkg \/usr\/local\/bin\/epkg
+
+printf "\nReplacing \"/usr/share/bcfg2\" with \"/usr/local/lib/bcfg2/share/bcfg2\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/usr\/share\/bcfg2\/ \/usr\/local\/lib\/bcfg2\/share\/bcfg2\/
+
+printf "\nReplacing \"prefix = '/usr'\" with \"prefix = '/usr/local/lib/bcfg2'\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* prefix\ =\ \'\/usr\' prefix\ =\ \'/usr/local/lib/bcfg2\'
+
+printf "\nReplacing \"xmllint\" with \"/usr/local/bin/b2xmllint\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* xmllint \/usr\/local\/bin\/b2xmllint
+
+printf "\nCreating bcfg2 .pyc files...\n"
+${PYTHON} ${COMPILEALL} ${BASEDIR}
+
+exit 0
+]]></include_file>
+
+<include_file name="postinstall" mode="0755"><![CDATA[
+#!/bin/sh
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+test -x ${BASEDIR}/b2regexplace.sh || exit 1
+${BASEDIR}/b2regexplace.sh > ${BASEDIR}/postinstall.log 2>&1 3>&1
+]]></include_file>
+
+
 <encapinfo>
 description Bcfg2 - Provides a declarative interface to system configuration
 prereq pkgspec >= bcfg2-zlib-1.2.3
 prereq pkgspec >= bcfg2-libiconv-1.9.2
 prereq pkgspec >= bcfg2-gettext-0.14.5
-prereq pkgspec >= bcfg2-patch-2.5.9
 prereq pkgspec >= bcfg2-openssl-0.9.8b
 prereq pkgspec >= bcfg2-libstdc++-0.1
 prereq pkgspec >= bcfg2-libgcc-0.1
