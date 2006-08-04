@@ -68,7 +68,7 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
         interactionlist = []
         [interactionlist.append(x.id) for x in interact_queryset]
         if not interactionlist == []:
-            cursor.execute("select client_id from reports_interaction, reports_bad_interactions, reports_client "+
+            cursor.execute("SELECT DISTINCT client_id from reports_interaction, reports_bad_interactions, reports_client "+
                            "WHERE reports_bad_interactions.interaction_id IN %s "+
                            "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
                            "AND reports_bad_interactions.bad_id = %s", [interactionlist, eyedee])
