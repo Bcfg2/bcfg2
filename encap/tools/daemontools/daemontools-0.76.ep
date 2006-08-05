@@ -271,18 +271,35 @@ cp package/run.rclocal ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
 </source>
 
 <prepackage>
-mkdir /usr/local/var 2>/dev/null || exit 0
-mkdir /usr/local/var/svc.d 2>/dev/null || exit 0
-mkdir /usr/local/var/multilog 2>/dev/null || exit 0
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+mkdir var 2>/dev/null || exit 1
+mkdir var/svc.d 2>/dev/null || exit 1
+mkdir var/svc.d/svscan 2>/dev/null || exit 1
+mkdir var/svc.d/svscan/log 2>/dev/null || exit 1
+mkdir var/encap 2>/dev/null || exit 1
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
+<include_file name="var/svc.d/svscan/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/svscan
+]]></include_file>
+
 <include_file name="postinstall" mode="0755"><![CDATA[
 #!/bin/sh -e
+umask 002
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+LOG=${BASEDIR}/postinstall.log
+exec > $LOG 2>&1
+printf "Running daemontools postinstall script...\n"
+date
+test -d /usr/local/var/multilog || mkdir /usr/local/var/multilog
+test -d /usr/local/var/multilog/svscan || mkdir /usr/local/var/multilog/svscan
 test -h /command || ln -s /usr/local/encap/daemontools-0.76/bin /command
+test -d /service || mkdir /service
+test -h /service/.svscan || ln -s /usr/local/var/svc.d/svscan /service/.svscan
 cd /usr/local/encap/daemontools-0.76 && ./package/run
+printf "Finished daemontools postinstall script.\n"
 ]]></include_file>
 
 <encapinfo>

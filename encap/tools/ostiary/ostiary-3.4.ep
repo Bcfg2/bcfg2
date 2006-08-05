@@ -35,16 +35,57 @@ PLATFORM_ENDIF
 <source
 url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
      http://ingles.homeunix.org/software/ost/ostiary-3.4.tar.gz"
-	use_objdir="no"
+     use_objdir="no"
 >
 
 </source>
 
 <prepackage>
+# /usr/local/etc stuff
+mkdir share 2>/dev/null || exit 1
+mkdir share/doc 2>/dev/null || exit 1
+mkdir share/doc/ostiary 2>/dev/null || exit 1
+mkdir share/doc/ostiary/examples 2>/dev/null || exit 1
+mv etc/ostiary.cfg share/doc/ostiary/examples/ostiary.cfg
+rmdir etc
+# daemons should be in /usr/local/sbin
+mkdir sbin 2>/dev/null || exit 1
+mv bin/ostiaryd sbin/ostiaryd
+# daemontool stuff
+mkdir var 2>/dev/null || exit 1
+mkdir var/svc.d 2>/dev/null || exit 1
+mkdir var/svc.d/ostiary 2>/dev/null || exit 1
+mkdir var/svc.d/ostiary/log 2>/dev/null || exit 1
+# encap stuff
 mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
+
+<include_file name="var/svc.d/ostiary/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /usr/local/sbin/ostiaryd -c /usr/local/etc/ostiary.cfg -v -D
+]]></include_file>
+
+<include_file name="var/svc.d/ostiary/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/ostiary
+]]></include_file>
+
+<include_file name="postinstall" mode="0755"><![CDATA[
+#!/bin/sh -e
+umask 002
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+LOG=${BASEDIR}/postinstall.log
+exec > $LOG 2>&1
+printf "Running ostiary postinstall script...\n"
+date
+test -d /usr/local/var/multilog || mkdir /usr/local/var/multilog
+test -d /usr/local/var/multilog/ostiary || mkdir /usr/local/var/multilog/ostiary
+printf "Finished ostiary postinstall script.\n"
+]]></include_file>
 
 <encapinfo>
 description Ostiary - Simple, Secure Remote Script Execution

@@ -1,3 +1,5 @@
+ * Install default bcfg2.conf if one doesn't yet exist 
+
  * daemontools:
    * Test encap, including postinstall scripts for config
    * Modify Makefile, README, bcfg2-0.8.2.ep to work with daemontools
@@ -12,6 +14,10 @@
    * Make sure paths point to right places under /usr/local
    * Modify Makefile, README, bcfg2-0.8.2.ep to work with ostiary
    * Integration with bcfg2 client
+
+ * bcfg2-site: create/test
+
+ * Double-check all permissions, and make sure they are not effected by umask
 
  * Announce to mailing list:
    * daemontools & ostiary stuff
