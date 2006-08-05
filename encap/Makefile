@@ -77,6 +77,7 @@ clean :
 	( rm *.log || true )
 	( rm *.packaged || true )
 	( rm *.gz || true )
+	( rm *~ || true )
 
 uninstall : clean
 	( rm *.installed || true )
