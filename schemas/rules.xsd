@@ -36,6 +36,8 @@
   <xsd:complexType name='PermissionsType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='perms' use='required'/>
+    <xsd:attribute type='xsd:string' name='owner' use='required'/>
+    <xsd:attribute type='xsd:string' name='group' use='required'/>
   </xsd:complexType>
 
   <xsd:complexType name='RContainerType'>
