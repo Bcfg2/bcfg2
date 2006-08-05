@@ -291,6 +291,28 @@ exec 2>&1
 exec /command/multilog t /usr/local/var/multilog/svscan
 ]]></include_file>
 
+<include_file name="bin/svrm" mode="0755"><![CDATA[
+#!/bin/sh
+# Remove a daemontools service
+PATH=/command:$PATH
+export PATH
+if [ "${1}x" = "x" -o "${2}x" != "x" ]; then
+    printf "Usage: svrm [SERVICE]\n"
+    exit 1
+fi
+SERVICE="`basename ${1}`"
+if [ ! -e "/service/$SERVICE" ]; then
+    printf "Service \"${SERVICE}\" not installed. Installed services:\n"
+    svstat /service/*
+    exit 1
+else
+    cd /service/$SERVICE
+    rm /service/$SERVICE
+    svc -dx . log
+fi
+exit 0
+]]></include_file>
+
 <include_file name="bin/svscan.rc" mode="0755"><![CDATA[
 #!/bin/sh
 # svscan.rc - replacement for /command/svscanboot
