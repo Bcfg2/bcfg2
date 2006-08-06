@@ -1,3 +1,5 @@
 Before building this, make sure that you have these libraries installed:
  * /usr/lib/libapt-pkg* (Part of the "apt" package on Debian)
  * /usr/lib/libapt-inst* (Part of the "apt-utils" package on Debian)
+
+You also must have the "libapt-pkg-dev" package installed.

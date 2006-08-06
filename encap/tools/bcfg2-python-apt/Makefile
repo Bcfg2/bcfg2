@@ -16,7 +16,9 @@ APTMAJOR := $(shell apt-get --version | head -1 | cut -c 7)
 
 ifeq ($(APTMAJOR),5)
 PYTHON-APT = bcfg2-python-apt-0.5.10
-else ifeq ($(APTMAJOR),6)
+endif
+
+ifeq ($(APTMAJOR),6)
 PYTHON-APT = bcfg2-python-apt-0.6.19
 endif
 
