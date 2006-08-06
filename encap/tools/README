@@ -1,3 +1,7 @@
+bcfg2-python-apt
+----------------
+Needed for bcfg2 clients that use the "Advanced Packaging Tool" (apt).
+
 bcfg2-server
 ------------
 Encaps for bcfg2 server deps. Only for GNU/Linux.

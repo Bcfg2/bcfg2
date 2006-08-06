@@ -15,6 +15,10 @@
 
  * Make *-doc* .ep's "shared" instead of platform-specific.
 
+ * Update README to refer to need to make/install tools/bcfg2-python-apt
+   on apt-using platforms (Debian, Ubuntu etc.) - also mention false error
+   message you will get if you don't.
+   
  * Announce to mailing list:
    * daemontools & ostiary stuff
    * encap support for Solaris (sparc and x86)
