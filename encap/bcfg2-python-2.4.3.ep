@@ -57,6 +57,14 @@ PLATFORM_ENDIF
 >
 
 <configure>
+cat setup.py \
+| sed s:\/usr\/local\/:\/usr\/local\/lib\/bcfg2\/:g \
+| sed s:\/usr\/local\/lib\/bcfg2\/ssl\/include:\/usr\/local\/lib\/bcfg2\/include:g \
+| sed s:\/usr\/contrib\/ssl\/include\/:\/usr\/local\/lib\/bcfg2\/include\/openssl\/:g \
+| sed s:\/usr\/local\/lib\/bcfg2\/ssl\/lib:\/usr\/local\/lib\/bcfg2\/lib:g \
+> setup.py.bcfg2
+mv setup.py setup.py.orig
+cp setup.py.bcfg2 setup.py
 ./configure \
 	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
 PLATFORM_IF_MATCH(linux)
@@ -71,6 +79,8 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage><![CDATA[
+rm ${builddir}/setup.py
+cp ${builddir}/setup.py.orig ${builddir}/setup.py
 echo /usr/local/lib/bcfg2/lib/python2.4/site-packages > lib/bcfg2/lib/python2.4/site-packages/usr-local-lib-bcfg2.pth
 mkdir bin 2>/dev/null || exit 0
 ln -sf ../lib/bcfg2/bin/idle bin/b2-idle
