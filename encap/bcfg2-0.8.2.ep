@@ -263,7 +263,7 @@ for BINARY in ${BINARIES}; do
 done
 
 for FILE in ${COMPILEALL}; do
-    if [ ! -e ${FILE} ]; then
+    if [ ! -f ${FILE} ]; then
         printf "\nERROR: ${FILE} does not exist, exiting...\n"
         exit 1
     fi
@@ -317,7 +317,7 @@ exit 0
 #!/bin/sh
 BASEDIR="`echo ${0} | xargs -n1 dirname`"
 
-if [ ! -e ${BASEDIR}/postinstall.log ]; then
+if [ ! -f ${BASEDIR}/postinstall.log ]; then
     test -x ${BASEDIR}/b2-regexplace.sh || exit 1
     ${BASEDIR}/b2-regexplace.sh first > ${BASEDIR}/postinstall.log 2>&1 3>&1
 else
