@@ -3,3 +3,9 @@ Before building this, make sure that you have these libraries installed:
  * /usr/lib/libapt-inst* (Part of the "apt-utils" package on Debian)
 
 You also must have the "libapt-pkg-dev" package installed.
+
+To see if your Debian variant is supported, do "grep ifeq Makefile" and see if
+any of those strings match "cat /etc/issue".
+
+It should be pretty trivial to add new Debian platforms; if you have any
+issues, mail the bcfg2-dev list or open a ticket.

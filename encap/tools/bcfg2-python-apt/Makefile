@@ -12,18 +12,23 @@ export EPKG
 MKENCAP = ${BASEDIR}/bin/mkencap
 export MKENCAP
 
-APTMAJOR := $(shell apt-get --version | head -1 | cut -c 7)
+DISTRO := $(shell cat /etc/issue | head -1)
 
-ifeq ($(APTMAJOR),5)
+ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
 PYTHON-APT = bcfg2-python-apt-0.5.10
 endif
 
-ifeq ($(APTMAJOR),6)
+ifeq ($(DISTRO),Debian GNU/Linux testing/unstable \n \l)
 PYTHON-APT = bcfg2-python-apt-0.6.19
+endif
+
+ifeq ($(DISTRO),Ubuntu 6.06.1 LTS \n \l)
+PYTHON-APT = bcfg2-python-apt-0.6.16.2ubuntu8
 endif
 
 .ep.installed : # Clean, compile and install an encap package
 	@printf "***** START .ep.installed for |$*| ***** \n"
+	( apt-get install libapt-pkg-dev || true )
 	( ${EPKG} -q -r ${ENCAPDIR}/$* || true )
 	( rm -rf ${ENCAPDIR}/$* || true )
 	( ${MKENCAP} -m /usr/local/bin/m4 -b -DUP $*.ep || true ) > $*.log 2>&1
