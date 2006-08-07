@@ -65,6 +65,10 @@ url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8b.tar.gz
 	-I/usr/local/lib/bcfg2/include
 </configure>
 
+<build type="append">
+	${MAKE} test
+</build>
+
 </source>
 
 <prepackage>

@@ -6,7 +6,7 @@ quickly as possible (from source).
 
 You can view this document with glorious Trac Wiki formatting at:
  * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapHowto
-(Although that version may be out of date)
+   (Although that version may be out of date)
 
 You can obtain the latest version of the code from bcfg2 svn:
  * `svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/encap`
@@ -50,6 +50,9 @@ work, but it has not yet been tested with a working bcfg2 repository.
 
 == Prerequisites ==
  * GNU gcc and GNU g++
+   * If you are using the gcc distributed with Solaris/x86 10, you need to 
+     install the gcc bugfix at http://www.openssl.org/~appro/values.c by 
+     running "ksh -f values.c" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * epkg (the encap package manager)
    * Canonical website is http://www.encap.org/epkg
