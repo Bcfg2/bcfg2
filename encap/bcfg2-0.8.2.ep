@@ -359,7 +359,7 @@ exit 0
 #!/bin/sh
 exec 2>&1
 printf "*** exec /command/envdir ./env ./bcfg2-client.sh ...\n"
-exec /command/envdir ./env ./bcfg2-client.sh
+exec /command/envdir /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh
 ]]></include_file>
 
 <include_file name="var/svc.d/bcfg2-client/log/run" mode="0755"><![CDATA[
