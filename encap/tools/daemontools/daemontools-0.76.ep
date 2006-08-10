@@ -307,8 +307,11 @@ if [ ! -e "/service/$SERVICE" ]; then
     exit 1
 else
     cd /service/$SERVICE
+    REALDIR=`pwd -P`
     rm /service/$SERVICE
     svc -dx . log
+    rm -rf ${REALDIR}/supervise
+    rm -rf ${REALDIR}/log/supervise
 fi
 exit 0
 ]]></include_file>
