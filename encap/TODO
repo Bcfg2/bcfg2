@@ -1,15 +1,7 @@
- * daemontools:
-   * Modify README, bcfg2-0.8.2.ep to work with daemontools
-   * Create bcfg2 "run" scripts (look at init scripts for other platforms):
-     * Run bcfg2 server on bootup (configurable like debian, default off)
-     * Run bcfg2 client once on bootup (")
-     * Run bcfg2 client at specified interval (")
-
- * ostiary:
-   * Modify README to work with ostiary
-   * Integration with bcfg2 client
-
  * bcfg2-site: create/test
+   * ostiary setup / bcfg2 integration scripts
+   * envdir overrides
+   * etc.
 
  * Double-check all permissions, and make sure they are not effected by umask
 
@@ -18,6 +10,10 @@
  * Update README to refer to need to make/install tools/bcfg2-python-apt
    on apt-using platforms (Debian, Ubuntu etc.) - also mention false error
    message you will get if you don't.
+
+ * Big README update, mention ostiary, daemontools, bcfg2-site etc.
+
+ * Build everywhere, basic test and post binaries
    
  * Announce to mailing list:
    * daemontools & ostiary stuff

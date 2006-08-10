@@ -78,7 +78,7 @@ url="http://www.pobox.com/users/dclark/mirror/bcfg/bcfg2-0.8.2.tar.gz
 
 <prepackage type="set"><![CDATA[
 # Make binaries available from /usr/local/bin
-mkdir bin 2>/dev/null || exit 1
+test -d bin || mkdir bin
 for FILE in `ls lib/bcfg2/bin`; do \
     ln -sf ../lib/bcfg2/bin/${FILE} bin/${FILE}; \
     if [ ! "`printf "${FILE}" | cut -c 1-5`x" = "bcfg2x" ]; then \
@@ -86,18 +86,18 @@ for FILE in `ls lib/bcfg2/bin`; do \
     fi; \
 done
 # Make doc available from /usr/local/share/doc/bcfg2
-mkdir share 2>/dev/null || exit 1
-mkdir share/doc  2>/dev/null || exit 1
-mkdir share/doc/bcfg2  2>/dev/null || exit 1
+test -d share || mkdir share
+test -d share/doc || mkdir share/doc
+test -d share/doc/bcfg2 || mkdir share/doc/bcfg2
 (cp ${builddir}/doc/manual.pdf share/doc/bcfg2/ || true)
 cp -r ${builddir}/examples share/doc/bcfg2/
 # Make man pages available from /usr/local/man
 mv lib/bcfg2/share/man .
 # Make tools dirs and copy over tools
-mkdir lib/bcfg2/tools || exit 1
+test -d lib/bcfg2/tools || mkdir lib/bcfg2/tools
 cp ${builddir}/tools/* lib/bcfg2/tools/
-mkdir sbin 2>/dev/null || exit 1
-mkdir share/doc/bcfg2/tools 2>/dev/null || exit 1
+test -d sbin || mkdir sbin
+test -d share/doc/bcfg2/tools || mkdir share/doc/bcfg2/tools
 # Makes tools with #! line executable
 for FILE in `ls lib/bcfg2/tools`; do \
 	F="lib/bcfg2/tools/${FILE}"; \
@@ -115,9 +115,15 @@ for FILE in `ls lib/bcfg2/tools`; do \
 		ln -sf ../../../../lib/bcfg2/tools/${FILE} share/doc/bcfg2/tools/${FILE}; \
     fi; \
 done
+# daemontools stuff
+test -d var || mkdir var
+test -d var/svc.d || mkdir var/svc.d
+test -d var/svc.d/bcfg2-client || mkdir var/svc.d/bcfg2-client
+test -d var/svc.d/bcfg2-client/log || mkdir var/svc.d/bcfg2-client/log
+test -d var/svc.d/bcfg2-server || mkdir var/svc.d/bcfg2-server
+test -d var/svc.d/bcfg2-server/log  || mkdir var/svc.d/bcfg2-server/log
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
-mkdir var 2>/dev/null || exit 1
-mkdir var/encap 2>/dev/null || exit 1
+test -d  var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 ]]></prepackage>
 
@@ -313,15 +319,109 @@ ${PYTHON} ${COMPILEALL} ${BASEDIR}
 exit 0
 ]]></include_file>
 
+<include_file name="var/svc.d/bcfg2-client/bcfg2-client.sh" mode="0755"><![CDATA[
+#!/bin/sh
+
+# note: variables provided from environment with envdir:
+#       /usr/local/etc/default/bcfg2-client/env/OPTIONS
+#       /usr/local/etc/default/bcfg2-client/env/RUN_INTERVAL_SECONDS
+
+ENVDIR="/usr/local/etc/default/bcfg2-client/env"
+
+# make sure we have options
+if [ ! -f ${ENVDIR}/OPTIONS ]; then
+    printf "WARNING: ${ENVDIR}/OPTIONS\n"
+    printf "WARNING: does not exist. Using default of \"-q -v -d -n\"\n"
+    OPTIONS="-q -v -d -n"
+fi
+
+# make sure we have a sleep variable
+if [ "${RUN_INTERVAL_SECONDS}x" = "x" ]; then
+    printf "WARNING: ${ENVDIR}/RUN_INTERVAL_SECONDS\n"
+    printf "WARNING: does not exist or has no value.\n"
+    printf "WARNING: Using default of 3600 seconds between runs.\n"
+    RUN_INTERVAL_SECONDS=3600
+fi
+
+# loop forever
+while :
+do
+    printf "*** starting /usr/local/bin/bcfg2 ${OPTIONS} ...\n"
+    /usr/local/bin/bcfg2 ${OPTIONS}
+    printf "*** sleeping ${RUN_INTERVAL_SECONDS} seconds ...\n"
+    sleep ${RUN_INTERVAL_SECONDS}
+done
+
+exit 0
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-client/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+printf "*** exec /command/envdir ./env ./bcfg2-client.sh ...\n"
+exec /command/envdir ./env ./bcfg2-client.sh
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-client/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/bcfg2-client
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-server/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+/command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+    printf "*** exec /usr/local/bin/bcfg2-server ${OPTIONS} ...\n"'
+exec /command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+    exec /usr/local/bin/bcfg2-server ${OPTIONS}'
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-server/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/bcfg2-server
+]]></include_file>
+
 <include_file name="postinstall" mode="0755"><![CDATA[
 #!/bin/sh
 BASEDIR="`echo ${0} | xargs -n1 dirname`"
+MULTILOG="/usr/local/var/multilog"
+DEFAULT="/usr/local/etc/default"
 
+# Fix paths
 if [ ! -f ${BASEDIR}/postinstall.log ]; then
     test -x ${BASEDIR}/b2-regexplace.sh || exit 1
     ${BASEDIR}/b2-regexplace.sh first > ${BASEDIR}/postinstall.log 2>&1 3>&1
 else
     printf "\npostinstall: already ran\n\t${BASEDIR}/b2-regexplace.sh, not running again...\n" >> ${BASEDIR}/postinstall.log
+fi
+
+# Make sure log directories exist
+test -d /usr/local/var || mkdir /usr/local/var
+test -d $MULTILOG || mkdir $MULTILOG
+test -d $MULTILOG/bcfg2-client || mkdir $MULTILOG/bcfg2-client
+test -d $MULTILOG/bcfg2-server || mkdir $MULTILOG/bcfg2-server
+
+# Make sure environment directories exist
+test -d /usr/local/etc || mkdir /usr/local/etc
+test -d $DEFAULT || mkdir $DEFAULT
+test -d $DEFAULT/bcfg2-client || mkdir $DEFAULT/bcfg2-client
+test -d $DEFAULT/bcfg2-client/env || mkdir $DEFAULT/bcfg2-client/env
+test -d $DEFAULT/bcfg2-server || mkdir $DEFAULT/bcfg2-server
+test -d $DEFAULT/bcfg2-server/env || mkdir $DEFAULT/bcfg2-server/env
+
+# Put in default client environment if it didn't exist
+if [ ! -f $DEFAULT/bcfg2-client/.SENTINEL ]; then
+    touch $DEFAULT/bcfg2-client/.SENTINEL
+    echo "-q -v -d -n" > $DEFAULT/bcfg2-client/env/OPTIONS
+    echo "3600" > $DEFAULT/bcfg2-client/env/RUN_INTERVAL_SECONDS
+fi
+
+# Put in default server environment if it didn't exist
+if [ ! -f $DEFAULT/bcfg2-server/.SENTINEL ]; then
+    touch $DEFAULT/bcfg2-server/.SENTINEL
+    echo "-v" > $DEFAULT/bcfg2-server/env/OPTIONS
 fi
 ]]></include_file>
 

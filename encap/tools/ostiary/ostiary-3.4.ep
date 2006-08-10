@@ -59,7 +59,6 @@ mkdir var/svc.d 2>/dev/null || exit 1
 mkdir var/svc.d/ostiary 2>/dev/null || exit 1
 mkdir var/svc.d/ostiary/log 2>/dev/null || exit 1
 # encap stuff
-mkdir var 2>/dev/null || exit 0
 mkdir var/encap 2>/dev/null || exit 0
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
