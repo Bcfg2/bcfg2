@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="bcfg2-cheetah-doc-0.9.16a1"
+>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/cheetah/CheetahDocs-0.9.16a1.tgz
+http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/CheetahDocs-0.9.16a1.tgz"
+subdir="CheetahDocs"
+>
+
+<configure>
+:
+</configure>
+
+<build>
+:
+</build>
+
+<install>
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/cheetah || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/cheetah
+cp -R * ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/cheetah
+</install>
+
+<clean>
+:
+</clean>
+
+</source>
+
+<prepackage>
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<encapinfo>
+description cheetah-doc - cheetah template system documentation
+</encapinfo>
+
+</encap_profile>

@@ -1,4 +1,4 @@
-# $Id:$
+# $Id$
 
 .PHONY : all install clean uninstall encaps rename
 .SUFFIXES : 
@@ -14,6 +14,8 @@ export MKENCAP
 
 GLIB = bcfg2-glib-2.8.6
 GAMIN = bcfg2-gamin-0.1.7
+CHEETAH = bcfg2-cheetah-2.0rc7
+CHEETAH-DOC = bcfg2-cheetah-doc-0.9.16a1
 
 .ep.installed : # Clean, compile and install an encap package
 	@printf "***** START .ep.installed for |$*| ***** \n"
@@ -39,9 +41,9 @@ GAMIN = bcfg2-gamin-0.1.7
 all :
 	( $(MAKE) install > make.log 2>&1 && $(MAKE) encaps >> make.log 2>&1 ) &
 
-install : ${EPKG} ${MKENCAP} ${GAMIN}.installed
+install : ${EPKG} ${MKENCAP} ${CHEETAH-DOC}.installed
 
-encaps : ${EPKG} ${MKENCAP} ${GAMIN}.packaged
+encaps : ${EPKG} ${MKENCAP} ${CHEETAH-DOC}.packaged
 
 rename : encaps
 	test "$${OS}x" != "x"
@@ -61,7 +63,13 @@ uninstall : clean
 	( rm -rf ${ENCAPDIR}/bcfg2-glib* || true )
 	( ${EPKG} -q -r ${ENCAPDIR}/bcfg2-gamin* || true )
 	( rm -rf ${ENCAPDIR}/bcfg2-gamin* || true )
+	( ${EPKG} -q -r ${ENCAPDIR}/bcfg2-cheetah* || true )
+	( rm -rf ${ENCAPDIR}/bcfg2-cheetah* || true )
     
 ${GAMIN}.installed : ${GLIB}.installed
+${CHEETAH}.installed : ${GAMIN}.installed
+${CHEETAH-DOC}.installed : ${CHEETAH}.installed
 
 ${GAMIN}.packaged : ${GLIB}.packaged
+${CHEETAH}.packaged : ${GAMIN}.packaged
+${CHEETAH-DOC}.packaged : ${CHEETAH}.packaged
