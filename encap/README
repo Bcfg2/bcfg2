@@ -4,6 +4,12 @@ This bootstrap code is a method for getting bcfg2 (as a client),
 including all dependencies, up and running on a new platform as
 quickly as possible (from source).
 
+The latest version of this document is always available from:
+ * http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/encap/README
+
+For a more general overview of what this is, see:
+ * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapPackages
+
 You can view this document with glorious Trac Wiki formatting at:
  * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapHowto
    (Although that version may be out of date)
