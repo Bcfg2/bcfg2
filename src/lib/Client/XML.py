@@ -1,0 +1,21 @@
+'''XML lib compatibility layer for the Bcfg2 client'''
+__revision__ = '$Revision$'
+
+# library will use lxml, then builtin xml.etree, then ElementTree
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import XMLSyntaxError as ParseError
+except ImportError:
+    # lxml not available 
+    try:
+        from xml.etree.ElementTree import Element, XML, tostring
+        from xml.parsers.expat import ExpatError as ParseError
+    except ImportError:
+        try:
+            from elementtree.ElementTree import Element, XML, tostring
+            from xml.parsers.expat import ExpatError as ParseError
+        except ImportError:
+            print "Failed to load lxml, xml.etree and elementtree.ElementTree"
+            print "Cannot continue"
+            raise SystemExit, 1
