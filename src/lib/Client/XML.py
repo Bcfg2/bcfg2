@@ -6,15 +6,18 @@ __revision__ = '$Revision$'
 try:
     from lxml.etree import Element, SubElement, tostring
     from lxml.etree import XMLSyntaxError as ParseError
+    driver = 'lxml'
 except ImportError:
     # lxml not available 
     try:
         from xml.etree.ElementTree import Element, XML, tostring
         from xml.parsers.expat import ExpatError as ParseError
+        driver = 'etree-py'
     except ImportError:
         try:
             from elementtree.ElementTree import Element, XML, tostring
             from xml.parsers.expat import ExpatError as ParseError
+            driver = 'etree'
         except ImportError:
             print "Failed to load lxml, xml.etree and elementtree.ElementTree"
             print "Cannot continue"

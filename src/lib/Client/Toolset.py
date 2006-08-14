@@ -5,7 +5,9 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
 
-import binascii, copy, difflib, grp, logging, lxml.etree, os, popen2, pwd, stat, sys, xml.sax.saxutils
+import binascii, copy, difflib, grp, logging, os, popen2, pwd, stat, sys, xml.sax.saxutils
+
+import Bcfg2.Client.XML
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -62,7 +64,7 @@ class Toolset(object):
                 self.VerifyEntry(cfile)
                 if not self.states[cfile]:
                     self.InstallConfigFile(cfile)
-        self.statistics = lxml.etree.Element("Statistics")
+        self.statistics = Bcfg2.Client.XML.Element("Statistics")
 
     def saferun(self, command):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
@@ -184,9 +186,10 @@ class Toolset(object):
         flows = [(dirty, "Bad"), (self.modified, "Modified")]
         for (condition, tagName) in flows:
             if condition:
-                container = lxml.etree.SubElement(stats, tagName)
+                container = Bcfg2.Client.XML.SubElement(stats, tagName)
                 for ent in [key for key, val in self.states.iteritems() if not val]:
-                    newent = lxml.etree.SubElement(container, ent.tag, name=ent.get('name', 'None'))
+                    newent = Bcfg2.Client.XML.SubElement(container, ent.tag, 
+                                                         name=ent.get('name', 'None'))
                     for field in [item for item in 'current_exists', 'current_diff' if item in ent.attrib]:
                         newent.set(field, ent.get(field))
                         del ent.attrib[field]
@@ -201,15 +204,15 @@ class Toolset(object):
                     if 'severity' in ent.attrib:
                         newent.set('severity', ent.get('severity'))
         if self.extra_services + self.pkgwork['remove']:
-            extra = lxml.etree.SubElement(stats, "Extra")
-            [lxml.etree.SubElement(extra, "Service", name=svc, current_status='on')
+            extra = Bcfg2.Client.XML.SubElement(stats, "Extra")
+            [Bcfg2.Client.XML.SubElement(extra, "Service", name=svc, current_status='on')
              for svc in self.extra_services]
             for pkg in self.pkgwork['remove']:
                 if pkg in self.installed:
-                    lxml.etree.SubElement(extra, "Package", name=pkg,
-                                          current_version=self.installed[pkg])
+                    Bcfg2.Client.XML.SubElement(extra, "Package", name=pkg,
+                                                current_version=self.installed[pkg])
                 else:
-                    lxml.etree.SubElement(extra, "Package", name=pkg)
+                    Bcfg2.Client.XML.SubElement(extra, "Package", name=pkg)
                     self.logger.error("Failed to find installed version of packages %s" % (pkg))
         return stats
 
@@ -226,7 +229,7 @@ class Toolset(object):
                 self.states[entry] = method(entry)
         except:
             self.logger.error("Failure in VerifyEntry", exc_info=1)
-            self.logger.error("Entry: %s" % (lxml.etree.tostring(entry)))
+            self.logger.error("Entry: %s" % (Bcfg2.Client.XML.tostring(entry)))
 
     def InstallEntry(self, entry):
         '''Dispatch call to self.Install<tagname>'''
