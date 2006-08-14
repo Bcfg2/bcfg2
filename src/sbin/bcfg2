@@ -3,10 +3,8 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-from lxml.etree import Element, XML, tostring, XMLSyntaxError
-
 import logging, os, signal, tempfile, time, xmlrpclib
-import Bcfg2.Options
+import Bcfg2.Options, Bcfg2.Client.XML
 
 try:
     import Bcfg2.Client.Proxy, Bcfg2.Logging
@@ -114,7 +112,7 @@ class Client:
     def run_probe(self, probe):
         '''Execute probe'''
         probe_name = probe.attrib['name']
-        ret = Element("probe-data", probe_name, source=probe.attrib['source'])
+        ret = Bcfg2.Client.XML.Element("probe-data", probe_name, source=probe.attrib['source'])
         try:
             script = open(tempfile.mktemp(), 'w+')
             try:
@@ -173,8 +171,8 @@ class Client:
             times['probe_download'] = time.time()
         
             try:
-                probes = XML(probe_data)
-            except XMLSyntaxError, syntax_error:
+                probes = Bcfg2.Client.XML.XML(probe_data)
+            except Bcfg2.Client.XML.ParseError, syntax_error:
                 self.fatal_error(
                     "server returned invalid probe requests: %s" %
                     (syntax_error))
@@ -210,8 +208,8 @@ class Client:
             times['caching'] = time.time()
             
         try:
-            self.config = XML(rawconfig)
-        except XMLSyntaxError, syntax_error:
+            self.config = Bcfg2.Client.XML.XML(rawconfig)
+        except Bcfg2.Client.XML.ParseError, syntax_error:
             self.fatal_error("the configuration could not be parsed: %s" %
                              (syntax_error))
 
@@ -227,7 +225,7 @@ class Client:
             self.fatal_error("server did not specify a toolset")
 
         if self.setup['bundle']:
-            replacement_xml = Element("Configuration", version='2.0')
+            replacement_xml = Bcfg2.Client.XML.Element("Configuration", version='2.0')
             for child in self.config.getchildren():
                 if ((child.tag == 'Bundle') and
                     (child.attrib['name'] == self.setup['bundle'])):
@@ -257,8 +255,8 @@ class Client:
 
         if not self.setup['file'] and not self.setup['bundle']:
             # upload statistics
-            feedback = Element("upload-statistics")
-            timeinfo = Element("OpStamps")
+            feedback = Bcfg2.Client.XML.Element("upload-statistics")
+            timeinfo = Bcfg2.Client.XML.Element("OpStamps")
             for (event, timestamp) in times.iteritems():
                 timeinfo.set(event, str(timestamp))
             stats = self.toolset.GenerateStats(__revision__)
@@ -266,7 +264,7 @@ class Client:
             feedback.append(stats)
 
             try:
-                proxy.RecvStats(tostring(feedback))
+                proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback))
             except xmlrpclib.Fault:
                 self.logger.error("Failed to upload configuration statistics")
                 raise SystemExit, 2
