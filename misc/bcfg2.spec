@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.8.2
+%define version 0.8.3pre1
 %define release 1
 %define pythonversion 2.3
 
@@ -55,7 +55,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/sbin/bcfg2-info
 /usr/sbin/StatReports
 /usr/bin/GenerateHostInfo
-/usr/lib/python%{pythonversion}/site-packages/Bcfg2/Server/*
+/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Server/*
 /usr/share/bcfg2/schemas/*
 /usr/share/bcfg2/xsl-transforms/*
 /usr/share/man/man8/*
@@ -64,8 +64,8 @@ rm -rf $RPM_BUILD_ROOT
 %files -n bcfg2
 %defattr(-,root,root)
 /usr/sbin/bcfg2
-/usr/lib/python%{pythonversion}/site-packages/Bcfg2/*.py*
-/usr/lib/python%{pythonversion}/site-packages/Bcfg2/Client/*
+/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/*.py*
+/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Client/*
 /usr/share/man/man1/*
 /usr/share/man/man5/*
 /etc/init.d/bcfg2
