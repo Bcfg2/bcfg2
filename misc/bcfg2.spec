@@ -39,11 +39,12 @@ python%{pythonversion} setup.py build
 python%{pythonversion} setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
+mkdir -p ${RPM_BUILD_ROOT}/etc/default
 mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2* ${RPM_BUILD_ROOT}/usr/sbin
 mv ${RPM_BUILD_ROOT}/usr/bin/StatReports ${RPM_BUILD_ROOT}/usr/sbin
 install -m 755 debian/buildsys/common/bcfg2.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2
 install -m 755 debian/buildsys/common/bcfg2-server.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2-server
-install -m 755 debian/bcfg2.default -d ${RPM_BUILD_ROOT}/etc/default
+install -m 755 debian/bcfg2.default ${RPM_BUILD_ROOT}/etc/default/bcfg2
 
 %clean
 rm -rf $RPM_BUILD_ROOT
