@@ -136,7 +136,7 @@ class ToolsetImpl(Toolset):
         if len(self.pkgwork['remove']) > 0:
             if self.setup['remove'] in ['all', 'packages']:
                 self.logger.info("Removing packages: %s" % self.pkgwork['remove'])
-                if not self.saferun("rpm --quiet -e %s" % " ".join(self.pkgwork['remove']))[0]:
+                if not self.saferun("rpm --quiet -e --allmatches %s" % " ".join(self.pkgwork['remove']))[0]:
                     self.pkgwork['remove'] = []
                     self.Refresh()
                     self.Inventory()
