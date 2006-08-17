@@ -80,7 +80,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
         self.static_skn = ''
-        for pubkey in [pubk for pubk in self.repository.entries.keys() if pubk.find('.pub.H_') != -1]:
+        pubkeys = [pubk for pubk in self.repository.entries.keys() if pubk.find('.pub.H_') != -1]
+        pubkeys.sort()
+        for pubkey in pubkeys:
             hostname = pubkey.split('H_')[1]
             try:
                 (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
@@ -96,8 +98,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
         if not hasattr(self, 'static_skn'):
             self.cache_skn()
         entry.text = self.static_skn
-        for hostkey in [keytmpl % client for keytmpl in self.pubkeys \
-                        if self.repository.entries.has_key(keytmpl % client)]:
+        hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
+                        if self.repository.entries.has_key(keytmpl % client)]
+        hostkeys.sort()
+        for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.repository.entries[hostkey].data)
         permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
