@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="makeself-2.1.4"
+>
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/makeself/makeself-2.1.4.run
+     http://www.megastep.org/makeself/makeself-2.1.4.run"
+subdir="/"
+>
+<!-- TODO check above megastep URL, and create mirror -->
+
+<unpack><![CDATA[
+cd .. && \
+rm -rf ${ENCAP_PKGNAME} && \
+/bin/sh ${ENCAP_PKGNAME}.run
+]]></unpack>
+
+<configure>
+:
+</configure>
+
+<build>
+:
+</build>
+
+<install>
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d  ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man1 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man1
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/makeself || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/makeself
+if [ -d ${builddir}/${ENCAP_PKGNAME}.run ]; then rmdir ${builddir}/${ENCAP_PKGNAME}.run; fi
+cp ${builddir}/* ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/makeself
+mv ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/makeself/*.sh ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+mv ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/makeself/*.1 ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man1
+</install>
+
+<clean>
+:
+</clean>
+
+</source>
+
+<prepackage type="set">
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d  var || mkdir var
+test -d  var/encap || mkdir var/encap
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<encapinfo>
+description makeself - Make self-extractable archives on Unix
+</encapinfo>
+
+</encap_profile>

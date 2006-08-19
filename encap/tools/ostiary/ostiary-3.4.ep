@@ -7,6 +7,7 @@
 	pkgspec="ostiary-3.4"
 >
 
+<prereq package="patch-2.5.9" />
 <prereq package="m4-1.4.4" />
 
 <environment
@@ -39,6 +40,32 @@ url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
      http://ingles.homeunix.org/software/ost/ostiary-3.4.tar.gz"
      use_objdir="no"
 >
+
+<patch options="-p1"><![CDATA[
+#
+# Allow up to 32 Actions (up from 8)...
+#
+--- ostiary-3.4/ost.h	2006-08-16 23:31:59.000000000 -0400
++++ ostiary-3.4.new/ost.h	2006-08-16 23:33:23.000000000 -0400
+@@ -22,7 +22,7 @@
+ /* Note: strictly IPv4 for now... */
+ #define MAX_SIZEOF_IP 16
+ 
+-#define MAX_NUM_SECRETS 8
++#define MAX_NUM_SECRETS 32
+ #define MAX_NUM_CACHED_IPS 128
+ 
+ #define MAX_SECRET_SIZE 64
+@@ -53,7 +53,7 @@
+ /* Note: strictly IPv4 for now... */
+ #define MAX_SIZEOF_IP 16
+ 
+-#define MAX_NUM_SECRETS 8
++#define MAX_NUM_SECRETS 32
+ #define MAX_NUM_CACHED_IPS 128
+ 
+ /* You can make MAX_SECRET_SIZE bigger, but don't forget to update
+]]></patch>
 
 </source>
 

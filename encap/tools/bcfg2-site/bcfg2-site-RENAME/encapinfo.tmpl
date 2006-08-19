@@ -1,0 +1,9 @@
+#include "site-settings.conf"
+encap 2.1       # libencap-2.3.8
+platform share
+date ${DATE}
+contact "${ADMIN_NAME}" <${ADMIN_EMAIL}>
+description bcfg2-site-${SITE_SHORTNAME} - bcfg2 configuration for ${SITE_NAME}
+prereq pkgspec >= bcfg2-0.8.2
+prereq pkgspec >= daemontools-0.76
+prereq pkgspec >= ostiary-3.4

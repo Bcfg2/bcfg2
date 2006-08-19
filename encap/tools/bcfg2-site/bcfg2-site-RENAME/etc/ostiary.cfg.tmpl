@@ -1,0 +1,29 @@
+#include "site-settings.conf"
+# If present, ostiaryd will shut down once the cache of bad IPs is full.
+# Under daemontools, this just has the effect of generating a service
+# restart log message.
+EXIT_ON_IPCACHE_FULL
+
+# If present, ostiaryd will not detach from the terminal it was started
+# from. This is useful when running ostiaryd from programs like inetd or
+# cygrunsrv or daemontools.
+SKIP_DETACH
+
+# Port to listen on. (Can be specified on command line.)
+PORT=${OSTIARY_PORT}
+
+# The password to remotely kill ostiaryd. Sort of useless when running under
+# daemontools, since daemontools will just start ostiaryd back up. (But it
+# is required to be in this file)
+KILL="${OSTIARY_PASSWORD}-kill"
+
+# Must be at least one action.  Format is:
+# ACTION="secret","command (with path)",["uid"[,"gid"]]
+# NOTE: There is a maximum of 31 actions
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvqn","/usr/local/sbin/ost-bcfg2.sh dvqn","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvn","/usr/local/sbin/ost-bcfg2.sh dvn","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvq","/usr/local/sbin/ost-bcfg2.sh dvq","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dv","/usr/local/sbin/ost-bcfg2.sh dv","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-vq","/usr/local/sbin/ost-bcfg2.sh vq","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-v","/usr/local/sbin/ost-bcfg2.sh v","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-restart","/usr/local/sbin/ost-bcfg2.sh restart","0","0"

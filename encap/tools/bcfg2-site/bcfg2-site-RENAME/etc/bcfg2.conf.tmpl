@@ -1,0 +1,10 @@
+#include "site-settings.conf"
+[communication]
+protocol = xmlrpc/ssl
+password = ${BCFG2_PASSWORD}
+
+[components]
+bcfg2 = https://${BCFG2_SERVER}:${BCFG2_PORT}
+
+[statistics]
+sendmailpath = ${SENDMAILPATH}
