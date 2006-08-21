@@ -143,7 +143,13 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
 
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
-        client = self.resolve_client(address[0])
+        try:
+            client = self.resolve_client(address[0])
+            meta = self.Core.metadata.get_metadata(client)
+        except Bcfg2.Server.metadata.MetadataConsistencyError:
+            warning = 'metadata consistency error'
+            self.logger.warning(warning)
+            raise Fault, (6, warning)
         try:
             xpdata = XML(probedata)
         except:
