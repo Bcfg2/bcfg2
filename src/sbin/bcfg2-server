@@ -159,7 +159,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         for data in xpdata:
             if self.Core.plugins.has_key(data.get('source')):
                 try:
-                    self.Core.plugins[data.get('source')].ReceiveData(client, data)
+                    self.Core.plugins[data.get('source')].ReceiveData(meta, data)
                 except:
                     self.logger.error("Failed to process probe data from client %s" % (client), exc_info=1)
             else:
