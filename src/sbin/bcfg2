@@ -111,8 +111,8 @@ class Client:
 
     def run_probe(self, probe):
         '''Execute probe'''
-        probe_name = probe.attrib['name']
-        ret = Bcfg2.Client.XML.Element("probe-data", probe_name, source=probe.attrib['source'])
+        name = probe.get('name')
+        ret = Bcfg2.Client.XML.Element("probe-data", name=name, source=probe.get('source'))
         try:
             script = open(tempfile.mktemp(), 'w+')
             try:
@@ -125,7 +125,7 @@ class Client:
             finally:
                 os.unlink(script.name)
         except:
-            self.logger.error("Failed to execute probe: %s" % (probe_name), exc_info=1)
+            self.logger.error("Failed to execute probe: %s" % (name), exc_info=1)
             raise SystemExit, 1
         return ret
 
