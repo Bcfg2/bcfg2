@@ -179,14 +179,19 @@ class Client:
             
             # execute probes
             try:
-                probe_info = [self.run_probe(probe)
-                              for probe in probes.findall(".//probe")]
+                probedata = Bcfg2.Client.XML.Element("ProbeData")
+                [probedata.append(self.run_probe(probe))
+                 for probe in probes.findall(".//probe")]
             except:
                 self.logger.error("Failed to Execute probes")
                 raise SystemExit, 1
 
-            # upload probe responses
-            proxy.RecvProbeData(probe_info)
+            try:
+                # upload probe responses
+                proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata))
+            except:
+                self.logger.error("Failed to upload probe data", exc_info=1)
+                raise SystemExit, 1
         
             times['probe_upload'] = time.time()
 
