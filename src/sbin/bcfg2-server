@@ -144,15 +144,20 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
         client = self.resolve_client(address[0])
+        try:
+            xpdata = XML(probedata)
+        except:
+            self.logger.error("Failed to parse probe data from client %s" % (client))
+            return False
 
-        for data in probedata:
-            try:
-                [generator] = [gen for gen in self.Core.generators if gen.__name__ == data.get('source')]
-                generator.ReceiveData(client, data)
-            except IndexError:
+        for data in xpdata:
+            if self.Core.Plugins.has_key(data.get('source')):
+                try:
+                    self.Core.Plugins[data.get('source')].ReceiveData(client, data)
+                except:
+                    self.logger.error("Failed to process probe data from client %s" % (client), exc_info=1)
+            else:
                 self.logger.warning("Failed to locate plugin %s" % (data.get('source')))
-            except:
-                critical_error('error in probe data receipt')
         return True
 
     def Bcfg2AssertProfile(self, address, profile):
