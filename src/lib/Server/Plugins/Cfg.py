@@ -1,12 +1,13 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-import binascii, logging, os, re, stat, tempfile, Bcfg2.Server.Plugin
+import binascii, logging, os, re, stat, tempfile, Bcfg2.Server.Plugin, lxml.etree
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 specific = re.compile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                       '(G(?P<prio>\d+)_(?P<group>\S+)))$')
+probeData = {}
 
 class SpecificityError(Exception):
     '''Thrown in case of filename parse failure'''
@@ -71,7 +72,7 @@ class ConfigFileEntry(object):
     all data for all clients.'''
     info = re.compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
-                      '(?P<paranoid>paranoid(\s)*)$')
+                      '(?P<paranoid>paranoid(\s)*)|interpolate:(\s)*(?P<interpolate>\w+)(\s)*$')
     
     def __init__(self, path, repopath):
         object.__init__(self)
@@ -80,13 +81,17 @@ class ConfigFileEntry(object):
         self.fragments = []
         self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
         self.paranoid = False
-
+        self.interpolate = False
+        
     def read_info(self):
         '''read in :info metadata'''
+        self.interpolate = False
+        self.paranoid = False
         filename = "%s/:info" % self.repopath
         for line in open(filename).readlines():
             match = self.info.match(line)
             if not match:
+                logger.warning("Failed to match line: %s"%line)
                 continue
             else:
                 mgd = match.groupdict()
@@ -100,9 +105,11 @@ class ConfigFileEntry(object):
                     self.metadata['perms'] = mgd['perms']
                     if len(self.metadata['perms']) == 3:
                         self.metadata['perms'] = "0%s" % (self.metadata['perms'])
-                elif mgd['paranoid']:
+                elif mgd['paranoid'] in ["True", "true"]:
                     self.paranoid = True
-
+                elif mgd['interpolate'] in ["True", "true"]:
+                    self.interpolate = True
+                    
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''
         basename = name.split('/')[-1]
@@ -196,6 +203,12 @@ class ConfigFileEntry(object):
                 logger.error("Unknown delta type %s" % (delta.op))
             
         [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
+        if self.interpolate:
+            if metadata.hostname in probeData:
+                for name, value in probeData[metadata.hostname].iteritems():
+                    filedata = filedata.replace("@@%s@@"%name, value )
+            else:
+                logger.warning("Cannot interpolate data for client: %s for config file: %s"% (metadata.hostname, basefile.name))
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
         if entry.attrib['encoding'] == 'base64':
@@ -223,8 +236,35 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         self.famID = {}
         self.directories = []
         self.AddDirectoryMonitor(self.data)
+        self.interpolate = False #this is true if any file in the repo needs to be interpolated.
+        self.probes = Bcfg2.Server.Plugin.DirectoryBacked(datastore + '/Probes', self.core.fam )
         # eventually flush fam events here so that all entries built here
         # ready to go
+
+    def GetProbes(self, _):
+        '''Return a set of probes for execution on client'''
+        ret = []
+        bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
+        if self.interpolate:
+            for name, entry in self.probes.entries.iteritems():
+                probe = lxml.etree.Element('probe')
+                probe.set('name', name )
+                probe.set('source', 'Cfg')
+                probe.text = entry.data
+                match = bangline.match(entry.data.split('\n')[0])
+                if match:
+                    probe.set('interpreter', match.group('interpreter'))
+                ret.append(probe)
+            probe = lxml.etree.Element('probe')
+            probe.set('name', 'hostname')
+            probe.set('source', 'Cfg')
+            probe.text = '''/bin/hostname'''
+            ret.append(probe)
+        return ret
+
+    def ReceiveData(self, client, data):
+        '''Receive probe results pertaining to client'''
+        probeData[client.hostname] = { data.get('name'):data.text }
 
     def AddDirectoryMonitor(self, name):
         '''Add new directory to FAM structures'''
@@ -287,3 +327,5 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             pass
         else:
             logger.error("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
+        self.interpolate = len([entry for entry in self.entries.values() if entry.interpolate ]) > 0
+
