@@ -10,8 +10,12 @@ if __name__ == '__main__':
     if '-v' in sys.argv:
         verbose = True
         sys.argv.remove('-v')
+    if '-C' in sys.argv:
+        cpath = sys.argv[sys.argv.index('-C') + 1]
+    else:
+        cpath = '/etc/bcfg2.conf'
     cf = ConfigParser.ConfigParser()
-    cf.read(['/etc/bcfg2.conf'])
+    cf.read([cpath])
     try:
         prefix = cf.get('server', 'prefix')
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
@@ -19,17 +23,13 @@ if __name__ == '__main__':
     if verbose:
         print "Using installation prefix %s" % (prefix)
     schemadir = "%s/share/bcfg2/schemas" % (prefix)
-    if len(sys.argv) > 1:
-        repo = sys.argv[1]
-    else:
-        try:
-            repo = cf.get('server', 'repository')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            print "Repository location not specified in config file or on command line"
-            print "Usage: bcfg2-repo-validate [-v] <repo directory>"
-            raise SystemExit, 1
 
-    # add more validation as more schemas get written
+    try:
+        repo = cf.get('server', 'repository')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        print "Repository location not specified in config file"
+        raise SystemExit, 1
+
     filesets = {'metadata':("%s/Metadata/groups.xml", "%s/metadata.xsd"),
                 'clients':("%s/Metadata/clients.xml", "%s/clients.xsd"),
                 'bundle':("%s/Bundler/*.xml", "%s/bundle.xsd"),
