@@ -237,7 +237,10 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         self.directories = []
         self.AddDirectoryMonitor(self.data)
         self.interpolate = False #this is true if any file in the repo needs to be interpolated.
-        self.probes = Bcfg2.Server.Plugin.DirectoryBacked(datastore + '/Probes', self.core.fam )
+        try:
+            self.probes = Bcfg2.Server.Plugin.DirectoryBacked(datastore + '/Probes', self.core.fam )
+        except:
+            self.probes = False
         # eventually flush fam events here so that all entries built here
         # ready to go
 
@@ -246,15 +249,16 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         ret = []
         bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
         if self.interpolate:
-            for name, entry in self.probes.entries.iteritems():
-                probe = lxml.etree.Element('probe')
-                probe.set('name', name )
-                probe.set('source', 'Cfg')
-                probe.text = entry.data
-                match = bangline.match(entry.data.split('\n')[0])
-                if match:
-                    probe.set('interpreter', match.group('interpreter'))
-                ret.append(probe)
+            if self.probes:
+                for name, entry in self.probes.entries.iteritems():
+                    probe = lxml.etree.Element('probe')
+                    probe.set('name', name )
+                    probe.set('source', 'Cfg')
+                    probe.text = entry.data
+                    match = bangline.match(entry.data.split('\n')[0])
+                    if match:
+                        probe.set('interpreter', match.group('interpreter'))
+                    ret.append(probe)
             probe = lxml.etree.Element('probe')
             probe.set('name', 'hostname')
             probe.set('source', 'Cfg')
