@@ -10,17 +10,13 @@ __revision__ = '$Revision$'
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
 from time import asctime, strptime
-from socket import getfqdn
-from sys import argv
-from getopt import getopt, GetoptError
-import re, os
-from copy import deepcopy
+import copy, getopt, re, os, socket, sys
 
 def generatereport(rspec, nrpt):
     '''generatereport creates and returns an ElementTree representation
      of a report adhering to the XML spec for intermediate reports'''
-    reportspec = deepcopy(rspec)
-    nodereprt = deepcopy(nrpt)
+    reportspec = copy.deepcopy(rspec)
+    nodereprt = copy.deepcopy(nrpt)
 
     reportgood = reportspec.get("good", default = 'Y')
     reportmodified = reportspec.get("modified", default = 'Y')
@@ -146,8 +142,12 @@ def pretty_print(element, level=0):
 
 
 if __name__ == '__main__':
+    if '-C' in sys.argv:
+        cfpath = sys.argv[sys.argv.index('-C') + 1]
+    else:
+        cfpath = '/etc/bcfg2.conf'
     c = ConfigParser()
-    c.read(['/etc/bcfg2.conf'])
+    c.read([cfpath])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
     clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
@@ -155,8 +155,8 @@ if __name__ == '__main__':
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
-        opts, args = getopt(argv[1:], "hc:s:", ["help", "config=", "stats="])
-    except GetoptError, mesg:
+        opts, args = getopt.getopt(sys.argv[1:], "C:hc:s:", ["help", "config=", "stats="])
+    except getopt.GetoptError, mesg:
         # print help information and exit:
         print "%s\nUsage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]" % (mesg) 
         raise SystemExit, 2
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
 
         if reprt.get('refresh-time') != None:
-            nodereport.set("refresh-time",reprt.get("refresh-time", default="600"))
+            nodereport.set("refresh-time", reprt.get("refresh-time", default="600"))
 
         
         procnodereport = generatereport(reprt, nodereport)
@@ -248,12 +248,12 @@ if __name__ == '__main__':
                 
             if deliverymechanism == 'mail':
                 if delivtype == 'nodes-individual':
-                    reportdata = deepcopy(procnodereport)
+                    reportdata = copy.deepcopy(procnodereport)
                     for noden in procnodereport.findall("Node"):
                         [reportdata.remove(y) for y in reportdata.findall("Node")]
                         reportdata.append(noden)
                 else:
-                    reportdata = deepcopy(procnodereport)
+                    reportdata = copy.deepcopy(procnodereport)
 
                 result = stylesheet.apply(ElementTree(reportdata))
                 outputstring = stylesheet.tostring(result)
@@ -265,7 +265,7 @@ if __name__ == '__main__':
                                     (toastring, desti.get('address'))
                         #prepend To: and From:
                         outputstring = "To: %s\nFrom: root@%s\n%s"% \
-                                       (toastring, getfqdn(), outputstring)
+                                       (toastring, socket.getfqdn(), outputstring)
                         mail(outputstring, c) #call function to send
             else:
                 outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot())
