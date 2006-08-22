@@ -1,7 +1,7 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, time, xmlrpclib, ConfigParser, httplib
+import logging, socket, sys, time, xmlrpclib, ConfigParser, httplib
 
 class CobaltComponentError(Exception):
     '''This error signals component connection errors'''
@@ -123,7 +123,10 @@ class OSSafeTransport(xmlrpclib.Transport):
 class SafeProxy:
     '''Wrapper for proxy'''
     _cfile = ConfigParser.ConfigParser()
-    _cfpath = '/etc/bcfg2.conf'
+    if '-C' in sys.argv:
+        _cfpath = sys.argv[sys.argv.index('-C') + 1]
+    else:
+        _cfpath = '/etc/bcfg2.conf'
     _cfile.read([_cfpath])
     try:
         _components = _cfile._sections['components']
