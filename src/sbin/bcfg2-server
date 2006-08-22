@@ -221,7 +221,10 @@ if __name__ == '__main__':
     SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()
     if SSETUP['daemon']:
         daemonize(SSETUP['daemon'])
-    BSERV = Bcfg2Serv(SSETUP)
+    try:
+        BSERV = Bcfg2Serv(SSETUP)
+    except:
+        critical_error("Failed to setup server; probably a key problem")
     while not BSERV.shut:
         try:
             BSERV.serve_forever()
