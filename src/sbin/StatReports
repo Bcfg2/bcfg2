@@ -151,7 +151,12 @@ if __name__ == '__main__':
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
     clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
-    transformpath = "/usr/share/bcfg2/xsl-transforms/"
+    try:
+        prefix = c.get('server', 'prefix')
+    except (NoSectionError, NoOptionError):
+        prefix = '/usr'
+
+    transformpath = "/%s/share/bcfg2/xsl-transforms/" % (prefix)
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
