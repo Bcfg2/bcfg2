@@ -57,6 +57,11 @@ Cause bcfg2 to remove extra configuration elements it detects. Mode is one of al
 .RS
 Assert a profile for the current client.
 .RE
+.B "\-k" 
+.RS
+Run in bulletproof mode. This currently only effect behavior in the
+debian toolset; it calls apt-get update and clean and dpkg --configure --pending.
+.RE
 .SH "SEE ALSO"
 .BR bcfg2-server(8),
 .BR bcfg2-info(8)

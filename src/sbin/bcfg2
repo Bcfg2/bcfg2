@@ -59,6 +59,8 @@ class Client:
                          False, ('communication', 'password'), 'password', False),
             'retries': (('-R', '<numretries>', 'the number of times to retry network communication'),
                         False, ('communication', 'retries'), '3', False),
+            'kevlar': (('-k', False, "run in kevlar (bulletproof) mode"),
+                       False, False, False, True),
             }
 
         self.setup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()

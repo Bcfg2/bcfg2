@@ -23,11 +23,10 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         null = open('/dev/null', 'w+')
         os.dup2(null.fileno(), sys.__stdin__.fileno())
         if not self.setup['dryrun']:
-            self.saferun("dpkg --force-confold --configure -a")
-            if not self.setup['build']:
-                self.saferun("/usr/sbin/dpkg-reconfigure -f noninteractive debconf < /dev/null")
-            self.saferun("apt-get clean")
-            self.saferun("apt-get -q=2 -y update")
+            if self.setup['kevlar']:
+                self.saferun("dpkg --force-confold --configure --pending")
+                self.saferun("apt-get clean")
+                self.saferun("apt-get -q=2 -y update")
         self.installed = {}
         self.pkgwork = {'add':[], 'update':[], 'remove':[]}
         for pkg in [cpkg for cpkg in self.cfg.findall(".//Package") if not cpkg.attrib.has_key('type')]:
