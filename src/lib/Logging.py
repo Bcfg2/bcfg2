@@ -86,6 +86,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
 
     def __init__(self, procname, path, facility):
         self.procname = procname
+        self.unixsocket = False
         logging.handlers.SysLogHandler.__init__(self, path, facility)
 
     def emit(self, record):
@@ -134,7 +135,10 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='lo
         logging.root.addHandler(console)
     if to_syslog:
         try:
-            syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+            try:
+                syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+            except socket.error:
+                syslog = FragmentingSysLogHandler(procname, ('localhost', 514), syslog_facility)
             syslog.setLevel(logging.DEBUG)
             syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
             logging.root.addHandler(syslog)
