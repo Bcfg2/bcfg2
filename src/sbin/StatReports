@@ -254,24 +254,37 @@ if __name__ == '__main__':
             if deliverymechanism == 'mail':
                 if delivtype == 'nodes-individual':
                     reportdata = copy.deepcopy(procnodereport)
-                    for noden in procnodereport.findall("Node"):
+                    for noden in reportdata.findall("Node"):
                         [reportdata.remove(y) for y in reportdata.findall("Node")]
                         reportdata.append(noden)
+                        result = stylesheet.apply(ElementTree(reportdata))
+                        outputstring = stylesheet.tostring(result)
+                        
+                        if not outputstring == None:
+                            toastring = ''
+                            for desti in deliv.findall("Destination"):
+                                toastring = "%s%s " % \
+                                            (toastring, desti.get('address'))
+                            #prepend To: and From:
+                            outputstring = "To: %s\nFrom: root@%s\n%s"% \
+                                           (toastring, socket.getfqdn(), outputstring)
+                            mail(outputstring, c) #call function to send
+                        
                 else:
                     reportdata = copy.deepcopy(procnodereport)
 
-                result = stylesheet.apply(ElementTree(reportdata))
-                outputstring = stylesheet.tostring(result)
+                    result = stylesheet.apply(ElementTree(reportdata))
+                    outputstring = stylesheet.tostring(result)
                         
-                if not outputstring == None:
-                    toastring = ''
-                    for desti in deliv.findall("Destination"):
-                        toastring = "%s%s " % \
-                                    (toastring, desti.get('address'))
-                        #prepend To: and From:
-                        outputstring = "To: %s\nFrom: root@%s\n%s"% \
-                                       (toastring, socket.getfqdn(), outputstring)
-                        mail(outputstring, c) #call function to send
+                    if not outputstring == None:
+                        toastring = ''
+                        for desti in deliv.findall("Destination"):
+                            toastring = "%s%s " % \
+                                        (toastring, desti.get('address'))
+                            #prepend To: and From:
+                            outputstring = "To: %s\nFrom: root@%s\n%s"% \
+                                           (toastring, socket.getfqdn(), outputstring)
+                            mail(outputstring, c) #call function to send
             else:
                 outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot())
                 if deliverymechanism == 'rss':
