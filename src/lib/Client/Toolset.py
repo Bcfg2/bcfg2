@@ -220,6 +220,9 @@ class Toolset(object):
 
     def VerifyEntry(self, entry, modlist = []):
         '''Dispatch call to Verify<tagname> and save state in self.states'''
+        if not hasattr(self, "Verify%s" % (entry.tag)):
+            self.logger("Got unsupported entry type %s" % (entry.tag))
+            self.states[entry] = False
         try:
             method = getattr(self, "Verify%s" % (entry.tag))
             # verify state and stash value in state
