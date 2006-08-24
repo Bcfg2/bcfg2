@@ -7,6 +7,9 @@
 	pkgspec="bcfg2-pyrex-0.9.4.1"
 >
 
+<prereq package="m4-1.4.4" />
+<prereq package="bcfg2-python-2.4.3" />
+
 <environment
         variable="CC"
         value="gcc"
@@ -78,13 +81,14 @@ url="http://www.pobox.com/users/dclark/mirror/pyrex/Pyrex-0.9.4.1.tar.gz
 
 <prepackage type="set">
 chmod -R o+r lib/bcfg2
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description Pyrex - a Language for Writing Python Extension Modules
+description pyrex - a language for writing python extension modules
 </encapinfo>
 
 </encap_profile>

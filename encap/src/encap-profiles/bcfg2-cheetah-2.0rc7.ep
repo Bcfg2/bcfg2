@@ -7,6 +7,9 @@
 	pkgspec="bcfg2-cheetah-2.0rc7"
 >
 
+<prereq package="m4-1.4.4" />
+<prereq package="bcfg2-python-2.4.3" />
+
 <environment
         variable="CC"
         value="gcc"
@@ -80,6 +83,7 @@ http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/Cheetah-2.0rc7.tar.gz"
 </source>
 
 <prepackage type="set">
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}

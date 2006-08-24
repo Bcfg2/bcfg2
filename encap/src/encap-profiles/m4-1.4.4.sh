@@ -40,8 +40,8 @@ cat > ${ENCAP_PKGNAME}.ep << EOF
 </source>
 
 <prepackage type="set">
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 

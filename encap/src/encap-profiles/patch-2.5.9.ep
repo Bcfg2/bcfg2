@@ -42,13 +42,14 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage type="set">
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description patch - Apply a diff file to an original
+description patch - apply a diff file to an original
 </encapinfo>
 
 </encap_profile>

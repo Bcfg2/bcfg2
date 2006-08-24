@@ -1,0 +1,40 @@
+#!/bin/sh
+
+chomp() {
+    printf "$1" | sed s:^\ ::g | sed s:\ $::g
+}
+
+cname() {
+    unset CTMP1 CTMP2
+    for PART in $(printf "$1" | sed s:-:\ :g); do 
+        if [ ! "`printf $PART | cut -c1 | sed s:[0-9]:0:g`x" = "0x" ]; then
+        CTMP1="${CTMP1} ${PART}"
+        fi
+    done
+    CTMP2="`chomp "$CTMP1" | sed s:\ :_:g | sed s:\+:X:g | tr [a-z] [A-Z]`"
+    printf "\$(%s)%s" "`basename "$CTMP2"`" "$2"
+}
+
+builddeps() {
+    unset DEPSTMP
+    for LINE in `grep "<prereq package=\"" $1 \
+                 | sed s/\ //g \
+                 | awk -F\" '{print $2}'`; do 
+                 DEPSTMP="${DEPSTMP} `cname $LINE $2`"
+    done
+    chomp "$DEPSTMP"
+}
+
+installdeps() {
+    unset DEPSTMP
+    for LINE in `grep "prereq pkgspec" $1 \
+                 | awk '{print $4}'`; do 
+                 DEPSTMP="${DEPSTMP} `cname $LINE $2`"
+    done
+    chomp "$DEPSTMP"
+}
+
+printf "%s : %s\n" "`cname $1 .installed`" "`builddeps $1 .installed`"
+printf "%s : %s\n" "`cname $1 .packaged`" "`installdeps $1 .packaged`"
+
+exit 0

@@ -7,8 +7,8 @@
 	pkgspec="daemontools-0.76"
 >
 
-<prereq package="patch-2.5.9" />
 <prereq package="m4-1.4.4" />
+<prereq package="patch-2.5.9" />
 
 <environment
         variable="CC"
@@ -277,11 +277,12 @@ mv package/run.inittab package/run.inittab.orig
 mv package/boot.inittab package/boot.inittab.orig
 mv package/run.rclocal package/run.inittab.orig
 mv package/boot.rclocal package/boot.inittab.orig
-mkdir var 2>/dev/null || exit 1
-mkdir var/svc.d 2>/dev/null || exit 1
-mkdir var/svc.d/svscan 2>/dev/null || exit 1
-mkdir var/svc.d/svscan/log 2>/dev/null || exit 1
-mkdir var/encap 2>/dev/null || exit 1
+test -d var || mkdir var
+test -d var/svc.d || mkdir var/svc.d
+test -d var/svc.d/svscan || mkdir var/svc.d/svscan
+test -d var/svc.d/svscan/log || mkdir var/svc.d/svscan/log
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 

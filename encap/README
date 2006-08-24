@@ -1,30 +1,50 @@
+tools-build
+-----------
+Tools used during the build process; should be built before anything else.
+ * m4 - The macro processor, used by mkencap, which is used by everything.
+ * makeself - A utility to create self-extracting archives, used by the 
+              top-level Makefile to create the bcfg2-*.run distributions.
+ * patch - Used to patch daemontools and ostiary sources before they build.
+
+bcfg2-client
+------------
+bcfg2 gettext libgcc libiconv libstdc++ libxml2 libxslt lxml openssl pkg-config pyopenssl pyrex python zlib
+
+bcfg2-cheetah
+-------------
+The cheetah python-powered templating system. Used as a build tool by bcfg2-site, and by bcfg2-server. Build order: 
+
 bcfg2-python-apt
 ----------------
-Needed for bcfg2 clients that use the "Advanced Packaging Tool" (apt).
+Needed for bcfg2 clients that use the "Advanced Packaging Tool" (apt), such as Debian and Ubuntu.
 
 bcfg2-server
 ------------
-Encaps for bcfg2 server deps. Only for GNU/Linux.
+Gamin (and glib, upon which it depends), which are needed by the bcfg2 server. Only for GNU/Linux.
 
 bcfg2-site
 ----------
 Tools to make an encap package with your site-specific bcfg2.conf,
 custom bcfg2 generators, bcfg2 client run frequency, etc.
 
-daemontools - http://cr.yp.to/daemontools.html
-----------------------------------------------
-D. J. Bernstein's daemontools - a collection of tools for managing
-UNIX services the same way across all UNIX platforms. May be useful to
-set up one-time run of bcfg2 client at startup, or to run ostiary.
+tools-deploy/daemontools
+------------------------
+D. J. Bernstein's daemontools - a collection of tools for managing UNIX services the same way across all UNIX platforms. Used by bcfg2-site to run ostiary and bcfg2-client; may also be used to run bcfg2-server.
 
-epkg - http://www.encap.org/epkg
---------------------------------
-Mark D. Roth's epkg - an encap pacakage manager. Needed to build the
-*.ep and *.sh files, although in most cases epkg binaries for your
-platform will already exist.
+tools-deploy/ostiary
+--------------------
+Ray Ingles' ostiary - simple, secure remote script execution. Used by bcfg2-site to enable the remote kickoff of bcfg2-client runs.
 
-ostiary - http://ingles.homeunix.org/software/ost
--------------------------------------------------
-Ray Ingles' ostiary - simple, secure remote script execution.  May be
-useful if you like/are used to being able to kick off a config update
-on a config client from a config server, like with cfengine.
+bcfg2-python-apt
+----------------
+Before building this, make sure that you have these libraries installed:
+ * /usr/lib/libapt-pkg* (Part of the "apt" package on Debian)
+ * /usr/lib/libapt-inst* (Part of the "apt-utils" package on Debian)
+
+You also must have the "libapt-pkg-dev" package installed.
+
+To see if your Debian variant is supported, do "grep ifeq Makefile" and see if
+any of those strings match "cat /etc/issue".
+
+It should be pretty trivial to add new Debian platforms; if you have any
+issues, mail the bcfg2-dev list or open a ticket.

@@ -1,0 +1,81 @@
+#!/bin/sh -e
+
+umask 002
+BASEDIR="${ENCAP_TARGET}" # Usually /usr/local
+PKGDIR="${ENCAP_SOURCE}/${ENCAP_PKGNAME}" # Ususally /usr/local/encap/<pkgname>
+LOG="${PKGDIR}/postinstall.log"
+MKINSTALLDIRS="${PKGDIR}/mkinstalldirs"
+exec > $LOG 2>&1
+
+printf "Running ${ENCAP_PKGNAME} postinstall script...\n"
+date
+
+chmod 755 ${MKINSTALLDIRS}
+${MKINSTALLDIRS} "${BASEDIR}/etc/default/bcfg2-client/env"
+${MKINSTALLDIRS} "${BASEDIR}/etc/default/bcfg2-server/env"
+${MKINSTALLDIRS} "${BASEDIR}/sbin"
+
+rmcp() {
+    SRCFILENAME="`basename ${1}`"
+    if [ -d "${2}" ]; then 
+        DESTDIRNAME="$2"
+    else 
+        DESTDIRNAME="`dirname ${2}`"
+    fi
+    TARGETNAME="$DESTDIRNAME/$SRCFILENAME"
+    if [ -h "$TARGETNAME" ]; then rm "$TARGETNAME"; fi
+    if [ -f "$TARGETNAME" ]; then rm "$TARGETNAME"; fi
+    cp "$1" "$2"
+}
+
+if [ -f ${BASEDIR}/etc/default/bcfg2-client/.SENTINEL_BCFG2 ]; then
+    printf "INFO: bcfg2 client options have been updated by bcfg2 -\n"
+    printf "INFO: not replacing that configuration.\n"
+elif [ -f ${BASEDIR}/etc/default/bcfg2-client/.SENTINEL_SITE ]; then
+    printf "INFO: bcfg2 client options have been previously updated -\n"
+    printf "INFO: not replacing that configuration.\n"
+else
+    DIR="etc/default/bcfg2-client"
+    rmcp $PKGDIR/$DIR/env/RUN_INTERVAL_SECONDS ${BASEDIR}/$DIR/env/
+    rmcp $PKGDIR/$DIR/env/OPTIONS ${BASEDIR}/$DIR/env/
+    touch ${BASEDIR}/$DIR/.SENTINEL_SITE
+fi
+
+if [ -f ${BASEDIR}/etc/default/bcfg2-server/.SENTINEL_BCFG2 ]; then
+    printf "INFO: bcfg2 server options have been updated by bcfg2 -\n"
+    printf "INFO: not replacing that configuration.\n"
+elif [ -f ${BASEDIR}/etc/default/bcfg2-server/.SENTINEL_SITE ]; then
+    printf "INFO: bcfg2 server options have been previously updated -\n"
+    printf "INFO: not replacing that configuration.\n"
+else
+    DIR="etc/default/bcfg2-server"
+    rmcp $PKGDIR/$DIR/env/OPTIONS ${BASEDIR}/$DIR/env/
+    touch ${BASEDIR}/$DIR/.SENTINEL_SITE
+fi
+
+if [ -f ${BASEDIR}/etc/.SENTINEL_BCFG2 ]; then
+    printf "INFO: bcfg2.conf and/or ostiary.cfg may have been updated by\n"
+    printf "INFO: bcfg2 - not replacing that configuration.\n"
+elif [ -f ${BASEDIR}/etc/.SENTINEL_SITE ]; then
+    printf "INFO: bcfg2.conf and/or ostiary.cfg may have been previously\n"
+    printf "INFO: updated - not replacing that configuration.\n"
+else
+    rmcp $PKGDIR/etc/bcfg2.conf ${BASEDIR}/etc/
+    rmcp $PKGDIR/etc/ostiary.cfg ${BASEDIR}/etc/
+    touch ${BASEDIR}/etc/.SENTINEL_SITE
+fi
+
+if [ -f ${BASEDIR}/sbin/.SENTINEL_BCFG2 ]; then
+    printf "INFO: ost-bcfg2.sh may have been updated by bcfg2 -\n"
+    printf "INFO: not replacing that configuration with this script.\n"
+elif [ -f ${BASEDIR}/sbin/.SENTINEL_SITE ]; then
+    printf "INFO: ost-bcfg2.sh may have been previously updated -\n"
+    printf "INFO: not replacing that configuration with this script.\n"
+else
+    rmcp $PKGDIR/sbin/ost-bcfg2.sh ${BASEDIR}/sbin/
+    touch ${BASEDIR}/sbin/.SENTINEL_SITE
+fi
+
+printf "Finished ${ENCAP_PKGNAME} postinstall script.\n"
+
+exit 0

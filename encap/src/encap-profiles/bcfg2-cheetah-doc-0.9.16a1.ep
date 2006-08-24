@@ -7,6 +7,8 @@
 	pkgspec="bcfg2-cheetah-doc-0.9.16a1"
 >
 
+<prereq package="m4-1.4.4" />
+
 <environment
         variable="PATH"
 PLATFORM_IF_MATCH(solaris)
@@ -47,6 +49,7 @@ cp -R * ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/cheetah
 </source>
 
 <prepackage>
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}

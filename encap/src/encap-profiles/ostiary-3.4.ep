@@ -7,8 +7,8 @@
 	pkgspec="ostiary-3.4"
 >
 
-<prereq package="patch-2.5.9" />
 <prereq package="m4-1.4.4" />
+<prereq package="patch-2.5.9" />
 
 <environment
         variable="CC"
@@ -71,22 +71,22 @@ url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
 
 <prepackage>
 # /usr/local/etc stuff
-mkdir share 2>/dev/null || exit 1
-mkdir share/doc 2>/dev/null || exit 1
-mkdir share/doc/ostiary 2>/dev/null || exit 1
-mkdir share/doc/ostiary/examples 2>/dev/null || exit 1
+test -d share || mkdir share
+test -d share/doc || mkdir share/doc
+test -d share/doc/ostiary || mkdir share/doc/ostiary
+test -d share/doc/ostiary/examples || mkdir share/doc/ostiary/examples
 mv etc/ostiary.cfg share/doc/ostiary/examples/ostiary.cfg
 rmdir etc
 # daemons should be in /usr/local/sbin
-mkdir sbin 2>/dev/null || exit 1
+test -d sbin || mkdir sbin
 mv bin/ostiaryd sbin/ostiaryd
 # daemontool stuff
-mkdir var 2>/dev/null || exit 1
-mkdir var/svc.d 2>/dev/null || exit 1
-mkdir var/svc.d/ostiary 2>/dev/null || exit 1
-mkdir var/svc.d/ostiary/log 2>/dev/null || exit 1
-# encap stuff
-mkdir var/encap 2>/dev/null || exit 0
+test -d var || mkdir var
+test -d var/svc.d || mkdir var/svc.d
+test -d var/svc.d/ostiary || mkdir var/svc.d/ostiary
+test -d var/svc.d/ostiary/log || mkdir var/svc.d/ostiary/log
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 

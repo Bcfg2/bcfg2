@@ -7,6 +7,8 @@
 	pkgspec="daemontools-doc-20060731"
 >
 
+<prereq package="m4-1.4.4" />
+
 <environment
         variable="PATH"
 PLATFORM_IF_MATCH(solaris)
@@ -46,8 +48,9 @@ cp -R * ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/daemontools
 </source>
 
 <prepackage>
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 

@@ -7,6 +7,9 @@
 	pkgspec="bcfg2-gettext-0.14.5"
 >
 
+<prereq package="m4-1.4.4" />
+<prereq package="bcfg2-libiconv-1.9.2" />
+
 <environment
         variable="CC"
         value="gcc"
@@ -66,14 +69,14 @@ url="http://www.pobox.com/users/dclark/mirror/gettext/gettext-0.14.5.tar.gz
 <prepackage type="set">
 # Make man pages available from /usr/local/lib/bcfg2/man
 mv lib/bcfg2/share/man lib/bcfg2/
-# Other stuff...
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description Gettext - Tools to produce multi-lingual messages
+description gettext - tools to produce multi-lingual messages
 </encapinfo>
 
 </encap_profile>

@@ -7,6 +7,8 @@
 	pkgspec="bcfg2-zlib-1.2.3"
 >
 
+<prereq package="m4-1.4.4" />
+
 <environment
         variable="CC"
         value="gcc"
@@ -77,14 +79,14 @@ PLATFORM_ENDIF
 <prepackage type="set">
 # Make man pages available from /usr/local/lib/bcfg2/man
 mv lib/bcfg2/share/man lib/bcfg2/
-# Other stuff...
-mkdir var 2>/dev/null || exit 0
-mkdir var/encap 2>/dev/null || exit 0
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description Zlib compression library
+description zlib - compression library
 </encapinfo>
 
 </encap_profile>
