@@ -3,7 +3,7 @@
 bcfg \- reconfigure machine based on settings in BCFG2
 .SH SYNOPSIS
 .B bcfg2
-.I [-d] [-v] [-p] [-c cache file] [-f config file] [-q] [-b bundle]
+.I [-d] [-v] [-p] [-c cache file] [-f config file] [-I] [-q] [-b bundle]
 [-r removal mode]
 .SH DESCRIPTION
 .PP
@@ -38,6 +38,11 @@ configuration files marked as paranoid by the Bcfg2 server.
 Run bcfg2 in quick mode. Package checksum verification won't be
 performed. This mode relaxes the constraints of correctness, and thus
 should only be used in safe conditions. 
+.RE
+.B "\-I"
+.RS
+Run bcfg2 in interactive mode.  The user will be prompted before each 
+change.
 .RE
 .B "\-n"
 .RS

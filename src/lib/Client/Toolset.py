@@ -555,13 +555,29 @@ class Toolset(object):
             self.logger.info("Packages to remove:")
             self.logger.info(self.pkgwork['remove'])
         if [entry for entry in self.states if not (self.states[entry] or entry.tag == 'Package')]:
-            self.logger.info("Entries to update:")
+            self.logger.info("Entries are incorrect:")
             self.logger.info(["%s: %s" % (entry.tag, entry.get('name'))
                               for entry in self.states if not (self.states[entry]
                                                                or entry.tag == 'Package')])
         if self.extra_services:
             self.logger.info("Services to remove:")
             self.logger.info(self.extra_services)
+
+    def PromptUser(self):
+        '''Prompts user for each entry in interactive mode'''
+        #get list of entries that need to be updated
+        #ask user for each entry
+        work = self.pkgwork['add'] + self.pkgwork['update']
+        work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
+	self.iinst = [];
+	for entry in work:
+	    try:
+                if raw_input("Would you like to install %s%s? (y/N): " % (entry.tag, entry.get('name'))) in ['y','Y']:
+	            self.iinst.append((entry.tag, entry.get('name')))
+            except:
+	        continue
+	self.logger.info("You chose to install:")
+	self.logger.info(['%s:%s' % item for item in self.iinst])
 
     def Install(self):
         '''Correct detected misconfigurations'''
@@ -584,6 +600,9 @@ class Toolset(object):
         work = self.pkgwork['add'] + self.pkgwork['update']
         # add non-package entries
         work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
+
+	if self.setup['interactive']:
+	    work = [entry for entry in work if (entry.tag, entry.get('name')) in self.iinst]
 
         # Counters
         ## Packages left to install

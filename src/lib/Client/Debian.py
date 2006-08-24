@@ -20,8 +20,8 @@ class ToolsetImpl(Bcfg2.Client.Toolset.Toolset):
         self.logger.debug('Configuring Debian toolset')
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         # dup /dev/null on top of stdin
-        null = open('/dev/null', 'w+')
-        os.dup2(null.fileno(), sys.__stdin__.fileno())
+        #null = open('/dev/null', 'w+')
+        #os.dup2(null.fileno(), sys.__stdin__.fileno())
         if not self.setup['dryrun']:
             if self.setup['kevlar']:
                 self.saferun("dpkg --force-confold --configure --pending")

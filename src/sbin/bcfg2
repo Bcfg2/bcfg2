@@ -41,6 +41,8 @@ class Client:
                       False, False, False, False),
             'file': (('-f', "<configspec>", "configure from a file rather than querying the server"),
                      False, False, False, False),
+            'interactive': (('-I', False, "prompt the user for each change"),
+                      False, False, False, True),
             'cache': (('-c', "<configspec>", "store the configuration in a file"),
                       False, False, False, False),
             'profile': (('-p', '<profile>', "assert the given profile for the host"),
@@ -252,6 +254,10 @@ class Client:
     
         # summarize current state
         self.toolset.CondDisplayState('initial')
+
+        # run bcfg in interactive mode
+        if self.setup['interactive']:
+            self.toolset.PromptUser()
 
         # install incorrect aspects of configuration
         self.toolset.Install()
