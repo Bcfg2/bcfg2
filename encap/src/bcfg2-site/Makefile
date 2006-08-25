@@ -33,7 +33,7 @@ copy : fill
 	EN=`cat bcfg2-site-RENAME/encapname.out` && \
 	( test ! -d $(ED)/bcfg2-site-$${EN} || rm -rf $(ED)/bcfg2-site-$${EN} ) && \
 	for SRC in `find bcfg2-site-RENAME | grep -v svn | grep -v tmpl`; do \
-		DEST=$(ED)/`printf "$$SRC" | sed s/RENAME/$$EN/g | sed s/\.out//g`; \
+		DEST=$(ED)/`printf "%s\n" "$$SRC" | sed s/RENAME/$$EN/g | sed s/\.out//g`; \
 		if [ -d $$SRC ]; then mkdir $$DEST; else cp $$SRC $$DEST; fi; \
 	done		
 

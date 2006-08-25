@@ -133,7 +133,7 @@ rename : encaps
 	if [ "$(OS)x" != "x" ]; then OS="$(OS)"; fi && \
 	if [ "$${OS}x" != "x" ]; then \
 		for OLDNAME in `ls ./*-encap-*.tar.gz`; do \
-			NEWNAME="`printf $${OLDNAME} \
+			NEWNAME="`printf "%s\n" "$${OLDNAME}" \
 				| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
 				| sed s:\ :-:g | sed s:OSDIST:\$${OS}:g`" ; \
 			if [ "$${OLDNAME}x" != "$${NEWNAME}x" ]; then \

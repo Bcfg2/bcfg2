@@ -1,16 +1,19 @@
 #!/bin/sh
 
+# Note: Solaris sed(1) requires a newline from stdin
 SED="sed"
 #SED="/opt/csw/bin/gsed"
+#SED="/usr/xpg4/bin/sed"
+#SED="/usr/ucb/sed"
 
 chomp() {
-    printf "$1" | ${SED} 's:^\ ::g' | ${SED} 's:\ $::g'
+    printf "%s\n" "$1" | ${SED} 's:^\ ::g' | ${SED} 's:\ $::g'
 }
 
 cname() {
     unset CTMP1 CTMP2
-    for PART in `printf "$1" | ${SED} 's:-:\ :g'`; do 
-        if [ ! "`printf $PART | cut -c1 | ${SED} 's:[0-9]:0:g'`x" = "0x" ]; then
+    for PART in `printf "%s\n" "$1" | ${SED} 's:-:\ :g'`; do 
+        if [ ! "`printf "%s\n" "$PART" | cut -c1 | ${SED} 's:[0-9]:0:g'`x" = "0x" ]; then
         CTMP1="${CTMP1} ${PART}"
         fi
     done
