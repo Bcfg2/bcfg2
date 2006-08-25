@@ -1,3 +1,8 @@
+#include "site-settings.conf"
+#compiler-settings
+cheetahVarStartToken = @
+commentStartToken = //
+#end compiler-settings
 #!/bin/sh -e
 
 umask 002
@@ -75,6 +80,19 @@ else
     rmcp $PKGDIR/sbin/ost-bcfg2.sh ${BASEDIR}/sbin/
     touch ${BASEDIR}/sbin/.SENTINEL_SITE
 fi
+
+//if int(@BCFG2_CLIENT_RUN_INTERVAL_SECONDS) > 0
+if [ ! -h /service/bcfg2-client ]; then
+    if [ -d /usr/local/var/svc.d/bcfg2-client ]; then
+        ln -s /usr/local/var/svc.d/bcfg2-client /service/bcfg2-client
+    else
+        printf "ERROR: /usr/local/var/svc.d/bcfg2-client does not exist.\n"
+        exit 1
+    fi
+else
+    printf "INFO: /service/bcfg2-client already exists, not replacing...\n"
+fi
+//end if
 
 printf "Finished ${ENCAP_PKGNAME} postinstall script.\n"
 

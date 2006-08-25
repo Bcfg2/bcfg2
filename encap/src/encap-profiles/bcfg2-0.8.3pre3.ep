@@ -2,6 +2,12 @@
 
 <!-- $Id$ -->
 
+<!-- To make this work with a new version of bcfg2, first do a "svn mv" -->
+<!-- of this file to the new version name, and then do a global search- -->
+<!-- replace of the version with the new version (i.e. search for       -->
+<!-- "0.8.3pre3" and replace with "0.8.3") - DO NOT DO IT MANUALLY,     -->
+<!-- the version string is referenced by some of the included files.    -->
+
 <encap_profile
 	profile_ver="1.0"
 	pkgspec="bcfg2-0.8.3pre3"

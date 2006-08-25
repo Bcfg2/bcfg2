@@ -18,6 +18,7 @@
 #set global $BCFG2_SERVER = "config.localdomain.com"
 #set global $BCFG2_PORT = "6"
 #set global $OSTIARY_PORT = "7"
+## How often to run the bcfg2 client, or "0" to disable
 #set global $BCFG2_CLIENT_RUN_INTERVAL_SECONDS = "3600"
 ## Initial options for bcfg(1). The bcfg2 client is started with these options 
 ## on installation and periodically based on BCFG2_CLIENT_RUN_INTERVAL_SECONDS, 
