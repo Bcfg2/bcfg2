@@ -1,10 +1,13 @@
 #!/bin/sh
 # $Id$
 
-ENCAP_PKGNAME=m4-1.4.4
-PATH=$PATH:/usr/local/bin
+ENCAP_PKGNAME="m4-1.4.4"
+PATH="$PATH:/usr/local/bin"
 export PATH
 
+date > ${ENCAP_PKGNAME}.log
+
+if [ -f "${ENCAP_PKGNAME}.ep" ]; then rm ${ENCAP_PKGNAME}.ep; fi
 cat > ${ENCAP_PKGNAME}.ep << EOF
 <?xml version="1.0"?>
 
@@ -24,7 +27,6 @@ cat > ${ENCAP_PKGNAME}.ep << EOF
         value="/usr/local/bin:"
         type="prepend"
 />
-
 
 <environment
         variable="PATH"
@@ -52,23 +54,46 @@ description m4 - GNU implementation of the traditional Unix macro processor
 </encap_profile>
 EOF
 
+if [ -f m4-fake ]; then rm m4-fake; fi
 cat > m4-fake << EOF
 #!/bin/sh
 cat \$4
 EOF
-
 chmod 755 m4-fake
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -DUP ${ENCAP_PKGNAME}.ep || true ) \
-	> ${ENCAP_PKGNAME}.log 2>&1
+CURDIR="`pwd`"
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -T ${ENCAP_PKGNAME}.ep || true ) \
-	>> ${ENCAP_PKGNAME}.log 2>&1
+printf "Environment variables:\n" \
+	>> ${ENCAP_PKGNAME}.log
+env >> ${ENCAP_PKGNAME}.log
 
-( ${MKENCAP} -m ${PWD}/m4-fake -b -CBI ${ENCAP_PKGNAME}.ep ) \
-	>> ${ENCAP_PKGNAME}.log 2>&1
+printf "\nsrcdir:|%s| pwd:|%s| \$0:|%s|\n" "${srcdir}" "`pwd`" "$0" \
+    >> ${ENCAP_PKGNAME}.log
 
-rm m4-fake
-rm ${ENCAP_PKGNAME}.ep
+printf "\n%s :\n" "`ls -l ${ENCAP_PKGNAME}.ep`" \
+    >> ${ENCAP_PKGNAME}.log
+cat ${ENCAP_PKGNAME}.ep >> ${ENCAP_PKGNAME}.log
+
+printf "\n\n%s :\n" "`ls -l m4-fake`" \
+    >> ${ENCAP_PKGNAME}.log
+cat m4-fake >> ${ENCAP_PKGNAME}.log
+
+printf "\n${MKENCAP} -m ${CURDIR}/m4-fake -b -DUP ${ENCAP_PKGNAME}.ep :\n" \
+    >> ${ENCAP_PKGNAME}.log
+( ${MKENCAP} -m ${CURDIR}/m4-fake -b -DUP ${ENCAP_PKGNAME}.ep || true ) \
+    >> ${ENCAP_PKGNAME}.log 2>&1
+
+printf "\n${MKENCAP} -m ${CURDIR}/m4-fake -b -T ${ENCAP_PKGNAME}.ep :\n" \
+    >> ${ENCAP_PKGNAME}.log
+( ${MKENCAP} -m ${CURDIR}/m4-fake -b -T ${ENCAP_PKGNAME}.ep || true ) \
+    >> ${ENCAP_PKGNAME}.log 2>&1
+
+printf "\n${MKENCAP} -m ${CURDIR}/m4-fake -b -CBI ${ENCAP_PKGNAME}.ep :\n" \
+    >> ${ENCAP_PKGNAME}.log
+( ${MKENCAP} -m ${CURDIR}/m4-fake -b -CBI ${ENCAP_PKGNAME}.ep ) \
+    >> ${ENCAP_PKGNAME}.log 2>&1
+
+rm m4-fake >> ${ENCAP_PKGNAME}.log 2>&1
+rm ${ENCAP_PKGNAME}.ep >> ${ENCAP_PKGNAME}.log 2>&1
 
 exit 0

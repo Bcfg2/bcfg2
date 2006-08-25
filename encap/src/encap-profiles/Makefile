@@ -125,7 +125,7 @@ all : install encaps rename
 .DELETE_ON_ERROR : # delete the target of a rule if it has changed and its 
                    # commands exit with a nonzero exit status
 
-install : $(EPKG) $(MKENCAP) $(EP2TARGET) $(addsuffix .installed,$(sources))
+install : $(EPKG) $(MKENCAP) $(EP2TARGET) $(M4).installed $(addsuffix .installed,$(sources))
 
 encaps : $(EPKG) $(MKENCAP) $(EP2TARGET) $(addsuffix .packaged,$(sources))
 
