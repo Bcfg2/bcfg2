@@ -1,24 +1,27 @@
 #!/bin/sh
 
+SED="sed"
+#SED="/opt/csw/bin/gsed"
+
 chomp() {
-    printf "$1" | sed s:^\ ::g | sed s:\ $::g
+    printf "$1" | ${SED} 's:^\ ::g' | ${SED} 's:\ $::g'
 }
 
 cname() {
     unset CTMP1 CTMP2
-    for PART in $(printf "$1" | sed s:-:\ :g); do 
-        if [ ! "`printf $PART | cut -c1 | sed s:[0-9]:0:g`x" = "0x" ]; then
+    for PART in `printf "$1" | ${SED} 's:-:\ :g'`; do 
+        if [ ! "`printf $PART | cut -c1 | ${SED} 's:[0-9]:0:g'`x" = "0x" ]; then
         CTMP1="${CTMP1} ${PART}"
         fi
     done
-    CTMP2="`chomp "$CTMP1" | sed s:\ :_:g | sed s:\+:X:g | tr [a-z] [A-Z]`"
+    CTMP2="`chomp "$CTMP1" | ${SED} 's:\ :_:g' | ${SED} 's:\+:X:g' | tr [a-z] [A-Z]`"
     printf "\$(%s)%s" "`basename "$CTMP2"`" "$2"
 }
 
 builddeps() {
     unset DEPSTMP
     for LINE in `grep "<prereq package=\"" $1 \
-                 | sed s/\ //g \
+                 | ${SED} 's/\ //g' \
                  | awk -F\" '{print $2}'`; do 
                  DEPSTMP="${DEPSTMP} `cname $LINE $2`"
     done
