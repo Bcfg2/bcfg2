@@ -16,9 +16,7 @@ subdir="/"
 >
 
 <unpack><![CDATA[
-cd .. && \
-rm -rf ${ENCAP_PKGNAME} && \
-/bin/sh ${ENCAP_PKGNAME}.run
+/bin/sh -x ${ENCAP_PKGNAME}.run
 ]]></unpack>
 
 <configure>

@@ -156,7 +156,7 @@ uninstall : distclean
 		rm -rf $(ENCAPDIR)/$${ENCAP}-*; \
 		rm ./$${ENCAP}-*.installed; \
 	done)
-	test ! -d $(BASEDIR)/lib/bcfg2
+	-rm -rf  $(BASEDIR)/lib/bcfg2
 
 bcfg2only :
 	$(MAKE) -t; sleep 2; touch $(srcdir)/$(BCFG2).ep; $(MAKE)
