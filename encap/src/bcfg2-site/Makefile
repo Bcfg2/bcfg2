@@ -14,7 +14,7 @@ BD = /usr/local
 ED = ${BD}/encap
 export ED
 
-all : encap
+all : encap install
 
 clean :
 	for DIR in `find . -type d | grep -v "\.svn"`; do \
