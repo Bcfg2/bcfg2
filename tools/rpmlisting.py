@@ -177,12 +177,20 @@ def prune_archs(pkgs):
     return pruned_pkgs
 
 
+# from http://aspn.activestate.com/ASPN/Python/Cookbook/Recipe/52306
+def sorted_values(adict):
+    """return a list of values from a dict, sorted by key."""
+    items = adict.items()
+    items.sort()
+    return [value for key, value in items]
+
+
 def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
     pkgs = prune_archs(prune_pkgs(get_pkgs(rpmdir)))
-    for rpmblobs in pkgs.values():
+    for rpmblobs in sorted_values(pkgs):
         if len(rpmblobs) == 1:
             # regular pkgmgr entry
             rpmblob = rpmblobs[0]
