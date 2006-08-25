@@ -137,6 +137,29 @@ pkgs = {
     return pkgs
 
 
+def get_pkgs2(rpmdir):
+    """scan a dir of rpms and generate a pkgs structure.  this version parses the filenames directly instead of reading their metadata.  on my machine, this brought runtime from half an hour down to 3 seconds."""
+    pkgs = {}
+    rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
+    for filename in rpms:
+        name, version, release, arch = None, None, None, None
+        (major, minor) = sys.version_info[:2]
+        if major >= 2 and minor >= 4:
+            (blob, arch, extension) = filename.rsplit('.', 2)
+            (name, version, release) = blob.rsplit('-', 2)
+        else:
+            (rextension, rarch, rblob) = filename[::-1].split('.', 2)
+            (blob, arch, extension) = (rblob[::-1], rarch[::-1], rextension[::-1])
+            (rrelease, rversion, rname) = blob[::-1].split('-', 2)
+            (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
+        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'arch':arch}
+        if pkgs.has_key(name):
+            pkgs[name].append(rpmblob)
+        else:
+            pkgs[name] = [rpmblob]
+    return pkgs
+
+
 def prune_pkgs(pkgs):
     """prune a pkgs structure to contain only the latest version of each package (includes multiarch results)."""
     latest_pkgs = {}
@@ -189,7 +212,7 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
-    pkgs = prune_archs(prune_pkgs(get_pkgs(rpmdir)))
+    pkgs = prune_archs(prune_pkgs(get_pkgs2(rpmdir)))
     for rpmblobs in sorted_values(pkgs):
         if len(rpmblobs) == 1:
             # regular pkgmgr entry
