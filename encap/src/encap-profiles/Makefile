@@ -1,6 +1,6 @@
 # $Id$
 
-.PHONY : test log all install clean distclean uninstall encaps rename bcfg2only
+.PHONY : test log all install clean distclean uninstall encaps rename bcfg2only bcfg2bump
 .SUFFIXES : 
 .SUFFIXES : .ep .sh .installed .packaged .d
 
@@ -160,5 +160,32 @@ uninstall : distclean
 
 bcfg2only :
 	$(MAKE) -t; sleep 2; touch $(srcdir)/$(BCFG2).ep; $(MAKE)
+    
+bcfg2bump :
+	@if [ "$(NEWVERSION)x" != "x" ]; then NEWVERSION="$(NEWVERSION)"; fi && \
+	if [ "$(FORCE)x" != "x" ]; then FORCE="$(FORCE)"; fi && \
+	if [ "$${NEWVERSION}x" != "x" ]; then \
+		if [ "$${FORCE}x" != "yesmamx" ]; then \
+			printf "About to 'svn mv %s %s'\n" "$(BCFG2).ep" "$$NEWVERSION"; \
+			printf "\tand edit the later as appropriate.\n"; \
+			printf "Press 'return' to continue, or 'ctrl-c' to exit. "; \
+			read THROWAWAY; \
+		fi; \
+		svn mv $(BCFG2).ep $${NEWVERSION}; \
+		NVBASE="`printf "%s\n" "$${NEWVERSION}" | sed 's:\.ep::g'`"; \
+		sed s:$(BCFG2):$$NVBASE:g $${NEWVERSION} > $${NEWVERSION}.tmp; \
+		mv $${NEWVERSION}.tmp $${NEWVERSION}; \
+		printf "Changes to %s are:\n" "$${NEWVERSION}"; \
+		svn diff $${NEWVERSION}; \
+		if [ "$${FORCE}x" != "yesmamx" ]; then \
+			printf "'svn commit %s -m \"EncapPackages: Bumped bcfg2 .ep version to %s\"'? \n" "$${NEWVERSION}" "$${NEWVERSION}"; \
+			printf "Press 'return' to commit, or 'ctrl-c' to exit. "; \
+			read THROWAWAY; \
+		fi; \
+		svn commit $${NEWVERSION} -m "EncapPackages: Bumped bcfg2 .ep version to $${NVBASE}"; \
+	else \
+		printf "Set the NEWVERSION (and optionally FORCE) environment variables\n"; \
+		printf "Example: 'NEWVERSION=bcfg2-0.8.3.ep $(MAKE) bcfg2bump'\n"; \
+	fi
 
 include $(addsuffix .d,$(sources))
