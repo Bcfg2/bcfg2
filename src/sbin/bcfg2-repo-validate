@@ -23,6 +23,7 @@ if __name__ == '__main__':
     if verbose:
         print "Using installation prefix %s" % (prefix)
     schemadir = "%s/share/bcfg2/schemas" % (prefix)
+    os.chdir(schemadir)
 
     try:
         repo = cf.get('server', 'repository')
