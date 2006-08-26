@@ -2,7 +2,7 @@
 
 export SHELL = /bin/sh
 
-.PHONY : test log all installconfig dist
+.PHONY : test log all clean uninstall
 
 log :
 	( $(MAKE) all > ./make.log 2>&1 ) &
@@ -10,10 +10,12 @@ log :
 all :
 	$(MAKE) -C ./encap-profiles all
 	$(MAKE) -C ./bcfg2-site all
-	$(MAKE) dist
-
-installconfig :
-	$(MAKE) -C ./bcfg2-site install
+	$(MAKE) -C ./makeself-dist all
+    
+clean :
+	-rm ./*.log ./*~
 	
-dist :
-	
+uninstall : clean
+	$(MAKE) -C ./encap-profiles uninstall
+	$(MAKE) -C ./bcfg2-site distclean
+	$(MAKE) -C ./makeself-dist distclean
