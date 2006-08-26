@@ -96,29 +96,143 @@ umask 002
 LOC_INSTALLDIR="\`pwd\`"
 
 # Install epkg if it isn't installed
-if [ ! -h "$EPKG" ]; then
-    set -x
+if [ ! -h "$EPKG" -o ! -d "$ENCAPDIR/epkg-2.3.[89]" ]; then
+    printf "epkg : (cd / && tar xf \$LOC_INSTALLDIR/epkg.tar)\n"
     (cd / && tar xf \$LOC_INSTALLDIR/epkg.tar)
+    printf "epkg : $EPKGDIR/bin/epkg -i -q $EPKGDIR\n"
     $EPKGDIR/bin/epkg -i -q $EPKGDIR
-    set +x
 fi
 
 # Install everything else
-for LOC_BCFG2DEP in $BCFG2DEPS $DAEMONTOOLS $OSTIARTY $BCFG2; do
-    LOC_PKGSPEC="\`printf "%s\n" "\$LOC_BCFG2DEP" | sed s:-encap.*::g\`"
+for LOC_PKG in $BCFG2DEPS $BCFG2 $DAEMONTOOLS $OSTIARTY $BCFG2_SITE; do
+    LOC_PKGSPEC="\`printf "%s\n" "\$LOC_PKG" | sed s:-encap.*::g\`"
     if [ -d "$ENCAPDIR/\$LOC_PKGSPEC" ]; then
         if [ "\${LOC_PKGSPEC}x" != "x" ]; then
-            printf "\$LOC_BCFG2DEP : removing $ENCAPDIR/\$LOC_PKGSPEC\n"
+            printf "\$LOC_PKGSPEC : removing $ENCAPDIR/\$LOC_PKGSPEC\n"
+            ($EPKG -r -q $ENCAPDIR/\$LOC_PKGSPEC || true)
             rm -rf $ENCAPDIR/\$LOC_PKGSPEC
         fi
     fi
-    set -x
-    $EPKG -i -q \$LOC_BCFG2DEP
-    set +x
+    printf "\$LOC_PKGSPEC : installing \${LOC_PKG}\n"
+    $EPKG -i -q \$LOC_PKG
 done
 
-# Handle passwords if not already set...
-# TODO
+## Handle passwords if not already set... [
+# Define variables
+LOC_BCFG2_CONF="/usr/local/etc/bcfg2.conf"
+LOC_BCFG2_RE='^password\ =\ $'
+LOC_OST_CFG="/usr/local/etc/ostiary.cfg"
+LOC_OST_KILL_RE='^KILL=\"-kill\"$'
+LOC_OST_ACTION_RE='^ACTION=\"-bcfg2-'
+
+# Check to see if passwords are set
+printf "Checking to see if password is set in \'\${LOC_BCFG2_CONF}\'... "
+grep "\${LOC_BCFG2_RE}" \$LOC_BCFG2_CONF >/dev/null && LOC_BCFG2_SET="no"
+if [ "\${LOC_BCFG2_SET}x" = "nox" ]; then 
+    printf "no\n"
+else 
+    printf "yes\n"
+fi
+
+printf "Checking to see if passwords are set in \'\${LOC_OST_CFG}\'... "
+grep "\${LOC_OST_KILL_RE}" \$LOC_OST_CFG >/dev/null && LOC_OST_SET="no"
+grep "\${LOC_OST_ACTION_RE}" \$LOC_OST_CFG >/dev/null && LOC_OST_SET="no"
+if [ "\${LOC_OST_SET}x" = "nox" ]; then 
+    printf "no\n"
+else 
+    printf "yes\n"
+fi
+
+# Password read function
+getpasswd() {
+    password1=""; password2=""; password=""
+    stty -echo
+    trap "stty echo ; echo 'Interrupted' ; exit 1" 1 2 3 15
+    printf "Enter \$1 password: "
+    read -r password1
+    printf "\n"
+    printf "Enter \$1 password again: "
+    read -r password2
+    printf "\n"
+    stty echo
+    if [ "\${password1}x" != "\${password2}x" ]; then
+        printf "The passwords did not match, please try again...\n"
+        getpasswd "\$1"
+    else
+        password="\${password1}"
+    fi
+}
+
+# Securely prompt sysadmin for passwords that are not either already set or
+# in the environment as LOC_BCFG2_PASSWD and/or LOC_OST_PASSWD
+if [ "\${LOC_BCFG2_SET}x" = "nox" ]; then
+    # You can set passwords as env variables to avoid interactive mode
+    if [ "\${LOC_BCFG2_PASSWD}x" = "x" ]; then
+        getpasswd bcfg2
+        LOC_BCFG2_PASSWD="\$password"
+    else
+        printf "Got LOC_BCFG2_PASSWD from environment...\n"
+    fi
+fi
+
+if [ "\${LOC_OST_SET}x" = "nox" ]; then
+    # You can set passwords as env variables to avoid interactive mode
+    if [ "\${LOC_OST_PASSWD}x" = "x" ]; then
+        getpasswd "ostiary base"
+        LOC_OST_PASSWD="\$password"
+    else
+        printf "Got LOC_OST_PASSWD from environment...\n"
+    fi
+fi
+
+# Sed quoting function - quote the &, :, ' and \ characters
+sedquote() {
+    i=1 
+    while [ \$i -le \`expr length \$1\` ]; do
+        c=\`expr substr \$1 \$i 1\`
+        if [ "\${c}x" = "&x" -o "\${c}x" = ":x" -o "\${c}x" = "'x" -o "\${c}x" = "\\\\x" ]; then
+            c=\\\\\${c}
+        fi
+        printf "%s" "\$c"
+        i=\`expr \$i + 1\`
+    done
+}
+
+# Edit files with supplied password values
+umask 077
+
+if [ "\${LOC_BCFG2_SET}x" = "nox" ]; then
+    printf "Setting bcfg2 password...\n"
+    chmod 600 \$LOC_BCFG2_CONF
+    LOC_BCFG2_SED="\$LOC_INSTALLDIR/loc_bcfg2.sed"
+    printf "s:%s:password = %s:g\n" "\$LOC_BCFG2_RE" "\`sedquote "\${LOC_BCFG2_PASSWD}"\`" > \$LOC_BCFG2_SED
+    sed -f \$LOC_BCFG2_SED \$LOC_BCFG2_CONF > \${LOC_BCFG2_CONF}.withpasswords
+    chmod 600 \${LOC_BCFG2_CONF}.withpasswords
+    mv \${LOC_BCFG2_CONF}.withpasswords \${LOC_BCFG2_CONF}
+fi
+
+if [ "\${LOC_OST_SET}x" = "nox" ]; then
+    printf "Setting ostiary passwords...\n"
+    chmod 600 \$LOC_OST_CFG
+    LOC_OST_KILL_SED="\$LOC_INSTALLDIR/loc_ost_kill.sed"
+    LOC_OST_ACTION_SED="\$LOC_INSTALLDIR/loc_ost_action.sed"
+    printf "s:%s:KILL=%s-kill:g\n" "\$LOC_OST_KILL_RE" "\`sedquote "\${LOC_OST_PASSWD}"\`" > \$LOC_OST_KILL_SED
+    printf "s:%s:ACTION=\\"%s-bcfg2-:g\n" "\$LOC_OST_ACTION_RE" "\`sedquote "\${LOC_OST_PASSWD}"\`" > \$LOC_OST_ACTION_SED
+    sed -f \$LOC_OST_KILL_SED \$LOC_OST_CFG | sed -f \$LOC_OST_ACTION_SED \
+    > \${LOC_OST_CFG}.withpasswords
+    chmod 600 \${LOC_OST_CFG}.withpasswords
+    mv \${LOC_OST_CFG}.withpasswords \${LOC_OST_CFG}
+fi
+
+## ]
+
+# Just to be paranoid...
+chown 0 \${LOC_BCFG2_CONF}*
+chown 0 \${LOC_OST_CFG}*
+chgrp 0 \${LOC_BCFG2_CONF}*
+chgrp 0 \${LOC_OST_CFG}*
+chmod 600 \${LOC_BCFG2_CONF}*
+chmod 600 \${LOC_OST_CFG}*
 
 exit 0
 
@@ -129,3 +243,5 @@ chmod 755 $DISTDIR/setup.sh
 # Create .run file from $DISTDIR with makeself
 BLURB="Bcfg2 Client install for $SITENAME (version $SITEVER)"
 ${MAKESELF} --nox11 $DISTDIR ${DISTDIR}.run "$BLURB" ./setup.sh
+
+exit 0
