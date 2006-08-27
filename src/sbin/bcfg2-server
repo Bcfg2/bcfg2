@@ -112,23 +112,12 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             if self.socket in rsockinfo:
                 return self.socket.accept()
 
-    def resolve_client(self, client):
-        if self.setup['client']:
-            return self.setup['client']
-        try:
-            return socket.gethostbyaddr(client)[0]
-        except socket.herror:
-            warning = "host resolution error for %s" % (client)
-            self.logger.warning(warning)
-            raise Fault, (5, warning)
-        
     def Bcfg2GetProbes(self, address):
         '''Fetch probes for a particular client'''
-        client = self.resolve_client(address[0])
         resp = Element('probes')
-
         try:
-            meta = self.Core.metadata.get_metadata(client)
+            name = self.Core.metadata.resolve_client(address[0])
+            meta = self.Core.metadata.get_metadata(name)
             
             for generator in self.Core.generators:
                 for probe in generator.GetProbes(meta):
@@ -144,16 +133,16 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
         try:
-            client = self.resolve_client(address[0])
-            meta = self.Core.metadata.get_metadata(client)
-        except Bcfg2.Server.metadata.MetadataConsistencyError:
+            name = self.Core.metadata.resolve_client(address[0])
+            meta = self.Core.metadata.get_metadata(name)
+        except Bcfg2.Server.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
         try:
             xpdata = XML(probedata)
         except:
-            self.logger.error("Failed to parse probe data from client %s" % (client))
+            self.logger.error("Failed to parse probe data from client %s" % (address))
             return False
 
         for data in xpdata:
@@ -161,15 +150,15 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
                 try:
                     self.Core.plugins[data.get('source')].ReceiveData(meta, data)
                 except:
-                    self.logger.error("Failed to process probe data from client %s" % (client), exc_info=1)
+                    self.logger.error("Failed to process probe data from client %s" % (address), exc_info=1)
             else:
                 self.logger.warning("Failed to locate plugin %s" % (data.get('source')))
         return True
 
     def Bcfg2AssertProfile(self, address, profile):
         '''Set profile for a client'''
-        client = self.resolve_client(address[0])
         try:
+            client = self.Core.metadata.resolve_client(address[0])
             self.Core.metadata.set_profile(client, profile)
         except (Bcfg2.Server.Metadata.MetadataConsistencyError, Bcfg2.Server.Metadata.MetadataRuntimeError):
             warning = 'metadata consistency error'
@@ -179,8 +168,12 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
 
     def Bcfg2GetConfig(self, address, _=False, profile=False):
         '''Build config for a client'''
-        client = self.resolve_client(address[0])
-        return tostring(self.Core.BuildConfiguration(client))
+        try:
+            client = self.Core.metadata.resolve_client(address[0])
+            return tostring(self.Core.BuildConfiguration(client))
+        except Bcfg2.Server.Metadata.MetadataConsistencyError:
+            self.logger.warning("Metadata consistency failure for %s" % (address))
+            raise Fault, (6, "Metadata consistency failure")
 
     def Bcfg2RecvStats(self, address, stats):
         '''Act on statistics upload'''
@@ -188,7 +181,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
         if state.get('version') >= '2.0':
-            client = self.resolve_client(address[0])
+            client = self.Core.metadata.resolve_client(address[0])
             
             # Update statistics
             self.Core.stats.updateStats(sdata, client)
@@ -214,8 +207,6 @@ if __name__ == '__main__':
                    False, False, False, False),
         'configfile': (('-C', '<conffile>', 'use this config file'),
                        False, False, '/etc/bcfg2.conf', False),
-        'client': (('-c', '<client>', 'hard set the client name (for debugging)'),
-                   False, False, False, False)
         }
     
     SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()

@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, os, time
+import logging, lxml.etree, os, socket, time
 
 class MetadataConsistencyError(Exception):
     '''This error gets raised when metadata is internally inconsistent'''
@@ -21,15 +21,16 @@ class ClientMetadata(object):
 
 class Metadata:
     '''This class contains data for bcfg2 server metadata'''
-    __name__ = 'Metadata'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, fam, datastore):
+        self.__name__ = 'Metadata'
         self.data = "%s/%s" % (datastore, self.__name__)
         fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
         fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
         self.states = {'groups.xml':False, 'clients.xml':False}
+        self.addresses = {}
         self.clients = {}
         self.aliases = {}
         self.groups = {}
@@ -58,6 +59,11 @@ class Metadata:
             self.aliases = {}
             self.clientdata = xdata
             for client in xdata.findall('./Client'):
+                if address in client.attrib:
+                    self.addresses[client.get('address')] = client.get('name')
+                for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
+                    self.addresses[alias.get('address')] = client.get('name')
+                    
                 self.clients.update({client.get('name'): client.get('profile')})
                 [self.aliases.update({alias.get('name'): client.get('name')}) for alias in client.findall('Alias')]
         else:
@@ -153,6 +159,17 @@ class Metadata:
         '''Build the configuration header for a client configuration'''
         return lxml.etree.Element("Configuration", version='2.0', toolset=self.find_toolset(client))
 
+    def resolve_client(self, address):
+        '''Lookup address locally or in DNS to get a hostname'''
+        if self.addresses.has_key(address):
+            return self.addresses[address]
+        try:
+            return socket.gethostbyaddr(address)[0]
+        except socket.herror:
+            warning = "address resolution error for %s" % (address)
+            self.logger.warning(warning)
+            raise MetadataConsistencyError
+    
     def get_metadata(self, client):
         '''Return the metadata for a given client'''
         if self.aliases.has_key(client):
