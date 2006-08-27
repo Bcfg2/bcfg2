@@ -13,6 +13,7 @@
       <xsd:element name='Alias'>
         <xsd:complexType>
           <xsd:attribute type='xsd:string' name='name' use='required'/>
+          <xsd:attribute type='xsd:string' name='address'/>   
         </xsd:complexType>
       </xsd:element>
     </xsd:choice>
@@ -20,6 +21,7 @@
     <xsd:attribute type='xsd:string' name='profile' use='required'/>
     <xsd:attribute type='xsd:string' name='pingable' use='required'/>
     <xsd:attribute type='xsd:string' name='pingtime'/>
+    <xsd:attribute type='xsd:string' name='address'/>
   </xsd:complexType>
 
   <xsd:element name='Clients'>
