@@ -146,18 +146,19 @@ class ToolsetImpl(Toolset):
         if cmdrc != 0:
             self.logger.debug("Package %s version incorrect" % entry.get('name'))
         else:
-            if entry.attrib.get('verify', 'true') == 'true':
-                if self.setup['quick'] or entry.get('type') == 'encap':
-                    return True
-                (vstat, odata) = self.saferun("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
-                if vstat == 0:
-                    return True
+            if self.setup['quick'] or entry.get('type') == 'encap' or \
+                   entry.attrib.get('verify', 'true') == 'false':
+                return True
+            (vstat, odata) = self.saferun("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
+            if vstat == 0:
+                return True
+            else:
+                output = [line for line in odata if line[:5] == 'ERROR']
+                if len([name for name in output if name.split()[-1] not in modlist]):
+                    self.logger.debug("Package %s content verification failed" % \
+                                      (entry.get('name')))
                 else:
-                    output = [line for line in odata if line[:5] == 'ERROR']
-                    if len([name for name in output if name.split()[-1] not in modlist]):
-                        self.logger.debug("Package %s content verification failed" % (entry.get('name')))
-                    else:
-                        return True
+                    return True
         return False
 
     def Inventory(self):
