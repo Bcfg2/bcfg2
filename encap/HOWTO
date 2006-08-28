@@ -1,5 +1,11 @@
 = Encap based bootstrap for bcfg2 and complete bcfg2 client toolchain =
 
+This documentation is not up to date with the current state of the encap code.
+A complete doc refresh should be done in time for the 0.8.4 release.
+
+This should be considered an alpha version. Everything compiles and seems to
+work, but it has not yet been tested.
+
 This bootstrap code is a method for getting bcfg2 (as a client),
 including all dependencies, up and running on a new platform as
 quickly as possible (from source).
@@ -35,9 +41,6 @@ GNU/Linux and FreeBSD.
 
 When using this packaging, `/etc/bcfg2.conf` is instead
 `/usr/local/etc/bcfg2.conf`.
-
-This should be considered an alpha version. Everything compiles and seems to
-work, but it has not yet been tested with a working bcfg2 repository.
 
 == Building and installing everything ==
  1. Make sure all of the Prerequisites (see below) are installed.
