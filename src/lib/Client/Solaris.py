@@ -103,7 +103,7 @@ class ToolsetImpl(Toolset):
             else:
                 self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
-        self.logger.debug("starting non-lrc validatiaon for %s" % (entry.get('name'))
+        self.logger.debug("starting non-lrc validatiaon for %s" % (entry.get('name')))
         try:
             srvdata = self.saferun("/usr/bin/svcs -H -o STA %s" % entry.attrib['name'])[1][0].split()
         except IndexError:
