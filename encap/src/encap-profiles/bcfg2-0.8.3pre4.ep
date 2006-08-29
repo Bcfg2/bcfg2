@@ -1,0 +1,464 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<!-- To make this work with a new version of bcfg2, first do a "svn mv" -->
+<!-- of this file to the new version name, and then do a global search- -->
+<!-- replace of the version with the new version (i.e. search for       -->
+<!-- "0.8.3pre3" and replace with "0.8.3") - DO NOT DO IT MANUALLY,     -->
+<!-- the version string is referenced by some of the included files.    -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="bcfg2-0.8.3pre4"
+>
+
+<prereq package="m4-1.4.4" />
+<prereq package="bcfg2-zlib-1.2.3" />
+<prereq package="bcfg2-libiconv-1.9.2" />
+<prereq package="bcfg2-gettext-0.14.5" />
+<prereq package="bcfg2-pkg-config-0.20" />
+<prereq package="bcfg2-openssl-0.9.8b" />
+<prereq package="bcfg2-libstdc++-0.1" />
+<prereq package="bcfg2-libgcc-0.1" />
+<prereq package="bcfg2-python-2.4.3" />
+<prereq package="bcfg2-pyopenssl-0.6" />
+<prereq package="bcfg2-libxml2-2.6.26" />
+<prereq package="bcfg2-libxslt-1.1.17" />
+<prereq package="bcfg2-lxml-1.0.1" />
+
+<environment
+        variable="CC"
+        value="gcc"
+        type="set"
+/>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+PLATFORM_IF_MATCH(linux)
+PLATFORM_ELSE
+<environment
+        variable="MAKE"
+        value="gmake"
+        type="set"
+/>
+PLATFORM_ENDIF
+
+<environment
+        variable="LDFLAGS"
+PLATFORM_IF_MATCH(linux)
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib"
+PLATFORM_ELSE_IF_MATCH(aix)
+	value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
+PLATFORM_ELSE_IF_MATCH(solaris)
+        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
+PLATFORM_ELSE
+PLATFORM_ENDIF
+        type="set"
+/>
+
+<environment
+        variable="CPPFLAGS"
+        value="-I/usr/local/lib/bcfg2/include"
+        type="set"
+/>
+
+<source
+url="http://www.pobox.com/users/dclark/mirror/bcfg/bcfg2-0.8.3pre4.tar.gz
+     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.3pre4.tar.gz"
+>
+
+<configure>
+:
+</configure>
+
+<build>
+/usr/local/lib/bcfg2/bin/python setup.py build \
+--build-base=${builddir}/build
+</build>
+
+<install>
+/usr/local/lib/bcfg2/bin/python setup.py install \
+--prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
+</install>
+
+<clean>
+/usr/local/lib/bcfg2/bin/python setup.py clean
+</clean>
+
+</source>
+
+<prepackage type="set"><![CDATA[
+# Make binaries available from /usr/local/bin
+test -d bin || mkdir bin
+for FILE in `ls lib/bcfg2/bin`; do \
+    ln -sf ../lib/bcfg2/bin/${FILE} bin/${FILE}; \
+    if [ ! "`printf "${FILE}" | cut -c 1-5`x" = "bcfg2x" ]; then \
+        ln -sf ../lib/bcfg2/bin/${FILE} bin/b2-${FILE}; \
+    fi; \
+done
+# Make doc available from /usr/local/share/doc/bcfg2
+test -d share || mkdir share
+test -d share/doc || mkdir share/doc
+test -d share/doc/bcfg2 || mkdir share/doc/bcfg2
+(cp ${builddir}/doc/manual.pdf share/doc/bcfg2/ || true)
+cp -r ${builddir}/examples share/doc/bcfg2/
+# Make man pages available from /usr/local/man
+mv lib/bcfg2/share/man .
+# Make tools dirs and copy over tools
+test -d lib/bcfg2/tools || mkdir lib/bcfg2/tools
+cp ${builddir}/tools/* lib/bcfg2/tools/
+test -d sbin || mkdir sbin
+test -d share/doc/bcfg2/tools || mkdir share/doc/bcfg2/tools
+# Makes tools with #! line executable
+for FILE in `ls lib/bcfg2/tools`; do \
+	F="lib/bcfg2/tools/${FILE}"; \
+    if [ "`head -1 ${F} | grep ^#\!/`x" != "x" ]; then \
+        chmod 755 ${F} ; \
+	fi; \
+done
+# Make executable tools available from /usr/local/sbin, and nonexecutable 
+# tools/tools doc available from /usr/local/share/doc/bcfg2/tools
+for FILE in `ls lib/bcfg2/tools`; do \
+    F="lib/bcfg2/tools/${FILE}"; \
+    if [ -x ${F} ]; then \
+        ln -sf ../lib/bcfg2/tools/${FILE} sbin/b2-example-tool-${FILE}; \
+	else \
+		ln -sf ../../../../lib/bcfg2/tools/${FILE} share/doc/bcfg2/tools/${FILE}; \
+    fi; \
+done
+# daemontools stuff
+test -d var || mkdir var
+test -d var/svc.d || mkdir var/svc.d
+test -d var/svc.d/bcfg2-client || mkdir var/svc.d/bcfg2-client
+test -d var/svc.d/bcfg2-client/log || mkdir var/svc.d/bcfg2-client/log
+test -d var/svc.d/bcfg2-server || mkdir var/svc.d/bcfg2-server
+test -d var/svc.d/bcfg2-server/log  || mkdir var/svc.d/bcfg2-server/log
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d  var/encap || mkdir var/encap
+touch var/encap/${ENCAP_PKGNAME}
+]]></prepackage>
+
+<include_file name="b2-regexplace.py" mode="0755"><![CDATA[
+#!/usr/local/lib/bcfg2/bin/python
+
+# regexplace: regular expression search and replace
+# Stefano Spinucci
+# 2006-02-07 (rev 4)
+# Daniel Clark
+# 2006-08-03 (modified for bcfg2 encap use)
+# thanks to roadrunner.py
+# http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52553
+# for some ideas and some code
+# tested with python 2.4.3
+
+import sys, os, re, string
+
+# pupulate and return 'fileslist[]' with all files inside 'dir' matching 'regx'
+def make_files_list(dir, regx):
+
+    # if dir is not a directory, exit with error
+    if not os.path.isdir(dir):
+        sys.exit(dir + ' is not a valid dir to walk !!!')
+
+    # compile the search regexp
+    cregex=re.compile(regx)
+
+    # initialize the file list
+    fileslist = []
+
+    # loop on all files and select files matching 'regx'
+    # don't include symbolic links
+    for root, dirs, files in os.walk(dir):
+        for name in files:
+            if cregex.search(name) and name not in ("b2-regexplace.sh", "b2-regexplace.py", "postinstall", "postinstall.log", "bcfg2-0.8.3pre4.ep"):
+                path = os.path.join(root, name)
+                if not os.path.islink(path):
+                    fileslist.append(path)
+
+    # return the file list
+    return fileslist[:]
+
+# in all files in 'fileslist' search the regexp 'searchregx' and replace
+# with 'replacestring'; real substitution in files only if 'simulation' = 0
+def replace_in_files(fileslist, searchregx, replacestring, simulation):
+
+    # compile regexp
+    cregex=re.compile(searchregx)
+    
+    # loop on all files
+    for xfile in fileslist:
+
+        # initialize the replace flag
+        replaceflag=0
+
+        # open file for read  
+        readlines=open(xfile,'r').readlines()
+        # intialize the list counter
+        listindex = -1
+
+        # search and replace in current file printing to the user changed lines
+        for currentline in readlines:
+
+            # increment the list counter
+            listindex = listindex + 1
+
+            # if the regexp is found
+            if cregex.search(currentline):
+
+                # make the substitution
+                f=re.sub(searchregx,replacestring,currentline)
+
+                # print the current filename, the old string and the new string
+                print '\n' + xfile
+                print '- ' + currentline ,
+                if currentline[-1:]!='\n': print '\n' ,
+                print '+ ' + f ,
+                if f[-1:]!='\n': print '\n' ,
+
+                # if substitution is real
+                if simulation == 0:
+
+                    # update the whole file variable ('readlines')
+                    readlines[listindex] = f
+                    replaceflag=1
+                            
+        # if some text was replaced
+        # overwrite the original file
+        if replaceflag==1:
+
+            # open the file for writting  
+            write_file=open(xfile,'w') 
+
+            # overwrite the file  
+            for line in readlines:
+                write_file.write(line)
+
+            # close the file
+            write_file.close()
+
+# main function
+def main():
+
+    # if parameters are wrong, exit with error
+    if len(sys.argv) < 5:
+
+        print 'Usage: regexplace.py dirname files-regexp search-regexp replace-string'
+
+        sys.exit(1)
+
+    # make the file list
+    fileslist = make_files_list(sys.argv[1], sys.argv[2])
+
+    # real execution
+    replace_in_files(fileslist, sys.argv[3], sys.argv[4], 0)        
+
+    # simulated execution
+    #replace_in_files(fileslist, sys.argv[3], sys.argv[4], 1)
+                
+            
+if __name__ == '__main__':
+    main()
+]]></include_file>
+
+<include_file name="b2-regexplace.sh" mode="0755"><![CDATA[
+#!/bin/sh
+
+# This fixes paths for the bcfg2 encap packaging.
+
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+REGEXPLACE="${BASEDIR}/b2-regexplace.py"
+PYTHON="/usr/local/lib/bcfg2/bin/python"
+BINARIES="${REGEXPLACE} ${PYTHON}"
+COMPILEALL="/usr/local/lib/bcfg2/lib/python2.4/compileall.py"
+
+printf "**** Running postinstall with BASEDIR=|${BASEDIR}|...\n"
+for BINARY in ${BINARIES}; do
+    if [ ! -x ${BINARY} ]; then
+        printf "\nERROR: ${BINARY} is not executable, exiting...\n"
+        exit 1
+    fi
+done
+
+for FILE in ${COMPILEALL}; do
+    if [ ! -f ${FILE} ]; then
+        printf "\nERROR: ${FILE} does not exist, exiting...\n"
+        exit 1
+    fi
+done
+
+# Do not run more than once; it does not converge.
+# (/usr/local/usr/local/bcfg2.conf bug)
+if [ "${1}x" != "firstx" ]; then
+    printf "\nb2-regexplace.sh: Already ran\n\t${BASEDIR}/b2-regexplace.sh, not running again...\n"
+    exit 0
+fi
+
+printf "\nRemoving bcfg2 .pyc files...\n"
+find ${BASEDIR} -type f | grep "\.pyc$" | xargs -n1 rm
+
+printf "\nFixing bcfg2 paths...\n"
+
+printf "\nReplacing \"/etc/bcfg2.conf\" with \"/usr/local/etc/bcfg2.conf\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/etc\/bcfg2.conf \/usr\/local\/etc\/bcfg2.conf
+
+printf "\nReplacing \"/local/sbin/epkg\" with \"/usr/local/bin/epkg\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/local\/sbin\/epkg \/usr\/local\/bin\/epkg
+
+printf "\nReplacing \"/usr/share/bcfg2\" with \"/usr/local/lib/bcfg2/share/bcfg2\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/usr\/share\/bcfg2\/ \/usr\/local\/lib\/bcfg2\/share\/bcfg2\/
+
+printf "\nReplacing \"prefix = '/usr'\" with \"prefix = '/usr/local/lib/bcfg2'\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* prefix\ =\ \'\/usr\' prefix\ =\ \'/usr/local/lib/bcfg2\'
+
+printf "\nReplacing \"xmllint\" with \"/usr/local/bin/b2-xmllint\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* xmllint \/usr\/local\/bin\/b2-xmllint
+
+printf "\nReplacing \"#!/usr/bin/env python\" with "
+printf "\"#!/usr/local/lib/bcfg2/bin/python\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/env\ python \#\!\/usr\/local\/lib\/bcfg2\/bin\/python
+
+printf "\nReplacing \"#!/usr/bin/perl\" with \"#!/usr/bin/env perl\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/perl \#\!\/usr\/bin\/env\ perl
+
+printf "\nReplacing \"#!/usr/bin/python\" with "
+printf "\"#!/usr/local/lib/bcfg2/bin/python\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/python \#\!\/usr\/local\/lib\/bcfg2\/bin\/python
+
+printf "\nCreating bcfg2 .pyc files...\n"
+${PYTHON} ${COMPILEALL} ${BASEDIR}
+
+exit 0
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-client/bcfg2-client.sh" mode="0755"><![CDATA[
+#!/bin/sh
+
+# note: variables provided from environment with envdir:
+#       /usr/local/etc/default/bcfg2-client/env/OPTIONS
+#       /usr/local/etc/default/bcfg2-client/env/RUN_INTERVAL_SECONDS
+
+ENVDIR="/usr/local/etc/default/bcfg2-client/env"
+
+# make sure we have options
+if [ ! -f ${ENVDIR}/OPTIONS ]; then
+    printf "WARNING: ${ENVDIR}/OPTIONS\n"
+    printf "WARNING: does not exist. Using default of \"-q -v -d -n\"\n"
+    OPTIONS="-q -v -d -n"
+fi
+
+# make sure we have a sleep variable
+if [ "${RUN_INTERVAL_SECONDS}x" = "x" ]; then
+    printf "WARNING: ${ENVDIR}/RUN_INTERVAL_SECONDS\n"
+    printf "WARNING: does not exist or has no value.\n"
+    printf "WARNING: Using default of 3600 seconds between runs.\n"
+    RUN_INTERVAL_SECONDS=3600
+fi
+
+# loop forever
+while :
+do
+    printf "*** starting /usr/local/bin/bcfg2 ${OPTIONS} ...\n"
+    /usr/local/bin/bcfg2 ${OPTIONS}
+    printf "*** sleeping ${RUN_INTERVAL_SECONDS} seconds ...\n"
+    sleep ${RUN_INTERVAL_SECONDS}
+done
+
+exit 0
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-client/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+printf "*** exec /command/envdir /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh ...\n"
+exec /command/envdir /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-client/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/bcfg2-client
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-server/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+/command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+    printf "*** exec /usr/local/bin/bcfg2-server ${OPTIONS} ...\n"'
+exec /command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+    exec /usr/local/bin/bcfg2-server ${OPTIONS}'
+]]></include_file>
+
+<include_file name="var/svc.d/bcfg2-server/log/run" mode="0755"><![CDATA[
+#!/bin/sh
+exec 2>&1
+exec /command/multilog t /usr/local/var/multilog/bcfg2-server
+]]></include_file>
+
+<include_file name="postinstall" mode="0755"><![CDATA[
+#!/bin/sh
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+MULTILOG="/usr/local/var/multilog"
+DEFAULT="/usr/local/etc/default"
+
+# Fix paths
+if [ ! -f ${BASEDIR}/postinstall.log ]; then
+    test -x ${BASEDIR}/b2-regexplace.sh || exit 1
+    ${BASEDIR}/b2-regexplace.sh first > ${BASEDIR}/postinstall.log 2>&1 3>&1
+else
+    printf "\npostinstall: already ran\n\t${BASEDIR}/b2-regexplace.sh, not running again...\n" >> ${BASEDIR}/postinstall.log
+fi
+
+# Make sure log directories exist
+test -d /usr/local/var || mkdir /usr/local/var
+test -d $MULTILOG || mkdir $MULTILOG
+test -d $MULTILOG/bcfg2-client || mkdir $MULTILOG/bcfg2-client
+test -d $MULTILOG/bcfg2-server || mkdir $MULTILOG/bcfg2-server
+
+# Make sure environment directories exist
+test -d /usr/local/etc || mkdir /usr/local/etc
+test -d $DEFAULT || mkdir $DEFAULT
+test -d $DEFAULT/bcfg2-client || mkdir $DEFAULT/bcfg2-client
+test -d $DEFAULT/bcfg2-client/env || mkdir $DEFAULT/bcfg2-client/env
+test -d $DEFAULT/bcfg2-server || mkdir $DEFAULT/bcfg2-server
+test -d $DEFAULT/bcfg2-server/env || mkdir $DEFAULT/bcfg2-server/env
+
+# Put in default client environment if it didn't exist
+if [ ! -f $DEFAULT/bcfg2-client/.SENTINEL ]; then
+    touch $DEFAULT/bcfg2-client/.SENTINEL
+    echo "-q -v -d -n" > $DEFAULT/bcfg2-client/env/OPTIONS
+    echo "3600" > $DEFAULT/bcfg2-client/env/RUN_INTERVAL_SECONDS
+fi
+
+# Put in default server environment if it didn't exist
+if [ ! -f $DEFAULT/bcfg2-server/.SENTINEL ]; then
+    touch $DEFAULT/bcfg2-server/.SENTINEL
+    echo "-v" > $DEFAULT/bcfg2-server/env/OPTIONS
+fi
+]]></include_file>
+
+
+<encapinfo>
+description Bcfg2 - Provides a declarative interface to system configuration
+prereq pkgspec >= bcfg2-zlib-1.2.3
+prereq pkgspec >= bcfg2-libiconv-1.9.2
+prereq pkgspec >= bcfg2-gettext-0.14.5
+prereq pkgspec >= bcfg2-openssl-0.9.8b
+prereq pkgspec >= bcfg2-libstdc++-0.1
+prereq pkgspec >= bcfg2-libgcc-0.1
+prereq pkgspec >= bcfg2-python-2.4.3
+prereq pkgspec >= bcfg2-pyopenssl-0.6
+prereq pkgspec >= bcfg2-libxml2-2.6.26
+prereq pkgspec >= bcfg2-libxslt-1.1.17
+prereq pkgspec >= bcfg2-lxml-1.0.1
+</encapinfo>
+
+</encap_profile>
