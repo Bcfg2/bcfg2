@@ -695,6 +695,7 @@ class Toolset(object):
 
     def RestartService(self, entry):
         '''Restart a service entry'''
-        self.logger.debug('Restarting service %s' % entry.get('name'))
-        self.saferun('/etc/init.d/%s %s' % (entry.get('name'), entry.get('reload', 'reload')))
+        if entry.get('status') == 'on':
+            self.logger.debug('Restarting service %s' % entry.get('name'))
+            self.saferun('/etc/init.d/%s %s' % (entry.get('name'), entry.get('reload', 'reload')))
         

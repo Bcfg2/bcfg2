@@ -94,9 +94,13 @@ class ToolsetImpl(Toolset):
             filename = entry.get('FMRI').split('/')[-1]
             # this is a legacy service
             gname = "/etc/rc*.d/%s" % filename
-            if glob(gname.replace('_', '.')):
+            files = glob(gname.replace('_', '.'))
+            if files:
+                self.logger.debug("Matched %s with %s" % \
+                                  (entry.get("FMRI"), ":".join(files)))
                 return entry.get('status') == 'on'
             else:
+                self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
             srvdata = self.saferun("/usr/bin/svcs -H -o STA %s" % entry.attrib['name'])[1][0].split()
@@ -141,7 +145,10 @@ class ToolsetImpl(Toolset):
             if self.setup['dryrun']:
                 print "Enabling Service %s" % (entry.attrib['name'])
             else:
-                cmdrc = self.saferun("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))[0]
+                if entry.get('FMRI').startswith('lrc'):
+                    pass
+                else:
+                    cmdrc = self.saferun("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))[0]
         return cmdrc == 0
 
     def VerifyPackage(self, entry, modlist):
@@ -229,5 +236,6 @@ class ToolsetImpl(Toolset):
         if service.get("FMRI").startswith('lrc'):
             Toolset.RestartService(self, service)
         else:
-            self.logger.debug("Restarting service %s" % (service.get("FMRI")))
-            self.saferun("svcadm restart %s" % (service.get("FMRI")))
+            if entry.get('status') == 'on':
+                self.logger.debug("Restarting service %s" % (service.get("FMRI")))
+                self.saferun("svcadm restart %s" % (service.get("FMRI")))
