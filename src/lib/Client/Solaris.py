@@ -2,7 +2,7 @@
 '''This provides bcfg2 support for Solaris'''
 __revision__ = '$Revision$'
 
-import os
+import os, lxml.etree
 from glob import glob
 from os import stat, unlink
 from re import compile as regcompile
@@ -115,6 +115,7 @@ class ToolsetImpl(Toolset):
 
     def InstallService(self, entry):
         '''Install Service entry'''
+        print lxml.etree.tostring(entry)
         if not entry.attrib.has_key('status'):
             self.logger.info('Insufficient information for Service %s; cannot Install' % entry.get('name'))
             return False
@@ -146,7 +147,17 @@ class ToolsetImpl(Toolset):
                 print "Enabling Service %s" % (entry.attrib['name'])
             else:
                 if entry.get('FMRI').startswith('lrc'):
-                    pass
+                    loc = entry.get("FMRI")[4:].replace('_', ',')
+                    try:
+                        stat(loc.replace('/S', '/Disabled.'))
+                        self.logger.debug("Renaming file %s to %s" % \
+                                          (loc.replace('/S', '/DISABLED'), loc))
+                        os.rename(loc.replace('/S', '/DISABLED'), loc)
+                        cmdrc = 0
+                    except:
+                        self.logger.debug("Failed to rename %s to %s" \
+                                          % (loc.replace('/S', '/DISABLED'), loc))
+                        cmdrc = 1
                 else:
                     cmdrc = self.saferun("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))[0]
         return cmdrc == 0
@@ -236,6 +247,6 @@ class ToolsetImpl(Toolset):
         if service.get("FMRI").startswith('lrc'):
             Toolset.RestartService(self, service)
         else:
-            if entry.get('status') == 'on':
+            if service.get('status') == 'on':
                 self.logger.debug("Restarting service %s" % (service.get("FMRI")))
                 self.saferun("svcadm restart %s" % (service.get("FMRI")))
