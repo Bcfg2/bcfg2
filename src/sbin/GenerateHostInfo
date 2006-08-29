@@ -1,29 +1,23 @@
 #!/usr/bin/env python
-# Jul 17 2005
 #GenerateHostInfo - Joey Hagedorn - hagedorn@mcs.anl.gov
 
 '''Generates hostinfo.xml at a regular interval'''
 __revision__ = '$Revision$'
 
-from ConfigParser import ConfigParser
-from lxml.etree import parse, tostring
-from os import fork, execl, dup2, wait, uname
-import sys
+from os import dup2, execl, fork, uname, wait
+import lxml, sys, time, ConfigParser
 
 if __name__ == '__main__':
-    c = ConfigParser()
+    c = ConfigParser.ConfigParser()
     c.read(['/etc/bcfg2.conf'])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
-    sendmailpath = c.get('statistics','sendmailpath')
     
-    clientElement =  parse(clientdatapath)
+    clientElement = lxml.etree.parse(clientdatapath)
     hostlist = [client.get('name') for client in clientElement.findall("Client")]
 
     pids = {}
-    fullnames = {}
     null = open('/dev/null', 'w+')
-
 
     #use uname to detect OS and use -t for darwin and -w for linux
     #/bin/ping on linux /sbin/ping on os x
@@ -56,22 +50,14 @@ if __name__ == '__main__':
                 continue
             chost = pids[cpid]
             del pids[cpid]
+            elm = clientElement.xpath("//Client[@name='%s']"%chost)[0]
             if status == 0:
-                try:
-                    clientElement.xpath("//Client[@name='%s']"%chost)[0].set("pingable",'Y')
-                except:#i think this is for a problem with aliases?
-                    clientElement.xpath("//Client[@name='%s']"%fullnames[chost])[0].set("pingable",'Y')
-                #also set pingtime, if you can get it
-
+                elm.set("pingable",'Y')
+                elm.set("pingtime", str(time.time()))
             else:
-                if chost.count('.') > 0:
-                    fullnames[chost.split('.')[0]] = chost
-                    hostlist.append(chost.split('.')[0])
-                else:
-                    clientElement.xpath("//Client[@name='%s']"%(fullnames[chost]))[0].set("pingable",'N')
-                    #also set pingtime if you can get it
+                elm.set("pingable",'N')
 
     fout = open(clientdatapath, 'w')
-    fout.write(tostring(clientElement.getroot()))
+    fout.write(lxml.etree.tostring(clientElement.getroot()))
     fout.close()
                         
