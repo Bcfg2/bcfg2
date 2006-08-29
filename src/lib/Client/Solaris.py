@@ -79,7 +79,7 @@ class ToolsetImpl(Toolset):
                 self.ptypes[match.group('name')] = 'encap'
             else:
                 print "Failed to split name %s" % pkg
-        print self.installed.keys()
+        #print self.installed.keys()
 
     def VerifyService(self, entry):
         '''Verify Service status for entry'''
@@ -133,10 +133,10 @@ class ToolsetImpl(Toolset):
             else:
                 if entry.get("FMRI").startswith('lrc'):
                     try:
-                        loc = entry.get("FMRI")[4:].replace('_', ',')
+                        loc = entry.get("FMRI")[4:].replace('_', '.')
                         self.logger.debug("Renaming file %s to %s" % \
-                                          (loc, loc.replace('/S', '/DISABLED')))
-                        os.rename(loc, loc.replace('/S', '/DISABLED'))
+                                          (loc, loc.replace('/S', '/DISABLED.S')))
+                        os.rename(loc, loc.replace('/S', '/DISABLED.S'))
                         return True
                     except OSError:
                         self.logger.error("Failed to rename init script %s" % (loc))
@@ -151,12 +151,12 @@ class ToolsetImpl(Toolset):
                     try:
                         stat(loc.replace('/S', '/Disabled.'))
                         self.logger.debug("Renaming file %s to %s" % \
-                                          (loc.replace('/S', '/DISABLED'), loc))
-                        os.rename(loc.replace('/S', '/DISABLED'), loc)
+                                          (loc.replace('/S', '/DISABLED.S'), loc))
+                        os.rename(loc.replace('/S', '/DISABLED.S'), loc)
                         cmdrc = 0
                     except:
                         self.logger.debug("Failed to rename %s to %s" \
-                                          % (loc.replace('/S', '/DISABLED'), loc))
+                                          % (loc.replace('/S', '/DISABLED.S'), loc))
                         cmdrc = 1
                 else:
                     cmdrc = self.saferun("/usr/sbin/svcadm enable -r %s" % (entry.attrib['FMRI']))[0]
