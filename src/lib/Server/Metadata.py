@@ -59,7 +59,7 @@ class Metadata:
             self.aliases = {}
             self.clientdata = xdata
             for client in xdata.findall('./Client'):
-                if address in client.attrib:
+                if 'address' in client.attrib:
                     self.addresses[client.get('address')] = client.get('name')
                 for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
                     self.addresses[alias.get('address')] = client.get('name')
