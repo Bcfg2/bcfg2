@@ -2,6 +2,7 @@
 '''This provides bcfg2 support for Solaris'''
 __revision__ = '$Revision$'
 
+import os
 from glob import glob
 from os import stat, unlink
 from re import compile as regcompile
@@ -89,7 +90,7 @@ class ToolsetImpl(Toolset):
             else:
                 self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
                 return False
-        if entry.get('FMRI')[:3] == 'lrc':
+        if entry.get('FMRI').startswith('lrc'):
             filename = entry.get('FMRI').split('/')[-1]
             # this is a legacy service
             gname = "/etc/rc*.d/%s" % filename
@@ -125,6 +126,16 @@ class ToolsetImpl(Toolset):
             if self.setup['dryrun']:
                 print "Disabling Service %s" % (entry.get('name'))
             else:
+                if entry.get("FMRI").startswith('lrc'):
+                    try:
+                        loc = entry.get("FMRI")[4:].replace('_', ',')
+                        self.logger.debug("Renaming file %s to %s" % \
+                                          (loc, loc.replace('/S', '/DISABLED')))
+                        os.rename(loc, loc.replace('/S', '/DISABLED'))
+                        return True
+                    except OSError:
+                        self.logger.error("Failed to rename init script %s" % (loc))
+                        return False
                 cmdrc = self.saferun("/usr/sbin/svcadm disable -r %s" % (entry.attrib['FMRI']))[0]
         else:
             if self.setup['dryrun']:
