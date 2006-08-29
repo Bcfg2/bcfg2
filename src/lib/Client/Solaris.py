@@ -230,4 +230,4 @@ class ToolsetImpl(Toolset):
             Toolset.RestartService(self, service)
         else:
             self.logger.debug("Restarting service %s" % (service.get("FMRI")))
-            self.saferun("svcadm restart %s" % (service.get("FMRI"))
+            self.saferun("svcadm restart %s" % (service.get("FMRI")))
