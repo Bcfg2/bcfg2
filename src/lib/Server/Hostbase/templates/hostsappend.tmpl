@@ -1,0 +1,19 @@
+#raw##########################################################################
+#end raw
+#  Hosts on subnet: ${subnet[0]}
+#    total hosts: ${subnet[1]}
+#for $ip in $ips
+${ip[0]}       	${ip[1]} #slurp
+#if $ip[4] and not $ip[3]:
+# $ip[5]
+#else
+#for $name in $ip[2]
+${name.split('.', 1)[0]} #slurp
+#end for
+#for $cname in $ip[3]
+${cname.split('.', 1)[0]} #slurp
+#end for
+# $ip[5]
+#end if
+#end for
+

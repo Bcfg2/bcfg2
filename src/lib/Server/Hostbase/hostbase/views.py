@@ -1,5 +1,6 @@
+# Create your views here.
 """Views.py
-Contains all the views associated with the dbconvert app
+Contains all the views associated with the hostbase app
 Also has does form validation
 """
 __revision__ = 0.1
@@ -36,12 +37,12 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         if not (request.POST['email_address'] and userregex.match(request.POST['email_address'])):
 ##             validated = False
 ##         if not validated:
-##             t = Template(open('./dbconvert/templates/errors.html').read())
+##             t = Template(open('./hostbase/webtemplates/errors.html').read())
 ##             t.failures = validate(request, True)
 ##             return HttpResponse(str(t))
-##         return HttpResponseRedirect('/dbconvert/%s/' % host.id)
+##         return HttpResponseRedirect('/hostbase/%s/' % host.id)
 ##     else:
-##         t = Template(open('./dbconvert/templates/netreg.html').read())
+##         t = Template(open('./hostbase/webtemplates/netreg.html').read())
 ##         t.TYPE_CHOICES = Interface.TYPE_CHOICES
 ##         t.failures = False
 ##         return HttpResponse(str(t))
@@ -53,13 +54,13 @@ def search(request):
     """
     if request.GET.has_key('sub'):
         querystring = """SELECT DISTINCT h.hostname, h.id, h.status
-        FROM (((((dbconvert_host h
-        INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-        INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-        INNER JOIN dbconvert_name_mxs x ON n.id = x.name_id)
-        INNER JOIN dbconvert_mx m ON m.id = x.mx_id)
-        LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+        FROM (((((hostbase_host h
+        INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+        INNER JOIN hostbase_name n ON p.id = n.ip_id)
+        INNER JOIN hostbase_name_mxs x ON n.id = x.name_id)
+        INNER JOIN hostbase_mx m ON m.id = x.mx_id)
+        LEFT JOIN hostbase_cname c ON n.id = c.name_id
         WHERE """
 
         _and = False
@@ -79,7 +80,7 @@ def search(request):
         if not _and:
             cursor = connection.cursor()
             cursor.execute("""SELECT hostname, id, status
-            FROM dbconvert_host ORDER BY hostname""")
+            FROM hostbase_host ORDER BY hostname""")
             results = cursor.fetchall()
         else:
             querystring += " ORDER BY h.hostname"
@@ -87,11 +88,11 @@ def search(request):
             cursor.execute(querystring)
             results = cursor.fetchall()
         
-        temp = Template(open('./dbconvert/templates/results.html').read())
+        temp = Template(open('./hostbase/webtemplates/results.html').read())
         temp.hosts = results
         return HttpResponse(str(temp))
     else:
-        temp = Template(open('./dbconvert/templates/search.html').read())
+        temp = Template(open('./hostbase/webtemplates/search.html').read())
         temp.TYPE_CHOICES = Interface.TYPE_CHOICES
         temp.DNS_CHOICES = Name.DNS_CHOICES
         temp.yesno = [(1, 'yes'), (0, 'no')]
@@ -99,13 +100,13 @@ def search(request):
 
 def look(request, host_id):
     """Displays general host information"""
-    temp = Template(open('./dbconvert/templates/host.html').read())
+    temp = Template(open('./hostbase/webtemplates/host.html').read())
     hostdata = gethostdata(host_id)
     temp = fill(temp, hostdata)
     return HttpResponse(str(temp))
     
 def dns(request, host_id):
-    temp = Template(open('./dbconvert/templates/dns.html').read())
+    temp = Template(open('./hostbase/webtemplates/dns.html').read())
     hostdata = gethostdata(host_id, True)
     temp = fill(temp, hostdata, True)
     return HttpResponse(str(temp))
@@ -244,14 +245,14 @@ def edit(request, host_id):
                             dns_view='global', only=False)
                 name.save()
             host.save()
-            return HttpResponseRedirect('/dbconvert/%s/' % host.id)
+            return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
-            t = Template(open('./dbconvert/templates/errors.html').read())
+            t = Template(open('./hostbase/webtemplates/errors.html').read())
             t.failures = validate(request, False, host_id)
             return HttpResponse(str(t))
         # examine the check boxes for any changes
     else:
-        t = Template(open('./dbconvert/templates/edit.html').read())
+        t = Template(open('./hostbase/webtemplates/edit.html').read())
         hostdata = gethostdata(host_id)
         t = fill(t, hostdata)
         t.type_choices = Interface.TYPE_CHOICES
@@ -282,11 +283,11 @@ def confirm(request, item, item_id, host_id, name_id=None):
             Name.objects.get(id=item_id).cname_set.all().delete()
             Name.objects.get(id=item_id).delete()
         if item == 'cname' or item == 'mx' or item == 'name':
-            return HttpResponseRedirect('/dbconvert/%s/dns' % host_id)
+            return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
         else:
-            return HttpResponseRedirect('/dbconvert/%s/edit' % host_id)
+            return HttpResponseRedirect('/hostbase/%s/edit' % host_id)
     else:
-        temp = Template(open('./dbconvert/templates/confirm.html').read())
+        temp = Template(open('./hostbase/webtemplates/confirm.html').read())
         interface = None
         ips = []
         names = {}
@@ -372,9 +373,9 @@ def dnsedit(request, host_id):
                     if created:
                         mx.save()
                     name.mxs.add(mx)
-        return HttpResponseRedirect('/dbconvert/%s/dns' % host_id)
+        return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
     else:
-        temp = Template(open('./dbconvert/templates/dnsedit.html').read())
+        temp = Template(open('./hostbase/webtemplates/dnsedit.html').read())
         hostdata = gethostdata(host_id, True)
         temp = fill(temp, hostdata, True)
         temp.request = request
@@ -429,7 +430,7 @@ def new(request):
             host.status = 'active'
             host.save()
         else:
-            temp = Template(open('./dbconvert/templates/errors.html').read())
+            temp = Template(open('./hostbase/webtemplates/errors.html').read())
             temp.failures = validate(request, True)
             return HttpResponse(str(temp))
         if request.POST['mac_addr_new']:
@@ -550,9 +551,9 @@ def new(request):
             mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
             mx.save()            
         host.save()
-        return HttpResponseRedirect('/dbconvert/%s/' % host.id)
+        return HttpResponseRedirect('/hostbase/%s/' % host.id)
     else:
-        temp = Template(open('./dbconvert/templates/new.html').read())
+        temp = Template(open('./hostbase/webtemplates/new.html').read())
         temp.TYPE_CHOICES = Interface.TYPE_CHOICES
         temp.NETGROUP_CHOICES = Host.NETGROUP_CHOICES
         temp.CLASS_CHOICES = Host.CLASS_CHOICES
