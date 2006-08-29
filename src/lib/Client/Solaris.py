@@ -91,6 +91,7 @@ class ToolsetImpl(Toolset):
                 self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
                 return False
         if entry.get('FMRI').startswith('lrc'):
+            self.logger.debug("Starting lrc validation for %s" % (entry.get('name')))
             filename = entry.get('FMRI').split('/')[-1]
             # this is a legacy service
             gname = "/etc/rc*.d/%s" % filename
@@ -102,6 +103,7 @@ class ToolsetImpl(Toolset):
             else:
                 self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
+        self.logger.debug("starting non-lrc validatiaon for %s" % (entry.get('name'))
         try:
             srvdata = self.saferun("/usr/bin/svcs -H -o STA %s" % entry.attrib['name'])[1][0].split()
         except IndexError:
