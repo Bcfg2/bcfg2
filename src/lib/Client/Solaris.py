@@ -223,3 +223,11 @@ class ToolsetImpl(Toolset):
             unlink(self.noaskname)
         except:
             pass
+
+    def RestartService(self, service):
+        '''Restart a service'''
+        if service.get("FMRI").startswith('lrc'):
+            Toolset.RestartService(self, service)
+        else:
+            self.logger.debug("Restarting service %s" % (service.get("FMRI")))
+            self.saferun("svcadm disable %s" % (service.get("FMRI"))

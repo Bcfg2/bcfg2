@@ -530,8 +530,7 @@ class Toolset(object):
                         # stop services in miniroot
                         self.saferun('/etc/init.d/%s stop' % svc.get('name'))
                     else:
-                        self.logger.debug('Restarting service %s' % svc.get('name'))
-                        self.saferun('/etc/init.d/%s %s' % (svc.get('name'), svc.get('reload', 'reload')))
+                        self.RestartService(svc)
             
         for entry in self.structures:
             if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
@@ -693,3 +692,9 @@ class Toolset(object):
                 self.modified.append(entry)
             left = len(work) + len(self.pkgwork['remove'])
         self.HandleBundleDeps()
+
+    def RestartService(self, entry):
+        '''Restart a service entry'''
+        self.logger.debug('Restarting service %s' % entry.get('name'))
+        self.saferun('/etc/init.d/%s %s' % (entry.get('name'), entry.get('reload', 'reload')))
+        
