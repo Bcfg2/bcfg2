@@ -64,6 +64,7 @@ class Hostbase(Plugin):
                           'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read()),
                           }
         self.Entries['ConfigFile'] = {}
+        self.__rmi__ = ['rebuildState']
 
 
     def FetchFile(self, entry, metadata):
