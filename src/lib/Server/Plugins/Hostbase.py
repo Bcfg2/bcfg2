@@ -55,28 +55,16 @@ class Hostbase(Plugin):
         self.filedata = {}
         self.dnsservers = []
         self.dhcpservers = []
-        self.templates = {'zone':Template(open(self.data + '/templates/' + 'zonetemplate.tmpl').read()),
+        self.templates = {'zone':Template(open(self.data + '/templates/' + 'zone.tmpl').read()),
                           'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
-                          'named':Template(open(self.data + '/templates/' + 'namedtemplate.tmpl').read()),
+                          'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
                           'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
-                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd_template.tmpl').read()),
+                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd.tmpl').read()),
                           'hosts':Template(open(self.data + '/templates/' + 'hosts.tmpl').read()),
                           'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read()),
                           }
         self.Entries['ConfigFile'] = {}
 
-    def get_serial(self, zonefile):
-        """Updates the serial number for a particular zone file"""
-        todaydate = (strftime('%Y%m%d'))
-        try:
-            if todaydate == str(zonefile[2])[:8]:
-                serial = zonefile[2] + 1
-            else:
-                serial = int(todaydate) * 100
-            return str(serial)
-        except (KeyError):
-            serial = int(todaydate) * 100
-            return str(serial)
 
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
@@ -100,12 +88,12 @@ class Hostbase(Plugin):
             SubElement(output, "ConfigFile", name="/etc/dhcpd.conf")
         return [output]
 
-    def rebuildState(self, event):
+    def rebuildState(self):
         '''Pre-cache all state information for hostbase config files'''
 
         cursor = connection.cursor()
 
-        cursor.execute("SELECT id, serial FROM dbconvert_zone")
+        cursor.execute("SELECT id, serial FROM hostbase_zone")
         zones = cursor.fetchall()
 
         for zone in zones:
@@ -116,12 +104,11 @@ class Hostbase(Plugin):
                     serial = zone[1] + 1
                 else:
                     serial = int(todaydate) * 100
-                return str(serial)
             except (KeyError):
                 serial = int(todaydate) * 100
-            cursor.execute("""UPDATE dbconvert_zone SET serial = \'%s\' WHERE id = \'%s\'""" % (str(serial), zone[0]))
+            cursor.execute("""UPDATE hostbase_zone SET serial = \'%s\' WHERE id = \'%s\'""" % (str(serial), zone[0]))
 
-        cursor.execute("SELECT * FROM dbconvert_zone")
+        cursor.execute("SELECT * FROM hostbase_zone")
         zones = cursor.fetchall()
 
         iplist = []
@@ -130,36 +117,36 @@ class Hostbase(Plugin):
         for zone in zones:
             if zone[1] == 'mcs.anl.gov':
                 reversezone = zone
-                cursor.execute("""SELECT n.name FROM dbconvert_zone_nameservers z
-                INNER JOIN dbconvert_nameserver n ON z.nameserver_id = n.id
+                cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
+                INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
                 WHERE z.zone_id = \'%s\'""" % zone[0])
                 mcs_nameservers = cursor.fetchall()
 
 
         for zone in zones:
             self.templates['zone'].zone = zone
-            cursor.execute("""SELECT n.name FROM dbconvert_zone_nameservers z
-            INNER JOIN dbconvert_nameserver n ON z.nameserver_id = n.id
+            cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
+            INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
             self.templates['zone'].nameservers = cursor.fetchall()
-            cursor.execute("""SELECT i.ip_addr FROM dbconvert_zone_addresses z
-            INNER JOIN dbconvert_ip i ON z.ip_id = i.id
+            cursor.execute("""SELECT i.ip_addr FROM hostbase_zone_addresses z
+            INNER JOIN hostbase_ip i ON z.ip_id = i.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
             self.templates['zone'].addresses = cursor.fetchall()
-            cursor.execute("""SELECT m.priority, m.mx FROM dbconvert_zone_mxs z
-            INNER JOIN dbconvert_mx m ON z.mx_id = m.id
+            cursor.execute("""SELECT m.priority, m.mx FROM hostbase_zone_mxs z
+            INNER JOIN hostbase_mx m ON z.mx_id = m.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
             self.templates['zone'].mxs = cursor.fetchall()
             self.filedata[zone[1]] = str(self.templates['zone'])
 
             querystring = """SELECT h.hostname, p.ip_addr,
             n.name, c.cname, m.priority, m.mx
-            FROM (((((dbconvert_host h INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-            INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-            INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-            INNER JOIN dbconvert_name_mxs x ON n.id = x.name_id)
-            INNER JOIN dbconvert_mx m ON m.id = x.mx_id)
-            LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+            FROM (((((hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
+            INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+            INNER JOIN hostbase_name n ON p.id = n.ip_id)
+            INNER JOIN hostbase_name_mxs x ON n.id = x.name_id)
+            INNER JOIN hostbase_mx m ON m.id = x.mx_id)
+            LEFT JOIN hostbase_cname c ON n.id = c.name_id
             WHERE h.hostname LIKE '%%%%%s' AND h.status = 'active'
             ORDER BY h.hostname, n.name, p.ip_addr
             """ % zone[1]
@@ -193,7 +180,7 @@ class Hostbase(Plugin):
 
         filelist = []
         cursor.execute("""
-        SELECT ip_addr FROM dbconvert_ip ORDER BY ip_addr
+        SELECT ip_addr FROM hostbase_ip ORDER BY ip_addr
         """)
         three_subnet = [ip[0].rstrip('0123456789').rstrip('.') \
                         for ip in cursor.fetchall()]
@@ -228,9 +215,9 @@ class Hostbase(Plugin):
         for filename in reversenames:
             originlist = []
             cursor.execute("""
-            SELECT h.hostname, p.ip_addr, p.num FROM ((dbconvert_host h
-            INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-            INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
+            SELECT h.hostname, p.ip_addr, p.num FROM ((hostbase_host h
+            INNER JOIN hostbase_interface i ON h.id = i.host_id)
+            INNER JOIN hostbase_ip p ON i.id = p.interface_id)
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr
             """ % filename[1])
             reversehosts = cursor.fetchall()
@@ -271,8 +258,8 @@ class Hostbase(Plugin):
         cursor = connection.cursor()
         cursor.execute("""
         SELECT hostname, mac_addr, ip_addr
-        FROM (dbconvert_host h INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip ip ON i.id = ip.interface_id
+        FROM (hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip ip ON i.id = ip.interface_id
         WHERE h.dhcp=1 AND h.status = 'active'
         ORDER BY h.hostname, i.mac_addr
         """)
@@ -317,7 +304,7 @@ class Hostbase(Plugin):
 
         cursor = connection.cursor()
         cursor.execute("""
-        SELECT hostname FROM dbconvert_host ORDER BY hostname
+        SELECT hostname FROM hostbase_host ORDER BY hostname
         """)
         hostbase = cursor.fetchall()
         domains = [host[0].split(".", 1)[1] for host in hostbase]
@@ -326,7 +313,7 @@ class Hostbase(Plugin):
         domain_data.sort()
 
         cursor.execute("""
-        SELECT ip_addr FROM dbconvert_ip ORDER BY ip_addr
+        SELECT ip_addr FROM hostbase_ip ORDER BY ip_addr
         """)
         ips = cursor.fetchall()
         three_octets = [ip[0].rstrip('0123456789').rstrip('.') \
@@ -339,10 +326,10 @@ class Hostbase(Plugin):
         for three_octet in three_octets_data:
             querystring = """SELECT h.hostname, h.primary_user,
             p.ip_addr, n.name, c.cname
-            FROM (((dbconvert_host h INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-            INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-            INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-            LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+            FROM (((hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
+            INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+            INNER JOIN hostbase_name n ON p.id = n.ip_id)
+            LEFT JOIN hostbase_cname c ON n.id = c.name_id
             WHERE p.ip_addr LIKE \'%s%%%%\' AND h.status = 'active'
             ORDER BY p.ip_addr""" % three_octet[0]
             cursor.execute(querystring)
@@ -410,7 +397,7 @@ class Hostbase(Plugin):
         # fetches all the printers from the database
         cursor.execute("""
         SELECT printq, location, primary_user, comments
-        FROM dbconvert_host
+        FROM hostbase_host
         WHERE whatami='printer' AND printq <> '' AND status = 'active'
         ORDER BY printq
         """)
@@ -449,22 +436,22 @@ class Hostbase(Plugin):
         
         cursor = connection.cursor()
         cursor.execute("""
-        SELECT hostname FROM dbconvert_host WHERE netgroup=\"red\" AND status = 'active'
+        SELECT hostname FROM hostbase_host WHERE netgroup=\"red\" AND status = 'active'
         ORDER BY hostname""")
         redmachines = list(cursor.fetchall())
         cursor.execute("""
-        SELECT n.name FROM ((dbconvert_host h INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id) INNER JOIN dbconvert_name n ON p.id = n.ip_id
+        SELECT n.name FROM ((hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id) INNER JOIN hostbase_name n ON p.id = n.ip_id
         WHERE netgroup=\"red\" AND n.only=1 AND h.status = 'active'
         """)
         redmachines.extend(list(cursor.fetchall()))
         cursor.execute("""
-        SELECT hostname FROM dbconvert_host WHERE netgroup=\"win\" AND status = 'active'
+        SELECT hostname FROM hostbase_host WHERE netgroup=\"win\" AND status = 'active'
         ORDER BY hostname""")
         winmachines = list(cursor.fetchall())
         cursor.execute("""
-        SELECT n.name FROM ((dbconvert_host h INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id) INNER JOIN dbconvert_name n ON p.id = n.ip_id
+        SELECT n.name FROM ((hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id) INNER JOIN hostbase_name n ON p.id = n.ip_id
         WHERE netgroup=\"win\" AND n.only=1 AND h.status = 'active'
         """)
         winmachines.__add__(list(cursor.fetchall()))
@@ -474,7 +461,7 @@ class Hostbase(Plugin):
         hostslpdfile += "\n"
         for machine in winmachines:
             hostslpdfile += machine[0] + "\n"
-        self.filedata['hosts.lpd']
+        self.filedata['hosts.lpd'] = hostslpdfile
         self.Entries['ConfigFile']['/mcs/etc/hosts.lpd'] = self.FetchFile
 
 
@@ -492,10 +479,10 @@ class Hostbase(Plugin):
         cursor = connection.cursor()
         # fetches all the hosts that with valid netgroup entries
         cursor.execute("""
-        SELECT h.hostname, n.name, h.netgroup, n.only FROM ((dbconvert_host h
-        INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-        INNER JOIN dbconvert_name n ON p.id = n.ip_id
+        SELECT h.hostname, n.name, h.netgroup, n.only FROM ((hostbase_host h
+        INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+        INNER JOIN hostbase_name n ON p.id = n.ip_id
         WHERE h.netgroup <> '' AND h.netgroup <> 'none' AND h.status = 'active'
         ORDER BY h.netgroup, h.hostname
         """)
