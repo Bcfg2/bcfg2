@@ -188,7 +188,8 @@ class ToolsetImpl(Toolset):
                 sysvrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'sysv']
                 enrmpkgs = [pkg for pkg in self.pkgwork['remove'] if self.ptypes[pkg] == 'encap']
                 if sysvrmpkgs:
-                    if not self.saferun("/usr/sbin/pkgrm -n %s" % " ".join(sysvrmpkgs))[0]:
+                    if not self.saferun("/usr/sbin/pkgrm -a %s -n %s" % \
+                                        (self.noaskname, " ".join(sysvrmpkgs)))[0]:
                         [self.pkgwork['remove'].remove(pkg) for pkg in sysvrmpkgs]
                 if enrmpkgs:
                     if not self.saferun("/local/sbin/epkg -l -q -r %s" % " ".join(enrmpkgs))[0]:
