@@ -691,6 +691,8 @@ class Toolset(object):
                 work.remove(entry)
                 self.modified.append(entry)
             left = len(work) + len(self.pkgwork['remove'])
+        if self.setup['interactive']:
+            self.setup['dryrun'] = True
         self.HandleBundleDeps()
 
     def RestartService(self, entry):
