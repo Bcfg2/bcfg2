@@ -571,7 +571,7 @@ class Toolset(object):
 	self.iinst = [];
 	for entry in work:
 	    try:
-                if raw_input("Would you like to install %s%s? (y/N): " % (entry.tag, entry.get('name'))) in ['y','Y']:
+                if raw_input("Would you like to install %s: %s? (y/N): " % (entry.tag, entry.get('name'))) in ['y','Y']:
 	            self.iinst.append((entry.tag, entry.get('name')))
             except:
 	        continue

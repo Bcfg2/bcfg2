@@ -224,14 +224,26 @@ class ToolsetImpl(Toolset):
                         [self.pkgwork['remove'].remove(pkg) for pkg in enrmpkgs]
             else:
                 self.logger.info("Need to remove packages: %s" % (self.pkgwork['remove']))
-                if len(self.extra_services) > 0:
-                    if self.setup['remove'] in ['all', 'services']:
-                        self.logger.info("Removing services: %s" % (self.extra_services))
-                        for service in self.extra_services:
-                            if not self.saferun("/usr/sbin/svcadm disable %s" % service)[0]:
-                                self.extra_services.remove(service)
-                    else:
-                        self.logger.info("Need to remove services: %s" % (self.extra_services))
+        if len(self.extra_services) > 0:
+            self.logger.info("Here")
+            self.logger.info('removal mode is: %s' % (self.setup))
+            if self.setup['remove'] in ['all', 'services']:
+                self.logger.info("Removing services: %s" % (self.extra_services))
+                for service in [svc for svc in self.extra_services if not svc.startswith('lrc:')]:
+                    if not self.saferun("/usr/sbin/svcadm disable %s" % service)[0]:
+                        self.extra_services.remove(service)
+                for svc in [svc for svc in self.extra_services if svc.startswith('lrc:')]:
+                    loc = svc[4:].replace('_', '.')
+                    self.logger.info("Renaming file %s to %s" % \
+                                      (loc, loc.replace('/S', '/DISABLED.S')))
+                    try:
+                        os.rename(loc, loc.replace('/S', '/DISABLED.S'))
+                        self.extra_services.remove(svc)
+                    except OSError:
+                        self.logger.error("Failed to rename %s" % loc)
+
+            else:
+                self.logger.info("Need to remove services: %s" % (self.extra_services))
 
     def Install(self):
         '''Local install method handling noaskfiles'''
