@@ -29,7 +29,7 @@ class ToolsetImpl(Toolset):
     and standard SMF services'''
     pkgtool = {'sysv':("/usr/sbin/pkgadd %s -d %%s -n %%%%s", (("%s", ["name"]))),
                'blast':("/opt/csw/bin/pkg-get install %s", ("%s", ["name"])),
-               'encap':("/local/sbin/epkg -l -q %s", ("%s", ["url"]))}
+               'encap':("/local/sbin/epkg -l -f -q %s", ("%s", ["url"]))}
     splitter = regcompile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.-]+)')
     ptypes = {}
     __name__ = 'Solaris'
@@ -169,7 +169,7 @@ class ToolsetImpl(Toolset):
         if entry.get('type') in ['sysv', 'blast'] or entry.get('type')[:4] == 'sysv':
             cmdrc = self.saferun("/usr/bin/pkginfo -q -v \"%s\" %s" % (entry.get('version'), entry.get('name')))[0]
         elif entry.get('type') in ['encap']:
-            cmdrc = self.saferun("/local/sbin/epkg -q -k %s-%s >/dev/null" %
+            cmdrc = self.saferun("/local/sbin/epkg -q -S -k %s-%s >/dev/null" %
                                  (entry.get('name'), entry.get('version')))[0]
         if cmdrc != 0:
             self.logger.debug("Package %s version incorrect" % entry.get('name'))
