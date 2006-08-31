@@ -5,9 +5,11 @@ import sys
 import commands
 import getopt
 import re
+import datetime
 
 
 def run_or_die(command):
+    """run a command, returning output.  raise an exception if it fails."""
     (status, stdio) = commands.getstatusoutput(command)
     if status != 0:
         raise Exception("command '%s' failed with exit status %d and output '%s'" %
@@ -99,6 +101,29 @@ def subdivide(verstr):
     return parts
 
 
+def parse_rpm(fullpath):
+    """read the name, version, release, and arch of an rpm.  this version reads the rpm headers.  this version takes a full pathname argument."""
+    cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s' % (fullpath)
+    output = run_or_die(cmd)
+    (name, version, release, arch) = output.split()
+    return (name, version, release, arch)
+    
+
+def parse_rpm_filename(filename):
+    """read the name, version, release, and arch of an rpm.  this version simply parses the filename.  this version takes a short filename argument."""
+    name, version, release, arch = None, None, None, None
+    (major, minor) = sys.version_info[:2]
+    if major >= 2 and minor >= 4:
+        (blob, arch, extension) = filename.rsplit('.', 2)
+        (name, version, release) = blob.rsplit('-', 2)
+    else:
+        (rextension, rarch, rblob) = filename[::-1].split('.', 2)
+        (blob, arch, extension) = (rblob[::-1], rarch[::-1], rextension[::-1])
+        (rrelease, rversion, rname) = blob[::-1].split('-', 2)
+        (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
+    return (name, version, release, arch)
+
+
 def get_pkgs(rpmdir):
     """scan a dir of rpms and generate a pkgs structure."""
     pkgs = {}
@@ -120,16 +145,9 @@ pkgs = {
 }
 """
     rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
-    for rpm in rpms:
-        cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (rpmdir, rpm)
-        output = run_or_die(cmd)
-        try:
-            (name, version, release, arch) = output.split()
-        except:
-            print "cmd:", cmd
-            print "output:", output
-            raise
-        rpmblob = {'file':rpm, 'name':name, 'version':version, 'release':release, 'arch':arch}
+    for filename in rpms:
+        (name, version, release, arch) = parse_rpm("%s/%s" % (rpmdir, filename))
+        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'arch':arch}
         if pkgs.has_key(name):
             pkgs[name].append(rpmblob)
         else:
@@ -142,16 +160,12 @@ def get_pkgs2(rpmdir):
     pkgs = {}
     rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
     for filename in rpms:
-        name, version, release, arch = None, None, None, None
-        (major, minor) = sys.version_info[:2]
-        if major >= 2 and minor >= 4:
-            (blob, arch, extension) = filename.rsplit('.', 2)
-            (name, version, release) = blob.rsplit('-', 2)
-        else:
-            (rextension, rarch, rblob) = filename[::-1].split('.', 2)
-            (blob, arch, extension) = (rblob[::-1], rarch[::-1], rextension[::-1])
-            (rrelease, rversion, rname) = blob[::-1].split('-', 2)
-            (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
+        try:
+            (name, version, release, arch) = parse_rpm_filename(filename)
+        except:
+            # for incorrectly named rpms (ie, sun's java rpms) we need to read the rpm headers.
+            sys.stderr.write("Warning: could not parse filename %s.\n" % filename)
+            (name, version, release, arch) = parse_rpm("%s/%s" % (rpmdir, filename))
         rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'arch':arch}
         if pkgs.has_key(name):
             pkgs[name].append(rpmblob)
@@ -160,7 +174,7 @@ def get_pkgs2(rpmdir):
     return pkgs
 
 
-def prune_pkgs(pkgs):
+def prune_pkgs_latest(pkgs):
     """prune a pkgs structure to contain only the latest version of each package (includes multiarch results)."""
     latest_pkgs = {}
     for rpmblobs in pkgs.values():
@@ -177,7 +191,7 @@ def prune_pkgs(pkgs):
     return latest_pkgs
 
 
-def prune_archs(pkgs):
+def prune_pkgs_archs(pkgs):
     """prune a pkgs structure to contain no more than one subarch per architecture for each set of packages."""
     subarch_mapping = {'x86':['i686','i586','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
     arch_mapping = {'i686':'x86', 'i586':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
@@ -200,6 +214,52 @@ def prune_archs(pkgs):
     return pruned_pkgs
 
 
+def get_date_from_desc(date_desc):
+    """calls the unix 'date' command to turn a date description into a python date object.
+example: get_date_from_desc("last sunday 1 week ago")"""
+    stdio = run_or_die('date -d "' + date_desc + '" "+%Y %m %d"')
+    (year_str, month_str, day_str) = stdio.split()
+    year = int(year_str)
+    month = int(month_str)
+    day = int(day_str)
+    date_obj = datetime.date(year, month, day)
+    return date_obj
+
+
+def get_mtime_date(path):
+    """return a naive date object based on the file's mtime."""
+    return datetime.date.fromtimestamp(os.stat(path).st_mtime)
+
+
+def prune_pkgs_timely(pkgs, start_date_desc=None, end_date_desc=None, rpmdir='.'):
+    """prune a pkgs structure to contain only rpms with an mtime within a certain temporal window."""
+    start_date = None
+    if start_date_desc != None:
+        start_date = get_date_from_desc(start_date_desc)
+    end_date = None
+    if end_date_desc != None:
+        end_date = get_date_from_desc(end_date_desc)
+    if start_date == None and end_date == None:
+        return pkgs
+    if start_date != None:
+        for rpmblobs in pkgs.values():
+            pkg_name = rpmblobs[0]['name']
+            timely_blobs = [blob for blob in rpmblobs if start_date < get_mtime_date(rpmdir + '/' + blob['file'])]
+            if len(timely_blobs) == 0:
+                del pkgs[pkg_name]
+            else:
+                pkgs[pkg_name] = timely_blobs
+    if end_date != None:
+        for rpmblobs in pkgs.values():
+            pkg_name = rpmblobs[0]['name']
+            timely_blobs = [blob for blob in rpmblobs if get_mtime_date(rpmdir + '/' + blob['file']) <= end_date]
+            if len(timely_blobs) == 0:
+                del pkgs[pkg_name]
+            else:
+                pkgs[pkg_name] = timely_blobs
+    return pkgs
+
+
 # from http://aspn.activestate.com/ASPN/Python/Cookbook/Recipe/52306
 def sorted_values(adict):
     """return a list of values from a dict, sorted by key."""
@@ -208,11 +268,11 @@ def sorted_values(adict):
     return [value for key, value in items]
 
 
-def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout):
+def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout, start_date_desc=None, end_date_desc=None):
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
-    pkgs = prune_archs(prune_pkgs(get_pkgs2(rpmdir)))
+    pkgs = prune_pkgs_archs(prune_pkgs_latest(prune_pkgs_timely(get_pkgs2(rpmdir), start_date_desc, end_date_desc, rpmdir)))
     for rpmblobs in sorted_values(pkgs):
         if len(rpmblobs) == 1:
             # regular pkgmgr entry
