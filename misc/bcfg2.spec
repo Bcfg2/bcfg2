@@ -40,11 +40,17 @@ python%{pythonversion} setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLE
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
 mkdir -p ${RPM_BUILD_ROOT}/etc/default
+mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily/
+mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly/
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/bcfg2/
 mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2* ${RPM_BUILD_ROOT}/usr/sbin
 mv ${RPM_BUILD_ROOT}/usr/bin/StatReports ${RPM_BUILD_ROOT}/usr/sbin
 install -m 755 debian/buildsys/common/bcfg2.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2
 install -m 755 debian/buildsys/common/bcfg2-server.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2-server
 install -m 755 debian/bcfg2.default ${RPM_BUILD_ROOT}/etc/default/bcfg2
+install -m 755 debian/bcfg2.cron.daily ${RPM_BUILD_ROOT}/etc/cron.daily/bcfg2
+install -m 755 debian/bcfg2.cron.hourly ${RPM_BUILD_ROOT}/etc/cron.hourly/bcfg2
+install -m 755 tools/bcfg2-cron ${RPM_BUILD_ROOT}/usr/lib/bcfg2/bcfg2-cron
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -71,6 +77,9 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/man/man5/*
 /etc/init.d/bcfg2
 /etc/default/bcfg2
+/etc/cron.hourly/bcfg2
+/etc/cron.daily/bcfg2
+/usr/lib/bcfg2/bcfg2-cron
 
 %post -n bcfg2-server
 chkconfig --add bcfg2-server
