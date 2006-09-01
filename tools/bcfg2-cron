@@ -30,7 +30,8 @@ BCFG2_CFG=/etc/bcfg2.conf
 invoke_bcfg2 () {
   # Invoke bcfg2 if enabled
   if [ ${BCFG2_ENABLED} -eq 1 ]; then
-    ${BCFG2_BIN} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_${RUNTYPE}}
+      eval BCFG2_EXTRA_OPTIONS=\${BCFG2_OPTIONS_${RUNTYPE}}
+    ${BCFG2_BIN} ${BCFG2_OPTIONS} ${BCFG2_EXTRA_OPTIONS}}
   fi
 }
 
