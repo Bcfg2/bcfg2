@@ -101,72 +101,66 @@ def subdivide(verstr):
     return parts
 
 
-def parse_rpm(fullpath):
-    """read the name, version, release, and arch of an rpm.  this version reads the rpm headers.  this version takes a full pathname argument."""
-    cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s' % (fullpath)
+subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
+arch_mapping = {'x86':['i686','i586','i486','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
+
+
+def parse_rpm(path, filename):
+    """read the name, version, release, and subarch of an rpm.  this version reads the rpm headers."""
+    cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (path, filename)
     output = run_or_die(cmd)
-    (name, version, release, arch) = output.split()
-    return (name, version, release, arch)
+    (name, version, release, subarch) = output.split()
+    if subarch not in subarch_mapping.keys():
+        raise Exception("%s/%s has invalid subarch %s" % (path, filename, subarch))
+    return (name, version, release, subarch)
     
 
-def parse_rpm_filename(filename):
-    """read the name, version, release, and arch of an rpm.  this version simply parses the filename.  this version takes a short filename argument."""
-    name, version, release, arch = None, None, None, None
-    (major, minor) = sys.version_info[:2]
-    if major >= 2 and minor >= 4:
-        (blob, arch, extension) = filename.rsplit('.', 2)
-        (name, version, release) = blob.rsplit('-', 2)
-    else:
-        (rextension, rarch, rblob) = filename[::-1].split('.', 2)
-        (blob, arch, extension) = (rblob[::-1], rarch[::-1], rextension[::-1])
-        (rrelease, rversion, rname) = blob[::-1].split('-', 2)
-        (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
-    return (name, version, release, arch)
+def parse_rpm_filename(path, filename):
+    """read the name, version, release, and subarch of an rpm.  this version tries to parse the filename directly, and calls 'parse_rpm' as a fallback."""
+    name, version, release, subarch = None, None, None, None
+    try:
+        (major, minor) = sys.version_info[:2]
+        if major >= 2 and minor >= 4:
+            (blob, subarch, extension) = filename.rsplit('.', 2)
+            (name, version, release) = blob.rsplit('-', 2)
+        else:
+            (rextension, rsubarch, rblob) = filename[::-1].split('.', 2)
+            (blob, subarch, extension) = (rblob[::-1], rsubarch[::-1], rextension[::-1])
+            (rrelease, rversion, rname) = blob[::-1].split('-', 2)
+            (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
+        if subarch not in subarch_mapping.keys():
+            raise "%s/%s has invalid subarch %s." % (path, filename, subarch)
+    except:
+        # for incorrectly named rpms (ie, sun's java rpms) we fall back to reading the rpm headers.
+        sys.stderr.write("Warning: could not parse filename %s/%s.  Attempting to parse rpm headers.\n" % (path, filename))
+        (name, version, release, subarch) = parse_rpm(path, filename)
+    return (name, version, release, subarch)
 
 
 def get_pkgs(rpmdir):
-    """scan a dir of rpms and generate a pkgs structure."""
+    """scan a dir of rpms and generate a pkgs structure.  first try parsing the filename.  if that fails, try parsing the rpm headers."""
     pkgs = {}
     """
 pkgs structure:
 * pkgs is a dict of package name, rpmblob list pairs:
   pkgs = {name:[rpmblob,rpmblob...], name:[rpmblob,rpmblob...]}
 * rpmblob is a dict describing an rpm file:
-  rpmblob = {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'arch':'i386'},
+  rpmblob = {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'subarch':'i386'},
 
 example:
 pkgs = {
 'foo' : [
-  {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'arch':'i386'},
-  {'file':'foo-0.2-3.i386.rpm', 'name':'foo', 'version':'0.2', 'release':'3', 'arch':'i386'}],
+  {'file':'foo-0.1-5.i386.rpm', 'name':'foo', 'version':'0.1', 'release':'5', 'subarch':'i386'},
+  {'file':'foo-0.2-3.i386.rpm', 'name':'foo', 'version':'0.2', 'release':'3', 'subarch':'i386'}],
 'bar' : [
-  {'file':'bar-3.2a-12.mips.rpm', 'name':'bar', 'version':'3.2a', 'release':'12', 'arch':'mips'},
-  {'file':'bar-3.7j-4.mips.rpm', 'name':'bar', 'version':'3.7j', 'release':'4', 'arch':'mips'}]
+  {'file':'bar-3.2a-12.mips.rpm', 'name':'bar', 'version':'3.2a', 'release':'12', 'subarch':'mips'},
+  {'file':'bar-3.7j-4.mips.rpm', 'name':'bar', 'version':'3.7j', 'release':'4', 'subarch':'mips'}]
 }
 """
     rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
     for filename in rpms:
-        (name, version, release, arch) = parse_rpm("%s/%s" % (rpmdir, filename))
-        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'arch':arch}
-        if pkgs.has_key(name):
-            pkgs[name].append(rpmblob)
-        else:
-            pkgs[name] = [rpmblob]
-    return pkgs
-
-
-def get_pkgs2(rpmdir):
-    """scan a dir of rpms and generate a pkgs structure.  this version parses the filenames directly instead of reading their metadata.  on my machine, this brought runtime from half an hour down to 3 seconds."""
-    pkgs = {}
-    rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
-    for filename in rpms:
-        try:
-            (name, version, release, arch) = parse_rpm_filename(filename)
-        except:
-            # for incorrectly named rpms (ie, sun's java rpms) we need to read the rpm headers.
-            sys.stderr.write("Warning: could not parse filename %s.\n" % filename)
-            (name, version, release, arch) = parse_rpm("%s/%s" % (rpmdir, filename))
-        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'arch':arch}
+        (name, version, release, subarch) = parse_rpm_filename(rpmdir, filename)
+        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'subarch':subarch}
         if pkgs.has_key(name):
             pkgs[name].append(rpmblob)
         else:
@@ -193,21 +187,19 @@ def prune_pkgs_latest(pkgs):
 
 def prune_pkgs_archs(pkgs):
     """prune a pkgs structure to contain no more than one subarch per architecture for each set of packages."""
-    subarch_mapping = {'x86':['i686','i586','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
-    arch_mapping = {'i686':'x86', 'i586':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
     pruned_pkgs = {}
     for rpmblobs in pkgs.values():
         pkg_name = rpmblobs[0]['name']
         arch_sifter = {}
         for challenger in rpmblobs:
-            arch = arch_mapping[challenger['arch']]
+            arch = subarch_mapping[challenger['subarch']]
             incumbent = arch_sifter.get(arch)
             if incumbent == None:
                 arch_sifter[arch] = challenger
             else:
-                subarchs = subarch_mapping[arch]
-                challenger_index = subarchs.index(challenger['arch'])
-                incumbent_index = subarchs.index(incumbent['arch'])
+                subarchs = arch_mapping[arch]
+                challenger_index = subarchs.index(challenger['subarch'])
+                incumbent_index = subarchs.index(incumbent['subarch'])
                 if challenger_index < incumbent_index:
                     arch_sifter[arch] = challenger
         pruned_pkgs[pkg_name] = arch_sifter.values()
@@ -272,7 +264,7 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout, start_date_d
     """the meat of this library."""
     output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
-    pkgs = prune_pkgs_archs(prune_pkgs_latest(prune_pkgs_timely(get_pkgs2(rpmdir), start_date_desc, end_date_desc, rpmdir)))
+    pkgs = prune_pkgs_archs(prune_pkgs_latest(prune_pkgs_timely(get_pkgs(rpmdir), start_date_desc, end_date_desc, rpmdir)))
     for rpmblobs in sorted_values(pkgs):
         if len(rpmblobs) == 1:
             # regular pkgmgr entry
@@ -282,10 +274,10 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout, start_date_d
         else:
             # multiarch pkgmgr entry
             rpmblob = rpmblobs[0]
-            archs = [blob['arch'] for blob in rpmblobs]
-            archs.sort()
-            multiarch_string = ' '.join(archs)
-            pattern_string = '\.(%s)\.rpm$' % '|'.join(archs) # e.g., '\.(i386|x86_64)\.rpm$'
+            subarchs = [blob['subarch'] for blob in rpmblobs]
+            subarchs.sort()
+            multiarch_string = ' '.join(subarchs)
+            pattern_string = '\.(%s)\.rpm$' % '|'.join(subarchs) # e.g., '\.(i386|x86_64)\.rpm$'
             pattern = re.compile(pattern_string)
             multiarch_file = pattern.sub('.%(arch)s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%(arch)s.rpm'
             output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s"/>\n' %
