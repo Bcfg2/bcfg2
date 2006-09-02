@@ -234,6 +234,18 @@ chgrp 0 \${LOC_OST_CFG}*
 chmod 600 \${LOC_BCFG2_CONF}*
 chmod 600 \${LOC_OST_CFG}*
 
+# Restart services if they exist to catch any config file changes
+if [ -x /command/svc -a -x /command/svstat ]; then
+    for LOC_SERVICE in bcfg2-client bcfg2-server ostiary; do
+        if [ -h /service/\${LOC_SERVICE} ]; then
+            printf "Restarting daemontools service \${LOC_SERVICE}...\n" 
+            /command/svc -t /service/\${LOC_SERVICE}
+            sleep 2
+            /command/svstat /service/\${LOC_SERVICE}
+        fi
+    done
+fi
+    
 exit 0
 
 EOF
@@ -241,7 +253,7 @@ EOF
 chmod 755 $DISTDIR/setup.sh
 
 # Create .run file from $DISTDIR with makeself
-BLURB="Bcfg2 Client install for $SITENAME (version $SITEVER)"
+BLURB="Bcfg2 Client install for $SITENAME (version $SITEVER) - export REPLACE_CONFIG=yes before running to force config file replacement"
 ${MAKESELF} --nox11 $DISTDIR ${DISTDIR}.run "$BLURB" ./setup.sh
 
 exit 0

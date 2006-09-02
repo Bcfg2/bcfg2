@@ -141,6 +141,14 @@ rename : encaps
 			fi; \
 		done; \
 	fi
+	for OLDNAME in `ls ./*-doc-*-encap-*.tar.gz`; do \
+		NEWNAME="`printf "%s\n" "$${OLDNAME}" \
+			| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
+			| sed s:\ :-:g | sed s:OSDIST:share:g`" ; \
+		if [ "$${OLDNAME}x" != "$${NEWNAME}x" ]; then \
+			mv ./$${OLDNAME} ./$${NEWNAME}; \
+		fi; \
+	done;
 
 clean : 
 	-(rm ./*.log; rm ./*.packaged; rm ./*.gz; rm ./*~)

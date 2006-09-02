@@ -1,13 +1,37 @@
-= TODO =
+= EncapTodo: TODO =
 
-== For 0.8.4 ==
+== For 0.8.3 ==
 
+ * Fix "from httplib import HTTPS" issue
+ 
+ * Update README and INSTALL
+  
  * Build everywhere, basic test
  
- * Double-check all permissions, and make sure they are not effected by 
-   the environment's umask
+== For 0.8.4  ==
 
- * Big documentation update
+ * Possibly add GNU Readline library for python
+
+ * Write HOWTO
+ 
+ * Packages all deps of new reports (django etc.) for GNU/Linux
+
+== For 0.8.5 or earlier ==
+
+ * Cut down distribution size to something more reasonable
+   * Some platforms are now >150MB (installed)
+   * Remove unneeded doc / test code / etc.
+   * Perhaps make seperate -doc- or -extra- encap packages
    
+ * Improve handling of libgcc/libstdc++
+
+ * Try to make build not effect the build host as much
+ 
+ * Try to make it easier to build as non-root
+
  * Handle removals nicely (preremove/postremove scripts)
    * Work towards full compliance with encap 2.1 spec
+   * Remove /service links in remove scripts for daemontools services
+   
+== Documentation Version ==
+$Id$

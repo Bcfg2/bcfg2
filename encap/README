@@ -1,1 +1,115 @@
-For now, look at the HOWTO
+= EncapReadme: Encap based bootstrap for bcfg2 and complete bcfg2 toolchain =
+
+This code is a method for getting bcfg2, including all dependencies, up and
+running on many platforms as quickly as possible, from source.
+
+== What you get ==
+The end result is a self-extracting/self-installing bcfg2 client distribution
+that does a complete client install, which includes:
+ * the epkg encap package manager
+ * all software on which bcfg2 depends
+ * bcfg2 itself
+ * ostiary to kick off bcfg2 client runs remotely
+ * daemontools to run bcfg2 client as a periodic service with logging
+ * all with site-specific configuration parameters, set at build time in a   
+   single unified build-time configuration file, site-settings.conf
+ * optional install-time entry of bcfg2 and ostiary passwords, interactively
+   or via environment variables
+   
+As well as:
+ * encap packages for software on which the bcfg2 server functionality
+   depends (glib, gamin, and cheetah)
+ * encaps of optional documentation packages
+
+== Internet resources ==
+For a more general overview of what this is, see:
+ * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapPackages
+
+You can obtain the latest version of the code from bcfg2 svn:
+ * `svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/encap`
+
+== Operation notes ==
+Using the encap package manager this code automatically downloads, builds and
+creates encap packages for bcfg2 and dependencies to `/usr/local/encap`, and
+installs symbolic links to these packages from `/usr/local` (the usual encap
+thing). 
+
+It attempts to be as self contained as possible; everything gets linked to
+under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
+software, which is prefixed by `b2-` (`b2-openssl`, `b2-python` etc.).  
+
+To run the bcfg2 server, you also need to install gamin, which
+supports a subset of the platforms bcfg2 client will work on, including
+GNU/Linux (but first install glib, on which gamin depends). You also need to 
+install the cheetah templating system on the bcfg2 server if you wish to use 
+the bcfg2 templating functionality.
+
+== Important differances from upstream sources ==
+ * `/usr/local/etc/bcfg2.conf` is used instead of `/etc/bcfg2.conf`
+ * In general, everything is under `/usr/local` instead of `/`
+
+== About ostiary integration ==
+TODO
+
+== About daemontools integration ==
+TODO
+
+== Environment variables ==
+TODO
+Before the initial make/gmake and before the client install, you can set some 
+environment variables to control some behaviors:
+ * DEST=""
+ * FORCE_CONFIG="yes"
+ * 
+
+== Supported Platforms == 
+Below is a table of platforms that have been successfully bootstrapped using
+this code.
+
+|| OS        || Vendor || Version || Arch  || GCC   || By || Bcfg2 (+svn) ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.8.2 +r???? ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.8.2 +r???? ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.8.2 +r???? ||
+|| GNU/Linux || Ubuntu || Dapper  || i386  || 4.0.3 || dc || 0.8.2 +r???? ||
+|| Solaris   || Sun    || 10      || Sparc || 3.4.3 || dc || 0.8.2 +r???? ||
+|| Solaris   || Sun    || 10      || i386  || 3.4.3 || dc || 0.8.2 +r???? ||
+
+dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
+
+If you bootstrap a platform not listed above, please add a comment to:
+ * http://trac.mcs.anl.gov/projects/bcfg2/ticket/74
+so that platform can be added to the list. 
+
+If you modified any of the files in this package to be able to bootstrap the
+new platform, please include either diffs or a tarball of your modified
+version in a new ticket so your changes can be incorporated into a new
+release. 
+
+Any other notes, such as where you got the GNU binaries or any issues people
+should be aware of, would also be appreciated. 
+
+You may want to scan all of the bootstrapped binaries and libraries with
+`ldd` (or equivalent) to make sure there are no dependencies on libraries
+other than those included with the base operating system and the libraries
+built as part of the bootstrap process. 
+
+== libgcc and libstdc++ ==
+On non-GNU operating systems, libgcc and libstdc++ are a run-time
+requirement. These libraries are usually distributed with gcc/g++, so the
+bootstrap system attempts to create encap packages containing those
+libraries by copying them from the build machine. To test that this worked,
+you'll want to either temporarily remove gcc/g++ from the build machine and
+make sure everything still works, or install the bcfg2-*.tar.gz encap
+packages on a "clean" machine (without a gcc/g++ install) and test on that 
+machine.
+
+== Encap profile (.ep) documentation ==
+Note that the doc for the encap profile format is in 
+[wiki:EncapManEncapProfile "`man 5 encap_profile`"].
+
+== Next steps ==
+ 1. Build and install; see [wiki:EncapInstall INSTALL]
+ 1. Set up your server and clients; see [wiki:EncapHowto HOWTO]
+
+== Documentation Version ==
+$Id$

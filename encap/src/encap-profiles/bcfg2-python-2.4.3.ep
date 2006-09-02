@@ -83,6 +83,18 @@ PLATFORM_ENDIF
 	--disable-ipv6
 </configure>
 
+<build type="append"><![CDATA[
+# Make sure linking to openssl worked
+${builddir}/python -c "from httplib import HTTPS" || HS="no"; \
+if [ "${HS}x" = "nox" ]; then \
+    printf "ERROR: HTTPS fails (usually a problem with linking against "; \
+    printf "openssl), aborting...\n"; \
+    exit 1; \
+else \
+    printf "INFO: HTTPS works\n"; \
+fi
+]]></build>
+
 </source>
 
 <prepackage><![CDATA[
