@@ -1,3 +1,7 @@
+EncapPackages | EncapReadme | '''EncapInstall''' | EncapHowto
+
+----
+
 = EncapInstall: bcfg2/encap installation instructions =
 
 == Prerequisites ==
@@ -5,14 +9,14 @@
  * GNU gcc and GNU g++
    * If you are using the gcc distributed with Solaris/x86 10, you need to 
      install the gcc bug fix at http://www.openssl.org/~appro/values.c by 
-     running "ksh -f values.c" as root (or openssl will segfault)
+     running "`ksh -f values.c`" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * /usr/local/man should be a directory, not a symbolic link
  * epkg (the encap package manager)
    * Canonical website is http://www.encap.org/epkg
    * Mirror of epkg binaries is available at http://www.dclark.us/mirror/
    * If built from source, first need all recommended libraries from web page
-     * To ease building from source, read epkg/README and use epkg/Makefile
+     * To ease building from source, read `epkg/README` and use `epkg/Makefile`
 
 You will need binaries of the GNU tools. For GNU and BSD based operating 
 systems, you should be able to get these via the operating system's package 
@@ -28,10 +32,10 @@ system. For commercial operating systems, these can be obtained from:
  * Freeware for Solaris at http://www.sunfreeware.com/
  * Community Software for Solaris at http://www.blastwave.org/packages.php
 
-== Advanced Packaging Tool (APT) support (Debian/Ubuntu/etc) == 
+== Advanced Packaging Tool (APT) support == 
 
-On platforms that use APT, such as Debian and Ubuntu, bcfg2-python-apt must be
-built. Unfortunately the version required is dependent on the version of the
+On platforms that use APT, such as Debian and Ubuntu, "bcfg2-python-apt" must
+be built. Unfortunately the version required is dependent on the version of the
 distribution. 
 
 To see if your distribution is supported, do:
@@ -46,7 +50,7 @@ the contents of your `/etc/issue` requesting that it be supported, and support
 should be added within a few days (or of course patches are gratefully 
 accepted).
 
-When building bcfg2-python-apt, there are some additional prerequisites:
+When building "bcfg2-python-apt", there are some additional prerequisites:
  * `/usr/lib/libapt-pkg*` (Part of the "apt" package on Debian)
  * `/usr/lib/libapt-inst*` (Part of the "apt-utils" package on Debian)
  * The "`libapt-pkg-dev`" package 
@@ -59,13 +63,13 @@ apt-get install apt apt-utils libapt-pkg-dev
 Note that the build is disruptive to the currently installed bcfg2 packages
 (whatever you have installed is uninstalled and then replaced with the
 newly-built packages), although no configuration files will be replaced
-unless you ask them to be (via `REPLACE_CONFIG="yes"; export REPLACE_CONFIG`).
+unless you ask them to be (via "`REPLACE_CONFIG="yes"; export REPLACE_CONFIG`").
 
  1. Make sure all of the prerequisites (see above) are installed.
  1. The build/install must be done as "`root`".
  1. Change to the src directory (`cd src`)
  1. Copy your `site-settings.conf` file to `bcfg2-site/`; if you don't have
-    one already, copy over bcfg2-site/site-settings.conf-example and change
+    one already, copy over `bcfg2-site/site-settings.conf-example` and change
     it to suit your site.
  1. Run `make` (GNU/Linux platforms) or `gmake` (all other platforms). This 
     will kick off and background the entire build process. Make output will be
@@ -95,4 +99,6 @@ For more information on the "`bcfg2-*.run`" file and what to do next, see the
 [wiki:EncapHowto HOWTO].
 
 == Documentation Version ==
-$Id$
+ * This is a copy of: $Id$
+ * Most recent version: http://www.bcfg2.org/browser/trunk/bcfg2/encap/INSTALL
+

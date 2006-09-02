@@ -4,7 +4,7 @@
 
  * Fix "from httplib import HTTPS" issue
  
- * Update README and INSTALL
+ * Update README and post to Wiki
   
  * Build everywhere, basic test
  
@@ -27,7 +27,7 @@
 
  * Try to make build not effect the build host as much
  
- * Try to make it easier to build as non-root
+ * Try to make it possible to build as non-root
 
  * Handle removals nicely (preremove/postremove scripts)
    * Work towards full compliance with encap 2.1 spec

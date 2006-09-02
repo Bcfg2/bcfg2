@@ -1,3 +1,7 @@
+EncapPackages | EncapReadme | EncapInstall | '''EncapHowto'''
+
+----
+
 = EncapHowto: Encap Packages HOWTO =
 
 TODO: Aim is to have nice HOWTO for 0.8.4 release.
@@ -5,4 +9,5 @@ TODO: Aim is to have nice HOWTO for 0.8.4 release.
 <Reference to README and INSTALL in wiki: format>
 
 == Documentation Version ==
-$Id$
+ * This is a copy of: $Id$
+ * Most recent version: http://www.bcfg2.org/browser/trunk/bcfg2/encap/HOWTO
