@@ -64,6 +64,7 @@ PLATFORM_ENDIF
 >
 
 <configure>
+if [ -f setup.py.orig ]; then cp setup.py.orig setup.py; fi
 cat setup.py \
 | sed s:\/usr\/local\/:\/usr\/local\/lib\/bcfg2\/:g \
 | sed s:\/usr\/local\/lib\/bcfg2\/ssl\/include:\/usr\/local\/lib\/bcfg2\/include:g \

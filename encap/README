@@ -1,3 +1,7 @@
+EncapPackages | '''EncapReadme''' | EncapInstall | EncapHowto
+
+----
+
 = EncapReadme: Encap based bootstrap for bcfg2 and complete bcfg2 toolchain =
 
 This code is a method for getting bcfg2, including all dependencies, up and
@@ -112,4 +116,5 @@ Note that the doc for the encap profile format is in
  1. Set up your server and clients; see [wiki:EncapHowto HOWTO]
 
 == Documentation Version ==
-$Id$
+ * This is a copy of: $Id$
+ * Most recent version: http://www.bcfg2.org/browser/trunk/bcfg2/encap/README

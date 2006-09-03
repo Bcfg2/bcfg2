@@ -5,17 +5,27 @@
  * Fix "from httplib import HTTPS" issue
  
  * Update README and post to Wiki
+ 
+ * Update EncapPackages on the Wiki
   
  * Build everywhere, basic test
  
+ * Fix bcfg2bump (see IRC)
+ 
+ * Test bcfg2bump
+ 
 == For 0.8.4  ==
 
- * Possibly add GNU Readline library for python
+ * Move from lxml (+deps) to elementtree for client
+   * Maybe just move to Python 2.5 (which includes elementtree) if final comes
+     out on schedule (Sept 12th, 2006 is planned final release date)
 
- * Write HOWTO
+ * Possibly add GNU Readline library for python
  
  * Packages all deps of new reports (django etc.) for GNU/Linux
 
+ * Write HOWTO
+ 
 == For 0.8.5 or earlier ==
 
  * Cut down distribution size to something more reasonable
