@@ -11,6 +11,7 @@ export MKENCAP := ${BASEDIR}/bin/mkencap
 export SHELL = /bin/sh
 srcdir = .
 export EP2TARGET := $(srcdir)/ep2target
+PAGER ?= more
 
 BCFG2 := $(basename $(wildcard bcfg2-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH := $(basename $(wildcard bcfg2-cheetah-[0-9].[0-9]*.ep))
@@ -170,30 +171,37 @@ bcfg2only :
 	$(MAKE) -t; sleep 2; touch $(srcdir)/$(BCFG2).ep; $(MAKE)
     
 bcfg2bump :
-	@if [ "$(NEWVERSION)x" != "x" ]; then NEWVERSION="$(NEWVERSION)"; fi && \
+	@if [ "$(NEW)x" != "x" ]; then NEW="$(NEW)"; fi && \
+	if [ "$(OLD)x" != "x" ]; then OLD="$(OLD)"; fi && \
 	if [ "$(FORCE)x" != "x" ]; then FORCE="$(FORCE)"; fi && \
-	if [ "$${NEWVERSION}x" != "x" ]; then \
+	if [ "$${OLD}x" != "x" -a "$${NEW}x" != "x" ]; then \
+	OLDBASE="`printf "%s\n" "$${OLD}" | sed 's:\.ep::g'`"; \
+	NEWBASE="`printf "%s\n" "$${NEW}" | sed 's:\.ep::g'`"; \
 		if [ "$${FORCE}x" != "yesmamx" ]; then \
-			printf "About to 'svn mv %s %s'\n" "$(BCFG2).ep" "$$NEWVERSION"; \
+			printf "About to 'svn mv %s %s'\n" "$$OLD" "$$NEW"; \
 			printf "\tand edit the later as appropriate.\n"; \
+			printf "And then 'rm %s%s'...\n" "$$OLDBASE" ".*"; \
 			printf "Press 'return' to continue, or 'ctrl-c' to exit. "; \
 			read THROWAWAY; \
 		fi; \
-		svn mv $(BCFG2).ep $${NEWVERSION}; \
-		NVBASE="`printf "%s\n" "$${NEWVERSION}" | sed 's:\.ep::g'`"; \
-		sed s:$(BCFG2):$$NVBASE:g $${NEWVERSION} > $${NEWVERSION}.tmp; \
-		mv $${NEWVERSION}.tmp $${NEWVERSION}; \
-		printf "Changes to %s are:\n" "$${NEWVERSION}"; \
-		svn diff $${NEWVERSION}; \
+		svn mv $${OLD} $${NEW} && \
+		sed s:$${OLDBASE}:$${NEWBASE}:g $${NEW} > $${NEW}.tmp && \
+		mv $${NEW}.tmp $${NEW} && \
+		rm $${OLDBASE}.*; \
+		printf "Changes to %s are:\n" "$${NEW}"; \
 		if [ "$${FORCE}x" != "yesmamx" ]; then \
-			printf "'svn commit %s -m \"EncapPackages: Bumped bcfg2 .ep version to %s\"'? \n" "$${NEWVERSION}" "$${NEWVERSION}"; \
+			svn diff $${NEW} | $(PAGER); \
+			printf "'svn commit %s %s -m \"EncapPackages: Bumped bcfg2 .ep version to %s\"'? \n" "$${OLD}" "$${NEW}" "$${NEW}"; \
 			printf "Press 'return' to commit, or 'ctrl-c' to exit. "; \
 			read THROWAWAY; \
+		else \
+			svn diff $${NEW}; \
 		fi; \
-		svn commit $${NEWVERSION} -m "EncapPackages: Bumped bcfg2 .ep version to $${NVBASE}"; \
+		svn commit $${OLD} $${NEW} -m "EncapPackages: Bumped bcfg2 .ep version to $${NEW}"; \
 	else \
-		printf "Set the NEWVERSION (and optionally FORCE) environment variables\n"; \
-		printf "Example: 'NEWVERSION=bcfg2-0.8.3.ep $(MAKE) bcfg2bump'\n"; \
+		printf "Set the OLD, NEW (and optionally FORCE) environment "; \
+		printf "variables. Example:\n"; \
+		printf "\tOLD=bcfg2-0.8.3pre5.ep NEW=bcfg2-0.8.3.ep $(MAKE) bcfg2bump\n";\
 	fi
 
 include $(addsuffix .d,$(sources))
