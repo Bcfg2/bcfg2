@@ -1,11 +1,7 @@
 = EncapTodo: TODO =
 
 == For 0.8.3 ==
-
- * Fix "from httplib import HTTPS" issue
- 
- * Update README and post to Wiki
- 
+  
  * Update EncapPackages on the Wiki
   
  * Build everywhere, basic test
@@ -16,15 +12,15 @@
  
 == For 0.8.4  ==
 
+ * Possibly add GNU Readline library for python
+ 
+ * Write HOWTO
+
+ * Packages all deps of new reports (django etc.) for GNU/Linux
+
  * Move from lxml (+deps) to elementtree for client
    * Maybe just move to Python 2.5 (which includes elementtree) if final comes
      out on schedule (Sept 12th, 2006 is planned final release date)
-
- * Possibly add GNU Readline library for python
- 
- * Packages all deps of new reports (django etc.) for GNU/Linux
-
- * Write HOWTO
  
 == For 0.8.5 or earlier ==
 
@@ -32,7 +28,13 @@
    * Some platforms are now >150MB (installed)
    * Remove unneeded doc / test code / etc.
    * Perhaps make seperate -doc- or -extra- encap packages
-   
+   * Might be able to make client-side only python 2.5 (statically linked to
+     deps like openssl), bcfg2, daemontools, ostiary, and bcfg2-site.
+       * http://groups.google.com/groups/starred?lnk=lnmst&hl=en
+   * Look into using http://sourceforge.net/projects/cx-freeze/ for client-side
+
+== For 0.8.6 or earlier ==
+ 
  * Improve handling of libgcc/libstdc++
 
  * Try to make build not effect the build host as much

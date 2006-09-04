@@ -26,8 +26,7 @@ As well as:
  * encaps of optional documentation packages
 
 == Internet resources ==
-For a more general overview of what this is, see:
- * http://trac.mcs.anl.gov/projects/bcfg2/wiki/EncapPackages
+For a more general overview, see http://www.bcfg2.org/wiki/EncapPackages
 
 You can obtain the latest version of the code from bcfg2 svn:
  * `svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/encap`
@@ -42,41 +41,120 @@ It attempts to be as self contained as possible; everything gets linked to
 under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
 software, which is prefixed by `b2-` (`b2-openssl`, `b2-python` etc.).  
 
-To run the bcfg2 server, you also need to install gamin, which
-supports a subset of the platforms bcfg2 client will work on, including
-GNU/Linux (but first install glib, on which gamin depends). You also need to 
-install the cheetah templating system on the bcfg2 server if you wish to use 
-the bcfg2 templating functionality.
+To run the bcfg2 server, you also need to install gamin, which supports a
+subset of the platforms bcfg2 client will work on, including GNU/Linux (but
+first install glib, on which gamin depends). You also need to install the
+cheetah templating system on the bcfg2 server if you wish to use the bcfg2
+templating functionality.
 
-== Important differances from upstream sources ==
- * `/usr/local/etc/bcfg2.conf` is used instead of `/etc/bcfg2.conf`
+== Important differences from upstream sources ==
  * In general, everything is under `/usr/local` instead of `/`
+   * `/usr/local/etc/bcfg2.conf` is used instead of `/etc/bcfg2.conf`
 
-== About ostiary integration ==
-TODO
-
-== About daemontools integration ==
-TODO
-
-== Environment variables ==
-TODO
+== Environment variables and Sentinel files ==
 Before the initial make/gmake and before the client install, you can set some 
 environment variables to control some behaviors:
- * DEST=""
- * FORCE_CONFIG="yes"
- * 
+ * `DEST="<path>"` - Set where the final build output goes. Default is 
+   `./DIST`
+ * `REPLACE_CONFIG="yes"` - Unconditionally replace local configuration files 
+   for bcfg2 and ostiary with those included in the distribution. The old 
+   files are saved to <filename>-<date>.
+ * `LOC_BCFG2_PASSWD="<password>"` , `LOC_OST_PASSWD="<password>"` - Set the 
+   bcfg2 server and ostiaryd daemon passwords, to avoid being interactively 
+   prompted for them.
+
+There are also some "sentinel files" (zero byte files that only indicate
+state) that you can create to control the operation of the install. This is
+mostly useful so that installs don't clobber local changes / changes made by
+bcfg2.
+
+Sentinel file names:
+ * `.SENTINEL_SITE` - Indicates that the bcfg2 client has been previously 
+   installed.
+ * `.SENTINEL_BCFG2` - Indicates that the files have been modified by bcfg2
+   itself. (If you change any of the config files mentioned below via bcfg2,
+   you'll want to put this sentinel file in the appropriate directory with 
+   bcfg2 as well).
+   
+If either of these files exist, the install will not overwrite the existing
+config files unless `REPLACE_CONFIG="yes"` is set.
+
+{{{
+Directory with sentinel file(s)       Covered config files
+-----------------------------------   --------------------------------------
+/usr/local/etc                        bcfg2.conf , ostiary.conf
+/usr/local/etc/default/bcfg2-client   env/RUN_INTERVAL_SECONDS , env/OPTIONS
+/usr/local/etc/default/bcfg2-server   env/OPTIONS
+/usr/local/sbin                       ost-bcfg2.sh
+}}}
+
+== About daemontools integration == 
+In order to avoid a lot of platform/distribution-specific code, the encap
+bcfg2 distribution includes and uses [http://cr.yp.to/daemontools.html
+daemontools] (with some common patches) instead of init scripts and cron. 
+
+The bcfg2 client (.run) distribution uses daemontools to run ostiary, and to
+run the bcfg2 client periodically. 
+
+On the server, edit `/usr/local/etc/default/bcfg2-server/env/OPTIONS` to
+include the options you want to start up the bcfg2 server with, and then do
+{{{ 
+ln -s /usr/local/var/svc.d/bcfg2-server /service/ 
+}}}
+to enable the service. 
+
+You can use `/command/svstat /service/bcfg2-server` to see the status, and
+`/command/svrm /service/bcfg2-server` to remove it.
+
+Logs for all daemontools services are under `/usr/local/var/multilog`.
+They use a highly precise time format; to translate into a readable format,
+pipe the logs through `/command/tai64nlocal`.
+
+== About ostiary integration ==
+In order to enable the remote kickoff of bcfg2 client runs, the bcfg2 client
+distribution includes [http://ingles.homeunix.org/software/ost/ ostiary], a
+simple, very security-paranoid daemon that runs a script with fixed
+arguments based on a password hash it receives.
+
+The following actions are available via ostiary; you can add more by editing
+`/usr/local/etc/ostiary.cfg`. The <password> is a value you set during
+compile-time or (preferably) .run file install time. 
+ * `<password>-bcfg2-dvqn` : Run `bcfg2-client -d -v -q -n`
+ * `<password>-bcfg2-dvn` : Run `bcfg2-client -d -v -n`
+ * `<password>-bcfg2-dvq` : Run `bcfg2-client -d -v -q`
+ * `<password>-bcfg2-dv` : Run `bcfg2-client -d -v`
+ * `<password>-bcfg2-vq` : Run `bcfg2-client -v -q`
+ * `<password>-bcfg2-v` : Run `bcfg2-client -v`
+ * `<password>-bcfg2-restart` : Restart the bcfg2-client daemontools service
+ 
+There are plans for the future for a bcfg2 plugin that will set per-machine
+passwords after the initial install, however as with cfengine the worst that
+someone can do if they find your password is to bring your host into a
+cleaner state.
+
+To execute one of these actions, you use the `ostclient` command, i.e.:
+{{{ ostclient -a <address> -p <port> }}}
+where <address> is the address of the machine you want to run the bcfg2
+client on, and <port> is the ostiary port number you set during the INSTALL
+procedure. You will then be prompted to `Enter command secret: `, at which
+point you will enter one of the above-listed values, such as
+`<password>-bcfg2-dvqn` (the command to run and the password are
+integrated into the same string).
+
+Logs of bcfg2-client runs kicked off via ostiary are in
+`/usr/local/var/multilog/bcfg2-client-ostiary`
 
 == Supported Platforms == 
 Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
-|| OS        || Vendor || Version || Arch  || GCC   || By || Bcfg2 (+svn) ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.8.2 +r???? ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.8.2 +r???? ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.8.2 +r???? ||
-|| GNU/Linux || Ubuntu || Dapper  || i386  || 4.0.3 || dc || 0.8.2 +r???? ||
-|| Solaris   || Sun    || 10      || Sparc || 3.4.3 || dc || 0.8.2 +r???? ||
-|| Solaris   || Sun    || 10      || i386  || 3.4.3 || dc || 0.8.2 +r???? ||
+|| OS        || Vendor || Version || Arch  || GCC   || By || Bcfg2 ||
+|| AIX       || IBM    || 5.3     || POWER || 4.1.0 || dc || 0.8.3 ||
+|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5 || dc || 0.8.3 ||
+|| GNU/Linux || Debian || Sid     || i386  || 4.1.2 || dc || 0.8.3 ||
+|| GNU/Linux || Ubuntu || Dapper  || i386  || 4.0.3 || dc || 0.8.3 ||
+|| Solaris   || Sun    || 10      || Sparc || 3.4.3 || dc || 0.8.3 ||
+|| Solaris   || Sun    || 10      || i386  || 3.4.3 || dc || 0.8.3 ||
 
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
@@ -103,13 +181,12 @@ requirement. These libraries are usually distributed with gcc/g++, so the
 bootstrap system attempts to create encap packages containing those
 libraries by copying them from the build machine. To test that this worked,
 you'll want to either temporarily remove gcc/g++ from the build machine and
-make sure everything still works, or install the bcfg2-*.tar.gz encap
-packages on a "clean" machine (without a gcc/g++ install) and test on that 
-machine.
+make sure everything still works, or install the bcfg2 client on a "clean"
+machine (without a gcc/g++ install) and test on that machine.
 
 == Encap profile (.ep) documentation ==
 Note that the doc for the encap profile format is in 
-[wiki:EncapManEncapProfile "`man 5 encap_profile`"].
+[wiki:EncapManEncapProfile `man 5 encap_profile`].
 
 == Next steps ==
  1. Build and install; see [wiki:EncapInstall INSTALL]
