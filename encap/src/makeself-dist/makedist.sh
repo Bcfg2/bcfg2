@@ -154,10 +154,10 @@ getpasswd() {
     stty -echo
     trap "stty echo ; echo 'Interrupted' ; exit 1" 1 2 3 15
     printf "Enter \$1 password: "
-    read -r password1
+    read password1
     printf "\n"
     printf "Enter \$1 password again: "
-    read -r password2
+    read password2
     printf "\n"
     stty echo
     if [ "\${password1}x" != "\${password2}x" ]; then
