@@ -30,6 +30,7 @@ BCFG2_PKG_CONFIG := $(basename $(wildcard bcfg2-pkg-config-*.ep))
 BCFG2_PYOPENSSL := $(basename $(wildcard bcfg2-pyopenssl-*.ep))
 BCFG2_PYREX := $(basename $(wildcard bcfg2-pyrex-*.ep))
 BCFG2_PYTHON := $(basename $(wildcard bcfg2-python-[0-9].[0-9]*.ep))
+BCFG2_READLINE := $(basename $(wildcard bcfg2-readline-*.ep))
 BCFG2_ZLIB := $(basename $(wildcard bcfg2-zlib-*.ep))
 DAEMONTOOLS := $(basename $(wildcard daemontools-[0-9].[0-9]*.ep))
 DAEMONTOOLS_DOC := $(basename $(wildcard daemontools-doc-*.ep))
@@ -39,7 +40,7 @@ OSTIARTY := $(basename $(wildcard ostiary-[0-9].[0-9]*.ep))
 OSTIARTY_DOC := $(basename $(wildcard ostiary-doc-*.ep))
 PATCH := $(basename $(wildcard patch-*.ep))
 
-sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_CHEETAH_DOC)  $(BCFG2_GETTEXT) $(BCFG2_LIBICONV) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYREX) $(BCFG2_PYTHON) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(DAEMONTOOLS_DOC) $(MAKESELF) $(OSTIARTY) $(OSTIARTY_DOC) $(PATCH))
+sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_CHEETAH_DOC)  $(BCFG2_GETTEXT) $(BCFG2_LIBICONV) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYREX) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(DAEMONTOOLS_DOC) $(MAKESELF) $(OSTIARTY) $(OSTIARTY_DOC) $(PATCH))
 
 sources_sh := $(sort $(BCFG2_LIBGCC) $(BCFG2_LIBSTDCXX) $(M4))
 

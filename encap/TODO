@@ -2,8 +2,6 @@
 
 == For 0.8.4  ==
 
- * Possibly add GNU Readline library for python
- 
  * Write HOWTO
 
  * Packages all deps of new reports (django etc.) for GNU/Linux
