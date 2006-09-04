@@ -80,7 +80,7 @@ PLATFORM_ELSE
 	--with-gcc \
 	--with-cxx=g++ \
 PLATFORM_ENDIF
-	--enable-shared=yes \
+	--enable-shared=no \
 	--disable-ipv6
 </configure>
 
