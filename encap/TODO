@@ -1,15 +1,5 @@
 = EncapTodo: TODO =
 
-== For 0.8.3 ==
-  
- * Update EncapPackages on the Wiki
-  
- * Build everywhere, basic test
- 
- * Fix bcfg2bump (see IRC)
- 
- * Test bcfg2bump
- 
 == For 0.8.4  ==
 
  * Possibly add GNU Readline library for python
