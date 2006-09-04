@@ -1,0 +1,4 @@
+ * Building of OpenSSL fails on Solaris 10 on sparcv9 in "gmake test" with:
+   "gmake[1]: *** [test_evp] Error 9"; until this is fixed, the encap packages
+   won't work on that platform. Hints from people who admin Solaris are 
+   welcomed.
