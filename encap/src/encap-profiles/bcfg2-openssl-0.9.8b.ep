@@ -64,6 +64,11 @@ url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8b.tar.gz
 >
 
 <configure>
+if [ -f config.orig ]; then cp config.orig config; fi
+cat config | sed s:CC\=ccc:CC\=gcc:g | sed s:CC\=cc:CC\=gcc:g > config.bcfg2
+mv config config.orig
+cp config.bcfg2 config
+chmod 755 config
 ./config \
 	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
 	zlib-dynamic shared \
@@ -78,6 +83,10 @@ url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8b.tar.gz
 </source>
 
 <prepackage>
+# Put source back to pristine state
+rm ${builddir}/config
+cp ${builddir}/config.orig ${builddir}/config
+chmod 755 ${builddir}/config
 # Make man pages available from /usr/local/lib/bcfg2/man
 mv lib/bcfg2/ssl/man lib/bcfg2/
 # Other stuff...
