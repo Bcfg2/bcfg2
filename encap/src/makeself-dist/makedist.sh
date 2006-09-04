@@ -95,6 +95,11 @@ umask 002
 # Local Variables
 LOC_INSTALLDIR="\`pwd\`"
 
+# Make sure /usr/local/man exists
+if [ ! -d /usr/local ]; then mkdir /usr/local; fi
+if [ -h /usr/local/man ]; then rm /usr/local/man; fi
+if [ ! -d /usr/local/man ]; then mkdir /usr/local/man; fi
+
 # Install epkg if it isn't installed
 if [ ! -h "$EPKG" -o ! -d "$ENCAPDIR/epkg-2.3.[89]" ]; then
     printf "epkg : (cd / && tar xf \$LOC_INSTALLDIR/epkg.tar)\n"

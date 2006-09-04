@@ -11,7 +11,6 @@ EncapPackages | EncapReadme | '''EncapInstall''' | EncapHowto
      install the gcc bug fix at http://www.openssl.org/~appro/values.c by 
      running "`ksh -f values.c`" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
- * /usr/local/man should be a directory, not a symbolic link
  * epkg (the encap package manager)
    * Canonical website is http://www.encap.org/epkg
    * Mirror of epkg binaries is available at http://www.dclark.us/mirror/
