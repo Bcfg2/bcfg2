@@ -221,7 +221,7 @@ if [ "\${LOC_OST_SET}x" = "nox" ]; then
     chmod 600 \$LOC_OST_CFG
     LOC_OST_KILL_SED="\$LOC_INSTALLDIR/loc_ost_kill.sed"
     LOC_OST_ACTION_SED="\$LOC_INSTALLDIR/loc_ost_action.sed"
-    printf "s:%s:%sKILL=%s-kill%s:g\n" "\$LOC_OST_KILL_RE" '"' "\`sedquote "\${LOC_OST_PASSWD}"\`" '"' > \$LOC_OST_KILL_SED
+    printf "s:%s:KILL=%s%s-kill%s:g\n" "\$LOC_OST_KILL_RE" '"' "\`sedquote "\${LOC_OST_PASSWD}"\`" '"' > \$LOC_OST_KILL_SED
     printf "s:%s:ACTION=\\"%s-bcfg2-:g\n" "\$LOC_OST_ACTION_RE" "\`sedquote "\${LOC_OST_PASSWD}"\`" > \$LOC_OST_ACTION_SED
     sed -f \$LOC_OST_KILL_SED \$LOC_OST_CFG | sed -f \$LOC_OST_ACTION_SED \
     > \${LOC_OST_CFG}.withpasswords
