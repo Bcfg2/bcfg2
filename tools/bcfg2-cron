@@ -41,7 +41,7 @@ case $1 in
             RUNTYPE=DAILY invoke_bcfg2
     ;;
   "--hourly")
-    [ "x${BCFG2_CRON}" = "xhourly" -o "x${BCFG2_CRON}" = "xboth"] && \
+    [ "x${BCFG2_CRON}" = "xhourly" -o "x${BCFG2_CRON}" = "xboth" ] && \
             RUNTYPE=HOURLY invoke_bcfg2
     ;;
   *)
