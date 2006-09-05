@@ -1,11 +1,9 @@
 '''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
 __revision__ = '$Revision$'
 
+import sys, os
 from lxml.etree import Element, SubElement
-from django.db import connection
 from syslog import syslog, LOG_INFO
-sys.path.append("/disks/bcfg2/Hostbase")
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
@@ -48,6 +46,8 @@ class Hostbase(Plugin):
 
         self.ready = False
         Plugin.__init__(self, core, datastore)
+        sys.path.append(self.data)
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 ##         try:
 ##             DataNexus.__init__(self, datastore + '/Hostbase/data',
 ##                                files, self.core.fam)
@@ -67,7 +67,7 @@ class Hostbase(Plugin):
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
-
+        self.rebuildState()
 
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
@@ -94,6 +94,10 @@ class Hostbase(Plugin):
     def rebuildState(self):
         '''Pre-cache all state information for hostbase config files'''
 
+        try:
+            from django.db import connection
+        except:
+            raise PluginInitError
         cursor = connection.cursor()
 
         cursor.execute("SELECT id, serial FROM hostbase_zone")
@@ -256,6 +260,8 @@ class Hostbase(Plugin):
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
 
+        from django.db import connection
+
         # fetches all the hosts with DHCP == True
         cursor = connection.cursor()
         cursor.execute("""
@@ -301,6 +307,8 @@ class Hostbase(Plugin):
 
 
     def buildHosts(self):
+
+        from django.db import connection
 
         append_data = []
 
@@ -391,6 +399,7 @@ class Hostbase(Plugin):
 Name            Room        User                            Type                      Notes
 ==============  ==========  ==============================  ========================  ====================
 """
+        from django.db import connection
 
         cursor = connection.cursor()
         # fetches all the printers from the database
@@ -414,13 +423,14 @@ Name            Room        User                            Type                
                 else:
                     printersfile += ("%-16s%-12s%-32s%-26s%s\n" %
                                      (printq, printer[1], printer[2], '', printer[3]))
-        print 'Done!'
         self.filedata['printers.data'] = printersfile
         self.Entries['ConfigFile']['/mcs/etc/printers.data'] = self.FetchFile
 
     def buildHostsLPD(self):
         """Creates the /mcs/etc/hosts.lpd file"""
         
+        from django.db import connection
+
         header = """+@machines
         +@all-machines
         achilles.ctd.anl.gov
@@ -472,6 +482,7 @@ Name            Room        User                            Type                
 #
 #  Number of hosts in '%s' machine netgroup: %i
 #\n\n"""
+        from django.db import connection
 
         cursor = connection.cursor()
         # fetches all the hosts that with valid netgroup entries
