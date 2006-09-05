@@ -82,8 +82,10 @@ cp $BSDIR/$BCFG2_SITE $DISTDIR
 # Create setup.sh in $DISTDIR
 if [ "`uname`x" = "SunOSx" ]; then
     printf "#!/bin/ksh\n\n" > $DISTDIR/setup.sh
+    EXPR="/usr/ucb/expr"
 else
     printf "#!/bin/sh\n\n" > $DISTDIR/setup.sh
+    EXPR="expr"
 fi
 ######################################################################
 cat >> $DISTDIR/setup.sh << EOF
@@ -197,13 +199,13 @@ fi
 # Sed quoting function - quote the &, :, ' and \ characters
 sedquote() {
     i=1 
-    while [ \$i -le \`expr length \$1\` ]; do
-        c=\`expr substr \$1 \$i 1\`
+    while [ \$i -le \`${EXPR} length \$1\` ]; do
+        c=\`${EXPR} substr \$1 \$i 1\`
         if [ "\${c}x" = "&x" -o "\${c}x" = ":x" -o "\${c}x" = "'x" -o "\${c}x" = "\\\\x" ]; then
             c=\\\\\${c}
         fi
         printf "%s" "\$c"
-        i=\`expr \$i + 1\`
+        i=\`${EXPR} \$i + 1\`
     done
 }
 
