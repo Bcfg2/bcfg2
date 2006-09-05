@@ -275,8 +275,8 @@ cp package/run.rclocal ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
 mv package/run package/run.orig
 mv package/run.inittab package/run.inittab.orig
 mv package/boot.inittab package/boot.inittab.orig
-mv package/run.rclocal package/run.inittab.orig
-mv package/boot.rclocal package/boot.inittab.orig
+mv package/run.rclocal package/run.rclocal.orig
+mv package/boot.rclocal package/boot.rclocal.orig
 test -d var || mkdir var
 test -d var/svc.d || mkdir var/svc.d
 test -d var/svc.d/svscan || mkdir var/svc.d/svscan
@@ -395,8 +395,8 @@ fi
 
 <include_file name="package/boot.inittab" mode="0644"><![CDATA[
 
-SV:2345:respawn:/command/svscan.rc start
-SZ:S016:once:/command/svscan.rc stop
+SV:2345:respawn:/command/svscan.rc start < /dev/null
+SZ:S016:once:/command/svscan.rc stop < /dev/null
 ]]></include_file>
 
 <include_file name="package/run.rclocal" mode="0755"><![CDATA[
