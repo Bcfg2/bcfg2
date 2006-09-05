@@ -302,7 +302,7 @@ if [ "${1}x" = "x" -o "${2}x" != "x" ]; then
     exit 1
 fi
 SERVICE="`basename ${1}`"
-if [ ! -e "/service/$SERVICE" ]; then
+if [ ! -h "/service/$SERVICE" -a ! -f "/service/$SERVICE" ]; then
     printf "Service \"${SERVICE}\" not installed. Installed services:\n"
     svstat /service/*
     exit 1
