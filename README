@@ -1,0 +1,15 @@
+Bcfg2 is a configuration management system. It helps system administrators
+deploy complex changes across large numbers of systems in a coherent and 
+transparent fashion. 
+
+Much documentation is available on the Bcfg2 web site, at:
+http://www.bcfg2.org
+
+For a basic installation of bcfg2, (ignoring prerequisites) can be performed 
+by running the command:
+$ python setup install --prefix=/install/prefix
+
+This command will install all code and binaries in that prefix. If the installation
+prefix is not /usr, or the python installation prefix, then the environment variable
+PYTHONPATH will need to be adjusted to point at the bcfg2 libraries installed into:
+$ PYTHONPATH=/install/prefix/lib/python2.X/site-packages
