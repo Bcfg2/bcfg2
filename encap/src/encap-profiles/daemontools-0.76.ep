@@ -395,7 +395,7 @@ fi
 
 <include_file name="package/boot.inittab" mode="0644"><![CDATA[
 
-SV:2345:respawn:/command/svscan.rc start < /dev/null
+SV:2345:respawn:/command/svscan.rc start < /dev/null > /tmp/svscan.rc.log 2>&1
 SZ:S016:once:/command/svscan.rc stop < /dev/null
 ]]></include_file>
 
