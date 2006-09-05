@@ -56,7 +56,7 @@ class Hostbase(Plugin):
 ##             raise PluginInitError
         self.filedata = {}
         self.dnsservers = []
-        self.dhcpservers = []
+        self.dhcpservers = ['scotty']
         self.templates = {'zone':Template(open(self.data + '/templates/' + 'zone.tmpl').read()),
                           'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
                           'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
@@ -67,8 +67,11 @@ class Hostbase(Plugin):
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
-        self.rebuildState()
-
+        try:
+            self.rebuildState()
+        except:
+            raise PluginInitError
+        
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
         fname = entry.get('name').split('/')[-1]
@@ -94,10 +97,7 @@ class Hostbase(Plugin):
     def rebuildState(self):
         '''Pre-cache all state information for hostbase config files'''
 
-        try:
-            from django.db import connection
-        except:
-            raise PluginInitError
+        from django.db import connection
         cursor = connection.cursor()
 
         cursor.execute("SELECT id, serial FROM hostbase_zone")
@@ -432,16 +432,16 @@ Name            Room        User                            Type                
         from django.db import connection
 
         header = """+@machines
-        +@all-machines
-        achilles.ctd.anl.gov
-        raven.ops.anl.gov
-        seagull.hr.anl.gov
-        parrot.ops.anl.gov
-        condor.ops.anl.gov
-        delphi.esh.anl.gov
-        anlcv1.ctd.anl.gov
-        anlvms.ctd.anl.gov
-        olivia.ctd.anl.gov\n\n"""
++@all-machines
+achilles.ctd.anl.gov
+raven.ops.anl.gov
+seagull.hr.anl.gov
+parrot.ops.anl.gov
+condor.ops.anl.gov
+delphi.esh.anl.gov
+anlcv1.ctd.anl.gov
+anlvms.ctd.anl.gov
+olivia.ctd.anl.gov\n\n"""
         
         cursor = connection.cursor()
         cursor.execute("""
