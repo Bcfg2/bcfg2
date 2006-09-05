@@ -80,9 +80,13 @@ BCFG2_SITE="$BSEP"
 cp $BSDIR/$BCFG2_SITE $DISTDIR
 
 # Create setup.sh in $DISTDIR
+if [ "`uname`x" = "SunOSx" ]; then
+    printf "#!/bin/ksh\n\n" > $DISTDIR/setup.sh
+else
+    printf "#!/bin/sh\n\n" > $DISTDIR/setup.sh
+fi
 ######################################################################
-cat > $DISTDIR/setup.sh << EOF
-#!/bin/sh
+cat >> $DISTDIR/setup.sh << EOF
 
 # \$Id$
 
@@ -154,10 +158,10 @@ getpasswd() {
     stty -echo
     trap "stty echo ; echo 'Interrupted' ; exit 1" 1 2 3 15
     printf "Enter \$1 password: "
-    read password1
+    read -r password1
     printf "\n"
     printf "Enter \$1 password again: "
-    read password2
+    read -r password2
     printf "\n"
     stty echo
     if [ "\${password1}x" != "\${password2}x" ]; then
