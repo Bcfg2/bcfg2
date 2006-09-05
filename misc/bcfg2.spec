@@ -7,7 +7,7 @@ Summary: Bcfg2 Client
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Source0: %{name}-%{version}.tar.gz
+Source0: ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
 License: BSD-like
 Group: System Tools
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -15,7 +15,7 @@ Prefix: %{_prefix}
 BuildArchitectures: noarch
 Vendor: Narayan Desai <desai@mcs.anl.gov>
 PreReq: lsb >= 3.0
-Requires: lxml, python
+Requires: lxml >= 0.9, python
 
 %description
 Bcfg2 is a configuration management tool.
@@ -24,7 +24,11 @@ Bcfg2 is a configuration management tool.
 Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
-Requires: lxml, pyOpenSSL
+Requires: bcfg2, pyOpenSSL
+%if "%{_vendor}" == "redhat"
+Requires: gamin-python
+%endif
+
 
 %description -n bcfg2-server
 Bcfg2 client
@@ -33,27 +37,28 @@ Bcfg2 client
 %setup -q
 
 %build
-python%{pythonversion} setup.py build
+%{__python}%{pythonversion} setup.py build
 
 %install
-python%{pythonversion} setup.py install --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
-mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
-mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
-mkdir -p ${RPM_BUILD_ROOT}/etc/default
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily/
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly/
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib/bcfg2/
-mv ${RPM_BUILD_ROOT}/usr/bin/bcfg2* ${RPM_BUILD_ROOT}/usr/sbin
-mv ${RPM_BUILD_ROOT}/usr/bin/StatReports ${RPM_BUILD_ROOT}/usr/sbin
-install -m 755 debian/buildsys/common/bcfg2.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2
-install -m 755 debian/buildsys/common/bcfg2-server.init ${RPM_BUILD_ROOT}/etc/init.d/bcfg2-server
-install -m 755 debian/bcfg2.default ${RPM_BUILD_ROOT}/etc/default/bcfg2
-install -m 755 debian/bcfg2.cron.daily ${RPM_BUILD_ROOT}/etc/cron.daily/bcfg2
-install -m 755 debian/bcfg2.cron.hourly ${RPM_BUILD_ROOT}/etc/cron.hourly/bcfg2
-install -m 755 tools/bcfg2-cron ${RPM_BUILD_ROOT}/usr/lib/bcfg2/bcfg2-cron
+%{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES
+%{__install} -d %{buildroot}/usr/bin
+%{__install} -d %{buildroot}/usr/sbin
+%{__install} -d %{buildroot}/etc/init.d
+%{__install} -d %{buildroot}/etc/default
+%{__install} -d %{buildroot}/etc/cron.daily
+%{__install} -d %{buildroot}/etc/cron.hourly
+%{__install} -d %{buildroot}/usr/lib/bcfg2
+%{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}/usr/sbin
+%{__mv} %{buildroot}/usr/bin/StatReports %{buildroot}/usr/sbin
+%{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}/etc/init.d/bcfg2
+%{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}/etc/init.d/bcfg2-server
+%{__install} -m 755 debian/bcfg2.default %{buildroot}/etc/default/bcfg2
+%{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}/etc/cron.daily/bcfg2
+%{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}/etc/cron.hourly/bcfg2
+%{__install} -m 755 tools/bcfg2-cron %{buildroot}/usr/lib/bcfg2/bcfg2-cron
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+[ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
 
 %files -n bcfg2-server
 %defattr(-,root,root)
@@ -82,4 +87,4 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/bcfg2/bcfg2-cron
 
 %post -n bcfg2-server
-chkconfig --add bcfg2-server
+/sbin/chkconfig --add bcfg2-server
