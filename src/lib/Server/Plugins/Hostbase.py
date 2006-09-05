@@ -4,6 +4,8 @@ __revision__ = '$Revision$'
 from lxml.etree import Element, SubElement
 from django.db import connection
 from syslog import syslog, LOG_INFO
+sys.path.append("/disks/bcfg2/Hostbase")
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
@@ -153,7 +155,6 @@ class Hostbase(Plugin):
             """ % zone[1]
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
-##             hosts[zone[1]] = zonehosts
             prevhost = (None, None, None, None)
             for host in zonehosts:
                 if not host[0].split(".", 1)[1] == zone[1]:
