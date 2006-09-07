@@ -101,13 +101,6 @@ function toggleInter(){
 div#ipaddr${interface.id}{
    display: none;
 }
-<!-- 
-#for $ip in $ips[$interface.id]
-div#dns${ip.id}{
-   display: none;
-}
-#end for
--->
 #end for
 div#interface{
    display: none;
@@ -130,7 +123,16 @@ ok, submitted
    <tr> <td> <b>hostname</b></td>
    <td> <input name="hostname" type="text" value="$host.hostname"></td></tr>
    <tr> <td> <b>whatami</b></td>
-   <td> <input name="whatami" type="text" value="$host.whatami"></td></tr>
+   <td> 
+   <select name="whatami">
+   #for $choice in $host.WHATAMI_CHOICES
+       #if $host.whatami == $choice[0]
+           <option value="$choice[0]" selected="selected">$choice[1]
+       #else
+           <option value="$choice[0]">$choice[1]
+       #end if
+   #end for
+   </select></td></tr>
    <tr> <td> <b>netgroup</b></td>
    <td>
    <select name="netgroup">

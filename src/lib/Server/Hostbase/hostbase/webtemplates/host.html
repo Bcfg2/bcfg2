@@ -131,8 +131,12 @@
    <td> $ip.ip_addr</td></tr>
    #end for
    #end for
-   <tr> <td> <b>comments</b></td>
-   <td> $host.comments</td></tr>
+   <tr> <td valign="top"> <b>comments</b></td>
+   <td> 
+   #for $line in $host.comments.split("\n")
+   $line<br>
+   #end for
+   </td></tr>
 
 </table>
 <a style="font-size:75%" href="/hostbase/$host.id/dns/">see detailed DNS information for this host</a>

@@ -19,6 +19,25 @@ class Host(models.Model):
         ('operations','operations'),('guest','guest'),
         ('confidential','confidential'),('public','public')
         )
+    WHATAMI_CHOICES = (
+        ('aix-3', 'aix-3'), ('aix-4', 'aix-4'),
+        ('aix-5', 'aix-5'), ('baytech', 'baytech'),
+        ('decserver', 'decserver'), ('dialup', 'dialup'),
+        ('dos', 'dos'), ('freebsd', 'freebsd'),
+        ('hpux', 'hpux'), ('irix-5', 'irix-5'),
+        ('irix-6', 'irix-6'), ('linux', 'linux'),
+        ('linux-2', 'linux-2'), ('linux-rh73', 'linux-rh73'),
+        ('linux-rh80', 'linux-rh80'), ('linux-sles80', 'linux-sles80'),
+        ('linux-sles80-64', 'linux-sles80-64'), ('linux-sles80-ia32', 'linux-sles80-ia32'),
+        ('linux-sles80-ia64', 'linux-sles80-ia64'), ('mac', 'mac'),
+        ('network', 'network'), ('next', 'next'),
+        ('none', 'none'), ('osf', 'osf'), ('printer', 'printer'),
+        ('robot', 'robot'), ('solaris-2', 'solaris-2'),
+        ('sun4', 'sun4'), ('unknown', 'unknown'), ('virtual', 'virtual'),
+        ('win31', 'win31'), ('win95', 'win95'),
+        ('winNTs', 'winNTs'), ('winNTw', 'winNTw'),
+        ('win2k', 'win2k'), ('winXP', 'winXP'), ('xterm', 'xterm')
+        )
     hostname = models.CharField(maxlength=64)
     whatami = models.CharField(maxlength=16)
     netgroup = models.CharField(maxlength=32, choices=NETGROUP_CHOICES)

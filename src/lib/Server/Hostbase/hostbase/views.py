@@ -6,11 +6,13 @@ Also has does form validation
 __revision__ = 0.1
 
 from django.http import HttpResponse, HttpResponseRedirect
-from models import *
+from hostbase.models import *
 from Cheetah.Template import Template
 from datetime import date
 from django.db import connection
 import re
+
+templatedir = '/usr/lib/python2.3/site-packages/Hostbase/hostbase/webtemplates'
 
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
@@ -88,11 +90,11 @@ def search(request):
             cursor.execute(querystring)
             results = cursor.fetchall()
         
-        temp = Template(open('./hostbase/webtemplates/results.html').read())
+        temp = Template(open('%s/results.html' % templatedir).read())
         temp.hosts = results
         return HttpResponse(str(temp))
     else:
-        temp = Template(open('./hostbase/webtemplates/search.html').read())
+        temp = Template(open('%s/search.html' % templatedir).read())
         temp.TYPE_CHOICES = Interface.TYPE_CHOICES
         temp.DNS_CHOICES = Name.DNS_CHOICES
         temp.yesno = [(1, 'yes'), (0, 'no')]
@@ -100,13 +102,13 @@ def search(request):
 
 def look(request, host_id):
     """Displays general host information"""
-    temp = Template(open('./hostbase/webtemplates/host.html').read())
+    temp = Template(open('%s/host.html' % templatedir).read())
     hostdata = gethostdata(host_id)
     temp = fill(temp, hostdata)
     return HttpResponse(str(temp))
     
 def dns(request, host_id):
-    temp = Template(open('./hostbase/webtemplates/dns.html').read())
+    temp = Template(open('%s/dns.html' % templatedir).read())
     hostdata = gethostdata(host_id, True)
     temp = fill(temp, hostdata, True)
     return HttpResponse(str(temp))
@@ -247,12 +249,12 @@ def edit(request, host_id):
             host.save()
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
-            t = Template(open('./hostbase/webtemplates/errors.html').read())
+            t = Template(open('%s/errors.html' % templatedir).read())
             t.failures = validate(request, False, host_id)
             return HttpResponse(str(t))
         # examine the check boxes for any changes
     else:
-        t = Template(open('./hostbase/webtemplates/edit.html').read())
+        t = Template(open('%s/edit.html' % templatedir).read())
         hostdata = gethostdata(host_id)
         t = fill(t, hostdata)
         t.type_choices = Interface.TYPE_CHOICES
@@ -287,7 +289,7 @@ def confirm(request, item, item_id, host_id, name_id=None):
         else:
             return HttpResponseRedirect('/hostbase/%s/edit' % host_id)
     else:
-        temp = Template(open('./hostbase/webtemplates/confirm.html').read())
+        temp = Template(open('%s/confirm.html' % templatedir).read())
         interface = None
         ips = []
         names = {}
@@ -375,7 +377,7 @@ def dnsedit(request, host_id):
                     name.mxs.add(mx)
         return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
     else:
-        temp = Template(open('./hostbase/webtemplates/dnsedit.html').read())
+        temp = Template(open('%s/dnsedit.html' % templatedir).read())
         hostdata = gethostdata(host_id, True)
         temp = fill(temp, hostdata, True)
         temp.request = request
@@ -430,7 +432,7 @@ def new(request):
             host.status = 'active'
             host.save()
         else:
-            temp = Template(open('./hostbase/webtemplates/errors.html').read())
+            temp = Template(open('%s/errors.html' % templatedir).read())
             temp.failures = validate(request, True)
             return HttpResponse(str(temp))
         if request.POST['mac_addr_new']:
@@ -553,7 +555,7 @@ def new(request):
         host.save()
         return HttpResponseRedirect('/hostbase/%s/' % host.id)
     else:
-        temp = Template(open('./hostbase/webtemplates/new.html').read())
+        temp = Template(open('%s/new.html' % templatedir).read())
         temp.TYPE_CHOICES = Interface.TYPE_CHOICES
         temp.NETGROUP_CHOICES = Host.NETGROUP_CHOICES
         temp.CLASS_CHOICES = Host.CLASS_CHOICES
@@ -652,3 +654,29 @@ def validate(request, new=False, host_id=None):
     if not failures:
         return 0
     return failures
+
+def push(request):
+    if request.GET.has_key('sub'):
+        # do xmlrpc function here
+        return HttpResponse("TBD")
+    else:
+        temp = Template(open('%s/push.html' % templatedir).read())
+        temp.dirtyhosts = Host.objects.filter(dirty=True)
+        return HttpResponse(str(temp))
+
+def zones(request):
+    zones = Zone.objects.all()
+    temp = Template(open('%s/zones.html' % templatedir).read())
+    temp.zones = zones
+    return HttpResponse(str(temp))
+
+def zoneview(request, zone_id):
+    zone = Zone.objects.get(id=zone_id)
+    temp = Template(open('%s/zoneview.html' % templatedir).read())
+    temp.zone = zone
+    aux = zone.aux.split('\n')
+    temp.aux = aux
+    temp.nameservers = zone.nameservers.all()
+    temp.mxs = zone.mxs.all()
+    temp.addresses = zone.addresses.all()
+    return HttpResponse(str(temp))
