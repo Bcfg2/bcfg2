@@ -81,7 +81,7 @@
     <td nowrap><table width="100%" border="0" cellpadding="5" cellspacing="0"> 
         <tr> 
           <td><!-- InstanceBeginEditable name="mainFeature" --> 
-#if $hosts
+{% if hosts %}
 <table border="0" width="100%">
    <colgroup>
    <col width="200">
@@ -91,22 +91,22 @@
    <tr> <td><b>hostname</b></td>
    <td> <b>status</b> </td>
    </tr>
-   #for $host in $hosts
-   <tr> <td> $host[0]</td>
-   #if $host[2]
+   {% for host in hosts %}
+   <tr> <td>{{ host.0 }}</td>
+   {% if host.2 %}
    <td> active </td>
-   #else
+   {% else %}
    <td> inactive </td>
-   #end if
-   <td> <a href="$host[1]">view</a> </td>
-   <td> <a href="$host[1]/edit">edit</a> </td>
+   {% endif %}
+   <td> <a href="{{ host.1 }}">view</a> </td>
+   <td> <a href="{{ host.1 }}/edit">edit</a> </td>
    </tr>
-   #end for
+   {% endfor %}
 </table>
-#else
+{% else %}
 No hosts matched your query<br>
 Click the back button on your browser to edit your search
-#end if
+{% endif %}
             <!-- InstanceEndEditable --></td> 
         </tr> 
     </table></td>

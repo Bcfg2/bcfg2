@@ -94,7 +94,7 @@ class Hostbase(Plugin):
             SubElement(output, "ConfigFile", name="/etc/dhcpd.conf")
         return [output]
 
-    def rebuildState(self):
+    def rebuildState(self, _):
         '''Pre-cache all state information for hostbase config files'''
 
         from django.db import connection
@@ -517,3 +517,7 @@ olivia.ctd.anl.gov\n\n"""
                 fileoutput += each + "\n"
             self.filedata['%s-machines' % netgroup] = fileoutput
             self.Entries['ConfigFile']['%s-machines' % netgroup] = self.FetchFile
+
+        cursor.execute("""
+        UPDATE hostbase_host SET dirty=0
+        """)

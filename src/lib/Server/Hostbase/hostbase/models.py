@@ -54,6 +54,7 @@ class Host(models.Model):
     expiration_date = models.DateField(null=True, blank=True)
     last = models.DateField(auto_now=True, auto_now_add=True)
     status = models.CharField(maxlength=7, choices=STATUS_CHOICES)
+    dirty = models.BooleanField()
 
     class Admin:
         list_display = ('hostname', 'last')

@@ -10,6 +10,7 @@ from hostbase.models import *
 from Cheetah.Template import Template
 from datetime import date
 from django.db import connection
+from django.shortcuts import render_to_response
 import re
 
 templatedir = '/usr/lib/python2.3/site-packages/Hostbase/hostbase/webtemplates'
@@ -90,9 +91,7 @@ def search(request):
             cursor.execute(querystring)
             results = cursor.fetchall()
         
-        temp = Template(open('%s/results.html' % templatedir).read())
-        temp.hosts = results
-        return HttpResponse(str(temp))
+        return render_to_response('%s/results.html' % templatedir, {'hosts': results})
     else:
         temp = Template(open('%s/search.html' % templatedir).read())
         temp.TYPE_CHOICES = Interface.TYPE_CHOICES

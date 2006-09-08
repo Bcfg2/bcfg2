@@ -100,49 +100,49 @@
    <tr> <td> <b>printq</b></td>
    <td> $host.printq</td></tr>
    <tr> <td> <b>dhcp</b></td>
-   #if $host.dhcp
+   {% if host.dhcp %}
    <td> y </td></tr>
-   #else
+   {% else %}
    <td> n </td></tr>
-   #end if
+   {% endif %}
    <tr> <td> <b>outbound_smtp</b></td>
-   #if $host.outbound_smtp
+   {% if host.outbound_smtp %}
    <td> y </td></tr>
-   #else
+   {% else %}
    <td> n </td></tr>
-   #end if
+   {% endif %}
    <tr> <td> <b>primary_user</b></td>
-   <td> $host.primary_user</td></tr>
+   <td> {{ host.primary_user }}</td></tr>
    <tr> <td> <b>administrator</b></td>
-   <td> $host.administrator</td></tr>
+   <td> {{ host.administrator }}</td></tr>
    <tr> <td> <b>location</b></td>
-   <td> $host.location</td></tr>
+   <td> {{ host.location }}</td></tr>
    <tr> <td> <b>expiration_date</b></td>
-   <td> $host.expiration_date</td></tr>
-   #for $interface in $interfaces
+   <td> {{ host.expiration_date }}</td></tr>
+   {% for interface in interfaces %}
    <tr> <td><br><b>Interface</b></td>
-   #if $interface.hdwr_type != 'no'
-   <td><br>$interface.hdwr_type </td></tr>
-   #end if
+   {% ifnotequal interface.hdwr_type 'no' %}
+   <td><br>{{ interface.hdwr_type }}</td></tr>
+   {% endif %}
    <tr> <td> <b>mac_addr</b></td>
-   <td> $interface.mac_addr </b></td></tr>
-   #for $ip in $ips[$interface.id]
+   <td> {{ interface.mac_addr }}</b></td></tr>
+   {% for ip in ips.{{ interface.id }} %}
    <tr> <td> <b>ip_addr</b></td>
-   <td> $ip.ip_addr</td></tr>
-   #end for
-   #end for
+   <td> {{ ip.ip_addr }}</td></tr>
+   {% endfor %}
+   {% endfor %}
    <tr> <td valign="top"> <b>comments</b></td>
    <td> 
-   #for $line in $host.comments.split("\n")
-   $line<br>
-   #end for
+   {% for line in host.comments.split("\n") %}
+   {{ line }}<br>
+   {% endfor %}
    </td></tr>
 
 </table>
-<a style="font-size:75%" href="/hostbase/$host.id/dns/">see detailed DNS information for this host</a>
+<a style="font-size:75%" href="/hostbase/{{ host.id }}/dns/">see detailed DNS information for this host</a>
 <br><br>
-this host is $host.status<br>
-last update on $host.last<br>
+this host is {{ host.status }}<br>
+last update on {{ host.last }}<br>
             <!-- InstanceEndEditable --></td> 
         </tr> 
     </table></td>
