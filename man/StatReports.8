@@ -1,0 +1,28 @@
+.TH "StatReports" 8
+.SH NAME
+StatReports \- Generate State reports for bcfg2 clients
+.SH SYNOPSIS
+.B StatReports
+.SH DESCRIPTION
+.PP
+.B StatReports
+Build all client state reports. See the Bcfg2 manual for report setup information.
+.SH OPTIONS
+.PP
+.B \-c <configuration file>
+.RS
+Specify an alternate report configuration path. The default is repo/etc/reports-configuration.xml
+.RE
+.B \-h
+.RS
+Produce a help message
+.RE
+.B "\-s <statistics Path>"
+.RS
+Use an alternative path for the statistics file. The default is repo/etc/statistics.xml
+.RE
+.SH "SEE ALSO"
+.BR bcfg(1),
+.BR Bcfg2Server(8)
+.SH "BUGS"
+None currently known
