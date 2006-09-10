@@ -1,3 +1,9 @@
+bcfg2 (0.8.3-2) unstable; urgency=low
+
+  * fix an init script bug
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Sun, 10 Sep 2006 16:08:04 -0500
+
 bcfg2 (0.8.3-1) unstable; urgency=low
 
   * final release!
