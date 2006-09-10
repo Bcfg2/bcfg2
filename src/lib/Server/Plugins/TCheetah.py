@@ -24,7 +24,7 @@ class TemplateFile(FileBacked):
 
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
-        self.metadata = metadata
+        self.template.metadata = metadata
         try:
             entry.text = str(self.template)
         except:
