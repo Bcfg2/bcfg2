@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core, Bcfg2.Server.Metadata
+import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core, Bcfg2.Server.Metadata, Bcfg2.Server.Plugin
 
 def printTabular(rows):
     '''print data in tabular format'''
@@ -188,6 +188,8 @@ if __name__ == '__main__':
                     dispatch[ucmd[0]](ucmd, bcore)
                 except SystemExit, code:
                     raise SystemExit, code
+                except Bcfg2.Server.Plugin.PluginExecutionError:
+                    continue
                 except:
                     logger.error("command failure", exc_info=1)
             else:

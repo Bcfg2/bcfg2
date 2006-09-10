@@ -28,7 +28,7 @@ class TemplateFile(FileBacked):
         try:
             entry.text = str(self.template)
         except:
-            logger.error("Failed to template %s" % entry.get('name'))
+            logger.error("Failed to template %s" % entry.get('name'), exc_info=1)
             raise PluginExecutionError
         perms = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
@@ -87,7 +87,7 @@ class TCheetah(Plugin):
             if self.entries.has_key(identifier):
                 self.entries[identifier].HandleEvent(event)
         elif action == 'deleted':
-            if self.entries.has_key[identifier]:
+            if self.entries.has_key(identifier):
                 del self.entries[identifier]
                 del self.Entries['ConfigFile'][identifier]
                                  
