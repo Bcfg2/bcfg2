@@ -62,7 +62,7 @@ ROOT_URLCONF = 'Hostbase.urls'
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.
-    '/disks/bcfg2/Hostbase/hostbase/webtemplates'
+    '/usr/lib/python2.3/site-packages/Hostbase/hostbase/webtemplates'
 )
 
 INSTALLED_APPS = (

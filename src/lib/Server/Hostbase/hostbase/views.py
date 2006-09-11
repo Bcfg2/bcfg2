@@ -100,11 +100,16 @@ def search(request):
 
 def look(request, host_id):
     """Displays general host information"""
-    temp = Template(open('%s/host.html' % templatedir).read())
-    hostdata = gethostdata(host_id)
-    temp = fill(temp, hostdata)
-    return HttpResponse(str(temp))
-    
+    host = Host.objects.get(id=host_id)
+    interfaces = []
+    for interface in host.interface_set.all():
+        interfaces.append((interface, interface.ip_set.all()))
+    comments = [line for line in host.comments.split("\n")]
+    return render_to_response('%s/host.html' % templatedir,
+                              {'host': host,
+                               'interfaces': interfaces,
+                               'comments': comments})
+                                   
 def dns(request, host_id):
     temp = Template(open('%s/dns.html' % templatedir).read())
     hostdata = gethostdata(host_id, True)
