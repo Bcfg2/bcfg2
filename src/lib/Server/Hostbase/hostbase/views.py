@@ -93,11 +93,10 @@ def search(request):
         
         return render_to_response('%s/results.html' % templatedir, {'hosts': results})
     else:
-        temp = Template(open('%s/search.html' % templatedir).read())
-        temp.TYPE_CHOICES = Interface.TYPE_CHOICES
-        temp.DNS_CHOICES = Name.DNS_CHOICES
-        temp.yesno = [(1, 'yes'), (0, 'no')]
-        return HttpResponse(str(temp))
+        return render_to_response('%s/search.html' % templatedir,
+                                  {'TYPE_CHOICES': Interface.TYPE_CHOICES,
+                                   'DNS_CHOICES': Name.DNS_CHOICES,
+                                   'yesno': [(1, 'yes'), (0, 'no')]})
 
 def look(request, host_id):
     """Displays general host information"""
