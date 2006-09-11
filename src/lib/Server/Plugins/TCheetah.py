@@ -19,12 +19,13 @@ class TemplateFile(FileBacked):
     def Index(self):
         '''Create the template data structures'''
         self.template = Template(self.data, searchList=[self.properties])
-        self.template.properties = self.properties.properties
+        self.template.properties = self.properties
         # put in owner permission detection
 
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
         self.template.metadata = metadata
+        self.template.properties = self.properties.properties
         try:
             entry.text = str(self.template)
         except:
