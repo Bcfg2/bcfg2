@@ -158,6 +158,13 @@ class ConfigFileEntry(object):
         else:
             logger.error("Unhandled Action %s for file %s" % (action, event.filename))
 
+    def Diagnose(self, metadata):
+        '''Print diagnostic information for entry'''
+        logger.info("Entries available:")
+        logger.info([bfile.name for bfile in self.fragments])
+        logger.info("Applicable entries:")
+        logger.info([bfile.name for bfile in self.fragments if bfile.applies(metadata) and not bfile.op])
+
     def GetConfigFile(self, entry, metadata):
         '''Fetch config file from repository'''
         name = entry.attrib['name']
