@@ -449,7 +449,7 @@ class Toolset(object):
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
             if entry.get("paranoid", False) and self.setup.get("paranoid", False):
-                self.saferun("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
+                self.saferun("cp %s /var/cache/bcfg2/%s" % (entry.get('name'), entry.get('name')))
             os.rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), err:
