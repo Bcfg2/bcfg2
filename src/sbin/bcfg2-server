@@ -182,9 +182,10 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         # Versioned stats to prevent tied client/server upgrade
         if state.get('version') >= '2.0':
             client = self.Core.metadata.resolve_client(address[0])
+            meta = self.Core.metadata.get_metadata(client)
             
             # Update statistics
-            self.Core.stats.updateStats(sdata, client)
+            self.Core.stats.updateStats(sdata, meta.hostname)
 
         self.logger.info("Client %s reported state %s" % 
                          (client, state.attrib['state']))
