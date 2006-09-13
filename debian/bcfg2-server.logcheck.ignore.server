@@ -2,3 +2,4 @@
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ bcfg2-server\[[0-9]+\]: Processed [0-9]+ gamin events in [0-9.]+ seconds\. [0-9]+ coalesced$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ bcfg2-server\[[0-9]+\]: Generated config for [._[:alnum:]-]+ in [0-9.]+ seconds$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ bcfg2-server\[[0-9]+\]: Client [._[:alnum:]-]+ reported state (clean|dirty)$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ bcfg2-server\[[0-9]+\]: Suppressing event for bogus file .*$
