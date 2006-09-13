@@ -103,18 +103,61 @@ def look(request, host_id):
     host = Host.objects.get(id=host_id)
     interfaces = []
     for interface in host.interface_set.all():
-        interfaces.append((interface, interface.ip_set.all()))
-    comments = [line for line in host.comments.split("\n")]
+        interfaces.append([interface, interface.ip_set.all()])
     return render_to_response('%s/host.html' % templatedir,
                               {'host': host,
-                               'interfaces': interfaces,
-                               'comments': comments})
+                               'interfaces': interfaces})
                                    
 def dns(request, host_id):
-    temp = Template(open('%s/dns.html' % templatedir).read())
-    hostdata = gethostdata(host_id, True)
-    temp = fill(temp, hostdata, True)
-    return HttpResponse(str(temp))
+    host = Host.objects.get(id=host_id)
+    ips = []
+    info = []
+    cnames = []
+    mxs = []
+    for interface in host.interface_set.all():
+        ips.extend(interface.ip_set.all())
+    for ip in ips:
+        info.append([ip, ip.name_set.all()])
+        for name in ip.name_set.all():
+            cnames.extend(name.cname_set.all())
+            mxs.append((name.id, name.mxs.all()))
+    return render_to_response('%s/dns.html' % templatedir,
+                              {'host': host,
+                               'info': info,
+                               'cnames': cnames,
+                               'mxs': mxs})
+
+def gethostdata(host_id, dnsdata=False):
+    """Grabs the necessary data about a host
+    Replaces a lot of repeated code"""
+    hostdata = {}
+    hostdata['ips'] = {}
+    hostdata['names'] = {}
+    hostdata['cnames'] = {}
+    hostdata['mxs'] = {}
+    hostdata['host'] = Host.objects.get(id=host_id)
+    hostdata['interfaces'] = hostdata['host'].interface_set.all()
+    for interface in hostdata['interfaces']:
+        hostdata['ips'][interface.id] = interface.ip_set.all()
+        if dnsdata:
+            for ip in hostdata['ips'][interface.id]:
+                hostdata['names'][ip.id] = ip.name_set.all()
+                for name in hostdata['names'][ip.id]:
+                    hostdata['cnames'][name.id] = name.cname_set.all()
+                    hostdata['mxs'][name.id] = name.mxs.all()
+    return hostdata
+
+def fill(template, hostdata, dnsdata=False):
+    """Fills a generic template
+    Replaces a lot of repeated code"""
+    if dnsdata:
+        template.names = hostdata['names']
+        template.cnames = hostdata['cnames']
+        template.mxs = hostdata['mxs']
+    template.host = hostdata['host']
+    template.interfaces = hostdata['interfaces']
+    template.ips = hostdata['ips']
+    return template
 
 def edit(request, host_id):
     """Edit general host information
@@ -385,39 +428,6 @@ def dnsedit(request, host_id):
         temp = fill(temp, hostdata, True)
         temp.request = request
         return HttpResponse(str(temp))
-
-def gethostdata(host_id, dnsdata=False):
-    """Grabs the necessary data about a host
-    Replaces a lot of repeated code"""
-    hostdata = {}
-    hostdata['ips'] = {}
-    hostdata['names'] = {}
-    hostdata['cnames'] = {}
-    hostdata['mxs'] = {}
-    hostdata['host'] = Host.objects.get(id=host_id)
-    hostdata['interfaces'] = hostdata['host'].interface_set.all()
-    for interface in hostdata['interfaces']:
-        hostdata['ips'][interface.id] = interface.ip_set.all()
-        if dnsdata:
-            for ip in hostdata['ips'][interface.id]:
-                hostdata['names'][ip.id] = ip.name_set.all()
-                for name in hostdata['names'][ip.id]:
-                    hostdata['cnames'][name.id] = name.cname_set.all()
-                    hostdata['mxs'][name.id] = name.mxs.all()
-    return hostdata
-
-def fill(template, hostdata, dnsdata=False):
-    """Fills a generic template
-    Replaces a lot of repeated code"""
-    if dnsdata:
-        template.names = hostdata['names']
-        template.cnames = hostdata['cnames']
-        template.mxs = hostdata['mxs']
-    template.host = hostdata['host']
-    template.interfaces = hostdata['interfaces']
-    template.ips = hostdata['ips']
-    return template
-
     
 def new(request):
     """Function for creating a new host in hostbase
@@ -435,9 +445,8 @@ def new(request):
             host.status = 'active'
             host.save()
         else:
-            temp = Template(open('%s/errors.html' % templatedir).read())
-            temp.failures = validate(request, True)
-            return HttpResponse(str(temp))
+            return render_to_response('%s/errors.html' % templatedir,
+                                      {'failures': validate(request, True)})
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new'],
@@ -558,13 +567,11 @@ def new(request):
         host.save()
         return HttpResponseRedirect('/hostbase/%s/' % host.id)
     else:
-        temp = Template(open('%s/new.html' % templatedir).read())
-        temp.TYPE_CHOICES = Interface.TYPE_CHOICES
-        temp.NETGROUP_CHOICES = Host.NETGROUP_CHOICES
-        temp.CLASS_CHOICES = Host.CLASS_CHOICES
-        temp.SUPPORT_CHOICES = Host.SUPPORT_CHOICES
-        temp.failures = False
-        return HttpResponse(str(temp))
+        return render_to_response('%s/new.html' % templatedir,
+                                  {'TYPE_CHOICES': Interface.TYPE_CHOICES,
+                                   'NETGROUP_CHOICES': Host.NETGROUP_CHOICES,
+                                   'CLASS_CHOICES': Host.CLASS_CHOICES,
+                                   'SUPPORT_CHOICES': Host.SUPPORT_CHOICES})                                   
     
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
