@@ -1,27 +1,30 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
-from posixpath import isdir
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
-from lxml.etree import XML, XMLSyntaxError
-from Cheetah.Template import Template
+#from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
 
-import logging
+import logging, lxml.etree, posixpath, Cheetah.Template
+import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
-class TemplateFile(FileBacked):
+class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
     def __init__(self, name, properties):
-        FileBacked.__init__(self, name)
+        self.name = name
         self.properties = properties
-    
-    def Index(self):
-        '''Create the template data structures'''
-        self.template = Template(self.data, searchList=[self.properties])
-        self.template.properties = self.properties
-        # put in owner permission detection
+        self.states = {'template': False, 'info': False}
+        self.metadata = {'owner': 'root', 'group': 'root', 'perms': '644'}
 
+    def HandleEvent(self, event):
+        '''Handle all fs events for this template'''
+        if event.filename == 'template':
+            self.template = Cheetah.Template.Template(open(self.name).read())
+            self.template.properties = self.properties.properties
+        elif event.filename == 'info':
+            # read the metadata
+            pass
+    
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
         self.template.metadata = metadata
@@ -30,28 +33,27 @@ class TemplateFile(FileBacked):
             entry.text = str(self.template)
         except:
             logger.error("Failed to template %s" % entry.get('name'), exc_info=1)
-            raise PluginExecutionError
-        perms = {'owner':'root', 'group':'root', 'perms':'0644'}
-        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+            raise Bcfg2.Server.Plugin.PluginExecutionError
+        [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
 
-class CheetahProperties(SingleXMLFileBacked):
+class CheetahProperties(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     '''Class for Cheetah properties'''
     def Index(self):
         '''Build data into an elementtree object for templating usage'''
         try:
-            self.properties = XML(self.data)
+            self.properties = lxml.etree.XML(self.data)
             del self.data
-        except XMLSyntaxError:
+        except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse properties")
 
-class TCheetah(Plugin):
+class TCheetah(Bcfg2.Server.Plugin.Plugin):
     '''The TCheetah generator implements a templating mechanism for configuration files'''
     __name__ = 'TCheetah'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         if self.data[-1] == '/':
             self.data = self.data[:-1]
         self.Entries['ConfigFile'] = {}
@@ -71,24 +73,26 @@ class TCheetah(Plugin):
         if event.filename[0] == '/':
             return
         epath = "".join([self.data, self.handles[event.requestID], event.filename])
-        identifier = epath[len(self.data):]
+        if event.filename in ['info', 'template']:
+            identifier = self.handles[event.requestID][:-1]
+        else:
+            identifier = self.handles[event.requestID] + event.filename
         if action in ['exists', 'created']:
-            if isdir(epath):
+            if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             else:
                 if self.entries.has_key(identifier):
                     pass
                 else:
-                    #try:
                     self.entries[identifier] = TemplateFile(epath, self.properties)
                     self.entries[identifier].HandleEvent(event)
                     self.Entries['ConfigFile'][identifier] = self.BuildEntry
-                    #except:
         elif action == 'changed':
             if self.entries.has_key(identifier):
                 self.entries[identifier].HandleEvent(event)
         elif action == 'deleted':
-            if self.entries.has_key(identifier):
+            # the template file is the sentinal that creates a real entry
+            if event.filename == 'template' and self.entries.has_key(identifier):
                 del self.entries[identifier]
                 del self.Entries['ConfigFile'][identifier]
                                  
@@ -100,7 +104,7 @@ class TCheetah(Plugin):
             relative += '/'
         name = self.data + relative
         if relative not in self.handles.values():
-            if not isdir(name):
+            if not posixpath.isdir(name):
                 print "Cheetah: Failed to open directory %s" % (name)
                 return
             reqid = self.core.fam.AddMonitor(name, self)
