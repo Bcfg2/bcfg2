@@ -1,12 +1,12 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
-#from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, FileBacked, SingleXMLFileBacked
-
-import logging, lxml.etree, posixpath, Cheetah.Template
+import logging, lxml.etree, posixpath, re, Cheetah.Template
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
+info = re.compile('^owner:(\s)*(?P<owner>\w+)$|group:(\s)*(?P<group>\w+)$|' +
+                  'perms:(\s)*(?P<perms>\w+)$')
 
 class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
@@ -22,8 +22,21 @@ class TemplateFile:
             self.template = Cheetah.Template.Template(open(self.name).read())
             self.template.properties = self.properties.properties
         elif event.filename == 'info':
-            # read the metadata
-            pass
+            for line in open(self.name[:-8] + '/info').readlines():
+                match = info.match(line)
+                if not match:
+                    logger.warning("Failed to match line: %s"%line)
+                    continue
+                else:
+                    mgd = match.groupdict()
+                    if mgd['owner']:
+                        self.metadata['owner'] = mgd['owner']
+                    elif mgd['group']:
+                        self.metadata['group'] = mgd['group']
+                    elif mgd['perms']:
+                        self.metadata['perms'] = mgd['perms']
+                        if len(self.metadata['perms']) == 3:
+                            self.metadata['perms'] = "0%s" % (self.metadata['perms'])              
     
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
@@ -81,12 +94,10 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
             if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             else:
-                if self.entries.has_key(identifier):
-                    pass
-                else:
+                if not self.entries.has_key(identifier):
                     self.entries[identifier] = TemplateFile(epath, self.properties)
-                    self.entries[identifier].HandleEvent(event)
                     self.Entries['ConfigFile'][identifier] = self.BuildEntry
+                self.entries[identifier].HandleEvent(event)
         elif action == 'changed':
             if self.entries.has_key(identifier):
                 self.entries[identifier].HandleEvent(event)
