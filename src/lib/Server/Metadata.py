@@ -13,11 +13,12 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, toolset):
+    def __init__(self, client, groups, bundles, toolset, categories):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
         self.toolset = toolset
+        self.categories = categories
 
 class Metadata:
     '''This class contains data for bcfg2 server metadata'''
@@ -66,7 +67,7 @@ class Metadata:
                     
                 self.clients.update({client.get('name'): client.get('profile')})
                 [self.aliases.update({alias.get('name'): client.get('name')}) for alias in client.findall('Alias')]
-        else:
+        elif filename == 'groups.xml':
             self.public = []
             self.profiles = []
             self.toolsets = {}
@@ -88,8 +89,8 @@ class Metadata:
                 if group.attrib.has_key('category'):
                     self.categories[group.get('name')] = group.get('category')
             for group in grouptmp:
-                self.groups[group] = ([], [])
-                gcategories = []
+                # self.groups[group] => (bundles, groups, categories)
+                self.groups[group] = ([], [], {})
                 tocheck = [group]
                 while tocheck:
                     now = tocheck.pop()
@@ -98,11 +99,11 @@ class Metadata:
                     if grouptmp.has_key(now):
                         (bundles, groups) = grouptmp[now]
                         for ggg in [ggg for ggg in groups if ggg not in self.groups[group][1]]:
-                            if not self.categories.has_key(ggg) or (self.categories[ggg] not in gcategories):
+                            if not self.categories.has_key(ggg) or not self.groups[group][2].has_key(self.categories[ggg]):
                                 self.groups[group][1].append(ggg)
                                 tocheck.append(ggg)
                             if self.categories.has_key(ggg):
-                                gcategories.append(self.categories[ggg])
+                                self.groups[group][2][self.categories[ggg]] = ggg
                         [self.groups[group][0].append(bund) for bund in bundles
                          if bund not in self.groups[group][0]]
         self.states[filename] = True
@@ -175,7 +176,7 @@ class Metadata:
         if self.aliases.has_key(client):
             client = self.aliases[client]
         if self.clients.has_key(client):
-            [bundles, groups] = self.groups[self.clients[client]]
+            (bundles, groups, categories) = self.groups[self.clients[client]]
         else:
             if self.default == None:
                 self.logger.error("Cannot set group for client %s; no default group set" % (client))
@@ -188,7 +189,7 @@ class Metadata:
             self.logger.error("Cannot determine toolset for client %s" % (client))
             raise MetadataConsistencyError
         toolset = toolinfo[0]
-        return ClientMetadata(client, groups, bundles, toolset)
+        return ClientMetadata(client, groups, bundles, toolset, categories)
         
     def ping_sweep_clients(self):
         '''Find live and dead clients'''
