@@ -533,8 +533,11 @@ class Toolset(object):
                         self.RestartService(svc)
             
         for entry in self.structures:
-            if [strent for strent in entry.getchildren() if not self.states.get(strent, False)]:
+            leftovers = [strent for strent in entry.getchildren() if not self.states.get(strent, False)]
+            if len(leftovers) > 0:
                 self.logger.info("%s %s incomplete" % (entry.tag, entry.get('name', "")))
+                self.logger.verbose("Incorrect entries:")
+                self.logger.verbose(["%s: %s" % (left.tag, left.get('name')) for left in leftovers])
             else:
                 self.structures[entry] = True
 
