@@ -13,7 +13,7 @@ def ShouldIgnore(event):
     '''Test if the event should be suppresed'''
     if event.filename.split('/')[-1] == '.svn':
         return True
-    if event.filename.endswith('~') or event.filename.endswith('.tmp')
+    if event.filename.endswith('~') or event.filename.endswith('.tmp') \
     or event.filename.endswith('.tmp'):
         logger.error("Suppressing event for file %s" % (event.filename))
         return True
