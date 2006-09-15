@@ -536,8 +536,8 @@ class Toolset(object):
             leftovers = [strent for strent in entry.getchildren() if not self.states.get(strent, False)]
             if len(leftovers) > 0:
                 self.logger.info("%s %s incomplete" % (entry.tag, entry.get('name', "")))
-                self.logger.verbose("Incorrect entries:")
-                self.logger.verbose(["%s: %s" % (left.tag, left.get('name')) for left in leftovers])
+                self.logger.info("Incorrect entries:")
+                self.logger.info(["%s: %s" % (left.tag, left.get('name')) for left in leftovers])
             else:
                 self.structures[entry] = True
 
@@ -571,15 +571,15 @@ class Toolset(object):
         #ask user for each entry
         work = self.pkgwork['add'] + self.pkgwork['update']
         work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
-	self.iinst = [];
-	for entry in work:
-	    try:
-                if raw_input("Would you like to install %s: %s? (y/N): " % (entry.tag, entry.get('name'))) in ['y','Y']:
-	            self.iinst.append((entry.tag, entry.get('name')))
+        self.iinst = [];
+        for entry in work:
+            try:
+                if raw_input("Would you like to install %s: %s? (y/N): " % (entry.tag, entry.get('name'))) in ['y', 'Y']:
+                    self.iinst.append((entry.tag, entry.get('name')))
             except:
-	        continue
-	self.logger.info("You chose to install:")
-	self.logger.info(['%s:%s' % item for item in self.iinst])
+                continue
+        self.logger.info("You chose to install:")
+        self.logger.info(['%s:%s' % item for item in self.iinst])
 
     def Install(self):
         '''Correct detected misconfigurations'''
@@ -603,8 +603,8 @@ class Toolset(object):
         # add non-package entries
         work += [ent for ent in self.states if ent.tag != 'Package' and not self.states[ent]]
 
-	if self.setup['interactive']:
-	    work = [entry for entry in work if (entry.tag, entry.get('name')) in self.iinst]
+        if self.setup['interactive']:
+            work = [entry for entry in work if (entry.tag, entry.get('name')) in self.iinst]
 
         # Counters
         ## Packages left to install
