@@ -49,7 +49,6 @@ Bcfg2 client
 %{__install} -d %{buildroot}/etc/cron.hourly
 %{__install} -d %{buildroot}/usr/lib/bcfg2
 %{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}/usr/sbin
-%{__mv} %{buildroot}/usr/bin/StatReports %{buildroot}/usr/sbin
 %{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}/etc/init.d/bcfg2
 %{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}/etc/init.d/bcfg2-server
 %{__install} -m 755 debian/bcfg2.default %{buildroot}/etc/default/bcfg2
@@ -62,11 +61,7 @@ Bcfg2 client
 
 %files -n bcfg2-server
 %defattr(-,root,root)
-/usr/sbin/bcfg2-server
-/usr/sbin/bcfg2-repo-validate
-/usr/sbin/bcfg2-info
-/usr/sbin/StatReports
-/usr/bin/GenerateHostInfo
+/usr/sbin/bcfg2-*
 /usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Server/*
 /usr/share/bcfg2/schemas/*
 /usr/share/bcfg2/xsl-transforms/*
