@@ -2,16 +2,15 @@
 
 import lxml.etree, sys, ConfigParser
 
-#this will be replaced by redeadin config file, but I am in a hurry right now
 CP = ConfigParser.ConfigParser()
 CP.read(['/etc/bcfg2.conf'])
 try:
     prefix = CP.get('server', 'repository')
 except:
-    prefix = "/disks/bcfg2"
+    prefix = "/var/lib/bcfg2"
 
 if len(sys.argv) < 2:
-    print "Usage client-query.py -d|u|p <profile name>"
+    print "Usage bcfg2-query -d|u|p <profile name>"
     print "\t -d\t\t shows the clients that are currently down"
     print "\t -u\t\t shows the clients that are currently up"
     print "\t -p <profile name>\t shows all the clients of that profile"
@@ -30,9 +29,3 @@ for client in xml.findall('.//Client'):
             print client.get("name")
     elif '-a' in sys.argv:
         print client.get("name")
-
-
-        
-
-
-                                                                                               
