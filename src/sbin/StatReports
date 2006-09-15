@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-#Jun 7 2005
-#StatReports - Joey Hagedorn - hagedorn@mcs.anl.gov
-
-'''StatReports Generates & distributes reports of statistic information
+'''bcfg2-build-reports Generates & distributes reports of statistic information
 for bcfg2'''
 __revision__ = '$Revision$'
 
@@ -163,11 +160,11 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(sys.argv[1:], "C:hc:s:", ["help", "config=", "stats="])
     except getopt.GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]" % (mesg) 
+        print "%s\nUsage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
-            print "Usage:\nStatReports.py [-h] [-c <configuration-file>] [-s <statistics-file>]"
+            print "Usage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]"
             raise SystemExit
         if o in ("-c", "--config"):
             configpath = a
@@ -188,17 +185,17 @@ if __name__ == '__main__':
     try:
         statsdata = XML(open(statpath).read())
     except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s"%(statpath))
+        print("bcfg2-build-reports: Failed to parse %s"%(statpath))
         raise SystemExit, 1
     try:
         configdata = XML(open(configpath).read())
     except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s"%(configpath))
+        print("bcfg2-build-reports: Failed to parse %s"%(configpath))
         raise SystemExit, 1
     try:
         clientsdata = XML(open(clientsdatapath).read())
     except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s"%(clientsdatapath))
+        print("bcfg2-build-reports: Failed to parse %s"%(clientsdatapath))
         raise SystemExit, 1
 
     #Merge data from three sources
@@ -241,14 +238,14 @@ if __name__ == '__main__':
             try: #make sure valid stylesheet is selected
                 os.stat(transformpath + transform)
             except:
-                print("StatReports: Invalid report type or delivery mechanism.\n Can't find: "\
+                print("bcfg2-build-reports: Invalid report type or delivery mechanism.\n Can't find: "\
                       + transformpath + transform)
                 raise SystemExit, 1
 
             try: #try to parse stylesheet
                 stylesheet = XSLT(parse(transformpath + transform))
             except:
-                print("StatReports: invalid XSLT transform file.")
+                print("bcfg2-build-reports: invalid XSLT transform file.")
                 raise SystemExit, 1
                 
             if deliverymechanism == 'mail':
