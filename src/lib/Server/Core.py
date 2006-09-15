@@ -9,6 +9,16 @@ import logging, lxml.etree, os, stat, Bcfg2.Server.Metadata, ConfigParser
 
 logger = logging.getLogger('Bcfg2.Core')
 
+def ShouldIgnore(event):
+    '''Test if the event should be suppresed'''
+    if event.filename.split('/')[-1] == '.svn':
+        return True
+    if event.filename.endswith('~') or event.filename.endswith('.tmp')
+    or event.filename.endswith('.tmp'):
+        logger.error("Suppressing event for file %s" % (event.filename))
+        return True
+    return False
+
 class CoreInitError(Exception):
     '''This error is raised when the core cannot be initialized'''
     pass
@@ -66,8 +76,7 @@ class FamFam(object):
         unique = []
         bookkeeping = []
         for event in rawevents:
-            if event.filename.split('/')[-1] == '.svn':
-                # ignore svn directories
+            if ShouldIgnore(event):
                 continue
             if event.code2str() != 'changed':
                 # process all non-change events
@@ -148,8 +157,7 @@ class GaminFam(object):
         unique = []
         bookkeeping = []
         for event in self.events:
-            if event.filename.split('/')[-1] == '.svn':
-                # skip svn directories
+            if ShouldIgnore(event):
                 continue
             if event.code2str() != 'changed':
                 # process all non-change events
