@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# Import client configuration in to repository like tarball.
+# This tarball can then be extracted on the server straight in to the server
+# Repository. This makes it easier to import a live host in to bcfg2
+#			- Sami Haahtinen <ressu@ressukka.net>
+#
+# TODO:
+#  - Fetch filelist from server
+
+usage() {
+  echo "$0: tool to import files in to bcfg2-server repository"
+  echo "	-s		Copy SSH Key files"
+  echo "	-p		Create :info files with current file permissions"
+  echo "	-n		No suffix. Generate global files"
+  echo "	--debian	Run debsums to detect changed configuration files"
+  echo "			** debsums is only able to detect part of changes!"
+  echo "	-h		Help (You are here)"
+}
+
+## Start Getopt
+TEMP=`getopt -o snph --long help,debian -n $0 -- "$@"`
+
+if [ $? != 0 ] ; then ( usage ) >&2 ; exit 1 ; fi
+
+eval set -- "$TEMP"
+## End Getopt
+
+## Start Defaults
+NEEDSSH=0
+NEEDPERM=0
+DEBSUMS=0
+NOSUFFIX=0
+# End Defaults
+
+## Start option parse
+while true ; do
+  case "$1" in
+    -s) NEEDSSH=1; shift ;;
+    -p) NEEDPERM=1; shift ;;
+    --debian) DEBSUMS=1; shift ;;
+    -n) NOSUFFIX=1; shift ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --) shift; break ;;
+    *)
+      echo "Internal error!"
+      exit 1
+      ;;
+  esac
+done
+
+FILES=$@
+## End option parse
+
+## Start functions
+init_temp_repo() {
+  TMPREPO=`mktemp -d`
+  if [ $NEEDSSH -ne 0 ]; then
+    SSHBASE="$TMPREPO/SSHbase"
+    mkdir $SSHBASE
+  fi
+  CFGREPO="$TMPREPO/Cfg"
+  HOSTNAME=`hostname -f`
+  if [ $NOSUFFIX -eq 0 ]; then
+    SUFFIX=".H_$HOSTNAME"
+  else
+    SUFFIX=""
+  fi
+}
+
+package_temp_repo() {
+  echo "Creating tarball to: /tmp/$HOSTNAME-bcfg2.tar.gz"
+  # We should test for files here.
+  tar -cz -C $TMPREPO -f /tmp/$HOSTNAME-bcfg2.tar.gz .
+}
+
+clean_temp_repo() {
+  rm -r "$TMPREPO"
+}
+
+get_ssh() {
+  if [ $NEEDSSH -ne 0 ]; then
+    echo "Importing SSH host keys (if exists)"
+    for i in $(find /etc/ssh -name ssh_host\*); do
+      FILE=$(basename $i)
+      cp $i $SSHBASE/${FILE}${SUFFIX}
+    done
+  fi
+}
+
+get_files() {
+  if [ -n "$FILES" ]; then
+    echo "Copying files:"
+
+    # TODO: Files need an absolute path!
+    for i in $FILES; do
+      if [ -f $i ]; then
+	echo -n "$i: "
+	FILE=$(basename $i)
+	mkdir -p $CFGREPO/$i
+	cp $i $CFGREPO/$i/${FILE}${SUFFIX}
+	if [ $NEEDPERM -ne 0 ]; then
+	  # Get permissions for the file
+	  echo -n "(permissions) "
+	  find $i -printf "owner:%u\ngroup:%g\nperms:%#m\n" > "$CFGREPO/$i/:info"
+	fi
+	echo "OK"
+      else
+	echo "$i: Not a file"
+      fi
+    done
+  fi
+}
+
+get_debsums() {
+  if [ $DEBSUMS -ne 0 ]; then
+    echo "Locating changed configuration with debsums"
+    echo " ** debsums by design is unable to find all changed files"
+    echo "    you need to add missing files by hand."
+    DEBSUMSFILES=$(debsums -ec 2> /dev/null)
+    FILES="$FILES $DEBSUMSFILES"
+  fi
+}
+## End Functions
+
+if [ $(($NEEDPERM + $NEEDSSH + $DEBSUMS)) -eq 0 -a -z "$FILES" ]; then usage ; exit 0; fi
+
+init_temp_repo
+get_debsums
+get_ssh
+get_files
+package_temp_repo
+clean_temp_repo
