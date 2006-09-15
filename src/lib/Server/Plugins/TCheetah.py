@@ -1,7 +1,7 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, posixpath, re, Cheetah.Template
+import logging, lxml.etree, posixpath, re, Cheetah.Parser, Cheetah.Template
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
@@ -19,8 +19,12 @@ class TemplateFile:
     def HandleEvent(self, event):
         '''Handle all fs events for this template'''
         if event.filename == 'template':
-            self.template = Cheetah.Template.Template(open(self.name).read())
-            self.template.properties = self.properties.properties
+            try:
+                self.template = Cheetah.Template.Template(open(self.name).read())
+                self.template.properties = self.properties.properties
+            except Cheetah.Parser.ParseError, perror:
+                logger.error("Cheetah parse error for file %s" % (self.name))
+                logger.error(perror.report())
         elif event.filename == 'info':
             for line in open(self.name[:-8] + '/info').readlines():
                 match = info.match(line)
