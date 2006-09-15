@@ -1,6 +1,7 @@
 %define name bcfg2
 %define version 0.8.4
 %define release 1
+%define __python python
 %define pythonversion 2.3
 
 Summary: Bcfg2 Client
@@ -76,7 +77,7 @@ Bcfg2 client
 /usr/share/man/man1/*
 /usr/share/man/man5/*
 /etc/init.d/bcfg2
-/etc/default/bcfg2
+%config(noreplace) /etc/default/bcfg2
 /etc/cron.hourly/bcfg2
 /etc/cron.daily/bcfg2
 /usr/lib/bcfg2/bcfg2-cron
