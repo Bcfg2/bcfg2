@@ -40,8 +40,8 @@
 	</affiliation>
       </author>
     </authorgroup>
-    <date>September 5, 2006</date>
-    <edition>Manual for version 0.8.3</edition>
+    <date>September 15, 2006</date>
+    <edition>Manual for version 0.8.4</edition>
     <releaseinfo>$Revision$</releaseinfo>
     <pubdate>July 2006</pubdate>
     <copyright>
@@ -72,7 +72,7 @@
 
     <revhistory>
       <revision>
-	<revnumber>0.8.3</revnumber>
+	<revnumber>0.8.4</revnumber>
 	<date>$Date$</date>
 	<revremark>$Id$</revremark>
       </revision>

@@ -24,9 +24,9 @@
 
     <para>
       The BCFG2 Reporting System consists of a number of elements
-      including the <command>StatReports</command> Executable, a
+      including the <command>bcfg2-build-reports</command> Executable, a
       configuration file, and XSLT transform
-      files. <command>StatReports</command> reads a default
+      files. <command>bcfg2-build-reports</command> reads a default
       configuration file (or a config file specified on the command
       line) then prepares and delivers the reports according to the
       format defined in the transform files. It is expected that this
@@ -36,17 +36,17 @@
       needs to be generated immediately.  </para>
     
     <para>
-      <command>StatReports</command> gets the data it reports from a
+      <command>bcfg2-build-reports</command> gets the data it reports from a
       number of sources. <filename>Metadata/clients.xml</filename>
       contains information about if a host is currently pingable or
-      not. <command>GenerateHostInfo</command> will be run
-      automatically by <command>StatReports</command> if the
+      not. <command>bcfg2-ping-sweep</command> will be run
+      automatically by <command>bcfg2-build-reports</command> if the
       <filename>Metadata/clients.xml</filename> file is out of date
       with pingability information.
     </para>
     
     <para>
-      The next place <command>StatReports</command> gets data from is
+      The next place <command>bcfg2-build-reports</command> gets data from is
       the <filename>statistics.xml</filename> file. This file is
       maintained by bcfgd, and is updated whenever a client updates,
       therefore is always up to date and no maintainance is required
@@ -55,7 +55,7 @@
     </para>
     
     <para>
-      Finally <command>StatReports</command> is able to pull information
+      Finally <command>bcfg2-build-reports</command> is able to pull information
       from the <filename>Metadata/groups.xml</filename> file as well.
       This allows reports to describe the configured profile for each client.
     </para>	
@@ -146,7 +146,7 @@
     <title>Configuration</title>
     
     <para>The <filename>report-configuration.xml</filename> file is
-      the standard file that the <command>StatReports</command>
+      the standard file that the <command>bcfg2-build-reports</command>
       executable uses when it is run without any command line
       arguments. Alternate configuration files, formatted identically,
       can be used by specifing -c flag. This can be useful for
@@ -154,8 +154,8 @@
       example:</para>
 
     <programlisting>
-      Run this hourly: StatReports -c WebAndRssReport-config.xml
-      Run this daily: StatReports -c emailReports-config.xml
+      Run this hourly: bcfg2-build-reports -c WebAndRssReport-config.xml
+      Run this daily: bcfg2-build-reports -c emailReports-config.xml
     </programlisting>
 
     <para>The <filename>report-configuration.xml</filename>
@@ -224,7 +224,7 @@
   <para>
       Once configured correctly, just wait for the e-mail or view the
       outputed html files with a web browser.
-      <command>StatReports</command> to recieve your reports
+      <command>bcfg2-build-reports</command> to recieve your reports
       immediately, or configure cron to run it perodically. E-mail
       reports will deliver the appropriate content directly to your
       mail client, and the html files should be viewable with any web
