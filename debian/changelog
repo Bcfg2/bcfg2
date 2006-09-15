@@ -1,3 +1,10 @@
+bcfg2 (0.8.4-1) unstable; urgency=low
+
+  * Change paths to the reporting system
+  * Add server dep on python-cheetah
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri, 15 Sep 2006 12:53:56 -0500
+
 bcfg2 (0.8.3-2) unstable; urgency=low
 
   * fix an init script bug

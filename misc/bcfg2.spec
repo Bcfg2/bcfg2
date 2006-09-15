@@ -1,5 +1,5 @@
 %define name bcfg2
-%define version 0.8.3
+%define version 0.8.4
 %define release 1
 %define pythonversion 2.3
 
@@ -83,3 +83,9 @@ Bcfg2 client
 
 %post -n bcfg2-server
 /sbin/chkconfig --add bcfg2-server
+
+%changelog
+
+* Fri Sep 15 2006 Narayan Desai <desai@mcs.anl.gov> - 0.8.4-1
+- Initial log
+
