@@ -17,15 +17,15 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 xml = lxml.etree.parse('%s/Metadata/clients.xml'%prefix)
-for client in xml.findall('.//Client'):
-    if '-u' in sys.argv:
-        if client.get("pingable") == "Y":
-            print client.get("name")
-    elif '-d' in sys.argv:
-        if client.get("pingable") == "N":
-            print client.get("name")
-    elif '-p' in sys.argv and sys.argv[sys.argv.index('-p') + 1] != '':
-        if client.get("profile") == sys.argv[sys.argv.index('-p') + 1]:
-            print client.get("name")
-    elif '-a' in sys.argv:
-        print client.get("name")
+if '-p' in sys.argv:
+    profile = sys.argv[sys.argv.index('-p') + 1]
+    clients = xml.xpath(".//Client[@profile='%s']" % (profile))
+elif '-d' in sys.argv:
+    clients = xml.xpath(".//Client[@pingable='N']")
+elif '-u' in sys.argv:
+    clients = xml.xpath(".//Client[@pingable='Y']")
+elif '-a' in sys.argv:
+    clients = xml.xpath(".//Client")
+
+for client in clients:
+    print client.get('name')
