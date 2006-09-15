@@ -1,0 +1,125 @@
+#!/usr/bin/python
+
+import socket, sys, os
+
+usage = '''
+bcfg2-admin [options]
+--init      initialize the bcfg2 repository( this is interactive and should only be run once )
+'''
+
+config = '''
+[server]
+repository = %s
+structures = Bundler,Base
+generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules
+
+[statistics]
+sendmailpath = /usr/sbin/sendmail
+
+[communication]
+protocol = xmlrpc/ssl
+password = %s
+key = /etc/bcfg2.key
+
+[components]
+bcfg2 = %s
+'''
+
+groups = '''
+<Groups version='3.0'>
+   <Group profile='true' public='false' name='basic'>
+      <Group name='%s'/>
+   </Group>
+   <Group name='ubuntu' toolset='debian'/>
+   <Group name='debian' toolset='debian'/>
+   <Group name='redhat' toolset='rh'/>
+   <Group name='suse' toolset='rh'/>
+   <Group name='mandrake' toolset='rh'/>
+   <Group name='solaris' toolset='solaris'/>
+</Groups>
+'''
+clients = '''
+<Clients version="3.0">
+   <Client profile="basic" pingable="Y" pingtime="0" name="%s"/>
+</Clients>
+'''
+
+prompt = '''
+please select which os your machine is running:
+a. Redhat/Fedora/RHEL/RHAS/Centos
+b. SUSE/SLES
+c. Mandrake
+d. Debian
+e. Ubuntu
+f. Solaris
+'''
+
+#build bcfg2.conf file
+def initialize_repo():
+    repo = raw_input( "location of bcfg2 repository [/var/lib/bcfg2]: " )
+    if repo == '':
+        repo = '/var/lib/bcfg2'
+
+    password = ''
+    while ( password == '' ):
+        password = raw_input( "please provide the password used for communication verification: " )
+
+    #get the hostname
+    server = "https://%s:6789"%socket.getfqdn()
+    server_location = raw_input( "please provide the server location[%s]: "%server)
+    if server_location == '':
+        server_location = server
+
+
+    open("/etc/bcfg2.conf","w").write(config%( repo, password, server_location ))
+
+    #generate the ssl key
+    print "Now we will generate the ssl key used for secure communitcation"
+    os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out /etc/bcfg2.key -keyout /etc/bcfg2.key')
+    try:
+        os.chmod('/etc/bcfg2.key','0600')
+    except:
+        pass
+    
+    #create the repo dirs
+    for dir in ['SSHbase','Cfg','Pkgmgr','Svcmgr','Rules','etc','Metadata' ]:
+        path = "%s/%s"%(repo,dir)
+        newpath = ''
+        for subdir in path.split('/'):
+            newpath = newpath + subdir + '/'
+            try:
+                os.mkdir(newpath)
+            except:
+                pass
+            
+    #create the groups.xml file
+    selection = ''
+    while ( selection == '' ):
+        print prompt
+        selection = raw_input(" selection: ")
+        if selection.lower() not in ['a','b','c','d','e']:
+            selection = ''
+    if selection.lower() == 'a':
+        selection = 'redhat'
+    elif selection.lower() == 'b':
+        selection = 'suse'
+    elif selection.lower() == 'c':
+        selection = 'mandrake'
+    elif selection.lower() == 'd':
+        selection = 'debian'
+    elif selection.lower() == 'e':
+        selection = 'ubuntu'
+    elif selection.lower() == 'f':
+        selection = 'solaris'
+
+    open("%s/Metadata/groups.xml"%repo, "w").write(groups%selection)
+
+    #now the clients file
+    open("%s/Metadata/clients.xml"%repo, "w").write(clients%socket.getfqdn())
+
+if __name__ == '__main__':
+    if "--init" in sys.argv:
+        initialize_repo()
+    else:
+        print usage
+        
