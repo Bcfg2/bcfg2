@@ -179,7 +179,7 @@ if __name__ == '__main__':
     #try:
         #hostinstat = os.stat(hostinfopath)
         #if (time() - hostinstat[9])/(60*60) > 23.5:
-    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
+    os.system('bcfg2-ping-sweep') # bcfg2-ping-sweep needs to be in path
     #except OSError:
     #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
