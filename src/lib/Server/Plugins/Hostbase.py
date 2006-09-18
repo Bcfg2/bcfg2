@@ -68,7 +68,7 @@ class Hostbase(Plugin):
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
         try:
-            self.rebuildState()
+            self.rebuildState(None)
         except:
             raise PluginInitError
         
