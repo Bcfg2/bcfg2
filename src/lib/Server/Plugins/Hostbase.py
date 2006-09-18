@@ -166,8 +166,8 @@ class Hostbase(Plugin):
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
                     self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
                                            (host[2].split(".", 1)[0], 'A', host[1]))
-                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%-29s\n" %                   
-                                           ('', 'MX', host[4], host[5].split(".", 1)[0]))
+                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%-29s.\n" %                   
+                                           ('', 'MX', host[4], host[5]))
                 if host[3]:
                     if host[3].split(".", 1)[1] == zone[1]:
                         self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
