@@ -166,7 +166,7 @@ class Hostbase(Plugin):
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
                     self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
                                            (host[2].split(".", 1)[0], 'A', host[1]))
-                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%-29s.\n" %                   
+                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %                   
                                            ('', 'MX', host[4], host[5]))
                 if host[3]:
                     if host[3].split(".", 1)[1] == zone[1]:
@@ -268,7 +268,8 @@ class Hostbase(Plugin):
         SELECT hostname, mac_addr, ip_addr
         FROM (hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
         INNER JOIN hostbase_ip ip ON i.id = ip.interface_id
-        WHERE h.dhcp=1 AND h.status = 'active'
+        WHERE h.dhcp=1 AND h.status='active' AND i.mac_addr <> ''
+        AND i.mac_addr <> 'float' AND i.mac_addr <> 'unknown'
         ORDER BY h.hostname, i.mac_addr
         """)
 
