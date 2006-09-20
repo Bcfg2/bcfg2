@@ -1,3 +1,23 @@
+{% extends "base.html" %}
+
+{% block pagebanner %}
+  <div class="header">
+      <h2>{{ host.hostname }}</h2>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block sidebar %}
+<a href="/hostbase/" class="sidebar">new search</a>
+<ul>
+<li><a href="/hostbase/{{ host.id }}/" class="sidebar">host info</a></li>
+<li><a href="/hostbase/{{ host.id }}/dns/" class="sidebar">detailed dns info</a></li>
+<li><a href="/hostbase/{{ host.id }}/dns/edit/" class="sidebar">edit dns info</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+
 <script language=JavaScript type=text/Javascript>
 function toggleAddr(interface_id){
    if(document.getElementById){
@@ -14,136 +34,136 @@ function toggleInter(){
 </script>
 
 <style type=text/css>
-#for $interface in $interfaces
-div#ipaddr${interface.id}{
+{% for interface in interfaces %}
+div#ipaddr{{ interface.0.id }}{
    display: none;
 }
-#end for
+{% endfor %}
 div#interface{
    display: none;
 }
 </style>
 
 <form name="hostdata" action="?sub=true" method="post">
-<input type="hidden" name="host" value="$host.id">
+<input type="hidden" name="host" value="{{ host.id }}">
 <table border="0" width="100%">
    <colgroup>
    <col width="150">
    <col width="*">
    <tr> <td> <b>hostname</b></td>
-   <td> <input name="hostname" type="text" value="$host.hostname"></td></tr>
+   <td> <input name="hostname" type="text" value="{{ host.hostname }}"></td></tr>
    <tr> <td> <b>whatami</b></td>
    <td> 
    <select name="whatami">
-   #for $choice in $host.WHATAMI_CHOICES
-       #if $host.whatami == $choice[0]
-           <option value="$choice[0]" selected="selected">$choice[1]
-       #else
-           <option value="$choice[0]">$choice[1]
-       #end if
-   #end for
+   {% for choice in host.WHATAMI_CHOICES %}
+       {% ifequal host.whatami choice.0 %}
+           <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
+       {% else %}
+           <option value="{{ choice.0 }}">{{ choice.1 }}
+       {% endifequal %}
+   {% endfor %}
    </select></td></tr>
    <tr> <td> <b>netgroup</b></td>
    <td>
    <select name="netgroup">
-   #for $choice in $host.NETGROUP_CHOICES
-       #if $host.netgroup == $choice[0]
-           <option value="$choice[0]" selected="selected">$choice[1]
-       #else
-           <option value="$choice[0]">$choice[1]
-       #end if
-   #end for
+   {% for choice in host.NETGROUP_CHOICES %}
+       {% ifequal host.netgroup choice.0 %}
+           <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
+       {% else %}
+           <option value="{{ choice.0 }}">{{ choice.1 }}
+       {% endifequal %}
+   {% endfor %}
    </select>
    </td></tr>
    <tr> <td> <b>class</b></td>
    <td>
    <select name="security_class">
-   #for $choice in $host.CLASS_CHOICES
-       #if $host.security_class == $choice[0]
-           <option value="$choice[0]" selected="selected">$choice[1]
-       #else
-           <option value="$choice[0]">$choice[1]
-       #end if
-   #end for
+   {% for choice in host.CLASS_CHOICES %}
+       {% ifequal host.security_class choice.0 %}
+           <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
+       {% else %}
+           <option value="{{ choice.0 }}">{{ choice.1 }}
+       {% endifequal %}
+   {% endfor %}
    </select></td></tr>
    <tr> <td> <b>support</b></td>
    <td>
    <select name="support">
-   #for $choice in $host.SUPPORT_CHOICES
-       #if $host.support == $choice[0]
-           <option value="$choice[0]" selected="selected">$choice[1]
-       #else
-           <option value="$choice[0]">$choice[1]
-       #end if
-   #end for
+   {% for choice in host.SUPPORT_CHOICES %}
+       {% ifequal host.support choice.0 %}
+           <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
+       {% else %}
+           <option value="{{ choice.0 }}">{{ choice.1 }}
+       {% endifequal %}
+   {% endfor %}
    </select></td></tr>
    <tr> <td> <b>csi</b></td>
-   <td> <input name="csi" type="text" value="$host.csi"></td></tr>
+   <td> <input name="csi" type="text" value="{{ host.csi }}"></td></tr>
    <tr> <td> <b>printq</b></td>
-   <td> <input name="printq" type="text" value="$host.printq"></td></tr>
+   <td> <input name="printq" type="text" value="{{ host.printq }}"></td></tr>
    <tr> <td> <b>dhcp</b></td>
    <td>
-   #if $host.dhcp
+   {% if host.dhcp %}
        <input type="checkbox" checked="checked" name="dhcp"></td></tr>
-   #else
+   {% else %}
        <input type="checkbox" name="dhcp"></td></tr>
-   #end if   
+   {% endif %}   
    <tr> <td> <b>outbound_smtp</b></td>
    <td>
-   #if $host.outbound_smtp
+   {% if host.outbound_smtp %}
        <input type="checkbox" checked="checked" name="outbound_smtp"></td></tr>
-   #else
+   {% else %}
        <input type="checkbox" name="outbound_smtp"></td></tr>
-   #end if   
+   {% endif %}   
    <tr> <td> <b>primary_user</b></td>
-   <td> <input name="primary_user" type="text" size="32" value="$host.primary_user"></td></tr>
+   <td> <input name="primary_user" type="text" size="32" value="{{ host.primary_user }}"></td></tr>
    <tr> <td> <b>administrator</b></td>
-   <td> <input name="administrator" type="text" size="32" value="$host.administrator"></td></tr>
+   <td> <input name="administrator" type="text" size="32" value="{{ host.administrator }}"></td></tr>
    <tr> <td> <b>location</b></td>
-   <td> <input name="location" type="text" value="$host.location"></td></tr>
+   <td> <input name="location" type="text" value="{{ host.location }}"></td></tr>
    <tr> <td> <b>expiration_date</b></td>
-   <td> <input name="expiration_date" type="text" value="$host.expiration_date"> YYYY-MM-DD</td></tr>
-   #for $interface in $interfaces
+   <td> <input name="expiration_date" type="text" value="{{ host.expiration_date }}"> YYYY-MM-DD</td></tr>
+   {% for interface in interfaces %}
        <tr> <td><br><b>Interface</b>
        </td><td><br>
-       #for $choice in $interface.TYPE_CHOICES
-           #if $interface.hdwr_type == $choice[0]
-               <input type="radio" name="hdwr_type$interface.id" value="$choice[0]" checked="checked">$choice[1]
-           #else
-               <input type="radio" name="hdwr_type$interface.id" value="$choice[0]">$choice[1]
-           #end if
-       #end for
+       {% for choice in interface.0.TYPE_CHOICES %}
+           {% ifequal interface.0.hdwr_type choice.0 %}
+               <input type="radio" name="hdwr_type{{ interface.0.id }}" value="{{ choice.0 }}" checked="checked">{{ choice.1 }}
+           {% else %}
+               <input type="radio" name="hdwr_type{{ interface.0.id }}" value="{{ choice.0 }}">{{ choice.1 }}
+           {% endifequal %}
+       {% endfor %}
        </td></tr>
        <tr> <td> <b>mac_addr</b></td>
-       <td> <input name="mac_addr$interface.id" type="text" value="$interface.mac_addr">
-       <a style="font-size:75%" href="/hostbase/$host.id/interface/${interface.id}/confirm">remove</a>
+       <td> <input name="mac_addr{{ interface.0.id }}" type="text" value="{{ interface.0.mac_addr }}">
+       <a style="font-size:75%" href="/hostbase/{{ host.id }}/interface/{{ interface.0.id }}/confirm">remove</a>
        </td></tr>
-       #for $ip in $ips[$interface.id]
+       {% for ip in interface.1 %}
            <tr> <td> <b>ip_addr</b>
 	   </td>
-           <td> <input name="ip_addr${ip.id}" type="text" value="$ip.ip_addr">
-	   <a style="font-size:75%" href="/hostbase/$host.id/ip/${ip.id}/confirm">remove
+           <td> <input name="ip_addr{{ ip.id }}" type="text" value="{{ ip.ip_addr }}">
+	   <a style="font-size:75%" href="/hostbase/{{ host.id }}/ip/{{ ip.id }}/confirm">remove
 	   </a></td></tr>
-       #end for
+       {% endfor %}
 
 <!-- Section for adding a new IP address to an existing interface -->
 <!-- By default, section is hidden -->
        </table>
-       <div id=ipaddr${interface.id}>
+       <div id=ipaddr{{ interface.0.id }}>
        <table border="0" width="100%">
            <colgroup>
            <col width="150">
            <col width="*">
            <tr> <td> <b>ip_addr</b></td>
-           <td> <input name="${interface.id}ip_addr" type="text"></td></tr>
+           <td> <input name="{{ interface.0.id }}ip_addr" type="text"></td></tr>
        </table>
        </div>
-       <a style="font-size:75%" href=# onclick="toggleAddr($interface.id)">Add a New IP Address</a>
+       <a style="font-size:75%" href=# onclick="toggleAddr({{ interface.0.id }})">Add a New IP Address</a>
        <table border="0" width="100%">
            <colgroup>
                <col width="150">
 	       <col width="*">
-   #end for
+   {% endfor %}
 <!--  End section for new IP address -->
 
 <!-- Section for add an entirely new interface to a host -->
@@ -155,9 +175,9 @@ div#interface{
        <col width="150">
        <col width="*">
    <tr> <td><br><b>Interface</b></td><td><br>
-   #for $choice in $type_choices
-   <input type="radio" name="hdwr_type_new" value="$choice[0]">$choice[1]
-   #end for
+   {% for choice in TYPE_CHOICES %}
+   <input type="radio" name="hdwr_type_new" value="{{ choice.0 }}">{{ choice.1 }}
+   {% endfor %}
    </td></tr>
    <tr> <td> <b>mac_addr</b></td>
    <td> <input name="mac_addr_new" type="text"></td></tr>
@@ -174,20 +194,22 @@ div#interface{
    <col width="150">
    <col width="*">
 <tr> <td> <b>comments</b></td>
-<td> <textarea rows="10" cols="50" name="comments">$host.comments</textarea></td></tr>
+<td> <textarea rows="10" cols="50" name="comments">{{ host.comments }}</textarea></td></tr>
 </table>
-<a style="font-size:75%" href="/hostbase/$host.id/dns/edit">edit detailed DNS information for this host</a>
+<a style="font-size:75%" href="/hostbase/{{ host.id }}/dns/edit">edit detailed DNS information for this host</a>
 <br>
 this host is 
 <select name="status">
-#for $choice in $host.STATUS_CHOICES
-#if $host.status == $choice[0]
-<option value="$choice[0]" selected="selected">$choice[1]
-#else
-<option value="$choice[0]">$choice[1]
-#end if
-#end for
+{% for choice in host.STATUS_CHOICES %}
+{% ifequal host.status choice.0 %}
+<option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
+{% else %}
+<option value="{{ choice.0 }}">{{ choice.1 }}
+{% endifequal %}
+{% endfor %}
 </select><br>
-last update on $host.last<br>
+last update on {{ host.last }}<br>
 <p><input type="submit" value="Submit">
 </form>
+
+{% endblock %}

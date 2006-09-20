@@ -24,7 +24,13 @@
    <tr> <td> <b>hostname</b></td>
    <td> <input name="hostname" type="text" ></td></tr>
    <tr> <td> <b>whatami</b></td>
-   <td> </td></tr>
+   <td>
+   <select name="whatami">
+   {% for choice in WHATAMI_CHOICES %}
+   <option value="{{ choice.0 }}">{{ choice.1 }}
+   {% endfor %}
+   </select>
+   </td></tr>
    <tr> <td> <b>netgroup</b></td>
    <td>
    <select name="netgroup">

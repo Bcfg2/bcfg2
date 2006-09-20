@@ -13,7 +13,7 @@ from django.db import connection
 from django.shortcuts import render_to_response
 import re
 
-templatedir = '/usr/lib/python2.3/site-packages/Hostbase/hostbase/webtemplates'
+templatedir = '/usr/lib/python2.4/site-packages/Hostbase/hostbase/webtemplates'
 
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
@@ -91,9 +91,9 @@ def search(request):
             cursor.execute(querystring)
             results = cursor.fetchall()
         
-        return render_to_response('%s/results.html' % templatedir, {'hosts': results})
+        return render_to_response('results.html', {'hosts': results})
     else:
-        return render_to_response('%s/search.html' % templatedir,
+        return render_to_response('search.html',
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'yesno': [(1, 'yes'), (0, 'no')]})
@@ -104,7 +104,7 @@ def look(request, host_id):
     interfaces = []
     for interface in host.interface_set.all():
         interfaces.append([interface, interface.ip_set.all()])
-    return render_to_response('%s/host.html' % templatedir,
+    return render_to_response('host.html',
                               {'host': host,
                                'interfaces': interfaces})
                                    
@@ -121,7 +121,7 @@ def dns(request, host_id):
         for name in ip.name_set.all():
             cnames.extend(name.cname_set.all())
             mxs.append((name.id, name.mxs.all()))
-    return render_to_response('%s/dns.html' % templatedir,
+    return render_to_response('dns.html',
                               {'host': host,
                                'info': info,
                                'cnames': cnames,
@@ -300,12 +300,14 @@ def edit(request, host_id):
             return HttpResponse(str(t))
         # examine the check boxes for any changes
     else:
-        t = Template(open('%s/edit.html' % templatedir).read())
-        hostdata = gethostdata(host_id)
-        t = fill(t, hostdata)
-        t.type_choices = Interface.TYPE_CHOICES
-        t.request = request
-        return HttpResponse(str(t))
+        host = Host.objects.get(id=host_id)
+        interfaces = []
+        for interface in host.interface_set.all():
+            interfaces.append([interface, interface.ip_set.all()])
+        return render_to_response('edit.html',
+                                  {'host': host,
+                                   'interfaces': interfaces,
+                                   'TYPE_CHOICES': Interface.TYPE_CHOICES})
 
 def confirm(request, item, item_id, host_id, name_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
@@ -335,44 +337,48 @@ def confirm(request, item, item_id, host_id, name_id=None):
         else:
             return HttpResponseRedirect('/hostbase/%s/edit' % host_id)
     else:
-        temp = Template(open('%s/confirm.html' % templatedir).read())
         interface = None
         ips = []
-        names = {}
-        cnames = {}
-        mxs = {}
+        names = []
+        cnames = []
+        mxs = []
         if item == 'interface':
             interface = Interface.objects.get(id=item_id)
             ips = interface.ip_set.all()
             for ip in ips:
-                names[ip.id] = ip.name_set.all()
-                for name in names[ip.id]:
-                    cnames[name.id] = name.cname_set.all()
-                    mxs[name.id] = name.mx_set.all()
+                for name in ip.name_set.all():
+                    names.append((ip.id, name))
+                    for cname in name.cname_set.all():
+                        cnames.append((name.id, cname))
+                    for mx in name.mxs.all():
+                        mxs.append((name.id, mx))
         elif item=='ip':
             ips = [IP.objects.get(id=item_id)]
-            names[ips[0].id] = ips[0].name_set.all()
-            for name in names[ips[0].id]:
-                cnames[name.id] = name.cname_set.all()
-                mxs[name.id] = name.mx_set.all()
+            for name in ips[0].name_set.all():
+                names.append((ips[0].id, name))
+                for cname in name.cname_set.all():
+                    cnames.append((name.id, cname))
+                for mx in name.mxs.all():
+                    mxs.append((name.id, mx))
         elif item=='name':
             names = [Name.objects.get(id=item_id)]
-            for name in names:
-                cnames[name.id] = name.cname_set.all()
-                mxs[name.id] = name.mxs.all()
+            for cname in names[0].cname_set.all():
+                cnames.append((names[0].id, cname))
+            for mx in names[0].mxs.all():
+                mxs.append((names[0].id, mx))
         elif item=='cname':
             cnames = [CName.objects.get(id=item_id)]
         elif item=='mx':
             mxs = [MX.objects.get(id=item_id)]
-        temp.interface = interface
-        temp.ips = ips
-        temp.names = names
-        temp.cnames = cnames
-        temp.mxs = mxs
-        temp.id = item_id
-        temp.type = item
-        temp.host_id = host_id
-        return HttpResponse(str(temp))
+        return render_to_response('confirm.html',
+                                  {'interface': interface,
+                                   'ips': ips,
+                                   'names': names,
+                                   'cnames': cnames,
+                                   'id': item_id,
+                                   'type': item,
+                                   'host_id': host_id,
+                                   'mxs': mxs})
 
 def dnsedit(request, host_id):
     """Edits specific DNS information
@@ -423,11 +429,26 @@ def dnsedit(request, host_id):
                     name.mxs.add(mx)
         return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
     else:
-        temp = Template(open('%s/dnsedit.html' % templatedir).read())
-        hostdata = gethostdata(host_id, True)
-        temp = fill(temp, hostdata, True)
-        temp.request = request
-        return HttpResponse(str(temp))
+        host = Host.objects.get(id=host_id)
+        ips = []
+        info = []
+        cnames = []
+        mxs = []
+        interfaces = host.interface_set.all()
+        for interface in host.interface_set.all():
+            ips.extend(interface.ip_set.all())
+        for ip in ips:
+            info.append([ip, ip.name_set.all()])
+            for name in ip.name_set.all():
+                cnames.extend(name.cname_set.all())
+                mxs.append((name.id, name.mxs.all()))
+        return render_to_response('dnsedit.html',
+                                  {'host': host,
+                                   'info': info,
+                                   'cnames': cnames,
+                                   'mxs': mxs,
+                                   'request': request,
+                                   'interfaces': interfaces})
     
 def new(request):
     """Function for creating a new host in hostbase
@@ -571,7 +592,8 @@ def new(request):
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'NETGROUP_CHOICES': Host.NETGROUP_CHOICES,
                                    'CLASS_CHOICES': Host.CLASS_CHOICES,
-                                   'SUPPORT_CHOICES': Host.SUPPORT_CHOICES})                                   
+                                   'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
+                                   'WHATAMI_CHOICES': Host.WHATAMI_CHOICES})                                   
     
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
