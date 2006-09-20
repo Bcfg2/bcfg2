@@ -39,7 +39,7 @@
 	       <tr> <td><b>name(dns)</b></td>
 	       <td> <input name="name{{ name.id }}" type="text" value="{{ name.name }}">
 	       <select name="dns_view{{ name.id }}">
-	       {% for choice in name.DNS_CHOICES %}
+	       {% for choice in DNS_CHOICES %}
 	       {% ifequal name.dns_view choice.0 %}
 	       <option value="{{ choice.0 }}">{{ choice.1 }}
 	       {% else %}
@@ -74,7 +74,7 @@
    	   <tr> <td> <b>name</b></td>
 	   <td> <input name="{{ ip.0.ip_addr }}name" type="text">
 	   <select name="{{ ip.0.ip_addr }}dns_view">	   
-	   {% for choice in name.DNS_CHOICES %}
+	   {% for choice in DNS_CHOICES %}
 	   <option value="{{ choice.0 }}">{{ choice.1 }}
 	   {% endfor %}
 	   </select></td></tr>

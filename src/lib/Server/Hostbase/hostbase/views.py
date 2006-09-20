@@ -13,8 +13,6 @@ from django.db import connection
 from django.shortcuts import render_to_response
 import re
 
-templatedir = '/usr/lib/python2.4/site-packages/Hostbase/hostbase/webtemplates'
-
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
            'comments', 'status']
@@ -295,7 +293,7 @@ def edit(request, host_id):
             host.save()
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
-            t = Template(open('%s/errors.html' % templatedir).read())
+            t = Template(open('errors.html').read())
             t.failures = validate(request, False, host_id)
             return HttpResponse(str(t))
         # examine the check boxes for any changes
@@ -448,7 +446,8 @@ def dnsedit(request, host_id):
                                    'cnames': cnames,
                                    'mxs': mxs,
                                    'request': request,
-                                   'interfaces': interfaces})
+                                   'interfaces': interfaces,
+                                   'DNS_CHOICES': Name.DNS_CHOICES})
     
 def new(request):
     """Function for creating a new host in hostbase
@@ -466,7 +465,7 @@ def new(request):
             host.status = 'active'
             host.save()
         else:
-            return render_to_response('%s/errors.html' % templatedir,
+            return render_to_response('errors.html',
                                       {'failures': validate(request, True)})
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
@@ -588,7 +587,7 @@ def new(request):
         host.save()
         return HttpResponseRedirect('/hostbase/%s/' % host.id)
     else:
-        return render_to_response('%s/new.html' % templatedir,
+        return render_to_response('new.html',
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'NETGROUP_CHOICES': Host.NETGROUP_CHOICES,
                                    'CLASS_CHOICES': Host.CLASS_CHOICES,
