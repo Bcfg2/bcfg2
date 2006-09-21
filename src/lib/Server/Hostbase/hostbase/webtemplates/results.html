@@ -19,6 +19,7 @@
    <col width="200">
    <col width="75">
    <col width="50">
+   <col width="50">
    <col width="*">
    <tr> <td><b>hostname</b></td>
    <td> <b>status</b> </td>
@@ -32,6 +33,7 @@
    {% endif %}
    <td> <a href="{{ host.1 }}">view</a> </td>
    <td> <a href="{{ host.1 }}/edit">edit</a> </td>
+   <td> <a href="{{ host.1 }}/remove">remove</a> </td>
    </tr>
    {% endfor %}
 </table>

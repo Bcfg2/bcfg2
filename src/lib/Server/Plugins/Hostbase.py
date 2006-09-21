@@ -256,6 +256,7 @@ class Hostbase(Plugin):
         self.buildHostsLPD()
         self.buildPrinters()
         self.buildNetgroups()
+        return True
 
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''

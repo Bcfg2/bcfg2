@@ -7,7 +7,6 @@ __revision__ = 0.1
 
 from django.http import HttpResponse, HttpResponseRedirect
 from hostbase.models import *
-from Cheetah.Template import Template
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
@@ -293,10 +292,8 @@ def edit(request, host_id):
             host.save()
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
-            t = Template(open('errors.html').read())
-            t.failures = validate(request, False, host_id)
-            return HttpResponse(str(t))
-        # examine the check boxes for any changes
+            return render_to_response('errors.html',
+                                      {'failures': validate(request, False, host_id)})
     else:
         host = Host.objects.get(id=host_id)
         interfaces = []
@@ -476,27 +473,27 @@ def new(request):
             new_ip = IP(interface=new_inter,
                         num=0, ip_addr=request.POST['ip_addr_new'])
             new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            if created:
+                mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_ip.ip_addr.split(".")[2]])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name, dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_inter.hdwr_type])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             name = Name(ip=new_ip, name=host.hostname,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()            
-        if request.POST['ip_addr_new1'] and not request.POST['mac_addr_new1']:
+            name.mxs.add(mx)
+        if request.POST['ip_addr_new'] and not request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr="",
                                   hdwr_type=request.POST['hdwr_type_new1'])
@@ -504,27 +501,27 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new1'])
             new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            if created:
+                mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_ip.ip_addr.split(".")[2]])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_inter.hdwr_type])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             name = Name(ip=new_ip, name=host.hostname,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()            
+            name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new2'],
@@ -534,27 +531,27 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            if created:
+                mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_ip.ip_addr.split(".")[2]])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_inter.hdwr_type])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             name = Name(ip=new_ip, name=host.hostname,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()            
+            name.mxs.add(mx)
         if request.POST['ip_addr_new2'] and not request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
                                   mac_addr="",
@@ -563,27 +560,27 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            if created:
+                mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_ip.ip_addr.split(".")[2]])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             new_name = "-".join([host.hostname.split(".")[0],
                                  new_inter.hdwr_type])
             new_name += "." + host.hostname.split(".", 1)[1]
             name = Name(ip=new_ip, name=new_name,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()
+            name.mxs.add(mx)
             name = Name(ip=new_ip, name=host.hostname,
                         dns_view='global', only=False)
             name.save()
-            mx = MX(name=name, priority=30, mx='mailgw.mcs.anl.gov')
-            mx.save()            
+            name.mxs.add(mx)
         host.save()
         return HttpResponseRedirect('/hostbase/%s/' % host.id)
     else:
@@ -594,6 +591,27 @@ def new(request):
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES})                                   
     
+def remove(request, host_id):
+    host = Host.objects.get(id=host_id)
+    if request.has_key('sub'):
+        for interface in host.interface_set.all():
+            for ip in interface.ip_set.all():
+                for name in ip.name_set.all():
+                    name.cname_set.all().delete()
+                ip.name_set.all().delete()
+            interface.ip_set.all().delete()
+            interface.delete()
+        host.delete()
+        return HttpResponseRedirect('/hostbase/')
+    else:
+        """Displays general host information"""
+        interfaces = []
+        for interface in host.interface_set.all():
+            interfaces.append([interface, interface.ip_set.all()])
+        return render_to_response('remove.html',
+                                  {'host': host,
+                                   'interfaces': interfaces})
+
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
     failures = []
@@ -638,7 +656,7 @@ def validate(request, new=False, host_id=None):
         if ((request.POST['mac_addr_new'] or request.POST['ip_addr_new']) and
             not request.has_key('hdwr_type_new')):
             failures.append('hdwr_type (#1)')
-        if ((request.POST['mac_addr_new2'] or request.POST['ip_addr_new']) and
+        if ((request.POST['mac_addr_new2'] or request.POST['ip_addr_new2']) and
             not request.has_key('hdwr_type_new2')):
             failures.append('hdwr_type (#2)')
 

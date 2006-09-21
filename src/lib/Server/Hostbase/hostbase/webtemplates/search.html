@@ -3,11 +3,16 @@
 {% block pagebanner %}
   <div class="header">
       <h2>Welcome to Hostbase!</h2>
+      <p>search for hosts using one or more of the fields below
   </div>
   <br/>
 {% endblock %}
+
+{% block sidebar %}
+<a href="/hostbase/new" class="sidebar">add a new host</a>
+{% endblock %}
+
 {% block content %}
-Find hosts using one or more of the searchable fields below.<br>
 <!-- ...or go to <a href="hostinfo">this</a>
  page to enter hostinfo-like queries<br><br> -->
 <form name="input" action="?sub=true" method="post">
