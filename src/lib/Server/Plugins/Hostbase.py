@@ -9,7 +9,7 @@ from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, D
 from time import strftime
 from sets import Set
 import re
-
+from django.template import loader, Context
 
 ## class DataNexus(DirectoryBacked):
 ##     '''DataNexus is an object that watches multiple files and
@@ -61,7 +61,7 @@ class Hostbase(Plugin):
                           'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
                           'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
                           'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
-                          'dhcp':Template(open(self.data + '/templates/' + 'dhcpd.tmpl').read()),
+                          'dhcp':loader.get_template('dhcpd.tmpl'),
                           'hosts':Template(open(self.data + '/templates/' + 'hosts.tmpl').read()),
                           'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read()),
                           }
@@ -300,11 +300,13 @@ class Hostbase(Plugin):
         if hostdata not in hosts:
             hosts.append(hostdata)
 
-        self.templates['dhcp'].hosts = hosts
-        self.templates['dhcp'].numips = len(hosts)
-        self.templates['dhcp'].timecreated = strftime("%a %b %d %H:%M:%S %Z %Y")
+        context = Context({
+            'hosts': hosts,
+            'numips': len(hosts),
+            'timecreated': strftime("%a %b %d %H:%M:%S %Z %Y"),
+            })
 
-        self.filedata['dhcpd.conf'] = str(self.templates['dhcp'])
+        self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
         self.Entries['ConfigFile']['/etc/dhcpd.conf'] = self.FetchFile
 
 

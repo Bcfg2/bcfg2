@@ -450,6 +450,12 @@ def new(request):
     """Function for creating a new host in hostbase
     Data is validated before committed to the database"""
     if request.GET.has_key('sub'):
+        try:
+            Host.objects.get(hostname=request.POST['hostname'])
+            return render_to_response('errors.html',
+                                      {'failures': ['%s already exists in hostbase' % request.POST['hostname']]})
+        except:
+            pass
         if not validate(request, True):
             host = Host()
             # this is the stuff that validate() should take care of
@@ -459,6 +465,8 @@ def new(request):
             for attrib in attribs:
                 if request.POST.has_key(attrib):
                     host.__dict__[attrib] = request.POST[attrib]
+            if request.POST.has_key('expiration_date'):
+                host.__dict__['expiration_date'] = date(2000, 1, 1)
             host.status = 'active'
             host.save()
         else:
