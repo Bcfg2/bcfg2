@@ -6,7 +6,7 @@ Also has does form validation
 __revision__ = 0.1
 
 from django.http import HttpResponse, HttpResponseRedirect
-from hostbase.models import *
+from Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response

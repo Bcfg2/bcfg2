@@ -278,21 +278,19 @@ class Hostbase(Plugin):
         count = 0
         hosts = []
         hostdata = [dhcphosts[0][0], dhcphosts[0][1], dhcphosts[0][2]]
-        for x in range(1, len(cursor.fetchall())-1):
+        for x in range(1, len(cursor.fetchall())):
             # if an interface has 2 or more ip addresses
             # adds the ip to the current interface
-            if hostdata[0] == dhcphosts[x][0] and hostdata[1] == dhcphosts[x][1]:
+            if hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0] and hostdata[1] == dhcphosts[x][1]:
                 hostdata[2] = ", ".join([hostdata[2], dhcphosts[x][2]])
             # if a host has 2 or more interfaces
             # writes the current one and grabs the next
-            elif hostdata[0] == dhcphosts[x][0]:
+            elif hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0]:
                 hosts.append(hostdata)
                 count += 1
-                hostdata = [dhcphosts[x][0], dhcphosts[x][1], dhcphosts[x][2]]
+                hostdata = ["-".join([dhcphosts[x][0], str(count)]), dhcphosts[x][1], dhcphosts[x][2]]
             # new host found, writes current data to the template
             else:
-                if count:
-                    hostdata[0] = "-".join([hostdata[0], str(count)])
                 hosts.append(hostdata)
                 count = 0
                 hostdata = [dhcphosts[x][0], dhcphosts[x][1], dhcphosts[x][2]]
