@@ -191,16 +191,3 @@ class Metadata:
         toolset = toolinfo[0]
         return ClientMetadata(client, groups, bundles, toolset, categories)
         
-    def ping_sweep_clients(self):
-        '''Find live and dead clients'''
-        live = {}
-        dead = {}
-        work = self.clients.keys()
-        while work:
-            client = work.pop()
-            rc = os.system("/bin/ping -w 5 -c 1 %s > /dev/null 2>&1" % client)
-            if not rc:
-                live[client] = time.time()
-            else:
-                dead[client] = time.time()
-        
