@@ -9,7 +9,6 @@ from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, D
 from time import strftime
 from sets import Set
 import re
-from django.template import loader, Context
 
 ## class DataNexus(DirectoryBacked):
 ##     '''DataNexus is an object that watches multiple files and
@@ -48,6 +47,7 @@ class Hostbase(Plugin):
         Plugin.__init__(self, core, datastore)
         sys.path.append(self.data)
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+        from django.template import loader, Context
 ##         try:
 ##             DataNexus.__init__(self, datastore + '/Hostbase/data',
 ##                                files, self.core.fam)
