@@ -47,7 +47,7 @@ class Hostbase(Plugin):
         Plugin.__init__(self, core, datastore)
         sys.path.append(self.data)
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-        from django.template import loader, Context
+        from django.template import loader
 ##         try:
 ##             DataNexus.__init__(self, datastore + '/Hostbase/data',
 ##                                files, self.core.fam)
@@ -71,7 +71,7 @@ class Hostbase(Plugin):
             self.rebuildState(None)
         except:
             raise PluginInitError
-        
+                
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
         fname = entry.get('name').split('/')[-1]
@@ -262,6 +262,7 @@ class Hostbase(Plugin):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
 
         from django.db import connection
+        from django.template import Context
 
         # fetches all the hosts with DHCP == True
         cursor = connection.cursor()
