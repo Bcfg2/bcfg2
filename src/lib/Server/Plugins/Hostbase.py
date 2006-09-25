@@ -305,7 +305,7 @@ class Hostbase(Plugin):
             })
 
         self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
-        self.Entries['ConfigFile']['/etc/dhcpd.conf'] = self.FetchFile
+        self.Entries['ConfigFile']['/etc/dhcp3/dhcpd.conf'] = self.FetchFile
 
 
     def buildHosts(self):
