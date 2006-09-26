@@ -533,7 +533,7 @@ def new(request):
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new2'],
-                                  hdwr_type=request.POST['hdwr_addr_new2'])
+                                  hdwr_type=request.POST['mac_addr_new2'])
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, num=0,
