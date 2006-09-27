@@ -141,6 +141,15 @@ class Nameserver(models.Model):
     class Admin:
         pass
 
+class ZoneAddress(models.Model):
+    ip_addr = models.IPAddressField()
+
+    def __str__(self):
+        return self.ip_addr
+
+    class Admin:
+        pass
+
 class Zone(models.Model):
     zone = models.CharField(maxlength=64)
     serial = models.IntegerField()
@@ -152,7 +161,7 @@ class Zone(models.Model):
     ttl = models.IntegerField()
     nameservers = models.ManyToManyField(Nameserver)
     mxs = models.ManyToManyField(MX)
-    addresses = models.ManyToManyField(IP, blank=True)
+    addresses = models.ManyToManyField(ZoneAddress, blank=True)
     aux = models.TextField(blank=True)
 
     def __str__(self):

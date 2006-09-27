@@ -8,8 +8,7 @@
 {% endblock %}
 
 {% block sidebar %}
-<a href="/hostbase/" class="sidebar">new search</a><br>
-<a href="/hostbase/" class="sidebar">add a new host</a>
+{% include "navbar" %}
 <ul class="sidebar">
    <li><a href="/hostbase/{{ host.id }}/" class="sidebar">host info</a></li>
    <li><a href="/hostbase/{{ host.id }}/edit/" class="sidebar">edit host info</a></li>

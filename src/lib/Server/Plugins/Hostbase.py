@@ -137,7 +137,7 @@ class Hostbase(Plugin):
             WHERE z.zone_id = \'%s\'""" % zone[0])
             self.templates['zone'].nameservers = cursor.fetchall()
             cursor.execute("""SELECT i.ip_addr FROM hostbase_zone_addresses z
-            INNER JOIN hostbase_ip i ON z.ip_id = i.id
+            INNER JOIN hostbase_zoneaddress i ON z.zoneaddress_id = i.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
             self.templates['zone'].addresses = cursor.fetchall()
             cursor.execute("""SELECT m.priority, m.mx FROM hostbase_zone_mxs z

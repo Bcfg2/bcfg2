@@ -8,9 +8,8 @@
 {% endblock %}
 
 {% block sidebar %}
-<a href="/hostbase/" class="sidebar">new search</a><br>
-<a href="/hostbase/new/" class="sidebar">add a new host</a>
-<ul>
+{% include "navbar" %}
+<ul class="sidebar">
 <li><a href="/hostbase/{{ host.id }}/" class="sidebar">host info</a></li>
 <li><a href="/hostbase/{{ host.id }}/dns/" class="sidebar">detailed dns info</a></li>
 <li><a href="/hostbase/{{ host.id }}/dns/edit/" class="sidebar">edit dns info</a></li>
@@ -47,12 +46,13 @@ div#interface{
 
 <form name="hostdata" action="?sub=true" method="post">
 <input type="hidden" name="host" value="{{ host.id }}">
+<input type="hidden" name="hostname" value="{{ host.hostname }}">
 <table border="0" width="100%">
    <colgroup>
    <col width="150">
    <col width="*">
    <tr> <td> <b>hostname</b></td>
-   <td> <input name="hostname" type="text" value="{{ host.hostname }}"></td></tr>
+   <td> {{ host.hostname }}</td></tr>
    <tr> <td> <b>whatami</b></td>
    <td> 
    <select name="whatami">

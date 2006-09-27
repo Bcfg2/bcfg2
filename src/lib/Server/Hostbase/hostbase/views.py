@@ -16,6 +16,9 @@ attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
            'comments', 'status']
 
+zoneattribs = ['zone', 'admin', 'primary_master', 'expire', 'retry',
+               'refresh', 'ttl', 'aux']
+
 dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
             'ip_addr':'p.ip_addr LIKE \'%%%%%s%%%%\'',
             'name':'n.name LIKE \'%%%%%s%%%%\'',
@@ -712,28 +715,48 @@ def validate(request, new=False, host_id=None):
         return 0
     return failures
 
-def push(request):
-    if request.GET.has_key('sub'):
-        # do xmlrpc function here
-        return HttpResponse("TBD")
-    else:
-        temp = Template(open('%s/push.html' % templatedir).read())
-        temp.dirtyhosts = Host.objects.filter(dirty=True)
-        return HttpResponse(str(temp))
-
 def zones(request):
     zones = Zone.objects.all()
-    temp = Template(open('%s/zones.html' % templatedir).read())
-    temp.zones = zones
-    return HttpResponse(str(temp))
+    return render_to_response('zones.html',
+                              {'zones': zones})
 
 def zoneview(request, zone_id):
     zone = Zone.objects.get(id=zone_id)
-    temp = Template(open('%s/zoneview.html' % templatedir).read())
-    temp.zone = zone
-    aux = zone.aux.split('\n')
-    temp.aux = aux
-    temp.nameservers = zone.nameservers.all()
-    temp.mxs = zone.mxs.all()
-    temp.addresses = zone.addresses.all()
-    return HttpResponse(str(temp))
+    return render_to_response('zoneview.html',
+                              {'zone': zone,
+                               'nameservers': zone.nameservers.all(),
+                               'mxs': zone.mxs.all(),
+                               'addresses': zone.addresses.all()
+                               })
+
+def zoneedit(request, zone_id):
+    if request.has_key('sub'):
+        zone = Zone.objects.get(id=zone_id)
+        for attrib in zoneattribs:
+            if request.POST.has_key(attrib):
+                zone.__dict__[attrib] = request.POST[attrib]
+        count = 0
+##         for nameserver in zone.nameservers.all():
+##             nameserver.name = request.POST['nameserver%i' % count]
+##             nameserver.save()
+##             count += 1
+##         count = 0
+##         for mx in zone.mxs.all():
+##             mx.priority = request.POST['priority%i' % count]
+##             mx.mx = request.POST['mx%i' % count]
+##             mx.save()
+##             count += 1
+##         count = 0
+##         for address in zone.addresses.all():
+##             address.ip_addr = request.POST['address%i' % count]
+##             count += 1
+        zone.save()
+        return HttpResponseRedirect('/hostbase/zones/%s/' % zone.id)
+    else:
+        zone = Zone.objects.get(id=zone_id)
+        return render_to_response('zoneedit.html',
+                                  {'zone': zone,
+                                   'nameservers': zone.nameservers.all(),
+                                   'mxs': zone.mxs.all(),
+                                   'addresses': zone.addresses.all()
+                                   })
