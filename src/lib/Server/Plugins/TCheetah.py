@@ -100,7 +100,8 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             else:
                 if not self.entries.has_key(identifier):
-                    self.entries[identifier] = TemplateFile(identifier, self.properties)
+                    self.entries[identifier] = TemplateFile( \
+                        self.data + '/' + identifier, self.properties)
                     self.Entries['ConfigFile'][identifier] = self.BuildEntry
                 self.entries[identifier].HandleEvent(event)
         elif action == 'changed':
