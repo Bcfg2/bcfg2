@@ -199,9 +199,9 @@ class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
     def __init__(self, setup, configfile):
         object.__init__(self)
-        cfile = ConfigParser.ConfigParser()
-        cfile.read([configfile])
-        self.datastore = cfile.get('server','repository')
+        self.cfile = ConfigParser.ConfigParser()
+        self.cfile.read([configfile])
+        self.datastore = self.cfile.get('server','repository')
         try:
             self.fam = monitor()
         except IOError:
@@ -214,12 +214,12 @@ class Core(object):
         self.plugins = {}
         self.revision = '-1'
         try:
-            self.svn = cfile.get('server', 'svn') == 'yes'
+            self.svn = self.cfile.get('server', 'svn') == 'yes'
             self.read_svn_revision()
         except:
             self.svn = False
         
-        mpath = cfile.get('server','repository')
+        mpath = self.cfile.get('server','repository')
         try:
             self.metadata = Bcfg2.Server.Metadata.Metadata(self.fam, mpath)
         except OSError:
@@ -227,8 +227,8 @@ class Core(object):
         
         self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
-        structures = cfile.get('server', 'structures').split(',')
-        generators = cfile.get('server', 'generators').split(',')
+        structures = self.cfile.get('server', 'structures').split(',')
+        generators = self.cfile.get('server', 'generators').split(',')
 
         for plugin in structures + generators:
             if not self.plugins.has_key(plugin):
