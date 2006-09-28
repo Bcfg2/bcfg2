@@ -20,13 +20,14 @@ class TemplateFile:
         '''Handle all fs events for this template'''
         if event.filename == 'template':
             try:
-                self.template = Cheetah.Template.Template(open(self.name).read())
+                self.template = Cheetah.Template.Template(open(self.name + \
+                                                               '/template').read())
                 self.template.properties = self.properties.properties
             except Cheetah.Parser.ParseError, perror:
                 logger.error("Cheetah parse error for file %s" % (self.name))
                 logger.error(perror.report())
         elif event.filename == 'info':
-            for line in open(self.name[:-8] + '/info').readlines():
+            for line in open(self.name + '/info').readlines():
                 match = info.match(line)
                 if not match:
                     logger.warning("Failed to match line: %s"%line)
@@ -99,7 +100,7 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             else:
                 if not self.entries.has_key(identifier):
-                    self.entries[identifier] = TemplateFile(epath, self.properties)
+                    self.entries[identifier] = TemplateFile(identifier, self.properties)
                     self.Entries['ConfigFile'][identifier] = self.BuildEntry
                 self.entries[identifier].HandleEvent(event)
         elif action == 'changed':
