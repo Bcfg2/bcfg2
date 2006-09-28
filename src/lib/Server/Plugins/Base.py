@@ -26,6 +26,6 @@ class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
         '''Build structures for client described by metadata'''
         ret = lxml.etree.Element("Independant", version='2.0')
         fragments = reduce(lambda x, y: x+y,
-                           [base.Match(metadata) for base in self.entries.values()])
+                           [base.Match(metadata) for base in self.entries.values()], [])
         [ret.append(copy.deepcopy(frag)) for frag in fragments]
         return [ret]
