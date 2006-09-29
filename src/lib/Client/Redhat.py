@@ -3,7 +3,7 @@
 
 '''This is redhat client support'''
 __revision__ = '$Revision$'
-
+import time
 from Bcfg2.Client.Toolset import Toolset
 
 class ToolsetImpl(Toolset):
