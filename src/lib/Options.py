@@ -44,10 +44,10 @@ class BasicOptionParser:
             try:
                 opts, args = getopt.getopt(sys.argv[1:], self.shortopt, self.longopt)
             except getopt.GetoptError, err:
-                print "%s Usage:" % (self.name)
                 print err
+                print "%s Usage:" % (self.name)
                 print self.helpmsg
-                raise OptionFailure, err
+                raise SystemExit, 1
             if '-h' in sys.argv:
                 print "%s Usage:" % (self.name)
                 print self.helpmsg
