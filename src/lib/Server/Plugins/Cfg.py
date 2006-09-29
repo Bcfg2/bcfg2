@@ -83,11 +83,11 @@ class ConfigFileEntry(object):
         self.paranoid = False
         self.interpolate = False
         
-    def read_info(self):
+    def read_info(self, name):
         '''read in :info metadata'''
         self.interpolate = False
         self.paranoid = False
-        filename = "%s/:info" % self.repopath
+        filename = "%s/%s" % (self.repopath, name)
         for line in open(filename).readlines():
             match = self.info.match(line)
             if not match:
@@ -130,9 +130,9 @@ class ConfigFileEntry(object):
         '''Handle FAM updates'''
         action = event.code2str()
         #logger.debug("Got event %s for %s" % (action, event.filename))
-        if event.filename == ':info':
+        if event.filename in [':info', 'info']:
             if action in ['changed', 'exists', 'created']:
-                return self.read_info()
+                return self.read_info(event.filename)
         if event.filename != self.path.split('/')[-1]:
             if not specific.match('/' + event.filename):
                 logger.info('Suppressing event for bogus file %s' % event.filename)
