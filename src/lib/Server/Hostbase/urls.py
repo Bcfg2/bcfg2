@@ -19,4 +19,6 @@ urlpatterns = patterns('Hostbase.hostbase.views',
     (r'^hostbase/zones/$', 'zones'),
     (r'^hostbase/zones/(?P<zone_id>\d+)/$', 'zoneview'),                       
     (r'^hostbase/zones/(?P<zone_id>\d+)/edit', 'zoneedit'),
-)
+    (r'^hostbase/zones/new/$', 'zonenew'),
+    (r'^hostbase/zones/(?P<zone_id>\d+)/(?P<item>\D+)/(?P<item_id>\d+)/confirm', 'confirm'),
+                       )

@@ -10,6 +10,10 @@
 
 {% block sidebar %}
 {% include "navbar" %}
+<ul>
+<li><a href="/hostbase/zones/{{ zone.id }}/" class="sidebar">view zone</a><br>
+</li>
+</ul>
 {% endblock %}
 
 {% block content %}
@@ -61,7 +65,8 @@ div#address{
    </td>
    <td>
    {% for nameserver in nameservers %}
-       <input name="nameserver{{ forloop.counter0 }}" type="text" size="32" value="{{ nameserver.name }}"><br>
+       <input name="nameserver{{ forloop.counter0 }}" type="text" size="32" value="{{ nameserver.name }}">
+       <a style="font-size:75%" href="/hostbase/zones/{{ zone.id }}/nameserver/{{ nameserver.id }}/confirm">remove<br>
    {% endfor %}
    </td></tr>
    </table>
@@ -84,7 +89,8 @@ div#address{
    <td>
    {% for mx in mxs %}
        <input name="priority{{ forloop.counter0 }}" type="text" size="6" value="{{ mx.priority }}">
-       <input name="mx{{ forloop.counter0 }}" type="text" size="32" value="{{ mx.mx }}"><br>
+       <input name="mx{{ forloop.counter0 }}" type="text" size="32" value="{{ mx.mx }}">
+       <a style="font-size:75%" href="/hostbase/zones/{{ zone.id }}/zonemx/{{ mx.id }}/confirm">remove<br>
    {% endfor %}
    </td></tr>
    </table>
@@ -103,15 +109,16 @@ div#address{
       <colgroup>
       <col width="200">
       <col width="*">
-   <tr><td valign="top"> <b>A records</b><br>
+   <tr><td valign="top"> <b>A records</b>
    {% if addresses %}
-   <a style="font-size:75%" href=# onclick="toggleField('address')">add a new MX record</a>
+   <br><a style="font-size:75%" href=# onclick="toggleField('address')">add a new MX record</a>
    {% endif %}
    </td>
    <td>
    {% if addresses %}
    {% for address in addresses %}
-       <input name="address{{ forloop.counter0 }}" type="text" value="{{ address.ip_addr }}"><br>
+       <input name="address{{ forloop.counter0 }}" type="text" value="{{ address.ip_addr }}">
+       <a style="font-size:75%" href="/hostbase/zones/{{ zone.id }}/address/{{ address.id }}/confirm">remove<br>
    {% endfor %}
    </td></tr>
    </table>
@@ -130,7 +137,7 @@ div#address{
       <col width="200">
       <col width="*">
    {% else %}
-       <input name="new_address" type="text" value="none" >
+      <input name="new_address" type="text" value="none" >
    {% endif %}
    </td></tr>
 

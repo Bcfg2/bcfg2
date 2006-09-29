@@ -10,6 +10,10 @@
 
 {% block sidebar %}
 {% include "navbar" %}
+<ul class="sidebar">
+<li><a href="/hostbase/zones/{{ zone.id }}/edit/" class="sidebar">edit zone</a><br>
+</li>
+</ul>
 {% endblock %}
 
 {% block content %}

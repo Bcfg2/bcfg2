@@ -307,7 +307,7 @@ def edit(request, host_id):
                                    'interfaces': interfaces,
                                    'TYPE_CHOICES': Interface.TYPE_CHOICES})
 
-def confirm(request, item, item_id, host_id, name_id=None):
+def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
     if request.GET.has_key('sub'):
         if item == 'interface':
@@ -330,8 +330,19 @@ def confirm(request, item, item_id, host_id, name_id=None):
         elif item=='name':
             Name.objects.get(id=item_id).cname_set.all().delete()
             Name.objects.get(id=item_id).delete()
+        elif item=='nameserver':
+            nameserver = Nameserver.objects.get(id=item_id)
+            Zone.objects.get(id=zone_id).nameservers.remove(nameserver)
+        elif item=='zonemx':
+            mx = MX.objects.get(id=item_id)
+            Zone.objects.get(id=zone_id).mxs.remove(mx)
+        elif item=='address':
+            address = ZoneAddress.objects.get(id=item_id)
+            Zone.objects.get(id=zone_id).addresses.remove(address)
         if item == 'cname' or item == 'mx' or item == 'name':
-            return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
+            return HttpResponseRedirect('/hostbase/%s/dnsedit' % host_id)
+        elif item == 'nameserver' or item == 'zonemx' or item == 'address':
+            return HttpResponseRedirect('/hostbase/zones/%s/edit' % zone_id)
         else:
             return HttpResponseRedirect('/hostbase/%s/edit' % host_id)
     else:
@@ -340,6 +351,9 @@ def confirm(request, item, item_id, host_id, name_id=None):
         names = []
         cnames = []
         mxs = []
+        zonemx = None
+        nameserver = None
+        address = None
         if item == 'interface':
             interface = Interface.objects.get(id=item_id)
             ips = interface.ip_set.all()
@@ -368,6 +382,12 @@ def confirm(request, item, item_id, host_id, name_id=None):
             cnames = [CName.objects.get(id=item_id)]
         elif item=='mx':
             mxs = [MX.objects.get(id=item_id)]
+        elif item=='zonemx':
+            zonemx = MX.objects.get(id=item_id)
+        elif item=='nameserver':
+            nameserver = Nameserver.objects.get(id=item_id)
+        elif item=='address':
+            address = ZoneAddress.objects.get(id=item_id)
         return render_to_response('confirm.html',
                                   {'interface': interface,
                                    'ips': ips,
@@ -376,7 +396,11 @@ def confirm(request, item, item_id, host_id, name_id=None):
                                    'id': item_id,
                                    'type': item,
                                    'host_id': host_id,
-                                   'mxs': mxs})
+                                   'mxs': mxs,
+                                   'zonemx': zonemx,
+                                   'nameserver': nameserver,
+                                   'address': address,
+                                   'zone_id': zone_id})
 
 def dnsedit(request, host_id):
     """Edits specific DNS information
@@ -424,7 +448,7 @@ def dnsedit(request, host_id):
                             mx=request.POST['%smx' % ipaddrstr])
                     if created:
                         mx.save()
-                    name.mxs.add(mx)
+                    name.mxs.add(mx)                
         return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
     else:
         host = Host.objects.get(id=host_id)
@@ -603,7 +627,7 @@ def new(request):
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES})                                   
     
 def remove(request, host_id):
-    host = Host.objects.get(id=host_id)
+    host = Host.GET.objects.get(id=host_id)
     if request.has_key('sub'):
         for interface in host.interface_set.all():
             for ip in interface.ip_set.all():
@@ -613,7 +637,7 @@ def remove(request, host_id):
             interface.ip_set.all().delete()
             interface.delete()
         host.delete()
-        return HttpResponseRedirect('/hostbase/')
+        return HttpResponseRedirect('/hostbase/%s/' % host_id)
     else:
         """Displays general host information"""
         interfaces = []
@@ -730,27 +754,53 @@ def zoneview(request, zone_id):
                                })
 
 def zoneedit(request, zone_id):
-    if request.has_key('sub'):
+    if request.GET.has_key('sub'):
         zone = Zone.objects.get(id=zone_id)
         for attrib in zoneattribs:
             if request.POST.has_key(attrib):
                 zone.__dict__[attrib] = request.POST[attrib]
         count = 0
-##         for nameserver in zone.nameservers.all():
-##             nameserver.name = request.POST['nameserver%i' % count]
-##             nameserver.save()
-##             count += 1
-##         count = 0
-##         for mx in zone.mxs.all():
-##             mx.priority = request.POST['priority%i' % count]
-##             mx.mx = request.POST['mx%i' % count]
-##             mx.save()
-##             count += 1
-##         count = 0
-##         for address in zone.addresses.all():
-##             address.ip_addr = request.POST['address%i' % count]
-##             count += 1
+        for nameserver in zone.nameservers.all():
+            ns, created = Nameserver.objects.get_or_create(name=request.POST['nameserver%i' % count])
+            if created or not (nameserver == ns):
+                ns.save()
+                zone.nameservers.add(ns)
+                zone.nameservers.remove(nameserver)
+            count += 1
+        count = 0
+        for mx in zone.mxs.all():
+            mrecord, created = MX.objects.get_or_create(priority=request.POST['priority%i' % count],
+                                                        mx=request.POST['mx%i' % count])
+            if created or not (mx == mrecord):
+                mrecord.save()
+                zone.mxs.add(mrecord)
+                zone.mxs.remove(mx)
+            count += 1
+        count = 0
+        for address in zone.addresses.all():
+            arecord, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['address%i' % count])
+            if created or not (arecord == address):
+                arecord.save()
+                zone.addresses.add(arecord)
+                zone.addresses.remove(address)
+            count += 1
         zone.save()
+        if request.POST['new_nameserver']:
+            nameserver, created = Nameserver.objects.get_or_create(name=request.POST['new_nameserver'])
+            if created:
+                nameserver.save()
+            zone.nameservers.add(nameserver)
+        if request.POST['new_mx'] and request.POST['new_priority']:
+            mx, created = MX.objects.get_or_create(priority=request.POST['new_priority'],
+                                                   mx=request.POST['new_mx'])
+            if created:
+                mx.save()
+            zone.mxs.add(mx)
+        if request.POST['new_address'] and not request.POST['new_address'] == 'none':
+            address, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['new_address'])
+            if created:
+                address.save()
+            zone.addresses.add(address)
         return HttpResponseRedirect('/hostbase/zones/%s/' % zone.id)
     else:
         zone = Zone.objects.get(id=zone_id)
@@ -759,4 +809,44 @@ def zoneedit(request, zone_id):
                                    'nameservers': zone.nameservers.all(),
                                    'mxs': zone.mxs.all(),
                                    'addresses': zone.addresses.all()
+                                   })
+
+def zonenew(request):
+    if request.GET.has_key('sub'):
+        try:
+            Zone.objects.get(zone=request.POST['zone'])
+            return render_to_response('errors.html',
+                                      {'failures': ['%s already exists in database' % request.POST['zone']]})
+        except:
+            zone = Zone(zone=request.POST['zone'])
+        for attrib in zoneattribs:
+            if request.POST.has_key(attrib):
+                zone.__dict__[attrib] = request.POST[attrib]
+        zone.serial = 1
+        zone.save()
+        for num in range(0,4):
+            if request.POST['nameserver%i' % num]:
+                ns, created = Nameserver.objects.get_or_create(name=request.POST['nameserver%i' % num])
+                if created:
+                    ns.save()
+                zone.nameservers.add(ns)
+        for num in range(0,2):
+            if request.POST['priority%i' % num] and request.POST['mx%i' % num]:
+                mrecord, created = MX.objects.get_or_create(priority=request.POST['priority%i' % num],
+                                                            mx=request.POST['mx%i' % num])
+                if created:
+                    mrecord.save()
+                zone.mxs.add(mrecord)
+        for num in range(0,2):
+            if request.POST['address%i' % num]:
+                arecord, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['address%i' % num])
+                if created:
+                    arecord.save()
+                zone.addresses.add(arecord)
+        return HttpResponseRedirect('/hostbase/zones/%s/' % zone.id)
+    else:
+        return render_to_response('zonenew.html',
+                                  {'nameservers': range(0,4),
+                                  'mxs': range(0,2),
+                                  'addresses': range(0,2)
                                    })

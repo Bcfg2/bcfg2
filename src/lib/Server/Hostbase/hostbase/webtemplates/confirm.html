@@ -93,6 +93,22 @@ Are you sure you want to remove these items?
 </ul>
 {% endif %}
 
+{% if zone_id %}
+<ul>
+{% ifequal type 'zonemx' %}
+<li> mx: {{ zonemx.priority }} {{ zonemx.mx }} </li>
+{% endifequal %}
+
+{% ifequal type 'nameserver' %}
+<li> nameserver: {{ nameserver.name }} </li>
+{% endifequal %}
+
+{% ifequal type 'address' %}
+<li> address: {{ address.ip_addr }} </li>
+{% endifequal %}
+</ul>
+{% endif %}
+
 <input type="submit" value="confirm">
 <input type="reset" value="cancel" onclick="history.back()">
 </form>
