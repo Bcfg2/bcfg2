@@ -74,7 +74,7 @@ http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/Cheetah-2.0rc7.tar.gz"
 
 <install>
 /usr/local/lib/bcfg2/bin/python setup.py install \
---prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 \
+--prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
 </install> 
 
 <clean>
