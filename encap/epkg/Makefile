@@ -6,7 +6,7 @@
 BASEDIR = /usr/local
 ENCAPDIR = ${BASEDIR}/encap
 PREFIX = /tmp/epkg-static-libs
-PATH = ${PREFIX}/bin:/usr/sfw/bin:/usr/ccs/bin:/usr/local/bin:/opt/csw/bin:/usr/sbin:/usr/bin
+PATH = ${PREFIX}/bin:/usr/sfw/bin:/usr/ccs/bin:/usr/local/bin:/opt/csw/bin:/usr/sbin:/usr/bin:/bin
 LDFLAGS = -L${PREFIX}/lib
 CPPFLAGS = -I${PREFIX}/include
 export PATH LDFLAGS CPPFLAGS
@@ -28,7 +28,7 @@ libtar:
 	cd ${LIBTAR} && ./configure --disable-encap --disable-epkg-install --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
 
 openssl:
-	cd ${OPENSSL} && ./config --prefix=${PREFIX} zlib no-shared && $(MAKE) && $(MAKE) install 
+	cd ${OPENSSL} && ./config --prefix=${PREFIX} zlib no-asm no-shared && $(MAKE) && $(MAKE) install 
 
 curl:
 	cd ${CURL} && ./configure --disable-ipv6 --disable-shared --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
