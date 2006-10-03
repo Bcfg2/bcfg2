@@ -4,18 +4,16 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-openssl-0.9.8b"
+	pkgspec="bcfg2-gzip-1.2.4b"
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
+<prereq package="patch-2.5.9" />
 <prereq package="bcfg2-pkg-config-0.20" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -58,40 +56,45 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8b.tar.gz
-     http://www.openssl.org/source/openssl-0.9.8b.tar.gz"
-	use_objdir="no"
+url="http://www.pobox.com/users/dclark/mirror/gzip/gzip-1.2.4a.tar.gz
+     ftp://ftp.gnu.org/gnu/gzip/gzip-1.2.4a.tar.gz"
 >
 
+<patch options="-p1"><![CDATA[
+--- gzip-1.2.4/gzip.c	Thu Aug 19 15:39:43 1993
++++ gzip-1.2.4b/gzip.c	Tue Jan  8 21:44:18 2002
+@@ -1005,7 +1005,14 @@
+ #ifdef NO_MULTIPLE_DOTS
+     char *dot; /* pointer to ifname extension, or NULL */
+ #endif
++    int max_suffix_len = (z_len > 3 ? z_len : 3);
+ 
++    /* Leave enough room in ifname or ofname for suffix: */
++    if (strlen(iname) >= sizeof(ifname) - max_suffix_len) {
++        strncpy(ifname, iname, sizeof(ifname) - 1);
++	/* last byte of ifname is already zero and never overwritten */
++        error("file name too long");
++    }
+     strcpy(ifname, iname);
+ 
+     /* If input file exists, return OK. */
+]]></patch>
+
 <configure>
-if [ -f config.orig ]; then cp config.orig config; fi
-cat config | sed s:CC\=ccc:CC\=gcc:g | sed s:CC\=cc:CC\=gcc:g > config.bcfg2
-mv config config.orig
-cp config.bcfg2 config
-chmod 755 config
-./config \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	zlib-dynamic shared \
-	-L/usr/local/lib/bcfg2/lib \
-	-I/usr/local/lib/bcfg2/include
+./configure \
+	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2"
 </configure>
 
-<build type="append">
-	${MAKE} test
-</build>
+<install type="prepend">
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
+</install>
 
 </source>
 
-<prepackage>
-# Put source back to pristine state
-rm ${builddir}/config
-cp ${builddir}/config.orig ${builddir}/config
-chmod 755 ${builddir}/config
-# Make man pages available from /usr/local/lib/bcfg2/man
-mv lib/bcfg2/ssl/man lib/bcfg2/
-# Other stuff...
-test -d bin || mkdir bin
-ln -sf ../lib/bcfg2/bin/openssl bin/b2-openssl
+<prepackage type="set">
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
@@ -99,7 +102,7 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description openssl - SSL encryption tool and library
+description gzip - The GNU compression utility
 </encapinfo>
 
 </encap_profile>

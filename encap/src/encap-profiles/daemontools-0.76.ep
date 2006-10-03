@@ -12,7 +12,7 @@
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -311,8 +311,8 @@ else
     REALDIR=`pwd -P`
     rm /service/$SERVICE
     svc -dx . log
-    rm -rf ${REALDIR}/supervise
-    rm -rf ${REALDIR}/log/supervise
+    test -d ${REALDIR}/supervise && rm -rf ${REALDIR}/supervise
+    test -d ${REALDIR}/log/supervise && rm -rf ${REALDIR}/log/supervise
 fi
 exit 0
 ]]></include_file>
@@ -434,6 +434,27 @@ test -d /usr/local/var/multilog/svscan || mkdir /usr/local/var/multilog/svscan
 test -h /command || ln -s /usr/local/encap/daemontools-0.76/bin /command
 cd /usr/local/encap/daemontools-0.76 && ./package/run
 printf "Finished daemontools postinstall script.\n"
+]]></include_file>
+
+<include_file name="preremove" mode="0755"><![CDATA[
+#!/bin/sh
+
+printf "Running daemontools preremove script...\n"
+date
+
+for SERVICE in `ls /service`; do
+    if [ -h /service/$SERVICE ]; then
+        printf "INFO: Removing /service/$SERVICE ...\n"
+        /command/svrm /service/$SERVICE || true
+    fi
+done
+
+if [ -h /service/.svscan ]; then
+    printf "INFO: Removing /service/.svscan ...\n"
+    /command/svrm /service/.svscan || true
+fi
+
+printf "Finished daemontools preremove script.\n"
 ]]></include_file>
 
 <encapinfo>

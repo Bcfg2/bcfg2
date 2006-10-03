@@ -9,15 +9,14 @@
 
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
+<prereq package="bcfg2-gzip-1.2.4b" />
 <prereq package="bcfg2-pkg-config-0.20" />
 <prereq package="bcfg2-readline-5.1" />
-<prereq package="bcfg2-openssl-0.9.8b" />
+<prereq package="bcfg2-openssl-0.9.8c" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -79,10 +78,10 @@ cp setup.py.bcfg2 setup.py
 PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE
 	--with-gcc \
-	--with-cxx=g++ \
 PLATFORM_ENDIF
 	--enable-shared=no \
-	--disable-ipv6
+	--disable-ipv6 \
+	--without-cxx
 </configure>
 
 <build type="append"><![CDATA[
@@ -100,13 +99,18 @@ fi
 </source>
 
 <prepackage><![CDATA[
+# Put setup back into pristine state
 rm ${builddir}/setup.py
 cp ${builddir}/setup.py.orig ${builddir}/setup.py
+# Make site-packages be in the PYTHONPATH
 echo /usr/local/lib/bcfg2/lib/python2.4/site-packages > lib/bcfg2/lib/python2.4/site-packages/usr-local-lib-bcfg2.pth
+# Convienience links
 mkdir bin 2>/dev/null || exit 0
-ln -sf ../lib/bcfg2/bin/idle bin/b2-idle
 ln -sf ../lib/bcfg2/bin/pydoc bin/b2-pydoc
 ln -sf ../lib/bcfg2/bin/python bin/b2-python
+# Remove some big stuff that bcfg2 doesn't need
+if [ -d lib/bcfg2/lib/python2.4/test ]; then rm -rf lib/bcfg2/lib/python2.4/test; fi
+if [ -d lib/bcfg2/lib/python2.4/idlelib ]; then rm -rf lib/bcfg2/lib/python2.4/idlelib; fi
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap

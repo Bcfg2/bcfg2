@@ -4,13 +4,11 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-lxml-1.0.1"
+	pkgspec="bcfg2-lxml-1.1.1"
 >
 
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
 <prereq package="bcfg2-pkg-config-0.20" />
 <prereq package="bcfg2-python-2.4.3" />
 <prereq package="bcfg2-pyrex-0.9.4.1" />
@@ -19,7 +17,7 @@
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -62,8 +60,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/lxml/lxml-1.0.1.tgz
-     http://codespeak.net/lxml/lxml-1.0.1.tgz"
+url="http://www.pobox.com/users/dclark/mirror/lxml/lxml-1.1.1.tgz
+     http://codespeak.net/lxml/lxml-1.1.1.tgz"
 >
 
 <configure>

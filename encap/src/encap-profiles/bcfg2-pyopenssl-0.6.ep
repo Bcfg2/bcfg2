@@ -9,15 +9,13 @@
 
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
 <prereq package="bcfg2-pkg-config-0.20" />
-<prereq package="bcfg2-openssl-0.9.8b" />
+<prereq package="bcfg2-openssl-0.9.8c" />
 <prereq package="bcfg2-python-2.4.3" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 

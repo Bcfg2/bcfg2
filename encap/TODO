@@ -1,37 +1,11 @@
 = EncapTodo: TODO =
 
-== For 0.8.4  ==
-
  * Write HOWTO
 
  * Packages all deps of new reports (django etc.) for GNU/Linux
 
- * Move from lxml (+deps) to elementtree for client
-   * Maybe just move to Python 2.5 (which includes elementtree) if final comes
-     out on schedule (Sept 12th, 2006 is planned final release date)
+ * Work towards full compliance with encap 2.1 spec
+
  
-== For 0.8.5 or earlier ==
-
- * Cut down distribution size to something more reasonable
-   * Some platforms are now >150MB (installed)
-   * Remove unneeded doc / test code / etc.
-   * Perhaps make seperate -doc- or -extra- encap packages
-   * Might be able to make client-side only python 2.5 (statically linked to
-     deps like openssl), bcfg2, daemontools, ostiary, and bcfg2-site.
-       * http://groups.google.com/groups/starred?lnk=lnmst&hl=en
-   * Look into using http://sourceforge.net/projects/cx-freeze/ for client-side
-
-== For 0.8.6 or earlier ==
- 
- * Improve handling of libgcc/libstdc++
-
- * Try to make build not effect the build host as much
- 
- * Try to make it possible to build as non-root
-
- * Handle removals nicely (preremove/postremove scripts)
-   * Work towards full compliance with encap 2.1 spec
-   * Remove /service links in remove scripts for daemontools services
-   
 == Documentation Version ==
 $Id$

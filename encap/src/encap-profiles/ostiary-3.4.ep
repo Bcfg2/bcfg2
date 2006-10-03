@@ -12,7 +12,7 @@
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -113,6 +113,20 @@ date
 test -d /usr/local/var/multilog || mkdir /usr/local/var/multilog
 test -d /usr/local/var/multilog/ostiary || mkdir /usr/local/var/multilog/ostiary
 printf "Finished ostiary postinstall script.\n"
+]]></include_file>
+
+<include_file name="preremove" mode="0755"><![CDATA[
+#!/bin/sh
+
+printf "Running ostiary preremove script...\n"
+date
+
+if [ -h /service/ostiary ]; then
+    printf "INFO: Removing /service/ostiary...\n"
+    /command/svrm /service/ostiary
+fi
+
+printf "Finished ostiary preremove script.\n"
 ]]></include_file>
 
 <encapinfo>

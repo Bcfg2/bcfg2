@@ -1,7 +1,7 @@
 # $Id$
 
 .PHONY : test log all install clean distclean uninstall encaps rename bcfg2only bcfg2bump
-.SUFFIXES : 
+.SUFFIXES :
 .SUFFIXES : .ep .sh .installed .packaged .d
 
 export BASEDIR = /usr/local
@@ -17,11 +17,8 @@ BCFG2 := $(basename $(wildcard bcfg2-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH := $(basename $(wildcard bcfg2-cheetah-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH_DOC := $(basename $(wildcard bcfg2-cheetah-doc-*.ep))
 BCFG2_GAMIN := $(basename $(wildcard bcfg2-gamin-*.ep))
-BCFG2_GETTEXT := $(basename $(wildcard bcfg2-gettext-*.ep))
 BCFG2_GLIB := $(basename $(wildcard bcfg2-glib-*.ep))
-BCFG2_LIBGCC := $(basename $(wildcard bcfg2-libgcc-*.sh))
-BCFG2_LIBICONV := $(basename $(wildcard bcfg2-libiconv-*.ep))
-BCFG2_LIBSTDCXX := $(basename $(wildcard bcfg2-libstdc++-*.sh))
+BCFG2_GZIP := $(basename $(wildcard bcfg2-gzip-*.ep))
 BCFG2_LIBXML2 := $(basename $(wildcard bcfg2-libxml2-*.ep))
 BCFG2_LIBXSLT := $(basename $(wildcard bcfg2-libxslt-*.ep))
 BCFG2_LXML := $(basename $(wildcard bcfg2-lxml-*.ep))
@@ -40,9 +37,9 @@ OSTIARTY := $(basename $(wildcard ostiary-[0-9].[0-9]*.ep))
 OSTIARTY_DOC := $(basename $(wildcard ostiary-doc-*.ep))
 PATCH := $(basename $(wildcard patch-*.ep))
 
-sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_CHEETAH_DOC)  $(BCFG2_GETTEXT) $(BCFG2_LIBICONV) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYREX) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(DAEMONTOOLS_DOC) $(MAKESELF) $(OSTIARTY) $(OSTIARTY_DOC) $(PATCH))
+sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_CHEETAH_DOC)  $(BCFG2_GZIP) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYREX) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(DAEMONTOOLS_DOC) $(MAKESELF) $(OSTIARTY) $(OSTIARTY_DOC) $(PATCH))
 
-sources_sh := $(sort $(BCFG2_LIBGCC) $(BCFG2_LIBSTDCXX) $(M4))
+sources_sh := $(sort $(M4))
 
 # Only compile bcfg2-glib and bcfg2-gamin (needed by bcfg2 server) on Linux
 # (Gamin only supports Linux), and only compile bcfg2-python-apt on known
@@ -123,8 +120,8 @@ log :
 	&& $(MAKE) rename >> ./make.log 2>&1 ) &
 
 all : install encaps rename
- 
-.DELETE_ON_ERROR : # delete the target of a rule if it has changed and its 
+
+.DELETE_ON_ERROR : # delete the target of a rule if it has changed and its
                    # commands exit with a nonzero exit status
 
 install : $(EPKG) $(MKENCAP) $(EP2TARGET) $(M4).installed $(addsuffix .installed,$(sources))
@@ -152,12 +149,12 @@ rename : encaps
 		fi; \
 	done;
 
-clean : 
+clean :
 	-(rm ./*.log; rm ./*.packaged; rm ./*.gz; rm ./*~)
 
 distclean : clean
 	-rm ./*.d
-	
+
 uninstall : distclean
 	-(find $(BASEDIR)/lib/bcfg2 | grep "\.pyc" | xargs -n1 rm)
 	-(ENCAPS="m4 patch daemontools makeself ostiary bcfg2"; \
@@ -170,7 +167,7 @@ uninstall : distclean
 
 bcfg2only :
 	$(MAKE) -t; sleep 2; touch $(srcdir)/$(BCFG2).ep; $(MAKE)
-    
+
 bcfg2bump :
 	@if [ "$(NEW)x" != "x" ]; then NEW="$(NEW)"; fi && \
 	if [ "$(OLD)x" != "x" ]; then OLD="$(OLD)"; fi && \

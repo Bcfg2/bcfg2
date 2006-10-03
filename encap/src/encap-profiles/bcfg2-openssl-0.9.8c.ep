@@ -4,15 +4,16 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-gettext-0.14.5"
+	pkgspec="bcfg2-openssl-0.9.8c"
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-libiconv-1.9.2" />
+<prereq package="bcfg2-zlib-1.2.3" />
+<prereq package="bcfg2-pkg-config-0.20" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -55,20 +56,40 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/gettext/gettext-0.14.5.tar.gz
-     http://ftp.gnu.org/pub/gnu/gettext/gettext-0.14.5.tar.gz"
+url="http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8c.tar.gz
+     http://www.openssl.org/source/openssl-0.9.8c.tar.gz"
+	use_objdir="no"
 >
 
 <configure>
-./configure \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2"
+if [ -f config.orig ]; then cp config.orig config; fi
+cat config | sed s:CC\=ccc:CC\=gcc:g | sed s:CC\=cc:CC\=gcc:g > config.bcfg2
+mv config config.orig
+cp config.bcfg2 config
+chmod 755 config
+./config \
+	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
+	zlib-dynamic shared \
+	-L/usr/local/lib/bcfg2/lib \
+	-I/usr/local/lib/bcfg2/include
 </configure>
+
+<build type="append">
+	${MAKE} test
+</build>
 
 </source>
 
-<prepackage type="set">
+<prepackage>
+# Put source back to pristine state
+rm ${builddir}/config
+cp ${builddir}/config.orig ${builddir}/config
+chmod 755 ${builddir}/config
 # Make man pages available from /usr/local/lib/bcfg2/man
-mv lib/bcfg2/share/man lib/bcfg2/
+mv lib/bcfg2/ssl/man lib/bcfg2/
+# Other stuff...
+test -d bin || mkdir bin
+ln -sf ../lib/bcfg2/bin/openssl bin/b2-openssl
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
@@ -76,7 +97,7 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description gettext - tools to produce multi-lingual messages
+description openssl - SSL encryption tool and library
 </encapinfo>
 
 </encap_profile>

@@ -8,13 +8,11 @@
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
 <prereq package="bcfg2-pkg-config-0.20" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 

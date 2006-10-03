@@ -15,21 +15,17 @@
 
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-libiconv-1.9.2" />
-<prereq package="bcfg2-gettext-0.14.5" />
 <prereq package="bcfg2-pkg-config-0.20" />
-<prereq package="bcfg2-openssl-0.9.8b" />
-<prereq package="bcfg2-libstdc++-0.1" />
-<prereq package="bcfg2-libgcc-0.1" />
+<prereq package="bcfg2-openssl-0.9.8c" />
 <prereq package="bcfg2-python-2.4.3" />
 <prereq package="bcfg2-pyopenssl-0.6" />
 <prereq package="bcfg2-libxml2-2.6.26" />
 <prereq package="bcfg2-libxslt-1.1.17" />
-<prereq package="bcfg2-lxml-1.0.1" />
+<prereq package="bcfg2-lxml-1.1.1" />
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
@@ -445,20 +441,34 @@ if [ ! -f $DEFAULT/bcfg2-server/.SENTINEL ]; then
 fi
 ]]></include_file>
 
+<include_file name="preremove" mode="0755"><![CDATA[
+#!/bin/sh
+
+printf "Running bcfg2 preremove script...\n"
+date
+
+if [ -h /service/bcfg2-client ]; then
+    printf "INFO: Removing /service/bcfg2-client...\n"
+    /command/svrm /service/bcfg2-client
+fi
+
+if [ -h /service/bcfg2-server ]; then
+    printf "INFO: Removing /service/bcfg2-server...\n"
+    /command/svrm /service/bcfg2-server
+fi
+
+printf "Finished bcfg2 preremove script.\n"
+]]></include_file>
 
 <encapinfo>
 description Bcfg2 - Provides a declarative interface to system configuration
 prereq pkgspec >= bcfg2-zlib-1.2.3
-prereq pkgspec >= bcfg2-libiconv-1.9.2
-prereq pkgspec >= bcfg2-gettext-0.14.5
-prereq pkgspec >= bcfg2-openssl-0.9.8b
-prereq pkgspec >= bcfg2-libstdc++-0.1
-prereq pkgspec >= bcfg2-libgcc-0.1
+prereq pkgspec >= bcfg2-openssl-0.9.8c
 prereq pkgspec >= bcfg2-python-2.4.3
 prereq pkgspec >= bcfg2-pyopenssl-0.6
 prereq pkgspec >= bcfg2-libxml2-2.6.26
 prereq pkgspec >= bcfg2-libxslt-1.1.17
-prereq pkgspec >= bcfg2-lxml-1.0.1
+prereq pkgspec >= bcfg2-lxml-1.1.1
 </encapinfo>
 
 </encap_profile>

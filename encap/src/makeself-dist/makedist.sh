@@ -48,17 +48,10 @@ tar -cf $DISTDIR/epkg.tar $EPKGDIR/*
 
 # Copy bcfg2 and client deps to $DISTDIR
 BCFG2="`basename $EPDIR/bcfg2-[0-9].[0-9]*-encap-*.tar.gz`"
-BCFG2_GETTEXT="`basename $EPDIR/bcfg2-gettext-*-encap-*.tar.gz`"
-BCFG2_LIBGCC="`basename $EPDIR/bcfg2-libgcc-*.tar.gz`"
-BCFG2_LIBICONV="`basename $EPDIR/bcfg2-libiconv-*-encap-*.tar.gz`"
-BCFG2_LIBSTDCXX="`basename $EPDIR/bcfg2-libstdc++-*.tar.gz`"
 BCFG2_LIBXML2="`basename $EPDIR/bcfg2-libxml2-*-encap-*.tar.gz`"
 BCFG2_LIBXSLT="`basename $EPDIR/bcfg2-libxslt-*-encap-*.tar.gz`"
 BCFG2_LXML="`basename $EPDIR/bcfg2-lxml-*-encap-*.tar.gz`"
-BCFG2_OPENSSL="`basename $EPDIR/bcfg2-openssl-*-encap-*.tar.gz`"
-BCFG2_PYOPENSSL="`basename $EPDIR/bcfg2-pyopenssl-*-encap-*.tar.gz`"
 BCFG2_PYTHON="`basename $EPDIR/bcfg2-python-[0-9].[0-9]*-encap-*.tar.gz`"
-BCFG2_ZLIB="`basename $EPDIR/bcfg2-zlib-*-encap-*.tar.gz`"
 DAEMONTOOLS="`basename $EPDIR/daemontools-[0-9].[0-9]*-encap-*.tar.gz`"
 OSTIARTY="`basename $EPDIR/ostiary-[0-9].[0-9]*-encap-*.tar.gz`"
 
@@ -67,7 +60,7 @@ if [ "${BCFG2_PYTHON_APT_TMP}x" != 'bcfg2-python-apt-*-encap-*.tar.gzx' ]; then
     BCFG2_PYTHON_APT="$BCFG2_PYTHON_APT_TMP"
 fi
 
-BCFG2DEPS="$BCFG2_GETTEXT $BCFG2_LIBGCC $BCFG2_LIBICONV $BCFG2_LIBSTDCXX $BCFG2_LIBXML2 $BCFG2_LIBXSLT $BCFG2_LXML $BCFG2_OPENSSL $BCFG2_PYOPENSSL $BCFG2_PYTHON $BCFG2_ZLIB $BCFG2_PYTHON_APT"
+BCFG2DEPS="$BCFG2_LIBXML2 $BCFG2_LIBXSLT $BCFG2_LXML $BCFG2_PYTHON $BCFG2_PYTHON_APT"
 
 FILES="$BCFG2DEPS $BCFG2 $DAEMONTOOLS $OSTIARTY"
 
