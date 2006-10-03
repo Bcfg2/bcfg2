@@ -55,7 +55,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/python-apt/python-apt_0.6.16.2ubuntu8.tar.gz
+url="ftp://encapsrcdist/mirror/python-apt/python-apt_0.6.16.2ubuntu8.tar.gz
+     http://www.pobox.com/users/dclark/mirror/python-apt/python-apt_0.6.16.2ubuntu8.tar.gz
      http://archive.ubuntu.com/ubuntu/pool/main/p/python-apt/python-apt_0.6.16.2ubuntu8.tar.gz"
 subdir="python-apt-0.6.16.2ubuntu8"
 >

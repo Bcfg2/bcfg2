@@ -55,7 +55,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/cheetah/Cheetah-2.0rc7.tar.gz
+url="ftp://encapsrcdist/mirror/cheetah/Cheetah-2.0rc7.tar.gz
+http://www.pobox.com/users/dclark/mirror/cheetah/Cheetah-2.0rc7.tar.gz
 http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/Cheetah-2.0rc7.tar.gz"
 >
 

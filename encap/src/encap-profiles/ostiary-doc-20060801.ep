@@ -20,8 +20,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-doc-20060801.tar.gz"
-	use_objdir="no"
+url="ftp://encapsrcdist/mirror/ostiary/ostiary-doc-20060801.tar.gz
+     http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-doc-20060801.tar.gz"
+use_objdir="no"
 >
 
 <configure>

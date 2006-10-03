@@ -36,9 +36,10 @@ PLATFORM_ELSE
 PLATFORM_ENDIF
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
+url="ftp://encapsrcdist/mirror/ostiary/ostiary-3.4.tar.gz
+     http://www.pobox.com/users/dclark/mirror/ostiary/ostiary-3.4.tar.gz
      http://ingles.homeunix.org/software/ost/ostiary-3.4.tar.gz"
-     use_objdir="no"
+use_objdir="no"
 >
 
 <patch options="-p1"><![CDATA[

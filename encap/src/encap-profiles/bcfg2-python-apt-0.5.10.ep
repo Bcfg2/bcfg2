@@ -55,7 +55,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/python-apt/python-apt_0.5.10.tar.gz
+url="ftp://encapsrcdist/mirror/python-apt/python-apt_0.5.10.tar.gz
+     http://www.pobox.com/users/dclark/mirror/python-apt/python-apt_0.5.10.tar.gz
      http://ftp.debian.org/debian/pool/main/p/python-apt/python-apt_0.5.10.tar.gz"
 subdir="python-apt-0.5.10"
 >

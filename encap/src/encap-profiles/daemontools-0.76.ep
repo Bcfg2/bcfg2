@@ -36,10 +36,11 @@ PLATFORM_ELSE
 PLATFORM_ENDIF
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-0.76.tar.gz
+url="ftp://encapsrcdist/mirror/daemontools/daemontools-0.76.tar.gz
+     http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-0.76.tar.gz
      http://cr.yp.to/daemontools/daemontools-0.76.tar.gz"
-	use_objdir="no"
-	subdir="admin/daemontools-0.76"
+use_objdir="no"
+subdir="admin/daemontools-0.76"
 >
 
 <patch options="-p1"><![CDATA[

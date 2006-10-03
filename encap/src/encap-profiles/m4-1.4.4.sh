@@ -35,8 +35,9 @@ cat > ${ENCAP_PKGNAME}.ep << EOF
 />
 
 <source
-	url="http://www.pobox.com/users/dclark/mirror/m4/m4-1.4.4.tar.gz
-	     http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"
+url="ftp://encapsrcdist/mirror/m4/m4-1.4.4.tar.gz
+     http://www.pobox.com/users/dclark/mirror/m4/m4-1.4.4.tar.gz
+     http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"
 >
 
 </source>

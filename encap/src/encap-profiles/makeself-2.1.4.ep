@@ -10,7 +10,8 @@
 <prereq package="m4-1.4.4" />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/makeself/makeself-2.1.4.run
+url="ftp://encapsrcdist/mirror/makeself/makeself-2.1.4.run
+     http://www.pobox.com/users/dclark/mirror/makeself/makeself-2.1.4.run
      http://www.megastep.org/makeself/makeself-2.1.4.run"
 subdir="/"
 >

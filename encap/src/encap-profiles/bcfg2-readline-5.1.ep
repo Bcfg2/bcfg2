@@ -55,7 +55,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/readline/readline-5.1.tar.gz
+url="ftp://encapsrcdist/mirror/readline/readline-5.1.tar.gz
+     http://www.pobox.com/users/dclark/mirror/readline/readline-5.1.tar.gz
      ftp://ftp.cwru.edu/pub/bash/readline-5.1.tar.gz"
 >
 

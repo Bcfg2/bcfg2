@@ -20,8 +20,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-doc-20060731.tar.gz"
-	use_objdir="no"
+url="ftp://encapsrcdist/mirror/daemontools/daemontools-doc-20060731.tar.gz
+     http://www.pobox.com/users/dclark/mirror/daemontools/daemontools-doc-20060731.tar.gz"
+use_objdir="no"
 >
 
 <configure>
