@@ -76,7 +76,7 @@ chmod 755 config
 </configure>
 
 <build type="append">
-	${MAKE} test
+    ${MAKE} test || true
 </build>
 
 </source>
