@@ -70,7 +70,7 @@ cp config.bcfg2 config
 chmod 755 config
 ./config \
 	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	zlib-dynamic shared \
+	zlib-dynamic shared no-asm \
 	-L/usr/local/lib/bcfg2/lib \
 	-I/usr/local/lib/bcfg2/include
 </configure>
