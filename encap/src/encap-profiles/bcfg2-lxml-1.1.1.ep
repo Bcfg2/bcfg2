@@ -43,7 +43,7 @@ PLATFORM_ENDIF
 <environment
         variable="LDFLAGS"
 PLATFORM_IF_MATCH(linux)
-        value="-L/usr/local/lib/bcfg2/lib -lexslt -L/usr/local/lib/bcfg2/lib/python2.4/site-packages -Wl,-rpath,/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib/python2.4/site-packages"
+        value="-L/usr/local/lib/bcfg2/lib -lexslt -L/usr/local/lib/bcfg2/lib/python2.4/site-packages -Wl,-rpath,/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib/python2.4/site-packages -YP,/usr/local/lib/bcfg2/lib:/usr/local/lib/bcfg2/lib/python2.4/site-packages:/usr/lib:/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -lexslt -L/usr/local/lib/bcfg2/lib/python2.4/site-packages -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/local/lib/bcfg2/lib/python2.4/site-packages:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(solaris)

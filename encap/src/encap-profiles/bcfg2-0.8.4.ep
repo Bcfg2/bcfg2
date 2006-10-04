@@ -51,7 +51,7 @@ PLATFORM_ENDIF
 <environment
         variable="LDFLAGS"
 PLATFORM_IF_MATCH(linux)
-        value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib"
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib:/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
 	value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(solaris)
