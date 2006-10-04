@@ -48,7 +48,7 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
 sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
-DISTRO := $(shell cat /etc/issue | head -1)
+DISTRO := $(shell cat /etc/issue | grep ^[a-zA-Z] | head -1)
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
@@ -64,6 +64,22 @@ endif
 ifeq ($(DISTRO),Ubuntu 6.06.1 LTS \n \l)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.16.2ubuntu8
 OS ?= linux_ubuntu_dapper
+endif
+
+ifeq ($(DISTRO),Red Hat Linux release 6.0 (Hedwig))
+OS ?= linux_redhat_60
+endif
+
+ifeq ($(DISTRO),Red Hat Linux release 7.2 (Enigma))
+OS ?= linux_redhat_72
+endif
+
+ifeq ($(DISTRO),Welcome to SuSE SLES 8 (powered by UnitedLinux 1.0) (i586))
+OS ?= linux_suse_sles8
+endif
+
+ifeq ($(DISTRO),Welcome to SUSE Linux Enterprise Server 10 (i586) - Kernel \r (\l).)
+OS ?= linux_suse_sles10
 endif
 
 ifdef BCFG2_PYTHON_APT
