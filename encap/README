@@ -149,8 +149,6 @@ Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
 || OS        || Vendor || Version || Arch  || GCC     || By || Bcfg2 ||
-|| AIX       || IBM    || 4.3.1   || POWER || 2.95.3  || dc || 0.8.5 ||
-|| AIX       || IBM    || 4.3.3   || POWER || 3.3.0   || dc || 0.8.5 ||
 || AIX       || IBM    || 5.2     || POWER || 3.3.2   || dc || 0.8.5 ||
 || AIX       || IBM    || 5.3     || POWER || 4.1.1   || dc || 0.8.5 ||
 || GNU/Linux || Debian || Sarge   || i386  || 3.3.5   || dc || 0.8.5 ||
