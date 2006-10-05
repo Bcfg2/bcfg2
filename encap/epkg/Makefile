@@ -7,6 +7,7 @@ BASEDIR = /usr/local
 ENCAPDIR = ${BASEDIR}/encap
 PREFIX = /tmp/epkg-static-libs
 PATH = ${PREFIX}/bin:/usr/sfw/bin:/usr/ccs/bin:/usr/local/bin:/opt/csw/bin:/usr/sbin:/usr/bin:/bin
+CC = gcc
 LDFLAGS = -L${PREFIX}/lib
 CPPFLAGS = -I${PREFIX}/include
 export PATH LDFLAGS CPPFLAGS
