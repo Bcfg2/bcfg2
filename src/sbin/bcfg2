@@ -4,7 +4,7 @@
 __revision__ = '$Revision$'
 
 import logging, os, signal, tempfile, time, xmlrpclib
-import Bcfg2.Options, Bcfg2.Client.XML
+import Bcfg2.Options, Bcfg2.Client.XML, Bcfg2.Client.Frame
 
 try:
     import Bcfg2.Client.Proxy, Bcfg2.Logging
@@ -83,36 +83,6 @@ class Client:
             print "cannot use -n and -r together"
             raise SystemExit, 1
 
-    def load_toolset(self, toolsetName):
-        '''Import client toolset modules'''
-        
-        toolset_packages = {
-            'debian': "Bcfg2.Client.Debian",
-            'rh': "Bcfg2.Client.Redhat",
-            'solaris': "Bcfg2.Client.Solaris"
-            }
-
-        if toolset_packages.has_key(toolsetName):
-            toolset_class = toolset_packages[toolsetName]
-        else:
-            toolset_class = toolsetName
-
-        try:
-            mod = __import__(toolset_class, globals(), locals(), ['*'])
-        except ImportError:
-            self.fatal_error("Failed to load server-specified toolset: %s" % (toolsetName))
-        except:
-            self.logger.error("Failed to import toolset %s" % (toolsetName), exc_info=1)
-            self.fatal_error("Cannot continue")
-            
-        try:
-            self.toolset = mod.ToolsetImpl(self.config, self.setup)
-            
-            self.logger.debug("Selected %s toolset..." % (toolsetName))
-        except:
-            self.logger.error("Failed to instantiate toolset: %s" % (toolsetName), exc_info=1)
-            raise SystemExit, 1
-
     def run_probe(self, probe):
         '''Execute probe'''
         name = probe.get('name')
@@ -137,6 +107,10 @@ class Client:
         '''Signal a fatal error'''
         self.logger.error("Fatal error: %s" % (message))
         raise SystemExit, 1
+
+    def get_config(self):
+        '''Either download the config from the server or read it from file'''
+        
 
     def run(self):
         ''' Perform client execution phase '''
@@ -228,54 +202,13 @@ class Client:
         if self.config.tag == 'error':
             self.fatal_error("server error: %s" % (self.config.text))
 
-        # Get toolset from server
-        try:
-            toolsetName = self.config.get('toolset', 'Toolset')
-        except:
-            self.fatal_error("server did not specify a toolset")
+        self.tools = Bcfg2.Client.Frame.Frame(self.config, self.setup, times)
 
-        if self.setup['bundle']:
-            replacement_xml = Bcfg2.Client.XML.Element("Configuration", version='2.0')
-            for child in self.config.getchildren():
-                if ((child.tag == 'Bundle') and
-                    (child.attrib['name'] == self.setup['bundle'])):
-                    replacement_xml.append(child)
-            self.config = replacement_xml
+        self.tools.Execute()
 
-        # Create toolset handle
-        self.load_toolset(toolsetName)
-
-        times['initialization'] = time.time()
-        
-        # verify state
-        self.toolset.Inventory()
-
-        times['inventory'] = time.time()
-    
-        # summarize current state
-        self.toolset.CondDisplayState('initial')
-
-        # run bcfg in interactive mode
-        if self.setup['interactive']:
-            self.toolset.PromptUser()
-
-        # install incorrect aspects of configuration
-        self.toolset.Install()
-
-        self.toolset.CondDisplayState('final')
-
-        times['install'] = time.time()
-        times['finished'] = time.time()
-
-        if not self.setup['file'] and not self.setup['bundle']:
+        if not self.setup['file']:
             # upload statistics
-            feedback = Bcfg2.Client.XML.Element("upload-statistics")
-            timeinfo = Bcfg2.Client.XML.Element("OpStamps")
-            for (event, timestamp) in times.iteritems():
-                timeinfo.set(event, str(timestamp))
-            stats = self.toolset.GenerateStats(__revision__)
-            stats.append(timeinfo)
-            feedback.append(stats)
+            feedback = self.tools.GenerateStats()
 
             try:
                 proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback))
@@ -285,4 +218,5 @@ class Client:
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
-    Client().run()
+    client = Client()
+    client.run()

@@ -137,7 +137,10 @@ class Component(SSLServer,
         except:
             self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
             raise ComponentInitError
-        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+        try:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+        except TypeError:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, False, None)
         self.logRequests = 0
         self.port = self.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
