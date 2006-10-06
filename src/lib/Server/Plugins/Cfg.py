@@ -118,7 +118,7 @@ class ConfigFileEntry(object):
             logger.error("Confused about file %s; ignoring" % (name))
             return
         if basename == ':info':
-            return self.read_info()
+            return self.read_info(basename)
 
         try:
             self.fragments.append(FileEntry(self.path, name))
