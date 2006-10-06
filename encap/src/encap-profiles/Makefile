@@ -47,21 +47,23 @@ sources_sh := $(sort $(M4))
 UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
-sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
 DISTRO := $(shell cat /etc/issue | grep ^[a-zA-Z] | head -1)
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
+sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.5.10
 OS ?= linux_debian_sarge
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux testing/unstable \n \l)
+sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
 OS ?= linux_debian_sid
 endif
 
 ifeq ($(DISTRO),Ubuntu 6.06.1 LTS \n \l)
+sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.16.2ubuntu8
 OS ?= linux_ubuntu_dapper
 endif
