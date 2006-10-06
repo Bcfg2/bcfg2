@@ -67,7 +67,7 @@ url="ftp://encapsrcdist/mirror/glib/glib-2.8.6.tar.gz
 <configure>
 ./configure \
 	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	--without-libiconv
+	--with-libiconv=gnu
 </configure>
 
 </source>
