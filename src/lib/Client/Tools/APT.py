@@ -49,7 +49,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             return False
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
-                if not self.setup['quick']:
+                if not self.setup['quick'] and entry.get('verify', 'true') == 'true':
                     output = self.cmd.run("/usr/bin/debsums -s %s" % entry.get('name'))[1]
                     if [filename for filename in output if filename not in modlist]:
                         return False
