@@ -32,6 +32,16 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                'Permissions': ['name', 'owner', 'group', 'perms'],
                'SymLink': ['name', 'to']}
 
+    def canInstall(self, entry):
+        '''Check if entry is complete for installation'''
+        if Bcfg2.Client.Tools.Tool.canInstall(self, entry):
+            if (entry.tag, entry.text, entry.get('empty', 'false')) == \
+               ('ConfigFile', None, 'false'):
+                return False
+            return True
+        else:
+            return False
+
     def VerifySymLink(self, entry, _):
         '''Verify SymLink Entry'''
         try:
@@ -190,9 +200,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
     def InstallConfigFile(self, entry):
         '''Install ConfigFile Entry'''
-        if entry.text == None and entry.get('empty', 'false') != 'true':
-            self.logger.info("Incomplete information for ConfigFile %s" % entry.get('name'))
-            return False
         self.logger.info("Installing ConfigFile %s" % (entry.get('name')))
 
         parent = "/".join(entry.get('name').split('/')[:-1])
