@@ -19,6 +19,7 @@
     <xsd:attribute type='xsd:string' name='reloc'/>
     <xsd:attribute type='xsd:string' name='multiarch'/>
     <xsd:attribute type='xsd:string' name='srcs'/>
+    <xsd:attribute type='xsd:string' name='type'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
