@@ -32,7 +32,6 @@ class Frame:
                 tool_class = "Bcfg2.Client.Tools.%s" % tool
                 mod = __import__(tool_class, globals(), locals(), ['*'])
             except ImportError:
-                print "Failed to import module %s" % (tool)
                 continue
 
             try:
