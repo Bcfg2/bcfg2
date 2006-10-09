@@ -74,7 +74,6 @@ Bcfg2 client
 /usr/sbin/bcfg2
 /usr/lib*/python%{pythonversion}/site-packages/Bcfg2/*.py*
 /usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Client/*
-/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Client/Tools/*
 /usr/share/man/man1/*
 /usr/share/man/man5/*
 /etc/init.d/bcfg2
