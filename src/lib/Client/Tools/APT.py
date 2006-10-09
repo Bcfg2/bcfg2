@@ -7,7 +7,7 @@ import Bcfg2.Client.Tools
 try:
     import apt_pkg
 except ImportError:
-    raise  toolInstantiationError
+    raise  Bcfg2.Client.Tools.toolInstantiationError
 
 class APT(Bcfg2.Client.Tools.PkgTool):
     '''The Debian toolset implements package and service operations and inherits
