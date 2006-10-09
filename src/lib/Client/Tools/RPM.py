@@ -23,6 +23,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 (name, version) = line.split()
                 self.installed[name] = version
             except ValueError:
+                if line == '':
+                    continue
                 self.logger.error("Failed to access RPM db; retrying after 30s")
                 time.sleep(30)
                 return self.RefreshPackages(level + 1)

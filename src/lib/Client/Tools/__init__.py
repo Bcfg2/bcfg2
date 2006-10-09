@@ -171,6 +171,7 @@ class PkgTool(Tool):
         self.installed = {}
         self.Remove = self.RemovePackages
         self.FindExtra = self.FindExtraPackages
+        self.RefreshPackages()
 
     def VerifyPackage(self, dummy, _):
         '''Dummy verification method'''

@@ -1,8 +1,13 @@
 '''This is the bcfg2 support for apt-get'''
 __revision__ = '$Revision$'
 
-import apt_pkg, os, re
+import os, re
 import Bcfg2.Client.Tools
+
+try:
+    import apt_pkg
+except ImportError:
+    raise  toolInstantiationError
 
 class APT(Bcfg2.Client.Tools.PkgTool):
     '''The Debian toolset implements package and service operations and inherits
