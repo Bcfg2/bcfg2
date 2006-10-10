@@ -79,9 +79,9 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage type="set">
-# Remove doc - it's big
-if [ -d lib/bcfg2/share/doc ]; then rm -rf lib/bcfg2/share/doc; fi
-if [ -d lib/bcfg2/share/gtk-doc ]; then rm -rf lib/bcfg2/share/gtk-doc; fi
+# Remove doc - it's big  # not any more, since it's server-only
+#if [ -d lib/bcfg2/share/doc ]; then rm -rf lib/bcfg2/share/doc; fi
+#if [ -d lib/bcfg2/share/gtk-doc ]; then rm -rf lib/bcfg2/share/gtk-doc; fi
 # Make convieniance links
 test -d bin || mkdir bin
 ln -sf ../lib/bcfg2/bin/xmllint bin/b2-xmllint
