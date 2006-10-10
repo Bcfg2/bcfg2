@@ -46,13 +46,12 @@ div#interface{
 
 <form name="hostdata" action="?sub=true" method="post">
 <input type="hidden" name="host" value="{{ host.id }}">
-<input type="hidden" name="hostname" value="{{ host.hostname }}">
 <table border="0" width="100%">
    <colgroup>
    <col width="150">
    <col width="*">
    <tr> <td> <b>hostname</b></td>
-   <td> {{ host.hostname }}</td></tr>
+   <td> <input name="hostname" value="{{ host.hostname }}"></td></tr>
    <tr> <td> <b>whatami</b></td>
    <td> 
    <select name="whatami">

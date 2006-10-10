@@ -10,11 +10,12 @@ from Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
+from Hostbase import settings
 import re
 
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
-           'comments', 'status']
+           'status']
 
 zoneattribs = ['zone', 'admin', 'primary_master', 'expire', 'retry',
                'refresh', 'ttl', 'aux']
@@ -180,7 +181,9 @@ def edit(request, host_id):
             # likely use a helper fucntion
             for attrib in attribs:
                 if request.POST.has_key(attrib):
-                    host.__dict__[attrib] = request.POST[attrib]
+                    host.__dict__[attrib] = request.POST[attrib].lower()
+            if request.POST.has_key('comments'):
+                host.comments = request.POST['comments']
             if len(request.POST['expiration_date'].split("-")) == 3:
                 (year, month, day) = request.POST['expiration_date'].split("-")
                 host.expiration_date = date(int(year), int(month), int(day))
@@ -212,7 +215,7 @@ def edit(request, host_id):
                         name.name = newname
                         name.save()
                 if request.POST['%dip_addr' % inter.id]:
-                    mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+                    mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                     if created:
                         mx.save()
                     new_ip = IP(interface=inter, num=len(ips),
@@ -243,7 +246,7 @@ def edit(request, host_id):
                                       hdwr_type=request.POST['hdwr_type_new'])
                 new_inter.save()
             if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
-                mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+                mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                 if created:
                     mx.save()
                 new_ip = IP(interface=new_inter, num=0,
@@ -268,7 +271,7 @@ def edit(request, host_id):
                 name.save()
                 name.mxs.add(mx)
             if request.POST['ip_addr_new'] and not request.POST['mac_addr_new']:
-                mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+                mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                 if created:
                     mx.save()
                 new_inter = Interface(host=host, mac_addr="",
@@ -478,7 +481,7 @@ def new(request):
     Data is validated before committed to the database"""
     if request.GET.has_key('sub'):
         try:
-            Host.objects.get(hostname=request.POST['hostname'])
+            Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
                                       {'failures': ['%s already exists in hostbase' % request.POST['hostname']]})
         except:
@@ -491,7 +494,9 @@ def new(request):
             host.dhcp = request.POST.has_key('dhcp')
             for attrib in attribs:
                 if request.POST.has_key(attrib):
-                    host.__dict__[attrib] = request.POST[attrib]
+                    host.__dict__[attrib] = request.POST[attrib].lower()
+            if request.POST.has_key('comments'):
+                host.comments = request.POST['comments']
             if request.POST.has_key('expiration_date'):
                 host.__dict__['expiration_date'] = date(2000, 1, 1)
             host.status = 'active'
@@ -508,7 +513,7 @@ def new(request):
             new_ip = IP(interface=new_inter,
                         num=0, ip_addr=request.POST['ip_addr_new'])
             new_ip.save()
-            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
                 mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
@@ -536,7 +541,7 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new1'])
             new_ip.save()
-            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
                 mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
@@ -566,7 +571,7 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
-            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
                 mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
@@ -595,7 +600,7 @@ def new(request):
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
-            mx, created = MX.objects.get_or_create(priority=30, mx='mailgw.mcs.anl.gov')
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
                 mx.save()
             new_name = "-".join([host.hostname.split(".")[0],
@@ -627,7 +632,7 @@ def new(request):
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES})                                   
     
 def remove(request, host_id):
-    host = Host.GET.objects.get(id=host_id)
+    host = Host.objects.get(id=host_id)
     if request.has_key('sub'):
         for interface in host.interface_set.all():
             for ip in interface.ip_set.all():
@@ -637,7 +642,7 @@ def remove(request, host_id):
             interface.ip_set.all().delete()
             interface.delete()
         host.delete()
-        return HttpResponseRedirect('/hostbase/%s/' % host_id)
+        return HttpResponseRedirect('/hostbase/')
     else:
         """Displays general host information"""
         interfaces = []
@@ -678,7 +683,7 @@ def validate(request, new=False, host_id=None):
         and request.POST['administrator']):
         failures.append('administrator')
 
-    locationregex = re.compile('^[0-9]{3}-[a-z][0-9]{3}$|none|bmr|cave|dsl|evl|mobile|offsite|mural|activespaces')
+    locationregex = re.compile('^[0-9]{3}-[a-zA-Z][0-9]{3}$|none|bmr|cave|dsl|evl|mobile|offsite|mural|activespaces')
     if not (request.POST['location']
             and locationregex.match(request.POST['location'])):
         failures.append('location')

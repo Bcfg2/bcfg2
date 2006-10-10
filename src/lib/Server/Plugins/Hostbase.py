@@ -33,7 +33,7 @@ import re
 ##     def rebuildState(self, event):
 ##         '''This function is called when underlying data has changed'''
 ##         pass
-
+    
 class Hostbase(Plugin):
     '''The Hostbase plugin handles host/network info'''
     __name__ = 'Hostbase'
@@ -45,18 +45,19 @@ class Hostbase(Plugin):
 
         self.ready = False
         Plugin.__init__(self, core, datastore)
-        sys.path.append(self.data)
-        os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+        files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
+                 'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
         from django.template import loader
 ##         try:
-##             DataNexus.__init__(self, datastore + '/Hostbase/data',
-##                                files, self.core.fam)
+##             self.repository = DataNexus(self.data + '/templates/',
+##                                         files, self.core.fam)
 ##         except:
 ##             self.LogError("Failed to load data directory")
 ##             raise PluginInitError
         self.filedata = {}
         self.dnsservers = []
-        self.dhcpservers = ['scotty']
+        self.dhcpservers = []
         self.templates = {'zone':Template(open(self.data + '/templates/' + 'zone.tmpl').read()),
                           'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
                           'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
@@ -279,22 +280,23 @@ class Hostbase(Plugin):
         count = 0
         hosts = []
         hostdata = [dhcphosts[0][0], dhcphosts[0][1], dhcphosts[0][2]]
-        for x in range(1, len(cursor.fetchall())):
-            # if an interface has 2 or more ip addresses
-            # adds the ip to the current interface
-            if hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0] and hostdata[1] == dhcphosts[x][1]:
-                hostdata[2] = ", ".join([hostdata[2], dhcphosts[x][2]])
-            # if a host has 2 or more interfaces
-            # writes the current one and grabs the next
-            elif hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0]:
-                hosts.append(hostdata)
-                count += 1
-                hostdata = ["-".join([dhcphosts[x][0], str(count)]), dhcphosts[x][1], dhcphosts[x][2]]
-            # new host found, writes current data to the template
-            else:
-                hosts.append(hostdata)
-                count = 0
-                hostdata = [dhcphosts[x][0], dhcphosts[x][1], dhcphosts[x][2]]
+        if len(dhcphosts) > 1:
+            for x in range(1, len(cursor.fetchall())):
+                # if an interface has 2 or more ip addresses
+                # adds the ip to the current interface
+                if hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0] and hostdata[1] == dhcphosts[x][1]:
+                    hostdata[2] = ", ".join([hostdata[2], dhcphosts[x][2]])
+                # if a host has 2 or more interfaces
+                # writes the current one and grabs the next
+                elif hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0]:
+                    hosts.append(hostdata)
+                    count += 1
+                    hostdata = ["-".join([dhcphosts[x][0], str(count)]), dhcphosts[x][1], dhcphosts[x][2]]
+                # new host found, writes current data to the template
+                else:
+                    hosts.append(hostdata)
+                    count = 0
+                    hostdata = [dhcphosts[x][0], dhcphosts[x][1], dhcphosts[x][2]]
         #makes sure the last of the data gets written out
         if hostdata not in hosts:
             hosts.append(hostdata)
@@ -434,6 +436,7 @@ Name            Room        User                            Type                
         
         from django.db import connection
 
+        # this header needs to be changed to be more generic
         header = """+@machines
 +@all-machines
 achilles.ctd.anl.gov

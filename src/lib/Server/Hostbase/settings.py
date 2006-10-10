@@ -77,3 +77,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'Hostbase.hostbase',
 )
+
+DEFAULT_MX = 'mailgw.mcs.anl.gov'
+PRIORITY = 30
