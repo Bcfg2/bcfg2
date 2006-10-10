@@ -7,7 +7,6 @@ from django.db import connection
 from os import system
 import sys
 
-xmldirectory = "./xmldata/"
 logic_ops = ["and", "or"]
 host_attribs = ["hostname", "whatami", "netgroup", "security_class",
                 "support", "csi", "memory", "printq", "dhcp", "outbound_smtp",
@@ -102,13 +101,13 @@ try:
                 queryoptions += result[0]
     if ('--summary', '') in opts:
         fields = "h.hostname, h.whatami, h.location, h.primary_user"
-        query = """SELECT DISTINCT %s FROM (((((dbconvert_host h
-        INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-        INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-        INNER JOIN dbconvert_name_mxs x ON x.name_id = n.id)
-        INNER JOIN dbconvert_mx m ON m.id = x.mx_id)
-        LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+        query = """SELECT DISTINCT %s FROM (((((hostbase_host h
+        INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+        INNER JOIN hostbase_name n ON p.id = n.ip_id)
+        INNER JOIN hostbase_name_mxs x ON x.name_id = n.id)
+        INNER JOIN hostbase_mx m ON m.id = x.mx_id)
+        LEFT JOIN hostbase_cname c ON n.id = c.name_id
         WHERE %s ORDER BY h.hostname
         """ % (fields, queryoptions)
         cursor.execute(query)
@@ -128,13 +127,13 @@ try:
         if not fields:
             print "No valid fields were entered.  exiting..."
             sys.exit()
-        query = """SELECT DISTINCT %s FROM (((((dbconvert_host h
-        INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-        INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-        INNER JOIN dbconvert_name_mxs x ON x.name_id = n.id)
-        INNER JOIN dbconvert_mx m ON m.id = x.mx_id)
-        LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+        query = """SELECT DISTINCT %s FROM (((((hostbase_host h
+        INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+        INNER JOIN hostbase_name n ON p.id = n.ip_id)
+        INNER JOIN hostbase_name_mxs x ON x.name_id = n.id)
+        INNER JOIN hostbase_mx m ON m.id = x.mx_id)
+        LEFT JOIN hostbase_cname c ON n.id = c.name_id
         WHERE %s ORDER BY h.hostname
         """ % (fields, queryoptions)
 
@@ -152,13 +151,13 @@ try:
             last = host
             print ''
     else:
-        basequery = """SELECT DISTINCT h.hostname FROM (((((dbconvert_host h
-        INNER JOIN dbconvert_interface i ON h.id = i.host_id)
-        INNER JOIN dbconvert_ip p ON i.id = p.interface_id)
-        INNER JOIN dbconvert_name n ON p.id = n.ip_id)
-        INNER JOIN dbconvert_name_mxs x ON x.name_id = n.id)
-        INNER JOIN dbconvert_mx m ON m.id = x.mx_id)
-        LEFT JOIN dbconvert_cname c ON n.id = c.name_id
+        basequery = """SELECT DISTINCT h.hostname FROM (((((hostbase_host h
+        INNER JOIN hostbase_interface i ON h.id = i.host_id)
+        INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+        INNER JOIN hostbase_name n ON p.id = n.ip_id)
+        INNER JOIN hostbase_name_mxs x ON x.name_id = n.id)
+        INNER JOIN hostbase_mx m ON m.id = x.mx_id)
+        LEFT JOIN hostbase_cname c ON n.id = c.name_id
         WHERE
         """
         cursor.execute(basequery + queryoptions + " ORDER BY h.hostname")
