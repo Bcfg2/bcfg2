@@ -53,10 +53,10 @@ diff -ru daemontools-0.76/src/error.h daemontools-0.76.new/src/error.h
 @@ -3,7 +3,7 @@
  #ifndef ERROR_H
  #define ERROR_H
- 
+
 -extern int errno;
 +#include <errno.h>
- 
+
  extern int error_intr;
  extern int error_nomem;
 diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
@@ -71,9 +71,9 @@ diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
  #include "strerr.h"
  #include "error.h"
 @@ -14,6 +15,11 @@
- 
+
  #define SERVICES 1000
- 
+
 +#ifndef SVSCANINFO
 +#define SVSCANINFO ".svscan"  /* must begin with dot ('.') */
 +#endif
@@ -81,14 +81,14 @@ diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
 +#define INFO "svscan: info: "
  #define WARNING "svscan: warning: "
  #define FATAL "svscan: fatal: "
- 
+
 @@ -38,7 +44,7 @@
    int i;
    const char *args[3];
- 
+
 -  if (fn[0] == '.') return;
 +  if (fn[0] == '.' && str_diff(fn,SVSCANINFO)) return;
- 
+
    if (stat(fn,&st) == -1) {
      strerr_warn4(WARNING,"unable to stat ",fn,": ",&strerr_sys);
 @@ -59,7 +65,8 @@
@@ -100,11 +100,11 @@ diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
 +    x[i].pid = (fn[0] != '.') ? 0 : -1;
      x[i].pidlog = 0;
      x[i].flaglog = 0;
- 
+
 @@ -190,12 +197,39 @@
    }
  }
- 
+
 +static void open_svscan_log(void)
 +{
 +  const int i = numx;
@@ -135,7 +135,7 @@ diff -ru daemontools-0.76/src/svscan.c daemontools-0.76.new/src/svscan.c
    if (argv[0] && argv[1])
      if (chdir(argv[1]) == -1)
        strerr_die4sys(111,FATAL,"unable to chdir to ",argv[1],": ");
- 
+
 +  open_svscan_log();
 +
    for (;;) {
@@ -198,9 +198,9 @@ diff -ru daemontools-0.76/src/svc.c daemontools-0.76.sigq12/src/svc.c
 --- daemontools-0.76/src/svc.c	Thu Jul 12 19:49:49 2001
 +++ daemontools-0.76.sigq12/src/svc.c	Wed Mar 17 10:31:47 2004
 @@ -27,9 +27,9 @@
- 
+
    sig_ignore(sig_pipe);
- 
+
 -  while ((opt = getopt(argc,argv,"udopchaitkx")) != opteof)
 +  while ((opt = getopt(argc,argv,"udopchaitkxq12")) != opteof)
      if (opt == '?')
@@ -243,9 +243,7 @@ diff -ur admin/daemontools-0.76-orig/src/supervise.c admin/daemontools-0.76/src/
 
 ]]></patch>
 
-<configure>
-:
-</configure>
+<configure type="unset" />
 
 <build>
 ./package/compile
@@ -266,9 +264,7 @@ cp package/run.inittab ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
 cp package/run.rclocal ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/package
 </install>
 
-<clean>
-:
-</clean>
+<clean type="unset" />
 
 </source>
 
@@ -312,7 +308,10 @@ else
     REALDIR=`pwd -P`
     rm /service/$SERVICE
     svc -dx . log
+    sleep 1
+    test -f ${REALDIR}/supervise/status && rm ${REALDIR}/supervise/status
     test -d ${REALDIR}/supervise && rm -rf ${REALDIR}/supervise
+    test -f ${REALDIR}/log/supervise/status && rm ${REALDIR}/log/supervise/status
     test -d ${REALDIR}/log/supervise && rm -rf ${REALDIR}/log/supervise
 fi
 exit 0
@@ -377,6 +376,43 @@ else
 fi
 ]]></include_file>
 
+<include_file name="package/stop" mode="0755"><![CDATA[
+#!/bin/sh -e
+
+umask 022
+test -d package || ( echo 'Wrong working directory.'; exit 1 )
+test -d src || ( echo 'Wrong working directory.'; exit 1 )
+
+if test -r /etc/inittab
+then
+  /command/setlock /etc/inittab package/stop.inittab
+else
+  /command/setlock /etc/rc.local package/stop.rclocal
+fi
+
+for SERVICE in `ls /service`; do
+    if [ -h /service/$SERVICE ]; then
+        printf "INFO: Removing /service/$SERVICE ...\n"
+        /command/svrm /service/$SERVICE || true
+    fi
+done
+
+if [ -h /service/.svscan ]; then
+    printf "INFO: Removing /service/.svscan ...\n"
+    (/command/svrm /service/.svscan) && true || true
+fi
+
+if [ -d /service ]; then
+    printf "INFO: Removing /service ...\n"
+    rmdir /service
+fi
+
+if [ -h /command ]; then
+    printf "INFO: Removing /command ...\n"
+    rm /command
+fi
+]]></include_file>
+
 <include_file name="package/run.inittab" mode="0755"><![CDATA[
 #!/bin/sh -e
 
@@ -393,6 +429,27 @@ else
   echo 'init should start svscan now.'
 fi
 ]]></include_file>
+
+<include_file name="package/stop.inittab" mode="0755"><![CDATA[
+#!/bin/sh -e
+
+if grep svscan.rc /etc/inittab >/dev/null
+then
+  echo 'Backing up inittab to .inittab.backup...'
+  rm -f /etc/.inittab.backup
+  cp -f /etc/inittab /etc/.inittab.backup
+  echo 'Removing svscan lines from inittab...'
+  rm -f /etc/inittab'{new}'
+  grep -v svscan /etc/inittab > /etc/inittab'{new}'
+  mv -f /etc/inittab'{new}' /etc/inittab
+  kill -HUP 1
+  echo 'init should stop svscan now.'
+else
+  echo 'inittab does not contain an svscan.rc line.
+'
+fi
+]]></include_file>
+
 
 <include_file name="package/boot.inittab" mode="0644"><![CDATA[
 
@@ -413,6 +470,25 @@ else
   cat /etc/rc.local package/boot.rclocal > /etc/rc.local'{new}'
   mv -f /etc/rc.local'{new}' /etc/rc.local
   echo 'Reboot now to start svscan.'
+fi
+]]></include_file>
+
+<include_file name="package/stop.rclocal" mode="0755"><![CDATA[
+#!/bin/sh -e
+
+if grep svscan.rc /etc/rc.local >/dev/null
+then
+  echo 'Backing up rc.local to .rc.local.backup...'
+  rm -f /etc/.rc.local.backup
+  cp -f /etc/rc.local /etc/.rc.local.backup
+  echo 'Removing svscan lines from /etc/rc.local...'
+  rm -f /etc/rc.local'{new}'
+  grep -v svscan /etc/rc.local > /etc/rc.local'{new}'
+  mv -f /etc/rc.local'{new}' /etc/rc.local
+  echo 'Reboot now to stop svscan.'
+else
+  echo 'rc.local does not contain an svscan.rc line.
+.'
 fi
 ]]></include_file>
 
@@ -443,17 +519,7 @@ printf "Finished daemontools postinstall script.\n"
 printf "Running daemontools preremove script...\n"
 date
 
-for SERVICE in `ls /service`; do
-    if [ -h /service/$SERVICE ]; then
-        printf "INFO: Removing /service/$SERVICE ...\n"
-        /command/svrm /service/$SERVICE || true
-    fi
-done
-
-if [ -h /service/.svscan ]; then
-    printf "INFO: Removing /service/.svscan ...\n"
-    /command/svrm /service/.svscan || true
-fi
+cd /usr/local/encap/daemontools-0.76 && ./package/stop
 
 printf "Finished daemontools preremove script.\n"
 ]]></include_file>
