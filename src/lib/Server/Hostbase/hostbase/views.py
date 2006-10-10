@@ -201,19 +201,20 @@ def edit(request, host_id):
                     name.name = newname
                     name.save()
                 for ip in ips:
-                    oldip = ip.ip_addr
-                    ip.ip_addr = request.POST['ip_addr%d' % ip.id]
-                    ip.save()
-                    oldname = "-".join([host.hostname.split(".", 1)[0],
-                                        oldip.split(".")[2]])
-                    oldname += "." + host.hostname.split(".", 1)[1]
-                    newname = "-".join([host.hostname.split(".", 1)[0],
-                                        ip.ip_addr.split(".")[2]])
-                    newname += "." + host.hostname.split(".", 1)[1]
-                    if Name.objects.filter(name=oldname):
-                        name = Name.objects.get(name=oldname, ip=ip.id)
-                        name.name = newname
-                        name.save()
+                    if not ip.ip_addr == request.POST['ip_addr%d' % ip.id]:
+                        oldip = ip.ip_addr
+                        ip.ip_addr = request.POST['ip_addr%d' % ip.id]
+                        ip.save()
+                        oldname = "-".join([host.hostname.split(".", 1)[0],
+                                            oldip.split(".")[2]])
+                        oldname += "." + host.hostname.split(".", 1)[1]
+                        newname = "-".join([host.hostname.split(".", 1)[0],
+                                            ip.ip_addr.split(".")[2]])
+                        newname += "." + host.hostname.split(".", 1)[1]
+                        if Name.objects.filter(name=oldname):
+                            name = Name.objects.get(name=oldname, ip=ip.id)
+                            name.name = newname
+                            name.save()
                 if request.POST['%dip_addr' % inter.id]:
                     mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                     if created:
