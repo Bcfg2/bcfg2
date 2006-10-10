@@ -192,10 +192,6 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         return "<ok/>"
 
 if __name__ == '__main__':
-    if '-D' in sys.argv:
-        Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False)
-    else:
-        Bcfg2.Logging.setup_logging('bcfg2-server')
 
     OPTINFO = {
         'verbose': (('-v', False, 'enable verbose output'),
@@ -211,6 +207,15 @@ if __name__ == '__main__':
         }
     
     SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()
+    level = 20
+    if self.setup['verbose']:
+        level = 10
+    if self.setup['debug']:
+        level = 0
+    if '-D' in sys.argv:
+        Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False, level=level)
+    else:
+        Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
     if SSETUP['daemon']:
         daemonize(SSETUP['daemon'])
     try:
