@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+    pkgspec="bcfg2-elementtree-1.2.6"
+>
+
+<prereq package="m4-1.4.4" />
+<prereq package="bcfg2-python-2.4.3" />
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+PLATFORM_IF_MATCH(linux)
+PLATFORM_ELSE
+<environment
+        variable="MAKE"
+        value="gmake"
+        type="set"
+/>
+PLATFORM_ENDIF
+
+<source
+url="ftp://encapsrcdist/mirror/elementtree/elementtree-1.2.6-20050316.tar.gz
+http://www.pobox.com/users/dclark/mirror/elementtree/elementtree-1.2.6-20050316.tar.gz
+http://effbot.org/downloads/elementtree-1.2.6-20050316.tar.gz"
+>
+
+<configure type="unset" />
+
+<build>
+/usr/local/lib/bcfg2/bin/python setup.py build \
+--build-base=${builddir}/build
+</build>
+
+<install>
+/usr/local/lib/bcfg2/bin/python setup.py install \
+--prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
+</install>
+
+<clean>
+/usr/local/lib/bcfg2/bin/python setup.py clean
+</clean>
+
+</source>
+
+<prepackage type="set">
+chmod -R o+r lib/bcfg2
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<encapinfo>
+description elementtree - Light-weight toolkit for XML processing
+</encapinfo>
+
+</encap_profile>

@@ -16,6 +16,7 @@ PAGER ?= more
 BCFG2 := $(basename $(wildcard bcfg2-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH := $(basename $(wildcard bcfg2-cheetah-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH_DOC := $(basename $(wildcard bcfg2-cheetah-doc-*.ep))
+BCFG2_ELEMENTTREE := $(basename $(wildcard bcfg2-elementtree-*.ep))
 BCFG2_GAMIN := $(basename $(wildcard bcfg2-gamin-*.ep))
 BCFG2_GLIB := $(basename $(wildcard bcfg2-glib-*.ep))
 BCFG2_GZIP := $(basename $(wildcard bcfg2-gzip-*.ep))
@@ -37,9 +38,11 @@ OSTIARTY := $(basename $(wildcard ostiary-[0-9].[0-9]*.ep))
 OSTIARTY_DOC := $(basename $(wildcard ostiary-doc-*.ep))
 PATCH := $(basename $(wildcard patch-*.ep))
 
-sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_CHEETAH_DOC)  $(BCFG2_GZIP) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYREX) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(DAEMONTOOLS_DOC) $(MAKESELF) $(OSTIARTY) $(OSTIARTY_DOC) $(PATCH))
+sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_ELEMENTTREE) $(BCFG2_GZIP) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYOPENSSL) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_ZLIB) $(DAEMONTOOLS) $(MAKESELF) $(OSTIARTY) $(PATCH))
 
 sources_sh := $(sort $(M4))
+
+sources_server := $(sort $(BCFG2_GLIB) $(BCFG2_GAMIN) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_CHEETAH_DOC) $(BCFG2_PYREX) $(DAEMONTOOLS_DOC) $(OSTIARTY_DOC))
 
 # Only compile bcfg2-glib and bcfg2-gamin (needed by bcfg2 server) on Linux
 # (Gamin only supports Linux), and only compile bcfg2-python-apt on known
@@ -51,19 +54,19 @@ DISTRO := $(shell cat /etc/issue | grep ^[a-zA-Z] | head -1)
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
-sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
+sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.5.10
 OS ?= linux_debian_sarge
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux testing/unstable \n \l)
-sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
+sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
 OS ?= linux_debian_sid
 endif
 
 ifeq ($(DISTRO),Ubuntu 6.06.1 LTS \n \l)
-sources_ep += $(BCFG2_GLIB) $(BCFG2_GAMIN)
+sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.16.2ubuntu8
 OS ?= linux_ubuntu_dapper
 endif

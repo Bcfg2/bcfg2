@@ -48,9 +48,7 @@ tar -cf $DISTDIR/epkg.tar $EPKGDIR/*
 
 # Copy bcfg2 and client deps to $DISTDIR
 BCFG2="`basename $EPDIR/bcfg2-[0-9].[0-9]*-encap-*.tar.gz`"
-BCFG2_LIBXML2="`basename $EPDIR/bcfg2-libxml2-*-encap-*.tar.gz`"
-BCFG2_LIBXSLT="`basename $EPDIR/bcfg2-libxslt-*-encap-*.tar.gz`"
-BCFG2_LXML="`basename $EPDIR/bcfg2-lxml-*-encap-*.tar.gz`"
+BCFG2_ELEMENTTREE="`basename $EPDIR/bcfg2-elementtree-*-encap-*.tar.gz`"
 BCFG2_PYTHON="`basename $EPDIR/bcfg2-python-[0-9].[0-9]*-encap-*.tar.gz`"
 DAEMONTOOLS="`basename $EPDIR/daemontools-[0-9].[0-9]*-encap-*.tar.gz`"
 OSTIARTY="`basename $EPDIR/ostiary-[0-9].[0-9]*-encap-*.tar.gz`"
@@ -60,7 +58,7 @@ if [ "${BCFG2_PYTHON_APT_TMP}x" != 'bcfg2-python-apt-*-encap-*.tar.gzx' ]; then
     BCFG2_PYTHON_APT="$BCFG2_PYTHON_APT_TMP"
 fi
 
-BCFG2DEPS="$BCFG2_LIBXML2 $BCFG2_LIBXSLT $BCFG2_LXML $BCFG2_PYTHON $BCFG2_PYTHON_APT"
+BCFG2DEPS="$BCFG2_ELEMENTTREE $BCFG2_PYTHON $BCFG2_PYTHON_APT"
 
 FILES="$BCFG2DEPS $BCFG2 $DAEMONTOOLS $OSTIARTY"
 
