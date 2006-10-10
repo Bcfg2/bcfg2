@@ -14,14 +14,11 @@
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-zlib-1.2.3" />
+<prereq package="patch-2.5.9" />
 <prereq package="bcfg2-pkg-config-0.20" />
-<prereq package="bcfg2-openssl-0.9.8c" />
 <prereq package="bcfg2-python-2.4.3" />
 <prereq package="bcfg2-pyopenssl-0.6" />
-<prereq package="bcfg2-libxml2-2.6.26" />
-<prereq package="bcfg2-libxslt-1.1.17" />
-<prereq package="bcfg2-lxml-1.1.1" />
+<prereq package="bcfg2-elementtree-1.2.6" />
 
 <environment
         variable="CC"
@@ -73,9 +70,45 @@ url="ftp://encapsrcdist/mirror/bcfg/bcfg2-0.8.5pre2.tar.gz
      ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.5pre2.tar.gz"
 >
 
-<configure>
-:
-</configure>
+<patch options="-p1"><![CDATA[
+--- bcfg2-0.8.5pre2/src/lib/Client/XML.py.orig	2006-10-09 23:56:01.000000000 -0400
++++ bcfg2-0.8.5pre2/src/lib/Client/XML.py	2006-10-10 00:02:42.000000000 -0400
+@@ -1,24 +1,13 @@
+ '''XML lib compatibility layer for the Bcfg2 client'''
+ __revision__ = '$Revision: 2064 $'
+ 
+-# library will use lxml, then builtin xml.etree, then ElementTree
++# Changed for EncapPackages - always use ElementTree, or raise an exception
+ 
+ try:
+-    from lxml.etree import Element, SubElement, XML, tostring
+-    from lxml.etree import XMLSyntaxError as ParseError
+-    driver = 'lxml'
++    from elementtree.ElementTree import Element, SubElement, XML, tostring
++    from xml.parsers.expat import ExpatError as ParseError
++    driver = 'etree'
+ except ImportError:
+-    # lxml not available 
+-    try:
+-        from xml.etree.ElementTree import Element, SubElement, XML, tostring
+-        from xml.parsers.expat import ExpatError as ParseError
+-        driver = 'etree-py'
+-    except ImportError:
+-        try:
+-            from elementtree.ElementTree import Element, SubElement, XML, tostring
+-            from xml.parsers.expat import ExpatError as ParseError
+-            driver = 'etree'
+-        except ImportError:
+-            print "Failed to load lxml, xml.etree and elementtree.ElementTree"
+-            print "Cannot continue"
+-            raise SystemExit, 1
++    print "Failed to load elementtree.ElementTree"
++    print "Cannot continue"
++    raise SystemExit, 1
+
+]]></patch>
+
+<configure type="unset" />
 
 <build>
 /usr/local/lib/bcfg2/bin/python setup.py build \
@@ -463,13 +496,8 @@ printf "Finished bcfg2 preremove script.\n"
 
 <encapinfo>
 description Bcfg2 - Provides a declarative interface to system configuration
-prereq pkgspec >= bcfg2-zlib-1.2.3
-prereq pkgspec >= bcfg2-openssl-0.9.8c
 prereq pkgspec >= bcfg2-python-2.4.3
-prereq pkgspec >= bcfg2-pyopenssl-0.6
-prereq pkgspec >= bcfg2-libxml2-2.6.26
-prereq pkgspec >= bcfg2-libxslt-1.1.17
-prereq pkgspec >= bcfg2-lxml-1.1.1
+prereq pkgspec >= bcfg2-elementtree-1.2.6
 </encapinfo>
 
 </encap_profile>
