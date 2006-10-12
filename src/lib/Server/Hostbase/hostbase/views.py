@@ -3,14 +3,13 @@
 Contains all the views associated with the hostbase app
 Also has does form validation
 """
-__revision__ = 0.1
 
 from django.http import HttpResponse, HttpResponseRedirect
 from Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
-from Hostbase import settings
+from Hostbase import settings, regex
 import re
 
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
@@ -188,33 +187,30 @@ def edit(request, host_id):
                 (year, month, day) = request.POST['expiration_date'].split("-")
                 host.expiration_date = date(int(year), int(month), int(day))
             for inter in interfaces:
+                changetype = False
                 ips = IP.objects.filter(interface=inter.id)
-                inter.mac_addr = request.POST['mac_addr%d' % inter.id]
-                oldtype = inter.hdwr_type
-                inter.hdwr_type = request.POST['hdwr_type%d' % inter.id]
-                oldname = "-".join([host.hostname.split(".", 1)[0], oldtype])
-                oldname += "." + host.hostname.split(".", 1)[1]
-                newname = "-".join([host.hostname.split(".", 1)[0],
-                                    inter.hdwr_type])
-                newname += "." + host.hostname.split(".", 1)[1]
-                for name in Name.objects.filter(name=oldname):
-                    name.name = newname
-                    name.save()
+                if inter.mac_addr != request.POST['mac_addr%d' % inter.id]:
+                    inter.mac_addr = request.POST['mac_addr%d' % inter.id]
+                if inter.hdwr_type != request.POST['hdwr_type%d' % inter.id]:
+                    oldtype = inter.hdwr_type
+                    inter.hdwr_type = request.POST['hdwr_type%d' % inter.id]
+                    changetype = True
                 for ip in ips:
+                    names = ip.name_set.all()
                     if not ip.ip_addr == request.POST['ip_addr%d' % ip.id]:
                         oldip = ip.ip_addr
+                        oldsubnet = oldip.split(".")[2]
                         ip.ip_addr = request.POST['ip_addr%d' % ip.id]
                         ip.save()
-                        oldname = "-".join([host.hostname.split(".", 1)[0],
-                                            oldip.split(".")[2]])
-                        oldname += "." + host.hostname.split(".", 1)[1]
-                        newname = "-".join([host.hostname.split(".", 1)[0],
-                                            ip.ip_addr.split(".")[2]])
-                        newname += "." + host.hostname.split(".", 1)[1]
-                        if Name.objects.filter(name=oldname):
-                            name = Name.objects.get(name=oldname, ip=ip.id)
-                            name.name = newname
-                            name.save()
+                        for name in names:
+                            if name.name.split(".")[0].endswith('-%s' % oldsubnet):
+                                name.name = name.name.replace('-%s' % oldsubnet, '-%s' % ip.ip_addr.split(".")[2])
+                                name.save()
+                    if changetype:
+                        for name in names:
+                            if name.name.split(".")[0].endswith('-%s' % oldtype):
+                                name.name = name.name.replace('-%s' % oldtype, '-%s' % inter.hdwr_type)
+                                name.save()
                 if request.POST['%dip_addr' % inter.id]:
                     mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                     if created:
@@ -656,9 +652,8 @@ def remove(request, host_id):
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
     failures = []
-    dateregex = re.compile('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
     if (request.POST['expiration_date']
-        and dateregex.match(request.POST['expiration_date'])):
+        and regex.date.match(request.POST['expiration_date'])):
         try:
             (year, month, day) = request.POST['expiration_date'].split("-")
             date(int(year), int(month), int(day))
@@ -667,31 +662,26 @@ def validate(request, new=False, host_id=None):
     elif request.POST['expiration_date']:
         failures.append('expiration_date')
 
-    hostregex = re.compile('^[a-z0-9-_]+(\.[a-z0-9-_]+)+$')
     if not (request.POST['hostname']
-            and hostregex.match(request.POST['hostname'])):
+            and regex.host.match(request.POST['hostname'])):
         failures.append('hostname')
 
-    printregex = re.compile('^[a-z0-9-]+$')
-    if not printregex.match(request.POST['printq']) and request.POST['printq']:
+    if not regex.printq.match(request.POST['printq']) and request.POST['printq']:
         failures.append('printq')
 
-    userregex = re.compile('^[a-z0-9-_\.@]+$')
-    if not userregex.match(request.POST['primary_user']):
+    if not regex.user.match(request.POST['primary_user']):
         failures.append('primary_user')
 
-    if (not userregex.match(request.POST['administrator'])
+    if (not regex.user.match(request.POST['administrator'])
         and request.POST['administrator']):
         failures.append('administrator')
 
-    locationregex = re.compile('^[0-9]{3}-[a-zA-Z][0-9]{3}$|none|bmr|cave|dsl|evl|mobile|offsite|mural|activespaces')
     if not (request.POST['location']
-            and locationregex.match(request.POST['location'])):
+            and regex.location.match(request.POST['location'])):
         failures.append('location')
 
     if new:
-        macaddr_regex = re.compile('^[0-9abcdef]{2}(:[0-9abcdef]{2}){5}$')
-        if (not macaddr_regex.match(request.POST['mac_addr_new'])
+        if (not regex.macaddr.match(request.POST['mac_addr_new'])
             and request.POST['mac_addr_new']):
             failures.append('mac_addr (#1)')
         if ((request.POST['mac_addr_new'] or request.POST['ip_addr_new']) and
@@ -701,15 +691,14 @@ def validate(request, new=False, host_id=None):
             not request.has_key('hdwr_type_new2')):
             failures.append('hdwr_type (#2)')
 
-        if (not macaddr_regex.match(request.POST['mac_addr_new2'])
+        if (not regex.macaddr.match(request.POST['mac_addr_new2'])
             and request.POST['mac_addr_new2']):
             failures.append('mac_addr (#2)')
 
-        ipaddr_regex = re.compile('^[0-9]{1,3}(\.[0-9]{1,3}){3}$')
-        if (not ipaddr_regex.match(request.POST['ip_addr_new'])
+        if (not regex.ipaddr.match(request.POST['ip_addr_new'])
             and request.POST['ip_addr_new']):
             failures.append('ip_addr (#1)')
-        if (not ipaddr_regex.match(request.POST['ip_addr_new2'])
+        if (not regex. ipaddr.match(request.POST['ip_addr_new2'])
             and request.POST['ip_addr_new2']):
             failures.append('ip_addr (#2)')
 
@@ -723,23 +712,18 @@ def validate(request, new=False, host_id=None):
          and 'ip_addr (#2)' not in failures]
 
     elif host_id:
-        macaddr_regex = re.compile('^[0-9abcdef]{2}(:[0-9abcdef]{2}){5}$')
-        ipaddr_regex = re.compile('^[0-9]{1,3}(\.[0-9]{1,3}){3}$')
         interfaces = Interface.objects.filter(host=host_id)
         for interface in interfaces:
-            if (not macaddr_regex.match(request.POST['mac_addr%d' % interface.id])
+            if (not regex.macaddr.match(request.POST['mac_addr%d' % interface.id])
                 and request.POST['mac_addr%d' % interface.id]):
                 failures.append('mac_addr (%s)' % request.POST['mac_addr%d' % interface.id])
             for ip in interface.ip_set.all():
-                if not ipaddr_regex.match(request.POST['ip_addr%d' % ip.id]):
+                if not regex.ipaddr.match(request.POST['ip_addr%d' % ip.id]):
                     failures.append('ip_addr (%s)' % request.POST['ip_addr%d' % ip.id])
                 [failures.append('ip_addr (%s)' % request.POST['ip_addr%d' % ip.id])
                  for number in request.POST['ip_addr%d' % ip.id].split(".")
                  if (number.isdigit() and int(number) > 255 and
                      'ip_addr (%s)' % request.POST['ip_addr%d' % ip.id] not in failures)]
-
-        
-
 
     if not failures:
         return 0
