@@ -1,10 +1,10 @@
 #!/usr/bin/python
 """Hostinfo queries the hostbase database according to user-defined data"""
-__revision__ = '0.1'
 
+from os import system, environ
+environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
 from getopt import gnu_getopt, GetoptError
 from django.db import connection
-from os import system
 import sys
 
 logic_ops = ["and", "or"]
