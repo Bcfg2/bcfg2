@@ -1,10 +1,13 @@
 #!/usr/bin/python
+'''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import socket, sys, os
+import difflib, lxml.etree, os, socket, sys, ConfigParser
+import Bcfg2.Server.Core, Bcfg2.Logging
 
 usage = '''
 bcfg2-admin [options]
---init      initialize the bcfg2 repository( this is interactive and should only be run once )
+init      initialize the bcfg2 repository( this is interactive; only run once )
+pull <client> <entry type> <entry name>
 '''
 
 config = '''
@@ -54,8 +57,13 @@ e. Ubuntu
 f. Solaris
 '''
 
+def err_exit(msg):
+    print msg
+    raise SystemExit, 1
+
 #build bcfg2.conf file
 def initialize_repo():
+    '''Setup a new repo'''
     repo = raw_input( "location of bcfg2 repository [/var/lib/bcfg2]: " )
     if repo == '':
         repo = '/var/lib/bcfg2'
@@ -65,13 +73,12 @@ def initialize_repo():
         password = raw_input( "please provide the password used for communication verification: " )
 
     #get the hostname
-    server = "https://%s:6789"%socket.getfqdn()
-    server_location = raw_input( "please provide the server location[%s]: "%server)
-    if server_location == '':
-        server_location = server
+    server = "https://%s:6789" % socket.getfqdn()
+    uri = raw_input( "please provide the server location[%s]: " % server)
+    if uri == '':
+        uri = server
 
-
-    open("/etc/bcfg2.conf","w").write(config%( repo, password, server_location ))
+    open("/etc/bcfg2.conf","w").write(config % ( repo, password, uri ))
 
     #generate the ssl key
     print "Now we will generate the ssl key used for secure communitcation"
@@ -82,8 +89,8 @@ def initialize_repo():
         pass
     
     #create the repo dirs
-    for dir in ['SSHbase','Cfg','Pkgmgr','Svcmgr','Rules','etc','Metadata' ]:
-        path = "%s/%s"%(repo,dir)
+    for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Svcmgr', 'Rules', 'etc', 'Metadata' ]:
+        path = "%s/%s" % (repo, subdir)
         newpath = ''
         for subdir in path.split('/'):
             newpath = newpath + subdir + '/'
@@ -97,7 +104,7 @@ def initialize_repo():
     while ( selection == '' ):
         print prompt
         selection = raw_input(" selection: ")
-        if selection.lower() not in ['a','b','c','d','e']:
+        if selection.lower() not in 'abcde':
             selection = ''
     if selection.lower() == 'a':
         selection = 'redhat'
@@ -117,9 +124,89 @@ def initialize_repo():
     #now the clients file
     open("%s/Metadata/clients.xml"%repo, "w").write(clients%socket.getfqdn())
 
+def update_file(path, diff):
+    '''Update file at path using diff'''
+    newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
+    print "writing file, %s" % path
+    open(path, 'w').write(newdata)
+
+def do_pull(client, etype, ename):
+    '''Make currently recorded client state correct for entry'''
+    cfile = '/etc/bcfg2.conf'
+    cfp = ConfigParser.ConfigParser()
+    cfp.read(cfile)
+    repo = cfp.get('server', 'repository')
+    stats = lxml.etree.parse("%s/etc/statistics.xml" % (repo))
+    hostent = stats.xpath('.//Node[@name="%s"]' % client)
+    if not hostent:
+        print "Could not find stats for client %s" % (client)
+    sdata = hostent[0]
+    if sdata.xpath('.//Statistics[@state="dirty"]'):
+        state = 'dirty'
+    else:
+        state = 'clean'
+    # need to pull entry out of statistics
+    entry = sdata.xpath('.//Statistics[@state="%s"]/Bad/%s[@name="%s"]' % \
+                        (state, etype, ename))
+    if not entry:
+        err_exit("Could not find state data for entry; rerun bcfg2 on client system")
+        
+    # fail for unsupported etypes
+    if etype not in ['ConfigFile', 'Package']:
+        err_exit("Unsupported entry type %s" % (etype))
+    try:
+        bcore = Bcfg2.Server.Core.Core({}, cfile)
+    except Bcfg2.Server.Core.CoreInitError, msg:
+        print "Core load failed because %s" % msg
+        raise SystemExit, 1
+    [bcore.fam.Service() for x in range(10)]
+    while bcore.fam.Service():
+        pass
+    m = bcore.metadata.get_metadata(client)
+    # find appropriate location in repo
+    if etype == 'ConfigFile':
+        rversion = lxml.etree.Element('ConfigFile', name=ename)
+        bcore.Bind(rversion, m)
+        current = rversion.text
+        diff = entry[0].get('current_diff')[1:-1]
+        basefile = [frag for frag in \
+                    bcore.plugins['Cfg'].entries[ename].fragments \
+                    if frag.applies(m)][-1]
+        if ".H_%s" % (m.hostname) in basefile.name:
+            answer = raw_input("Found host-specific file %s; Should it be updated (n/Y): ")
+            if answer in 'Yy':
+                update_file(basefile.name, diff)
+            else:
+                raise SystemExit, 1
+        else:
+            # there are two possibilities
+            msg = "Should this change apply to this host of all hosts effected by file %s? (N/y): " % (basefile.name)
+            choice = raw_input(msg)
+            if choice in 'Yy':
+                newname = basefile.name
+            else:
+                # figure out host-specific filename
+                if '.G_' in basefile.name:
+                    idx = basefile.name.find(".G_")
+                    newname = basefile.name[:idx] + ".H_%s" % (m.hostname)
+                else:
+                    newname = basefile.name + ".H_%s" % (m.hostname)
+            print "This file will be installed as file %s" % newname
+            if raw_input("Should it be installed? (N/y): ") in 'Yy':
+                update_file(newname, diff)
+    else:
+        err_exit("Don't support entry type %s yet" % etype)
+    # svn commit if running under svn
+    
 if __name__ == '__main__':
-    if "--init" in sys.argv:
+    Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
+    if sys.argv[1] == "init":
         initialize_repo()
+    elif sys.argv[1] == 'pull':
+        if len(sys.argv) != 5:
+            print usage
+            raise SystemExit, 1
+        do_pull(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         print usage
         
