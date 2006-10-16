@@ -163,9 +163,14 @@ def edit(request, host_id):
     """Edit general host information
     Data is validated before being committed to the database"""
     # fix bug when ip address changes, update the dns info appropriately
-
+    changename = False
     if request.GET.has_key('sub'):
         host = Host.objects.get(id=host_id)
+        if request.POST['hostname'] != host.hostname:
+            oldhostname = host.hostname.split(".")[0]
+            host.hostname = request.POST['hostname']
+            host.save()
+            changename = True
         interfaces = host.interface_set.all()
         if not validate(request, False, host_id):
             if (request.POST.has_key('outbound_smtp')
@@ -210,6 +215,11 @@ def edit(request, host_id):
                         for name in names:
                             if name.name.split(".")[0].endswith('-%s' % oldtype):
                                 name.name = name.name.replace('-%s' % oldtype, '-%s' % inter.hdwr_type)
+                                name.save()
+                    if changename:
+                        for name in names:
+                            if name.name.startswith(oldhostname):
+                                name.name = name.name.replace(oldhostname, host.hostname.split(".")[0])
                                 name.save()
                 if request.POST['%dip_addr' % inter.id]:
                     mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
