@@ -63,7 +63,7 @@ class Hostbase(Plugin):
                           'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
                           'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
                           'dhcp':loader.get_template('dhcpd.tmpl'),
-                          'hosts':Template(open(self.data + '/templates/' + 'hosts.tmpl').read()),
+                          'hosts':loader.get_template('hosts.tmpl'),
                           'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read()),
                           }
         self.Entries['ConfigFile'] = {}
@@ -96,8 +96,18 @@ class Hostbase(Plugin):
         return [output]
 
     def rebuildState(self, _):
-        '''Pre-cache all state information for hostbase config files'''
+        '''Pre-cache all state information for hostbase config files
+        callable as an XMLRPC function'''
+        self.buildZones()
+        self.buildDHCP()
+        self.buildHosts()
+        self.buildHostsLPD()
+        self.buildPrinters()
+        self.buildNetgroups()
+        return True
 
+    def buildZones(self):
+        '''Pre-build and stash zone files'''
         from django.db import connection
         cursor = connection.cursor()
 
@@ -244,20 +254,13 @@ class Hostbase(Plugin):
                     self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
             else:
                 originlist = [filename[0]]
-            hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
-                     for host in reversehosts]
+                hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
+                         for host in reversehosts]
             self.templates['reverseapp'].hosts = hosts
             self.templates['reverseapp'].inaddr = filename[0]
             self.templates['reverseapp'].fileorigin = None
             self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
-
-        self.buildDHCP()
-        self.buildHosts()
-        self.buildHostsLPD()
-        self.buildPrinters()
-        self.buildNetgroups()
-        return True
 
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
@@ -312,8 +315,9 @@ class Hostbase(Plugin):
 
 
     def buildHosts(self):
-
+        '''Pre-build and stash /etc/hosts file'''
         from django.db import connection
+        from django.template import Context
 
         append_data = []
 
@@ -356,11 +360,15 @@ class Hostbase(Plugin):
                            for octet in two_octets_set]
         two_octets_data.sort()
 
-        self.templates['hosts'].domain_data = domain_data
-        self.templates['hosts'].three_octets_data = three_octets_data
-        self.templates['hosts'].two_octets_data = two_octets_data
-        self.templates['hosts'].three_octets = len(three_octets)
-        self.filedata['hosts'] = str(self.templates['hosts'])
+        context = Context({
+            'domain_data': domain_data,
+            'three_octets_data': three_octets_data,
+            'two_octets_data': two_octets_data,
+            'three_octets': three_octets,
+            'timecreated': strftime("%a %b %d %H:%M:%S %Z %Y"),
+            })
+
+        self.filedata['hosts'] = self.templates['hosts'].render(context)
 
         for subnet in append_data:
             ips = []
