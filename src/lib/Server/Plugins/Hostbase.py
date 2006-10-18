@@ -256,10 +256,10 @@ class Hostbase(Plugin):
                 originlist = [filename[0]]
                 hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
                          for host in reversehosts]
-            self.templates['reverseapp'].hosts = hosts
-            self.templates['reverseapp'].inaddr = filename[0]
-            self.templates['reverseapp'].fileorigin = None
-            self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
+                self.templates['reverseapp'].hosts = hosts
+                self.templates['reverseapp'].inaddr = filename[0]
+                self.templates['reverseapp'].fileorigin = None
+                self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
 
     def buildDHCP(self):
