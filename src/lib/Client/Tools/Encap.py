@@ -17,10 +17,6 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
 # If you define self.pkgtool and self.pkgname it will [use] the Pkgtool.Install 
 # method will do the installation stuff for you
 
-    def __init__(self, logger, setup, config, states):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
-        self.installed = {}
-
     def RefreshPackages(self):
         '''Try to find encap packages'''
         self.installed = {}
