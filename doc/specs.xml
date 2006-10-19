@@ -81,7 +81,7 @@
 	  <row><entry>toolset</entry>
 	    <entry>Describes which client-side logic should be used to
 	    make configuration
-	    changes</entry><entry>(rh|debian|solaris)</entry></row>
+	    changes</entry><entry>(rh|debian|solaris|aix|auto)</entry></row>
 	  <row><entry>category</entry>
 	    <entry>A group can only contain one instance of a group in
 	    any category. This provides the basis for representing
