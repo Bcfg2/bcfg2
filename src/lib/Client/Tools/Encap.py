@@ -1,6 +1,3 @@
-# dclark: This is just stuff from Solaris.py munged together into what looked
-#         like the right places, before making anything actually work.
-
 '''Bcfg2 Support for Encap Packages'''
 
 __revision__ = '$Revision$'
@@ -33,7 +30,8 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
                 self.installed[match.group('name')] = match.group('version')
             else:
                 print "Failed to split name %s" % pkg
-        #print self.installed.keys()
+	self.logger.debug("Encap.py: RefreshPackages: self.installed.keys() are:")
+        self.logger.debug("%s" % self.installed.keys())
         
     def VerifyPackage(self, entry, _):
         '''Verify Package status for entry'''
@@ -57,4 +55,3 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
         self.cmd.run("/usr/local/bin/epkg -l -q -r %s" % (names))
         self.RefreshPackages()
         self.extra = self.FindExtraPackages()
-
