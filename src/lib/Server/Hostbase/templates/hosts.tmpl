@@ -2,29 +2,25 @@
 # MCS hosts file
 #
 # This file is generated automatically - DO NOT EDIT IT.
-# To create this file, do 'make hosts' in "hostbase".
 #
-# Generated on: Wed Jan  4 20:34:34 CST 2006
+# Generated on: {{ timecreated }}
 #
 
 127.0.0.1	localhost.mcs.anl.gov localhost
 
 #  This file lists hosts in these domains:
-#for $domain in $domain_data
-#    ${domain[0]}: ${domain[1]}
-#end for
+{% for domain in domain_data %}{{ domain.0 }}: {{ domain.1 }}
+{% endfor %}
 #
 #  This file lists hosts on these networks:
 #
 #    Network        Hosts
 #    ---------------------------------------------------------------------
-#for $octet in $two_octets_data
-#    ${octet[0]}		${octet[1]}
-#end for
+{% for octet in two_octets_data %}{{ octet.0 }}		{{octet.1 }}
+{% endfor %}
 #
-#for $octet in $three_octets_data
-#    ${octet[0]}       		${octet[1]}
-#end for
+{% for octet in three_octets_data %}{{ octet.0 }}       		{{ octet.1 }}
+{% endfor %}
 #
-#  Total host interfaces (ip addresses) in this file: $three_octets
+#  Total host interfaces (ip addresses) in this file: {{ three_octets }}
 
