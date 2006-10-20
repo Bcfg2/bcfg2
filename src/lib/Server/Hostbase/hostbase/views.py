@@ -51,6 +51,9 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         return HttpResponse(str(t))
     
 
+def login(request):
+    return render_to_response('login.html', {})
+
 def search(request):
     """Search for hosts in the database
     If more than one field is entered, logical AND is used
@@ -78,8 +81,7 @@ def search(request):
                     querystring += ' AND '
                 querystring += "h.%s LIKE \'%%%%%s%%%%\'" % (field, request.POST[field])
                 _and = True
-
-                
+               
         if not _and:
             cursor = connection.cursor()
             cursor.execute("""SELECT hostname, id, status
@@ -350,7 +352,7 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
             address = ZoneAddress.objects.get(id=item_id)
             Zone.objects.get(id=zone_id).addresses.remove(address)
         if item == 'cname' or item == 'mx' or item == 'name':
-            return HttpResponseRedirect('/hostbase/%s/dnsedit' % host_id)
+            return HttpResponseRedirect('/hostbase/%s/dns/edit' % host_id)
         elif item == 'nameserver' or item == 'zonemx' or item == 'address':
             return HttpResponseRedirect('/hostbase/zones/%s/edit' % zone_id)
         else:
