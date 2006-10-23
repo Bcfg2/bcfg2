@@ -16,7 +16,7 @@
 <prereq package="m4-1.4.4" />
 <prereq package="patch-2.5.9" />
 <prereq package="bcfg2-pkg-config-0.20" />
-<prereq package="bcfg2-python-2.4.3" />
+<prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-pyopenssl-0.6" />
 <prereq package="bcfg2-elementtree-1.2.6" />
 
@@ -188,7 +188,7 @@ touch var/encap/${ENCAP_PKGNAME}
 # thanks to roadrunner.py
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/52553
 # for some ideas and some code
-# tested with python 2.4.3
+# tested with python 2.4.4
 
 import sys, os, re, string
 
@@ -496,7 +496,7 @@ printf "Finished bcfg2 preremove script.\n"
 
 <encapinfo>
 description Bcfg2 - Provides a declarative interface to system configuration
-prereq pkgspec >= bcfg2-python-2.4.3
+prereq pkgspec >= bcfg2-python-2.4.4
 prereq pkgspec >= bcfg2-elementtree-1.2.6
 </encapinfo>
 
