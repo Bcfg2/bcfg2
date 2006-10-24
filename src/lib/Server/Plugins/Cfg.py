@@ -260,14 +260,17 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         if self.interpolate:
             if self.probes:
                 for name, entry in self.probes.entries.iteritems():
-                    probe = lxml.etree.Element('probe')
-                    probe.set('name', name )
-                    probe.set('source', 'Cfg')
-                    probe.text = entry.data
-                    match = bangline.match(entry.data.split('\n')[0])
-                    if match:
-                        probe.set('interpreter', match.group('interpreter'))
-                    ret.append(probe)
+                    if entry.data:
+                        probe = lxml.etree.Element('probe')
+                        probe.set('name', name )
+                        probe.set('source', 'Cfg')
+                        probe.text = entry.data
+                        match = bangline.match(entry.data.split('\n')[0])
+                        if match:
+                            probe.set('interpreter', match.group('interpreter'))
+                        else:
+                            probe.set('interpreter', '/bin/sh')
+                        ret.append(probe)
             probe = lxml.etree.Element('probe')
             probe.set('name', 'hostname')
             probe.set('source', 'Cfg')
