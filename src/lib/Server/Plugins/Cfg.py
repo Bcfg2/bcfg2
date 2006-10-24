@@ -215,7 +215,8 @@ class ConfigFileEntry(object):
         if self.interpolate:
             if metadata.hostname in probeData:
                 for name, value in probeData[metadata.hostname].iteritems():
-                    filedata = filedata.replace("@@%s@@"%name, value )
+                    if value != None:
+                        filedata = filedata.replace("@@%s@@"%name, value )
             else:
                 logger.warning("Cannot interpolate data for client: %s for config file: %s"% (metadata.hostname, basefile.name))
         if self.paranoid:
@@ -280,7 +281,10 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
 
     def ReceiveData(self, client, data):
         '''Receive probe results pertaining to client'''
-        probeData[client.hostname] = { data.get('name'):data.text }
+        try:
+            probeData[client.hostname].update({ data.get('name'):data.text })
+        except KeyError:
+            probeData[client.hostname] = { data.get('name'):data.text }
 
     def AddDirectoryMonitor(self, name):
         '''Add new directory to FAM structures'''
