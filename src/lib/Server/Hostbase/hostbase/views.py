@@ -56,9 +56,6 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 
 def login(request):
     return render_to_response('login.html', {'next':'/hostbase'})
-
-        
-    
         
 
 def search(request):
