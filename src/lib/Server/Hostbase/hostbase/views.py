@@ -1,8 +1,8 @@
-# Create your views here.
 """Views.py
 Contains all the views associated with the hostbase app
 Also has does form validation
 """
+__revision__ = "$Revision: $"
 
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -53,7 +53,6 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         t.failures = False
 ##         return HttpResponse(str(t))
     
-
 def login(request):
     return render_to_response('login.html', {'next':'/hostbase'})
         
@@ -741,6 +740,15 @@ def validate(request, new=False, host_id=None):
                  for number in request.POST['ip_addr%d' % ip.id].split(".")
                  if (number.isdigit() and int(number) > 255 and
                      'ip_addr (%s)' % request.POST['ip_addr%d' % ip.id] not in failures)]
+            if (request.POST['%dip_addr' % interface.id]
+                and not regex.ipaddr.match(request.POST['%dip_addr' % interface.id])):
+                failures.append('ip_addr (%s)' % request.POST['%dip_addr' % interface.id])
+        if (request.POST['mac_addr_new']
+            and not regex.macaddr.match(request.POST['mac_addr_new'])):
+            failures.append('mac_addr (%s)' % request.POST['mac_addr_new'])
+        if (request.POST['ip_addr_new']
+            and not regex.ipaddr.match(request.POST['ip_addr_new'])):
+            failures.append('ip_addr (%s)' % request.POST['ip_addr_new'])
 
     if not failures:
         return 0
