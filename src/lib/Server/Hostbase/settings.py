@@ -5,7 +5,7 @@ ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 MANAGERS = ADMINS
-CFG_TYPE = 'mcs'
+CFG_TYPE = 'environ'
 
 if CFG_TYPE == 'mcs':
     # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
@@ -23,11 +23,14 @@ if CFG_TYPE == 'mcs':
     # Local time zone for this installation. All choices can be found here:
     # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
     TIME_ZONE = 'America/Chicago'
+    # Absolute path to the directory that holds media.
+    # Example: "/home/media/media.lawrence.com/"
+    MEDIA_ROOT = ''
     
 if CFG_TYPE == 'environ':
     import os
     # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-    DATABASE_ENGINE = os.envoiron['bcfg_db_engine']
+    DATABASE_ENGINE = os.environ['bcfg_db_engine']
     # Or path to database file if using sqlite3.
     DATABASE_NAME = os.environ['bcfg_db_name']
     # Not used with sqlite3.
@@ -41,15 +44,21 @@ if CFG_TYPE == 'environ':
     # Local time zone for this installation. All choices can be found here:
     # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
     TIME_ZONE = os.environ['bcfg_time_zone']
-
+    # Absolute path to the directory that holds media.
+    # Example: "/home/media/media.lawrence.com/"
+    MEDIA_ROOT = os.environ['bcfg_media_root']
+    #add non-default AUTH Backends:
+    AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
+                               'Hostbase.backends.LDAPBackend',)
+    #create login url area:
+    import django.contrib.auth
+    django.contrib.auth.LOGIN_URL = '/login'
+    
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
 # http://blogs.law.harvard.edu/tech/stories/storyReader$15
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
 # URL that handles the media served from MEDIA_ROOT.
 # Example: "http://media.lawrence.com"
 MEDIA_URL = ''

@@ -114,13 +114,20 @@ class ldapauth(object):
         try:
             raw_obj = user_obj[0][1]
             self.memberOf = raw_obj['memberOf']
-            self.sAMAccountName = raw_obj['sAMAccountName']
-            self.distinguishedName = raw_obj['distinguishedName']
-            self.telephoneNumber = raw_obj['telephoneNumber']
-            self.title = raw_obj['title']
-            self.department = raw_obj['department']
-            self.mail = raw_obj['mail']
-            self.badge_no = raw_obj['extensionAttribute1']
+            self.sAMAccountName = raw_obj['sAMAccountName'][0]
+            self.distinguishedName = raw_obj['distinguishedName'][0]
+            self.telephoneNumber = raw_obj['telephoneNumber'][0]
+            self.title = raw_obj['title'][0]
+            self.department = raw_obj['department'][0]
+            self.mail = raw_obj['mail'][0]
+            self.badge_no = raw_obj['extensionAttribute1'][0]
+            self.email = raw_obj['extensionAttribute2'][0]
+            display_name = raw_obj['displayName'][0].split(",")
+            self.name_f = raw_obj['givenName'][0]
+            self.name_l = display_name[0]
+            self.is_staff = False
+            self.is_superuser = False
+            
             return
         except KeyError, e:
             raise LDAPAUTHError("Portions of the LDAP User profile not present")

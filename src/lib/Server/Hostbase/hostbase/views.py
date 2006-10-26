@@ -5,13 +5,16 @@ Also has does form validation
 """
 
 from django.http import HttpResponse, HttpResponseRedirect
+
+from django.contrib.auth.decorators import login_required
+
 from Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
 from Hostbase import settings, regex
 import re
-
+    
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
            'status']
@@ -52,7 +55,11 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
     
 
 def login(request):
-    return render_to_response('login.html', {})
+    return render_to_response('login.html', {'next':'/hostbase'})
+
+        
+    
+        
 
 def search(request):
     """Search for hosts in the database
@@ -99,6 +106,7 @@ def search(request):
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'yesno': [(1, 'yes'), (0, 'no')]})
+
 
 def look(request, host_id):
     """Displays general host information"""
@@ -852,3 +860,25 @@ def zonenew(request):
                                   'mxs': range(0,2),
                                   'addresses': range(0,2)
                                    })
+
+if settings.CFG_TYPE == 'environ':
+    #login required stuff
+    search = login_required(search)
+    look = login_required(look)
+    dns = login_required(dns)
+    gethostdata = login_required(gethostdata)
+    fill = login_required(fill)
+    edit = login_required(edit)
+    confirm = login_required(confirm)
+    dnsedit = login_required(dnsedit)
+    new = login_required(new)
+    remove = login_required(remove)
+    validate = login_required(validate)
+    zones = login_required(zones)
+    zoneview = login_required(zoneview)
+    zoneedit = login_required(zoneedit)
+    zonenew = login_required(zonenew)
+    
+else:
+    pass
+

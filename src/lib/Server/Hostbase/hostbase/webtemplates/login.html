@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block pagebanner %}
+  <div class="header">
+      <h2>Login to Hostbase!</h2>
+      <p>You must login to manage hosts</p>
+  </div>
+  <br/>
+{% endblock %}
+{% block content %}
+  {% if form.has_errors %}
+  {{ form.username.errors|join:", " }}
+  <p>Login Failed.</p>
+  {% endif %}
+  {% if user.is_authenticated %}
+  <p>Welcome, {{ user.username }}. Thanks for logging in.</p>
+  {% else %}
+  <p>Welcome, user. Please log in.</p>
+  <form name="input" action="." method="post">
+  <input name="username" type="text">
+  <br />
+  <input name="password" type="password">
+  <br />
+  <input type="submit" value="Login">
+  <input type="hidden" name="next" value="/hostbase" />
+
+  </form>
+  {% endif %}
+{% endblock %}
