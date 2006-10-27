@@ -53,10 +53,6 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         t.failures = False
 ##         return HttpResponse(str(t))
     
-def login(request):
-    return render_to_response('login.html', {'next':'/hostbase'})
-        
-
 def search(request):
     """Search for hosts in the database
     If more than one field is entered, logical AND is used
@@ -885,5 +881,11 @@ if settings.CFG_TYPE == 'environ':
     zonenew = login_required(zonenew)
     
 else:
-    pass
+    edit = login_required(edit)
+    confirm = login_required(confirm)
+    dnsedit = login_required(dnsedit)
+    new = login_required(new)
+    remove = login_required(remove)
+    zoneedit = login_required(zoneedit)
+    zonenew = login_required(zonenew)
 
