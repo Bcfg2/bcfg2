@@ -1,6 +1,8 @@
 import os
 from django.conf.urls.defaults import *
 
+os.environ['bcfg_media_root'] = "/homes/raffenet/under_contruction/djangobase/bcfg2/src/lib/Server/Hostbase/media"
+
 urlpatterns = patterns('Hostbase.hostbase.views',
                        
                        (r'^admin/', include('django.contrib.admin.urls')),
@@ -18,10 +20,12 @@ urlpatterns = patterns('Hostbase.hostbase.views',
                        (r'^hostbase/zones/(?P<zone_id>\d+)/$', 'zoneview'),                       
                        (r'^hostbase/zones/(?P<zone_id>\d+)/edit', 'zoneedit'),
                        (r'^hostbase/zones/new/$', 'zonenew'),
-                       (r'^hostbase/zones/(?P<zone_id>\d+)/(?P<item>\D+)/(?P<item_id>\d+)/confirm', 'confirm'))
-                       #(r'^login/$', 'login'),
+                       (r'^hostbase/zones/(?P<zone_id>\d+)/(?P<item>\D+)/(?P<item_id>\d+)/confirm', 'confirm'),
+                       )
+
 #fixme: this is a temp. kludge to handle static serving of css, img, js etc...
 #a better solution is to use mod_python/apache directives for the static serving
+
 urlpatterns += patterns('',
                         (r'^site_media/(.*)$',
                          'django.views.static.serve',
@@ -31,5 +35,7 @@ urlpatterns += patterns('',
 urlpatterns += patterns('',                        
                         (r'^login/$', 'django.contrib.auth.views.login',
                          {'template_name': 'login.html'}),
+                        (r'^logout/$', 'django.contrib.auth.views.logout',
+                         {'template_name': 'logout.html'})
                         )
                        

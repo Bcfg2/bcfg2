@@ -52,7 +52,7 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         t.TYPE_CHOICES = Interface.TYPE_CHOICES
 ##         t.failures = False
 ##         return HttpResponse(str(t))
-    
+
 def search(request):
     """Search for hosts in the database
     If more than one field is entered, logical AND is used
@@ -92,12 +92,15 @@ def search(request):
             cursor.execute(querystring)
             results = cursor.fetchall()
         
-        return render_to_response('results.html', {'hosts': results})
+        return render_to_response('results.html',
+                                  {'hosts': results,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
     else:
         return render_to_response('search.html',
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
-                                   'yesno': [(1, 'yes'), (0, 'no')]})
+                                   'yesno': [(1, 'yes'), (0, 'no')],
+                                   'logged_in': request.session.get('_auth_user_id', False)})
 
 
 def look(request, host_id):
@@ -108,7 +111,8 @@ def look(request, host_id):
         interfaces.append([interface, interface.ip_set.all()])
     return render_to_response('host.html',
                               {'host': host,
-                               'interfaces': interfaces})
+                               'interfaces': interfaces,
+                               'logged_in': request.session.get('_auth_user_id', False)})
                                    
 def dns(request, host_id):
     host = Host.objects.get(id=host_id)
@@ -127,7 +131,9 @@ def dns(request, host_id):
                               {'host': host,
                                'info': info,
                                'cnames': cnames,
-                               'mxs': mxs})
+                               'mxs': mxs,
+                               'logged_in': request.session.get('_auth_user_id', False)})
+
 
 def gethostdata(host_id, dnsdata=False):
     """Grabs the necessary data about a host
@@ -308,7 +314,8 @@ def edit(request, host_id):
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
             return render_to_response('errors.html',
-                                      {'failures': validate(request, False, host_id)})
+                                      {'failures': validate(request, False, host_id),
+                                       'logged_in': request.session.get('_auth_user_id', False)})
     else:
         host = Host.objects.get(id=host_id)
         interfaces = []
@@ -317,7 +324,8 @@ def edit(request, host_id):
         return render_to_response('edit.html',
                                   {'host': host,
                                    'interfaces': interfaces,
-                                   'TYPE_CHOICES': Interface.TYPE_CHOICES})
+                                   'TYPE_CHOICES': Interface.TYPE_CHOICES,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
 
 def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
@@ -412,7 +420,8 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                                    'zonemx': zonemx,
                                    'nameserver': nameserver,
                                    'address': address,
-                                   'zone_id': zone_id})
+                                   'zone_id': zone_id,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
 
 def dnsedit(request, host_id):
     """Edits specific DNS information
@@ -483,7 +492,8 @@ def dnsedit(request, host_id):
                                    'mxs': mxs,
                                    'request': request,
                                    'interfaces': interfaces,
-                                   'DNS_CHOICES': Name.DNS_CHOICES})
+                                   'DNS_CHOICES': Name.DNS_CHOICES,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
     
 def new(request):
     """Function for creating a new host in hostbase
@@ -492,7 +502,8 @@ def new(request):
         try:
             Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
-                                      {'failures': ['%s already exists in hostbase' % request.POST['hostname']]})
+                                      {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
+                                       'logged_in': request.session.get('_auth_user_id', False)})
         except:
             pass
         if not validate(request, True):
@@ -512,7 +523,9 @@ def new(request):
             host.save()
         else:
             return render_to_response('errors.html',
-                                      {'failures': validate(request, True)})
+                                      {'failures': validate(request, True),
+                                       'logged_in': request.session.get('_auth_user_id', False)})
+
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new'],
@@ -638,7 +651,8 @@ def new(request):
                                    'NETGROUP_CHOICES': Host.NETGROUP_CHOICES,
                                    'CLASS_CHOICES': Host.CLASS_CHOICES,
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
-                                   'WHATAMI_CHOICES': Host.WHATAMI_CHOICES})                                   
+                                   'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
     
 def remove(request, host_id):
     host = Host.objects.get(id=host_id)
@@ -659,7 +673,8 @@ def remove(request, host_id):
             interfaces.append([interface, interface.ip_set.all()])
         return render_to_response('remove.html',
                                   {'host': host,
-                                   'interfaces': interfaces})
+                                   'interfaces': interfaces,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
 
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
@@ -753,7 +768,8 @@ def validate(request, new=False, host_id=None):
 def zones(request):
     zones = Zone.objects.all()
     return render_to_response('zones.html',
-                              {'zones': zones})
+                              {'zones': zones,
+                               'logged_in': request.session.get('_auth_user_id', False)})
 
 def zoneview(request, zone_id):
     zone = Zone.objects.get(id=zone_id)
@@ -761,7 +777,8 @@ def zoneview(request, zone_id):
                               {'zone': zone,
                                'nameservers': zone.nameservers.all(),
                                'mxs': zone.mxs.all(),
-                               'addresses': zone.addresses.all()
+                               'addresses': zone.addresses.all(),
+                               'logged_in': request.session.get('_auth_user_id', False)
                                })
 
 def zoneedit(request, zone_id):
@@ -819,7 +836,8 @@ def zoneedit(request, zone_id):
                                   {'zone': zone,
                                    'nameservers': zone.nameservers.all(),
                                    'mxs': zone.mxs.all(),
-                                   'addresses': zone.addresses.all()
+                                   'addresses': zone.addresses.all(),
+                                   'logged_in': request.session.get('_auth_user_id', False)
                                    })
 
 def zonenew(request):
@@ -827,7 +845,9 @@ def zonenew(request):
         try:
             Zone.objects.get(zone=request.POST['zone'])
             return render_to_response('errors.html',
-                                      {'failures': ['%s already exists in database' % request.POST['zone']]})
+                                      {'failures': ['%s already exists in database' % request.POST['zone']],
+                                       'logged_in': request.session.get('_auth_user_id', False)})
+
         except:
             zone = Zone(zone=request.POST['zone'])
         for attrib in zoneattribs:
@@ -859,7 +879,8 @@ def zonenew(request):
         return render_to_response('zonenew.html',
                                   {'nameservers': range(0,4),
                                   'mxs': range(0,2),
-                                  'addresses': range(0,2)
+                                  'addresses': range(0,2),
+                                   'logged_in': request.session.get('_auth_user_id', False)
                                    })
 
 if settings.CFG_TYPE == 'environ':

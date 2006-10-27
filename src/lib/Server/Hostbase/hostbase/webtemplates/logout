@@ -1,0 +1,5 @@
+{% if logged_in %}
+<p> <a href="/logout/" class="sidebar">logout</a>
+{% else %}
+<p> <a href="/login/" class="sidebar">login</a>
+{% endif %}

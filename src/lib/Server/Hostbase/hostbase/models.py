@@ -65,8 +65,8 @@ class Host(models.Model):
 
 class Interface(models.Model):
     TYPE_CHOICES = (
-        ('eth', 'ethernet'), ('wl', 'wireless'), ('myr', 'myr'),
-        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe')
+        ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
+        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge')
         )
     host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
     mac_addr = models.CharField(maxlength=32, core=True)

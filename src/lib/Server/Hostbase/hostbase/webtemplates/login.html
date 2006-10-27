@@ -21,7 +21,11 @@
   <input name="password" type="password">
   <br />
   <input type="submit" value="Login">
+  {% if next %}
   <input type="hidden" name="next" value="{{ next }}" />
+  {% else %}
+  <input type="hidden" name="next" value="/hostbase/" />
+  {% endif %}
 
   </form>
   {% endif %}
