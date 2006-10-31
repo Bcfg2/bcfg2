@@ -1,12 +1,11 @@
 import os
 from django.conf.urls.defaults import *
 
-os.environ['bcfg_media_root'] = "/homes/raffenet/under_contruction/djangobase/bcfg2/src/lib/Server/Hostbase/media"
-
 urlpatterns = patterns('Hostbase.hostbase.views',
                        
                        (r'^admin/', include('django.contrib.admin.urls')),
                        (r'^hostbase/$', 'search'),
+                       (r'^$','index' ),
                        (r'^hostbase/(?P<host_id>\d+)/$', 'look'),
                        (r'^hostbase/(?P<host_id>\d+)/edit', 'edit'),
                        (r'^hostbase/(?P<host_id>\d+)/remove', 'remove'),

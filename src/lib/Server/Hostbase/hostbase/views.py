@@ -7,6 +7,7 @@ __revision__ = "$Revision: $"
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 from Hostbase.hostbase.models import *
 from datetime import date
@@ -52,6 +53,11 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
 ##         t.TYPE_CHOICES = Interface.TYPE_CHOICES
 ##         t.failures = False
 ##         return HttpResponse(str(t))
+
+def index(request):
+    """rediredct to /hostbase/"""
+    return render_to_response('index.html',
+                              {})
 
 def search(request):
     """Search for hosts in the database
