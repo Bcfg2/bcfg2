@@ -3,122 +3,58 @@ __revision__ = '$Revision$'
 
 import logging, socket, sys, time, xmlrpclib, ConfigParser, httplib
 
-class CobaltComponentError(Exception):
-    '''This error signals component connection errors'''
-    pass
-
-def verify_cb(conn, cert, errnum, depth, ok):
-    print 'Got certificate: %s' % cert.get_subject()
-    return ok
-
-class poSSLFile:
-    def __init__(self, sock, master):
-        self.sock = sock
-        self.master = master
-        #self.read = self.sock.read
-        self.master.count += 1
-
-    def close(self):
-        self.master.count -= 1
-        if not self.master.count:
-            self.sock.close()
-
-    def readline(self):
-        print "in readline"
-        data = ''
-        char = self.read(1)
-        while char != '\n':
-            data += char
-            char = self.read(1)
-        print data
-        return data
-
-    def read(self, size=None):
-        print "in read", size
-        if size:
-            data = ''
-            while not data:
-                try:
-                    data = self.sock.read(size)
-                except OpenSSL.SSL.ZeroReturnError:
-                    break
-            return data
-        else:
-            print "no size"
-            data = self.sock.read()
-            return data
-
-class pSockMaster:
-    def __init__(self, connection):
-        self._connection = connection
-        self.sendall = self._connection.send
-        self.count = 1
-
-    def makefile(self, mode, bufsize=None):
-        return poSSLFile(self._connection, self)
-
-    def close(self):
-        self.count -= 1
-        if not self.count:
-            self._connection.close()
-
-class PHTTPSConnection(httplib.HTTPSConnection):
-    "This class allows communication via SSL."
-
-    def __init__(self, host, port=None, key_file=None, cert_file=None,
-                 strict=None):
-        httplib.HTTPSConnection.__init__(self, host, port, strict)
-        self.ctx = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        self.ctx.set_verify(OpenSSL.SSL.VERIFY_PEER, verify_cb)
-        self.ctx.use_privatekey_file ('/tmp/keys/client.pkey')
-        self.ctx.use_certificate_file('/tmp/keys/client.cert')
-        self.ctx.load_verify_locations('/tmp/keys/CA.cert')
+class Bcfg2HTTPSConnection(httplib.HTTPSConnection):
 
     def connect(self):
-        "Connect to a host on a given (SSL) port."
-        self._sock = OpenSSL.SSL.Connection(self.ctx,
-                                           socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-        self._sock.connect((self.host, self.port))
-        self.sock = pSockMaster(self._sock)
+        "Connect to a host on a given (SSL) port binding the socket to a specific local address"
 
-    def send(self, msg):
-        print "sending message %s" % (msg)
-        self._sock.sendall(msg)
+        _cfile = ConfigParser.ConfigParser()
+        if '-C' in sys.argv:
+            _cfpath = sys.argv[sys.argv.index('-C') + 1]
+        else:
+            _cfpath = '/etc/bcfg2.conf'
+            _cfile.read([_cfpath])      
+        _bindaddress = ""
+        try:
+            _bindaddress = _cfile.get('communication', 'bindaddress')
+        except:
+            self.log.error("%s doesn't contain a valid bindadress value" % (_cfpath))
+            raise SystemExit, 1
 
-class PHTTPS(httplib.HTTPS):
-    _connection_class = PHTTPSConnection
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-class OSSafeTransport(xmlrpclib.Transport):
-    """Handles an HTTPS transaction to an XML-RPC server."""
+        # the following line is the sole modification in comparison to the
+        # connect() in httplib.HTTPSConnection 
+        sock.bind((_bindaddress,0))
+
+        sock.connect((self.host, self.port))
+        ssl = socket.ssl(sock, self.key_file, self.cert_file) 
+        self.sock = httplib.FakeSocket(sock, ssl)
+
+class Bcfg2HTTPS(httplib.HTTPS):
+    """Own HTTPS class for overriding the _connection_class value"""
+    
+    _connection_class = Bcfg2HTTPSConnection # instead of HTTPSConnection from httplib
+
+
+class Bcfg2SafeTransport(xmlrpclib.Transport):
+    """Own SafeTransport class for overriding the HTTPS object"""
+
     def make_connection(self, host):
+
         # create a HTTPS connection object from a host descriptor
         # host may be a string, or a (host, x509-dict) tuple
+        import httplib
         host, extra_headers, x509 = self.get_host_info(host)
-        return PHTTPS(host, None, '/tmp/keys/client.pkey', '/tmp/keys/client.cert')
+        try:
+            HTTPS = Bcfg2HTTPS  # instead of HTTPS from httplib
+        except AttributeError:
+            raise NotImplementedError(
+                "your version of httplib doesn't support HTTPS"
+                )
+        else:
+            return HTTPS(host, None, **(x509 or {}))
 
-    def _parse_response(self, file, sock):
-        # read response from input file/socket, and parse it
-
-        p, u = self.getparser()
-
-        while 1:
-            if sock:
-                response = sock.recv(1024)
-            else:
-                try:
-                    response = file.read(1024)
-                except OpenSSL.SSL.ZeroReturnError:
-                    break
-            if not response:
-                break
-            if self.verbose:
-                print "body:", repr(response)
-            p.feed(response)
-
-        file.close()
-        p.close()
-
-        return u.close()
 
 class SafeProxy:
     '''Wrapper for proxy'''
@@ -138,6 +74,13 @@ class SafeProxy:
     except KeyError:
         print "%s doesn't contain a valid communication setup" % (_cfpath)
         raise SystemExit, 1
+
+    _bindaddress = ""
+    try:
+        _bindaddress = _cfile.get('communication', 'bindaddress')
+    except:
+        pass
+        
     _retries = 4
 
     def __init__(self, component, url=None):
@@ -148,7 +91,11 @@ class SafeProxy:
         else:
             address = self.__get_location(component)
         try:
-            self.proxy = xmlrpclib.ServerProxy(address, transport=xmlrpclib.SafeTransport())
+            if self._bindaddress != "":
+                self.log.info("Binding client to address %s" % self._bindaddress)
+                self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())
+            else:
+                self.proxy = xmlrpclib.ServerProxy(address, transport=xmlrpclib.SafeTransport())
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError
