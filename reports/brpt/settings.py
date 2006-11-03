@@ -63,6 +63,20 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'brpt.urls'
 
+# Authentication Settings
+# Use NIS authentication backend defined in backends.py
+AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
+                           'brpt.backends.NISBackend')
+# The NIS group authorized to login to BCFG2's reportinvg system
+AUTHORIZED_GROUP = ''
+#create login url area:
+import django.contrib.auth
+django.contrib.auth.LOGIN_URL = '/login'
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+            
+    
+
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.

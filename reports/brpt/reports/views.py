@@ -8,8 +8,7 @@ from datetime import datetime, timedelta
 from time import strptime
 from django.db import connection
 from django.db.backends import util
-
-
+from django.contrib.auth.decorators import login_required
 
 def index(request):
     return render_to_response('index.html')
