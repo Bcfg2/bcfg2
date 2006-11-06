@@ -274,7 +274,7 @@ class Hostbase(Plugin):
         SELECT hostname, mac_addr, ip_addr
         FROM (hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
         INNER JOIN hostbase_ip ip ON i.id = ip.interface_id
-        WHERE h.dhcp=1 AND h.status='active' AND i.mac_addr <> ''
+        WHERE i.dhcp=1 AND h.status='active' AND i.mac_addr <> ''
         AND i.mac_addr <> 'float' AND i.mac_addr <> 'unknown'
         ORDER BY h.hostname, i.mac_addr
         """)

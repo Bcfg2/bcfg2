@@ -29,30 +29,8 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
             'cname':'c.cname LIKE \'%%%%%s%%%%\'',
             'mx':'m.mx LIKE \'%%%%%s%%%%\'',
             'dns_view':'n.dns_view = \'%s\'',
-            'hdwr_type':'i.hdwr_type = \'%s\''}
-
-
-## def netreg(request):
-##     if request.GET.has_key('sub'):
-##         failures = []
-##         validated = True
-##         # do validation right in here
-##         macaddr_regex = re.compile('^[0-9abcdef]{2}(:[0-9abcdef]{2}){5}$')
-##         if not (request.POST['mac_addr'] and macaddr_regex.match(request.POST['mac_addr'])):
-##             validated = False
-##         userregex = re.compile('^[a-z0-9-_\.@]+$')
-##         if not (request.POST['email_address'] and userregex.match(request.POST['email_address'])):
-##             validated = False
-##         if not validated:
-##             t = Template(open('./hostbase/webtemplates/errors.html').read())
-##             t.failures = validate(request, True)
-##             return HttpResponse(str(t))
-##         return HttpResponseRedirect('/hostbase/%s/' % host.id)
-##     else:
-##         t = Template(open('./hostbase/webtemplates/netreg.html').read())
-##         t.TYPE_CHOICES = Interface.TYPE_CHOICES
-##         t.failures = False
-##         return HttpResponse(str(t))
+            'hdwr_type':'i.hdwr_type = \'%s\'',
+            'dhcp':'i.dhcp = \'%s\''}
 
 def index(request):
     """rediredct to /hostbase/"""
@@ -192,9 +170,6 @@ def edit(request, host_id):
                 not request.POST.has_key('outbound_smtp')
                 and host.outbound_smtp):
                 host.outbound_smtp = not host.outbound_smtp
-            if (request.POST.has_key('dhcp') and not host.dhcp or
-                not request.POST.has_key('dhcp') and host.dhcp):
-                host.dhcp = not host.dhcp
             # add validation for attribs here
             # likely use a helper fucntion
             for attrib in attribs:
@@ -214,6 +189,9 @@ def edit(request, host_id):
                     oldtype = inter.hdwr_type
                     inter.hdwr_type = request.POST['hdwr_type%d' % inter.id]
                     changetype = True
+                if (request.POST.has_key('dhcp%d' % inter.id) and not inter.dhcp or
+                    not request.POST.has_key('dhcp%d' % inter.id) and inter.dhcp):
+                    inter.dhcp = not inter.dhcp
                 for ip in ips:
                     names = ip.name_set.all()
                     if not ip.ip_addr == request.POST['ip_addr%d' % ip.id]:
@@ -264,7 +242,8 @@ def edit(request, host_id):
             if request.POST['mac_addr_new']:
                 new_inter = Interface(host=host,
                                       mac_addr=request.POST['mac_addr_new'],
-                                      hdwr_type=request.POST['hdwr_type_new'])
+                                      hdwr_type=request.POST['hdwr_type_new'],
+                                      dhcp=request.POST['dhcp_new'])
                 new_inter.save()
             if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
                 mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
@@ -296,7 +275,8 @@ def edit(request, host_id):
                 if created:
                     mx.save()
                 new_inter = Interface(host=host, mac_addr="",
-                                      hdwr_type=request.POST['hdwr_type_new'])
+                                      hdwr_type=request.POST['hdwr_type_new'],
+                                      dhcp=False)
                 new_inter.save()
                 new_ip = IP(interface=new_inter, num=0,
                             ip_addr=request.POST['ip_addr_new'])
@@ -517,7 +497,6 @@ def new(request):
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
             host.outbound_smtp = request.POST.has_key('outbound_smtp')
-            host.dhcp = request.POST.has_key('dhcp')
             for attrib in attribs:
                 if request.POST.has_key(attrib):
                     host.__dict__[attrib] = request.POST[attrib].lower()
@@ -535,7 +514,8 @@ def new(request):
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new'],
-                                  hdwr_type=request.POST['hdwr_type_new'])
+                                  hdwr_type=request.POST['hdwr_type_new'],
+                                  dhcp=request.POST.has_key('dhcp_new'))
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter,
@@ -564,7 +544,8 @@ def new(request):
         if request.POST['ip_addr_new'] and not request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr="",
-                                  hdwr_type=request.POST['hdwr_type_new1'])
+                                  hdwr_type=request.POST['hdwr_type_new1'],
+                                  dhcp=False)
             new_inter.save()
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new1'])
@@ -593,7 +574,8 @@ def new(request):
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
                                   mac_addr=request.POST['mac_addr_new2'],
-                                  hdwr_type=request.POST['mac_addr_new2'])
+                                  hdwr_type=request.POST['mac_addr_new2'],
+                                  dhcp=request.POST.has_key('dhcp_new2'))
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, num=0,
@@ -623,7 +605,8 @@ def new(request):
         if request.POST['ip_addr_new2'] and not request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
                                   mac_addr="",
-                                  hdwr_type=request.POST['hdwr_type_new2'])
+                                  hdwr_type=request.POST['hdwr_type_new2'],
+                                  dhcp=False)
             new_inter.save()
             new_ip = IP(interface=new_inter, num=0,
                         ip_addr=request.POST['ip_addr_new2'])
@@ -915,4 +898,3 @@ else:
     remove = login_required(remove)
     zoneedit = login_required(zoneedit)
     zonenew = login_required(zonenew)
-

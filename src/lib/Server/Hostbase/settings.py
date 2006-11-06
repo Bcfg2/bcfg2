@@ -5,7 +5,7 @@ ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 MANAGERS = ADMINS
-CFG_TYPE = 'environ'
+CFG_TYPE = 'mcs'
 
 if CFG_TYPE == 'mcs':
     # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
@@ -23,6 +23,19 @@ if CFG_TYPE == 'mcs':
     # Local time zone for this installation. All choices can be found here:
     # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
     TIME_ZONE = 'America/Chicago'
+
+    DEFAULT_MX = 'mailgw.mcs.anl.gov'
+    PRIORITY = 30
+
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+    AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
+                               'Hostbase.backends.NISBackend')
+    AUTHORIZED_GROUP = 'support'
+
+    #create login url area:
+    import django.contrib.auth
+    django.contrib.auth.LOGIN_URL = '/login'
     # Absolute path to the directory that holds media.
     # Example: "/home/media/media.lawrence.com/"
     MEDIA_ROOT = ''

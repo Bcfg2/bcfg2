@@ -37,12 +37,6 @@
    <td> <input name="csi" type="text" ></td></tr>
    <tr> <td> <b>printq</b></td>
    <td> <input name="printq" type="text" ></td></tr>
-   <tr> <td> <b>dhcp</b></td>
-   <td>
-   {% for choice in yesno %}
-   <input type="radio" name="dhcp" value="{{ choice.0 }}" >{{ choice.1 }}
-   {% endfor %}
-   </td></tr>
    <tr> <td> <b>outbound_smtp</b></td>
    <td>
    {% for choice in yesno %}
@@ -60,6 +54,12 @@
    <tr> <td><br><b>Interface</b></td><td><br>
    {% for choice in TYPE_CHOICES %}
    <input type="radio" name="hdwr_type" value="{{ choice.0 }}" >{{ choice.1 }}
+   {% endfor %}
+   </td></tr>
+   <tr> <td> <b>dhcp</b></td>
+   <td>
+   {% for choice in yesno %}
+   <input type="radio" name="dhcp" value="{{ choice.0 }}" >{{ choice.1 }}
    {% endfor %}
    </td></tr>
    <tr> <td> <b>mac_addr</b></td>

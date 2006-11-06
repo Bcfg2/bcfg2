@@ -102,13 +102,6 @@ div#interface{
    <td> <input name="csi" type="text" value="{{ host.csi }}"></td></tr>
    <tr> <td> <b>printq</b></td>
    <td> <input name="printq" type="text" value="{{ host.printq }}"></td></tr>
-   <tr> <td> <b>dhcp</b></td>
-   <td>
-   {% if host.dhcp %}
-       <input type="checkbox" checked="checked" name="dhcp"></td></tr>
-   {% else %}
-       <input type="checkbox" name="dhcp"></td></tr>
-   {% endif %}   
    <tr> <td> <b>outbound_smtp</b></td>
    <td>
    {% if host.outbound_smtp %}
@@ -135,6 +128,13 @@ div#interface{
            {% endifequal %}
        {% endfor %}
        </td></tr>
+       <tr> <td> <b>dhcp</b></td>
+       <td>
+       {% if interface.0.dhcp %}
+           <input type="checkbox" checked="checked" name="dhcp{{ interface.0.id }}"></td></tr>
+       {% else %}
+           <input type="checkbox" name="dhcp{{ interface.0.id }}"></td></tr>
+       {% endif %}   
        <tr> <td> <b>mac_addr</b></td>
        <td> <input name="mac_addr{{ interface.0.id }}" type="text" value="{{ interface.0.mac_addr }}">
        <a style="font-size:75%" href="/hostbase/{{ host.id }}/interface/{{ interface.0.id }}/confirm">remove</a>
@@ -180,6 +180,13 @@ div#interface{
    <input type="radio" name="hdwr_type_new" value="{{ choice.0 }}">{{ choice.1 }}
    {% endfor %}
    </td></tr>
+   <tr> <td> <b>dhcp</b></td>
+   <td>
+   {% if host.dhcp %}
+       <input type="checkbox" checked="checked" name="dhcp_new"></td></tr>
+   {% else %}
+       <input type="checkbox" name="dhcp_new"></td></tr>
+   {% endif %}   
    <tr> <td> <b>mac_addr</b></td>
    <td> <input name="mac_addr_new" type="text"></td></tr>
    <tr> <td> <b>ip_addr</b></td>

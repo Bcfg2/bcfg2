@@ -45,7 +45,6 @@ class Host(models.Model):
     support = models.CharField(maxlength=8, choices=SUPPORT_CHOICES)
     csi = models.CharField(maxlength=32, blank=True)
     printq = models.CharField(maxlength=32)
-    dhcp = models.BooleanField()
     outbound_smtp = models.BooleanField()
     primary_user = models.EmailField()
     administrator = models.EmailField(blank=True)
@@ -66,12 +65,13 @@ class Host(models.Model):
 class Interface(models.Model):
     TYPE_CHOICES = (
         ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
-        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge')
+        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge'), ('virtual', 'virtual')
         )
     host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
     mac_addr = models.CharField(maxlength=32, core=True)
     hdwr_type = models.CharField('type', maxlength=16, choices=TYPE_CHOICES,
                                  radio_admin=True, blank=True)
+    dhcp = models.BooleanField()
     
     def __str__(self):
         return self.mac_addr

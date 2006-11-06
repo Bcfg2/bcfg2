@@ -56,9 +56,6 @@
    <td> <input name="csi" type="text" ></td></tr>
    <tr> <td> <b>printq</b></td>
    <td> <input name="printq" type="text" ></td></tr>
-   <tr> <td> <b>dhcp</b></td>
-   <td>
-   <input type="checkbox" name="dhcp"></td></tr>
    <tr> <td> <b>outbound_smtp</b></td>
    <td>
    <input type="checkbox" name="outbound_smtp"></td></tr>
@@ -75,6 +72,9 @@
    <input type="radio" name="hdwr_type_new" value="{{ choice.0 }}" >{{ choice.1 }}
    {% endfor %}
    </td></tr>
+   <tr> <td> <b>dhcp</b></td>
+   <td>
+   <input type="checkbox" name="dhcp_new"></td></tr>
    <tr> <td> <b>mac_addr</b></td>
    <td> <input name="mac_addr_new" type="text"></td></tr>
    <tr> <td> <b>ip_addr</b></td>
@@ -84,6 +84,9 @@
    <input type="radio" name="hdwr_type_new2" value="{{ choice.0 }}" >{{ choice.1 }}
    {% endfor %}
    </td></tr>
+   <tr> <td> <b>dhcp</b></td>
+   <td>
+   <input type="checkbox" name="dhcp_new2"></td></tr>
    <tr> <td> <b>mac_addr</b></td>
    <td> <input name="mac_addr_new2" type="text"></td></tr>
    <tr> <td> <b>ip_addr</b></td>

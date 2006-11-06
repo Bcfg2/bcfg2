@@ -37,12 +37,6 @@
    <td> {{ host.csi }}</td></tr>
    <tr> <td> <b>printq</b></td>
    <td> {{ host.printq }}</td></tr>
-   <tr> <td> <b>dhcp</b></td>
-   {% if host.dhcp %}
-   <td> y </td></tr>
-   {% else %}
-   <td> n </td></tr>
-   {% endif %}
    <tr> <td> <b>outbound_smtp</b></td>
    {% if host.outbound_smtp %}
    <td> y </td></tr>
@@ -62,8 +56,14 @@
    {% ifnotequal interface.0.hdwr_type 'no' %}
    <td><br>{{ interface.0.hdwr_type }}</td></tr>
    {% endifnotequal %}
+   <tr> <td> <b>dhcp</b></td>
+   {% if interface.0.dhcp %}
+   <td> y </td></tr>
    <tr> <td> <b>mac_addr</b></td>
    <td> {{ interface.0.mac_addr }}</b></td></tr>
+   {% else %}
+   <td> n </td></tr>
+   {% endif %}
    {% for ip in interface.1 %}
    <tr> <td> <b>ip_addr</b></td>
    <td> {{ ip.ip_addr }}</td></tr>
