@@ -15,14 +15,12 @@ zone "." {
 
 // be authoritative for the localhost forward and reverse zones, and for
 // broadcast zones as per RFC 1912
-
-#for $zone in $zones
-zone "${zone[1]}" {
+{% for zone in zones %}
+zone "{{ zone.1 }}" {
 	type master;
-	file "/etc/bind/${zone[1]}";
-};
+	file "/etc/bind/{{ zone.1 }}";
+};{% endfor %}
 
-#end for
 zone "localhost" {
 	type master;
 	file "/etc/bind/db.local";
@@ -42,14 +40,11 @@ zone "255.in-addr.arpa" {
 	type master;
 	file "/etc/bind/db.255";
 };
-
-#for $reverse in $reverses
-zone "${reverse[0]}.in-addr.arpa" {
+{% for reverse in reverses %}
+zone "{{ reverse.0 }}.in-addr.arpa" {
 	type master;
-	file "/etc/bind/${reverse[0]}.rev";
-};
-
-#end for
+	file "/etc/bind/{{ reverse.0 }}.rev";
+};{% endfor %}
 
 // zone "com" { type delegation-only; };
 // zone "net" { type delegation-only; };

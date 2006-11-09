@@ -3,7 +3,7 @@
 #
 # This file is generated automatically - DO NOT EDIT IT.
 #
-# Generated on: {{ timecreated }}
+# Generated on: {% now "r" %}
 #
 
 127.0.0.1	localhost.mcs.anl.gov localhost
@@ -22,5 +22,5 @@
 {% for octet in three_octets_data %}{{ octet.0 }}       		{{ octet.1 }}
 {% endfor %}
 #
-#  Total host interfaces (ip addresses) in this file: {{ three_octets }}
+#  Total host interfaces (ip addresses) in this file: {{ num_ips }}
 

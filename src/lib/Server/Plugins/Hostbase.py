@@ -4,10 +4,11 @@ __revision__ = '$Revision$'
 import sys, os
 from lxml.etree import Element, SubElement
 from syslog import syslog, LOG_INFO
-from Cheetah.Template import Template
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
 from sets import Set
+from django.template import Context, loader
+from django.db import connection
 import re
 
 ## class DataNexus(DirectoryBacked):
@@ -48,7 +49,6 @@ class Hostbase(Plugin):
         files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
                  'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
         os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
-        from django.template import loader
 ##         try:
 ##             self.repository = DataNexus(self.data + '/templates/',
 ##                                         files, self.core.fam)
@@ -58,13 +58,13 @@ class Hostbase(Plugin):
         self.filedata = {}
         self.dnsservers = []
         self.dhcpservers = []
-        self.templates = {'zone':Template(open(self.data + '/templates/' + 'zone.tmpl').read()),
-                          'reversesoa':Template(open(self.data + '/templates/' + 'reversesoa.tmpl').read()),
-                          'named':Template(open(self.data + '/templates/' + 'named.tmpl').read()),
-                          'reverseapp':Template(open(self.data + '/templates/' + 'reverseappend.tmpl').read()),
+        self.templates = {'zone':loader.get_template('zone.tmpl'),
+                          'reversesoa':loader.get_template('reversesoa.tmpl'),
+                          'named':loader.get_template('named.tmpl'),
+                          'reverseapp':loader.get_template('reverseappend.tmpl'),
                           'dhcp':loader.get_template('dhcpd.tmpl'),
                           'hosts':loader.get_template('hosts.tmpl'),
-                          'hostsapp':Template(open(self.data + '/templates/' + 'hostsappend.tmpl').read()),
+                          'hostsapp':loader.get_template('hostsappend.tmpl'),
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
@@ -108,7 +108,6 @@ class Hostbase(Plugin):
 
     def buildZones(self):
         '''Pre-build and stash zone files'''
-        from django.db import connection
         cursor = connection.cursor()
 
         cursor.execute("SELECT id, serial FROM hostbase_zone")
@@ -142,20 +141,25 @@ class Hostbase(Plugin):
 
 
         for zone in zones:
-            self.templates['zone'].zone = zone
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
             INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
-            self.templates['zone'].nameservers = cursor.fetchall()
+            nameservers = cursor.fetchall()
             cursor.execute("""SELECT i.ip_addr FROM hostbase_zone_addresses z
             INNER JOIN hostbase_zoneaddress i ON z.zoneaddress_id = i.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
-            self.templates['zone'].addresses = cursor.fetchall()
+            addresses = cursor.fetchall()
             cursor.execute("""SELECT m.priority, m.mx FROM hostbase_zone_mxs z
             INNER JOIN hostbase_mx m ON z.mx_id = m.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
-            self.templates['zone'].mxs = cursor.fetchall()
-            self.filedata[zone[1]] = str(self.templates['zone'])
+            mxs = cursor.fetchall()
+            context = Context({
+                'zone': zone,
+                'nameservers': nameservers,
+                'addresses': addresses,
+                'mxs': mxs
+                })
+            self.filedata[zone[1]] = self.templates['zone'].render(context)
 
             querystring = """SELECT h.hostname, p.ip_addr,
             n.name, c.cname, m.priority, m.mx
@@ -216,16 +220,21 @@ class Hostbase(Plugin):
             towrite = filename.split('.')
             towrite.reverse()
             reversename = '.'.join(towrite)
-            self.templates['reversesoa'].inaddr = reversename
-            self.templates['reversesoa'].zone = reversezone
-            self.templates['reversesoa'].nameservers = mcs_nameservers
-            self.filedata['%s.rev' % reversename] = str(self.templates['reversesoa'])
+            context = Context({
+                'inaddr': reversename,
+                'zone': reversezone,
+                'nameservers': mcs_nameservers,
+                })
+
+            self.filedata['%s.rev' % reversename] = self.templates['reversesoa'].render(context)
             reversenames.append((reversename, filename))
 
         ## here's where the named.conf file gets written
-        self.templates['named'].zones = zones
-        self.templates['named'].reverses = reversenames
-        self.filedata['named.conf'] = str(self.templates['named'])
+        context = Context({
+            'zones': zones,
+            'reverses': reversenames,
+            })        
+        self.filedata['named.conf'] = self.templates['named'].render(context)
         self.Entries['ConfigFile']['%s/named.conf' % self.filepath] = self.FetchFile
 
         reversenames.sort()
@@ -248,25 +257,26 @@ class Hostbase(Plugin):
                     hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
                              for host in reversehosts
                              if host[1].rstrip('0123456789').rstrip('.') == origin[1]]
-                    self.templates['reverseapp'].hosts = hosts
-                    self.templates['reverseapp'].inaddr = origin[0]
-                    self.templates['reverseapp'].fileorigin = filename[0]
-                    self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
+                    context = Context({
+                        'hosts': hosts,
+                        'inaddr': origin[0],
+                        'fileorigin': filename[0],
+                        })        
+                    self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
             else:
                 originlist = [filename[0]]
                 hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
                          for host in reversehosts]
-                self.templates['reverseapp'].hosts = hosts
-                self.templates['reverseapp'].inaddr = filename[0]
-                self.templates['reverseapp'].fileorigin = None
-                self.filedata['%s.rev' % filename[0]] += str(self.templates['reverseapp'])
+                context = Context({
+                    'hosts': hosts,
+                    'inaddr': filename[0],
+                    'fileorigin': None,
+                    })        
+                self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
 
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
-
-        from django.db import connection
-        from django.template import Context
 
         # fetches all the hosts with DHCP == True
         cursor = connection.cursor()
@@ -307,7 +317,6 @@ class Hostbase(Plugin):
         context = Context({
             'hosts': hosts,
             'numips': len(hosts),
-            'timecreated': strftime("%a %b %d %H:%M:%S %Z %Y"),
             })
 
         self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
@@ -316,8 +325,6 @@ class Hostbase(Plugin):
 
     def buildHosts(self):
         '''Pre-build and stash /etc/hosts file'''
-        from django.db import connection
-        from django.template import Context
 
         append_data = []
 
@@ -365,7 +372,7 @@ class Hostbase(Plugin):
             'three_octets_data': three_octets_data,
             'two_octets_data': two_octets_data,
             'three_octets': three_octets,
-            'timecreated': strftime("%a %b %d %H:%M:%S %Z %Y"),
+            'num_ips': len(three_octets),
             })
 
         self.filedata['hosts'] = self.templates['hosts'].render(context)
@@ -373,17 +380,17 @@ class Hostbase(Plugin):
         for subnet in append_data:
             ips = []
             simple = True
-            namelist = [subnet[1][0][3]]
+            namelist = [name.split('.', 1)[0] for name in [subnet[1][0][3]]]
             cnamelist = []
             if subnet[1][0][4]:
-                cnamelist.append(subnet[1][0][4])
+                cnamelist.append(subnet[1][0][4].split('.', 1)[0])
                 simple = False
             appenddata = subnet[1][0]
             for ip in subnet[1][1:]:
                 if appenddata[2] == ip[2]:
-                    namelist.append(ip[3])
+                    namelist.append(ip[3].split('.', 1)[0])
                     if ip[4]:
-                        cnamelist.append(ip[4])
+                        cnamelist.append(ip[4].split('.', 1)[0])
                         simple = False
                     appenddata = ip
                 else:
@@ -393,16 +400,18 @@ class Hostbase(Plugin):
                                 cnamelist, simple, appenddata[1]))
                     appenddata = ip
                     simple = True
-                    namelist = [ip[3]]
+                    namelist = [ip[3].split('.', 1)[0]]
                     cnamelist = []
                     if ip[4]:
-                        cnamelist.append(ip[4])
+                        cnamelist.append(ip[4].split('.', 1)[0])
                         simple = False
             ips.append((appenddata[2], appenddata[0], namelist,
                         cnamelist, simple, appenddata[1]))
-            self.templates['hostsapp'].subnet = subnet[0]
-            self.templates['hostsapp'].ips = ips
-            self.filedata['hosts'] += str(self.templates['hostsapp'])
+            context = Context({
+                'subnet': subnet[0],
+                'ips': ips,
+                })
+            self.filedata['hosts'] += self.templates['hostsapp'].render(context)
         self.Entries['ConfigFile']['/mcs/etc/hosts'] = self.FetchFile
 
     def buildPrinters(self):
@@ -412,7 +421,6 @@ class Hostbase(Plugin):
 Name            Room        User                            Type                      Notes
 ==============  ==========  ==============================  ========================  ====================
 """
-        from django.db import connection
 
         cursor = connection.cursor()
         # fetches all the printers from the database
@@ -442,8 +450,6 @@ Name            Room        User                            Type                
     def buildHostsLPD(self):
         """Creates the /mcs/etc/hosts.lpd file"""
         
-        from django.db import connection
-
         # this header needs to be changed to be more generic
         header = """+@machines
 +@all-machines
@@ -496,7 +502,6 @@ olivia.ctd.anl.gov\n\n"""
 #
 #  Number of hosts in '%s' machine netgroup: %i
 #\n\n"""
-        from django.db import connection
 
         cursor = connection.cursor()
         # fetches all the hosts that with valid netgroup entries

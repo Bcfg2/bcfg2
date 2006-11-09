@@ -1,14 +1,13 @@
-\$ORIGIN .
-\$TTL $zone[8]
-${inaddr}.in-addr.arpa	IN SOA	$zone[4]. $zone[3] (
-				$zone[2]     	; serial
-				$zone[7]		; refresh interval
-				$zone[6]		; retry interval
-				$zone[5]		; expire interval
-				$zone[8]		; min ttl
+$ORIGIN .
+$TTL {{ zone.8 }}
+{{ inaddr }}.in-addr.arpa	IN SOA	{{ zone.4 }}. {{ zone.3 }} (
+				{{ zone.2 }}     	; serial
+				{{ zone.7 }}		; refresh interval
+				{{ zone.6 }}		; retry interval
+				{{ zone.5 }}		; expire interval
+				{{ zone.8 }}		; min ttl
 				)
 
-			#for $ns in $nameservers
-			NS 	$ns[0]
-			#end for
+			{% for ns in nameservers %}NS 	{{ ns.0 }}
+			{% endfor %}
 
