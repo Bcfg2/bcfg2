@@ -5,68 +5,46 @@ ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 MANAGERS = ADMINS
-CFG_TYPE = 'mcs'
 
-if CFG_TYPE == 'mcs':
-    # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-    DATABASE_ENGINE = 'mysql'
-    # Or path to database file if using sqlite3.
-    DATABASE_NAME = 'hosttest'
-    # Not used with sqlite3.
-    DATABASE_USER = 'hosttest'
-    # Not used with sqlite3.
-    DATABASE_PASSWORD = 'marathon'
-    # Set to empty string for localhost. Not used with sqlite3.
-    DATABASE_HOST = 'mysql.mcs.anl.gov'
-    # Set to empty string for default. Not used with sqlite3.
-    DATABASE_PORT = '3306'             
-    # Local time zone for this installation. All choices can be found here:
-    # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
-    TIME_ZONE = 'America/Chicago'
+# 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
+DATABASE_ENGINE = ''
+# Or path to database file if using sqlite3.
+DATABASE_NAME = ''
+# Not used with sqlite3.
+DATABASE_USER = ''
+# Not used with sqlite3.
+DATABASE_PASSWORD = ''
+# Set to empty string for localhost. Not used with sqlite3.
+DATABASE_HOST = ''
+# Set to empty string for default. Not used with sqlite3.
+DATABASE_PORT = ''             
+# Local time zone for this installation. All choices can be found here:
+# http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
+TIME_ZONE = ''
 
-    DEFAULT_MX = 'mailgw.mcs.anl.gov'
-    PRIORITY = 30
+# enter the defauly MX record machines will get in Hostbase
+# this setting may move elsewhere eventually
+DEFAULT_MX = 'mailserver.somewhere.com'
+PRIORITY = 30
 
-    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-    AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
-                               'Hostbase.backends.NISBackend')
-    AUTHORIZED_GROUP = 'support'
+# Uncomment a backend below if you would like to use it for authentication
+AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
+                           #'Hostbase.backends.NISBackend',
+                           #'Hostbase.backends.LDAPBacken',                           
+                           )
 
-    #create login url area:
-    import django.contrib.auth
-    django.contrib.auth.LOGIN_URL = '/login'
-    # Absolute path to the directory that holds media.
-    # Example: "/home/media/media.lawrence.com/"
-    MEDIA_ROOT = ''
-    
-if CFG_TYPE == 'environ':
-    import os
-    # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-    DATABASE_ENGINE = os.environ['bcfg_db_engine']
-    # Or path to database file if using sqlite3.
-    DATABASE_NAME = os.environ['bcfg_db_name']
-    # Not used with sqlite3.
-    DATABASE_USER = os.environ['bcfg_db_user']
-    # Not used with sqlite3.
-    DATABASE_PASSWORD = os.environ['bcfg_db_password']
-    # Set to empty string for localhost. Not used with sqlite3.
-    DATABASE_HOST = os.environ['bcfg_db_host']
-    # Set to empty string for default. Not used with sqlite3.
-    DATABASE_PORT = os.environ['bcfg_db_port']            
-    # Local time zone for this installation. All choices can be found here:
-    # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
-    TIME_ZONE = os.environ['bcfg_time_zone']
-    # Absolute path to the directory that holds media.
-    # Example: "/home/media/media.lawrence.com/"
-    MEDIA_ROOT = os.environ['bcfg_media_root']
-    #add non-default AUTH Backends:
-    AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
-                               'Hostbase.backends.LDAPBackend',)
-    #create login url area:
-    import django.contrib.auth
-    django.contrib.auth.LOGIN_URL = '/login'
-    
+# enter an NIS group name you'd like to give access to edit hostbase records
+AUTHORIZED_GROUP = ''
+
+#create login url area:
+import django.contrib.auth
+django.contrib.auth.LOGIN_URL = '/login'
+# Absolute path to the directory that holds media.
+# Example: "/home/media/media.lawrence.com/"
+MEDIA_ROOT = ''
+        
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
 # http://blogs.law.harvard.edu/tech/stories/storyReader$15

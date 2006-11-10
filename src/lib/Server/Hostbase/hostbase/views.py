@@ -872,29 +872,18 @@ def zonenew(request):
                                    'logged_in': request.session.get('_auth_user_id', False)
                                    })
 
-if settings.CFG_TYPE == 'environ':
-    #login required stuff
-    search = login_required(search)
-    look = login_required(look)
-    dns = login_required(dns)
-    gethostdata = login_required(gethostdata)
-    fill = login_required(fill)
-    edit = login_required(edit)
-    confirm = login_required(confirm)
-    dnsedit = login_required(dnsedit)
-    new = login_required(new)
-    remove = login_required(remove)
-    validate = login_required(validate)
-    zones = login_required(zones)
-    zoneview = login_required(zoneview)
-    zoneedit = login_required(zoneedit)
-    zonenew = login_required(zonenew)
-    
-else:
-    edit = login_required(edit)
-    confirm = login_required(confirm)
-    dnsedit = login_required(dnsedit)
-    new = login_required(new)
-    remove = login_required(remove)
-    zoneedit = login_required(zoneedit)
-    zonenew = login_required(zonenew)
+## login required stuff
+## uncomment the views below that you would like to restrict access to
+
+## search = login_required(search)
+## look = login_required(look)
+## dns = login_required(dns)
+## edit = login_required(edit)
+## confirm = login_required(confirm)
+## dnsedit = login_required(dnsedit)
+## new = login_required(new)
+## remove = login_required(remove)
+## zones = login_required(zones)
+## zoneview = login_required(zoneview)
+## zoneedit = login_required(zoneedit)
+## zonenew = login_required(zonenew)
