@@ -125,19 +125,18 @@ class Hostbase(Plugin):
                 serial = int(todaydate) * 100
             cursor.execute("""UPDATE hostbase_zone SET serial = \'%s\' WHERE id = \'%s\'""" % (str(serial), zone[0]))
 
-        cursor.execute("SELECT * FROM hostbase_zone")
+        cursor.execute("SELECT * FROM hostbase_zone WHERE zone <> \'.rev\'")
         zones = cursor.fetchall()
 
         iplist = []
         hosts = {}
 
-        for zone in zones:
-            if zone[1] == 'mcs.anl.gov':
-                reversezone = zone
-                cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
-                INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
-                WHERE z.zone_id = \'%s\'""" % zone[0])
-                mcs_nameservers = cursor.fetchall()
+        cursor.execute("SELECT * FROM hostbase_zone WHERE zone = \'.rev\'")
+        reversezone = cursor.fetchall()[0]
+        cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
+        INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
+        WHERE z.zone_id = \'%s\'""" % reversezone[0])
+        reverse_nameservers = cursor.fetchall()
 
 
         for zone in zones:
@@ -223,7 +222,7 @@ class Hostbase(Plugin):
             context = Context({
                 'inaddr': reversename,
                 'zone': reversezone,
-                'nameservers': mcs_nameservers,
+                'nameservers': reverse_nameservers,
                 })
 
             self.filedata['%s.rev' % reversename] = self.templates['reversesoa'].render(context)

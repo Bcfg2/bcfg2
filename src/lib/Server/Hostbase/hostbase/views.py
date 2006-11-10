@@ -818,7 +818,7 @@ def zoneedit(request, zone_id):
             if created:
                 address.save()
             zone.addresses.add(address)
-        return HttpResponseRedirect('/hostbase/zones/%s/' % zone.id)
+        return HttpResponseRedirect('/hostbase/zones/%s/edit' % zone.id)
     else:
         zone = Zone.objects.get(id=zone_id)
         return render_to_response('zoneedit.html',
