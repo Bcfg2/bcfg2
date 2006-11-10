@@ -45,9 +45,10 @@ class Frame:
         if not self.setup['dryrun']:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
-                self.VerifyEntry(cfile)
+                tool = [t for t in self.tools if t.handlesEntry(cfile)][0]
+                self.states[cfile] = tool.VerifyConfigFile(cfile, [])
                 if not self.states[cfile]:
-                    self.InstallConfigFile(cfile)
+                    tool.InstallConfigFile(cfile)
         # find entries not handled by any tools
         problems = [entry for struct in config for entry in struct if entry not in self.handled]
         if problems:
