@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 import sys, os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
 from lxml.etree import Element, SubElement
 from syslog import syslog, LOG_INFO
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
@@ -48,7 +49,6 @@ class Hostbase(Plugin):
         Plugin.__init__(self, core, datastore)
         files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
                  'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
-        os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
 ##         try:
 ##             self.repository = DataNexus(self.data + '/templates/',
 ##                                         files, self.core.fam)
