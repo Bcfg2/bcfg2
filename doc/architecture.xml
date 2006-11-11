@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='chap:architecture'>
 <title>Bcfg2 Architecture</title>
 
   <para>
@@ -11,7 +11,7 @@
     architecture motivated by it.
   </para>
 
-  <section>
+  <section id='sec:goals'>
     <title>Goals</title>
 
     <itemizedlist>
@@ -83,8 +83,8 @@
     </itemizedlist>
   </section>
 
-  <section>
-    <title>The Bcfg2 client</title>
+  <section id='sec:client'>
+    <title>The Bcfg2 Client</title>
 
     <para>The Bcfg2 client performs all client configuration or
     reconfiguration operations. It renders a declarative configuration
@@ -206,7 +206,7 @@
       </listitem>
     </orderedlist>
 
-    <section>
+    <section id='sec:arch-abstraction'>
       <title>Architecture Abstraction</title>
 
       <para>The Bcfg2 client internally supports the administrative
@@ -248,7 +248,7 @@
       </para>
     </section>
   </section>
-  <section>
+  <section id='sec:server'>
     <title>The Bcfg2 Server</title>
     <para>
       The Bcfg2 server is responsible for taking a network description
@@ -268,7 +268,7 @@
       configuration specifications for clients.
     </para>
 
-    <section>
+    <section id='sec:construction'>
       <title>The Configuration Specification Construction Process</title>
       <para>
 	As we described in the previous section, the client connects
@@ -346,7 +346,7 @@
     </section>
   </section>
 
-  <section>
+  <section id='sec:literal'>
     <title>The Literal Configuration Specification</title>
     
     <para>
@@ -391,7 +391,7 @@
       </listitem>
     </itemizedlist>
 
-    <section>
+    <section id='sec:spec-structure'>
       <title>The Structure of Specifications</title>
       <para>
 	Configuration specifications contain some number of
@@ -428,7 +428,7 @@
     </section>
   </section>
 
-  <section>
+  <section id='sec:design-considerations'>
     <title>Design Considerations</title>
 
     <para>
@@ -439,7 +439,7 @@
       well. 
     </para>
 
-    <section>
+    <section id='sec:metadata'>
       <title>System Metadata</title>
 
       <para>
@@ -541,7 +541,7 @@
       </orderedlist>
     </section>
 
-    <section>
+    <section id='sec:pkg-management'>
       <title>Package Management</title>
 
       <para>

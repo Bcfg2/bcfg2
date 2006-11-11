@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='chap:development'>
 <title>Developing for Bcfg2</title>
 
   <para>
@@ -10,7 +10,7 @@
     how to implement them.
   </para>
   
-  <section>
+  <section id='sec:plugins'>
     <title>Bcfg2 Plugins</title>
 
     <para>
@@ -25,7 +25,7 @@
       easily supplant one or all of them. 
     </para>
 
-    <table>
+    <table id='table:plugin-functions'>
       <title>Bcfg2 Plugin Functions</title>
       <tgroup cols='2'>
 	<colspec colnum='1'/>
@@ -52,7 +52,7 @@
 
   </section>
 
-  <section>
+  <section id='sec:writing-plugins'>
     <title>Writing Bcfg2 Plugins</title>
 
     <para>
@@ -63,7 +63,7 @@
     </para>
 
 
-    <table>
+    <table id='table:plugin-members'>
       <title>Bcfg2 Plugin Members</title>
       <tgroup cols='3'>
 	<colspec colnum='1' colwidth='1*'/>
@@ -104,10 +104,10 @@
       </tgroup>
     </table>
     
-    <section>
+    <section id='sec:example-plugin'>
       <title>An Example Plugin</title>
 
-      <example>
+      <example id='ex:simple-plugin'>
 	<title>A Simple Plugin</title>
       <programlisting>import socket, Bcfg2.Server.Plugin
 

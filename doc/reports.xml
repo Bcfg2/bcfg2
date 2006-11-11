@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='chap:reports'>
   <title>BCFG2 Reports</title>
 
   <para>
@@ -19,7 +19,7 @@
     prove to be powerful.
   </para>
 
-  <section>
+  <section id='sec:reports-how'>
     <title>How it works</title>
 
     <para>
@@ -61,7 +61,7 @@
     </para>	
   </section>
 
-  <section>
+  <section id='sec:report-types'>
     <title>Report Types</title>
     
     <para>
@@ -76,7 +76,7 @@
       custom report using XSLT. Tables describing report types and
       report delivery mechanisms follow:  </para>
 
-    <table>
+    <table id='table:report-types'>
       <title>Bcfg2 Report Types</title>
       <tgroup cols='2'>
 	<colspec colnum='1' colwidth='1*'/>
@@ -122,7 +122,7 @@
       </tgroup>
     </table>
 
-    <table>
+    <table id='table:report-delivery'>
       <title>Bcfg2 Report Delivery Mechanisms</title>
       <tgroup cols='2'>
 	<colspec colnum='1' colwidth='1*'/>
@@ -142,7 +142,7 @@
 
   </section>
 
-  <section>
+  <section id='sec:reports-configuration'>
     <title>Configuration</title>
     
     <para>The <filename>report-configuration.xml</filename> file is
@@ -184,7 +184,7 @@
 
   </section>
 
-  <section>
+  <section id='sec:reports-quick-start'>
     <title>Reporting Quick Start</title>
 
     <para>
@@ -193,7 +193,7 @@
       information on exactly what each section does, please refer to
       the Configuration section above.  </para>
 
-  <example>
+  <example id='ex:report-config'>
   <title>etc/report-configuration.xml</title>
   <programlisting><![CDATA[<Reports>
       <Report name='core_stats' good='Y' modified='Y'>
