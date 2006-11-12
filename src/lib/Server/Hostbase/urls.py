@@ -24,6 +24,7 @@ urlpatterns = patterns('Hostbase.hostbase.views',
 
 #fixme: this is a temp. kludge to handle static serving of css, img, js etc...
 #a better solution is to use mod_python/apache directives for the static serving
+os.environ['bcfg_media_root'] = '/usr/lib/python2.4/site-packages/Hostbase/media'
 
 urlpatterns += patterns('',
                         (r'^site_media/(.*)$',
