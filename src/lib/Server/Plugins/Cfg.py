@@ -146,7 +146,7 @@ class ConfigFileEntry(object):
         elif len(entries) > 1:
             logger.error("Matched multiple entries for spec %s" % (event.filename))
             logger.error("Entry filenames are:")
-            logger.error([entry.get('name') for entry in entries])
+            logger.error([entry.name for entry in entries])
             
         if action == 'deleted':
             logger.info("Removing entry %s" % event.filename)
