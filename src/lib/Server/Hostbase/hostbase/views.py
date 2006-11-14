@@ -682,6 +682,20 @@ def validate(request, new=False, host_id=None):
             and regex.host.match(request.POST['hostname'])):
         failures.append('hostname')
 
+    if not regex.printq.match(request.POST['printq']) and request.POST['printq']:
+        failures.append('printq')
+
+    if not regex.user.match(request.POST['primary_user']):
+        failures.append('primary_user')
+
+    if (not regex.user.match(request.POST['administrator'])
+        and request.POST['administrator']):
+        failures.append('administrator')
+
+    if not (request.POST['location']
+            and regex.location.match(request.POST['location'])):
+        failures.append('location')
+
     if new:
         if (not regex.macaddr.match(request.POST['mac_addr_new'])
             and request.POST['mac_addr_new']):
@@ -861,15 +875,22 @@ def zonenew(request):
 ## login required stuff
 ## uncomment the views below that you would like to restrict access to
 
-## search = login_required(search)
-## look = login_required(look)
-## dns = login_required(dns)
+## uncomment the lines below this point to restrict access to pages that modify the database
+## anonymous users can still view data in Hostbase
+
 ## edit = login_required(edit)
 ## confirm = login_required(confirm)
 ## dnsedit = login_required(dnsedit)
 ## new = login_required(new)
 ## remove = login_required(remove)
-## zones = login_required(zones)
-## zoneview = login_required(zoneview)
 ## zoneedit = login_required(zoneedit)
 ## zonenew = login_required(zonenew)
+
+## uncomment the lines below this point to restrict access to all of hostbase
+
+## search = login_required(search)
+## look = login_required(look)
+## dns = login_required(dns)
+## zones = login_required(zones)
+## zoneview = login_required(zoneview)
+

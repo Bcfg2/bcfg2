@@ -62,4 +62,4 @@ if opts[0][0] == '-c':
     fd.close()
     os.system('vi + /tmp/hostbase.%s.tmp' % host.id)
     os.system('batchadd.py /tmp/hostbase.%s.tmp' % host.id)
-    
+    os.system('rm /tmp/hostbase.%s.tmp' % host.id)
