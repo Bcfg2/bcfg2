@@ -13,6 +13,7 @@ from Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
+from django import forms
 from Hostbase import settings, regex
 import re
     
@@ -770,107 +771,102 @@ def zoneview(request, zone_id):
                                'logged_in': request.session.get('_auth_user_id', False)
                                })
 
-def zoneedit(request, zone_id):
-    if request.GET.has_key('sub'):
-        zone = Zone.objects.get(id=zone_id)
-        for attrib in zoneattribs:
-            if request.POST.has_key(attrib):
-                zone.__dict__[attrib] = request.POST[attrib]
-        count = 0
-        for nameserver in zone.nameservers.all():
-            ns, created = Nameserver.objects.get_or_create(name=request.POST['nameserver%i' % count])
-            if created or not (nameserver == ns):
-                ns.save()
-                zone.nameservers.add(ns)
-                zone.nameservers.remove(nameserver)
-            count += 1
-        count = 0
-        for mx in zone.mxs.all():
-            mrecord, created = MX.objects.get_or_create(priority=request.POST['priority%i' % count],
-                                                        mx=request.POST['mx%i' % count])
-            if created or not (mx == mrecord):
-                mrecord.save()
-                zone.mxs.add(mrecord)
-                zone.mxs.remove(mx)
-            count += 1
-        count = 0
-        for address in zone.addresses.all():
-            arecord, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['address%i' % count])
-            if created or not (arecord == address):
-                arecord.save()
-                zone.addresses.add(arecord)
-                zone.addresses.remove(address)
-            count += 1
-        zone.save()
-        if request.POST['new_nameserver']:
-            nameserver, created = Nameserver.objects.get_or_create(name=request.POST['new_nameserver'])
-            if created:
-                nameserver.save()
-            zone.nameservers.add(nameserver)
-        if request.POST['new_mx'] and request.POST['new_priority']:
-            mx, created = MX.objects.get_or_create(priority=request.POST['new_priority'],
-                                                   mx=request.POST['new_mx'])
-            if created:
-                mx.save()
-            zone.mxs.add(mx)
-        if request.POST['new_address'] and not request.POST['new_address'] == 'none':
-            address, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['new_address'])
-            if created:
-                address.save()
-            zone.addresses.add(address)
-        return HttpResponseRedirect('/hostbase/zones/%s/edit' % zone.id)
-    else:
-        zone = Zone.objects.get(id=zone_id)
-        return render_to_response('zoneedit.html',
-                                  {'zone': zone,
-                                   'nameservers': zone.nameservers.all(),
-                                   'mxs': zone.mxs.all(),
-                                   'addresses': zone.addresses.all(),
-                                   'logged_in': request.session.get('_auth_user_id', False)
-                                   })
-
 def zonenew(request):
-    if request.GET.has_key('sub'):
-        try:
-            Zone.objects.get(zone=request.POST['zone'])
-            return render_to_response('errors.html',
-                                      {'failures': ['%s already exists in database' % request.POST['zone']],
-                                       'logged_in': request.session.get('_auth_user_id', False)})
-
-        except:
-            zone = Zone(zone=request.POST['zone'])
-        for attrib in zoneattribs:
-            if request.POST.has_key(attrib):
-                zone.__dict__[attrib] = request.POST[attrib]
-        zone.serial = 1
-        zone.save()
-        for num in range(0,4):
-            if request.POST['nameserver%i' % num]:
-                ns, created = Nameserver.objects.get_or_create(name=request.POST['nameserver%i' % num])
-                if created:
-                    ns.save()
-                zone.nameservers.add(ns)
-        for num in range(0,2):
-            if request.POST['priority%i' % num] and request.POST['mx%i' % num]:
-                mrecord, created = MX.objects.get_or_create(priority=request.POST['priority%i' % num],
-                                                            mx=request.POST['mx%i' % num])
-                if created:
-                    mrecord.save()
-                zone.mxs.add(mrecord)
-        for num in range(0,2):
-            if request.POST['address%i' % num]:
-                arecord, created = ZoneAddress.objects.get_or_create(ip_addr=request.POST['address%i' % num])
-                if created:
-                    arecord.save()
-                zone.addresses.add(arecord)
-        return HttpResponseRedirect('/hostbase/zones/%s/' % zone.id)
+    manipulator = Zone.AddManipulator()
+    nsmanipulator = Nameserver.AddManipulator()
+    mxmanipulator = MX.AddManipulator()
+    addressmanipulator = ZoneAddress.AddManipulator()
+    
+    if request.method == 'POST':
+        new_data = request.POST.copy()
+        new_data['serial'] = '1'
+        errors = manipulator.get_validation_errors(new_data)
+        errors.update(check_zone_errors(request.POST.copy()))
+        if errors:
+            return render_to_response('errors.html', {'failures': errors})
+        else:
+            do_zone_add(manipulator, new_data)
+            return HttpResponseRedirect('/hostbase/zones/%s' % new_zone.id)
     else:
-        return render_to_response('zonenew.html',
-                                  {'nameservers': range(0,4),
-                                  'mxs': range(0,2),
-                                  'addresses': range(0,2),
-                                   'logged_in': request.session.get('_auth_user_id', False)
-                                   })
+        errors = new_data = {}
+
+    form = forms.FormWrapper(manipulator, {}, {})
+    nsform = forms.FormWrapper(nsmanipulator, {}, {})
+    mxform = forms.FormWrapper(mxmanipulator, {}, {})
+    aform = forms.FormWrapper(addressmanipulator, {}, {})
+    return render_to_response('zonenew.html', {'form': form,
+                                               'nsform': nsform,
+                                               'mxform': mxform,
+                                               'aform': aform,
+                                               })
+
+def zoneedit(request, zone_id):
+    manipulator = Zone.ChangeManipulator(zone_id)
+    nsaddmanipulator = Nameserver.AddManipulator()
+    mxaddmanipulator = MX.AddManipulator()
+    addressaddmanipulator = ZoneAddress.AddManipulator()
+    zone = manipulator.original_object
+    nsmanipulators = [Nameserver.ChangeManipulator(ns.id) for ns in zone.nameservers.all()]
+    mxmanipulators = [MX.ChangeManipulator(mx.id) for mx in zone.mxs.all()]
+    addressmanipulators = [ZoneAddress.ChangeManipulator(address.id) for address in zone.addresses.all()]
+    if request.method == 'POST':
+        new_data = request.POST.copy()
+        new_data['serial'] = str(zone.serial)
+        errors = manipulator.get_validation_errors(new_data)
+        errors.update(check_zone_errors(request.POST.copy()))
+        if not errors:
+            do_zone_add(manipulator, new_data)
+            return HttpResponseRedirect('/hostbase/zones/%s' % zone.id)
+        else:
+            return render_to_response('errors.html', {'failures': errors})           
+    else:
+        errors = {}
+        new_data = manipulator.flatten_data()
+        
+    form = forms.FormWrapper(manipulator, new_data, errors)
+    nsforms = [forms.FormWrapper(nsm, nsm.flatten_data(), {}) for nsm in nsmanipulators]
+    mxforms = [forms.FormWrapper(mxm, mxm.flatten_data(), {}) for mxm in mxmanipulators]
+    aforms = [forms.FormWrapper(am, am.flatten_data(), {}) for am in addressmanipulators]
+    return render_to_response('zoneedit.html', {'form': form,
+                                                'nsforms': nsforms,
+                                                'mxforms': mxforms,
+                                                'aforms': aforms,
+                                                'nsadd': forms.FormWrapper(nsaddmanipulator, {}, {}),
+                                                'mxadd': forms.FormWrapper(mxaddmanipulator, {}, {}),
+                                                'addadd': forms.FormWrapper(addressaddmanipulator, {}, {}),
+                                                'zone_id': zone_id,
+                                                'zone': zone.zone
+                                                })
+
+def do_zone_add(manipulator, new_data):
+    manipulator.do_html2python(new_data)
+    zone = manipulator.save(new_data)
+    for name in new_data.getlist('name'):
+        if name:
+            ns, created = Nameserver.objects.get_or_create(name=name)
+            zone.nameservers.add(ns)
+    priorities = new_data.getlist('priority')
+    for mx in new_data.getlist('mx'):
+        if priorities[0] and mx:
+            mxrecord, created = MX.objects.get_or_create(priority=priorities.pop(0), mx=mx)
+            zone.mxs.add(mxrecord)
+    for address in new_data.getlist('ip_addr'):
+        if address:
+            arecord, created = ZoneAddress.objects.get_or_create(ip_addr=address)
+            zone.addresses.add(arecord)
+
+def check_zone_errors(new_data):
+    errors = {}
+    for ns in new_data.getlist('name'):
+        errors.update(Nameserver.AddManipulator().get_validation_errors({'name':ns}))
+    for addr in new_data.getlist('ip_addr'): 
+        errors.update(ZoneAddress.AddManipulator().get_validation_errors({'ip_addr':addr}))
+    priorities = new_data.getlist('priority')
+    count = 0
+    for mx in new_data.getlist('mx'):
+        errors.update(MX.AddManipulator().get_validation_errors({'mx':mx, 'priority':priorities[0]}))
+        count += 1
+    return errors
 
 ## login required stuff
 ## uncomment the views below that you would like to restrict access to
