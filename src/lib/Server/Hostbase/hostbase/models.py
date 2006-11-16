@@ -96,8 +96,8 @@ class IP(models.Model):
         ordering = ('ip_addr', )
 
 class MX(models.Model):
-    priority = models.IntegerField()
-    mx = models.CharField(maxlength=64, core=True)
+    priority = models.IntegerField(blank=True)
+    mx = models.CharField(maxlength=64, core=True, blank=True)
 
     def __str__(self):
         return (" ".join([str(self.priority), self.mx]))
@@ -133,7 +133,7 @@ class CName(models.Model):
         pass
 
 class Nameserver(models.Model):
-    name = models.CharField(maxlength=64)
+    name = models.CharField(maxlength=64, blank=True)
 
     def __str__(self):
         return self.name
@@ -142,7 +142,7 @@ class Nameserver(models.Model):
         pass
 
 class ZoneAddress(models.Model):
-    ip_addr = models.IPAddressField()
+    ip_addr = models.IPAddressField(blank=True)
 
     def __str__(self):
         return self.ip_addr
@@ -159,8 +159,8 @@ class Zone(models.Model):
     retry = models.IntegerField()
     refresh = models.IntegerField()
     ttl = models.IntegerField()
-    nameservers = models.ManyToManyField(Nameserver)
-    mxs = models.ManyToManyField(MX)
+    nameservers = models.ManyToManyField(Nameserver, blank=True)
+    mxs = models.ManyToManyField(MX, blank=True)
     addresses = models.ManyToManyField(ZoneAddress, blank=True)
     aux = models.TextField(blank=True)
 
