@@ -68,11 +68,8 @@ class Hostbase(Plugin):
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
-        try:
-            self.rebuildState(None)
-        except:
-            raise PluginInitError
-                
+        self.rebuildState(None)
+                 
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
         fname = entry.get('name').split('/')[-1]
@@ -240,7 +237,7 @@ class Hostbase(Plugin):
         for filename in reversenames:
             originlist = []
             cursor.execute("""
-            SELECT h.hostname, p.ip_addr, p.num FROM ((hostbase_host h
+            SELECT h.hostname, p.ip_addr FROM ((hostbase_host h
             INNER JOIN hostbase_interface i ON h.id = i.host_id)
             INNER JOIN hostbase_ip p ON i.id = p.interface_id)
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr

@@ -218,8 +218,7 @@ def edit(request, host_id):
                     mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                     if created:
                         mx.save()
-                    new_ip = IP(interface=inter, num=len(ips),
-                                ip_addr=request.POST['%dip_addr' % inter.id])
+                    new_ip = IP(interface=inter, ip_addr=request.POST['%dip_addr' % inter.id])
                     new_ip.save()
                     new_name = "-".join([host.hostname.split(".")[0],
                                          new_ip.ip_addr.split(".")[2]])
@@ -250,8 +249,7 @@ def edit(request, host_id):
                 mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
                 if created:
                     mx.save()
-                new_ip = IP(interface=new_inter, num=0,
-                            ip_addr=request.POST['ip_addr_new'])
+                new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
                 new_ip.save()
                 new_name = "-".join([host.hostname.split(".")[0],
                                      new_ip.ip_addr.split(".")[2]])
@@ -279,8 +277,7 @@ def edit(request, host_id):
                                       hdwr_type=request.POST['hdwr_type_new'],
                                       dhcp=False)
                 new_inter.save()
-                new_ip = IP(interface=new_inter, num=0,
-                            ip_addr=request.POST['ip_addr_new'])
+                new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
                 new_ip.save()
                 new_name = "-".join([host.hostname.split(".")[0],
                                      new_ip.ip_addr.split(".")[2]])
@@ -519,8 +516,7 @@ def new(request):
                                   dhcp=request.POST.has_key('dhcp_new'))
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
-            new_ip = IP(interface=new_inter,
-                        num=0, ip_addr=request.POST['ip_addr_new'])
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
@@ -548,8 +544,7 @@ def new(request):
                                   hdwr_type=request.POST['hdwr_type_new1'],
                                   dhcp=False)
             new_inter.save()
-            new_ip = IP(interface=new_inter, num=0,
-                        ip_addr=request.POST['ip_addr_new1'])
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new1'])
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
@@ -579,8 +574,7 @@ def new(request):
                                   dhcp=request.POST.has_key('dhcp_new2'))
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
-            new_ip = IP(interface=new_inter, num=0,
-                        ip_addr=request.POST['ip_addr_new2'])
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
@@ -609,8 +603,7 @@ def new(request):
                                   hdwr_type=request.POST['hdwr_type_new2'],
                                   dhcp=False)
             new_inter.save()
-            new_ip = IP(interface=new_inter, num=0,
-                        ip_addr=request.POST['ip_addr_new2'])
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:

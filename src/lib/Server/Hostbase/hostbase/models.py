@@ -84,7 +84,6 @@ class IP(models.Model):
     interface = models.ForeignKey(Interface,
                                   edit_inline=models.TABULAR, num_in_admin=1)
     ip_addr = models.IPAddressField(core=True)
-    num = models.IntegerField()
     
     def __str__(self):
         return self.ip_addr
