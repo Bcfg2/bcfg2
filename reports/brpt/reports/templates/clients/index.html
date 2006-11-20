@@ -11,17 +11,21 @@
 
 {% block content %}
 {% if client_list_a %}
-<table><tr><td>
-    <ul>
+<table><tr><td align="top">
+    <ul style="list-style-type:none;">
     {% for client in client_list_a %}
-        <li><a href="{{client.name}}/">{{ client.name }}</a></li>
+        <li><div class="{{client.current_interaction.state}}-lineitem">
+		<a href="{{client.name}}/">{{ client.name }}</a>
+		</div></li>
     {% endfor %}
     </ul>
-</td><td>
-    <ul>
+</td><td align="top">
+    <ul style="list-style-type:none;">
     {% if client_list_b %}
       {% for client in client_list_b %}
-        <li><a href="{{client.name}}/">{{ client.name }}</a></li>
+	    <li><div class="{{client.current_interaction.state}}-lineitem">
+		<a href="{{client.name}}/">{{ client.name }}</a>
+		</div></li>
       {% endfor %}
     {% endif %}
     </ul>
