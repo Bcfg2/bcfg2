@@ -15,69 +15,44 @@
 {% endblock %}
 
 {% block content %}
-<!-- ...or go to <a href="hostinfo">this</a>
- page to enter hostinfo-like queries<br><br> -->
+{% comment %}
+ ...or go to <a href="hostinfo">this</a>
+ page to enter hostinfo-like queries<br><br>
+{% endcomment %}
+
 <form name="input" action="?sub=true" method="post">
-<table border="0" width="100%">
-   <colgroup>
-   <col width="150">
-   <col width="*">
-   <tr> <td> <b>hostname</b></td>
-   <td> <input name="hostname" type="text" ></td></tr>
-   <tr> <td> <b>whatami</b></td>
-   <td> <input name="whatami" type="text" ></td></tr>
-   <td> </td></tr>
-   <tr> <td> <b>netgroup</b></td>
-   <td> <input name="netgroup" type="text" ></td></tr>
-   <tr> <td> <b>class</b></td>
-   <td> <input name="security_class" type="text" ></td></tr>
-   <tr> <td> <b>support</b></td>
-   <td> <input name="support" type="text" ></td></tr>
-   <tr> <td> <b>csi</b></td>
-   <td> <input name="csi" type="text" ></td></tr>
-   <tr> <td> <b>printq</b></td>
-   <td> <input name="printq" type="text" ></td></tr>
-   <tr> <td> <b>outbound_smtp</b></td>
-   <td>
+   <fieldset class="module aligned ()">
+   <label for="hostname">hostname:</label><input name="hostname" type="text" ><br>
+   <label for="netgroup">netgroup:</label><input name="netgroup" type="text" ><br>
+   <label for="security_class">class:</label><input name="security_class" type="text" ><br>
+   <label for="support">support:</label><input name="support" type="text" ><br>
+   <label for="csi">csi:</label><input name="csi" type="text" ><br>
+   <label for="printq">printq:</label><input name="printq" type="text" ><br>
+   <label for="outbound_smtp">outbound_smtp:</label>
    {% for choice in yesno %}
    <input type="radio" name="outbound_smtp" value="{{ choice.0 }}" >{{ choice.1 }}
-   {% endfor %}
-   </td></tr>
-   <tr> <td> <b>primary_user</b></td>
-   <td> <input name="primary_user" type="text" size="32" ></td></tr>
-   <tr> <td> <b>administrator</b></td>
-   <td> <input name="administrator" type="text" size="32" ></td></tr>
-   <tr> <td> <b>location</b></td>
-   <td> <input name="location" type="text" ></td></tr>
-   <tr> <td> <b>expiration_date</b></td>
-   <td> <input name="expiration_date" type="text" size="10" >YYYY-MM-DD</td></tr>
-   <tr> <td><br><b>Interface</b></td><td><br>
+   {% endfor %}<br>
+   <label for="primary_user">primary_user:</label><input name="primary_user" type="text" ><br>
+   <label for="administrator">administrator:</label><input name="administrator" type="text" ><br>
+   <label for="location">location:</label><input name="location" type="text" ><br>
+   <label for="expiration_date">expiration_date:</label><input name="expiration_date" type="text" ><br>
+   <br><label for="Interface">Interface:</label>
    {% for choice in TYPE_CHOICES %}
    <input type="radio" name="hdwr_type" value="{{ choice.0 }}" >{{ choice.1 }}
-   {% endfor %}
-   </td></tr>
-   <tr> <td> <b>dhcp</b></td>
-   <td>
+   {% endfor %}<br>
+   <label for="dhcp">dhcp:</label>
    {% for choice in yesno %}
    <input type="radio" name="dhcp" value="{{ choice.0 }}" >{{ choice.1 }}
-   {% endfor %}
-   </td></tr>
-   <tr> <td> <b>mac_addr</b></td>
-   <td> <input name="mac_addr" type="text"></td></tr>
-   <tr> <td> <b>ip_addr</b></td>
-   <td> <input name="ip_addr" type="text"></td></tr>
-   <tr> <td> <b>name</b></td>
-   <td> <input name="name" type="text"></td></tr>
-   <tr> <td><b>dns_view</b></td><td>
+   {% endfor %}<br>
+   <label for="mac_addr">mac_addr:</label><input name="mac_addr" type="text" ><br>
+   <label for="ip_addr">ip_addr:</label><input name="ip_addr" type="text" ><br>
+   <label for="name">name:</label><input name="name" type="text" ><br>
+   <label for="dns_view">dns_viewer:</label>
    {% for choice in DNS_CHOICES %}
    <input type="radio" name="dns_view" value="{{ choice.0 }}" >{{ choice.1 }}
-   {% endfor %}
-   </td></tr>
-   <tr> <td> <b>cname</b></td>
-   <td> <input name="cname" type="text"></td></tr>
-   <tr> <td> <b>mx</b></td>
-   <td> <input name="mx" type="text"></td></tr>
-</table>
+   {% endfor %}<br>
+   <label for="cname">cname:</label><input name="cname" type="text" ><br>
+   <label for="mx">mx:</label><input name="mx" type="text" ><br>
 <p>
 <input type="submit" value="Search">
 </form>
