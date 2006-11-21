@@ -15,28 +15,24 @@
 
 {% block content %}
 <form name="zonedata" action="" method="post">
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-<tr><td><label for="id_zone">zone:</label></td> <td>{{ form.zone }}</td></tr>
-<tr><td><label for="id_admin">admin:</label></td> <td>{{ form.admin }}</td></tr>
-<tr><td><label for="id_primary_master">primary_master:</label></td> <td>{{ form.primary_master }}</td></tr>
-<tr><td><label for="id_expire">expire:</label></td> <td>{{ form.expire }}</td></tr>
-<tr><td><label for="id_retry">retry:</label></td> <td>{{ form.retry }}</td></tr>
-<tr><td><label for="id_refresh">refresh:</label></td> <td>{{ form.refresh }}</td></tr>
-<tr><td><label for="id_ttl">ttl:</label></td> <td>{{ form.ttl }}</td></tr>
-<tr><td><label for="id_name">nameserver:</label> <td>{{ nsform.name }}</td></tr>
-<tr><td><label for="id_name">nameserver:</label> <td>{{ nsform.name }}</td></tr>
-<tr><td><label for="id_name">nameserver:</label> <td>{{ nsform.name }}</td></tr>
-<tr><td><label for="id_name">nameserver:</label> <td>{{ nsform.name }}</td></tr>
-<tr><td><label for="id_mx">mx:</label> <td>{{ mxform.priority }} {{ mxform.mx }}</td></tr>
-<tr><td><label for="id_mx">mx:</label> <td>{{ mxform.priority }} {{ mxform.mx }}</td></tr>
-<tr><td><label for="id_mx">ip address:</label> <td>{{ aform.ip_addr }}</td></tr>
-<tr><td><label for="id_mx">ip address:</label> <td>{{ aform.ip_addr }}</td></tr>
-<tr><td><label for="id_aux">aux:<br>
-(information not generated from Hostbase)</label></td> <td>{{ form.aux }}</td></tr>
-</table>
+  <fieldset class="module aligned ()">
+  <label for="id_zone">zone:</label>{{ form.zone }}<br>
+  <label for="id_admin">admin:</label>{{ form.admin }}<br>
+  <label for="id_primary_master">primary_master:</label>{{ form.primary_master }}<br>
+  <label for="id_expire">expire:</label>{{ form.expire }}<br>
+  <label for="id_retry">retry:</label>{{ form.retry }}<br>
+  <label for="id_refresh">refresh:</label>{{ form.refresh }}<br>
+  <label for="id_ttl">ttl:</label>{{ form.ttl }}<br>
+  <label for="id_name">nameserver:</label>{{ nsform.name }}<br>
+  <label for="id_name">nameserver:</label>{{ nsform.name }}<br>
+  <label for="id_name">nameserver:</label>{{ nsform.name }}<br>
+  <label for="id_name">nameserver:</label>{{ nsform.name }}<br>
+  <label for="id_mx">mx:</label>{{ mxform.priority }} {{ mxform.mx }}<br>
+  <label for="id_mx">mx:</label>{{ mxform.priority }} {{ mxform.mx }}<br>
+  <label for="id_mx">ip address:</label>{{ aform.ip_addr }}<br>
+  <label for="id_mx">ip address:</label>{{ aform.ip_addr }}<br>
+  <label for="id_aux">aux:
+(information not generated from Hostbase)</label>{{ form.aux }}<br>
 <p><input type="submit" value="Submit">
 </form>
 {% endblock %}

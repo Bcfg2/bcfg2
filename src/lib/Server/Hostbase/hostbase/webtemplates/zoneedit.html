@@ -41,73 +41,40 @@ div#address{
 </style>
 
 <form name="zonedata" action="" method="post">
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-<tr><td><label for="id_zone">zone:</label></td> <td>{{ form.zone }}</td></tr>
-<tr><td><label for="id_admin">admin:</label></td> <td>{{ form.admin }}</td></tr>
-<tr><td><label for="id_primary_master">primary_master:</label></td> <td>{{ form.primary_master }}</td></tr>
-<tr><td><label for="id_expire">expire:</label></td> <td>{{ form.expire }}</td></tr>
-<tr><td><label for="id_retry">retry:</label></td> <td>{{ form.retry }}</td></tr>
-<tr><td><label for="id_refresh">refresh:</label></td> <td>{{ form.refresh }}</td></tr>
-<tr><td><label for="id_ttl">ttl:</label></td> <td>{{ form.ttl }}</td></tr>
+   <fieldset class="module aligned ()">
+<label for="id_zone">zone:</label></td> <td>{{ form.zone }}<br>
+<label for="id_admin">admin:</label></td> <td>{{ form.admin }}<br>
+<label for="id_primary_master">primary_master:</label></td> <td>{{ form.primary_master }}<br>
+<label for="id_expire">expire:</label></td> <td>{{ form.expire }}<br>
+<label for="id_retry">retry:</label></td> <td>{{ form.retry }}<br>
+<label for="id_refresh">refresh:</label></td> <td>{{ form.refresh }}<br>
+<label for="id_ttl">ttl:</label></td> <td>{{ form.ttl }}<br>
 {% for ns in nsforms %}
-<tr><td><label for="id_name">nameserver:</label></td> <td>{{ ns.name }}</td></tr>
+<label for="id_name">nameserver:</label></td> <td>{{ ns.name }}<br>
 {% endfor %}
 </table>
 <div id=nameserver>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-   <tr><td><label for="id_name">nameserver:</label></td> <td>{{ nsadd.name }}</td></tr>
-   <tr><td><label for="id_name">nameserver:</label></td> <td>{{ nsadd.name }}</td></tr>
-</table>
+   <label for="id_name">nameserver:</label></td> <td>{{ nsadd.name }}<br>
+   <label for="id_name">nameserver:</label></td> <td>{{ nsadd.name }}<br>
 </div>
-<a style="font-size:75%" href=# onclick="toggleField('nameserver')">Add NS records</a>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
+<a style="font-size:75%" href=# onclick="toggleField('nameserver')">Add NS records</a><br>
 {% for mx in mxforms %}
-<tr><td><label for="id_mx">mx:</label></td> <td>{{ mx.priority }} {{ mx.mx }}</td></tr>
+<label for="id_mx">mx:</label></td> <td>{{ mx.priority }} {{ mx.mx }}<br>
 {% endfor %}
-</table>
 <div id=mx>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-   <tr><td><label for="id_mx">mx:</label></td> <td>{{ mxadd.priority }} {{ mxadd.mx }}</td></tr>
-   <tr><td><label for="id_mx">mx:</label></td> <td>{{ mxadd.priority }} {{ mxadd.mx }}</td></tr>
-</table>
+   <label for="id_mx">mx:</label></td> <td>{{ mxadd.priority }} {{ mxadd.mx }}<br>
+   <label for="id_mx">mx:</label></td> <td>{{ mxadd.priority }} {{ mxadd.mx }}<br>
 </div>
-<a style="font-size:75%" href=# onclick="toggleField('mx')">Add MX records</a>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
+<a style="font-size:75%" href=# onclick="toggleField('mx')">Add MX records</a><br>
 {% for a in aforms %}
-<tr><td><label for="id_address">ip address:</label></td> <td>{{ a.ip_addr }}</td></tr>
+<label for="id_address">ip address:</label></td> <td>{{ a.ip_addr }}<br>
 {% endfor %}
-</table>
 <div id=address>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-   <tr><td><label for="id_address">ip address:</label></td> <td>{{ addadd.ip_addr }}</td></tr>
-   <tr><td><label for="id_address">ip address:</label></td> <td>{{ addadd.ip_addr }}</td></tr>
-</table>
+   <label for="id_address">ip address:</label></td> <td>{{ addadd.ip_addr }}<br>
+   <label for="id_address">ip address:</label></td> <td>{{ addadd.ip_addr }}<br>
 </div>
-<a style="font-size:75%" href=# onclick="toggleField('address')">Add A records</a>
-<table border="0" width="100%">
-   <colgroup>
-   <col width="200">
-   <col width="*">
-<tr><td><label for="id_aux">aux:</label></td> <td>{{ form.aux }}</td></tr>
-</table>
+<a style="font-size:75%" href=# onclick="toggleField('address')">Add A records</a><br>
+<label for="id_aux">aux:</label></td> <td>{{ form.aux }}<br>
 <p><input type="submit" value="Submit">
 </form>
 
