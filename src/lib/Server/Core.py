@@ -229,6 +229,7 @@ class Core(object):
 
         structures = self.cfile.get('server', 'structures').split(',')
         generators = self.cfile.get('server', 'generators').split(',')
+        [data.remove('') for data in [structures, generators] if '' in data]
 
         for plugin in structures + generators:
             if not self.plugins.has_key(plugin):
