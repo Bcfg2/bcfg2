@@ -5,7 +5,11 @@
 #content-main { float:left; }
 
 /*  HEADER  */
-#header { background:#000; color:#ffc; position:absolute;}
+#header { 
+background:#000; 
+color:#ffc; 
+position:absolute;
+}
 #header a:link, #header a:visited { color:white; }
 #header a:hover { text-decoration:underline; }
 #branding h1 { padding:0 10px; font-size:18px; margin:8px 0; font-weight:normal; color:#f4f379; }
@@ -13,12 +17,25 @@
 #user-tools { position:absolute; top:0; right:0; padding:1.2em 10px; font-size:11px; text-align:right; }
 
 /*SIDEBAR*/
-#sidebar {float: left; position: relative; width: auto; height: 100%; margin-top: 3em; padding-right: 1.5em; padding
--left: 1.5em; padding-top: 1em; padding-bottom:3em; background: #000; color:ffc; }
+#sidebar {
+   float:left; 
+   position: relative; 
+   width: auto; 
+   height: 100%; 
+   margin-top: 3em; 
+   padding-right: 1.5em; 
+   padding-left: 1.5em; 
+   padding-top: 1em; 
+   padding-bottom:3em; 
+   background: #000; 
+   color:ffc;
+}
+
 a.sidebar:link {color: #fff;}
 a.sidebar:active {color: #fff;}
 a.sidebar:visited {color: #fff;}
 a.sidebar:hover {color: #fff;}
+
 ul.sidebar {
         color: #ffc;
         text-decoration: none;
@@ -30,3 +47,16 @@ ul.sidebar-level2 {
         list-style-type: none;
         font-size: 11px;
 }
+
+/* ALIGNED FIELDSETS */
+.aligned label { display:block; padding:0 1em 3px 0; float:left; width:8em; }
+.aligned label.inline { display:inline; float:none; }
+.colMS .aligned .vLargeTextField, .colMS .aligned .vXMLLargeTextField { width:350px; }
+form .aligned p, form .aligned ul { margin-left:7em; padding-left:30px; }
+form .aligned table p { margin-left:0; padding-left:0; }
+form .aligned p.help { padding-left:38px; }
+.aligned .vCheckboxLabel { float:none !important; display:inline; padding-left:4px; }
+.colM .aligned .vLargeTextField, colM .aligned .vXMLLargeTextField { width:610px; }
+.checkbox-row p.help { margin-left:0; padding-left:0 !important; } 
+
+
