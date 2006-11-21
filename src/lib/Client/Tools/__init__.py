@@ -42,9 +42,9 @@ class executor:
         cmdstat = -1
         while cmdstat == -1:
             runpipe.fromchild.flush()
-            moreOutput = runpipe.fromchild.read()
+            moreOutput = runpipe.fromchild.readline()
             if len(moreOutput) > 0:                
-                self.logger.debug('< %s' % moreOutput)
+                self.logger.debug('< %s' % moreOutput[:-1])
             output += moreOutput
             cmdstat = runpipe.poll()
 
