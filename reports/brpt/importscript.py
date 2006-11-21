@@ -27,17 +27,20 @@ from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime, sleep
 from django.db import connection, backend
+import ConfigParser
 
 if __name__ == '__main__':
     somewhatverbose = False
     verbose = False
     veryverbose = False
+
     try:
         opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,"debug", "clients=", "stats="])
     except GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] -c <clients-file> -s <statistics-file>" % (mesg) 
+        print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg) 
         raise SystemExit, 2
+    opts.append(("1","1"))#this requires the loop run at least once
     for o, a in opts:
         if o in ("-h", "--help"):
             print "Usage:\nimportscript.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
@@ -45,9 +48,18 @@ if __name__ == '__main__':
             print "v : verbose; print messages on record insertion/skip"
             print "u : updates; print status messages as items inserted semi-verbose"
             print "d : debug; print most SQL used to manipulate database"
+            print "C : path to bcfg2.conf config file."
             print "c : clients.xml file"
             print "s : statistics.xml file"
             raise SystemExit
+        if o in ("-C"):
+            cpath = a
+        else:
+            cpath = "/etc/bcfg2.conf"
+
+        cf = ConfigParser.ConfigParser()
+        cf.read([cpath])
+		
         if o in ("-v", "--verbose"):
             verbose = True
         if o in ("-u", "--updates"):
@@ -56,8 +68,21 @@ if __name__ == '__main__':
             veryverbose = True
         if o in ("-c", "--clients"):
             clientspath = a
+        else:
+            try:
+                clientspath = "%s/Metadata/clients.xml"%cf.get('server', 'repository')
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                print "Could not read bcfg2.conf; exiting"
+                raise SystemExit, 1
+
         if o in ("-s", "--stats"):
             statpath = a
+        else:
+            try:
+                statpath = "%s/etc/statistics.xml"%cf.get('server', 'repository')
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                print "Could not read bcfg2.conf; exiting"
+                raise SystemExit, 1
 
     '''Reads Data & Config files'''
     try:
