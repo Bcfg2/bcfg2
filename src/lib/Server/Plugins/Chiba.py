@@ -35,5 +35,9 @@ class Chiba(Bcfg2.Server.Plugin.Plugin):
         except socket.gaierror:
             self.logger.error("Failed to resolve %s"% myriname)
             raise Bcfg2.Server.Plugin.PluginExecutionError, (myriname, 'lookup')
-        entry.text = self.repo.entries['interfaces-template'].data % myriaddr
+        if metadata.hostname.split('.')[0] == 'ccsched':
+            entry.text = self.repo.entries['interfaces-template.ccsched'].data % myriaddr
+        else:
+            entry.text = self.repo.entries['interfaces-template'].data % myriaddr
+                                             
 
