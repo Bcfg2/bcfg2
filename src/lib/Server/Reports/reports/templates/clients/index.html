@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Client Index Listing{% endblock %}
+
+{% block pagebanner %}
+  <div class="header">
+      <h1>Clients List</h1>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block content %}
+{% if client_list_a %}
+<table><tr><td align="top">
+    <ul style="list-style-type:none;">
+    {% for client in client_list_a %}
+        <li><div class="{{client.current_interaction.state}}-lineitem">
+		<a href="{{client.name}}/">{{ client.name }}</a>
+		</div></li>
+    {% endfor %}
+    </ul>
+</td><td align="top">
+    <ul style="list-style-type:none;">
+    {% if client_list_b %}
+      {% for client in client_list_b %}
+	    <li><div class="{{client.current_interaction.state}}-lineitem">
+		<a href="{{client.name}}/">{{ client.name }}</a>
+		</div></li>
+      {% endfor %}
+    {% endif %}
+    </ul>
+</tr></tab.e>
+{% else %}
+    <p>No client records are available.</p>
+{% endif %}
+{% endblock %}
