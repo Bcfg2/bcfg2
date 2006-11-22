@@ -161,6 +161,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             except OSError:
                 self.logger.error('Failed to create directory %s' % (entry.get('name')))
                 return False
+        return self.InstallPermissions(entry)
+
+    def VerifyPermissions(self, entry, _):
+        '''Verify Permissions entry'''
+        return self.VerifyDirectory(entry, _)
+
+    def InstallPermissions(self, entry):
+        '''Install POSIX Permissions'''
         try:
             os.chown(entry.get('name'),
                   pwd.getpwnam(entry.get('owner'))[2], grp.getgrnam(entry.get('group'))[2])
