@@ -1,5 +1,5 @@
 from django import template
-#from brpt.reports.models import Client, Interaction, Bad, Modified, Extra
+#from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra
 
 register = template.Library()
 

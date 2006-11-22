@@ -1,4 +1,4 @@
-# Django settings for brpt project.
+# Django settings for bcfg reports project.
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
 c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
@@ -61,12 +61,12 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
 )
 
-ROOT_URLCONF = 'brpt.urls'
+ROOT_URLCONF = 'Bcfg2.Server.Reports.urls'
 
 # Authentication Settings
 # Use NIS authentication backend defined in backends.py
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
-                           'brpt.backends.NISBackend')
+                           'Bcfg2.Server.Reports.backends.NISBackend')
 # The NIS group authorized to login to BCFG2's reportinvg system
 AUTHORIZED_GROUP = ''
 #create login url area:
@@ -88,5 +88,5 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'brpt.reports'
+    'Bcfg2.Server.Reports'
 )

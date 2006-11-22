@@ -1,6 +1,6 @@
 import os
 import crypt, nis
-import brpt.settings import AUTHORIZED_GROUP
+import Bcfg2.Server.Reports.settings import AUTHORIZED_GROUP
 
 """Checks with NIS to see if the current user is in the support group"""
 

@@ -3,7 +3,7 @@
 from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
+from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
 from datetime import datetime, timedelta
 from time import strptime
 from django.db import connection

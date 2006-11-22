@@ -7,9 +7,9 @@ try:
     import settings
 except ImportError:
     try:
-        import brpt.settings
+        import Bcfg2.Server.Reports.settings
     except ImportError:
-        sys.stderr.write("Failed to locate settings.py. Is brpt python module installed?")
+        sys.stderr.write("Failed to locate settings.py. Is Bcfg2.Server.Reports python module installed?")
         sys.exit(1)
 
 project_directory = os.path.dirname(settings.__file__)
@@ -20,7 +20,7 @@ sys.path.pop()
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
-from brpt.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
+from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
 from lxml.etree import XML, XMLSyntaxError
 from sys import argv
 from getopt import getopt, GetoptError
