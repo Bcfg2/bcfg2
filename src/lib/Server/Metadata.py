@@ -1,7 +1,8 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, os, socket, time
+import lxml.etree, re, socket
+import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
     '''This error gets raised when metadata is internally inconsistent'''
@@ -13,23 +14,25 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, toolset, categories):
+    def __init__(self, client, groups, bundles, toolset, categories, probed):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
         self.toolset = toolset
         self.categories = categories
+        self.probes = probed
 
-class Metadata:
+class Metadata(Bcfg2.Server.Plugin.Plugin):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __name__ = "Metadata"
 
-    def __init__(self, fam, datastore):
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         self.__name__ = 'Metadata'
-        self.data = "%s/%s" % (datastore, self.__name__)
-        fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
-        fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
+        core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
+        core.fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
         self.states = {'groups.xml':False, 'clients.xml':False}
         self.addresses = {}
         self.clients = {}
@@ -41,7 +44,12 @@ class Metadata:
         self.categories = {}
         self.clientdata = None
         self.default = None
-        self.logger = logging.getLogger('Bcfg2.Server.Metadata')
+        try:
+            self.probes = Bcfg2.Server.Plugin.DirectoryBacked(datastore + "/Probes",
+                                                              core.fam)
+        except:
+            self.probes = False
+        self.probedata = {}
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
@@ -189,5 +197,30 @@ class Metadata:
             self.logger.error("Cannot determine toolset for client %s" % (client))
             raise MetadataConsistencyError
         toolset = toolinfo[0]
-        return ClientMetadata(client, groups, bundles, toolset, categories)
+        probed = self.probedata.get(client, {})
+        return ClientMetadata(client, groups, bundles, toolset, categories, probed)
         
+    def GetProbes(self, _):
+        '''Return a set of probes for execution on client'''
+        ret = []
+        if self.probes:
+            bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
+            for name, entry in [x for x in self.probes.entries.iteritems() if x.data]:
+                probe = lxml.etree.Element('probe')
+                probe.set('name', name )
+                probe.set('source', self.__name__)
+                probe.text = entry.data
+                match = bangline.match(entry.data.split('\n')[0])
+                if match:
+                    probe.set('interpreter', match.group('interpreter'))
+                else:
+                    probe.set('interpreter', '/bin/sh')
+                    ret.append(probe)
+        return ret
+
+    def ReceiveData(self, client, data):
+        '''Receive probe results pertaining to client'''
+        try:
+            self.probedata[client.hostname].update({ data.get('name'):data.text })
+        except KeyError:
+            self.probedata[client.hostname] = { data.get('name'):data.text }

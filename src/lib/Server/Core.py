@@ -219,19 +219,13 @@ class Core(object):
         except:
             self.svn = False
         
-        mpath = self.cfile.get('server','repository')
-        try:
-            self.metadata = Bcfg2.Server.Metadata.Metadata(self.fam, mpath)
-        except OSError:
-            raise CoreInitError, "metadata path incorrect"
-        
         self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
         structures = self.cfile.get('server', 'structures').split(',')
         generators = self.cfile.get('server', 'generators').split(',')
         [data.remove('') for data in [structures, generators] if '' in data]
 
-        for plugin in structures + generators:
+        for plugin in structures + generators + ['Metadata']:
             if not self.plugins.has_key(plugin):
                 try:
                     mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
@@ -247,6 +241,7 @@ class Core(object):
                 except:
                     logger.error("Unexpected initiantiation failure for plugin %s" % (plugin), exc_info=1)
 
+        self.metadata = self.plugins['Metadata']
         for plugin in structures:
             if self.plugins.has_key(plugin):
                 self.structures.append(self.plugins[plugin])
