@@ -153,7 +153,7 @@ class Frame:
     def Remove(self):
         '''Remove extra entries'''
         for tool in self.tools:
-            extras = [entry for entry in self.removal if tool.canInstall(entry)]
+            extras = [entry for entry in self.removal if tool.handlesEntry(entry)]
             if extras:
                 try:
                     tool.Remove(extras)
