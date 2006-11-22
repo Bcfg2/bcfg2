@@ -149,6 +149,29 @@ span.mini-date {
     right: 65px;
     }
 
+
+div.dirty-lineitem {
+    background: #FF6A6A;
+	width:100%;
+    }
+div.modified-lineitem {
+    background: #FFEC8B;
+    }
+div.clean-lineitem {
+    background: #9AFF9A;
+	width:100%;
+    }
+div.extra-lineitem {
+    background: #6699CC;
+    }
+div.warning-lineitem {
+    background: #FF9933;
+    }
+
+
+
+
+
 h2	{
     font-size: 16px;
     color: #000;
