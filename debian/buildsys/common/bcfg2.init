@@ -1,5 +1,4 @@
 #!/bin/sh
-# Start bcfg2 client on startup
 #
 # bcfg2 - bcfg2 configuration client
 #
@@ -9,7 +8,7 @@
 ### BEGIN INIT INFO
 # Provides:          bcfg2
 # Required-Start:    $network $named
-# Required-Stop:     
+# Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:      S 0 1 6
 # Short-Description: Configuration management client
@@ -54,19 +53,15 @@ case "$1" in
     fi
     exit $STATUS
     ;;
-  restart)
-    $0 stop
-    $0 start
-    ;;
   status)
     # Since we are always OK, always return OK as status
     exit 0
     ;;
-  stop|force-reload)
+  restart|reload|stop|force-reload)
     true
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart|force-reload|status}"
+    echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
     exit 1
 esac
 

@@ -38,5 +38,6 @@ binary-install/bcfg2 ::
 	dh_installinit -p$(cdbs_curpkg) -o --no-start
 
 binary-install/bcfg2-server ::
+	cd doc && make manual.html
 	dh_installinit -p$(cdbs_curpkg) -o
 endif
