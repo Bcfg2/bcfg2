@@ -3,7 +3,7 @@
 '''The XML-RPC Bcfg2 Server'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Metadata 
+import Bcfg2.Server.Plugins.Metadata 
 
 from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
@@ -123,7 +123,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
                 for probe in generator.GetProbes(meta):
                     resp.append(probe)
             return tostring(resp)
-        except Bcfg2.Server.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
@@ -135,7 +135,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         try:
             name = self.Core.metadata.resolve_client(address[0])
             meta = self.Core.metadata.get_metadata(name)
-        except Bcfg2.Server.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
@@ -160,7 +160,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         try:
             client = self.Core.metadata.resolve_client(address[0])
             self.Core.metadata.set_profile(client, profile)
-        except (Bcfg2.Server.Metadata.MetadataConsistencyError, Bcfg2.Server.Metadata.MetadataRuntimeError):
+        except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError, Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
             warning = 'metadata consistency error'
             self.logger.warning(warning)
             raise Fault, (6, warning)
@@ -171,7 +171,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         try:
             client = self.Core.metadata.resolve_client(address[0])
             return tostring(self.Core.BuildConfiguration(client))
-        except Bcfg2.Server.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             self.logger.warning("Metadata consistency failure for %s" % (address))
             raise Fault, (6, "Metadata consistency failure")
 

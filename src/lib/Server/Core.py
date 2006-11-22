@@ -5,7 +5,7 @@ from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Statistics import Statistics
 
-import logging, lxml.etree, os, stat, Bcfg2.Server.Metadata, ConfigParser
+import logging, lxml.etree, os, stat, ConfigParser
 
 logger = logging.getLogger('Bcfg2.Core')
 
@@ -218,7 +218,8 @@ class Core(object):
             self.read_svn_revision()
         except:
             self.svn = False
-        
+
+        mpath = self.cfile.get('server','repository')
         self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
         structures = self.cfile.get('server', 'structures').split(',')
