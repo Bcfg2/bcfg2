@@ -92,12 +92,15 @@ class Frame:
                 self.removal = [entry for entry in self.extra if entry.tag == 'Package']
 
         if self.setup['dryrun']:
-            self.logger.info("In dryrun mode: suppressing entry installation for:")
-            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
-                              in self.states if not self.states[entry]])
-            self.logger.info("In dryrun mode: suppressing entry removal for:")
-            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
-                              in self.removal])
+            updated = [entry for entry in self.states if not self.states[entry]]
+            if updated:
+                self.logger.info("In dryrun mode: suppressing entry installation for:")
+                self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
+                                  in updated])
+            if self.removal:
+                self.logger.info("In dryrun mode: suppressing entry removal for:")
+                self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
+                                  in self.removal])
             self.removal = []
             return
         elif self.setup['interactive']:
