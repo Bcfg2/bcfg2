@@ -59,6 +59,10 @@ def critical_error(operation):
     logger.error(operation, exc_info=1)
     raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
+class SetupError(Exception):
+    '''Used when the server cant be setup'''
+    pass
+
 class Bcfg2Serv(Bcfg2.Server.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
@@ -71,8 +75,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             Bcfg2.Server.Component.Component.__init__(self, setup)
             self.shut = False
         except Bcfg2.Server.Component.ComponentInitError:
-            logger.critical("Failed to setup server")
-            raise SystemExit, 1
+            raise SetupError
 
         # set shutdown handlers for sigint and sigterm
         signal.signal(signal.SIGINT, self.start_shutdown)
@@ -216,8 +219,8 @@ if __name__ == '__main__':
         daemonize(SSETUP['daemon'])
     try:
         BSERV = Bcfg2Serv(SSETUP)
-    except:
-        critical_error("Failed to setup server; probably a key problem")
+    except SetupError:
+        raise SystemExit, 1
     while not BSERV.shut:
         try:
             BSERV.serve_forever()

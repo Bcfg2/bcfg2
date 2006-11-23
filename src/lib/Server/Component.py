@@ -53,7 +53,6 @@ class SSLServer(BaseHTTPServer.HTTPServer):
     def __init__(self, address, keyfile, handler):
         SocketServer.BaseServer.__init__(self, address, handler)
         ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        print keyfile
         ctxt.use_privatekey_file (keyfile)
         ctxt.use_certificate_file(keyfile)
         #ctxt.load_verify_locations('/tmp/keys/CA.cert')
@@ -134,6 +133,9 @@ class Component(SSLServer,
 
         try:
             SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
+        except socket.error:
+            self.logger.error("Failed to bind to socket")
+            raise ComponentInitError
         except:
             self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
             raise ComponentInitError
