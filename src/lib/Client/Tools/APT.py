@@ -67,7 +67,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             self.logger.info('Removing packages:')
             self.logger.info(packages)
             self.cmd.run("apt-get remove -y --force-yes %s" % \
-                         " ".join(packages))
+                         " ".join([pkg.get('name') for pkg in packages]))
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
               

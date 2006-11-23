@@ -74,9 +74,9 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 return False
         return True
 
-    def RemovePackages(self, entries):
+    def RemovePackages(self, packages):
         '''Remove specified entries'''
-        pkgnames = " ".join([entry[2] for entry in entries])
+        pkgnames = [pkg.get('name') for pkg in packages]
         if len(pkgnames) > 0:
             self.logger.info("Removing packages: %s" % pkgnames)
             self.cmd.run("rpm --quiet -e --allmatches %s" % " ".join(pkgnames))
