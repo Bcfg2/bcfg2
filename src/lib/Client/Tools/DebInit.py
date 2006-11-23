@@ -51,9 +51,12 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     def FindExtra(self):
         '''Find Extra Debian Service Entries'''
         specified = [entry.get('name') for entry in self.getSupportedEntries()]
-        extra = [self.svcre.match(fname).group('name') for fname in
-                 glob.glob("/etc/rc[12345].d/S*") \
-                 if self.svcre.match(fname).group('name') not in specified]
+        extra = []
+        for name in [self.svcre.match(fname).group('name') for fname in
+                      glob.glob("/etc/rc[12345].d/S*") \
+                      if self.svcre.match(fname).group('name') not in specified]:
+            if name not in extra:
+                extra.append(name)
         return [Bcfg2.Client.XML.Element('Service', name=name, type='deb') for name \
                 in extra]
 
