@@ -83,10 +83,22 @@ class Frame:
         '''Set self.whitelist based on user interaction'''
         prompt = "Would you like to install %s: %s? (y/N): "
         rprompt = "Would you like to remove %s: %s? (y/N): "
+        if self.setup['remove']:
+            if self.setup['remove'] == 'all':
+                self.removal = self.extra
+            elif self.setup['remove'] == 'services':
+                self.removal = [entry for entry in self.extra if entry.tag == 'Service']
+            elif self.setup['remove'] == 'packages':
+                self.removal = [entry for entry in self.extra if entry.tag == 'Package']
+
         if self.setup['dryrun']:
             self.logger.info("In dryrun mode: suppressing entry installation for:")
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
                               in self.states if not self.states[entry]])
+            self.logger.info("In dryrun mode: suppressing entry removal for:")
+            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
+                              in self.removal])
+            self.removal = []
             return
         elif self.setup['interactive']:
             self.whitelist = promptFilter(prompt, [entry for entry in self.states \
@@ -104,13 +116,6 @@ class Frame:
         else:
             # all systems are go
             self.whitelist = [entry for entry in self.states if not self.states[entry]]
-            if self.setup['remove']:
-                if self.setup['remove'] == 'all':
-                    self.removal = self.extra
-                elif self.setup['remove'] == 'services':
-                    self.removal = [entry for entry in self.extra if entry.tag == 'Service']
-                elif self.setup['remove'] == 'packages':
-                    self.removal = [entry for entry in self.extra if entry.tag == 'Package']
 
     def DispatchInstallCalls(self, entries):
         '''Dispatch install calls to underlying tools'''
