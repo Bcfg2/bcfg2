@@ -179,7 +179,13 @@ class Frame:
 
         if ((self.states.values().count(False) == 0) and not self.extra):
             self.logger.info('All entries correct.')
-    
+
+    def ReInventory(self):
+        '''Recheck everything'''
+        if not self.setup['dryrun'] and self.setup['kevlar']:
+            self.logger.info("Rechecking system inventory")
+            self.Inventory()
+
     def Execute(self):
         '''Run all methods'''
         self.Inventory()
@@ -189,6 +195,9 @@ class Frame:
         self.Install()
         self.times['install'] = time.time()
         self.Remove()
+        self.times['remove'] = time.time()
+        self.ReInventory()
+        self.times['reinventory'] = time.time()
         self.times['finished'] = time.time()
         self.CondDisplayState('final')
 
