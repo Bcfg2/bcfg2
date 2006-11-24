@@ -41,6 +41,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
         for pkg in cache.Packages:
             if pkg.CurrentVer:
                 self.installed[pkg.Name] = pkg.CurrentVer.VerStr
+        self.extra = self.FindExtraPackages()
 
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
