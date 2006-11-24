@@ -93,7 +93,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             owner = pwd.getpwuid(ondisk[ST_UID])[0]
             group = grp.getgrgid(ondisk[ST_GID])[0]
         except (OSError, KeyError):
-            self.logger.error('User resolution failing')
+            self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
             owner = 'root'
             group = 'root'
         perms = oct(os.stat(entry.get('name'))[ST_MODE])[-4:]
