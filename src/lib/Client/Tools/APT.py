@@ -53,7 +53,12 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and entry.get('verify', 'true') == 'true':
                     output = self.cmd.run("/usr/bin/debsums -as %s" % entry.get('name'))[1]
-                    if [filename for filename in output if filename not in modlist]:
+                    files = [item.split()[-1] for item in output]
+                    bad = [filename for filename in files if filename not in modlist]
+                    if bad:
+                        self.logger.info("Package %s failed validation. Bad files are:" % \
+                                         entry.get('name'))
+                        self.logger.info(bad)
                         return False
                 return True
             else:
