@@ -131,7 +131,7 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='lo
         return 
     # add the handler to the root logger
     if to_console:
-        console = logging.StreamHandler()
+        console = logging.StreamHandler(sys.stdout)
         console.setLevel(logging.DEBUG)
         # tell the handler to use this format
         console.setFormatter(TermiosFormatter())
