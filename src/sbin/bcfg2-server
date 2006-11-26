@@ -97,6 +97,15 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             for method in plugin.__rmi__:
                 self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
                                        "%s.%s" % (plugin.__name__, method))
+        famfd = self.Core.fam.fileno()
+        while True:
+            try:
+                rsockinfo = select.select([famfd], [], [], 15)[0]
+                if not rsockinfo:
+                    break
+                self.Core.Service()
+            except socket.error:
+                continue
 
     def get_request(self):
         '''We need to do work between requests, so select with timeout instead of blocking in accept'''
