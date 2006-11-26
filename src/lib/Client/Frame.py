@@ -106,7 +106,7 @@ class Frame:
         elif self.setup['interactive']:
             self.whitelist = promptFilter(prompt, [entry for entry in self.states \
                                                    if not self.states[entry]])
-            self.removal = promptFilter(rprompt, self.extra)
+            self.removal = promptFilter(rprompt, self.removal)
         elif self.setup['bundle']:
             # only install entries in specified bundle
             mbs = [bund for bund in self.config.findall('./Bundle') \
