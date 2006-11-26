@@ -53,6 +53,10 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and entry.get('verify', 'true') == 'true':
                     output = self.cmd.run("/usr/bin/debsums -as %s" % entry.get('name'))[1]
+                    if len(output) == 1 and "no md5sums for" in output[0]:
+                        self.logger.info("Package %s has no md5sums. Cannot verify" % \
+                                         entry.get('name'))
+                        return False
                     files = [item.split()[-1] for item in output]
                     bad = [filename for filename in files if filename not in modlist]
                     if bad:
