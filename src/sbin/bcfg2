@@ -139,8 +139,9 @@ class Client:
 
             try:
                 probe_data = proxy.GetProbes()
-            except xmlrpclib.Fault:
+            except xmlrpclib.Fault, flt:
                 self.logger.error("Failed to download probes from bcfg2")
+                self.logger.error(flt.faultString)
                 raise SystemExit, 1
 
             times['probe_download'] = time.time()
