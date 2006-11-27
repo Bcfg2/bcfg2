@@ -139,9 +139,10 @@ class Frame:
             mods = self.modified
             mbundles = [struct for struct in self.config if struct.tag == 'Bundle' and \
                         [mod for mod in mods if mod in struct]]
-            self.logger.info("The Following Bundles have been modifed:")
-            self.logger.info([mbun.get('name') for mbun in mbundles])
-            self.logger.info("")
+            if mbundles:
+                self.logger.info("The Following Bundles have been modifed:")
+                self.logger.info([mbun.get('name') for mbun in mbundles])
+                self.logger.info("")
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
@@ -196,8 +197,9 @@ class Frame:
         self.times['install'] = time.time()
         self.Remove()
         self.times['remove'] = time.time()
-        self.ReInventory()
-        self.times['reinventory'] = time.time()
+        if self.modified:
+            self.ReInventory()
+            self.times['reinventory'] = time.time()
         self.times['finished'] = time.time()
         self.CondDisplayState('final')
 
