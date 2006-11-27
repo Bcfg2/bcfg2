@@ -1,3 +1,21 @@
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+c = ConfigParser()
+#This needs to be configurable one day somehow
+c.read(['/etc/bcfg2.conf'])
+
+defaults = {'database_engine':'',
+            'database_name':'',
+            'database_user':'',
+            'database_password':'',
+            'database_host':'',
+            'database_port':3306,
+            }
+
+if c.has_section('hostbase'):
+    options = dict(c.items('hostbase'))
+else:
+    options = defaults
+
 # Django settings for Hostbase project.
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -7,36 +25,35 @@ ADMINS = (
 MANAGERS = ADMINS
 
 # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-DATABASE_ENGINE = ''
+DATABASE_ENGINE = options['database_engine']
 # Or path to database file if using sqlite3.
-DATABASE_NAME = ''
+DATABASE_NAME = options['database_name']
 # Not used with sqlite3.
-DATABASE_USER = ''
+DATABASE_USER = options['database_user']
 # Not used with sqlite3.
-DATABASE_PASSWORD = ''
+DATABASE_PASSWORD = options['database_password']
 # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_HOST = ''
+DATABASE_HOST = options['database_host']
 # Set to empty string for default. Not used with sqlite3.
-DATABASE_PORT = ''             
+DATABASE_PORT = int(options['database_port'])
 # Local time zone for this installation. All choices can be found here:
 # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
 TIME_ZONE = ''
 
 # enter the defauly MX record machines will get in Hostbase
 # this setting may move elsewhere eventually
-DEFAULT_MX = 'mailserver.somewhere.com'
-PRIORITY = 30
+DEFAULT_MX = options['default_mx']
+PRIORITY = int(option['priority'])
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Uncomment a backend below if you would like to use it for authentication
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
-                           #'Hostbase.backends.NISBackend',
+                           'Hostbase.backends.NISBackend',
                            #'Hostbase.backends.LDAPBacken',                           
                            )
-
 # enter an NIS group name you'd like to give access to edit hostbase records
-AUTHORIZED_GROUP = ''
+AUTHORIZED_GROUP = options['authorized_group']
 
 #create login url area:
 import django.contrib.auth
