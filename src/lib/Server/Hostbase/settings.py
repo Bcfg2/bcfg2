@@ -43,7 +43,7 @@ TIME_ZONE = ''
 # enter the defauly MX record machines will get in Hostbase
 # this setting may move elsewhere eventually
 DEFAULT_MX = options['default_mx']
-PRIORITY = int(option['priority'])
+PRIORITY = int(options['priority'])
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
