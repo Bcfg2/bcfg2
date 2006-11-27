@@ -57,7 +57,16 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                         self.logger.info("Package %s has no md5sums. Cannot verify" % \
                                          entry.get('name'))
                         return False
-                    files = [item.split()[-1] for item in output]
+                    files = []
+                    for item in output:
+                        if "checksum mismatch" in item:
+                            files.append(item.split()[-1])
+                        elif "can't open" in item:
+                            files.append(item.split()[5])
+                        else:
+                            self.logger.error("Got Unsupported pattern %s from debsums" \
+                                              % item)
+                            files.append(item)
                     bad = [filename for filename in files if filename not in modlist]
                     if bad:
                         self.logger.info("Package %s failed validation. Bad files are:" % \
