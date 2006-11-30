@@ -9,13 +9,13 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 
-from Hostbase.hostbase.models import *
+from Bcfg2.Server.Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
 from django.shortcuts import render_to_response
 from django import forms
-from Hostbase import settings, regex
-import re
+from Bcfg2.Server.Hostbase import settings, regex
+import dns, re
     
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
@@ -153,34 +153,26 @@ def fill(template, hostdata, dnsdata=False):
     return template
 
 def edit(request, host_id):
-    """Edit general host information
-    Data is validated before being committed to the database"""
-    # fix bug when ip address changes, update the dns info appropriately
+    """Edit general host information"""
+    manipulator = Host.ChangeManipulator(host_id)
     changename = False
-    if request.GET.has_key('sub'):
+    if request.method == 'POST':
         host = Host.objects.get(id=host_id)
         if request.POST['hostname'] != host.hostname:
             oldhostname = host.hostname.split(".")[0]
-            host.hostname = request.POST['hostname']
-            host.save()
             changename = True
         interfaces = host.interface_set.all()
-        if not validate(request, False, host_id):
-            if (request.POST.has_key('outbound_smtp')
-                and not host.outbound_smtp or
-                not request.POST.has_key('outbound_smtp')
-                and host.outbound_smtp):
-                host.outbound_smtp = not host.outbound_smtp
-            # add validation for attribs here
-            # likely use a helper fucntion
-            for attrib in attribs:
-                if request.POST.has_key(attrib):
-                    host.__dict__[attrib] = request.POST[attrib].lower()
-            if request.POST.has_key('comments'):
-                host.comments = request.POST['comments']
-            if len(request.POST['expiration_date'].split("-")) == 3:
-                (year, month, day) = request.POST['expiration_date'].split("-")
-                host.expiration_date = date(int(year), int(month), int(day))
+        new_data = request.POST.copy()
+
+        errors = manipulator.get_validation_errors(new_data)
+        if not errors:
+
+            # somehow keep track of multiple interface change manipulators
+            # as well as multiple ip chnage manipulators??? (add manipulators???)
+            # change to many-to-many??????
+
+            # dynamically look up mx records?
+
             for inter in interfaces:
                 changetype = False
                 ips = IP.objects.filter(interface=inter.id)
@@ -298,7 +290,7 @@ def edit(request, host_id):
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
             return render_to_response('errors.html',
-                                      {'failures': validate(request, False, host_id),
+                                      {'failures': errors,
                                        'logged_in': request.session.get('_auth_user_id', False)})
     else:
         host = Host.objects.get(id=host_id)
@@ -676,19 +668,19 @@ def validate(request, new=False, host_id=None):
             and regex.host.match(request.POST['hostname'])):
         failures.append('hostname')
 
-    if not regex.printq.match(request.POST['printq']) and request.POST['printq']:
-        failures.append('printq')
+##     if not regex.printq.match(request.POST['printq']) and request.POST['printq']:
+##         failures.append('printq')
 
-    if not regex.user.match(request.POST['primary_user']):
-        failures.append('primary_user')
+##     if not regex.user.match(request.POST['primary_user']):
+##         failures.append('primary_user')
 
-    if (not regex.user.match(request.POST['administrator'])
-        and request.POST['administrator']):
-        failures.append('administrator')
+##     if (not regex.user.match(request.POST['administrator'])
+##         and request.POST['administrator']):
+##         failures.append('administrator')
 
-    if not (request.POST['location']
-            and regex.location.match(request.POST['location'])):
-        failures.append('location')
+##     if not (request.POST['location']
+##             and regex.location.match(request.POST['location'])):
+##         failures.append('location')
 
     if new:
         if (not regex.macaddr.match(request.POST['mac_addr_new'])
@@ -787,11 +779,12 @@ def zonenew(request):
     nsform = forms.FormWrapper(nsmanipulator, {}, {})
     mxform = forms.FormWrapper(mxmanipulator, {}, {})
     aform = forms.FormWrapper(addressmanipulator, {}, {})
-    return render_to_response('zonenew.html', {'form': form,
-                                               'nsform': nsform,
-                                               'mxform': mxform,
-                                               'aform': aform,
-                                               })
+    context = {'form': form,
+               'nsform': nsform,
+               'mxform': mxform,
+               'aform': aform,
+               }
+    return render_to_response('zonenew.html', context)
 
 def zoneedit(request, zone_id):
     manipulator = Zone.ChangeManipulator(zone_id)
@@ -799,9 +792,11 @@ def zoneedit(request, zone_id):
     mxaddmanipulator = MX.AddManipulator()
     addressaddmanipulator = ZoneAddress.AddManipulator()
     zone = manipulator.original_object
-    nsmanipulators = [Nameserver.ChangeManipulator(ns.id) for ns in zone.nameservers.all()]
+    nsmanipulators = [Nameserver.ChangeManipulator(ns.id)
+                      for ns in zone.nameservers.all()]
     mxmanipulators = [MX.ChangeManipulator(mx.id) for mx in zone.mxs.all()]
-    addressmanipulators = [ZoneAddress.ChangeManipulator(address.id) for address in zone.addresses.all()]
+    addressmanipulators = [ZoneAddress.ChangeManipulator(address.id)
+                           for address in zone.addresses.all()]
     if request.method == 'POST':
         new_data = request.POST.copy()
         new_data['serial'] = str(zone.serial)
@@ -820,16 +815,17 @@ def zoneedit(request, zone_id):
     nsforms = [forms.FormWrapper(nsm, nsm.flatten_data(), {}) for nsm in nsmanipulators]
     mxforms = [forms.FormWrapper(mxm, mxm.flatten_data(), {}) for mxm in mxmanipulators]
     aforms = [forms.FormWrapper(am, am.flatten_data(), {}) for am in addressmanipulators]
-    return render_to_response('zoneedit.html', {'form': form,
-                                                'nsforms': nsforms,
-                                                'mxforms': mxforms,
-                                                'aforms': aforms,
-                                                'nsadd': forms.FormWrapper(nsaddmanipulator, {}, {}),
-                                                'mxadd': forms.FormWrapper(mxaddmanipulator, {}, {}),
-                                                'addadd': forms.FormWrapper(addressaddmanipulator, {}, {}),
-                                                'zone_id': zone_id,
-                                                'zone': zone.zone
-                                                })
+    context = {'form': form,
+               'nsforms': nsforms,
+               'mxforms': mxforms,
+               'aforms': aforms,
+               'nsadd': forms.FormWrapper(nsaddmanipulator, {}, {}),
+               'mxadd': forms.FormWrapper(mxaddmanipulator, {}, {}),
+               'addadd': forms.FormWrapper(addressaddmanipulator, {}, {}),
+               'zone_id': zone_id,
+               'zone': zone.zone
+               }
+    return render_to_response('zoneedit.html', context)
 
 def do_zone_add(manipulator, new_data):
     manipulator.do_html2python(new_data)
@@ -857,7 +853,7 @@ def check_zone_errors(new_data):
     priorities = new_data.getlist('priority')
     count = 0
     for mx in new_data.getlist('mx'):
-        errors.update(MX.AddManipulator().get_validation_errors({'mx':mx, 'priority':priorities[0]}))
+        errors.update(MX.AddManipulator().get_validation_errors({'mx':mx, 'priority':priorities[count]})) 
         count += 1
     return errors
 

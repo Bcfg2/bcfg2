@@ -44,7 +44,7 @@ class Host(models.Model):
     security_class = models.CharField('class', maxlength=16)
     support = models.CharField(maxlength=8, choices=SUPPORT_CHOICES)
     csi = models.CharField(maxlength=32, blank=True)
-    printq = models.CharField(maxlength=32)
+    printq = models.CharField(maxlength=32, blank=True)
     outbound_smtp = models.BooleanField()
     primary_user = models.EmailField()
     administrator = models.EmailField(blank=True)
