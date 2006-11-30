@@ -88,5 +88,5 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
-    'Bcfg2.Server.Reports'
+    'Bcfg2.Server.Reports.reports'
 )
