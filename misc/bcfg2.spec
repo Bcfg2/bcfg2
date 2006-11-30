@@ -64,6 +64,7 @@ Bcfg2 client
 %defattr(-,root,root)
 /usr/sbin/bcfg2-*
 /usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Server/*
+/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Server/*/*
 /usr/share/bcfg2/schemas/*
 /usr/share/bcfg2/xsl-transforms/*
 /usr/share/man/man8/*
