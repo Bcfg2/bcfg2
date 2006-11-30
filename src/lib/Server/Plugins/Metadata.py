@@ -22,6 +22,10 @@ class ClientMetadata(object):
         self.categories = categories
         self.probes = probed
 
+    def inGroup(self, group):
+        '''Test to see if client is a member of group'''
+        return group in self.groups
+
 class Metadata(Bcfg2.Server.Plugin.Plugin):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
