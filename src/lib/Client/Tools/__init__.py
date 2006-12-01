@@ -1,8 +1,8 @@
 '''This contains all Bcfg2 Tool modules'''
 __revision__ = '$Revision$'
 
-__all__ = ["APT", "Blast", "Chkconfig", "DebInit", "Encap", "PostInstall",
-           "POSIX", "RPM", "SMF", "SYSV"]
+__all__ = ["APT", "Blast", "Chkconfig", "DebInit", "Encap", "Portage",
+           "PostInstall", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV"]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML
 
