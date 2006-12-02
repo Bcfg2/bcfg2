@@ -25,6 +25,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             self.cmd.run("emerge -q --sync")
         self.installed = {}
         self.RefreshPackages()
+        
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
         cache = self.cmd.run("equery -q list")

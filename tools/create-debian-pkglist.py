@@ -20,7 +20,7 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
     except:
         pass
     output = open(filename, 'w')
-    depfile = open(filename + '-deps', 'w')
+    #depfile = open(filename + '-deps', 'w')
     groupinfo = "".join(['<Group name="%s">' % group for group in groups])
     output.write('<PackageList priority="%s" type="deb">%s\n' % (prio, groupinfo))
     for dist in dists:
@@ -61,7 +61,7 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
             if data.count(data[0]) == len(data):
                 elt = lxml.etree.Element("Package", name=pkg)
                 [lxml.etree.SubElement(elt, "Package", name=dep) for dep in data[0]]
-                depfile.write(lxml.etree.tostring(elt) + '\n')
+                #depfile.write(lxml.etree.tostring(elt) + '\n')
                 del pkgdeps[pkg]
         # now we need to do per-arch entries
         perarch = 0
@@ -77,7 +77,7 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
     closegroup = "".join(['</Group>' for group in groups])
     output.write('%s</PackageList>\n' % (closegroup))
     output.close()
-    depfile.close()
+    #depfile.close()
     if filename[-1] == '~':
         old = open(filename[:-1]).read()
         new = open(filename).read()
