@@ -36,3 +36,5 @@ logic.
 
 - Brian Pellin and Andrew Lusk did substantial work on Bcfg1, some of
 which was used in the bcfg2 client.
+
+- Michael Jinks <mjinks@uchicago.edu> wrote the gentoo tool drivers.
