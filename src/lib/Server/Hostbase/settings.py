@@ -49,8 +49,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Uncomment a backend below if you would like to use it for authentication
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
-                           'Hostbase.backends.NISBackend',
-                           #'Hostbase.backends.LDAPBacken',                           
+                           'Bcfg2.Server.Hostbase.backends.NISBackend',
+                           #'Bcfg2.Server.Hostbase.backends.LDAPBacken',                           
                            )
 # enter an NIS group name you'd like to give access to edit hostbase records
 AUTHORIZED_GROUP = options['authorized_group']
@@ -90,7 +90,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
 )
 
-ROOT_URLCONF = 'Hostbase.urls'
+ROOT_URLCONF = 'Bcfg2.Server.Hostbase.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
