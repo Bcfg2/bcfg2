@@ -26,8 +26,8 @@ test -x $DAEMON || exit 5
 # Include lsb functions
 . /lib/lsb/init-functions
 
-msg=log_success_msg
-fail=log_failure_msg
+alias l_msg log_success_msg
+alias l_fail log_failure_msg
 
 # Internal variables
 BINARY=$(basename $DAEMON)
@@ -39,9 +39,9 @@ case "$1" in
     STATUS=$?
     if [ "$STATUS" = 0 ]
     then
-	${msg} "bcfg2-server"
+	l_msg "bcfg2-server"
     else
-	${fail} "bcfg2-server"
+	l_fail "bcfg2-server"
     fi
     exit $STATUS
     ;;
@@ -50,10 +50,10 @@ case "$1" in
     killproc ${BINARY}
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
-      ${msg} "bcfg2-server"
+      l_msg "bcfg2-server"
       exit 0
     else
-      ${fail} "bcfg2-server"
+      l_fail "bcfg2-server"
     fi
     exit $STATUS
     ;;
@@ -72,16 +72,16 @@ case "$1" in
 
     if [ -f $PIDFILE ]; then
       if [ -n "$PID" ]; then
-	${fail} "$BINARY dead but pid file exists..."
+	l_fail "$BINARY dead but pid file exists..."
 	exit 1
       fi
     fi
     
-    ${fail} "$BINARY is not running"
+    l_fail "$BINARY is not running"
     exit 3
     ;;
   *)
-    ${msg} "Usage: $0 {start|stop|status|reload|restart|force-reload}"
+    l_msg "Usage: $0 {start|stop|status|reload|restart|force-reload}"
     exit 1
     ;;
 esac
