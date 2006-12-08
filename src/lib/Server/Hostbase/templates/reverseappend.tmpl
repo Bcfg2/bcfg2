@@ -1,4 +1,4 @@
 {% if fileorigin %}$ORIGIN {{ fileorigin }}.in-addr.arpa.{% endif %}
 $ORIGIN {{ inaddr }}.in-addr.arpa.
-{% for host in hosts %}{% ifequal host.2 0 %}{{ host.3.3 }}			PTR	{{ host.0 }}.{% else %}{{ host.3.3 }}			PTR	{{ host.4.0 }}-{{ host.3.2 }}.{{ host.4.1 }}.{% endifequal %}
+{% for host in hosts %}{{ host.0.3 }}			PTR	{{ host.1.0 }}.{{ host.1.1 }}
 {% endfor %}

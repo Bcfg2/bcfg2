@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 import sys, os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
 from syslog import syslog, LOG_INFO
 from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
@@ -235,6 +235,7 @@ class Hostbase(Plugin):
 
         reversenames.sort()
         for filename in reversenames:
+            print filename
             originlist = []
             cursor.execute("""
             SELECT h.hostname, p.ip_addr FROM ((hostbase_host h
@@ -250,7 +251,7 @@ class Hostbase(Plugin):
                  if (".".join([ip[1].split(".")[2], filename[0]]),
                      ".".join([filename[1], ip[1].split(".")[2]])) not in originlist]
                 for origin in originlist:
-                    hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
+                    hosts = [(host[1].split("."), host[0].split(".", 1))
                              for host in reversehosts
                              if host[1].rstrip('0123456789').rstrip('.') == origin[1]]
                     context = Context({
@@ -261,7 +262,7 @@ class Hostbase(Plugin):
                     self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
             else:
                 originlist = [filename[0]]
-                hosts = [host.__add__((host[1].split("."), host[0].split(".", 1)))
+                hosts = [(host[1].split("."), host[0].split(".", 1))
                          for host in reversehosts]
                 context = Context({
                     'hosts': hosts,
@@ -269,6 +270,7 @@ class Hostbase(Plugin):
                     'fileorigin': None,
                     })        
                 self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
+            print hosts
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
 
     def buildDHCP(self):
