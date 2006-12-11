@@ -257,7 +257,7 @@ class Core(object):
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
-                      [struct.BuildStructures(metadata) for struct in self.structures])
+                      [struct.BuildStructures(metadata) for struct in self.structures], [])
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
