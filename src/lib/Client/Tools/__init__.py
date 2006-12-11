@@ -47,6 +47,10 @@ class executor:
                 self.logger.debug('< %s' % moreOutput[:-1])
             output += moreOutput
             cmdstat = runpipe.poll()
+        for line in runpipe.fromchild.readlines():
+            if len(line) > 0:
+                self.logger.debug('< %s' % line[:-1])
+            output += line
 
         return (cmdstat, [line for line in output.split('\n') if line])
 
