@@ -51,6 +51,14 @@ class Plugin(object):
         '''Receive probe results pertaining to client'''
         pass
 
+    def HandlesEntry(self, entry):
+        '''This is the slow path method for routing configuration binding requests'''
+        return False
+
+    def HandleEntry(self, entry, metadata):
+        '''This is the slow-path handler for configuration entry binding'''
+        raise PluginExecutionError
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):
