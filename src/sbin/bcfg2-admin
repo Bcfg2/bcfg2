@@ -89,7 +89,8 @@ def initialize_repo():
         pass
     
     #create the repo dirs
-    for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Svcmgr', 'Rules', 'etc', 'Metadata' ]:
+    for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Svcmgr', 'Rules', 'etc', 'Metadata',
+                   'Base', 'Bundler']:
         path = "%s/%s" % (repo, subdir)
         newpath = ''
         for subdir in path.split('/'):
@@ -123,6 +124,7 @@ def initialize_repo():
 
     #now the clients file
     open("%s/Metadata/clients.xml"%repo, "w").write(clients%socket.getfqdn())
+    print "Repository created successfuly in %s" % (repo)
 
 def update_file(path, diff):
     '''Update file at path using diff'''
