@@ -278,8 +278,11 @@ class Core(object):
             return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
             generators = ", ".join([gen.__name__ for gen in glist])
-            logger.error("%s %s served by multiple generators: %s" % (entry.tag,
-                                                                           entry.get('name'), generators))
+            logger.error("%s %s served by multiple generators: %s" % \
+                         (entry.tag, entry.get('name'), generators))
+        g2list = [gen for gen in self.generators if gen.HandlesEntry(entry)]
+        if len(g2list) == 1:
+            return g2list[0].HandleEntry(entry, metadata)
         raise PluginExecutionError, (entry.tag, entry.get('name'))
                 
     def BuildConfiguration(self, client):
