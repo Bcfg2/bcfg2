@@ -29,6 +29,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 "ssh_host_rsa_key.pub.H_%s", "ssh_host_key.pub.H_%s"]
     hostkeys = ["ssh_host_dsa_key.H_%s",
                 "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
+    keypatterns = ['ssh_host_dsa_key', 'ssh_host_rsa_key', 'ssh_host_key',
+                   'ssh_host_dsa_key.pub', 'ssh_host_rsa_key.pub', 'ssh_host_key.pub']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -52,6 +54,16 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                               prefix + '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
         self.__rmi__ = ['GetPubKeys']
+
+
+    def HandlesEntry(self, entry):
+        '''Handle key entries dynamically'''
+        return entry.tag == 'ConfigFile' and \
+               [fpat for fpat in self.keypatterns if entry.get('name').endswith(fpat)]
+
+    def HandleEntry(self, entry, metadata):
+        '''Bind key data'''
+        return self.build_hk(entry, metadata)
 
     def GetPubKeys(self, _):
         '''Export public key data'''
