@@ -48,7 +48,7 @@ clients = '''
 '''
 
 prompt = '''
-please select which os your machine is running:
+please select which operating system your machine is running:
 a. Redhat/Fedora/RHEL/RHAS/Centos
 b. SUSE/SLES
 c. Mandrake
