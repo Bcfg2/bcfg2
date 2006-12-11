@@ -26,8 +26,8 @@ test -x $DAEMON || exit 5
 # Include lsb functions
 . /lib/lsb/init-functions
 
-alias l_msg log_success_msg
-alias l_fail log_failure_msg
+alias l_msg=log_success_msg
+alias l_fail=log_failure_msg
 
 # Internal variables
 BINARY=$(basename $DAEMON)
