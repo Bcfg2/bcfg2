@@ -75,8 +75,12 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                         return False
                 return True
             else:
+                self.logger.info("Incorrect version of Package %s installed: %s != %s" \
+                                 % (entry.get('name'), self.installed[entry.get('name')],
+                                    entry.get('version')))
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False
+        self.logger.info("Package %s not installed" % (entry.get('name')))
         entry.set('current_exists', 'false')
         return False
 
