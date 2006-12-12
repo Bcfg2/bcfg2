@@ -131,8 +131,8 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
             name = self.Core.metadata.resolve_client(address[0])
             meta = self.Core.metadata.get_metadata(name)
             
-            for generator in self.Core.generators:
-                for probe in generator.GetProbes(meta):
+            for plugin in self.Core.plugins.values():
+                for probe in plugin.GetProbes(meta):
                     resp.append(probe)
             return tostring(resp)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:

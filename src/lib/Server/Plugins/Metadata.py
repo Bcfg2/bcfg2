@@ -209,7 +209,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         ret = []
         if self.probes:
             bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
-            for name, entry in [x for x in self.probes.entries.iteritems() if x.data]:
+            for name, entry in [(name, entry) for name, entry in \
+                                self.probes.entries.iteritems() if entry.data]:
                 probe = lxml.etree.Element('probe')
                 probe.set('name', name )
                 probe.set('source', self.__name__)
