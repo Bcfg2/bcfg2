@@ -64,6 +64,11 @@ class CheetahProperties(Bcfg2.Server.Plugin.SingleXMLFileBacked):
         except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse properties")
 
+class FakeProperties:
+    '''Dummy class used when properties dont exist'''
+    def __init__(self):
+        self.properties = lxml.etree.Element("Properties")
+
 class TCheetah(Bcfg2.Server.Plugin.Plugin):
     '''The TCheetah generator implements a templating mechanism for configuration files'''
     __name__ = 'TCheetah'
@@ -78,7 +83,12 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
-        self.properties = CheetahProperties('%s/../etc/properties.xml' % self.data, self.core.fam)
+        try:
+            self.properties = CheetahProperties('%s/../etc/properties.xml' \
+                                                % (self.data), self.core.fam)
+        except:
+            self.properties = FakeProperties()
+            self.logger.info("Failed to read properties file; TCheetah properties disabled")
 
     def BuildEntry(self, entry, metadata):
         '''Dispatch fetch calls to the correct object'''
