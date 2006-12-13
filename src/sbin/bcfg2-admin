@@ -1,13 +1,16 @@
 #!/usr/bin/python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import difflib, lxml.etree, os, socket, sys, ConfigParser
+import difflib, logging, lxml.etree, os, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging
+
+log = logging.getLogger('bcfg-admin')
 
 usage = '''
 bcfg2-admin [options]
-init      initialize the bcfg2 repository( this is interactive; only run once )
-pull <client> <entry type> <entry name>
+init        - initialize the bcfg2 repository( this is interactive; only run once )
+mineentry   <client> <entry type> <entry name> - mine statistics for entry information
+minestruct  <client> - mine statistics for extra entries
 '''
 
 config = '''
@@ -132,17 +135,25 @@ def update_file(path, diff):
     print "writing file, %s" % path
     open(path, 'w').write(newdata)
 
-def do_pull(client, etype, ename):
-    '''Make currently recorded client state correct for entry'''
+def get_repo_path():
+    '''return repository path'''
     cfile = '/etc/bcfg2.conf'
     cfp = ConfigParser.ConfigParser()
     cfp.read(cfile)
-    repo = cfp.get('server', 'repository')
+    return cfp.get('server', 'repository')
+
+def load_stats(client):
+    repo = get_repo_path()
     stats = lxml.etree.parse("%s/etc/statistics.xml" % (repo))
     hostent = stats.xpath('.//Node[@name="%s"]' % client)
     if not hostent:
-        print "Could not find stats for client %s" % (client)
-    sdata = hostent[0]
+        err_exit("Could not find stats for client %s" % (client))
+    return hostent[0]
+
+def do_pull(client, etype, ename):
+    '''Make currently recorded client state correct for entry'''
+    cfile = '/etc/bcfg2.conf'
+    sdata = load_stats(client)
     if sdata.xpath('.//Statistics[@state="dirty"]'):
         state = 'dirty'
     else:
@@ -199,6 +210,54 @@ def do_pull(client, etype, ename):
     else:
         err_exit("Don't support entry type %s yet" % etype)
     # svn commit if running under svn
+
+def do_minestruct(argdata):
+    '''Pull client entries into structure'''
+    if len(argdata) != 1:
+        err_exit("minestruct must be called with a client name")
+    client = argdata[0]
+    stats = load_stats(client)
+    if len(stats.getchildren()) == 2:
+        # client is dirty
+        current = [ent for ent in stats.getchildren() if ent.get('state') == 'dirty'][0]
+    else:
+        current = stats.getchildren()[0]
+    extra = current.find('Extra').getchildren()
+    log.info("Found %d extra entries" % (len(extra)))
+    log.info(["%s: %s" % (entry.tag, entry.get('name')) for entry in extra])
+
+def do_tidy(args):
+    '''Clean up unused or unusable files from the repository'''
+    hostmatcher = re.compile('.*\.H_(\S+)$')
+    repo = get_repo_path()
+    score = ([], [])
+    # clean up unresolvable hosts in SSHbase
+    for name in os.listdir("%s/SSHbase" % (repo)):
+        if not hostmatcher.match(name):
+            print "could not match name %s" % (name)
+        else:
+            hostname = hostmatcher.match(name).group(1)
+            if hostname in score[0] + score[1]:
+                continue
+            try:
+                socket.gethostbyname(hostname)
+                score[0].append(hostname)
+            except:
+                print "could not resolve %s" % (hostname)
+                score[1].append(hostname)
+    for name in os.listdir("%s/SSHbase" % (repo)):
+        if not hostmatcher.match(name):
+            print "could not match name %s" % (name)
+        else:
+            if hostmatcher.match(name).group(1) in score[1]:
+                if '-f' in args:
+                    os.unlink("%s/SSHbase/%s" % (repo, name))
+                else:
+                    answer = raw_input("Unlink file %s? [yN] " % name)
+                    if answer in ['y', 'Y']:
+                        os.unlink("%s/SSHbase/%s" % (repo, name))
+    # clean up file~
+    # clean up files without parsable names in Cfg
     
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
@@ -209,6 +268,10 @@ if __name__ == '__main__':
             print usage
             raise SystemExit, 1
         do_pull(sys.argv[2], sys.argv[3], sys.argv[4])
+    elif sys.argv[1] == 'minestruct':
+        do_minestruct(sys.argv[2:])
+    elif sys.argv[1] == 'tidy':
+        do_tidy(sys.argv[2:])
     else:
         print usage
         
