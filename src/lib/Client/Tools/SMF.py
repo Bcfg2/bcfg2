@@ -70,7 +70,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
                                      (entry.get('FMRI')))[0]
         else:
             if entry.get('FMRI').startswith('lrc'):
-                loc = entry.get("FMRI")[4:].replace('_', ',')
+                loc = entry.get("FMRI")[4:].replace('_', '.')
                 try:
                     os.stat(loc.replace('/S', '/Disabled.'))
                     self.logger.debug("Renaming file %s to %s" % \
@@ -110,7 +110,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
             else:
                 if entry.get('status') == 'on':
                     self.logger.info("Restarting smf service %s" % (entry.get("FMRI")))
-                    self.cmd.run("svcadm restart %s" % (entry.get("FMRI")))
+                    self.cmd.run("/usr/sbin/svcadm restart %s" % (entry.get("FMRI")))
                 else:
-                    self.cmd.run("svcadm disable %s" % (entry.get("FMRI")))
+                    self.cmd.run("/usr/sbin/svcadm disable %s" % (entry.get("FMRI")))
 
