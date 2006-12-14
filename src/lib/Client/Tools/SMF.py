@@ -41,7 +41,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
-            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % entry.attrib['name'])[1][0].split()
+            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % entry.get('name'))[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             return False
@@ -93,21 +93,16 @@ class SMF(Bcfg2.Client.Tools.Tool):
     def FindExtra(self):
         '''Find Extra SMF Services'''
         allsrv = [name for name, version in \
-                  [ srvc.strip().split() for srvc in
-                    self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1] ]
+                  [srvc.split() for srvc in
+                   self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1]]
                   if version != 'disabled']
 
-        for svc in self.getSupportedEntries():
-            name = self.cmd.run("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % \
-                                svc.get('name'))[1]
-            if name:
-                svc.set('FMRI', name[0])
-                if name in allsrv:
-                    allsrv.remove(name)
-            else:
-                self.logger.info("Failed to locate FMRI for service %s" % svc.get('name'))
-                
-        return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) for name in allsrv]
+        self.logger.info("Found %d total services" % (len(allsrv)))
+        [allsrv.remove(svc.get('FMRI')) for svc in self.getSupportedEntries() \
+         if svc.get("FMRI") in allsrv]
+        self.logger.info("Found %d extra services" % (len(allsrv)))
+        return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
+                for name in allsrv]
 
     def BundleUpdated(self, bundle):
         '''Restart smf services'''

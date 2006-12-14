@@ -38,21 +38,16 @@ class executor:
         self.logger.debug('> %s' % command)
 
         runpipe = readonlypipe(command, bufsize=16384)
-        output = ''
-        cmdstat = -1
-        while cmdstat == -1:
-            runpipe.fromchild.flush()
-            moreOutput = runpipe.fromchild.readline()
-            if len(moreOutput) > 0:                
-                self.logger.debug('< %s' % moreOutput[:-1])
-            output += moreOutput
-            cmdstat = runpipe.poll()
-        for line in runpipe.fromchild.readlines():
+        output = []
+        runpipe.fromchild.flush()
+        line = runpipe.fromchild.readline()
+        while line:
             if len(line) > 0:
                 self.logger.debug('< %s' % line[:-1])
-            output += line
-
-        return (cmdstat, [line for line in output.split('\n') if line])
+            output.append(line[:-1])
+            line = runpipe.fromchild.readline()
+        cmdstat = runpipe.poll()
+        return (cmdstat, output)
 
 class Tool:
     '''All tools subclass this. It defines all interfaces that need to be defined'''
