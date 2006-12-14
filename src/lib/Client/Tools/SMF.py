@@ -97,10 +97,8 @@ class SMF(Bcfg2.Client.Tools.Tool):
                    self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1]]
                   if version != 'disabled']
 
-        self.logger.info("Found %d total services" % (len(allsrv)))
         [allsrv.remove(svc.get('FMRI')) for svc in self.getSupportedEntries() \
          if svc.get("FMRI") in allsrv]
-        self.logger.info("Found %d extra services" % (len(allsrv)))
         return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
                 for name in allsrv]
 
