@@ -277,15 +277,18 @@ def edit(request, host_id):
                 name = Name(ip=new_ip, name=new_name,
                             dns_view='global', only=False)
                 name.save()
+                name.mxs.add(mx)
                 new_name = "-".join([host.hostname.split(".")[0],
                                      new_inter.hdwr_type])
                 new_name += "." + host.hostname.split(".", 1)[1]
                 name = Name(ip=new_ip, name=new_name,
                             dns_view='global', only=False)
                 name.save()
+                name.mxs.add(mx)
                 name = Name(ip=new_ip, name=host.hostname,
                             dns_view='global', only=False)
                 name.save()
+                name.mxs.add(mx)
             host.save()
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
