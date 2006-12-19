@@ -533,10 +533,10 @@ def new(request):
         if request.POST['ip_addr_new'] and not request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
                                   mac_addr="",
-                                  hdwr_type=request.POST['hdwr_type_new1'],
+                                  hdwr_type=request.POST['hdwr_type_new'],
                                   dhcp=False)
             new_inter.save()
-            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new1'])
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
@@ -771,7 +771,7 @@ def zonenew(request):
             return render_to_response('errors.html', {'failures': errors})
         else:
             do_zone_add(manipulator, new_data)
-            return HttpResponseRedirect('/hostbase/zones/%s' % new_zone.id)
+            return HttpResponseRedirect('/hostbase/zones/')
     else:
         errors = new_data = {}
 
