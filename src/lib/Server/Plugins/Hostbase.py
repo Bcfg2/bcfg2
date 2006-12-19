@@ -165,14 +165,15 @@ class Hostbase(Plugin):
             INNER JOIN hostbase_name_mxs x ON n.id = x.name_id)
             INNER JOIN hostbase_mx m ON m.id = x.mx_id)
             LEFT JOIN hostbase_cname c ON n.id = c.name_id
-            WHERE h.hostname LIKE '%%%%%s' AND h.status = 'active'
+            WHERE n.name LIKE '%%%%%s'
+            AND h.status = 'active'
             ORDER BY h.hostname, n.name, p.ip_addr
             """ % zone[1]
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
             prevhost = (None, None, None, None)
             for host in zonehosts:
-                if not host[0].split(".", 1)[1] == zone[1]:
+                if not host[2].split(".", 1)[1] == zone[1]:
                     continue
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
                     self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
@@ -191,7 +192,6 @@ class Hostbase(Plugin):
                                                 host[2].split(".", 1)[0]))
                 prevhost = host
             self.filedata[zone[1]] += ("\n\n%s" % zone[9])
-
             self.Entries['ConfigFile']["%s/%s" % (self.filepath, zone[1])] = self.FetchFile
 
 
@@ -235,7 +235,6 @@ class Hostbase(Plugin):
 
         reversenames.sort()
         for filename in reversenames:
-            print filename
             originlist = []
             cursor.execute("""
             SELECT h.hostname, p.ip_addr FROM ((hostbase_host h
@@ -270,7 +269,6 @@ class Hostbase(Plugin):
                     'fileorigin': None,
                     })        
                 self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
-            print hosts
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
 
     def buildDHCP(self):
