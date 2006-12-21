@@ -27,6 +27,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
     def VerifyService(self, entry, _):
         '''Verify SMF Service Entry'''
         if not self.GetFMRI(entry):
+            self.logger.error("smf service %s doesn't have FMRI set" % entry.get('name'))
             return False
         if entry.get('FMRI').startswith('lrc'):
             filename = entry.get('FMRI').split('/')[-1]
@@ -108,9 +109,15 @@ class SMF(Bcfg2.Client.Tools.Tool):
             if not self.canInstall(entry):
                 self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
             else:
-                if entry.get('status') == 'on':
-                    self.logger.info("Restarting smf service %s" % (entry.get("FMRI")))
-                    self.cmd.run("/usr/sbin/svcadm restart %s" % (entry.get("FMRI")))
+                if entry.get("FMRI").startswith('lrc'):
+                    if entry.get('status') == 'on':
+                        self.logger.info("Restarting smf/lrc service %s"%(entry.get("name")))
+                        self.cmd.run("/etc/init.d/%s %s" % (entry.get('name'),
+                                                            entry.get('reload', 'reload')))
                 else:
-                    self.cmd.run("/usr/sbin/svcadm disable %s" % (entry.get("FMRI")))
+                    if entry.get('status') == 'on':
+                        self.logger.info("Restarting smf service %s" % (entry.get("FMRI")))
+                        self.cmd.run("/usr/sbin/svcadm restart %s" % (entry.get("FMRI")))
+                    else:
+                        self.cmd.run("/usr/sbin/svcadm disable %s" % (entry.get("FMRI")))
 
