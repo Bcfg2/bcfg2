@@ -11,7 +11,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     __name__ = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
     __important__ = ["/etc/make.conf", "/etc/make.globals", \
-    	             "/etc/make.profile/make.defaults", "/etc/make.profile/packages" ]
+                  "/etc/make.profile/make.defaults", "/etc/make.profile/packages" ]
     __handles__ = [('Package', 'ebuild')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
@@ -28,26 +28,27 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
-        cache = self.cmd.run("equery -q list")
+        cache = self.cmd.run("equery -q list")[1]
         self.installed = {}
         for pkg in cache:
-	    # there has got to be a better way...
-            name = re.split("-[0-9]", pkg)[0]
-            version = re.sub(name+"-", "", pkg)
+            pattern = re.compile('(.*)-(\d.*)')
+            if pattern.match(pkg):
+                 name = pattern.match(pkg).group(1)
+                 version = pattern.match(pkg).group(2)
             self.installed[name] = version
 
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
         if not entry.attrib.has_key('version'):
             self.logger.info("Cannot verify unversioned package %s" %
-                             (entry.attrib['name']))
+               (entry.attrib['name']))
             return False
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and entry.get('verify', 'true') == 'true':
-		    # mrj - there's probably a "python way" to avoid the grep...?
+                # mrj - there's probably a "python way" to avoid the grep...?
                     output = self.cmd.run("/usr/bin/equery check =%s | grep '!!!'" \
-		    	% entry.get('name'))[1]
+                             % entry.get('name'))[1]
                     if [filename for filename in output if filename not in modlist]:
                         return False
                 return True
