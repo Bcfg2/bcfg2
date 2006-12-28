@@ -6,6 +6,7 @@ from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Statistics import Statistics
 
 import logging, lxml.etree, os, stat, ConfigParser
+import Bcfg2.Server.Plugins.Metadata
 
 logger = logging.getLogger('Bcfg2.Core')
 
@@ -291,7 +292,7 @@ class Core(object):
         config = lxml.etree.Element("Configuration", version='2.0', revision=self.revision)
         try:
             meta = self.metadata.get_metadata(client)
-        except Bcfg2.Server.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             logger.error("Metadata consistency error for client %s" % client)
             return lxml.etree.Element("error", type='metadata error')
 
