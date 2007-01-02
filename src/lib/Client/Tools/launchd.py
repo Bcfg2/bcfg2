@@ -51,5 +51,18 @@ class LaunchD(Bcfg2.Client.Tools.Tool):
 
     def BundleUpdated(self, bundle):
         '''Reload LaunchD plist'''
-        pass
+        for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
+            if not self.canInstall(entry):
+                self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
+            else:
+                if entry.get('status') == 'on':
+                    #may need to start/stop as well!
+                    self.logger.info("Reloading LaunchD  service %s" % (entry.get("name")))
+                    #stop?
+                    self.cmd.run("/bin/launchctl unload %s" % (entry.get("plist")))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
+                    self.cmd.run("/bin/launchctl load %s" % (entry.get("plist")))
+                    #start?
+                else:
+                    #may need to stop as well!
+                    self.cmd.run("/bin/launchctl unload %s" % (entry.get("plist")))
 
