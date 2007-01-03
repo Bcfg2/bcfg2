@@ -1,6 +1,9 @@
+{% load syntax_coloring %}
+
 {% extends "base.html" %}
 
 {% block extra_header_info %}
+<link rel="stylesheet" type="text/css" href="/site_media/syntax-coloring.css" />
 <script type="text/javascript" src="/site_media/CalendarPopup.js"></script>
 <script language="JavaScript">var cal = new CalendarPopup();</script>
 {% endblock%}
@@ -41,7 +44,7 @@
 {% endif %}{% if not item.reason.current_exists %}
 <tr><td align="right"><b>Existance: </b></td><td colspan=2>This item does not currently exist on the host but is specified to exist in the configuration.</td></tr>
 {% endif %}{% if item.reason.current_diff %}
-<tr><td align="right"><b>Unified Diff: </b></td><td colspan=2><pre>{{item.reason.current_diff}}</pre></td></tr>
+<tr><td align="right"><b>Unified Diff: </b></td><td colspan=2><pre>{{item.reason.current_diff|syntaxhilight:"diff"}}</pre></td></tr>
 {% endif %}
 </table></center>
 <hr/>
