@@ -37,7 +37,7 @@
                       <xs:restriction base="xs:string">
                         <xs:enumeration value="nodes-individual"/>
                         <xs:enumeration value="nodes-digest"/>
-                        <xs:enumeration value="stats-overview"/>
+                        <xs:enumeration value="overview-stats"/>
                       </xs:restriction>
                     </xs:simpleType>
                   </xs:attribute>
