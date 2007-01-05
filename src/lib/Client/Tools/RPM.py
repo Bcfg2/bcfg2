@@ -9,7 +9,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
     __name__ = 'RPM'
     __execs__ = ['/bin/rpm', '/var/lib/rpm']
     __handles__ = [('Package', 'rpm')]
-    __req__ = {'Package': ['name', 'version', 'url']}
+    __req__ = {'Package': ['name', 'version']}
+    __ireq__ = {'Package': ['name', 'version', 'url']}
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
