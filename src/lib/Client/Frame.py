@@ -15,6 +15,8 @@ def promptFilter(prompt, entries):
             continue
     return ret
 
+toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'}}
+
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
     def __init__(self, config, setup, times):
@@ -51,6 +53,13 @@ class Frame:
                     tool.InstallConfigFile(cfile)
         # find entries not handled by any tools
         problems = [entry for struct in config for entry in struct if entry not in self.handled]
+        if toolset_defs.has_key(config.get('toolset')):
+            tdefs = toolset_defs[config.get('toolset')]
+            for problem in problems[:]:
+                if tdefs.has_key(problem.tag):
+                    problem.set('type', tdefs[problem.tag])
+                    problems.remove(problem)
+
         if problems:
             self.logger.error("The following entries are not handled by any tool:")
             self.logger.error(["%s:%s:%s" % (entry.tag, entry.get('type'), \
