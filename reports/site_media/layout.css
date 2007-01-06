@@ -12,7 +12,7 @@
 #user-tools { position:absolute; top:0; right:0; padding:1.2em 10px; font-size:11px; text-align:right; }
 
 /*SIDEBAR*/
-#sidebar {float: left; position: relative; width: auto; height: 100%; margin-top: 3em; padding-right: 1.5em; padding-left: 1.5em; padding-top: 1em; padding-bottom:3em; background: #000; color:ffc; }
+#sidebar {float: left; position: relative; width: auto; height: 100%; margin-top: 3em; padding-right: 1.5em; padding-left: 1.5em; padding-top: 1em; padding-bottom:3em; background: #000; color:ffc; min-height:500px;}
 a.sidebar:link {color: #fff;}
 a.sidebar:active {color: #fff;}
 a.sidebar:visited {color: #fff;}
