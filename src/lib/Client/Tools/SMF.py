@@ -90,6 +90,8 @@ class SMF(Bcfg2.Client.Tools.Tool):
 
     def Remove(self, svcs):
         '''Remove Extra SMF entries'''
+        # Extra service entry removal is nonsensical
+        # Extra service entries should be reflected in config, even if disabled
         pass
 
     def FindExtra(self):

@@ -62,7 +62,6 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
 
     def Remove(self, entries):
         '''Remove extra service entries'''
-        self.logger.info('Removing services:')
-        self.logger.info([entry.get('name') for entry in entries])
-        for entry in entries:
-            self.cmd.run("rm -f /etc/rc*.d/S??%s" % (entry.get('name')))
+        # Extra service removal is nonsensical
+        # Extra services need to be reflected in the config
+        return
