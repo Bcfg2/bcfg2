@@ -68,6 +68,6 @@ if __name__ == '__main__':
                     print "%s checks out" % (filename)
             else:
                 print "%s ***FAILS*** to verify \t\t<----" % (filename)
-                os.system("xmllint --schema %s %s" % (schemaname % schemadir, filename))
+                os.system("xmllint --xinclude --schema %s %s" % (schemaname % schemadir, filename))
                 failures = 1
     raise SystemExit, failures

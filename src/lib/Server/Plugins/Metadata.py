@@ -54,24 +54,43 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         except:
             self.probes = False
         self.probedata = {}
+        self.extra = {'groups.xml':[], 'clients.xml':[]}
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
         filename = event.filename.split('/')[-1]
-        if filename not in ['groups.xml', 'clients.xml']:
+        if filename in ['groups.xml', 'clients.xml']:
+            dest = filename
+        elif filename in reduce(lambda x,y:x+y, self.extra.values()):
+            if event.code2str() == 'exists':
+                return
+            dest = [key for key, value in self.extra.iteritems() if filename in value][0]
+        else:
             return
         if event.code2str() == 'endExist':
             return
         try:
-            xdata = lxml.etree.parse("%s/%s" % (self.data, filename))
+            xdata = lxml.etree.parse("%s/%s" % (self.data, dest))
         except lxml.etree.XMLSyntaxError:
-            self.logger.error('Failed to parse %s' % (filename))
+            self.logger.error('Failed to parse %s' % (dest))
             return
-        if filename == 'clients.xml':
+        included = [ent.get('href') for ent in \
+                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        if included:
+            for name in included:
+                if name not in self.extra[dest]:
+                    self.core.fam.AddMonitor("%s/%s" % (self.data, name), self)
+                    self.extra[dest].append(name)
+            try:
+                xdata.xinclude()
+            except lxml.etree.XIncludeError:
+                self.logger.error("Failed to process XInclude for file %s" % dest)
+
+        if dest == 'clients.xml':
             self.clients = {}
             self.aliases = {}
             self.clientdata = xdata
-            for client in xdata.findall('./Client'):
+            for client in xdata.findall('.//Client'):
                 if 'address' in client.attrib:
                     self.addresses[client.get('address')] = client.get('name')
                 for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
@@ -79,14 +98,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                     
                 self.clients.update({client.get('name'): client.get('profile')})
                 [self.aliases.update({alias.get('name'): client.get('name')}) for alias in client.findall('Alias')]
-        elif filename == 'groups.xml':
+        elif dest == 'groups.xml':
             self.public = []
             self.profiles = []
             self.toolsets = {}
             self.groups = {}
             grouptmp = {}
             self.categories = {}
-            for group in xdata.findall('./Group'):
+            for group in xdata.findall('.//Group'):
                 grouptmp[group.get('name')] = tuple([[item.get('name') for item in group.findall(spec)]
                                                      for spec in ['./Bundle', './Group']])
                 grouptmp[group.get('name')][1].append(group.get('name'))
@@ -118,7 +137,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                                 self.groups[group][2][self.categories[ggg]] = ggg
                         [self.groups[group][0].append(bund) for bund in bundles
                          if bund not in self.groups[group][0]]
-        self.states[filename] = True
+        self.states[dest] = True
         if False not in self.states.values():
             # check that all client groups are real and complete
             real = self.groups.keys()

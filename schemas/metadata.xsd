@@ -40,12 +40,18 @@
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='toolsetType' name='toolset' use='optional'/>
     <xsd:attribute type='xsd:string' name='category' use='optional'/>
+    <xsd:attribute type='xsd:string' name='comment' use='optional'/>
   </xsd:complexType>
     
   <xsd:element name='Groups'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Group' type='groupType'/>
+        <xsd:element name='Groups'>
+          <xsd:choice>
+            <xsd:element name='Group' type='groupType'/>
+          </xsd:choice>
+        </xsd:element>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>
     </xsd:complexType>
