@@ -84,8 +84,14 @@ class SMF(Bcfg2.Client.Tools.Tool):
                                       % (loc.replace('/S', '/DISABLED.S'), loc))
                     cmdrc = 1
             else:
-                cmdrc = self.cmd.run("/usr/sbin/svcadm enable -r %s" % \
-                                     (entry.get('FMRI')))[0]
+                srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" %
+                                       entry.get('FMRI'))[1] [0].split()
+                if srvdata[0] == 'MNT':
+                    cmdarg = 'clear'
+                else:
+                    cmdarg = 'enable'
+                cmdrc = self.cmd.run("/usr/sbin/svcadm %s -r %s" % \
+                                     (cmdarg, entry.get('FMRI')))[0]
         return cmdrc == 0
 
     def Remove(self, svcs):

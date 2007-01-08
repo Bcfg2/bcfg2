@@ -15,7 +15,8 @@ def promptFilter(prompt, entries):
             continue
     return ret
 
-toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'}}
+toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'},
+                'debian': {'Service':'deb', 'Package':'deb'}}
 
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
