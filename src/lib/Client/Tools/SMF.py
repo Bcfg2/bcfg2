@@ -23,6 +23,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
             else:
                 self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
                 return False
+        return True
     
     def VerifyService(self, entry, _):
         '''Verify SMF Service Entry'''
@@ -42,7 +43,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
-            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % entry.get('name'))[1][0].split()
+            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % entry.get('FMRI'))[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             return False
