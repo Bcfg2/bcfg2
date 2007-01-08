@@ -29,7 +29,11 @@ class Frame:
         self.whitelist = []
         self.removal = []
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
-        for tool in Bcfg2.Client.Tools.__all__[:]:
+        if self.setup['drivers']:
+            tools = self.setup['drivers'].split(',')
+        else:
+            tools = Bcfg2.Client.Tools.__all__[:]
+        for tool in tools:
             try:
                 tool_class = "Bcfg2.Client.Tools.%s" % tool
                 mod = __import__(tool_class, globals(), locals(), ['*'])
