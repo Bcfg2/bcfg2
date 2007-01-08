@@ -39,7 +39,10 @@ class executor:
 
         runpipe = readonlypipe(command, bufsize=16384)
         output = []
-        runpipe.fromchild.flush()
+        try:#macosx doesn't like this
+            runpipe.fromchild.flush()
+        except IOError:
+            pass
         line = runpipe.fromchild.readline()
         while line:
             if len(line) > 0:

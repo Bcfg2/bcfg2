@@ -19,14 +19,16 @@ class launchd(Bcfg2.Client.Tools.Tool):
         /System/Library/LaunchAgents   Mac OS X Per-user agents.
         /System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
         plistLocations = ["/Library/LaunchDaemons","/System/Library/LaunchDaemons"]
-        plistMapping = []
+        plistMapping = {}
         for directory in plistLocations:
             for daemon in os.listdir(directory):
                 try:
-                    plistMapping.append(dict(zip(self.cmd.run("defaults read %s/%s"%\
-                                                              (directory,daemon.rsplit('.')[0]))[1],
-                                                 "%s/%s"%(directory,daemon))))
-                except KeyError:
+                    if daemon.endswith(".plist"):
+                        d = daemon[:(len(daemon)-6)]
+                    else:
+                        d = daemon
+                    plistMapping[self.cmd.run("defaults read %s/%s Label"%(directory,d))[1][0]] = "%s/%s"%(directory,daemon)
+                except KeyError: #perhaps this could be more robust
                     pass
         try:
             return plistMapping[entry.get('name')]
@@ -47,7 +49,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
             return entry.get('status') == 'off'
 
         try: #Perhaps add the "-w" flag to load and unload to modify the file itself!
-            self.cmd.run("/bin/launchctl load %s" % self.FindPlist(entry))
+            self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))
         except IndexError:
             return 'on'
         return False
@@ -58,7 +60,6 @@ class launchd(Bcfg2.Client.Tools.Tool):
         if entry.get('status') == 'on':
             cmdrc = self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))[0]
         else:
-            #we might want to stop services ehre? that could effectively kill things that were up?
             cmdrc = self.cmd.run("/bin/launchctl unload -w %s" % self.FindPlist(entry))[0]
         return cmdrc == 0
 
@@ -70,11 +71,14 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
     def FindExtra(self):
         '''Find Extra launchd Services'''
-        allsrv =  self.cmd.run("/bin/launchctl list")
+        try:
+            allsrv =  self.cmd.run("/bin/launchctl list")[1]
+        except IndexError:
+            allsrv = [];
 
-        [allsrv.remove(svc) for svc in self.getSupportedEntries() if svc in allsrv]
-        return [Bcfg2.Client.XML.Element("Service", type='launchd', name=name) \
-                for name in allsrv]
+        [allsrv.remove(svc) for svc in [entry.get("name") for entry
+                                        in self.getSupportedEntries()] if svc in allsrv]
+        return [Bcfg2.Client.XML.Element("Service", type='launchd', name=name, status='on') for name in allsrv]
 
     def BundleUpdated(self, bundle):
         '''Reload launchd plist'''
@@ -83,13 +87,11 @@ class launchd(Bcfg2.Client.Tools.Tool):
                 self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
             else:
                 if entry.get('status') == 'on' and self.FindPlist(entry):
-                    #may need to start/stop as well!
                     self.logger.info("Reloading launchd  service %s" % (entry.get("name")))
                     #stop?
-                    self.cmd.run("/bin/launchctl unload %s" % (self.FindPlist(entry)))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
-                    self.cmd.run("/bin/launchctl load %s" % (self.FindPlist(entry)))
-                    #start?
+                    self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
+                    self.cmd.run("/bin/launchctl load -w %s" % (self.FindPlist(entry)))
                 else:
-                    #may need to stop as well!
-                    self.cmd.run("/bin/launchctl unload %s" % (self.FindPlist(entry)))
+                    #only if necessary....
+                    self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))
 
