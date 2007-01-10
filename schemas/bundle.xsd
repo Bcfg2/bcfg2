@@ -21,6 +21,7 @@
       <xsd:element name='Group' type='GroupType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='negate' use='required'/>
   </xsd:complexType>
 
   <xsd:element name='Bundle'>

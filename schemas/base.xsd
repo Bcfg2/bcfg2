@@ -21,6 +21,7 @@
       <xsd:element name='Group' type='ContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
+    <xsd:attribute name='negate' type='xsd:string'/>
   </xsd:complexType>
 
   <xsd:element name='Base'>

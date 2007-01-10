@@ -187,8 +187,12 @@ class StructFile(XMLFileBacked):
                                          and not isinstance(item, lxml.etree._Comment)]
             for group in [item for item in worklist if item.tag == 'Group']:
                 # if only python had forceable early-binding
-                newpred = eval("lambda x:'%s' in x.groups and predicate(x)" % (group.get('name')),
-                               {'predicate':predicate})
+                if group.get('negate', 'false') == 'true':
+                    cmd = "lambda x:'%s' not in x.groups and predicate(x)"
+                else:
+                    cmd = "lambda x:'%s' in x.groups and predicate(x)"
+                    
+                newpred = eval(cmd % (group.get('name')), {'predicate':predicate})
                 work[newpred] = group.getchildren()
 
     def Match(self, metadata):
