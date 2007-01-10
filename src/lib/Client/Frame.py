@@ -78,6 +78,16 @@ class Frame:
             self.logger.error(["%s:%s:%s" % (entry.tag, entry.get('type'), \
                                              entry.get('name')) for entry in problems])
             self.logger.error("")
+        entries = [(entry.tag, entry.get('name')) for struct in config for entry in struct]
+        multi = []
+        for entry in entries[:]:
+            if entries.count(entry) > 1:
+                multi.append(entry)
+                entries.remove(entry)
+        if multi:
+            self.logger.info("The following entries are included multiple times:")
+            self.logger.info(multi)
+            
                     
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
