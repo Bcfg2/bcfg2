@@ -4,10 +4,18 @@ __revision__ = '$Revision$'
 import logging, time
 import Bcfg2.Client.Tools
 
+def cmpent(ent1, ent2):
+    '''Sort entries'''
+    if ent1.tag != ent2.tag:
+        return cmp(ent1.tag, ent2.tag)
+    else:
+        return cmd(ent1.get('name'), ent2.get('name'))
+
 def promptFilter(prompt, entries):
     '''Filter a supplied list based on user input'''
     ret = []
-    for entry in [entry for entry in entries]:
+    entries.sort(cmpent)
+    for entry in entries[:]:
         try:
             if raw_input(prompt % (entry.tag, entry.get('name'))) in ['y', 'Y']:
                 ret.append(entry)
