@@ -248,8 +248,10 @@ class SvcTool(Tool):
             if self.handlesEntry(entry):
                 if entry.get('status') == 'on':
                     self.logger.debug('Restarting service %s' % entry.get('name'))
-                    self.cmd.run('/etc/init.d/%s %s' % \
-                                 (entry.get('name'), entry.get('reload', 'reload')))
+                    rc = self.cmd.run('/etc/init.d/%s %s' % \
+                                      (entry.get('name'), entry.get('reload', 'reload')))[0]
                 else:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
-                    self.cmd.run('/etc/init.d/%s stop' %  (entry.get('name')))
+                    rc = self.cmd.run('/etc/init.d/%s stop' %  (entry.get('name')))[0]
+                if rc:
+                    self.logger.error("Failed to restart service %s" % (entry.get('name')))
