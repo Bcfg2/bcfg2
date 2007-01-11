@@ -1,3 +1,9 @@
+bcfg2 (0.9.0-0.0pre2) unstable; urgency=low
+
+  * second pre of 0.9.0
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu, 11 Jan 2007 12:35:19 -0600
+
 bcfg2 (0.9.0-0.0pre1) unstable; urgency=low
 
   * first prerelease of 0.9.0
