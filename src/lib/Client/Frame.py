@@ -42,19 +42,26 @@ class Frame:
             tools = self.setup['drivers'].split(',')
         else:
             tools = Bcfg2.Client.Tools.__all__[:]
+        tmods = {}
+        tool_class = "Bcfg2.Client.Tools.%s" % tool
         for tool in tools:
             try:
-                tool_class = "Bcfg2.Client.Tools.%s" % tool
-                mod = __import__(tool_class, globals(), locals(), ['*'])
+                tmods[tool] = __import__(tool_class, globals(), locals(), ['*'])
             except ImportError:
                 continue
 
+        for tool in tools:
+            for conflict in getattr(tool, 'conflicts', []):
+                del tmods[conflict]
+        
+        for (tool, mod) in tmods.iteritems():
             try:
                 self.tools.append(getattr(mod, tool)(self.logger, setup, config, self.states))
             except Bcfg2.Client.Tools.toolInstantiationError:
                 continue
             except:
                 self.logger.error("Failed to instantiate tool %s" % (tool), exc_info=1)
+
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.__name__ for tool in self.tools])
         if not self.setup['dryrun']:

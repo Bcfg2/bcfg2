@@ -1,15 +1,17 @@
 # This is the bcfg2 support for yum
 '''This provides bcfg2 support for yum'''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools.RPM
+
+conflicts = ['RPM']
 
 class Yum(Bcfg2.Client.Tools.RPM.RPM):
     '''Support for Yum packages'''
     pkgtype = 'yum'
     pkgtool = ("/usr/bin/yum install %s", ("%s-%s", ["name", "version"]))
     __name__ = 'Yum'
-    __execs__ = ['/usr/bin/yum']
+    __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum')]
 
     def RemovePackages(self, packages):
