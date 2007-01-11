@@ -220,9 +220,9 @@ class INode:
         else:
             predicate = parent.predicate
             if data.get('negate', 'false') == 'true':
-                psrc = self.raw
-            else:
                 psrc = self.nraw
+            else:
+                psrc = self.raw
             if data.tag in psrc.keys():
                 self.predicate = eval(psrc[data.tag] % (data.get('name')),
                                       {'predicate':predicate})
