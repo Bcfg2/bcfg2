@@ -48,9 +48,11 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Group' type='groupType'/>
         <xsd:element name='Groups'>
-          <xsd:choice>
-            <xsd:element name='Group' type='groupType'/>
-          </xsd:choice>
+          <xsd:complexType>
+            <xsd:choice>
+              <xsd:element name='Group' type='groupType'/>
+            </xsd:choice>
+          </xsd:complexType>
         </xsd:element>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>

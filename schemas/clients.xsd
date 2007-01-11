@@ -29,9 +29,11 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
 	<xsd:element name='Client' type='ClientType'/>
         <xsd:element name='Clients'>
-          <xsd:choice>
-            <xsd:element name='Client' type='ClientType'/>
-          </xsd:choice>
+          <xsd:complexType>
+            <xsd:choice>
+              <xsd:element name='Client' type='ClientType'/>
+            </xsd:choice>
+          </xsd:complexType>
         </xsd:element>
       </xsd:choice>
       <xsd:attribute name='version' type='xsd:string'/>

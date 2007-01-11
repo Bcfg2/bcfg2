@@ -38,6 +38,7 @@
                         <xs:enumeration value="nodes-individual"/>
                         <xs:enumeration value="nodes-digest"/>
                         <xs:enumeration value="overview-stats"/>
+                        <xs:enumeration value="timing-summary"/>
                       </xs:restriction>
                     </xs:simpleType>
                   </xs:attribute>
