@@ -207,6 +207,8 @@ class INode:
     '''LNodes provide lists of things available at a particular group intersection'''
     raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
            'Group':"lambda x:'%s' in x.groups and predicate(x)"}
+    nraw = {'Client':"lambda x:'%s' != x.hostname and predicate(x)",
+            'Group':"lambda x:'%s' not in x.groups and predicate(x)"}
     containers = ['Group', 'Client']
     ignore = []
     
@@ -217,8 +219,13 @@ class INode:
             self.predicate = lambda x:True
         else:
             predicate = parent.predicate
-            if data.tag in self.raw.keys():
-                self.predicate = eval(self.raw[data.tag] % (data.get('name')), {'predicate':predicate})
+            if data.get('negate', 'false') == 'true':
+                psrc = raw
+            else:
+                psrc = nraw
+            if data.tag in psrc.keys():
+                self.predicate = eval(psrc[data.tag] % (data.get('name')),
+                                      {'predicate':predicate})
             else:
                 raise Exception
         mytype = self.__class__
