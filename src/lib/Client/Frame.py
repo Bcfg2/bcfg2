@@ -43,8 +43,8 @@ class Frame:
         else:
             tools = Bcfg2.Client.Tools.__all__[:]
         tmods = {}
-        tool_class = "Bcfg2.Client.Tools.%s" % tool
         for tool in tools:
+            tool_class = "Bcfg2.Client.Tools.%s" % tool
             try:
                 tmods[tool] = __import__(tool_class, globals(), locals(), ['*'])
             except ImportError:
