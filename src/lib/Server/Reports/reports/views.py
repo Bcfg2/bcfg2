@@ -9,6 +9,7 @@ from time import strptime
 from django.db import connection
 from django.db.backends import util
 from django.contrib.auth.decorators import login_required
+from sets import Set
 
 def index(request):
     return render_to_response('index.html')
@@ -85,6 +86,74 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
                                                          'timestamp_date' : timestamp[:10],
                                                          'timestamp_time' : timestamp[11:19]})
 
+def bad_item_index(request, timestamp = 'now'):
+    timestamp = timestamp.replace("@"," ")
+    mod_or_bad = "bad"
+    cursor = connection.cursor()
+
+    if timestamp == 'now':
+        bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
+                           [c.current_interaction
+                            for c in Client.objects.all()]).distinct()])
+                             #this will need expiration support
+        kinds = list(Set(bad_kinds.values()))
+        item_list_dict = dict([(x,[]) for x in kinds])
+        for obj in bad_kinds:
+            item_list_dict[obj.kind].append(obj)
+                                                
+    else: #this isn't done yet
+        bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
+                           [c.current_interaction
+                            for c in Client.objects.all()]).distinct()])
+                             #this will need expiration support
+        kinds = list(Set(bad_kinds.values()))
+        item_list_dict = dict([(x,[]) for x in kinds])
+        for obj in bad_kinds:
+            item_list_dict[obj.kind].append(obj)
+
+    item_list_pseudodict = item_list_dict.items()
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
+
+    return render_to_response('config_items/listing.html', {'item_list_pseudodict':item_list_pseudodict,
+                                                            'mod_or_bad':mod_or_bad,
+                                                            'timestamp' : timestamp,
+                                                            'timestamp_date' : timestamp[:10],
+                                                            'timestamp_time' : timestamp[11:19]})
+def modified_item_index(request, timestamp = 'now'):
+    timestamp = timestamp.replace("@"," ")
+    mod_or_bad = "modified"
+    cursor = connection.cursor()
+
+    if timestamp == 'now':
+        mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
+                           [c.current_interaction
+                            for c in Client.objects.all()]).distinct()])
+                             #this will need expiration support
+        kinds = list(Set(mod_kinds.values()))
+        item_list_dict = dict([(x,[]) for x in kinds])
+        for obj in mod_kinds:
+            item_list_dict[obj.kind].append(obj)
+                                                
+    else: #this isn't done yet
+        mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
+                           [c.current_interaction
+                            for c in Client.objects.all()]).distinct()])
+                             #this will need expiration support
+        kinds = list(Set(mod_kinds.values()))
+        item_list_dict = dict([(x,[]) for x in kinds])
+        for obj in mod_kinds:
+            item_list_dict[obj.kind].append(obj)
+
+    item_list_pseudodict = item_list_dict.items()
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
+
+    return render_to_response('config_items/listing.html', {'item_list_pseudodict':item_list_pseudodict,
+                                                            'mod_or_bad':mod_or_bad,
+                                                            'timestamp' : timestamp,
+                                                            'timestamp_date' : timestamp[:10],
+                                                            'timestamp_time' : timestamp[11:19]})
 
 
 def client_index(request):
@@ -175,6 +244,8 @@ def display_index(request):
     return render_to_response('displays/index.html')
 
 def prepare_client_lists(request, timestamp = 'now'):
+    #I suggest we implement "expiration" here.
+
     timestamp = timestamp.replace("@"," ")
     #client_list = Client.objects.all().order_by('name')#change this to order by interaction's state
     client_interaction_dict = {}

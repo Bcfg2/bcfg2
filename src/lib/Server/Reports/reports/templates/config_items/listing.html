@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load django_templating_sigh %}
+
+{% block extra_header_info %}
+<link rel="stylesheet" type="text/css" href="/site_media/yui/tabview/assets/tabview.css">
+<link rel="stylesheet" type="text/css" href="/site_media/yui/round_tabs.css">
+
+<script type="text/javascript" src="/site_media/yui/yahoo/yahoo.js"></script>
+<script type="text/javascript" src="/site_media/yui/event/event.js"></script>
+<script type="text/javascript" src="/site_media/yui/dom/dom.js"></script>
+<script type="text/javascript" src="/site_media/yui/tabview/tabview.js"></script>
+<script type="text/javascript">
+YAHOO.example.init = function( ){
+    var tabView = new YAHOO.widget.TabView( { id: 'demo' } );
+    {% for item_list in item_list_pseudodict %}
+    tabView.addTab( new YAHOO.widget.Tab({
+        label: '{{item_list.0}}',
+        content: '<p><ul style="list-style-type:none;">{% for item in item_list.1|sortwell %}<li><strong>{{item.kind}}: </strong><tt><a href="/elements/{{mod_or_bad}}/{{item.id}}">{{item.name}}</a></tt></li>{% endfor %}</ul></p>',
+        active: 'True'
+    }));
+    {% endfor %}
+
+    YAHOO.util.Event.onContentReady('tabview', function() {
+        tabView.appendTo(this); /* append to #doc */
+    });
+
+};
+YAHOO.example.init();
+
+</script>
+<style type="text/css">
+#demo .yui-content { padding:1em; } /* pad content container */
+</style>
+{% endblock %}
+
+{% block title %}{{mod_or_bad|capfirst}} Item Listing{% endblock %}
+
+{% block pagebanner %}
+  <div class="header">
+      <h1>{{mod_or_bad|capfirst}} Configuration Elements</h1>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block content %}
+{% if item_list_pseudodict %}
+<div id="tabview"></div>
+{% else %}
+    <p>There are currently no inconsistent configuration entries.</p>
+{% endif %}
+{% endblock %}

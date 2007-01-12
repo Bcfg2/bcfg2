@@ -19,9 +19,15 @@ urlpatterns = patterns('',
 
     (r'^elements/modified/(?P<eyedee>\d+)/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','Bcfg2.Server.Reports.reports.views.config_item_modified'),
     (r'^elements/modified/(?P<eyedee>\d+)/$','Bcfg2.Server.Reports.reports.views.config_item_modified'),
+    (r'^elements/modified/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01]\
+    [0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','Bcfg2.Server.Reports.reports.views.modified_item_index'),
+    (r'^elements/modified/$','Bcfg2.Server.Reports.reports.views.modified_item_index'),
     (r'^elements/bad/(?P<eyedee>\d+)/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','Bcfg2.Server.Reports.reports.views.config_item_bad'),
     (r'^elements/bad/(?P<eyedee>\d+)/$','Bcfg2.Server.Reports.reports.views.config_item_bad'),
-                       )
+    (r'^elements/bad/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01]\
+    [0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','Bcfg2.Server.Reports.reports.views.bad_item_index'),
+    (r'^elements/bad/$','Bcfg2.Server.Reports.reports.views.bad_item_index'),
+)
 
     # Uncomment this for admin:
     #(r'^admin/', include('django.contrib.admin.urls')),

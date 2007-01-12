@@ -5,8 +5,7 @@
     <title>{% block title %}Bcfg2 Reporting System{% endblock %}</title>
     <link rel="stylesheet" type="text/css" href="/site_media/boxypastel.css" />
     <link rel="stylesheet" type="text/css" href="/site_media/base.css" />
-    <script type="text/javascript" src="/site_media/main.js">
-    </script>
+    <script type="text/javascript" src="/site_media/main.js"></script>
     {% block extra_header_info %}{% endblock %}
 </head>
 
@@ -30,6 +29,13 @@
 		<li><a href="/displays/timing/" class="sidebar">Timing</a></li>
 	    </ul>
 	    </li>
+	    <li>
+        <span class="sidebar">Config Items</span>
+	    <ul class="sidebar-level2">
+	        <li><a href="/elements/bad/" class="sidebar">Bad</a></li>
+	        <li><a href="/elements/modified/" class="sidebar">Modified</a></li>
+	    </ul>
+        </li>
         </ul>
         {% endblock %}
     </div>
