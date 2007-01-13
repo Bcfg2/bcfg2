@@ -14,6 +14,7 @@
       <xsd:enumeration value='rpm' />
       <xsd:enumeration value='encap' />
       <xsd:enumeration value='sysv' />
+      <xsd:enumeration value='portage' />
     </xsd:restriction>
   </xsd:simpleType>
 
