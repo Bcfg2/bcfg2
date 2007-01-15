@@ -234,9 +234,10 @@ class PkgTool(Tool):
     def FindExtraPackages(self):
         '''Find extra packages'''
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
-        extras = [key for key in self.installed if key not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype) \
-                for name in extras]
+        extras = [data for data in self.installed.iteritems() if data[0] not in packages]
+        return [Bcfg2.Client.XML.Element('Package', name=name, \
+                                         type=self.pkgtype, version=version) \
+                                         for (name, version) in extras]
 
 class SvcTool(Tool):
     '''This class defines basic Service behavior'''
