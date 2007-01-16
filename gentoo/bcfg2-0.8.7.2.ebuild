@@ -4,7 +4,7 @@
 
 DESCRIPTION="Bcfg2 is a configuration management tool.  Package includes client
 and server."
-HOMEPAGE="http://www.mcs.anl.gov/cobalt/bcfg2"
+HOMEPAGE="http://trac.mcs.anl.gov/projects/bcfg2"
 
 # MY_PV=`echo $PV | sed -e 's/_//g'`
 # SRC_URI="ftp://ftp.mcs.anl.gov/pub/bcfg/${PN}-${MY_PV}.tar.gz"

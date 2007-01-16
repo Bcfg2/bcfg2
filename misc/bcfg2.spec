@@ -4,7 +4,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:             bcfg2
-Version:          0.9.0pre4
+Version:          0.9.0pre5
 Release: %{release}
 Summary:          Configuration management system
 
