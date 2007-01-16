@@ -233,6 +233,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                             return False
 
         # If we get here, then the parent directory should exist
+        if entry.get("paranoid", False) and self.setup.get("paranoid", False):
+            bkupnam = entry.get('name').replace('/', '_')
+            if self.cmd.run("cp %s /var/cache/bcfg2/%s" % (entry.get('name'), bkupnam))[0]:
+                self.logger.error("Failed to create backup file for ConfigFile %s" % \
+                                  (entry.get('name')))
+                return False
         try:
             newfile = open("%s.new"%(entry.get('name')), 'w')
             if entry.get('encoding', 'ascii') == 'base64':
@@ -249,8 +255,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             except KeyError:
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
-            if entry.get("paranoid", False) and self.setup.get("paranoid", False):
-                self.cmd.run("cp %s /var/cache/bcfg2/%s" % (entry.get('name')))
             os.rename(newfile.name, entry.get('name'))
             return True
         except (OSError, IOError), err:
