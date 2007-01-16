@@ -1,11 +1,10 @@
 '''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
 __revision__ = '$Revision$'
 
-import sys, os
+import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
-from syslog import syslog, LOG_INFO
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
+from Bcfg2.Server.Plugin import Plugin, PluginExecutionError
 from time import strftime
 from sets import Set
 from django.template import Context, loader

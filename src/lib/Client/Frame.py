@@ -9,7 +9,7 @@ def cmpent(ent1, ent2):
     if ent1.tag != ent2.tag:
         return cmp(ent1.tag, ent2.tag)
     else:
-        return cmd(ent1.get('name'), ent2.get('name'))
+        return cmp(ent1.get('name'), ent2.get('name'))
 
 def promptFilter(prompt, entries):
     '''Filter a supplied list based on user input'''

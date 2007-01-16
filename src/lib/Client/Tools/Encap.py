@@ -26,7 +26,7 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
                 self.installed[match.group('name')] = match.group('version')
             else:
                 print "Failed to split name %s" % pkg
-	self.logger.debug("Encap.py: RefreshPackages: self.installed.keys() are:")
+        self.logger.debug("Encap.py: RefreshPackages: self.installed.keys() are:")
         self.logger.debug("%s" % self.installed.keys())
         
     def VerifyPackage(self, entry, _):

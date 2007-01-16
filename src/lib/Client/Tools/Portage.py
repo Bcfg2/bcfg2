@@ -15,7 +15,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'ebuild')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
-    '''requires a working PORTAGE_BINHOST in make.conf'''
+    # requires a working PORTAGE_BINHOST in make.conf
     pkgtool = ('emerge --getbinpkgonly =%s', ('%s-%s', ['name', 'version']))
     
     def __init__(self, logger, cfg, setup, states):
@@ -33,8 +33,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         for pkg in cache:
             pattern = re.compile('(.*)-(\d.*)')
             if pattern.match(pkg):
-                 name = pattern.match(pkg).group(1)
-                 version = pattern.match(pkg).group(2)
+                name = pattern.match(pkg).group(1)
+                version = pattern.match(pkg).group(2)
             self.installed[name] = version
 
     def VerifyPackage(self, entry, modlist):

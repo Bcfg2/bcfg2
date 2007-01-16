@@ -22,3 +22,5 @@ except ImportError:
             print "Failed to load lxml, xml.etree and elementtree.ElementTree"
             print "Cannot continue"
             raise SystemExit, 1
+
+len([Element, SubElement, XML, tostring, ParseError])

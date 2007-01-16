@@ -1,7 +1,7 @@
 '''launchd support for Bcfg2'''
 __revision__ = '$Revision: 2596 $'
 
-import glob, os
+import os
 import Bcfg2.Client.Tools
 
 class launchd(Bcfg2.Client.Tools.Tool):
@@ -13,12 +13,12 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
     #currently requires the path to the plist to load/unload, and Name is acually a reverse-fqdn (or the label)
     def FindPlist(self, entry):
-        '''Locate plist file that provides given reverse-fqdn name'''
-        '''/Library/LaunchAgents          Per-user agents provided by the administrator.
+        '''Locate plist file that provides given reverse-fqdn name
+        /Library/LaunchAgents          Per-user agents provided by the administrator.
         /Library/LaunchDaemons         System wide daemons provided by the administrator.
         /System/Library/LaunchAgents   Mac OS X Per-user agents.
         /System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
-        plistLocations = ["/Library/LaunchDaemons","/System/Library/LaunchDaemons"]
+        plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
         plistMapping = {}
         for directory in plistLocations:
             for daemon in os.listdir(directory):
@@ -27,7 +27,9 @@ class launchd(Bcfg2.Client.Tools.Tool):
                         d = daemon[:(len(daemon)-6)]
                     else:
                         d = daemon
-                    plistMapping[self.cmd.run("defaults read %s/%s Label"%(directory,d))[1][0]] = "%s/%s"%(directory,daemon)
+                    plistMapping[self.cmd.run( \
+                        "defaults read %s/%s Label" % (directory, d))[1][0]] = \
+                        "%s/%s"%(directory, daemon)
                 except KeyError: #perhaps this could be more robust
                     pass
         try:
@@ -74,7 +76,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
         try:
             allsrv =  self.cmd.run("/bin/launchctl list")[1]
         except IndexError:
-            allsrv = [];
+            allsrv = []
 
         [allsrv.remove(svc) for svc in [entry.get("name") for entry
                                         in self.getSupportedEntries()] if svc in allsrv]

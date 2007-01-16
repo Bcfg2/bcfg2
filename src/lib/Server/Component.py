@@ -44,6 +44,7 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.connection.shutdown()
 
     def setup(self):
+        '''Setup a working connection'''
         self.connection = self.request
         self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
         self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
@@ -152,10 +153,6 @@ class Component(SSLServer,
         self.atime = 0
         self.assert_location()
         atexit.register(self.deassert_location)
-
-    def HandleEvents(self, address, event_list):
-        '''Default event handler'''
-        return True
 
     def _cobalt_marshalled_dispatch(self, data, address):
         """Decode and dispatch XMLRPC requests. Overloaded to pass through

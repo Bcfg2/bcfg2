@@ -60,7 +60,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         return [Bcfg2.Client.XML.Element('Service', name=name, type='deb') for name \
                 in extra]
 
-    def Remove(self, entries):
+    def Remove(self, _):
         '''Remove extra service entries'''
         # Extra service removal is nonsensical
         # Extra services need to be reflected in the config
