@@ -16,8 +16,12 @@ def promptFilter(prompt, entries):
     ret = []
     entries.sort(cmpent)
     for entry in entries[:]:
+        if 'qtext' in entry.attrib:
+            iprompt = entry.get('qtext')
+        else:
+            iprompt = prompt % (entry.tag, entry.get('name'))
         try:
-            if raw_input(prompt % (entry.tag, entry.get('name'))) in ['y', 'Y']:
+            if raw_input(iprompt) in ['y', 'Y']:
                 ret.append(entry)
         except:
             continue

@@ -56,6 +56,8 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                     if len(output) == 1 and "no md5sums for" in output[0]:
                         self.logger.info("Package %s has no md5sums. Cannot verify" % \
                                          entry.get('name'))
+                        entry.set('qtext', "Reinstall Package %s-%s to setup md5sums? (y/N) " \
+                                  % (entry.get('name'), entry.get('version')))
                         return False
                     files = []
                     for item in output:
@@ -72,10 +74,15 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                         self.logger.info("Package %s failed validation. Bad files are:" % \
                                          entry.get('name'))
                         self.logger.info(bad)
+                        entry.set('qtext',
+                                  "Reinstall Package %s-%s to fix failing md5sums? (y/N) ")
                         return False
                 return True
             else:
                 entry.set('current_version', self.installed[entry.get('name')])
+                entry.set('qtext', "Upgrade Package %s (%s -> %s)? (y/N) " % \
+                          (entry.get('name'), entry.get('current_version'),
+                           entry.get('version')))
                 return False
         self.logger.info("Package %s not installed" % (entry.get('name')))
         entry.set('current_exists', 'false')

@@ -148,8 +148,7 @@ class Component(SSLServer,
         self.port = self.socket.getsockname()[1]
         self.url = "https://%s:%s" % (socket.gethostname(), self.port)
         self.logger.info("Bound to port %s" % self.port)
-        self.funcs.update({'HandleEvents':self.HandleEvents,
-                           'system.listMethods':self.addr_system_listMethods})
+        self.funcs.update({'system.listMethods':self.addr_system_listMethods})
         self.atime = 0
         self.assert_location()
         atexit.register(self.deassert_location)
