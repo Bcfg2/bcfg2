@@ -85,7 +85,7 @@ Bcfg2 client
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
 
 %files -n bcfg2
-%defattr(-,root,root)
+%defattr(-,root,root,-)
 %{_sbindir}/bcfg2
 %{python_sitelib}/Bcfg2/*.py*
 %{python_sitelib}/Bcfg2/Client/*
@@ -101,7 +101,7 @@ Bcfg2 client
 /sbin/chkconfig --add bcfg2-server
 
 %files -n bcfg2-server
-%defattr(-,root,root,_)
+%defattr(-,root,root,-)
 
 %{_initrddir}/bcfg2-server
 
