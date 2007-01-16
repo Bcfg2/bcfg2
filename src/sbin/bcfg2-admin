@@ -1,16 +1,20 @@
 #!/usr/bin/python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import difflib, logging, lxml.etree, os, re, socket, sys, ConfigParser
+import difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging
 
 log = logging.getLogger('bcfg-admin')
+
+colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegreen', 
+          'orange1', 'lightblue2']
 
 usage = '''
 bcfg2-admin [options]
 init        - initialize the bcfg2 repository( this is interactive; only run once )
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
+viz         [-h] [-b] [-m] [-o output.png] [-r'
 '''
 
 config = '''
@@ -139,9 +143,8 @@ def update_file(path, diff):
     print "writing file, %s" % path
     open(path, 'w').write(newdata)
 
-def get_repo_path():
+def get_repo_path(cfile='/etc/bcfg2.conf'):
     '''return repository path'''
-    cfile = '/etc/bcfg2.conf'
     cfp = ConfigParser.ConfigParser()
     cfp.read(cfile)
     return cfp.get('server', 'repository')
@@ -262,6 +265,90 @@ def do_tidy(args):
                         os.unlink("%s/SSHbase/%s" % (repo, name))
     # clean up file~
     # clean up files without parsable names in Cfg
+
+def do_viz(args):
+    '''Build visualization of groups file'''
+    if '-C' in args:
+        repo = get_repo_path(args[args.index('-C') + 1])
+    else:
+        repo = get_repo_path()
+    groups = lxml.etree.parse(repo + '/Metadata/groups.xml').getroot()
+    clients = lxml.etree.parse(repo + '/Metadata/clients.xml').getroot()
+    if '-r' in args:
+        dotpipe = popen2.Popen4("dd bs=4M 2>/dev/null")
+    else:
+        dotpipe = popen2.Popen4("dot -Tpng")
+    categories = {'default':'grey83'}
+    instances = {}
+    for group in groups.findall('Group'):
+        if group.get('category', False):
+            if not categories.has_key(group.get('category')):
+                categories[group.get('category')] = colors.pop()
+        
+    try:
+        dotpipe.tochild.write("digraph groups {\n")
+    except:
+        print "write to dot process failed. Is graphviz installed?"
+        raise SystemExit, 1
+    dotpipe.tochild.write('\trankdir="LR";\n')
+    if '-h' in args:
+        for client in clients.findall('Client'):
+            if instances.has_key(client.get('profile')):
+                instances[client.get('profile')].append(client.get('name'))
+            else:
+                instances[client.get('profile')] = [client.get('name')]
+        for profile, clist in instances.iteritems():
+            clist.sort()
+            dotpipe.tochild.write('''\t"%s-instances" [ label="%s", shape="record" ];\n''' % (profile, '|'.join(clist)))
+            dotpipe.tochild.write('''\t"%s-instances" -> "group-%s";\n''' % (profile, profile))
+
+    if '-b' in args:
+        bundles = []
+        [bundles.append(bund.get('name')) for bund in groups.findall('.//Bundle')
+         if bund.get('name') not in bundles]
+        bundles.sort()
+        for bundle in bundles:
+            dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' % (bundle, bundle))
+    gseen = []
+    for group in groups.findall('Group'):
+        color = categories[group.get('category', 'default')]
+        if group.get('profile', 'false') == 'true':
+            style="filled, bold"
+        else:
+            style = "filled"
+        gseen.append(group.get('name'))
+        dotpipe.tochild.write('\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' %
+                              (group.get('name'), group.get('name'), style, color))
+        if '-b' in args:
+            for bundle in group.findall('Bundle'):
+                dotpipe.tochild.write('\t"group-%s" -> "bundle-%s";\n' %
+                                      (group.get('name'), bundle.get('name')))
+        
+    for group in groups.findall('Group'):
+        for parent in group.findall('Group'):
+            if parent.get('name') not in gseen:
+                dotpipe.tochild.write('\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n' %
+                                      (parent.get('name'), parent.get('name')))
+                gseen.append(parent.get("name"))
+            dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
+                                  (group.get('name'), parent.get('name')))
+    if '-m' not in args:
+        dotpipe.tochild.write("\tsubgraph cluster_key {\n")
+        dotpipe.tochild.write('''\tstyle="filled";\n''')
+        dotpipe.tochild.write('''\tcolor="lightblue";\n''')
+        dotpipe.tochild.write('''\tBundle [ shape="septagon" ];\n''')
+        dotpipe.tochild.write('''\tGroup [shape="ellipse"];\n''')
+        dotpipe.tochild.write('''\tProfile [style="bold", shape="ellipse"];\n''')
+        dotpipe.tochild.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
+        dotpipe.tochild.write('''\tlabel="Key";\n''')
+        dotpipe.tochild.write("\t}\n")
+    dotpipe.tochild.write("}\n")
+    dotpipe.tochild.close()
+    data = dotpipe.fromchild.read()
+    if '-o' in args:
+        output = open(args[args.index('-o') + 1], 'w').write(data)
+    else:
+        print data
     
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
@@ -276,6 +363,8 @@ if __name__ == '__main__':
         do_minestruct(sys.argv[2:])
     elif sys.argv[1] == 'tidy':
         do_tidy(sys.argv[2:])
+    elif sys.argv[1] == 'viz':
+        do_viz(sys.argv[2:])
     else:
         print usage
         
