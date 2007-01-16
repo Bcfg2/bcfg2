@@ -24,7 +24,10 @@ def promptFilter(prompt, entries):
     return ret
 
 toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'},
-                'debian': {'Service':'deb', 'Package':'deb'}}
+                'debian': {'Service':'deb', 'Package':'deb'},
+                'nexenta': {'Service':'smf', 'Package':'deb'},
+                'solaris': {'Service':'smf', 'Package':'sysv'},
+                'gentoo': {'Service':'rc-update', 'Package':'ebuild'}}
 
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
