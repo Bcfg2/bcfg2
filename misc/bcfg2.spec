@@ -17,7 +17,7 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
-Requires:         python-lxml
+Requires:         lxml >= 0.9
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -66,44 +66,42 @@ Bcfg2 client
 
 %install
 %{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES
-%{__install} -d %{buildroot}/usr/bin
-%{__install} -d %{buildroot}/usr/sbin
-%{__install} -d %{buildroot}/etc/init.d
-%{__install} -d %{buildroot}/etc/default
-%{__install} -d %{buildroot}/etc/cron.daily
-%{__install} -d %{buildroot}/etc/cron.hourly
-%{__install} -d %{buildroot}/usr/lib/bcfg2
-%{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}/usr/sbin
-%{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}/etc/init.d/bcfg2
-%{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}/etc/init.d/bcfg2-server
-%{__install} -m 755 debian/bcfg2.default %{buildroot}/etc/default/bcfg2
-%{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}/etc/cron.daily/bcfg2
-%{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}/etc/cron.hourly/bcfg2
-%{__install} -m 755 tools/bcfg2-cron %{buildroot}/usr/lib/bcfg2/bcfg2-cron
+%{__install} -d %{buildroot}%{_bindir}
+%{__install} -d %{buildroot}%{_sbindir}
+%{__install} -d %{buildroot}%{_initrddir}
+%{__install} -d %{buildroot}%{_sysconfdir}/default
+%{__install} -d %{buildroot}%{_sysconfdir}/cron.daily
+%{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
+%{__install} -d %{buildroot}%{_libdir}/bcfg2
+%{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}%{_sbindir}
+%{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
+%{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
+%{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
+%{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
+%{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
+%{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_libdir}/bcfg2/bcfg2-cron
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
 
 %files -n bcfg2
 %defattr(-,root,root)
-/usr/sbin/bcfg2
-/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/*.py*
-/usr/lib*/python%{pythonversion}/site-packages/Bcfg2/Client/*
-/usr/share/man/man1/*
-/usr/share/man/man5/*
-/etc/init.d/bcfg2
-%config(noreplace) /etc/default/bcfg2
-/etc/cron.hourly/bcfg2
-/etc/cron.daily/bcfg2
-/usr/lib/bcfg2/bcfg2-cron
+%{_sbindir}/bcfg2
+%{python_sitelib}/Bcfg2/*.py*
+%{python_sitelib}/Bcfg2/Client/*
+%{_mandir}/man1/*
+%{_mandir}/man5/*
+%{_initrddir}/bcfg2
+%config(noreplace) %{_sysconfdir}/default/bcfg2
+%{_sysconfdir}/cron.hourly/bcfg2
+%{_sysconfdir}/cron.daily/bcfg2
+%{_libdir}/bcfg2/bcfg2-cron
 
 %post -n bcfg2-server
 /sbin/chkconfig --add bcfg2-server
 
 %files -n bcfg2-server
 %defattr(-,root,root,_)
-
-%ghost %attr(600,root,root) %config(noreplace) %{_sysconfdir}/bcfg2.key
 
 %{_initrddir}/bcfg2-server
 
@@ -124,7 +122,7 @@ Bcfg2 client
 %{_mandir}/man8/bcfg2-repo-validate.8*
 %{_mandir}/man8/bcfg2-server.8*
 
-%dir %{_var}/lib/bcfg2
+%dir %{_libdir}/bcfg2
 
 %changelog
 * Fri Dec 22 2006 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.8.7.1-5
