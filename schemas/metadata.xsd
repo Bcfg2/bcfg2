@@ -7,7 +7,10 @@
       $Id$
     </xsd:documentation>
   </xsd:annotation>
-  
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+
   <xsd:simpleType name='toolsetType'>
     <xsd:restriction base="xsd:string">
       <xsd:pattern value="rh|debian|solaris|aix|gentoo|auto"/>
@@ -42,20 +45,17 @@
     <xsd:attribute type='xsd:string' name='category' use='optional'/>
     <xsd:attribute type='xsd:string' name='comment' use='optional'/>
   </xsd:complexType>
-    
-  <xsd:element name='Groups'>
-    <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Group' type='groupType'/>
-        <xsd:element name='Groups'>
-          <xsd:complexType>
-            <xsd:choice>
-              <xsd:element name='Group' type='groupType'/>
-            </xsd:choice>
-          </xsd:complexType>
-        </xsd:element>
-      </xsd:choice>
-      <xsd:attribute name='version' type='xsd:string'/>
-    </xsd:complexType>
-  </xsd:element>
+
+  <xsd:complexType name='groupsType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Groups' type='groupsType'/>
+    </xsd:choice>
+    <xsd:attribute name='version' type='xsd:string'/>
+    <xsd:attribute name='origin' type='xsd:string'/>   
+    <xsd:attribute name='revision' type='xsd:string'/>  
+    <xsd:attribute ref='xml:base'/>  
+  </xsd:complexType>
+
+  <xsd:element name='Groups' type='groupsType'/>
 </xsd:schema>

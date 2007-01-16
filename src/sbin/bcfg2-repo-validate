@@ -20,8 +20,6 @@ if __name__ == '__main__':
         prefix = cf.get('server', 'prefix')
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         prefix = '/usr'
-    if verbose:
-        print "Using installation prefix %s" % (prefix)
     schemadir = "%s/share/bcfg2/schemas" % (prefix)
     os.chdir(schemadir)
 
@@ -44,8 +42,6 @@ if __name__ == '__main__':
     failures  = 0
     for k, (spec, schemaname) in filesets.iteritems():
         try:
-            if verbose:
-                print "Processing schema %s" % (schemaname % (schemadir))
             schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
         except:
             print "Failed to process schema %s" % (schemaname%(schemadir))
@@ -67,7 +63,13 @@ if __name__ == '__main__':
                 if verbose:
                     print "%s checks out" % (filename)
             else:
-                print "%s ***FAILS*** to verify \t\t<----" % (filename)
-                os.system("xmllint --xinclude --schema %s %s" % (schemaname % schemadir, filename))
-                failures = 1
+                rc = os.system("xmllint --noout --xinclude --schema %s %s > /dev/null 2>/dev/null" % \
+                               (schemaname % schemadir, filename))
+                if rc:
+                    failures = 1
+                    print "%s ***FAILS*** to verify \t\t<----" % (filename)
+                    os.system("xmllint --noout --xinclude --schema %s %s" % \
+                              (schemaname % schemadir, filename))
+                elif verbose:
+                    print "%s checks out" % (filename)
     raise SystemExit, failures
