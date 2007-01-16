@@ -38,6 +38,8 @@
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>
+      <xsd:attribute type='xsd:string' name='origin'/>
+      <xsd:attribute type='xsd:string' name='revision'/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>
