@@ -14,7 +14,7 @@ bcfg2-admin [options]
 init        - initialize the bcfg2 repository( this is interactive; only run once )
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
-viz         [-h] [-b] [-m] [-o output.png] [-r'
+viz         [-h] [-b] [-m] [-o output.png] [-r]
 '''
 
 config = '''

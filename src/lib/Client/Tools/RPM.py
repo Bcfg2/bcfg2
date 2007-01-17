@@ -98,5 +98,11 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             self.logger.info("Removing packages: %s" % pkgnames)
             if self.cmd.run("rpm --quiet -e --allmatches %s" % " ".join(pkgnames))[0] == 0:
                 self.modified += packages
+            else:
+                for pkg in packages:
+                    if self.cmd.run("rpm --quiet -e --allmatches %s" % \
+                                    pkg.get('name'))[0] == 0:
+                        self.modified += pkg
+
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
