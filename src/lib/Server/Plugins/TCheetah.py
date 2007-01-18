@@ -50,7 +50,7 @@ class TemplateFile:
         try:
             entry.text = str(self.template)
         except:
-            logger.error("Failed to template %s" % entry.get('name'), exc_info=1)
+            logger.error("Failed to template %s" % entry.get('name'))
             raise Bcfg2.Server.Plugin.PluginExecutionError
         [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
 
