@@ -1,0 +1,37 @@
+.TH "bcfg2-admin" 8
+.SH NAME
+bcfg2-admin \- Perform repository administration tasks
+.SH SYNOPSIS
+.B bcfg2-server
+.I init
+.I mineentry <client> <entry type> <entry name>
+.I minestruct <client>
+.I viz [-h] [-b] [-k] [-o output.png] [-r]
+
+.SH DESCRIPTION
+.PP
+.B bcfg2-server
+This daemon serves configurations to clients based on the data in its 
+repository. 
+.SH VIZ OPTIONS
+.PP
+.B \-h
+.RS
+Include hosts in diagram
+.RE
+.B \-b
+.RS
+Include bundles in diagram
+.RE
+.B "-o <output file>"
+.RS
+Write to outfile file instead of stdout
+.RE
+.B \-r
+.RS
+Produce raw graphviz output
+.RE
+.B \-k
+.RS
+Add a shape/color key
+.RE

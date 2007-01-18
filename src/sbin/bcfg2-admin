@@ -14,7 +14,7 @@ bcfg2-admin [options]
 init        - initialize the bcfg2 repository( this is interactive; only run once )
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
-viz         [-h] [-b] [-m] [-o output.png] [-r]
+viz         [-h] [-b] [-k] [-o output.png] [-r]
 '''
 
 config = '''
@@ -268,19 +268,22 @@ def do_tidy(args):
 
 def do_viz(args):
     '''Build visualization of groups file'''
-    if '-C' in args:
+    if '-R' in args:
+        repo = args[args.index('-R') + 1]
+    elif '-C' in args:
         repo = get_repo_path(args[args.index('-C') + 1])
     else:
         repo = get_repo_path()
-    groups = lxml.etree.parse(repo + '/Metadata/groups.xml').getroot()
-    clients = lxml.etree.parse(repo + '/Metadata/clients.xml').getroot()
+    groupdata = lxml.etree.parse(repo + '/Metadata/groups.xml')
+    groupdata.xinclude()
+    groups = groupdata.getroot()
     if '-r' in args:
         dotpipe = popen2.Popen4("dd bs=4M 2>/dev/null")
     else:
         dotpipe = popen2.Popen4("dot -Tpng")
     categories = {'default':'grey83'}
     instances = {}
-    for group in groups.findall('Group'):
+    for group in groups.findall('.//Groups/Group'):
         if group.get('category', False):
             if not categories.has_key(group.get('category')):
                 categories[group.get('category')] = colors.pop()
@@ -292,6 +295,7 @@ def do_viz(args):
         raise SystemExit, 1
     dotpipe.tochild.write('\trankdir="LR";\n')
     if '-h' in args:
+        clients = lxml.etree.parse(repo + '/Metadata/clients.xml').getroot()
         for client in clients.findall('Client'):
             if instances.has_key(client.get('profile')):
                 instances[client.get('profile')].append(client.get('name'))
@@ -310,7 +314,7 @@ def do_viz(args):
         for bundle in bundles:
             dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' % (bundle, bundle))
     gseen = []
-    for group in groups.findall('Group'):
+    for group in groups.findall('.//Groups/Group'):
         color = categories[group.get('category', 'default')]
         if group.get('profile', 'false') == 'true':
             style="filled, bold"
@@ -324,7 +328,7 @@ def do_viz(args):
                 dotpipe.tochild.write('\t"group-%s" -> "bundle-%s";\n' %
                                       (group.get('name'), bundle.get('name')))
         
-    for group in groups.findall('Group'):
+    for group in groups.findall('.//Groups/Group'):
         for parent in group.findall('Group'):
             if parent.get('name') not in gseen:
                 dotpipe.tochild.write('\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n' %
@@ -332,7 +336,7 @@ def do_viz(args):
                 gseen.append(parent.get("name"))
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
-    if '-m' not in args:
+    if '-k' not in args:
         dotpipe.tochild.write("\tsubgraph cluster_key {\n")
         dotpipe.tochild.write('''\tstyle="filled";\n''')
         dotpipe.tochild.write('''\tcolor="lightblue";\n''')
