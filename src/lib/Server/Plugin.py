@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree
+import logging, lxml.etree, re
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -89,8 +89,9 @@ class FileBacked(object):
 class DirectoryBacked(object):
     '''This object is a coherent cache for a filesystem hierarchy of files.'''
     __child__ = FileBacked
+    patterns = re.compile('.*')
 
-    def __init__(self, name, fam):
+    def __init__(self, name, fam)
         object.__init__(self)
         self.name = name
         self.fam = fam
@@ -112,6 +113,8 @@ class DirectoryBacked(object):
             logger.info("got multiple adds for %s" % name)
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
+                return
+            if not self.patterns.match(name):
                 return
             self.entries[name] = self.__child__('%s/%s' % (self.name, name))
             self.entries[name].HandleEvent()
@@ -302,7 +305,11 @@ class XMLSrc(XMLFileBacked):
             self.pnode.Match(metadata, cache[1])
             self.cache = cache
 
-class PrioDir(Plugin, DirectoryBacked):
+class XMLDirectoryBacked(DirectoryBacked):
+    '''Directorybacked for *.xml'''
+    patterns = re.compile('.*\.xml')    
+
+class PrioDir(Plugin, XMLDirectoryBacked):
     '''This is a generator that handles package assignments'''
     __name__ = 'PrioDir'
     __child__ = XMLSrc
@@ -310,14 +317,14 @@ class PrioDir(Plugin, DirectoryBacked):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         try:
-            DirectoryBacked.__init__(self, self.data, self.core.fam)
+            XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
             self.logger.error("Failed to load %s indices" % (self.__name__))
             raise PluginInitError
 
     def HandleEvent(self, event):
         '''Handle events and update dispatch table'''
-        DirectoryBacked.HandleEvent(self, event)
+        XMLDirectoryBacked.HandleEvent(self, event)
         for src in self.entries.values():
             for itype, children in src.items.iteritems():
                 for child in children:

@@ -5,7 +5,7 @@ import Bcfg2.Server.Plugin
 import copy
 import lxml.etree
 
-class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
+class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''This Structure is good for the pile of independent configs needed for most actual systems'''
     __name__ =  'Base'
     __version__ = '$Id$'
@@ -17,7 +17,7 @@ class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         self.fragements = {}
         try:
-            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
             self.logger.error("Failed to load Base repository")
             raise Bcfg2.Server.Plugin.PluginInitError

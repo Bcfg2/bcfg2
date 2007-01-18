@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 import copy, lxml.etree, Bcfg2.Server.Plugin
 
-class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
+class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
     __name__ =  'Bundler'
     __version__ = '$Id$'
@@ -13,7 +13,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.DirectoryBacked):
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         try:
-            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
             self.logger.error("Failed to load Bundle repository")
             raise Bcfg2.Server.Plugin.PluginInitError
