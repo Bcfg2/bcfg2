@@ -204,6 +204,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 entry.set("current_diff", xml.sax.saxutils.quoteattr(diff))
             except:
                 pass
+            udiff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), \
+                                                               tempdata.split('\n'))])
+            entry.set('qtext', udiff + "\nInstall ConfigFile %s: (y/N) " % \
+                      (entry.get('name')))
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):

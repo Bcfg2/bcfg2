@@ -268,7 +268,9 @@ class Frame:
                               ([entry for entry in self.states if not \
                                 self.states[entry]], "Bad")]:
             container = Bcfg2.Client.XML.SubElement(stats, ename)
-            [container.append(item) for item in data]
+            for item in data:
+                item.set('qtext', '')
+                container.append(item)
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")
         feedback.append(stats)
