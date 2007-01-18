@@ -5,7 +5,7 @@
 # DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean
 
 # Comment this line if you wish to build without pycentral or pysupport
-#DEB_PYTHON_SYSTEM := pycentral
+DEB_PYTHON_SYSTEM := pycentral
 DEB_PYTHON_MODULE_PACKAGE := bcfg2
 ifdef DEB_PYTHON_SYSTEM
 DEB_DH_INSTALLINIT_ARGS := -n
@@ -40,4 +40,6 @@ binary-install/bcfg2 ::
 binary-install/bcfg2-server ::
 	cd doc && make manual.html
 	dh_installinit -p$(cdbs_curpkg) -o
+	mkdir debian/bcfg2-server/usr/share/bcfg2/hostbase
+	cp src/lib/Server/Hostbase/templates/* debian/bcfg2-server/usr/share/bcfg2/hostbase
 endif
