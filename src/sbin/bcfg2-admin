@@ -336,7 +336,7 @@ def do_viz(args):
                 gseen.append(parent.get("name"))
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
-    if '-k' not in args:
+    if '-k' in args:
         dotpipe.tochild.write("\tsubgraph cluster_key {\n")
         dotpipe.tochild.write('''\tstyle="filled";\n''')
         dotpipe.tochild.write('''\tcolor="lightblue";\n''')
