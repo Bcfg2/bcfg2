@@ -27,6 +27,8 @@ class Client:
             #                  env, cfpath, default, boolean)),
             'verbose':(('-v', False,"enable verbose output"),
                        False, False, False, True),
+            'extra':(('-e', False,"enable extra entry detailed output"),
+                       False, False, False, True),
             'quick':(('-q', False, "disable some checksum verification"),
                      False, False, False, True),
             'debug':(('-d', False, "enable debugging output"),

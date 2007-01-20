@@ -3,7 +3,7 @@
 bcfg \- reconfigure machine based on settings in BCFG2
 .SH SYNOPSIS
 .B bcfg2
-.I [-d] [-v] [-p] [-c cache file] [-f config file] [-I] [-q] [-b bundle]
+.I [-d] [-v] [-p] [-c cache file] [-e] [-f config file] [-I] [-q] [-b bundle]
 [-r removal mode]
 .SH DESCRIPTION
 .PP
@@ -65,6 +65,11 @@ Cause bcfg2 to remove extra configuration elements it detects. Mode is one of al
 .B "\-p <profile>" 
 .RS
 Assert a profile for the current client.
+.RE
+.B "\-e" 
+.RS
+When in verbose mode, display extra entry information (temporary until
+verbosity rework)
 .RE
 .B "\-k" 
 .RS
