@@ -91,7 +91,7 @@ class DirectoryBacked(object):
     __child__ = FileBacked
     patterns = re.compile('.*')
 
-    def __init__(self, name, fam)
+    def __init__(self, name, fam):
         object.__init__(self)
         self.name = name
         self.fam = fam
