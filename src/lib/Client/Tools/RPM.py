@@ -70,7 +70,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                   (entry.get('name'), entry.get('version'),
                                    self.installed[entry.get('name')]))
                 entry.set('current_version', self.installed[entry.get('name')])
-                entry.set('Upgrade Package %s (%s -> %s)? (y/N) ' % \
+                entry.set('Upgrade/downgrade Package %s (%s -> %s)? (y/N) ' % \
                           (entry.get('name'), entry.get('current_version'),
                            entry.get('version')))
                 return False

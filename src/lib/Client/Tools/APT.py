@@ -80,7 +80,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                 return True
             else:
                 entry.set('current_version', self.installed[entry.get('name')])
-                entry.set('qtext', "Upgrade Package %s (%s -> %s)? (y/N) " % \
+                entry.set('qtext', "Upgrade/downgrade Package %s (%s -> %s)? (y/N) " % \
                           (entry.get('name'), entry.get('current_version'),
                            entry.get('version')))
                 return False
