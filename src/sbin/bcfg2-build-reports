@@ -41,7 +41,7 @@ def generatereport(rspec, nrpt):
             SubElement(stats,"Good")
 
         [stats.remove(item) for item in stats.findall("Bad") + stats.findall("Modified") if \
-         item.getchildren() == None]
+         item.getchildren() == []]
         [stats.remove(item) for item in stats.findall("Modified") if reportmodified == 'N']
                 
         #test for staleness -if stale add Stale tag
