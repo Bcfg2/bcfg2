@@ -197,8 +197,12 @@ class Frame:
                     self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
                          if not self.states[entry]]
-            if not self.setup['interactive']:
-                self.DispatchInstallCalls(clobbered)
+            if clobbered:
+                self.logger.debug("Found clobbered entries:")
+                self.logger.debug(["%s:%s" % (entry.tag, entry.get('name')) \
+                                   for entry in clobbered])
+                if not self.setup['interactive']:
+                    self.DispatchInstallCalls(clobbered)
             for tool, bundle in tbm:
                 try:
                     tool.BundleUpdated(bundle)
