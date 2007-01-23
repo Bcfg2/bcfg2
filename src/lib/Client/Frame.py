@@ -192,7 +192,7 @@ class Frame:
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
-                    tool.Inventory(bundle)
+                    tool.Inventory([bundle])
                 except:
                     self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
