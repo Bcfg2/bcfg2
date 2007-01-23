@@ -87,7 +87,11 @@ class Tool:
 
     def BundleUpdated(self, _):
         '''This callback is used when bundle updates occur'''
-        pass
+        return
+
+    def BundleNotUpdated(self, _):
+        '''This callback is used when a bundle is not updated'''
+        return
 
     def Inventory(self, structures=[]):
         '''Dispatch verify calls to underlying methods'''

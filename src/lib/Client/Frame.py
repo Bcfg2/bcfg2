@@ -183,7 +183,7 @@ class Frame:
         if self.modified:
             # Handle Bundle interdeps
             mods = self.modified
-            mbundles = [struct for struct in self.config if struct.tag == 'Bundle' and \
+            mbundles = [struct for struct in self.config.findall('Bundle') if \
                         [mod for mod in mods if mod in struct]]
             if mbundles:
                 self.logger.info("The Following Bundles have been modifed:")
@@ -203,11 +203,17 @@ class Frame:
                                    for entry in clobbered])
                 if not self.setup['interactive']:
                     self.DispatchInstallCalls(clobbered)
-            for tool, bundle in tbm:
-                try:
-                    tool.BundleUpdated(bundle)
-                except:
-                    self.logger.error("%s.BundleUpdated() call failed:" % (tool.__name__), exc_info=1)
+
+            for bundle in self.config.findall('.//Bundle'):
+                for tool in self.tools:
+                    try:
+                        if bundle in mbundles:
+                            tool.BundleUpdated(bundle)
+                        else:
+                             tool.BundleNotUpdated(bundle)
+                    except:
+                        self.logger.error("%s.BundleNotUpdated() call failed:" % \
+                                          (tool.__name__), exc_info=1)
                 
     def Remove(self):
         '''Remove extra entries'''
