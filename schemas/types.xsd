@@ -8,7 +8,7 @@
     </xsd:documentation>
   </xsd:annotation>
 
-    <xsd:simpleType name='PackageTypeEnum'>
+  <xsd:simpleType name='PackageTypeEnum'>
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='deb' />
       <xsd:enumeration value='rpm' />
@@ -22,6 +22,28 @@
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='on'/>
       <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='ActionTimingEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='both'/>
+      <xsd:enumeration value='pre'/>
+      <xsd:enumeration value='post'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='ActionWhenEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='modified'/>
+      <xsd:enumeration value='always'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='ActionStatusEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='ignore'/>
+      <xsd:enumeration value='check'/>
     </xsd:restriction>
   </xsd:simpleType>
 

@@ -29,6 +29,14 @@
     <xsd:attribute type='xsd:string' name='group'/>
   </xsd:complexType>
 
+  <xsd:complexType name='ActionType'>
+    <xsd:attribute type='ActionTimingEnum' name='timing' use='required'/>
+    <xsd:attribute type='ActionWhenEnum' name='when' use='required'/>
+    <xsd:attribute type='ActionStatusEnum' name='status' use='required'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='command' use='required'/>
+  </xsd:complexType>
+
   <xsd:complexType name='SymLinkType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='to' use='required'/>
@@ -48,6 +56,7 @@
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Permissions' type='PermissionsType'/>
+      <xsd:element name='Action' type='ActionType'/>
       <xsd:element name='Group' type='RContainerType'/>
       <xsd:element name='Client' type='RContainerType'/>
     </xsd:choice>
@@ -64,6 +73,7 @@
 	<xsd:element name='SymLink' type='SymLinkType'/>
 	<xsd:element name='Package' type='PackageType'/>
 	<xsd:element name='Permissions' type='PermissionsType'/>
+	<xsd:element name='Action' type='ActionType'/>
 	<xsd:element name='Group' type='RContainerType'/>
 	<xsd:element name='Client' type='RContainerType'/>
       </xsd:choice>

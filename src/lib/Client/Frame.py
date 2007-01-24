@@ -43,6 +43,7 @@ class Frame:
         self.tools = []
         self.states = {}
         self.whitelist = []
+        self.blacklist = []
         self.removal = []
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
         if self.setup['drivers']:
@@ -137,6 +138,7 @@ class Frame:
             elif self.setup['remove'] == 'packages':
                 self.removal = [entry for entry in self.extra if entry.tag == 'Package']
 
+        candidates = [entry for entry in self.states if not self.states[entry]]
         if self.setup['dryrun']:
             updated = [entry for entry in self.states if not self.states[entry]]
             if updated:
@@ -150,21 +152,41 @@ class Frame:
             self.removal = []
             return
         elif self.setup['interactive']:
-            self.whitelist = promptFilter(prompt, [entry for entry in self.states \
-                                                   if not self.states[entry]])
+            self.whitelist = promptFilter(prompt, candidates)
+            self.blacklist = [c for c in candidates if c not in self.whitelist]
             self.removal = promptFilter(rprompt, self.removal)
-        elif self.setup['bundle']:
-            # only install entries in specified bundle
-            mbs = [bund for bund in self.config.findall('./Bundle') \
-                   if bund.get('name') == self.setup['bundle']]
-            if not mbs:
-                self.logger.error("Could not find bundle %s" % (self.setup['bundle']))
-                return
-            self.whitelist = [entry for entry in self.states if not self.states[entry] \
-                              and entry in mbs[0].getchildren()]
         else:
-            # all systems are go
-            self.whitelist = [entry for entry in self.states if not self.states[entry]]
+            # need to do bundle and pre-action checks
+            if self.setup['bundle']:
+                bundles = [b for b in self.config.findall('./Bundle') \
+                           if b.get('name') == self.setup['bundle']]
+            else:
+                bundles = self.config.findall('./Bundle')
+            gbundles = []
+            for bundle in bundles:
+                actions = [a for a in bundle.findall('./Action') \
+                           if a.get('timing') != 'post']
+                # run all actions if modified or always
+                for action in actions:
+                    if action.get('when') == 'always':
+                        self.DispatchInstallCalls([action])
+                    else:
+                        # when == modified
+                        # check if bundle should be modified
+                        if [c for c in candidates if c in bundle]:
+                            self.DispatchInstallCalls([action])
+                if False in [self.states[a] for a in actions]:
+                    self.logger.info("Bundle %s failed prerequisite action" % \
+                                     (bundle.get('name')))
+                    continue
+                else:
+                    gbundles.append(bundle)
+
+            for entry in candidates:
+                if [bundle for bundle in gbundles if entry in bundle]:
+                    self.whitelist.append(entry)
+                else:
+                    self.blacklist.append(entry)
 
     def DispatchInstallCalls(self, entries):
         '''Dispatch install calls to underlying tools'''
@@ -180,11 +202,12 @@ class Frame:
     def Install(self):
         '''Install all entries'''
         self.DispatchInstallCalls(self.whitelist)
+        mods = self.modified
+        mbundles = [struct for struct in self.config.findall('Bundle') if \
+                    [mod for mod in mods if mod in struct]]
+
         if self.modified:
             # Handle Bundle interdeps
-            mods = self.modified
-            mbundles = [struct for struct in self.config.findall('Bundle') if \
-                        [mod for mod in mods if mod in struct]]
             if mbundles:
                 self.logger.info("The Following Bundles have been modifed:")
                 self.logger.info([mbun.get('name') for mbun in mbundles])
@@ -196,7 +219,7 @@ class Frame:
                 except:
                     self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
-                         if not self.states[entry]]
+                         if not self.states[entry] and entry not in self.blacklist]
             if clobbered:
                 self.logger.debug("Found clobbered entries:")
                 self.logger.debug(["%s:%s" % (entry.tag, entry.get('name')) \
@@ -204,16 +227,16 @@ class Frame:
                 if not self.setup['interactive']:
                     self.DispatchInstallCalls(clobbered)
 
-            for bundle in self.config.findall('.//Bundle'):
-                for tool in self.tools:
-                    try:
-                        if bundle in mbundles:
-                            tool.BundleUpdated(bundle)
-                        else:
-                             tool.BundleNotUpdated(bundle)
-                    except:
-                        self.logger.error("%s.BundleNotUpdated() call failed:" % \
-                                          (tool.__name__), exc_info=1)
+        for bundle in self.config.findall('.//Bundle'):
+            for tool in self.tools:
+                try:
+                    if bundle in mbundles:
+                        tool.BundleUpdated(bundle)
+                    else:
+                        tool.BundleNotUpdated(bundle)
+                except:
+                    self.logger.error("%s.BundleNotUpdated() call failed:" % \
+                                      (tool.__name__), exc_info=1)
                 
     def Remove(self):
         '''Remove extra entries'''
