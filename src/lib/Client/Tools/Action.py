@@ -20,6 +20,7 @@ class Action(Bcfg2.Client.Tools.Tool):
         self.logger.debug("Running Action %s" % (entry.get('name')))
         rc = self.cmd.run(entry.get('command'))[0]
         self.logger.debug("Action: %s got rc %s" % (entry.get('command'), rc))
+        entry.set('rc', str(rc))
         if entry.get('status', 'check') == 'ignore':
             return True
         else:
