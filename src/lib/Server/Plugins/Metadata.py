@@ -42,6 +42,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.clients = {}
         self.aliases = {}
         self.groups = {}
+        self.cgroups = {}
         self.public = []
         self.profiles = []
         self.toolsets = {}
@@ -223,7 +224,19 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             raise MetadataConsistencyError
         toolset = toolinfo[0]
         probed = self.probedata.get(client, {})
-        return ClientMetadata(client, groups, bundles, toolset, categories, probed)
+        newgroups = groups[:]
+        newbundles = bundles[:]
+        newcategories = {}
+        newcategories.update(categories)
+        for group in  self.cgroups.get(client, []):
+            if self.groups.has_key(group):
+                nbundles, ngroups, ncategories = self.groups[group]
+            else:
+                nbundles, ngroups, ncategories = ([], [group], {})
+            [newbundles.append(b) for b in nbundles if b not in newbundles]
+            [newgroups.append(g) for g in ngroups if g not in newgroups]
+            newcategories.update(ncategories)
+        return ClientMetadata(client, newgroups, newbundles, toolset, newcategories, probed)
         
     def GetProbes(self, _):
         '''Return a set of probes for execution on client'''
@@ -246,7 +259,16 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
 
     def ReceiveData(self, client, data):
         '''Receive probe results pertaining to client'''
+        if not self.cgroups.has_key(client.hostname):
+            self.cgroups[client.hostname] = []
+        dlines = data.text.split('\n')
+        for line in dlines[:]:
+            if line.split(':')[0] == 'group':
+                if line.split(':')[1] not in self.cgroups[client.hostname]:
+                    self.cgroups[client.hostname].append(line.split(':')[1])
+                dlines.remove(line)
+        dtext = "\n".join(dlines)
         try:
-            self.probedata[client.hostname].update({ data.get('name'):data.text })
+            self.probedata[client.hostname].update({ data.get('name'):dtext })
         except KeyError:
-            self.probedata[client.hostname] = { data.get('name'):data.text }
+            self.probedata[client.hostname] = { data.get('name'):dtext }
