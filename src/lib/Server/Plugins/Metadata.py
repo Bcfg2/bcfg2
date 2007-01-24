@@ -264,8 +264,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         dlines = data.text.split('\n')
         for line in dlines[:]:
             if line.split(':')[0] == 'group':
-                if line.split(':')[1] not in self.cgroups[client.hostname]:
-                    self.cgroups[client.hostname].append(line.split(':')[1])
+                newgroup = line.split(':')[1].strip()
+                if newgroup not in self.cgroups[client.hostname]:
+                    self.cgroups[client.hostname].append(newgroup)
                 dlines.remove(line)
         dtext = "\n".join(dlines)
         try:
