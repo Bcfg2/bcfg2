@@ -1,5 +1,4 @@
-'''This is the bcfg2 support for the Gentoo Portage system, largely cribbed from the
-APT one'''
+'''This is the bcfg2 tool for the Gentoo Portage system.'''
 __revision__ = '$Revision: $'
 
 import re
@@ -10,8 +9,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     the rest from Toolset.Toolset'''
     __name__ = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
-    __important__ = ["/etc/make.conf", "/etc/make.globals", \
-                  "/etc/make.profile/make.defaults", "/etc/make.profile/packages" ]
+    __important__ = ['/etc/make.conf']
     __handles__ = [('Package', 'ebuild')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
@@ -21,8 +19,6 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     def __init__(self, logger, cfg, setup, states):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup, states)
         self.cfg = cfg
-        if not self.setup['dryrun']:
-            self.cmd.run("emerge -q --sync")
         self.installed = {}
         self.RefreshPackages()
         
@@ -45,11 +41,13 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             return False
         if self.installed.has_key(entry.attrib['name']):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
-                if not self.setup['quick'] and entry.get('verify', 'true') == 'true':
-                # mrj - there's probably a "python way" to avoid the grep...?
-                    output = self.cmd.run("/usr/bin/equery check =%s | grep '!!!'" \
-                             % entry.get('name'))[1]
-                    if [filename for filename in output if filename not in modlist]:
+                if not self.setup['quick'] and \
+				entry.get('verify', 'true') == 'true':
+                    output = self.cmd.run \
+				    ("/usr/bin/equery check =%s 2>&1 |grep '!!!' \
+					| awk '{print $2}'" % entry.get('name'))[1]
+                    if [filename for filename in output \
+				    if filename not in modlist]:
                         return False
                 return True
             else:
