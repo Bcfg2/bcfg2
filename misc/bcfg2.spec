@@ -117,11 +117,7 @@ Bcfg2 client
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-server
 
-%{_mandir}/man8/bcfg2-build-reports.8*
-%{_mandir}/man8/bcfg2-info.8*
-%{_mandir}/man8/bcfg2-repo-validate.8*
-%{_mandir}/man8/bcfg2-server.8*
-
+%{_mandir}/man8/*.8*
 %dir %{_libdir}/bcfg2
 
 %changelog
