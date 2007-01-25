@@ -253,11 +253,15 @@ class Frame:
         self.logger.info('\nPhase: %s' % phase)
         self.logger.info('Correct entries:\t%d' % self.states.values().count(True))
         self.logger.info('Incorrect entries:\t%d' % self.states.values().count(False))
+        if phase == 'final' and self.states.values().count(False):
+            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for \
+                              entry in self.states if not self.states[entry]])
         self.logger.info('Total managed entries:\t%d' % len(self.states.values()))
         self.logger.info('Unmanaged entries:\t%d' % len(self.extra))
         if phase == 'final' and self.setup['extra']:
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) \
                               for entry in self.extra])
+                
         self.logger.info("")
 
         if ((self.states.values().count(False) == 0) and not self.extra):
