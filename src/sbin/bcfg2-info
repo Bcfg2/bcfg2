@@ -177,6 +177,7 @@ if __name__ == '__main__':
         print "Core load failed because %s" % msg
         raise SystemExit, 1
     for i in range(25):
+        print "Filesystem check %d of %d" % (i + 1, 25)
         bcore.fam.Service()
         time.sleep(0.5)
     while True:
