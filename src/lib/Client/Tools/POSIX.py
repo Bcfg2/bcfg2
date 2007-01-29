@@ -206,7 +206,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 pass
             udiff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), \
                                                                tempdata.split('\n'))])
-            entry.set('qtext', udiff.encode('ascii') + "\nInstall ConfigFile %s: (y/N) " % \
+            try:
+                eudiff = udiff.encode('ascii')
+            except:
+                eudiff = "No diff available"
+            entry.set('qtext', eudiff + "\nInstall ConfigFile %s: (y/N) " % \
                       (entry.get('name')))
         return contentStatus and permissionStatus
 
