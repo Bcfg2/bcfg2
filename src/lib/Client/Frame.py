@@ -101,7 +101,7 @@ class Frame:
                 entries.remove(entry)
         if multi:
             self.logger.info("The following entries are included multiple times:")
-            self.logger.info(multi)
+            self.logger.info(["%s:%s" % entry for entry in multi])
             
                     
     def __getattr__(self, name):
