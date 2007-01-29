@@ -209,7 +209,7 @@ class Frame:
         if self.modified:
             # Handle Bundle interdeps
             if mbundles:
-                self.logger.info("The Following Bundles have been modifed:")
+                self.logger.info("The Following Bundles have been modified:")
                 self.logger.info([mbun.get('name') for mbun in mbundles])
                 self.logger.info("")
             tbm = [(t, b) for t in self.tools for b in mbundles]
