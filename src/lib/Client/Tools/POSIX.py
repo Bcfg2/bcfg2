@@ -209,7 +209,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 eudiff = udiff.encode('ascii')
             except:
-                eudiff = "No diff available"
+                eudiff = "Binary file: no diff printed"
             entry.set('qtext', eudiff + "\nInstall ConfigFile %s: (y/N) " % \
                       (entry.get('name')))
         return contentStatus and permissionStatus
