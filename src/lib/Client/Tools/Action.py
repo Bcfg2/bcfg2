@@ -30,6 +30,10 @@ class Action(Bcfg2.Client.Tools.Tool):
         '''Actions always verify true'''
         return True
 
+    def VerifyPostInstall(self, dummy, _):
+        '''Actions always verify true'''
+        return True
+
     def InstallAction(self, entry):
         '''Run actions as pre-checks for bundle installation'''
         if entry.get('timing') != 'post':
