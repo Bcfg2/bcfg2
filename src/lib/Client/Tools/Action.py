@@ -41,6 +41,9 @@ class Action(Bcfg2.Client.Tools.Tool):
             return self.states[entry]
         return True
 
+    def InstallPostInstall(self, entry):
+        return self.InstallAction(self, entry)
+
     def BundleUpdated(self, bundle):
         '''Run postinstalls when bundles have been updated'''
         for postinst in bundle.findall("PostInstall"):
