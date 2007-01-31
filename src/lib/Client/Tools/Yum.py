@@ -13,6 +13,7 @@ class Yum(Bcfg2.Client.Tools.RPM.RPM):
     __name__ = 'Yum'
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum')]
+    __req__ = {'Package': ['name', 'version']}
 
     def RemovePackages(self, packages):
         '''Remove specified entries'''
