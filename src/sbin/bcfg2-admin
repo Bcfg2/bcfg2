@@ -152,7 +152,7 @@ def get_repo_path(cfile='/etc/bcfg2.conf'):
 def load_stats(client):
     repo = get_repo_path()
     stats = lxml.etree.parse("%s/etc/statistics.xml" % (repo))
-    hostent = stats.xpath('.//Node[@name="%s"]' % client)
+    hostent = stats.xpath('//Node[@name="%s"]' % client)
     if not hostent:
         err_exit("Could not find stats for client %s" % (client))
     return hostent[0]
