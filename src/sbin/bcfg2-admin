@@ -2,6 +2,7 @@
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
 import difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
+import xml.sax.saxutils
 import Bcfg2.Server.Core, Bcfg2.Logging
 
 log = logging.getLogger('bcfg-admin')
@@ -139,7 +140,7 @@ def initialize_repo():
 
 def update_file(path, diff):
     '''Update file at path using diff'''
-    newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
+    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
     print "writing file, %s" % path
     open(path, 'w').write(newdata)
 
