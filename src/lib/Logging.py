@@ -125,7 +125,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                 self.socket.send("Reconnected to syslog")
                 self.socket.send(msg)
 
-def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='local0', level=0):
+def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
         return 
