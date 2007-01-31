@@ -20,7 +20,7 @@ class Yum(Bcfg2.Client.Tools.RPM.RPM):
         pkgnames = [pkg.get('name') for pkg in packages]
         if len(pkgnames) > 0:
             self.logger.info("Removing packages: %s" % pkgnames)
-            if self.cmd.run("yum remove %s" % " ".join(pkgnames))[0] == 0:
+            if self.cmd.run("yum -d0 -y remove %s" % " ".join(pkgnames))[0] == 0:
                 self.modified += packages
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
