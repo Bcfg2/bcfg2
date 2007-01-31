@@ -201,7 +201,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if not contentStatus:
             diff = '\n'.join([x for x in difflib.ndiff(content.split('\n'), tempdata.split('\n'))])
             try:
-                entry.set("current_diff", xml.sax.saxutils.quoteattr(diff))
+                entry.set("current_diff", xml.sax.saxutils.escape(diff))
             except:
                 pass
             udiff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), \
