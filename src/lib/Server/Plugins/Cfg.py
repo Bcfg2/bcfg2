@@ -114,10 +114,11 @@ class ConfigFileEntry(object):
         '''add new file additions for a single cf file'''
         basename = name.split('/')[-1]
         rbasename = self.repopath.split('/')[-1]
-        if not ((basename == ':info') or (basename[:len(rbasename)] == rbasename)):
+        if not ((basename not in [':info', 'info']) or
+                (basename[:len(rbasename)] == rbasename)):
             logger.error("Confused about file %s; ignoring" % (name))
             return
-        if basename == ':info':
+        if basename in [':info', 'info']:
             return self.read_info(basename)
 
         try:
