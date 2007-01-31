@@ -9,7 +9,7 @@ conflicts = ['RPM']
 class Yum(Bcfg2.Client.Tools.RPM.RPM):
     '''Support for Yum packages'''
     pkgtype = 'yum'
-    pkgtool = ("/usr/bin/yum install %s", ("%s-%s", ["name", "version"]))
+    pkgtool = ("/usr/bin/yum -d0 -y install %s", ("%s-%s", ["name", "version"]))
     __name__ = 'Yum'
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum')]
