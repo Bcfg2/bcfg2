@@ -58,10 +58,6 @@ class Frame:
             except ImportError:
                 continue
 
-        for tool in tools:
-            for conflict in getattr(tool, 'conflicts', []):
-                del tmods[conflict]
-        
         for (tool, mod) in tmods.iteritems():
             try:
                 self.tools.append(getattr(mod, tool)(self.logger, setup, config, self.states))
@@ -69,6 +65,11 @@ class Frame:
                 continue
             except:
                 self.logger.error("Failed to instantiate tool %s" % (tool), exc_info=1)
+
+        for tool in self.tools[:]:
+            for conflict in getattr(tool, 'conflicts', []):
+                [self.tools.remove(item) for item in self.tools \
+                 if item.__name__ == conflict]
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.__name__ for tool in self.tools])

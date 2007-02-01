@@ -2,14 +2,29 @@
 '''This provides bcfg2 support for yum'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools.RPM
+import Bcfg2.Client.Tools.RPM, ConfigParser, sys
 
 conflicts = ['RPM']
+
+YAD = True
+CP = ConfigParser.ConfigParser()
+try:
+    if '-C' in sys.argv:
+        CP.read([sys.argv[sys.argv.index('-C') + 1]])
+    else:
+        CP.read(['/etc/bcfg2.conf'])
+    if CP.get('Yum', 'autodep') == 'false':
+        YAD = False
+except ConfigParser.NoOptionError:
+    pass
 
 class Yum(Bcfg2.Client.Tools.RPM.RPM):
     '''Support for Yum packages'''
     pkgtype = 'yum'
-    pkgtool = ("/usr/bin/yum -d0 -y install %s", ("%s-%s", ["name", "version"]))
+    if YAD:
+        pkgtool = ("/usr/bin/yum -d0 -y install %s", ("%s-%s", ["name", "version"]))
+    else:
+        pkgtool = ("/usr/bin/yum -d0 install %s", ("%s-%s", ["name", "version"]))
     __name__ = 'Yum'
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum')]

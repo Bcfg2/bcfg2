@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "launchd", 
-           "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV"]
+           "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV", "Yum"]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML
 
