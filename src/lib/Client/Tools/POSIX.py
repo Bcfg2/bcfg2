@@ -105,13 +105,29 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if owner != entry.get('owner'):
                 entry.set('current_owner', owner)
                 self.logger.debug("%s %s ownership wrong" % (entry.tag, entry.get('name')))
+                nqtext = entry.get('qtext', '') + '\n'
+                nqtext += "%s owner wrong. is %s should be %s" % \
+                          (entry.get('name'), owner, entry.get('owner'))
+                entry.set('qtext', nqtext)
             if group != entry.get('group'):
                 entry.set('current_group', group)
                 self.logger.debug("%s %s group wrong" % (entry.tag, entry.get('name')))
+                nqtext = entry.get('qtext', '') + '\n'
+                nqtext += "%s group wrong. is %s should be %s" % \
+                          (entry.get('name'), group, entry.get('group'))
+                entry.set('qtext', nqtext)
             if perms != entry.get('perms'):
                 entry.set('current_perms', perms)
                 self.logger.debug("%s %s permissions wrong: are %s should be %s" %
                                (entry.tag, entry.get('name'), perms, entry.get('perms')))
+                nqtext = entry.get('qtext', '') + '\n'
+                nqtext += "%s perms wrong. is %s should be %s" % \
+                          (entry.get('name'), perms, entry.get('perms'))
+                entry.set('qtext', nqtext)
+            if entry.tag != 'ConfigFile':
+                nnqtext = entry.get('qtext')
+                nnqtext += '\nInstall %s %s: (y/N) ' % (entry.tag, entry.get('name'))
+                entry.set('qtext', nnqtext)
             return False
 
     def InstallDirectory(self, entry):
@@ -210,8 +226,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 eudiff = udiff.encode('ascii')
             except:
                 eudiff = "Binary file: no diff printed"
-            entry.set('qtext', eudiff + "\nInstall ConfigFile %s: (y/N) " % \
-                      (entry.get('name')))
+            question = "Install ConfigFile %s: (y/N) " % (entry.get('name'))
+            nqtext = entry.get('qtext')
+            if nqtext:
+                nqtext += '\n'
+            nqtext += eudiff + '\n' + question    
+            entry.set('qtext', nqtext)
+            
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
