@@ -15,7 +15,7 @@ try:
         CP.read(['/etc/bcfg2.conf'])
     if CP.get('Yum', 'autodep') == 'false':
         YAD = False
-except ConfigParser.NoOptionError:
+except:
     pass
 
 class Yum(Bcfg2.Client.Tools.RPM.RPM):
