@@ -227,7 +227,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             except:
                 eudiff = "Binary file: no diff printed"
             question = "Install ConfigFile %s: (y/N) " % (entry.get('name'))
-            nqtext = entry.get('qtext')
+            nqtext = entry.get('qtext', '')
             if nqtext:
                 nqtext += '\n'
             nqtext += eudiff + '\n' + question    
