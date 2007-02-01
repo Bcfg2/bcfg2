@@ -4,7 +4,7 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:             bcfg2
-Version:          0.9.1
+Version:          0.9.1a
 Release: %{release}
 Summary:          Configuration management system
 
@@ -72,14 +72,14 @@ Bcfg2 client
 %{__install} -d %{buildroot}%{_sysconfdir}/default
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.daily
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
-%{__install} -d %{buildroot}%{_libdir}/bcfg2
+%{__install} -d %{buildroot}%{_prefix}/lib/bcfg2
 %{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}%{_sbindir}
 %{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
-%{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_libdir}/bcfg2/bcfg2-cron
+%{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
@@ -95,7 +95,7 @@ Bcfg2 client
 %config(noreplace) %{_sysconfdir}/default/bcfg2
 %{_sysconfdir}/cron.hourly/bcfg2
 %{_sysconfdir}/cron.daily/bcfg2
-%{_libdir}/bcfg2/bcfg2-cron
+%{_prefix}/lib/bcfg2/bcfg2-cron
 
 %post -n bcfg2-server
 /sbin/chkconfig --add bcfg2-server
@@ -118,9 +118,12 @@ Bcfg2 client
 %{_sbindir}/bcfg2-server
 
 %{_mandir}/man8/*.8*
-%dir %{_libdir}/bcfg2
+%dir %{_prefix}/lib/bcfg2
 
 %changelog
+* Fri Feb 2 2007 Mike Brady <mike.brady@devnull.net.nz> 0.9.1
+- Removed use of _libdir due to Red Hat x86_64 issue.
+
 * Fri Dec 22 2006 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.8.7.1-5
 - Server needs client library files too so put them in main package
 
