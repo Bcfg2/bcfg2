@@ -12,6 +12,7 @@
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='deb' />
       <xsd:enumeration value='rpm' />
+      <xsd:enumeration value='blast' />
       <xsd:enumeration value='encap' />
       <xsd:enumeration value='sysv' />
       <xsd:enumeration value='portage' />
