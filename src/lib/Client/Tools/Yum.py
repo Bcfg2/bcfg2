@@ -4,8 +4,6 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools.RPM, ConfigParser, sys
 
-conflicts = ['RPM']
-
 YAD = True
 CP = ConfigParser.ConfigParser()
 try:
@@ -29,6 +27,7 @@ class Yum(Bcfg2.Client.Tools.RPM.RPM):
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum')]
     __req__ = {'Package': ['name', 'version']}
+    conflicts = ['RPM']
 
     def RemovePackages(self, packages):
         '''Remove specified entries'''
