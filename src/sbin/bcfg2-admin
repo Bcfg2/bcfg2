@@ -189,7 +189,7 @@ def do_pull(client, etype, ename):
         rversion = lxml.etree.Element('ConfigFile', name=ename)
         bcore.Bind(rversion, m)
         current = rversion.text
-        diff = entry[0].get('current_diff')[1:-1]
+        diff = entry[0].get('current_diff')
         basefile = [frag for frag in \
                     bcore.plugins['Cfg'].entries[ename].fragments \
                     if frag.applies(m)][-1]
