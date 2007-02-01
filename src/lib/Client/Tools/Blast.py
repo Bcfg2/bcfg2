@@ -2,7 +2,7 @@
 '''This provides bcfg2 support for blastwave'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools.SYSV
+import Bcfg2.Client.Tools.SYSV, tempfile
 
 class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     '''Support for Blastwave packages'''
