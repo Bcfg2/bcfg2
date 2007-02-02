@@ -40,8 +40,4 @@ binary-install/bcfg2 ::
 binary-install/bcfg2-server ::
 	cd doc && make manual.html
 	dh_installinit -p$(cdbs_curpkg) -o
-	mkdir debian/bcfg2-server/usr/share/bcfg2/hostbase
-	cp src/lib/Server/Hostbase/templates/* debian/bcfg2-server/usr/share/bcfg2/hostbase
-	debian/bcfg2-server/usr/share/bcfg2/hostbase/webtemplates
-	cp src/lib/Server/Hostbase/hostbase/webtemplates debian/bcfg2-server/usr/share/bcfg2/hostbase/webtemplates
 endif

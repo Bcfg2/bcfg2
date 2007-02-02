@@ -98,7 +98,7 @@ TEMPLATE_DIRS = (
     '/usr/lib/python2.3/site-packages/Bcfg2/Server/Hostbase/hostbase/webtemplates',
     '/usr/lib/python2.4/site-packages/Bcfg2/Server/Hostbase/hostbase/webtemplates',
     '/usr/lib/python2.3/site-packages/Bcfg2/Server/Hostbase/templates',
-    '/usr/lib/python2.4/site-packages/Bcfg2/Server/Hostbase/templates',
+    '/usr/share/bcfg2/Hostbase/templates',
     
 )
 
