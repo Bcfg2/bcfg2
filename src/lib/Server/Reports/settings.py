@@ -51,7 +51,7 @@ SECRET_KEY = 'eb5+y%oy-qx*2+62vv=gtnnxg1yig_odu0se5$h0hh#pc*lmo7'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -80,6 +80,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.
+    '/usr/share/python-support/python-django/django/contrib/admin/templates/',
+    '/home/desai/dev/bcfg2/src/lib/Server/Reports/reports/templates'
 )
 
 INSTALLED_APPS = (

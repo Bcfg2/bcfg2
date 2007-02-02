@@ -57,7 +57,9 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                              (entry.get('version'), entry.get('name')))[0]
 
         if cmdrc != 0:
-            self.logger.debug("Package %s version incorrect" % entry.get('name'))
+            self.logger.debug("Package %s version incorrect: have %s want %s" \
+                              % (entry.get('name'), self.installed[entry.get('name')],
+                                 entry.get('version')))
         else:
             if self.setup['quick'] or entry.attrib.get('verify', 'true') == 'false':
                 return True
