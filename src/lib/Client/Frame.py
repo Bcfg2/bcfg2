@@ -165,6 +165,9 @@ class Frame:
                 bundles = self.config.getchildren()
             gbundles = []
             for bundle in bundles:
+                if bundle.tag != 'Bundle':
+                    gbundles.append(bundle)
+                    continue
                 actions = [a for a in bundle.findall('./Action') \
                            if a.get('timing') != 'post']
                 # run all actions if modified or always
