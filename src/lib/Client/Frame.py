@@ -162,7 +162,7 @@ class Frame:
                 bundles = [b for b in self.config.findall('./Bundle') \
                            if b.get('name') == self.setup['bundle']]
             else:
-                bundles = self.config.findall('./Bundle')
+                bundles = self.config.getchildren()
             gbundles = []
             for bundle in bundles:
                 actions = [a for a in bundle.findall('./Action') \
