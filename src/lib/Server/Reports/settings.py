@@ -81,7 +81,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.
     '/usr/share/python-support/python-django/django/contrib/admin/templates/',
-    '/home/desai/dev/bcfg2/src/lib/Server/Reports/reports/templates'
+    '/usr/share/bcfg2/Reports/templates'
 )
 
 INSTALLED_APPS = (
