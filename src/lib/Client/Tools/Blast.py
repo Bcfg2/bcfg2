@@ -7,10 +7,11 @@ import Bcfg2.Client.Tools.SYSV, tempfile
 class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     '''Support for Blastwave packages'''
     pkgtype = 'blast'
-    pkgtool = ("/opt/csw/bin/pkg-get install %s", ("%s", ["name"]))
+    pkgtool = ("/opt/csw/bin/pkg-get install %s", ("%s", ["bname"]))
     __name__ = 'Blast'
     __execs__ = ['/opt/csw/bin/pkg-get']
     __handles__ = [('Package', 'blast')]
+    __ireq__ = {'Package': ['name', 'version', 'bname']}
 
     def __init__(self, logger, setup, config, states):
         # dont use the sysv constructor
