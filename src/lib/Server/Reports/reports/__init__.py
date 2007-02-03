@@ -1,1 +1,1 @@
-__all__ = ['templates']
+__all__ = ['templatetags']
