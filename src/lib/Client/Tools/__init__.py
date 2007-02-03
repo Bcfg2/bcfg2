@@ -44,12 +44,14 @@ class executor:
         except IOError:
             pass
         line = runpipe.fromchild.readline()
-        while line:
-            if len(line) > 0:
-                self.logger.debug('< %s' % line[:-1])
-            output.append(line[:-1])
-            line = runpipe.fromchild.readline()
-        cmdstat = runpipe.poll()
+        cmdstat = -1
+        while cmdstat == -1:
+            while line:
+                if len(line) > 0:
+                    self.logger.debug('< %s' % line[:-1])
+                    output.append(line[:-1])
+                line = runpipe.fromchild.readline()
+            cmdstat = runpipe.poll()
         return (cmdstat, output)
 
 class Tool:
