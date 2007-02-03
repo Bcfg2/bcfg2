@@ -1,3 +1,9 @@
+bcfg2 (0.9.1b-0.3) unstable; urgency=low
+
+  * doubly brown paper bag release
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri,  2 Feb 2007 19:26:12 -0600
+
 bcfg2 (0.9.1a-0.2) unstable; urgency=low
 
   * brown paper bag release
