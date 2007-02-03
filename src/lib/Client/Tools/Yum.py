@@ -27,6 +27,7 @@ class Yum(Bcfg2.Client.Tools.RPM.RPM):
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum'), ('Package', 'rpm')]
     __req__ = {'Package': ['name', 'version']}
+    __ireq__ = {'Package': ['name', 'version']}
     conflicts = ['RPM']
 
     def RemovePackages(self, packages):
