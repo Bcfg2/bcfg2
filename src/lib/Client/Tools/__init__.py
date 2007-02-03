@@ -52,6 +52,8 @@ class executor:
                     output.append(line[:-1])
                 line = runpipe.fromchild.readline()
             cmdstat = runpipe.poll()
+        output += [line[:-1] for line in runpipe.fromchild.readlines() \
+                   if line]
         return (cmdstat, output)
 
 class Tool:
