@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "launchd", 
            "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV", "Yum"]
 
-import os, popen2, stat, sys, Bcfg2.Client.XML
+import os, popen2, stat, sys, Bcfg2.Client.XML, time
 
 class toolInstantiationError(Exception):
     '''This error is called if the toolset cannot be instantiated'''
@@ -51,6 +51,7 @@ class executor:
                     self.logger.debug('< %s' % line[:-1])
                     output.append(line[:-1])
                 line = runpipe.fromchild.readline()
+            time.sleep(0.1)
             cmdstat = runpipe.poll()
         output += [line[:-1] for line in runpipe.fromchild.readlines() \
                    if line]
