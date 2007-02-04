@@ -70,7 +70,7 @@ class FileEntry(Bcfg2.Server.Plugin.FileBacked):
 class ConfigFileEntry(object):
     '''ConfigFileEntry is a repository entry for a single file, containing
     all data for all clients.'''
-    info = re.compile('^owner:(\s)*(?P<owner>\w+)|group:(\s)*(?P<group>\w+)|' +
+    info = re.compile('^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)|interpolate:(\s)*(?P<interpolate>\w+)(\s)*$')
     
