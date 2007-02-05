@@ -60,16 +60,17 @@ class Frame:
                 continue
 
         for tool in tclass.values():
-            for conflict in getattr(tool, 'conflicts', []):
-                tclass.pop(conflict)
-
-        for tool in tclass.values():
             try:
                 self.tools.append(tool(self.logger, setup, config, self.states))
             except Bcfg2.Client.Tools.toolInstantiationError:
                 continue
             except:
                 self.logger.error("Failed to instantiate tool %s" % (tool), exc_info=1)
+
+        for tool in self.tools[:]:
+            for conflict in getattr(tool, 'conflicts', []):
+                [self.tools.remove(item) for item in self.tools \
+                 if item.__name__ == conflict]
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.__name__ for tool in self.tools])
