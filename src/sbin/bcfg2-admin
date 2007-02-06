@@ -284,7 +284,8 @@ def do_viz(args):
         dotpipe = popen2.Popen4("dot -Tpng")
     categories = {'default':'grey83'}
     instances = {}
-    for group in groups.findall('.//Groups/Group'):
+    egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
+    for group in egroups:
         if group.get('category', False):
             if not categories.has_key(group.get('category')):
                 categories[group.get('category')] = colors.pop()
@@ -315,7 +316,7 @@ def do_viz(args):
         for bundle in bundles:
             dotpipe.tochild.write('''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' % (bundle, bundle))
     gseen = []
-    for group in groups.findall('.//Groups/Group'):
+    for group in egroups:
         color = categories[group.get('category', 'default')]
         if group.get('profile', 'false') == 'true':
             style="filled, bold"
@@ -329,7 +330,7 @@ def do_viz(args):
                 dotpipe.tochild.write('\t"group-%s" -> "bundle-%s";\n' %
                                       (group.get('name'), bundle.get('name')))
         
-    for group in groups.findall('.//Groups/Group'):
+    for group in egroups:
         for parent in group.findall('Group'):
             if parent.get('name') not in gseen:
                 dotpipe.tochild.write('\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n' %
