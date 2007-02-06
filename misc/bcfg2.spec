@@ -1,10 +1,10 @@
-%define release 0.1
+%define release 0.0rc1
 %define __python python
 %define pythonversion 2.3
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:             bcfg2
-Version:          0.9.1d
+Version:          0.9.2
 Release: %{release}
 Summary:          Configuration management system
 
