@@ -8,7 +8,7 @@ import Bcfg2.Server.Core, Bcfg2.Logging
 log = logging.getLogger('bcfg-admin')
 
 colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegreen', 
-          'orange1', 'lightblue2']
+          'orange1', 'lightblue2', 'green1', 'blue1', 'yellow1']
 
 usage = '''
 bcfg2-admin [options]
