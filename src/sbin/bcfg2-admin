@@ -8,7 +8,8 @@ import Bcfg2.Server.Core, Bcfg2.Logging
 log = logging.getLogger('bcfg-admin')
 
 colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegreen', 
-          'orange1', 'lightblue2', 'green1', 'blue1', 'yellow1']
+          'orange1', 'lightblue2', 'green1', 'blue1', 'yellow1', 'darkturquoise',
+          'gray66']
 
 usage = '''
 bcfg2-admin [options]
@@ -346,6 +347,10 @@ def do_viz(args):
         dotpipe.tochild.write('''\tGroup [shape="ellipse"];\n''')
         dotpipe.tochild.write('''\tProfile [style="bold", shape="ellipse"];\n''')
         dotpipe.tochild.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
+        for category in categories:
+            dotpipe.tochild.write('''\t''' + category + ''' [label="''' + category + \
+                                  '''", shape="record", style="filled", fillcolor=''' + \
+                                  categories[category] + '''];\n''')
         dotpipe.tochild.write('''\tlabel="Key";\n''')
         dotpipe.tochild.write("\t}\n")
     dotpipe.tochild.write("}\n")
