@@ -26,13 +26,13 @@ class Statistics(object):
             try:
                 fout = open(self.filename + '.new', 'w')
             except IOError, ioerr:
-                self.logger.error("Failed to open %s for writing: %s" % (self.filename, ioerr))
+                self.logger.error("Failed to open %s for writing: %s" % (self.filename + '.new', ioerr))
             else:
                 fout.write(lxml.etree.tostring(self.element))
                 fout.close()
+                os.rename(self.filename + '.new', self.filename)
                 self.dirty = 0
                 self.lastwrite = time()
-                os.rename(self.filename + '.new', self.filename)
 
     def ReadFromFile(self):
         '''Reads current state regarding statistics'''
