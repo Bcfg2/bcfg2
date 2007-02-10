@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from time import asctime, localtime, time
 
-import logging, lxml.etree
+import logging, lxml.etree, os
 
 class Statistics(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
@@ -24,7 +24,7 @@ class Statistics(object):
                 or force:
             #syslog(LOG_INFO, "Statistics: Updated statistics.xml")
             try:
-                fout = open(self.filename, 'w')
+                fout = open(self.filename + '.new', 'w')
             except IOError, ioerr:
                 self.logger.error("Failed to open %s for writing: %s" % (self.filename, ioerr))
             else:
@@ -32,6 +32,7 @@ class Statistics(object):
                 fout.close()
                 self.dirty = 0
                 self.lastwrite = time()
+                os.rename(self.filename + '.new', self.filename)
 
     def ReadFromFile(self):
         '''Reads current state regarding statistics'''
