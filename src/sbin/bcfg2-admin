@@ -220,7 +220,7 @@ def do_compare(args):
         (old, new) = [os.listdir(spot) for spot in args]
         for item in old:
             print item
-            do_compare(oldd + '/' + item, newd + '/' + item)
+            do_compare([oldd + '/' + item, newd + '/' + item])
             old.remove(item)
             new.remove(item)
         if new:
