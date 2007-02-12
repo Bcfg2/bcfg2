@@ -219,10 +219,13 @@ def do_compare(args):
         (oldd, newd) = args
         (old, new) = [os.listdir(spot) for spot in args]
         for item in old:
-            print item
-            do_compare([oldd + '/' + item, newd + '/' + item])
-            old.remove(item)
+            print "Entry:", item
+            state = do_compare([oldd + '/' + item, newd + '/' + item])
             new.remove(item)
+            if state:
+                print "Entry:", item, "good"
+            else:
+                print "Entry:", item, "bad"
         if new:
             print "new has extra entries", new
         return
@@ -239,6 +242,7 @@ def do_compare(args):
             if bundle.get('name')[-4:] == '.xml':
                 bundle.set('name', bundle.get('name')[:-4])
 
+    rcs = []
     for bundle in new.findall('./Bundle'):
         equiv = old.xpath('Bundle[@name="%s"]' % (bundle.get('name')))
         if len(equiv) == 0:
@@ -248,6 +252,9 @@ def do_compare(args):
             if compare(bundle, equiv[0]):
                 new.remove(bundle)
                 old.remove(equiv[0])
+                rcs.append(True)
+            else:
+                rcs.append(False)
         else:
             print "dunno what is going on for bundle %s" % (bundle.get('name'))
     i1 = new.find('./Independant')
@@ -255,6 +262,9 @@ def do_compare(args):
     if compare(i1, i2):
         new.remove(i1)
         old.remove(i2)
+    else:
+        rcs.append(False)
+    return not False in rcs
 
 def do_pull(client, etype, ename):
     '''Make currently recorded client state correct for entry'''
