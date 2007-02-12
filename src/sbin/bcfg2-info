@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core
+import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 
 def printTabular(rows):
@@ -56,6 +56,17 @@ def doBuild(cmd, core):
     else:
         print 'Usage: build <hostname> <output file>'
 
+def doBuildAll(cmd, core):
+    if len(cmd) != 2:
+        print "Usage: buildall <directory>"
+        return
+    try:
+        os.mkdir(cmd[1])
+    except:
+        pass
+    for client in core.metadata.clients:
+        doBuild(['build', client, cmd[1] + '/' + client + '.xml'], core)
+
 def doBuildFile(cmd, core):
     '''build a config file for client'''
     if len(cmd) == 3:
@@ -88,6 +99,7 @@ def doHelp(_, dummy):
     '''print out usage info'''
     print 'Commands:'
     print 'build <hostname> <filename> - build config for hostname, writing to filename'
+    print 'buildall <directory> - build configs for all clients in directory'
     print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
     print 'bundles - print out group/bundle information'
     print 'clients - print out client/profile information'
@@ -163,9 +175,9 @@ def doVersion(_, dummy):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
-    dispatch = {'build': doBuild, 'buildfile': doBuildFile,  'bundles': doBundles,
-                'clients': doClients, 'generators': doGenerators, 'groups': doGroups,
-                'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
+    dispatch = {'build': doBuild, 'buildall': doBuildAll, 'buildfile': doBuildFile,
+                'bundles': doBundles, 'clients': doClients, 'generators': doGenerators,
+                'groups': doGroups, 'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
                 'showentries': doShowentries, 'update': doUpdate, 'version': doVersion}
     if '-c' in sys.argv:
         cfile = sys.argv[-1]
