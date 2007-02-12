@@ -179,7 +179,7 @@ def compare(new, old):
         elif len(equiv) >= 1:
             if child.tag == 'ConfigFile':
                 if child.text != equiv[0].text:
-                    print "%s %s contents differ" \
+                    print " %s %s contents differ" \
                           % (child.tag, child.get('name'))
                     continue
             noattrmatch = [field for field in important[child.tag] if \
@@ -188,12 +188,12 @@ def compare(new, old):
                 new.remove(child)
                 old.remove(equiv[0])
             else:
-                print "%s %s attributes %s do not match" % \
+                print " %s %s attributes %s do not match" % \
                       (child.tag, child.get('name'), noattrmatch)
     if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
         return True
     if new.tag == 'Independant':
-        name = 'Indep'
+        name = 'Base'
     else:
         name = new.get('name')
     both = []
@@ -205,11 +205,11 @@ def compare(new, old):
             newl.remove(entry)
             oldl.remove(entry)
     for entry in both:
-        print "%s differs (in bundle %s)" % (entry, name)
+        print " %s differs (in bundle %s)" % (entry, name)
     for entry in oldl:
-        print "%s only in old configuration (in bundle %s)" % (entry, name)
+        print " %s only in old configuration (in bundle %s)" % (entry, name)
     for entry in newl:
-        print "%s only in new configuration (in bundle %s)" % (entry, name)
+        print " %s only in new configuration (in bundle %s)" % (entry, name)
     return False
 
 def do_compare(args):
