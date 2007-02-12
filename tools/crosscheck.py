@@ -12,34 +12,48 @@ important = {'Package':['name', 'version'],
              'PostInstall':['name']}
 
 def compare(new, old):
-    for i in range(2): #this is hardcoded.. may be a better looping method
-        for child in new.getchildren():
-            equiv = old.xpath('%s[@name="%s"]' % (child.tag, child.get('name')))
-            if not important.has_key(child.tag):
-                print "tag type %s not handled" % (child.tag)
-                continue
-            if len(equiv) == 0:
-                print "didn't find matching %s %s" % (child.tag, child.get('name'))
-                continue
-            elif len(equiv) >= 1:
-                if child.tag == 'ConfigFile':
-                    if child.text != equiv[0].text:
-                        continue
-                if [child.get(field) for field in important[child.tag]] == \
-                   [equiv[0].get(field) for field in important[child.tag]]:
-                    new.remove(child)
-                    old.remove(equiv[0])
-                else:
-                    print "+", lxml.etree.tostring(child),
-                    print "-", lxml.etree.tostring(equiv[0]),
+    for child in new.getchildren():
+        equiv = old.xpath('%s[@name="%s"]' % (child.tag, child.get('name')))
+        if not important.has_key(child.tag):
+            print "tag type %s not handled" % (child.tag)
+            continue
+        if len(equiv) == 0:
+            print "didn't find matching %s %s" % (child.tag, child.get('name'))
+            continue
+        elif len(equiv) >= 1:
+            if child.tag == 'ConfigFile':
+                if child.text != equiv[0].text:
+                    print "%s %s contents differ" \
+                          % (child.tag, child.get('name'))
+                    continue
+            noattrmatch = [field for field in important[child.tag] if \
+                           child.get(field) != equiv[0].get(field)]
+            if not noattrmatch:
+                new.remove(child)
+                old.remove(equiv[0])
+            else:
+                print "%s %s attributes %s do not match" % \
+                      (child.tag, child.get('name'), noattrmatch)
     if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
         return True
     if new.tag == 'Independant':
         name = 'Indep'
     else:
         name = new.get('name')
-    print name, ["%s.%s" % (child.tag, child.get('name')) for child in old.getchildren()],
-    print ["%s.%s" % (child.tag, child.get('name')) for child in new.getchildren()]
+    both = []
+    oldl = ["%s %s" % (entry.tag, entry.get('name')) for entry in old]
+    newl = ["%s %s" % (entry.tag, entry.get('name')) for entry in new]
+    for entry in newl:
+        if entry in oldl:
+            both.append(entry)
+            newl.remove(entry)
+            oldl.remove(entry)
+    for entry in both:
+        print "%s differs (in bundle %s)" % (entry, name)
+    for entry in oldl:
+        print "%s only in old configuration (in bundle %s)" % (entry, name)
+    for entry in newl:
+        print "%s only in new configuration (in bundle %s)" % (entry, name)
     return False
     
 
