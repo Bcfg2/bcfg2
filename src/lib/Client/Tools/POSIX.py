@@ -113,15 +113,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 entry.set('current_group', group)
                 self.logger.debug("%s %s group wrong" % (entry.tag, entry.get('name')))
                 nqtext = entry.get('qtext', '') + '\n'
-                nqtext += "%s group wrong. is %s should be %s" % \
+                nqtext += "%s group is %s should be %s" % \
                           (entry.get('name'), group, entry.get('group'))
                 entry.set('qtext', nqtext)
             if perms != entry.get('perms'):
                 entry.set('current_perms', perms)
-                self.logger.debug("%s %s permissions wrong: are %s should be %s" %
+                self.logger.debug("%s %s permissions are %s should be %s" %
                                (entry.tag, entry.get('name'), perms, entry.get('perms')))
                 nqtext = entry.get('qtext', '') + '\n'
-                nqtext += "%s perms wrong. is %s should be %s" % \
+                nqtext += "%s perms are %s should be %s" % \
                           (entry.get('name'), perms, entry.get('perms'))
                 entry.set('qtext', nqtext)
             if entry.tag != 'ConfigFile':
