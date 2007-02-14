@@ -17,8 +17,8 @@
               <head>
                     <title>
                         <xsl:choose>
-                            <xsl:when test="count(/Report/Node/Statistics/Bad) > 0">BCFG Nightly Errors (<xsl:value-of select="@name" />)</xsl:when>
-                            <xsl:otherwise>BCFG Nightly Errors (<xsl:value-of select="@name" />)</xsl:otherwise>
+                            <xsl:when test="count(/Report/Node/Statistics/Bad) > 0">BCFG Status (<xsl:value-of select="@name" />)</xsl:when>
+                            <xsl:otherwise>BCFG Status (<xsl:value-of select="@name" />)</xsl:otherwise>
                         </xsl:choose>
                     </title>
                     <xsl:if test="count(/Report/@refresh-time) > 0">
@@ -32,10 +32,10 @@
                         <h1>
                             <xsl:choose>
                                 <xsl:when test="count(/Report/Node/Statistics/Bad) > 0">
-                                    BCFG Nightly Errors (<xsl:value-of select="@name" />)
+                                    BCFG Status (<xsl:value-of select="@name" />)
                                 </xsl:when>
                                 <xsl:otherwise>
-                                    BCFG Nightly Errors (<xsl:value-of select="@name" />)
+                                    BCFG Status (<xsl:value-of select="@name" />)
                                 </xsl:otherwise>
                             </xsl:choose>
                         </h1><span class="notebox">Report Run @ <xsl:value-of select="@time" /></span>
