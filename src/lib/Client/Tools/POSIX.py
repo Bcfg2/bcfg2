@@ -244,19 +244,24 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 os.lstat(parent)
             except:
-                self.logger.debug('Creating parent path for config file %s' % (entry.get('name')))
-                for idx in xrange(len(parent.split('/')[:-1])):
-                    current = '/'+'/'.join(parent.split('/')[1:2+idx])
+                self.logger.debug('Creating parent path for config file %s' % \
+                                  (entry.get('name')))
+                current = '/'
+                for next in parent.split('/')[1:]:
+                    current += next + '/'
                     try:
                         sloc = os.lstat(current)
                         try:
                             if not S_ISDIR(sloc[ST_MODE]):
+                                self.logger.debug('%s is not a directory; recreating' \
+                                                  % (current))
                                 os.unlink(current)
                                 os.mkdir(current)
                         except OSError:
                             return False
                     except OSError:
                         try:
+                            self.logger.debug("Creating non-existent path %s" % current)
                             os.mkdir(current)
                         except OSError:
                             return False
