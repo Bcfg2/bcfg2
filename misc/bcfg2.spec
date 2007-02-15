@@ -1,4 +1,4 @@
-%define release 0.0rc4
+%define release 0.0rc5
 %define __python python
 %define pythonversion 2.3
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
@@ -11,7 +11,7 @@ Summary:          Configuration management system
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.2rc2.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.2rc5.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
@@ -59,7 +59,7 @@ Requires: gamin-python
 Bcfg2 client
 
 %prep
-%setup -q -n bcfg2-0.9.2rc2
+%setup -q -n bcfg2-0.9.2rc5
 
 %build
 %{__python}%{pythonversion} setup.py build
