@@ -40,3 +40,8 @@ class Yum(Bcfg2.Client.Tools.RPM.RPM):
                 self.modified += packages
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
+
+    def VerifyPackage(self, entry, modlist):
+        if entry.get('version') == 'noverify':
+            return self.installed.has_key(entry.get('name'))
+        return Bcfg2.Client.Tools.RPM.RPM.VerifyPackage(self, entry, modlist)
