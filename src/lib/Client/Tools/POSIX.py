@@ -231,7 +231,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nqtext += '\n'
             nqtext += eudiff 
             entry.set('qtext', nqtext)
-        qtxt = entry.get('qtext')
+        qtxt = entry.get('qtext', '')
         qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
         entry.set('qtext', qtxt)
         return contentStatus and permissionStatus
