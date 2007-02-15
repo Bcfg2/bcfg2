@@ -143,7 +143,7 @@ class Tool:
         if entry.tag != 'Package' or struct.tag != 'Bundle':
             return []
         return [sentry.get('name') for sentry in struct if sentry.tag in \
-                ['ConfigFile', 'SymLink', 'Directory']]
+                ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
 
     def canVerify(self, entry):
         '''test if entry has enough information to be verified'''
