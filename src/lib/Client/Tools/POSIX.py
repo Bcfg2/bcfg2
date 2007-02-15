@@ -226,13 +226,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 eudiff = udiff.encode('ascii')
             except:
                 eudiff = "Binary file: no diff printed"
-            question = "Install ConfigFile %s: (y/N) " % (entry.get('name'))
             nqtext = entry.get('qtext', '')
             if nqtext:
                 nqtext += '\n'
             nqtext += eudiff + '\n' + question    
             entry.set('qtext', nqtext)
-            
+        qtxt = entry.get('qtext')
+        qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
+        entry.set('qtext', qtxt)
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
