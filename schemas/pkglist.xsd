@@ -20,6 +20,7 @@
     <xsd:attribute type='xsd:string' name='multiarch'/>
     <xsd:attribute type='xsd:string' name='srcs'/>
     <xsd:attribute type='xsd:string' name='type'/>
+    <xsd:attribute type='xsd:string' name='bname'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
