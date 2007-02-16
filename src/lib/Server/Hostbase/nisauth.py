@@ -35,7 +35,7 @@ class nisauth(object):
         if p[1] == crypt.crypt(passwd, p[1][:2]):
             # check to see if user is in valid support groups
             # will have to include these groups in a settings file eventually
-            if not login in nis.match(AUTHORIZED_GROUP, 'group.byname').split(':')[-1].split(','):
+            if not login in nis.match(AUTHORIZED_GROUP, 'group.byname').split(':')[-1].split(',') and p[3] != nis.match(AUTHORIZED_GROUP, 'group.byname').split(':')[2]:
                 raise NISAUTHError('group')
             self.uid = p[2]
         else:
