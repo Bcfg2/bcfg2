@@ -2,7 +2,7 @@
 %define __python python
 %define pythonversion %{py_ver}
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
-%{!?initrddir: %define initrddir %{_sysconfdir}/rc.d/init.d}
+%{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
 Version:          0.9.2
