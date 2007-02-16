@@ -17,8 +17,13 @@ class PNode(Bcfg2.Server.Plugin.INode):
         if not pdict.has_key('Package'):
             pdict['Package'] = []
         for child in data.getchildren():
-            for attr in [key for key in data.attrib.keys() if key != 'name' and not child.attrib.has_key(key)]:
-                child.set(attr, data.get(attr))
+            for attr in [key for key in data.attrib.keys() \
+                         if key != 'name' and not child.attrib.has_key(key)]:
+                try:
+                    child.set(attr, data.get(attr))
+                except:
+                    # don't fail on things like comments and other immutable elements
+                    pass
         Bcfg2.Server.Plugin.INode.__init__(self, data, pdict, parent)
         if not self.contents.has_key('Package'):
             self.contents['Package'] = {}
