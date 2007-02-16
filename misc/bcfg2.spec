@@ -1,7 +1,8 @@
 %define release 0.0rc5
 %define __python python
-%define pythonversion 2.3
+%define pythonversion %{py_ver}
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?initrddir: %define initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
 Version:          0.9.2
@@ -65,7 +66,7 @@ Bcfg2 client
 %{__python}%{pythonversion} setup.py build
 
 %install
-%{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES
+%{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES --prefix=/usr
 %{__install} -d %{buildroot}%{_bindir}
 %{__install} -d %{buildroot}%{_sbindir}
 %{__install} -d %{buildroot}%{_initrddir}
