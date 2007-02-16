@@ -16,9 +16,12 @@
 
 {% if failures %}
 There were errors in the following fields<br><br>
-{% for failure in failures.items %}
+{% for failure in failures %}
 
-<font color="#FF0000">{{ failure.0 }}: {{ failure.1|join:", " }}</font><br>
+<font color="#FF0000">{{ failure }}</font><br>
+{% comment %}
+{{ failure.1|join:", " }}
+{% endcomment %}
 
 {% endfor %}
 {% endif %}

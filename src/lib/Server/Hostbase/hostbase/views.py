@@ -19,7 +19,7 @@ import re
     
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
-           'status']
+           'status', 'comments']
 
 zoneattribs = ['zone', 'admin', 'primary_master', 'expire', 'retry',
                'refresh', 'ttl', 'aux']
@@ -153,7 +153,7 @@ def fill(template, hostdata, dnsdata=False):
     return template
 
 def edit(request, host_id):
-    """Edit general host information"""
+    """edit general host information"""
     manipulator = Host.ChangeManipulator(host_id)
     changename = False
     if request.method == 'POST':
@@ -172,6 +172,9 @@ def edit(request, host_id):
             # change to many-to-many??????
 
             # dynamically look up mx records?
+
+            for attrib in attribs:
+                host.__dict__[attrib] = request.POST[attrib]
 
             for inter in interfaces:
                 changetype = False
@@ -631,6 +634,166 @@ def new(request):
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)})
+
+def copy(request, host_id):
+    """Function for creating a new host in hostbase
+    Data is validated before committed to the database"""
+    if request.GET.has_key('sub'):
+        try:
+            Host.objects.get(hostname=request.POST['hostname'].lower())
+            return render_to_response('errors.html',
+                                      {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
+                                       'logged_in': request.session.get('_auth_user_id', False)})
+        except:
+            pass
+        if not validate(request, True):
+            host = Host()
+            # this is the stuff that validate() should take care of
+            # examine the check boxes for any changes
+            host.outbound_smtp = request.POST.has_key('outbound_smtp')
+            for attrib in attribs:
+                if request.POST.has_key(attrib):
+                    host.__dict__[attrib] = request.POST[attrib].lower()
+            if request.POST.has_key('comments'):
+                host.comments = request.POST['comments']
+            if request.POST.has_key('expiration_date'):
+                host.__dict__['expiration_date'] = date(2000, 1, 1)
+            host.status = 'active'
+            host.save()
+        else:
+            return render_to_response('errors.html',
+                                      {'failures': validate(request, True),
+                                       'logged_in': request.session.get('_auth_user_id', False)})
+
+        if request.POST['mac_addr_new']:
+            new_inter = Interface(host=host,
+                                  mac_addr=request.POST['mac_addr_new'],
+                                  hdwr_type=request.POST['hdwr_type_new'],
+                                  dhcp=request.POST.has_key('dhcp_new'))
+            new_inter.save()
+        if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
+            new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
+            if created:
+                mx.save()
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_ip.ip_addr.split(".")[2]])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name, dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_inter.hdwr_type])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            name = Name(ip=new_ip, name=host.hostname,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+        if request.POST['ip_addr_new'] and not request.POST['mac_addr_new']:
+            new_inter = Interface(host=host,
+                                  mac_addr="",
+                                  hdwr_type=request.POST['hdwr_type_new'],
+                                  dhcp=False)
+            new_inter.save()
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
+            new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
+            if created:
+                mx.save()
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_ip.ip_addr.split(".")[2]])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_inter.hdwr_type])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            name = Name(ip=new_ip, name=host.hostname,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+        if request.POST['mac_addr_new2']:
+            new_inter = Interface(host=host,
+                                  mac_addr=request.POST['mac_addr_new2'],
+                                  hdwr_type=request.POST['mac_addr_new2'],
+                                  dhcp=request.POST.has_key('dhcp_new2'))
+            new_inter.save()
+        if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
+            new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
+            if created:
+                mx.save()
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_ip.ip_addr.split(".")[2]])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_inter.hdwr_type])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            name = Name(ip=new_ip, name=host.hostname,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+        if request.POST['ip_addr_new2'] and not request.POST['mac_addr_new2']:
+            new_inter = Interface(host=host,
+                                  mac_addr="",
+                                  hdwr_type=request.POST['hdwr_type_new2'],
+                                  dhcp=False)
+            new_inter.save()
+            new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
+            new_ip.save()
+            mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
+            if created:
+                mx.save()
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_ip.ip_addr.split(".")[2]])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            new_name = "-".join([host.hostname.split(".")[0],
+                                 new_inter.hdwr_type])
+            new_name += "." + host.hostname.split(".", 1)[1]
+            name = Name(ip=new_ip, name=new_name,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+            name = Name(ip=new_ip, name=host.hostname,
+                        dns_view='global', only=False)
+            name.save()
+            name.mxs.add(mx)
+        host.save()
+        return HttpResponseRedirect('/hostbase/%s/' % host.id)
+    else:
+        host = Host.objects.get(id=host_id)
+        return render_to_response('copy.html',
+                                  {'host': host,
+                                   'TYPE_CHOICES': Interface.TYPE_CHOICES,
+                                   'NETGROUP_CHOICES': Host.NETGROUP_CHOICES,
+                                   'CLASS_CHOICES': Host.CLASS_CHOICES,
+                                   'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
+                                   'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
+                                   'logged_in': request.session.get('_auth_user_id', False)})
     
 def remove(request, host_id):
     host = Host.objects.get(id=host_id)
@@ -866,13 +1029,14 @@ def check_zone_errors(new_data):
 ## uncomment the lines below this point to restrict access to pages that modify the database
 ## anonymous users can still view data in Hostbase
 
-## edit = login_required(edit)
-## confirm = login_required(confirm)
-## dnsedit = login_required(dnsedit)
-## new = login_required(new)
-## remove = login_required(remove)
-## zoneedit = login_required(zoneedit)
-## zonenew = login_required(zonenew)
+edit = login_required(edit)
+confirm = login_required(confirm)
+dnsedit = login_required(dnsedit)
+new = login_required(new)
+copy = login_required(copy)
+remove = login_required(remove)
+zoneedit = login_required(zoneedit)
+zonenew = login_required(zonenew)
 
 ## uncomment the lines below this point to restrict access to all of hostbase
 
