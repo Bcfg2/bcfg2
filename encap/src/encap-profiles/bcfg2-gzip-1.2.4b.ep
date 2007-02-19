@@ -56,8 +56,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/gzip/gzip-1.2.4a.tar.gz
-     http://www.pobox.com/users/dclark/mirror/gzip/gzip-1.2.4a.tar.gz
+url="http://encapsrcdist/mirror/gzip/gzip-1.2.4a.tar.gz
+     http://mirror.opensysadmin.com/gzip/gzip-1.2.4a.tar.gz
      ftp://ftp.gnu.org/gnu/gzip/gzip-1.2.4a.tar.gz"
 >
 

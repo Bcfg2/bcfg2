@@ -65,8 +65,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/bcfg/bcfg2-0.8.7.tar.gz
-     http://www.pobox.com/users/dclark/mirror/bcfg/bcfg2-0.8.7.tar.gz
+url="http://encapsrcdist/mirror/bcfg/bcfg2-0.8.7.tar.gz
+     http://mirror.opensysadmin.com/bcfg/bcfg2-0.8.7.tar.gz
      ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.8.7.tar.gz"
 >
 

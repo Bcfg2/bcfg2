@@ -60,8 +60,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/lxml/lxml-1.1.1.tgz
-     http://www.pobox.com/users/dclark/mirror/lxml/lxml-1.1.1.tgz
+url="http://encapsrcdist/mirror/lxml/lxml-1.1.1.tgz
+     http://mirror.opensysadmin.com/lxml/lxml-1.1.1.tgz
      http://codespeak.net/lxml/lxml-1.1.1.tgz"
 >
 

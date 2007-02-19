@@ -55,8 +55,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/pyrex/Pyrex-0.9.4.1.tar.gz
-     http://www.pobox.com/users/dclark/mirror/pyrex/Pyrex-0.9.4.1.tar.gz
+url="http://encapsrcdist/mirror/pyrex/Pyrex-0.9.4.1.tar.gz
+     http://mirror.opensysadmin.com/pyrex/Pyrex-0.9.4.1.tar.gz
      http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/Pyrex-0.9.4.1.tar.gz"
 >
 

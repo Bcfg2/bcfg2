@@ -20,8 +20,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/cheetah/CheetahDocs-0.9.16a1.tgz
-http://www.pobox.com/users/dclark/mirror/cheetah/CheetahDocs-0.9.16a1.tgz
+url="http://encapsrcdist/mirror/cheetah/CheetahDocs-0.9.16a1.tgz
+http://mirror.opensysadmin.com/cheetah/CheetahDocs-0.9.16a1.tgz
 http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/CheetahDocs-0.9.16a1.tgz"
 subdir="CheetahDocs"
 >

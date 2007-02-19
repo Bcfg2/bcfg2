@@ -56,8 +56,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/openssl/openssl-0.9.8c.tar.gz
-     http://www.pobox.com/users/dclark/mirror/openssl/openssl-0.9.8c.tar.gz
+url="http://encapsrcdist/mirror/openssl/openssl-0.9.8c.tar.gz
+     http://mirror.opensysadmin.com/openssl/openssl-0.9.8c.tar.gz
      http://www.openssl.org/source/openssl-0.9.8c.tar.gz"
 	use_objdir="no"
 >

@@ -30,8 +30,8 @@ PLATFORM_ELSE
 PLATFORM_ENDIF
 
 <source
-url="ftp://encapsrcdist/mirror/elementtree/elementtree-1.2.6-20050316.tar.gz
-http://www.pobox.com/users/dclark/mirror/elementtree/elementtree-1.2.6-20050316.tar.gz
+url="http://encapsrcdist/mirror/elementtree/elementtree-1.2.6-20050316.tar.gz
+http://mirror.opensysadmin.com/elementtree/elementtree-1.2.6-20050316.tar.gz
 http://effbot.org/downloads/elementtree-1.2.6-20050316.tar.gz"
 >
 

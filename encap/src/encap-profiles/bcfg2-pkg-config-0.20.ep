@@ -54,8 +54,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/pkg-config/pkg-config-0.20.tar.gz
-     http://www.pobox.com/users/dclark/mirror/pkg-config/pkg-config-0.20.tar.gz
+url="http://encapsrcdist/mirror/pkg-config/pkg-config-0.20.tar.gz
+     http://mirror.opensysadmin.com/pkg-config/pkg-config-0.20.tar.gz
      http://pkgconfig.freedesktop.org/releases/pkg-config-0.20.tar.gz"
 >
 

@@ -58,8 +58,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/libxslt/libxslt-1.1.17.tar.gz
-     http://www.pobox.com/users/dclark/mirror/libxslt/libxslt-1.1.17.tar.gz
+url="http://encapsrcdist/mirror/libxslt/libxslt-1.1.17.tar.gz
+     http://mirror.opensysadmin.com/libxslt/libxslt-1.1.17.tar.gz
      ftp://xmlsoft.org/libxml2/libxslt-1.1.17.tar.gz"
 >
 

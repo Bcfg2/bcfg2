@@ -57,8 +57,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/gamin/gamin-0.1.7.tar.gz
-     http://www.pobox.com/users/dclark/mirror/gamin/gamin-0.1.7.tar.gz
+url="http://encapsrcdist/mirror/gamin/gamin-0.1.7.tar.gz
+     http://mirror.opensysadmin.com/gamin/gamin-0.1.7.tar.gz
      http://www.gnome.org/~veillard/gamin/sources/gamin-0.1.7.tar.gz"
 >
 

@@ -59,8 +59,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/glib/glib-2.8.6.tar.gz
-     http://www.pobox.com/users/dclark/mirror/glib/glib-2.8.6.tar.gz
+url="http://encapsrcdist/mirror/glib/glib-2.8.6.tar.gz
+     http://mirror.opensysadmin.com/glib/glib-2.8.6.tar.gz
      http://ftp.gnome.org/pub/GNOME/sources/glib/2.8/glib-2.8.6.tar.gz"
 >
 

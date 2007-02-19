@@ -59,8 +59,8 @@ PLATFORM_ENDIF
 />
 
 <source
-url="ftp://encapsrcdist/mirror/python/Python-2.4.4.tgz
-     http://www.pobox.com/users/dclark/mirror/python/Python-2.4.4.tgz
+url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
+     http://mirror.opensysadmin.com/python/Python-2.4.4.tgz
      http://www.python.org/ftp/python/2.4.4/Python-2.4.4.tgz"
 >
 
