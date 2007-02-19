@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-readline-5.1"
+	pkgspec="bcfg2-readline-5.2"
 >
 
 <prereq package="m4-1.4.4" />
@@ -55,9 +55,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/readline/readline-5.1.tar.gz
-     http://mirror.opensysadmin.com/readline/readline-5.1.tar.gz
-     ftp://ftp.cwru.edu/pub/bash/readline-5.1.tar.gz"
+url="http://encapsrcdist/mirror/readline/readline-5.2.tar.gz
+     http://mirror.opensysadmin.com/readline/readline-5.2.tar.gz
+     ftp://ftp.cwru.edu/pub/bash/readline-5.2.tar.gz"
 >
 
 <configure>
