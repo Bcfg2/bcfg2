@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-libxslt-1.1.17"
+	pkgspec="bcfg2-libxslt-1.1.20"
 >
 
 <prereq package="m4-1.4.4" />
@@ -58,9 +58,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/libxslt/libxslt-1.1.17.tar.gz
-     http://mirror.opensysadmin.com/libxslt/libxslt-1.1.17.tar.gz
-     ftp://xmlsoft.org/libxml2/libxslt-1.1.17.tar.gz"
+url="http://encapsrcdist/mirror/libxslt/libxslt-1.1.20.tar.gz
+     http://mirror.opensysadmin.com/libxslt/libxslt-1.1.20.tar.gz
+     ftp://xmlsoft.org/libxml2/libxslt-1.1.20.tar.gz"
 >
 
 <configure>
