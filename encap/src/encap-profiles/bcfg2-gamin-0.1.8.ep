@@ -4,13 +4,13 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-libxml2-2.6.26"
+	pkgspec="bcfg2-gamin-0.1.8"
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-zlib-1.2.3" />
 <prereq package="bcfg2-pkg-config-0.20" />
 <prereq package="bcfg2-python-2.4.4" />
+<prereq package="bcfg2-glib-2.12.9" />
 
 <environment
         variable="CC"
@@ -57,34 +57,19 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/libxml2/libxml2-sources-2.6.26.tar.gz
-     http://mirror.opensysadmin.com/libxml2/libxml2-sources-2.6.26.tar.gz
-     ftp://xmlsoft.org/libxml2/libxml2-sources-2.6.26.tar.gz"
-subdir="libxml2-2.6.26"
+url="http://encapsrcdist/mirror/gamin/gamin-0.1.8.tar.gz
+     http://mirror.opensysadmin.com/gamin/gamin-0.1.8.tar.gz
+     http://www.gnome.org/~veillard/gamin/sources/gamin-0.1.8.tar.gz"
 >
 
 <configure>
 ./configure \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	--without-iconv \
-PLATFORM_IF_MATCH(aix)
-PLATFORM_ELSE
-	--enable-shared \
-PLATFORM_ENDIF
-	--enable-ipv6=no \
-	--with-python=/usr/local/lib/bcfg2 \
-	--with-zlib=/usr/local/lib/bcfg2
+	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2"
 </configure>
 
 </source>
 
 <prepackage type="set">
-# Remove doc - it's big  # not any more, since it's server-only
-#if [ -d lib/bcfg2/share/doc ]; then rm -rf lib/bcfg2/share/doc; fi
-#if [ -d lib/bcfg2/share/gtk-doc ]; then rm -rf lib/bcfg2/share/gtk-doc; fi
-# Make convieniance links
-test -d bin || mkdir bin
-ln -sf ../lib/bcfg2/bin/xmllint bin/b2-xmllint
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
@@ -92,7 +77,8 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description libxml2 - XML C library for the Gnome project
+description Gamin - The File Alteration Monitor
+prereq pkgspec >= bcfg2-glib-2.12.9
 </encapinfo>
 
 </encap_profile>

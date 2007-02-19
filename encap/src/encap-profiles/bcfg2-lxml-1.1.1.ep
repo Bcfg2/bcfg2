@@ -12,7 +12,7 @@
 <prereq package="bcfg2-pkg-config-0.20" />
 <prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-pyrex-0.9.4.1" />
-<prereq package="bcfg2-libxml2-2.6.26" />
+<prereq package="bcfg2-libxml2-2.6.27" />
 <prereq package="bcfg2-libxslt-1.1.17" />
 
 <environment
