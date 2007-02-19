@@ -148,14 +148,15 @@ Logs of bcfg2-client runs kicked off via ostiary are in
 Below is a table of platforms that have been successfully bootstrapped using
 this code.
 
-|| OS        || Vendor || Version || Arch  || GCC     || By || Bcfg2 ||
-|| AIX       || IBM    || 5.2     || POWER || 3.3.2   || dc || 0.8.5 ||
-|| AIX       || IBM    || 5.3     || POWER || 4.1.1   || dc || 0.8.5 ||
-|| GNU/Linux || Debian || Sarge   || i386  || 3.3.5   || dc || 0.8.5 ||
-|| GNU/Linux || Debian || Sid     || i386  || 4.1.2   || dc || 0.8.5 ||
-|| GNU/Linux || SuSE   || SLES8   || i386  || 3.2.2   || dc || 0.8.5 ||
-|| GNU/Linux || SuSE   || SLES10  || i386  || 4.1.0   || dc || 0.8.5 ||
-|| GNU/Linux || Ubuntu || Dapper  || i386  || 4.0.3   || dc || 0.8.5 ||
+|| OS        || Vendor || Version || Arch   || GCC     || By || Bcfg2 ||
+|| AIX       || IBM    || 5.2     || POWER  || 3.3.2   || dc || 0.8.5 ||
+|| AIX       || IBM    || 5.3     || POWER  || 4.1.1   || dc || 0.8.5 ||
+|| GNU/Linux || Debian || Sarge   || i386   || 3.3.5   || dc || 0.8.5 ||
+|| GNU/Linux || Debian || Etch    || x86_64 || 4.1.2   || dc || 0.9.2 ||
+|| GNU/Linux || Debian || Sid     || i386   || 4.1.2   || dc || 0.8.5 ||
+|| GNU/Linux || SuSE   || SLES8   || i386   || 3.2.2   || dc || 0.8.5 ||
+|| GNU/Linux || SuSE   || SLES10  || i386   || 4.1.0   || dc || 0.8.5 ||
+|| GNU/Linux || Ubuntu || Dapper  || i386   || 4.0.3   || dc || 0.8.5 ||
 
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
