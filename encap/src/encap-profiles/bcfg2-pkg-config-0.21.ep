@@ -4,11 +4,10 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-pyrex-0.9.4.1"
+	pkgspec="bcfg2-pkg-config-0.21"
 >
 
 <prereq package="m4-1.4.4" />
-<prereq package="bcfg2-python-2.4.4" />
 
 <environment
         variable="CC"
@@ -55,33 +54,20 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/pyrex/Pyrex-0.9.4.1.tar.gz
-     http://mirror.opensysadmin.com/pyrex/Pyrex-0.9.4.1.tar.gz
-     http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/Pyrex-0.9.4.1.tar.gz"
+url="http://encapsrcdist/mirror/pkg-config/pkg-config-0.21.tar.gz
+     http://mirror.opensysadmin.com/pkg-config/pkg-config-0.21.tar.gz
+     http://pkgconfig.freedesktop.org/releases/pkg-config-0.21.tar.gz"
 >
 
 <configure>
-:
+./configure \
+	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
+	--with-pc-path=/usr/local/lib/bcfg2/lib/pkgconfig
 </configure>
-
-<build>
-/usr/local/lib/bcfg2/bin/python setup.py build \
---build-base=${builddir}/build
-</build>
-
-<install>
-/usr/local/lib/bcfg2/bin/python setup.py install \
---prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
-</install>
-
-<clean>
-/usr/local/lib/bcfg2/bin/python setup.py clean
-</clean>
 
 </source>
 
 <prepackage type="set">
-chmod -R o+r lib/bcfg2
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
@@ -89,7 +75,7 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description pyrex - a language for writing python extension modules
+description pkg-config - application and library compilation helper tool
 </encapinfo>
 
 </encap_profile>
