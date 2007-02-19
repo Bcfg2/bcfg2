@@ -12,7 +12,7 @@
 <prereq package="bcfg2-gzip-1.2.4b" />
 <prereq package="bcfg2-pkg-config-0.20" />
 <prereq package="bcfg2-readline-5.1" />
-<prereq package="bcfg2-openssl-0.9.8c" />
+<prereq package="bcfg2-openssl-0.9.8d" />
 
 <environment
         variable="CC"
