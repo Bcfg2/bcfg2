@@ -83,11 +83,6 @@ PLATFORM_ENDIF
 </source>
 
 <prepackage type="set">
-# Remove doc - it's big # not any more - server only
-#if [ -d lib/bcfg2/share/doc ]; then rm -rf lib/bcfg2/share/doc; fi
-# Put python stuff in the right place
-mv lib/bcfg2/lib/lib/python2.4 lib/bcfg2/lib
-rmdir lib/bcfg2/lib/lib
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap

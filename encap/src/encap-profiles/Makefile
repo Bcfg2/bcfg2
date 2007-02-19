@@ -60,6 +60,7 @@ OS ?= linux_debian_sarge
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 4.0 \n \l)
+sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
 OS ?= linux_debian_etch
 endif

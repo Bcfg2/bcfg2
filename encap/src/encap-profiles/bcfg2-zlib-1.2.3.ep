@@ -58,6 +58,13 @@ PLATFORM_IF_MATCH(solaris)
         variable="CFLAGS"
         type="unset"
 />
+PLATFORM_ELSE_IF_MATCH(linux)
+<environment
+        variable="CFLAGS"
+        value=" -fPIC"
+        type="append"
+/>
+PLATFORM_ELSE
 PLATFORM_ENDIF
 
 <source
