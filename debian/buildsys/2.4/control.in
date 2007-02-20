@@ -3,6 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Sami Haahtinen <ressu@debian.org>
 Build-Depends: @cdbs@, python2.4-dev
+Build-Depends-Indep: xsltproc, docbook-xsl
 Standards-Version: 3.7.2.0
 
 Package: bcfg2

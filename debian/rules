@@ -12,6 +12,7 @@ DEB_DH_INSTALLINIT_ARGS := -n
 else
 DEB_DH_INSTALLINIT_ARGS := --no-start
 endif
+DEB_COMPRESS_EXCLUDE :=*.tif
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
@@ -41,3 +42,7 @@ binary-install/bcfg2-server ::
 	cd doc && make manual.html
 	dh_installinit -p$(cdbs_curpkg) -o
 endif
+
+# Build the manual page too
+build/bcfg2-server::
+	cd doc && make manual.html

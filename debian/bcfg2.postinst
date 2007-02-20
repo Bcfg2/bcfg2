@@ -19,8 +19,13 @@ set -e
 
 case "$1" in
     configure)
+	OLDUMASK=$(umask)
+	umask 027
 	ucf /usr/share/bcfg2/bcfg2.conf /etc/bcfg2.conf
+	ucfr bcfg2 /etc/bcfg2.conf
+	umask $OLDUMASK
 	ucf /usr/share/bcfg2/bcfg2.default /etc/default/bcfg2
+	ucfr bcfg2 /etc/default/bcfg2
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

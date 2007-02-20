@@ -21,8 +21,14 @@ case "$1" in
        purge)
          for i in /etc/default/bcfg2 /etc/bcfg2.conf; do
            rm -f $i
-           # This might prove to be a bug, assuming that ucf is in /usr/sbin
-  	   test -x /usr/bin/ucf && ucf -p $i
+
+	   if which ucf >/dev/null; then
+	     ucf --purge $1
+	   fi
+	   if which ucfr >/dev/null; then
+	     ucfr --purge bcfg2 $i
+	   fi
+
 	 done
 	 ;;
        remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
