@@ -81,26 +81,27 @@ rmdir etc
 # daemons should be in /usr/local/sbin
 test -d sbin || mkdir sbin
 mv bin/ostiaryd sbin/ostiaryd
-# daemontool stuff
+# runit stuff
 test -d var || mkdir var
-test -d var/svc.d || mkdir var/svc.d
-test -d var/svc.d/ostiary || mkdir var/svc.d/ostiary
-test -d var/svc.d/ostiary/log || mkdir var/svc.d/ostiary/log
+test -d etc || mkdir etc
+test -d etc/sv || mkdir etc/sv
+test -d etc/sv/ostiary || mkdir etc/sv/ostiary
+test -d etc/sv/ostiary/log || mkdir etc/sv/ostiary/log
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
-<include_file name="var/svc.d/ostiary/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/ostiary/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
 exec /usr/local/sbin/ostiaryd -c /usr/local/etc/ostiary.cfg -v -D
 ]]></include_file>
 
-<include_file name="var/svc.d/ostiary/log/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/ostiary/log/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
-exec /command/multilog t /usr/local/var/multilog/ostiary
+exec /usr/local/bin/svlogd -tt /usr/local/var/svlogd/ostiary
 ]]></include_file>
 
 <include_file name="postinstall" mode="0755"><![CDATA[
@@ -111,8 +112,8 @@ LOG=${BASEDIR}/postinstall.log
 exec > $LOG 2>&1
 printf "Running ostiary postinstall script...\n"
 date
-test -d /usr/local/var/multilog || mkdir /usr/local/var/multilog
-test -d /usr/local/var/multilog/ostiary || mkdir /usr/local/var/multilog/ostiary
+test -d /usr/local/var/svlogd || mkdir /usr/local/var/svlogd
+test -d /usr/local/var/svlogd/ostiary || mkdir /usr/local/var/svlogd/ostiary
 printf "Finished ostiary postinstall script.\n"
 ]]></include_file>
 
@@ -122,9 +123,9 @@ printf "Finished ostiary postinstall script.\n"
 printf "Running ostiary preremove script...\n"
 date
 
-if [ -h /service/ostiary ]; then
-    printf "INFO: Removing /service/ostiary...\n"
-    /command/svrm /service/ostiary
+if [ -h /usr/local/var/service/ostiary ]; then
+    printf "INFO: Removing /usr/local/var/service/ostiary...\n"
+    rm /usr/local/var/service/ostiary
 fi
 
 printf "Finished ostiary preremove script.\n"

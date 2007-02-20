@@ -50,8 +50,8 @@ tar -cf $DISTDIR/epkg.tar $EPKGDIR/*
 BCFG2="`basename $EPDIR/bcfg2-[0-9].[0-9]*-encap-*.tar.gz`"
 BCFG2_ELEMENTTREE="`basename $EPDIR/bcfg2-elementtree-*-encap-*.tar.gz`"
 BCFG2_PYTHON="`basename $EPDIR/bcfg2-python-[0-9].[0-9]*-encap-*.tar.gz`"
-DAEMONTOOLS="`basename $EPDIR/daemontools-[0-9].[0-9]*-encap-*.tar.gz`"
 OSTIARTY="`basename $EPDIR/ostiary-[0-9].[0-9]*-encap-*.tar.gz`"
+RUNIT="`basename $EPDIR/runit-[0-9].[0-9]*-encap-*.tar.gz`"
 
 BCFG2_PYTHON_APT_TMP="`basename $EPDIR/bcfg2-python-apt-*-encap-*.tar.gz`"
 if [ "${BCFG2_PYTHON_APT_TMP}x" != 'bcfg2-python-apt-*-encap-*.tar.gzx' ]; then
@@ -60,7 +60,7 @@ fi
 
 BCFG2DEPS="$BCFG2_ELEMENTTREE $BCFG2_PYTHON $BCFG2_PYTHON_APT"
 
-FILES="$BCFG2DEPS $BCFG2 $DAEMONTOOLS $OSTIARTY"
+FILES="$BCFG2DEPS $BCFG2 $RUNIT $OSTIARTY"
 
 for FILE in ${FILES}; do
     cp $EPDIR/$FILE $DISTDIR
@@ -106,7 +106,7 @@ if [ ! -h "$EPKG" -o ! -d "$ENCAPDIR/epkg-2.3.[89]" ]; then
 fi
 
 # Install everything else
-for LOC_PKG in $BCFG2DEPS $BCFG2 $DAEMONTOOLS $OSTIARTY $BCFG2_SITE; do
+for LOC_PKG in $BCFG2DEPS $BCFG2 $RUNIT $OSTIARTY $BCFG2_SITE; do
     LOC_PKGSPEC="\`printf "%s\n" "\$LOC_PKG" | sed s:-encap.*::g\`"
     if [ -d "$ENCAPDIR/\$LOC_PKGSPEC" ]; then
         if [ "\${LOC_PKGSPEC}x" != "x" ]; then
@@ -237,13 +237,13 @@ chmod 600 \${LOC_BCFG2_CONF}*
 chmod 600 \${LOC_OST_CFG}*
 
 # Restart services if they exist to catch any config file changes
-if [ -x /command/svc -a -x /command/svstat ]; then
+if [ -x /usr/local/bin/sv ]; then
     for LOC_SERVICE in bcfg2-client bcfg2-server ostiary; do
-        if [ -h /service/\${LOC_SERVICE} ]; then
-            printf "Restarting daemontools service \${LOC_SERVICE}...\n" 
-            /command/svc -t /service/\${LOC_SERVICE}
+        if [ -h /usr/local/var/service/\${LOC_SERVICE} ]; then
+            printf "Restarting runit service \${LOC_SERVICE}...\n" 
+            /usr/local/bin/sv restart /usr/local/var/service/\${LOC_SERVICE}
             sleep 2
-            /command/svstat /service/\${LOC_SERVICE}
+            /usr/local/bin/sv status /usr/local/var/service/\${LOC_SERVICE}
         fi
     done
 fi

@@ -124,31 +124,31 @@ else
     touch ${BASEDIR}/sbin/.SENTINEL_SITE
 fi
 
-# ostiary (daemontools)
-if [ ! -h /service/ostiary ]; then
-    if [ -d /usr/local/var/svc.d/ostiary ]; then
-        printf "INFO: Enabling ostiary service (via daemontools)...\n"
-        ln -s /usr/local/var/svc.d/ostiary /service/ostiary
+# ostiary (runit)
+if [ ! -h /usr/local/var/service/ostiary ]; then
+    if [ -d /usr/local/etc/sv/ostiary ]; then
+        printf "INFO: Enabling ostiary service (via runit)...\n"
+        ln -s /usr/local/etc/sv/ostiary /usr/local/var/service/ostiary
     else
-        printf "ERROR: /usr/local/var/svc.d/ostiary does not exist.\n"
+        printf "ERROR: /usr/local/etc/sv/ostiary does not exist.\n"
         exit 1
     fi
 else
-    printf "INFO: /service/ostiary already exists, not replacing...\n"
+    printf "INFO: /usr/local/var/service/ostiary already exists, not replacing...\n"
 fi
 
-# bcfg2-client (daemontools)
+# bcfg2-client (runit)
 //if int(@BCFG2_CLIENT_RUN_INTERVAL_SECONDS) > 0
-if [ ! -h /service/bcfg2-client ]; then
-    if [ -d /usr/local/var/svc.d/bcfg2-client ]; then
-        printf "INFO: Enabling bcfg2-client service (via daemontools)...\n"
-        ln -s /usr/local/var/svc.d/bcfg2-client /service/bcfg2-client
+if [ ! -h /usr/local/var/service/bcfg2-client ]; then
+    if [ -d /usr/local/etc/sv/bcfg2-client ]; then
+        printf "INFO: Enabling bcfg2-client service (via runit)...\n"
+        ln -s /usr/local/etc/sv/bcfg2-client /usr/local/var/service/bcfg2-client
     else
-        printf "ERROR: /usr/local/var/svc.d/bcfg2-client does not exist.\n"
+        printf "ERROR: /usr/local/etc/sv/bcfg2-client does not exist.\n"
         printf "ERROR: Could not enable bcfg2-client service.\n"
     fi
 else
-    printf "INFO: /service/bcfg2-client already exists, not replacing...\n"
+    printf "INFO: /usr/local/var/service/bcfg2-client already exists, not replacing...\n"
 fi
 //end if
 

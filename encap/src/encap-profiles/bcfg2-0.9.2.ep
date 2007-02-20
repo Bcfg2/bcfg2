@@ -165,13 +165,14 @@ for FILE in `ls lib/bcfg2/tools`; do \
 		ln -sf ../../../../lib/bcfg2/tools/${FILE} share/doc/bcfg2/tools/${FILE}; \
     fi; \
 done
-# daemontools stuff
+# runit stuff
 test -d var || mkdir var
-test -d var/svc.d || mkdir var/svc.d
-test -d var/svc.d/bcfg2-client || mkdir var/svc.d/bcfg2-client
-test -d var/svc.d/bcfg2-client/log || mkdir var/svc.d/bcfg2-client/log
-test -d var/svc.d/bcfg2-server || mkdir var/svc.d/bcfg2-server
-test -d var/svc.d/bcfg2-server/log  || mkdir var/svc.d/bcfg2-server/log
+test -d etc || mkdir etc
+test -d etc/sv || mkdir etc/sv
+test -d etc/sv/bcfg2-client || mkdir etc/sv/bcfg2-client
+test -d etc/sv/bcfg2-client/log || mkdir etc/sv/bcfg2-client/log
+test -d etc/sv/bcfg2-server || mkdir etc/sv/bcfg2-server
+test -d etc/sv/bcfg2-server/log  || mkdir etc/sv/bcfg2-server/log
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d  var/encap || mkdir var/encap
 touch var/encap/${ENCAP_PKGNAME}
@@ -369,10 +370,10 @@ ${PYTHON} ${COMPILEALL} ${BASEDIR}
 exit 0
 ]]></include_file>
 
-<include_file name="var/svc.d/bcfg2-client/bcfg2-client.sh" mode="0755"><![CDATA[
+<include_file name="etc/sv/bcfg2-client/bcfg2-client.sh" mode="0755"><![CDATA[
 #!/bin/sh
 
-# note: variables provided from environment with envdir:
+# note: variables provided from environment with chpst -e:
 #       /usr/local/etc/default/bcfg2-client/env/OPTIONS
 #       /usr/local/etc/default/bcfg2-client/env/RUN_INTERVAL_SECONDS
 
@@ -405,38 +406,38 @@ done
 exit 0
 ]]></include_file>
 
-<include_file name="var/svc.d/bcfg2-client/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/bcfg2-client/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
-printf "*** exec /command/envdir /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh ...\n"
-exec /command/envdir /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh
+printf "*** exec /usr/local/bin/chpst -e /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh ...\n"
+exec /usr/local/bin/chpst -e /usr/local/etc/default/bcfg2-client/env ./bcfg2-client.sh
 ]]></include_file>
 
-<include_file name="var/svc.d/bcfg2-client/log/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/bcfg2-client/log/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
-exec /command/multilog t /usr/local/var/multilog/bcfg2-client
+exec /usr/local/bin/svlogd -tt /usr/local/var/svlogd/bcfg2-client
 ]]></include_file>
 
-<include_file name="var/svc.d/bcfg2-server/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/bcfg2-server/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
-/command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+/usr/local/bin/chpst -e /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
     printf "*** exec /usr/local/bin/bcfg2-server ${OPTIONS} ...\n"'
-exec /command/envdir /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
+exec /usr/local/bin/chpst -e /usr/local/etc/default/bcfg2-server/env /bin/sh -c '\
     exec /usr/local/bin/bcfg2-server ${OPTIONS}'
 ]]></include_file>
 
-<include_file name="var/svc.d/bcfg2-server/log/run" mode="0755"><![CDATA[
+<include_file name="etc/sv/bcfg2-server/log/run" mode="0755"><![CDATA[
 #!/bin/sh
 exec 2>&1
-exec /command/multilog t /usr/local/var/multilog/bcfg2-server
+exec /usr/local/bin/svlogd -tt /usr/local/var/svlogd/bcfg2-server
 ]]></include_file>
 
 <include_file name="postinstall" mode="0755"><![CDATA[
 #!/bin/sh
 BASEDIR="`echo ${0} | xargs -n1 dirname`"
-MULTILOG="/usr/local/var/multilog"
+SVLOGD="/usr/local/var/svlogd"
 DEFAULT="/usr/local/etc/default"
 
 # Fix paths
@@ -449,9 +450,9 @@ fi
 
 # Make sure log directories exist
 test -d /usr/local/var || mkdir /usr/local/var
-test -d $MULTILOG || mkdir $MULTILOG
-test -d $MULTILOG/bcfg2-client || mkdir $MULTILOG/bcfg2-client
-test -d $MULTILOG/bcfg2-server || mkdir $MULTILOG/bcfg2-server
+test -d $SVLOGD || mkdir $SVLOGD
+test -d $SVLOGD/bcfg2-client || mkdir $SVLOGD/bcfg2-client
+test -d $SVLOGD/bcfg2-server || mkdir $SVLOGD/bcfg2-server
 
 # Make sure environment directories exist
 test -d /usr/local/etc || mkdir /usr/local/etc
@@ -481,14 +482,14 @@ fi
 printf "Running bcfg2 preremove script...\n"
 date
 
-if [ -h /service/bcfg2-client ]; then
-    printf "INFO: Removing /service/bcfg2-client...\n"
-    /command/svrm /service/bcfg2-client
+if [ -h /usr/local/var/service/bcfg2-client ]; then
+    printf "INFO: Removing /usr/local/var/service/bcfg2-client...\n"
+    rm /usr/local/var/service/bcfg2-client
 fi
 
-if [ -h /service/bcfg2-server ]; then
-    printf "INFO: Removing /service/bcfg2-server...\n"
-    /command/svrm /service/bcfg2-server
+if [ -h /usr/local/var/service/bcfg2-server ]; then
+    printf "INFO: Removing /usr/local/var/service/bcfg2-server...\n"
+    rm /usr/local/var/service/bcfg2-server
 fi
 
 printf "Finished bcfg2 preremove script.\n"

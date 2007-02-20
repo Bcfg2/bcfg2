@@ -14,7 +14,7 @@ that does a complete client install, which includes:
  * all software on which bcfg2 depends
  * bcfg2 itself
  * ostiary to kick off bcfg2 client runs remotely
- * daemontools to run bcfg2 client as a periodic service with logging
+ * runit to run bcfg2 client as a periodic service with logging
  * all with site-specific configuration parameters, set at build time in a
    single unified build-time configuration file, site-settings.conf
  * optional install-time entry of bcfg2 and ostiary passwords, interactively
@@ -88,27 +88,25 @@ Directory with sentinel file(s)       Covered config files
 /usr/local/sbin                       ost-bcfg2.sh
 }}}
 
-== About daemontools integration ==
+== About runit integration ==
 In order to avoid a lot of platform/distribution-specific code, the encap
-bcfg2 distribution includes and uses [http://cr.yp.to/daemontools.html
-daemontools] (with some common patches) instead of init scripts and cron.
+bcfg2 distribution includes and uses [http://smarden.org/runit/useinit.html
+runit] instead of init scripts and cron.
 
-The bcfg2 client (.run) distribution uses daemontools to run ostiary, and to
-run the bcfg2 client periodically.
+The bcfg2 client (.run) distribution uses runit to run ostiary, and to run 
+the bcfg2 client periodically.
 
 On the server, edit `/usr/local/etc/default/bcfg2-server/env/OPTIONS` to
 include the options you want to start up the bcfg2 server with, and then do
 {{{
-ln -s /usr/local/var/svc.d/bcfg2-server /service/
+ln -s /usr/local/etc/sv/bcfg2-server /usr/local/var/service/
 }}}
 to enable the service.
 
-You can use `/command/svstat /service/bcfg2-server` to see the status, and
-`/command/svrm /service/bcfg2-server` to remove it.
+You can use `sv status /usr/local/var/service/bcfg2-server` to see the 
+status, and `rm /usr/local/var/service/bcfg2-server` to remove it.
 
-Logs for all daemontools services are under `/usr/local/var/multilog`.
-They use a highly precise time format; to translate into a readable format,
-pipe the logs through `/command/tai64nlocal`.
+Logs for all runit services are under `/usr/local/var/svlogd`.
 
 == About ostiary integration ==
 In order to enable the remote kickoff of bcfg2 client runs, the bcfg2 client
@@ -125,7 +123,7 @@ compile-time or (preferably) .run file install time.
  * `<password>-bcfg2-dv` : Run `bcfg2-client -d -v`
  * `<password>-bcfg2-vq` : Run `bcfg2-client -v -q`
  * `<password>-bcfg2-v` : Run `bcfg2-client -v`
- * `<password>-bcfg2-restart` : Restart the bcfg2-client daemontools service
+ * `<password>-bcfg2-restart` : Restart the bcfg2-client runit service
 
 There are plans for the future for a bcfg2 plugin that will set per-machine
 passwords after the initial install, however as with cfengine the worst that
@@ -142,7 +140,7 @@ point you will enter one of the above-listed values, such as
 integrated into the same string).
 
 Logs of bcfg2-client runs kicked off via ostiary are in
-`/usr/local/var/multilog/bcfg2-client-ostiary`
+`/usr/local/var/svlogd/bcfg2-client-ostiary`
 
 == Supported Platforms ==
 Below is a table of platforms that have been successfully bootstrapped using

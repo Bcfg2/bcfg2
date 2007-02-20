@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+
+<!-- $Id$ -->
+
+<encap_profile
+	profile_ver="1.0"
+	pkgspec="runit-1.7.2"
+>
+
+<prereq package="m4-1.4.4" />
+<prereq package="patch-2.5.9" />
+
+<environment
+        variable="CC"
+        value="gcc -static-libgcc"
+        type="set"
+/>
+
+<environment
+        variable="PATH"
+PLATFORM_IF_MATCH(solaris)
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE
+        value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
+PLATFORM_ENDIF
+        type="prepend"
+/>
+
+PLATFORM_IF_MATCH(linux)
+PLATFORM_ELSE
+<environment
+        variable="MAKE"
+        value="gmake"
+        type="set"
+/>
+PLATFORM_ENDIF
+
+<source
+url="http://encapsrcdist/mirror/runit/runit-1.7.2.tar.gz
+     http://mirror.opensysadmin.com/runit/runit-1.7.2.tar.gz
+     http://smarden.org/runit/runit-1.7.2.tar.gz"
+use_objdir="no"
+subdir="admin/runit-1.7.2"
+>
+
+<configure type="unset" />
+
+<build>
+./package/compile
+./package/check
+</build>
+
+<install>
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/runit || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/runit
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man8 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man8
+cp command/* ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/bin
+cp -r doc/* ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/runit
+cp -r etc ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/runit
+cp -r package ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/share/doc/runit
+cp man/* ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/man/man8
+</install>
+
+<clean type="unset" />
+
+</source>
+
+<prepackage>
+# Make "this encap is installed" sentinal file available in /usr/local/var/encap
+test -d var || mkdir var
+test -d var/encap || mkdir var/encap
+touch var/encap/${ENCAP_PKGNAME}
+</prepackage>
+
+<include_file name="bin/runsvdir-usrlocal-start" mode="0755"><![CDATA[
+#!/bin/sh
+PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
+exec env - PATH=$PATH \
+runsvdir -P /usr/local/var/service 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
+]]></include_file>
+
+<include_file name="boot.inittab" mode="0644"><![CDATA[
+
+SV:123456:respawn:/usr/local/bin/runsvdir-usrlocal-start
+]]></include_file>
+
+<include_file name="inittab-install" mode="0755"><![CDATA[
+#!/bin/sh -e
+if grep SV: /etc/inittab >/dev/null
+then
+  echo 'inittab contains an SV: line. I assume that runsvdir is already running.
+'
+else
+  echo 'Adding runsvdir to inittab...'
+  rm -f /etc/inittab'{new}'
+  cat /etc/inittab boot.inittab > /etc/inittab'{new}'
+  mv -f /etc/inittab'{new}' /etc/inittab
+  kill -HUP 1
+  echo 'init should start runsvdir now.
+'
+fi
+]]></include_file>
+
+<include_file name="inittab-remove" mode="0755"><![CDATA[
+#!/bin/sh -e
+if grep SV: /etc/inittab >/dev/null
+then
+  echo 'Backing up inittab to .inittab.backup...'
+  rm -f /etc/.inittab.backup
+  cp -f /etc/inittab /etc/.inittab.backup
+  echo 'Removing svscan lines from inittab...'
+  rm -f /etc/inittab'{new}'
+  grep -v SV: /etc/inittab > /etc/inittab'{new}'
+  mv -f /etc/inittab'{new}' /etc/inittab
+  kill -HUP 1
+  echo 'init should stop runsvdir now.
+'
+else
+  echo 'inittab does not contain a runsvdir line.
+'
+fi
+]]></include_file>
+
+<include_file name="postinstall" mode="0755"><![CDATA[
+#!/bin/sh -e
+umask 002
+BASEDIR="`echo ${0} | xargs -n1 dirname`"
+LOG=${BASEDIR}/postinstall.log
+exec > $LOG 2>&1
+printf "Running runit postinstall script...\n"
+date
+test -d /usr/local/var || mkdir /usr/local/var
+test -d /usr/local/var/svlogd || mkdir /usr/local/var/svlog
+test -d /usr/local/var/service || mkdir /usr/local/var/service
+test -d /usr/local/etc || mkdir /usr/local/etc
+test -d /usr/local/etc/default || mkdir /usr/local/etc/default
+test -d /usr/local/etc/sv || mkdir /usr/local/etc/sv
+cd ${ENCAP_SOURCE}/${ENCAP_PKGNAME} && ./inittab-install
+printf "Finished runit postinstall script.\n"
+]]></include_file>
+
+<include_file name="preremove" mode="0755"><![CDATA[
+#!/bin/sh
+printf "Running runit preremove script...\n"
+date
+cd ${ENCAP_SOURCE}/${ENCAP_PKGNAME} && ./inittab-remove
+printf "Finished runit preremove script.\n"
+]]></include_file>
+
+<encapinfo>
+description runit - a UNIX init scheme with service supervision
+</encapinfo>
+
+</encap_profile>
