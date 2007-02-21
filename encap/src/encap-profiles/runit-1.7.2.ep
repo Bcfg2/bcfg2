@@ -160,6 +160,7 @@ fi
 if [ -d /etc/event.d ]; then
     printf "Installing to /etc/event.d/SV (Upstart) ...\n"
     cd ${ENCAP_SOURCE}/${ENCAP_PKGNAME} && cp upstart.boot /etc/event.d/SV
+    kill -HUP 1
 fi
 printf "Finished runit postinstall script.\n"
 ]]></include_file>
@@ -176,6 +177,7 @@ if [ -d /etc/event.d ]; then
     if [ -f /etc/event.d/SV ]; then
         printf "Removing /etc/event.d/SV (Upstart) ...\n"
         rm /etc/event.d/SV
+	kill -HUP 1
     fi
 fi
 printf "Finished runit preremove script.\n"
