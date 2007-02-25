@@ -14,7 +14,7 @@ export PATH LDFLAGS CPPFLAGS
 
 ZLIB = zlib-1.2.3
 LIBTAR = libtar-1.2.11
-OPENSSL = openssl-0.9.8c
+OPENSSL = openssl-0.9.8e
 CURL = curl-7.15.4
 FGET = fget-1.3.3
 EXPAT = expat-2.0.0
