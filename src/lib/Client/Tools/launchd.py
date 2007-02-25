@@ -1,5 +1,5 @@
 '''launchd support for Bcfg2'''
-__revision__ = '$Revision: 2596 $'
+__revision__ = '$Revision$'
 
 import os
 import Bcfg2.Client.Tools

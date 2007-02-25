@@ -1,5 +1,5 @@
 '''This is the bcfg2 tool for the Gentoo Portage system.'''
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 import re
 import Bcfg2.Client.Tools
