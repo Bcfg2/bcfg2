@@ -1,5 +1,10 @@
 = EncapTodo: TODO =
 
+ * Add new version of XML.py patch to bcfg2 encap.
+
+ * Move to using svlogd for runit run logs; see:
+   * http://www.thedjbway.org/svscanboot.html
+
  * Write HOWTO
 
  * Packages all deps of new reports (django etc.) for GNU/Linux
