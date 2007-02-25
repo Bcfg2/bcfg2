@@ -153,6 +153,19 @@ test -d /usr/local/var/service || mkdir /usr/local/var/service
 test -d /usr/local/etc || mkdir /usr/local/etc
 test -d /usr/local/etc/default || mkdir /usr/local/etc/default
 test -d /usr/local/etc/sv || mkdir /usr/local/etc/sv
+for service in `ls /usr/local/etc/sv`; do
+    test -d /usr/local/etc/sv/$service/supervise && rm -rf /usr/local/etc/sv/$service/supervise
+    test -d /usr/local/etc/sv/$service/log/supervise && rm -rf /usr/local/etc/sv/$service/log/supervise
+done
+if [ -d /usr/local/var/service/.disabled ]; then
+    for service in `ls /usr/local/var/service/.disabled`; do 
+        if [ -h /usr/local/var/service/$service ]; then
+	    rm /usr/local/var/service/.disabled/$service
+	else
+            mv /usr/local/var/service/.disabled/$service  /usr/local/var/service/
+	fi
+    done
+fi
 if [ -f /etc/inittab ]; then
     printf "Installing to /etc/inittab ...\n"
     cd ${ENCAP_SOURCE}/${ENCAP_PKGNAME} && ./inittab-install
@@ -181,6 +194,21 @@ if [ -d /etc/event.d ]; then
         rm /etc/event.d/SV
     fi
 fi
+printf "Test, remove this code soon:\n"
+ps auxw | grep sv
+test -d /usr/local/var/service/.disabled || mkdir /usr/local/var/service/.disabled
+for service in `ls /usr/local/var/service`; do
+    sv exit /usr/local/var/service/$service
+done
+printf "Waiting 7 seconds for runsv processes to die...\n"
+sleep 7
+mv /usr/local/var/service/* /usr/local/var/service/.disabled/ 2>/dev/null || printf "No services to disable.\n"
+printf "Waiting 7 more seconds for runsv processes to die...\n"
+sleep 7
+for service in `ls /usr/local/etc/sv`; do
+    test -d /usr/local/etc/sv/$service/supervise && rm -rf /usr/local/etc/sv/$service/supervise
+    test -d /usr/local/etc/sv/$service/log/supervise && rm -rf /usr/local/etc/sv/$service/log/supervise
+done
 printf "Finished runit preremove script.\n"
 ]]></include_file>
 

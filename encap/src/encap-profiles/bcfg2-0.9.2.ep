@@ -394,16 +394,16 @@ if [ "${RUN_INTERVAL_SECONDS}x" = "x" ]; then
     RUN_INTERVAL_SECONDS=3600
 fi
 
-# loop forever
-while :
-do
-    printf "*** starting /usr/local/bin/bcfg2 ${OPTIONS} ...\n"
-    /usr/local/bin/bcfg2 ${OPTIONS}
-    printf "*** sleeping ${RUN_INTERVAL_SECONDS} seconds ...\n"
-    sleep ${RUN_INTERVAL_SECONDS}
-done
-
-exit 0
+# Run bcfg2 and then sleep (runsv takes care of starting up script
+# again after it exits). Need to exec sleep so runit can exit
+# cleanly while the sleep is in progress; see:
+# http://comments.gmane.org/gmane.comp.sysutils.supervision.general/1373
+# for more information on why this is required (short reason: runit is
+# more anal about making sure things are logged than daemontools)
+printf "*** starting /usr/local/bin/bcfg2 ${OPTIONS} ...\n"
+/usr/local/bin/bcfg2 ${OPTIONS}
+printf "*** sleeping ${RUN_INTERVAL_SECONDS} seconds ...\n"
+exec sleep ${RUN_INTERVAL_SECONDS}
 ]]></include_file>
 
 <include_file name="etc/sv/bcfg2-client/run" mode="0755"><![CDATA[
