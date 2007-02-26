@@ -22,10 +22,11 @@ def checkformat(values, indices):
     """Ensures file contains all necessary attributes in order """
     filelist = [pair[0] for pair in values]
 
-#    lines = len(filelist)
+    #    lines = len(filelist)
+
+    filelist = filelist[indices[0]:]
 
     for index in indices:
-        filelist = filelist[index:]
         if filelist[0:13] != host_attribs:
             # figure out what to do here
             return False
@@ -34,6 +35,7 @@ def checkformat(values, indices):
             try:
                 next = filelist[1:].index('hostname')
                 remaining = filelist[13:next+1]
+                filelist = filelist[next+1:]
             except:
                 remaining = filelist[13:]
             needfields = ['mac_addr', 'hdwr_type', 'ip_addr']
