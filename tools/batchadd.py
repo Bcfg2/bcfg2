@@ -2,13 +2,13 @@
 
 import sys, os
 from datetime import date
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Hostbase.settings'
-from Hostbase.hostbase.models import *
-from Hostbase.settings import DEFAULT_MX, PRIORITY
-import Hostbase.regex
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
+from Bcfg2.Server.Hostbase.hostbase.models import *
+from Bcfg2.Server.Hostbase.settings import DEFAULT_MX, PRIORITY
+import Bcfg2.Server.Hostbase.regex
 
 host_attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
-                'csi', 'printq', 'dhcp', 'outbound_smtp', 'primary_user',
+                'csi', 'printq', 'outbound_smtp', 'primary_user',
                 'administrator', 'location', 'expiration_date', 'comments']
 
 def handle_error(field):
@@ -26,16 +26,16 @@ def checkformat(values, indices):
 
     for index in indices:
         filelist = filelist[index:]
-        if filelist[0:14] != host_attribs:
+        if filelist[0:13] != host_attribs:
             # figure out what to do here
             return False
         else:
             # process rest of host attributes
             try:
                 next = filelist[1:].index('hostname')
-                remaining = filelist[14:next+1]
+                remaining = filelist[13:next+1]
             except:
-                remaining = filelist[14:]
+                remaining = filelist[13:]
             needfields = ['mac_addr', 'hdwr_type', 'ip_addr']
             if [item for item in needfields if item not in remaining]:
                 return False
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         blank = Host()
         for attrib in host_attribs:
             pair = info.pop(0)
-            if pair[0] == 'dhcp' or pair[0] == 'outbound_smtp':
+            if pair[0] == 'outbound_smtp':
                 if pair[1] == 'y':
                     blank.__dict__[pair[0]] = 1
                 else:
@@ -112,6 +112,8 @@ if __name__ == '__main__':
             if info[0][0] == 'mac_addr':
                 pair = info.pop(0)
                 inter = Interface.objects.create(host=blank, mac_addr=pair[1], hdwr_type='eth')
+                if not pair[1]:
+                    inter.dhcp = False
                 inter.save()
             elif info[0][0] == 'hdwr_type':
                 pair = info.pop(0)
@@ -119,7 +121,7 @@ if __name__ == '__main__':
                 inter.save()
             elif info[0][0] == 'ip_addr':
                 pair = info.pop(0)
-                ip = IP.objects.create(interface=inter, ip_addr=pair[1], num=1)
+                ip = IP.objects.create(interface=inter, ip_addr=pair[1])
                 hostnamenode = Name(ip=ip, name=blank.hostname, dns_view='global', only=False)
                 hostnamenode.save()
                 namenode = Name(ip=ip, name=".".join([newhostname + "-" + inter.hdwr_type,
