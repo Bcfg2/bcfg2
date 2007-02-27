@@ -1,10 +1,11 @@
 '''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
 __revision__ = '$Revision$'
 
-import os
+import sys, os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError
+from syslog import syslog, LOG_INFO
+from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
 from sets import Set
 from django.template import Context, loader
@@ -121,19 +122,11 @@ class Hostbase(Plugin):
                 serial = int(todaydate) * 100
             cursor.execute("""UPDATE hostbase_zone SET serial = \'%s\' WHERE id = \'%s\'""" % (str(serial), zone[0]))
 
-        cursor.execute("SELECT * FROM hostbase_zone WHERE zone <> \'.rev\'")
+        cursor.execute("SELECT * FROM hostbase_zone WHERE zone NOT LIKE \'%%.rev\'")
         zones = cursor.fetchall()
 
         iplist = []
         hosts = {}
-
-        cursor.execute("SELECT * FROM hostbase_zone WHERE zone = \'.rev\'")
-        reversezone = cursor.fetchall()[0]
-        cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
-        INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
-        WHERE z.zone_id = \'%s\'""" % reversezone[0])
-        reverse_nameservers = cursor.fetchall()
-
 
         for zone in zones:
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
@@ -193,46 +186,28 @@ class Hostbase(Plugin):
             self.filedata[zone[1]] += ("\n\n%s" % zone[9])
             self.Entries['ConfigFile']["%s/%s" % (self.filepath, zone[1])] = self.FetchFile
 
-
-        filelist = []
-        cursor.execute("""
-        SELECT ip_addr FROM hostbase_ip ORDER BY ip_addr
-        """)
-        three_subnet = [ip[0].rstrip('0123456789').rstrip('.') \
-                        for ip in cursor.fetchall()]
-        three_subnet_set = Set(three_subnet)
-        two_subnet = [subnet.rstrip('0123456789').rstrip('.') \
-                      for subnet in three_subnet_set]
-        two_subnet_set = Set(two_subnet)
-        filelist = [each for each in two_subnet_set \
-                    if two_subnet.count(each) > 1]
-        for each in three_subnet_set:
-            if each.rstrip('0123456789').rstrip('.') not in filelist:
-                filelist.append(each)
-
+        cursor.execute("SELECT * FROM hostbase_zone WHERE zone LIKE \'%%.rev\' AND zone <> \'.rev\'")
+        reversezones = cursor.fetchall()
+        
         reversenames = []
-        for filename in filelist:
-            towrite = filename.split('.')
-            towrite.reverse()
-            reversename = '.'.join(towrite)
+        for reversezone in reversezones:            
+            cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
+            INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
+            WHERE z.zone_id = \'%s\'""" % reversezone[0])
+            reverse_nameservers = cursor.fetchall()
+
             context = Context({
-                'inaddr': reversename,
+                'inaddr': reversezone[1].rstrip('.rev'),
                 'zone': reversezone,
                 'nameservers': reverse_nameservers,
                 })
 
-            self.filedata['%s.rev' % reversename] = self.templates['reversesoa'].render(context)
-            reversenames.append((reversename, filename))
+            self.filedata[reversezone[1]] = self.templates['reversesoa'].render(context)
+            subnet = reversezone[1].split(".")
+            subnet.reverse()
+            reversenames.append((reversezone[1].rstrip('.rev'),".".join(subnet[1:]))) 
 
-        ## here's where the named.conf file gets written
-        context = Context({
-            'zones': zones,
-            'reverses': reversenames,
-            })        
-        self.filedata['named.conf'] = self.templates['named'].render(context)
-        self.Entries['ConfigFile']['%s/named.conf' % self.filepath] = self.FetchFile
-
-        reversenames.sort()
+        print reversenames
         for filename in reversenames:
             originlist = []
             cursor.execute("""
@@ -269,6 +244,15 @@ class Hostbase(Plugin):
                     })        
                 self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
+
+        ## here's where the named.conf file gets written
+        context = Context({
+            'zones': zones,
+            'reverses': reversenames,
+            })        
+        self.filedata['named.conf'] = self.templates['named'].render(context)
+        self.Entries['ConfigFile']['%s/named.conf' % self.filepath] = self.FetchFile
+
 
     def buildDHCP(self):
         '''Pre-build dhcpd.conf and stash in the filedata table'''
@@ -530,7 +514,7 @@ olivia.ctd.anl.gov\n\n"""
             for each in netgroups[netgroup]:
                 fileoutput += each + "\n"
             self.filedata['%s-machines' % netgroup] = fileoutput
-            self.Entries['ConfigFile']['%s-machines' % netgroup] = self.FetchFile
+            self.Entries['ConfigFile']['/my/adm/hostbase/makenets/machines/%s-machines' % netgroup] = self.FetchFile
 
         cursor.execute("""
         UPDATE hostbase_host SET dirty=0
