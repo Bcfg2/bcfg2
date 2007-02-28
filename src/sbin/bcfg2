@@ -133,7 +133,10 @@ class Client:
                                  % (self.setup['file']))
         else:
             # retrieve config from server
-            proxy = Bcfg2.Client.Proxy.bcfg2()
+            try:
+                proxy = Bcfg2.Client.Proxy.bcfg2(self.setup)
+            except:
+                self.fatal_error("failed to instantiate proxy to server")
 
             if self.setup['profile']:
                 try:
