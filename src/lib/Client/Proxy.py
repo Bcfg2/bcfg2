@@ -3,11 +3,14 @@ __revision__ = '$Revision$'
 
 import logging, socket, sys, time, xmlrpclib, ConfigParser, httplib
 
+class CobaltComponentError(Exception):
+    pass
+
 class Bcfg2HTTPSConnection(httplib.HTTPSConnection):
 
     def connect(self):
         "Connect to a host on a given (SSL) port binding the socket to a specific local address"
-
+        print "Proxy connect"
         _cfile = ConfigParser.ConfigParser()
         if '-C' in sys.argv:
             _cfpath = sys.argv[sys.argv.index('-C') + 1]
@@ -25,7 +28,7 @@ class Bcfg2HTTPSConnection(httplib.HTTPSConnection):
 
         # the following line is the sole modification in comparison to the
         # connect() in httplib.HTTPSConnection 
-        sock.bind((_bindaddress,0))
+        sock.bind((_bindaddress, 0))
 
         sock.connect((self.host, self.port))
         ssl = socket.ssl(sock, self.key_file, self.cert_file) 
@@ -44,7 +47,6 @@ class Bcfg2SafeTransport(xmlrpclib.Transport):
 
         # create a HTTPS connection object from a host descriptor
         # host may be a string, or a (host, x509-dict) tuple
-        import httplib
         host, extra_headers, x509 = self.get_host_info(host)
         try:
             HTTPS = Bcfg2HTTPS  # instead of HTTPS from httplib
@@ -58,41 +60,63 @@ class Bcfg2SafeTransport(xmlrpclib.Transport):
 
 class SafeProxy:
     '''Wrapper for proxy'''
-    _cfile = ConfigParser.ConfigParser()
-    if '-C' in sys.argv:
-        _cfpath = sys.argv[sys.argv.index('-C') + 1]
-    else:
-        _cfpath = '/etc/bcfg2.conf'
-    _cfile.read([_cfpath])
-    try:
-        _components = _cfile._sections['components']
-    except KeyError:
-        print "%s doesn't contain a valid components section" % (_cfpath)
-        raise SystemExit, 1
-    try:
-        _authinfo = ('root', _cfile.get('communication', 'password'))
-    except KeyError:
-        print "%s doesn't contain a valid communication setup" % (_cfpath)
-        raise SystemExit, 1
 
-    _bindaddress = ""
-    try:
-        _bindaddress = _cfile.get('communication', 'bindaddress')
-    except:
-        pass
-        
     _retries = 4
-
-    def __init__(self, component, url=None):
+    _authinfo = ()
+    _components = {}
+    def __init__(self, component, args={}):
         self.component = component
         self.log = logging.getLogger(component)
-        if url != None:
-            address = url
+
+        if args.has_key('server'):
+            # processing from command line args
+            self._components[component] = args['server']
+        else:
+            if args.has_key('setup'):
+                # processing from specified config file
+                _cfpath = args['setup']
+            else:
+                _cfpath = '/etc/bcfg2.conf'
+            self._cfile = ConfigParser.ConfigParser()
+            self._cfile.read([_cfpath])
+            try:
+                self._components = self._cfile._sections['components']
+            except:
+                self.log.error("%s doesn't contain a valid components section" % (_cfpath))
+                raise SystemExit, 1
+        if args.has_key('password'):
+            # get passwd from cmdline
+            password = args['password']
+        else:
+            try:
+                password = self._cfile.get('communication', 'password')
+            except:
+                self.log.error("%s doesn't contain a valid password" % (_cfpath))
+                raise SystemExit, 1
+        if args.has_key('user'):
+            user = args['user']
+        else:
+            try:
+                user = self._cfile.get('communication', 'user')
+            except:
+                user = 'root'
+            
+        self._authinfo = (user, password)
+
+        _bindaddress = ""
+        try:
+            _bindaddress = self._cfile.get('communication', 'bindaddress')
+        except:
+            pass
+        
+        if args.has_key('server'):
+            address = args['server']
         else:
             address = self.__get_location(component)
+            
         try:
-            if self._bindaddress != "":
-                self.log.info("Binding client to address %s" % self._bindaddress)
+            if _bindaddress != "":
+                self.log.info("Binding client to address %s" % _bindaddress)
                 self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())
             else:
                 self.proxy = xmlrpclib.ServerProxy(address, transport=xmlrpclib.SafeTransport())
