@@ -139,6 +139,8 @@ def pretty_print(element, level=0):
 
 
 if __name__ == '__main__':
+    ping=True
+    all=False
     if '-C' in sys.argv:
         cfpath = sys.argv[sys.argv.index('-C') + 1]
     else:
@@ -157,17 +159,21 @@ if __name__ == '__main__':
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "C:hc:s:", ["help", "config=", "stats="])
+        opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=","no-ping", "stats="])
     except getopt.GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]" % (mesg) 
+        print "%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
         if o in ("-h", "--help"):
             print "Usage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]"
             raise SystemExit
+        if o in ("-A", "--all"):
+            all=True
         if o in ("-c", "--config"):
             configpath = a
+        if o in ("-N", "--no-ping"):
+            ping = False
         if o in ("-s", "--stats"):
             statpath = a
 
@@ -176,7 +182,8 @@ if __name__ == '__main__':
     #try:
         #hostinstat = os.stat(hostinfopath)
         #if (time() - hostinstat[9])/(60*60) > 23.5:
-    os.system('bcfg2-ping-sweep') # bcfg2-ping-sweep needs to be in path
+    if ping:
+        os.system('bcfg2-ping-sweep') # bcfg2-ping-sweep needs to be in path
     #except OSError:
     #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
@@ -202,18 +209,29 @@ if __name__ == '__main__':
     nodereport = Element("Report", attrib={"time" : asctime()})
     #should all of the other info in Metadata be appended?
     #What about all of the package stuff for other types of reports?
-    
     for client in clientsdata.findall("Client"):
         nodel = Element("Node", attrib={"name" : client.get("name")})
         nodel.append(client)
-
         for nod in statsdata.findall("Node"):
             if client.get('name').find(nod.get('name')) == 0:
                 for statel in nod.findall("Statistics"):
                     nodel.append(statel)
-        nodereport.append(nodel)
-
-
+                    nodereport.append(nodel)
+                    
+    if all:
+        for nod in statsdata.findall("Node"):
+            for client in clientsdata.findall("Client"):
+                if client.get('name').find(nod.get('name')) == 0:
+                    break
+            else:
+                nodel = Element("Node", attrib={"name" : nod.get("name")})
+                client = Element("Client", attrib={"name" : nod.get("name"), "profile" : "default"})
+                nodel.append(client)
+                for statel in nod.findall("Statistics"):
+                    nodel.append(statel)
+                    nodereport.append(nodel)
+                
+                
     for reprt in configdata.findall('Report'):
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
 
