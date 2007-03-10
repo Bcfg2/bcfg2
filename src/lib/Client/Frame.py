@@ -141,57 +141,56 @@ class Frame:
                 self.removal = [entry for entry in self.extra if entry.tag == 'Package']
 
         candidates = [entry for entry in self.states if not self.states[entry]]
+        self.whitelist = [entry for entry in self.states if not self.states[entry]]
         if self.setup['dryrun']:
-            updated = [entry for entry in self.states if not self.states[entry]]
-            if updated:
+            if self.whitelist:
                 self.logger.info("In dryrun mode: suppressing entry installation for:")
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
-                                  in updated])
+                                  in self.whitelist])
+                self.whitelist = []
             if self.removal:
                 self.logger.info("In dryrun mode: suppressing entry removal for:")
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
                                   in self.removal])
             self.removal = []
             return
-        elif self.setup['interactive']:
-            self.whitelist = promptFilter(prompt, candidates)
-            self.blacklist = [c for c in candidates if c not in self.whitelist]
-            self.removal = promptFilter(rprompt, self.removal)
+        # Here is where most of the work goes
+        # first perform bundle filtering
+        if self.setup['bundle']:
+            bundles = [b for b in self.config.findall('./Bundle') \
+                       if b.get('name') == self.setup['bundle']]
+            self.whitelist = [e for e in self.whitelist if \
+                              True in [e in b for b in bundles]]
         else:
-            # need to do bundle and pre-action checks
-            if self.setup['bundle']:
-                bundles = [b for b in self.config.findall('./Bundle') \
-                           if b.get('name') == self.setup['bundle']]
-            else:
-                bundles = self.config.getchildren()
-            gbundles = []
-            for bundle in bundles:
-                if bundle.tag != 'Bundle':
-                    gbundles.append(bundle)
-                    continue
-                actions = [a for a in bundle.findall('./Action') \
-                           if a.get('timing') != 'post']
-                # run all actions if modified or always
-                for action in actions:
-                    if action.get('when') == 'always':
-                        self.DispatchInstallCalls([action])
-                    else:
-                        # when == modified
-                        # check if bundle should be modified
-                        if [c for c in candidates if c in bundle]:
-                            self.DispatchInstallCalls([action])
-                if False in [self.states[a] for a in actions]:
-                    self.logger.info("Bundle %s failed prerequisite action" % \
-                                     (bundle.get('name')))
-                    continue
-                else:
-                    gbundles.append(bundle)
+            bundles = self.config.getchildren()
 
-            for entry in candidates:
-                if [bundle for bundle in gbundles if entry in bundle]:
-                    self.whitelist.append(entry)
-                else:
-                    self.blacklist.append(entry)
+        # first process prereq actions
+        for bundle in bundles[:]:
+            if bundle.tag != 'Bundle':
+                continue
+            actions = [a for a in bundle.findall('./Action') \
+                       if a.get('timing') != 'post']
+            # now we process all "always actions"
+            bmodified = len([item for item in bundle if item in self.whitelist])
+            for action in actions:
+                if bmodified or action.get('when') == 'always':
+                    self.DispatchInstallCalls([action])
+            # need to test to fail entries in whitelist
+            if False in [self.states[a] for a in actions]:
+                # then display bundles forced off with entries
+                self.logger.info("Bundle %s failed prerequisite action" % \
+                                 (bundle.get('name')))
+                bundles.remove(bundle)
+                b_to_remv = [ent for ent in self.whitelist if ent in bundle]
+                if b_to_remv:
+                    self.logger.info("Not installing entries from Bundle %s" % \
+                                     (bundle.get('name')))
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_remv])
+                    [self.whitelist.remove(ent) for ent in b_to_remv]
+
+        for entry in candidates:
+            if entry not in self.whitelist:
+                self.blacklist.append(entry)
 
     def DispatchInstallCalls(self, entries):
         '''Dispatch install calls to underlying tools'''

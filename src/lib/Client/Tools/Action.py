@@ -17,6 +17,10 @@ class Action(Bcfg2.Client.Tools.Tool):
 
     def RunAction(self, entry):
         '''This method handles command execution and status return'''
+        if self.setup['interactive']:
+            prompt = 'Run Action %s, %s: (N/y): ' % (entry.get('name'), entry.get('command'))
+            if raw_input(prompt) not in ['y', 'Y']:
+                return False
         self.logger.debug("Running Action %s" % (entry.get('name')))
         rc = self.cmd.run(entry.get('command'))[0]
         self.logger.debug("Action: %s got rc %s" % (entry.get('command'), rc))
