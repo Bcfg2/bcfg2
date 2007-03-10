@@ -110,7 +110,7 @@ class DirectoryBacked(object):
         if name == '':
             logger.info("got add for empty name")
         elif self.entries.has_key(name):
-            logger.info("got multiple adds for %s" % name)
+            self.entries[name].HandleEvent()
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
                 return
