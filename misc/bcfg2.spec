@@ -1,4 +1,4 @@
-%define release 0.1
+%define release 0.0pre1
 %define __python python
 %{!?py_ver: %define py_ver 2.3}
 %define pythonversion %{py_ver}
@@ -6,20 +6,20 @@
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
-Version:          0.9.2
+Version:          0.9.3
 Release: %{release}
 Summary:          Configuration management system
 
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.2.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.3pre1.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
 
 BuildRequires:    python-devel
-Requires:         lxml >= 0.9
+Requires:         python-lxml >= 0.9
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -61,7 +61,7 @@ Requires: gamin-python
 Bcfg2 client
 
 %prep
-%setup -q -n bcfg2-0.9.2
+%setup -q -n bcfg2-0.9.3pre1
 
 %build
 %{__python}%{pythonversion} setup.py build
