@@ -21,7 +21,8 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         self.Entries = {'ConfigFile':{'/etc/passwd':self.from_yp_cb,
                                            '/etc/group':self.from_yp_cb,
                                            '/etc/security/limits.conf':self.gen_limits_cb,
-                                           '/root/.ssh/authorized_keys':self.gen_root_keys_cb}}
+                                           '/root/.ssh/authorized_keys':self.gen_root_keys_cb,
+					   '/etc/sudoers':self.gen_sudoers}}
         try:
             self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
         except:
@@ -56,4 +57,14 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         rdata = self.repository.entries
         entry.text = "".join([rdata["%s.key" % user].data for user in superusers if rdata.has_key("%s.key" % user)])
         perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+
+    def gen_sudoers(self, entry, metadata):
+        '''Build root authorized keys file based on current ACLs'''
+        superusers = self.repository.entries['superusers'].data.split()
+        rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
+        superusers += [user for (user, host) in rootlike if host == metadata.hostname.split('.')[0]]
+        rdata = self.repository.entries
+        entry.text = self.repository.entries['static.sudoers'].data%",".join(superusers)
+        perms = {'owner':'root', 'group':'root', 'perms':'0400'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
