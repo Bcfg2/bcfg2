@@ -188,6 +188,10 @@ class Frame:
                     self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_remv])
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
+        if self.setup['interactive']:
+            self.whitelist = promptFilter(prompt, self.whitelist) 
+            self.removal = promptFilter(rprompt, self.removal) 
+
         for entry in candidates:
             if entry not in self.whitelist:
                 self.blacklist.append(entry)
