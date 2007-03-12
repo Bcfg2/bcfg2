@@ -19,7 +19,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python2.3-lxml (>= 0.8), python2.3-gamin | python2.3-fam , python2.3-pyopenssl, libxml2-utils (>= 2.6.23), gamin | fam, ucf, bcfg2 (= ${Source-Version}), python-cheetah
+Depends: ${python:Depends}, python2.3-lxml (>= 0.8), python2.3-gamin | python2.3-fam , libxml2-utils (>= 2.6.23), gamin | fam, ucf, bcfg2 (= ${Source-Version}), python-cheetah
 Description: Configuration management server
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.

@@ -1,62 +1,14 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, sys, time, xmlrpclib, ConfigParser, httplib
+import logging, socket, time, xmlrpclib, ConfigParser
+from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
+import Bcfg2.tlslite.errors
+
+#FIXME need to reimplement _binadaddress support for XMLRPCTransport
 
 class CobaltComponentError(Exception):
     pass
-
-class Bcfg2HTTPSConnection(httplib.HTTPSConnection):
-
-    def connect(self):
-        "Connect to a host on a given (SSL) port binding the socket to a specific local address"
-        print "Proxy connect"
-        _cfile = ConfigParser.ConfigParser()
-        if '-C' in sys.argv:
-            _cfpath = sys.argv[sys.argv.index('-C') + 1]
-        else:
-            _cfpath = '/etc/bcfg2.conf'
-            _cfile.read([_cfpath])      
-        _bindaddress = ""
-        try:
-            _bindaddress = _cfile.get('communication', 'bindaddress')
-        except:
-            self.log.error("%s doesn't contain a valid bindadress value" % (_cfpath))
-            raise SystemExit, 1
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # the following line is the sole modification in comparison to the
-        # connect() in httplib.HTTPSConnection 
-        sock.bind((_bindaddress, 0))
-
-        sock.connect((self.host, self.port))
-        ssl = socket.ssl(sock, self.key_file, self.cert_file) 
-        self.sock = httplib.FakeSocket(sock, ssl)
-
-class Bcfg2HTTPS(httplib.HTTPS):
-    """Own HTTPS class for overriding the _connection_class value"""
-    
-    _connection_class = Bcfg2HTTPSConnection # instead of HTTPSConnection from httplib
-
-
-class Bcfg2SafeTransport(xmlrpclib.Transport):
-    """Own SafeTransport class for overriding the HTTPS object"""
-
-    def make_connection(self, host):
-
-        # create a HTTPS connection object from a host descriptor
-        # host may be a string, or a (host, x509-dict) tuple
-        host, extra_headers, x509 = self.get_host_info(host)
-        try:
-            HTTPS = Bcfg2HTTPS  # instead of HTTPS from httplib
-        except AttributeError:
-            raise NotImplementedError(
-                "your version of httplib doesn't support HTTPS"
-                )
-        else:
-            return HTTPS(host, None, **(x509 or {}))
-
 
 class SafeProxy:
     '''Wrapper for proxy'''
@@ -103,6 +55,11 @@ class SafeProxy:
             
         self._authinfo = (user, password)
 
+        if args.has_key('fingerprint'):
+            self.fingerprint = args['fingerprint']
+        else:
+            self.fingerprint = False
+
         _bindaddress = ""
         try:
             _bindaddress = self._cfile.get('communication', 'bindaddress')
@@ -115,11 +72,16 @@ class SafeProxy:
             address = self.__get_location(component)
             
         try:
-            if _bindaddress != "":
-                self.log.info("Binding client to address %s" % _bindaddress)
-                self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())
+            #             if _bindaddress != "":
+            #                 self.log.info("Binding client to address %s" % _bindaddress)
+            #                 self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())
+            #             else:
+            if self.fingerprint:
+                transport = XMLRPCTransport(x509Fingerprint=self.fingerprint)
             else:
-                self.proxy = xmlrpclib.ServerProxy(address, transport=xmlrpclib.SafeTransport())
+                transport = XMLRPCTransport()
+            self.proxy = xmlrpclib.ServerProxy(address, transport=transport)
+
         except IOError, io_error:
             self.log.error("Invalid server URL %s: %s" % (address, io_error))
             raise CobaltComponentError
@@ -149,6 +111,11 @@ class SafeProxy:
             except socket.error, serr:
                 self.log.debug("Attempting %s (%d of %d) failed because %s" % (methodName, (irs+1),
                                                                                self._retries, serr))
+            except Bcfg2.tlslite.errors.TLSFingerprintError, err:
+                self.log.error("Server fingerprint did not match")
+                errmsg = err.message.split()
+                self.log.error("Got %s expected %s" % (errmsg[3], errmsg[4]))
+                raise SystemExit, 1
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break

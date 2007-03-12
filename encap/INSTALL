@@ -6,10 +6,6 @@ EncapPackages | EncapReadme | '''EncapInstall''' | EncapHowto
 
 == Prerequisites ==
  * Read the [wiki:EncapReadme README]
- * GNU gcc and GNU g++
-   * If you are using the gcc distributed with Solaris/x86 10, you need to 
-     install the gcc bug fix at http://www.openssl.org/~appro/values.c by 
-     running "`ksh -f values.c`" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * epkg (the encap package manager)
    * Canonical website is http://www.encap.org/epkg

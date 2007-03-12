@@ -39,7 +39,7 @@ thing).
 
 It attempts to be as self contained as possible; everything gets linked to
 under `/usr/local/lib/bcfg2`, except for bcfg2 itself and some dependent
-software, which is prefixed by `b2-` (`b2-openssl`, `b2-python` etc.).
+software, which is prefixed by `b2-` (`b2-python` etc.).
 
 To run the bcfg2 server, you also need to install gamin, which supports a
 subset of the platforms bcfg2 client will work on, including GNU/Linux (but

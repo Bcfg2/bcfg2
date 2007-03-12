@@ -12,7 +12,6 @@
 <prereq package="bcfg2-gzip-1.2.4b" />
 <prereq package="bcfg2-pkg-config-0.21" />
 <prereq package="bcfg2-readline-5.2" />
-<prereq package="bcfg2-openssl-0.9.8e" />
 
 <environment
         variable="CC"
@@ -68,9 +67,6 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
 if [ -f setup.py.orig ]; then cp setup.py.orig setup.py; fi
 cat setup.py \
 | sed s:\/usr\/local\/:\/usr\/local\/lib\/bcfg2\/:g \
-| sed s:\/usr\/local\/lib\/bcfg2\/ssl\/include:\/usr\/local\/lib\/bcfg2\/include:g \
-| sed s:\/usr\/contrib\/ssl\/include\/:\/usr\/local\/lib\/bcfg2\/include\/openssl\/:g \
-| sed s:\/usr\/local\/lib\/bcfg2\/ssl\/lib:\/usr\/local\/lib\/bcfg2\/lib:g \
 > setup.py.bcfg2
 mv setup.py setup.py.orig
 cp setup.py.bcfg2 setup.py
@@ -84,18 +80,6 @@ PLATFORM_ENDIF
 	--disable-ipv6 \
 	--without-cxx
 </configure>
-
-<build type="append"><![CDATA[
-# Make sure linking to openssl worked
-${builddir}/python -c "from httplib import HTTPS" || HS="no"; \
-if [ "${HS}x" = "nox" ]; then \
-    printf "ERROR: HTTPS fails (usually a problem with linking against "; \
-    printf "openssl), aborting...\n"; \
-    exit 1; \
-else \
-    printf "INFO: HTTPS works\n"; \
-fi
-]]></build>
 
 </source>
 

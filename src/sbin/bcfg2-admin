@@ -3,7 +3,7 @@
 
 import difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import xml.sax.saxutils
-import Bcfg2.Server.Core, Bcfg2.Logging
+import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
 
 log = logging.getLogger('bcfg-admin')
 
@@ -13,6 +13,7 @@ colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegree
 
 usage = '''
 bcfg2-admin [options]
+fingerprint - print the server certificate fingerprint
 init        - initialize the bcfg2 repository( this is interactive; only run once )
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
@@ -266,6 +267,16 @@ def do_compare(args):
         rcs.append(False)
     return not False in rcs
 
+def do_fingerprint():
+    '''calculate key fingerprint'''
+    cfile = '/etc/bcfg2.conf'
+    cf = ConfigParser.ConfigParser()
+    cf.read([cfile])
+    keypath = cf.get('communication', 'key')
+    x509 = Bcfg2.tlslite.api.X509()
+    x509.parse(open(keypath).read())
+    print x509.getFingerprint()
+
 def do_pull(client, etype, ename):
     '''Make currently recorded client state correct for entry'''
     cfile = '/etc/bcfg2.conf'
@@ -485,6 +496,8 @@ if __name__ == '__main__':
         do_viz(sys.argv[2:])
     elif sys.argv[1] == 'compare':
         do_compare(sys.argv[2:])
+    elif sys.argv[1] == 'fingerprint':
+        do_fingerprint()
     else:
         print usage
         

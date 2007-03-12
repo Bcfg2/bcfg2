@@ -1,5 +1,6 @@
 debian/tmp/usr/bin/bcfg2	usr/sbin
 debian/tmp/usr/lib/python*/site-packages/Bcfg2/*.py
+debian/tmp/usr/lib/python*/site-packages/Bcfg2/tlslite/*
 debian/tmp/usr/lib/python*/site-packages/Bcfg2/Client/*
 debian/tmp/usr/share/man/man1/*
 debian/tmp/usr/share/man/man5/*

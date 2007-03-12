@@ -2,7 +2,9 @@
 __revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
-import BaseHTTPServer, OpenSSL.SSL, SimpleXMLRPCServer, SocketServer
+import BaseHTTPServer, SimpleXMLRPCServer, SocketServer
+import Bcfg2.tlslite.errors
+import Bcfg2.tlslite.api
 
 import Bcfg2.Client.Proxy as Proxy
 
@@ -24,8 +26,6 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             # get arguments
             data = self.rfile.read(int(self.headers["content-length"]))
             response = self.server._cobalt_marshalled_dispatch(data, self.client_address)
-        except OpenSSL.SSL.SysCallError:
-            log.error("Client %s unexpectedly closed connection" % (self.client_address[0]))
         except: # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             log.error("Unexcepted handler failure in do_POST", exc_info=1)
@@ -41,7 +41,7 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
             # shut down the connection
             self.wfile.flush()
-            self.connection.shutdown()
+            #self.connection.shutdown()
 
     def setup(self):
         '''Setup a working connection'''
@@ -49,47 +49,30 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
         self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
 
-class SSLServer(BaseHTTPServer.HTTPServer):
-    '''This class encapsulates all of the ssl server stuff'''
+class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
+                BaseHTTPServer.HTTPServer):
+    '''This class is an tlslite-using SSLServer'''
     def __init__(self, address, keyfile, handler):
-        SocketServer.BaseServer.__init__(self, address, handler)
-        ctxt = OpenSSL.SSL.Context(OpenSSL.SSL.SSLv23_METHOD)
-        ctxt.use_privatekey_file (keyfile)
-        ctxt.use_certificate_file(keyfile)
-        #ctxt.load_verify_locations('/tmp/keys/CA.cert')
-        ctxt.set_verify(OpenSSL.SSL.VERIFY_PEER, self.verify_cb)
-        self.socket = OpenSSL.SSL.Connection(ctxt,
-                                             socket.socket(self.address_family, self.socket_type))
-        self.server_bind()
-        self.server_activate()
+        self.sc = Bcfg2.tlslite.api.SessionCache()
+        x509 = Bcfg2.tlslite.api.X509()
+        s = open(keyfile).read()
+        x509.parse(s)
+        self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
+        self.chain = Bcfg2.tlslite.api.X509CertChain([x509])
+        BaseHTTPServer.HTTPServer.__init__(self, address, handler)
 
-    def verify_cb(self, conn, cert, errnum, depth, ok):
-        '''handle cerificate verification'''
-        print "here"
-        print 'Got cert: %s' % (cert.get_subject())
-        print cert.get_pubkey()
-        return ok
-
-    def handle_request(self):
-        """Handle one request, possibly blocking."""
+    def handshake(self, tlsConnection):
         try:
-            request, client_address = self.get_request()
-        except socket.error:
-            return
-        if self.verify_request(request, client_address):
-            try:
-                self.process_request(request, client_address)
-            except Exception, err:
-                if isinstance(err, OpenSSL.SSL.Error):
-                    if isinstance(err, OpenSSL.SSL.SysCallError):
-                        log.error("Client %s unexpectedly closed connection" % (client_address[0]))
-                    else:
-                        log.error("%s from %s" % (err[0][0][2], client_address[0]))
-                else:
-                    log.error("Unknown socket I/O failure from %s" % (client_address[0]), exc_info=1)
-                self.close_request(request)
+            tlsConnection.handshakeServer(certChain=self.chain,
+                                          privateKey=self.key,
+                                          sessionCache=self.sc)
+            tlsConnection.ignoreAbruptClose = True
+            return True
+        except Bcfg2.tlslite.errors.TLSError, error:
+            print "Handshake failure:", str(error)
+            return False
                 
-class Component(SSLServer,
+class Component(TLSServer,
                 SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """Cobalt component providing XML-RPC access"""
     __name__ = 'Component'
@@ -133,7 +116,7 @@ class Component(SSLServer,
         self.password = self.cfile.get('communication', 'password')
 
         try:
-            SSLServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
+            TLSServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         except socket.error:
             self.logger.error("Failed to bind to socket")
             raise ComponentInitError

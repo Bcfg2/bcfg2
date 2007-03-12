@@ -35,6 +35,8 @@ class Client:
                      False, False, False, True),
             'drivers':(('-D', '<driver1>,<driver2>', "Specify tool driver set"),
                      False, False, False, False),
+            'fingerprint':(('-F', '<server fingerprint>', "Server Fingerprint"),
+                     False, ('communication', 'fingerprint'), False, False),
             'dryrun':(('-n', False, "do not actually change the system"),
                       False, False, False, True),
             'build': (('-B', False, "run in build mode"),

@@ -1,6 +1,6 @@
 # $Id$
 
-.PHONY : all clean distclean install zlib libtar openssl curl fget expat epkg
+.PHONY : all clean distclean install zlib libtar curl fget expat epkg
 .SUFFIXES : 
 
 BASEDIR = /usr/local
@@ -14,27 +14,18 @@ export PATH LDFLAGS CPPFLAGS
 
 ZLIB = zlib-1.2.3
 LIBTAR = libtar-1.2.11
-OPENSSL = openssl-0.9.8e
 CURL = curl-7.15.4
 FGET = fget-1.3.3
 EXPAT = expat-2.0.0
 EPKG = epkg-2.3.9
 
-all: zlib libtar openssl curl fget expat epkg
+all: zlib libtar curl fget expat epkg
 
 zlib:
 	cd ${ZLIB} && prefix=${PREFIX} CC=gcc ./configure && $(MAKE) && $(MAKE) install
 
 libtar:
 	cd ${LIBTAR} && ./configure --disable-encap --disable-epkg-install --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
-
-openssl:
-	cd ${OPENSSL} && cat config | sed s:CC\=ccc:CC\=gcc:g | sed s:CC\=cc:CC\=gcc:g > config.nasa
-	cd ${OPENSSL} && mv config config.orig
-	cd ${OPENSSL} && cp config.nasa config
-	cd ${OPENSSL} && chmod 755 config
-	(cd ${OPENSSL} && ./config --prefix=${PREFIX} zlib no-asm no-shared && $(MAKE) && $(MAKE) install) || (cd ${OPENSSL} && mv config.orig config) 
-	cd ${OPENSSL} && mv config.orig config
 
 curl:
 	cd ${CURL} && ./configure --disable-ipv6 --disable-shared --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
