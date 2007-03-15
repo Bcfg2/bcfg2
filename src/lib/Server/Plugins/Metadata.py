@@ -47,6 +47,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.profiles = []
         self.toolsets = {}
         self.categories = {}
+        self.bad_clients = {}
         self.clientdata = None
         self.default = None
         try:
@@ -90,6 +91,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         if dest == 'clients.xml':
             self.clients = {}
             self.aliases = {}
+            self.bad_clients = {}
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 if 'address' in client.attrib:
@@ -145,11 +147,17 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             # check that all client groups are real and complete
             real = self.groups.keys()
             for client in self.clients.keys():
-                if self.clients[client] not in real or self.clients[client] not in self.profiles:
+                if self.clients[client] not in self.profiles:
                     self.logger.error("Client %s set as nonexistant or incomplete group %s" \
                                       % (client, self.clients[client]))
                     self.logger.error("Removing client mapping for %s" % (client))
+                    self.bad_clients[client] = self.clients[client]
                     del self.clients[client]
+            for bclient in self.bad_clients.keys():
+                if self.bad_clients[bclient] in self.profiles:
+                    self.logger.info("Restored profile mapping for client %s" % bclient)
+                    self.clients[bclient] = self.bad_clients[bclient]
+                    del self.bad_clients[bclient]
 
     def set_profile(self, client, profile):
         '''Set group parameter for provided client'''
