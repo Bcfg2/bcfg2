@@ -107,7 +107,9 @@ class Tool:
                                 if self.canVerify(entry)]:
             try:
                 func = getattr(self, "Verify%s" % (entry.tag))
-                self.states[entry] = func(entry, self.buildModlist(entry, struct))
+                mods = self.buildModlist(entry, struct)
+                mods += [c.get('name') for c in entry.findall("Ignore")]
+                self.states[entry] = func(entry, mods)
             except:
                 self.logger.error(
                     "Unexpected failure of verification method for entry type %s" \
