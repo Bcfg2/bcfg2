@@ -1,7 +1,7 @@
 #!/usr/bin/python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
+import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import xml.sax.saxutils
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
 
@@ -74,7 +74,7 @@ def err_exit(msg):
     raise SystemExit, 1
 
 #build bcfg2.conf file
-def initialize_repo():
+def initialize_repo(cfile):
     '''Setup a new repo'''
     repo = raw_input( "location of bcfg2 repository [/var/lib/bcfg2]: " )
     if repo == '':
@@ -90,7 +90,7 @@ def initialize_repo():
     if uri == '':
         uri = server
 
-    open("/etc/bcfg2.conf","w").write(config % ( repo, password, uri ))
+    open(cfile,"w").write(config % ( repo, password, uri ))
 
     #generate the ssl key
     print "Now we will generate the ssl key used for secure communitcation"
@@ -152,8 +152,7 @@ def get_repo_path(cfile='/etc/bcfg2.conf'):
     cfp.read(cfile)
     return cfp.get('server', 'repository')
 
-def load_stats(client):
-    repo = get_repo_path()
+def load_stats(repo, client):
     stats = lxml.etree.parse("%s/etc/statistics.xml" % (repo))
     hostent = stats.xpath('//Node[@name="%s"]' % client)
     if not hostent:
@@ -267,9 +266,8 @@ def do_compare(args):
         rcs.append(False)
     return not False in rcs
 
-def do_fingerprint():
+def do_fingerprint(cfile):
     '''calculate key fingerprint'''
-    cfile = '/etc/bcfg2.conf'
     cf = ConfigParser.ConfigParser()
     cf.read([cfile])
     keypath = cf.get('communication', 'key')
@@ -277,10 +275,9 @@ def do_fingerprint():
     x509.parse(open(keypath).read())
     print x509.getFingerprint()
 
-def do_pull(client, etype, ename):
+def do_pull(cfile, repopath, client, etype, ename):
     '''Make currently recorded client state correct for entry'''
-    cfile = '/etc/bcfg2.conf'
-    sdata = load_stats(client)
+    sdata = load_stats(repopath, client)
     if sdata.xpath('.//Statistics[@state="dirty"]'):
         state = 'dirty'
     else:
@@ -338,12 +335,12 @@ def do_pull(client, etype, ename):
         err_exit("Don't support entry type %s yet" % etype)
     # svn commit if running under svn
 
-def do_minestruct(argdata):
+def do_minestruct(repopath, argdata):
     '''Pull client entries into structure'''
     if len(argdata) != 1:
         err_exit("minestruct must be called with a client name")
     client = argdata[0]
-    stats = load_stats(client)
+    stats = load_stats(repopath, client)
     if len(stats.getchildren()) == 2:
         # client is dirty
         current = [ent for ent in stats.getchildren() if ent.get('state') == 'dirty'][0]
@@ -353,10 +350,9 @@ def do_minestruct(argdata):
     log.info("Found %d extra entries" % (len(extra)))
     log.info(["%s: %s" % (entry.tag, entry.get('name')) for entry in extra])
 
-def do_tidy(args):
+def do_tidy(repo, args):
     '''Clean up unused or unusable files from the repository'''
     hostmatcher = re.compile('.*\.H_(\S+)$')
-    repo = get_repo_path()
     score = ([], [])
     # clean up unresolvable hosts in SSHbase
     for name in os.listdir("%s/SSHbase" % (repo)):
@@ -386,15 +382,9 @@ def do_tidy(args):
     # clean up file~
     # clean up files without parsable names in Cfg
 
-def do_viz(args):
+def do_viz(repopath, args):
     '''Build visualization of groups file'''
-    if '-R' in args:
-        repo = args[args.index('-R') + 1]
-    elif '-C' in args:
-        repo = get_repo_path(args[args.index('-C') + 1])
-    else:
-        repo = get_repo_path()
-    groupdata = lxml.etree.parse(repo + '/Metadata/groups.xml')
+    groupdata = lxml.etree.parse(repopath + '/Metadata/groups.xml')
     groupdata.xinclude()
     groups = groupdata.getroot()
     if '-r' in args:
@@ -416,7 +406,7 @@ def do_viz(args):
         raise SystemExit, 1
     dotpipe.tochild.write('\trankdir="LR";\n')
     if '-h' in args:
-        clients = lxml.etree.parse(repo + '/Metadata/clients.xml').getroot()
+        clients = lxml.etree.parse(repopath + '/Metadata/clients.xml').getroot()
         for client in clients.findall('Client'):
             if instances.has_key(client.get('profile')):
                 instances[client.get('profile')].append(client.get('name'))
@@ -478,26 +468,78 @@ def do_viz(args):
         output = open(args[args.index('-o') + 1], 'w').write(data)
     else:
         print data
+
+def do_client(args):
+    '''Do things with clients'''
+    '''bcfg2-admin client add name profile uuid password secure location'''
+    for i in args:
+        print i.split('=', 1)
+
     
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
-    if sys.argv[1] == "init":
-        initialize_repo()
-    elif sys.argv[1] == 'pull':
-        if len(sys.argv) != 5:
+
+    '''Some sensible defaults'''
+    configfile = "/etc/bcfg2.conf"
+    repopath = ""
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hC:R:', ['help', 'configfile=', 'repopath='])
+    except getopt.GetoptError, msg:
+        print msg
+        raise SystemExit, 1
+
+    '''First get the options...'''
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
             print usage
             raise SystemExit, 1
-        do_pull(sys.argv[2], sys.argv[3], sys.argv[4])
-    elif sys.argv[1] == 'minestruct':
-        do_minestruct(sys.argv[2:])
-    elif sys.argv[1] == 'tidy':
-        do_tidy(sys.argv[2:])
-    elif sys.argv[1] == 'viz':
-        do_viz(sys.argv[2:])
-    elif sys.argv[1] == 'compare':
-        do_compare(sys.argv[2:])
-    elif sys.argv[1] == 'fingerprint':
-        do_fingerprint()
+        if opt in ("-C", "--configfile"):
+            configfile = arg
+        if opt in ("-R", "--repopath"):
+            repopath = arg
+
+    '''...then do something with the other arguments'''
+    if len(args) < 1:
+        print usage
+
+    elif args[0] == "init":
+        initialize_repo(configfile)
+
+    elif args[0] == 'pull':
+        if len(args) != 4:
+            print usage
+            raise SystemExit, 1
+        if repopath == "":
+            repopath = get_repo_path(configfile)
+        do_pull(configfile, repopath, args[1], args[2], args[3])
+
+    elif args[0] == 'minestruct':
+        if repopath == "":
+            repopath = get_repo_path(configfile)
+        do_minestruct(repopath, args[1:])
+
+    elif args[0] == 'tidy':
+        if repopath == "":
+            repopath = get_repo_path(configfile)
+        do_tidy(repopath, args[1:])
+
+    elif args[0] == 'viz':
+        if repopath == "":
+            repopath = get_repo_path(configfile)
+        do_viz(repopath, args[1:])
+
+    elif args[0] == 'compare':
+        do_compare(args[1:])
+
+    elif args[0] == 'fingerprint':
+        do_fingerprint(configfile)
+
+    elif args[0] == 'client':
+        if len(args) < 4:
+            print usage
+            raise SystemExit, 1
+        do_client(args[1:])
+
     else:
         print usage
-        
