@@ -73,6 +73,7 @@ class ConfigFileEntry(object):
     info = re.compile('^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
                       '(?P<paranoid>paranoid(\s)*)|interpolate:(\s)*(?P<interpolate>\w+)(\s)*$')
+    iignore = re.compile('^\S*$')
     
     def __init__(self, path, repopath):
         object.__init__(self)
@@ -91,7 +92,8 @@ class ConfigFileEntry(object):
         for line in open(filename).readlines():
             match = self.info.match(line)
             if not match:
-                logger.warning("Failed to match line: %s"%line)
+                if not self.iignore.match(line):
+                    logger.warning("Failed to match line: %s"%line)
                 continue
             else:
                 mgd = match.groupdict()
