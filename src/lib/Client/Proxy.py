@@ -1,11 +1,45 @@
 '''Cobalt proxy provides client access to cobalt components'''
 __revision__ = '$Revision$'
 
-import logging, socket, time, xmlrpclib, ConfigParser
+import logging, socket, time, xmlrpclib, ConfigParser, httplib
 from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
+from Bcfg2.tlslite.integration.HTTPTLSConnection import HTTPTLSConnection
+from Bcfg2.tlslite.TLSConnection import TLSConnection
 import Bcfg2.tlslite.errors
 
 #FIXME need to reimplement _binadaddress support for XMLRPCTransport
+
+class MyHTTPTLSConnection(HTTPTLSConnection):
+    def connect(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if hasattr(sock, 'settimeout'):
+            sock.settimeout(90)
+        sock.connect((self.host, self.port))
+
+        #Use a TLSConnection to emulate a socket
+        self.sock = TLSConnection(sock)
+
+        #When httplib closes this, close the socket
+        self.sock.closeSocket = True
+        self._handshake(self.sock)
+
+class MyXMLRPCTransport(XMLRPCTransport):
+    def make_connection(self, host):
+        # create a HTTPS connection object from a host descriptor
+        host, extra_headers, x509 = self.get_host_info(host)
+        http = MyHTTPTLSConnection(host, None,
+                                   self.username, self.password,
+                                   self.sharedKey,
+                                   self.certChain, self.privateKey,
+                                   self.checker.cryptoID,
+                                   self.checker.protocol,
+                                   self.checker.x509Fingerprint,
+                                   self.checker.x509TrustList,
+                                   self.checker.x509CommonName,
+                                   self.settings)
+        http2 = httplib.HTTP()
+        http2._setup(http)
+        return http2
 
 class CobaltComponentError(Exception):
     pass
