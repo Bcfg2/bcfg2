@@ -111,9 +111,9 @@ class SafeProxy:
             #                 self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())
             #             else:
             if self.fingerprint:
-                transport = XMLRPCTransport(x509Fingerprint=self.fingerprint)
+                transport = MyXMLRPCTransport(x509Fingerprint=self.fingerprint)
             else:
-                transport = XMLRPCTransport()
+                transport = MyXMLRPCTransport()
             self.proxy = xmlrpclib.ServerProxy(address, transport=transport)
 
         except IOError, io_error:
