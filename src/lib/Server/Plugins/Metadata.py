@@ -344,12 +344,15 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 self.logger.error("Client %s attempted to use global password while in secure mode" % (address[0]))
                 return False
             if password != self.password:
-                self.logger.error("Client %s used incorrect password" % (address[0]))
+                self.logger.error("Client %s used incorrect global password" % (address[0]))
                 return False
             return True
-        if self.passwords[client] != password:
-            self.logger.error("Client %s used incorrect password" % (address[0]))
-            return False
+        if client not in self.secure:
+            if password not in [self.password, self.passwords[client]]:
+                self.logger.error("Client %s failed to use either allowed password" % \
+                                  (address[0]))
+                return False
         # populate the session cache
         if user != 'root':
             self.session_cache[address] = (time.time(), user)
+        return True
