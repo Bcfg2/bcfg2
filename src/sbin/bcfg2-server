@@ -128,7 +128,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         '''Fetch probes for a particular client'''
         resp = Element('probes')
         try:
-            name = self.Core.metadata.resolve_client(address[0])
+            name = self.Core.metadata.resolve_client(address)
             meta = self.Core.metadata.get_metadata(name)
             
             for plugin in self.Core.plugins.values():
@@ -145,7 +145,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def Bcfg2RecvProbeData(self, address, probedata):
         '''Receive probe data from clients'''
         try:
-            name = self.Core.metadata.resolve_client(address[0])
+            name = self.Core.metadata.resolve_client(address)
             meta = self.Core.metadata.get_metadata(name)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
@@ -172,7 +172,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def Bcfg2AssertProfile(self, address, profile):
         '''Set profile for a client'''
         try:
-            client = self.Core.metadata.resolve_client(address[0])
+            client = self.Core.metadata.resolve_client(address)
             self.Core.metadata.set_profile(client, profile)
         except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError, Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
             warning = 'metadata consistency error'
@@ -183,7 +183,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
     def Bcfg2GetConfig(self, address, _=False, profile=False):
         '''Build config for a client'''
         try:
-            client = self.Core.metadata.resolve_client(address[0])
+            client = self.Core.metadata.resolve_client(address)
             return tostring(self.Core.BuildConfiguration(client))
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             self.logger.warning("Metadata consistency failure for %s" % (address))
@@ -195,7 +195,7 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         state = sdata.find(".//Statistics")
         # Versioned stats to prevent tied client/server upgrade
         if state.get('version') >= '2.0':
-            client = self.Core.metadata.resolve_client(address[0])
+            client = self.Core.metadata.resolve_client(address)
             meta = self.Core.metadata.get_metadata(client)
             
             # Update statistics
@@ -204,6 +204,9 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
         self.logger.info("Client %s reported state %s" % 
                          (client, state.attrib['state']))
         return "<ok/>"
+
+    def _authenticate_connection(self, _, user, password, address):
+        return self.Core.metadata.AuthenticateConnection(user, password, address)
 
 if __name__ == '__main__':
 

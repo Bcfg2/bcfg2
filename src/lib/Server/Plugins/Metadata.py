@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-import lxml.etree, re, socket
+import lxml.etree, re, socket, time, sys, ConfigParser
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
@@ -14,13 +14,15 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, toolset, categories, probed):
+    def __init__(self, client, groups, bundles, toolset, categories, probed, uuid, password):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
         self.toolset = toolset
         self.categories = categories
         self.probes = probed
+        self.uuid = uuid
+        self.password = password
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
@@ -48,6 +50,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.toolsets = {}
         self.categories = {}
         self.bad_clients = {}
+        self.uuid = {}
+        self.secure = []
+        self.floating = []
+        self.passwords = {}
+        self.session_cache = {}
         self.clientdata = None
         self.default = None
         try:
@@ -57,6 +64,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probes = False
         self.probedata = {}
         self.extra = {'groups.xml':[], 'clients.xml':[]}
+        CP = ConfigParser.ConfigParser()
+        if '-C' in sys.argv:
+            CP.read([sys.argv[sys.argv.index('-C') + 1]])
+        else:
+            CP.read(['/etc/bcfg2.conf'])
+        self.password = CP.get('communication', 'password')
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
@@ -92,10 +105,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.clients = {}
             self.aliases = {}
             self.bad_clients = {}
+            self.secure = []
+            self.floating = []
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 if 'address' in client.attrib:
                     self.addresses[client.get('address')] = client.get('name')
+                if 'uuid' in client.attrib:
+                    self.uuid[client.get('uuid')] = client.get('name')
+                if 'secure' in client.attrib:
+                    self.secure.append(client.get('name'))
+                if client.get('location', 'fixed') == 'floating':
+                    self.floating.append(client.get('name'))
+                if 'password' in client.attrib:
+                    self.passwords[client.get('name')] = client.get('password')
                 for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
                     self.addresses[alias.get('address')] = client.get('name')
                     
@@ -202,8 +225,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         '''Build the configuration header for a client configuration'''
         return lxml.etree.Element("Configuration", version='2.0', toolset=self.find_toolset(client))
 
-    def resolve_client(self, address):
+    def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
+        if self.session_cache.has_key(addresspair):
+            (stamp, uuid) = self.session_cache[addresspair]
+            if time.time() - stamp < 60:
+                return self.uuid[uuid]
+        address = addresspair[0]
         if self.addresses.has_key(address):
             return self.addresses[address]
         try:
@@ -237,6 +265,15 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         newbundles = bundles[:]
         newcategories = {}
         newcategories.update(categories)
+        if self.passwords.has_key(client):
+            password = self.passwords[client]
+        else:
+            password = None
+        uuids = [item for item, value in self.uuid.iteritems() if value == client]
+        if uuids:
+            uuid = uuids[0]
+        else:
+            uuid = None
         for group in  self.cgroups.get(client, []):
             if self.groups.has_key(group):
                 nbundles, ngroups, ncategories = self.groups[group]
@@ -245,7 +282,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             [newbundles.append(b) for b in nbundles if b not in newbundles]
             [newgroups.append(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        return ClientMetadata(client, newgroups, newbundles, toolset, newcategories, probed)
+        return ClientMetadata(client, newgroups, newbundles, toolset, newcategories,
+                              probed, uuid, password)
         
     def GetProbes(self, _):
         '''Return a set of probes for execution on client'''
@@ -282,3 +320,36 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probedata[client.hostname].update({ data.get('name'):dtext })
         except KeyError:
             self.probedata[client.hostname] = { data.get('name'):dtext }
+
+    def AuthenticateConnection(self, user, password, address):
+        '''This function checks user and password'''
+        if user == 'root':
+            # we aren't using per-client keys
+            client = self.resolve_client(address)
+        else:
+            # user maps to client
+            if user not in self.uuid:
+                self.logger.error("Got request for unknown UUID %s from %s" % (user, address[0]))
+                return False
+            client = self.uuid[user]
+
+        # we have the client
+        if client not in self.floating:
+            if client != self.resolve_client(address):
+                self.logger.error("Got request for non-floating UUID %s from %s" \
+                                  % (user, address[0]))
+                return False
+        if client not in self.passwords:
+            if client in self.secure:
+                self.logger.error("Client %s attempted to use global password while in secure mode" % (address[0]))
+                return False
+            if password != self.password:
+                self.logger.error("Client %s used incorrect password" % (address[0]))
+                return False
+        if self.passwords[client] != password:
+            self.logger.error("Client %s used incorrect password for UUID %s" % \
+                              (address[0], user))
+            return False
+        # populate the session cache
+        if user != 'root':
+            self.session_cache[address] = (time.time(), user)
