@@ -346,9 +346,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             if password != self.password:
                 self.logger.error("Client %s used incorrect password" % (address[0]))
                 return False
+            return True
         if self.passwords[client] != password:
-            self.logger.error("Client %s used incorrect password for UUID %s" % \
-                              (address[0], user))
+            self.logger.error("Client %s used incorrect password" % (address[0]))
             return False
         # populate the session cache
         if user != 'root':
