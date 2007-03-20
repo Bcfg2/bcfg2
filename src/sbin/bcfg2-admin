@@ -18,6 +18,7 @@ init        - initialize the bcfg2 repository( this is interactive; only run onc
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
 viz         [-h] [-b] [-k] [-o output.png] [-r]
+client      add name=  profile=  uuid=  password=  secure=  location=
 '''
 
 config = '''
@@ -469,12 +470,30 @@ def do_viz(repopath, args):
     else:
         print data
 
-def do_client(args):
+def do_client(repopath, args):
     '''Do things with clients'''
     '''bcfg2-admin client add name profile uuid password secure location'''
-    for i in args:
-        print i.split('=', 1)
+    tree = lxml.etree.parse(repopath + '/Metadata/clients.xml')
+    root = tree.getroot()
 
+    if args[0] == 'add':
+        '''Adding a node'''
+        print "Adding client..."
+        element = lxml.etree.Element("Client")
+        for i in args[1:]:
+            attr, val = i.split('=', 1)
+            if not(attr in ['name', 'profile', 'uuid', 'password', 'secure', 'location']):
+                print "Attribute %s unknown" % attr
+                raise SystemExit, 1
+            element.attrib[attr] = val
+        root.append(element)
+
+    elif args[0] in ['delete', 'remove']:
+        '''Removing a node'''
+        print "Removing"
+
+    tree.write(repopath + '/Metadata/clients.xml')
+    print "Done"
     
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
@@ -539,7 +558,8 @@ if __name__ == '__main__':
         if len(args) < 4:
             print usage
             raise SystemExit, 1
-        do_client(args[1:])
-
+        if repopath == "":
+            repopath = get_repo_path(configfile)
+        do_client(repopath, args[1:])
     else:
         print usage
