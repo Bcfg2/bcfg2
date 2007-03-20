@@ -70,8 +70,8 @@ f. Solaris
 g. Gentoo
 '''
 
-def err_exit(msg):
-    print msg
+def err_exit(emsg):
+    print emsg
     raise SystemExit, 1
 
 #build bcfg2.conf file
@@ -213,10 +213,10 @@ def compare(new, old):
         print " %s only in new configuration (in bundle %s)" % (entry, name)
     return False
 
-def do_compare(args):
+def do_compare(cargs):
     '''run file comparison'''
-    if '-r' in args:
-        args.remove('-r')
+    if '-r' in cargs:
+        cargs.remove('-r')
         (oldd, newd) = args
         (old, new) = [os.listdir(spot) for spot in args]
         for item in old:
@@ -231,7 +231,7 @@ def do_compare(args):
             print "new has extra entries", new
         return
     try:
-        (old, new) = args
+        (old, new) = cargs
     except IndexError:
         print "Usage: bcfg2-admin compare <old> <new>"
         raise SystemExit
@@ -536,9 +536,12 @@ if __name__ == '__main__':
         if opt in ("-C", "--configfile"):
             configfile = arg
         if opt in ("-R", "--repopath"):
-            repopath = arg
+            Repopath = arg
 
     # ...then do something with the other arguments
+    if Repopath == '':
+        Repopath = get_repo_path(configfile)
+            
     if len(args) < 1:
         print usage
 
@@ -549,24 +552,16 @@ if __name__ == '__main__':
         if len(args) != 4:
             print usage
             raise SystemExit, 1
-        if repopath == "":
-            repopath = get_repo_path(configfile)
-        do_pull(configfile, repopath, args[1], args[2], args[3])
+        do_pull(configfile, Repopath, args[1], args[2], args[3])
 
     elif args[0] == 'minestruct':
-        if repopath == "":
-            repopath = get_repo_path(configfile)
-        do_minestruct(repopath, args[1:])
+        do_minestruct(Repopath, args[1:])
 
     elif args[0] == 'tidy':
-        if repopath == "":
-            repopath = get_repo_path(configfile)
-        do_tidy(repopath, args[1:])
+        do_tidy(Repopath, args[1:])
 
     elif args[0] == 'viz':
-        if repopath == "":
-            repopath = get_repo_path(configfile)
-        do_viz(repopath, args[1:])
+        do_viz(Repopath, args[1:])
 
     elif args[0] == 'compare':
         do_compare(args[1:])
@@ -578,8 +573,6 @@ if __name__ == '__main__':
         if len(args) < 4:
             print usage
             raise SystemExit, 1
-        if repopath == "":
-            repopath = get_repo_path(configfile)
-        do_client(repopath, args[1:])
+        do_client(Repopath, args[1:])
     else:
         print usage
