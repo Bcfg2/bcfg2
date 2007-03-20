@@ -341,7 +341,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 return False
         if client not in self.passwords:
             if client in self.secure:
-                self.logger.error("Client %s attempted to use global password while in secure mode" % (address[0]))
+                self.logger.error("Client %s in secure mode but has no password" % (address[0]))
                 return False
             if password != self.password:
                 self.logger.error("Client %s used incorrect global password" % (address[0]))
