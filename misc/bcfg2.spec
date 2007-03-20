@@ -90,7 +90,7 @@ Bcfg2 client
 %defattr(-,root,root,-)
 %{_sbindir}/bcfg2
 %{python_sitelib}/Bcfg2/*.py*
-${python_sitelib}/Bcfg2/tlslite/*
+%{python_sitelib}/Bcfg2/tlslite/*
 %{python_sitelib}/Bcfg2/Client/*
 %{_mandir}/man1/*
 %{_mandir}/man5/*
