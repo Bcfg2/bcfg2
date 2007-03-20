@@ -155,7 +155,6 @@ class Component(TLSServer,
         params = rawparams[2:]
         # check authentication
         if not self._authenticate_connection(method, user, password, address):
-            self.logger.error("Authentication failure from %s" % address[0])
             return xmlrpclib.dumps(xmlrpclib.Fault(3, "Authentication Failure"))
         # generate response
         try:
