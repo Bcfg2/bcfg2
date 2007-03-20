@@ -33,15 +33,18 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.end_headers()
         else:
             # got a valid XML RPC response
-            self.send_response(200)
-            self.send_header("Content-type", "text/xml")
-            self.send_header("Content-length", str(len(response)))
-            self.end_headers()
-            self.wfile.write(response)
-
-            # shut down the connection
-            self.wfile.flush()
-            #self.connection.shutdown()
+            try:
+                self.send_response(200)
+                self.send_header("Content-type", "text/xml")
+                self.send_header("Content-length", str(len(response)))
+                self.end_headers()
+                self.wfile.write(response)
+                
+                # shut down the connection
+                self.wfile.flush()
+                #self.connection.shutdown()
+            except socket.error:
+                pass
 
     def setup(self):
         '''Setup a working connection'''
