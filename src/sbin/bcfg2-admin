@@ -17,7 +17,7 @@ fingerprint - print the server certificate fingerprint
 init        - initialize the bcfg2 repository( this is interactive; only run once )
 mineentry   <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
-viz         [-h] [-b] [-k] [-o output.png] [-r]
+viz         [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]
 client      add name=  profile=  uuid=  password=  secure=  location=
 '''
 
@@ -383,12 +383,33 @@ def do_tidy(repo, args):
     # clean up file~
     # clean up files without parsable names in Cfg
 
-def do_viz(repopath, args):
+def do_viz(repopath, myargs):
     '''Build visualization of groups file'''
+    # First get options to the 'viz' subcommand
+    try:
+        opts, args = getopt.getopt(myargs, 'rhbko:', ['raw', 'includehosts', 'includebundles', 'includekey', 'outfile='])
+    except getopt.GetoptError, msg:
+        print msg
+        raise SystemExit, 1
+
+    options = []
+    for opt, arg in opts:
+        if   opt in ("-r", "--raw"):
+            options.append("raw")
+        elif opt in ("-h", "--includehosts"):
+            options.append("hosts")
+        elif opt in ("-b", "--includebundles"):
+            options.append("bundles")
+        elif opt in ("-k", "--includekey"):
+            options.append("key")
+        elif opt in ("-o", "--outfile"):
+            options.append("outfile")
+            outputfile = arg
+
     groupdata = lxml.etree.parse(repopath + '/Metadata/groups.xml')
     groupdata.xinclude()
     groups = groupdata.getroot()
-    if '-r' in args:
+    if 'raw' in options:
         dotpipe = popen2.Popen4("dd bs=4M 2>/dev/null")
     else:
         dotpipe = popen2.Popen4("dot -Tpng")
@@ -406,7 +427,7 @@ def do_viz(repopath, args):
         print "write to dot process failed. Is graphviz installed?"
         raise SystemExit, 1
     dotpipe.tochild.write('\trankdir="LR";\n')
-    if '-h' in args:
+    if 'hosts' in options:
         clients = lxml.etree.parse(repopath + '/Metadata/clients.xml').getroot()
         for client in clients.findall('Client'):
             if instances.has_key(client.get('profile')):
@@ -418,7 +439,7 @@ def do_viz(repopath, args):
             dotpipe.tochild.write('''\t"%s-instances" [ label="%s", shape="record" ];\n''' % (profile, '|'.join(clist)))
             dotpipe.tochild.write('''\t"%s-instances" -> "group-%s";\n''' % (profile, profile))
 
-    if '-b' in args:
+    if 'bundles' in options:
         bundles = []
         [bundles.append(bund.get('name')) for bund in groups.findall('.//Bundle')
          if bund.get('name') not in bundles]
@@ -435,7 +456,7 @@ def do_viz(repopath, args):
         gseen.append(group.get('name'))
         dotpipe.tochild.write('\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' %
                               (group.get('name'), group.get('name'), style, color))
-        if '-b' in args:
+        if 'bundles' in options:
             for bundle in group.findall('Bundle'):
                 dotpipe.tochild.write('\t"group-%s" -> "bundle-%s";\n' %
                                       (group.get('name'), bundle.get('name')))
@@ -448,7 +469,7 @@ def do_viz(repopath, args):
                 gseen.append(parent.get("name"))
             dotpipe.tochild.write('\t"group-%s" -> "group-%s" ;\n' %
                                   (group.get('name'), parent.get('name')))
-    if '-k' in args:
+    if 'key' in options:
         dotpipe.tochild.write("\tsubgraph cluster_key {\n")
         dotpipe.tochild.write('''\tstyle="filled";\n''')
         dotpipe.tochild.write('''\tcolor="lightblue";\n''')
@@ -465,19 +486,18 @@ def do_viz(repopath, args):
     dotpipe.tochild.write("}\n")
     dotpipe.tochild.close()
     data = dotpipe.fromchild.read()
-    if '-o' in args:
-        output = open(args[args.index('-o') + 1], 'w').write(data)
+    if 'outfile' in options:
+        output = open(outputfile, 'w').write(data)
     else:
         print data
 
 def do_client(repopath, args):
     '''Do things with clients'''
-    '''bcfg2-admin client add name profile uuid password secure location'''
     tree = lxml.etree.parse(repopath + '/Metadata/clients.xml')
     root = tree.getroot()
 
     if args[0] == 'add':
-        '''Adding a node'''
+        # Adding a node
         print "Adding client..."
         element = lxml.etree.Element("Client")
         for i in args[1:]:
@@ -489,7 +509,7 @@ def do_client(repopath, args):
         root.append(element)
 
     elif args[0] in ['delete', 'remove']:
-        '''Removing a node'''
+        # Removing a node
         print "Removing"
 
     tree.write(repopath + '/Metadata/clients.xml')
@@ -498,7 +518,7 @@ def do_client(repopath, args):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
 
-    '''Some sensible defaults'''
+    # Some sensible defaults
     configfile = "/etc/bcfg2.conf"
     repopath = ""
 
@@ -508,7 +528,7 @@ if __name__ == '__main__':
         print msg
         raise SystemExit, 1
 
-    '''First get the options...'''
+    # First get the options...
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print usage
@@ -518,7 +538,7 @@ if __name__ == '__main__':
         if opt in ("-R", "--repopath"):
             repopath = arg
 
-    '''...then do something with the other arguments'''
+    # ...then do something with the other arguments
     if len(args) < 1:
         print usage
 
