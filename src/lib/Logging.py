@@ -3,6 +3,8 @@ __revision__ = '$Revision$'
 
 import copy, fcntl, logging, logging.handlers, math, socket, struct, sys, termios, types
 
+logging.raiseExceptions=0
+
 def print_attributes(attrib):
     ''' Add the attributes for an element'''
     return ' '.join(['%s="%s"' % data for data in attrib.iteritems()])
