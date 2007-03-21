@@ -210,8 +210,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
         try:
             content = open(entry.get('name')).read()
-        except IOError:
-            # file does not exist
+        except IOError, error:
+            self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
             return False
         contentStatus = content == tempdata
         if not contentStatus:
