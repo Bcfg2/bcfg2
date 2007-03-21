@@ -236,8 +236,18 @@ def do_compare(cargs):
         print "Usage: bcfg2-admin compare <old> <new>"
         raise SystemExit
 
-    new = lxml.etree.parse(new).getroot()
-    old = lxml.etree.parse(old).getroot()
+    try:
+        new = lxml.etree.parse(new).getroot()
+    except IOError:
+        print "Failed to read %s" % (new)
+        raise SystemExit, 1
+
+    try:
+        old = lxml.etree.parse(old).getroot()
+    except IOError:
+        print "Failed to read %s" % (old)
+        raise SystemExit, 1
+    
     for src in [new, old]:
         for bundle in src.findall('./Bundle'):
             if bundle.get('name')[-4:] == '.xml':
