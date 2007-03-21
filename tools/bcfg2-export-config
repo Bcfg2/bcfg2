@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+# Contributed by gogo
+
+'''TODO'''
+__revision__ = '$Revision: 221 $'
+
+import logging, lxml.etree, Bcfg2.Logging, Bcfg2.Server.Core, Bcfg2.Server.Metadata, Bcfg2.Server.Plugin
+import sys,os,time,errno
+from optparse import OptionParser
+
+def buildConfiguration(core, client):
+  '''Build client configuration.'''
+
+  return core.BuildConfiguration(client)
+
+def write_siggi_entry(user, group, permission, path):
+  '''Write an entry to the configfiles.siggi file which is needed by siggi.'''
+  f = open(outputdir + '/configfiles.siggi', 'a')
+  f.write("%s,%s,%s,%s\n" % (user, group, permission, path))
+  f.close()
+  logger.info("Wrote siggi entry." )
+
+class ConfigFileNotBuild(Exception):
+  def __init__(self, value):
+    self.value = value
+  def __str__(self):
+    return repr(self.value)
+
+
+def handleConfigFileEntry(cfg):
+  '''Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+  in the appropriate directory under the output directory.'''
+  name       = cfg.get('name')
+  permission = cfg.get('perms').rjust(4,'0')
+  user       = cfg.get('owner')
+  group      = cfg.get('group')
+
+  logger.info("\nHandling ConfigFile entry %s >>>" % name)
+
+  # directory creation
+  logger.info("Creating directory %s" % ( os.path.dirname(outputdir + name)) )
+  try:
+    os.makedirs(os.path.dirname(outputdir + name))
+  except OSError,err:
+    if err.errno != errno.EEXIST:
+      raise
+  except:
+    logger.error("Fatal error during directory creation!")
+    raise
+
+  # write config file
+  f = open(outputdir + name, "w" )
+  try:
+    f.write(cfg.text)
+  except: # plugin throw an exception and therefore there is no content => None
+    raise ConfigFileNotBuild(name)
+  f.close()
+
+  # write siggi entry
+  try:
+    write_siggi_entry(user, group, permission, name)
+  except:
+    logger.error("Writing entry to configfiles.siggi failed!")
+    raise
+
+  logger.info("<<<")
+
+if __name__ == '__main__':
+  Bcfg2.Logging.setup_logging('export-config-AMS', to_syslog=False)
+  logger = logging.getLogger('export-config-AMS')
+
+  # parse command line options, arguments
+  parser = OptionParser(usage = "%prog [options] client outputdir", version = __revision__)
+  parser.add_option("-c", "--config-file", action="store", dest="configfile", 
+      help="Use given bcfg2.conf file, default: /etc/bcfg2.conf")
+
+  parser.add_option("-f", "--fam-steps", action="store", dest="famsteps",
+      type = "int", help="How many times to handle fam events, default: 10")
+
+  parser.set_defaults(famsteps = 10, configfile="/etc/bcfg2.conf")
+
+  (options, args) = parser.parse_args()
+
+  # ensure client hostname is given
+  if len(args) != 2:
+    parser.error("incorrect number of arguments.")
+
+  client = args[0]
+  outputdir = args[1]
+
+  # stop if output directory exists
+  if os.path.exists(outputdir):
+    logger.error("Output directory already exists, won't override!")
+    raise SystemExit, 1
+
+  logger.info("Generating configuration for %s" % client)
+
+  # load Bcfg2 Core
+  try:
+    logger.debug("Trying to load core...")
+    bcore = Bcfg2.Server.Core.Core({}, options.configfile)
+  except Bcfg2.Server.Core.CoreInitError, msg:
+    logger.error("Core load failed because %s" % msg)
+    raise SystemExit, 1
+  else:
+    logger.debug("Core loaded.")
+
+  # FAM service handling
+  for i in range(options.famsteps):
+    logger.info("FAM service handling: %s to go..." % str(options.famsteps - i) )
+    bcore.fam.Service()
+    time.sleep(0.5)
+
+  # get configuration for client
+  try:
+    client_config = buildConfiguration( bcore, client)
+  except:
+    logger.error("Building client configuration failed. Exiting...")
+    raise SystemExit, 1
+
+  # client could be without a group, not listed in client.xml ...
+  if client_config.tag == 'error':
+    logger.error("Building client configuration failed. Exiting...")
+    raise SystemExit, 1
+
+  # handle <ConfigFile> entries
+  for configfile in [cfile for cfile in client_config.findall(".//ConfigFile")]:
+    try:
+      handleConfigFileEntry(configfile)
+    except ConfigFileNotBuild, e:
+      logger.error("Error: Plugin failed to generate file content for ConfigFile %s !" % e)
+      raise SystemExit, 1
+    except:
+      raise SystemExit, 1
