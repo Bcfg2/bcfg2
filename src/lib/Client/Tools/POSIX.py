@@ -288,6 +288,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 os.chown(newfile.name, pwd.getpwnam(entry.get('owner'))[2],
                          grp.getgrnam(entry.get('group'))[2])
             except KeyError:
+                self.logger.error("Failed to chown %s to %s:%s" % \
+                                  (entry.get('name'), entry.get('owner'),
+                                   entry.get('group')))
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
             os.rename(newfile.name, entry.get('name'))
