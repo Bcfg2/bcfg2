@@ -530,7 +530,7 @@ if __name__ == '__main__':
 
     # Some sensible defaults
     configfile = "/etc/bcfg2.conf"
-    repopath = ""
+    Repopath = ""
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hC:R:', ['help', 'configfile=', 'repopath='])
