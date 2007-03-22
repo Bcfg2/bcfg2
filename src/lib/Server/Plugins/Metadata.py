@@ -308,6 +308,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         '''Receive probe results pertaining to client'''
         if not self.cgroups.has_key(client.hostname):
             self.cgroups[client.hostname] = []
+        if data.text == None:
+            self.logger.error("Got null response to probe %s from %s" % \
+                              (data.get('name'), client.hostname))
+            return
         dlines = data.text.split('\n')
         for line in dlines[:]:
             if line.split(':')[0] == 'group':
