@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, re
+import logging, lxml.etree, re, copy
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -356,7 +356,10 @@ class PrioDir(Plugin, XMLDirectoryBacked):
             index = prio.index(max(prio))
 
         data = matching[index].cache[1][entry.tag][name]
-        [entry.attrib.__setitem__(key, data[key]) for key in data.keys()]
         if data.has_key('__text__'):
-            del entry.attrib['__text__']
             entry.text = data['__text__']
+            del data['__text__']
+        if data.has_key('__children__'):
+            [entry.append(copy.deepcopy(item)) for item in data['__children__']]
+            del data['__children__']
+        [entry.attrib.__setitem__(key, data[key]) for key in data.keys()]

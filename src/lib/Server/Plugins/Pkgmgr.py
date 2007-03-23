@@ -30,9 +30,13 @@ class PNode(Bcfg2.Server.Plugin.INode):
         for pkg in data.findall('./Package'):
             if pkg.attrib.has_key('name') and pkg.get('name') not in pdict['Package']:
                 pdict['Package'].append(pkg.get('name'))
+            self.contents['Package'][pkg.get('name')] = {}
+            if pkg.getchildren():
+                self.contents['Package'][pkg.get('name')]['__children__'] \
+                                                                          = pkg.getchildren()
             if pkg.attrib.has_key('simplefile'):
                 pkg.set('url', "%s/%s" % (pkg.get('uri'), pkg.get('simplefile')))
-                self.contents['Package'][pkg.get('name')] = pkg.attrib
+                self.contents['Package'][pkg.get('name')].update(pkg.attrib)
             else:
                 if pkg.attrib.has_key('file'):
                     if pkg.attrib.has_key('multiarch'):
@@ -49,7 +53,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         logger.error("Failed to match pkg %s" % pkg.get('file'))
                         continue
                     pkgname = mdata.group('name')
-                    self.contents['Package'][pkgname] = mdata.groupdict()
+                    self.contents['Package'][pkgname].update(mdata.groupdict())
                     if pkg.attrib.get('file'):
                         self.contents['Package'][pkgname]['url'] = pkg.get('url')
                         self.contents['Package'][pkgname]['type'] = pkg.get('type')
@@ -60,7 +64,8 @@ class PNode(Bcfg2.Server.Plugin.INode):
                     if pkgname not in pdict['Package']:
                         pdict['Package'].append(pkgname)
                 else:
-                    self.contents['Package'][pkg.get('name')] = pkg.attrib
+                    self.contents['Package'][pkg.get('name')].update(pkg.attrib)
+                        
 
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
     '''PkgSrc files contain a PNode hierarchy that returns matching package entries'''
