@@ -358,8 +358,7 @@ class PrioDir(Plugin, XMLDirectoryBacked):
         data = matching[index].cache[1][entry.tag][name]
         if data.has_key('__text__'):
             entry.text = data['__text__']
-            del data['__text__']
         if data.has_key('__children__'):
             [entry.append(copy.deepcopy(item)) for item in data['__children__']]
-            del data['__children__']
-        [entry.attrib.__setitem__(key, data[key]) for key in data.keys()]
+        [entry.attrib.__setitem__(key, data[key]) for key in data.keys() \
+         if not key.startswith('__')]
