@@ -182,7 +182,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                     self.clients[bclient] = self.bad_clients[bclient]
                     del self.bad_clients[bclient]
 
-    def set_profile(self, client, profile):
+    def set_profile(self, client, profile, addresspair):
         '''Set group parameter for provided client'''
         self.logger.info("Asserting client %s profile to %s" % (client, profile))
         if False in self.states.values():
@@ -195,7 +195,16 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             cli = self.clientdata.xpath('/Clients/Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
         else:
-            lxml.etree.SubElement(self.clientdata.getroot(), 'Client', name=client, profile=profile)
+            if self.session_cache.has_key(addresspair):
+                # we are working with a uuid'd client
+                lxml.etree.SubElement(self.clientdata.getroot(),
+                                      'Client', name=client,
+                                      uuid=client, profile=profile,
+                                      address=addresspair[0])
+            else:
+                lxml.etree.SubElement(self.clientdata.getroot(),
+                                      'Client', name=client,
+                                      profile=profile)
         self.clients[client] = profile
         self.write_back_clients()
 
@@ -227,6 +236,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
 
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
+        print self.session_cache
         if self.session_cache.has_key(addresspair):
             (stamp, uuid) = self.session_cache[addresspair]
             if time.time() - stamp < 60:
@@ -333,12 +343,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         else:
             # user maps to client
             if user not in self.uuid:
-                self.logger.error("Got request for unknown UUID %s from %s" % (user, address[0]))
-                return False
-            client = self.uuid[user]
+                client = user
+                self.uuid[user] = user
+            else:
+                client = self.uuid[user]
 
         # we have the client
-        if client not in self.floating:
+        if client not in self.floating and client != user:
             if client != self.resolve_client(address):
                 self.logger.error("Got request for non-floating UUID %s from %s" \
                                   % (user, address[0]))
@@ -350,9 +361,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             if password != self.password:
                 self.logger.error("Client %s used incorrect global password" % (address[0]))
                 return False
-            return True
         if client not in self.secure:
-            if password not in [self.password, self.passwords[client]]:
+            if self.passwords.has_key(client):
+                plist = [self.password, self.passwords[client]]
+            else:
+                plist = [self.password]
+            if password not in plist:
                 self.logger.error("Client %s failed to use either allowed password" % \
                                   (address[0]))
                 return False
