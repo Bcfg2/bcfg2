@@ -15,7 +15,7 @@ usage = '''
 bcfg2-admin [options]
 fingerprint - print the server certificate fingerprint
 init        - initialize the bcfg2 repository( this is interactive; only run once )
-mineentry   <client> <entry type> <entry name> - mine statistics for entry information
+pull <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
 viz         [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]
 client      add name=  profile=  uuid=  password=  secure=  location=
@@ -562,7 +562,7 @@ if __name__ == '__main__':
         if len(args) != 4:
             print usage
             raise SystemExit, 1
-        do_pull(configfile, Repopath, args[1], args[2], args[3])
+        do_pull(args[0], Repopath, args[1], args[2], args[3])
 
     elif args[0] == 'minestruct':
         do_minestruct(Repopath, args[1:])
