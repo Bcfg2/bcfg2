@@ -30,7 +30,8 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         except IndexError:
             onlevels = []
 
-        pstatus = self.cmd.run('/sbin/service %s status')[0]
+        pstatus = self.cmd.run('/sbin/service %s status' % \
+                               entry.get('name'))[0]
         # chkconfig/init.d service
         if entry.get('status') == 'on':
             status = (len(onlevels) > 0 ) and pstatus
