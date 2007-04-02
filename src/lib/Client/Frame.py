@@ -49,7 +49,7 @@ class Frame:
         if self.setup['drivers']:
             tools = self.setup['drivers'].split(',')
         else:
-            tools = Bcfg2.Client.Tools.__all__[:]
+            tools = Bcfg2.Client.Tools.drivers[:]
         tclass = {}
         for tool in tools:
             tool_class = "Bcfg2.Client.Tools.%s" % tool

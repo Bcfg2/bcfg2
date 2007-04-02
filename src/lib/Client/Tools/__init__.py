@@ -4,6 +4,8 @@ __revision__ = '$Revision$'
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "launchd", 
            "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV", "Yum"]
 
+drivers = __all__[:]
+
 import os, popen2, stat, sys, Bcfg2.Client.XML, time
 
 class toolInstantiationError(Exception):
