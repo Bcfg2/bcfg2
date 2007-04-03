@@ -1,13 +1,20 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-import binascii, logging, os, re, stat, tempfile, Bcfg2.Server.Plugin, lxml.etree
+import binascii, difflib, logging, os, re, stat, tempfile, \
+       xml.sax.saxutils, Bcfg2.Server.Plugin, lxml.etree
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 specific = re.compile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                       '(G(?P<prio>\d+)_(?P<group>\S+)))$')
 probeData = {}
+
+def update_file(path, diff):
+    '''Update file at path using diff'''
+    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
+    print "writing file, %s" % path
+    open(path, 'w').write(newdata)
 
 class SpecificityError(Exception):
     '''Thrown in case of filename parse failure'''
@@ -352,3 +359,34 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             logger.error("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
         self.interpolate = len([entry for entry in self.entries.values() if entry.interpolate ]) > 0
 
+    def AcceptEntry(self, meta, _, entry_name, diff):
+        '''per-plugin bcfg2-admin pull support'''
+        hsq = "Found host-specific file %s; Should it be updated (n/Y): "
+        repo_vers = lxml.etree.Element('ConfigFile', name=entry_name)
+        self.Entries['ConfigFile'][entry_name](repo_vers, meta)
+        repo_curr = repo_vers.text
+        # find the file fragment
+        basefile = [frag for frag in \
+                    self.entries[entry_name].fragments \
+                    if frag.applies(meta)][-1]
+        gsq = "Should this change apply to this host of all hosts effected by file %s? (N/y): " % (basefile.name)
+        if ".H_%s" % (meta.hostname) in basefile.name:
+            answer = raw_input(hsq)
+        else:
+            answer = raw_input(gsq)
+
+        if answer in 'Yy':
+            update_file(basefile.name, diff)
+            return
+
+        if ".H_%s" % (meta.hostname) in basefile.name:
+            raise SystemExit, 1
+        # figure out host-specific filename
+        if '.G_' in basefile.name:
+            idx = basefile.name.find(".G_")
+            newname = basefile.name[:idx] + ".H_%s" % (meta.hostname)
+        else:
+            newname = basefile.name + ".H_%s" % (meta.hostname)
+        print "This file will be installed as file %s" % newname
+        if raw_input("Should it be installed? (N/y): ") in 'Yy':
+            update_file(newname, diff)

@@ -2,7 +2,6 @@
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
-import xml.sax.saxutils
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
 
 log = logging.getLogger('bcfg-admin')
@@ -298,10 +297,9 @@ def do_pull(cfile, repopath, client, etype, ename):
                         (state, etype, ename))
     if not entry:
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
-        
-    # fail for unsupported etypes
-    if etype not in ['ConfigFile', 'Package']:
-        err_exit("Unsupported entry type %s" % (etype))
+
+    diff = entry[0].get('current_diff')
+
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
     except Bcfg2.Server.Core.CoreInitError, msg:
@@ -311,39 +309,18 @@ def do_pull(cfile, repopath, client, etype, ename):
     while bcore.fam.Service():
         pass
     m = bcore.metadata.get_metadata(client)
-    # find appropriate location in repo
-    if etype == 'ConfigFile':
-        rversion = lxml.etree.Element('ConfigFile', name=ename)
-        bcore.Bind(rversion, m)
-        current = rversion.text
-        diff = entry[0].get('current_diff')
-        basefile = [frag for frag in \
-                    bcore.plugins['Cfg'].entries[ename].fragments \
-                    if frag.applies(m)][-1]
-        if ".H_%s" % (m.hostname) in basefile.name:
-            answer = raw_input("Found host-specific file %s; Should it be updated (n/Y): ")
-            if answer in 'Yy':
-                update_file(basefile.name, diff)
-            else:
-                raise SystemExit, 1
-        else:
-            # there are two possibilities
-            msg = "Should this change apply to this host of all hosts effected by file %s? (N/y): " % (basefile.name)
-            choice = raw_input(msg)
-            if choice in 'Yy':
-                newname = basefile.name
-            else:
-                # figure out host-specific filename
-                if '.G_' in basefile.name:
-                    idx = basefile.name.find(".G_")
-                    newname = basefile.name[:idx] + ".H_%s" % (m.hostname)
-                else:
-                    newname = basefile.name + ".H_%s" % (m.hostname)
-            print "This file will be installed as file %s" % newname
-            if raw_input("Should it be installed? (N/y): ") in 'Yy':
-                update_file(newname, diff)
-    else:
-        err_exit("Don't support entry type %s yet" % etype)
+    # find appropriate plugin in bcore
+    glist = [gen for gen in bcore.generators if
+             gen.Entries.get(etype, {}).has_key(ename)]
+    if len(glist) != 1:
+        err_exit("Got wrong numbers of matching generators for entry:" \
+                 + "%s" % ([g.__name__ for g in glist]))
+    plugin = glist[0]
+    try:
+        plugin.AcceptEntry(m, 'ConfigFile', ename, diff)
+    except Bcfg2.Server.Plugin.PluginExecutionError:
+        err_exit("Configuration upload not supported by plugin %s" \
+                 % (plugin.__name__))
     # svn commit if running under svn
 
 def do_minestruct(repopath, argdata):
@@ -526,7 +503,7 @@ def do_client(repopath, args):
     print "Done"
     
 if __name__ == '__main__':
-    Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
+    Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=False)
 
     # Some sensible defaults
     configfile = "/etc/bcfg2.conf"
@@ -562,7 +539,7 @@ if __name__ == '__main__':
         if len(args) != 4:
             print usage
             raise SystemExit, 1
-        do_pull(args[0], Repopath, args[1], args[2], args[3])
+        do_pull(configfile, Repopath, args[1], args[2], args[3])
 
     elif args[0] == 'minestruct':
         do_minestruct(Repopath, args[1:])

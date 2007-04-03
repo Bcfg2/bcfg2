@@ -59,6 +59,16 @@ class Plugin(object):
         '''This is the slow-path handler for configuration entry binding'''
         raise PluginExecutionError
 
+    def AcceptEntry(self, metadata, entry_type, entry_name, data):
+        '''This is the null per-plugin implementation
+        of bcfg2-admin pull'''
+        raise PluginExecutionError
+
+    def CommitChanges(self):
+        '''Handle revctl commits, if needed'''
+        # not implemented yet
+        pass
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):
