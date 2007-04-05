@@ -1,4 +1,4 @@
-%define release 0.0pre3
+%define release 0.0pre4
 %define __python python
 %{!?py_ver: %define py_ver 2.3}
 %define pythonversion %{py_ver}
