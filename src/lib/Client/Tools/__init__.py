@@ -255,6 +255,7 @@ class PkgTool(Tool):
 class SvcTool(Tool):
     '''This class defines basic Service behavior'''
     __name__ = 'SvcTool'
+    __svcrestart__ = 'reload'
 
     def BundleUpdated(self, bundle):
         '''The Bundle has been updated'''
@@ -263,7 +264,7 @@ class SvcTool(Tool):
                 if entry.get('status') == 'on':
                     self.logger.debug('Restarting service %s' % entry.get('name'))
                     rc = self.cmd.run('/etc/init.d/%s %s' % \
-                                      (entry.get('name'), entry.get('reload', 'reload')))[0]
+                                      (entry.get('name'), entry.get('reload', self.__svcrestart__)))[0]
                 else:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
                     rc = self.cmd.run('/etc/init.d/%s stop' %  (entry.get('name')))[0]

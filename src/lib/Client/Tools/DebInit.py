@@ -10,6 +10,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     __execs__ = ['/usr/sbin/update-rc.d']
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}
+    __svcrestart__ = 'restart'
     svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
     # implement entry (Verify|Install) ops
