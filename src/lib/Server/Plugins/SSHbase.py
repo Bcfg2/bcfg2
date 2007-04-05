@@ -1,7 +1,14 @@
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 
-import binascii, os, socket, Bcfg2.Server.Plugin
+import binascii, difflib, os, socket, xml.sax.saxutils
+import Bcfg2.Server.Plugin
+
+def update_file(path, diff):
+    '''Update file at path using diff'''
+    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
+    print "writing file, %s" % path
+    open(path, 'w').write(newdata)
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
@@ -168,3 +175,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                     os.unlink("%s.pub" % temploc)
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
+
+    def AcceptEntry(self, meta, _, entry_name, diff):
+        '''per-plugin bcfg2-admin pull support'''
+        filename = "%s/%s.H_%s" % (self.data, entry_name.split('/')[-1],
+                                   meta.hostname)
+        print "This file will be installed as file %s" % filename
+        if raw_input("Should it be installed? (N/y): ") in 'Yy':
+            update_file(filename, diff)
+        
