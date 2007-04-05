@@ -5,6 +5,7 @@ __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "launchd",
            "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV", "Yum"]
 
 drivers = __all__[:]
+default = drivers[:]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML, time
 

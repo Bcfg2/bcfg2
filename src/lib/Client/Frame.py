@@ -47,9 +47,15 @@ class Frame:
         self.removal = []
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
         if self.setup['drivers']:
-            tools = self.setup['drivers'].split(',')
+            tools = []
+            for tcandidate in self.setup['drivers'].split(','):
+                if tcandidate not in Bcfg2.Client.Tools.drivers:
+                    self.logger.error("Tool driver %s is not available"\
+                                      % (tcandidate))
+                else:
+                    tools.append(tcandidate)
         else:
-            tools = Bcfg2.Client.Tools.drivers[:]
+            tools = Bcfg2.Client.Tools.default[:]
         tclass = {}
         for tool in tools:
             tool_class = "Bcfg2.Client.Tools.%s" % tool

@@ -4,7 +4,7 @@
 __revision__ = '$Revision$'
 
 import logging, os, signal, tempfile, time, xmlrpclib
-import Bcfg2.Options, Bcfg2.Client.XML, Bcfg2.Client.Frame
+import Bcfg2.Options, Bcfg2.Client.XML, Bcfg2.Client.Frame, Bcfg2.Client.Tools
 
 try:
     import Bcfg2.Client.Proxy, Bcfg2.Logging
@@ -34,7 +34,7 @@ class Client:
             'debug':(('-d', False, "enable debugging output"),
                      False, False, False, True),
             'drivers':(('-D', '<driver1>,<driver2>', "Specify tool driver set"),
-                     False, False, False, False),
+                     False, ('client', 'drivers'), False, False),
             'fingerprint':(('-F', '<server fingerprint>', "Server Fingerprint"),
                      False, ('communication', 'fingerprint'), False, False),
             'dryrun':(('-n', False, "do not actually change the system"),
@@ -80,6 +80,10 @@ class Client:
         Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
+        if self.setup['drivers'] == 'help':
+            self.logger.info("The following drivers are available:")
+            self.logger.info(Bcfg2.Client.Tools.drivers)
+            raise SystemExit, 0
         if 'services' in self.setup['remove']:
             self.logger.error("Service removal is nonsensical, disable services to get former behavior")
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
