@@ -110,7 +110,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 if 'address' in client.attrib:
-                    self.addresses[client.get('address')] = client.get('name')
+                    caddr = client.get('address')
+                    if self.addresses.has_key(caddr):
+                        self.addresses[caddr].append(client.get('name'))
+                    else:
+                        self.addresses[caddr] = [client.get('name')]
                 if 'uuid' in client.attrib:
                     self.uuid[client.get('uuid')] = client.get('name')
                 if 'secure' in client.attrib:
@@ -120,7 +124,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 if 'password' in client.attrib:
                     self.passwords[client.get('name')] = client.get('password')
                 for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
-                    self.addresses[alias.get('address')] = client.get('name')
+                    if self.addresses.has_key(alias.get('address')):
+                        self.addresses[alias.get('address')].append(client.get('name'))
+                    else:
+                        self.addresses[alias.get('address')] = (client.get('name'))
                     
                 self.clients.update({client.get('name'): client.get('profile')})
                 [self.aliases.update({alias.get('name'): client.get('name')}) for alias in client.findall('Alias')]
@@ -243,7 +250,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 return self.uuid[uuid]
         address = addresspair[0]
         if self.addresses.has_key(address):
-            return self.addresses[address]
+            if len(self.addresses[address]) != 1:
+                self.logger.error("Address %s has multiple reverse assignments; a uuid must be used" % (address))
+                raise MetadataConsistencyError
+            return self.addresses[address][0]
         try:
             return socket.gethostbyaddr(address)[0]
         except socket.herror:
@@ -349,8 +359,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 client = self.uuid[user]
 
         # we have the client
-        if client not in self.floating and client != user:
-            if client != self.resolve_client(address):
+        if client not in self.floating and user != 'root':
+            if address[0] in self.addresses:
+                # we are using manual resolution
+                if client not in self.addresses[address[0]]:
+                    self.logger.error("Got request for non-floating UUID %s from %s" % (user, address[0]))
+                    return False
+            elif client != self.resolve_client(address):
                 self.logger.error("Got request for non-floating UUID %s from %s" \
                                   % (user, address[0]))
                 return False
