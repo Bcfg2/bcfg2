@@ -80,6 +80,8 @@ class Client:
         Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
+        if 'services' in self.setup['remove']:
+            self.logger.error("Service removal is nonsensical, disable services to get former behavior")
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
