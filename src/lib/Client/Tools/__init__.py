@@ -1,11 +1,12 @@
 '''This contains all Bcfg2 Tool modules'''
 __revision__ = '$Revision$'
 
-__all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "launchd", 
-           "Portage", "POSIX", "RPM", "RcUpdate", "SMF", "SYSV", "Yum"]
+__all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
+           "launchd", "Portage", "POSIX", "RPM", "RPMng", 'rpmtools',
+           "RcUpdate", "SMF", "SYSV", "Yum"]
 
-drivers = __all__[:]
-default = drivers[:]
+drivers = [item for item in __all__ if item not in ['rpmtools']]
+default = [item for item in drivers if item not in ['RPMng']]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML, time
 
