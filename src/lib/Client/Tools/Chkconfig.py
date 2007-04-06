@@ -34,9 +34,9 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                                entry.get('name'))[0]
         # chkconfig/init.d service
         if entry.get('status') == 'on':
-            status = (len(onlevels) > 0 ) and pstatus
+            status = (len(onlevels) > 0 ) and not pstatus
         else:
-            status = (len(onlevels) == 0) and not pstatus
+            status = (len(onlevels) == 0) and pstatus
 
         if not status:
             if entry.get('status') == 'on':
