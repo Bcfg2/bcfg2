@@ -110,6 +110,10 @@ Bcfg2 client
 
 %{python_sitelib}/Bcfg2/Server
 
+%if "%{pythonversion}" == "2.5"
+%{python_sitelib}/*egg-info
+%endif
+
 %{_datadir}/bcfg2
 
 %{_sbindir}/bcfg2-admin
