@@ -1,4 +1,4 @@
-%define release 0.0pre4
+%define release 0.0pre5
 %define __python python
 %{!?py_ver: %define py_ver 2.3}
 %define pythonversion %{py_ver}
@@ -61,7 +61,7 @@ Requires: gamin-python
 Bcfg2 client
 
 %prep
-%setup -q -n bcfg2-0.9.3pre4
+%setup -q -n bcfg2-0.9.3pre5
 
 %build
 %{__python}%{pythonversion} setup.py build
