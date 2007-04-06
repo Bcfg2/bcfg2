@@ -61,7 +61,7 @@ Requires: gamin-python
 Bcfg2 client
 
 %prep
-%setup -q -n bcfg2-0.9.3pre3
+%setup -q -n bcfg2-0.9.3pre4
 
 %build
 %{__python}%{pythonversion} setup.py build
