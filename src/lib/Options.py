@@ -70,10 +70,10 @@ class BasicOptionParser:
                 else:
                     ret[key] = sys.argv[sys.argv.index(option[0]) + 1]
                 continue
-            elif envvar and os.environ.has_key(envvar):
+            if envvar and os.environ.has_key(envvar):
                 ret[key] = os.environ[envvar]
                 continue
-            elif self.configfile and cfpath:
+            if self.configfile and cfpath:
                 try:
                     value = apply(cf.get, cfpath)
                     ret[key] = value
