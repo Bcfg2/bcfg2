@@ -80,9 +80,7 @@ class BasicOptionParser:
                     continue
                 except:
                     pass
-            else:
-                ret[key] = default
-                continue
+            ret[key] = default
         return ret
     
 class OptionParser(BasicOptionParser):
