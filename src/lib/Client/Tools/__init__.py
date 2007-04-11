@@ -3,10 +3,10 @@ __revision__ = '$Revision$'
 
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
            "launchd", "Portage", "POSIX", "RPM", "RPMng", 'rpmtools',
-           "RcUpdate", "SMF", "SYSV", "Yum"]
+           "RcUpdate", "SMF", "SYSV", "Yum", "YUMng"]
 
 drivers = [item for item in __all__ if item not in ['rpmtools']]
-default = [item for item in drivers if item not in ['RPMng']]
+default = [item for item in drivers if item not in ['RPMng', 'YUMng']]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML, time
 
