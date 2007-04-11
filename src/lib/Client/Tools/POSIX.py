@@ -309,13 +309,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
             os.rename(newfile.name, entry.get('name'))
-            try:
-                os.utime(entry.get('name'), (int(entry.get('mtime')),
-                                             int(entry.get('mtime'))))
-            except:
-                self.logger.error("ConfigFile %s mtime fix failed" \
-                                  % (entry.get('name')))
-                return False
+            if entry.get('mtime', '-1') != '-1':
+                try:
+                    os.utime(entry.get('name'), (int(entry.get('mtime')),
+                                                 int(entry.get('mtime'))))
+                except:
+                    self.logger.error("ConfigFile %s mtime fix failed" \
+                                      % (entry.get('name')))
+                    return False
             return True
         except (OSError, IOError), err:
             if err.errno == 13:
