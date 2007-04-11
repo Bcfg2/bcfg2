@@ -1,4 +1,4 @@
-%define release 0.0pre5
+%define release 0.0pre6
 %define __python python
 %{!?py_ver: %define py_ver 2.3}
 %define pythonversion %{py_ver}
@@ -13,7 +13,7 @@ Summary:          Configuration management system
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.3pre5.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.3pre6.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
@@ -61,7 +61,7 @@ Requires: gamin-python
 Bcfg2 client
 
 %prep
-%setup -q -n bcfg2-0.9.3pre5
+%setup -q -n bcfg2-0.9.3pre6
 
 %build
 %{__python}%{pythonversion} setup.py build
