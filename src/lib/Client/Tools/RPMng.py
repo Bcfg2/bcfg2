@@ -3,7 +3,12 @@
 __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools, rpmtools, os.path, rpm, ConfigParser
+#import time, sys
 
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 class RPMng(Bcfg2.Client.Tools.PkgTool):
     '''Support for RPM packages'''
@@ -165,8 +170,11 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                       pkg.get('gpgkeyid', '')))
                                 self.logger.info('         Disabling signature check.')
 
+                            vp_ts = rpmtools.rpmtransactionset()
                             self.instance_status[inst]['verify'] = \
-                                                      rpmtools.rpm_verify( self.vp_ts, pkg, flags)
+                                                      rpmtools.rpm_verify( vp_ts, pkg, flags)
+                            vp_ts.closeDB()
+                            del vp_ts
 
                     if self.instance_status[inst]['installed'] == False:
                         self.logger.info("        Package %s %s not installed." % \
@@ -209,8 +217,11 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                           pkg.get('gpgkeyid', '')))
                                     self.logger.info('         Disabling signature check.')
 
+                                vp_ts = rpmtools.rpmtransactionset()
                                 self.instance_status[inst]['verify'] = \
-                                                      rpmtools.rpm_verify( self.vp_ts, pkg, flags )
+                                                      rpmtools.rpm_verify( vp_ts, pkg, flags )
+                                vp_ts.closeDB()
+                                del vp_ts
 
                             else:
                                 # Wrong version installed.
@@ -464,7 +475,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Fix installOnlyPackages
         if len(install_only_pkgs) > 0:
             self.logger.info("Attempting to install 'install only packages'")
-            install_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
+            install_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),\
                                                   inst.get('simplefile')) \
                                            for inst in install_only_pkgs])
             self.logger.debug("rpm --install --quiet --oldpackage %s" % install_args)
@@ -507,7 +518,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         installed_instances.append(inst)
                     else:
                         self.logger.debug("InstallOnlyPackage %s %s would not install." % \
-                                              (self.instance_status[inst].get('pkg').get('name'),\
+                                              (self.instance_status[inst].get('pkg').get('name'), \
                                                self.str_evra(inst)))
 
                 install_pkg_set = set([self.instance_status[inst].get('pkg') \
@@ -551,7 +562,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Fix upgradeable packages.
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
-            upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
+            upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),\
                                                   inst.get('simplefile')) \
                                            for inst in upgrade_pkgs])
             cmdrc, output = self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
@@ -591,7 +602,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         upgraded_instances.append(inst)
                     else:
                         self.logger.debug("Package %s %s would not upgrade." % \
-                                              (self.instance_status[inst].get('pkg').get('name'),\
+                                              (self.instance_status[inst].get('pkg').get('name'), \
                                                self.str_evra(inst)))
 
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg') \
@@ -749,14 +760,15 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
                     self.logger.info("Extra Package %s %s." % \
-                                     (name, self.str_evra(installed_inst)))
-                    Bcfg2.Client.XML.SubElement(extra_entry, \
-                                                'Instance', 
-                                                epoch = str(installed_inst.get('epoch', '')),\
-                                                version = installed_inst.get('version'), \
-                                                release = installed_inst.get('release'), \
-                                                arch = installed_inst.get('arch', ''))
-                    extras.append(extra_entry)
+                                               (name, self.str_evra(installed_inst)))
+                    tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
+                                     version = installed_inst.get('version'), \
+                                     release = installed_inst.get('release'))
+                    if installed_inst.get('epoch', None) != None:
+                        tmp_entry.set('epoch', str(installed_inst.get('epoch')))
+                    if installed_inst.get('arch', None) != None:
+                        tmp_entry.set('arch', installed_inst.get('arch'))
+                extras.append(extra_entry)
         return extras
 
 
@@ -800,35 +812,39 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 if not_found:
                     self.logger.info("Extra Normal Package Instance %s %s" % \
                                                         (name, self.str_evra(installed_inst)))
-                    Bcfg2.Client.XML.SubElement(extra_entry, \
-                                     'Instance', 
-                                     epoch = str(installed_inst.get('epoch', '')),\
+                    tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
                                      version = installed_inst.get('version'), \
-                                     release = installed_inst.get('release'), \
-                                     arch = installed_inst.get('arch', ''))
+                                     release = installed_inst.get('release'))
+                    if installed_inst.get('epoch', None) != None:
+                        tmp_entry.set('epoch', str(installed_inst.get('epoch')))
+                    if installed_inst.get('arch', None) != None:
+                        tmp_entry.set('arch', installed_inst.get('arch'))
 
         if len(extra_entry) == 0:
             extra_entry = None
 
         return extra_entry
 
-    def Inventory(self, structures=[]):
-        '''
-           Wrap the Tool.Inventory() method with its own rpm.TransactionSet() 
-           and an explicit closeDB() as the close wasn't happening and DB4 
-           locks were getting left behind on the RPM database creating a nice 
-           mess.
-
-           ***** Do performance comparison with the transctionset/closeDB
-                 moved into rpmtools, which would mean a transactionset/closeDB
-                 per VerifyPackage() call (meaning one per RPM package) rather 
-                 than one for the whole system.
-        '''
-        self.vp_ts = rpmtools.rpmtransactionset()
-        Bcfg2.Client.Tools.Tool.Inventory(self)
-        # Tool is still an old style class, so super doesn't work. Change it.
-        #super(RPMng, self).Inventory()
-        self.vp_ts.closeDB()
+    #def Inventory(self, structures=[]):
+    #    '''
+    #       Wrap the Tool.Inventory() method with its own rpm.TransactionSet() 
+    #       and an explicit closeDB() as the close wasn't happening and DB4 
+    #       locks were getting left behind on the RPM database creating a nice 
+    #       mess.
+    #
+    #       ***** Do performance comparison with the transctionset/closeDB
+    #             moved into rpmtools, which would mean a transactionset/closeDB
+    #             per VerifyPackage() call (meaning one per RPM package) rather 
+    #             than one for the whole system.
+    #    '''
+    #    self.vp_ts = rpmtools.rpmtransactionset()
+    #    try:
+    #        Bcfg2.Client.Tools.Tool.Inventory(self)
+    #        # Tool is still an old style class, so super doesn't work. Change it.
+    #        #super(RPMng, self).Inventory()
+    #    finally:
+    #        self.vp_ts.closeDB()
+    #        del self.vp_ts
 
     def str_evra(self, instance):
         '''
