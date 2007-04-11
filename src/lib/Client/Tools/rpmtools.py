@@ -18,7 +18,7 @@
     Run 'rpmtools' -h for the options.
 
 """
-__revision__ = '0.3'
+__revision__ = '$Revision$'
 
 import rpm, optparse, pwd, grp
 import sys, os, md5, stat
@@ -164,13 +164,17 @@ def rpmpackagelist(rts):
                'epoch':header[rpm.RPMTAG_EPOCH],
                'version':header[rpm.RPMTAG_VERSION], 
 	       'release':header[rpm.RPMTAG_RELEASE],
-               'arch':header[rpm.RPMTAG_ARCH] } 
+               'arch':header[rpm.RPMTAG_ARCH],
+               'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1] }
 	       for header in rts.dbMatch()]
 
 def getindexbykeyword(index_ts, **kwargs):
     """
         Return list of indexs from the rpmdb matching keywords
         ex: getHeadersByKeyword(name='foo', version='1', release='1')
+ 
+        Can be passed any structure that can be indexed by the pkgspec 
+        keyswords as other keys are filtered out.
 
     """
     lst = []
@@ -180,18 +184,21 @@ def getindexbykeyword(index_ts, **kwargs):
     else:
         index_mi = index_ts.dbMatch()
 
-    # This is wrong! Yes its an issue, but you can't just ignore it.
-    # FIX THIS!!!!  This is how it is in YUM.
     if kwargs.has_key('epoch'):
-        del(kwargs['epoch']) # epochs don't work here for None/0/'0' reasons
+        if kwargs['epoch'] != None and kwargs['epoch'] != 'None':
+            kwargs['epoch'] = int(kwargs['epoch'])
+        else:
+            del(kwargs['epoch'])
 
-    keywords = len(kwargs.keys())
+    keywords = [ key for key in kwargs.keys() \
+                         if key in ('name', 'epoch', 'version', 'release', 'arch')]
+    keywords_len = len(keywords)
     for hdr in index_mi:
         match = 0
-        for keyword in kwargs.keys():
+        for keyword in keywords:
             if hdr[keyword] == kwargs[keyword]:
                 match += 1
-        if match == keywords:
+        if match == keywords_len:
             lst.append(index_mi.instance())
     del index_mi
     return lst
@@ -203,6 +210,9 @@ def getheadersbykeyword(header_ts, **kwargs):
 
         Return list of headers from the rpmdb matching keywords
         ex: getHeadersByKeyword(name='foo', version='1', release='1')
+ 
+        Can be passed any structure that can be indexed by the pkgspec 
+        keyswords as other keys are filtered out.
 
     """
     lst = []
@@ -212,20 +222,21 @@ def getheadersbykeyword(header_ts, **kwargs):
     else:
         header_mi = header_ts.dbMatch()
 
-    # This is wrong! Yes its an issue, but you can't just ignore it.
-    # FIX THIS!!!!  This is how it is in YUM.
-    # Fixed, I hope. MJTB 20070127.
-    if kwargs.has_key('epoch') and kwargs['epoch'] != None:
-        kwargs['epoch'] = int(kwargs['epoch'])
-        #del(kwargs['epoch']) # epochs don't work here for None/0/'0' reasons
+    if kwargs.has_key('epoch'):
+        if kwargs['epoch'] != None and kwargs['epoch'] != 'None':
+            kwargs['epoch'] = int(kwargs['epoch'])
+        else:
+            del(kwargs['epoch'])
 
-    keywords = len(kwargs.keys())
+    keywords = [ key for key in kwargs.keys() \
+                         if key in ('name', 'epoch', 'version', 'release', 'arch')]
+    keywords_len = len(keywords)
     for hdr in header_mi:
         match = 0
-        for keyword in kwargs.keys():
+        for keyword in keywords:
             if hdr[keyword] == kwargs[keyword]:
                 match += 1
-        if match == keywords:
+        if match == keywords_len:
             lst.append(hdr)
     del header_mi
     return lst
@@ -545,7 +556,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
     vsflags = 0
     if 'nodigest' in verify_options:
         vsflags |= rpm._RPMVSF_NODIGESTS
-    if 'nosifnature' in verify_options:
+    if 'nosignature' in verify_options:
         vsflags |= rpm._RPMVSF_NOSIGNATURES
     ovsflags = vp_ts.setVSFlags(vsflags)
 
@@ -620,7 +631,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
                 else:
                     file_stat.append(' ')
         
-                file_stat.append(fileinfo[0])
+                file_stat.append(fileinfo[0]) # The filename.
                 package_results.setdefault('files', []).append(file_stat)
 
     # Run the verify script if there is one.
@@ -722,46 +733,61 @@ class Rpmtscallback(object):
 	    Generic rpmts call back.
         """
         if   reason == rpm.RPMCALLBACK_INST_OPEN_FILE:
-            print 'rpm.RPMCALLBACK_INST_OPEN_FILE'
+            pass
+            #print 'rpm.RPMCALLBACK_INST_OPEN_FILE'
         elif reason == rpm.RPMCALLBACK_INST_CLOSE_FILE:
-            print 'rpm.RPMCALLBACK_INST_CLOSE_FILE'
+            pass
+            #print 'rpm.RPMCALLBACK_INST_CLOSE_FILE'
         elif reason == rpm.RPMCALLBACK_INST_START:
-            print 'rpm.RPMCALLBACK_INST_START'
+            pass
+            #print 'rpm.RPMCALLBACK_INST_START'
         elif reason == rpm.RPMCALLBACK_TRANS_PROGRESS or \
 	     reason == rpm.RPMCALLBACK_INST_PROGRESS:
-            print 'rpm.RPMCALLBACK_TRANS_PROGRESS or \
-	           rpm.RPMCALLBACK_INST_PROGRESS'
+            pass
+            #print 'rpm.RPMCALLBACK_TRANS_PROGRESS or \
+	    #       rpm.RPMCALLBACK_INST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_TRANS_START:
-            print 'rpm.RPMCALLBACK_TRANS_START'
+            pass
+            #print 'rpm.RPMCALLBACK_TRANS_START'
         elif reason == rpm.RPMCALLBACK_TRANS_STOP:
-            print 'rpm.RPMCALLBACK_TRANS_STOP'
+            pass
+            #print 'rpm.RPMCALLBACK_TRANS_STOP'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_START:
-            print 'rpm.RPMCALLBACK_REPACKAGE_START'
+            pass
+            #print 'rpm.RPMCALLBACK_REPACKAGE_START'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_PROGRESS:
-            print 'rpm.RPMCALLBACK_REPACKAGE_PROGRESS'
+            pass
+            #print 'rpm.RPMCALLBACK_REPACKAGE_PROGRESS'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_STOP:
-            print 'rpm.RPMCALLBACK_REPACKAGE_STOP'
+            pass
+            #print 'rpm.RPMCALLBACK_REPACKAGE_STOP'
         elif reason == rpm.RPMCALLBACK_UNINST_PROGRESS:
-            print 'rpm.RPMCALLBACK_UNINST_PROGRESS'
+            pass
+            #print 'rpm.RPMCALLBACK_UNINST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_UNINST_START:
-            print 'rpm.RPMCALLBACK_UNINST_START'
+            pass
+            #print 'rpm.RPMCALLBACK_UNINST_START'
         elif reason == rpm.RPMCALLBACK_UNINST_STOP:
-            print 'rpm.RPMCALLBACK_UNINST_STOP'
-            print '***Package ', key, ' deleted ***'
+            pass
+            #print 'rpm.RPMCALLBACK_UNINST_STOP'
+            #print '***Package ', key, ' deleted ***'
             # How do we get at this?
             # RPM.modified += key
         elif reason == rpm.RPMCALLBACK_UNPACK_ERROR:
-            print 'rpm.RPMCALLBACK_UNPACK_ERROR'
+            pass
+            #print 'rpm.RPMCALLBACK_UNPACK_ERROR'
         elif reason == rpm.RPMCALLBACK_CPIO_ERROR:
-            print 'rpm.RPMCALLBACK_CPIO_ERROR'
+            pass
+            #print 'rpm.RPMCALLBACK_CPIO_ERROR'
         elif reason == rpm.RPMCALLBACK_UNKNOWN:
-            print 'rpm.RPMCALLBACK_UNKNOWN'
+            pass
+            #print 'rpm.RPMCALLBACK_UNKNOWN'
         else:
             print 'ERROR - Fell through callBack'
     
-        print reason, amount, total, key, client_data
+        #print reason, amount, total, key, client_data
 
-def rpm_erase(erase_pkgspec, erase_flags):
+def rpm_erase(erase_pkgspecs, erase_flags):
     """
        pkgspecs is a list of pkgspec dicts specifying packages
        e.g.: 
@@ -780,25 +806,32 @@ def rpm_erase(erase_pkgspec, erase_flags):
     erase_ts = rpmtransactionset()
     erase_ts.setFlags(erase_ts_flags)
 
-    idx_list = getindexbykeyword(erase_ts, **erase_pkgspec)
-    if len(idx_list) > 1 and not 'allmatches' in erase_flags:
-        print 'ERROR - Multiple package match for erase'
-    else:
-        for idx in idx_list:
-            erase_ts.addErase(idx)
+    for pkgspec in erase_pkgspecs:
+        idx_list = getindexbykeyword(erase_ts, **pkgspec)
+        if len(idx_list) > 1 and not 'allmatches' in erase_flags:
+            #pass
+            print 'ERROR - Multiple package match for erase', pkgspec
+        else:
+            for idx in idx_list:
+                erase_ts.addErase(idx)
 
+    #for te in erase_ts:
+    #    print "%s %s:%s-%s.%s" % (te.N(), te.E(), te.V(), te.R(), te.A())
+
+    erase_problems = []
     if 'nodeps' not in erase_flags:
         erase_problems = erase_ts.check()
 
-    if erase_problems:
-        print 'ERROR - Dependency failures on package erase'
-        print erase_problems
-    else:
+    if erase_problems == []:
         erase_ts.order()
         erase_callback = Rpmtscallback() 
         erase_ts.run(erase_callback.callback, 'Erase')
+    #else:
+    #    print 'ERROR - Dependency failures on package erase'
+    #    print erase_problems
 
     erase_ts.closeDB()
+    del erase_ts
     return erase_problems
 
 def display_verify_file(file_results):
@@ -1056,6 +1089,6 @@ if __name__ == "__main__":
 
     elif options.erase:
         if options.name:
-            rpm_erase(cmdline_pkgspec, rpm_options)
+            rpm_erase([cmdline_pkgspec], rpm_options)
         else:
             print 'You must specify the "--name" option'
