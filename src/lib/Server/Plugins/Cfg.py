@@ -79,7 +79,8 @@ class ConfigFileEntry(object):
     all data for all clients.'''
     info = re.compile('^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
                       'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
-                      '(?P<paranoid>paranoid(\s)*)|interpolate:(\s)*(?P<interpolate>\w+)(\s)*$')
+                      '(?P<paranoid>paranoid(\s)*)|mtime:(\s)*(?P<mtime>\w+)|' 
+                      'interpolate:(\s)*(?P<interpolate>\w+)(\s)*$')
     iignore = re.compile('^\S*$')
     
     def __init__(self, path, repopath):
@@ -118,6 +119,8 @@ class ConfigFileEntry(object):
                     self.paranoid = True
                 elif mgd['interpolate'] in ["True", "true"]:
                     self.interpolate = True
+                elif mgd['mtime']:
+                    self.metadata['mtime'] = mgd['mtime']
                     
     def AddEntry(self, name):
         '''add new file additions for a single cf file'''

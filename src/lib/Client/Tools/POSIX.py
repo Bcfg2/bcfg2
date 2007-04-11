@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
-from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK
+from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 
 import binascii, difflib, grp, os, pwd, xml.sax.saxutils
 import Bcfg2.Client.Tools
@@ -96,10 +96,16 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
             owner = 'root'
             group = 'root'
-        perms = oct(os.stat(entry.get('name'))[ST_MODE])[-4:]
+        finfo = os.stat(entry.get('name'))
+        perms = oct(finfo[ST_MODE])[-4:]
+        if entry.get('mtime', '-1') != '-1':
+            mtime = str(finfo[ST_MTIME])
+        else:
+            mtime = '-1'
         if ((owner == entry.get('owner')) and
             (group == entry.get('group')) and
-            (perms == entry.get('perms'))):
+            (perms == entry.get('perms')) and
+            (mtime == entry.get('mtime', '-1'))):
             return True
         else:
             if owner != entry.get('owner'):
@@ -123,6 +129,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nqtext = entry.get('qtext', '') + '\n'
                 nqtext += "%s perms are %s should be %s" % \
                           (entry.get('name'), perms, entry.get('perms'))
+                entry.set('qtext', nqtext)
+            if mtime != entry.get('mtime', '-1'):
+                entry.set('current_mtime', mtime)
+                self.logger.debug("%s %s mtime is %s should be %s" \
+                                  % (entry.tag, entry.get('name'), mtime,
+                                     entry.get('mtime')))
+                nqtext = entry.get('qtext', '') + '\n'
+                nqtext += "%s mtime is %s should be %s" % \
+                          (entry.get('name'), mtime, entry.get('mtime'))
                 entry.set('qtext', nqtext)
             if entry.tag != 'ConfigFile':
                 nnqtext = entry.get('qtext')
@@ -294,6 +309,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 os.chown(newfile.name, 0, 0)
             os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
             os.rename(newfile.name, entry.get('name'))
+            try:
+                os.utime(entry.get('name'), (int(entry.get('mtime')),
+                                             int(entry.get('mtime'))))
+            except:
+                self.logger.error("ConfigFile %s mtime fix failed" \
+                                  % (entry.get('name')))
+                return False
             return True
         except (OSError, IOError), err:
             if err.errno == 13:
