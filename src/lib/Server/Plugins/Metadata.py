@@ -107,6 +107,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.bad_clients = {}
             self.secure = []
             self.floating = []
+            self.addresses = {}
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 if 'address' in client.attrib:
@@ -294,7 +295,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             uuid = uuids[0]
         else:
             uuid = None
-        for group in  self.cgroups.get(client, []):
+        for group in self.cgroups.get(client, []):
             if self.groups.has_key(group):
                 nbundles, ngroups, ncategories = self.groups[group]
             else:
@@ -349,7 +350,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         '''This function checks user and password'''
         if user == 'root':
             # we aren't using per-client keys
-            client = self.resolve_client(address)
+            try:
+                client = self.resolve_client(address)
+            except MetadataConsistencyError:
+                self.logger.error("Client %s failed to authenticate due to metadata problem" % (address))
         else:
             # user maps to client
             if user not in self.uuid:
