@@ -11,6 +11,13 @@
   <xsd:include schemaLocation="types.xsd"/>
 
   <xsd:complexType name='PackageType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Ignore'>
+        <xsd:complexType>
+          <xsd:attribute type='xsd:string' name='name'/>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:choice>
     <xsd:attribute type='xsd:string' name='name'/>
     <xsd:attribute type='xsd:string' name='version'/>
     <xsd:attribute type='xsd:string' name='file'/>
