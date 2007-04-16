@@ -144,7 +144,13 @@ class Component(TLSServer,
         """Decode and dispatch XMLRPC requests. Overloaded to pass through
         client address information
         """
-        rawparams, method = xmlrpclib.loads(data)
+        try:
+            rawparams, method = xmlrpclib.loads(data)
+        except:
+            self.logger.error("Failed to parse request from %s" \
+                              % (address[0]))
+            #open('/tmp/badreq', 'w').write(data)
+            return xmlrpclib.dumps(xmlrpclib.Fault(4, "Bad Request"))
         if len(rawparams) < 2:
             self.logger.error("No authentication included with request from %s" % address[0])
             return xmlrpclib.dumps(xmlrpclib.Fault(2, "No Authentication Info"))
