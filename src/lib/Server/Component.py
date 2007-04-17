@@ -7,6 +7,7 @@ import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
 
 import Bcfg2.Client.Proxy as Proxy
+from Bcfg2.tlslite.TLSConnection import TLSConnection
 
 log = logging.getLogger('Component')
 
@@ -63,6 +64,13 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
         self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
         self.chain = Bcfg2.tlslite.api.X509CertChain([x509])
         BaseHTTPServer.HTTPServer.__init__(self, address, handler)
+
+    def finish_request(self, sock, client_address):
+        sock.settimeout(90)
+        tlsConnection = TLSConnection(sock)
+        if self.handshake(tlsConnection) == True:
+            self.RequestHandlerClass(tlsConnection, client_address, self)
+            tlsConnection.close()
 
     def handshake(self, tlsConnection):
         try:
