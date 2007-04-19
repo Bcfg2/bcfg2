@@ -125,7 +125,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
               Constructs the text prompts for interactive mode.
         '''
-        if len(entry) == 0:
+        instances = [inst for inst in entry if inst.tag == 'Instance' or inst.tag == 'Package']
+        if instances == []:
             # We have an old style no Instance entry. Convert it to new style.
             version, release = entry.get('version').split('-')
             instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
@@ -134,9 +135,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             instance.set('version', version)
             instance.set('release', release)
             instances = [ instance ]
-        else:
-            # We have a new style entry or a previously converted old style entry.
-            instances = [inst for inst in entry if inst.tag == 'Instance' or inst.tag == 'Package']
 
         self.logger.info("Verifying package instances for %s" % entry.get('name'))
         package_fail = False
@@ -157,8 +155,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     for pkg in self.installed[entry.get('name')]:
                         if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
                             self.logger.info("        %s" % self.str_evra(inst))
-                            self.logger.debug("        verify_flags = %s" % \
-                                                           (inst.get('verify_flags', [])))
                             self.instance_status[inst]['installed'] = True
      
                             flags = inst.get('verify_flags', '').split(',')
@@ -169,6 +165,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                    % (pkg.get('name'), self.str_evra(pkg), \
                                                       pkg.get('gpgkeyid', '')))
                                 self.logger.info('         Disabling signature check.')
+
+                            if self.setup.get('quick', False):
+                                if rpmtools.prelink_exists:
+                                    flags += ['nomd5', 'nosize']
+                                else:
+                                    flags += ['nomd5']
+                            self.logger.debug("        verify_flags = %s" % flags) 
 
                             vp_ts = rpmtools.rpmtransactionset()
                             self.instance_status[inst]['verify'] = \
@@ -205,8 +208,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         for pkg in arch_match:
                             if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
                                 self.logger.info("        %s" % self.str_evra(inst))
-                                self.logger.debug("        verify_flags = %s" % \
-                                                              (inst.get('verify_flags', [])))
                                 self.instance_status[inst]['installed'] = True
 
                                 flags = inst.get('verify_flags', '').split(',') 
@@ -216,6 +217,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                        % (pkg.get('name'), self.str_evra(pkg), \
                                                           pkg.get('gpgkeyid', '')))
                                     self.logger.info('         Disabling signature check.')
+
+                                if self.setup.get('quick', False):
+                                    if rpmtools.prelink_exists:
+                                        flags += ['nomd5', 'nosize']
+                                    else:
+                                        flags += ['nomd5']
+                                self.logger.debug("        verify_flags = %s" % flags) 
 
                                 vp_ts = rpmtools.rpmtransactionset()
                                 self.instance_status[inst]['verify'] = \
@@ -455,7 +463,15 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            self.RemovePackages(self.extra_instances)
+            if (self.setup.get('remove') == 'all' or \
+                self.setup.get('remove') == 'packages') and\
+                not self.setup.get('dryrun'):
+                self.RemovePackages(self.extra_instances)
+            else:
+                self.logger.info("The following extra package instances will be removed by the '-r' option:")
+                for pkg in self.extra_instances:
+                    for inst in pkg:
+                        self.logger.info("    %s %s" % (pkg.get('name'), self.str_evra(inst)))
 
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
@@ -825,33 +841,16 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         return extra_entry
 
-    #def Inventory(self, structures=[]):
-    #    '''
-    #       Wrap the Tool.Inventory() method with its own rpm.TransactionSet() 
-    #       and an explicit closeDB() as the close wasn't happening and DB4 
-    #       locks were getting left behind on the RPM database creating a nice 
-    #       mess.
-    #
-    #       ***** Do performance comparison with the transctionset/closeDB
-    #             moved into rpmtools, which would mean a transactionset/closeDB
-    #             per VerifyPackage() call (meaning one per RPM package) rather 
-    #             than one for the whole system.
-    #    '''
-    #    self.vp_ts = rpmtools.rpmtransactionset()
-    #    try:
-    #        Bcfg2.Client.Tools.Tool.Inventory(self)
-    #        # Tool is still an old style class, so super doesn't work. Change it.
-    #        #super(RPMng, self).Inventory()
-    #    finally:
-    #        self.vp_ts.closeDB()
-    #        del self.vp_ts
-
     def str_evra(self, instance):
         '''
             Convert evra dict entries to a string.
         '''
-        return '%s:%s-%s.%s' % (instance.get('epoch', '*'), instance.get('version', '*'),
-                                instance.get('release', '*'), instance.get('arch', '*'))
+        if instance.get('epoch', '*') == '*' or instance.get('epoch', '*') == None: 
+ 	    return '%s-%s.%s' % (instance.get('version', '*'), 
+ 	                         instance.get('release', '*'), instance.get('arch', '*')) 
+ 	else: 
+ 	    return '%s:%s-%s.%s' % (instance.get('epoch', '*'), instance.get('version', '*'), 
+ 	                            instance.get('release', '*'), instance.get('arch', '*')) 
 
     def pkg_vr_equal(self, config_entry, installed_entry):
         '''
@@ -875,11 +874,12 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         else:
             epoch = None
 
-        if (config_entry.tag == 'Instance' and\
-            epoch == installed_entry.get('epoch', None) and \
-            config_entry.get('version') == installed_entry.get('version') and \
-            config_entry.get('release') == installed_entry.get('release') and \
-            config_entry.get('arch', None) == installed_entry.get('arch', None)):
+        if (config_entry.tag == 'Instance' and \
+           (epoch == installed_entry.get('epoch', 0) or \
+            (epoch == 0 and installed_entry.get('epoch', 0) == None)) and \
+           config_entry.get('version') == installed_entry.get('version') and \
+           config_entry.get('release') == installed_entry.get('release') and \
+           config_entry.get('arch', None) == installed_entry.get('arch', None)):
             return True
         else:
             return False

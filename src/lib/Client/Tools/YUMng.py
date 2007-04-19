@@ -1,5 +1,5 @@
 '''This provides bcfg2 support for yum'''
-__revision__ = '0.1'
+__revision__ = '$Revision: $'
 
 import Bcfg2.Client.Tools.RPMng, ConfigParser, sys
 
@@ -73,7 +73,14 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            self.RemovePackages(self.extra_instances)
+            if (self.setup.get('remove') == 'all' or \
+                self.setup.get('remove') == 'packages'):
+                self.RemovePackages(self.extra_instances)
+            else:
+                self.logger.info("The following extra package instances will be removed by the '-r' option:")
+                for pkg in self.extra_instances:
+                    for inst in pkg:
+                        self.logger.info("    %s %s", (pkg.get('name'), self.str_evra(inst)))
 
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
