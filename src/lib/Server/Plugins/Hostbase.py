@@ -41,7 +41,7 @@ class Hostbase(Plugin):
     __name__ = 'Hostbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    filepath = '/etc/bind'
+    filepath = '/my/adm/hostbase/files/bind'
 
     def __init__(self, core, datastore):
 
@@ -61,6 +61,7 @@ class Hostbase(Plugin):
         self.templates = {'zone':loader.get_template('zone.tmpl'),
                           'reversesoa':loader.get_template('reversesoa.tmpl'),
                           'named':loader.get_template('named.tmpl'),
+                          'namedviews':loader.get_template('namedviews.tmpl'),
                           'reverseapp':loader.get_template('reverseappend.tmpl'),
                           'dhcp':loader.get_template('dhcpd.tmpl'),
                           'hosts':loader.get_template('hosts.tmpl'),
@@ -68,7 +69,10 @@ class Hostbase(Plugin):
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
-        self.rebuildState(None)
+        try:
+            self.rebuildState(None)
+        except:
+            raise PluginInitError
                  
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
@@ -89,7 +93,7 @@ class Hostbase(Plugin):
                 if re.search('/etc/bind/', configfile):
                     SubElement(output, "ConfigFile", name=configfile)
         if metadata.hostname in self.dhcpservers:
-            SubElement(output, "ConfigFile", name="/etc/dhcpd.conf")
+            SubElement(output, "ConfigFile", name="/etc/dhcp3/dhcpd.conf")
         return [output]
 
     def rebuildState(self, _):
@@ -148,9 +152,10 @@ class Hostbase(Plugin):
                 'mxs': mxs
                 })
             self.filedata[zone[1]] = self.templates['zone'].render(context)
+            self.filedata[zone[1] + '.external'] = self.templates['zone'].render(context)
 
             querystring = """SELECT h.hostname, p.ip_addr,
-            n.name, c.cname, m.priority, m.mx
+            n.name, c.cname, m.priority, m.mx, n.dns_view
             FROM (((((hostbase_host h INNER JOIN hostbase_interface i ON h.id = i.host_id)
             INNER JOIN hostbase_ip p ON i.id = p.interface_id)
             INNER JOIN hostbase_name n ON p.id = n.ip_id)
@@ -164,27 +169,66 @@ class Hostbase(Plugin):
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
             prevhost = (None, None, None, None)
+            cnames = ''
+            cnamesexternal = ''
             for host in zonehosts:
                 if not host[2].split(".", 1)[1] == zone[1]:
+                    self.filedata[zone[1]] += cnames
+                    self.filedata[zone[1] + '.external'] += cnamesexternal
+                    cnames = ''
+                    cnamesexternal = ''
                     continue
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
-                    self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
-                                           (host[2].split(".", 1)[0], 'A', host[1]))
-                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %                   
-                                           ('', 'MX', host[4], host[5]))
+                    self.filedata[zone[1]] += cnames
+                    self.filedata[zone[1] + '.external'] += cnamesexternal
+                    cnames = ''
+                    cnamesexternal = ''                    
+                    self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %
+                                               (host[2].split(".", 1)[0], 'A', host[1]))
+                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %
+                                               ('', 'MX', host[4], host[5]))
+                    if host[6] == 'global':
+                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-32s\n" %
+                                                                 (host[2].split(".", 1)[0], 'A', host[1]))
+                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-3s%s.\n" %
+                                                                 ('', 'MX', host[4], host[5]))
+                elif not prevhost[5] == host[5]:
+                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %
+                                               ('', 'MX', host[4], host[5]))                    
+                    if host[6] == 'global':
+                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-3s%s.\n" %
+                                                                 ('', 'MX', host[4], host[5]))
+                        
                 if host[3]:
-                    if host[3].split(".", 1)[1] == zone[1]:
-                        self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
-                                               (host[3].split(".", 1)[0],
-                                                'CNAME',host[2].split(".", 1)[0]))
-                    else:
-                        self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %                   
-                                               (host[3]+".",
-                                                'CNAME',
-                                                host[2].split(".", 1)[0]))
+                    try:
+                        if host[3].split(".", 1)[1] == zone[1]:
+                            cnames += ("%-32s%-10s%-32s\n" %
+                                                       (host[3].split(".", 1)[0],
+                                                        'CNAME',host[2].split(".", 1)[0]))
+                            if host[6] == 'global':
+                                cnamesexternal += ("%-32s%-10s%-32s\n" %
+                                                                         (host[3].split(".", 1)[0],
+                                                                          'CNAME',host[2].split(".", 1)[0]))
+                        else:
+                            cnames += ("%-32s%-10s%-32s\n" %
+                                                       (host[3]+".",
+                                                        'CNAME',
+                                                        host[2].split(".", 1)[0]))
+                            if host[6] == 'global':
+                                cnamesexternal += ("%-32s%-10s%-32s\n" %
+                                                                         (host[3]+".",
+                                                                          'CNAME',
+                                                                          host[2].split(".", 1)[0]))
+
+                    except:
+                        pass
                 prevhost = host
+            self.filedata[zone[1]] += cnames
+            self.filedata[zone[1] + '.external'] += cnamesexternal
             self.filedata[zone[1]] += ("\n\n%s" % zone[9])
+            self.filedata[zone[1] + '.external'] += ("\n\n%s" % zone[9])
             self.Entries['ConfigFile']["%s/%s" % (self.filepath, zone[1])] = self.FetchFile
+            self.Entries['ConfigFile']["%s/%s.external" % (self.filepath, zone[1])] = self.FetchFile
 
         cursor.execute("SELECT * FROM hostbase_zone WHERE zone LIKE \'%%.rev\' AND zone <> \'.rev\'")
         reversezones = cursor.fetchall()
@@ -203,47 +247,70 @@ class Hostbase(Plugin):
                 })
 
             self.filedata[reversezone[1]] = self.templates['reversesoa'].render(context)
+            self.filedata[reversezone[1] + '.external'] = self.templates['reversesoa'].render(context)
             subnet = reversezone[1].split(".")
             subnet.reverse()
             reversenames.append((reversezone[1].rstrip('.rev'),".".join(subnet[1:]))) 
 
-        print reversenames
         for filename in reversenames:
-            originlist = []
             cursor.execute("""
-            SELECT h.hostname, p.ip_addr FROM ((hostbase_host h
+            SELECT DISTINCT h.hostname, p.ip_addr, n.dns_view FROM ((hostbase_host h
             INNER JOIN hostbase_interface i ON h.id = i.host_id)
             INNER JOIN hostbase_ip p ON i.id = p.interface_id)
+            INNER JOIN hostbase_name n ON n.ip_id = p.id
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr
             """ % filename[1])
             reversehosts = cursor.fetchall()
             if len(filename[0].split(".")) == 2:
+                originlist = []
                 [originlist.append((".".join([ip[1].split(".")[2], filename[0]]),
                                     ".".join([filename[1], ip[1].split(".")[2]])))
                  for ip in reversehosts
                  if (".".join([ip[1].split(".")[2], filename[0]]),
                      ".".join([filename[1], ip[1].split(".")[2]])) not in originlist]
                 for origin in originlist:
-                    hosts = [(host[1].split("."), host[0].split(".", 1))
+                    hosts = [(host[1].split("."), host[0])
                              for host in reversehosts
                              if host[1].rstrip('0123456789').rstrip('.') == origin[1]]
+                    hosts_external = [(host[1].split("."), host[0])
+                                     for host in reversehosts
+                                     if (host[1].rstrip('0123456789').rstrip('.') == origin[1]
+                                         and host[2] == 'global')]
                     context = Context({
                         'hosts': hosts,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
                         })        
                     self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
+                    context = Context({
+                        'hosts': hosts_external,
+                        'inaddr': origin[0],
+                        'fileorigin': filename[0],
+                        })        
+                    self.filedata['%s.rev.external' % filename[0]] += self.templates['reverseapp'].render(context)
             else:
                 originlist = [filename[0]]
-                hosts = [(host[1].split("."), host[0].split(".", 1))
-                         for host in reversehosts]
+                hosts = [(host[1].split("."), host[0])
+                         for host in reversehosts
+                         if (host[1].split("."), host[0]) not in hosts]
+                hosts_external = [(host[1].split("."), host[0])
+                                  for host in reversehosts
+                                  if ((host[1].split("."), host[0]) not in hosts
+                                  and host[2] == 'global')]
                 context = Context({
                     'hosts': hosts,
                     'inaddr': filename[0],
                     'fileorigin': None,
                     })        
                 self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
+                context = Context({
+                    'hosts': hosts_external,
+                    'inaddr': filename[0],
+                    'fileorigin': None,
+                    })
+                self.filedata['%s.rev.external' % filename[0]] += self.templates['reverseapp'].render(context)                
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
+            self.Entries['ConfigFile']['%s/%s.rev.external' % (self.filepath, filename[0])] = self.FetchFile
 
         ## here's where the named.conf file gets written
         context = Context({
@@ -251,7 +318,9 @@ class Hostbase(Plugin):
             'reverses': reversenames,
             })        
         self.filedata['named.conf'] = self.templates['named'].render(context)
-        self.Entries['ConfigFile']['%s/named.conf' % self.filepath] = self.FetchFile
+        self.Entries['ConfigFile']['/my/adm/hostbase/files/named.conf'] = self.FetchFile
+        self.filedata['named.conf.views'] = self.templates['namedviews'].render(context)
+        self.Entries['ConfigFile']['/my/adm/hostbase/files/named.conf.views'] = self.FetchFile
 
 
     def buildDHCP(self):
@@ -299,7 +368,7 @@ class Hostbase(Plugin):
             })
 
         self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
-        self.Entries['ConfigFile']['/etc/dhcp3/dhcpd.conf'] = self.FetchFile
+        self.Entries['ConfigFile']['/my/adm/hostbase/files/dhcpd.conf'] = self.FetchFile
 
 
     def buildHosts(self):
@@ -335,10 +404,11 @@ class Hostbase(Plugin):
             INNER JOIN hostbase_ip p ON i.id = p.interface_id)
             INNER JOIN hostbase_name n ON p.id = n.ip_id)
             LEFT JOIN hostbase_cname c ON n.id = c.name_id
-            WHERE p.ip_addr LIKE \'%s%%%%\' AND h.status = 'active'
-            ORDER BY p.ip_addr""" % three_octet[0]
+            WHERE p.ip_addr LIKE \'%s.%%%%\' AND h.status = 'active'""" % three_octet[0]
             cursor.execute(querystring)
-            append_data.append((three_octet, cursor.fetchall()))
+            tosort = list(cursor.fetchall())
+            tosort.sort(lambda x, y: cmp(int(x[2].split(".")[-1]), int(y[2].split(".")[-1])))
+            append_data.append((three_octet, tuple(tosort)))
 
         two_octets = [ip.rstrip('0123456789').rstrip('.') for ip in three_octets]
         two_octets_set = Set(two_octets)
@@ -375,7 +445,7 @@ class Hostbase(Plugin):
                 else:
                     if appenddata[0] == ip[0]:
                         simple = False
-                    ips.append((appenddata[2], appenddata[0], namelist,
+                    ips.append((appenddata[2], appenddata[0], Set(namelist),
                                 cnamelist, simple, appenddata[1]))
                     appenddata = ip
                     simple = True
@@ -384,7 +454,7 @@ class Hostbase(Plugin):
                     if ip[4]:
                         cnamelist.append(ip[4].split('.', 1)[0])
                         simple = False
-            ips.append((appenddata[2], appenddata[0], namelist,
+            ips.append((appenddata[2], appenddata[0], Set(namelist),
                         cnamelist, simple, appenddata[1]))
             context = Context({
                 'subnet': subnet[0],
