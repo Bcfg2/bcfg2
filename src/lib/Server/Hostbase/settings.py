@@ -38,7 +38,7 @@ DATABASE_HOST = options['database_host']
 DATABASE_PORT = int(options['database_port'])
 # Local time zone for this installation. All choices can be found here:
 # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
-TIME_ZONE = ''
+TIME_ZONE = 'America/Chicago'
 
 # enter the defauly MX record machines will get in Hostbase
 # this setting may move elsewhere eventually

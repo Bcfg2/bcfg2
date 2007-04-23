@@ -107,7 +107,7 @@ class MX(models.Model):
 class Name(models.Model):
     DNS_CHOICES = (
         ('global','global'),('internal','ANL internal'),
-        ('mcs-internal','MCS internal'),('private','private')
+        ('private','private')
         )
     ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
     name = models.CharField(maxlength=64, core=True)
