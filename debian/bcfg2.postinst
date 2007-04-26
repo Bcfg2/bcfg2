@@ -22,10 +22,12 @@ case "$1" in
 	OLDUMASK=$(umask)
 	umask 027
 	ucf /usr/share/bcfg2/bcfg2.conf /etc/bcfg2.conf
-	ucfr bcfg2 /etc/bcfg2.conf
 	umask $OLDUMASK
 	ucf /usr/share/bcfg2/bcfg2.default /etc/default/bcfg2
-	ucfr bcfg2 /etc/default/bcfg2
+        if [ -x /usr/bin/ucfr ] ; then
+	    ucfr bcfg2 /etc/bcfg2.conf
+            ucfr bcfg2 /etc/default/bcfg2
+        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
