@@ -9,7 +9,7 @@ XS-Python-Version: >= 2.3
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.8), ucf, lsb-base (>= 3.1-9)
+Depends: ${python:Depends}, debsums, python-apt, python-lxml (>= 0.9), ucf, lsb-base (>= 3.1-9)
 XB-Python-Version: ${python:Versions}
 Description: Configuration management client
  Bcfg2 is a configuration management system that generates configuration sets
@@ -21,7 +21,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python-lxml (>= 0.8), python-gamin | python-fam , libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), python-cheetah
+Depends: ${python:Depends}, python-lxml (>= 0.9), python-gamin | python-fam , libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), python-cheetah
 XB-Python-Version: ${python:Versions}
 Description: Configuration management server
  Bcfg2 is a configuration management system that generates configuration sets
