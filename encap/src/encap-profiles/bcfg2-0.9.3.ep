@@ -497,6 +497,7 @@ printf "Finished bcfg2 preremove script.\n"
 description Bcfg2 - Provides a declarative interface to system configuration
 prereq pkgspec >= bcfg2-python-2.4.4
 prereq pkgspec >= bcfg2-elementtree-1.2.6
+prereq pkgspec >= bcfg2-m2crypto-0.17
 </encapinfo>
 
 </encap_profile>
