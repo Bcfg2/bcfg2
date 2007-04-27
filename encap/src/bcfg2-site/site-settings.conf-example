@@ -11,6 +11,8 @@
 #set global $SITE_SHORTNAME = "localdomain"
 ## SITE_VERSION should be the version of this file, starting at 1
 #set global $SITE_VERSION = "1"
+## SITE_FINGERPRINT value, or "" to disable
+#set global $SITE_FINGERPRINT = ""
 ####
 #### Paths, Variables, and Passwords
 ####
