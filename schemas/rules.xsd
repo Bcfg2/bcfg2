@@ -38,6 +38,7 @@
     <xsd:attribute name='protocol' type='xsd:string'/>
     <xsd:attribute name='reload' type='xsd:string'/>
     <xsd:attribute name='FMRI' type='xsd:string'/>
+    <xsd:attribute name='supervised' type='xsd:string'/>
     <xsd:attribute name='type' type='xsd:string'/>
   </xsd:complexType>
 
