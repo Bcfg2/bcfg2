@@ -526,7 +526,7 @@ if __name__ == '__main__':
             Repopath = arg
 
     # ...then do something with the other arguments
-    if Repopath == '':
+    if Repopath == '' and 'init' not in args:
         Repopath = get_repo_path(configfile)
             
     if len(args) < 1:
