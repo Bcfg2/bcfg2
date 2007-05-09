@@ -179,7 +179,7 @@ if __name__ == '__main__':
                 'bundles': doBundles, 'clients': doClients, 'generators': doGenerators,
                 'groups': doGroups, 'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
                 'showentries': doShowentries, 'update': doUpdate, 'version': doVersion}
-    if '-c' in sys.argv:
+    if '-C' in sys.argv:
         cfile = sys.argv[-1]
     else:
         cfile = '/etc/bcfg2.conf'
