@@ -136,8 +136,8 @@ class Frame:
 
     def Decide(self):
         '''Set self.whitelist based on user interaction'''
-        prompt = "Would you like to install %s: %s? (y/N): "
-        rprompt = "Would you like to remove %s: %s? (y/N): "
+        prompt = "Install %s: %s? (y/N): "
+        rprompt = "Remove %s: %s? (y/N): "
         if self.setup['remove']:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
