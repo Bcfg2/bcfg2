@@ -15,6 +15,10 @@ class ComponentInitError(Exception):
     '''Raised in case of component initialization failure'''
     pass
 
+class ComponentKeyError(Exception):
+    '''raised in case of key parse fails'''
+    pass
+
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
     def finish(self):
@@ -61,7 +65,10 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
         x509 = Bcfg2.tlslite.api.X509()
         s = open(keyfile).read()
         x509.parse(s)
-        self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
+        try:
+            self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
+        except:
+            raise ComponentKeyError
         self.chain = Bcfg2.tlslite.api.X509CertChain([x509])
         BaseHTTPServer.HTTPServer.__init__(self, address, handler)
 
@@ -131,6 +138,9 @@ class Component(TLSServer,
             TLSServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
         except socket.error:
             self.logger.error("Failed to bind to socket")
+            raise ComponentInitError
+        except ComponentKeyError:
+            self.logger.error("Failed to parse key" % (keyfile))
             raise ComponentInitError
         except:
             self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
