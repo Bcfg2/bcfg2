@@ -44,7 +44,9 @@ should only be used in safe conditions.
 .RE
 .B "\-D <driver1>,<driver2>"
 .RS
-Specify a set of bcfg2 tool drivers.
+Specify a set of bcfg2 tool drivers. NOTE: only drivers listed will be
+loaded. (IE, if you don't include POSIX, you will be unable to
+verify/install ConfigFiles, etc)
 .RE
 .B "\-I"
 .RS
