@@ -263,7 +263,7 @@ class SvcTool(Tool):
         '''The Bundle has been updated'''
         for entry in bundle:
             if self.handlesEntry(entry):
-                if entry.get('status') == 'on':
+                if entry.get('status') == 'on' and not self.setup['build']:
                     self.logger.debug('Restarting service %s' % entry.get('name'))
                     rc = self.cmd.run('/etc/init.d/%s %s' % \
                                       (entry.get('name'), entry.get('reload', self.__svcrestart__)))[0]
