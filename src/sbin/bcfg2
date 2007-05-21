@@ -3,7 +3,7 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-import logging, os, signal, tempfile, time, xmlrpclib
+import getopt, logging, os, signal, sys, tempfile, time, xmlrpclib
 import Bcfg2.Options, Bcfg2.Client.XML, Bcfg2.Client.Frame, Bcfg2.Client.Tools
 
 try:
@@ -71,7 +71,13 @@ class Client:
                        False, False, False, True),
             }
 
-        self.setup = Bcfg2.Options.OptionParser('bcfg2', optinfo).parse()
+        optparser = Bcfg2.Options.OptionParser('bcfg2', optinfo)
+        self.setup = optparser.parse()
+        if getopt.getopt(sys.argv[1:],
+                         optparser.shortopt, optparser.longopt)[1]:
+            print "Bcfg2 takes no arguments, only options"
+            print optparser.helpmsg
+            raise SystemExit, 1
         level = 30
         if self.setup['verbose']:
             level = 20
