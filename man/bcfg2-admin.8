@@ -2,18 +2,46 @@
 .SH NAME
 bcfg2-admin \- Perform repository administration tasks
 .SH SYNOPSIS
-.B bcfg2-server
+.B bcfg2-admin
 .I init
 .I compare <old> <new>
-.I mineentry <client> <entry type> <entry name>
 .I minestruct <client>
+.I pull <client> <entry type> <entry name>
+.I tidy
 .I viz [-h] [-b] [-k] [-o output.png] [-r]
 
 .SH DESCRIPTION
 .PP
-.B bcfg2-server
-This daemon serves configurations to clients based on the data in its 
-repository. 
+.B bcfg2-admin
+Perform bcfg2 repository administration
+.SH MODES
+.PP 
+.B init
+.RS
+Initialize a new repository (interactive)
+.RE
+.B compare
+.RS
+Compare two client configurations. Can be used to verify consistent
+behavior between releases
+.RE
+.B minestruct
+.RS
+Build structure entries based on client statistics extra entries
+.RE
+.B pull
+.RS
+Install configuration information into repo based on client bad
+entries
+.RE
+.B tidy
+.RS
+Remove unused files from repository
+.RE
+.B viz
+.RS
+Create a graphviz diagram of client, group and bundle information
+.RE
 .SH VIZ OPTIONS
 .PP
 .B \-h

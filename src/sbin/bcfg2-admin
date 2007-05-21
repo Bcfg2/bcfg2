@@ -18,6 +18,8 @@ pull <client> <entry type> <entry name> - mine statistics for entry information
 minestruct  <client> - mine statistics for extra entries
 viz         [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]
 client      add name=  profile=  uuid=  password=  secure=  location=
+tidy        - clean up unused files from repo
+compare <config1.xml> <config2.xml> - compare two configurations for differences
 '''
 
 config = '''
