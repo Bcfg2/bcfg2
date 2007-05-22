@@ -114,7 +114,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 if 'address' in client.attrib:
                     caddr = client.get('address')
                     if self.addresses.has_key(caddr):
-                        self.addresses[caddr].append(clname))
+                        self.addresses[caddr].append(clname)
                     else:
                         self.addresses[caddr] = [clname]
                 if 'uuid' in client.attrib:
