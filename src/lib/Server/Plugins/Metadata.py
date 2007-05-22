@@ -110,28 +110,31 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.addresses = {}
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
+                clname = client.get('name').lower()
                 if 'address' in client.attrib:
                     caddr = client.get('address')
                     if self.addresses.has_key(caddr):
-                        self.addresses[caddr].append(client.get('name'))
+                        self.addresses[caddr].append(clname))
                     else:
-                        self.addresses[caddr] = [client.get('name')]
+                        self.addresses[caddr] = [clname]
                 if 'uuid' in client.attrib:
-                    self.uuid[client.get('uuid')] = client.get('name')
+                    self.uuid[client.get('uuid')] = clname
                 if 'secure' in client.attrib:
-                    self.secure.append(client.get('name'))
+                    self.secure.append(clname)
                 if client.get('location', 'fixed') == 'floating':
-                    self.floating.append(client.get('name'))
+                    self.floating.append(clname)
                 if 'password' in client.attrib:
-                    self.passwords[client.get('name')] = client.get('password')
-                for alias in [alias for alias in client.findall('Alias') if 'address' in alias.attrib]:
+                    self.passwords[clname] = client.get('password')
+                for alias in [alias for alias in client.findall('Alias')\
+                              if 'address' in alias.attrib]:
                     if self.addresses.has_key(alias.get('address')):
-                        self.addresses[alias.get('address')].append(client.get('name'))
+                        self.addresses[alias.get('address')].append(clname)
                     else:
-                        self.addresses[alias.get('address')] = (client.get('name'))
+                        self.addresses[alias.get('address')] = [clname]
                     
-                self.clients.update({client.get('name'): client.get('profile')})
-                [self.aliases.update({alias.get('name'): client.get('name')}) for alias in client.findall('Alias')]
+                self.clients.update({clname: client.get('profile')})
+                [self.aliases.update({alias.get('name'): clname}) \
+                 for alias in client.findall('Alias')]
         elif dest == 'groups.xml':
             self.public = []
             self.profiles = []
@@ -244,7 +247,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
 
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
-        print self.session_cache
+        #print self.session_cache
         if self.session_cache.has_key(addresspair):
             (stamp, uuid) = self.session_cache[addresspair]
             if time.time() - stamp < 60:
@@ -256,7 +259,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 raise MetadataConsistencyError
             return self.addresses[address][0]
         try:
-            return socket.gethostbyaddr(address)[0]
+            return socket.gethostbyaddr(address)[0].lower()
         except socket.herror:
             warning = "address resolution error for %s" % (address)
             self.logger.warning(warning)
