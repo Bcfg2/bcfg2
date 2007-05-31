@@ -110,6 +110,7 @@ def doHelp(_, dummy):
     print 'mappings <type*> <name*>- print generator mappings for optional type and name'
     print 'quit'
     print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
+    print 'showclient <client1> <client2> - show metadata for given hosts'
     print 'update - process pending file events'
     print 'version - print version of this tool'
 
@@ -136,6 +137,38 @@ def doGroups(_, core):
         gdata.remove(group)
         data.append((group, prof, cat, ','.join(gdata)))
     printTabular(data)
+
+def doShowclient(cmd, core):
+    ''' print host metadata'''
+    data = [('Client', 'Profile', "Groups", "Bundles")]
+    for client in cmd[1:]:
+        if client not in core.metadata.clients:
+            print "Client %s not defined" % client
+            continue
+        profile = core.metadata.clients[client]
+        bundles, groups, categories = core.metadata.groups[profile]
+        groups.remove(profile)
+        numbundles = len(bundles)
+        numgroups = len(groups)
+        num = max((numbundles, numgroups))
+        for i in range(0,num):
+            if i == 0:
+                c = client
+                p = profile
+            else:
+                c = ""
+                p = ""
+            if i < numbundles:
+                b = bundles[i]
+            else:
+                b = ""
+            if i < numgroups:
+                g = groups[i]
+            else:
+                g = ""
+            data.append((c, p, g, b))
+    if len(data) > 1:
+        printTabular(data)
 
 def doMappings(cmd, core):
     '''print out mapping info'''
@@ -175,10 +208,13 @@ def doVersion(_, dummy):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
-    dispatch = {'build': doBuild, 'buildall': doBuildAll, 'buildfile': doBuildFile,
-                'bundles': doBundles, 'clients': doClients, 'generators': doGenerators,
-                'groups': doGroups, 'help': doHelp, 'mappings': doMappings, 'quit': doQuit,
-                'showentries': doShowentries, 'update': doUpdate, 'version': doVersion}
+    dispatch = {'build': doBuild, 'buildall': doBuildAll,
+                'buildfile': doBuildFile, 'bundles': doBundles,
+                'clients': doClients, 'generators': doGenerators,
+                'groups': doGroups, 'help': doHelp,
+                'mappings': doMappings, 'quit': doQuit,
+                'showentries': doShowentries, 'update': doUpdate,
+                'version': doVersion, 'showclient': doShowclient}
     if '-C' in sys.argv:
         cfile = sys.argv[-1]
     else:
