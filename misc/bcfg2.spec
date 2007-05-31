@@ -5,6 +5,13 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
 
+# Most rpm-based distributions include the lxml package a 'python-lxml',
+# but some distributions and some people who roll their own lxml packages
+# call it just 'lxml'. We'll try to catch both.
+%define dfl_lxml python-lxml
+%define alt_lxml lxml
+%define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
+
 Name:             bcfg2
 Version:          0.9.4
 Release: %{release}
@@ -19,7 +26,7 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
-Requires:         python-lxml >= 0.9
+Requires:         %{lxmldep} >= 0.9
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
