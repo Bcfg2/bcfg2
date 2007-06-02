@@ -3,6 +3,7 @@
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
+import xml.sax.saxutils
 
 log = logging.getLogger('bcfg-admin')
 
@@ -34,7 +35,7 @@ sendmailpath = /usr/sbin/sendmail
 [communication]
 protocol = xmlrpc/ssl
 password = %s
-key = /etc/bcfg2.key
+key = %s/bcfg2.key
 
 [components]
 bcfg2 = %s
@@ -92,13 +93,16 @@ def initialize_repo(cfile):
     if uri == '':
         uri = server
 
-    open(cfile,"w").write(config % ( repo, password, uri ))
+    #guess path of ssl key file
+    keypath = os.path.dirname(os.path.abspath(cfile))
+
+    open(cfile,"w").write(config % ( repo, password, keypath, uri ))
 
     #generate the ssl key
     print "Now we will generate the ssl key used for secure communitcation"
-    os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out /etc/bcfg2.key -keyout /etc/bcfg2.key')
+    os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
     try:
-        os.chmod('/etc/bcfg2.key','0600')
+        os.chmod('%s/bcfg2.key'% keypath,'0600')
     except:
         pass
     
