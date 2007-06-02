@@ -31,7 +31,8 @@ toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'},
                 'debian': {'Service':'deb', 'Package':'deb'},
                 'nexenta': {'Service':'smf', 'Package':'deb'},
                 'solaris': {'Service':'smf', 'Package':'sysv'},
-                'gentoo': {'Service':'rc-update', 'Package':'ebuild'}}
+                'gentoo': {'Service':'rc-update', 'Package':'ebuild'},
+                'freebsd': {'Package':'freebsdpkg'}}
 
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
