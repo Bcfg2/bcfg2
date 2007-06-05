@@ -64,12 +64,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probes = False
         self.probedata = {}
         self.extra = {'groups.xml':[], 'clients.xml':[]}
-        CP = ConfigParser.ConfigParser()
-        if '-C' in sys.argv:
-            CP.read([sys.argv[sys.argv.index('-C') + 1]])
-        else:
-            CP.read(['/etc/bcfg2.conf'])
-        self.password = CP.get('communication', 'password')
+        self.password = core.cfile.get('communication', 'password')
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
