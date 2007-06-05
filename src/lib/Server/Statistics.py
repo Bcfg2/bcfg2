@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
-from time import asctime, localtime, time
+from time import asctime, localtime, time, strptime
 
 import logging, lxml.etree, os
 
@@ -53,8 +53,9 @@ class Statistics(object):
         '''Updates the statistics of a current node with new data'''
 
         # Current policy: 
-        # - Keep latest clean run for clean nodes
-        # - Keep latest clean and dirty run for dirty nodes
+        # - Keep anything less than 24 hours old
+        #   - Keep latest clean run for clean nodes
+        #   - Keep latest clean and dirty run for dirty nodes
         newstat =  xml.find('Statistics')
 
         if newstat.get('state') == 'clean':
@@ -72,12 +73,14 @@ class Statistics(object):
             node = SubElement(self.element, 'Node', name=client)
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
-            self.element.remove(nodes[0])
-            node = SubElement(self.element, 'Node', name=client)
+            node = nodes[0]
+            now = asctime(localtime())
+            for elem in [elem for elem in node.findall('Statistics') if isOlderThan24h(elem.get('time')) == True]:
+                node.remove(elem)
         elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
-            for elem in [elem for elem in node.findall('Statistics') if elem.get('state') == 'dirty']:
+            for elem in [elem for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and isOlderThan24h(elem.get('time')) == True]:
                 node.remove(elem)
         else:
             # Shouldn't be reached
@@ -92,3 +95,15 @@ class Statistics(object):
         # Set dirty
         self.dirty = 1
         self.WriteBack()
+
+
+    def isOlderThan24h(time):
+        '''Helper function to determine if <time> string is older than 24 hours'''
+        now = time()
+        utime = mktime(strptime(time))
+        secondsPerDay = 60*60*24
+
+        if (now-utime)>secondsPerDay:
+            return True
+        else:
+            return False
