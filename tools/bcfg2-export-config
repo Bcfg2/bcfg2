@@ -1,21 +1,40 @@
 #!/usr/bin/env python
-# Contributed by gogo
+# Contributed by Robert Gogolok <gogo@cs.uni-sb.de>
 
-'''TODO'''
+# TODO:
+# - export plugins
+# - document usage
+
+'''This tool exports the bcfg2 configuration for the specified client to an output directory.
+
+First the specified output directory is created.
+
+Then for every <ConfigFile> entry of the specified host
+the appropriate directory under the output directory is created.
+The metadata information get stored in an index file in the output directory. 
+
+The format of the index file is:
+user,group,permission,/path/to/file
+'''
 __revision__ = '$Revision: 221 $'
 
-import logging, lxml.etree, Bcfg2.Logging, Bcfg2.Server.Core, Bcfg2.Server.Metadata, Bcfg2.Server.Plugin
+import logging, lxml.etree, Bcfg2.Logging, Bcfg2.Server.Core
+import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 import sys,os,time,errno
 from optparse import OptionParser
 
+DEFAULT_BCFG2_CONFIGFILE = "/etc/bcfg2.conf"
+DEFAULT_FAM_STEPS = 20
+DEFAULT_INDEX_FILE = "index.txt"
+TOOLNAME = "bcfg2-export-config"
+
 def buildConfiguration(core, client):
   '''Build client configuration.'''
-
   return core.BuildConfiguration(client)
 
-def write_entry(user, group, permission, path):
-  '''Write an entry to the configfiles file.'''
-  f = open(outputdir + '/configfiles', 'a')
+def write_entry(indexfile, user, group, permission, path):
+  '''Write an entry to the file listing ConfigFile entries in outputdir.'''
+  f = open(outputdir + '/%s' % indexfile, 'a')
   f.write("%s,%s,%s,%s\n" % (user, group, permission, path))
   f.close()
   logger.info("Wrote entry." )
@@ -27,7 +46,7 @@ class ConfigFileNotBuild(Exception):
     return repr(self.value)
 
 
-def handleConfigFileEntry(cfg):
+def handleConfigFileEntry(indexfile, cfg):
   '''Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
   in the appropriate directory under the output directory.'''
   name       = cfg.get('name')
@@ -58,7 +77,7 @@ def handleConfigFileEntry(cfg):
 
   # write entry
   try:
-    write_entry(user, group, permission, name)
+    write_entry(indexfile, user, group, permission, name)
   except:
     logger.error("Writing entry to configfiles failed!")
     raise
@@ -66,22 +85,25 @@ def handleConfigFileEntry(cfg):
   logger.info("<<<")
 
 if __name__ == '__main__':
-  Bcfg2.Logging.setup_logging('export-config-AMS', to_syslog=False)
-  logger = logging.getLogger('export-config-AMS')
+  Bcfg2.Logging.setup_logging('%s' % TOOLNAME, to_syslog=False)
+  logger = logging.getLogger('%s' % TOOLNAME)
 
   # parse command line options, arguments
   parser = OptionParser(usage = "%prog [options] client outputdir", version = __revision__)
-  parser.add_option("-c", "--config-file", action="store", dest="configfile", 
-      help="Use given bcfg2.conf file, default: /etc/bcfg2.conf")
+  parser.add_option("-C", "--config-file", action="store", dest="configfile", 
+      help="Use given bcfg2.conf file, by default %s" % DEFAULT_BCFG2_CONFIGFILE)
 
   parser.add_option("-f", "--fam-steps", action="store", dest="famsteps",
-      type = "int", help="How many times to handle fam events, default: 10")
+      type = "int", help="How many times to handle fam/gamin events, by default %s" % DEFAULT_FAM_STEPS)
 
-  parser.set_defaults(famsteps = 10, configfile="/etc/bcfg2.conf")
+  parser.add_option("-i", "--index-filename", action="store", dest="indexfile",
+      help="Filename for index of exported ConfigFile entries, by default %s" % DEFAULT_INDEX_FILE)
+
+  parser.set_defaults(configfile=DEFAULT_BCFG2_CONFIGFILE, famsteps = DEFAULT_FAM_STEPS, indexfile = DEFAULT_INDEX_FILE)
 
   (options, args) = parser.parse_args()
 
-  # ensure client hostname is given
+  # ensure client hostname and outputdir is given
   if len(args) != 2:
     parser.error("incorrect number of arguments.")
 
@@ -126,9 +148,10 @@ if __name__ == '__main__':
   # handle <ConfigFile> entries
   for configfile in [cfile for cfile in client_config.findall(".//ConfigFile")]:
     try:
-      handleConfigFileEntry(configfile)
+      handleConfigFileEntry(options.indexfile, configfile)
     except ConfigFileNotBuild, e:
       logger.error("Error: Plugin failed to generate file content for ConfigFile %s !" % e)
       raise SystemExit, 1
     except:
+      logger.error("unknown error, I give up")
       raise SystemExit, 1
