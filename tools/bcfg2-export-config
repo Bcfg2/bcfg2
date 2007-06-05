@@ -13,12 +13,12 @@ def buildConfiguration(core, client):
 
   return core.BuildConfiguration(client)
 
-def write_siggi_entry(user, group, permission, path):
-  '''Write an entry to the configfiles.siggi file which is needed by siggi.'''
-  f = open(outputdir + '/configfiles.siggi', 'a')
+def write_entry(user, group, permission, path):
+  '''Write an entry to the configfiles file.'''
+  f = open(outputdir + '/configfiles', 'a')
   f.write("%s,%s,%s,%s\n" % (user, group, permission, path))
   f.close()
-  logger.info("Wrote siggi entry." )
+  logger.info("Wrote entry." )
 
 class ConfigFileNotBuild(Exception):
   def __init__(self, value):
@@ -56,11 +56,11 @@ def handleConfigFileEntry(cfg):
     raise ConfigFileNotBuild(name)
   f.close()
 
-  # write siggi entry
+  # write entry
   try:
-    write_siggi_entry(user, group, permission, name)
+    write_entry(user, group, permission, name)
   except:
-    logger.error("Writing entry to configfiles.siggi failed!")
+    logger.error("Writing entry to configfiles failed!")
     raise
 
   logger.info("<<<")
