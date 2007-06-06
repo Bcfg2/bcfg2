@@ -1,7 +1,7 @@
 '''This provides bcfg2 support for yum'''
 __revision__ = '$Revision: $'
 
-import Bcfg2.Client.Tools.RPMng, ConfigParser, sys
+import Bcfg2.Client.Tools.RPMng, ConfigParser, sys, os.path
 
 try:
     set
@@ -15,7 +15,7 @@ try:
         CP.read([sys.argv[sys.argv.index('-C') + 1]])
     else:
         CP.read(['/etc/bcfg2.conf'])
-    if CP.get('YUMng', 'autodep') == 'false':
+    if CP.get('YUMng', 'autodep').lower() == 'false':
         YAD = False
 except:
     pass
@@ -29,11 +29,14 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     __handles__ = [('Package', 'yum'), ('Package', 'rpm')]
  
     __req__ = {'Package': ['name', 'version']}
-    __ireq__ = {'Package': ['name', 'version']}
+    __ireq__ = {'Package': ['name']}
+    #__ireq__ = {'Package': ['name', 'version']}
  
     __new_req__ = {'Package': ['name'], 'Instance': ['version', 'release', 'arch']}
-    __new_ireq__ = {'Package': ['name', 'uri'], \
-                    'Instance': ['simplefile', 'version', 'release', 'arch']}
+    __new_ireq__ = {'Package': ['name'], \
+                    'Instance': []}
+    #__new_ireq__ = {'Package': ['name', 'uri'], \
+    #                'Instance': ['simplefile', 'version', 'release', 'arch']}
 
     __gpg_req__ = {'Package': ['name', 'version']}
     __gpg_ireq__ = {'Package': ['name', 'version']}
@@ -85,7 +88,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
         for pkg in packages:
-            for inst in [inst for inst in pkg if inst.tag == 'Instance' or inst.tag == 'Package']:
+            for inst in [pinst for pinst in pkg \
+                         if pinst.tag in ['Instance', 'Package']]:
                 if self.instance_status[inst].get('installed', False) == False:
                     if pkg.get('name') == 'gpg-pubkey':
                         gpg_keys.append(inst)
@@ -128,12 +132,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
             install_args = []
             for inst in install_pkgs:
-                pkg_arg = self.instance_status[inst].get('pkg').get('name') + '-'
+                pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 if inst.get('epoch', False):
-                    pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                if inst.get('arch', False):
-                    pkg_arg = pkg_arg + '.' + inst.get('arch')
+                    pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
+                              '-' + inst.get('release') + '.' + inst.get('arch')
+                else:
+                    if inst.get('version', False):
+                        pkg_arg = pkg_arg + '-' + inst.get('version')
+                        if inst.get('release', False):
+                            pkg_arg = pkg_arg + '-' + inst.get('release')
+                    if inst.get('arch', False):
+                        pkg_arg = pkg_arg + '.' + inst.get('arch')
                 install_args.append(pkg_arg)
             
             cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
@@ -165,12 +174,18 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.logger.error("Single Pass Install of Packages Failed")
                 installed_instances = []
                 for inst in install_pkgs:
-                    pkg_arg = self.instance_status[inst].get('pkg').get('name') + '-'
+                    pkg_arg = self.instance_status[inst].get('pkg').get('name')
                     if inst.get('epoch', False):
-                        pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                    pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                    if inst.get('arch', False):
-                        pkg_arg = pkg_arg + '.' + inst.get('arch')
+                        pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
+                                  '-' + inst.get('release') + '.' + inst.get('arch')
+                    else:
+                        if inst.get('version', False):
+                            pkg_arg = pkg_arg + '-' + inst.get('version')
+                            if inst.get('release', False):
+                                pkg_arg = pkg_arg + '-' + inst.get('release')
+                        if inst.get('arch', False):
+                            pkg_arg = pkg_arg + '.' + inst.get('arch')
+    
                     cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
                     if cmdrc == 0:
                         installed_instances.append(inst)
@@ -208,12 +223,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
             upgrade_args = []
             for inst in upgrade_pkgs:
-                pkg_arg = self.instance_status[inst].get('pkg').get('name') + '-'
-                if inst.haskey('epoch'):
-                    pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                if inst.haskey('arch'):
-                    pkg_arg = pkg_arg + '.' + inst.get('arch')
+                pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                if inst.get('epoch', False):
+                    pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
+                              '-' + inst.get('release') + '.' + inst.get('arch')
+                else:
+                    if inst.get('version', False):
+                        pkg_arg = pkg_arg + '-' + inst.get('version')
+                        if inst.get('release', False):
+                            pkg_arg = pkg_arg + '-' + inst.get('release')
+                    if inst.get('arch', False):
+                        pkg_arg = pkg_arg + '.' + inst.get('arch')
                 upgrade_args.append(pkg_arg)
             
             cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
@@ -245,12 +265,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.logger.error("Single Pass Install of Packages Failed")
                 installed_instances = []
                 for inst in upgrade_pkgs:
-                    pkg_arg = self.instance_status[inst].get('pkg').get('name') + '-'
-                    if inst.haskey('epoch'):
-                        pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                    pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                    if inst.haskey('arch'):
-                        pkg_arg = pkg_arg + '.' + inst.get('arch')
+                    pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                    if inst.get('epoch', False):
+                        pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
+                                  '-' + inst.get('release') + '.' + inst.get('arch')
+                    else:
+                        if inst.get('version', False):
+                            pkg_arg = pkg_arg + '-' + inst.get('version')
+                            if inst.get('release', False):
+                                pkg_arg = pkg_arg + '-' + inst.get('release')
+                        if inst.get('arch', False):
+                            pkg_arg = pkg_arg + '.' + inst.get('arch')
                     cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
                     if cmdrc == 0:
                         installed_instances.append(inst)
@@ -308,7 +333,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     erase_args.append(pkg_arg)
                 else:
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
-                                                 % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                                 % (pkg.get('name'), self.str_evra(pkg)))
                     self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
 
         cmdrc, output = self.cmd.run(pkgtool % " ".join(erase_args))
@@ -332,7 +357,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                             pkg_arg = pkg_arg + '.' + inst.get('arch')
                     else:
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
-                                                 % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                                 % (pkg.get('name'), self.str_evra(pkg)))
                         self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
 
                     cmdrc, output = self.cmd.run(self.pkgtool % pkg_arg)
