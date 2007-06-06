@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
-from time import asctime, localtime, time, strptime
+from time import asctime, localtime, time, strptime, mktime
 
 import logging, lxml.etree, os
 
@@ -74,13 +74,11 @@ class Statistics(object):
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
             node = nodes[0]
-            for elem in [elem for elem in node.findall('Statistics') if self.isOlderThan24h(elem.get('time'))]:
-                node.remove(elem)
+            [node.remove(elem) for elem in node.findall('Statistics') if self.isOlderThan24h(elem.get('time'))]
         elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
-            for elem in [elem for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and self.isOlderThan24h(elem.get('time')))]:
-                node.remove(elem)
+            [node.remove(elem) for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and self.isOlderThan24h(elem.get('time')))]
         else:
             # Shouldn't be reached
             self.logger.error("Duplicate node entry for %s"%(client))
