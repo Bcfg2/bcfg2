@@ -4,7 +4,9 @@ urlpatterns = patterns('',
     # Example:
     # (r'^Bcfg2.Server.Reports/', include('Bcfg2.Server.Reports.apps.foo.urls.foo')),
     (r'^/*$','Bcfg2.Server.Reports.reports.views.index'),
+
     (r'^clients/(?P<hostname>\S+)/(?P<pk>\d+)/$', 'Bcfg2.Server.Reports.reports.views.client_detail'),
+    (r'^clients/(?P<hostname>\S+)/manage/$', 'Bcfg2.Server.Reports.reports.views.client_manage'),
     (r'^clients/(?P<hostname>\S+)/$', 'Bcfg2.Server.Reports.reports.views.client_detail'),
     (r'^clients/(?P<hostname>\S+)$', 'Bcfg2.Server.Reports.reports.views.client_detail'),
                        #hack because hostnames have periods and we still want to append slash

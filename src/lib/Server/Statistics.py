@@ -74,13 +74,12 @@ class Statistics(object):
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
             node = nodes[0]
-            now = asctime(localtime())
-            for elem in [elem for elem in node.findall('Statistics') if isOlderThan24h(elem.get('time')) == True]:
+            for elem in [elem for elem in node.findall('Statistics') if self.isOlderThan24h(elem.get('time'))]:
                 node.remove(elem)
         elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
-            for elem in [elem for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and isOlderThan24h(elem.get('time')) == True]:
+            for elem in [elem for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and self.isOlderThan24h(elem.get('time')))]:
                 node.remove(elem)
         else:
             # Shouldn't be reached
@@ -97,13 +96,11 @@ class Statistics(object):
         self.WriteBack()
 
 
-    def isOlderThan24h(time):
+    def isOlderThan24h(self, testTime):
         '''Helper function to determine if <time> string is older than 24 hours'''
         now = time()
-        utime = mktime(strptime(time))
+        utime = mktime(strptime(testTime))
         secondsPerDay = 60*60*24
 
-        if (now-utime)>secondsPerDay:
-            return True
-        else:
-            return False
+        return (now-utime) > secondsPerDay
+

@@ -172,6 +172,13 @@ def client_detail(request, hostname = None, pk = None):
         interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
     return render_to_response('clients/detail.html', {'client': client, 'interaction': interaction})
 
+def client_manage(request, hostname = None):
+    #SETUP error pages for when you specify a client or interaction that doesn't exist
+    client = get_object_or_404(Client, name=hostname)
+    #if post data has a ?disable=DATE, set it for the client in the DB (model!) +save
+    interaction = client.current_interaction
+    return render_to_response('clients/manage.html', {'client': client, 'interaction': interaction})
+
 def display_sys_view(request, timestamp = 'now'):
     client_lists = prepare_client_lists(request, timestamp)
     return render_to_response('displays/sys_view.html', client_lists)
