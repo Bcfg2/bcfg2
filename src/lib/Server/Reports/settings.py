@@ -59,7 +59,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
-    'django.middleware.profile.ProfileMiddleware',
 )
 
 ROOT_URLCONF = 'Bcfg2.Server.Reports.urls'
