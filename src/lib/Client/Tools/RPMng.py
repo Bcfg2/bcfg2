@@ -177,7 +177,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                 self.instance_status[inst]['installed'] = True
          
                                 if self.pkg_verify == 'true' and \
-                                   inst.get('pkg_checks', 'true') == 'true':
+                                   inst.get('pkg_verify', 'true') == 'true':
                                     flags = inst.get('verify_flags', '').split(',')
                                     if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
                                        entry.get('name') != 'gpg-pubkey':
@@ -232,7 +232,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                     self.instance_status[inst]['installed'] = True
     
                                     if self.pkg_verify == 'true' and \
-                                       inst.get('pkg_checks', 'true') == 'true':
+                                       inst.get('pkg_verify', 'true') == 'true':
                                         flags = inst.get('verify_flags', '').split(',') 
                                         if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids:
                                             flags += ['nosignature', 'nodigest']
