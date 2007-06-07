@@ -17,6 +17,16 @@
           <xsd:attribute type='xsd:string' name='name'/>
         </xsd:complexType>
       </xsd:element>
+      <xsd:element name='Instance'>
+        <xsd:complexType>
+          <xsd:attribute name='arch' type='xsd:string'/>
+          <xsd:attribute name='epoch' type='xsd:string'/>
+          <xsd:attribute name='version' type='xsd:string'/>
+          <xsd:attribute name='release' type='xsd:string'/>
+          <xsd:attribute name='simplefile' type='xsd:string'/>
+          <xsd:attribute name='pkg_verify' type='xsd:string'/>
+        </xsd:complexType>
+      </xsd:element>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name'/>
     <xsd:attribute type='xsd:string' name='version'/>
@@ -28,6 +38,7 @@
     <xsd:attribute type='xsd:string' name='srcs'/>
     <xsd:attribute type='xsd:string' name='type'/>
     <xsd:attribute type='xsd:string' name='bname'/>
+    <xsd:attribute name='pkg_checks' type='xsd:string'/>
   </xsd:complexType>
 
   <xsd:complexType name='ContainerType'>
