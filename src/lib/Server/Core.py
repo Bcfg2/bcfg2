@@ -103,7 +103,7 @@ class GaminEvent(object):
     '''This class provides an event analogous to python-fam events based on gamin sources'''
     def __init__(self, request_id, filename, code):
         action_map = {GAMCreated: 'created', GAMExists: 'exists', GAMChanged: 'changed',
-                      GAMDeleted: 'deleted', GAMEndExist: 'endExist'}
+                      GAMDeleted: 'deleted', GAMEndExist: 'endExist', GAMMoved: 'moved'}
         self.requestID = request_id
         self.filename = filename
         if action_map.has_key(code):
@@ -185,7 +185,7 @@ class GaminFam(object):
         return count
         
 try:
-    from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted
+    from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted, GAMMoved
     monitor = GaminFam
 except ImportError:
     # fall back to _fam
