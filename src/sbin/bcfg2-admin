@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
@@ -46,13 +46,14 @@ groups = '''
    <Group profile='true' public='false' name='basic'>
       <Group name='%s'/>
    </Group>
-   <Group name='ubuntu' toolset='debian'/>
-   <Group name='debian' toolset='debian'/>
-   <Group name='redhat' toolset='rh'/>
-   <Group name='suse' toolset='rh'/>
+   <Group name='ubuntu'   toolset='debian'/>
+   <Group name='debian'   toolset='debian'/>
+   <Group name='freebsd'  toolset='freebsd'/>
+   <Group name='gentoo'   toolset='gentoo'/>
+   <Group name='redhat'   toolset='rh'/>
+   <Group name='suse'     toolset='rh'/>
    <Group name='mandrake' toolset='rh'/>
-   <Group name='solaris' toolset='solaris'/>
-   <Group name='gentoo' toolset='gentoo'/>
+   <Group name='solaris'  toolset='solaris'/>
 </Groups>
 '''
 clients = '''
@@ -70,6 +71,7 @@ d. Debian
 e. Ubuntu
 f. Solaris
 g. Gentoo
+h. FreeBSD
 '''
 
 def err_exit(emsg):
@@ -123,7 +125,7 @@ def initialize_repo(cfile):
     while ( selection == '' ):
         print prompt
         selection = raw_input(" selection: ")
-        if selection.lower() not in 'abcdefg':
+        if selection.lower() not in 'abcdefgh':
             selection = ''
     if selection.lower() == 'a':
         selection = 'redhat'
@@ -139,6 +141,8 @@ def initialize_repo(cfile):
         selection = 'solaris'
     elif selection.lower() == 'g':
         selection = 'gentoo'
+    elif selection.lower() == 'h':
+        selection = 'freebsd'
 
     open("%s/Metadata/groups.xml"%repo, "w").write(groups%selection)
 
