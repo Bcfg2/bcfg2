@@ -8,8 +8,13 @@ from os import dup2, execl, fork, uname, wait
 import lxml.etree, sys, time, ConfigParser
 
 if __name__ == '__main__':
+    if '-C' in sys.argv:
+        cfpath = sys.argv[sys.argv.index('-C') + 1]
+    else:
+        cfpath = '/etc/bcfg2.conf'
+
     c = ConfigParser.ConfigParser()
-    c.read(['/etc/bcfg2.conf'])
+    c.read([cfpath])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     
@@ -35,7 +40,7 @@ if __name__ == '__main__':
                 dup2(null.fileno(), sys.__stderr__.fileno())
                 if osname == 'Linux':
                     execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
-                elif osname == 'Darwin':
+                elif osname in ['Darwin', 'FreeBSD']:
                     execl('/sbin/ping', 'ping', '-t', '5', '-c', '1', host)
                 elif osname == 'SunOS':
                     execl('/usr/sbin/ping', 'ping', host, '56', '1')
