@@ -84,6 +84,30 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             self.pkg_verify = 'true'
         self.logger.debug('pkg_verify = %s' % self.pkg_verify)
 
+        # installed_action
+        if RPMng_CP.has_option(self.__name__, 'installed_action'):
+            self.installed_action = RPMng_CP.get(self.__name__, 'installed_action').lower()
+        else:
+            self.installed_action = 'install'
+        self.logger.debug('installed_action = %s' % self.installed_action)
+
+        # version_fail_action
+        if RPMng_CP.has_option(self.__name__, 'version_fail_action'):
+            self.version_fail_action = RPMng_CP.get(self.__name__, 'version_fail_action').lower()
+        else:
+            self.version_fail_action = 'upgrade'
+        self.logger.debug('version_fail_action = %s' % self.version_fail_action)
+
+        # verify_fail_action
+        if self.__name__ == "RPMng":
+            if RPMng_CP.has_option(self.__name__, 'verify_fail_action'):
+                self.verify_fail_action = RPMng_CP.get(self.__name__, 'verify_fail_action').lower()
+            else:
+                self.verify_fail_action = 'reinstall'
+        else: # yum can't reinstall packages.
+            self.verify_fail_action = 'none'
+        self.logger.debug('verify_fail_action = %s' % self.verify_fail_action)
+
     def RefreshPackages(self):
         '''
             Creates self.installed{} which is a dict of installed packages.
@@ -310,6 +334,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                                            self.str_evra(inst))
                             qtext_versions = qtext_versions + 'R(%s) ' % self.str_evra(inst)
                             self.instance_status[inst]['modlist'] = modlist
+                            inst.set('verify_status', str(self.instance_status[inst]))
     
                     if self.instance_status[inst]['installed'] == False or \
                        self.instance_status[inst].get('version_fail', False)== True or \
@@ -439,25 +464,50 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.RefreshPackages()
         self.extra = self.FindExtraPackages()
 
-    def reinstall_check(self, verify_results):
+    def FixInstance(self, instance, inst_status):
         '''
            Control if a reinstall of a package happens or not based on the 
            results from RPMng.VerifyPackage().
 
            Return True to reinstall, False to not reintstall.
         '''
-        reinstall = False
+        fix = False
 
-        for inst in verify_results.get('verify'):
-            self.logger.debug('reinstall_check: %s %s:%s-%s.%s' % inst.get('nevra'))
+        if inst_status.get('installed', False) == False:
+            if instance.get('installed_action', 'install') == "install" and \
+               self.installed_action == "install":
+                fix = True
+            else:
+               self.logger.debug('Installed Action for %s %s is to not install' % \
+                                                     (inst_status.get('pkg').get('name'),
+                                                      self.str_evra(instance)))
 
-            # Parse file results
-            for file_result in inst.get('files', []):
-                self.logger.debug('reinstall_check: file: %s' % file_result)
-                if file_result[-2] != 'c':
-                    reinstall = True
+        elif inst_status.get('version_fail', False) == True:
+            if instance.get('version_fail_action', 'upgrade') == "upgrade" and \
+               self.version_fail_action == "upgrade":
+                fix = True
+            else:
+               self.logger.debug('Version Fail Action for %s %s is to not upgrade' % \
+                                                     (inst_status.get('pkg').get('name'),
+                                                      self.str_evra(instance)))
 
-        return reinstall
+        elif inst_status.get('verify_fail', False) == True:
+            if instance.get('verify_fail_action', 'reinstall') == "reinstall" and \
+               self.verify_fail_action == "reinstall":
+                for inst in inst_status.get('verify'):
+                    self.logger.debug('reinstall_check: %s %s:%s-%s.%s' % inst.get('nevra'))
+    
+                    # Parse rpm verify file results
+                    for file_result in inst.get('files', []):
+                        self.logger.debug('reinstall_check: file: %s' % file_result)
+                        if file_result[-2] != 'c':
+                            fix = True
+            else:
+               self.logger.debug('Verify Fail Action for %s %s is to not reinstall' % \
+                                                     (inst_status.get('pkg').get('name'),
+                                                      self.str_evra(instance)))
+
+        return fix
     
     def Install(self, packages):
         '''
@@ -501,10 +551,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         for pkg in packages:
             for inst in [instn for instn in pkg if instn.tag \
                          in ['Instance', 'Package']]:
-                if self.instance_status[inst].get('installed', False) == False or \
-                   self.instance_status[inst].get('version_fail', False) == True or \
-                   (self.instance_status[inst].get('verify_fail', False) == True and \
-                    self.reinstall_check(self.instance_status[inst])):
+                if self.FixInstance(inst, self.instance_status[inst]):
                     if pkg.get('name') == 'gpg-pubkey':
                         gpg_keys.append(inst)
                     elif pkg.get('name') in self.installOnlyPkgs:

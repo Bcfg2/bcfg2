@@ -33,6 +33,9 @@
           <xsd:attribute name='simplefile' type='xsd:string'/>
           <xsd:attribute name='pkg_verify' type='xsd:string'/>
           <xsd:attribute name='verify_flags' type='xsd:string'/>
+          <xsd:attribute name='installed_action' type='xsd:string'/>
+          <xsd:attribute name='version_fail_action' type='xsd:string'/>
+          <xsd:attribute name='verify_fail_action' type='xsd:string'/>
         </xsd:complexType>
       </xsd:element>
     </xsd:choice>
