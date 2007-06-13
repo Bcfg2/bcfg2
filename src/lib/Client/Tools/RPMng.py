@@ -35,11 +35,12 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
     def __init__(self, logger, setup, config, states):
-   
+        self.__name__ = 'RPMng'
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
 
         self.instance_status = {}
         self.extra_instances = []
+        self.modlists = {}
         self.gpg_keyids = self.getinstalledgpg()
 
         # Process thee RPMng section from the config file.
@@ -333,7 +334,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             self.logger.info("*** Instance %s failed RPM verification ***" % \
                                                                            self.str_evra(inst))
                             qtext_versions = qtext_versions + 'R(%s) ' % self.str_evra(inst)
-                            self.instance_status[inst]['modlist'] = modlist
+                            self.modlists[entry] = modlist
+
+                            # Attach status structure for return to server for reporting.
                             inst.set('verify_status', str(self.instance_status[inst]))
     
                     if self.instance_status[inst]['installed'] == False or \
@@ -341,7 +344,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                        self.instance_status[inst].get('verify_fail', False) == True:
                         package_fail = True
                         self.instance_status[inst]['pkg'] = entry
-                        self.instance_status[inst]['modlist'] = modlist
+                        self.modlists[entry] = modlist
     
                 # Find Installed Instances that are not in the Config.
                 extra_installed = self.FindExtraInstances(entry, self.installed[entry.get('name')])
@@ -381,7 +384,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             for inst in instances:
                 qtext_versions = qtext_versions + 'I(%s) ' % self.str_evra(inst)
                 self.instance_status.setdefault(inst, {})['installed'] = False
-                self.instance_status[inst]['modlist'] = modlist
+                self.modlists[entry] = modlist
                 self.instance_status[inst]['pkg'] = entry
                 if inst.tag == 'Instance':
                     bcfg2_versions = bcfg2_versions + '(%s) ' % self.str_evra(inst)
@@ -478,32 +481,45 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                self.installed_action == "install":
                 fix = True
             else:
-               self.logger.debug('Installed Action for %s %s is to not install' % \
+                self.logger.debug('Installed Action for %s %s is to not install' % \
                                                      (inst_status.get('pkg').get('name'),
                                                       self.str_evra(instance)))
 
         elif inst_status.get('version_fail', False) == True:
             if instance.get('version_fail_action', 'upgrade') == "upgrade" and \
-               self.version_fail_action == "upgrade":
+                self.version_fail_action == "upgrade":
                 fix = True
             else:
-               self.logger.debug('Version Fail Action for %s %s is to not upgrade' % \
+                self.logger.debug('Version Fail Action for %s %s is to not upgrade' % \
                                                      (inst_status.get('pkg').get('name'),
                                                       self.str_evra(instance)))
 
-        elif inst_status.get('verify_fail', False) == True:
+        elif inst_status.get('verify_fail', False) == True and self.__name__ == "RPMng":
+            # yum can't reinstall packages so only do this for rpm.
             if instance.get('verify_fail_action', 'reinstall') == "reinstall" and \
                self.verify_fail_action == "reinstall":
                 for inst in inst_status.get('verify'):
+                    # This needs to be a for loop rather than a straight get() 
+                    # because the underlying routines handle multiple packages
+                    # and return a list of results.
                     self.logger.debug('reinstall_check: %s %s:%s-%s.%s' % inst.get('nevra'))
+
+                    if inst.get("hdr", False):
+                        fix = True
     
-                    # Parse rpm verify file results
-                    for file_result in inst.get('files', []):
-                        self.logger.debug('reinstall_check: file: %s' % file_result)
-                        if file_result[-2] != 'c':
-                            fix = True
+                    elif inst.get('files', False):
+                        # Parse rpm verify file results
+                        for file_result in inst.get('files', []):
+                            self.logger.debug('reinstall_check: file: %s' % file_result)
+                            if file_result[-2] != 'c':
+                                fix = True
+                                break
+
+                    # Shouldn't really need this, but included for clarity.
+                    elif inst.get("deps", False):
+                        fix = False
             else:
-               self.logger.debug('Verify Fail Action for %s %s is to not reinstall' % \
+                self.logger.debug('Verify Fail Action for %s %s is to not reinstall' % \
                                                      (inst_status.get('pkg').get('name'),
                                                       self.str_evra(instance)))
 
@@ -562,7 +578,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Fix installOnlyPackages
         if len(install_only_pkgs) > 0:
             self.logger.info("Attempting to install 'install only packages'")
-            install_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),\
+            install_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                   inst.get('simplefile')) \
                                            for inst in install_only_pkgs])
             self.logger.debug("rpm --install --quiet --oldpackage %s" % install_args)
@@ -573,23 +589,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 self.logger.info("Single Pass for InstallOnlyPkgs Succeded")
                 self.RefreshPackages()
 
-                # Reverify all the packages that we might have just changed.
-                # There may be multiple instances per package, only do the 
-                # verification once.
-                install_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in install_only_pkgs])
-                self.logger.info("Reverifying InstallOnlyPkgs")
-                for inst in install_only_pkgs:
-                    pkg_entry = self.instance_status[inst].get('pkg')
-                    if pkg_entry in install_pkg_set:
-                        self.logger.debug("Reverifying InstallOnlyPkg %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg_entry)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
             else:
                 # The rpm command failed.  No packages installed.
                 # Try installing instances individually.
@@ -611,20 +610,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 install_pkg_set = set([self.instance_status[inst].get('pkg') \
                                                       for inst in install_only_pkgs])
                 self.RefreshPackages()
-                for inst in installed_instances:
-                    pkg = inst.get('pkg')
-                    # Reverify all the packages that we might have just changed.
-                    # There may be multiple instances per package, only do the
-                    # verification once.
-                    if pkg in install_pkg_set:
-                        self.logger.debug("Reverifying InstallOnlyPkg %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
 
         # Install GPG keys.
         if len(gpg_keys) > 0:
@@ -649,7 +634,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Fix upgradeable packages.
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
-            upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),\
+            upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                   inst.get('simplefile')) \
                                            for inst in upgrade_pkgs])
             cmdrc, output = self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
@@ -660,20 +645,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg') \
                                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
-                for inst in upgrade_pkgs:
-                    pkg_entry = self.instance_status[inst].get('pkg')
-                    # Reverify all the packages that we might have just changed.
-                    # There may be multiple instances per package, only do the 
-                    # verification once.
-                    if pkg_entry in upgrade_pkg_set:
-                        self.logger.debug("Reverifying Upgradable Package %s" % \
-                                                                      (pkg_entry.get('name')))
-                        upgrade_pkg_set.remove(pkg_entry)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg_entry, 
-                                                          self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
             else:
                 # The rpm command failed.  No packages upgraded.
                 # Try upgrading instances individually.
@@ -695,20 +666,11 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg') \
                                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
-                for inst in upgraded_instances:
-                    pkg_entry = self.instance_status[inst].get('pkg')
-                    # Reverify all the packages that we might have just changed.
-                    # There may be multiple instances per package, only do the
-                    # verification once.
-                    if pkg_entry in upgrade_pkg_set:
-                        self.logger.debug("Reverifying Upgradable Package %s" % \
-                                                                      (pkg_entry.get('name')))
-                        upgrade_pkg_set.remove(pkg_entry)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                        self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
+
+        if not self.setup['kevlar']:
+            for pkg_entry in packages:
+                self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
+                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, self.modlists[pkg_entry])
 
         for entry in [ent for ent in packages if self.states[ent]]:
             self.modified.append(entry)

@@ -90,13 +90,14 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         for pkg in packages:
             for inst in [pinst for pinst in pkg \
                          if pinst.tag in ['Instance', 'Package']]:
-                if self.instance_status[inst].get('installed', False) == False:
-                    if pkg.get('name') == 'gpg-pubkey':
-                        gpg_keys.append(inst)
-                    else:
-                        install_pkgs.append(inst)
-                elif self.instance_status[inst].get('version_fail', False) == True:
-                    upgrade_pkgs.append(inst)
+                if self.FixInstance(inst, self.instance_status[inst]):
+                    if self.instance_status[inst].get('installed', False) == False:
+                        if pkg.get('name') == 'gpg-pubkey':
+                            gpg_keys.append(inst)
+                        else:
+                            install_pkgs.append(inst)
+                    elif self.instance_status[inst].get('version_fail', False) == True:
+                        upgrade_pkgs.append(inst)
 
         # Install GPG keys.
         # Alternatively specify the required keys using 'gpgkey' in the 
@@ -150,24 +151,6 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 # The yum command succeeded.  All packages installed.
                 self.logger.info("Single Pass for Install Succeded")
                 self.RefreshPackages()
-
-                # Reverify all the packages that we might have just changed.
-                # There may be multiple instances per package, only do the
-                # verification once.
-                install_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in install_pkgs])
-                self.logger.info("Reverifying Installed Packages")
-                for inst in install_pkgs:
-                    pkg_entry = self.instance_status[inst].get('pkg')
-                    if pkg_entry in install_pkg_set:
-                        self.logger.debug("Reverifying Installed %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg_entry)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
             else:
                 # The yum command failed.  No packages installed.
                 # Try installing instances individually.
@@ -193,24 +176,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                         self.logger.debug("%s %s would not install." % \
                                               (self.instance_status[inst].get('pkg').get('name'), \
                                                self.str_evra(inst)))
-
-                install_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in install_pkgs])
                 self.RefreshPackages()
-                for inst in installed_instances:
-                    pkg = inst.get('pkg')
-                    # Reverify all the packages that we might have just changed.
-                    # There may be multiple instances per package, only do the
-                    # verification once.
-                    if pkg in install_pkg_set:
-                        self.logger.debug("Reverifying Installed Package %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
 
         # Fix upgradeable packages.
         if len(upgrade_pkgs) > 0:
