@@ -159,7 +159,7 @@ def updatepkg(pkg):
                             inst.attrib['epoch'] = str(latest['epoch'])
                         inst.attrib['version'] = latest['version']
                         inst.attrib['release'] = latest['release']
-                        if pkg.get('type') == 'yum':
+                        if inst.get('simplefile', False):
                             inst.attrib['simplefile'] = latest['filename']
 
 def main():
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     options, arguments = p.parse_args()
 
     if not options.configfile:
-        print "An existing Pkgrmgr configuration file must be specified with the -c option."
+        print "An existing Pkgmgr configuration file must be specified with the -c option."
         sys.exit()
 
     # Set up list of directories to search
