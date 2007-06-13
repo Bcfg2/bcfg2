@@ -207,24 +207,6 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 # The yum command succeeded.  All packages installed.
                 self.logger.info("Single Pass for Install Succeded")
                 self.RefreshPackages()
-
-                # Reverify all the packages that we might have just changed.
-                # There may be multiple instances per package, only do the
-                # verification once.
-                install_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in upgrade_pkgs])
-                self.logger.info("Reverifying Installed Packages")
-                for inst in upgrade_pkgs:
-                    pkg_entry = self.instance_status[inst].get('pkg')
-                    if pkg_entry in install_pkg_set:
-                        self.logger.debug("Reverifying Installed %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg_entry)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
             else:
                 # The yum command failed.  No packages installed.
                 # Try installing instances individually.
@@ -250,24 +232,12 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                                               (self.instance_status[inst].get('pkg').get('name'), \
                                                self.str_evra(inst)))
 
-                install_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in upgrade_pkgs])
                 self.RefreshPackages()
-                for inst in installed_instances:
-                    pkg = inst.get('pkg')
-                    # Reverify all the packages that we might have just changed.
-                    # There may be multiple instances per package, only do the
-                    # verification once.
-                    if pkg in install_pkg_set:
-                        self.logger.debug("Reverifying Installed Package %s" % \
-                                                                      (pkg_entry.get('name')))
-                        install_pkg_set.remove(pkg)
-                        self.states[pkg_entry] = self.VerifyPackage(pkg, \
-                                                         self.instance_status[inst].get('modlist'))
-                    else:
-                        # We already reverified this pacakge.
-                        continue
 
+        if not self.setup['kevlar']:
+            for pkg_entry in packages:
+                self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
+                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, self.modlists[pkg_entry])
 
         for entry in [ent for ent in packages if self.states[ent]]:
             self.modified.append(entry)
