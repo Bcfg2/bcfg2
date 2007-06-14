@@ -262,9 +262,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
     
     def get_metadata(self, client):
         '''Return the metadata for a given client'''
+        client = client.lower()
         if self.aliases.has_key(client):
             client = self.aliases[client]
-        if self.clients.has_key(client.lower()):
+        if self.clients.has_key(client):
             (bundles, groups, categories) = self.groups[self.clients[client]]
         else:
             if self.default == None:
