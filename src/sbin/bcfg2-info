@@ -18,7 +18,7 @@ def printTabular(rows):
 def getInput():
     '''read commands from stdin'''
     try:
-        return raw_input('> ').split(" ")
+        return raw_input('> ').strip().split(" ")
     except KeyboardInterrupt:
         return ['']
     except EOFError:
