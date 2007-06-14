@@ -511,12 +511,18 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
             file_results.append('RPMVERIFY_MTIME')
 
     if flags & RPMVERIFY_USER:
-        user = pwd.getpwuid(lstat.st_uid)[0]
+        try:
+            user = pwd.getpwuid(lstat.st_uid)[0]
+        except KeyError:
+            user = None
         if not user or not fuser or (user != fuser):
             file_results.append('RPMVERIFY_USER')
 
     if flags & RPMVERIFY_GROUP:
-        group = grp.getgrgid(lstat.st_gid)[0]
+        try:
+            group = grp.getgrgid(lstat.st_gid)[0]
+        except KeyError:
+            group = None
         if not group or not fgroup or (group != fgroup):
             file_results.append('RPMVERIFY_GROUP')
  
