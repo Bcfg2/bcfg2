@@ -46,7 +46,7 @@ class TemplateFile:
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
         self.template.metadata = metadata
-        self.template.entry = entry
+        self.template.path = entry.get('name')
         self.template.properties = self.properties.properties
         try:
             entry.text = str(self.template)
