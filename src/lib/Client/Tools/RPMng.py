@@ -670,7 +670,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if not self.setup['kevlar']:
             for pkg_entry in packages:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
-                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, self.modlists[pkg_entry])
+                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
+                                                                 self.modlists.get(pkg_entry, []))
 
         for entry in [ent for ent in packages if self.states[ent]]:
             self.modified.append(entry)
