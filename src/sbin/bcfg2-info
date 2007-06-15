@@ -134,7 +134,8 @@ def doGroups(_, core):
         else:
             cat = ''
         gdata = [grp for grp in core.metadata.groups[group][1]]
-        gdata.remove(group)
+        if group in gdata:
+            gdata.remove(group)
         data.append((group, prof, cat, ','.join(gdata)))
     printTabular(data)
 
