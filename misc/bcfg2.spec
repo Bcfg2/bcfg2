@@ -1,6 +1,6 @@
 %define release 0.0pre3
 %define __python python
-%{!?py_ver: %define py_ver 2.3}
+%{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
