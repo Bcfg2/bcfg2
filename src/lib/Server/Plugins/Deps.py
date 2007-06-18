@@ -53,7 +53,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
         prereqs = []
         for structure in structures:
             for entry in structure.getchildren():
-                if (entry.tag, entry.get('name')) not in entries:
+                if (entry.tag, entry.get('name')) not in entries \
+                       and not isinstance(entry, lxml.etree._Comment):
                     entries.append((entry.tag, entry.get('name')))
         entries.sort()
         entries = tuple(entries)
