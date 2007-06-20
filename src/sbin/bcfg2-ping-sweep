@@ -15,7 +15,6 @@ if __name__ == '__main__':
 
     c = ConfigParser.ConfigParser()
     c.read([cfpath])
-    configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     
     clientElement = lxml.etree.parse(clientdatapath)
