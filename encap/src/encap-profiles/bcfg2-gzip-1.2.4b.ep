@@ -9,7 +9,7 @@
 
 <prereq package="m4-1.4.4" />
 <prereq package="patch-2.5.9" />
-<prereq package="bcfg2-pkg-config-0.21" />
+<prereq package="bcfg2-pkg-config-0.22" />
 
 <environment
         variable="CC"

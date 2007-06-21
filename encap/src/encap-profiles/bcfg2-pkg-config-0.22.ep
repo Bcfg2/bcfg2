@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-pkg-config-0.21"
+	pkgspec="bcfg2-pkg-config-0.22"
 >
 
 <prereq package="m4-1.4.4" />
@@ -54,9 +54,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/pkg-config/pkg-config-0.21.tar.gz
-     http://mirror.opensysadmin.com/pkg-config/pkg-config-0.21.tar.gz
-     http://pkgconfig.freedesktop.org/releases/pkg-config-0.21.tar.gz"
+url="http://encapsrcdist/mirror/pkg-config/pkg-config-0.22.tar.gz
+     http://mirror.opensysadmin.com/pkg-config/pkg-config-0.22.tar.gz
+     http://pkgconfig.freedesktop.org/releases/pkg-config-0.22.tar.gz"
 >
 
 <configure>

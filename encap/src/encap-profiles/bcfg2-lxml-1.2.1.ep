@@ -4,12 +4,12 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-lxml-1.1.2"
+	pkgspec="bcfg2-lxml-1.2.1"
 >
 
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-zlib-1.2.3" />
-<prereq package="bcfg2-pkg-config-0.21" />
+<prereq package="bcfg2-pkg-config-0.22" />
 <prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-pyrex-0.9.5.1a" />
 <prereq package="bcfg2-libxml2-2.6.29" />
@@ -60,9 +60,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/lxml/lxml-1.1.2.tgz
-     http://mirror.opensysadmin.com/lxml/lxml-1.1.2.tgz
-     http://codespeak.net/lxml/lxml-1.1.2.tgz"
+url="http://encapsrcdist/mirror/lxml/lxml-1.2.1.tgz
+     http://mirror.opensysadmin.com/lxml/lxml-1.2.1.tgz
+     http://codespeak.net/lxml/lxml-1.2.1.tgz"
 >
 
 <configure>
