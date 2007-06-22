@@ -15,39 +15,27 @@ PAGER ?= more
 
 BCFG2 := $(basename $(wildcard bcfg2-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH := $(basename $(wildcard bcfg2-cheetah-[0-9].[0-9]*.ep))
-BCFG2_CHEETAH_DOC := $(basename $(wildcard bcfg2-cheetah-doc-*.ep))
 BCFG2_ELEMENTTREE := $(basename $(wildcard bcfg2-elementtree-*.ep))
-BCFG2_GAMIN := $(basename $(wildcard bcfg2-gamin-*.ep))
-BCFG2_GLIB := $(basename $(wildcard bcfg2-glib-*.ep))
 BCFG2_GZIP := $(basename $(wildcard bcfg2-gzip-*.ep))
-BCFG2_LIBXML2 := $(basename $(wildcard bcfg2-libxml2-*.ep))
-BCFG2_LIBXSLT := $(basename $(wildcard bcfg2-libxslt-*.ep))
-BCFG2_LXML := $(basename $(wildcard bcfg2-lxml-*.ep))
 BCFG2_M2CRYPTO := $(basename $(wildcard bcfg2-m2crypto-*.ep))
 BCFG2_OPENSSL := $(basename $(wildcard bcfg2-openssl-*.ep))
 BCFG2_PKG_CONFIG := $(basename $(wildcard bcfg2-pkg-config-*.ep))
-BCFG2_PYREX := $(basename $(wildcard bcfg2-pyrex-*.ep))
 BCFG2_PYTHON := $(basename $(wildcard bcfg2-python-[0-9].[0-9]*.ep))
 BCFG2_READLINE := $(basename $(wildcard bcfg2-readline-*.ep))
-BCFG2_SETUPTOOLS := $(basename $(wildcard bcfg2-setuptools-*.ep))
 BCFG2_SWIG := $(basename $(wildcard bcfg2-swig-*.ep))
 BCFG2_ZLIB := $(basename $(wildcard bcfg2-zlib-*.ep))
 M4 := $(basename $(wildcard m4-*.sh))
 MAKESELF := $(basename $(wildcard makeself-*.ep))
 OSTIARTY := $(basename $(wildcard ostiary-[0-9].[0-9]*.ep))
-OSTIARTY_DOC := $(basename $(wildcard ostiary-doc-*.ep))
 PATCH := $(basename $(wildcard patch-*.ep))
 RUNIT := $(basename $(wildcard runit-[0-9].[0-9]*.ep))
 
-sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_ELEMENTTREE) $(BCFG2_GZIP) $(BCFG2_M2CRYPTO) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_SETUPTOOLS) $(BCFG2_SWIG) $(BCFG2_ZLIB) $(MAKESELF) $(OSTIARTY) $(PATCH) $(RUNIT))
+sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_ELEMENTTREE) $(BCFG2_GZIP) $(BCFG2_M2CRYPTO) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_SWIG) $(BCFG2_ZLIB) $(MAKESELF) $(OSTIARTY) $(PATCH) $(RUNIT))
 
-sources_sh := $(sort $(M4))
+sources_sh := $(M4)
 
-sources_server := $(sort $(BCFG2_GLIB) $(BCFG2_GAMIN) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_CHEETAH_DOC) $(BCFG2_PYREX) $(OSTIARTY_DOC))
-
-# Only compile bcfg2-glib and bcfg2-gamin (needed by bcfg2 server) on Linux
-# (Gamin only supports Linux), and only compile bcfg2-python-apt on known
-# Debian and Ubuntu systems (as python-apt is distribution-specific)
+# Only compile bcfg2-python-apt on known Debian and Ubuntu 
+# systems (as python-apt is distribution-specific)
 UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
@@ -55,13 +43,11 @@ DISTRO := $(shell cat /etc/issue | grep ^[a-zA-Z] | head -1)
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
-sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.5.10
 OS ?= linux_debian_sarge
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 4.0 \n \l)
-sources_ep += $(sources_server)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
 OS ?= linux_debian_etch
 endif
@@ -165,8 +151,7 @@ rename : encaps
 				mv ./$${OLDNAME} ./$${NEWNAME}; \
 			fi; \
 		done; \
-	fi
-	
+	fi	
 	for OLDNAME in `(ls . | grep .*-doc-.*-encap-.*.tar.gz) || break`; do \
 		NEWNAME="`printf "%s\n" "$${OLDNAME}" \
 			| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
@@ -174,7 +159,7 @@ rename : encaps
 		if [ "$${OLDNAME}x" != "$${NEWNAME}x" ]; then \
 			mv ./$${OLDNAME} ./$${NEWNAME}; \
 		fi; \
-	done;
+	done
 
 clean :
 	-(rm ./*.log; rm ./*.packaged; rm ./*.gz; rm ./*~)

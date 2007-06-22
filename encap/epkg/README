@@ -9,8 +9,11 @@ decompress/untar the distributions, and then run make (or gmake on
 non-GNU platforms)
 
 All of the software is available from:
- * http://www.dclark.us/mirror/epkg-deps
-(or Google for it).
+ * http://mirror.opensysadmin.com/epkg-deps/epkg-with-all-deps.tar.gz
+You will want to download and extract this file to this directory, as
+it contains symbloic links to the README and Makefile in this directory.
+After that is complete, do "cd epkg-with-all-deps" and then "make" or
+"gmake" (depending on what GNU Make is called on your machine).
 
 Once you have a working epkg distribution, you should:
  * cd /usr/local/encap

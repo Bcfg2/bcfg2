@@ -14,9 +14,9 @@ export PATH LDFLAGS CPPFLAGS
 
 ZLIB = zlib-1.2.3
 LIBTAR = libtar-1.2.11
-CURL = curl-7.15.4
+CURL = curl-7.16.2
 FGET = fget-1.3.3
-EXPAT = expat-2.0.0
+EXPAT = expat-2.0.1
 EPKG = epkg-2.3.9
 
 all: zlib libtar curl fget expat epkg
@@ -37,4 +37,5 @@ expat:
 	cd ${EXPAT} && ./configure --disable-shared --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
 
 epkg:
+	test -d $(ENCAPDIR)/$(EPKG) && rm -rf $(ENCAPDIR)/$(EPKG)
 	cd ${EPKG} && ./configure && $(MAKE) && $(MAKE) install
