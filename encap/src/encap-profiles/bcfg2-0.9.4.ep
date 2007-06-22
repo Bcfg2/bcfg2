@@ -370,8 +370,11 @@ printf "\nReplacing \"#!/usr/bin/python\" with "
 printf "\"#!/usr/local/lib/bcfg2/bin/python\"...\n"
 ${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/python \#\!\/usr\/local\/lib\/bcfg2\/bin\/python
 
-printf "\nCreating bcfg2 .pyc files...\n"
-${PYTHON} ${COMPILEALL} ${BASEDIR}
+# For some reason this causes TLSSocketServerMixIn.py to be replaced with the contents of 
+# TLSSocketServerMixIn.pyc , which breaks things. Should figure out why and fix this for
+# improved performance as soon as possible (TODO/FIXME).
+#printf "\nCreating bcfg2 .pyc files...\n"
+#${PYTHON} ${COMPILEALL} ${BASEDIR}
 
 exit 0
 ]]></include_file>
