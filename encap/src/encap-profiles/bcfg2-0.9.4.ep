@@ -19,6 +19,7 @@
 <prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-elementtree-1.2.6" />
 <prereq package="bcfg2-m2crypto-0.17" />
+<prereq package="bcfg2-setuptools-0.6c6" />
 
 <environment
         variable="CC"

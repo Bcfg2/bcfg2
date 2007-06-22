@@ -13,6 +13,7 @@
 <prereq package="bcfg2-openssl-0.9.8e" />
 <prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-swig-1.3.31" />
+<prereq package="bcfg2-setuptools-0.6c6" />
 
 <environment
         variable="CC"
@@ -102,7 +103,9 @@ touch var/encap/${ENCAP_PKGNAME}
 
 <encapinfo>
 description m2crypto - a crypto and SSL toolkit for Python
-
+exclude lib/bcfg2/lib/python2.4/site-packages/site.py
+exclude lib/bcfg2/lib/python2.4/site-packages/site.pyc
+exclude lib/bcfg2/lib/python2.4/site-packages/easy-install.pth
 </encapinfo>
 
 </encap_profile>
