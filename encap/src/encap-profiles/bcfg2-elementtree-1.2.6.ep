@@ -43,7 +43,14 @@ http://effbot.org/downloads/elementtree-1.2.6-20050316.tar.gz"
 </build>
 
 <install>
-/usr/local/lib/bcfg2/bin/python setup.py install \
+test -d ${ENCAP_SOURCE} || mkdir ${ENCAP_SOURCE}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME} || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4
+test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
+PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
 --prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
 </install>
 

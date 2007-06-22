@@ -4,10 +4,12 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-cheetah-2.0rc8"
+	pkgspec="bcfg2-setuptools-0.6c6"
 >
 
 <prereq package="m4-1.4.4" />
+<prereq package="bcfg2-zlib-1.2.3" />
+<prereq package="bcfg2-pkg-config-0.22" />
 <prereq package="bcfg2-python-2.4.4" />
 
 <environment
@@ -55,9 +57,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/cheetah/Cheetah-2.0rc8.tar.gz
-http://mirror.opensysadmin.com/cheetah/Cheetah-2.0rc8.tar.gz
-http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/Cheetah-2.0rc8.tar.gz"
+url="http://encapsrcdist/mirror/setuptools/setuptools-0.6c6.tar.gz
+     http://mirror.opensysadmin.com/setuptools/setuptools-0.6c6.tar.gz
+     http://cheeseshop.python.org/packages/source/s/setuptools/setuptools-0.6c6.tar.gz"
 >
 
 <configure>
@@ -82,15 +84,21 @@ test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCA
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
 PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
 --prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
-</install> 
+</install>
 
 <clean>
-/usr/local/lib/bcfg2/bin/python setup.py clean --all
+/usr/local/lib/bcfg2/bin/python setup.py clean
 </clean>
 
 </source>
 
 <prepackage type="set">
+# Fix paths so they work with symlinks
+mv ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/easy-install.pth ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/easy-install.pth.broken
+mv ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/setuptools.pth ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/setuptools.pth.broken
+cat ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/easy-install.pth.broken | sed s:\.\/:\/usr\/local\/lib\/bcfg2\/lib\/python2.4\/site-packages\/:g > ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/easy-install.pth
+cat ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/setuptools.pth.broken | sed s:\.\/:\/usr\/local\/lib\/bcfg2\/lib\/python2.4\/site-packages\/:g > ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/setuptools.pth
+rm ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages/*.broken
 # Make "this encap is installed" sentinal file available in /usr/local/var/encap
 test -d var || mkdir var
 test -d var/encap || mkdir var/encap
@@ -98,7 +106,7 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description cheetah - the python-powered template engine
+description setuptools - work with python packages
 </encapinfo>
 
 </encap_profile>
