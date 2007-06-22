@@ -157,7 +157,7 @@ encaps : $(EPKG) $(MKENCAP) $(EP2TARGET) $(addsuffix .packaged,$(sources))
 rename : encaps
 	if [ "$(OS)x" != "x" ]; then OS="$(OS)"; fi && \
 	if [ "$${OS}x" != "x" ]; then \
-		for OLDNAME in `(ls . | grep *-encap-*.tar.gz) || break`; do \
+		for OLDNAME in `(ls . | grep .*-encap-.*.tar.gz) || break`; do \
 			NEWNAME="`printf "%s\n" "$${OLDNAME}" \
 				| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
 				| sed s:\ :-:g | sed s:OSDIST:\$${OS}:g`" ; \
@@ -167,7 +167,7 @@ rename : encaps
 		done; \
 	fi
 	
-	for OLDNAME in `(ls . | grep *-doc-*-encap-*.tar.gz) || break`; do \
+	for OLDNAME in `(ls . | grep .*-doc-.*-encap-.*.tar.gz) || break`; do \
 		NEWNAME="`printf "%s\n" "$${OLDNAME}" \
 			| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
 			| sed s:\ :-:g | sed s:OSDIST:share:g`" ; \
