@@ -50,6 +50,7 @@ tar -cf $DISTDIR/epkg.tar $EPKGDIR/*
 BCFG2="`basename $EPDIR/bcfg2-[0-9].[0-9]*-encap-*.tar.gz`"
 BCFG2_ELEMENTTREE="`basename $EPDIR/bcfg2-elementtree-*-encap-*.tar.gz`"
 BCFG2_M2CRYPTO="`basename $EPDIR/bcfg2-m2crypto-*-encap-*.tar.gz`"
+BCFG2_OPENSSL="`basename $EPDIR/bcfg2-openssl-*-encap-*.tar.gz`"
 BCFG2_PYTHON="`basename $EPDIR/bcfg2-python-[0-9].[0-9]*-encap-*.tar.gz`"
 OSTIARTY="`basename $EPDIR/ostiary-[0-9].[0-9]*-encap-*.tar.gz`"
 RUNIT="`basename $EPDIR/runit-[0-9].[0-9]*-encap-*.tar.gz`"
@@ -59,7 +60,7 @@ if [ "${BCFG2_PYTHON_APT_TMP}x" != 'bcfg2-python-apt-*-encap-*.tar.gzx' ]; then
     BCFG2_PYTHON_APT="$BCFG2_PYTHON_APT_TMP"
 fi
 
-BCFG2DEPS="$BCFG2_ELEMENTTREE $BCFG2_M2CRYPTO $BCFG2_PYTHON $BCFG2_PYTHON_APT"
+BCFG2DEPS="$BCFG2_ELEMENTTREE $BCFG2_M2CRYPTO $BCFG2_OPENSSL $BCFG2_PYTHON $BCFG2_PYTHON_APT"
 
 FILES="$BCFG2DEPS $BCFG2 $RUNIT $OSTIARTY"
 
