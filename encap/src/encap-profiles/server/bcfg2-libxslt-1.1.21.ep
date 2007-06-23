@@ -12,6 +12,7 @@
 <prereq package="bcfg2-pkg-config-0.22" />
 <prereq package="bcfg2-python-2.4.4" />
 <prereq package="bcfg2-libxml2-2.6.29" />
+<prereq package="bcfg2-setuptools-0.6c6" />
 
 <environment
         variable="CC"
