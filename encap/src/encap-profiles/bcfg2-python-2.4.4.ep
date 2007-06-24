@@ -83,7 +83,7 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
 if [ -f setup.py.orig ]; then cp setup.py.orig setup.py; fi
 cat setup.py \
 | sed s:\/usr\/local\/:\/usr\/local\/lib\/bcfg2\/:g \
-| sed s:intl::g \
+| sed s:\'intl\'::g \
 > setup.py.bcfg2
 mv setup.py setup.py.orig
 cp setup.py.bcfg2 setup.py
