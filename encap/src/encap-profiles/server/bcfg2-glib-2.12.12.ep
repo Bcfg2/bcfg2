@@ -68,7 +68,7 @@ url="http://encapsrcdist/mirror/glib/glib-2.12.12.tar.gz
 <configure>
 ./configure \
 	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	--with-libiconv=no
+	--with-libiconv=gnu
 </configure>
 
 </source>
