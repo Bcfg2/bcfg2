@@ -1,8 +1,8 @@
 # $Id$
 
-.PHONY : test log all install clean distclean uninstall encaps rename bcfg2only bcfg2bump
+.PHONY : test log all install clean distclean encaps rename
 .SUFFIXES :
-.SUFFIXES : .ep .sh .installed .packaged .d
+.SUFFIXES : .ep .installed .packaged .d
 
 export BASEDIR = /usr/local
 export ENCAPDIR := ${BASEDIR}/encap
@@ -10,7 +10,7 @@ export EPKG := ${BASEDIR}/bin/epkg
 export MKENCAP := ${BASEDIR}/bin/mkencap
 export SHELL = /bin/sh
 srcdir = .
-export EP2TARGET := $(srcdir)/../ep2target
+export EP2TARGET := $(srcdir)/ep2target
 PAGER ?= more
 
 BCFG2_CHEETAH_DOC := $(basename $(wildcard bcfg2-cheetah-doc-*.ep))
@@ -37,16 +37,6 @@ sources := $(BCFG2_CHEETAH_DOC) $(BCFG2_GAMIN) $(BCFG2_GLIB) $(BCFG2_LIBXML2) $(
 	touch ./$*.installed
 	@printf "***** STOP .ep.installed for |$*| ***** \n"
 
-%.installed : %.sh # Create and install a "fake" encap package
-	@printf "***** START .sh.installed for |$*| ***** \n"
-	-$(EPKG) -q -r $(ENCAPDIR)/$*
-	-rm -rf $(ENCAPDIR)/$*
-	chmod 755 $(srcdir)/$*.sh && $(srcdir)/$*.sh
-	$(EPKG) -q -i $(ENCAPDIR)/$*
-	test -h $(BASEDIR)/var/encap/$*
-	touch ./$*.installed
-	@printf "***** STOP .sh.installed for |$*| ***** \n"
-
 %.packaged : %.installed # Create .tar.gz encap packages
 	@printf "***** START .installed.packaged for |$*| ***** \n"
 	-rm $(ENCAPDIR)/$*-*.tar.gz
@@ -60,11 +50,6 @@ sources := $(BCFG2_CHEETAH_DOC) $(BCFG2_GAMIN) $(BCFG2_GLIB) $(BCFG2_LIBXML2) $(
 	@printf "***** START .d.ep for |$*| ***** \n"
 	chmod 755 $(EP2TARGET) && $(EP2TARGET) $< > $@
 	@printf "***** STOP .d.ep for |$*| ***** \n"
-
-%.d : %.sh # Create dependancy files from .sh files
-	@printf "***** START .d.sh for |$*| ***** \n"
-	chmod 755 $(EP2TARGET) && $(EP2TARGET) $< > $@
-	@printf "***** STOP .d.sh for |$*| ***** \n"
 
 log :
 	( $(MAKE) install > ./make.log 2>&1 \
