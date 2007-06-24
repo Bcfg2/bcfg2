@@ -4,7 +4,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-glib-2.12.9"
+	pkgspec="bcfg2-glib-2.12.12"
 >
 
 <prereq package="m4-1.4.4" />
@@ -60,14 +60,15 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/glib/glib-2.12.9.tar.gz
-     http://mirror.opensysadmin.com/glib/glib-2.12.9.tar.gz
-     http://ftp.gnome.org/pub/GNOME/sources/glib/2.12/glib-2.12.9.tar.gz"
+url="http://encapsrcdist/mirror/glib/glib-2.12.12.tar.gz
+     http://mirror.opensysadmin.com/glib/glib-2.12.12.tar.gz
+     http://ftp.gnome.org/pub/GNOME/sources/glib/2.12/glib-2.12.12.tar.gz"
 >
 
 <configure>
 ./configure \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2"
+	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
+	--with-libiconv=no
 </configure>
 
 </source>

@@ -10,7 +10,7 @@
 <prereq package="m4-1.4.4" />
 <prereq package="bcfg2-pkg-config-0.22" />
 <prereq package="bcfg2-python-2.4.4" />
-<prereq package="bcfg2-glib-2.12.9" />
+<prereq package="bcfg2-glib-2.12.12" />
 <prereq package="bcfg2-setuptools-0.6c6" />
 
 <environment
@@ -79,7 +79,7 @@ touch var/encap/${ENCAP_PKGNAME}
 
 <encapinfo>
 description Gamin - The File Alteration Monitor
-prereq pkgspec >= bcfg2-glib-2.12.9
+prereq pkgspec >= bcfg2-glib-2.12.12
 </encapinfo>
 
 </encap_profile>
