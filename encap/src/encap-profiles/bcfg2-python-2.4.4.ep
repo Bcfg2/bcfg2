@@ -64,6 +64,34 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
      http://www.python.org/ftp/python/2.4.4/Python-2.4.4.tgz"
 >
 
+<patch options="-p0"><![CDATA[
+--- setup.py	2007-06-24 18:48:21.000000000 -0400
++++ setup.py	2007-06-24 19:25:26.000000000 -0400
+@@ -355,22 +355,6 @@
+         # static Unicode character database
+         if have_unicode:
+             exts.append( Extension('unicodedata', ['unicodedata.c']) )
+-        # access to ISO C locale support
+-        data = open('pyconfig.h').read()
+-        m = re.search(r"#s*define\s+WITH_LIBINTL\s+1\s*", data)
+-        if m is not None:
+-            locale_libs = ['intl']
+-        else:
+-            locale_libs = []
+-        if platform == 'darwin':
+-            locale_extra_link_args = ['-framework', 'CoreFoundation']
+-        else:
+-            locale_extra_link_args = []
+-
+-
+-        exts.append( Extension('_locale', ['_localemodule.c'],
+-                               libraries=locale_libs,
+-                               extra_link_args=locale_extra_link_args) )
+ 
+         # Modules with some UNIX dependencies -- on by default:
+         # (If you have a really backward UNIX, select and socket may not be
+]]></patch>
+
 <patch options="-p0" from_dir="Lib"><![CDATA[
 --- site.py	2007-06-21 22:26:29.000000000 -0400
 +++ site.py	2007-06-21 22:26:55.000000000 -0400
@@ -83,7 +111,6 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
 if [ -f setup.py.orig ]; then cp setup.py.orig setup.py; fi
 cat setup.py \
 | sed s:\/usr\/local\/:\/usr\/local\/lib\/bcfg2\/:g \
-| sed s:\'intl\'::g \
 > setup.py.bcfg2
 mv setup.py setup.py.orig
 cp setup.py.bcfg2 setup.py
