@@ -35,7 +35,8 @@ cat > ${ENCAP_PKGNAME}.ep << EOF
 />
 
 <source
-url="http://www.opensysadmin.com/mirror/m4/m4-1.4.4.tar.gz
+url="http://encapsrcdist/mirror/m4/m4-1.4.4.tar.gz
+     http://mirror.opensysadmin.com/m4/m4-1.4.4.tar.gz
      http://ftp.gnu.org/gnu/m4/m4-1.4.4.tar.gz"
 >
 
