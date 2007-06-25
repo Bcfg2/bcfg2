@@ -22,6 +22,7 @@ BCFG2_OPENSSL := $(basename $(wildcard bcfg2-openssl-*.ep))
 BCFG2_PKG_CONFIG := $(basename $(wildcard bcfg2-pkg-config-*.ep))
 BCFG2_PYTHON := $(basename $(wildcard bcfg2-python-[0-9].[0-9]*.ep))
 BCFG2_READLINE := $(basename $(wildcard bcfg2-readline-*.ep))
+BCFG2_SETUPTOOLS := $(basename $(wildcard bcfg2-setuptools-*.ep))
 BCFG2_SWIG := $(basename $(wildcard bcfg2-swig-*.ep))
 BCFG2_ZLIB := $(basename $(wildcard bcfg2-zlib-*.ep))
 M4 := $(basename $(wildcard m4-*.sh))
@@ -30,7 +31,7 @@ OSTIARTY := $(basename $(wildcard ostiary-[0-9].[0-9]*.ep))
 PATCH := $(basename $(wildcard patch-*.ep))
 RUNIT := $(basename $(wildcard runit-[0-9].[0-9]*.ep))
 
-sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_ELEMENTTREE) $(BCFG2_GZIP) $(BCFG2_M2CRYPTO) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_SWIG) $(BCFG2_ZLIB) $(MAKESELF) $(OSTIARTY) $(PATCH) $(RUNIT))
+sources_ep := $(sort $(BCFG2) $(BCFG2_CHEETAH) $(BCFG2_ELEMENTTREE) $(BCFG2_GZIP) $(BCFG2_M2CRYPTO) $(BCFG2_OPENSSL) $(BCFG2_PKG_CONFIG) $(BCFG2_PYTHON) $(BCFG2_READLINE) $(BCFG2_SETUPTOOLS) $(BCFG2_SWIG) $(BCFG2_ZLIB) $(MAKESELF) $(OSTIARTY) $(PATCH) $(RUNIT))
 
 sources_sh := $(M4)
 

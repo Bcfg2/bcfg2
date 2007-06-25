@@ -20,10 +20,9 @@ BCFG2_LIBXML2 := $(basename $(wildcard bcfg2-libxml2-*.ep))
 BCFG2_LIBXSLT := $(basename $(wildcard bcfg2-libxslt-*.ep))
 BCFG2_LXML := $(basename $(wildcard bcfg2-lxml-*.ep))
 BCFG2_PYREX := $(basename $(wildcard bcfg2-pyrex-*.ep))
-BCFG2_SETUPTOOLS := $(basename $(wildcard bcfg2-setuptools-*.ep))
 OSTIARTY_DOC := $(basename $(wildcard ostiary-doc-*.ep))
 
-sources := $(BCFG2_CHEETAH_DOC) $(BCFG2_GAMIN) $(BCFG2_GLIB) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_PYREX) $(BCFG2_SETUPTOOLS) $(OSTIARTY_DOC)
+sources := $(BCFG2_CHEETAH_DOC) $(BCFG2_GAMIN) $(BCFG2_GLIB) $(BCFG2_LIBXML2) $(BCFG2_LIBXSLT) $(BCFG2_LXML) $(BCFG2_PYREX) $(OSTIARTY_DOC)
 
 %.installed : %.ep # Clean, compile and install an encap package
 	@printf "***** START .ep.installed for |$*| ***** \n"
