@@ -55,7 +55,7 @@ PLATFORM_ENDIF
 
 <environment
         variable="CPPFLAGS"
-        value="-I/usr/local/lib/bcfg2/include"
+        value="-I/usr/local/lib/bcfg2/include/openssl -I/usr/local/lib/bcfg2/include"
         type="set"
 />
 
@@ -67,7 +67,9 @@ url="http://encapsrcdist/mirror/m2crypto/m2crypto-0.17.tar.gz
 
 <configure>
 /usr/local/lib/bcfg2/bin/python setup.py build_ext \
+--openssl=/usr/local/lib/bcfg2 \
 -I/usr/local/lib/bcfg2/include/openssl \
+-I/usr/local/lib/bcfg2/include \
 -L/usr/local/lib/bcfg2/lib/
 </configure>
 

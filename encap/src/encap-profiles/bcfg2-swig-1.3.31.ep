@@ -18,6 +18,12 @@
 />
 
 <environment
+        variable="CXX"
+        value="g++ -static-libgcc"
+        type="set"
+/>
+
+<environment
         variable="PATH"
 PLATFORM_IF_MATCH(solaris)
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
@@ -41,7 +47,7 @@ PLATFORM_ENDIF
 PLATFORM_IF_MATCH(linux)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib:/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
-        value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
+        value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib -Wl,-brtl"
 PLATFORM_ELSE_IF_MATCH(solaris)
         value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE
@@ -51,7 +57,13 @@ PLATFORM_ENDIF
 
 <environment
         variable="CPPFLAGS"
-        value="-I/usr/local/lib/bcfg2/include"
+        value="-I/usr/local/lib/bcfg2/include/openssl -I/usr/local/lib/bcfg2/include"
+        type="set"
+/>
+
+<environment
+        variable="CXXFLAGS"
+        value="-Wl,-bstatic -lstdc++ -Wl,-bdynamic -lsupc++"
         type="set"
 />
 

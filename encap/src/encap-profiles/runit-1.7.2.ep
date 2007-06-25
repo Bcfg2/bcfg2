@@ -25,6 +25,12 @@ PLATFORM_ENDIF
         type="prepend"
 />
 
+<environment
+        variable="CPPFLAGS"
+        value="-I/usr/local/lib"
+        type="set"
+/>
+
 PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE
 <environment
