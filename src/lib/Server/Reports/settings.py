@@ -2,9 +2,12 @@
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
 c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
-sqlitedbpath = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
-DEBUG = True
+if c.get('statistics', 'web_debug') == "True":
+    DEBUG = True
+else:
+    DEBUG = False
+    
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -13,12 +16,22 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'           # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-DATABASE_NAME = sqlitedbpath             # Or path to database file if using sqlite3.
-DATABASE_USER = ''             # Not used with sqlite3.
-DATABASE_PASSWORD = ''         # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+DATABASE_ENGINE = c.get('statistics', 'database_engine')
+# 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
+DATABASE_NAME = c.get('statistics', 'database_name')
+# Or path to database file if using sqlite3.
+#<repository>/etc/brpt.sqlite is default path
+DATABASE_USER = c.get('statistics', 'database_user')
+# Not used with sqlite3.
+DATABASE_PASSWORD = c.get('statistics', 'database_password')
+# Not used with sqlite3.
+DATABASE_HOST = c.get('statistics', 'database_host')
+# Set to empty string for localhost. Not used with sqlite3.
+DATABASE_PORT = c.get('statistics', 'database_port')
+# Set to empty string for default. Not used with sqlite3.
+
+if DATABASE_ENGINE == 'sqlite3' and DATABASE_NAME == '':
+    DATABASE_NAME = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
 # Local time zone for this installation. All choices can be found here:
 # http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
