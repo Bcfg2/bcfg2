@@ -55,15 +55,18 @@ PLATFORM_ENDIF
         type="set"
 />
 
-<environment
-        variable="CPPFLAGS"
-        value="-I/usr/local/lib/bcfg2/include/openssl -I/usr/local/lib/bcfg2/include"
-        type="set"
-/>
-
+PLATFORM_IF_MATCH(aix)
 <environment
         variable="CXXFLAGS"
         value="-Wl,-bstatic -lstdc++ -Wl,-bdynamic -lsupc++"
+        type="set"
+/>
+PLATFORM_ELSE
+PLATFORM_ENDIF
+
+<environment
+        variable="CPPFLAGS"
+        value="-I/usr/local/lib/bcfg2/include/openssl -I/usr/local/lib/bcfg2/include"
         type="set"
 />
 
