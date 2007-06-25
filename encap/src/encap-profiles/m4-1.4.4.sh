@@ -18,7 +18,7 @@ cat > ${ENCAP_PKGNAME}.ep << EOF
 
 <environment
         variable="CC"
-        value="gcc"
+        value="gcc -static-libgcc"
         type="set"
 />
 
