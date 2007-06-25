@@ -11,8 +11,8 @@
 
 {% block content %}
 <ul>
-<li><a href="/displays/sys-view/">System View</a></li>
-<li><a href="/displays/summary/">Summary Only</a></li>
-<li><a href="/displays/timing/">Timing</a></li>
+<li><a href="{% url Bcfg2.Server.Reports.reports.views.display_sys_view %}">System View</a></li>
+<li><a href="{% url Bcfg2.Server.Reports.reports.views.display_summary %}">Summary Only</a></li>
+<li><a href="{% url Bcfg2.Server.Reports.reports.views.display_timing %}">Timing</a></li>
 </ul>
 {% endblock %}

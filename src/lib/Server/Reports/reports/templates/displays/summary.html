@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block extra_header_info %}
-<script type="text/javascript" src="/site_media/CalendarPopup.js"></script>
+<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
 <script language="JavaScript">var cal = new CalendarPopup();</script>
 {% endblock%}
 {% block title %}Display Index Listing{% endblock %}
@@ -21,8 +21,8 @@
 <input type="text" name="time" value="{{timestamp_time}}" size=8>
 <a href="" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
    name="anchor1" ID="anchor1">Calendar</A>
-<input type="button" name="go" value="Go" onClick="location.href='/displays/summary/'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='/displays/summary/';"/>
+<input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_summary %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
+ | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_summary %}';"/>
 </form>
 </span><br/><br/><br/></div>
   {% include "displays/summary-block-direct-links.html" %}

@@ -172,6 +172,31 @@ def client_detail(request, hostname = None, pk = None):
         interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
     return render_to_response('clients/detail.html', {'client': client, 'interaction': interaction})
 
+def client_manage(request, hostname = None):
+    #SETUP error pages for when you specify a client or interaction that doesn't exist
+    client = get_object_or_404(Client, name=hostname)
+    currenttime = datetime.now().isoformat('@')
+    if client.expiration != None:
+        message = "This client currently has an expiration date of %s. Reports after %s will not include data for this host. You may change this if you wish by selecting a new time, earlier or later."%(client.expiration,client.expiration)
+    else:
+        message = "This client is currently active and displayed. You may choose a date after which this client will no longer appear in reports."
+    if request.method == 'POST':
+        date = request.POST['date1']
+        time = request.POST['time']
+        try:
+            timestamp = datetime(*(strptime(date+"@"+time, "%Y-%m-%d@%H:%M:%S")[0:6]))
+        except ValueError:
+            timestamp = None
+        if timestamp==None:
+            message = "Invalid removal date, please try again using the format: yyyy-mm-dd hh:mm:ss."
+        else:
+            client.expiration = timestamp
+            client.save()
+            message = "Expiration for client set to %s."%client.expiration
+    return render_to_response('clients/manage.html', {'client': client, 'message': message,
+                                                      'timestamp_date' : currenttime[:10],
+                                                      'timestamp_time' : currenttime[11:19]})
+
 def display_sys_view(request, timestamp = 'now'):
     client_lists = prepare_client_lists(request, timestamp)
     return render_to_response('displays/sys_view.html', client_lists)

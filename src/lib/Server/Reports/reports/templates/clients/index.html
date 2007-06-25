@@ -15,7 +15,7 @@
     <ul style="list-style-type:none;">
     {% for client in client_list_a %}
         <li><div class="{{client.current_interaction.state}}-lineitem">
-		<a href="{{client.name}}/">{{ client.name }}</a>
+		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
 		</div></li>
     {% endfor %}
     </ul>
@@ -24,12 +24,12 @@
     {% if client_list_b %}
       {% for client in client_list_b %}
 	    <li><div class="{{client.current_interaction.state}}-lineitem">
-		<a href="{{client.name}}/">{{ client.name }}</a>
+		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
 		</div></li>
       {% endfor %}
     {% endif %}
     </ul>
-</tr></tab.e>
+</tr></table>
 {% else %}
     <p>No client records are available.</p>
 {% endif %}
