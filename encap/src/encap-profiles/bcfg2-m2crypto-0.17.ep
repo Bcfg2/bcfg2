@@ -84,7 +84,9 @@ test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib || mkdir ${ENCAP_SOURCE}/
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
 PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
---prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
+--prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 \
+--single-version-externally-managed \
+--record ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/python-install.log
 </install>
 
 <clean>
