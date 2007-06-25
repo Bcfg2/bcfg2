@@ -47,7 +47,7 @@ sources := $(BCFG2_CHEETAH_DOC) $(BCFG2_GAMIN) $(BCFG2_GLIB) $(BCFG2_LIBXML2) $(
 
 %.d : %.ep # Create dependancy files from .ep files
 	@printf "***** START .d.ep for |$*| ***** \n"
-	chmod 755 $(EP2TARGET) && $(EP2TARGET) $< > $@
+	$(EP2TARGET) $< > $@
 	@printf "***** STOP .d.ep for |$*| ***** \n"
 
 log :
