@@ -1,7 +1,7 @@
 #include "site-settings.conf"
 #compiler-settings
 cheetahVarStartToken = @
-commentStartToken = //
+commentStartToken = %%
 #end compiler-settings
 #!/bin/sh -e
 
@@ -138,7 +138,7 @@ else
 fi
 
 # bcfg2-client (runit)
-//if int(@BCFG2_CLIENT_RUN_INTERVAL_SECONDS) > 0
+%%if int(@BCFG2_CLIENT_RUN_INTERVAL_SECONDS) > 0
 if [ ! -h /usr/local/var/service/bcfg2-client ]; then
     if [ -d /usr/local/etc/sv/bcfg2-client ]; then
         printf "INFO: Enabling bcfg2-client service (via runit)...\n"
@@ -150,7 +150,7 @@ if [ ! -h /usr/local/var/service/bcfg2-client ]; then
 else
     printf "INFO: /usr/local/var/service/bcfg2-client already exists, not replacing...\n"
 fi
-//end if
+%%end if
 
 # end
 printf "Finished ${ENCAP_PKGNAME} postinstall script.\n"

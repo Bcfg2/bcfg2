@@ -1,13 +1,13 @@
 #include "site-settings.conf"
 #compiler-settings
-commentStartToken = //
+commentStartToken = %%
 #end compiler-settings
 [communication]
 protocol = xmlrpc/ssl
 password = ${BCFG2_PASSWORD}
-//if str($SITE_FINGERPRINT) != ""
+%%if str($SITE_FINGERPRINT) != ""
 fingerprint = ${SITE_FINGERPRINT}
-//end if
+%%end if
 
 [components]
 bcfg2 = https://${BCFG2_SERVER}:${BCFG2_PORT}
