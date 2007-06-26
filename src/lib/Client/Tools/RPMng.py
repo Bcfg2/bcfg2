@@ -35,7 +35,6 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
     def __init__(self, logger, setup, config, states):
-        self.__name__ = 'RPMng'
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
 
         self.instance_status = {}
