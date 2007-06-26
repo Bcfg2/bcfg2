@@ -46,12 +46,10 @@
    {% endfor %}<br>
    <label for="mac_addr">mac_addr:</label><input name="mac_addr" type="text" ><br>
    <label for="ip_addr">ip_addr:</label><input name="ip_addr" type="text" ><br>
-   <label for="name">name:</label><input name="name" type="text" ><br>
    <label for="dns_view">dns_viewer:</label>
    {% for choice in DNS_CHOICES %}
    <input type="radio" name="dns_view" value="{{ choice.0 }}" >{{ choice.1 }}
    {% endfor %}<br>
-   <label for="cname">cname:</label><input name="cname" type="text" ><br>
    <label for="mx">mx:</label><input name="mx" type="text" ><br>
 <p>
 <input type="submit" value="Search">

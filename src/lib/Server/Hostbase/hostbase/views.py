@@ -15,7 +15,7 @@ from django.db import connection
 from django.shortcuts import render_to_response
 from django import forms
 from Bcfg2.Server.Hostbase import settings, regex
-import re
+import re, copy
     
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
@@ -27,7 +27,8 @@ zoneattribs = ['zone', 'admin', 'primary_master', 'expire', 'retry',
 dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
             'ip_addr':'p.ip_addr LIKE \'%%%%%s%%%%\'',
             'name':'n.name LIKE \'%%%%%s%%%%\'',
-            'cname':'c.cname LIKE \'%%%%%s%%%%\'',
+##             'hostname':'n.name LIKE \'%%%%%s%%%%\'',
+##             'cname':'n.name LIKE \'%%%%%s%%%%\'',
             'mx':'m.mx LIKE \'%%%%%s%%%%\'',
             'dns_view':'n.dns_view = \'%s\'',
             'hdwr_type':'i.hdwr_type = \'%s\'',
@@ -55,7 +56,12 @@ def search(request):
 
         _and = False
         for field in request.POST:
-            if request.POST[field] and field in dispatch:
+            if request.POST[field] and field == 'hostname':
+                if _and:
+                    querystring += ' AND '
+                querystring +=  'n.name LIKE \'%%%%%s%%%%\' or c.cname LIKE \'%%%%%s%%%%\'' % (request.POST[field], request.POST[field])
+                _and = True
+            elif request.POST[field] and field in dispatch:
                 if _and:
                     querystring += ' AND '
                 querystring += dispatch[field]  % request.POST[field]
@@ -98,7 +104,23 @@ def look(request, host_id):
                               {'host': host,
                                'interfaces': interfaces,
                                'logged_in': request.session.get('_auth_user_id', False)})
-                                   
+
+def logs(request, host_id):
+    """Displays general host information"""
+    host = Host.objects.get(id=host_id)
+    logs = Log.objects.filter(hostname=host.hostname)
+    return render_to_response('logviewer.html',
+                              {'hostname': host.hostname,
+                               'logs': logs,
+                               'logged_in': request.session.get('_auth_user_id', False)})
+
+def printlog(request, host_id, log_id):
+    """Displays general host information"""
+    log = Log.objects.get(id=log_id)
+    return render_to_response('log.html',
+                              {'text': log.log,
+                               'logged_in': request.session.get('_auth_user_id', False)})
+
 def dns(request, host_id):
     host = Host.objects.get(id=host_id)
     ips = []
@@ -158,10 +180,13 @@ def edit(request, host_id):
     changename = False
     if request.method == 'POST':
         host = Host.objects.get(id=host_id)
+        before = host.__dict__.copy()
         if request.POST['hostname'] != host.hostname:
             oldhostname = host.hostname.split(".")[0]
             changename = True
         interfaces = host.interface_set.all()
+        old_interfaces = [interface.__dict__.copy() for interface in interfaces]
+            
         new_data = request.POST.copy()
 
         errors = manipulator.get_validation_errors(new_data)
@@ -172,21 +197,34 @@ def edit(request, host_id):
             # change to many-to-many??????
 
             # dynamically look up mx records?
+            text = ''
 
             for attrib in attribs:
-                host.__dict__[attrib] = request.POST[attrib]
+                if host.__dict__[attrib] != request.POST[attrib]:
+                    text = do_log(text, attrib, host.__dict__[attrib], request.POST[attrib])
+                    host.__dict__[attrib] = request.POST[attrib]
+
+            if request.POST.has_key('expiration_date'):
+                ymd = request.POST['expiration_date'].split("-")
+                if date(int(ymd[0]), int(ymd[1]), int(ymd[2])) != host.__dict__['expiration_date']:
+                    text = do_log(text, 'expiration_date', host.__dict__['expiration_date'],
+                                  request.POST['expiration_date'])
+                    host.__dict__['expiration_date'] = date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
 
             for inter in interfaces:
                 changetype = False
                 ips = IP.objects.filter(interface=inter.id)
                 if inter.mac_addr != request.POST['mac_addr%d' % inter.id]:
-                    inter.mac_addr = request.POST['mac_addr%d' % inter.id]
+                    text = do_log(text, 'mac_addr', inter.mac_addr, request.POST['mac_addr%d' % inter.id])
+                    inter.mac_addr = request.POST['mac_addr%d' % inter.id].lower()
                 if inter.hdwr_type != request.POST['hdwr_type%d' % inter.id]:
                     oldtype = inter.hdwr_type
+                    text = do_log(text, 'hdwr_type', oldtype, request.POST['hdwr_type%d' % inter.id])
                     inter.hdwr_type = request.POST['hdwr_type%d' % inter.id]
                     changetype = True
                 if (request.POST.has_key('dhcp%d' % inter.id) and not inter.dhcp or
                     not request.POST.has_key('dhcp%d' % inter.id) and inter.dhcp):
+                    text = do_log(text, 'dhcp', inter.dhcp, int(not inter.dhcp))
                     inter.dhcp = not inter.dhcp
                 for ip in ips:
                     names = ip.name_set.all()
@@ -195,6 +233,7 @@ def edit(request, host_id):
                         oldsubnet = oldip.split(".")[2]
                         ip.ip_addr = request.POST['ip_addr%d' % ip.id]
                         ip.save()
+                        text = do_log(text, 'ip_addr', oldip, ip.ip_addr)
                         for name in names:
                             if name.name.split(".")[0].endswith('-%s' % oldsubnet):
                                 name.name = name.name.replace('-%s' % oldsubnet, '-%s' % ip.ip_addr.split(".")[2])
@@ -215,6 +254,7 @@ def edit(request, host_id):
                         mx.save()
                     new_ip = IP(interface=inter, ip_addr=request.POST['%dip_addr' % inter.id])
                     new_ip.save()
+                    text = do_log(text, '*new*', 'ip_addr', new_ip.ip_addr)
                     new_name = "-".join([host.hostname.split(".")[0],
                                          new_ip.ip_addr.split(".")[2]])
                     new_name += "." + host.hostname.split(".", 1)[1]
@@ -236,9 +276,10 @@ def edit(request, host_id):
                 inter.save()
             if request.POST['mac_addr_new']:
                 new_inter = Interface(host=host,
-                                      mac_addr=request.POST['mac_addr_new'],
+                                      mac_addr=request.POST['mac_addr_new'].lower(),
                                       hdwr_type=request.POST['hdwr_type_new'],
                                       dhcp=request.POST['dhcp_new'])
+                text = do_log(text, '*new*', 'mac_addr', new_inter.mac_addr)
                 new_inter.save()
             if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
                 mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
@@ -246,6 +287,7 @@ def edit(request, host_id):
                     mx.save()
                 new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
                 new_ip.save()
+                text = do_log(text, '*new*', 'ip_addr', new_ip.ip_addr)
                 new_name = "-".join([host.hostname.split(".")[0],
                                      new_ip.ip_addr.split(".")[2]])
                 new_name += "." + host.hostname.split(".", 1)[1]
@@ -274,6 +316,7 @@ def edit(request, host_id):
                 new_inter.save()
                 new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
                 new_ip.save()
+                text = do_log(text, '*new*', 'ip_addr', new_ip.ip_addr)
                 new_name = "-".join([host.hostname.split(".")[0],
                                      new_ip.ip_addr.split(".")[2]])
                 new_name += "." + host.hostname.split(".", 1)[1]
@@ -292,6 +335,9 @@ def edit(request, host_id):
                             dns_view='global', only=False)
                 name.save()
                 name.mxs.add(mx)
+            if text:
+                log = Log(hostname=host.hostname, log=text)
+                log.save()
             host.save()
             return HttpResponseRedirect('/hostbase/%s/' % host.id)
         else:
@@ -408,6 +454,7 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
 def dnsedit(request, host_id):
     """Edits specific DNS information
     Data is validated before committed to the database"""
+    text = ''
     if request.GET.has_key('sub'):
         hostdata = gethostdata(host_id, True)
         for ip in hostdata['names']:
@@ -415,18 +462,30 @@ def dnsedit(request, host_id):
             ipaddrstr = ipaddr.__str__()
             for name in hostdata['cnames']:
                 for cname in hostdata['cnames'][name]:
-                    cname.cname = request.POST['cname%d' % cname.id]
-                    cname.save()
+                    if regex.host.match(request.POST['cname%d' % cname.id]):
+                        text = do_log(text, 'cname', cname.cname, request.POST['cname%d' % cname.id])
+                        cname.cname = request.POST['cname%d' % cname.id]
+                        cname.save()
             for name in hostdata['mxs']:
                 for mx in hostdata['mxs'][name]:
-                    mx.priority = request.POST['priority%d' % mx.id]
-                    mx.mx = request.POST['mx%d' % mx.id]
-                    mx.save()
+                    if (mx.priority != request.POST['priority%d' % mx.id] and mx.mx != request.POST['mx%d' % mx.id]):
+                        text = do_log(text, 'mx', ' '.join([str(mx.priority), str(mx.mx)]),
+                                      ' '.join([request.POST['priority%d' % mx.id], request.POST['mx%d' % mx.id]]))
+                        nameobject = Name.objects.get(id=name)
+                        nameobject.mxs.remove(mx)
+                        newmx, created = MX.objects.get_or_create(priority=request.POST['priority%d' % mx.id], mx=request.POST['mx%d' % mx.id])
+                        if created:
+                            newmx.save()
+                        nameobject.mxs.add(newmx)
+                        nameobject.save()
             for name in hostdata['names'][ip]:
                 name.name = request.POST['name%d' % name.id]
-                if request.POST['%dcname' % name.id]:
+                name.dns_view = request.POST['dns_view%d' % name.id]
+                if (request.POST['%dcname' % name.id] and
+                regex.host.match(request.POST['%dcname' % name.id])):
                     cname = CName(name=name,
                                   cname=request.POST['%dcname' % name.id])
+                    text = do_log(text, '*new*', 'cname', cname.cname)
                     cname.save()
                 if (request.POST['%dpriority' % name.id] and
                     request.POST['%dmx' % name.id]):
@@ -434,16 +493,22 @@ def dnsedit(request, host_id):
                             mx=request.POST['%dmx' % name.id])
                     if created:
                         mx.save()
+                        text = do_log(text, '*new*', 'mx',
+                                      ' '.join([request.POST['%dpriority' % name.id],
+                                                request.POST['%dmx' % name.id]]))
                     name.mxs.add(mx)
                 name.save()
             if request.POST['%sname' % ipaddrstr]:
                 name = Name(ip=ipaddr,
                             dns_view=request.POST['%sdns_view' % ipaddrstr],
                             name=request.POST['%sname' % ipaddrstr], only=False)
+                text = do_log(text, '*new*', 'name', name.name)
                 name.save()
-                if request.POST['%scname' % ipaddrstr]:
+                if (request.POST['%scname' % ipaddrstr] and
+                regex.host.match(request.POST['%scname' % ipaddrstr])):
                     cname = CName(name=name,
                                   cname=request.POST['%scname' % ipaddrstr])
+                    text = do_log(text, '*new*', 'cname', cname.cname)
                     cname.save()
                 if (request.POST['%smx' % ipaddrstr] and
                     request.POST['%spriority' % ipaddrstr]):
@@ -451,7 +516,12 @@ def dnsedit(request, host_id):
                             mx=request.POST['%smx' % ipaddrstr])
                     if created:
                         mx.save()
+                    text = do_log(text, '*new*', 'mx',
+                                  ' '.join([request.POST['%spriority' % ipaddrstr], request.POST['%smx' % ipaddrstr]]))
                     name.mxs.add(mx)                
+        if text:
+            log = Log(hostname=hostdata['host'].hostname, log=text)
+            log.save()
         return HttpResponseRedirect('/hostbase/%s/dns' % host_id)
     else:
         host = Host.objects.get(id=host_id)
@@ -489,6 +559,10 @@ def new(request):
         except:
             pass
         if not validate(request, True):
+            if not request.POST['ip_addr_new'] and not request.POST['ip_addr_new2']:
+                return render_to_response('errors.html',
+                                          {'failures': ['ip_addr: You must enter an ip address'],
+                                          'logged_in': request.session.get('_auth_user_id', False)})
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -499,6 +573,8 @@ def new(request):
             if request.POST.has_key('comments'):
                 host.comments = request.POST['comments']
             if request.POST.has_key('expiration_date'):
+#                ymd = request.POST['expiration_date'].split("-")
+#                host.__dict__['expiration_date'] = date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
                 host.__dict__['expiration_date'] = date(2000, 1, 1)
             host.status = 'active'
             host.save()
@@ -509,7 +585,7 @@ def new(request):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new'],
+                                  mac_addr=request.POST['mac_addr_new'].lower(),
                                   hdwr_type=request.POST['hdwr_type_new'],
                                   dhcp=request.POST.has_key('dhcp_new'))
             new_inter.save()
@@ -567,8 +643,8 @@ def new(request):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new2'],
-                                  hdwr_type=request.POST['mac_addr_new2'],
+                                  mac_addr=request.POST['mac_addr_new2'].lower(),
+                                  hdwr_type=request.POST['hdwr_type_new2'],
                                   dhcp=request.POST.has_key('dhcp_new2'))
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
@@ -647,6 +723,10 @@ def copy(request, host_id):
         except:
             pass
         if not validate(request, True):
+            if not request.POST['ip_addr_new'] and not request.POST['ip_addr_new2']:
+                return render_to_response('errors.html',
+                                          {'failures': ['ip_addr: You must enter an ip address'],
+                                          'logged_in': request.session.get('_auth_user_id', False)})
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -657,6 +737,8 @@ def copy(request, host_id):
             if request.POST.has_key('comments'):
                 host.comments = request.POST['comments']
             if request.POST.has_key('expiration_date'):
+#                ymd = request.POST['expiration_date'].split("-")
+#                host.__dict__['expiration_date'] = date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
                 host.__dict__['expiration_date'] = date(2000, 1, 1)
             host.status = 'active'
             host.save()
@@ -667,7 +749,7 @@ def copy(request, host_id):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new'],
+                                  mac_addr=request.POST['mac_addr_new'].lower(),
                                   hdwr_type=request.POST['hdwr_type_new'],
                                   dhcp=request.POST.has_key('dhcp_new'))
             new_inter.save()
@@ -725,8 +807,8 @@ def copy(request, host_id):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new2'],
-                                  hdwr_type=request.POST['mac_addr_new2'],
+                                  mac_addr=request.POST['mac_addr_new2'].lower(),
+                                  hdwr_type=request.POST['hdwr_type_new2'],
                                   dhcp=request.POST.has_key('dhcp_new2'))
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
@@ -996,6 +1078,13 @@ def zoneedit(request, zone_id):
 def do_zone_add(manipulator, new_data):
     manipulator.do_html2python(new_data)
     zone = manipulator.save(new_data)
+##    text = ''
+##     for field in new_data:
+##         if not (field == 'nameservers' or field == 'mxs' or
+##                 field == 'priority' or field == 'ip_addr' or field == 'mx'):
+##             text += "%-20s -> %s" % (field, new_data[field])
+##     log = ZoneLog(zone=new_data['zone'], text)
+##     log.save()
     for name in new_data.getlist('name'):
         if name:
             ns, created = Nameserver.objects.get_or_create(name=name)
@@ -1022,6 +1111,11 @@ def check_zone_errors(new_data):
         errors.update(MX.AddManipulator().get_validation_errors({'mx':mx, 'priority':priorities[count]})) 
         count += 1
     return errors
+
+def do_log(text, attribute, previous, new):
+    if previous != new:
+        text += "%-20s%-20s -> %s\n" % (attribute, previous, new)
+    return text
 
 ## login required stuff
 ## uncomment the views below that you would like to restrict access to

@@ -12,7 +12,8 @@
 <ul class="sidebar">
    <li><a href="/hostbase/{{ host.id }}/" class="sidebar">host info</a></li>
    <li><a href="/hostbase/{{ host.id }}/edit/" class="sidebar">edit host info</a></li>
-   <li><a href="edit/" class="sidebar">edit dns info</a></li>
+   <li><a href="/hostbase/{{ host.id }}/dns/" class="sidebar">see dns info</a></li>
+   <li><a href="/hostbase/{{ host.id }}/logs/" class="sidebar">change logs</a></li>
 </ul>
 {% include "logout" %}
 {% endblock %}
@@ -42,7 +43,7 @@
 	       <select name="dns_view{{ name.id }}">
 	       {% for choice in DNS_CHOICES %}
 	       {% ifequal name.dns_view choice.0 %}
-	       <option value="{{ choice.0 }}">{{ choice.1 }}
+	       <option value="{{ choice.0 }}" selected="selected">{{ choice.1 }}
 	       {% else %}
 	       <option value="{{ choice.0 }}">{{ choice.1 }}
 	       {% endifequal %}

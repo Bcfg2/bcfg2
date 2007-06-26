@@ -27,9 +27,9 @@ class Host(models.Model):
         ('hpux', 'hpux'), ('irix-5', 'irix-5'),
         ('irix-6', 'irix-6'), ('linux', 'linux'),
         ('linux-2', 'linux-2'), ('linux-rh73', 'linux-rh73'),
-        ('linux-rh80', 'linux-rh80'), ('linux-sles80', 'linux-sles80'),
-        ('linux-sles80-64', 'linux-sles80-64'), ('linux-sles80-ia32', 'linux-sles80-ia32'),
-        ('linux-sles80-ia64', 'linux-sles80-ia64'), ('mac', 'mac'),
+        ('linux-rh8', 'linux-rh8'), ('linux-sles8', 'linux-sles8'),
+        ('linux-sles8-64', 'linux-sles8-64'), ('linux-sles8-ia32', 'linux-sles8-ia32'),
+        ('linux-sles8-ia64', 'linux-sles8-ia64'), ('mac', 'mac'),
         ('network', 'network'), ('next', 'next'),
         ('none', 'none'), ('osf', 'osf'), ('printer', 'printer'),
         ('robot', 'robot'), ('solaris-2', 'solaris-2'),
@@ -169,3 +169,18 @@ class Zone(models.Model):
     class Admin:
         pass
 
+class Log(models.Model):
+    hostname = models.CharField(maxlength=64)
+    date = models.DateTimeField(auto_now=True, auto_now_add=True)
+    log = models.TextField()
+
+    def __str__(self):
+        return self.hostname
+
+class ZoneLog(models.Model):
+    zone = models.CharField(maxlength=64)
+    date = models.DateTimeField(auto_now=True, auto_now_add=True)
+    log = models.TextField()
+
+    def __str__(self):
+        return self.zone

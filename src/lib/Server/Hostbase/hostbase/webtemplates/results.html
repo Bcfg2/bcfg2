@@ -21,20 +21,18 @@
    <col width="75">
    <col width="50">
    <col width="50">
+   <col width="50">
    <col width="*">
    <tr> <td><b>hostname</b></td>
    <td> <b>status</b> </td>
    </tr>
    {% for host in hosts %}
    <tr> <td>{{ host.0 }}</td>
-   {% if host.2 %}
-   <td> active </td>
-   {% else %}
-   <td> inactive </td>
-   {% endif %}
+   <td> {{ host.2 }} </td>
    <td> <a href="{{ host.1 }}">view</a> </td>
    <td> <a href="{{ host.1 }}/edit">edit</a> </td>
    <td> <a href="{{ host.1 }}/copy">copy</a> </td>
+   <td> <a href="{{ host.1 }}/logs">logs</a> </td>
 <!--   <td> <a href="{{ host.1 }}/remove">remove</a> </td> -->
    </tr>
    {% endfor %}
