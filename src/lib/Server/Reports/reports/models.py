@@ -1,6 +1,8 @@
 '''Django models for BCFG reports'''
 from django.db import models
+from django.db.models import Q
 from datetime import datetime, timedelta
+from time import strptime
 
 KIND_CHOICES = (
     #These are the kinds of config elements
@@ -16,6 +18,28 @@ PING_CHOICES = (
     ('Up (Y)', 'Y'),
     ('Down (N)', 'N')
 )
+class ClientManager(models.Manager):
+    '''extended client manager functions'''
+    def active(self,timestamp='now'):
+        '''returns a set of clients that have been created and have not yet been
+        expired as of optional timestmamp argument. Timestamp should be a
+        string formatted in the fashion: 2006-01-01 00:00:00'''
+        
+        if timestamp=='now':
+            timestamp = datetime.now()
+        else:
+            print timestamp
+            try:
+                timestamp = datetime(*strptime(timestamp, "%Y-%m-%d %H:%M:%S")[0:6])
+            except ValueError:
+                return self.filter(expiration__lt=timestamp, creation__gt=timestamp);
+                #this is a really hacky way to return an empty QuerySet
+                #this should return Client.objects.none() in Django development version.
+        
+        return self.filter(Q(expiration__gt=timestamp) | Q(expiration__isnull=True),
+                           creation__lt=timestamp)
+
+
 class Client(models.Model):
     '''object representing every client we have seen stats for'''
     creation = models.DateTimeField()
@@ -28,6 +52,8 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
+    objects = ClientManager()
+    
     class Admin:
         pass
 

@@ -5,6 +5,7 @@ urlpatterns = patterns('',
     # (r'^Bcfg2.Server.Reports/', include('Bcfg2.Server.Reports.apps.foo.urls.foo')),
     (r'^/*$','Bcfg2.Server.Reports.reports.views.index'),
 
+	(r'^clients/(?P<timestamp>(19|20)\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])@([01][0-9]|2[0-3]):([0-5][0-9]|60):([0-5][0-9]|60))/$','Bcfg2.Server.Reports.reports.views.client_index'),
     (r'^clients/(?P<hostname>\S+)/(?P<pk>\d+)/$', 'Bcfg2.Server.Reports.reports.views.client_detail'),
     (r'^clients/(?P<hostname>\S+)/manage/$', 'Bcfg2.Server.Reports.reports.views.client_manage'),
     (r'^clients/(?P<hostname>\S+)/$', 'Bcfg2.Server.Reports.reports.views.client_detail'),

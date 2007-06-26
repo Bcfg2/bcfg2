@@ -27,7 +27,7 @@ def config_item_modified(request, eyedee =None, timestamp = 'now'):
                    "WHERE reports_client.current_interaction_id = reports_modified_interactions.interaction_id "+
                    "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
                    "AND reports_modified_interactions.modified_id = %s", [eyedee])
-        associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+        associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
     else:
         interact_queryset = Interaction.objects.interaction_per_client(timestamp)
         interactionlist = []
@@ -37,7 +37,7 @@ def config_item_modified(request, eyedee =None, timestamp = 'now'):
                    "WHERE reports_modified_interactions.interaction_id IN %s "+
                    "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
                    "AND reports_modified_interactions.modified_id = %s", [interactionlist, eyedee])
-            associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+            associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
         else:
             associated_client_list = []
 
@@ -62,7 +62,7 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
                    "WHERE reports_client.current_interaction_id = reports_bad_interactions.interaction_id "+
                    "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
                    "AND reports_bad_interactions.bad_id = %s", [eyedee])
-        associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+        associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
     else:
         interact_queryset = Interaction.objects.interaction_per_client(timestamp)
         interactionlist = []
@@ -72,7 +72,7 @@ def config_item_bad(request, eyedee = None, timestamp = 'now'):
                            "WHERE reports_bad_interactions.interaction_id IN %s "+
                            "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
                            "AND reports_bad_interactions.bad_id = %s", [interactionlist, eyedee])
-            associated_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+            associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
         else:
             associated_client_list = None
 
@@ -94,8 +94,7 @@ def bad_item_index(request, timestamp = 'now'):
     if timestamp == 'now':
         bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
                            [c.current_interaction
-                            for c in Client.objects.all()]).distinct()])
-                             #this will need expiration support
+                            for c in Client.objects.active(timestamp)]).distinct()])
         kinds = list(Set(bad_kinds.values()))
         item_list_dict = dict([(x,[]) for x in kinds])
         for obj in bad_kinds:
@@ -104,8 +103,7 @@ def bad_item_index(request, timestamp = 'now'):
     else: #this isn't done yet
         bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
                            [c.current_interaction
-                            for c in Client.objects.all()]).distinct()])
-                             #this will need expiration support
+                            for c in Client.objects.active(timestamp)]).distinct()])
         kinds = list(Set(bad_kinds.values()))
         item_list_dict = dict([(x,[]) for x in kinds])
         for obj in bad_kinds:
@@ -128,7 +126,7 @@ def modified_item_index(request, timestamp = 'now'):
     if timestamp == 'now':
         mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
                            [c.current_interaction
-                            for c in Client.objects.all()]).distinct()])
+                            for c in Client.objects.active(timestamp)]).distinct()])
                              #this will need expiration support
         kinds = list(Set(mod_kinds.values()))
         item_list_dict = dict([(x,[]) for x in kinds])
@@ -138,7 +136,7 @@ def modified_item_index(request, timestamp = 'now'):
     else: #this isn't done yet
         mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
                            [c.current_interaction
-                            for c in Client.objects.all()]).distinct()])
+                            for c in Client.objects.active(timestamp)]).distinct()])
                              #this will need expiration support
         kinds = list(Set(mod_kinds.values()))
         item_list_dict = dict([(x,[]) for x in kinds])
@@ -156,12 +154,18 @@ def modified_item_index(request, timestamp = 'now'):
                                                             'timestamp_time' : timestamp[11:19]})
 
 
-def client_index(request):
-    client_list = Client.objects.all().order_by('name')
+def client_index(request, timestamp = 'now'):
+    timestamp = timestamp.replace("@"," ")
+    client_list = Client.objects.active(timestamp).order_by('name')
     client_list_a = client_list[:len(client_list)/2]
     client_list_b = client_list[len(client_list)/2:]
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
     return render_to_response('clients/index.html', {'client_list_a': client_list_a,
-                                                    'client_list_b': client_list_b})
+                                                     'client_list_b': client_list_b,
+                                                     'timestamp' : timestamp,
+                                                     'timestamp_date' : timestamp[:10],
+                                                     'timestamp_time' : timestamp[11:19]})
 
 def client_detail(request, hostname = None, pk = None):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
@@ -212,7 +216,7 @@ def display_timing(request, timestamp = 'now'):
     #+------+-------+----------------+-----------+---------+----------------+-------+
     #| name | parse | probe download | inventory | install | cfg dl & parse | total |
     #+------+-------+----------------+-----------+---------+----------------+-------+
-    client_list = Client.objects.all().order_by('name')
+    client_list = Client.objects.active(timestamp.replace("@"," ")).order_by('name')
     stats_list = []
 
     if not timestamp == 'now':
