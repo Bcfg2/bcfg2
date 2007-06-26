@@ -11,6 +11,7 @@ from sets import Set
 from django.template import Context, loader
 from django.db import connection
 import re
+import cStringIO
 
 ## class DataNexus(DirectoryBacked):
 ##     '''DataNexus is an object that watches multiple files and
@@ -133,6 +134,8 @@ class Hostbase(Plugin):
         hosts = {}
 
         for zone in zones:
+            zonefile = cStringIO.StringIO()
+            externalzonefile = cStringIO.StringIO()
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
             INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
@@ -151,8 +154,8 @@ class Hostbase(Plugin):
                 'addresses': addresses,
                 'mxs': mxs
                 })
-            self.filedata[zone[1]] = self.templates['zone'].render(context)
-            self.filedata[zone[1] + '.external'] = self.templates['zone'].render(context)
+            zonefile.write(self.templates['zone'].render(context))
+            externalzonefile.write(self.templates['zone'].render(context))
 
             querystring = """SELECT h.hostname, p.ip_addr,
             n.name, c.cname, m.priority, m.mx, n.dns_view
@@ -169,64 +172,68 @@ class Hostbase(Plugin):
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
             prevhost = (None, None, None, None)
-            cnames = ''
-            cnamesexternal = ''
+            cnames = cStringIO.StringIO()
+            cnamesexternal = cStringIO.StringIO()
             for host in zonehosts:
                 if not host[2].split(".", 1)[1] == zone[1]:
-                    self.filedata[zone[1]] += cnames
-                    self.filedata[zone[1] + '.external'] += cnamesexternal
-                    cnames = ''
-                    cnamesexternal = ''
+                    zonefile.write(cnames.getvalue())
+                    externalzonefile.write(cnamesexternal.getvalue())
+                    cnames = cStringIO.StringIO()
+                    cnamesexternal = cStringIO.StringIO()
                     continue
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
-                    self.filedata[zone[1]] += cnames
-                    self.filedata[zone[1] + '.external'] += cnamesexternal
-                    cnames = ''
-                    cnamesexternal = ''                    
-                    self.filedata[zone[1]] += ("%-32s%-10s%-32s\n" %
+                    zonefile.write(cnames.getvalue())
+                    externalzonefile.write(cnamesexternal.getvalue())
+                    cnames = cStringIO.StringIO()
+                    cnamesexternal = cStringIO.StringIO()
+                    zonefile.write("%-32s%-10s%-32s\n" %
+                                   (host[2].split(".", 1)[0], 'A', host[1]))
+                    zonefile.write("%-32s%-10s%-3s%s.\n" %
+                                   ('', 'MX', host[4], host[5]))
+                    if host[6] == 'global':
+                        externalzonefile.write("%-32s%-10s%-32s\n" %
                                                (host[2].split(".", 1)[0], 'A', host[1]))
-                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %
+                        externalzonefile.write("%-32s%-10s%-3s%s.\n" %
                                                ('', 'MX', host[4], host[5]))
-                    if host[6] == 'global':
-                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-32s\n" %
-                                                                 (host[2].split(".", 1)[0], 'A', host[1]))
-                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-3s%s.\n" %
-                                                                 ('', 'MX', host[4], host[5]))
                 elif not prevhost[5] == host[5]:
-                    self.filedata[zone[1]] += ("%-32s%-10s%-3s%s.\n" %
-                                               ('', 'MX', host[4], host[5]))                    
+                    zonefile.write("%-32s%-10s%-3s%s.\n" %
+                                   ('', 'MX', host[4], host[5]))                    
                     if host[6] == 'global':
-                        self.filedata[zone[1] + '.external'] += ("%-32s%-10s%-3s%s.\n" %
-                                                                 ('', 'MX', host[4], host[5]))
+                        externalzonefile.write("%-32s%-10s%-3s%s.\n" %
+                                         ('', 'MX', host[4], host[5]))
                         
                 if host[3]:
                     try:
                         if host[3].split(".", 1)[1] == zone[1]:
-                            cnames += ("%-32s%-10s%-32s\n" %
-                                                       (host[3].split(".", 1)[0],
-                                                        'CNAME',host[2].split(".", 1)[0]))
+                            cnames.write("%-32s%-10s%-32s\n" %
+                                         (host[3].split(".", 1)[0],
+                                          'CNAME',host[2].split(".", 1)[0]))
                             if host[6] == 'global':
-                                cnamesexternal += ("%-32s%-10s%-32s\n" %
-                                                                         (host[3].split(".", 1)[0],
-                                                                          'CNAME',host[2].split(".", 1)[0]))
+                                cnamesexternal.write("%-32s%-10s%-32s\n" %
+                                                     (host[3].split(".", 1)[0],
+                                                      'CNAME',host[2].split(".", 1)[0]))
                         else:
-                            cnames += ("%-32s%-10s%-32s\n" %
-                                                       (host[3]+".",
-                                                        'CNAME',
-                                                        host[2].split(".", 1)[0]))
+                            cnames.write("%-32s%-10s%-32s\n" %
+                                         (host[3]+".",
+                                          'CNAME',
+                                          host[2].split(".", 1)[0]))
                             if host[6] == 'global':
-                                cnamesexternal += ("%-32s%-10s%-32s\n" %
-                                                                         (host[3]+".",
-                                                                          'CNAME',
-                                                                          host[2].split(".", 1)[0]))
+                                cnamesexternal.write("%-32s%-10s%-32s\n" %
+                                                     (host[3]+".",
+                                                      'CNAME',
+                                                      host[2].split(".", 1)[0]))
 
                     except:
                         pass
                 prevhost = host
-            self.filedata[zone[1]] += cnames
-            self.filedata[zone[1] + '.external'] += cnamesexternal
-            self.filedata[zone[1]] += ("\n\n%s" % zone[9])
-            self.filedata[zone[1] + '.external'] += ("\n\n%s" % zone[9])
+            zonefile.write(cnames.getvalue())
+            externalzonefile.write(cnamesexternal.getvalue())
+            zonefile.write("\n\n%s" % zone[9])
+            externalzonefile.write("\n\n%s" % zone[9])
+            self.filedata[zone[1]] = zonefile.getvalue()
+            self.filedata[zone[1] + ".external"] = externalzonefile.getvalue()
+            zonefile.close()
+            externalzonefile.close()
             self.Entries['ConfigFile']["%s/%s" % (self.filepath, zone[1])] = self.FetchFile
             self.Entries['ConfigFile']["%s/%s.external" % (self.filepath, zone[1])] = self.FetchFile
 
@@ -261,6 +268,8 @@ class Hostbase(Plugin):
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr
             """ % filename[1])
             reversehosts = cursor.fetchall()
+            zonefile = cStringIO.StringIO()
+            externalzonefile = cStringIO.StringIO()
             if len(filename[0].split(".")) == 2:
                 originlist = []
                 [originlist.append((".".join([ip[1].split(".")[2], filename[0]]),
@@ -281,13 +290,13 @@ class Hostbase(Plugin):
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
                         })        
-                    self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
+                    zonefile.write(self.templates['reverseapp'].render(context))
                     context = Context({
                         'hosts': hosts_external,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
                         })        
-                    self.filedata['%s.rev.external' % filename[0]] += self.templates['reverseapp'].render(context)
+                    externalzonefile.write(self.templates['reverseapp'].render(context))
             else:
                 originlist = [filename[0]]
                 hosts = [(host[1].split("."), host[0])
@@ -302,13 +311,17 @@ class Hostbase(Plugin):
                     'inaddr': filename[0],
                     'fileorigin': None,
                     })        
-                self.filedata['%s.rev' % filename[0]] += self.templates['reverseapp'].render(context)
+                zonefile.write(self.templates['reverseapp'].render(context))
                 context = Context({
                     'hosts': hosts_external,
                     'inaddr': filename[0],
                     'fileorigin': None,
                     })
-                self.filedata['%s.rev.external' % filename[0]] += self.templates['reverseapp'].render(context)                
+                externalzonefile.write(self.templates['reverseapp'].render(context))
+            self.filedata['%s.rev' % filename[0]] += zonefile.getvalue()
+            self.filedata['%s.rev.external' % filename[0]] += externalzonefile.getvalue()
+            zonefile.close()
+            externalzonefile.close()
             self.Entries['ConfigFile']['%s/%s.rev' % (self.filepath, filename[0])] = self.FetchFile
             self.Entries['ConfigFile']['%s/%s.rev.external' % (self.filepath, filename[0])] = self.FetchFile
 
@@ -580,10 +593,12 @@ olivia.ctd.anl.gov\n\n"""
                 hostdata = row
 
         for netgroup in netgroups:
-            fileoutput = header % (netgroup, netgroup, len(netgroups[netgroup]))
+            fileoutput = cStringIO.StringIO()
+            fileoutput.write(header % (netgroup, netgroup, len(netgroups[netgroup])))
             for each in netgroups[netgroup]:
-                fileoutput += each + "\n"
-            self.filedata['%s-machines' % netgroup] = fileoutput
+                fileoutput.write(each + "\n")
+            self.filedata['%s-machines' % netgroup] = fileoutput.getvalue()
+            fileoutput.close()
             self.Entries['ConfigFile']['/my/adm/hostbase/makenets/machines/%s-machines' % netgroup] = self.FetchFile
 
         cursor.execute("""
