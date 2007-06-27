@@ -321,7 +321,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                     probe.set('interpreter', match.group('interpreter'))
                 else:
                     probe.set('interpreter', '/bin/sh')
-                    ret.append(probe)
+                ret.append(probe)
         return ret
 
     def ReceiveData(self, client, data):
