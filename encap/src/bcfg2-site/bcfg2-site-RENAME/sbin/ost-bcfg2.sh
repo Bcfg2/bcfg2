@@ -8,9 +8,12 @@
 umask 002
 exec 2>&1
 
-LOG="svlogd -tt /usr/local/var/svlogd/bcfg2-client-ostiary"
 PATH=/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/bin:/bin
 export PATH
+
+LOGDIR="/usr/local/var/svlogd/bcfg2-client-ostiary"
+test -d $LOGDIR || mkdir $LOGDIR
+LOG="svlogd -tt $LOGDIR"
 
 case $1 in
        dvqn) bcfg2 -d -v -q -n       | $LOG ;;
