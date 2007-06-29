@@ -104,7 +104,7 @@ else
     touch ${BASEDIR}/etc/.SENTINEL_SITE
 fi
 
-# ost-bcfg2.sh
+# sbin/ost-bcfg2*
 if [ "${REPLACE_CONFIG}x" = "yesx" ]; then
     printf "REPLACE_CONFIG=yes, so removing ${BASEDIR}/sbin sentinel files...\n"
     S_B="${BASEDIR}/sbin/.SENTINEL_BCFG2"
@@ -114,13 +114,17 @@ if [ "${REPLACE_CONFIG}x" = "yesx" ]; then
 fi
 
 if [ -f ${BASEDIR}/sbin/.SENTINEL_BCFG2 ]; then
-    printf "INFO: ost-bcfg2.sh may have been updated by bcfg2 -\n"
+    printf "INFO: sbin/ost-bcfg2* may have been updated by bcfg2 -\n"
     printf "INFO: not replacing that configuration with this script.\n"
 elif [ -f ${BASEDIR}/sbin/.SENTINEL_SITE ]; then
-    printf "INFO: ost-bcfg2.sh may have been previously updated -\n"
+    printf "INFO: sbin/ost-bcfg2* may have been previously updated -\n"
     printf "INFO: not replacing that configuration with this script.\n"
 else
-    rmcp $PKGDIR/sbin/ost-bcfg2.sh ${BASEDIR}/sbin/
+    OSTSH="ost-bcfg2-dv ost-bcfg2-dvn ost-bcfg2-dvq ost-bcfg2-dvqn ost-bcfg2-restart ost-bcfg2.sh ost-bcfg2-v ost-bcfg2-vq"
+    for OSTFILE in $OSTSH; do
+        rmcp $PKGDIR/sbin/${OSTFILE} ${BASEDIR}/sbin/
+    done
+    chmod 700 ${BASEDIR}/sbin/*
     touch ${BASEDIR}/sbin/.SENTINEL_SITE
 fi
 
