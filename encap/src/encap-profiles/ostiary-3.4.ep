@@ -112,6 +112,7 @@ LOG=${BASEDIR}/postinstall.log
 exec > $LOG 2>&1
 printf "Running ostiary postinstall script...\n"
 date
+test -d /var/run || mkdir /var/run
 test -d /usr/local/var/svlogd || mkdir /usr/local/var/svlogd
 test -d /usr/local/var/svlogd/ostiary || mkdir /usr/local/var/svlogd/ostiary
 printf "Finished ostiary postinstall script.\n"
