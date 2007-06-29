@@ -354,6 +354,9 @@ ${REGEXPLACE} ${BASEDIR} .\* \/local\/sbin\/epkg \/usr\/local\/bin\/epkg
 printf "\nReplacing \"/usr/share/bcfg2\" with \"/usr/local/lib/bcfg2/share/bcfg2\"...\n"
 ${REGEXPLACE} ${BASEDIR} .\* \/usr\/share\/bcfg2\/ \/usr\/local\/lib\/bcfg2\/share\/bcfg2\/
 
+printf "\nReplacing \"/var/lib/bcfg2\" with \"/usr/local/var/lib/bcfg2\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \/var\/lib\/bcfg2\/ \/usr\/local\/var\/lib\/bcfg2\/
+
 printf "\nReplacing \"prefix = '/usr'\" with \"prefix = '/usr/local/lib/bcfg2'\"...\n"
 ${REGEXPLACE} ${BASEDIR} .\* prefix\ =\ \'\/usr\' prefix\ =\ \'/usr/local/lib/bcfg2\'
 
