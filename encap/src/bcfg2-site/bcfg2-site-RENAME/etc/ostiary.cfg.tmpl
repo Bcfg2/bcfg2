@@ -20,10 +20,12 @@ KILL="${OSTIARY_PASSWORD}-kill"
 # Must be at least one action.  Format is:
 # ACTION="secret","command (with path)",["uid"[,"gid"]]
 # NOTE: There is a maximum of 31 actions
-ACTION="${OSTIARY_PASSWORD}-bcfg2-dvqn","/usr/local/sbin/ost-bcfg2.sh dvqn","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-dvn","/usr/local/sbin/ost-bcfg2.sh dvn","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-dvq","/usr/local/sbin/ost-bcfg2.sh dvq","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-dv","/usr/local/sbin/ost-bcfg2.sh dv","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-vq","/usr/local/sbin/ost-bcfg2.sh vq","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-v","/usr/local/sbin/ost-bcfg2.sh v","0","0"
-ACTION="${OSTIARY_PASSWORD}-bcfg2-restart","/usr/local/sbin/ost-bcfg2.sh restart","0","0"
+# IMPORTANT: Commands *CAN NOT* have any arguments -
+#            on some platforms arguments are just ignored
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvqn","/usr/local/sbin/ost-bcfg2-dvqn","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvn","/usr/local/sbin/ost-bcfg2-dvn","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dvq","/usr/local/sbin/ost-bcfg2-dvq","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-dv","/usr/local/sbin/ost-bcfg2-dv","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-vq","/usr/local/sbin/ost-bcfg2-vq","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-v","/usr/local/sbin/ost-bcfg2-v","0","0"
+ACTION="${OSTIARY_PASSWORD}-bcfg2-restart","/usr/local/sbin/ost-bcfg2-restart","0","0"

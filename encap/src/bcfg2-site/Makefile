@@ -44,7 +44,7 @@ fix : copy
 	find $$EN -type f | xargs -n1 chmod 0644 && \
 	chmod 0600 $$EN/etc/ostiary.cfg && \
 	chmod 0600 $$EN/etc/bcfg2.conf && \
-	chmod 0755 $$EN/sbin/ost-bcfg2.sh && \
+	chmod 0755 $$EN/sbin/ost-bcfg2* && \
 	chmod 0755 $$EN/postinstall
 
 encap : fix
