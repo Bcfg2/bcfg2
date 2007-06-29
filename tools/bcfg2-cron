@@ -31,7 +31,7 @@ invoke_bcfg2 () {
   # Invoke bcfg2 if enabled
   if [ ${BCFG2_ENABLED} -eq 1 ]; then
       eval BCFG2_EXTRA_OPTIONS=\${BCFG2_OPTIONS_${RUNTYPE}}
-    ${BCFG2_BIN} ${BCFG2_OPTIONS} ${BCFG2_EXTRA_OPTIONS}}
+    ${BCFG2_BIN} ${BCFG2_OPTIONS} ${BCFG2_EXTRA_OPTIONS}
   fi
 }
 
