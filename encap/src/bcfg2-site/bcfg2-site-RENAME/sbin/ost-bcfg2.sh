@@ -15,15 +15,15 @@ LOGDIR="/usr/local/var/svlogd/bcfg2-client-ostiary"
 test -d $LOGDIR || mkdir $LOGDIR
 LOG="svlogd -tt $LOGDIR"
 
-case $1 in
-       dvqn) bcfg2 -d -v -q -n       | $LOG ;;
-        dvn) bcfg2 -d -v -n          | $LOG ;;
-        dvq) bcfg2 -d -v -q          | $LOG ;;
-         dv) bcfg2 -d -v             | $LOG ;;
-         vq) bcfg2 -v -q             | $LOG ;;
-          v) bcfg2 -v                | $LOG ;; 
-    restart) sv restart bcfg2-client | $LOG ;; 
-          *) printf "ERROR in $0\n"  | $LOG ;; 
+case $0 in
+       *-dvqn) bcfg2 -d -v -q -n       | $LOG ;;
+        *-dvn) bcfg2 -d -v -n          | $LOG ;;
+        *-dvq) bcfg2 -d -v -q          | $LOG ;;
+         *-dv) bcfg2 -d -v             | $LOG ;;
+         *-vq) bcfg2 -v -q             | $LOG ;;
+          *-v) bcfg2 -v                | $LOG ;; 
+    *-restart) sv restart bcfg2-client | $LOG ;; 
+            *) printf "ERROR in $0\n"  | $LOG ;; 
 esac
 
 exit 0
