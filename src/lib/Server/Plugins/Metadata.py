@@ -137,9 +137,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.groups = {}
             grouptmp = {}
             self.categories = {}
-            for group in xdata.findall('.//Group'):
-                if group.getparent().tag == 'Group':
-                    continue
+            for group in xdata.xpath('//Groups/Group') \
+                    + xdata.xpath('Group'):
                 grouptmp[group.get('name')] = tuple([[item.get('name') for item in group.findall(spec)]
                                                      for spec in ['./Bundle', './Group']])
                 grouptmp[group.get('name')][1].append(group.get('name'))
