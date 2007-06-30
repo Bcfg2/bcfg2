@@ -1,0 +1,7 @@
+You must build and install the client packages in ".." and the server
+packages in "../server" before building here.
+
+Type "make".
+
+Bcfg2 Reports do not work on all of the platforms supported by Bcfg2 client.
+GNU/Linux on x86_32 or x86_64 are recommended.
