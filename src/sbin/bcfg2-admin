@@ -14,13 +14,18 @@ colors = ['steelblue1', 'chartreuse', 'gold', 'magenta', 'indianred1', 'limegree
 usage = '''
 bcfg2-admin [options]
 fingerprint - print the server certificate fingerprint
-init        - initialize the bcfg2 repository( this is interactive; only run once )
-pull <client> <entry type> <entry name> - mine statistics for entry information
-minestruct  <client> - mine statistics for extra entries
-viz         [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]
-client      add name=  profile=  uuid=  password=  secure=  location=
+init        - initialize the bcfg2 repository
+              (this is interactive; only run once)
+pull        <client> <entry type> <entry name> 
+            - mine statistics for entry information
+minestruct  <client> 
+            - mine statistics for extra entries
+viz         [--includehosts] [--includebundles] [--includekey] 
+            [-o output.png] [--raw]
+client      add name= profile= uuid= password= address= secure= location=
 tidy        - clean up unused files from repo
-compare <config1.xml> <config2.xml> - compare two configurations for differences
+compare     <config1.xml> <config2.xml>
+            - compare two configurations for differences
 '''
 
 config = '''
@@ -499,7 +504,7 @@ def do_client(repopath, args):
         element = lxml.etree.Element("Client")
         for i in args[1:]:
             attr, val = i.split('=', 1)
-            if not(attr in ['name', 'profile', 'uuid', 'password', 'secure', 'location']):
+            if not(attr in ['name', 'profile', 'uuid', 'password', 'address', 'secure', 'location']):
                 print "Attribute %s unknown" % attr
                 raise SystemExit, 1
             element.attrib[attr] = val
