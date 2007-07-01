@@ -332,6 +332,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                               (data.get('name'), client.hostname))
             return
         dlines = data.text.split('\n')
+        self.logger.debug("%s:probe:%s:%s" % (client.hostname, 
+            data.get('name'), [line.strip() for line in dlines]))
         for line in dlines[:]:
             if line.split(':')[0] == 'group':
                 newgroup = line.split(':')[1].strip()
