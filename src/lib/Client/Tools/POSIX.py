@@ -95,7 +95,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except (OSError, KeyError):
             self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
             owner = 'root'
-            group = 'root'
+            try:
+                grp.getgrnam('root')
+                group = 'root'
+            except KeyError:
+                group = 'system'
         finfo = os.stat(entry.get('name'))
         perms = oct(finfo[ST_MODE])[-4:]
         if entry.get('mtime', '-1') != '-1':
