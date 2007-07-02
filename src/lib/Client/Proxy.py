@@ -139,9 +139,6 @@ class SafeProxy:
             except xmlrpclib.Fault:
                 self.log.debug("Operation %s completed with fault" % (methodName))
                 raise
-            except socket.sslerror:
-                self.log.debug("Attempt %d of %d failed due to SSL negotiation failure" %
-                               ((irs + 1), self._retries))
             except socket.error, serr:
                 self.log.debug("Attempting %s (%d of %d) failed because %s" % (methodName, (irs+1),
                                                                                self._retries, serr))
