@@ -2,8 +2,12 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, sys, time, Bcfg2.Logging, Bcfg2.Server.Core, os
+import logging, lxml.etree, sys, time, cmd
+import Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
+
+class dummyError(Exception):
+    pass
 
 def printTabular(rows):
     '''print data in tabular format'''
@@ -15,233 +19,239 @@ def printTabular(rows):
     for row in rows[1:]:
         print fstring % row
 
-def getInput():
-    '''read commands from stdin'''
-    try:
-        return raw_input('> ').strip().split(" ")
-    except KeyboardInterrupt:
-        return ['']
-    except EOFError:
-        return ['quit']
-    
-def doShowentries(cmd, core):
-    '''show abstract configuration entries for a given host'''
-    if len(cmd) not in [2, 3]:
-        print "Usage: showentries <hostname> <type>"
-        return
-    try:
-        meta = core.metadata.get_metadata(cmd[1])
-    except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-        print "Unable to find metadata for host %s" % cmd[1]
-        return
-    structures = core.GetStructures(meta)
-    output = [('entrytype', 'name')]
-    if len(cmd) == 2:
-        for item in structures:
-            for child in item.getchildren():
-                output.append((child.tag, child.get('name')))
-    if len(cmd) == 3:
-        for item in structures:
-            for child in item.getchildren():
-                if child.tag == cmd[2]:
-                    output.append((child.tag, child.get('name')))
-    printTabular(output)
+class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
+    def __init__(self, cfpath):
+        cmd.Cmd.__init__(self)
+        try:
+            Bcfg2.Server.Core.Core.__init__(self, {}, cfpath)
+        except Bcfg2.Server.Core.CoreInitError, msg:
+            print "Core load failed because %s" % msg
+            raise SystemExit, 1
+        self.prompt = '> '
+        self.cont = True
+        for i in range(25):
+            print "Filesystem check %d of %d" % (i + 1, 25)
+            self.fam.Service()
+            time.sleep(0.5)
 
-def doBuild(cmd, core):
-    '''build client configuration'''
-    if len(cmd) == 3:
-        output = open(cmd[2], 'w')
-        output.write(lxml.etree.tostring(core.BuildConfiguration(cmd[1])))
-        output.close()
-    else:
-        print 'Usage: build <hostname> <output file>'
+    def do_debug(self, _):
+        self.cont = False
+        raise dummyError
 
-def doBuildAll(cmd, core):
-    if len(cmd) != 2:
-        print "Usage: buildall <directory>"
-        return
-    try:
-        os.mkdir(cmd[1])
-    except:
-        pass
-    for client in core.metadata.clients:
-        doBuild(['build', client, cmd[1] + '/' + client + '.xml'], core)
+    def do_quit(self, _):
+        """Exit program.
+Usage: [quit|exit]"""
+        raise SystemExit, 0
 
-def doBuildFile(cmd, core):
-    '''build a config file for client'''
-    if len(cmd) == 3:
-        entry = lxml.etree.Element('ConfigFile', name=cmd[1])
-        metadata = core.metadata.get_metadata(cmd[2])
-        core.Bind(entry, metadata)
-        print lxml.etree.tostring(entry)
-    else:
-        print 'Usage: buildfile filename hostname'
+    do_EOF = do_quit
 
-def doBundles(_, core):
-    '''print out group/bundle info'''
-    data = [('Group', 'Bundles')]
-    groups = core.metadata.groups.keys()
-    groups.sort()
-    for group in groups:
-        data.append((group, ','.join(core.metadata.groups[group][0])))
-    printTabular(data)
+    def do_help(self, _):
+        '''print out usage info'''
+        print 'Commands:'
+        print 'build <hostname> <filename> - build config for hostname, writing to filename'
+        print 'buildall <directory> - build configs for all clients in directory'
+        print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
+        print 'bundles - print out group/bundle information'
+        print 'clients - print out client/profile information'
+        print 'debug - shell out to native python interpreter'
+        print 'generators - list current versions of generators'
+        print 'groups - list groups'
+        print 'help - print this text'
+        print 'mappings <type*> <name*>- print generator mappings for optional type and name'
+        print 'quit'
+        print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
+        print 'showclient <client1> <client2> - show metadata for given hosts'
+        print 'update - process pending file events'
+        print 'version - print version of this tool'
 
-def doClients(_, core):
-    '''print out client info'''
-    data = [('Client', 'Profile')]
-    clist = core.metadata.clients.keys()
-    clist.sort()
-    for client in clist:
-        data.append((client, core.metadata.clients[client]))
-    printTabular(data)
 
-def doHelp(_, dummy):
-    '''print out usage info'''
-    print 'Commands:'
-    print 'build <hostname> <filename> - build config for hostname, writing to filename'
-    print 'buildall <directory> - build configs for all clients in directory'
-    print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
-    print 'bundles - print out group/bundle information'
-    print 'clients - print out client/profile information'
-    print 'debug - shell out to native python interpreter'
-    print 'generators - list current versions of generators'
-    print 'groups - list groups'
-    print 'help - print this text'
-    print 'mappings <type*> <name*>- print generator mappings for optional type and name'
-    print 'quit'
-    print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
-    print 'showclient <client1> <client2> - show metadata for given hosts'
-    print 'update - process pending file events'
-    print 'version - print version of this tool'
+    def do_update(self, _):
+        '''Process pending fs events'''
+        self.fam.Service()
 
-def doGenerators(_, core):
-    '''print out generator info'''
-    for generator in core.generators:
-        print generator.__version__
-
-def doGroups(_, core):
-    '''print out group info'''
-    data = [("Groups", "Profile", "Category", "Contains")]
-    grouplist = core.metadata.groups.keys()
-    grouplist.sort()
-    for group in grouplist:
-        if group in core.metadata.profiles:
-            prof = 'yes'
+    def do_version(self, _):
+        '''print out code version'''
+        print __revision__
+        
+    def do_build(self, args):
+        '''build client configuration'''
+        if len(args.split()) != 2:
+            client, ofile = args.split()
+            output = open(ofile, 'w')
+            data = lxml.etree.tostring(self.BuildConfiguration(client))
+            output.write(data)
+            output.close()
         else:
-            prof = 'no'
-        if core.metadata.categories.has_key(group):
-            cat = core.metadata.categories[group]
-        else:
-            cat = ''
-        gdata = [grp for grp in core.metadata.groups[group][1]]
-        if group in gdata:
-            gdata.remove(group)
-        data.append((group, prof, cat, ','.join(gdata)))
-    printTabular(data)
+            print 'Usage: build <hostname> <output file>'
 
-def doShowclient(cmd, core):
-    ''' print host metadata'''
-    data = [('Client', 'Profile', "Groups", "Bundles")]
-    for client in cmd[1:]:
-        if client not in core.metadata.clients:
-            print "Client %s not defined" % client
-            continue
-        profile = core.metadata.clients[client]
-        bundles, groups, categories = core.metadata.groups[profile]
-        groups.remove(profile)
-        numbundles = len(bundles)
-        numgroups = len(groups)
-        num = max((numbundles, numgroups))
-        for i in range(0,num):
-            if i == 0:
-                c = client
-                p = profile
-            else:
-                c = ""
-                p = ""
-            if i < numbundles:
-                b = bundles[i]
-            else:
-                b = ""
-            if i < numgroups:
-                g = groups[i]
-            else:
-                g = ""
-            data.append((c, p, g, b))
-    if len(data) > 1:
+    def do_buildall(self, args):
+        if len(args.split()) != 2:
+            print "Usage: buildall <directory>"
+            return
+        try:
+            os.mkdir(args)
+        except:
+            pass
+        for client in self.metadata.clients:
+            self.do_build(client, "%s/%s.xml" % (args, client))
+
+    def do_buildfile(self, args):
+        '''build a config file for client'''
+        if len(args.split()) == 2:
+            fname, client = args.split()
+            entry = lxml.etree.Element('ConfigFile', name=fname)
+            metadata = self.metadata.get_metadata(client)
+            self.Bind(entry, metadata)
+            print lxml.etree.tostring(entry)
+        else:
+            print 'Usage: buildfile filename hostname'
+
+    def do_bundles(self, _):
+        '''print out group/bundle info'''
+        data = [('Group', 'Bundles')]
+        groups = self.metadata.groups.keys()
+        groups.sort()
+        for group in groups:
+            data.append((group,
+                         ','.join(self.metadata.groups[group][0])))
         printTabular(data)
 
-def doMappings(cmd, core):
-    '''print out mapping info'''
-    # dump all mappings unless type specified
-    data = [('Plugin', 'Type', 'Name')]
-    for generator in core.generators:
-        if len(cmd) == 1:
-            etypes = generator.Entries.keys()
-        elif len(cmd) > 1:
-            etypes = [cmd[1]]
-        if len(cmd) == 3:
-            interested = [(etype, [cmd[2]]) for etype in etypes]
-        else:
-            interested = [(etype, generator.Entries[etype].keys()) for etype in etypes
-                          if generator.Entries.has_key(etype)]
-        if [etype for (etype, names) in interested
-            if generator.Entries.has_key(etype) and [name for name in names
-                                                     if generator.Entries[etype].has_key(name)]]:
-            for (etype, names) in interested:
-                for name in names:
-                    if generator.Entries.has_key(etype) and generator.Entries[etype].has_key(name):
-                        data.append((generator.__name__, etype, name))
-    printTabular(data)
+    def do_clients(self, _):
+        '''print out client info'''
+        data = [('Client', 'Profile')]
+        clist = self.metadata.clients.keys()
+        clist.sort()
+        for client in clist:
+            data.append((client, self.metadata.clients[client]))
+        printTabular(data)
 
-def doQuit(cmd, core):
-    '''exit program'''
-    raise SystemExit, 0
+    def do_generators(self, _):
+        '''print out generator info'''
+        for generator in self.generators:
+            print generator.__version__
 
-def doUpdate(_, core):
-    '''Process pending fs events'''
-    core.fam.Service()
+    def do_showentries(self, args):
+        '''show abstract configuration entries for a given host'''
+        arglen = len(args.split())
+        if arglen not in [2, 3]:
+            print "Usage: showentries <hostname> <type>"
+            return
+        client = args.split()[0]
+        try:
+            meta = self.metadata.get_metadata(client)
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+            print "Unable to find metadata for host %s" % client
+            return
+        structures = self.GetStructures(meta)
+        output = [('entrytype', 'name')]
+        if arglen == 1:
+            for item in structures:
+                for child in item.getchildren():
+                    output.append((child.tag, child.get('name')))
+        if arglen == 2:
+            etype = args.split()[1]
+            for item in structures:
+                for child in item.getchildren():
+                    if child.tag == etype:
+                        output.append((child.tag, child.get('name')))
+        printTabular(output)
 
-def doVersion(_, dummy):
-    '''print out code version'''
-    print __revision__
-        
+    def do_groups(self, _):
+        '''print out group info'''
+        data = [("Groups", "Profile", "Category", "Contains")]
+        grouplist = self.metadata.groups.keys()
+        grouplist.sort()
+        for group in grouplist:
+            if group in self.metadata.profiles:
+                prof = 'yes'
+            else:
+                prof = 'no'
+            if self.metadata.categories.has_key(group):
+                cat = self.metadata.categories[group]
+            else:
+                cat = ''
+            gdata = [grp for grp in self.metadata.groups[group][1]]
+            if group in gdata:
+                gdata.remove(group)
+            data.append((group, prof, cat, ','.join(gdata)))
+        printTabular(data)
+
+    def do_showclient(self, args):
+        ''' print host metadata'''
+        data = [('Client', 'Profile', "Groups", "Bundles")]
+        if not len(args):
+            print "Usage:\nshowclient <client> ... <clientN>"
+            return
+        for client in args.split():
+            if client not in self.metadata.clients:
+                print "Client %s not defined" % client
+                continue
+            profile = self.metadata.clients[client]
+            bundles, groups, categories = self.metadata.groups[profile]
+            groups.remove(profile)
+            numbundles = len(bundles)
+            numgroups = len(groups)
+            num = max((numbundles, numgroups))
+            for i in range(0, num):
+                if i == 0:
+                    c = client
+                    p = profile
+                else:
+                    c = ""
+                    p = ""
+                if i < numbundles:
+                    b = bundles[i]
+                else:
+                    b = ""
+                if i < numgroups:
+                    g = groups[i]
+                else:
+                    g = ""
+                data.append((c, p, g, b))
+        if len(data) > 1:
+            printTabular(data)
+
+    def do_mappings(self, args):
+        '''print out mapping info'''
+        # dump all mappings unless type specified
+        data = [('Plugin', 'Type', 'Name')]
+        arglen = len(args.split())
+        for generator in self.generators:
+            if arglen == 0:
+                etypes = generator.Entries.keys()
+            else:
+                etypes = [args.split()[0]]
+            if arglen == 2:
+                interested = [(etype, [args.split()[1]]) \
+                              for etype in etypes]
+            else:
+                interested = [(etype, generator.Entries[etype]) \
+                              for etype in etypes \
+                              if generator.Entries.has_key(etype)]
+            for etype, names in interested:
+                for name in [name for name in names if name in \
+                             generator.Entries.get(etype, {})]:
+                    data.append((generator.__name__, etype, name))
+        printTabular(data)
+
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     logger = logging.getLogger('bcfg2-info')
-    dispatch = {'build': doBuild, 'buildall': doBuildAll,
-                'buildfile': doBuildFile, 'bundles': doBundles,
-                'clients': doClients, 'generators': doGenerators,
-                'groups': doGroups, 'help': doHelp,
-                'mappings': doMappings, 'quit': doQuit,
-                'showentries': doShowentries, 'update': doUpdate,
-                'version': doVersion, 'showclient': doShowclient}
     if '-C' in sys.argv:
         cfile = sys.argv[-1]
     else:
         cfile = '/etc/bcfg2.conf'
-    try:
-        bcore = Bcfg2.Server.Core.Core({}, cfile)
-    except Bcfg2.Server.Core.CoreInitError, msg:
-        print "Core load failed because %s" % msg
-        raise SystemExit, 1
-    for i in range(25):
-        print "Filesystem check %d of %d" % (i + 1, 25)
-        bcore.fam.Service()
-        time.sleep(0.5)
-    while True:
-        ucmd = getInput()
-        if ucmd[0] == 'debug':
-            break
-        else:
-            if dispatch.has_key(ucmd[0]):
-                try:
-                    dispatch[ucmd[0]](ucmd, bcore)
-                except SystemExit, code:
-                    raise SystemExit, code
-                except Bcfg2.Server.Plugin.PluginExecutionError:
-                    continue
-                except:
-                    logger.error("command failure", exc_info=1)
-            else:
-                print "Unknown command: %s" % ucmd[0]
+
+    #bcore = Bcfg2.Server.Core.Core({}, cfile)
+    loop = infoCore(cfile)
+    while loop.cont:
+        try:
+            loop.cmdloop()
+        except SystemExit, val:
+            raise
+        except Bcfg2.Server.Plugin.PluginExecutionError:
+            continue
+        except dummyError:
+            continue
+        except:
+            logger.error("command failure", exc_info=1)
