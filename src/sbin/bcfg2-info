@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, sys, time, cmd
+import copy, logging, lxml.etree, sys, time, cmd
 import Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 
@@ -187,10 +187,11 @@ Usage: [quit|exit]"""
                 print "Client %s not defined" % client
                 continue
             profile = self.metadata.clients[client]
-            bundles, groups, categories = self.metadata.groups[profile]
-            groups.remove(profile)
-            numbundles = len(bundles)
-            numgroups = len(groups)
+            bds, gps, cgs = \
+                 copy.deepcopy(self.metadata.groups[profile])
+            gps.remove(profile)
+            numbundles = len(bds)
+            numgroups = len(gps)
             num = max((numbundles, numgroups))
             for i in range(0, num):
                 if i == 0:
@@ -200,11 +201,11 @@ Usage: [quit|exit]"""
                     c = ""
                     p = ""
                 if i < numbundles:
-                    b = bundles[i]
+                    b = bds[i]
                 else:
                     b = ""
                 if i < numgroups:
-                    g = groups[i]
+                    g = gps[i]
                 else:
                     g = ""
                 data.append((c, p, g, b))
