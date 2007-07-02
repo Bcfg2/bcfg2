@@ -176,6 +176,10 @@ Usage: [quit|exit]"""
             data.append((group, prof, cat, ','.join(gdata)))
         printTabular(data)
 
+    def complete_showclient(self, text, line, begidx, endidx):
+        return [entry for entry in self.metadata.clients \
+                if entry.startswith(text)] 
+
     def do_showclient(self, args):
         ''' print host metadata'''
         data = [('Client', 'Profile', "Groups", "Bundles")]
@@ -243,7 +247,6 @@ if __name__ == '__main__':
     else:
         cfile = '/etc/bcfg2.conf'
 
-    #bcore = Bcfg2.Server.Core.Core({}, cfile)
     loop = infoCore(cfile)
     while loop.cont:
         try:
