@@ -14,7 +14,7 @@ class TemplateFile:
         self.name = name
         self.properties = properties
         self.states = {'template': False, 'info': False}
-        self.metadata = {'owner': 'root', 'group': 'root', 'perms': '644'}
+        self.metadata = {'owner': 'root', 'group': '0', 'perms': '644'}
 
     def HandleEvent(self, event):
         '''Handle all fs events for this template'''

@@ -22,6 +22,28 @@ def calcPerms(initial, perms):
                 tempperms |= perm
     return tempperms
 
+def normUid(entry):
+    '''This takes a user name or uid and returns the corrisponding uid or False'''
+    try:
+        try:
+            return int(entry.get('owner'))
+        except:
+            return int(pwd.getpwnam(entry.get('owner'))[2])
+    except (OSError, KeyError):
+        self.logger.error('UID normalization failed for %s' % (entry.get('name')))
+        return False
+
+def normGid(entry):
+    '''This takes a group name or gid and returns the corrisponding gid or False'''
+    try:
+        try:
+            return int(entry.get('group'))
+        except:
+            return int(grp.getgrnam(entry.get('group'))[2])
+    except (OSError, KeyError):
+        self.logger.error('GID normalization failed for %s' % (entry.get('name')))
+        return False
+    
 class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
     __name__ = 'POSIX'
@@ -95,11 +117,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except (OSError, KeyError):
             self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
             owner = 'root'
-            try:
-                grp.getgrnam('root')
-                group = 'root'
-            except KeyError:
-                group = 'system'
+            group = '0'
         finfo = os.stat(entry.get('name'))
         perms = oct(finfo[ST_MODE])[-4:]
         if entry.get('mtime', '-1') != '-1':
@@ -205,8 +223,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def InstallPermissions(self, entry):
         '''Install POSIX Permissions'''
         try:
-            os.chown(entry.get('name'),
-                  pwd.getpwnam(entry.get('owner'))[2], grp.getgrnam(entry.get('group'))[2])
+            os.chown(entry.get('name'), normUid(entry), normGid(entry))
             os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
@@ -304,8 +321,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             newfile.write(filedata)
             newfile.close()
             try:
-                os.chown(newfile.name, pwd.getpwnam(entry.get('owner'))[2],
-                         grp.getgrnam(entry.get('group'))[2])
+                os.chown(newfile.name, normUid(entry), normGid(entry))
             except KeyError:
                 self.logger.error("Failed to chown %s to %s:%s" % \
                                   (entry.get('name'), entry.get('owner'),

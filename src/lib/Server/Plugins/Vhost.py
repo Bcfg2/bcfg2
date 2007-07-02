@@ -69,7 +69,7 @@ class VhostFile(SingleXMLFileBacked):
             entry.text = 'NO_START=0\n'
         else:
             entry.text = 'NO_START=1\n'
-        perms = {'owner':'root', 'group':'root', 'perms':'0644'}
+        perms = {'owner':'root', 'group':'0', 'perms':'0644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
 		
     def generateApacheSvc(self, entry, metadata):
@@ -99,7 +99,7 @@ class VhostFile(SingleXMLFileBacked):
             line = line.replace("XXchoiceXX", choice)
             config += line
         entry.text = base64.encodestring(config)
-        perms = {'owner':'root', 'group':'root', 'perms':'0644', 'encoding':'base64'}
+        perms = {'owner':'root', 'group':'0', 'perms':'0644', 'encoding':'base64'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
 
 class Vhost(Plugin):

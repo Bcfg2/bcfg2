@@ -80,7 +80,7 @@ class Hostbase(Plugin):
         fname = entry.get('name').split('/')[-1]
         if not self.filedata.has_key(fname):
             raise PluginExecutionError
-        perms = {'owner':'root', 'group':'root', 'perms':'644'}
+        perms = {'owner':'root', 'group':'0', 'perms':'644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
         entry.text = self.filedata[fname]
 
