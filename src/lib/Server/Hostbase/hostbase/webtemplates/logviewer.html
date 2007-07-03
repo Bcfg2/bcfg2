@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block pagebanner %}
+  <div class="header">
+      <h2>Change Logs for {{ hostname }}</h2>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block sidebar %}
+{% include "navbar" %}
+{% include "logout" %}
+{% endblock %}
+
+{% block content %}
+
+{% if logs %}
+<ul>
+{% for log in logs %}
+<li><a href="{{ log.id }}">{{ log.date }}</li>
+{% endfor %}
+</ul>
+{% else %}
+There are no logs for this host<br>
+{% endif %}
+
+{% endblock %}
