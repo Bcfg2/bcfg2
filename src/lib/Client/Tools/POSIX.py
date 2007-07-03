@@ -112,8 +112,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                               (entry.tag, entry.get('name')))
             return False
         try:
-            owner = pwd.getpwuid(ondisk[ST_UID])[0]
-            group = grp.getgrgid(ondisk[ST_GID])[0]
+            owner = str(ondisk[ST_UID])
+            group = str(ondisk[ST_GID])
         except (OSError, KeyError):
             self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
             owner = 'root'
@@ -124,20 +124,20 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             mtime = str(finfo[ST_MTIME])
         else:
             mtime = '-1'
-        if ((owner == entry.get('owner')) and
-            (group == entry.get('group')) and
+        if ((owner == str(normUid(entry))) and
+            (group == str(normGid(entry))) and
             (perms == entry.get('perms')) and
             (mtime == entry.get('mtime', '-1'))):
             return True
         else:
-            if owner != entry.get('owner'):
+            if owner != str(normUid(entry)):
                 entry.set('current_owner', owner)
                 self.logger.debug("%s %s ownership wrong" % (entry.tag, entry.get('name')))
                 nqtext = entry.get('qtext', '') + '\n'
                 nqtext += "%s owner wrong. is %s should be %s" % \
                           (entry.get('name'), owner, entry.get('owner'))
                 entry.set('qtext', nqtext)
-            if group != entry.get('group'):
+            if group != str(normGid(entry)):
                 entry.set('current_group', group)
                 self.logger.debug("%s %s group wrong" % (entry.tag, entry.get('name')))
                 nqtext = entry.get('qtext', '') + '\n'
