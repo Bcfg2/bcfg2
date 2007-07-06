@@ -2,8 +2,8 @@
 __revision__ = '$Revision$'
 
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
-           "FreeBSDPackage", "launchd", "Portage", "POSIX", "RPM", 
-           "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "Yum", 
+           "FreeBSDPackage", "launchd", "Portage", "POSIX", "RPM",
+           "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "Yum",
            "YUMng"]
 
 drivers = [item for item in __all__ if item not in ['rpmtools']]
@@ -37,7 +37,7 @@ class executor:
     '''this class runs stuff for us'''
     def __init__(self, logger):
         self.logger = logger
-        
+
     def run(self, command):
         '''Run a command in a pipe dealing with stdout buffer overloads'''
         self.logger.debug('> %s' % command)
@@ -69,7 +69,7 @@ class Tool:
     __handles__ = []
     __req__ = {}
     __important__ = []
-    
+
     def __init__(self, logger, setup, config, states):
         self.setup = setup
         self.logger = logger
@@ -140,7 +140,7 @@ class Tool:
         '''return a list of supported entries'''
         return [entry for struct in self.config.getchildren() for entry in struct.getchildren() \
                 if self.handlesEntry(entry)]
-    
+
     def handlesEntry(self, entry):
         '''return if entry is handled by this Tool'''
         return (entry.tag, entry.get('type')) in self.__handles__
@@ -156,10 +156,11 @@ class Tool:
         '''test if entry has enough information to be verified'''
         if not self.handlesEntry(entry):
             return False
-        
+
         if [attr for attr in self.__req__[entry.tag] if attr not in entry.attrib]:
             self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
                               % (entry.tag, entry.get('name')))
+            self.logger.debug("\t... due to absense of %s attribute" % attr)
             return False
         return True
 
@@ -175,9 +176,10 @@ class Tool:
         if [attr for attr in self.__ireq__[entry.tag] if attr not in entry.attrib]:
             self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                               % (entry.tag, entry.get('name')))
+            self.logger.debug("\t... due to absense of %s attribute" % attr)
             return False
         return True
-    
+
 class PkgTool(Tool):
     '''PkgTool provides a one-pass install with fallback for use with packaging systems'''
     pkgtool = ('echo %s', ('%s', ['name']))
@@ -194,7 +196,7 @@ class PkgTool(Tool):
     def VerifyPackage(self, dummy, _):
         '''Dummy verification method'''
         return False
-    
+
     def Install(self, packages):
         '''Run a one-pass install, followed by single pkg installs in case of failure'''
         self.logger.info("Trying single pass package install for pkgtype %s" % \
