@@ -17,6 +17,11 @@ import rpm
 import optparse
 import datetime
 import glob
+import urllib
+import gzip
+import time
+import urlparse
+from elementtree.ElementTree import parse
 
 def info(object, spacing=10, collapse=1):
     """Print methods and doc strings.
@@ -132,20 +137,103 @@ def loadRpms(dirs):
             if subarch in subarchs or 'all' in subarchs:
                 
                 # Store what we want in our structure.
-                if name in packages:
-                    packages[name].append({'filename':file, 'mtime':file_mtime, 'name':name, 'arch':subarch, \
-                                          'epoch':epoch, 'version':version, 'release':release})
-                else:
-                    packages[name] = [{'filename':file, 'mtime':file_mtime, 'name':name, 'arch':subarch, \
-                                      'epoch':epoch, 'version':version, 'release':release}]
+                packages.setdefault(name, []).append({'filename':file, 'mtime':file_mtime, 'name':name, \
+                                                      'arch':subarch, 'epoch':epoch, 'version':version, \
+                                                      'release':release})
 
-                # Print '.' for each package. stdio is line buffered, so have to flush it.
+            # Print '.' for each package. stdio is line buffered, so have to flush it.
             if options.verbose:
                 sys.stdout.write('.')
                 sys.stdout.flush()
         if options.verbose:
             sys.stdout.write('\n')
 
+    return packages
+
+class pkgmgr_URLopener(urllib.FancyURLopener):
+    """
+        Override default error handling so that we can see what the errors are.
+    """
+    def http_error_default(self, url, fp, errcode, errmsg, headers):
+        """
+            Override default error handling so that we can see what the errors are.
+        """
+        print "ERROR %s: Unable to retrieve %s" % (errcode, url)
+
+def loadRepos(repolist):
+    '''
+       repolist is a list of urls to yum repositories.
+
+       Builds a dictionary keyed by the package name.  Dictionary item is a list, 
+       one entry per package instance found.
+       
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
+       'arch', 'epoch', 'version' and 'release'.  
+ 
+       e.g.
+
+       packages = {
+       'bcfg2' : [
+           {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+            ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
+           {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+            ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
+       'bcfg2-server' : [
+           {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+            ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
+           {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+            ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
+       }
+       
+    '''
+    packages = {}
+    for repo in repolist:
+        url = urlparse.urljoin(repo, './repodata/primary.xml.gz')
+
+        if options.verbose:
+            print 'Loading : %s' % url
+
+        try:
+            opener = pkgmgr_URLopener()
+            file, message = opener.retrieve(url) 
+        except:
+            sys.exit()
+
+        try:
+            repo_file = gzip.open(file)
+            tree = parse(repo_file)
+        except IOError:
+            print "ERROR: Unable to parse retrieved file."
+            sys.exit()
+
+        repo = tree.getroot()
+        for element in repo:
+            if element.tag.endswith('package'):
+                for property in element:
+                    if property.tag.endswith('name'):
+                        name = property.text
+                    elif property.tag.endswith('arch'):
+                        subarch = property.text
+                    elif property.tag.endswith('version'):
+                        version = property.get('ver')
+                        epoch = property.get('epoch')
+                        release = property.get('rel')
+                    elif property.tag.endswith('location'):
+                        file = property.get('href')
+               
+                # Only load RPMs with subarchitectures as calculated from the --archs option.
+                if subarch in subarchs or 'all' in subarchs:
+                    packages.setdefault(name, []).append({'filename':file, 'name':name, \
+                                                          'arch':subarch, 'epoch':epoch, \
+                                                          'version':version, 'release':release})
+
+                # Print '.' for each package. stdio is line buffered, so have to flush it.
+                if options.verbose:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
+        if options.verbose:
+            sys.stdout.write('\n')
+        repo_file.close()
     return packages
 
 def printInstance(instance, group_count):
@@ -224,7 +312,10 @@ def main():
     if options.verbose:
         print 'Loading package headers'
 
-    package_dict = loadRpms(search_dirs)
+    if options.rpmdirs:
+        package_dict = loadRpms(search_dirs)
+    elif options.yumrepos:
+        package_dict = loadRepos(repos)
 
     if options.verbose:
         print 'Processing package headers'
@@ -275,9 +366,10 @@ if __name__ == "__main__":
                                         ''')
 
     p.add_option('--rpmdirs', '-d', action='store', 
-                                   default='.', \
                                    type='string', \
-                                   help='Comma separated list of directories to scan for RPMS. Wilcards are permitted. (Default: .)')
+                                   help='''Comma separated list of directories to scan for RPMS. 
+                                           Wilcards are permitted.
+                                        ''')
     
     p.add_option('--enddate', '-e', action='store', \
                                    type='string', \
@@ -287,16 +379,22 @@ if __name__ == "__main__":
                                    default='yum', \
                                    type='choice', \
                                    choices=('yum','rpm'), \
-                                   help='Format of the Output. Choices are yum or rpm. (Default: yum)')
+                                   help='''Format of the Output. Choices are yum or rpm. 
+                                           (Default: yum)
+                                        ''')
 
     p.add_option('--groups', '-g', action='store', \
                                    type='string', \
-                                   help='List of comma separated groups to nest Package entities in.')
+                                   help='''List of comma separated groups to nest Package 
+                                           entities in.
+                                        ''')
                                   
     p.add_option('--indent', '-i', action='store', \
                                    default=4, \
                                    type='int', \
-                                   help='Number of leading spaces to indent nested entries in the output. (Default:4)')
+                                   help='''Number of leading spaces to indent nested entries in the 
+                                           output. (Default:4)
+                                        ''')
 
     p.add_option('--outfile', '-o', action='store', \
                                    type='string', \
@@ -308,13 +406,16 @@ if __name__ == "__main__":
     p.add_option('--priority', '-p', action='store', \
                                    default=0, \
                                    type='int', \
-                                   help='Value to set priority attribute in the PackageList Tag. (Default: 0)')
+                                   help='''Value to set priority attribute in the PackageList Tag. 
+                                           (Default: 0)
+                                        ''')
 
     p.add_option('--release', '-r', action='store', \
                                    default='latest', \
                                    type='choice', \
                                    choices=('all','latest'), \
-                                   help='Which releases to include in the output. Choices are all or latest.  (Default: latest).')
+                                   help='''Which releases to include in the output. Choices are 
+                                           all or latest.  (Default: latest).''')
     
     p.add_option('--startdate', '-s', action='store', \
                                    type='string', \
@@ -327,16 +428,40 @@ if __name__ == "__main__":
     p.add_option('--verbose', '-v', action='store_true', \
                                     help='Enable verbose output.')
 
+    p.add_option('--yumrepos', '-y', action='store', 
+                                   type='string', \
+                                   help='''Comma separated list of YUM repository URLs to load.
+                                           NOTE: Each URL must end in a '/' character.''')
+
     options, arguments = p.parse_args()
 
     if options.pkgmgrhdr and options.format == 'rpm' and not options.uri:
         print "Option --uri must be specified to produce a PackageList Tag for rpm formatted files."
         sys.exit(1)
 
+    if not options.rpmdirs and not options.yumrepos:
+        print "One of --rpmdirs and --yumrepos must be specified"
+        sys.exit(1)
+        
     # Set up list of directories to search
-    search_dirs = []
-    for d in options.rpmdirs.split(','):
-        search_dirs += glob.glob(d) 
+    if options.rpmdirs:
+        search_dirs = []
+        for d in options.rpmdirs.split(','):
+            search_dirs += glob.glob(d) 
+        if options.verbose:
+            print 'The following directories will be scanned:'
+            for d in search_dirs:
+                print '    %s' % d
+ 
+    # Setup list of repos   
+    if options.yumrepos:
+        repos = []
+        for r in options.yumrepos.split(','):
+            repos.append(r)
+        if options.verbose:
+            print 'The following repositories will be scanned:'
+            for d in repos:
+                print '    %s' % d
 
     # Set up list of architectures to include and some mappings
     # to use later.
@@ -377,11 +502,6 @@ if __name__ == "__main__":
             else:
                 print 'Error: Multiple subarchitecutes of the same architecture specified.'
                 sys.exit(1)
-
-    if options.verbose:
-        print 'The following directories will be scanned:'
-        for d in search_dirs:
-            print '    %s' % d
 
     indent = ' ' * options.indent
 

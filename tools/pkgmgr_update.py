@@ -20,6 +20,7 @@ import optparse
 import datetime
 import glob
 from elementtree.ElementTree import parse, XML, fromstring, tostring
+import urlparse, urllib, gzip
 
 installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
                    'kernel-modules', 'kernel-debug', 'kernel-unsupported',
@@ -74,18 +75,21 @@ def loadRpms(dirs):
        'arch', 'epoch', 'version' and 'release'.  
  
        e.g.
-
-       packages = {
-       'bcfg2' : { 'noarch' : [ {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':'bcfg2', 
-                                 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-                                {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':'bcfg2', 
-                                 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}]},
-       'bcfg2-server' { 'noarch' : [ {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':'bcfg2-server', 
-                                      'arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-                                     {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
-                                      'arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}]},
-       }
        
+       packages = {
+       'bcfg2' : { 'noarch' : [ {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'release':'0.0rc1'}
+                                {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'release':'0.0rc5'}]},
+       'bcfg2-server' { 'noarch' : [ {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
+                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'version':'0.9.2', 'release':'0.0rc1'}
+                                     {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
+                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'version':'0.9.2', 'release':'0.0rc5'}]},
+       }
     """
     packages = {}
     ts = rpm.TransactionSet()
@@ -123,6 +127,91 @@ def loadRpms(dirs):
             if options.verbose:
                 sys.stdout.write('.')
                 sys.stdout.flush()
+        if options.verbose:
+            sys.stdout.write('\n')
+
+    return packages
+
+class pkgmgr_URLopener(urllib.FancyURLopener):
+    """
+        Override default error handling so that we can see what the errors are.
+    """
+    def http_error_default(self, url, fp, errcode, errmsg, headers):
+        """
+            Override default error handling so that we can see what the errors are.
+        """
+        print "ERROR %s: Unable to retrieve %s" % (errcode, url)
+
+def loadRepos(repolist):
+    """
+       repolist is a list of urls to yum repositories.
+
+       Builds a multilevel dictionary keyed by the package name and arch. 
+       Arch dictionary item is a list, one entry per package instance found.
+       
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
+       'arch', 'epoch', 'version' and 'release'.  
+ 
+       e.g.
+
+       packages = {
+       'bcfg2' : { 'noarch' : [ {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'release':'0.0rc1'}
+                                {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'release':'0.0rc5'}]},
+       'bcfg2-server' { 'noarch' : [ {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
+                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'version':'0.9.2', 'release':'0.0rc1'}
+                                     {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
+                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'version':'0.9.2', 'release':'0.0rc5'}]},
+       }
+       
+    """
+    packages = {}
+    for repo in repolist:
+        url = urlparse.urljoin(repo, './repodata/primary.xml.gz')
+
+        if options.verbose:
+            print 'Loading : %s' % url
+
+        try:
+            opener = pkgmgr_URLopener()
+            file, message = opener.retrieve(url)
+        except:
+            sys.exit()
+
+        try:
+            repo_file = gzip.open(file)
+            tree = parse(repo_file)
+        except IOError:
+            print "ERROR: Unable to parse retrieved file."
+            sys.exit()
+
+        root = tree.getroot()
+        for element in root:
+            if element.tag.endswith('package'):
+                for property in element:
+                    if property.tag.endswith('name'):
+                        name = property.text
+                    elif property.tag.endswith('arch'):
+                        subarch = property.text
+                    elif property.tag.endswith('version'):
+                        version = property.get('ver')
+                        epoch = property.get('epoch')
+                        release = property.get('rel')
+                    elif property.tag.endswith('location'):
+                        file = property.get('href')
+    
+                if name not in installOnlyPkgs:
+                    packages.setdefault(name, {}).setdefault(subarch, []).append({'filename':file, \
+                                              'name':name, 'arch':subarch, \
+                                              'epoch':epoch, 'version':version, 'release':release})
+                if options.verbose:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
         if options.verbose:
             sys.stdout.write('\n')
 
@@ -173,7 +262,10 @@ def main():
     if options.verbose:
         print 'Loading package headers'
 
-    package_dict = loadRpms(search_dirs)
+    if options.rpmdirs:
+        package_dict = loadRpms(search_dirs)
+    elif options.yumrepos:
+        package_dict = loadRepos(repos)
 
     if options.verbose:
         print 'Processing package headers'
@@ -192,9 +284,9 @@ if __name__ == "__main__":
                                    help='Existing Pkgmgr configuration  file name.')
 
     p.add_option('--rpmdirs', '-d', action='store', 
-                                   default='.', \
                                    type='string', \
-                                   help='Comma separated list of directories to scan for RPMS. Wilcards are permitted. (Default: .)')
+                                   help='''Comma separated list of directories to scan for RPMS. 
+                                           Wilcards are permitted.''')
     
     p.add_option('--outfile', '-o', action='store', \
                                    type='string', \
@@ -203,22 +295,40 @@ if __name__ == "__main__":
     p.add_option('--verbose', '-v', action='store_true', \
                                     help='Enable verbose output.')
 
+    p.add_option('--yumrepos', '-y', action='store',
+                                   type='string', \
+                                   help='''Comma separated list of YUM repository URLs to load.
+                                           NOTE: Each URL must end in a '/' character.''')
     options, arguments = p.parse_args()
 
     if not options.configfile:
         print "An existing Pkgmgr configuration file must be specified with the -c option."
         sys.exit()
 
-    # Set up list of directories to search
-    search_dirs = []
-    for d in options.rpmdirs.split(','):
-        search_dirs += glob.glob(d) 
+    if not options.rpmdirs and not options.yumrepos:
+        print "One of --rpmdirs and --yumrepos must be specified"
+        sys.exit(1)
 
-    if options.verbose:
-        print 'The following directories will be scanned:'
-        for d in search_dirs:
-            print '    %s' % d
-    
+    # Set up list of directories to search
+    if options.rpmdirs:
+        search_dirs = []
+        for d in options.rpmdirs.split(','):
+            search_dirs += glob.glob(d)
+        if options.verbose:
+            print 'The following directories will be scanned:'
+            for d in search_dirs:
+                print '    %s' % d
+
+    # Setup list of repos
+    if options.yumrepos:
+        repos = []
+        for r in options.yumrepos.split(','):
+            repos.append(r)
+        if options.verbose:
+            print 'The following repositories will be scanned:'
+            for d in repos:
+                print '    %s' % d
+
     if options.outfile:
         output = file(options.outfile, "w")
     else:
