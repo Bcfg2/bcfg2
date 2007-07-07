@@ -916,7 +916,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         if (config_entry.tag == 'Instance' and \
            (epoch == installed_entry.get('epoch', 0) or \
-            (epoch == 0 and installed_entry.get('epoch', 0) == None)) and \
+               (epoch == 0 and installed_entry.get('epoch', 0) == None) or \
+               (epoch == None and installed_entry.get('epoch', 0) == 0)) and \
            config_entry.get('version') == installed_entry.get('version') and \
            config_entry.get('release') == installed_entry.get('release') and \
            config_entry.get('arch', None) == installed_entry.get('arch', None)):
