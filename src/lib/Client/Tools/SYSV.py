@@ -23,10 +23,10 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     '''Solaris SYSV package support'''
     __execs__ = ["/usr/sbin/pkgadd"]
     __handles__ = [('Package', 'sysv')]
-    __req__ = {'Package': ['name', 'version']}
+    __req__ = {'Package': ['name', 'url', 'version']}
     __name__ = 'SYSV'
     pkgtype = 'sysv'
-    pkgtool = ("/usr/sbin/pkgadd %s -d %%s -n %%%%s", (("%s", ["name"])))
+    pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
     def __init__(self, logger, setup, config, states):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
