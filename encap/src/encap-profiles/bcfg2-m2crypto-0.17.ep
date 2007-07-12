@@ -3,8 +3,8 @@
 <!-- $Id$ -->
 
 <encap_profile
-	profile_ver="1.0"
-	pkgspec="bcfg2-m2crypto-0.17"
+  profile_ver="1.0"
+  pkgspec="bcfg2-m2crypto-0.17"
 >
 
 <prereq package="m4-1.4.4" />
@@ -47,7 +47,7 @@ PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(solaris)
-        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
+        value="-L/usr/local/lib/bcfg2/lib -L/usr/local/lib -R/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib"
 PLATFORM_ELSE
 PLATFORM_ENDIF
         type="set"

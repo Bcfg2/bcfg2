@@ -3,8 +3,8 @@
 <!-- $Id$ -->
 
 <encap_profile
-	profile_ver="1.0"
-	pkgspec="bcfg2-swig-1.3.31"
+  profile_ver="1.0"
+  pkgspec="bcfg2-swig-1.3.31"
 >
 
 <prereq package="m4-1.4.4" />
@@ -49,7 +49,7 @@ PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib -Wl,-brtl"
 PLATFORM_ELSE_IF_MATCH(solaris)
-        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
+        value="-L/usr/local/lib/bcfg2/lib -L/usr/local/lib -R/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib"
 PLATFORM_ELSE
 PLATFORM_ENDIF
         type="set"
@@ -78,25 +78,25 @@ url="http://encapsrcdist/mirror/swig/swig-1.3.31.tar.gz
 
 <configure>
 ./configure \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
-	--without-x \
-	--without-tcl \
-	--with-python=/usr/local/lib/bcfg2/bin/python \
-	--without-perl5 \
-	--without-java \
-	--without-gcj \
-	--without-guile \
-	--without-mzscheme \
-	--without-ruby \
-	--without-php4 \
-	--without-ocaml \
-	--without-pike \
-	--without-chicken \
-	--without-csharp \
-	--without-lua \
-	--without-allegrocl \
-	--without-clisp \
-	--without-r
+  --prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
+  --without-x \
+  --without-tcl \
+  --with-python=/usr/local/lib/bcfg2/bin/python \
+  --without-perl5 \
+  --without-java \
+  --without-gcj \
+  --without-guile \
+  --without-mzscheme \
+  --without-ruby \
+  --without-php4 \
+  --without-ocaml \
+  --without-pike \
+  --without-chicken \
+  --without-csharp \
+  --without-lua \
+  --without-allegrocl \
+  --without-clisp \
+  --without-r
 </configure>
 
 </source>
@@ -109,7 +109,7 @@ touch var/encap/${ENCAP_PKGNAME}
 </prepackage>
 
 <encapinfo>
-description swig - generate scripting interfaces to C/C++ code 
+description swig - generate scripting interfaces to C/C++ code
 </encapinfo>
 
 </encap_profile>

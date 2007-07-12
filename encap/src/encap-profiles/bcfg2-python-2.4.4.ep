@@ -3,8 +3,8 @@
 <!-- $Id$ -->
 
 <encap_profile
-	profile_ver="1.0"
-	pkgspec="bcfg2-python-2.4.4"
+  profile_ver="1.0"
+  pkgspec="bcfg2-python-2.4.4"
 >
 
 <prereq package="m4-1.4.4" />
@@ -46,7 +46,7 @@ PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(solaris)
-        value="-L/usr/local/lib/bcfg2/lib -R/usr/local/lib/bcfg2/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib"
+        value="-L/usr/local/lib/bcfg2/lib -L/usr/local/lib -R/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib -YP,/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib"
 PLATFORM_ELSE
 PLATFORM_ENDIF
         type="set"
@@ -87,7 +87,7 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
 -        exts.append( Extension('_locale', ['_localemodule.c'],
 -                               libraries=locale_libs,
 -                               extra_link_args=locale_extra_link_args) )
- 
+
          # Modules with some UNIX dependencies -- on by default:
          # (If you have a really backward UNIX, select and socket may not be
 ]]></patch>
@@ -96,7 +96,7 @@ url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
 --- site.py	2007-06-21 22:26:29.000000000 -0400
 +++ site.py	2007-06-21 22:26:55.000000000 -0400
 @@ -170,7 +170,7 @@
- 
+
  def addsitepackages(known_paths):
      """Add site-packages (and possibly site-python) to sys.path"""
 -    prefixes = [sys.prefix]
@@ -115,15 +115,15 @@ cat setup.py \
 mv setup.py setup.py.orig
 cp setup.py.bcfg2 setup.py
 ./configure \
-	--prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
+  --prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
 PLATFORM_IF_MATCH(linux)
 PLATFORM_ELSE
-	--with-gcc \
+  --with-gcc \
 PLATFORM_ENDIF
-	--enable-shared=no \
-	--disable-ipv6 \
-	--without-cxx \
-	--without-libintl
+  --enable-shared=no \
+  --disable-ipv6 \
+  --without-cxx \
+  --without-libintl
 </configure>
 
 </source>
