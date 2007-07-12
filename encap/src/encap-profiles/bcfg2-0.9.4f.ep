@@ -391,6 +391,8 @@ exit 0
 #       /usr/local/etc/default/bcfg2-client/env/RUN_INTERVAL_SECONDS
 
 ENVDIR="/usr/local/etc/default/bcfg2-client/env"
+PYTHONPATH="/usr/local/lib/bcfg2/lib/python2.4:/usr/local/lib/bcfg2/lib/python2.4/site-packages:/usr/local/lib/bcfg2/lib/python2.4/site-packages/Bcfg2"
+export ENVDIR PYTHONPATH
 
 # make sure we have options
 if [ ! -f ${ENVDIR}/OPTIONS ]; then
