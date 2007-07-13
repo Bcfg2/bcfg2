@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # $Id$
 
 ENCAP_PKGNAME="m4-1.4.4"
