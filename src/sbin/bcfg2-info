@@ -26,7 +26,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             Bcfg2.Server.Core.Core.__init__(self, {}, cfpath)
         except Bcfg2.Server.Core.CoreInitError, msg:
             print "Core load failed because %s" % msg
-            raise SystemExit, 1
+            raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
         for i in range(25):
@@ -41,7 +41,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_quit(self, _):
         """Exit program.
 Usage: [quit|exit]"""
-        raise SystemExit, 0
+        raise SystemExit(0)
 
     do_EOF = do_quit
 

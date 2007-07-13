@@ -81,7 +81,7 @@ h. FreeBSD
 
 def err_exit(emsg):
     print emsg
-    raise SystemExit, 1
+    raise SystemExit(1)
 
 #build bcfg2.conf file
 def initialize_repo(cfile):
@@ -254,13 +254,13 @@ def do_compare(cargs):
         new = lxml.etree.parse(new).getroot()
     except IOError:
         print "Failed to read %s" % (new)
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     try:
         old = lxml.etree.parse(old).getroot()
     except IOError:
         print "Failed to read %s" % (old)
-        raise SystemExit, 1
+        raise SystemExit(1)
     
     for src in [new, old]:
         for bundle in src.findall('./Bundle'):
@@ -319,7 +319,7 @@ def do_pull(cfile, repopath, client, etype, ename):
         bcore = Bcfg2.Server.Core.Core({}, cfile)
     except Bcfg2.Server.Core.CoreInitError, msg:
         print "Core load failed because %s" % msg
-        raise SystemExit, 1
+        raise SystemExit(1)
     [bcore.fam.Service() for x in range(10)]
     while bcore.fam.Service():
         pass
@@ -392,7 +392,7 @@ def do_viz(repopath, myargs):
         opts, args = getopt.getopt(myargs, 'rhbko:', ['raw', 'includehosts', 'includebundles', 'includekey', 'outfile='])
     except getopt.GetoptError, msg:
         print msg
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     options = []
     for opt, arg in opts:
@@ -427,7 +427,7 @@ def do_viz(repopath, myargs):
         dotpipe.tochild.write("digraph groups {\n")
     except:
         print "write to dot process failed. Is graphviz installed?"
-        raise SystemExit, 1
+        raise SystemExit(1)
     dotpipe.tochild.write('\trankdir="LR";\n')
     if 'hosts' in options:
         clients = lxml.etree.parse(repopath + '/Metadata/clients.xml').getroot()
@@ -506,7 +506,7 @@ def do_client(repopath, args):
             attr, val = i.split('=', 1)
             if not(attr in ['name', 'profile', 'uuid', 'password', 'address', 'secure', 'location']):
                 print "Attribute %s unknown" % attr
-                raise SystemExit, 1
+                raise SystemExit(1)
             element.attrib[attr] = val
         root.append(element)
 
@@ -528,17 +528,17 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(sys.argv[1:], 'hC:R:', ['help', 'configfile=', 'repopath='])
     except getopt.GetoptError, msg:
         print msg
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     if not args:
         print usage
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     # First get the options...
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print usage
-            raise SystemExit, 1
+            raise SystemExit(1)
         if opt in ("-C", "--configfile"):
             configfile = arg
         if opt in ("-R", "--repopath"):
@@ -557,7 +557,7 @@ if __name__ == '__main__':
     elif args[0] == 'pull':
         if len(args) != 4:
             print usage
-            raise SystemExit, 1
+            raise SystemExit(1)
         do_pull(configfile, Repopath, args[1], args[2], args[3])
 
     elif args[0] == 'minestruct':
@@ -578,7 +578,7 @@ if __name__ == '__main__':
     elif args[0] == 'client':
         if len(args) < 4:
             print usage
-            raise SystemExit, 1
+            raise SystemExit(1)
         do_client(Repopath, args[1:])
     else:
         print usage

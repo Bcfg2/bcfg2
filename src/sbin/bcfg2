@@ -3,21 +3,35 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-import getopt, logging, os, signal, sys, tempfile, time, xmlrpclib
-import Bcfg2.Options, Bcfg2.Client.XML, Bcfg2.Client.Frame, Bcfg2.Client.Tools
+import getopt
+import logging
+import os
+import signal
+import sys
+import tempfile
+import time
+import xmlrpclib
+import Bcfg2.Options
+import Bcfg2.Client.XML
+import Bcfg2.Client.Frame
+import Bcfg2.Client.Tools
 
 try:
-    import Bcfg2.Client.Proxy, Bcfg2.Logging
+    import Bcfg2.Client.Proxy
+    import Bcfg2.Logging
 except KeyError:
     print "Could not read options from configuration file"
-    raise SystemExit, 1
+    raise SystemExit(1)
+
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     os._exit(1)
 
+
 class Client:
     ''' The main bcfg2 client class '''
+
     def __init__(self):
         self.toolset = None
         self.config = None
@@ -25,26 +39,26 @@ class Client:
         optinfo = {
             # 'optname': (('-a', argdesc, optdesc),
             #                  env, cfpath, default, boolean)),
-            'verbose':(('-v', False,"enable verbose output"),
-                       False, False, False, True),
-            'extra':(('-e', False,"enable extra entry detailed output"),
-                       False, False, False, True),
-            'quick':(('-q', False, "disable some checksum verification"),
-                     False, False, False, True),
-            'debug':(('-d', False, "enable debugging output"),
-                     False, False, False, True),
-            'drivers':(('-D', '<driver1>,<driver2>', "Specify tool driver set"),
-                     False, ('client', 'drivers'), False, False),
-            'fingerprint':(('-F', '<server fingerprint>', "Server Fingerprint"),
-                     False, ('communication', 'fingerprint'), False, False),
-            'dryrun':(('-n', False, "do not actually change the system"),
+            'verbose': (('-v', False, "enable verbose output"),
+                        False, False, False, True),
+            'extra': (('-e', False, "enable extra entry output"),
                       False, False, False, True),
+            'quick': (('-q', False, "disable some checksum verification"),
+                      False, False, False, True),
+            'debug': (('-d', False, "enable debugging output"),
+                      False, False, False, True),
+            'drivers': (('-D', '<driver1>,<driver2>', "Specify tool driver set"),
+                        False, ('client', 'drivers'), False, False),
+            'fingerprint': (('-F', '<server fingerprint>', "Server Fingerprint"),
+                            False, ('communication', 'fingerprint'), False, False),
+            'dryrun': (('-n', False, "do not actually change the system"),
+                       False, False, False, True),
             'build': (('-B', False, "run in build mode"),
                       False, False, False, True),
-            'paranoid':(('-P', False, "make automatic backups of config files"),
-                        False, False, False, True),
-            'bundle':(('-b', '<bundle>', "only configure the given bundle"),
-                      False, False, False, False),
+            'paranoid': (('-P', False, "make automatic backups of config files"),
+                         False, False, False, True),
+            'bundle': (('-b', '<bundle>', "only configure the given bundle"),
+                       False, False, False, False),
             'file': (('-f', "<configspec>", "configure from a file rather than querying the server"),
                      False, False, False, False),
             'interactive': (('-I', False, "prompt the user for each change"),
@@ -77,7 +91,7 @@ class Client:
                          optparser.shortopt, optparser.longopt)[1]:
             print "Bcfg2 takes no arguments, only options"
             print optparser.helpmsg
-            raise SystemExit, 1
+            raise SystemExit(1)
         level = 30
         if self.setup['verbose']:
             level = 20
@@ -89,14 +103,14 @@ class Client:
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
             self.logger.info("The following drivers are available:")
             self.logger.info(Bcfg2.Client.Tools.drivers)
-            raise SystemExit, 0
+            raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove']:
             self.logger.error("Service removal is nonsensical, disable services to get former behavior")
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print "cannot use -f and -c together"
-            raise SystemExit, 1
+            raise SystemExit(1)
 
     def run_probe(self, probe):
         '''Execute probe'''
@@ -110,24 +124,20 @@ class Client:
                              (probe.attrib.get('interpreter', '/bin/sh')))
                 script.write(probe.text)
                 script.close()
-                os.chmod(script.name, 0755)             
+                os.chmod(script.name, 0755)
                 ret.text = os.popen(script.name).read().strip()
                 self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
             finally:
                 os.unlink(script.name)
         except:
             self.logger.error("Failed to execute probe: %s" % (name), exc_info=1)
-            raise SystemExit, 1
+            raise SystemExit(1)
         return ret
 
     def fatal_error(self, message):
         '''Signal a fatal error'''
         self.logger.error("Fatal error: %s" % (message))
-        raise SystemExit, 1
-
-    def get_config(self):
-        '''Either download the config from the server or read it from file'''
-        
+        raise SystemExit(1)
 
     def run(self):
         ''' Perform client execution phase '''
@@ -165,17 +175,17 @@ class Client:
             except xmlrpclib.Fault, flt:
                 self.logger.error("Failed to download probes from bcfg2")
                 self.logger.error(flt.faultString)
-                raise SystemExit, 1
+                raise SystemExit(1)
 
             times['probe_download'] = time.time()
-        
+
             try:
                 probes = Bcfg2.Client.XML.XML(probe_data)
             except Bcfg2.Client.XML.ParseError, syntax_error:
                 self.fatal_error(
                     "server returned invalid probe requests: %s" %
                     (syntax_error))
-            
+
             # execute probes
             try:
                 probedata = Bcfg2.Client.XML.Element("ProbeData")
@@ -183,7 +193,7 @@ class Client:
                  for probe in probes.findall(".//probe")]
             except:
                 self.logger.error("Failed to Execute probes")
-                raise SystemExit, 1
+                raise SystemExit(1)
 
             if len(probes.findall(".//probe")) > 0:
                 try:
@@ -191,15 +201,15 @@ class Client:
                     proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata))
                 except:
                     self.logger.error("Failed to upload probe data", exc_info=1)
-                    raise SystemExit, 1
-        
+                    raise SystemExit(1)
+
             times['probe_upload'] = time.time()
 
             try:
                 rawconfig = proxy.GetConfig()
             except xmlrpclib.Fault:
                 self.logger.error("Failed to download configuration from bcfg2")
-                raise SystemExit, 2
+                raise SystemExit(2)
 
             times['config_download'] = time.time()
 
@@ -211,7 +221,7 @@ class Client:
                 self.logger.warning("failed to write config cache file %s" %
                                     (self.setup['cache']))
             times['caching'] = time.time()
-            
+
         try:
             self.config = Bcfg2.Client.XML.XML(rawconfig)
         except Bcfg2.Client.XML.ParseError, syntax_error:
@@ -219,7 +229,7 @@ class Client:
                              (syntax_error))
 
         times['config_parse'] = time.time()
-    
+
         if self.config.tag == 'error':
             self.fatal_error("server error: %s" % (self.config.text))
 
@@ -235,7 +245,7 @@ class Client:
                 proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback))
             except xmlrpclib.Fault:
                 self.logger.error("Failed to upload configuration statistics")
-                raise SystemExit, 2
+                raise SystemExit(2)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
