@@ -17,6 +17,7 @@ __all__ = ["AES",
            "OpenSSL_RC4",
            "OpenSSL_RSAKey",
            "OpenSSL_TripleDES",
+           "prngd: prngd module"
            "PyCrypto_AES",
            "PyCrypto_RC4",
            "PyCrypto_RSAKey",

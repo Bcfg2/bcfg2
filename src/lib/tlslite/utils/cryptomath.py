@@ -102,11 +102,10 @@ except:
                 # Else see if we ahve Pprngd running
                 try:
                     def getRandomBytes(howMany):
-                        import prngd
                         try:
-                            p = prngd.PRNGD(sockname="/var/run/egd-pool")
+                            p = PRNGD(sockname="/var/run/egd-pool")
                         except:
-                            p = prngd.PRNGD(sockname="/dev/egd-pool")
+                            p = PRNGD(sockname="/dev/egd-pool")
                         return stringToBytes(p.read(howMany))
                     prngName = "PRNGD"
                 except:
