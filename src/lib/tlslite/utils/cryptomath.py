@@ -99,11 +99,22 @@ except:
                     return stringToBytes(s)
                 prngName ="CryptoAPI"
             except ImportError:
+                # Else see if we ahve Pprngd running
+                try:
+                    def getRandomBytes(howMany):
+                        import prngd
+                        try:
+                            p = prngd.PRNGD(sockname="/var/run/egd-pool")
+                        except:
+                            p = prngd.PRNGD(sockname="/dev/egd-pool")
+                        return stringToBytes(p.read(howMany))
+                    prngName = "PRNGD"
+                except:
                 #Else no PRNG :-(
-                def getRandomBytes(howMany):
-                    raise NotImplementedError("No Random Number Generator "\
-                                              "available.")
-            prngName = "None"
+                    def getRandomBytes(howMany):
+                        raise NotImplementedError("No Random Number Generator "\
+                                                  "available.")
+                    prngName = "None"
 
 # **************************************************************************
 # Converter Functions
