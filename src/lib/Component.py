@@ -85,7 +85,7 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
             tlsConnection.handshakeServer(certChain=self.chain,
                                           privateKey=self.key,
                                           sessionCache=self.sc,
-                                          checher=self.checker)
+                                          checker=self.checker)
             tlsConnection.ignoreAbruptClose = True
             return True
         except Bcfg2.tlslite.errors.TLSError, error:
