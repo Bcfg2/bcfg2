@@ -2,7 +2,7 @@
 '''Imports statistics.xml and clients.xml files in to database backend for new statistics engine'''
 __revision__ = '$Revision$'
 
-import os, sys
+import os, sys, binascii
 try:
     import settings
 except ImportError:
@@ -146,6 +146,10 @@ if __name__ == '__main__':
 
     
     for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
+        if r.get('current_bdiff', False):
+            rc_diff = binascii.b2a_base64(r.get('current_bdiff'))
+        else:
+            rc_diff = r.get('current_diff', '')
         arguments = [r.get('owner', default=""), r.get('current_owner', default=""),
                      r.get('group', default=""), r.get('current_group', default=""),
                      r.get('perms', default=""), r.get('current_perms', default=""),
@@ -153,7 +157,7 @@ if __name__ == '__main__':
                      r.get('to', default=""), r.get('current_to', default=""),
                      r.get('version', default=""), r.get('current_version', default=""),
                      (r.get('current_exists', default="True").capitalize()=="True"),
-                     r.get('current_diff', default="")]
+                     rc_diff]
         if reasons_hash.has_key(tuple(arguments)):
             current_reason_id = reasons_hash[tuple(arguments)]
             if verbose:
@@ -199,6 +203,11 @@ if __name__ == '__main__':
                                                  ('Extra/*', extra_hash, 'reports_extra'),
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
                 for x in statistics.findall(xpath):
+                    if x.get('current_bdiff', False):
+                        xc_diff = binascii.b2a_base64(x.get('current_bdiff'))
+                    else:
+                        xc_diff = x.get('current_diff', '')
+
                     arguments = [x.get('owner', default=""), x.get('current_owner', default=""),
                                  x.get('group', default=""), x.get('current_group', default=""),
                                  x.get('perms', default=""), x.get('current_perms', default=""),
@@ -206,7 +215,7 @@ if __name__ == '__main__':
                                  x.get('to', default=""), x.get('current_to', default=""),
                                  x.get('version', default=""), x.get('current_version', default=""),
                                  (x.get('current_exists', default="True").capitalize()=="True"),
-                                 x.get('current_diff', default="")]
+                                 xc_diff]
 
                     if not hashname.has_key((x.get('name'), x.tag, reasons_hash[tuple(arguments)])):
                         cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s, %s);",

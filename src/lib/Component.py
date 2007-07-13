@@ -60,11 +60,12 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
                 BaseHTTPServer.HTTPServer):
     '''This class is an tlslite-using SSLServer'''
-    def __init__(self, address, keyfile, handler):
+    def __init__(self, address, keyfile, handler, checker=None):
         self.sc = Bcfg2.tlslite.api.SessionCache()
         x509 = Bcfg2.tlslite.api.X509()
         s = open(keyfile).read()
         x509.parse(s)
+        self.checker = checker
         try:
             self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
         except:
@@ -83,7 +84,8 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
         try:
             tlsConnection.handshakeServer(certChain=self.chain,
                                           privateKey=self.key,
-                                          sessionCache=self.sc)
+                                          sessionCache=self.sc,
+                                          checher=self.checker)
             tlsConnection.ignoreAbruptClose = True
             return True
         except Bcfg2.tlslite.errors.TLSError, error:
