@@ -10,7 +10,7 @@ from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
 import logging, os, select, signal, socket, sys
-import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Server.Component
+import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component
 
 logger = logging.getLogger('bcfg2-server')
 
