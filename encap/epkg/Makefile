@@ -37,5 +37,5 @@ expat:
 	cd ${EXPAT} && ./configure --disable-shared --prefix=${PREFIX} && $(MAKE) && $(MAKE) install
 
 epkg:
-	test -d $(ENCAPDIR)/$(EPKG) && rm -rf $(ENCAPDIR)/$(EPKG)
+	test -d $(ENCAPDIR)/$(EPKG) && rm -rf $(ENCAPDIR)/$(EPKG) || true
 	cd ${EPKG} && ./configure && $(MAKE) && $(MAKE) install
