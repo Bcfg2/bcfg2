@@ -1,4 +1,4 @@
 '''base modules definition'''
 __revision__ = '$Revision$'
 
-all = ['Server', 'Client', 'Logging', 'Options']
+__all__ = ['Server', 'Client', 'Component', 'Logging', 'Options']
