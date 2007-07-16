@@ -147,7 +147,7 @@ if __name__ == '__main__':
     
     for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
         if r.get('current_bdiff', False):
-            rc_diff = binascii.b2a_base64(r.get('current_bdiff'))
+            rc_diff = binascii.a2b_base64(r.get('current_bdiff'))
         else:
             rc_diff = r.get('current_diff', '')
         arguments = [r.get('owner', default=""), r.get('current_owner', default=""),
@@ -204,7 +204,7 @@ if __name__ == '__main__':
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
                 for x in statistics.findall(xpath):
                     if x.get('current_bdiff', False):
-                        xc_diff = binascii.b2a_base64(x.get('current_bdiff'))
+                        xc_diff = binascii.a2b_base64(x.get('current_bdiff'))
                     else:
                         xc_diff = x.get('current_diff', '')
 

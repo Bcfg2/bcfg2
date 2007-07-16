@@ -328,7 +328,7 @@ class Frame:
                 container.append(item)
                 if item.get('current_diff', False):
                     item.set('current_bdiff',
-                             binascii.a2b_base64(item.get('current_diff')))
+                             binascii.b2a_base64(item.get('current_diff')))
                     item.set('current_diff', '')
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")
