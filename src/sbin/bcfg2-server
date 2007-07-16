@@ -63,7 +63,7 @@ class SetupError(Exception):
     '''Used when the server cant be setup'''
     pass
 
-class Bcfg2Serv(Bcfg2.Server.Component.Component):
+class Bcfg2Serv(Bcfg2.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
@@ -72,9 +72,9 @@ class Bcfg2Serv(Bcfg2.Server.Component.Component):
 
     def __init__(self, setup):
         try:
-            Bcfg2.Server.Component.Component.__init__(self, setup)
+            Bcfg2.Component.Component.__init__(self, setup)
             self.shut = False
-        except Bcfg2.Server.Component.ComponentInitError:
+        except Bcfg2.Component.ComponentInitError:
             raise SetupError
 
         # set shutdown handlers for sigint and sigterm
