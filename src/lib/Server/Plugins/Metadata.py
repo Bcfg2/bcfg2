@@ -353,7 +353,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             try:
                 client = self.resolve_client(address)
             except MetadataConsistencyError:
-                self.logger.error("Client %s failed to authenticate due to metadata problem" % (address))
+                self.logger.error("Client %s failed to authenticate due to metadata problem" % (address[0]))
+                return False
         else:
             # user maps to client
             if user not in self.uuid:
