@@ -197,14 +197,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         current = '/'+'/'.join(parent.split('/')[1:2+idx])
                         try:
                             sloc = os.stat(current)
-                            try:
-                                if not S_ISDIR(sloc[ST_MODE]):
-                                    os.unlink(current)
-                                    os.mkdir(current)
-                            except OSError:
-                                return False
                         except OSError:
                             try:
+                                os.mkdir(current)
+                            except OSError:
+                                return False
+                        if not S_ISDIR(sloc[ST_MODE]):
+                            try:
+                                os.unlink(current)
                                 os.mkdir(current)
                             except OSError:
                                 return False
