@@ -190,13 +190,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             parent = "/".join(entry.get('name').split('/')[:-1])
             if parent:
                 try:
-                    os.lstat(parent)
+                    os.stat(parent)
                 except:
                     self.logger.debug('Creating parent path for directory %s' % (entry.get('name')))
                     for idx in xrange(len(parent.split('/')[:-1])):
                         current = '/'+'/'.join(parent.split('/')[1:2+idx])
                         try:
-                            sloc = os.lstat(current)
+                            sloc = os.stat(current)
                             try:
                                 if not S_ISDIR(sloc[ST_MODE]):
                                     os.unlink(current)
@@ -279,7 +279,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         parent = "/".join(entry.get('name').split('/')[:-1])
         if parent:
             try:
-                os.lstat(parent)
+                os.stat(parent)
             except:
                 self.logger.debug('Creating parent path for config file %s' % \
                                   (entry.get('name')))
@@ -287,7 +287,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 for next in parent.split('/')[1:]:
                     current += next + '/'
                     try:
-                        sloc = os.lstat(current)
+                        sloc = os.stat(current)
                         try:
                             if not S_ISDIR(sloc[ST_MODE]):
                                 self.logger.debug('%s is not a directory; recreating' \
