@@ -2,4 +2,5 @@
 __revision__ = '$Revision$'
 
 all = ['Account', 'Base', 'Bundler', 'Cfg', 'Hostbase', 'Metadata',
-       'Pkgmgr', 'Rules', 'SSHbase', 'Svcmgr', 'Vhost']
+       'Pkgmgr', 'Rules', 'SSHbase', 'Svcmgr', 'TCheetah',
+       'TGenshi', 'Vhost']
