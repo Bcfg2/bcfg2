@@ -77,9 +77,6 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         except Bcfg2.Component.ComponentInitError:
             raise SetupError
 
-        # set shutdown handlers for sigint and sigterm
-        signal.signal(signal.SIGINT, self.start_shutdown)
-        signal.signal(signal.SIGTERM, self.start_shutdown)
         try:
             self.Core = Core(setup, setup['configfile'])
         except CoreInitError, msg:
