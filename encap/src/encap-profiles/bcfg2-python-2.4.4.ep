@@ -2,7 +2,7 @@
 
 <!-- $Id$ -->
 
-<-- On AIX 4.3.3 you need GNU binutils installed (from the IBM RPM) -->
+<!-- On AIX 4.3.3 you need GNU binutils installed (from the IBM RPM) -->
 
 <encap_profile
   profile_ver="1.0"
