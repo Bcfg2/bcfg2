@@ -27,7 +27,7 @@
 PLATFORM_IF_MATCH(solaris)
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
 PLATFORM_ELSE_IF_MATCH(aix4.3.3)
-		value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/linux/bin:"
+    value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/linux/bin:"
 PLATFORM_ELSE
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
 PLATFORM_ENDIF
@@ -47,6 +47,8 @@ PLATFORM_ENDIF
         variable="LDFLAGS"
 PLATFORM_IF_MATCH(linux)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-rpath,/usr/local/lib/bcfg2/lib -YP,/usr/local/lib/bcfg2/lib:/usr/lib:/lib"
+PLATFORM_ELSE_IF_MATCH(aix4.3.3)
+        value="-L/usr/local/lib/bcfg2/lib -L/usr/local/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/local/lib:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(aix)
         value="-L/usr/local/lib/bcfg2/lib -Wl,-blibpath:/usr/local/lib/bcfg2/lib:/usr/lib"
 PLATFORM_ELSE_IF_MATCH(solaris)
