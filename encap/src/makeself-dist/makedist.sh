@@ -2,7 +2,7 @@
 
 # $Id$
 
-# Script to create the 
+# Script to create the
 # bcfg2-<sitename>-<ver>-<arch>-<os>.run
 # (example: bcfg2-nasa-1-rs6000-aix5.3.0.run)
 # one-step install bcfg2 client distribution file
@@ -25,7 +25,7 @@ SITEVER="`echo $BSEP | awk -F\- '{print $4}'`"
 
 EPEP="`basename $EPDIR/m4-*-encap-*.tar.gz`"
 ARCH="`echo $EPEP | awk -F\- '{print $4}'`"
-OS="`echo $EPEP | awk -F\- '{print $5}' | awk -F. '{print $1}'`"
+OS="`echo $EPEP | awk -F\- '{print $5}' | sed s:\.tar\.gz$::g`"
 
 # Make temporary directory $DISTDIR from which distribution will be created
 cd $MDDIR
@@ -132,18 +132,18 @@ LOC_OST_ACTION_RE='^ACTION=\"-bcfg2-'
 # Check to see if passwords are set
 printf "Checking to see if password is set in \'\${LOC_BCFG2_CONF}\'... "
 grep "\${LOC_BCFG2_RE}" \$LOC_BCFG2_CONF >/dev/null && LOC_BCFG2_SET="no"
-if [ "\${LOC_BCFG2_SET}x" = "nox" ]; then 
+if [ "\${LOC_BCFG2_SET}x" = "nox" ]; then
     printf "no\n"
-else 
+else
     printf "yes\n"
 fi
 
 printf "Checking to see if passwords are set in \'\${LOC_OST_CFG}\'... "
 grep "\${LOC_OST_KILL_RE}" \$LOC_OST_CFG >/dev/null && LOC_OST_SET="no"
 grep "\${LOC_OST_ACTION_RE}" \$LOC_OST_CFG >/dev/null && LOC_OST_SET="no"
-if [ "\${LOC_OST_SET}x" = "nox" ]; then 
+if [ "\${LOC_OST_SET}x" = "nox" ]; then
     printf "no\n"
-else 
+else
     printf "yes\n"
 fi
 
@@ -191,7 +191,7 @@ fi
 
 # Sed quoting function - quote the &, :, ' and \ characters
 sedquote() {
-    i=1 
+    i=1
     while [ \$i -le \`${EXPR} length \$1\` ]; do
         c=\`${EXPR} substr \$1 \$i 1\`
         if [ "\${c}x" = "&x" -o "\${c}x" = ":x" -o "\${c}x" = "'x" -o "\${c}x" = "\\\\x" ]; then
@@ -242,14 +242,14 @@ chmod 600 \${LOC_OST_CFG}*
 if [ -x /usr/local/bin/sv ]; then
     for LOC_SERVICE in bcfg2-client bcfg2-server ostiary; do
         if [ -h /usr/local/var/service/\${LOC_SERVICE} ]; then
-            printf "Restarting runit service \${LOC_SERVICE}...\n" 
+            printf "Restarting runit service \${LOC_SERVICE}...\n"
             /usr/local/bin/sv restart /usr/local/var/service/\${LOC_SERVICE}
             sleep 2
             /usr/local/bin/sv status /usr/local/var/service/\${LOC_SERVICE}
         fi
     done
 fi
-    
+
 exit 0
 
 EOF
