@@ -2,6 +2,8 @@
 
 <!-- $Id$ -->
 
+<-- On AIX 4.3.3 you need GNU binutils installed (from the IBM RPM) -->
+
 <encap_profile
   profile_ver="1.0"
   pkgspec="bcfg2-python-2.4.4"
@@ -24,6 +26,8 @@
         variable="PATH"
 PLATFORM_IF_MATCH(solaris)
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/sfw/bin:/usr/ccs/bin:"
+PLATFORM_ELSE_IF_MATCH(aix4.3.3)
+		value="/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/linux/bin:"
 PLATFORM_ELSE
         value="/usr/local/lib/bcfg2/bin:/usr/local/bin:"
 PLATFORM_ENDIF
@@ -57,6 +61,15 @@ PLATFORM_ENDIF
         value="-I/usr/local/lib/bcfg2/include"
         type="set"
 />
+
+PLATFORM_IF_MATCH(aix4.3.3)
+<environment
+        variable="NM"
+        value="/usr/linux/bin/nm"
+        type="set"
+/>
+PLATFORM_ELSE
+PLATFORM_ENDIF
 
 <source
 url="http://encapsrcdist/mirror/python/Python-2.4.4.tgz
