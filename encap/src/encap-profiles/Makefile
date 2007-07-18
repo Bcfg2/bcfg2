@@ -71,11 +71,23 @@ ifeq ($(DISTRO),Red Hat Linux release 7.2 (Enigma))
 OS ?= linux_redhat_72
 endif
 
+ifeq ($(DISTRO),Red Hat Enterprise Linux AS release 4 (Nahant Update 4))
+OS ?= linux_redhat_rhel4
+endif
+
+ifeq ($(DISTRO),Red Hat Enterprise Linux AS release 4 (Nahant Update 5))
+OS ?= linux_redhat_rhel4
+endif
+
 ifeq ($(DISTRO),Welcome to SuSE SLES 8 (powered by UnitedLinux 1.0) (i586))
 OS ?= linux_suse_sles8
 endif
 
 ifeq ($(DISTRO),Welcome to SUSE Linux Enterprise Server 10 (i586) - Kernel \r (\l).)
+OS ?= linux_suse_sles10
+endif
+
+ifeq ($(DISTRO),Welcome to SUSE Linux Enterprise Server 10 (x86_64) - Kernel \r (\l).)
 OS ?= linux_suse_sles10
 endif
 
