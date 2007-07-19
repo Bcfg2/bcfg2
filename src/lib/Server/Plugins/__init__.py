@@ -3,4 +3,4 @@ __revision__ = '$Revision$'
 
 all = ['Account', 'Base', 'Bundler', 'Cfg', 'Hostbase', 'Metadata',
        'Pkgmgr', 'Rules', 'SSHbase', 'Svcmgr', 'TCheetah',
-       'TGenshi', 'Vhost']
+       'SGenshi', 'TGenshi', 'Vhost']
