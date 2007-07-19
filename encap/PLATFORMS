@@ -39,8 +39,6 @@ the encap package management code.
 || 27 || Solaris   || Sun     || 10      || Sparc  || dc || 0.9.4i ||
 || 28 || Solaris   || Sun     || 10      || x86_64 || dc || 0.9.5  ||
 
-* Redhat 6.0 has egcs-2.91.66
-
 dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
 
 == Adding new platforms ==
