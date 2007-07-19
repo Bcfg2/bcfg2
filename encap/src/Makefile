@@ -11,8 +11,7 @@ log :
 	@printf "Building in background, and logging to ./make.log\n"
 	( $(MAKE) all > ./make.log 2>&1 ) &
 
-all :
-	-rm -rf DIST bcfg2-site/bcfg2-site-[a-z]* makeself-dist/bcfg2-*
+all : distclean
 	$(MAKE) -C ./encap-profiles all
 	$(MAKE) -C ./bcfg2-site all
 	$(MAKE) -C ./makeself-dist all
@@ -27,11 +26,10 @@ all :
 clean :
 	-rm ./*.log ./*~ ./\#*
 	
-distclean: clean
-	-rm $(DEST)/*
-	-rmdir $(DEST)
+distclean : clean
+	-rm -rf $(DEST) bcfg2-site/bcfg2-site-[a-z]* makeself-dist/bcfg2-*
 	
-uninstall : clean
+uninstall : distclean
 	$(MAKE) -C ./encap-profiles uninstall
 	$(MAKE) -C ./bcfg2-site distclean
 	$(MAKE) -C ./makeself-dist distclean
