@@ -2,7 +2,8 @@
 __revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser
-import BaseHTTPServer, SimpleXMLRPCServer, SocketServer
+from base64 import decodestring
+import BaseHTTPServer, SimpleXMLRPCServer
 import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
 
@@ -30,7 +31,23 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         try:
             # get arguments
             data = self.rfile.read(int(self.headers["content-length"]))
-            response = self.server._cobalt_marshalled_dispatch(data, self.client_address)
+
+            authenticated = False
+            #try x509 cert auth (will have been completed, just checking status)
+            authenticated = self.request.authenticated
+            #TLSConnection can be accessed by self.request?
+            
+            #try httpauth
+            if not authenticated and "Authorization" in self.headers:
+                #need more checking here in case its all garbled
+                namepass = decodestring(self.headers["Authorization"].strip("Basic ")).split(":")
+                if self.server._authenticate_connection("bogus-method",
+                                                        namepass[0],
+                                                        namepass[1],
+                                                        self.client_address):
+                    authenticated = True
+
+            response = self.server._cobalt_marshalled_dispatch(data, self.client_address, authenticated)
         except: # This should only happen if the module is buggy
             # internal error, report as HTTP server error
             log.error("Unexcepted handler failure in do_POST", exc_info=1)
@@ -60,8 +77,10 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
                 BaseHTTPServer.HTTPServer):
     '''This class is an tlslite-using SSLServer'''
-    def __init__(self, address, keyfile, handler, checker=None):
+    def __init__(self, address, keyfile, handler, checker=None,
+                 reqCert=False):
         self.sc = Bcfg2.tlslite.api.SessionCache()
+        self.rc = reqCert
         x509 = Bcfg2.tlslite.api.X509()
         s = open(keyfile).read()
         x509.parse(s)
@@ -85,8 +104,14 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
             tlsConnection.handshakeServer(certChain=self.chain,
                                           privateKey=self.key,
                                           sessionCache=self.sc,
-                                          checker=self.checker)
+                                          checker=self.checker,
+                                          reqCert=self.rc)
             tlsConnection.ignoreAbruptClose = True
+            #Connection authenticated during TLS handshake, no need for passwords
+            if not self.checker == None:
+                tlsConnection.authenticated = True
+            else:
+                tlsConnection.authenticated = False
             return True
         except Bcfg2.tlslite.errors.TLSError, error:
             return False
@@ -160,7 +185,7 @@ class Component(TLSServer,
         self.assert_location()
         atexit.register(self.deassert_location)
 
-    def _cobalt_marshalled_dispatch(self, data, address):
+    def _cobalt_marshalled_dispatch(self, data, address, authenticated=False):
         """Decode and dispatch XMLRPC requests. Overloaded to pass through
         client address information
         """
@@ -171,15 +196,19 @@ class Component(TLSServer,
                               % (address[0]))
             #open('/tmp/badreq', 'w').write(data)
             return xmlrpclib.dumps(xmlrpclib.Fault(4, "Bad Request"))
-        if len(rawparams) < 2:
-            self.logger.error("No authentication included with request from %s" % address[0])
-            return xmlrpclib.dumps(xmlrpclib.Fault(2, "No Authentication Info"))
-        user = rawparams[0]
-        password = rawparams[1]
-        params = rawparams[2:]
-        # check authentication
-        if not self._authenticate_connection(method, user, password, address):
-            return xmlrpclib.dumps(xmlrpclib.Fault(3, "Authentication Failure"))
+        if not authenticated:
+            if len(rawparams) < 2:
+                self.logger.error("No authentication included with request from %s" % address[0])
+                return xmlrpclib.dumps(xmlrpclib.Fault(2, "No Authentication Info"))
+            user = rawparams[0]
+            password = rawparams[1]
+            params = rawparams[2:]
+            # check authentication
+            if not self._authenticate_connection(method, user, password, address):
+                return xmlrpclib.dumps(xmlrpclib.Fault(3, "Authentication Failure"))
+        else:
+            #there is no prefixed auth info in this case
+            params = rawparams[0:]
         # generate response
         try:
             # all handlers must take address as the first argument

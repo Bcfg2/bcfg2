@@ -7,6 +7,7 @@ import getopt
 import logging
 import os
 import signal
+import socket
 import sys
 import tempfile
 import time
@@ -15,6 +16,9 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
+from Bcfg2.Component import *
+from Bcfg2.tlslite.Checker import Checker
+from Bcfg2.tlslite.errors import *
 
 try:
     import Bcfg2.Client.Proxy
@@ -83,6 +87,12 @@ class Client:
                         False, ('communication', 'retries'), '3', False),
             'kevlar': (('-k', False, "run in kevlar (bulletproof) mode"),
                        False, False, False, True),
+            'agent': (('-A', False, "run in agent (continuous) mode, wait for reconfigure command from server"),
+                       False, False, False, True),
+            'agent-port': (('-g', '<agent tcp port>', 'the port on which to bind for agent mode'),
+                       False, ('communication', 'agent-port'), '6789', False),
+            'key': (('-K', '<client key file>', 'ssl cert + private key for agent mode xmlrpc server'),
+                           False, ('communication', 'key'), False, False),
             }
 
         optparser = Bcfg2.Options.OptionParser('bcfg2', optinfo)
@@ -111,6 +121,15 @@ class Client:
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print "cannot use -f and -c together"
             raise SystemExit(1)
+        if (self.setup["agent"] != False) and (self.setup["interactive"] != False):
+            print "cannot use -A and -I together"
+            raise SystemExit(1)
+        if (self.setup["agent"] and not self.setup["fingerprint"]):
+            print "Agent mode requires specification of x509 fingerprint"
+            raise SystemExit(1)
+        if (self.setup["agent"] and not self.setup["key"]):
+            print "Agent mode requires specification of ssl cert + key file"
+            raise SystemExit(1)
 
     def run_probe(self, probe):
         '''Execute probe'''
@@ -137,8 +156,11 @@ class Client:
     def fatal_error(self, message):
         '''Signal a fatal error'''
         self.logger.error("Fatal error: %s" % (message))
-        raise SystemExit(1)
-
+        if not self.setup["agent"]:
+            raise SystemExit(1)
+        else:
+            self.logger.error("Continuing...")
+        
     def run(self):
         ''' Perform client execution phase '''
         times = {}
@@ -157,18 +179,21 @@ class Client:
             except IOError:
                 self.fatal_error("failed to read cached configuration from: %s"
                                  % (self.setup['file']))
+                return(1)
         else:
             # retrieve config from server
             try:
                 proxy = Bcfg2.Client.Proxy.bcfg2(self.setup)
             except:
                 self.fatal_error("failed to instantiate proxy to server")
+                return(1)
 
             if self.setup['profile']:
                 try:
                     proxy.AssertProfile(self.setup['profile'])
                 except xmlrpclib.Fault:
                     self.fatal_error("Failed to set client profile")
+                    return(1)
 
             try:
                 probe_data = proxy.GetProbes()
@@ -185,6 +210,7 @@ class Client:
                 self.fatal_error(
                     "server returned invalid probe requests: %s" %
                     (syntax_error))
+                return(1)
 
             # execute probes
             try:
@@ -227,13 +253,17 @@ class Client:
         except Bcfg2.Client.XML.ParseError, syntax_error:
             self.fatal_error("the configuration could not be parsed: %s" %
                              (syntax_error))
+            return(1)            
 
         times['config_parse'] = time.time()
 
         if self.config.tag == 'error':
             self.fatal_error("server error: %s" % (self.config.text))
+            return(1)
 
-        self.tools = Bcfg2.Client.Frame.Frame(self.config, self.setup, times)
+        self.tools = Bcfg2.Client.Frame.Frame(self.config,
+                                              self.setup,
+                                              times)
 
         self.tools.Execute()
 
@@ -247,7 +277,114 @@ class Client:
                 self.logger.error("Failed to upload configuration statistics")
                 raise SystemExit(2)
 
+class FingerCheck(object):
+    def __init__(self, fprint):
+        self.fingerprint = fprint
+        self.logger = logging.getLogger('checker')
+
+    def __call__(self, connection):
+        if connection._client:
+            chain = connection.session.serverCertChain
+        else:
+            chain = connection.session.clientCertChain
+
+        if chain == None:
+            self.logger.error("Fingerprint authentication error")
+            raise TLSNoAuthenticationError()
+        if chain.getFingerprint() != self.fingerprint:
+            self.logger.error("Got connection with bad fingerprint %s" \
+                              % (chain.getFingerprint()))
+            raise TLSFingerprintError(\
+                    "X.509 fingerprint mismatch: %s, %s" % \
+                    (chain.getFingerprint(), self.fingerprint))
+
+class Agent(Bcfg2.Component.Component):
+        """The Bcfg2 Agent component providing XML-RPC access to 'run'"""
+        __name__ = 'bcfg2-agent'
+        __implementation__ = 'bcfg2-agent'
+            
+        def __init__(self, client):
+            # need to get addr
+            self.setup = client.setup
+            self.shut = False
+            signal.signal(signal.SIGINT, self.start_shutdown)
+            signal.signal(signal.SIGTERM, self.start_shutdown)
+            self.logger = logging.getLogger('Agent')
+
+            self.static = True
+                
+            if self.setup["agent-port"]:
+                port = int(self.setup["agent-port"])
+            elif self.setup["server"]:
+                port = int(self.setup["server"].split(':')[1])
+            else:
+                print "port or server URL not specified"
+                raise SystemExit, 1
+
+            location = (socket.gethostname(), port)
+
+            keyfile = self.setup["key"]
+            self.password = self.setup["password"]
+            
+            try:
+                TLSServer.__init__(self,
+                                   location,
+                                   keyfile,
+                                   CobaltXMLRPCRequestHandler,
+                                   FingerCheck(self.setup["fingerprint"]),
+                                   reqCert=True)
+            except socket.error:
+                self.logger.error("Failed to bind to socket")
+                raise ComponentInitError
+            except ComponentKeyError:
+                self.logger.error("Failed to parse key" % (keyfile))
+                raise ComponentInitError
+            except:
+                self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
+                raise ComponentInitError
+            try:
+                SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+            except TypeError:
+                SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, False, None)
+            self.logRequests = 0
+            self.port = self.socket.getsockname()[1]
+            self.url = "https://%s:%s" % (socket.gethostname(), self.port)
+            self.logger.info("Bound to port %s" % self.port)
+            self.funcs.update({'system.listMethods':self.addr_system_listMethods})
+            self.atime = 0
+            self.client = client
+            self.funcs.update({
+                "run": self.run,
+                })
+
+        def run(self, address):
+            try:
+                os.waitpid(-1, os.WNOHANG)
+            except:
+                pass
+            self.logger.info("Got run request from %s" % (address[0]))
+            if os.fork():
+                return True
+            else:
+                try:
+                    self.client.run()
+                except SystemExit:
+                    self.logger.error("Client failed to execute")
+                self.shut = True
+                return False
+            
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
     client = Client()
-    client.run()
+    spid = os.getpid()
+    if client.setup["agent"]:
+        agent = Agent(client)
+        while not agent.shut:
+            try:
+                agent.serve_forever()
+            except:
+                critical_error('error in service loop')
+        if os.getpid() == spid:
+            print("Shutting down")
+    else:
+        client.run()

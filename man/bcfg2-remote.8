@@ -1,0 +1,40 @@
+.TH "bcfg2-remote" 8
+.SH NAME
+bcfg2-remote \- Connect to a bcfg2 agent and trigger client execution
+.SH SYNOPSIS
+.B bcfg2-remote
+.I [-d <debug level>]
+.I [-H <agent host>]
+.I [-C <configfile>]
+.I [-k <ssl key>]
+.I [-p <agent tcp port>]
+.SH DESCRIPTION
+bcfg2-remote connects to a client agent, uses the server certificate
+for authentication, and causes that client to run the bcfg2 client
+code with the options specified on the client.
+.SH OPTIONS
+.PP
+.B "\-d debuglevel"
+.RS
+Set debug level (0-40).
+.RE
+.B "\-H hostname"
+.RS
+Connect to the agent on the specified host.
+.RE
+.B "-C configfile"
+.RS
+Use the specified bcfg2.conf.
+.RE
+.B "\-k sslkey"
+.RS
+Use the ssl certificate at the following path.
+.RE
+.B "\-p port"
+.RS
+Connect to the agent on the specified TCP port.
+.RE
+.SH "SEE ALSO"
+.BR bcfg2(1)
+
+
