@@ -3,8 +3,8 @@
 <!-- $Id$ -->
 
 <encap_profile
-	profile_ver="1.0"
-	pkgspec="runit-1.7.2"
+  profile_ver="1.0"
+  pkgspec="runit-1.7.2"
 >
 
 <prereq package="m4-1.4.4" />
@@ -49,38 +49,57 @@ use_objdir="no"
 subdir="admin/runit-1.7.2"
 >
 
-PLATFORM_IF_MATCH(aix)
+PLATFORM_IF_MATCH(aix|solaris2.6)
 <patch options="-p0" from_dir="src"><![CDATA[
 --- uw_tmp.h1	2007-06-25 01:17:00.000000000 -0400
 +++ uw_tmp.h1	2007-06-25 01:17:23.000000000 -0400
 @@ -3,7 +3,7 @@
- 
+
  /* sysdep: -utmpx */
- 
+
 -#define UW_TMP_UFILE _PATH_UTMP
 -#define UW_TMP_WFILE _PATH_WTMP
 +#define UW_TMP_UFILE UTMP_FILE
 +#define UW_TMP_WFILE WTMP_FILE
- 
+
  typedef struct utmp uw_tmp;
 ]]></patch>
-PLATFORM_ELSE_IF_MATCH(solaris)
+PLATFORM_ELSE
+PLATFORM_ENDIF
+
+PLATFORM_IF_MATCH(solaris)
 <patch options="-p0" from_dir="src"><![CDATA[
 --- Makefile	2007-07-02 10:09:24.000000000 -0400
 +++ Makefile	2007-07-02 10:09:45.000000000 -0400
 @@ -6,10 +6,10 @@
- 	./check-local $(IT)
- 
+   ./check-local $(IT)
+
  runit: load runit.o unix.a byte.a
 -	./load runit unix.a byte.a -static
 +	./load runit unix.a byte.a
- 
+
  runit-init: load runit-init.o unix.a byte.a
 -	./load runit-init unix.a byte.a -static
 +	./load runit-init unix.a byte.a
- 
+
  runsv: load runsv.o unix.a byte.a time.a
- 	./load runsv unix.a byte.a time.a
+   ./load runsv unix.a byte.a time.a
+]]></patch>
+PLATFORM_ELSE
+PLATFORM_ENDIF
+
+PLATFORM_IF_MATCH(solaris2.6)
+<patch options="-p0" from_dir="src"><![CDATA[
+--- utmpset.c   2007-07-19 07:08:25.356231209 -0400
++++ utmpset.c   2007-07-19 07:08:41.279314222 -0400
+@@ -34,7 +34,6 @@
+   while (read(fd, &ut, sizeof(uw_tmp)) == sizeof(uw_tmp)) {
+     if (!ut.ut_name[0] || (str_diff(ut.ut_line, line) != 0)) continue;
+     memset(ut.ut_name, 0, sizeof ut.ut_name);
+-    memset(ut.ut_host, 0, sizeof ut.ut_host);
+     if (time(&ut.ut_time) == -1) break;
+ #ifdef DEAD_PROCESS
+     ut.ut_type =DEAD_PROCESS;
 ]]></patch>
 PLATFORM_ELSE
 PLATFORM_ENDIF
@@ -227,14 +246,14 @@ done
 
 printf "\n6: Re-enabling services that were installed before package was removed...\n"
 if [ -d /usr/local/var/service/.disabled ]; then
-    for service in `ls /usr/local/var/service/.disabled`; do 
+    for service in `ls /usr/local/var/service/.disabled`; do
         if [ -h /usr/local/var/service/$service ]; then
-	    printf "A new version of $service exists, removing old version...\n"
-	    rm /usr/local/var/service/.disabled/$service
-	else
-	    printf "Re-enabling service $service...\n"
+      printf "A new version of $service exists, removing old version...\n"
+      rm /usr/local/var/service/.disabled/$service
+  else
+      printf "Re-enabling service $service...\n"
             mv /usr/local/var/service/.disabled/$service  /usr/local/var/service/
-	fi
+  fi
     done
 fi
 
@@ -300,7 +319,7 @@ fi
 if [ -d /etc/event.d ]; then
     if [ -f /etc/event.d/SV ]; then
         printf "Removing /etc/event.d/SV (Upstart) ...\n"
-	initctl stop SV || printf "SV already stopped...\n"
+  initctl stop SV || printf "SV already stopped...\n"
         rm /etc/event.d/SV
     fi
 fi
