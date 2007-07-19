@@ -248,12 +248,12 @@ printf "\n6: Re-enabling services that were installed before package was removed
 if [ -d /usr/local/var/service/.disabled ]; then
     for service in `ls /usr/local/var/service/.disabled`; do
         if [ -h /usr/local/var/service/$service ]; then
-      printf "A new version of $service exists, removing old version...\n"
-      rm /usr/local/var/service/.disabled/$service
-  else
-      printf "Re-enabling service $service...\n"
-            mv /usr/local/var/service/.disabled/$service  /usr/local/var/service/
-  fi
+            printf "A new version of $service exists, removing old version...\n"
+            rm /usr/local/var/service/.disabled/$service
+        else
+            printf "Re-enabling service $service...\n"
+            mv /usr/local/var/service/.disabled/$service /usr/local/var/service/
+      fi
     done
 fi
 
@@ -319,7 +319,7 @@ fi
 if [ -d /etc/event.d ]; then
     if [ -f /etc/event.d/SV ]; then
         printf "Removing /etc/event.d/SV (Upstart) ...\n"
-  initctl stop SV || printf "SV already stopped...\n"
+        initctl stop SV || printf "SV already stopped...\n"
         rm /etc/event.d/SV
     fi
 fi
