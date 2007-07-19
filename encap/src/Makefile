@@ -12,6 +12,7 @@ log :
 	( $(MAKE) all > ./make.log 2>&1 ) &
 
 all :
+	-rm -rf DIST bcfg2-site/bcfg2-site-[a-z]* makeself-dist/bcfg2-*
 	$(MAKE) -C ./encap-profiles all
 	$(MAKE) -C ./bcfg2-site all
 	$(MAKE) -C ./makeself-dist all
