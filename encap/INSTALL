@@ -1,4 +1,4 @@
-EncapPackages | EncapReadme | '''EncapInstall''' | EncapHowto
+EncapPackages | EncapReadme | EncapPlatforms | '''EncapInstall''' | EncapHowto
 
 ----
 
@@ -6,12 +6,18 @@ EncapPackages | EncapReadme | '''EncapInstall''' | EncapHowto
 
 == Prerequisites ==
  * Read the [wiki:EncapReadme README]
+ * GNU gcc and GNU g++
+   * If you are using the gcc distributed with Solaris/x86 10, you need to 
+     install the gcc bug fix at http://www.openssl.org/~appro/values.c by 
+     running "`ksh -f values.c`" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * epkg (the encap package manager)
    * Canonical website is http://www.encap.org/epkg
    * Mirror of epkg binaries is available at http://www.dclark.us/mirror/
    * If built from source, first need all recommended libraries from web page
      * To ease building from source, read `epkg/README` and use `epkg/Makefile`
+ * On AIX 4.3.3, you will need GNU binutils from:
+   ftp://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/RPMS/ppc/GNUPro/binutils-2.9.aix51.020209-4.aix4.3.ppc.rpm
 
 You will need binaries of the GNU tools. For GNU and BSD based operating 
 systems, you should be able to get these via the operating system's package 
@@ -22,13 +28,13 @@ system. For commercial operating systems, these can be obtained from:
    http://aixpdslib.seas.ucla.edu/aixpdslib.html 
    (These are trivial to convert into encap packages)
  * Bull AIX Freeware at http://www.bullfreeware.com/
+ * IBM AIX Toolbox at ftp://ftp.software.ibm.com/aix/freeSoftware
 
  Solaris::
  * Freeware for Solaris at http://www.sunfreeware.com/
  * Community Software for Solaris at http://www.blastwave.org/packages.php
 
 == Advanced Packaging Tool (APT) support == 
-
 On platforms that use APT, such as Debian and Ubuntu, "bcfg2-python-apt" must
 be built. Unfortunately the version required is dependent on the version of the
 distribution. 
@@ -84,9 +90,6 @@ the setup script will run.
 You can install the doc packages if you want, although it probably makes more
 sense to let bcfg2 install them on machines you want to have them on after you
 get stuff up and running.
-
-On GNU/Linux platforms, glib and gamin will also be built; these only have to
-be installed only on the bcfg2 server machine.
 
 Cheetah will be built on all platforms (as it is needed as a build-time 
 prerequisite), however for run-time it only needs to be installed on the bcfg2

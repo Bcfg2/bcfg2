@@ -1,10 +1,11 @@
-EncapPackages | EncapReadme | EncapInstall | '''EncapHowto'''
+EncapPackages | EncapReadme | EncapPlatforms | EncapInstall | '''EncapHowto'''
 
 ----
 
 = EncapHowto: Encap Packages HOWTO =
 
-TODO: Aim is to have nice HOWTO for 0.8.6 release.
+TODO: Aim is to have nice HOWTO before 1.0 release, incorporating the
+      work done at http://opensysadmin.com/trac/wiki/VirtualMachines
 
 <Reference to README and INSTALL in wiki: format>
 

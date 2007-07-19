@@ -1,0 +1,64 @@
+EncapPackages | EncapReadme | '''EncapPlatforms''' | EncapInstall | EncapHowto
+
+----
+
+= Bcfg2/Encap Platforms =
+
+Below is a table of platforms that have been successfully bootstrapped using
+the encap package management code.
+
+|||| '''OS'''||'''Vendor'''||'''Version'''||'''Arch'''||'''By'''||'''Bcfg2'''||
+||  1 || AIX       || IBM     || 4.3.1   || POWER  || dc || 0.9.5  ||
+||  2 || AIX       || IBM     || 4.3.3   || POWER  || dc || 0.9.4i ||
+||  3 || AIX       || IBM     || 5.2.0   || POWER  || dc || 0.9.4i ||
+||  4 || AIX       || IBM     || 5.3.0   || POWER  || dc || 0.9.4i ||
+||  5 || BSD       || FreeBSD || 6.2     || ix86   || dc || 0.9.5  ||
+||  6 || BSD       || FreeBSD || 6.2     || x86_64 || dc || 0.9.5  ||
+||  7 || GNU/Linux || CentOS  || 5.0     || ix86   || dc || 0.9.5  ||
+||  8 || GNU/Linux || CentOS  || 5.0     || x86_64 || dc || 0.9.5  ||
+||  9 || GNU/Linux || Debian  || Sarge   || ix86   || dc || 0.9.5  ||
+|| 10 || GNU/Linux || Debian  || Etch    || ix86   || dc || 0.9.4i ||
+|| 11 || GNU/Linux || Debian  || Etch    || x86_64 || dc || 0.9.4i ||
+|| 12 || GNU/Linux || Debian  || Lenny   || ix86   || dc || 0.9.5  ||
+|| 13 || GNU/Linux || Debian  || Sid     || ix86   || dc || 0.9.5  ||
+|| 14 || GNU/Linux || Redhat  || 6.0     || ix86   || dc || 0.9.4i ||
+|| 15 || GNU/Linux || Redhat  || 7.2     || ix86   || dc || 0.9.4i ||
+|| 16 || GNU/Linux || Redhat  || RHEL4   || ix86   || dc || 0.9.4i ||
+|| 17 || GNU/Linux || SuSE    || SLES8   || ix86   || dc || 0.9.4i ||
+|| 18 || GNU/Linux || SuSE    || SLES10  || ix86   || dc || 0.9.4i ||
+|| 19 || GNU/Linux || SuSE    || SLES10  || x86_64 || dc || 0.9.4i ||
+|| 20 || GNU/Linux || Ubuntu  || Dapper  || ix86   || dc || 0.9.5  ||
+|| 21 || GNU/Linux || Ubuntu  || Dapper  || x86_64 || dc || 0.9.5  ||
+|| 22 || GNU/Linux || Ubuntu  || Edgy    || ix86   || dc || 0.9.5  ||
+|| 23 || GNU/Linux || Ubuntu  || Feisty  || ix86   || dc || 0.9.5  ||
+|| 24 || Solaris   || Sun     || 2.6     || Sparc  || dc || 0.9.4i ||
+|| 25 || Solaris   || Sun     || 8       || Sparc  || dc || 0.9.4i ||
+|| 26 || Solaris   || Sun     || 9       || Sparc  || dc || 0.9.4i ||
+|| 27 || Solaris   || Sun     || 10      || Sparc  || dc || 0.9.4i ||
+|| 28 || Solaris   || Sun     || 10      || x86_64 || dc || 0.9.5  ||
+
+* Redhat 6.0 has egcs-2.91.66
+
+dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
+
+== Adding new platforms ==
+If you bootstrap a platform not listed above, please add a comment to:
+ * http://trac.mcs.anl.gov/projects/bcfg2/ticket/74
+so that platform can be added to the list.
+
+If you modified any of the files in this package to be able to bootstrap the
+new platform, please include either diffs or a tarball of your modified
+version in a new ticket so your changes can be incorporated into a new
+release.
+
+Any other notes, such as where you got the GNU binaries or any issues people
+should be aware of, would also be appreciated.
+
+You may want to scan all of the bootstrapped binaries and libraries with
+`ldd` (or equivalent) to make sure there are no dependencies on libraries
+other than those included with the base operating system and the libraries
+built as part of the bootstrap process.
+
+== Documentation Version ==
+ * This is a copy of: $Id$
+ * Most recent version: http://www.bcfg2.org/browser/trunk/bcfg2/encap/PLATFORMS

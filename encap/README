@@ -1,4 +1,4 @@
-EncapPackages | '''EncapReadme''' | EncapInstall | EncapHowto
+EncapPackages | '''EncapReadme''' | EncapPlatforms | EncapInstall | EncapHowto
 
 ----
 
@@ -10,20 +10,20 @@ running on many platforms as quickly as possible, from source.
 == What you get ==
 The end result is a self-extracting/self-installing bcfg2 client distribution
 that does a complete client install, which includes:
- * the epkg encap package manager
- * all software on which bcfg2 depends
- * bcfg2 itself
- * ostiary to kick off bcfg2 client runs remotely
- * runit to run bcfg2 client as a periodic service with logging
- * all with site-specific configuration parameters, set at build time in a
+ * The epkg encap package manager
+ * All software on which bcfg2 depends
+ * Bcfg2 itself
+ * Ostiary to kick off bcfg2 client runs remotely
+ * Runit to run bcfg2 client as a periodic service with logging
+ * All with site-specific configuration parameters, set at build time in a
    single unified build-time configuration file, site-settings.conf
- * optional install-time entry of bcfg2 and ostiary passwords, interactively
+ * Optional install-time entry of bcfg2 and ostiary passwords, interactively
    or via environment variables
 
 As well as:
- * encap packages for software on which the bcfg2 server functionality
-   depends (glib, gamin, and cheetah)
- * encaps of optional documentation packages
+ * Encaps of optional documentation packages
+ * Optionally you can build the software the bcfg2 server requires (cd to 
+   the encap/src/encap-packages/server directory and type "make")
 
 == Internet resources ==
 For a more general overview, see http://www.bcfg2.org/wiki/EncapPackages
@@ -139,47 +139,30 @@ point you will enter one of the above-listed values, such as
 `<password>-bcfg2-dvqn` (the command to run and the password are
 integrated into the same string).
 
+Another useful way of running ostiary is to put the password in a text file
+(on the local filesystem with appropriate permissions) and then do:
+{{{
+for HOST in $(bcfg2-query -u); do 
+    printf "$HOST: "
+    ostclient -a $HOST:1711 -f 0 < file-with-password.txt
+    sleep 1
+done
+}}}
+This will run the ostiary command associated with the password in
+"file-with-password.txt" on all hosts bcfg2 thinks are up. The sleep
+delay is arbitrary and not really required, but can be useful if you
+are monitoring the bcfg2 server logs interactively for client connections.
+
 Logs of bcfg2-client runs kicked off via ostiary are in
 `/usr/local/var/svlogd/bcfg2-client-ostiary`
-
-== Supported Platforms ==
-Below is a table of platforms that have been successfully bootstrapped using
-this code.
-
-|| OS        || Vendor || Version || Arch   || GCC     || By || Bcfg2 ||
-|| AIX       || IBM    || 5.2     || POWER  || 3.3.2   || dc || 0.8.5 ||
-|| AIX       || IBM    || 5.3     || POWER  || 4.1.1   || dc || 0.8.5 ||
-|| GNU/Linux || Debian || Sarge   || i386   || 3.3.5   || dc || 0.8.5 ||
-|| GNU/Linux || Debian || Etch    || x86_64 || 4.1.2   || dc || 0.9.2 ||
-|| GNU/Linux || Debian || Sid     || i386   || 4.1.2   || dc || 0.8.5 ||
-|| GNU/Linux || SuSE   || SLES8   || i386   || 3.2.2   || dc || 0.8.5 ||
-|| GNU/Linux || SuSE   || SLES10  || i386   || 4.1.0   || dc || 0.8.5 ||
-|| GNU/Linux || Ubuntu || Dapper  || i386   || 4.0.3   || dc || 0.8.5 ||
-
-dc: "Daniel Clark" <mailto:dclark@member.fsf.org>
-
-If you bootstrap a platform not listed above, please add a comment to:
- * http://trac.mcs.anl.gov/projects/bcfg2/ticket/74
-so that platform can be added to the list.
-
-If you modified any of the files in this package to be able to bootstrap the
-new platform, please include either diffs or a tarball of your modified
-version in a new ticket so your changes can be incorporated into a new
-release.
-
-Any other notes, such as where you got the GNU binaries or any issues people
-should be aware of, would also be appreciated.
-
-You may want to scan all of the bootstrapped binaries and libraries with
-`ldd` (or equivalent) to make sure there are no dependencies on libraries
-other than those included with the base operating system and the libraries
-built as part of the bootstrap process.
 
 == Encap profile (.ep) documentation ==
 Note that the doc for the encap profile format is in
 [wiki:EncapManEncapProfile `man 5 encap_profile`].
 
 == Next steps ==
+ 1. You can check to see if your platform has been successfully
+    bootstrapped before; see [wiki:EncapPlatforms PLATFORMS]
  1. Build and install; see [wiki:EncapInstall INSTALL]
  1. Set up your server and clients; see [wiki:EncapHowto HOWTO]
 
