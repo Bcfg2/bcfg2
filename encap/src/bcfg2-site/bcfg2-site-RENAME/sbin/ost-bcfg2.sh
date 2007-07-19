@@ -9,7 +9,8 @@ umask 002
 exec 2>&1
 
 PATH=/usr/local/lib/bcfg2/bin:/usr/local/bin:/usr/bin:/bin
-export PATH
+PYTHONPATH="/usr/local/lib/bcfg2/lib/python2.4:/usr/local/lib/bcfg2/lib/python2.4/site-packages:/usr/local/lib/bcfg2/lib/python2.4/site-packages/Bcfg2"
+export PATH PYTHONPATH
 
 LOGDIR="/usr/local/var/svlogd/bcfg2-client-ostiary"
 test -d $LOGDIR || mkdir $LOGDIR
