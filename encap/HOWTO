@@ -4,10 +4,10 @@ EncapPackages | EncapReadme | EncapPlatforms | EncapInstall | '''EncapHowto'''
 
 = EncapHowto: Encap Packages HOWTO =
 
-TODO: Aim is to have nice HOWTO before 1.0 release, incorporating the
-      work done at http://opensysadmin.com/trac/wiki/VirtualMachines
-
-<Reference to README and INSTALL in wiki: format>
+== TODO ==
+ * Aim is to have nice HOWTO before 1.0 release, incorporating the
+   work done at http://opensysadmin.com/trac/wiki/VirtualMachines
+ * Insert reference to README, INSTALL, and PLAFORMS in wiki: format
 
 == Documentation Version ==
  * This is a copy of: $Id$
