@@ -9,9 +9,9 @@ class PNode(Bcfg2.Server.Plugin.INode):
     '''PNode has a list of packages available at a particular group intersection'''
     splitters = {'rpm':re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
-                 'encap':re.compile('^(?P<name>\w+)-(?P<version>[\w\d\.-]+).encap.*$')}
+                 'encap':re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
-    
+
     def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
         if not pdict.has_key('Package'):
@@ -68,7 +68,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         self.contents['Package'][pkgname]['__children__'] = pkg.getchildren()
                 else:
                     self.contents['Package'][pkg.get('name')].update(pkg.attrib)
-                        
+
 
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
     '''PkgSrc files contain a PNode hierarchy that returns matching package entries'''
