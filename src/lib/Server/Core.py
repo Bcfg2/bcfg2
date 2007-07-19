@@ -241,7 +241,7 @@ class Core(object):
                 except PluginInitError:
                     logger.error("Failed to instantiate plugin %s" % (plugin))
                 except:
-                    logger.error("Unexpected initiantiation failure for plugin %s" % (plugin), exc_info=1)
+                    logger.error("Unexpected instantiation failure for plugin %s" % (plugin), exc_info=1)
 
         self.metadata = self.plugins['Metadata']
         for plugin in structures:
@@ -273,6 +273,20 @@ class Core(object):
 
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
+        if 'altsrc' in entry.attrib:
+            oldname = entry.get('name')
+            try:
+                ret = self.Bind(self, entry, metadata)
+                entry.set('name', oldname)
+                return ret
+            except:
+                entry.set('name', oldname)
+                logger.error("Failed binding entry %s:%s with altsrc %s" \
+                             % (entry.tag, entry.get('name'),
+                                entry.get('altsrc')))
+                logger.error("Falling back to %s:%s" % (entry.tag,
+                                                        entry.get('name')))
+
         glist = [gen for gen in self.generators if
                  gen.Entries.get(entry.tag, {}).has_key(entry.get('name'))]
         if len(glist) == 1:
