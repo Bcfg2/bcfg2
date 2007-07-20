@@ -75,7 +75,7 @@ Usage: [quit|exit]"""
         
     def do_build(self, args):
         '''build client configuration'''
-        if len(args.split()) != 2:
+        if len(args.split()) == 2:
             client, ofile = args.split()
             output = open(ofile, 'w')
             data = lxml.etree.tostring(self.BuildConfiguration(client))
