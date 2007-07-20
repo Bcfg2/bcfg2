@@ -27,7 +27,8 @@ clean :
 	-rm ./*.log ./*~ ./\#*
 	
 distclean : clean
-	-rm -rf $(DEST) bcfg2-site/bcfg2-site-[a-z]* makeself-dist/bcfg2-*
+	-rm -rf $(DEST) makeself-dist/bcfg2-*
+	-rm -rf bcfg2-site/bcfg2-site-*.tar.gz
 	
 uninstall : distclean
 	$(MAKE) -C ./encap-profiles uninstall
