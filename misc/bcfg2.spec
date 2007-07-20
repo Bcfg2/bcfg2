@@ -153,6 +153,7 @@ deployment strategies.
 %{_sbindir}/bcfg2-query
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-server
+%{_sbindir}/bcfg2-remote
 
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
