@@ -81,7 +81,7 @@ url="http://encapsrcdist/mirror/swig/swig-1.3.31.tar.gz
   --prefix="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2" \
   --without-x \
   --without-tcl \
-  --with-python=/usr/local/lib/bcfg2/bin/python \
+  --with-python=/usr/local/bin/b2-python \
   --without-perl5 \
   --without-java \
   --without-gcj \

@@ -111,7 +111,7 @@ Index: bcfg2/src/lib/Client/XML.py
 <configure type="unset" />
 
 <build>
-/usr/local/lib/bcfg2/bin/python setup.py build \
+/usr/local/bin/b2-python setup.py build \
 --build-base=${builddir}/build
 </build>
 
@@ -123,12 +123,12 @@ test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 || mkdir ${ENCAP_SOURCE}/${EN
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
-PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
+PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/bin/b2-python setup.py install \
 --prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
 </install>
 
 <clean>
-/usr/local/lib/bcfg2/bin/python setup.py clean
+/usr/local/bin/b2-python setup.py clean
 </clean>
 
 </source>
@@ -186,7 +186,7 @@ touch var/encap/${ENCAP_PKGNAME}
 ]]></prepackage>
 
 <include_file name="b2-regexplace.py" mode="0755"><![CDATA[
-#!/usr/local/lib/bcfg2/bin/python
+#!/usr/local/bin/b2-python
 
 # regexplace: regular expression search and replace
 # Stefano Spinucci
@@ -314,7 +314,7 @@ if __name__ == '__main__':
 
 BASEDIR="`echo ${0} | xargs -n1 dirname`"
 REGEXPLACE="${BASEDIR}/b2-regexplace.py"
-PYTHON="/usr/local/lib/bcfg2/bin/python"
+PYTHON="/usr/local/bin/b2-python"
 BINARIES="${REGEXPLACE} ${PYTHON}"
 COMPILEALL="/usr/local/lib/bcfg2/lib/python2.4/compileall.py"
 
@@ -364,15 +364,15 @@ printf "\nReplacing \"xmllint\" with \"/usr/local/bin/b2-xmllint\"...\n"
 ${REGEXPLACE} ${BASEDIR} .\* xmllint \/usr\/local\/bin\/b2-xmllint
 
 printf "\nReplacing \"#!/usr/bin/env python\" with "
-printf "\"#!/usr/local/lib/bcfg2/bin/python\"...\n"
-${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/env\ python \#\!\/usr\/local\/lib\/bcfg2\/bin\/python
+printf "\"#!/usr/local/bin/b2-python\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/env\ python \#\!\/usr\/local\/bin\/b2-python
 
 printf "\nReplacing \"#!/usr/bin/perl\" with \"#!/usr/bin/env perl\"...\n"
 ${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/perl \#\!\/usr\/bin\/env\ perl
 
 printf "\nReplacing \"#!/usr/bin/python\" with "
-printf "\"#!/usr/local/lib/bcfg2/bin/python\"...\n"
-${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/python \#\!\/usr\/local\/lib\/bcfg2\/bin\/python
+printf "\"#!/usr/local/bin/b2-python\"...\n"
+${REGEXPLACE} ${BASEDIR} .\* \#\!\/usr\/bin\/python \#\!\/usr\/local\/bin\/b2-python
 
 # For some reason this causes TLSSocketServerMixIn.py to be replaced with the contents of 
 # TLSSocketServerMixIn.pyc , which breaks things. Should figure out why and fix this for

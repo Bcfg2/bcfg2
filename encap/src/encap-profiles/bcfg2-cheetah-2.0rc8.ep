@@ -62,14 +62,14 @@ http://umn.dl.sourceforge.net/sourceforge/cheetahtemplate/Cheetah-2.0rc8.tar.gz"
 >
 
 <configure>
-/usr/local/lib/bcfg2/bin/python setup.py build_ext \
+/usr/local/bin/b2-python setup.py build_ext \
 -I/usr/local/lib/bcfg2/include \
 -L/usr/local/lib/bcfg2/lib \
 -L/usr/local/lib/bcfg2/lib/python2.4/site-packages
 </configure>
 
 <build>
-/usr/local/lib/bcfg2/bin/python setup.py build \
+/usr/local/bin/b2-python setup.py build \
 --build-base=${builddir}/build
 </build>
 
@@ -81,12 +81,12 @@ test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 || mkdir ${ENCAP_SOURCE}/${EN
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
-PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
+PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/bin/b2-python setup.py install \
 --prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2
 </install> 
 
 <clean>
-/usr/local/lib/bcfg2/bin/python setup.py clean --all
+/usr/local/bin/b2-python setup.py clean --all
 </clean>
 
 </source>

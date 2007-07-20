@@ -67,7 +67,7 @@ url="http://encapsrcdist/mirror/lxml/lxml-1.2.1.tgz
 >
 
 <configure>
-/usr/local/lib/bcfg2/bin/python setup.py build_ext \
+/usr/local/bin/b2-python setup.py build_ext \
 -I/usr/local/lib/bcfg2/include \
 -L/usr/local/lib/bcfg2/lib \
 -lexslt \
@@ -75,7 +75,7 @@ url="http://encapsrcdist/mirror/lxml/lxml-1.2.1.tgz
 </configure>
 
 <build>
-/usr/local/lib/bcfg2/bin/python setup.py build \
+/usr/local/bin/b2-python setup.py build \
 --build-base=${builddir}/build
 </build>
 
@@ -87,14 +87,14 @@ test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 || mkdir ${ENCAP_SOURCE}/${EN
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4 || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4
 test -d ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages || mkdir ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages
-PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/lib/bcfg2/bin/python setup.py install \
+PYTHONPATH="${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2/lib/python2.4/site-packages" /usr/local/bin/b2-python setup.py install \
 --prefix=${ENCAP_SOURCE}/${ENCAP_PKGNAME}/lib/bcfg2 \
 --single-version-externally-managed \
 --record ${ENCAP_SOURCE}/${ENCAP_PKGNAME}/python-install.log
 </install>
 
 <clean>
-/usr/local/lib/bcfg2/bin/python setup.py clean
+/usr/local/bin/b2-python setup.py clean
 make clean
 </clean>
 
