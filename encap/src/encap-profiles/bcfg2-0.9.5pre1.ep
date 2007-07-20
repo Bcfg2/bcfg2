@@ -10,7 +10,7 @@
 
 <encap_profile
 	profile_ver="1.0"
-	pkgspec="bcfg2-0.9.4j"
+	pkgspec="bcfg2-0.9.5pre1"
 >
 
 <prereq package="m4-1.4.4" />
@@ -66,9 +66,9 @@ PLATFORM_ENDIF
 />
 
 <source
-url="http://encapsrcdist/mirror/bcfg/bcfg2-0.9.4j.tar.gz
-     http://mirror.opensysadmin.com/bcfg/bcfg2-0.9.4j.tar.gz
-     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.4j.tar.gz"
+url="http://encapsrcdist/mirror/bcfg/bcfg2-0.9.5pre1.tar.gz
+     http://mirror.opensysadmin.com/bcfg/bcfg2-0.9.5pre1.tar.gz
+     ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.5pre1.tar.gz"
 >
 
 <patch options="-p1"><![CDATA[
@@ -217,7 +217,7 @@ def make_files_list(dir, regx):
     # don't include symbolic links
     for root, dirs, files in os.walk(dir):
         for name in files:
-            if cregex.search(name) and name not in ("b2-regexplace.sh", "b2-regexplace.py", "postinstall", "postinstall.log", "bcfg2-0.9.4j.ep"):
+            if cregex.search(name) and name not in ("b2-regexplace.sh", "b2-regexplace.py", "postinstall", "postinstall.log", "bcfg2-0.9.5pre1.ep"):
                 path = os.path.join(root, name)
                 if not os.path.islink(path):
                     fileslist.append(path)
