@@ -275,8 +275,10 @@ class Core(object):
         '''Bind an entry using the appropriate generator'''
         if 'altsrc' in entry.attrib:
             oldname = entry.get('name')
+            entry.set('name', entry.get('altsrc'))
+            del entry.attrib['altsrc']
             try:
-                ret = self.Bind(self, entry, metadata)
+                ret = self.Bind(entry, metadata)
                 entry.set('name', oldname)
                 return ret
             except:
