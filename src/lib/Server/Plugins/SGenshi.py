@@ -32,5 +32,6 @@ class SGenshi(Bcfg2.Server.Plugin.Plugin,
                                                         self.core.fam)
         
     def BuildStructures(self, metadata):
-        return [entry.GetValue(metadata) for entry in self.entries]
+        return [entry.GetValue(metadata) \
+                for entry in self.entries.values()]
             
