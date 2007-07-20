@@ -9,6 +9,7 @@
 
   <xsd:complexType name='StructureEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='altsrc' />
   </xsd:complexType>
 
 </xsd:schema>
