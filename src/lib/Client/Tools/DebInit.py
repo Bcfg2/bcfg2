@@ -42,7 +42,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             return False
         
         if entry.get('status') == 'off':
-            self.cmd.run("/etc/init.d/%s stop" % (entry.get('name')))
+            self.cmd.run("/usr/sbin/invoke-rc.d %s stop" % (entry.get('name')))
             cmdrc = self.cmd.run("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
         else:
             cmdrc = self.cmd.run("/usr/sbin/update-rc.d %s defaults" % \
@@ -66,3 +66,21 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         # Extra service removal is nonsensical
         # Extra services need to be reflected in the config
         return
+
+    def BundleUpdated(self, bundle):
+        '''The Bundle has been updated'''
+        for entry in bundle:
+            if self.handlesEntry(entry):
+                command = "/usr/sbin/invoke-rc.d %s" % entry.get('name')
+                if entry.get('status') == 'on' and not self.setup['build']:
+                    self.logger.debug('Restarting service %s' % entry.get('name'))
+                    rc = self.cmd.run('%s %s' % \
+                                      (command, entry.get('name'),
+                                       entry.get('reload', self.__svcrestart__)))[0]
+                else:
+                    self.logger.debug('Stopping service %s' % entry.get('name'))
+                    rc = self.cmd.run('%s stop' %  \
+                                      (command, entry.get('name')))[0]
+                if rc:
+                    self.logger.error("Failed to restart service %s" % (entry.get('name')))
+
