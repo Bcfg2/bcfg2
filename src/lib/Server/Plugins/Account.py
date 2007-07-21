@@ -52,19 +52,34 @@ class Account(Bcfg2.Server.Plugin.Plugin):
     def gen_root_keys_cb(self, entry, metadata):
         '''Build root authorized keys file based on current ACLs'''
         superusers = self.repository.entries['superusers'].data.split()
-        rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
-        superusers += [user for (user, host) in rootlike if host == metadata.hostname.split('.')[0]]
+        try:
+            rootlike = [line.split(':', 1) for line in \
+                        self.repository.entries['rootlike'].data.split()]
+            superusers += [user for (user, host) in rootlike \
+                           if host == metadata.hostname.split('.')[0]]
+        except:
+            pass
         rdata = self.repository.entries
-        entry.text = "".join([rdata["%s.key" % user].data for user in superusers if rdata.has_key("%s.key" % user)])
+        entry.text = "".join([rdata["%s.key" % user].data for user \
+                              in superusers if \
+                              rdata.has_key("%s.key" % user)])
         perms = {'owner':'root', 'group':'0', 'perms':'0600'}
-        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+        [entry.attrib.__setitem__(key, value) for (key, value) \
+         in perms.iteritems()]
 
     def gen_sudoers(self, entry, metadata):
         '''Build root authorized keys file based on current ACLs'''
         superusers = self.repository.entries['superusers'].data.split()
-        rootlike = [line.split(':', 1) for line in self.repository.entries['rootlike'].data.split()]
-        superusers += [user for (user, host) in rootlike if host == metadata.hostname.split('.')[0]]
-        rdata = self.repository.entries
-        entry.text = self.repository.entries['static.sudoers'].data%",".join(superusers)
+        try:
+            rootlike = [line.split(':', 1) for line in \
+                        self.repository.entries['rootlike'].data.split()]
+            superusers += [user for (user, host) in rootlike \
+                           if host == metadata.hostname.split('.')[0]]
+        except:
+            pass
+        entry.text = self.repository.entries['static.sudoers'].data
+        entry.text += "".join(["%s ALL=(ALL) ALL\n" % uname \
+                               for uname in superusers])
         perms = {'owner':'root', 'group':'0', 'perms':'0400'}
-        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+        [entry.attrib.__setitem__(key, value) for (key, value) \
+         in perms.iteritems()]
