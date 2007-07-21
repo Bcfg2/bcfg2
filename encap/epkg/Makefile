@@ -13,8 +13,8 @@ CPPFLAGS = -I${PREFIX}/include
 export PATH LDFLAGS CPPFLAGS
 
 ZLIB = zlib-1.2.3
-LIBTAR = libtar-1.2.11
-CURL = curl-7.16.2
+LIBTAR = libtar-1.2.12
+CURL = curl-7.16.4
 FGET = fget-1.3.3
 EXPAT = expat-2.0.1
 EPKG = epkg-2.3.9
