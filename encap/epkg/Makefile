@@ -100,6 +100,9 @@ log:
 	
 all: epkg.done
 
+.DELETE_ON_ERROR : # delete the target of a rule if it has changed and its
+                   # commands exit with a nonzero exit status
+
 clean:
 	-rm *.done
 	-rm -rf ${PREFIX}

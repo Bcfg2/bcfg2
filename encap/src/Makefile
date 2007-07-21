@@ -10,8 +10,9 @@ MKINSTALLDIRS = ./bcfg2-site/bcfg2-site-RENAME/mkinstalldirs
 log :
 	@printf "Building in background, and logging to ./make.log\n"
 	( $(MAKE) all > ./make.log 2>&1 ) &
+	tail -f make.log
 
-all : distclean
+all : clean
 	$(MAKE) -C ./encap-profiles all
 	$(MAKE) -C ./bcfg2-site all
 	$(MAKE) -C ./makeself-dist all
@@ -24,13 +25,17 @@ all : distclean
 	@printf "\n"
     
 clean :
+	-$(MAKE) -C ./encap-profiles clean
+	-$(MAKE) -C ./bcfg2-site clean
+	-$(MAKE) -C ./makeself-dist clean
 	-rm ./*.log ./*~ ./\#*
-	
-distclean : clean
 	-rm -rf $(DEST) makeself-dist/bcfg2-*
-	-rm -rf bcfg2-site/bcfg2-site-*.tar.gz
-	
+	-cd bcfg2-site && ls | grep bcfg2-site | grep -v bcfg2-site-RENAME | xargs -n1 rm -rf
+
+distclean : clean
+	-$(MAKE) -C ./encap-profiles distclean
+	-$(MAKE) -C ./bcfg2-site distclean
+	-$(MAKE) -C ./makeself-dist distclean
+
 uninstall : distclean
-	$(MAKE) -C ./encap-profiles uninstall
-	$(MAKE) -C ./bcfg2-site distclean
-	$(MAKE) -C ./makeself-dist distclean
+	-$(MAKE) -C ./encap-profiles uninstall

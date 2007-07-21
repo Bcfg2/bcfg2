@@ -1,9 +1,10 @@
 # $Id$
 
-.PHONY : test log all install clean distclean uninstall encaps rename bcfg2only bcfg2bump
+.PHONY : test log all install clean distclean uninstall encaps bcfg2only bcfg2bump
 .SUFFIXES :
 .SUFFIXES : .ep .sh .installed .packaged .d
 
+export ENCAP_CONTACT = dclark@pobox.com
 export BASEDIR = /usr/local
 export ENCAPDIR := ${BASEDIR}/encap
 export EPKG := ${BASEDIR}/bin/epkg
@@ -12,6 +13,7 @@ export SHELL = /bin/sh
 srcdir = .
 export EP2TARGET := $(srcdir)/ep2target
 PAGER ?= more
+export PKG_CONFIG_PATH = ${BASEDIR}/lib/bcfg2/lib/pkgconfig
 
 BCFG2 := $(basename $(wildcard bcfg2-[0-9].[0-9]*.ep))
 BCFG2_CHEETAH := $(basename $(wildcard bcfg2-cheetah-[0-9].[0-9]*.ep))
@@ -41,59 +43,74 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
 DISTRO := $(shell cat /etc/issue | grep ^[a-zA-Z] | head -1)
+UNAMEM := $(shell uname -m)
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 3.1 \n \l)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.5.10
-OS ?= linux_debian_sarge
+OS = linux_debian_sarge
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux 4.0 \n \l)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
-OS ?= linux_debian_etch
+OS = linux_debian_etch
 endif
 
 ifeq ($(DISTRO),Debian GNU/Linux testing/unstable \n \l)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.19
-OS ?= linux_debian_sid
+OS = linux_debian_sid
 endif
 
 ifeq ($(DISTRO),Ubuntu 6.06.1 LTS \n \l)
 BCFG2_PYTHON_APT = bcfg2-python-apt-0.6.16.2ubuntu8
-OS ?= linux_ubuntu_dapper
+OS = linux_ubuntu_dapper
 endif
 
 ifeq ($(DISTRO),Red Hat Linux release 6.0 (Hedwig))
-OS ?= linux_redhat_60
+OS = linux_redhat_60
 endif
 
 ifeq ($(DISTRO),Red Hat Linux release 7.2 (Enigma))
-OS ?= linux_redhat_72
+OS = linux_redhat_72
 endif
 
 ifeq ($(DISTRO),Red Hat Enterprise Linux AS release 4 (Nahant Update 4))
-OS ?= linux_redhat_rhel4
+OS = linux_redhat_rhel4
 endif
 
 ifeq ($(DISTRO),Red Hat Enterprise Linux AS release 4 (Nahant Update 5))
-OS ?= linux_redhat_rhel4
+OS = linux_redhat_rhel4
 endif
 
 ifeq ($(DISTRO),Welcome to SuSE SLES 8 (powered by UnitedLinux 1.0) (i586))
-OS ?= linux_suse_sles8
+OS = linux_suse_sles8
 endif
 
 ifeq ($(DISTRO),Welcome to SUSE Linux Enterprise Server 10 (i586) - Kernel \r (\l).)
-OS ?= linux_suse_sles10
+OS = linux_suse_sles10
 endif
 
 ifeq ($(DISTRO),Welcome to SUSE Linux Enterprise Server 10 (x86_64) - Kernel \r (\l).)
-OS ?= linux_suse_sles10
+OS = linux_suse_sles10
 endif
 
 ifdef BCFG2_PYTHON_APT
 sources_ep += $(BCFG2_PYTHON_APT)
 endif
+
+## Get ARCH for GNU/Linux distributions...
+ARCH = ix86
+ifeq ($(UNAMEM),x86_64)
+ARCH = x86_64
+endif
+
+## Finally, set PLATFORM for GNU/Linux distributions...
+PLATFORM =  
+ifeq ($(UNAME),Linux)
+PLATFORM = -p ${ARCH}-${OS}
+endif
+
+export MKENCAPCMD := ${BASEDIR}/bin/mkencap $(PLATFORM)
 
 # List of all sources...
 sources := $(sort $(sources_ep) $(sources_sh))
@@ -102,9 +119,9 @@ sources := $(sort $(sources_ep) $(sources_sh))
 	@printf "***** START .ep.installed for |$*| ***** \n"
 	-$(EPKG) -q -r $(ENCAPDIR)/$*
 	-rm -rf $(ENCAPDIR)/$*
-	-$(MKENCAP) -m /usr/local/bin/m4 -b -DUP $(srcdir)/$*.ep > ./$*.log 2>&1
-	-$(MKENCAP) -m /usr/local/bin/m4 -b -T $(srcdir)/$*.ep >> ./$*.log 2>&1
-	$(MKENCAP) -m /usr/local/bin/m4 -b -CBI $(srcdir)/$*.ep >> ./$*.log 2>&1
+	-$(MKENCAPCMD) -m /usr/local/bin/m4 -b -DUP $(srcdir)/$*.ep > ./$*.log 2>&1
+	-$(MKENCAPCMD) -m /usr/local/bin/m4 -b -T $(srcdir)/$*.ep >> ./$*.log 2>&1
+	$(MKENCAPCMD) -m /usr/local/bin/m4 -b -CBI $(srcdir)/$*.ep >> ./$*.log 2>&1
 	$(EPKG) -q -i $(ENCAPDIR)/$*
 	test -h $(BASEDIR)/var/encap/$*
 	touch ./$*.installed
@@ -123,8 +140,8 @@ sources := $(sort $(sources_ep) $(sources_sh))
 %.packaged : %.installed # Create .tar.gz encap packages
 	@printf "***** START .installed.packaged for |$*| ***** \n"
 	-rm $(ENCAPDIR)/$*-*.tar.gz
-	-(cd $(ENCAPDIR) && $(MKENCAP) -e $*)
-	-(cd $(ENCAPDIR) && $(MKENCAP) -c $*)
+	-(cd $(ENCAPDIR) && $(MKENCAPCMD) -ef $*)
+	-(cd $(ENCAPDIR) && $(MKENCAPCMD) -c $*)
 	mv $(ENCAPDIR)/$*-encap-*.tar.gz ./
 	touch ./$*.packaged
 	@printf "***** STOP .installed.packaged for |$*| ***** \n"
@@ -141,10 +158,9 @@ sources := $(sort $(sources_ep) $(sources_sh))
 
 log :
 	( $(MAKE) install > ./make.log 2>&1 \
-	&& $(MAKE) encaps >> ./make.log 2>&1 \
-	&& $(MAKE) rename >> ./make.log 2>&1 ) &
+	&& $(MAKE) encaps >> ./make.log 2>&1 ) &
 
-all : install encaps rename
+all : install encaps
 
 .DELETE_ON_ERROR : # delete the target of a rule if it has changed and its
                    # commands exit with a nonzero exit status
@@ -152,27 +168,6 @@ all : install encaps rename
 install : $(EPKG) $(MKENCAP) $(EP2TARGET) $(M4).installed $(addsuffix .installed,$(sources))
 
 encaps : $(EPKG) $(MKENCAP) $(EP2TARGET) $(addsuffix .packaged,$(sources))
-
-rename : encaps
-	if [ "$(OS)x" != "x" ]; then OS="$(OS)"; fi && \
-	if [ "$${OS}x" != "x" ]; then \
-		for OLDNAME in `(ls . | grep .*-encap-.*.tar.gz) || break`; do \
-			NEWNAME="`printf "%s\n" "$${OLDNAME}" \
-				| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
-				| sed s:\ :-:g | sed s:OSDIST:\$${OS}:g`" ; \
-			if [ "$${OLDNAME}x" != "$${NEWNAME}x" ]; then \
-				mv ./$${OLDNAME} ./$${NEWNAME}; \
-			fi; \
-		done; \
-	fi	
-	for OLDNAME in `(ls . | grep .*-doc-.*-encap-.*.tar.gz) || break`; do \
-		NEWNAME="`printf "%s\n" "$${OLDNAME}" \
-			| awk -F- '{$$NF = "OSDIST.tar.gz" ; print}' \
-			| sed s:\ :-:g | sed s:OSDIST:share:g`" ; \
-		if [ "$${OLDNAME}x" != "$${NEWNAME}x" ]; then \
-			mv ./$${OLDNAME} ./$${NEWNAME}; \
-		fi; \
-	done
 
 clean :
 	-(rm ./*.log; rm ./*.packaged; rm ./*.gz; rm ./*~)
