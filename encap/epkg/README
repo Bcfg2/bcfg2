@@ -6,7 +6,8 @@ Solaris/x86 10) to compile it.
 You'll need to manually download the versions of packages you want to
 this directory, edit the Makefile to refer to those versions,
 decompress/untar the distributions, and then run make (or gmake on
-non-GNU platforms)
+non-GNU platforms). The cacert.pem file that needs to be in this 
+directory is available from http://curl.haxx.se/docs/caextract.html
 
 All of the software is available from:
  * http://mirror.opensysadmin.com/epkg-deps/epkg-with-all-deps.tar.gz
