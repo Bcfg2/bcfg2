@@ -3,7 +3,7 @@
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
-import xml.sax.saxutils
+import xml.sax.saxutils, binascii
 
 log = logging.getLogger('bcfg-admin')
 
@@ -313,7 +313,10 @@ def do_pull(cfile, repopath, client, etype, ename):
     if not entry:
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
 
-    diff = entry[0].get('current_diff')
+    if 'current_bdiff' in entry[0].attrib:
+        diff = binascii.a2b_base64(entry[0].get('current_bdiff'))
+    else:
+        diff = entry[0].get('current_diff')
 
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
@@ -331,6 +334,8 @@ def do_pull(cfile, repopath, client, etype, ename):
         err_exit("Got wrong numbers of matching generators for entry:" \
                  + "%s" % ([g.__name__ for g in glist]))
     plugin = glist[0]
+    if diff == None:
+        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(entry[0]))
     try:
         plugin.AcceptEntry(m, 'ConfigFile', ename, diff)
     except Bcfg2.Server.Plugin.PluginExecutionError:
