@@ -166,7 +166,7 @@ epkg.done: expat.done
 	-rm /usr/local/etc/epkg-ca-bundle.pem
 	-rm /usr/local/etc/mkencap_environment
 	$(ENCAPDIR)/$(EPKG)/bin/epkg -f -i epkg
-	$(ENCAPDIR)/$(EPKG)/bin/epkg -c
+	-$(ENCAPDIR)/$(EPKG)/bin/epkg -c
 	test -f /usr/local/etc/epkg-ca-bundle.pem
 	test -f /usr/local/etc/mkencap_environment
 	touch epkg.done
