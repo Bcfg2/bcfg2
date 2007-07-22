@@ -55,6 +55,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         continue
                     pkgname = mdata.group('name')
                     self.contents['Package'][pkgname] = mdata.groupdict()
+                    self.contents['Package'][pkgname].update(pkg.attrib)
                     if pkg.attrib.get('file'):
                         self.contents['Package'][pkgname]['url'] = pkg.get('url')
                         self.contents['Package'][pkgname]['type'] = pkg.get('type')
