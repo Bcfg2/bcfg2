@@ -14,6 +14,7 @@ if len(sys.argv) < 2:
     print "\t -d\t\t shows the clients that are currently down"
     print "\t -u\t\t shows the clients that are currently up"
     print "\t -p <profile name>\t shows all the clients of that profile"
+    print "\t -a\t shows all clients"
     sys.exit(1)
 
 xml = lxml.etree.parse('%s/Metadata/clients.xml'%prefix)
