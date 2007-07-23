@@ -276,10 +276,12 @@ class Core(object):
         if 'altsrc' in entry.attrib:
             oldname = entry.get('name')
             entry.set('name', entry.get('altsrc'))
+            entry.set('realname', oldname)
             del entry.attrib['altsrc']
             try:
                 ret = self.Bind(entry, metadata)
                 entry.set('name', oldname)
+                del entry.attrib['realname']
                 return ret
             except:
                 entry.set('name', oldname)
