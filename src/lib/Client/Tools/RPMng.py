@@ -134,9 +134,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if self.setup['debug']:
             print "The following package instances are installed:"
             for name, instances in self.installed.iteritems():
-                self.logger.info("    " + name)
+                self.logger.debug("    " + name)
                 for inst in instances:
-                    self.logger.info("        %s" %self.str_evra(inst)) 
+                    self.logger.debug("        %s" %self.str_evra(inst)) 
         refresh_ts.closeDB()
         del refresh_ts
 
@@ -178,7 +178,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 instance.set('release', release)
             instances = [ instance ]
 
-        self.logger.info("Verifying package instances for %s" % entry.get('name'))
+        self.logger.debug("Verifying package instances for %s" % entry.get('name'))
         package_fail = False
         qtext_versions = ''
 
@@ -188,7 +188,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 if entry.get('name') in self.installOnlyPkgs:
                     # Packages that should only be installed or removed.
                     # e.g. kernels.
-                    self.logger.info("        Install only package.")
+                    self.logger.debug("        Install only package.")
                     for inst in instances:
                         self.instance_status.setdefault(inst, {})['installed'] = False
                         self.instance_status[inst]['version_fail'] = False
@@ -197,7 +197,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                                              (entry.get('name')))
                         for pkg in self.installed[entry.get('name')]:
                             if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
-                                self.logger.info("        %s" % self.str_evra(inst))
+                                self.logger.debug("        %s" % self.str_evra(inst))
                                 self.instance_status[inst]['installed'] = True
          
                                 if self.pkg_verify == 'true' and \
@@ -206,10 +206,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                     if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
                                        entry.get('name') != 'gpg-pubkey':
                                         flags += ['nosignature', 'nodigest']
-                                        self.logger.info('WARNING: Package %s %s requires GPG Public key with ID %s'\
+                                        self.logger.debug('WARNING: Package %s %s requires GPG Public key with ID %s'\
                                                            % (pkg.get('name'), self.str_evra(pkg), \
                                                               pkg.get('gpgkeyid', '')))
-                                        self.logger.info('         Disabling signature check.')
+                                        self.logger.debug('         Disabling signature check.')
         
                                     if self.setup.get('quick', False):
                                         if rpmtools.prelink_exists:
@@ -252,7 +252,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             # Check that it is the right version.
                             for pkg in arch_match:
                                 if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
-                                    self.logger.info("        %s" % self.str_evra(inst))
+                                    self.logger.debug("        %s" % self.str_evra(inst))
                                     self.instance_status[inst]['installed'] = True
     
                                     if self.pkg_verify == 'true' and \
@@ -326,11 +326,11 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                     instance_fail = True
                                     self.instance_status[inst]['verify_fail'] = True
                                 else:
-                                    self.logger.info("        Modlist/Ignore match: %s" % \
+                                    self.logger.debug("        Modlist/Ignore match: %s" % \
                                                                                  (file_result[-1]))
     
                         if instance_fail == True:
-                            self.logger.info("*** Instance %s failed RPM verification ***" % \
+                            self.logger.debug("*** Instance %s failed RPM verification ***" % \
                                                                            self.str_evra(inst))
                             qtext_versions = qtext_versions + 'R(%s) ' % self.str_evra(inst)
                             self.modlists[entry] = modlist
