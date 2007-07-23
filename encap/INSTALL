@@ -14,8 +14,11 @@ EncapPackages | EncapReadme | EncapPlatforms | '''EncapInstall''' | EncapHowto
      running "`ksh -f values.c`" as root (or openssl will segfault)
  * GNU make (make sure "gmake" links to GNU make on non-GNU platforms)
  * epkg (the encap package manager)
-   * Canonical website is http://www.encap.org/epkg
-   * Mirror of epkg binaries is available at http://www.dclark.us/mirror/
+   * Binaries are at http://mirror.opensysadmin.com/epkg-binaries/ 
+     (Note: All other binary versions link against libtar-1.2.11 or earlier. 
+     Versions of libtar before 1.2.12 have a nasty bug where 100 character 
+     path names are truncated to 99 characters. To see what version of libtar
+     your epkg binary is linked against, use `epkg -V`.)
    * If built from source, first need all recommended libraries from web page
      * To ease building from source, read `epkg/README` and use `epkg/Makefile`
  * On AIX 4.3.3, you will need GNU binutils from:
