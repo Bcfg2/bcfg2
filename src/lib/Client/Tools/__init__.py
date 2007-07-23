@@ -7,7 +7,7 @@ __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
            "YUMng"]
 
 drivers = [item for item in __all__ if item not in ['rpmtools']]
-default = [item for item in drivers if item not in ['RPMng', 'YUMng']]
+default = [item for item in drivers if item not in ['RPM', 'Yum']]
 
 import os, popen2, stat, sys, Bcfg2.Client.XML, time
 
