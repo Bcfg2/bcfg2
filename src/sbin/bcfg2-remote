@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from Bcfg2.tlslite.api import parsePEMKey, X509, X509CertChain
 from xmlrpclib import ServerProxy
 from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
-import Bcfg2.Options, Bcfg2.Logging, logging, socket
+import Bcfg2.Options, Bcfg2.Logging, logging, socket, sys
 
 if __name__ == '__main__':
     opts = {
@@ -39,17 +39,29 @@ if __name__ == '__main__':
 
     transport = XMLRPCTransport(certChain=certChain,
                                 privateKey=privateKey)
-    host = setup['host']
     port = setup['agent-port']
-    server = ServerProxy("https://%s:%s" % (host, port),  transport)
+    status = 0
+    if setup['host'] == '-':
+        urls = ["https://%s:%s" % (host, port) for host in \
+                [line.strip() for line in sys.stdin.readlines()]]
+    else:
+        host = setup['host']
+        urls = ["https://%s:%s" % (host, port)]
 
-    try:
-        result = server.run()
-    except socket.error, serr:
-        if serr.args[0] == 111:
-            logger.error("Failed to connect to client %s" % host)
-        elif serr.args[0] == 32:
-            logger.error("Connection to client %s dropped; authentication failure?" % host)
-        else:
-            logger.error("Got unexpected socket error %d" % serr.args[0])
-        raise SystemExit(1)
+    for url in urls:
+        server = ServerProxy(url,  transport)
+        
+        try:
+            result = server.run()
+        except socket.error, serr:
+            if serr.args[0] == 111:
+                logger.error("Failed to connect to %s" % url)
+            elif serr.args[0] == 32:
+                logger.error("Connection to %s dropped; authentication failure?" % url)
+            elif serr.args[0] == -5:
+                logger.error("Lookup failure for %s" % url)
+            else:
+                logger.error("Got unexpected socket error %d for %s" % \
+                             (serr.args[0], url), exc_info=1)
+            status = 1
+    raise SystemExit(status)
