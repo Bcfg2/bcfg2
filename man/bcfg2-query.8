@@ -1,0 +1,38 @@
+.TH "bcfg2-query" 8
+.SH NAME
+bcfg2-query \- Print client names by characteristic
+.SH SYNOPSIS
+.B bcfg2-query        
+.I [\-d]
+.I [\-u]
+.I [\-p profile]
+.I [\-a]
+
+.SH DESCRIPTION
+.PP
+.B bcfg2-query
+bcfg2-query produces streams of newline delimited client names based
+on client characteristics. 
+.SH OPTIONS
+.PP
+.B "\-a"
+.RS
+Display all clients
+.RE
+.B "\-u"
+.RS
+Display all up clients
+.RE
+.B "\-d" 
+.RS
+Display all down clients
+.RE
+.B "\-p <profile>"
+.RS
+Display all clients that are a part of the specified profile.
+.RE
+.SH "SEE ALSO"
+.BR bcfg2(1),
+.BR bcfg2-server(8)
+.SH "BUGS"
+None currently known
