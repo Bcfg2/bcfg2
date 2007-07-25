@@ -11,7 +11,7 @@ else:
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-     ('Joey Hagedorn', 'hagedorn@mcs.anl.gov'),
+     ('Bcfg2', 'bcfg-dev@mcs.anl.gov'),
 )
 
 MANAGERS = ADMINS
