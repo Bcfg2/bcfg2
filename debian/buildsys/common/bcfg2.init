@@ -28,6 +28,7 @@ BCFG2_OPTIONS="-q"
 # Disabled per default
 BCFG2_ENABLED=0
 BCFG2_INIT=0
+BCFG2_AGENT=0
 
 # Include default startup configuration if exists
 test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
@@ -37,14 +38,26 @@ test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
 # Exit if bcfg2 doesn't exist and is not executable
 test -x $BCFG2 || exit 5
 
+# Agent mode daemon capability
+DAEMON_PARAMS="-A"
+PIDFILE=/var/run/bcfg2.pid
+# Internal variables
+BINARY=$(basename $BCFG2)
+
 # Include lsb functions
 . /lib/lsb/init-functions
 
 case "$1" in
   start)
     echo -n "Running configuration management client: "
-    ${BCFG2} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
-    STATUS=$?
+    if ["$BCFG2_AGENT" = 1]
+      start_daemon ${BCFG2} ${DAEMON_PARAMS} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
+      STATUS=$?
+    else
+      ${BCFG2} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
+      STATUS=$?
+    fi
+
     if [ "$STATUS" = 0 ]
     then
       log_success_msg "bcfg2"
@@ -57,8 +70,31 @@ case "$1" in
     # Since we are always OK, always return OK as status
     exit 0
     ;;
-  restart|reload|stop|force-reload)
-    true
+  stop)
+    if ["$BCFG2_AGENT" = 1]
+      echo -n "Stopping configuration management client daemon: "
+      killproc ${BINARY}
+      STATUS=$?
+      if [ "$STATUS" = 0 ]; then
+        log_success_msg "bcfg2"
+        exit 0
+      else
+        log_failure_msg "bcfg2"
+      fi
+      exit $STATUS
+
+    else
+      true
+    fi
+    ;;
+  restart|reload|force-reload)
+    if ["$BCFG2_AGENT" = 1]
+      $0 stop
+      sleep 5
+      $0 start
+    else
+      true
+    fi
     ;;
   *)
     echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
