@@ -1,7 +1,7 @@
 # Django settings for bcfg reports project.
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
-c.read(['/etc/bcfg2.conf'])#This needs to be configurable one day somehow
+c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
 
 if c.get('statistics', 'web_debug') == "True":
     DEBUG = True
