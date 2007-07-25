@@ -50,8 +50,11 @@ class TemplateFile:
             
     def BuildFile(self, entry, metadata):
         '''Build literal file information'''
+        fname = entry.get('realname', entry.get('name'))
         try:
-            stream = self.template.generate(name=entry.get('name'), metadata=metadata, properties=self.properties)
+            stream = self.template.generate(name=fname,
+                                            metadata=metadata,
+                                            properties=self.properties)
             if isinstance(self.template, TextTemplate):
                 entry.text = stream.render('text')
             else:
