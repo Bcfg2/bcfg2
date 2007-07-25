@@ -10,7 +10,7 @@ def update_file(path, diff):
     print "writing file, %s" % path
     open(path, 'w').write(newdata)
 
-class SSHbase(Bcfg2.Server.Plugin.Plugin):
+class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
     for hosts.  It also manages the ssh_known_hosts file. It can
     integrate host keys from other management domains and similarly
@@ -42,26 +42,31 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         try:
-            self.repository = Bcfg2.Server.Plugin.DirectoryBacked(self.data, self.core.fam)
+            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError, ioerr:
             self.logger.error("Failed to load SSHbase repository from %s" % (self.data))
             self.logger.error(ioerr)
             raise Bcfg2.Server.Plugin.PluginInitError
-        try:
-            prefix = open("%s/prefix" % (self.data)).read().strip()
-        except IOError:
-            prefix = ''
         self.Entries = {'ConfigFile':
-                             {prefix + '/etc/ssh/ssh_known_hosts':self.build_skn, 
-                              prefix + '/etc/ssh/ssh_host_dsa_key':self.build_hk,
-                              prefix + '/etc/ssh/ssh_host_rsa_key':self.build_hk,
-                              prefix + '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
-                              prefix + '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
-                              prefix + '/etc/ssh/ssh_host_key':self.build_hk,
-                              prefix + '/etc/ssh/ssh_host_key.pub':self.build_hk}}
+                        {'/etc/ssh/ssh_known_hosts':self.build_skn, 
+                         '/etc/ssh/ssh_host_dsa_key':self.build_hk,
+                         '/etc/ssh/ssh_host_rsa_key':self.build_hk,
+                         '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
+                         '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
+                         '/etc/ssh/ssh_host_key':self.build_hk,
+                         '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
         self.__rmi__ = ['GetPubKeys']
 
+    def HandleEvent(self, event=None):
+        '''Local event handler that does skn regen on pubkey change'''
+        Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
+        if (len(self.entries.keys())) > (0.90 * len(os.listdir(self.data))) and \
+               event and '_key.pub.H_' in event.filename:
+            self.cache_skn()
+        elif (len(self.entries.keys())) > (0.90 * len(os.listdir(self.data))) and \
+             not hasattr(self, 'static_skn'):
+            self.cache_skn()
 
     def HandlesEntry(self, entry):
         '''Handle key entries dynamically'''
@@ -81,7 +86,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
         if self.ipcache.has_key(client):
-            return self.ipcache[client]
+            if self.ipcache[client]:
+                return self.ipcache[client]
+            else:
+                raise socket.gaierror
         else:
             # need to add entry
             try:
@@ -93,13 +101,14 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 if ipaddr:
                     self.ipcache[client] = (ipaddr, client)
                     return (ipaddr, client)
+                self.ipcache[client] = False
                 self.logger.error("Failed to find IP address for %s" % client)
                 raise socket.gaierror
 
     def cache_skn(self):
         '''build memory cache of the ssh known hosts file'''
         self.static_skn = ''
-        pubkeys = [pubk for pubk in self.repository.entries.keys() if pubk.find('.pub.H_') != -1]
+        pubkeys = [pubk for pubk in self.entries.keys() if pubk.find('.pub.H_') != -1]
         pubkeys.sort()
         for pubkey in pubkeys:
             hostname = pubkey.split('H_')[1]
@@ -109,20 +118,18 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
                 continue
             shortname = hostname.split('.')[0]
             self.static_skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
-                                         self.repository.entries[pubkey].data)
+                                         self.entries[pubkey].data)
 
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
-        if not hasattr(self, 'static_skn'):
-            self.cache_skn()
         entry.text = self.static_skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
-                        if self.repository.entries.has_key(keytmpl % client)]
+                        if self.entries.has_key(keytmpl % client)]
         hostkeys.sort()
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
-                self.repository.entries[hostkey].data)
+                self.entries[hostkey].data)
         permdata = {'owner':'root', 'group':'0', 'perms':'0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
@@ -130,14 +137,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
         '''This binds host key data into entries'''
         client = metadata.hostname
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
-        if filename not in self.repository.entries.keys():
+        if filename not in self.entries.keys():
             self.GenerateHostKeys(client)
-            if hasattr(self, 'static_skn'):
-                del self.static_skn
-        if not self.repository.entries.has_key(filename):
+        if not self.entries.has_key(filename):
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
-        keydata = self.repository.entries[filename].data
+        keydata = self.entries[filename].data
         permdata = {'owner':'root', 'group':'0'}
         permdata['perms'] = '0600'
         if entry.get('name')[-4:] == '.pub':
@@ -160,7 +165,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin):
             else:
                 keytype = 'rsa1'
 
-            if hostkey not in self.repository.entries.keys():
+            if hostkey not in self.entries.keys():
                 fileloc = "%s/%s" % (self.data, hostkey)
                 publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
                 temploc =  "/tmp/%s" % hostkey
