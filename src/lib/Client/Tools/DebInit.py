@@ -74,9 +74,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 command = "/usr/sbin/invoke-rc.d %s" % entry.get('name')
                 if entry.get('status') == 'on' and not self.setup['build']:
                     self.logger.debug('Restarting service %s' % entry.get('name'))
-                    rc = self.cmd.run('%s %s' % \
-                                      (command, entry.get('name'),
-                                       entry.get('reload', self.__svcrestart__)))[0]
+                    rc = self.cmd.run('%s %s' % (command, \
+                                                 entry.get('reload', self.__svcrestart__)))[0]
                 else:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
                     rc = self.cmd.run('%s stop' %  \
