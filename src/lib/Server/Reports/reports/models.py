@@ -57,39 +57,12 @@ class Client(models.Model):
     class Admin:
         pass
 
-#sql to add "profile"
 class Metadata(models.Model):
-    '''This is a mirror of clients.xml file, versioned by time'''
-    '''Generally, you look for the latest timestamp for a given client'''
+    '''insert magical interface to client metadata here'''
     client = models.ForeignKey(Client)
-    profile = models.ForeignKey(Group)
     timestamp = models.DateTimeField()
-    expiration = models.DateTimeField()#Set when group of given name disappears
-    
     def __str__(self):
         return self.timestamp
-
-#SQL to add everything here
-class Group(models.Model):
-    '''this is a mirror of groups.xml'''
-    '''generally, look for latest timestampf for a givenname that is not expired'''
-    name = models.CharField(maxlength=128)
-    groups = models.ManyToManyField(Group, related_name="containing_groups")
-    bundles = models.ManyToManyField(Bundle, related_name="containing_groups")
-    timestamp = models.DateTimeField()
-    expiration = models.DateTimeField()#Set when group of given name disappears
-    is_profile = models.BooleanField()
-    
-    def __str__(self):
-        return self.timestamp
-
-#SQL to add all of this tooooo
-class Bundle(models.Model):
-    name = models.CharField(maxlength=128)
-    def __str__(self):
-        return self.timestamp
-
-
     
 class Repository(models.Model):
     '''insert magical interface to subversioned repository here'''
