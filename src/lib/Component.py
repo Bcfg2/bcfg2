@@ -254,8 +254,12 @@ class Component(TLSServer,
         while True:
             try:
                 pid = os.waitpid(0, os.WNOHANG)[0]
-                self.children.remove(pid)
-                self.logger.debug("process %d exited" % pid)
+                if pid:
+                    self.logger.debug("process %d exited" % pid)
+                    if pid in self.children:
+                        self.children.remove(pid)
+                else:
+                    break
             except OSError:
                 break
         if len(self.children) >= self.child_limit:
