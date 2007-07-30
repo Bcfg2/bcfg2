@@ -81,9 +81,10 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                       (entry.get('name'), entry.get('version')))
             return False
 
-        (vstat, output) = self.cmd.run("rpm --verify -q %s %s-%s" % (" ".join(rpm_options),
-                                                                     entry.get('name'),
-                                                                     entry.get('version')))
+        (vstat, output) = self.cmd.run("rpm --verify %s %s-%s" % \
+                                       (" ".join(rpm_options),
+                                        entry.get('name'),
+                                        entry.get('version')))
         if vstat != 0:
             if [name for name in output if name.split()[-1] not in modlist]:
                 self.logger.debug("Package %s content verification failed" % \
