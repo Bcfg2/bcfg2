@@ -157,10 +157,13 @@ class Tool:
         if not self.handlesEntry(entry):
             return False
 
-        if [attr for attr in self.__req__[entry.tag] if attr not in entry.attrib]:
+        missing = [attr for attr in self.__req__[entry.tag] \
+                   if attr not in entry.attrib]
+        if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
                               % (entry.tag, entry.get('name')))
-            self.logger.debug("\t... due to absense of %s attribute" % attr)
+            self.logger.error("\t... due to absense of %s attribute(s)" % \
+                              (":".join(missing)))
             return False
         return True
 
@@ -173,10 +176,14 @@ class Tool:
         '''test if entry has enough information to be installed'''
         if not self.handlesEntry(entry):
             return False
-        if [attr for attr in self.__ireq__[entry.tag] if attr not in entry.attrib]:
+
+        missing = [attr for attr in self.__ireq__[entry.tag] \
+                   if attr not in entry.attrib]
+        if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                               % (entry.tag, entry.get('name')))
-            self.logger.debug("\t... due to absense of %s attribute" % attr)
+            self.logger.error("\t... due to absense of %s attribute" % \
+                              (":".join(missing)))
             return False
         return True
 
