@@ -3,7 +3,7 @@
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
-import xml.sax.saxutils, binascii
+import xml.sax.saxutils, binascii, time
 
 log = logging.getLogger('bcfg-admin')
 
@@ -308,15 +308,22 @@ def do_pull(cfile, repopath, client, etype, ename):
     else:
         state = 'clean'
     # need to pull entry out of statistics
-    entry = sdata.xpath('.//Statistics[@state="%s"]/Bad/%s[@name="%s"]' % \
-                        (state, etype, ename))
+    sxpath = ".//Statistics[@state='%s']/Bad/ConfigFile[@name='%s']/../.." % (state, ename)
+    sentries = sdata.xpath(sxpath)
+    print "Found %d entries for %s:%s:%s" % \
+          (len(sentries), client, etype, ename)
+    maxtime = max([time.strptime(stat.get('time')) for stat in sentries])
+    print "Found entry from", time.strftime("%c", maxtime)
+    statblock = [stat for stat in sentries \
+                 if time.strptime(stat.get('time')) == maxtime]
+    entry = statblock[0].xpath('.//Bad/ConfigFile[@name="%s"]' % ename)
     if not entry:
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
 
     if 'current_bdiff' in entry[0].attrib:
-        diff = binascii.a2b_base64(entry[0].get('current_bdiff'))
+        diff = binascii.a2b_base64(entry[-1].get('current_bdiff'))
     else:
-        diff = entry[0].get('current_diff')
+        diff = entry[-1].get('current_diff')
 
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
@@ -335,7 +342,7 @@ def do_pull(cfile, repopath, client, etype, ename):
                  + "%s" % ([g.__name__ for g in glist]))
     plugin = glist[0]
     if diff == None:
-        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(entry[0]))
+        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(entry[-1]))
     try:
         plugin.AcceptEntry(m, 'ConfigFile', ename, diff)
     except Bcfg2.Server.Plugin.PluginExecutionError:
