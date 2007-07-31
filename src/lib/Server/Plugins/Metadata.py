@@ -58,11 +58,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.clientdata = None
         self.default = None
         try:
-            self.probes = Bcfg2.Server.Plugin.DirectoryBacked(datastore + "/Probes",
-                                                              core.fam)
+            loc = datastore + "/Probes"
+            self.probes = Bcfg2.Server.Plugin.DirectoryBacked(loc, core.fam)
         except:
             self.probes = False
         self.probedata = {}
+        self.ptimes = {}
+        self.pctime = 0
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.cfile.get('communication', 'password')
 
@@ -304,10 +306,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         return ClientMetadata(client, newgroups, newbundles, toolset, newcategories,
                               probed, uuid, password)
         
-    def GetProbes(self, _):
+    def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''
         ret = []
-        if self.probes:
+        ctime = time.time() - self.ptimes.get(meta.hostname, 0)
+        diff = ctime > self.pctime
+        if self.probes and (diff or force):
             bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
             for name, entry in [(name, entry) for name, entry in \
                                 self.probes.entries.iteritems() if entry.data]:
@@ -345,6 +349,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probedata[client.hostname].update({ data.get('name'):dtext })
         except KeyError:
             self.probedata[client.hostname] = { data.get('name'):dtext }
+        self.ptimes[client.hostname] = time.time()
 
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''
