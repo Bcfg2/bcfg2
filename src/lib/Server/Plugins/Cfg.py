@@ -373,7 +373,12 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             answer = raw_input(gsq)
 
         if answer in 'Yy':
-            update_file(basefile.name, diff)
+            print "writing file, %s" % basefile.name
+            if fulldata:
+                newdata = fulldata
+            else:
+                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
+            open(basefile.name, 'w').write(newdata)
             return
 
         if ".H_%s" % (meta.hostname) in basefile.name:
