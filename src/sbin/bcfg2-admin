@@ -3,7 +3,7 @@
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.tlslite.api
-import xml.sax.saxutils, binascii, time
+import binascii, time
 
 log = logging.getLogger('bcfg-admin')
 
@@ -154,12 +154,6 @@ def initialize_repo(cfile):
     #now the clients file
     open("%s/Metadata/clients.xml"%repo, "w").write(clients%socket.getfqdn())
     print "Repository created successfuly in %s" % (repo)
-
-def update_file(path, diff):
-    '''Update file at path using diff'''
-    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
-    print "writing file, %s" % path
-    open(path, 'w').write(newdata)
 
 def get_repo_path(cfile='/etc/bcfg2.conf'):
     '''return repository path'''
@@ -319,11 +313,21 @@ def do_pull(cfile, repopath, client, etype, ename):
     entry = statblock[0].xpath('.//Bad/ConfigFile[@name="%s"]' % ename)
     if not entry:
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
+    cfentry = entry[-1]
 
-    if 'current_bdiff' in entry[0].attrib:
-        diff = binascii.a2b_base64(entry[-1].get('current_bdiff'))
+    mode = 'diff'
+    if 'current_bdiff' in cfentry.attrib:
+        diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
+    elif 'current_diff' in cfentry.attrib:
+        diff = cfentry.get('current_diff')
+    elif 'current_bfile' in cfentry.attrib:
+        mode = 'full'
+        data = binascii.a2b_base64(cfentry.get('current_bfile'))
+
+    if mode == 'diff':
+        print "Located diff:\n %s" % diff
     else:
-        diff = entry[-1].get('current_diff')
+        print "Found full file data:\n", data
 
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
@@ -342,7 +346,7 @@ def do_pull(cfile, repopath, client, etype, ename):
                  + "%s" % ([g.__name__ for g in glist]))
     plugin = glist[0]
     if diff == None:
-        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(entry[-1]))
+        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(cfentry))
     try:
         plugin.AcceptEntry(m, 'ConfigFile', ename, diff)
     except Bcfg2.Server.Plugin.PluginExecutionError:

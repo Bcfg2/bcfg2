@@ -43,7 +43,20 @@ def normGid(entry):
     except (OSError, KeyError):
         self.logger.error('GID normalization failed for %s' % (entry.get('name')))
         return False
-    
+
+text_chars = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
+notrans = string.maketrans("", "")
+
+def isString(strng):
+    '''Returns true if a string contains no binary chars'''
+    if "\0" in strng:
+        return False
+
+    if not strng:
+        return True
+
+    return len(strng.translate(notrans, text_chars)) == 0
+
 class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
     __name__ = 'POSIX'
@@ -251,22 +264,27 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
         contentStatus = content == tempdata
         if not contentStatus:
-            diff = '\n'.join([x for x in difflib.ndiff(content.split('\n'), tempdata.split('\n'))])
-            try:
-                entry.set("current_diff", xml.sax.saxutils.escape(diff))
-            except:
-                pass
-            udiff = '\n'.join([x for x in difflib.unified_diff(content.split('\n'), \
-                                                               tempdata.split('\n'))])
-            try:
-                eudiff = udiff.encode('ascii')
-            except:
-                eudiff = "Binary file: no diff printed"
-            nqtext = entry.get('qtext', '')
-            if nqtext:
-                nqtext += '\n'
-            nqtext += eudiff 
-            entry.set('qtext', nqtext)
+            if not isString(content) or not isString(tempdata):
+                entry.set('current_bfile', binascii.b2a_base64(content))
+                nqtext = entry.get('qtext', '')
+                nqtext += '\nBinary file, no printable diff'
+                entry.set('qtext', nqtest)
+            else:
+                diff = '\n'.join([x for x in difflib.ndiff(content.split('\n'),
+                                                           tempdata.split('\n'))])
+                entry.set("current_bdiff", binascii.b2a_base64(diff))
+                udiff = '\n'.join([x for x in \
+                                   difflib.unified_diff(content.split('\n'), \
+                                                        tempdata.split('\n'))])
+                try:
+                    eudiff = udiff.encode('ascii')
+                except:
+                    eudiff = "Binary file: no diff printed"
+                nqtext = entry.get('qtext', '')
+                if nqtext:
+                    nqtext += '\n'
+                    nqtext += eudiff 
+                entry.set('qtext', nqtext)
         qtxt = entry.get('qtext', '')
         qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
         entry.set('qtext', qtxt)

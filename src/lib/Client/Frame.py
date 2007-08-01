@@ -1,7 +1,7 @@
 '''Frame is the Client Framework that verifies and installs entries, and generates statistics'''
 __revision__ = '$Revision$'
 
-import binascii, logging, time
+import logging, time
 import Bcfg2.Client.Tools
 
 def cmpent(ent1, ent2):
@@ -326,10 +326,7 @@ class Frame:
             for item in data:
                 item.set('qtext', '')
                 container.append(item)
-                if item.get('current_diff', False):
-                    item.set('current_bdiff',
-                             binascii.b2a_base64(item.get('current_diff')))
-                    item.set('current_diff', '')
+                item.text = None
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")
         feedback.append(stats)

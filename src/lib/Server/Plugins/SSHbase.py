@@ -6,7 +6,7 @@ import Bcfg2.Server.Plugin
 
 def update_file(path, diff):
     '''Update file at path using diff'''
-    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
+    newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
     print "writing file, %s" % path
     open(path, 'w').write(newdata)
 
