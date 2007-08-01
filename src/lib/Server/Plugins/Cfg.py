@@ -10,12 +10,6 @@ specific = re.compile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                       '(G(?P<prio>\d+)_(?P<group>\S+)))$')
 probeData = {}
 
-def update_file(path, diff):
-    '''Update file at path using diff'''
-    newdata = '\n'.join(difflib.restore(xml.sax.saxutils.unescape(diff).split('\n'), 1))
-    print "writing file, %s" % path
-    open(path, 'w').write(newdata)
-
 class SpecificityError(Exception):
     '''Thrown in case of filename parse failure'''
     pass
@@ -362,7 +356,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             logger.error("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
         self.interpolate = len([entry for entry in self.entries.values() if entry.interpolate ]) > 0
 
-    def AcceptEntry(self, meta, _, entry_name, diff):
+    def AcceptEntry(self, meta, _, entry_name, diff, fulldata):
         '''per-plugin bcfg2-admin pull support'''
         hsq = "Found host-specific file %s; Should it be updated (n/Y): "
         repo_vers = lxml.etree.Element('ConfigFile', name=entry_name)
@@ -392,4 +386,9 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             newname = basefile.name + ".H_%s" % (meta.hostname)
         print "This file will be installed as file %s" % newname
         if raw_input("Should it be installed? (N/y): ") in 'Yy':
-            update_file(newname, diff)
+            print "writing file, %s" % newname
+            if fulldata:
+                newdata = fulldata
+            else:
+                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
+            open(newname, 'w').write(newdata)

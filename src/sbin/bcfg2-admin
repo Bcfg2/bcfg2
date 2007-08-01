@@ -306,6 +306,8 @@ def do_pull(cfile, repopath, client, etype, ename):
     sentries = sdata.xpath(sxpath)
     print "Found %d entries for %s:%s:%s" % \
           (len(sentries), client, etype, ename)
+    if not len(sentries):
+        raise SystemExit, 1
     maxtime = max([time.strptime(stat.get('time')) for stat in sentries])
     print "Found entry from", time.strftime("%c", maxtime)
     statblock = [stat for stat in sentries \
@@ -315,19 +317,20 @@ def do_pull(cfile, repopath, client, etype, ename):
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
     cfentry = entry[-1]
 
-    mode = 'diff'
     if 'current_bdiff' in cfentry.attrib:
+        data = False
         diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
     elif 'current_diff' in cfentry.attrib:
+        data = False
         diff = cfentry.get('current_diff')
     elif 'current_bfile' in cfentry.attrib:
-        mode = 'full'
         data = binascii.a2b_base64(cfentry.get('current_bfile'))
+        diff = False
 
-    if mode == 'diff':
+    if diff:
         print "Located diff:\n %s" % diff
     else:
-        print "Found full file data:\n", data
+        print "Found full (binary) file data"
 
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
@@ -345,10 +348,10 @@ def do_pull(cfile, repopath, client, etype, ename):
         err_exit("Got wrong numbers of matching generators for entry:" \
                  + "%s" % ([g.__name__ for g in glist]))
     plugin = glist[0]
-    if diff == None:
-        err_exit("Failed to locate diff\nStatistics entry was:\n%s" % lxml.etree.tostring(cfentry))
+    if not diff and not data:
+        err_exit("Failed to locate diff or full data\nStatistics entry was:\n%s" % lxml.etree.tostring(cfentry))
     try:
-        plugin.AcceptEntry(m, 'ConfigFile', ename, diff)
+        plugin.AcceptEntry(m, 'ConfigFile', ename, diff, data)
     except Bcfg2.Server.Plugin.PluginExecutionError:
         err_exit("Configuration upload not supported by plugin %s" \
                  % (plugin.__name__))

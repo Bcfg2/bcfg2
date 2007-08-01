@@ -181,11 +181,17 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
 
-    def AcceptEntry(self, meta, _, entry_name, diff):
+    def AcceptEntry(self, meta, _, entry_name, diff, fulldata):
         '''per-plugin bcfg2-admin pull support'''
         filename = "%s/%s.H_%s" % (self.data, entry_name.split('/')[-1],
                                    meta.hostname)
         print "This file will be installed as file %s" % filename
         if raw_input("Should it be installed? (N/y): ") in 'Yy':
-            update_file(filename, diff)
+            print "writing file, %s" % filename
+            if fulldata:
+                newdata = fulldata
+            else:
+                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
+            open(filename, 'w').write(newdata)
+
         

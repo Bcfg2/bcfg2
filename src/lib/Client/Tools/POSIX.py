@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 
-import binascii, difflib, grp, os, pwd, xml.sax.saxutils
+import binascii, difflib, grp, os, pwd, string
 import Bcfg2.Client.Tools
 
 def calcPerms(initial, perms):
@@ -268,7 +268,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
-                entry.set('qtext', nqtest)
             else:
                 diff = '\n'.join([x for x in difflib.ndiff(content.split('\n'),
                                                            tempdata.split('\n'))])
@@ -284,7 +283,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 if nqtext:
                     nqtext += '\n'
                     nqtext += eudiff 
-                entry.set('qtext', nqtext)
+            entry.set('qtext', nqtext)
         qtxt = entry.get('qtext', '')
         qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
         entry.set('qtext', qtxt)
