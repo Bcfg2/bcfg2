@@ -8,7 +8,7 @@ import logging, lxml.etree, os
 
 class Statistics(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
-    __min_write_delay__ = 30
+    __min_write_delay__ = 0
 
     def __init__(self, filename):
         self.filename = filename
