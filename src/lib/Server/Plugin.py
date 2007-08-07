@@ -276,12 +276,13 @@ class XMLSrc(XMLFileBacked):
     '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
     __node__ = INode
 
-    def __init__(self, filename):
+    def __init__(self, filename, noprio='False'):
         XMLFileBacked.__init__(self, filename)
         self.items = {}
         self.cache = None
         self.pnode = None
         self.priority = -1
+        self.noprio = noprio
 
     def HandleEvent(self, _=None):
         '''Read file upon update'''
@@ -298,10 +299,11 @@ class XMLSrc(XMLFileBacked):
             return
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
-        try:
-            self.priority = int(xdata.get('priority'))
-        except (ValueError, TypeError):
-            logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
+        if not self.noprio:
+            try:
+                self.priority = int(xdata.get('priority'))
+            except (ValueError, TypeError):
+                logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
         del xdata, data
 
     def Cache(self, metadata):

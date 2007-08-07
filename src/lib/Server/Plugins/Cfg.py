@@ -120,12 +120,17 @@ class ConfigFileEntry(object):
         '''add new file additions for a single cf file'''
         basename = name.split('/')[-1]
         rbasename = self.repopath.split('/')[-1]
-        if not ((basename in [':info', 'info']) or
+        if not ((basename in [':info', 'info', ':info.xml', 'info.xml']) or
                 (basename[:len(rbasename)] == rbasename)):
             logger.error("Confused about file %s; ignoring" % (name))
             return
         if basename in [':info', 'info']:
             return self.read_info(basename)
+        elif basename in ['info.xml', ':info.xml']:
+            print "here"
+            fpath = self.repopath + '/' + basename
+            self.infoxml = Bcfg2.Server.Plugin.XMLSrc(fpath, True)
+            return
 
         try:
             self.fragments.append(FileEntry(self.path, name))
@@ -140,6 +145,8 @@ class ConfigFileEntry(object):
         if event.filename in [':info', 'info']:
             if action in ['changed', 'exists', 'created']:
                 return self.read_info(event.filename)
+        elif event.filename in [':info.xml', 'info.xml']:
+            return self.infoxml.HandleEvent(event)
         if event.filename != self.path.split('/')[-1]:
             if not specific.match('/' + event.filename):
                 logger.info('Suppressing event for bogus file %s' % event.filename)
@@ -217,8 +224,15 @@ class ConfigFileEntry(object):
                 filedata = output
             else:
                 logger.error("Unknown delta type %s" % (delta.op))
-            
-        [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
+
+        if hasattr(self, 'infoxml'):
+            mdata = {}
+            self.infoxml.pnode.Match(metadata, mdata)
+            mdata = mdata['Info'][None]
+        else:
+            mdata = self.metadata
+        [entry.attrib.__setitem__(key, value) \
+         for (key, value) in mdata.iteritems()]
         if self.interpolate:
             if metadata.hostname in probeData:
                 for name, value in probeData[metadata.hostname].iteritems():
@@ -228,7 +242,7 @@ class ConfigFileEntry(object):
                 logger.warning("Cannot interpolate data for client: %s for config file: %s"% (metadata.hostname, basefile.name))
         if self.paranoid:
             entry.attrib['paranoid'] = 'true'
-        if entry.attrib['encoding'] == 'base64':
+        if entry.get('encoding', 'ascii') == 'base64':
             entry.text = binascii.b2a_base64(filedata)
             return
         if filedata == '':
