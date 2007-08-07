@@ -13,6 +13,9 @@ if len(sys.argv) < 2:
     print "Usage bcfg2-query -d|u|p <profile name>"
     print "\t -d\t\t shows the clients that are currently down"
     print "\t -u\t\t shows the clients that are currently up"
+    print "\t -c\t\t prints node names in a comma delimited list"
+    print "\t -s\t\t prints node names in a space delimited list"
+    print "\t -n\t\t prints node names in a newline delimited list (default)"
     print "\t -p <profile name>\t shows all the clients of that profile"
     print "\t -a\t shows all clients"
     sys.exit(1)
@@ -28,5 +31,11 @@ elif '-u' in sys.argv:
 elif '-a' in sys.argv:
     clients = xml.xpath(".//Client")
 
-for client in clients:
-    print client.get('name')
+cnames = [client.get('name') for client in clients]
+if '-c' in sys.argv:
+    print ",".join(cnames)
+elif '-s' in sys.argv:
+    print " ".join(cnames)
+else:
+    print "\n".join(cnames)
+
