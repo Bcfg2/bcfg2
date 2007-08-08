@@ -173,8 +173,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                           (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())
-                self.repository.AddEntry(hostkey)
-                self.repository.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
+                self.AddEntry(hostkey)
+                self.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
