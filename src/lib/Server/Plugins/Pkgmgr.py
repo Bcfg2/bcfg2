@@ -129,3 +129,16 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
                     except KeyError:
                         self.Entries[itype] = FuzzyDict([(child,
                                                           self.BindEntry)])
+
+    def BindEntry(self, entry, metadata):
+        '''Bind data for entry, and remove instances that are not requested'''
+        pname = entry.get('name')
+        Bcfg2.Server.Plugin.PrioDir.BindEntry(self, entry, metadata)
+        if entry.findall('Instance'):
+            mdata = FuzzyDict.fuzzy.match(pname)
+            if mdata:
+                arches = mdata.group('alist').split(',')
+                [entry.remove(inst) for inst in \
+                 entry.findall('Instance') \
+                 if inst.get('arch') not in arches]
+                
