@@ -276,7 +276,7 @@ class XMLSrc(XMLFileBacked):
     '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
     __node__ = INode
 
-    def __init__(self, filename, noprio='False'):
+    def __init__(self, filename, noprio=False):
         XMLFileBacked.__init__(self, filename)
         self.items = {}
         self.cache = None
@@ -299,10 +299,10 @@ class XMLSrc(XMLFileBacked):
             return
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
-        if not self.noprio:
-            try:
-                self.priority = int(xdata.get('priority'))
-            except (ValueError, TypeError):
+        try:
+            self.priority = int(xdata.get('priority'))
+        except (ValueError, TypeError):
+            if not self.noprio:
                 logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
         del xdata, data
 
@@ -364,6 +364,8 @@ class PrioDir(Plugin, XMLDirectoryBacked):
             if prio.count(max(prio)) > 1:
                 self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
                                   (entry.tag.lower(), metadata.hostname, entry.get('name')))
+                self.logger.error([item.name for item in matching])
+                self.logger.error("Prio was %s" % max(prio))
                 raise PluginExecutionError
             index = prio.index(max(prio))
 
