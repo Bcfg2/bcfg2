@@ -282,7 +282,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nqtext = entry.get('qtext', '')
                 if nqtext:
                     nqtext += '\n'
-                    nqtext += eudiff 
+                nqtext += eudiff 
             entry.set('qtext', nqtext)
         qtxt = entry.get('qtext', '')
         qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
