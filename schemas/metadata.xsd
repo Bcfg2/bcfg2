@@ -13,7 +13,7 @@
 
   <xsd:simpleType name='toolsetType'>
     <xsd:restriction base="xsd:string">
-      <xsd:pattern value="rh|debian|solaris|aix|gentoo|auto"/>
+      <xsd:pattern value="rh|debian|solaris|aix|gentoo|auto|freebsd"/>
     </xsd:restriction>
   </xsd:simpleType>
 

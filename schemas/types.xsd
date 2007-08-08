@@ -17,6 +17,7 @@
       <xsd:enumeration value='sysv' />
       <xsd:enumeration value='portage' />
       <xsd:enumeration value='yum' />
+      <xsd:enumeration value='freebsdpkg' />
     </xsd:restriction>
   </xsd:simpleType>
 
