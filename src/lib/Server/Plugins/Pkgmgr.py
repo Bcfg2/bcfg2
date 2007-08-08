@@ -5,12 +5,46 @@ import logging, re, Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
+class FuzzyDict(dict):
+    fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
+    def __getitem__(self, key):
+        mdata = self.fuzzy.match(key)
+        if mdata:
+            return dict.__getitem__(self, mdata.groupdict()['name'])
+        return dict.__getitem__(self, key)
+
+    def has_key(self, key):
+        mdata = self.fuzzy.match(key)
+        if self.fuzzy.match(key):
+            return dict.has_key(self, mdata.groupdict()['name'])
+        return dict.has_key(self, key)
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except:
+            if default:
+                return default
+            raise
+
 class PNode(Bcfg2.Server.Plugin.INode):
     '''PNode has a list of packages available at a particular group intersection'''
     splitters = {'rpm':re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
                  'encap':re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
+
+    def Match(self, metadata, data):
+        '''Return a dictionary of package mappings'''
+        if self.predicate(metadata):
+            for key in self.contents:
+                try:
+                    data[key].update(self.contents[key])
+                except:
+                    data[key] = FuzzyDict()
+                    data[key].update(self.contents[key])
+            for child in self.children:
+                child.Match(metadata, data)
 
     def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
@@ -26,7 +60,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                     pass
         Bcfg2.Server.Plugin.INode.__init__(self, data, pdict, parent)
         if not self.contents.has_key('Package'):
-            self.contents['Package'] = {}
+            self.contents['Package'] = FuzzyDict()
         for pkg in data.findall('./Package'):
             if pkg.attrib.has_key('name') and pkg.get('name') not in pdict['Package']:
                 pdict['Package'].append(pkg.get('name'))
@@ -74,6 +108,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
     '''PkgSrc files contain a PNode hierarchy that returns matching package entries'''
     __node__ = PNode
+    __cacheobj__ = FuzzyDict
 
 class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     '''This is a generator that handles package assignments'''
@@ -82,3 +117,15 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = PkgSrc
     __element__ = 'Package'
+
+    def HandleEvent(self, event):
+        '''Handle events and update dispatch table'''
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
+        for src in self.entries.values():
+            for itype, children in src.items.iteritems():
+                for child in children:
+                    try:
+                        self.Entries[itype][child] = self.BindEntry
+                    except KeyError:
+                        self.Entries[itype] = FuzzyDict([(child,
+                                                          self.BindEntry)])

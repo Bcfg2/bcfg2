@@ -275,6 +275,7 @@ class INode:
 class XMLSrc(XMLFileBacked):
     '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
     __node__ = INode
+    __cacheobj__ = dict
 
     def __init__(self, filename, noprio=False):
         XMLFileBacked.__init__(self, filename)
@@ -309,7 +310,7 @@ class XMLSrc(XMLFileBacked):
     def Cache(self, metadata):
         '''Build a package dict for a given host'''
         if self.cache == None or self.cache[0] != metadata:
-            cache = (metadata, {})
+            cache = (metadata, self.__cacheobj__())
             if self.pnode == None:
                 logger.error("Cache method called early for %s; forcing data load" % (self.name))
                 self.HandleEvent()
