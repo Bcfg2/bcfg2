@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 
-import binascii, difflib, grp, os, pwd, string
+import binascii, difflib, grp, os, pwd, string, logging
 import Bcfg2.Client.Tools
 
 def calcPerms(initial, perms):
@@ -22,6 +22,8 @@ def calcPerms(initial, perms):
                 tempperms |= perm
     return tempperms
 
+log = logging.getLogger('posix')
+
 def normUid(entry):
     '''This takes a user name or uid and returns the corrisponding uid or False'''
     try:
@@ -30,7 +32,7 @@ def normUid(entry):
         except:
             return int(pwd.getpwnam(entry.get('owner'))[2])
     except (OSError, KeyError):
-        self.logger.error('UID normalization failed for %s' % (entry.get('name')))
+        log.error('UID normalization failed for %s' % (entry.get('name')))
         return False
 
 def normGid(entry):
@@ -41,7 +43,8 @@ def normGid(entry):
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-        self.logger.error('GID normalization failed for %s' % (entry.get('name')))
+
+        log.error('GID normalization failed for %s' % (entry.get('name')))
         return False
 
 text_chars = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
