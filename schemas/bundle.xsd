@@ -33,7 +33,7 @@
 	<xsd:element name='ConfigFile' type='StructureEntry'/>
 	<xsd:element name='Directory' type='StructureEntry'/>
 	<xsd:element name='SymLink' type='StructureEntry'/>
-	<xsd:element name='Permission' type='StructureEntry'/>
+	<xsd:element name='Permissions' type='StructureEntry'/>
 	<xsd:element name='PostInstall' type='StructureEntry'/>
         <xsd:element name='Action' type='StructureEntry'/>       
 	<xsd:element name='Group' type='GroupType'/>
