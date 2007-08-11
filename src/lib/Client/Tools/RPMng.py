@@ -713,7 +713,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     if [attr for attr in self.__new_gpg_ireq__[inst.tag] \
                                  if attr not in inst.attrib]:
                         self.logger.error("Incomplete information for entry %s:%s; cannot install"\
-                                          % (inst.tag, inst.get('name')))
+                                          % (inst.tag, entry.get('name')))
                         return False
             else:
                 # New format with Instances.
@@ -721,14 +721,18 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 if [attr for attr in self.__new_ireq__[entry.tag] if attr not in entry.attrib]:
                     self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                                       % (entry.tag, entry.get('name')))
+                    self.logger.error("             Required attributes that may not be present are %s" \
+                                      % (self.__new_ireq__[entry.tag]))
                     return False
                 # Check that the Instance Level has what we need for verification.
                 for inst in instances:
                     if inst.tag == 'Instance':
                         if [attr for attr in self.__new_ireq__[inst.tag] \
                                      if attr not in inst.attrib]:
-                            self.logger.error("Incomplete information for entry %s:%s; cannot install" \
-                                              % (inst.tag, inst.get('name')))
+                            self.logger.error("Incomplete information for %s of package %s; cannot install" \
+                                              % (inst.tag, entry.get('name')))
+                            self.logger.error("         Required attributes that may not be present are %s" \
+                                              % (self.__new_ireq__[inst.tag]))
                             return False
         return True
 
