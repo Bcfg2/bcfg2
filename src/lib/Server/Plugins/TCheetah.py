@@ -26,6 +26,11 @@ class TemplateFile:
             except Cheetah.Parser.ParseError, perror:
                 logger.error("Cheetah parse error for file %s" % (self.name))
                 logger.error(perror.report())
+        elif event.filename == 'info.xml':
+            if not hasattr(self, 'infoxml'):
+                fpath = self.name + '/info.xml'
+                self.infoxml = Bcfg2.Server.Plugin.XMLSrc(fpath, True)
+            self.infoxml.HandleEvent(event)
         elif event.filename == 'info':
             for line in open(self.name + '/info').readlines():
                 match = info.match(line)
@@ -53,7 +58,14 @@ class TemplateFile:
         except:
             logger.error("Failed to template %s" % entry.get('name'))
             raise Bcfg2.Server.Plugin.PluginExecutionError
-        [entry.attrib.__setitem__(key, value) for (key, value) in self.metadata.iteritems()]
+        if hasattr(self, 'infoxml'):
+            mdata = {}
+            self.infoxml.pnode.Match(metadata, mdata)
+            [entry.attrib.__setitem__(key, value) \
+             for (key, value) in mdata['Info'][None].iteritems()]
+        else:
+            [entry.attrib.__setitem__(key, value) \
+             for (key, value) in self.metadata.iteritems()]
 
 class CheetahProperties(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     '''Class for Cheetah properties'''
@@ -102,7 +114,7 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
         if event.filename[0] == '/':
             return
         epath = "".join([self.data, self.handles[event.requestID], event.filename])
-        if event.filename in ['info', 'template']:
+        if event.filename in ['info', 'template', 'info.xml']:
             identifier = self.handles[event.requestID][:-1]
         else:
             identifier = self.handles[event.requestID] + event.filename
