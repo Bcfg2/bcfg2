@@ -325,6 +325,18 @@ class Core(object):
             # do prereq processing
             prereqs = self.plugins['Deps'].GeneratePrereqs(structures, meta)
             structures.append(prereqs)
+
+        # Perform altsrc consistency checking
+        esrcs = {}
+        for struct in structures:
+            for entry in struct:
+                key = (entry.tag, entry.get('name'))
+                if key in esrcs:
+                    if esrcs[key] != entry.get('altsrc'):
+                        logger.error("Found inconsistent altsrc mapping for entry %s:%s" % key)
+                else:
+                    esrcs[key] = entry.get('altsrc', None)
+        del esrcs
         
         for astruct in structures:
             try:
