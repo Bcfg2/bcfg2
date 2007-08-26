@@ -1,7 +1,8 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, posixpath, re, Cheetah.Parser, Cheetah.Template
+import logging, lxml.etree, posixpath, traceback, re, sys
+import Cheetah.Template, Cheetah.Parser
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
@@ -56,7 +57,11 @@ class TemplateFile:
         try:
             entry.text = str(self.template)
         except:
+            (a,b,c) = sys.exc_info()
+            msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]
+            logger.error(msg)
             logger.error("Failed to template %s" % entry.get('name'))
+            del a, b, c
             raise Bcfg2.Server.Plugin.PluginExecutionError
         if hasattr(self, 'infoxml'):
             mdata = {}
