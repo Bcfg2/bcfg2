@@ -248,6 +248,7 @@ if __name__ == '__main__':
         cfile = '/etc/bcfg2.conf'
 
     loop = infoCore(cfile)
+    loop.plugins['Metadata'].load_probedata()
     while loop.cont:
         try:
             loop.cmdloop()

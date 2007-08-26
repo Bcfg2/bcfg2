@@ -57,6 +57,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.session_cache = {}
         self.clientdata = None
         self.default = None
+        self.pdirty = False
         try:
             loc = datastore + "/Probes"
             self.probes = Bcfg2.Server.Plugin.DirectoryBacked(loc, core.fam)
@@ -225,6 +226,36 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         datafile.write(lxml.etree.tostring(self.clientdata.getroot()))
         datafile.close()
 
+    def write_probedata(self):
+        '''write probe data out for use with bcfg2-info'''
+        if self.pdirty:
+            top = lxml.etree.Element("Probed")
+            for client, probed in self.probedata.iteritems():
+                cx = lxml.etree.SubElement(top, 'Client', name=client)
+                for probe in probed:
+                    lxml.etree.SubElement(cx, 'Probe', name=probe,
+                                          value=self.probedata[client][probe])
+            data = lxml.etree.tostring(top)
+            try:
+                datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
+            except IOError:
+                self.logger.error("Failed to write clients.xml")
+                raise MetadataRuntimeError
+            datafile.write(data)
+            self.pdirty = False
+
+    def load_probedata(self):
+        try:
+            data = lxml.etree.parse(self.data + '/probed.xml').getroot()
+        except:
+            self.logger.error("Failed to read file probed.xml")
+            return
+        self.probedata={}
+        for client in data.getchildren():
+            self.probedata[client.get('name')] = {}
+            for pdata in client:
+                self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
+
     def find_toolset(self, client):
         '''Find the toolset for a given client'''
         tgroups = [self.toolsets[group] for group in self.groups[client][1] if self.toolsets.has_key(group)]
@@ -349,7 +380,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probedata[client.hostname].update({ data.get('name'):dtext })
         except KeyError:
             self.probedata[client.hostname] = { data.get('name'):dtext }
+        self.pdirty = True
         self.ptimes[client.hostname] = time.time()
+        self.write_probedata()
 
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''
