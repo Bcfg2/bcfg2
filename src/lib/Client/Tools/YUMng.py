@@ -67,7 +67,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
            - Each package will be added to self.modified[] if its self.states{}
              entry is set to True.
         '''
-        self.logger.info('Runing YUMng.Install()')
+        self.logger.info('Running YUMng.Install()')
 
         install_pkgs = []
         gpg_keys = []
