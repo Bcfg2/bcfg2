@@ -8,15 +8,19 @@ logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 class FuzzyDict(dict):
     fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
     def __getitem__(self, key):
-        mdata = self.fuzzy.match(key)
-        if mdata:
-            return dict.__getitem__(self, mdata.groupdict()['name'])
+        if isinstance(key, str):
+            mdata = self.fuzzy.match(key)
+            if mdata:
+                return dict.__getitem__(self, mdata.groupdict()['name'])
+        else:
+            print "got non-string key %s" % str(key)
         return dict.__getitem__(self, key)
 
     def has_key(self, key):
-        mdata = self.fuzzy.match(key)
-        if self.fuzzy.match(key):
-            return dict.has_key(self, mdata.groupdict()['name'])
+        if isinstance(key, str):
+            mdata = self.fuzzy.match(key)
+            if self.fuzzy.match(key):
+                return dict.has_key(self, mdata.groupdict()['name'])
         return dict.has_key(self, key)
 
     def get(self, key, default=None):
