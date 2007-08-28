@@ -6,6 +6,7 @@ import commands
 import getopt
 import re
 import datetime
+from socket import gethostname
 
 
 def run_or_die(command):
@@ -101,8 +102,8 @@ def subdivide(verstr):
     return parts
 
 
-subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
-arch_mapping = {'x86':['i686','i586','i486','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
+subarch_mapping = {'athlon':'x86', 'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
+arch_mapping = {'x86':['athlon','i686','i586','i486','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
 
 
 def parse_rpm(path, filename):
@@ -262,7 +263,7 @@ def sorted_values(adict):
 
 def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout, start_date_desc=None, end_date_desc=None):
     """the meat of this library."""
-    output.write('<PackageList uri="%s" type="rpm" priority="%s">\n' % (uri, priority))
+    output.write('<PackageList uri="%s" type="yum" priority="%s">\n' % (uri, priority))
     output.write(' <Group name="%s">\n' % group)
     pkgs = prune_pkgs_archs(prune_pkgs_latest(prune_pkgs_timely(get_pkgs(rpmdir), start_date_desc, end_date_desc, rpmdir)))
     for rpmblobs in sorted_values(pkgs):
@@ -299,7 +300,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     group = "base"
-    uri = "http://localhost/rpms"
+    uri = "http://"+gethostname()+"/rpms"
     rpmdir = "."
     priority = "0"
     output = None
