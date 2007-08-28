@@ -235,7 +235,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.RefreshPackages()
 
         if not self.setup['kevlar']:
-            for pkg_entry in packages:
+            for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
                                                                  self.modlists.get(pkg_entry, []))
