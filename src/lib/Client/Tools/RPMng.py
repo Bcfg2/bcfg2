@@ -684,6 +684,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         instances = entry.findall('Instance')
 
+        # If the entry wasn't verifiable, then we really don't want to try and fix something
+        # that we don't know is broken.
+        if not self.canVerify(entry):
+            self.logger.debug("WARNING: Package %s was not verifiable, not passing to Install()" \
+                                           % entry.get('name'))
+            return False
+
         if not instances:
             # Old non Instance format, unmodified.
             if entry.get('name') == 'gpg-pubkey':
