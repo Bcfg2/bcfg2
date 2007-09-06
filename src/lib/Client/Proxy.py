@@ -179,7 +179,7 @@ class ComponentProxy(SafeProxy):
     name = 'dummy'
     methods = []
 
-    def __init__(self, url=None):
+    def __init__(self, url={}):
         SafeProxy.__init__(self, self.name, url)
         for method in self.methods:
             setattr(self, method, eval('lambda *x:self.run_method(method, x)',
