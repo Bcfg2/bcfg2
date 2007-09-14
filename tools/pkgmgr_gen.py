@@ -465,14 +465,14 @@ if __name__ == "__main__":
 
     # Set up list of architectures to include and some mappings
     # to use later.
-    arch_mapping = {'x86':['i686','i586','i486','i386'], 
+    arch_mapping = {'x86':['i686','i586','i486','i386','athlon'], 
                     'x86_64':['x86_64'], 
                     'ia64':['ia64'], 
                     'ppc':['ppc'], 
                     'ppc64':['ppc64'], 
                     'sparc':['sparc'], 
                     'noarch':['noarch']}
-    subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 
+    subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'athlon':'x86', 
                        'x86_64':'x86_64', 
                        'ia64':'ia64', 
                        'ppc':'ppc', 
