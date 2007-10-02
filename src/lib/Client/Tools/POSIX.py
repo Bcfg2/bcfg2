@@ -116,7 +116,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except OSError:
             return False
 
-    def VerifyDirectory(self, entry, _):
+    def VerifyDirectory(self, entry, modlist):
         '''Verify Directory Entry'''
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
@@ -140,12 +140,32 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             mtime = str(finfo[ST_MTIME])
         else:
             mtime = '-1'
-        if ((owner == str(normUid(entry))) and
-            (group == str(normGid(entry))) and
-            (perms == entry.get('perms')) and
-            (mtime == entry.get('mtime', '-1'))):
-            return True
+        pTrue = ((owner == str(normUid(entry))) and
+                 (group == str(normGid(entry))) and
+                 (perms == entry.get('perms')) and
+                 (mtime == entry.get('mtime', '-1')))
+
+        pruneTrue = True
+        if entry.get('prune', 'false') == 'true' \
+               and entry.tag == 'Directory':
+            try:
+                entries = ['/'.join([entry.get('name'), ent]) \
+                           for ent in os.listdir(entry.get('name'))]
+                self.ex_ents = [e for e in entries if e not in modlist]
+                if self.ex_ents:
+                    pruneTrue = False
+                    self.logger.debug("Directory %s contains extra entries:" % entry.get('name'))
+                    self.logger.debug(self.ex_ents)
+                    nqtext = entry.get('qtext', '') + '\n'
+                    nqtext += "Directory %s contains extra entries:" % entry.get('name')
+                    nqtext += ":".join(self.ex_ents)
+                    entry.set('qtest', nqtext)
+            except OSError:
+                pruneTrue = True
         else:
+            pruneTrue = True
+
+        if not pTrue:
             if owner != str(normUid(entry)):
                 entry.set('current_owner', owner)
                 self.logger.debug("%s %s ownership wrong" % (entry.tag, entry.get('name')))
@@ -181,7 +201,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nnqtext = entry.get('qtext')
                 nnqtext += '\nInstall %s %s: (y/N) ' % (entry.tag, entry.get('name'))
                 entry.set('qtext', nnqtext)
-            return False
+        return pTrue and pruneTrue
+        
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
@@ -229,6 +250,17 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 os.mkdir(entry.get('name'))
             except OSError:
                 self.logger.error('Failed to create directory %s' % (entry.get('name')))
+                return False
+        if entry.get('prune', 'false') == 'true' and self.ex_ents:
+            for pname in self.ex_ents:
+                ulfailed = False
+                try:
+                    self.logger.debug("Unlinking file %s" % pname)
+                    os.unlink(pname)
+                except OSError:
+                    self.logger.error("Failed to unlink path %s" % pname)
+                    ulfailed = True
+            if ulfailed:
                 return False
         return self.InstallPermissions(entry)
 
