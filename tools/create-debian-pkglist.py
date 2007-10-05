@@ -52,7 +52,7 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
         coalesced = 0
         for pkg in pkgdata.keys():
             data = pkgdata[pkg].values()
-            if data.count(data[0]) == len(data):
+            if data.count(data[0]) == len(data) == len(archs):
                 output.write('<Package name="%s" version="%s"/>\n' % (pkg, data[0]))
                 coalesced += 1
                 del pkgdata[pkg]
