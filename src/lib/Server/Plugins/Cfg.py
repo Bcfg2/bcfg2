@@ -133,15 +133,17 @@ class ConfigFileEntry(object):
             return
 
         try:
-            self.fragments.append(FileEntry(self.path, name))
-            self.fragments.sort()
+            if name not in [ent.name for ent in self.fragments]:
+                self.fragments.append(FileEntry(self.path, name))
+                self.fragments.sort()
         except SpecificityError:
             return
 
     def HandleEvent(self, event):
         '''Handle FAM updates'''
         action = event.code2str()
-        #logger.debug("Got event %s for %s" % (action, event.filename))
+        #if self.path.endswith('/etc/passwd'):
+        #    logger.debug("Got event %s for %s" % (action, event.filename))
         if event.filename in [':info', 'info']:
             if action in ['changed', 'exists', 'created']:
                 return self.read_info(event.filename)

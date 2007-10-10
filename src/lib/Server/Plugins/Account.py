@@ -80,6 +80,6 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         entry.text = self.repository.entries['static.sudoers'].data
         entry.text += "".join(["%s ALL=(ALL) ALL\n" % uname \
                                for uname in superusers])
-        perms = {'owner':'root', 'group':'0', 'perms':'0400'}
+        perms = {'owner':'root', 'group':'0', 'perms':'0440'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in perms.iteritems()]

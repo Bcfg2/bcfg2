@@ -92,5 +92,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
             
         newstruct = lxml.etree.Element("Independant")
         for tag, name in prereqs:
-            lxml.etree.SubElement(newstruct, tag, name=name)
+            try:
+                lxml.etree.SubElement(newstruct, tag, name=name)
+            except:
+                self.logger("Failed to add dep entry for %s:%s" % (tag, name))
         return newstruct
