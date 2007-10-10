@@ -29,6 +29,26 @@ from time import strptime, sleep
 from django.db import connection, backend
 import ConfigParser
 
+def build_reason_kwargs(r_ent):
+    if r_ent.get('current_bdiff', False):
+        rc_diff = binascii.a2b_base64(r_ent.get('current_bdiff'))
+    else:
+        rc_diff = r_ent.get('current_diff', '')
+    return dict(owner=r_ent.get('owner', default=""),
+                current_owner=r_ent.get('current_owner', default=""),
+                group=r_ent.get('group', default=""),
+                current_group=r_ent.get('current_group', default=""),
+                perms=r_ent.get('perms', default=""),
+                current_perms=r_ent.get('current_perms', default=""),
+                status=r_ent.get('status', default=""),
+                current_status=r_ent.get('current_status', default=""),
+                to=r_ent.get('to', default=""),
+                current_to=r_ent.get('current_to', default=""),
+                version=r_ent.get('version', default=""),
+                current_version=r_ent.get('current_version', default=""),
+                current_exists=r_ent.get('current_exists', default="True").capitalize()=="True",
+                current_diff=rc_diff)
+
 if __name__ == '__main__':
     somewhatverbose = False
     verbose = False
@@ -120,10 +140,6 @@ if __name__ == '__main__':
     [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
     
 
-    cursor.execute("SELECT id, owner, current_owner, %s, current_group, perms, current_perms, status, current_status, %s, current_to, version, current_version, current_exists, current_diff from reports_reason"%(backend.quote_name("group"),backend.quote_name("to")))
-    reasons_hash = {}
-    [reasons_hash.__setitem__(tuple(n[1:]),n[0]) for n in cursor.fetchall()]
-
     cursor.execute("SELECT id, name, kind, reason_id from reports_bad")
     bad_hash = {}
     [bad_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
@@ -146,29 +162,20 @@ if __name__ == '__main__':
 
     
     for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
-        if r.get('current_bdiff', False):
-            rc_diff = binascii.a2b_base64(r.get('current_bdiff'))
-        else:
-            rc_diff = r.get('current_diff', '')
-        arguments = [r.get('owner', default=""), r.get('current_owner', default=""),
-                     r.get('group', default=""), r.get('current_group', default=""),
-                     r.get('perms', default=""), r.get('current_perms', default=""),
-                     r.get('status', default=""), r.get('current_status', default=""),
-                     r.get('to', default=""), r.get('current_to', default=""),
-                     r.get('version', default=""), r.get('current_version', default=""),
-                     (r.get('current_exists', default="True").capitalize()=="True"),
-                     rc_diff]
-        if reasons_hash.has_key(tuple(arguments)):
-            current_reason_id = reasons_hash[tuple(arguments)]
+        kargs = build_reason_kwargs(r)
+        rlist = \
+              Reason.objects.filter(**kargs)
+        if rlist:
+            current_reason_id = rlist[0].id
             if verbose:
-                print("Reason already exists..... It's ID is: %s"%current_reason_id)
+                print("Reason already exists. It's ID is: %s"%current_reason_id)
         else:
-            cursor.execute("INSERT INTO reports_reason VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
-                           arguments)
-            current_reason_id = cursor.lastrowid
-            reasons_hash[tuple(arguments)] = current_reason_id
+            reason = Reason(**kargs)
+            reason.save()
+            current_reason_id = reason.id
             if verbose:
                 print("Reason inserted with id %s"%current_reason_id)
+
     if (somewhatverbose or verbose):
         print "----------------REASONS SYNCED---------------------"
     
@@ -203,36 +210,22 @@ if __name__ == '__main__':
                                                  ('Extra/*', extra_hash, 'reports_extra'),
                                                  ('Modified/*', modified_hash, 'reports_modified')]:
                 for x in statistics.findall(xpath):
-                    if x.get('current_bdiff', False):
-                        xc_diff = binascii.a2b_base64(x.get('current_bdiff'))
-                    else:
-                        xc_diff = x.get('current_diff', '')
-
-                    arguments = [x.get('owner', default=""), x.get('current_owner', default=""),
-                                 x.get('group', default=""), x.get('current_group', default=""),
-                                 x.get('perms', default=""), x.get('current_perms', default=""),
-                                 x.get('status', default=""), x.get('current_status', default=""),
-                                 x.get('to', default=""), x.get('current_to', default=""),
-                                 x.get('version', default=""), x.get('current_version', default=""),
-                                 (x.get('current_exists', default="True").capitalize()=="True"),
-                                 xc_diff]
-
-                    if not hashname.has_key((x.get('name'), x.tag, reasons_hash[tuple(arguments)])):
+                    kargs = build_reason_kwargs(x)
+                    rr = Reason.objects.filter(**kargs)[0]
+                    if not hashname.has_key((x.get('name'), x.tag, rr.id)):
                         cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s, %s);",
                                        [x.get('name'),
                                         x.tag,
                                         (x.get('critical', default="False").capitalize()=="True"),
-                                        reasons_hash[tuple(arguments)]])
+                                        rr.id])
                         item_id = cursor.lastrowid
-                        hashname[(x.get('name'), x.tag, reasons_hash[tuple(arguments)])] = item_id
+                        hashname[(x.get('name'), x.tag, rr.id)] = item_id
                         if verbose:
-                            print "Bad item INSERTED having reason id %s and ID %s"%(reasons_hash[tuple(arguments)],
-                                                                                     hashname[(x.get('name'),x.tag, reasons_hash[tuple(arguments)])])
+                            print "Bad item INSERTED having reason id %s and ID %s"%(rr.id, hashname[(x.get('name'),x.tag, rr.id)])
                     else:
-                        item_id = hashname[(x.get('name'), x.tag, reasons_hash[tuple(arguments)])]
+                        item_id = hashname[(x.get('name'), x.tag, rr.id)]
                         if verbose:
-                            print "Bad item exists, has reason id %s and ID %s"%(reasons_hash[tuple(arguments)],
-                                                                                          hashname[(x.get('name'),x.tag, reasons_hash[tuple(arguments)])])
+                            print "Bad item exists, has reason id %s and ID %s"%(rr.id, hashname[(x.get('name'),x.tag, rr.id)])
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
