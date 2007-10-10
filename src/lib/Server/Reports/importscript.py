@@ -132,25 +132,9 @@ if __name__ == '__main__':
             if verbose:
                 print("Client %s already exists in db"%name)
 
-
-    cursor.execute("SELECT client_id, timestamp, id from reports_interaction")
-    interactions_hash = {}
-    [interactions_hash.__setitem__(str(x[0])+"-"+x[1].isoformat(),x[2]) for x in cursor.fetchall()]#possibly change str to tuple
     pingability = {}
     [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
     
-
-    cursor.execute("SELECT id, name, kind, reason_id from reports_bad")
-    bad_hash = {}
-    [bad_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
-
-    cursor.execute("SELECT id, name, kind, reason_id from reports_extra")
-    extra_hash = {}
-    [extra_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
-
-    cursor.execute("SELECT id, name, kind, reason_id from reports_modified")
-    modified_hash = {}
-    [modified_hash.__setitem__((n[1],n[2],n[3]),n[0]) for n in cursor.fetchall()]
 
     cursor.execute("SELECT id, metric, value from reports_performance")
     performance_hash = {}
@@ -181,6 +165,7 @@ if __name__ == '__main__':
     
     for node in statsdata.findall('Node'):
         name = node.get('name')
+        c_inst = Client.objects.filter(id=clients[name])[0]
         try:
             pingability[name]
         except KeyError:
@@ -188,49 +173,54 @@ if __name__ == '__main__':
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
             timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])#Maybe replace with django.core.db typecasts typecast_timestamp()? import from django.backends util
-            if interactions_hash.has_key(str(clients[name]) +"-"+ timestamp.isoformat()):
-                current_interaction_id = interactions_hash[str(clients[name])+"-"+timestamp.isoformat()]
+            ilist = Interaction.objects.filter(client=c_inst,
+                                               timestamp=timestamp)
+            if ilist:
+                current_interaction_id = ilist[0].id
                 if verbose:
                     print("Interaction for %s at %s with id %s already exists"%(clients[name],
                         datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
             else:
-                cursor.execute("INSERT INTO reports_interaction VALUES (NULL, %s, %s, %s, %s, %s, %s, %s);",
-                               [clients[name], timestamp,
-                                statistics.get('state', default="unknown"), statistics.get('revision',default="unknown"),
-                                statistics.get('client_version',default="unknown"),
-                                statistics.get('good',default="0"), statistics.get('total',default="0")])
-                current_interaction_id = cursor.lastrowid
-                interactions_hash[str(clients[name])+"-"+timestamp.isoformat()] = current_interaction_id
+                newint = Interaction(client=c_inst,
+                                     timestamp=timestamp,
+                                     state=statistics.get('state', default="unknown"),
+                                     repo_revision=statistics.get('revision',default="unknown"),
+                                     client_version=statistics.get('client_version',default="unknown"),
+                                     goodcount=statistics.get('good',default="0"),
+                                     totalcount=statistics.get('total',default="0"))
+                newint.save()
+                current_interaction_id = newint.id
                 if verbose:
                     print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
                         timestamp, current_interaction_id))
 
 
-            for (xpath, hashname, tablename) in [('Bad/*', bad_hash, 'reports_bad'),
-                                                 ('Extra/*', extra_hash, 'reports_extra'),
-                                                 ('Modified/*', modified_hash, 'reports_modified')]:
+            pattern = [('Bad/*', Bad), ('Extra/*', Extra),
+                       ('Modified/*', Modified)]
+            for (xpath, obj) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
                     rr = Reason.objects.filter(**kargs)[0]
-                    if not hashname.has_key((x.get('name'), x.tag, rr.id)):
-                        cursor.execute("INSERT INTO "+tablename+" VALUES (NULL, %s, %s, %s, %s);",
-                                       [x.get('name'),
-                                        x.tag,
-                                        (x.get('critical', default="False").capitalize()=="True"),
-                                        rr.id])
-                        item_id = cursor.lastrowid
-                        hashname[(x.get('name'), x.tag, rr.id)] = item_id
+                    links = obj.objects.filter(name=x.get('name'),
+                                               kind=x.tag,
+                                               reason=rr.id)
+                    if links:
+                        item_id = links[0].id
                         if verbose:
-                            print "Bad item INSERTED having reason id %s and ID %s"%(rr.id, hashname[(x.get('name'),x.tag, rr.id)])
+                            print "%s item exists, has reason id %s and ID %s"%(xpath, rr.id, item_id)
                     else:
-                        item_id = hashname[(x.get('name'), x.tag, rr.id)]
+                        newitem = obj(name=x.get('name'),
+                                      kind=x.tag,
+                                      reason=rr.id)
+                        newitem.save()
+                        item_id = newitem.id
                         if verbose:
-                            print "Bad item exists, has reason id %s and ID %s"%(rr.id, hashname[(x.get('name'),x.tag, rr.id)])
+                            print "Bad item INSERTED having reason id %s and ID %s"%(rr.id, item_id)
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
                     except:
-                        pass
+                        pass                    
 
             for times in statistics.findall('OpStamps'):
                 for tags in times.items():
