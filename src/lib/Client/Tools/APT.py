@@ -25,11 +25,6 @@ class APT(Bcfg2.Client.Tools.PkgTool):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup, states)
         self.cfg = cfg
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        if not self.setup['dryrun']:
-            if self.setup['kevlar']:
-                self.cmd.run("dpkg --force-confold --configure --pending")
-                self.cmd.run("apt-get clean")
-                self.cmd.run("apt-get -q=2 -y update")
         self.installed = {}
         self.RefreshPackages()
 
@@ -99,4 +94,10 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
               
-        
+    def Install(self, packages):
+        if not self.setup['dryrun']:
+            if self.setup['kevlar']:
+                self.cmd.run("dpkg --force-confold --configure --pending")
+                self.cmd.run("apt-get clean")
+                self.cmd.run("apt-get -q=2 -y update")
+        Bcfg2.Client.Tools.PkgTool.Install(self, packages)
