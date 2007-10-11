@@ -147,7 +147,7 @@ class Tool:
 
     def buildModlist(self, entry, struct):
         '''Build a list of potentially modified POSIX paths for this entry'''
-        if entry.tag != 'Package' or struct.tag != 'Bundle':
+        if struct.tag != 'Bundle':
             return []
         return [sentry.get('name') for sentry in struct if sentry.tag in \
                 ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
