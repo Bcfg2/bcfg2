@@ -138,24 +138,12 @@ if __name__ == '__main__':
     for node in statsdata.findall('Node'):
         name = node.get('name')
         c_inst = Client.objects.filter(id=clients[name])[0]
-        last_time = Interaction.objects.filter(client=c_inst).order_by('-timestamp')
-        if last_time:
-            lt = last_time[0].timestamp.ctime()
-        else:
-            lt = False
         try:
             pingability[name]
         except KeyError:
             pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
-            if lt:
-                st = mktime(t)
-                if st < lt:
-                    if verbose:
-                        print "Skipping Client %s time %s;already in db" \
-                              % (name, strftime("%c", t))
-                    continue
             timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])#Maybe replace with django.core.db typecasts typecast_timestamp()? import from django.backends util
             ilist = Interaction.objects.filter(client=c_inst,
                                                timestamp=timestamp)
@@ -164,6 +152,7 @@ if __name__ == '__main__':
                 if verbose:
                     print("Interaction for %s at %s with id %s already exists"%(clients[name],
                         datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
+                continue
             else:
                 newint = Interaction(client=c_inst,
                                      timestamp=timestamp,
