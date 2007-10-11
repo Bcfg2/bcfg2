@@ -20,7 +20,7 @@ sys.path.pop()
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
+from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason, Ping
 from lxml.etree import XML, XMLSyntaxError
 from sys import argv
 from getopt import getopt, GetoptError
@@ -134,17 +134,7 @@ if __name__ == '__main__':
 
     pingability = {}
     [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
-    
 
-    cursor.execute("SELECT id, metric, value from reports_performance")
-    performance_hash = {}
-    [performance_hash.__setitem__((n[1],n[2]),n[0]) for n in cursor.fetchall()]
-
-    cursor.execute("SELECT x.client_id, reports_ping.status from (SELECT client_id, MAX(endtime) from reports_ping GROUP BY client_id) x, reports_ping WHERE x.client_id = reports_ping.client_id")
-    ping_hash = {}
-    [ping_hash.__setitem__(n[0],n[1]) for n in cursor.fetchall()]
-
-    
     for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
         kargs = build_reason_kwargs(r)
         rlist = \
@@ -223,13 +213,14 @@ if __name__ == '__main__':
                         pass                    
 
             for times in statistics.findall('OpStamps'):
-                for tags in times.items():
-                    if not performance_hash.has_key((tags[0],float(tags[1]))):
-                        cursor.execute("INSERT INTO reports_performance VALUES (NULL, %s, %s)",[tags[0],tags[1]])
-                        performance_hash[(tags[0],tags[1])] = cursor.lastrowid
+                for metric, value in times.items():
+                    mmatch = Performance.objects.filter(metric=metric, value=value)
+                    if mmatch:
+                        item_id = mmatch[0].id
                     else:
-                        item_id = performance_hash[(tags[0],float(tags[1]))]
-                        #already exists
+                        mperf = Performance(metric=metric, value=value)
+                        mperf.save()
+                        item_id = mperf.id
                     try:
                         cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
@@ -246,19 +237,24 @@ if __name__ == '__main__':
         print("------------LATEST INTERACTION SET----------------")
 
     for key in pingability.keys():
-        if clients.has_key(key):
-            if ping_hash.has_key(clients[key]):
-                if ping_hash[clients[key]] == pingability[key]:
-                    cursor.execute("UPDATE reports_ping SET endtime = %s where reports_ping.client_id = %s",
-                                   [datetime.now(),clients[key]])
-                else:
-                    ping_hash[clients[key]] = pingability[key]
-                    cursor.execute("INSERT INTO reports_ping VALUES (NULL, %s, %s, %s, %s)",
-                                   [clients[key], datetime.now(), datetime.now(), pingability[key]])
+        if key not in clients:
+            #print "Ping Save Problem with client %s" % name
+            continue
+        cmatch = Client.objects.filter(id=clients[key])[0]
+        pmatch = Ping.objects.filter(client=cmatch).order_by('-endtime')
+        if pmatch:
+            if pmatch[0].status == pingability[key]:
+                pmatch[0].endtime = datetime.now()
+                pmatch[0].save()
             else:
-                ping_hash[clients[key]] = pingability[key]
-                cursor.execute("INSERT INTO reports_ping VALUES (NULL, %s, %s, %s, %s)",
-                               [clients[key], datetime.now(), datetime.now(), pingability[key]])
+                newp = Ping(client=cmatch, status=pingability[key],
+                            starttime=datetime.now(),
+                            endtime=datetime.now())
+                newp.save()
+        else:
+            newp = Ping(client=cmatch, status=pingability[key],
+                        starttime=datetime.now(), endtime=datetime.now())
+            newp.save()
 
     if (somewhatverbose or verbose):
         print "---------------PINGDATA SYNCED---------------------"
