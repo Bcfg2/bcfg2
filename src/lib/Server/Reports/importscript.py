@@ -25,7 +25,7 @@ from lxml.etree import XML, XMLSyntaxError
 from sys import argv
 from getopt import getopt, GetoptError
 from datetime import datetime
-from time import strptime, sleep
+from time import mktime, strftime, strptime, sleep
 from django.db import connection, backend
 import ConfigParser
 
@@ -135,33 +135,27 @@ if __name__ == '__main__':
     pingability = {}
     [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
 
-    for r in statsdata.findall('.//Bad/*')+statsdata.findall('.//Extra/*')+statsdata.findall('.//Modified/*'):
-        kargs = build_reason_kwargs(r)
-        rlist = \
-              Reason.objects.filter(**kargs)
-        if rlist:
-            current_reason_id = rlist[0].id
-            if verbose:
-                print("Reason already exists. It's ID is: %s"%current_reason_id)
-        else:
-            reason = Reason(**kargs)
-            reason.save()
-            current_reason_id = reason.id
-            if verbose:
-                print("Reason inserted with id %s"%current_reason_id)
-
-    if (somewhatverbose or verbose):
-        print "----------------REASONS SYNCED---------------------"
-    
     for node in statsdata.findall('Node'):
         name = node.get('name')
         c_inst = Client.objects.filter(id=clients[name])[0]
+        last_time = Interaction.objects.filter(client=c_inst).order_by('-timestamp')
+        if last_time:
+            lt = last_time[0].timestamp.ctime()
+        else:
+            lt = False
         try:
             pingability[name]
         except KeyError:
             pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
+            if lt:
+                st = mktime(t)
+                if st < lt:
+                    if verbose:
+                        print "Skipping Client %s time %s;already in db" \
+                              % (name, strftime("%c", t))
+                    continue
             timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])#Maybe replace with django.core.db typecasts typecast_timestamp()? import from django.backends util
             ilist = Interaction.objects.filter(client=c_inst,
                                                timestamp=timestamp)
@@ -190,10 +184,19 @@ if __name__ == '__main__':
             for (xpath, obj) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
-                    rr = Reason.objects.filter(**kargs)[0]
+                    rls = Reason.objects.filter(**kargs)
+                    if rls:
+                        rr = rls[0]
+                        if verbose:
+                            print "Reason exists: %s"% (rr.id)
+                    else:
+                        rr = Reason(**kargs)
+                        rr.save()
+                        if verbose:
+                            print "Created reason: %s" % rr.id
                     links = obj.objects.filter(name=x.get('name'),
                                                kind=x.tag,
-                                               reason=rr.id)
+                                               reason=rr)
                     if links:
                         item_id = links[0].id
                         if verbose:
@@ -201,7 +204,7 @@ if __name__ == '__main__':
                     else:
                         newitem = obj(name=x.get('name'),
                                       kind=x.tag,
-                                      reason=rr.id)
+                                      reason=rr)
                         newitem.save()
                         item_id = newitem.id
                         if verbose:
