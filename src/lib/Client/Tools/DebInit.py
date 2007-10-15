@@ -78,8 +78,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                                                  entry.get('reload', self.__svcrestart__)))[0]
                 else:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
-                    rc = self.cmd.run('%s stop' %  \
-                                      (command, entry.get('name')))[0]
+                    rc = self.cmd.run('%s stop' %  command)[0]
                 if rc:
                     self.logger.error("Failed to restart service %s" % (entry.get('name')))
 
