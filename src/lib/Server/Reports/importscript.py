@@ -25,8 +25,8 @@ from lxml.etree import XML, XMLSyntaxError
 from sys import argv
 from getopt import getopt, GetoptError
 from datetime import datetime
-from time import mktime, strftime, strptime, sleep
-from django.db import connection, backend
+from time import strptime
+from django.db import connection
 import ConfigParser
 
 def build_reason_kwargs(r_ent):
@@ -53,14 +53,19 @@ if __name__ == '__main__':
     somewhatverbose = False
     verbose = False
     veryverbose = False
-
+    cpath = "/etc/bcfg2.conf"
+    clientpath = False
+    statpath = False
+    
     try:
-        opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,"debug", "clients=", "stats="])
+        opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,
+                                                   "debug", "clients=", "stats=",
+                                                   "config="])
     except GetoptError, mesg:
         # print help information and exit:
         print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg) 
         raise SystemExit, 2
-    opts.append(("1","1"))#this requires the loop run at least once
+
     for o, a in opts:
         if o in ("-h", "--help"):
             print "Usage:\nimportscript.py [-h] [-v] -c <clients-file> -s <statistics-file> \n"
@@ -72,14 +77,9 @@ if __name__ == '__main__':
             print "c : clients.xml file"
             print "s : statistics.xml file"
             raise SystemExit
-        if o in ("-C"):
+        if o in ["-C", "--config"]:
             cpath = a
-        else:
-            cpath = "/etc/bcfg2.conf"
 
-        cf = ConfigParser.ConfigParser()
-        cf.read([cpath])
-		
         if o in ("-v", "--verbose"):
             verbose = True
         if o in ("-u", "--updates"):
@@ -88,28 +88,32 @@ if __name__ == '__main__':
             veryverbose = True
         if o in ("-c", "--clients"):
             clientspath = a
-        else:
-            try:
-                clientspath = "%s/Metadata/clients.xml"%cf.get('server', 'repository')
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                print "Could not read bcfg2.conf; exiting"
-                raise SystemExit, 1
 
         if o in ("-s", "--stats"):
             statpath = a
-        else:
-            try:
-                statpath = "%s/etc/statistics.xml"%cf.get('server', 'repository')
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                print "Could not read bcfg2.conf; exiting"
-                raise SystemExit, 1
 
-    '''Reads Data & Config files'''
+    cf = ConfigParser.ConfigParser()
+    cf.read([cpath])
+
+    if not statpath:
+        try:
+            statpath = "%s/etc/statistics.xml" % cf.get('server', 'repository')
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            print "Could not read bcfg2.conf; exiting"
+            raise SystemExit, 1
     try:
         statsdata = XML(open(statpath).read())
     except (IOError, XMLSyntaxError):
         print("StatReports: Failed to parse %s"%(statpath))
         raise SystemExit, 1
+
+    if not clientpath:
+        try:
+            clientspath = "%s/Metadata/clients.xml" % \
+                          cf.get('server', 'repository')
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            print "Could not read bcfg2.conf; exiting"
+            raise SystemExit, 1
     try:
         clientsdata = XML(open(clientspath).read())
     except (IOError, XMLSyntaxError):
@@ -119,21 +123,24 @@ if __name__ == '__main__':
     cursor = connection.cursor()
     clients = {}
     cursor.execute("SELECT name, id from reports_client;")
-    [clients.__setitem__(a,b) for a,b in cursor.fetchall()]
+    [clients.__setitem__(a, b) for a, b in cursor.fetchall()]
     
     for node in statsdata.findall('Node'):
         name = node.get('name')
         if not clients.has_key(name):
-            cursor.execute("INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)", [datetime.now(),name])
+            cursor.execute(\
+                "INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)",
+                [datetime.now(), name])
             clients[name] = cursor.lastrowid
             if verbose:
-                print("Client %s added to db"%name)
+                print("Client %s added to db" % name)
         else:
             if verbose:
-                print("Client %s already exists in db"%name)
+                print("Client %s already exists in db" % name)
 
     pingability = {}
-    [pingability.__setitem__(n.get('name'),n.get('pingable',default='N')) for n in clientsdata.findall('Client')]
+    [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
+     for n in clientsdata.findall('Client')]
 
     for node in statsdata.findall('Node'):
         name = node.get('name')
@@ -144,7 +151,9 @@ if __name__ == '__main__':
             pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             t = strptime(statistics.get('time'))
-            timestamp = datetime(t[0],t[1],t[2],t[3],t[4],t[5])#Maybe replace with django.core.db typecasts typecast_timestamp()? import from django.backends util
+            # Maybe replace with django.core.db typecasts typecast_timestamp()?
+            # import from django.backends util
+            timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
             ilist = Interaction.objects.filter(client=c_inst,
                                                timestamp=timestamp)
             if ilist:
@@ -168,9 +177,10 @@ if __name__ == '__main__':
                         timestamp, current_interaction_id))
 
 
-            pattern = [('Bad/*', Bad), ('Extra/*', Extra),
-                       ('Modified/*', Modified)]
-            for (xpath, obj) in pattern:
+            pattern = [('Bad/*', Bad, 'reports_bad'),
+                       ('Extra/*', Extra, 'reports_extra'),
+                       ('Modified/*', Modified, 'reports_modified')]
+            for (xpath, obj, tablename) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
                     rls = Reason.objects.filter(**kargs)
@@ -189,7 +199,7 @@ if __name__ == '__main__':
                     if links:
                         item_id = links[0].id
                         if verbose:
-                            print "%s item exists, has reason id %s and ID %s"%(xpath, rr.id, item_id)
+                            print "%s item exists, has reason id %s and ID %s" % (xpath, rr.id, item_id)
                     else:
                         newitem = obj(name=x.get('name'),
                                       kind=x.tag,
@@ -197,7 +207,7 @@ if __name__ == '__main__':
                         newitem.save()
                         item_id = newitem.id
                         if verbose:
-                            print "Bad item INSERTED having reason id %s and ID %s"%(rr.id, item_id)
+                            print "Bad item INSERTED having reason id %s and ID %s" % (rr.id, item_id)
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
