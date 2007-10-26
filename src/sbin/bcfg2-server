@@ -96,11 +96,17 @@ class Bcfg2Serv(Bcfg2.Component.Component):
                 self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
                                        "%s.%s" % (plugin.__name__, method))
         famfd = self.Core.fam.fileno()
+        events = False
         while True:
             try:
                 rsockinfo = select.select([famfd], [], [], 15)[0]
                 if not rsockinfo:
-                    break
+                    if events:
+                        break
+                    else:
+                        logger.error("Hit event timeout without getting any events; GAMIN/FAM problem?")
+                        continue
+                events = True
                 self.Core.Service()
             except socket.error:
                 continue
