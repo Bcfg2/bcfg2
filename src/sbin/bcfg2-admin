@@ -326,6 +326,10 @@ def do_pull(cfile, repopath, client, etype, ename):
     elif 'current_bfile' in cfentry.attrib:
         data = binascii.a2b_base64(cfentry.get('current_bfile'))
         diff = False
+    else:
+        print "having trouble processing entry. Entry is:"
+        print lxml.etree.tostring(cfentry)
+        raise SystemExit, 1
 
     if diff:
         print "Located diff:\n %s" % diff
