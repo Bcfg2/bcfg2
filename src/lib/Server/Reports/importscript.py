@@ -212,6 +212,7 @@ if __name__ == '__main__':
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
                     except:
+                        print "interactions insert failed"
                         pass                    
 
             for times in statistics.findall('OpStamps'):
@@ -227,6 +228,7 @@ if __name__ == '__main__':
                         cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
                     except:
+                        print "perf insert failed"
                         pass
 
     if (somewhatverbose or verbose):
