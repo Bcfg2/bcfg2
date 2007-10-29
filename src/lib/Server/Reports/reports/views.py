@@ -157,8 +157,8 @@ def modified_item_index(request, timestamp = 'now'):
 def client_index(request, timestamp = 'now'):
     timestamp = timestamp.replace("@"," ")
     client_list = Client.objects.active(timestamp).order_by('name')
-    client_list_a = client_list[:len(client_list)/2]
-    client_list_b = client_list[len(client_list)/2:]
+    client_list_b = client_list[:len(client_list)/2]
+    client_list_a = client_list[len(client_list)/2:]
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
     return render_to_response('clients/index.html', {'client_list_a': client_list_a,
