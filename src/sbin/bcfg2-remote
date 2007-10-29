@@ -61,7 +61,7 @@ if __name__ == '__main__':
             elif serr.args[0] == -5:
                 logger.error("Lookup failure for %s" % url)
             else:
-                logger.error("Got unexpected socket error %d for %s" % \
+                logger.error("Got unexpected socket error %s for %s" % \
                              (serr.args[0], url), exc_info=1)
             status = 1
     raise SystemExit(status)
