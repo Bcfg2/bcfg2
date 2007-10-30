@@ -202,7 +202,7 @@ if __name__ == '__main__':
                             print "%s item exists, has reason id %s and ID %s" % (xpath, rr.id, item_id)
                     else:
                         newitem = obj(name=x.get('name'),
-                                      kind=x.tag,
+                                      kind=x.tag, critical=False,
                                       reason=rr)
                         newitem.save()
                         item_id = newitem.id
