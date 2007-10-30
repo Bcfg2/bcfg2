@@ -181,7 +181,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
 
-    def AcceptEntry(self, meta, _, entry_name, diff, fulldata):
+    def AcceptEntry(self, meta, _, entry_name, diff, fulldata, metadata_updates={}):
         '''per-plugin bcfg2-admin pull support'''
         filename = "%s/%s.H_%s" % (self.data, entry_name.split('/')[-1],
                                    meta.hostname)

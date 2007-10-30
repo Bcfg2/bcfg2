@@ -317,6 +317,16 @@ def do_pull(cfile, repopath, client, etype, ename):
         err_exit("Could not find state data for entry; rerun bcfg2 on client system")
     cfentry = entry[-1]
 
+
+    badfields = [field for field in ['perms', 'owner', 'group'] \
+                 if cfentry.get(field) != cfentry.get('current_' + field) and \
+                 cfentry.get('current_' + field)]
+    if badfields:
+        m_updates = dict([(field, cfentry.get('current_' + field)) for field in badfields])
+        print "got metadata_updates", m_updates
+    else:
+        m_updates = {}
+
     if 'current_bdiff' in cfentry.attrib:
         data = False
         diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
@@ -327,14 +337,23 @@ def do_pull(cfile, repopath, client, etype, ename):
         data = binascii.a2b_base64(cfentry.get('current_bfile'))
         diff = False
     else:
-        print "having trouble processing entry. Entry is:"
-        print lxml.etree.tostring(cfentry)
-        raise SystemExit, 1
+        if not m_updates:
+            print "having trouble processing entry. Entry is:"
+            print lxml.etree.tostring(cfentry)
+            raise SystemExit, 1
+        else:
+            data = False
+            diff = False
 
     if diff:
         print "Located diff:\n %s" % diff
-    else:
+    elif data:
         print "Found full (binary) file data"
+    if m_updates:
+        print "Found metadata updates"
+
+    if not diff and not data and not m_updates:
+        err_exit("Failed to locate diff or full data or metadata updates\nStatistics entry was:\n%s" % lxml.etree.tostring(cfentry))
 
     try:
         bcore = Bcfg2.Server.Core.Core({}, cfile)
@@ -352,10 +371,8 @@ def do_pull(cfile, repopath, client, etype, ename):
         err_exit("Got wrong numbers of matching generators for entry:" \
                  + "%s" % ([g.__name__ for g in glist]))
     plugin = glist[0]
-    if not diff and not data:
-        err_exit("Failed to locate diff or full data\nStatistics entry was:\n%s" % lxml.etree.tostring(cfentry))
     try:
-        plugin.AcceptEntry(m, 'ConfigFile', ename, diff, data)
+        plugin.AcceptEntry(m, 'ConfigFile', ename, diff, data, m_updates)
     except Bcfg2.Server.Plugin.PluginExecutionError:
         err_exit("Configuration upload not supported by plugin %s" \
                  % (plugin.__name__))

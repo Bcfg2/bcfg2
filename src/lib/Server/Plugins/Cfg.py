@@ -127,7 +127,6 @@ class ConfigFileEntry(object):
         if basename in [':info', 'info']:
             return self.read_info(basename)
         elif basename in ['info.xml', ':info.xml']:
-            print "here"
             fpath = self.repopath + '/' + basename
             self.infoxml = Bcfg2.Server.Plugin.XMLSrc(fpath, True)
             return
@@ -372,8 +371,20 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
             logger.error("Got unknown event %s %s:%s" % (action, event.requestID, event.filename))
         self.interpolate = len([entry for entry in self.entries.values() if entry.interpolate ]) > 0
 
-    def AcceptEntry(self, meta, _, entry_name, diff, fulldata):
+    def AcceptEntry(self, meta, _, entry_name, diff, fulldata, metadata_updates={}):
         '''per-plugin bcfg2-admin pull support'''
+        if metadata_updates:
+            if hasattr(self.Entries['ConfigFile'][entry_name], 'infoxml'):
+                print "InfoXML support not yet implemented"
+            elif raw_input("Should metadata updates apply to all hosts? (n/Y) ") in 'yY':
+                self.entries[entry_name].metadata.update(metadata_updates)
+                infofile = open(self.entries[entry_name].repopath + '/:info', 'w')
+                for x in self.entries[entry_name].metadata.iteritems():
+                    infofile.write("%s: %s\n" % x)
+                infofile.close()
+        if not diff or fulldata:
+            raise SystemExit, 0
+                
         hsq = "Found host-specific file %s; Should it be updated (n/Y): "
         repo_vers = lxml.etree.Element('ConfigFile', name=entry_name)
         self.Entries['ConfigFile'][entry_name](repo_vers, meta)
