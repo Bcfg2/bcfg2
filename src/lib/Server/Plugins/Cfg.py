@@ -365,6 +365,12 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         elif action == 'deleted':
             if self.entries.has_key(configfile):
                 self.entries[configfile].HandleEvent(event)
+                try:
+                    os.stat(self.entries[configfile].repopath)
+                except:
+                    logger.info("Removing service for ConfigFile %s" % \
+                                self.entries[configfile].path)
+                    del self.entries[configfile]
         elif action in ['exists', 'endExist']:
             pass
         else:
