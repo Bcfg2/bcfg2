@@ -6,6 +6,8 @@ import copy, logging, lxml.etree, sys, time, cmd
 import Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 
+logger = logging.getLogger('bcfg2-info')
+
 class dummyError(Exception):
     pass
 
@@ -34,8 +36,23 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             self.fam.Service()
             time.sleep(0.5)
 
+    def do_loop(self):
+        self.cont = True
+        while self.cont:
+            try:
+                self.cmdloop()
+            except SystemExit, val:
+                raise
+            except Bcfg2.Server.Plugin.PluginExecutionError:
+                continue
+            except dummyError:
+                continue
+            except:
+                logger.error("command failure", exc_info=1)
+
     def do_debug(self, _):
         self.cont = False
+        print "dropping to python interpreter; run loop.do_loop() to resume"
         raise dummyError
 
     def do_quit(self, _):
@@ -241,7 +258,6 @@ Usage: [quit|exit]"""
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
-    logger = logging.getLogger('bcfg2-info')
     if '-C' in sys.argv:
         cfile = sys.argv[-1]
     else:
@@ -249,14 +265,4 @@ if __name__ == '__main__':
 
     loop = infoCore(cfile)
     loop.plugins['Metadata'].load_probedata()
-    while loop.cont:
-        try:
-            loop.cmdloop()
-        except SystemExit, val:
-            raise
-        except Bcfg2.Server.Plugin.PluginExecutionError:
-            continue
-        except dummyError:
-            continue
-        except:
-            logger.error("command failure", exc_info=1)
+    loop.do_loop()
