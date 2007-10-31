@@ -401,7 +401,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
                     if frag.applies(meta)][-1]
         gsq = "Should this change apply to this host of all hosts effected by file %s? (N/y): " % (basefile.name)
         if ".H_%s" % (meta.hostname) in basefile.name:
-            answer = raw_input(hsq)
+            answer = raw_input(hsq % basefile.name)
         else:
             answer = raw_input(gsq)
 
