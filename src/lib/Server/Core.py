@@ -223,8 +223,8 @@ class Core(object):
         mpath = self.cfile.get('server','repository')
         self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
-        structures = self.cfile.get('server', 'structures').split(',')
-        generators = self.cfile.get('server', 'generators').split(',')
+        structures = self.cfile.get('server', 'structures').replace(' ', '').split(',')
+        generators = self.cfile.get('server', 'generators').replace(' ', '').split(',')
         [data.remove('') for data in [structures, generators] if '' in data]
 
         for plugin in structures + generators + ['Metadata']:
