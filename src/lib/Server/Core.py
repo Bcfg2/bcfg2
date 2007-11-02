@@ -232,8 +232,8 @@ class Core(object):
                 try:
                     mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                              (plugin)).Server.Plugins, plugin)
-                except ImportError:
-                    logger.error("Failed to load plugin %s" % (plugin))
+                except ImportError, e:
+                    logger.error("Failed to load plugin %s: %s" % (plugin, e))
                     continue
                 struct = getattr(mod, plugin)
                 try:
