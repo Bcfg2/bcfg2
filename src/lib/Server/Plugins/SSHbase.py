@@ -130,7 +130,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.entries[hostkey].data)
-        permdata = {'owner':'root', 'group':'0', 'perms':'0644'}
+        permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
     def build_hk(self, entry, metadata):
@@ -143,7 +143,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
         keydata = self.entries[filename].data
-        permdata = {'owner':'root', 'group':'0'}
+        permdata = {'owner':'root', 'group':'root'}
         permdata['perms'] = '0600'
         if entry.get('name')[-4:] == '.pub':
             permdata['perms'] = '0644'

@@ -82,7 +82,7 @@ class ConfigFileEntry(object):
         self.path = path
         self.repopath = repopath
         self.fragments = []
-        self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'0', 'perms':'0644'}
+        self.metadata = {'encoding': 'ascii', 'owner':'root', 'group':'root', 'perms':'0644'}
         self.paranoid = False
         self.interpolate = False
         

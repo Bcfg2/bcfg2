@@ -34,7 +34,7 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         fname = entry.attrib['name'].split('/')[-1]
         entry.text = self.repository.entries["static.%s" % (fname)].data
         entry.text += self.repository.entries["dyn.%s" % (fname)].data
-        perms = {'owner':'root', 'group':'0', 'perms':'0644'}
+        perms = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
 
     def gen_limits_cb(self, entry, metadata):
@@ -43,7 +43,7 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         superusers = self.repository.entries["superusers"].data.split()
         useraccess = [line.split(':') for line in self.repository.entries["useraccess"].data.split()]
         users = [user for (user, host) in useraccess if host == metadata.hostname.split('.')[0]]
-        perms = {'owner':'root', 'group':'0', 'perms':'0600'}
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
         entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in superusers + users])
         if "*" not in users:
@@ -63,7 +63,7 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         entry.text = "".join([rdata["%s.key" % user].data for user \
                               in superusers if \
                               rdata.has_key("%s.key" % user)])
-        perms = {'owner':'root', 'group':'0', 'perms':'0600'}
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in perms.iteritems()]
 
@@ -80,6 +80,6 @@ class Account(Bcfg2.Server.Plugin.Plugin):
         entry.text = self.repository.entries['static.sudoers'].data
         entry.text += "".join(["%s ALL=(ALL) ALL\n" % uname \
                                for uname in superusers])
-        perms = {'owner':'root', 'group':'0', 'perms':'0440'}
+        perms = {'owner':'root', 'group':'root', 'perms':'0440'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in perms.iteritems()]
