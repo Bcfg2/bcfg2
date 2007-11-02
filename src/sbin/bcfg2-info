@@ -102,7 +102,7 @@ Usage: [quit|exit]"""
             print 'Usage: build <hostname> <output file>'
 
     def do_buildall(self, args):
-        if len(args.split()) != 2:
+        if len(args.split()) != 1:
             print "Usage: buildall <directory>"
             return
         try:
@@ -110,7 +110,7 @@ Usage: [quit|exit]"""
         except:
             pass
         for client in self.metadata.clients:
-            self.do_build(client, "%s/%s.xml" % (args, client))
+            self.do_build("%s %s/%s.xml" % (client, args, client))
 
     def do_buildfile(self, args):
         '''build a config file for client'''
