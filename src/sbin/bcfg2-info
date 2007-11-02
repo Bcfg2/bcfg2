@@ -61,6 +61,7 @@ Usage: [quit|exit]"""
         raise SystemExit(0)
 
     do_EOF = do_quit
+    do_exit = do_quit
 
     def do_help(self, _):
         '''print out usage info'''
