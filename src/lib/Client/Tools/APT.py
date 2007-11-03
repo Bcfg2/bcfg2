@@ -27,6 +27,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.installed = {}
         self.RefreshPackages()
+        self.updated = False
 
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
@@ -98,9 +99,9 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             self.extra = self.FindExtraPackages()
               
     def Install(self, packages):
-        if not self.setup['dryrun']:
-            if self.setup['kevlar']:
-                self.cmd.run("dpkg --force-confold --configure --pending")
-                self.cmd.run("apt-get clean")
-                self.cmd.run("apt-get -q=2 -y update")
+        if self.setup['kevlar'] and not self.setup['dryrun'] and not self.updated:
+            self.cmd.run("dpkg --force-confold --configure --pending")
+            self.cmd.run("apt-get clean")
+            self.cmd.run("apt-get -q=2 -y update")
+            self.updated = True
         Bcfg2.Client.Tools.PkgTool.Install(self, packages)
