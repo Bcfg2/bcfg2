@@ -47,7 +47,7 @@ def normGid(entry):
         log.error('GID normalization failed for %s' % (entry.get('name')))
         return False
 
-text_chars = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
+text_chars = "".join([chr(y) for y in range(32, 127)] + list("\n\r\t\b"))
 notrans = string.maketrans("", "")
 
 def isString(strng):
@@ -277,6 +277,27 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % (entry.get('name')))
             return False
+
+    def gatherCurrentData(self, entry):
+        if entry.tag == 'ConfigFile':
+            try:
+                ondisk = os.stat(entry.get('name'))
+            except OSError:
+                entry.set('current_exists', 'false')
+                self.logger.debug("%s %s does not exist" %
+                                  (entry.tag, entry.get('name')))
+                return False
+            try:
+                entry.set('current_owner', str(ondisk[ST_UID]))
+                entry.set('current_group', str(ondisk[ST_GID]))
+            except (OSError, KeyError):
+                pass
+            entry.set('perms', str(oct(ondisk[ST_MODE])[-4:]))
+            try:
+                content = open(entry.get('name')).read()
+                entry.set('current_bfile', binascii.b2a_base64(content))
+            except IOError, error:
+                self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
 
     def VerifyConfigFile(self, entry, _):
         '''Install ConfigFile Entry'''

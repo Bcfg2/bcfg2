@@ -152,6 +152,10 @@ class Tool:
         return [sentry.get('name') for sentry in struct if sentry.tag in \
                 ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
 
+    def gatherCurrentData(self, entry):
+        '''Default implementation of the information gathering routines'''
+        pass
+
     def canVerify(self, entry):
         '''test if entry has enough information to be verified'''
         if not self.handlesEntry(entry):
@@ -164,6 +168,10 @@ class Tool:
                               % (entry.tag, entry.get('name')))
             self.logger.error("\t... due to absense of %s attribute(s)" % \
                               (":".join(missing)))
+            try:
+                self.gatherCurrentData(entry)
+            except:
+                self.logger.error("Unexpected error in gatherCurrentData", exc_info=1)
             return False
         return True
 
