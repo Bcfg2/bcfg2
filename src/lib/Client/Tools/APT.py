@@ -60,6 +60,9 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                             files.append(item.split()[-1])
                         elif "can't open" in item:
                             files.append(item.split()[5])
+                        elif "is not installed" in item:
+                            self.logger.error("Package %s is not fully installed" \
+                                              % entry.get('name'))
                         else:
                             self.logger.error("Got Unsupported pattern %s from debsums" \
                                               % item)

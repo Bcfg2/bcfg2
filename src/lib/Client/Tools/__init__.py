@@ -245,6 +245,7 @@ class PkgTool(Tool):
                         self.states[pkg] = True
                     else:
                         self.logger.error("Failed to install package %s" % (pkg.get('name')))
+            self.RefreshPackages()
         for entry in [ent for ent in packages if self.states[ent]]:
             self.modified.append(entry)
 
