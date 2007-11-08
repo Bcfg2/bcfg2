@@ -32,10 +32,25 @@ config = '''
 [server]
 repository = %s
 structures = Bundler,Base
-generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules
+generators = SSHbase,Cfg,Pkgmgr,Rules
 
 [statistics]
 sendmailpath = /usr/sbin/sendmail
+database_engine = sqlite3
+# 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
+database_name =
+# Or path to database file if using sqlite3.
+#<repository>/etc/brpt.sqlite is default path if left empty
+database_user =
+# Not used with sqlite3.
+database_password =
+# Not used with sqlite3.
+database_host =
+# Not used with sqlite3.
+database_port =
+# Set to empty string for default. Not used with sqlite3.
+web_debug = True
+
 
 [communication]
 protocol = xmlrpc/ssl
@@ -114,7 +129,7 @@ def initialize_repo(cfile):
         pass
     
     #create the repo dirs
-    for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Svcmgr', 'Rules', 'etc', 'Metadata',
+    for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 'etc', 'Metadata',
                    'Base', 'Bundler']:
         path = "%s/%s" % (repo, subdir)
         newpath = ''
