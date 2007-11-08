@@ -291,10 +291,10 @@ def prepare_client_lists(request, timestamp = 'now'):
     interact_queryset = Interaction.objects.interaction_per_client(timestamp)
     # or you can specify a time like this: '2007-01-01 00:00:00'
     [client_interaction_dict.__setitem__(x.client_id,x) for x in interact_queryset]
-    client_list = Client.objects.filter(id__in=client_interaction_dict.keys()).order_by('name')
+    client_list = Client.objects.active(timestamp).filter(id__in=client_interaction_dict.keys()).order_by('name')
 
-    [clean_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
-    [bad_client_list.append(x) for x in Client.objects.filter(id__in=[y.client_id for y in interact_queryset.filter(state='dirty')])]
+    [clean_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
+    [bad_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=[y.client_id for y in interact_queryset.filter(state='dirty')])]
 
     client_ping_dict = {}
     [client_ping_dict.__setitem__(x,'Y') for x in client_interaction_dict.keys()]#unless we know otherwise...
@@ -309,7 +309,7 @@ def prepare_client_lists(request, timestamp = 'now'):
 
     client_down_ids = [y for y in client_ping_dict.keys() if client_ping_dict[y]=='N']
     if not client_down_ids == []:
-        [down_client_list.append(x) for x in Client.objects.filter(id__in=client_down_ids)]
+        [down_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=client_down_ids)]
 
     if (timestamp == 'now' or timestamp == None): 
         cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
@@ -317,7 +317,7 @@ def prepare_client_lists(request, timestamp = 'now'):
         for x in results:
             if type(x[1]) == type(""):
                 x[1] = util.typecast_timestamp(x[1])
-        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in results if datetime.now() - x[1] > timedelta(days=1)])
+        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetime.now() - x[1] > timedelta(days=1)])
     else:
         cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
                        "WHERE timestamp < %s GROUP BY client_id", [timestamp])
@@ -327,16 +327,16 @@ def prepare_client_lists(request, timestamp = 'now'):
         for x in results:
             if type(x[1]) == type(""):
                 x[1] = util.typecast_timestamp(x[1])
-        stale_all_client_list = Client.objects.filter(id__in=[x[0] for x in results if datetimestamp - x[1] > timedelta(days=1)])
+        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetimestamp - x[1] > timedelta(days=1)])
         
     [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
 
     
     cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_modified_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_modified_interactions.interaction_id GROUP BY reports_client.id")
-    modified_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+    modified_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
     cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_extra_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_extra_interactions.interaction_id GROUP BY reports_client.id")
-    extra_client_list = Client.objects.filter(id__in=[x[0] for x in cursor.fetchall()])
+    extra_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
