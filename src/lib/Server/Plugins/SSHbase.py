@@ -186,7 +186,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
         filename = "%s/%s.H_%s" % (self.data, entry_name.split('/')[-1],
                                    meta.hostname)
         print "This file will be installed as file %s" % filename
-        if raw_input("Should it be installed? (N/y): ") in 'Yy':
+        if raw_input("Should it be installed? (N/y): ") in ['Y', 'y']:
             print "writing file, %s" % filename
             if fulldata:
                 newdata = fulldata

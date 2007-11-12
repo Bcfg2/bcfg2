@@ -382,7 +382,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         if metadata_updates:
             if hasattr(self.Entries['ConfigFile'][entry_name], 'infoxml'):
                 print "InfoXML support not yet implemented"
-            elif raw_input("Should metadata updates apply to all hosts? (n/Y) ") in 'yY':
+            elif raw_input("Should metadata updates apply to all hosts? (n/Y) ") in ['Y', 'y']:
                 self.entries[entry_name].metadata.update(metadata_updates)
                 infofile = open(self.entries[entry_name].repopath + '/:info', 'w')
                 for x in self.entries[entry_name].metadata.iteritems():
@@ -399,13 +399,13 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         basefile = [frag for frag in \
                     self.entries[entry_name].fragments \
                     if frag.applies(meta)][-1]
-        gsq = "Should this change apply to this host of all hosts effected by file %s? (N/y): " % (basefile.name)
+        gsq = "Should this change apply to all hosts effected by file %s? (N/y): " % (basefile.name)
         if ".H_%s" % (meta.hostname) in basefile.name:
             answer = raw_input(hsq % basefile.name)
         else:
             answer = raw_input(gsq)
-
-        if answer in 'Yy':
+        
+        if answer in ['Y', 'y']:
             print "writing file, %s" % basefile.name
             if fulldata:
                 newdata = fulldata
@@ -423,7 +423,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         else:
             newname = basefile.name + ".H_%s" % (meta.hostname)
         print "This file will be installed as file %s" % newname
-        if raw_input("Should it be installed? (N/y): ") in 'Yy':
+        if raw_input("Should it be installed? (N/y): ") in ['Y', 'y']:
             print "writing file, %s" % newname
             if fulldata:
                 newdata = fulldata
