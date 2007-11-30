@@ -20,6 +20,9 @@ try:
 except:
     pass
 
+if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
+    raise ImportError
+
 class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     '''Support for Yum packages'''
     pkgtype = 'yum'
