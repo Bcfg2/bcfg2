@@ -28,11 +28,13 @@ BCFG2_OPTIONS="-q"
 # Disabled per default
 BCFG2_ENABLED=0
 BCFG2_INIT=0
+BCFG2_AGENT=0
 
 # Include default startup configuration if exists
 test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
 
-[ "$BCFG2_ENABLED" -eq "0" -o "$BCFG2_INIT" -eq 0 ] && exit 0
+[ "$BCFG2_ENABLED" -eq 0 ] && exit 0
+[ "$BCFG2_AGENT" -eq 0  -a "$BCFG2_INIT" -eq 0 ] && exit 0
 
 # Exit if bcfg2 doesn't exist and is not executable
 test -x $BCFG2 || exit 5
@@ -40,7 +42,19 @@ test -x $BCFG2 || exit 5
 case "$1" in
   start)
     echo -n "Running configuration management client: "
-    ${BCFG2} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
+
+    if [ "$BCFG2_AGENT" -eq 1 ]
+    then
+      ${BCFG2} -A -i /var/run/bcfg2-agent.pid ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_AGENT}
+      STATUS=$?
+    fi
+
+    if [ "$BCFG2_INIT" -eq 1 ]
+    then
+      ${BCFG2} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
+      STATUS=$?
+    fi
+
     echo "bcfg2"
     ;;
   status)

@@ -32,6 +32,45 @@ def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     os._exit(1)
 
+def daemonize(filename):
+    '''Do the double fork/setsession dance'''
+    # Check if the pid is active
+    try:
+        pidfile = open(filename, "r")
+        oldpid = int(pidfile.readline())
+        # getpgid() will retun an IO error if all fails
+        os.getpgid(oldpid)
+        pidfile.close()
+
+        # If we got this far without exceptions, there is another instance
+        # running. Exit gracefully.
+        print "PID File (%s) exists and listed PID (%d) is active." % \
+              (filename, oldpid)
+        raise SystemExit, 1
+    except OSError:
+        pidfile.close()
+    except IOError: 
+        # pid file doesn't
+        pass
+
+    # Fork once
+    if os.fork() != 0:      
+        os._exit(0)         
+    os.setsid()                     # Create new session
+    pid = os.fork()
+    if pid != 0:
+        pidfile = open(filename, "w")
+        pidfile.write("%i" % pid)
+        pidfile.close()
+        os._exit(0)     
+    os.chdir("/")         
+    os.umask(0)
+
+    null = open("/dev/null", "w+")
+
+    os.dup2(null.fileno(), sys.__stdin__.fileno())
+    os.dup2(null.fileno(), sys.__stdout__.fileno())
+    os.dup2(null.fileno(), sys.__stderr__.fileno())
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -91,6 +130,8 @@ class Client:
                        False, False, False, True),
             'agent-port': (('-g', '<agent tcp port>', 'the port on which to bind for agent mode'),
                        False, ('communication', 'agent-port'), '6789', False),
+            'agent-background': (('-i', '<pidfile name>', "Daemonize the agent"),
+                                 False, False, False, False),
             'key': (('-K', '<client key file>', 'ssl cert + private key for agent mode xmlrpc server'),
                            False, ('communication', 'key'), False, False),
             }
@@ -379,6 +420,8 @@ if __name__ == '__main__':
     spid = os.getpid()
     if client.setup["agent"]:
         agent = Agent(client)
+        if client.setup["agent-background"]:
+            daemonize(client.setup["agent-background"])
         while not agent.shut:
             try:
                 agent.serve_forever()

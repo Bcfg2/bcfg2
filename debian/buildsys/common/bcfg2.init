@@ -53,9 +53,11 @@ case "$1" in
     echo -n "Running configuration management client: "
     if [ "$BCFG2_AGENT" -eq 1 ]
     then
-      start_daemon ${BCFG2} -A ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_AGENT}
+      start_daemon ${BCFG2} -A -i /var/run/bcfg2-agent.pid ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_AGENT}
       STATUS=$?
-    else
+    fi
+
+    if [ "$BCFG2_INIT" -eq 1 ]; then
       ${BCFG2} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_INIT}
       STATUS=$?
     fi
