@@ -51,10 +51,15 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         '''Install Service entry'''
+        rcmd = "/sbin/chkconfig %s %s" 
         self.cmd.run("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
-        return self.cmd.run("/sbin/chkconfig %s %s" % (entry.get('name'),
-                                                       entry.get('status')))[0] == 0
+        pass1 = True
+        if entry.get('status') == 'off':
+            rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')) + " --level 1")[0]
+            pass1 = rc == 0
+        rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status'))[0]
+        return pass1 and rc == 0
 
     def FindExtra(self):
         '''Locate extra chkconfig Services'''
