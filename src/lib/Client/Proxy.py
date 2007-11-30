@@ -37,7 +37,7 @@ class MyXMLRPCTransport(XMLRPCTransport):
                                    self.checker.x509TrustList,
                                    self.checker.x509CommonName,
                                    self.settings)
-        http2 = httplib.HTTP()
+        http2 = httplib.HTTP(host)
         http2._setup(http)
         return http2
 
