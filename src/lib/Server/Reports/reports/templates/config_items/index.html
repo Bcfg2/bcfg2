@@ -29,19 +29,19 @@
 {% endifequal %}
 <center>
 <table border=1 padding=0 >
-<tr><th>Reason</th><th>Current Status</th><th>Specified in BCFG</th></tr>
+<tr><th>Reason</th><th>Current Status</th><th>Specified in bcfg2</th></tr>
 {% if item.reason.current_owner %}
-<tr><td align="right"><b>Owner: </b></td><td>{{item.reason.owner}}</td><td>{{item.reason.current_owner}}</td></tr>
+<tr><td align="right"><b>Owner: </b></td><td>{{item.reason.current_owner}}</td><td>{{item.reason.owner}}</td></tr>
 {% endif %}{% if item.reason.current_group %}
-<tr><td align="right"><b>Group: </b></td><td>{{item.reason.group}}</td><td>{{item.reason.current_group}}</td></tr>
+<tr><td align="right"><b>Group: </b></td><td>{{item.reason.current_group}}</td><td>{{item.reason.group}}</td></tr>
 {% endif %}{% if item.reason.current_perms %}
-<tr><td align="right"><b>Permissions: </b></td><td>{{item.reason.perms}}</td><td>{{item.reason.current_perms}}</td></tr>
+<tr><td align="right"><b>Permissions: </b></td><td>{{item.reason.current_perms}}</td><td>{{item.reason.perms}}</td></tr>
 {% endif %}{% if item.reason.current_status %}
-<tr><td align="right"><b>Status: </b></td><td>{{item.reason.status}}</td><td>{{item.reason.current_status}}</td></tr>
+<tr><td align="right"><b>Status: </b></td><td>{{item.reason.current_status}}</td><td>{{item.reason.status}}</td></tr>
 {% endif %}{% if item.reason.current_to %}
-<tr><td align="right"><b>Link Destination: </b></td><td>{{item.reason.to}}</td><td>{{item.reason.current_to}}</td></tr>
+<tr><td align="right"><b>Link Destination: </b></td><td>{{item.reason.current_to}}</td><td>{{item.reason.to}}</td></tr>
 {% endif %}{% if item.reason.current_version %}
-<tr><td align="right"><b>Version: </b></td><td>{{item.reason.version}}</td><td>{{item.reason.current_version}}</td></tr>
+<tr><td align="right"><b>Version: </b></td><td>{{item.reason.current_version}}</td><td>{{item.reason.version}}</td></tr>
 {% endif %}{% if not item.reason.current_exists %}
 <tr><td align="right"><b>Existance: </b></td><td colspan=2>This item does not currently exist on the host but is specified to exist in the configuration.</td></tr>
 {% endif %}{% if item.reason.current_diff %}
