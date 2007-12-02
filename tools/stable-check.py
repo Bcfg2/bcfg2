@@ -12,7 +12,10 @@ if __name__ == '__main__':
     avail = os.popen('svnmerge avail').read().strip()
     if not avail:
         raise SystemExit, 0
-    start, stop = [int(x) for x in avail.split('-')]
+    if '-' in avail:
+        start, stop = [int(x) for x in avail.split('-')]
+    else:
+        start = stop = int(avail)
 
     bf = []
     other = []
