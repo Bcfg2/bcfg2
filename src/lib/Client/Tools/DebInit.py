@@ -45,12 +45,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             self.cmd.run("/usr/sbin/invoke-rc.d %s stop" % (entry.get('name')))
             cmdrc = self.cmd.run("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
         else:
-            if entry.get('start', False):
-                cmd = "/usr/sbin/update-rc.d %%s start %s 2 3 4 5 . stop %s 0 1 6"
-                cmd = cmd % (entry.get('start'), entry.get('stop', '20'))
-            else:
-                cmd = "/usr/sbin/update-rc.d %s defaults" 
-            cmdrc = self.cmd.run(cmd % (entry.get('name')))[0]
+            cmdrc = self.cmd.run("/usr/sbin/update-rc.d %s defaults" % \
+                                 (entry.get('name')))[0]
         return cmdrc == 0
 
     def FindExtra(self):
