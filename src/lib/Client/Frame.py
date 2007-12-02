@@ -61,10 +61,15 @@ class Frame:
         for tool in tools:
             tool_class = "Bcfg2.Client.Tools.%s" % tool
             try:
-                tclass[tool] = getattr(__import__(tool_class, globals(), locals(), ['*']),
+                tclass[tool] = getattr(__import__(tool_class, globals(),
+                                                  locals(), ['*']),
                                        tool)
             except ImportError:
                 continue
+            except:
+                self.logger.error("Tool %s unexpectedly failed to load" % tool,
+                                  exc_info=1)
+                                  
 
         for tool in tclass.values():
             try:
