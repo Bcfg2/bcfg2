@@ -123,6 +123,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
+        if not hasattr(self, 'static_skn'):
+            self.cache_skn()
         entry.text = self.static_skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
                         if self.entries.has_key(keytmpl % client)]
