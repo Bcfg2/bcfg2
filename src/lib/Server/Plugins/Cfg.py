@@ -27,7 +27,9 @@ class FileEntry(Bcfg2.Server.Plugin.FileBacked):
         self.group = False
         self.op = False
         self.prio = False
-        if name.split('.')[-1] in ['cat', 'diff']:
+        bfname = name.split('/')[-1]
+        bid = myid.split('/')[-1]
+        if bfname[len(bid)+1:].split('.')[-1] in ['cat', 'diff']:
             self.op = name.split('.')[-1]
             name = name[:-(len(self.op) + 1)]
         if self.name.split('/')[-1] == myid.split('/')[-1]:
