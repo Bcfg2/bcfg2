@@ -118,7 +118,10 @@ def initialize_repo(cfile):
     #guess path of ssl key file
     keypath = os.path.dirname(os.path.abspath(cfile))
 
-    open(cfile,"w").write(config % ( repo, password, keypath, uri ))
+    try:
+        open(cfile,"w").write(config % ( repo, password, keypath, uri ))
+    except:
+        err_exit("Failed to write bcfg2 config file to %s" % cfile)
 
     #generate the ssl key
     print "Now we will generate the ssl key used for secure communitcation"
