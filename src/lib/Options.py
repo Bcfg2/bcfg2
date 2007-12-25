@@ -55,9 +55,9 @@ class BasicOptionParser:
         if self.configfile:
             cf = ConfigParser.ConfigParser()
             try:
-                cf.read(self.configfile)
+                cf.readfp(open(self.configfile))
             except Exception, e:
-                print "Failed to read configfile: %s\n%s" % (self.configfile, e)
+                print "Failed to read configfile: %s\n%s\n" % (self.configfile, e)
                 raise SystemExit, 1
         for key, (option, envvar, cfpath, default, boolean) in self.optionspec.iteritems():
             if self.dogetopt:
