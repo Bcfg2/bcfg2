@@ -5,6 +5,7 @@ __revision__ = '$Revision$'
 import copy, logging, lxml.etree, sys, time, cmd
 import Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
+import Bcfg2.Options
 
 logger = logging.getLogger('bcfg2-info')
 
@@ -259,11 +260,16 @@ Usage: [quit|exit]"""
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
-    if '-C' in sys.argv:
-        cfile = sys.argv[-1]
-    else:
-        cfile = '/etc/bcfg2.conf'
 
-    loop = infoCore(cfile)
+    optinfo = {
+            'configfile': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
+                      False, False, '/etc/bcfg2.conf', False),
+            'help': (('-h', False, "print this help message"),
+                     False, False, False, True)
+              }
+    optparser = Bcfg2.Options.OptionParser('bcfg2-info', optinfo)
+    setup = optparser.parse()
+
+    loop = infoCore(setup['configfile'])
     loop.plugins['Metadata'].load_probedata()
     loop.do_loop()
