@@ -93,7 +93,18 @@ class ConfigFileEntry(object):
         self.interpolate = False
         self.paranoid = False
         filename = "%s/%s" % (self.repopath, name)
-        for line in open(filename).readlines():
+
+        # case: info file gets moved as part of an upper directory, 
+        # e.g. mv Cfg/etc/passwd /tmp.
+        # Then comes first the event 'changed' for the info file
+        # and afterwards events 'changed' and 'deleted' for the
+        # actual config file and directory.
+        try:
+            lines = open(filename).readlines()
+        except IOError:
+            return
+
+        for line in lines:
             match = self.info.match(line)
             if not match:
                 if not self.iignore.match(line):
