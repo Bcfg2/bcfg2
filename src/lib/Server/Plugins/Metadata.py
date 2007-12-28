@@ -23,7 +23,7 @@ class ClientMetadata(object):
         self.probes = probed
         self.uuid = uuid
         self.password = password
-        self.overall = overall
+        self.all = overall
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
@@ -439,3 +439,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         if user != 'root':
             self.session_cache[address] = (time.time(), user)
         return True
+
+    def GetClientByGroup(self, group):
+        '''Return a list of clients that are in a given group'''
+        return [client for client in self.clients \
+                if group in self.groups[self.clients[client]][1]]
