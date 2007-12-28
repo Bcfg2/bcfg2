@@ -86,7 +86,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
                 for pkg in self.extra_instances:
                     for inst in pkg:
-                        self.logger.info("    %s %s", (pkg.get('name'), self.str_evra(inst)))
+                        self.logger.info("    %s %s" % \
+                                         ((pkg.get('name'), self.str_evra(inst))))
 
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
