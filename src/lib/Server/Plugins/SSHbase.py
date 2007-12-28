@@ -56,17 +56,36 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                          '/etc/ssh/ssh_host_key':self.build_hk,
                          '/etc/ssh/ssh_host_key.pub':self.build_hk}}
         self.ipcache = {}
-        self.__rmi__ = ['GetPubKeys']
+        self.__skn = False
+
+    def get_skn(self):
+        '''build memory cache of the ssh known hosts file'''
+        if not self.__skn:
+            self.__skn = ''
+            pubkeys = [pubk for pubk in self.entries.keys() \
+                       if pubk.find('.pub.H_') != -1]
+            pubkeys.sort()
+            for pubkey in pubkeys:
+                hostname = pubkey.split('H_')[1]
+                try:
+                    (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
+                except socket.gaierror:
+                    continue
+                shortname = hostname.split('.')[0]
+                self.__skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
+                                               self.entries[pubkey].data)
+        return self.__skn
+
+    def set_skn(self, value):
+        '''Set backing data for skn'''
+        self.__skn = value
+    skn = property(get_skn, set_skn)
 
     def HandleEvent(self, event=None):
         '''Local event handler that does skn regen on pubkey change'''
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
-        if (len(self.entries.keys())) > (0.90 * len(os.listdir(self.data))) and \
-               event and '_key.pub.H_' in event.filename:
-            self.cache_skn()
-        elif (len(self.entries.keys())) > (0.90 * len(os.listdir(self.data))) and \
-             not hasattr(self, 'static_skn'):
-            self.cache_skn()
+        if event and '_key.pub.H_' in event.filename:
+            self.skn = False
 
     def HandlesEntry(self, entry):
         '''Handle key entries dynamically'''
@@ -76,12 +95,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     def HandleEntry(self, entry, metadata):
         '''Bind key data'''
         return self.build_hk(entry, metadata)
-
-    def GetPubKeys(self, _):
-        '''Export public key data'''
-        if not hasattr(self, 'static_skn'):
-            self.cache_skn()
-        return self.static_skn
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
@@ -105,27 +118,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                 self.logger.error("Failed to find IP address for %s" % client)
                 raise socket.gaierror
 
-    def cache_skn(self):
-        '''build memory cache of the ssh known hosts file'''
-        self.static_skn = ''
-        pubkeys = [pubk for pubk in self.entries.keys() if pubk.find('.pub.H_') != -1]
-        pubkeys.sort()
-        for pubkey in pubkeys:
-            hostname = pubkey.split('H_')[1]
-            try:
-                (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
-            except socket.gaierror:
-                continue
-            shortname = hostname.split('.')[0]
-            self.static_skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
-                                         self.entries[pubkey].data)
-
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
-        if not hasattr(self, 'static_skn'):
-            self.cache_skn()
-        entry.text = self.static_skn
+        entry.text = self.skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
                         if self.entries.has_key(keytmpl % client)]
         hostkeys.sort()
