@@ -314,7 +314,6 @@ class Core(object):
             logger.error("Metadata consistency error for client %s" % client)
             return lxml.etree.Element("error", type='metadata error')
 
-        config.set('toolset', meta.toolset)
         try:
             structures = self.GetStructures(meta)
         except:

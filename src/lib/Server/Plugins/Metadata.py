@@ -14,11 +14,11 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, toolset, categories, probed, uuid, password, overall):
+    def __init__(self, client, groups, bundles, categories, probed, uuid,
+                 password, overall):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
-        self.toolset = toolset
         self.categories = categories
         self.probes = probed
         self.uuid = uuid
@@ -48,7 +48,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.cgroups = {}
         self.public = []
         self.profiles = []
-        self.toolsets = {}
         self.categories = {}
         self.bad_clients = {}
         self.uuid = {}
@@ -137,7 +136,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         elif dest == 'groups.xml':
             self.public = []
             self.profiles = []
-            self.toolsets = {}
             self.groups = {}
             grouptmp = {}
             self.categories = {}
@@ -152,8 +150,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                     self.profiles.append(group.get('name'))
                 if group.get('public', 'false') == 'true':
                     self.public.append(group.get('name'))
-                if group.attrib.has_key('toolset'):
-                    self.toolsets[group.get('name')] = group.get('toolset')
                 if group.attrib.has_key('category'):
                     self.categories[group.get('name')] = group.get('category')
             for group in grouptmp:
@@ -257,22 +253,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             for pdata in client:
                 self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
 
-    def find_toolset(self, client):
-        '''Find the toolset for a given client'''
-        tgroups = [self.toolsets[group] for group in self.groups[client][1] if self.toolsets.has_key(group)]
-        if len(tgroups) == 1:
-            return tgroups[0]
-        elif len(tgroups) == 0:
-            self.logger.error("Couldn't find toolset for client %s" % (client))
-            raise MetadataConsistencyError
-        else:
-            self.logger.error("Got goofy toolset result for client %s" % (client))
-            raise MetadataConsistencyError
-
-    def get_config_template(self, client):
-        '''Build the configuration header for a client configuration'''
-        return lxml.etree.Element("Configuration", version='2.0', toolset=self.find_toolset(client))
-
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
         #print self.session_cache
@@ -306,13 +286,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 raise MetadataConsistencyError
             self.set_profile(client, self.default, (None, None))
             [bundles, groups, categories] = self.groups[self.default]
-        toolinfo = [self.toolsets[group] for group in groups if self.toolsets.has_key(group)]
-        if len(toolinfo) > 1:
-            self.logger.error("Found multiple toolsets for client %s; choosing one" % (client))
-        elif len(toolinfo) == 0:
-            self.logger.error("Cannot determine toolset for client %s" % (client))
-            raise MetadataConsistencyError
-        toolset = toolinfo[0]
         probed = self.probedata.get(client, {})
         newgroups = groups[:]
         newbundles = bundles[:]
@@ -335,8 +308,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             [newbundles.append(b) for b in nbundles if b not in newbundles]
             [newgroups.append(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        return ClientMetadata(client, newgroups, newbundles, toolset,
-                              newcategories, probed, uuid, password, self)
+        return ClientMetadata(client, newgroups, newbundles, newcategories,
+                              probed, uuid, password, self)
         
     def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''

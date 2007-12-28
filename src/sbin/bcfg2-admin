@@ -66,14 +66,14 @@ groups = '''
    <Group profile='true' public='false' default='true' name='basic'>
       <Group name='%s'/>
    </Group>
-   <Group name='ubuntu'   toolset='debian'/>
-   <Group name='debian'   toolset='debian'/>
-   <Group name='freebsd'  toolset='freebsd'/>
-   <Group name='gentoo'   toolset='gentoo'/>
-   <Group name='redhat'   toolset='rh'/>
-   <Group name='suse'     toolset='rh'/>
-   <Group name='mandrake' toolset='rh'/>
-   <Group name='solaris'  toolset='solaris'/>
+   <Group name='ubuntu'/>
+   <Group name='debian'/>
+   <Group name='freebsd'/>
+   <Group name='gentoo'/>
+   <Group name='redhat'/>
+   <Group name='suse'/>
+   <Group name='mandrake'/>
+   <Group name='solaris'/>
 </Groups>
 '''
 clients = '''
