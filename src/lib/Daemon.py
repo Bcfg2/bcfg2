@@ -1,5 +1,5 @@
 '''Bcfg2 daemon support'''
-__revision__ = '$Revision'
+__revision__ = '$Revision$'
 
 import os, sys
 
