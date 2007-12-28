@@ -110,6 +110,7 @@ class TCheetah(Bcfg2.Server.Plugin.Plugin):
 
     def BuildEntry(self, entry, metadata):
         '''Dispatch fetch calls to the correct object'''
+        metadata.repo = self.data
         self.entries[entry.get('name')].BuildFile(entry, metadata)
 
     def HandleEvent(self, event):
