@@ -14,7 +14,7 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, toolset, categories, probed, uuid, password):
+    def __init__(self, client, groups, bundles, toolset, categories, probed, uuid, password, overall):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
@@ -23,6 +23,7 @@ class ClientMetadata(object):
         self.probes = probed
         self.uuid = uuid
         self.password = password
+        self.overall = overall
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
@@ -334,8 +335,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             [newbundles.append(b) for b in nbundles if b not in newbundles]
             [newgroups.append(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        return ClientMetadata(client, newgroups, newbundles, toolset, newcategories,
-                              probed, uuid, password)
+        return ClientMetadata(client, newgroups, newbundles, toolset,
+                              newcategories, probed, uuid, password, self)
         
     def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''
