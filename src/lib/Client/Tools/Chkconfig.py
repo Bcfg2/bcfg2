@@ -16,17 +16,21 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     def VerifyService(self, entry, _):
         '''Verify Service status for entry'''
         try:
-            srvdata = self.cmd.run('/sbin/chkconfig --list %s | grep -v "unknown service"'
-                                   % entry.attrib['name'])[1][0].split()
+            cmd = "/sbin/chkconfig --list %s " % (entry.get('name'))
+            raw = self.cmd.run(cmd)[1][0]
+            patterns = ["error reading information", "unknown service"]
+            srvdata = [line.split() for line in raw for pattern in patterns \
+                       if pattern not in line]
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             entry.set('current_status', 'off')
             return False
-        if entry.attrib['type'] == 'xinetd':
-            return entry.attrib['status'] == srvdata[1]
+        if entry.get('type') == 'xinetd':
+            return entry.get('status') == srvdata[1]
 
         try:
-            onlevels = [level.split(':')[0] for level in srvdata[1:] if level.split(':')[1] == 'on']
+            onlevels = [level.split(':')[0] for level in srvdata[1:] \
+                        if level.split(':')[1] == 'on']
         except IndexError:
             onlevels = []
 
