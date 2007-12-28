@@ -9,50 +9,10 @@ from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, os, select, signal, socket, sys
-import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component
+import logging, select, signal, socket, sys
+import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
-
-def daemonize(filename):
-    '''Do the double fork/setsession dance'''
-    # Check if the pid is active
-    try:
-        pidfile = open(filename, "r")
-        oldpid = int(pidfile.readline())
-        # getpgid() will retun an IO error if all fails
-        os.getpgid(oldpid)
-        pidfile.close()
-
-        # If we got this far without exceptions, there is another instance
-        # running. Exit gracefully.
-        logger.critical("PID File (%s) exists and listed PID (%d) is active." % \
-                        (filename, oldpid) )
-        raise SystemExit, 1
-    except OSError:
-        pidfile.close()
-    except IOError: 
-        # pid file doesn't
-        pass
-
-    # Fork once
-    if os.fork() != 0:      
-        os._exit(0)         
-    os.setsid()                     # Create new session
-    pid = os.fork()
-    if pid != 0:
-        pidfile = open(filename, "w")
-        pidfile.write("%i" % pid)
-        pidfile.close()
-        os._exit(0)     
-    os.chdir("/")         
-    os.umask(0)
-
-    null = open("/dev/null", "w+")
-
-    os.dup2(null.fileno(), sys.__stdin__.fileno())
-    os.dup2(null.fileno(), sys.__stdout__.fileno())
-    os.dup2(null.fileno(), sys.__stderr__.fileno())
 
 def critical_error(operation):
     '''Log and err, traceback and return an xmlrpc fault to client'''
@@ -234,7 +194,7 @@ if __name__ == '__main__':
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
     if SSETUP['daemon']:
-        daemonize(SSETUP['daemon'])
+        Bcfg2.Daemon.daemonize(SSETUP['daemon'])
     try:
         BSERV = Bcfg2Serv(SSETUP)
     except SetupError:

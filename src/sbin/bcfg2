@@ -16,6 +16,7 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
+import Bcfg2.Daemon
 from Bcfg2.Component import *
 from Bcfg2.tlslite.Checker import Checker
 from Bcfg2.tlslite.errors import *
@@ -31,46 +32,6 @@ except KeyError:
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     os._exit(1)
-
-def daemonize(filename):
-    '''Do the double fork/setsession dance'''
-    # Check if the pid is active
-    try:
-        pidfile = open(filename, "r")
-        oldpid = int(pidfile.readline())
-        # getpgid() will retun an IO error if all fails
-        os.getpgid(oldpid)
-        pidfile.close()
-
-        # If we got this far without exceptions, there is another instance
-        # running. Exit gracefully.
-        print "PID File (%s) exists and listed PID (%d) is active." % \
-              (filename, oldpid)
-        raise SystemExit, 1
-    except OSError:
-        pidfile.close()
-    except IOError: 
-        # pid file doesn't
-        pass
-
-    # Fork once
-    if os.fork() != 0:      
-        os._exit(0)         
-    os.setsid()                     # Create new session
-    pid = os.fork()
-    if pid != 0:
-        pidfile = open(filename, "w")
-        pidfile.write("%i" % pid)
-        pidfile.close()
-        os._exit(0)     
-    os.chdir("/")         
-    os.umask(0)
-
-    null = open("/dev/null", "w+")
-
-    os.dup2(null.fileno(), sys.__stdin__.fileno())
-    os.dup2(null.fileno(), sys.__stdout__.fileno())
-    os.dup2(null.fileno(), sys.__stderr__.fileno())
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -421,7 +382,7 @@ if __name__ == '__main__':
     if client.setup["agent"]:
         agent = Agent(client)
         if client.setup["agent-background"]:
-            daemonize(client.setup["agent-background"])
+            Bcfg2.Daemon.daemonize(client.setup["agent-background"])
         while not agent.shut:
             try:
                 agent.serve_forever()
