@@ -19,7 +19,10 @@ import rpm
 import optparse
 import datetime
 import glob
-from elementtree.ElementTree import parse, XML, fromstring, tostring
+try:
+    from lxml.etree import parse, XML, fromstring, tostring
+except:
+    from elementtree.ElementTree import parse, XML, fromstring, tostring
 import urlparse, urllib, gzip
 
 installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
