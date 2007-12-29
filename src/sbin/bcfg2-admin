@@ -27,11 +27,10 @@ if __name__ == '__main__':
         print msg
         raise SystemExit(1)
 
-    if not args:
-        print usage
-        raise SystemExit(1)
 
     help = False
+    if not args:
+        help = True
     # First get the options...
     for opt, arg in opts:
         if opt in ("-h", "--help"):
