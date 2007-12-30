@@ -5,15 +5,14 @@ import Bcfg2.Server.Admin
 class Client(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = 'bcfg2-admin client add <client> attr1=val1 attr2=val2\nbcfg2-admin client del <client>'
     __longhelp__ = __shorthelp__ + '\n\tCreate or delete client entries'
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-        self.tree = lxml.etree.parse(self.get_repo_path() + \
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
+        self.tree = lxml.etree.parse(self.repo_path + \
                                      '/Metadata/clients.xml')
         self.root = self.tree.getroot()
     
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        repopath = self.get_repo_path()
         if args[0] == 'add':
             attr_d = {}
             for i in args[1:]:
@@ -29,7 +28,7 @@ class Client(Bcfg2.Server.Admin.Mode):
         else:
             print "No command specified"
             raise SystemExit(1)
-        self.tree.write(repopath + '/Metadata/clients.xml')        
+        self.tree.write(self.repopath + '/Metadata/clients.xml')        
     
     def AddClient(self, client, attrs):
         '''add a new client'''

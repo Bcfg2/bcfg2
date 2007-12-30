@@ -6,8 +6,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "bcfg2-admin compare <file1> <file2>\nbcfg2-admin compare -r <dir1> <dir2>"
     __longhelp__ =  __shorthelp__ + '''\n\tCompare mode determines differences between directories of client specification instances'''
     
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         self.important = {'Package':['name', 'version'],
                           'Service':['name', 'status'],
                           'Directory':['name', 'owner', 'group', 'perms'],

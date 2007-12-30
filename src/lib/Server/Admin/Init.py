@@ -1,6 +1,8 @@
 import os, socket
 import Bcfg2.Server.Admin
 
+from Bcfg2.Settings import settings
+
 config = '''
 [server]
 repository = %s
@@ -91,9 +93,9 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def initializeRepo(self, repo, server_uri, password, os_selection):
         '''Setup a new repo'''
-        keypath = os.path.dirname(os.path.abspath(self.configfile))
+        keypath = os.path.dirname(os.path.abspath(settings.CONFIG_FILE))
         confdata = config % ( repo, password, keypath, server_uri )
-        open(self.configfile,"w").write(confdata)
+        open(settings.CONFIG_FILE,"w").write(confdata)
         # FIXME automate ssl key generation
         os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:

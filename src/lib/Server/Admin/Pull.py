@@ -6,8 +6,8 @@ class Pull(Bcfg2.Server.Admin.Mode):
     '''Pull mode retrieves entries from clients and integrates the information into the repository'''
     __shorthelp__ = 'bcfg2-admin pull <client> <entry type> <entry name>'
     __longhelp__ = __shorthelp__ + '\n\tIntegrate configuration information from clients into the server repository'
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
