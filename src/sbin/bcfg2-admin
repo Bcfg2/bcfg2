@@ -29,8 +29,6 @@ if __name__ == '__main__':
 
 
     help = False
-    if not args:
-        help = True
     # First get the options...
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -40,6 +38,7 @@ if __name__ == '__main__':
 
     modes = [x.lower() for x in Bcfg2.Server.Admin.__all__]
     modes.remove('mode')
+
     if help or len(args) < 1 or args[0] == 'help':
         if len(args) > 1:
             args = [args[1], args[0]]
