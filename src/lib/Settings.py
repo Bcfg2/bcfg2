@@ -78,16 +78,16 @@ class Settings(object):
           logger.error("Content of config file '%s' is not valid. Correct it!\n%s\n" % (self.CONFIG_FILE, e))
           raise SystemExit, 1
       
-          for section in locations:
-              if cfp.has_section(section):
-                  for key, location in locations[section]:
-                      try:
-                          if key in cookers:
+        for section in locations:
+            if cfp.has_section(section):
+                for key, location in locations[section]:
+                    try:
+                        if key in cookers:
                               setattr(self, key, cookers[key](cfp.get(section,
                                                                       location)))
-                          else:
+                        else:
                               setattr(self, key, cfp.get(section, location))
-                      except:
-                          pass
+                    except:
+                        pass
 
 settings = Settings()
