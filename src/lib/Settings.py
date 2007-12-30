@@ -8,24 +8,40 @@ __revision__ = '$Revision$'
 
 import logging, socket, ConfigParser
 
+locations = {'communication': [('COMMUNICATION_PROTOCOL', 'protocol'),
+                               ('COMMUNICATION_PASSWORD', 'communication'),
+                               ('COMMUNICATION_KEY', 'key'),
+                               ('COMMUNICATION_USER', 'user')],
+             'server': [('SERVER_PREFIX', 'prefix'),
+                        ('SERVER_GENERATORS','generators'),
+                        ('SERVER_REPOSITORY', 'repository'),
+                        ('SERVER_STRUCTURES','structures'),                        
+                        ('SERVER_SVN', 'svn'),
+             'components': [('COMPONENTS_BCFG2', 'bcfg2'),
+                            ('COMPONENTS_BCFG2_STATIC', 'bcfg2')]}
+
+cookers = {'COMPONENTS_BCFG2_STATIC': lambda x:True,
+           'SERVER_GENERATORS': lambda x:x.replace(' ','').split(','),
+           'SERVER_STRUCTURES': lambda x:x.replace(' ','').split(',')}
+
 class Settings(object):
 
     def __init__(self):
-        self.CONFIG_FILE             = self.default_config_file()
+        self.CONFIG_FILE             = '/etc/bcfg2.conf'
+        
+        self.SERVER_GENERATORS       = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules']
+        self.SERVER_PREFIX           = '/usr'
+        self.SERVER_REPOSITORY       = '/var/lib/bcfg2'
+        self.SERVER_STRUCTURES       = ['Bundler', 'Base']
+        self.SERVER_SVN              = False
 
-        self.SERVER_GENERATORS       = self.default_server_generators()
-        self.SERVER_PREFIX           = self.default_server_prefix()
-        self.SERVER_REPOSITORY       = self.default_server_repository()
-        self.SERVER_STRUCTURES       = self.default_server_structures()
-        self.SERVER_SVN              = self.default_server_svn()
+        self.COMMUNICATION_KEY       = False
+        self.COMMUNICATION_PASSWORD  = 'password'
+        self.COMMUNICATION_PROTOCOL  = 'xmlrpc/ssl'
+        self.COMMUNICATION_USER      = 'root'
 
-        self.COMMUNICATION_KEY       = self.default_communication_key()
-        self.COMMUNICATION_PASSWORD  = self.default_communication_password()
-        self.COMMUNICATION_PROTOCOL  = self.default_communication_protocol()
-        self.COMMUNICATION_USER      = self.default_communication_user()
-
-        self.COMPONENTS_BCFG2        = self.default_components_bcfg2()
-        self.COMPONENTS_BCFG2_STATIC = self.default_components_bcfg2_static()
+        self.COMPONENTS_BCFG2        = (socket.gethostname(), 0)
+        self.COMPONENTS_BCFG2_STATIC = False
 
 
     def __getattr__(self, name):
@@ -59,95 +75,17 @@ class Settings(object):
         except Exception, e:
           logger.error("Content of config file '%s' is not valid. Correct it!\n%s\n" % (self.CONFIG_FILE, e))
           raise SystemExit, 1
-        # communication config
-        if cfp.has_section('communication'):
-            try:
-                self.COMMUNICATION_PROTOCOL = cfp.get('communication','protocol')
-            except:
-              pass
-            try:
-                self.COMMUNICATION_PASSWORD = cfp.get('communication','password')
-            except:
-              pass
-            try:
-                self.COMMUNICATION_KEY      = cfp.get('communication','key')
-            except:
-              pass
-            try:
-                self.COMMUNICATION_USER     = cfp.get('communication','user')
-            except:
-              pass
-        # components config
-        if cfp.has_section('components'):
-            try:
-                self.COMPONENTS_BCFG2 = cfp.get('components', 'bcfg2')
-                self.COMPONENTS_BCFG2_STATIC = True
-            except:
-                pass
-        # server config
-        if cfp.has_section('server'):
-            try:
-                self.SERVER_GENERATORS = cfp.get('server','generators').replace(' ','').split(',')
-            except:
-              pass
-            try:
-                self.SERVER_PREFIX     = cfp.get('server','prefix')
-            except:
-              pass
-            try:
-                self.SERVER_REPOSITORY = cfp.get('server','repository')
-            except:
-              pass
-            try:
-                self.SERVER_STRUCTURES = cfp.get('server','structures').replace(' ','').split(',')
-            except:
-              pass
-            try:
-                self.SERVER_SVN        = cfp.get('server','svn')
-            except:
-              pass
-
-        return
-
-    def default_config_file(self):
-        return '/etc/bcfg2.conf'
-
-    def default_server_generators(self):
-        return ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules']
-
-    def default_server_prefix(self):
-        return '/usr'
-
-    def default_server_structures(self):
-        return ['Bundler', 'Base']
-
-    def default_server_repository(self):
-        return '/var/lib/bcfg2/'
-
-    def default_communication_key(self):
-        return False
-
-    def default_communication_password(self):
-        return 'password'
-
-    def default_communication_protocol(self):
-        return 'xmlrpc/ssl'
-
-    def default_communication_user(self):
-        return 'root'
-
-    def default_components_bcfg2(self):
-        return (socket.gethostname(), 0)
-
-    def default_components_bcfg2_static(self):
-        return False
-
-    def default_sendmail_path(self):
-        return '/usr/sbin/sendmail'
-
-    def default_server_svn(self):
-        return None
-
-
+      
+      for section in locations:
+          if cfp.has_section(section):
+              for key, location in locations[section]:
+                  try:
+                      if key in cookers:
+                          setattr(self, key, cookers[key](cfp.get(section,
+                                                                  location)))
+                      else:
+                          setattr(self, key, cfp.get(section, location))
+                  except:
+                      pass
 
 settings = Settings()
