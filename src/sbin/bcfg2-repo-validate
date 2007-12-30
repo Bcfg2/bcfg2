@@ -4,30 +4,23 @@
 __revision__ = '$Revision$'
 
 import glob, lxml.etree, os, sys, ConfigParser
+from Bcfg2.Settings import settings
 
 if __name__ == '__main__':
     verbose = False
     if '-v' in sys.argv:
         verbose = True
         sys.argv.remove('-v')
+    # override default settings
     if '-C' in sys.argv:
-        cpath = sys.argv[sys.argv.index('-C') + 1]
-    else:
-        cpath = '/etc/bcfg2.conf'
-    cf = ConfigParser.ConfigParser()
-    cf.read([cpath])
-    try:
-        prefix = cf.get('server', 'prefix')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        prefix = '/usr'
-    schemadir = "%s/share/bcfg2/schemas" % (prefix)
-    os.chdir(schemadir)
+        settings.read_config_file(sys.argv[sys.argv.index('-C') + 1])
 
+    schemadir = "%s/share/bcfg2/schemas" % (settings.SERVER_PREFIX)
     try:
-        repo = cf.get('server', 'repository')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        print "Repository location not specified in config file"
-        raise SystemExit, 1
+        os.chdir(schemadir)
+    except:
+        print "Failed to change to schema dir '%s'" % schemadir
+        raise SystemExit(1)
 
     filesets = {'metadata':("%s/Metadata/groups.xml", "%s/metadata.xsd"),
                 'clients':("%s/Metadata/clients.xml", "%s/clients.xsd"),
@@ -47,7 +40,7 @@ if __name__ == '__main__':
             print "Failed to process schema %s" % (schemaname%(schemadir))
             failures = 1
             continue
-        for filename in glob.glob(spec%(repo)):
+        for filename in glob.glob(spec%(settings.SERVER_REPOSITORY)):
             try:
                 datafile = lxml.etree.parse(open(filename))
             except SyntaxError:

@@ -14,6 +14,7 @@ class Settings(object):
         self.CONFIG_FILE             = self.default_config_file()
 
         self.SERVER_GENERATORS       = self.default_server_generators()
+        self.SERVER_PREFIX           = self.default_server_prefix()
         self.SERVER_REPOSITORY       = self.default_server_repository()
         self.SERVER_STRUCTURES       = self.default_server_structures()
         self.SERVER_SVN              = self.default_server_svn()
@@ -90,6 +91,10 @@ class Settings(object):
             except:
               pass
             try:
+                self.SERVER_PREFIX     = cfp.get('server','prefix')
+            except:
+              pass
+            try:
                 self.SERVER_REPOSITORY = cfp.get('server','repository')
             except:
               pass
@@ -109,6 +114,9 @@ class Settings(object):
 
     def default_server_generators(self):
         return ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules']
+
+    def default_server_prefix(self):
+        return '/usr'
 
     def default_server_structures(self):
         return ['Bundler', 'Base']
