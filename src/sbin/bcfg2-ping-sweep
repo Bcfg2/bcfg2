@@ -6,18 +6,23 @@ __revision__ = '$Revision$'
 
 from os import dup2, execl, fork, uname, wait
 import lxml.etree, sys, time, ConfigParser
+from Bcfg2.Settings import settings
+
 
 if __name__ == '__main__':
-    if '-C' in sys.argv:
-        cfpath = sys.argv[sys.argv.index('-C') + 1]
-    else:
-        cfpath = '/etc/bcfg2.conf'
 
-    c = ConfigParser.ConfigParser()
-    c.read([cfpath])
-    clientdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
+
+    # override default settings
+    if '-C' in sys.argv:
+        settings.read_config_file(sys.argv[sys.argv.index('-C') + 1])
+
+    clientdatapath = "%s/Metadata/clients.xml" % settings.SERVER_REPOSITORY
     
-    clientElement = lxml.etree.parse(clientdatapath)
+    try:
+        clientElement = lxml.etree.parse(clientdatapath)
+    except:
+        print "Failed to parse '%s'" % clientdatapath
+        raise SystemExit, 1
     hostlist = [client.get('name') for client in clientElement.findall("Client")]
 
     pids = {}
