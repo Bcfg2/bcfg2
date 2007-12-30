@@ -1,7 +1,7 @@
 '''Option parsing library for utilities'''
 __revision__ = '$Revision$'
 
-import getopt, os, sys, ConfigParser
+import getopt, os, sys
 
 class OptionFailure(Exception):
     pass

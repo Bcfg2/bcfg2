@@ -19,8 +19,7 @@ def mode_import(modename):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
 
-    # Some sensible defaults
-    configfile = "/etc/bcfg2.conf"
+    configfile = settings.CONFIG_FILE
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hC:', ['help', 'configfile='])

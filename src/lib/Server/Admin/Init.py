@@ -6,11 +6,11 @@ from Bcfg2.Settings import settings
 config = '''
 [server]
 repository = %s
-structures = Bundler,Base
-generators = SSHbase,Cfg,Pkgmgr,Rules
+structures = %s
+generators = %s
 
 [statistics]
-sendmailpath = /usr/sbin/sendmail
+sendmailpath = %s
 database_engine = sqlite3
 # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
 database_name =
@@ -28,7 +28,7 @@ web_debug = True
 
 
 [communication]
-protocol = xmlrpc/ssl
+protocol = %s
 password = %s
 key = %s/bcfg2.key
 
@@ -71,9 +71,9 @@ class Init(Bcfg2.Server.Admin.Mode):
     __longhelp__ = __shorthelp__ + '\n\tCompare two client specifications or directories of specifications'
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        repopath = raw_input( "location of bcfg2 repository [/var/lib/bcfg2]: " )
+        repopath = raw_input( "location of bcfg2 repository [%s]: " % settings.SERVER_REPOSITORY )
         if repopath == '':
-            repopath = '/var/lib/bcfg2'
+            repopath = settings.SERVER_REPOSITORY
         password = ''
         while ( password == '' ):
             password = raw_input(
@@ -94,7 +94,15 @@ class Init(Bcfg2.Server.Admin.Mode):
     def initializeRepo(self, repo, server_uri, password, os_selection):
         '''Setup a new repo'''
         keypath = os.path.dirname(os.path.abspath(settings.CONFIG_FILE))
-        confdata = config % ( repo, password, keypath, server_uri )
+        confdata = config % ( 
+                        repo, 
+                        settings.SERVER_STRUCTURES,
+                        settings.SERVER_GENERATORS,
+                        settings.SENDMAIL_PATH,
+                        settings.COMMUNICATION_PROTOCOL,
+                        password, keypath, server_uri 
+                    )
+
         open(settings.CONFIG_FILE,"w").write(confdata)
         # FIXME automate ssl key generation
         os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))

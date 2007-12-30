@@ -16,9 +16,10 @@ locations = {'communication': [('COMMUNICATION_PROTOCOL', 'protocol'),
                         ('SERVER_GENERATORS','generators'),
                         ('SERVER_REPOSITORY', 'repository'),
                         ('SERVER_STRUCTURES','structures'),                        
-                        ('SERVER_SVN', 'svn'),
+                        ('SERVER_SVN', 'svn')],
              'components': [('COMPONENTS_BCFG2', 'bcfg2'),
-                            ('COMPONENTS_BCFG2_STATIC', 'bcfg2')]}
+                            ('COMPONENTS_BCFG2_STATIC', 'bcfg2')],
+             'statistics': [('SENDMAIL_PATH', 'sendmai;')]}
 
 cookers = {'COMPONENTS_BCFG2_STATIC': lambda x:True,
            'SERVER_GENERATORS': lambda x:x.replace(' ','').split(','),
@@ -43,6 +44,7 @@ class Settings(object):
         self.COMPONENTS_BCFG2        = (socket.gethostname(), 0)
         self.COMPONENTS_BCFG2_STATIC = False
 
+        self.SENDMAIL_PATH           = '/usr/sbin/sendmail'
 
     def __getattr__(self, name):
         print "name = %s\n" % name
@@ -76,16 +78,16 @@ class Settings(object):
           logger.error("Content of config file '%s' is not valid. Correct it!\n%s\n" % (self.CONFIG_FILE, e))
           raise SystemExit, 1
       
-      for section in locations:
-          if cfp.has_section(section):
-              for key, location in locations[section]:
-                  try:
-                      if key in cookers:
-                          setattr(self, key, cookers[key](cfp.get(section,
-                                                                  location)))
-                      else:
-                          setattr(self, key, cfp.get(section, location))
-                  except:
-                      pass
+          for section in locations:
+              if cfp.has_section(section):
+                  for key, location in locations[section]:
+                      try:
+                          if key in cookers:
+                              setattr(self, key, cookers[key](cfp.get(section,
+                                                                      location)))
+                          else:
+                              setattr(self, key, cfp.get(section, location))
+                      except:
+                          pass
 
 settings = Settings()
