@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Statistics import Statistics
+from Bcfg2.Settings import settings
 
 import logging, lxml.etree, os, stat, ConfigParser
 import Bcfg2.Server.Plugins.Metadata
@@ -198,11 +199,9 @@ except ImportError:
 
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
-    def __init__(self, setup, configfile):
+    def __init__(self):
         object.__init__(self)
-        self.cfile = ConfigParser.ConfigParser()
-        self.cfile.read([configfile])
-        self.datastore = self.cfile.get('server','repository')
+        self.datastore = settings.SERVER_REPOSITORY
         try:
             self.fam = monitor()
         except IOError:
@@ -211,20 +210,22 @@ class Core(object):
         self.generators = []
         self.structures = []
         self.cron = {}
-        self.setup = setup
         self.plugins = {}
         self.revision = '-1'
-        try:
-            self.svn = self.cfile.get('server', 'svn') == 'yes'
-            self.read_svn_revision()
-        except:
-            self.svn = False
 
-        mpath = self.cfile.get('server','repository')
+        try:
+            if settings.SERVER_SVN:
+                self.read_svn_revision()
+        except:
+          settings.SERVER_SVN = False
+
+        self.svn = settings.SERVER_SVN
+
+        mpath = settings.SERVER_REPOSITORY
         self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
 
-        structures = self.cfile.get('server', 'structures').replace(' ', '').split(',')
-        generators = self.cfile.get('server', 'generators').replace(' ', '').split(',')
+        structures = settings.SERVER_STRUCTURES
+        generators = settings.SERVER_GENERATORS
         [data.remove('') for data in [structures, generators] if '' in data]
 
         for plugin in structures + generators + ['Metadata']:

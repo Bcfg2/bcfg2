@@ -3,12 +3,15 @@ __revision__ = '$Revision$'
 
 import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser, os
 from base64 import decodestring
+
 import BaseHTTPServer, SimpleXMLRPCServer
 import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
 
 import Bcfg2.Client.Proxy as Proxy
 from Bcfg2.tlslite.TLSConnection import TLSConnection
+
+from Bcfg2.Settings import settings
 
 log = logging.getLogger('Component')
 
@@ -144,34 +147,20 @@ class Component(TLSServer,
         signal.signal(signal.SIGINT, self.start_shutdown)
         signal.signal(signal.SIGTERM, self.start_shutdown)
         self.logger = logging.getLogger('Component')
-        self.cfile = ConfigParser.ConfigParser()
         self.children = []
-        if setup['configfile']:
-            cfilename = setup['configfile']
-        else:
-            cfilename = '/etc/bcfg2.conf'
-        self.cfile.read([cfilename])
-        if not self.cfile.has_section('communication'):
-            print "Configfile missing communication section"
-            raise SystemExit, 1
-        self.static = False
-        if not self.cfile.has_section('components'):
-            print "Configfile missing components section"
-            raise SystemExit, 1
-        if self.cfile._sections['components'].has_key(self.__name__):
-            self.static = True
-            location = urlparse.urlparse(self.cfile.get('components', self.__name__))[1].split(':')
-            location = (location[0], int(location[1]))
-        else:
-            location = (socket.gethostname(), 0)
-        try:
-            keyfile = self.cfile.get('communication', 'key')
-            #keyfile = '/tmp/keys/server.pkey'
-        except ConfigParser.NoOptionError:
-            print "No key specified in cobalt.conf"
-            raise SystemExit, 1
+        self.static = True
 
-        self.password = self.cfile.get('communication', 'password')
+        location = settings.COMPONENTS_BCFG2
+        if settings.COMPONENTS_BCFG2_STATIC:
+            location = urlparse.urlparse(settings.COMPONENTS_BCFG2)[1].split(':')
+            location = (location[0], int(location[1]))
+
+        if not settings.COMMUNICATION_KEY:
+            print "No key specified in '%s'" % settings.CONFIG_FILE
+            raise SystemExit, 1
+        keyfile = settings.COMMUNICATION_KEY
+
+        self.password = settings.COMMUNICATION_PASSWORD
 
         try:
             TLSServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
@@ -182,7 +171,7 @@ class Component(TLSServer,
             self.logger.error("Failed to parse key" % (keyfile))
             raise ComponentInitError
         except:
-            self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
+            self.logger.error("Failed to load ssl key '%s'" % (keyfile), exc_info=1)
             raise ComponentInitError
         try:
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)

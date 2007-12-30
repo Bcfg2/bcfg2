@@ -6,6 +6,7 @@ from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
 from Bcfg2.tlslite.integration.HTTPTLSConnection import HTTPTLSConnection
 from Bcfg2.tlslite.TLSConnection import TLSConnection
 import Bcfg2.tlslite.errors
+from Bcfg2.Settings import settings
 
 #FIXME need to reimplement _binadaddress support for XMLRPCTransport
 
@@ -49,63 +50,36 @@ class SafeProxy:
 
     _retries = 4
     _authinfo = ()
-    _components = {}
     def __init__(self, component, args={}):
         self.component = component
         self.log = logging.getLogger(component)
 
-        if args.has_key('server'):
-            # processing from command line args
-            self._components[component] = args['server']
-        else:
-            if args.has_key('setup'):
-                # processing from specified config file
-                _cfpath = args['setup']
-            else:
-                _cfpath = '/etc/bcfg2.conf'
-            self._cfile = ConfigParser.ConfigParser()
-            self._cfile.read([_cfpath])
-            try:
-                self._components = self._cfile._sections['components']
-            except:
-                self.log.error("%s doesn't contain a valid components section" % (_cfpath))
-                raise SystemExit, 1
-        if args.has_key('password'):
-            # get passwd from cmdline
+        password = settings.COMMUNICATION_PASSWORD
+        if args['password']:
             password = args['password']
-        else:
-            try:
-                password = self._cfile.get('communication', 'password')
-            except:
-                self.log.error("%s doesn't contain a valid password" % (_cfpath))
-                raise SystemExit, 1
-        if args.has_key('user'):
+
+        user = settings.COMMUNICATION_USER
+        if args['user']:
             user = args['user']
-        else:
-            try:
-                user = self._cfile.get('communication', 'user')
-            except:
-                user = 'root'
             
         self._authinfo = (user, password)
 
-        if args.has_key('fingerprint'):
+        self.fingerprint = False
+        if args['fingerprint']:
             self.fingerprint = args['fingerprint']
-        else:
-            self.fingerprint = False
 
-        _bindaddress = ""
-        try:
-            _bindaddress = self._cfile.get('communication', 'bindaddress')
-        except:
-            pass
-        
-        if args.has_key('server'):
+        address = settings.COMPONENTS_BCFG2
+        if args['server']:
             address = args['server']
-        else:
-            address = self.__get_location(component)
-            
+
+        # NOT USED
+        #_bindaddress = ""
+        #try:
+        #    _bindaddress = self._cfile.get('communication', 'bindaddress')
+        #except:
+        #    pass
         try:
+            # NOT USED
             #             if _bindaddress != "":
             #                 self.log.info("Binding client to address %s" % _bindaddress)
             #                 self.proxy = xmlrpclib.ServerProxy(address, transport=Bcfg2SafeTransport())

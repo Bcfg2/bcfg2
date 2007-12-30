@@ -5,6 +5,7 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugins.Metadata 
 
+from Bcfg2.Settings import settings
 from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
@@ -39,7 +40,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             raise SetupError
 
         try:
-            self.Core = Core(setup, setup['configfile'])
+            self.Core = Core()
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
             raise SystemExit, 1
@@ -184,7 +185,7 @@ if __name__ == '__main__':
         'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
                    False, False, False, False),
         'configfile': (('-C', '<conffile>', 'use this config file'),
-                       False, False, '/etc/bcfg2.conf', False),
+                       False, False, False, False),
         }
     
     SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()
@@ -195,6 +196,10 @@ if __name__ == '__main__':
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
     if SSETUP['daemon']:
         Bcfg2.Daemon.daemonize(SSETUP['daemon'])
+
+    # override default settings
+    settings.read_config_file(SSETUP['configfile'])
+
     try:
         BSERV = Bcfg2Serv(SSETUP)
     except SetupError:

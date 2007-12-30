@@ -1,4 +1,4 @@
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
            'Pull', 'Tidy', 'Viz']

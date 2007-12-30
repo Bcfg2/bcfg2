@@ -78,11 +78,11 @@ class Client:
             'setup': (('-C', '<configfile>', "use given config file (default /etc/bcfg2.conf)"),
                       False, False, '/etc/bcfg2.conf', False),
             'server': (('-S', '<server url>', 'the server hostname to connect to'),
-                       False, ('components', 'bcfg2'), 'https://localhost:6789', False),
+                       False, ('components', 'bcfg2'), False, False),
             'user': (('-u', '<user>', 'the user to provide for authentication'),
-                     False, ('communication', 'user'), 'root', False),
+                     False, ('communication', 'user'), False, False),
             'password': (('-x', '<password>', 'the password to provide for authentication'),
-                         False, ('communication', 'password'), 'password', False),
+                         False, ('communication', 'password'), False, False),
             'retries': (('-R', '<numretries>', 'the number of times to retry network communication'),
                         False, ('communication', 'retries'), '3', False),
             'kevlar': (('-k', False, "run in kevlar (bulletproof) mode"),
@@ -99,6 +99,10 @@ class Client:
 
         optparser = Bcfg2.Options.OptionParser('bcfg2', optinfo)
         self.setup = optparser.parse()
+
+        # override default settings
+        settings.read_config_file(self.setup['setup'])
+
         if getopt.getopt(sys.argv[1:],
                          optparser.shortopt, optparser.longopt)[1]:
             print "Bcfg2 takes no arguments, only options"

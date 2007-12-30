@@ -2,20 +2,15 @@
 __revision__ = '$Revision$'
 
 import getopt, os, sys, ConfigParser
-# (option, env, cfpath, default value, option desc, boolean, arg desc)
-# ((option, arg desc, opt desc), env, cfpath, default, boolean)
-bootstrap = {'configfile': (('-C', '<configfile>', 'Path to config file'), 
-                             'BCFG2_CONF', False, '/etc/bcfg2.conf',  False)}
 
 class OptionFailure(Exception):
     pass
 
 class BasicOptionParser:
     '''Basic OptionParser takes input from command line arguments, environment variables, and defaults'''
-    def __init__(self, name, optionspec, configfile=False, dogetopt=False):
+    def __init__(self, name, optionspec, dogetopt=False):
         self.name = name
         self.dogetopt = dogetopt
-        self.configfile = configfile
         self.optionspec = optionspec
         if dogetopt:
             self.shortopt = ''
@@ -52,13 +47,6 @@ class BasicOptionParser:
                 print "%s Usage:" % (self.name)
                 print self.helpmsg
                 raise SystemExit, 1
-        if self.configfile:
-            cf = ConfigParser.ConfigParser()
-            try:
-                cf.readfp(open(self.configfile))
-            except Exception, e:
-                print "Failed to read configfile: %s\n%s\n" % (self.configfile, e)
-                raise SystemExit, 1
         for key, (option, envvar, cfpath, default, boolean) in self.optionspec.iteritems():
             if self.dogetopt:
                 optinfo = [opt[1] for opt in opts if opt[0] == option[0]]
@@ -77,19 +65,10 @@ class BasicOptionParser:
             if envvar and os.environ.has_key(envvar):
                 ret[key] = os.environ[envvar]
                 continue
-            if self.configfile and cfpath:
-                try:
-                    value = apply(cf.get, cfpath)
-                    ret[key] = value
-                    continue
-                except:
-                    pass
             ret[key] = default
         return ret
     
 class OptionParser(BasicOptionParser):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, name, ospec):
-        # first find the cf file
-        cfpath = BasicOptionParser('bootstrap', bootstrap).parse()['configfile']
-        BasicOptionParser.__init__(self, name, ospec, cfpath, dogetopt=True)
+        BasicOptionParser.__init__(self, name, ospec, dogetopt=True)

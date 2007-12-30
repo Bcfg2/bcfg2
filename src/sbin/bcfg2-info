@@ -6,6 +6,7 @@ import copy, logging, lxml.etree, sys, time, cmd
 import Bcfg2.Logging, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 import Bcfg2.Options
+from Bcfg2.Settings import settings
 
 logger = logging.getLogger('bcfg2-info')
 
@@ -23,10 +24,10 @@ def printTabular(rows):
         print fstring % row
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
-    def __init__(self, cfpath):
+    def __init__(self):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, {}, cfpath)
+            Bcfg2.Server.Core.Core.__init__(self)
         except Bcfg2.Server.Core.CoreInitError, msg:
             print "Core load failed because %s" % msg
             raise SystemExit(1)
@@ -270,6 +271,9 @@ if __name__ == '__main__':
     optparser = Bcfg2.Options.OptionParser('bcfg2-info', optinfo)
     setup = optparser.parse()
 
-    loop = infoCore(setup['configfile'])
+    # override default settings
+    settings.read_config_file(setup['configfile'])
+
+    loop = infoCore()
     loop.plugins['Metadata'].load_probedata()
     loop.do_loop()
