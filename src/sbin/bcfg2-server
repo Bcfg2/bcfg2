@@ -175,23 +175,25 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 if __name__ == '__main__':
 
     OPTINFO = {
-        'verbose': Bcfg2.Options.VERBOSE,
-        'debug': Bcfg2.Options.DEBUG,
-        'help': Bcfg2.Options.HELP,
-        'daemon': Bcfg2.Options.DAEMON,
         'configfile': Bcfg2.Options.CFILE,
+        'daemon'    : Bcfg2.Options.DAEMON,
+        'debug'     : Bcfg2.Options.DEBUG,
+        'help'      : Bcfg2.Options.HELP,
+        'verbose'   : Bcfg2.Options.VERBOSE,
         }
-    
+
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
     print setup
+
+
     level = 0
-    if '-D' in sys.argv:
+    if setup['daemon']:
         Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False, level=level)
+        Bcfg2.Daemon.daemonize(setup['daemon'])
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
-    if setup['daemon']:
-        Bcfg2.Daemon.daemonize(setup['daemon'])
+
 
     try:
         BSERV = Bcfg2Serv(setup)
