@@ -86,6 +86,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
         if event and '_key.pub.H_' in event.filename:
             self.skn = False
+        if not self.skn:
+            if (len(self.entries.keys())) > (0.95 * len(os.listdir(self.data))):
+                a = self.skn
 
     def HandlesEntry(self, entry):
         '''Handle key entries dynamically'''
