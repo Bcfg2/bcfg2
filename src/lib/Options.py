@@ -1,74 +1,122 @@
 '''Option parsing library for utilities'''
 __revision__ = '$Revision$'
 
-import getopt, os, sys
+import getopt, os, sys, ConfigParser
 
 class OptionFailure(Exception):
     pass
 
-class BasicOptionParser:
-    '''Basic OptionParser takes input from command line arguments, environment variables, and defaults'''
-    def __init__(self, name, optionspec, dogetopt=False):
-        self.name = name
-        self.dogetopt = dogetopt
-        self.optionspec = optionspec
-        if dogetopt:
-            self.shortopt = ''
-            self.helpmsg = ''
-            # longopts aren't yet supported
-            self.longopt = []
-            for option, info in optionspec.iteritems():
-                (opt, argd, optd) = info[0]
-                self.helpmsg += opt.ljust(3)
-                if opt.count('-') == 1:
-                    self.shortopt += opt[1]
-                else:
-                    print "unsupported option %s" % (opt)
-                    continue
-                if info[4]:
-                    self.helpmsg += 24 * ' '
-                else:
-                    self.shortopt += ':'
-                    self.helpmsg += "%-24s" % (argd)
-                self.helpmsg += "%s\n" % (optd)
+class Option(object):
+    cfpath = '/etc/bcfg2.conf'
+    __cfp = False
+    def getCFP(self):
+        if not self.__cfp:
+            self.__cfp = ConfigParser.ConfigParser()
+            self.__cfp.readfp(open(self.cfpath))
+    cfp = property(getCFP)
 
-    def parse(self):
+    def getValue(self):
+        if self.cook:
+            return self.cook(self._value)
+        else:
+            return self._value
+    value = property(getValue)
+    
+    def __init__(self, desc, default, cmd=False, odesc=False,
+                 env=False, cf=False, cook=False):
+        self.desc = desc
+        self.default = default
+        self.cmd = cmd
+        if cmd and (cmd[0] != '-' or len(cmd) != 2):
+            raise OptionFailure("Poorly formed command %s" % cmd)
+        self.odesg = odesc
+        self.env = env
+        self.cf = cf
+        self.cook = cook
+
+    def buildHelpMessage(self):
+        msg = ''
+        if self.cmd:
+            msg = self.cmd.ljust(3)
+            if self.odesc:
+                msg += ':%-24s' % (self.odesc)
+            msg += "%s\n" % self.desc
+        return msg
+
+    def buildGetopt(self):
+        gstr = ''
+        if self.cmd:
+            gstr = self.cmd[1]
+            if self.odesc:
+                gstr += ':'
+        return gstr
+
+    def parse(self, opts, rawopts):
+        if self.cmd and opts:
+            # processing getopted data
+            optinfo = [opt[1] for opt in opts if opt[0] == option[0]]
+            if optinfo:
+                self._value = optinfo
+                return
+        if self.cmd and self.cmd in rawopts:
+            self._value = rawopts[rawopts.index(self.cmd) + 1]
+            return
+        # no command line option found
+        if self.env and self.env in os.environ:
+            self._value = os.environ[self.env]
+            return
+        if self.cf:
+            try:
+                if self.cf in locations:
+                    self._value = self.cfp.get(*locations[self.cf])
+                else:
+                    self._value = self.cfp.get(*self.cf)
+            except:
+                pass
+        self._value = self.default
+
+class OptionSet(dict):
+    def buildGetopt(self):
+        return ''.join([opt.buildGetopt() for opt in self.values()])
+
+    def buildHelpMessage(self):
+        return ''.join([opt.buildHelpMessage() for opt in self.values()])
+
+    def helpExit(self, msg='', code=1):
+        if msg:
+            print msg
+        print "Usage:"
+        print self.buildHelpMessage()
+        raise SystemExit(code)
+
+    def parse(self, argv, do_getopt=True):
         '''Parse options'''
         ret = {}
-        if self.dogetopt:
+        if do_getopt:
             try:
-                opts, args = getopt.getopt(sys.argv[1:], self.shortopt, self.longopt)
+                opts, args = getopt.getopt(argv, self.buildHelpGetopt(), [])
             except getopt.GetoptError, err:
-                print err
-                print "%s Usage:" % (self.name)
-                print self.helpmsg
-                raise SystemExit, 1
-            if '-h' in sys.argv:
-                print "%s Usage:" % (self.name)
-                print self.helpmsg
-                raise SystemExit, 1
-        for key, (option, envvar, cfpath, default, boolean) in self.optionspec.iteritems():
-            if self.dogetopt:
-                optinfo = [opt[1] for opt in opts if opt[0] == option[0]]
-                if optinfo:
-                    if boolean:
-                        ret[key] = True
-                    else:
-                        ret[key] = optinfo[0]
-                    continue
-            if option[0] in sys.argv:
-                if boolean:
-                    ret[key] = True
-                else:
-                    ret[key] = sys.argv[sys.argv.index(option[0]) + 1]
-                continue
-            if envvar and os.environ.has_key(envvar):
-                ret[key] = os.environ[envvar]
-                continue
-            ret[key] = default
-        return ret
-    
-class OptionParser(BasicOptionParser):
+                self.helpExit(err)
+            if '-h' in argv:
+                self.helpExit(err)
+        for key in self.keys():
+            option = self[key]
+            if do_getopt:
+                option.parse(opts, [])
+            else:
+                option.parse([], argv)
+            if hasattr(option, '_value'):
+                val = option.value
+                self[key] = val
+
+class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
-    def __init__(self, name, ospec):
-        BasicOptionParser.__init__(self, name, ospec, dogetopt=True)
+    def __init__(self, args):
+        self.Bootstrap = OptionSet(['configfile', Option('config file path',
+                                                         '/etc/bcfg2.conf',
+                                                         cmd='-C')])
+        self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
+        if self.Bootstrap['configfile'] != '/etc/bcfg2.conf':
+            Option.cfpath = self.Bootstrap['configfile']
+            Option.__cfp = False
+        OptionSet.__init__(self, args)
