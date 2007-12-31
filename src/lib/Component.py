@@ -156,11 +156,8 @@ class Component(TLSServer,
         opts = Bcfg2.Options.OptionParser(options)
         opts.parse([])
         location = opts['location']
-        if opts['static']:
-            location = urlparse.urlparse(location)[1].split(':')
-            location = (location[0], int(location[1]))
-
-        print opts
+        uparsed = urlparse.urlparse(location)[1].split(':')
+        sock_loc = (uparsed[0], int(uparsed[1]))
 
         if not opts['key']:
             print "No key specified in '%s'" % setup['configfile']
@@ -170,7 +167,7 @@ class Component(TLSServer,
         self.password = opts['passwd']
 
         try:
-            TLSServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)
+            TLSServer.__init__(self, sock_loc, keyfile, CobaltXMLRPCRequestHandler)
         except socket.error:
             self.logger.error("Failed to bind to socket")
             raise ComponentInitError
