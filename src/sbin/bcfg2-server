@@ -20,7 +20,7 @@ def critical_error(operation):
     raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
 class SetupError(Exception):
-    '''Used when the server cant be setup'''
+    '''Used when the server can't be setup'''
     pass
 
 class Bcfg2Serv(Bcfg2.Component.Component):
@@ -34,7 +34,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
     def __init__(self, setup):
         try:
             Bcfg2.Component.Component.__init__(self, setup)
-            self.shut = False
+            self.shut = False # FIXME doc why this is needed here
         except Bcfg2.Component.ComponentInitError:
             raise SetupError
 
@@ -45,16 +45,19 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             raise SystemExit, 1
 
         self.funcs.update({
-            "AssertProfile": self.Bcfg2AssertProfile, 
-            "GetConfig": self.Bcfg2GetConfig,
-            "GetProbes": self.Bcfg2GetProbes,
-            "RecvProbeData": self.Bcfg2RecvProbeData,
-            "RecvStats": self.Bcfg2RecvStats
+            "AssertProfile" : self.Bcfg2AssertProfile, 
+            "GetConfig"     : self.Bcfg2GetConfig,
+            "GetProbes"     : self.Bcfg2GetProbes,
+            "RecvProbeData" : self.Bcfg2RecvProbeData,
+            "RecvStats"     : self.Bcfg2RecvStats
             })
+
+        # init functions to be exposed as XML-RPC functions
         for plugin in self.Core.plugins.values():
             for method in plugin.__rmi__:
                 self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
                                        "%s.%s" % (plugin.__name__, method))
+
         famfd = self.Core.fam.fileno()
         events = False
         while True:

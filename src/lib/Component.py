@@ -147,11 +147,12 @@ class Component(TLSServer,
         self.logger = logging.getLogger('Component')
         self.children = []
         self.static = True
-        options = {'location': Bcfg2.Options.SERVER_LOCATION,
-                   'static': Bcfg2.Options.SERVER_STATIC,
-                   'key': Bcfg2.Options.SERVER_KEY,
-                   'passwd': Bcfg2.Options.SERVER_PASSWORD,
-                   }
+        options = {
+                    'key'      : Bcfg2.Options.SERVER_KEY,
+                    'location' : Bcfg2.Options.SERVER_LOCATION,
+                    'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
+                    'static'   : Bcfg2.Options.SERVER_STATIC,
+                  }
         opts = Bcfg2.Options.OptionParser(options)
         opts.parse([])
         location = opts['location']
