@@ -13,6 +13,7 @@ class Option(object):
         if not self.__cfp:
             self.__cfp = ConfigParser.ConfigParser()
             self.__cfp.readfp(open(self.cfpath))
+        return self.__cfp
     cfp = property(getCFP)
 
     def getValue(self):
@@ -29,7 +30,7 @@ class Option(object):
         self.cmd = cmd
         if cmd and (cmd[0] != '-' or len(cmd) != 2):
             raise OptionFailure("Poorly formed command %s" % cmd)
-        self.odesg = odesc
+        self.odesc = odesc
         self.env = env
         self.cf = cf
         self.cook = cook
@@ -54,9 +55,9 @@ class Option(object):
     def parse(self, opts, rawopts):
         if self.cmd and opts:
             # processing getopted data
-            optinfo = [opt[1] for opt in opts if opt[0] == option[0]]
+            optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
             if optinfo:
-                self._value = optinfo
+                self._value = optinfo[0]
                 return
         if self.cmd and self.cmd in rawopts:
             self._value = rawopts[rawopts.index(self.cmd) + 1]
@@ -67,10 +68,8 @@ class Option(object):
             return
         if self.cf:
             try:
-                if self.cf in locations:
-                    self._value = self.cfp.get(*locations[self.cf])
-                else:
-                    self._value = self.cfp.get(*self.cf)
+                self._value = self.cfp.get(*self.cf)
+                return
             except:
                 pass
         self._value = self.default
@@ -94,11 +93,11 @@ class OptionSet(dict):
         ret = {}
         if do_getopt:
             try:
-                opts, args = getopt.getopt(argv, self.buildHelpGetopt(), [])
+                opts, args = getopt.getopt(argv, self.buildGetopt(), [])
             except getopt.GetoptError, err:
                 self.helpExit(err)
             if '-h' in argv:
-                self.helpExit(err)
+                self.helpExit('', 0)
         for key in self.keys():
             option = self[key]
             if do_getopt:
@@ -112,11 +111,11 @@ class OptionSet(dict):
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):
-        self.Bootstrap = OptionSet(['configfile', Option('config file path',
-                                                         '/etc/bcfg2.conf',
-                                                         cmd='-C')])
+        self.Bootstrap = OptionSet([('configfile', Option('config file path',
+                                                          '/etc/bcfg2.conf',
+                                                          cmd='-C'))])
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
-        if self.Bootstrap['configfile'] != '/etc/bcfg2.conf':
+        if self.Bootstrap['configfile'] != Option.cfpath:
             Option.cfpath = self.Bootstrap['configfile']
             Option.__cfp = False
         OptionSet.__init__(self, args)
