@@ -158,43 +158,43 @@ SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                          default='/usr/lib/sendmail')
 
 CLIENT_PROFILE = Option('assert the given profile for the host',
-                        default='False', cmd='-p', odesc="<profile>")
+                        default=False, cmd='-p', odesc="<profile>")
 CLIENT_RETRIES = Option('the number of times to retry network communication',
                         default='3', cmd='-R', cf=('communication', 'retries'),
                         odesc="<retry count>")
 CLIENT_DRYRUN = Option('do not actually change the system',
-                       default='False', cmd='-n', )
+                       default=False, cmd='-n', )
 CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
-                              default='False', cmd='-e', )
+                              default=False, cmd='-e', )
 CLIENT_PARANOID = Option('make automatic backups of config files',
-                         default='False', cmd='-P', )
-CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default='False', cmd='-A', )
-CLIENT_DRIVERS = Option('Specify tool driver set', default='False',
+                         default=False, cmd='-P', )
+CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default=False, cmd='-A', )
+CLIENT_DRIVERS = Option('Specify tool driver set', default=False,
                         cmd='-D', cf=('client', 'drivers'),
                         odesc="<driver1,driver2>")
 CLIENT_CACHE = Option('store the configuration in a file',
-                      default='False', cmd='-c', odesc="<cache path>")
+                      default=False, cmd='-c', odesc="<cache path>")
 CLIENT_REMOVE = Option('force removal of additional configuration items',
-                       default='False', cmd='-r', odesc="<entry type|all>")
-CLIENT_BUNDLE = Option('only configure the given bundle', default='False',
+                       default=False, cmd='-r', odesc="<entry type|all>")
+CLIENT_BUNDLE = Option('only configure the given bundle', default=False,
                        cmd='-b', odesc='<bundle>')
-CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default='False',
+CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
-CLIENT_BUILD = Option('run in build mode', default='False', cmd='-B', )
+CLIENT_BUILD = Option('run in build mode', default=False, cmd='-B', )
 CLIENT_FILE = Option('configure from a file rather than querying the server',
-                     default='False', cmd='-f', odesc='<specification path>')
-SERVER_FINGERPRINT = Option('Server Fingerprint', default='False', cmd='-F',
+                     default=False, cmd='-f', odesc='<specification path>')
+SERVER_FINGERPRINT = Option('Server Fingerprint', default=False, cmd='-F',
                             cf=('communication', 'fingerprint'),
                             odesc='<fingerprint>')
-CLIENT_QUICK = Option('disable some checksum verification', default='False',
+CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
-CLIENT_BACKGROUND = Option('Daemonize the agent', default='False', cmd='-i', )
+CLIENT_BACKGROUND = Option('Daemonize the agent', default=False, cmd='-i', )
 CLIENT_PORT = Option('the port on which to bind for agent mode', default='6789',
                      cmd='-g', cf=('communication', 'agent-port'),
                      odesc='<agent port>')
-CLIENT_USER = Option('the user to provide for authentication', default='False',
+CLIENT_USER = Option('the user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
-INTERACTIVE = Option('prompt the user for each change', default='False',
+INTERACTIVE = Option('prompt the user for each change', default=False,
                      cmd='-I', )
 
 class OptionParser(OptionSet):
