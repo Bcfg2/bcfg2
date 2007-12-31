@@ -39,7 +39,10 @@ class Option(object):
         self.odesc = odesc
         self.env = env
         self.cf = cf
-        self.cook = cook
+        if not odesc and not cook:
+            self.cook = bool_cook
+        else:
+            self.cook = cook
 
     def buildHelpMessage(self):
         msg = ''
@@ -142,7 +145,7 @@ SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
 SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
                        default='', cook=bool_cook)
 SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
-                       default=False)
+                       default=False, cmd='-K', odesc='<ssl key file>')
 SERVER_PASSWORD = Option('Communication Password', cmd='-x',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
@@ -151,6 +154,42 @@ SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
                          default='xmlrpc/ssl')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                          default='/usr/lib/sendmail')
+
+CLIENT_PROFILE = Option('assert the given profile for the host',
+                        default='False', cmd='-p')
+CLIENT_RETRIES = Option('the number of times to retry network communication',
+                        default='3', cmd='-R', cf=('communication', 'retries'))
+CLIENT_DRYRUN = Option('do not actually change the system',
+                       default='False', cmd='-n', )
+CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
+                              default='False', cmd='-e', )
+CLIENT_PARANOID = Option('make automatic backups of config files',
+                         default='False', cmd='-P', )
+CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default='False', cmd='-A', )
+CLIENT_DRIVERS = Option('Specify tool driver set', default='False',
+                        cmd='-D', cf=('client', 'drivers'))
+CLIENT_CACHE = Option('store the configuration in a file',
+                      default='False', cmd='-c', )
+CLIENT_REMOVE = Option('force removal of additional configuration items',
+                       default='False', cmd='-r', )
+CLIENT_BUNDLE = Option('only configure the given bundle', default='False',
+                       cmd='-b', )
+CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default='False',
+                       cmd='-k', )
+CLIENT_BUILD = Option('run in build mode', default='False', cmd='-B', )
+CLIENT_FILE = Option('configure from a file rather than querying the server',
+                     default='False', cmd='-f', )
+SERVER_FINGERPRINT = Option('Server Fingerprint', default='False', cmd='-F',
+                            cf=('communication', 'fingerprint'))
+CLIENT_QUICK = Option('disable some checksum verification', default='False',
+                      cmd='-q', )
+CLIENT_BACKGROUND = Option('Daemonize the agent', default='False', cmd='-i', )
+CLIENT_PORT = Option('the port on which to bind for agent mode', default='6789',
+                     cmd='-g', cf=('communication', 'agent-port'))
+CLIENT_USER = Option('the user to provide for authentication', default='False',
+                     cmd='-u', cf=('communication', 'user'))
+INTERACTIVE = Option('prompt the user for each change', default='False',
+                     cmd='-I', )
 
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
