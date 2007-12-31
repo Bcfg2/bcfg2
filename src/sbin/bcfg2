@@ -68,7 +68,7 @@ class Client:
             'key': Bcfg2.Options.SERVER_KEY,
             }
 
-        optparser = Bcfg2.Options.OptionParser('bcfg2', optinfo)
+        optparser = Bcfg2.Options.OptionParser(optinfo)
         self.setup = optparser.parse()
 
         level = 30
