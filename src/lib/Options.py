@@ -114,6 +114,7 @@ class OptionSet(dict):
                 self.helpExit(err)
             if '-h' in argv:
                 self.helpExit('', 0)
+            self['args'] = args
         for key in self.keys():
             option = self[key]
             if do_getopt:
@@ -144,7 +145,7 @@ SERVER_STRUCTURES = Option('Server structure list', cf=('server', 'structures'),
                            default='Bundler,Base', cook=list_split)
 
 SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
-                         default=(socket.gethostname(), 0), cmd='-S',
+                         default='https://localhost:6789', cmd='-S',
                          odesc='https://server:port')
 SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
                        default='', cook=bool_cook)
