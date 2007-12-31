@@ -182,19 +182,19 @@ if __name__ == '__main__':
         'configfile': Bcfg2.Options.CFILE,
         }
     
-    SSETUP = Bcfg2.Options.OptionParser(OPTINFO)
-    SSETUP.parse(sys.argv[1:])
-    print SSETUP
+    setup = Bcfg2.Options.OptionParser(OPTINFO)
+    setup.parse(sys.argv[1:])
+    print setup
     level = 0
     if '-D' in sys.argv:
         Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False, level=level)
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
-    if SSETUP['daemon']:
-        Bcfg2.Daemon.daemonize(SSETUP['daemon'])
+    if setup['daemon']:
+        Bcfg2.Daemon.daemonize(setup['daemon'])
 
     try:
-        BSERV = Bcfg2Serv(SSETUP)
+        BSERV = Bcfg2Serv(setup)
     except SetupError:
         raise SystemExit, 1
     while not BSERV.shut:
