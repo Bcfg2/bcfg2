@@ -7,6 +7,7 @@ import logging
 import os
 import signal
 import socket
+import sys
 import tempfile
 import time
 import xmlrpclib
@@ -68,9 +69,10 @@ class Client:
             'key': Bcfg2.Options.SERVER_KEY,
             }
 
-        optparser = Bcfg2.Options.OptionParser(optinfo)
-        self.setup = optparser.parse()
+        self.setup = Bcfg2.Options.OptionParser(optinfo)
+        self.setup.parse(sys.argv[1:])
 
+        print self.setup
         level = 30
         if self.setup['verbose']:
             level = 20
