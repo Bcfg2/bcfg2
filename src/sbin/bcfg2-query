@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
-# FIXME add -C <configfile> support
-
 import lxml.etree, sys, ConfigParser
 
-from Bcfg2.Settings import settings
+CP = ConfigParser.ConfigParser()
+CP.read(['/etc/bcfg2.conf'])
+try:
+    prefix = CP.get('server', 'repository')
+except:
+    prefix = "/var/lib/bcfg2"
 
 if len(sys.argv) < 2:
     print "Usage bcfg2-query -d|u|p <profile name>"
@@ -16,9 +19,6 @@ if len(sys.argv) < 2:
     print "\t -p <profile name>\t shows all the clients of that profile"
     print "\t -a\t shows all clients"
     sys.exit(1)
-
-prefix = settings.SERVER_REPOSITORY
-
 
 xml = lxml.etree.parse('%s/Metadata/clients.xml'%prefix)
 if '-p' in sys.argv:

@@ -5,7 +5,6 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugins.Metadata 
 
-from Bcfg2.Settings import settings
 from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
@@ -176,19 +175,16 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 if __name__ == '__main__':
 
     OPTINFO = {
-        'verbose': (('-v', False, 'enable verbose output'),
-                    False, False, False, True),
-        'debug': (('-d', False, 'enable debugging output'),
-                  False, False, False, True),
-        'help': (('-h', False, 'display this usage information'),
-                 False, False, False, True),
-        'daemon': (('-D', '<pidfile>', 'daemonize the server, storing PID'),
-                   False, False, False, False),
-        'configfile': (('-C', '<conffile>', 'use this config file'),
-                       False, False, False, False),
+        'verbose': Bcfg2.Options.VERBOSE,
+        'debug': Bcfg2.Options.DEBUG,
+        'help': Bcfg2.Options.HELP,
+        'daemon': Bcfg2.Options.DAEMON,
+        'configfile': Bcfg2.Options.CFILE,
         }
     
-    SSETUP = Bcfg2.Options.OptionParser('bcfg2', OPTINFO).parse()
+    SSETUP = Bcfg2.Options.OptionParser(OPTINFO)
+    SSETUP.parse(sys.argv[1:])
+    print SSETUP
     level = 0
     if '-D' in sys.argv:
         Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False, level=level)
@@ -196,9 +192,6 @@ if __name__ == '__main__':
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
     if SSETUP['daemon']:
         Bcfg2.Daemon.daemonize(SSETUP['daemon'])
-
-    # override default settings
-    settings.read_config_file(SSETUP['configfile'])
 
     try:
         BSERV = Bcfg2Serv(SSETUP)

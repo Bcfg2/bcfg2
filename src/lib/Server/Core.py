@@ -4,10 +4,11 @@ __revision__ = '$Revision$'
 from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 from Bcfg2.Server.Statistics import Statistics
-from Bcfg2.Settings import settings
 
-import logging, lxml.etree, os, stat, ConfigParser
+import logging, lxml.etree, os, stat
 import Bcfg2.Server.Plugins.Metadata
+
+import Bcfg2.Options
 
 logger = logging.getLogger('Bcfg2.Core')
 
@@ -199,9 +200,18 @@ except ImportError:
 
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
+    options = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
+               'svn': Bcfg2.Options.SERVER_SVN,
+               'structures': Bcfg2.Options.SERVER_STRUCTURES,
+               'generators': Bcfg2.Options.SERVER_GENERATORS,
+               'password': Bcfg2.Options.SERVER_PASSWORD}
+
     def __init__(self):
         object.__init__(self)
-        self.datastore = settings.SERVER_REPOSITORY
+        opts = Bcfg2.Options.OptionParser(self.options)
+        opts.parse([])
+        self.datastore = opts['repo']
+        self.opts = opts
         try:
             self.fam = monitor()
         except IOError:
@@ -213,19 +223,17 @@ class Core(object):
         self.plugins = {}
         self.revision = '-1'
 
+        self.svn = opts['svn']
         try:
-            if settings.SERVER_SVN:
+            if self.svn:
                 self.read_svn_revision()
         except:
-          settings.SERVER_SVN = False
+            self.svn = False
 
-        self.svn = settings.SERVER_SVN
+        self.stats = Statistics("%s/etc/statistics.xml" % (self.datastore))
 
-        mpath = settings.SERVER_REPOSITORY
-        self.stats = Statistics("%s/etc/statistics.xml" % (mpath))
-
-        structures = settings.SERVER_STRUCTURES
-        generators = settings.SERVER_GENERATORS
+        structures = opts['structures']
+        generators = opts['generators']
         [data.remove('') for data in [structures, generators] if '' in data]
 
         for plugin in structures + generators + ['Metadata']:

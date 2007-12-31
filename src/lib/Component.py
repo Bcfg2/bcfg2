@@ -7,11 +7,9 @@ from base64 import decodestring
 import BaseHTTPServer, SimpleXMLRPCServer
 import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
-
+import Bcfg2.Options
 import Bcfg2.Client.Proxy as Proxy
 from Bcfg2.tlslite.TLSConnection import TLSConnection
-
-from Bcfg2.Settings import settings
 
 log = logging.getLogger('Component')
 
@@ -149,18 +147,26 @@ class Component(TLSServer,
         self.logger = logging.getLogger('Component')
         self.children = []
         self.static = True
-
-        location = settings.COMPONENTS_BCFG2
-        if settings.COMPONENTS_BCFG2_STATIC:
-            location = urlparse.urlparse(settings.COMPONENTS_BCFG2)[1].split(':')
+        options = {'location': Bcfg2.Options.SERVER_LOCATION,
+                   'static': Bcfg2.Options.SERVER_STATIC,
+                   'key': Bcfg2.Options.SERVER_KEY,
+                   'passwd': Bcfg2.Options.SERVER_PASSWORD,
+                   }
+        opts = Bcfg2.Options.OptionParser(options)
+        opts.parse([])
+        location = opts['location']
+        if opts['static']:
+            location = urlparse.urlparse(location)[1].split(':')
             location = (location[0], int(location[1]))
 
-        if not settings.COMMUNICATION_KEY:
-            print "No key specified in '%s'" % settings.CONFIG_FILE
-            raise SystemExit, 1
-        keyfile = settings.COMMUNICATION_KEY
+        print opts
 
-        self.password = settings.COMMUNICATION_PASSWORD
+        if not opts['key']:
+            print "No key specified in '%s'" % setup['configfile']
+            raise SystemExit, 1
+        keyfile = opts['key']
+
+        self.password = opts['passwd']
 
         try:
             TLSServer.__init__(self, location, keyfile, CobaltXMLRPCRequestHandler)

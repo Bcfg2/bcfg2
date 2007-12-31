@@ -1,8 +1,6 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-from Bcfg2.Settings import settings
-
 import lxml.etree, re, socket, time, sys
 import Bcfg2.Server.Plugin
 
@@ -69,7 +67,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.ptimes = {}
         self.pctime = 0
         self.extra = {'groups.xml':[], 'clients.xml':[]}
-        self.password = settings.COMMUNICATION_PASSWORD
+        self.password = core.opts['password']
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''

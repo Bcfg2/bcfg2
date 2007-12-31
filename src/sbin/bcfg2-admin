@@ -3,7 +3,6 @@
 
 import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
 import Bcfg2.Server.Core, Bcfg2.Logging
-from Bcfg2.Settings import settings
 
 log = logging.getLogger('bcfg-admin')
 
@@ -19,7 +18,8 @@ def mode_import(modename):
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
 
-    configfile = settings.CONFIG_FILE
+    # Some sensible defaults
+    configfile = "/etc/bcfg2.conf"
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hC:', ['help', 'configfile='])
@@ -35,9 +35,6 @@ if __name__ == '__main__':
             help = True
         if opt in ("-C", "--configfile"):
             configfile = arg
-
-    # override default settings
-    settings.read_config_file(configfile)
 
     modes = [x.lower() for x in Bcfg2.Server.Admin.__all__]
     modes.remove('mode')
@@ -55,8 +52,7 @@ if __name__ == '__main__':
             mode_cls = mode_import(modname)
         except ImportError, e:
             log.error("Failed to load admin mod %s: %s" % (modname, e))
-            raise SystemExit(0)
-        mode = mode_cls()
+        mode = mode_cls(configfile)
         mode(args[1:])
     else:
         print "unknown mode %s" % args[0]

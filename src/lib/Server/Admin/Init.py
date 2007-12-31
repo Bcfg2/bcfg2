@@ -1,7 +1,6 @@
 import os, socket
 import Bcfg2.Server.Admin
-
-from Bcfg2.Settings import settings
+import Bcfg2.Options
 
 config = '''
 [server]
@@ -69,11 +68,19 @@ os_list = [('Redhat/Fedora/RHEL/RHAS/Centos', 'redhat'),
 class Init(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = 'bcfg2-admin init'
     __longhelp__ = __shorthelp__ + '\n\tCompare two client specifications or directories of specifications'
+    options = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
+               'struct': Bcfg2.Options.SERVER_STRUCTURES,
+               'gens': Bcfg2.Options.SERVER_GENERATORS,
+               'proto': Bcfg2.Options.SERVER_PROTOCOL,
+               'sendmail': Bcfg2.Options.SENDMAIL_PATH}
+    
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        repopath = raw_input( "location of bcfg2 repository [%s]: " % settings.SERVER_REPOSITORY )
+        opts = Bcfg2.Options.OptionParser(options)
+        opts.parse([])
+        repopath = raw_input("location of bcfg2 repository [%s]: " % opts['repo'])
         if repopath == '':
-            repopath = settings.SERVER_REPOSITORY
+            repopath = opts['repo']
         password = ''
         while ( password == '' ):
             password = raw_input(
@@ -88,18 +95,15 @@ class Init(Bcfg2.Server.Admin.Mode):
             prompt += "%d: \n" % (os_list.index(entry) + 1, entry[0])
         prompt += ': '
         os_sel = os_list[int(raw_input(prompt))-1][1]
-        self.initializeRepo(repopath, server, password, os_sel)
+        self.initializeRepo(repopath, server, password, os_sel, opts)
         print "Repository created successfuly in %s" % (repopath)
 
-    def initializeRepo(self, repo, server_uri, password, os_selection):
+    def initializeRepo(self, repo, server_uri, password, os_selection, opts):
         '''Setup a new repo'''
         keypath = os.path.dirname(os.path.abspath(settings.CONFIG_FILE))
         confdata = config % ( 
-                        repo, 
-                        settings.SERVER_STRUCTURES,
-                        settings.SERVER_GENERATORS,
-                        settings.SENDMAIL_PATH,
-                        settings.COMMUNICATION_PROTOCOL,
+                        repo, opts['struct'], opts['gens'], 
+                        opts['sendmail'], opts['proto']
                         password, keypath, server_uri 
                     )
 

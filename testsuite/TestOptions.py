@@ -24,16 +24,21 @@ class TestOption(object):
         o.parse([], [])
         print o._value
         assert o._value == 'foobat'
+        o.cf = ('communication', 'pwd')
+        o.parse([], [])
+        print o._value
+        assert o._value == 'test4'
         o.cf = False
         o.parse([], [])
         assert o._value == 'test4'
 
     def test_cook(self):
-        cooker = lambda x: 1
-        o = Bcfg2.Options.Option('foo', 'test4', cook=cooker)
-        o.parse([], [])
-        assert o.value == 1
-    
+        o1 = Bcfg2.Options.Option('foo', 'test4', cook=Bcfg2.Options.bool_cook)
+        o1.parse([], [])
+        assert o1.value == True
+        o2 = Bcfg2.Options.Option('foo', '', cook=Bcfg2.Options.bool_cook)
+        o2.parse([], [])
+        assert o2.value == False
 
 class TestOptionSet(object):
     def test_buildGetopt(self):
@@ -54,15 +59,15 @@ class TestOptionSet(object):
             assert False
         except SystemExit:
             pass
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-h')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H', odesc='1'))]
         os2 = Bcfg2.Options.OptionSet(opts)
         try:
             os2.parse(['-h'])
             assert False
         except SystemExit:
             pass
+        os3 = Bcfg2.Options.OptionSet(opts)
+        os3.parse(['-G'])
+        assert os3['foo'] == True
 
 class TestOptionParser(object):
     def test__init(self):

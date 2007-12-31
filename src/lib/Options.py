@@ -1,7 +1,13 @@
 '''Option parsing library for utilities'''
 __revision__ = '$Revision$'
 
-import getopt, os, sys, ConfigParser
+import getopt, os, socket, sys, ConfigParser
+
+def bool_cook(x):
+    if x:
+        return True
+    else:
+        return False
 
 class OptionFailure(Exception):
     pass
@@ -57,7 +63,10 @@ class Option(object):
             # processing getopted data
             optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
             if optinfo:
-                self._value = optinfo[0]
+                if optinfo[0]:
+                    self._value = optinfo[0]
+                else:
+                    self._value = True
                 return
         if self.cmd and self.cmd in rawopts:
             self._value = rawopts[rawopts.index(self.cmd) + 1]
@@ -108,12 +117,45 @@ class OptionSet(dict):
                 val = option.value
                 self[key] = val
 
+list_split = lambda x:x.replace(' ','').split(',')
+
+CFILE = Option('Specify configuration file', '/etc/bcfg2.conf', cmd='-C',
+               odesc='<conffile>')
+HELP = Option('Print this usage message', False, cmd='-h')
+DEBUG = Option("Enable debugging output", False, cmd='-d')
+VERBOSE = Option("Enable verbose output", False, cmd='-v')
+DAEMON = Option("Daemonize process, storing pid", False,
+                cmd='-D', odesc="<pidfile>")
+
+SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
+                           cf=('server', 'repository'), cmd='-Q',
+                           odesc='<repository path>' )
+SERVER_SVN = Option('Server svn support', False, cf=('server', 'svn'))
+SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),
+                           default='SSHbase,Cfg,Pkgmgr,Rules', cook=list_split)
+SERVER_STRUCTURES = Option('Server structure list', cf=('server', 'structures'),
+                           default='Bundler,Base', cook=list_split)
+
+SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
+                         default=(socket.gethostname(), 0), cmd='-S',
+                         odesc='https://server:port')
+SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
+                       default='', cook=bool_cook)
+SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
+                       default=False)
+SERVER_PASSWORD = Option('Communication Password', cmd='-x',
+                         cf=('communication', 'password'), default=False)
+INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
+                       default='/usr')
+SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
+                         default='xmlrpc/ssl')
+SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
+                         default='/usr/lib/sendmail')
+
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):
-        self.Bootstrap = OptionSet([('configfile', Option('config file path',
-                                                          '/etc/bcfg2.conf',
-                                                          cmd='-C'))])
+        self.Bootstrap = OptionSet([('configfile', CFILE)])
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
         if self.Bootstrap['configfile'] != Option.cfpath:
             Option.cfpath = self.Bootstrap['configfile']
