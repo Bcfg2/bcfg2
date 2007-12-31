@@ -3,12 +3,10 @@
 '''Bcfg2 Client'''
 __revision__ = '$Revision$'
 
-import getopt
 import logging
 import os
 import signal
 import socket
-import sys
 import tempfile
 import time
 import xmlrpclib
@@ -17,9 +15,8 @@ import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 import Bcfg2.Daemon
-from Bcfg2.Component import *
-from Bcfg2.tlslite.Checker import Checker
-from Bcfg2.tlslite.errors import *
+from Bcfg2.Component import SimpleXMLRPCServer, ComponentInitError, ComponentKeyError, CobaltXMLRPCRequestHandler, TLSServer
+from Bcfg2.tlslite.errors import TLSNoAuthenticationError, TLSFingerprintError
 
 try:
     import Bcfg2.Client.Proxy
@@ -271,79 +268,79 @@ class FingerCheck(object):
                     (chain.getFingerprint(), self.fingerprint))
 
 class Agent(Bcfg2.Component.Component):
-        """The Bcfg2 Agent component providing XML-RPC access to 'run'"""
-        __name__ = 'bcfg2-agent'
-        __implementation__ = 'bcfg2-agent'
+    """The Bcfg2 Agent component providing XML-RPC access to 'run'"""
+    __name__ = 'bcfg2-agent'
+    __implementation__ = 'bcfg2-agent'
             
-        def __init__(self, client):
-            # need to get addr
-            self.setup = client.setup
-            self.shut = False
-            signal.signal(signal.SIGINT, self.start_shutdown)
-            signal.signal(signal.SIGTERM, self.start_shutdown)
-            self.logger = logging.getLogger('Agent')
+    def __init__(self, client):
+        # need to get addr
+        self.setup = client.setup
+        self.shut = False
+        signal.signal(signal.SIGINT, self.start_shutdown)
+        signal.signal(signal.SIGTERM, self.start_shutdown)
+        self.logger = logging.getLogger('Agent')
 
-            self.static = True
+        self.static = True
                 
-            if self.setup["agent-port"]:
-                port = int(self.setup["agent-port"])
-            elif self.setup["server"]:
-                port = int(self.setup["server"].split(':')[1])
-            else:
-                print "port or server URL not specified"
-                raise SystemExit, 1
+        if self.setup["agent-port"]:
+            port = int(self.setup["agent-port"])
+        elif self.setup["server"]:
+            port = int(self.setup["server"].split(':')[1])
+        else:
+            print "port or server URL not specified"
+            raise SystemExit, 1
 
-            location = (socket.gethostname(), port)
+        location = (socket.gethostname(), port)
 
-            keyfile = self.setup["key"]
-            self.password = self.setup["password"]
+        keyfile = self.setup["key"]
+        self.password = self.setup["password"]
             
-            try:
-                TLSServer.__init__(self,
-                                   location,
-                                   keyfile,
-                                   CobaltXMLRPCRequestHandler,
-                                   FingerCheck(self.setup["fingerprint"]),
-                                   reqCert=True)
-            except socket.error:
-                self.logger.error("Failed to bind to socket")
-                raise ComponentInitError
-            except ComponentKeyError:
-                self.logger.error("Failed to parse key" % (keyfile))
-                raise ComponentInitError
-            except:
-                self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
-                raise ComponentInitError
-            try:
-                SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-            except TypeError:
-                SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, False, None)
-            self.logRequests = 0
-            self.port = self.socket.getsockname()[1]
-            self.url = "https://%s:%s" % (socket.gethostname(), self.port)
-            self.logger.info("Bound to port %s" % self.port)
-            self.funcs.update({'system.listMethods':self.addr_system_listMethods})
-            self.atime = 0
-            self.client = client
-            self.funcs.update({
-                "run": self.run,
-                })
+        try:
+            TLSServer.__init__(self,
+                               location,
+                               keyfile,
+                               CobaltXMLRPCRequestHandler,
+                               FingerCheck(self.setup["fingerprint"]),
+                               reqCert=True)
+        except socket.error:
+            self.logger.error("Failed to bind to socket")
+            raise ComponentInitError
+        except ComponentKeyError:
+            self.logger.error("Failed to parse key" % (keyfile))
+            raise ComponentInitError
+        except:
+            self.logger.error("Failed to load ssl key %s" % (keyfile), exc_info=1)
+            raise ComponentInitError
+        try:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+        except TypeError:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self, False, None)
+        self.logRequests = 0
+        self.port = self.socket.getsockname()[1]
+        self.url = "https://%s:%s" % (socket.gethostname(), self.port)
+        self.logger.info("Bound to port %s" % self.port)
+        self.funcs.update({'system.listMethods':self.addr_system_listMethods})
+        self.atime = 0
+        self.client = client
+        self.funcs.update({
+            "run": self.run,
+            })
 
-        def run(self, address):
+    def run(self, address):
+        try:
+            os.waitpid(-1, os.WNOHANG)
+        except:
+            pass
+        self.logger.info("Got run request from %s" % (address[0]))
+        if os.fork():
+            return True
+        else:
             try:
-                os.waitpid(-1, os.WNOHANG)
-            except:
-                pass
-            self.logger.info("Got run request from %s" % (address[0]))
-            if os.fork():
-                return True
-            else:
-                try:
-                    self.client.run()
-                except SystemExit:
-                    self.logger.error("Client failed to execute")
-                self.shut = True
-                return False
+                self.client.run()
+            except SystemExit:
+                self.logger.error("Client failed to execute")
+            self.shut = True
+            return False
             
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
@@ -357,7 +354,8 @@ if __name__ == '__main__':
             try:
                 agent.serve_forever()
             except:
-                critical_error('error in service loop')
+                agent.logger.error('Error in service loop')
+                agent.logger.error('Continuing')
         if os.getpid() == spid:
             print("Shutting down")
     else:
