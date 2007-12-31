@@ -12,8 +12,10 @@ def bool_cook(x):
 class OptionFailure(Exception):
     pass
 
+DEFAULT_CONFIG_LOCATION = '/etc/bcfg2.conf'
+
 class Option(object):
-    cfpath = '/etc/bcfg2.conf'
+    cfpath = DEFAULT_CONFIG_LOCATION
     __cfp = False
     def getCFP(self):
         if not self.__cfp:
@@ -124,7 +126,7 @@ class OptionSet(dict):
 
 list_split = lambda x:x.replace(' ','').split(',')
 
-CFILE = Option('Specify configuration file', '/etc/bcfg2.conf', cmd='-C',
+CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
 HELP = Option('Print this usage message', False, cmd='-h')
 DEBUG = Option("Enable debugging output", False, cmd='-d')
