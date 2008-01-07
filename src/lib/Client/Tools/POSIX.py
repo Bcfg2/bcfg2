@@ -237,6 +237,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         except OSError:
                             try:
                                 os.mkdir(current)
+                                continue
                             except OSError:
                                 return False
                         if not S_ISDIR(sloc[ST_MODE]):
