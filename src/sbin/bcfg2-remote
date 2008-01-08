@@ -8,27 +8,21 @@ import Bcfg2.Options, Bcfg2.Logging, logging, socket, sys
 
 if __name__ == '__main__':
     opts = {
-        'agent-port': (('-p', '<agent tcp port>', 'agent TCP port'),
-                       False, ('communication', 'agent-port'),
-                       '6789', False),
-        'host': (('-H', '<agent host>', 'agent host'),
-                 False, False, False, False),
-        'setup': (('-C', '<configfile>', "config file path"),
-                  False, False, '/etc/bcfg2.conf', False),
-        'key': (('-k', '<ssl key>', 'ssl key path'),
-                False, ('communication', 'key'), False, False),
-        'debug': (('-d', '<debug level>', 'debug level (0-40)'),
-                  False, False, 0, False),
+        'agent-port': Bcfg2.Options.AGENT_PORT,
+        'host': Bcfg2.Options.AGENT_HOST,
+        'setup': Bcfg2.Options.CFILE,
+        'key': Bcfg2.Options.SERVER_KEY,
+        'debug': Bcfg2.Options.DEBUG,
         }
-    optparser = Bcfg2.Options.OptionParser('bcfg2', opts)
-    setup = optparser.parse()
+    setup = Bcfg2.Options.OptionParser(opts)
+    setup.parse(sys.argv[1:])
     Bcfg2.Logging.setup_logging('bcfg2-remote',
                                 to_syslog=False,
                                 level=int(setup['debug']))
     logger = logging.getLogger('bcfg2-remote')
     if not setup['host']:
         logger.error("-H option is required")
-        logger.error(optparser.helpmsg)
+        logger.error(setup.buildHelpMessage())
         raise SystemExit(1)
     s = open(setup['key']).read()
     x509 = X509()
