@@ -42,8 +42,8 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             
             #try httpauth
             if not authenticated and "Authorization" in self.headers:
-                #need more checking here in case its all garbled
-                namepass = decodestring(self.headers["Authorization"].strip("Basic ")).split(":")
+                binauth = self.headers['Authorization'].replace("Basic ", "")
+                namepass = decodestring(binauth).split(':')
                 if self.server._authenticate_connection("bogus-method",
                                                         namepass[0],
                                                         namepass[1],
