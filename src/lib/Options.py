@@ -116,6 +116,8 @@ class OptionSet(dict):
                 self.helpExit('', 0)
             self['args'] = args
         for key in self.keys():
+            if key == 'args':
+                continue
             option = self[key]
             if do_getopt:
                 option.parse(opts, [])
