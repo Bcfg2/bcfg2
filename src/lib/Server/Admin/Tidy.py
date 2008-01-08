@@ -30,7 +30,7 @@ class Tidy(Bcfg2.Server.Admin.Mode):
         bad = []
 
         # clean up unresolvable hosts in SSHbase
-        for name in os.listdir("%s/SSHbase" % (self.repo_path)):
+        for name in os.listdir("%s/SSHbase" % (self.get_repo_path())):
             if hostmatcher.match(name):
                 hostname = hostmatcher.match(name).group(1)
                 if hostname in good + bad:
@@ -40,12 +40,12 @@ class Tidy(Bcfg2.Server.Admin.Mode):
                     good.append(hostname)
                 except:
                     bad.append(hostname)
-        for name in os.listdir("%s/SSHbase" % (self.repo_path)):
+        for name in os.listdir("%s/SSHbase" % (self.get_repo_path())):
             if not hostmatcher.match(name):
-                to_remove.append("%s/SSHbase/%s" % (self.repo_path, name))
+                to_remove.append("%s/SSHbase/%s" % (self.get_repo_path(), name))
             else:
                 if hostmatcher.match(name).group(1) in bad:
-                    to_remove.append("%s/SSHbase/%s" % (self.repo_path, name))
+                    to_remove.append("%s/SSHbase/%s" % (self.get_repo_path(), name))
         # clean up file~
         # clean up files without parsable names in Cfg
         return to_remove

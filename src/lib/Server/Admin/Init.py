@@ -72,11 +72,12 @@ class Init(Bcfg2.Server.Admin.Mode):
                'struct': Bcfg2.Options.SERVER_STRUCTURES,
                'gens': Bcfg2.Options.SERVER_GENERATORS,
                'proto': Bcfg2.Options.SERVER_PROTOCOL,
-               'sendmail': Bcfg2.Options.SENDMAIL_PATH}
+               'sendmail': Bcfg2.Options.SENDMAIL_PATH,
+               'configfile': Bcfg2.Options.CFILE}
     
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        opts = Bcfg2.Options.OptionParser(options)
+        opts = Bcfg2.Options.OptionParser(self.options)
         opts.parse([])
         repopath = raw_input("location of bcfg2 repository [%s]: " % opts['repo'])
         if repopath == '':
@@ -100,14 +101,14 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def initializeRepo(self, repo, server_uri, password, os_selection, opts):
         '''Setup a new repo'''
-        keypath = os.path.dirname(os.path.abspath(settings.CONFIG_FILE))
+        keypath = os.path.dirname(os.path.abspath(opts['configfile']))
         confdata = config % ( 
                         repo, opts['struct'], opts['gens'], 
                         opts['sendmail'], opts['proto'],
                         password, keypath, server_uri 
                     )
 
-        open(settings.CONFIG_FILE,"w").write(confdata)
+        open(opts['configfile'], "w").write(confdata)
         # FIXME automate ssl key generation
         os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:

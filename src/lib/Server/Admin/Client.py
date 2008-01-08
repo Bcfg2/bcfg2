@@ -7,7 +7,7 @@ class Client(Bcfg2.Server.Admin.Mode):
     __longhelp__ = __shorthelp__ + '\n\tCreate or delete client entries'
     def __init__(self):
         Bcfg2.Server.Admin.Mode.__init__(self)
-        self.tree = lxml.etree.parse(self.repo_path + \
+        self.tree = lxml.etree.parse(self.get_repo_path() + \
                                      '/Metadata/clients.xml')
         self.root = self.tree.getroot()
     
@@ -28,7 +28,7 @@ class Client(Bcfg2.Server.Admin.Mode):
         else:
             print "No command specified"
             raise SystemExit(1)
-        self.tree.write(self.repopath + '/Metadata/clients.xml')        
+        self.tree.write(self.get_repo_path() + '/Metadata/clients.xml')        
     
     def AddClient(self, client, attrs):
         '''add a new client'''

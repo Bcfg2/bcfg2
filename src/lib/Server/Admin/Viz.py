@@ -38,9 +38,8 @@ class Viz(Bcfg2.Server.Admin.Mode):
                 kset = True
             elif opt in ("-o", "--outfile"):
                 outputfile = arg
-        repopath = self.repo_path
 
-        data = self.Visualize(repopath, rset, hset, bset, kset)
+        data = self.Visualize(self.get_repo_path(), rset, hset, bset, kset)
         if outputfile:
             open(outputfile, 'w').write(data)
         else:
