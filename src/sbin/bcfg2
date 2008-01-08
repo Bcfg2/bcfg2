@@ -72,7 +72,10 @@ class Client:
         self.setup = Bcfg2.Options.OptionParser(optinfo)
         self.setup.parse(sys.argv[1:])
 
-        print self.setup
+        if self.setup['args']:
+            print "Bcfg2 takes no arguments, only options"
+            print self.setup.buildHelpMessage()
+            raise SystemExit(1)
         level = 30
         if self.setup['verbose']:
             level = 20
