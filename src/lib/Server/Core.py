@@ -8,8 +8,6 @@ from Bcfg2.Server.Statistics import Statistics
 import logging, lxml.etree, os, stat
 import Bcfg2.Server.Plugins.Metadata
 
-import Bcfg2.Options
-
 logger = logging.getLogger('Bcfg2.Core')
 
 def ShouldIgnore(event):
@@ -200,18 +198,10 @@ except ImportError:
 
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
-    options = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
-               'svn': Bcfg2.Options.SERVER_SVN,
-               'structures': Bcfg2.Options.SERVER_STRUCTURES,
-               'generators': Bcfg2.Options.SERVER_GENERATORS,
-               'password': Bcfg2.Options.SERVER_PASSWORD}
 
-    def __init__(self):
+    def __init__(self, repo, structures, generators, password, svn):
         object.__init__(self)
-        opts = Bcfg2.Options.OptionParser(self.options)
-        opts.parse([])
-        self.datastore = opts['repo']
-        self.opts = opts
+        self.datastore = repo
         try:
             self.fam = monitor()
         except IOError:
@@ -222,8 +212,8 @@ class Core(object):
         self.cron = {}
         self.plugins = {}
         self.revision = '-1'
-
-        self.svn = opts['svn']
+        self.password = password
+        self.svn = svn
         try:
             if self.svn:
                 self.read_svn_revision()
@@ -232,8 +222,6 @@ class Core(object):
 
         self.stats = Statistics("%s/etc/statistics.xml" % (self.datastore))
 
-        structures = opts['structures']
-        generators = opts['generators']
         [data.remove('') for data in [structures, generators] if '' in data]
 
         for plugin in structures + generators + ['Metadata']:

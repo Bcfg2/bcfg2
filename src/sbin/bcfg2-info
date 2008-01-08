@@ -23,10 +23,10 @@ def printTabular(rows):
         print fstring % row
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
-    def __init__(self):
+    def __init__(self, repo, struct, gens, passwd, svn):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self)
+            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, passwd, svn)
         except Bcfg2.Server.Core.CoreInitError, msg:
             print "Core load failed because %s" % msg
             raise SystemExit(1)
@@ -260,14 +260,20 @@ Usage: [quit|exit]"""
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
-
+    print dir(Bcfg2.Options)
     optinfo = {
             'configfile': Bcfg2.Options.CFILE, 
             'help': Bcfg2.Options.HELP,
               }
+    optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
+                    'svn': Bcfg2.Options.SERVER_SVN,
+                    'structures': Bcfg2.Options.SERVER_STRUCTURES,
+                    'generators': Bcfg2.Options.SERVER_GENERATORS,
+                    'password': Bcfg2.Options.SERVER_PASSWORD})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 
-    loop = infoCore()
+    loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
+                    setup['password'], setup['svn'])
     loop.plugins['Metadata'].load_probedata()
     loop.do_loop()

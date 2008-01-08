@@ -20,7 +20,7 @@ def critical_error(operation):
     raise Fault, (7, "Critical unexpected failure: %s" % (operation))
 
 class SetupError(Exception):
-    '''Used when the server can't be setup'''
+    '''Used when the server cant be setup'''
     pass
 
 class Bcfg2Serv(Bcfg2.Component.Component):
@@ -39,7 +39,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             raise SetupError
 
         try:
-            self.Core = Core()
+            self.Core = Core(setup['repo'], setup['structures'],
+                             setup['generators'], setup['password'], setup['svn'])
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
             raise SystemExit, 1
@@ -184,6 +185,12 @@ if __name__ == '__main__':
         'help'      : Bcfg2.Options.HELP,
         'verbose'   : Bcfg2.Options.VERBOSE,
         }
+
+    OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
+                    'svn': Bcfg2.Options.SERVER_SVN,
+                    'structures': Bcfg2.Options.SERVER_STRUCTURES,
+                    'generators': Bcfg2.Options.SERVER_GENERATORS,
+                    'password': Bcfg2.Options.SERVER_PASSWORD})
 
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])

@@ -67,7 +67,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.ptimes = {}
         self.pctime = 0
         self.extra = {'groups.xml':[], 'clients.xml':[]}
-        self.password = core.opts['password']
+        self.password = core.password
 
     def HandleEvent(self, event):
         '''Handle update events for data files'''
