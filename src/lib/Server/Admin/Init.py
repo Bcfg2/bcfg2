@@ -2,6 +2,7 @@ import os, socket
 import Bcfg2.Server.Admin
 import Bcfg2.Options
 
+# default config file
 config = '''
 [server]
 repository = %s
@@ -50,72 +51,96 @@ groups = '''
    <Group name='solaris'/>
 </Groups>
 '''
+
 clients = '''
 <Clients version="3.0">
    <Client profile="basic" pingable="Y" pingtime="0" name="%s"/>
 </Clients>
 '''
 
-os_list = [('Redhat/Fedora/RHEL/RHAS/Centos', 'redhat'),
-           ('SUSE/SLES', 'suse'),
-           ('Mandrake', 'mandrake'),
-           ('Debian', 'debian'),
-           ('Ubuntu', 'ubuntu'),
-           ('Gentoo', 'gentoo'),
-           ('FreeBSD', 'freebsd')]
+os_list = [
+           ('Redhat/Fedora/RHEL/RHAS/Centos',   'redhat'),
+           ('SUSE/SLES',                        'suse'),
+           ('Mandrake',                         'mandrake'),
+           ('Debian',                           'debian'),
+           ('Ubuntu',                           'ubuntu'),
+           ('Gentoo',                           'gentoo'),
+           ('FreeBSD',                          'freebsd')
+          ]
 
 
 class Init(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = 'bcfg2-admin init'
-    __longhelp__ = __shorthelp__ + '\n\tCompare two client specifications or directories of specifications'
-    options = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
-               'struct': Bcfg2.Options.SERVER_STRUCTURES,
-               'gens': Bcfg2.Options.SERVER_GENERATORS,
-               'proto': Bcfg2.Options.SERVER_PROTOCOL,
-               'sendmail': Bcfg2.Options.SENDMAIL_PATH,
-               'configfile': Bcfg2.Options.CFILE}
+    __longhelp__ = __shorthelp__ + '\n\tCompare two client specifications or directories of specifications' # FIXME
+    options = {
+                'configfile': Bcfg2.Options.CFILE,
+                'gens'      : Bcfg2.Options.SERVER_GENERATORS,
+                'proto'     : Bcfg2.Options.SERVER_PROTOCOL,
+                'repo'      : Bcfg2.Options.SERVER_REPOSITORY,
+                'sendmail'  : Bcfg2.Options.SENDMAIL_PATH,
+                'struct'    : Bcfg2.Options.SERVER_STRUCTURES,
+              }
     
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         opts = Bcfg2.Options.OptionParser(self.options)
         opts.parse([])
-        repopath = raw_input("location of bcfg2 repository [%s]: " % opts['repo'])
+
+        # FIXME don't overwrite existing bcfg2.conf file
+        configfile = raw_input("Store bcfg2 configuration in [%s]: " % opts['configfile'])
+        if configfile == '':
+            configfile = opts['configfile']
+
+        repopath = raw_input("Location of bcfg2 repository [%s]: " % opts['repo'])
         if repopath == '':
             repopath = opts['repo']
+        
         password = ''
         while ( password == '' ):
             password = raw_input(
                 "Input password used for communication verification: " )
+        
         server = "https://%s:6789" % socket.getfqdn()
         rs = raw_input( "Input the server location [%s]: " % server)
         if rs:
             server = rs
-        #create the groups.xml file
+
+        # create the groups.xml file
         prompt = '''Input base Operating System for clients:\n'''
         for entry in os_list:
-            prompt += "%d: \n" % (os_list.index(entry) + 1, entry[0])
+            prompt += "%d: %s\n" % (os_list.index(entry) + 1, entry[0])
         prompt += ': '
         os_sel = os_list[int(raw_input(prompt))-1][1]
-        self.initializeRepo(repopath, server, password, os_sel, opts)
+        self.initializeRepo(configfile, repopath, server, password, os_sel, opts)
         print "Repository created successfuly in %s" % (repopath)
 
-    def initializeRepo(self, repo, server_uri, password, os_selection, opts):
+    def initializeRepo(self, configfile, repo, server_uri, password, os_selection, opts):
         '''Setup a new repo'''
-        keypath = os.path.dirname(os.path.abspath(opts['configfile']))
+        keypath = os.path.dirname(os.path.abspath(configfile))
+
         confdata = config % ( 
                         repo, opts['struct'], opts['gens'], 
                         opts['sendmail'], opts['proto'],
                         password, keypath, server_uri 
                     )
 
-        open(opts['configfile'], "w").write(confdata)
+        try:
+            open(configfile, "w").write(confdata)
+        except:
+            # FIXME how to handle
+            print "Failed to write configuration file to '%s'\n" % configfile
+            pass
+
         # FIXME automate ssl key generation
+        # FIXME key generation may fail as non-root user
         os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:
             os.chmod('%s/bcfg2.key'% keypath,'0600')
         except:
             pass
     
+        # FIXME don't overwrite existing directory/repo?
+        # FIXME repo creation may fail as non-root user
         for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 'etc', 'Metadata',
                        'Base', 'Bundler']:
             path = "%s/%s" % (repo, subdir)
@@ -127,8 +152,5 @@ class Init(Bcfg2.Server.Admin.Mode):
                 except:
                     continue
             
-        open("%s/Metadata/groups.xml"%repo, "w").write(groups % os_selection)
-        #now the clients file
-        open("%s/Metadata/clients.xml"%repo, "w").write(clients % socket.getfqdn())
-
-
+        open("%s/Metadata/groups.xml" % repo, "w").write(groups % os_selection)
+        open("%s/Metadata/clients.xml" % repo, "w").write(clients % socket.getfqdn())
