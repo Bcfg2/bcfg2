@@ -33,7 +33,9 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
     def __init__(self, setup):
         try:
-            Bcfg2.Component.Component.__init__(self, setup)
+            Bcfg2.Component.Component.__init__(self, setup['key'],
+                                               setup['password'],
+                                               setup['location'])
         except Bcfg2.Component.ComponentInitError:
             raise SetupError
 
@@ -190,6 +192,12 @@ if __name__ == '__main__':
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD})
+    OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
+                    'location' : Bcfg2.Options.SERVER_LOCATION,
+                    'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
+                    'static'   : Bcfg2.Options.SERVER_STATIC,
+                    })
+
 
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
@@ -203,6 +211,9 @@ if __name__ == '__main__':
     else:
         Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
 
+    if not setup['key']:
+        print "No key specified in '%s'" % setup['configfile']
+        raise SystemExit, 1
 
     try:
         BSERV = Bcfg2Serv(setup)

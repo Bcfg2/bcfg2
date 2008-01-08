@@ -7,7 +7,6 @@ from base64 import decodestring
 import BaseHTTPServer, SimpleXMLRPCServer
 import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
-import Bcfg2.Options
 import Bcfg2.Client.Proxy as Proxy
 from Bcfg2.tlslite.TLSConnection import TLSConnection
 
@@ -138,33 +137,18 @@ class Component(TLSServer,
     fork_funcs = []
     child_limit = 32
 
-    def __init__(self, setup):
+    def __init__(self, keyfile, password, location):
         # need to get addr
-        self.setup = setup
         self.shut = False
         signal.signal(signal.SIGINT, self.start_shutdown)
         signal.signal(signal.SIGTERM, self.start_shutdown)
         self.logger = logging.getLogger('Component')
         self.children = []
         self.static = True
-        options = {
-                    'key'      : Bcfg2.Options.SERVER_KEY,
-                    'location' : Bcfg2.Options.SERVER_LOCATION,
-                    'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
-                    'static'   : Bcfg2.Options.SERVER_STATIC,
-                  }
-        opts = Bcfg2.Options.OptionParser(options)
-        opts.parse([])
-        location = opts['location']
         uparsed = urlparse.urlparse(location)[1].split(':')
         sock_loc = (uparsed[0], int(uparsed[1]))
 
-        if not opts['key']:
-            print "No key specified in '%s'" % setup['configfile']
-            raise SystemExit, 1
-        keyfile = opts['key']
-
-        self.password = opts['passwd']
+        self.password = password
 
         try:
             TLSServer.__init__(self, sock_loc, keyfile, CobaltXMLRPCRequestHandler)
