@@ -202,6 +202,10 @@ CLIENT_USER = Option('the user to provide for authentication', default='root',
 INTERACTIVE = Option('prompt the user for each change', default=False,
                      cmd='-I', )
 
+AGENT_PORT = Option('Agent port', default=6789, cmd='-p', odesc='<port>',
+                    cf=('communication', 'agent-port'))
+AGENT_HOST = Option('Remote host', default=False, cmd='-H', odesc='<hostname>')
+
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):
