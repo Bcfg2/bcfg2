@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import getopt, difflib, logging, lxml.etree, os, popen2, re, socket, sys, ConfigParser
+import getopt, logging, sys
 import Bcfg2.Server.Core, Bcfg2.Logging
 
 log = logging.getLogger('bcfg-admin')
@@ -28,18 +28,18 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
 
-    help = False
+    do_help = False
     # First get the options...
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            help = True
+            do_help = True
         if opt in ("-C", "--configfile"):
             configfile = arg
 
     modes = [x.lower() for x in Bcfg2.Server.Admin.__all__]
     modes.remove('mode')
 
-    if help or len(args) < 1 or args[0] == 'help':
+    if do_help or len(args) < 1 or args[0] == 'help':
         if len(args) > 1:
             args = [args[1], args[0]]
         else:
