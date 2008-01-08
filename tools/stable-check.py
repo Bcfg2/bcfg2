@@ -9,24 +9,25 @@ def do_merge(revision_string):
 
 if __name__ == '__main__':
     os.popen('svn up').read()
-    avail = os.popen('svnmerge avail').read().strip()
-    if not avail:
+    availrev = os.popen('svnmerge avail').read().strip()
+    if not availrev:
         raise SystemExit, 0
-    if '-' in avail:
-        start, stop = [int(x) for x in avail.split('-')]
-    else:
-        start = stop = int(avail)
-
     bf = []
     other = []
-    for rev in range(start, stop + 1):
-        log = os.popen("svn log https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2 -r %s" % rev).read()
-        if "[bugfix]" in log:
-            bf.append(rev)
+    for avail in availrev.split(','):
+        if '-' in avail:
+            start, stop = [int(x) for x in avail.split('-')]
         else:
-            other.append(rev)
-        if '-v' in sys.argv:
-            print log,
+            start = stop = int(avail)
+
+        for rev in range(start, stop + 1):
+            log = os.popen("svn log https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2 -r %s" % rev).read()
+            if "[bugfix]" in log:
+                bf.append(rev)
+            else:
+                other.append(rev)
+            if '-v' in sys.argv:
+                print log,
 
     mrevs = ','.join([str(x) for x in bf])
     if '-c' in sys.argv:
