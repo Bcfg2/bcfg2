@@ -153,7 +153,7 @@ SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
                        default='', cook=bool_cook)
 SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
                        default=False, cmd='-K', odesc='<ssl key file>')
-SERVER_PASSWORD = Option('Communication Password', cmd='-x',
+SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
                        default='/usr')
