@@ -20,7 +20,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             raw = self.cmd.run(cmd)[1][0]
             patterns = ["error reading information", "unknown service"]
             srvdata = [line.split() for line in raw for pattern in patterns \
-                       if pattern not in line]
+                       if pattern not in line][0]
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             entry.set('current_status', 'off')
