@@ -152,7 +152,7 @@ class Client:
         else:
             # retrieve config from server
             try:
-                proxy = Bcfg2.Proxy.ComponentProxy("bcfg2", False,
+                proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
                                                    self.setup['user'],
                                                    self.setup['password'])
             except:
