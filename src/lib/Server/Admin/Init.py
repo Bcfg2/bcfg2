@@ -1,4 +1,4 @@
-import os, socket
+import getpass, os, socket
 import Bcfg2.Server.Admin
 import Bcfg2.Options
 
@@ -97,8 +97,10 @@ class Init(Bcfg2.Server.Admin.Mode):
         
         password = ''
         while ( password == '' ):
-            password = raw_input(
-                "Input password used for communication verification: " )
+            password = getpass.getpass(
+                "Input password used for communication verification "
+                "(without echoing): " 
+                )
         
         server = "https://%s:6789" % socket.getfqdn()
         rs = raw_input( "Input the server location [%s]: " % server)
