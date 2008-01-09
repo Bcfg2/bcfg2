@@ -19,13 +19,8 @@ import Bcfg2.Daemon
 from Bcfg2.Component import SimpleXMLRPCServer, ComponentInitError, ComponentKeyError, CobaltXMLRPCRequestHandler, TLSServer
 from Bcfg2.tlslite.errors import TLSNoAuthenticationError, TLSFingerprintError
 
-try:
-    import Bcfg2.Client.Proxy
-    import Bcfg2.Logging
-except KeyError:
-    print "Could not read options from configuration file"
-    raise SystemExit(1)
-
+import Bcfg2.Proxy
+import Bcfg2.Logging
 
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
@@ -157,8 +152,11 @@ class Client:
         else:
             # retrieve config from server
             try:
-                proxy = Bcfg2.Client.Proxy.bcfg2(self.setup)
+                proxy = Bcfg2.Proxy.ComponentProxy("bcfg2", False,
+                                                   self.setup['user'],
+                                                   self.setup['password'])
             except:
+                self.logger.debug("???", exc_info=1)
                 self.fatal_error("failed to instantiate proxy to server")
                 return(1)
 

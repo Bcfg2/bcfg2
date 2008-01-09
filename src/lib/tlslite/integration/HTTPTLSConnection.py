@@ -22,7 +22,7 @@ class HTTPBaseTLSConnection(httplib.HTTPConnection):
     def connect(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if hasattr(sock, 'settimeout'):
-            sock.settimeout(10)
+            sock.settimeout(90)
         sock.connect((self.host, self.port))
 
         #Use a TLSConnection to emulate a socket
