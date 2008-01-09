@@ -1,4 +1,4 @@
-import getpass, os, socket
+import getpass, os, random, socket, string
 import Bcfg2.Server.Admin
 import Bcfg2.Options
 
@@ -95,12 +95,11 @@ class Init(Bcfg2.Server.Admin.Mode):
         if repopath == '':
             repopath = opts['repo']
         
-        password = ''
-        while ( password == '' ):
-            password = getpass.getpass(
+        password = getpass.getpass(
                 "Input password used for communication verification "
-                "(without echoing): " 
-                )
+                "(without echoing; leave blank for a random): ")
+        if len(password.strip()) == 0:
+            password = self.genPassword()
         
         server = "https://%s:6789" % socket.getfqdn()
         rs = raw_input( "Input the server location [%s]: " % server)
@@ -115,6 +114,13 @@ class Init(Bcfg2.Server.Admin.Mode):
         os_sel = os_list[int(raw_input(prompt))-1][1]
         self.initializeRepo(configfile, repopath, server, password, os_sel, opts)
         print "Repository created successfuly in %s" % (repopath)
+
+    def genPassword(self):
+        chars = string.letters + string.digits
+        newpasswd = ''
+        for i in range(8):
+            newpasswd = newpasswd + random.choice(chars)
+        return newpasswd
 
     def initializeRepo(self, configfile, repo, server_uri, password, os_selection, opts):
         '''Setup a new repo'''
