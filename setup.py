@@ -3,7 +3,7 @@
 from distutils.core import setup
 from glob import glob
 
-setup(name="Bcfg2.Server",
+setup(name="Bcfg2",
       version="0.9.6pre1",
       description="Bcfg2 Server",
       author="Narayan Desai",
