@@ -5,7 +5,7 @@ from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 
-import binascii, difflib, grp, os, pwd, string, logging
+import binascii, difflib, grp, os, pwd, string, logging, time
 import Bcfg2.Client.Tools
 
 def calcPerms(initial, perms):
@@ -304,8 +304,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         '''Install ConfigFile Entry'''
         # configfile verify is permissions check + content check
         permissionStatus = self.VerifyDirectory(entry, _)
+        tbin = False
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = binascii.a2b_base64(entry.text)
+            tbin = True
         elif entry.get('empty', 'false') == 'true':
             tempdata = ''
         else:
@@ -313,7 +315,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.error("Cannot verify incomplete ConfigFile %s" % (entry.get('name')))
                 return False
             tempdata = entry.text
-
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
@@ -321,25 +322,44 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
         contentStatus = content == tempdata
         if not contentStatus:
-            if not isString(content) or not isString(tempdata):
+            if tbin or not isString(content):
                 entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
             else:
-                diff = '\n'.join([x for x in difflib.ndiff(content.split('\n'),
-                                                           tempdata.split('\n'))])
-                entry.set("current_bdiff", binascii.b2a_base64(diff))
-                udiff = '\n'.join([x for x in \
-                                   difflib.unified_diff(content.split('\n'), \
-                                                        tempdata.split('\n'))])
-                try:
-                    eudiff = udiff.encode('ascii')
-                except:
-                    eudiff = "Binary file: no diff printed"
-                nqtext = entry.get('qtext', '')
-                if nqtext:
-                    nqtext += '\n'
-                nqtext += eudiff 
+                do_diff = True
+                rawdiff = []
+                start = time.time()
+                longtime = False
+                for x in difflib.ndiff(content.split('\n'), tempdata.split('\n')):
+                    now = time.time()
+                    rawdiff.append(x)
+                    if now - start > 5 and not longtime:
+                        self.logger.info("Diff of %s taking a long time" % (entry.get('name')))
+                        longtime = True
+                    elif now - start > 30:
+                        self.logger.error("Diff of %s took too long; giving up" % (entry.get('name')))
+                        do_diff = False
+                        break
+                if do_diff:
+                    diff = '\n'.join(rawdiff)
+                    entry.set("current_bdiff", binascii.b2a_base64(diff))
+                    udiff = '\n'.join([x for x in \
+                                       difflib.unified_diff(content.split('\n'), \
+                                                            tempdata.split('\n'))])
+                    try:
+                        eudiff = udiff.encode('ascii')
+                    except:
+                        eudiff = "Binary file: no diff printed"
+                    nqtext = entry.get('qtext', '')
+
+                    if nqtext:
+                        nqtext += '\n'
+                    nqtext += eudiff 
+                else:
+                    entry.set('current_bfile', binascii.b2a_base64(content))
+                    nqtext = entry.get('qtext', '')
+                    nqtext += '\nDiff took too long to compute, no printable diff'
             entry.set('qtext', nqtext)
         qtxt = entry.get('qtext', '')
         qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
