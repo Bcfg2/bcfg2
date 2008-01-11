@@ -17,7 +17,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         '''Verify Service status for entry'''
         try:
             cmd = "/sbin/chkconfig --list %s " % (entry.get('name'))
-            raw = self.cmd.run(cmd)[1][0]
+            raw = self.cmd.run(cmd)[1]
             patterns = ["error reading information", "unknown service"]
             srvdata = [line.split() for line in raw for pattern in patterns \
                        if pattern not in line][0]
