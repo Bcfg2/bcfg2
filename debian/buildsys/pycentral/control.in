@@ -3,7 +3,6 @@ Section: admin
 Priority: optional
 Maintainer: Sami Haahtinen <ressu@debian.org>
 Build-Depends: @cdbs@
-Build-Depends-Indep: xsltproc, docbook-xsl
 Standards-Version: 3.7.2.0
 XS-Python-Version: >= 2.3
 

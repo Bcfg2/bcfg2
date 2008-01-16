@@ -15,7 +15,6 @@ tagstr=`echo ${version} | sed -e 's/\./_/g'`
 svn copy "$url" "${repo}/tags/${name}_${tagstr}" -m "tagged ${version} release"
 svn export . "${expath}"
 svn log -v "${repo}/tags/${name}_${tagstr}" > "${expath}/ChangeLog"
-cd "${expath}"/doc && make all
 cd /tmp
 
 tar czf "${tarname}" "${name}-${version}"
