@@ -37,6 +37,9 @@ class RetryMethod(_Method):
                 errmsg = err.message.split()
                 self.log.error("Got %s expected %s" % (errmsg[3], errmsg[4]))
                 raise SystemExit, 1
+            except Bcfg2.tlslite.errors.TLSError, err:
+                self.log.error("Unexpected TLS Error: %s. Retrying" % \
+                               (err.message))
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
