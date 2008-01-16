@@ -1,13 +1,12 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision$'
 
-import atexit, logging, select, signal, socket, sys, time, urlparse, xmlrpclib, cPickle, ConfigParser, os
+import logging, select, signal, socket, sys, urlparse, xmlrpclib, cPickle, os
 from base64 import decodestring
 
 import BaseHTTPServer, SimpleXMLRPCServer
 import Bcfg2.tlslite.errors
 import Bcfg2.tlslite.api
-import Bcfg2.Client.Proxy as Proxy
 from Bcfg2.tlslite.TLSConnection import TLSConnection
 
 log = logging.getLogger('Component')
@@ -133,7 +132,7 @@ class Component(TLSServer,
     __name__ = 'Component'
     __implementation__ = 'Generic'
     __statefields__ = []
-    async_funcs = ['assert_location']
+    async_funcs = []
     fork_funcs = []
     child_limit = 32
 
@@ -171,8 +170,6 @@ class Component(TLSServer,
         self.logger.info("Bound to port %s" % self.port)
         self.funcs.update({'system.listMethods':self.addr_system_listMethods})
         self.atime = 0
-        self.assert_location()
-        atexit.register(self.deassert_location)
 
     def _cobalt_marshalled_dispatch(self, data, address, authenticated=False):
         """Decode and dispatch XMLRPC requests. Overloaded to pass through
@@ -295,26 +292,6 @@ class Component(TLSServer,
                 continue
             if self.socket in rsockinfo:
                 return self.socket.accept()
-
-    def assert_location(self):
-        '''Assert component location with slp'''
-        if self.__name__ == 'service-location' or self.static:
-            return
-        if (time.time() - self.atime) > 240:
-            slp = Proxy.service_location()
-            slp.AssertService({'tag':'location', 'name':self.__name__, 'url':self.url})
-            self.atime = time.time()
-
-    def deassert_location(self):
-        '''remove registration from slp'''
-        if self.__name__ == 'service-location' or self.static:
-            return
-        slp = Proxy.service_location()
-        try:
-            slp.DeassertService([{'tag':'location', 'name':self.__name__, 'url':self.url}])
-        except xmlrpclib.Fault, fault:
-            if fault.faultCode == 11:
-                self.logger.error("Failed to deregister self; no matching component")
 
     def serve_forever(self):
         """Handle one request at a time until doomsday."""
