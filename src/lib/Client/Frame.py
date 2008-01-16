@@ -170,7 +170,7 @@ class Frame:
         # first perform bundle filtering
         if self.setup['bundle']:
             bundles = [b for b in self.config.findall('./Bundle') \
-                       if b.get('name') == self.setup['bundle']]
+                       if b.get('name') in self.setup['bundle']]
             self.whitelist = [e for e in self.whitelist if \
                               True in [e in b for b in bundles]]
         else:

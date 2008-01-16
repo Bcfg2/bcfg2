@@ -128,6 +128,7 @@ class OptionSet(dict):
                 self[key] = val
 
 list_split = lambda x:x.replace(' ','').split(',')
+colon_split = lambda x:x.split(':')
 
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
@@ -182,7 +183,7 @@ CLIENT_CACHE = Option('store the configuration in a file',
 CLIENT_REMOVE = Option('force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
 CLIENT_BUNDLE = Option('only configure the given bundle', default=False,
-                       cmd='-b', odesc='<bundle>')
+                       cmd='-b', odesc='<bundle>', cook=colon_split)
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_BUILD = Option('run in build mode', default=False, cmd='-B', )
