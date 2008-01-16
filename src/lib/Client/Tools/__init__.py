@@ -186,7 +186,7 @@ class Tool:
             return False
 
         missing = [attr for attr in self.__ireq__[entry.tag] \
-                   if attr not in entry.attrib]
+                   if attr not in entry.attrib or not entry.attrib[attr]]
         if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                               % (entry.tag, entry.get('name')))
