@@ -182,7 +182,7 @@ CLIENT_CACHE = Option('store the configuration in a file',
                       default=False, cmd='-c', odesc="<cache path>")
 CLIENT_REMOVE = Option('force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
-CLIENT_BUNDLE = Option('only configure the given bundle', default=False,
+CLIENT_BUNDLE = Option('only configure the given bundle', default='',
                        cmd='-b', odesc='<bundle>', cook=colon_split)
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
