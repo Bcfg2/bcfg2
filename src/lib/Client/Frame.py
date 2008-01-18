@@ -1,7 +1,7 @@
 '''Frame is the Client Framework that verifies and installs entries, and generates statistics'''
 __revision__ = '$Revision$'
 
-import logging, time
+import logging, time, types
 import Bcfg2.Client.Tools
 
 def cmpent(ent1, ent2):
@@ -36,9 +36,10 @@ toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'},
 
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
-    def __init__(self, config, setup, times):
+    def __init__(self, config, setup, times, drivers, dryrun):
         self.config = config
         self.times = times
+        self.dryrun = dryrun
         self.times['initialization'] = time.time()
         self.setup = setup
         self.tools = []
@@ -47,18 +48,15 @@ class Frame:
         self.blacklist = []
         self.removal = []
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
-        if self.setup['drivers']:
-            tools = []
-            for tcandidate in self.setup['drivers'].split(','):
-                if tcandidate not in Bcfg2.Client.Tools.drivers:
-                    self.logger.error("Tool driver %s is not available"\
-                                      % (tcandidate))
-                else:
-                    tools.append(tcandidate)
-        else:
-            tools = Bcfg2.Client.Tools.default[:]
+        for driver in drivers[:]:
+            if driver not in Bcfg2.Client.Tools.drivers:
+                self.logger.error("Tool driver %s is not available" % driver)
+                drivers.remove(driver)
+                
         tclass = {}
-        for tool in tools:
+        for tool in drivers:
+            if not isinstance(tool, types.StringType):
+                tclass[time.time()] = tool
             tool_class = "Bcfg2.Client.Tools.%s" % tool
             try:
                 tclass[tool] = getattr(__import__(tool_class, globals(),
@@ -86,7 +84,7 @@ class Frame:
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.__name__ for tool in self.tools])
-        if not self.setup['dryrun']:
+        if not self.dryrun:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
                 tool = [t for t in self.tools if t.handlesEntry(cfile)][0]
@@ -154,7 +152,7 @@ class Frame:
 
         candidates = [entry for entry in self.states if not self.states[entry]]
         self.whitelist = [entry for entry in self.states if not self.states[entry]]
-        if self.setup['dryrun']:
+        if self.dryrun:
             if self.whitelist:
                 self.logger.info("In dryrun mode: suppressing entry installation for:")
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
@@ -289,7 +287,7 @@ class Frame:
 
     def ReInventory(self):
         '''Recheck everything'''
-        if not self.setup['dryrun'] and self.setup['kevlar']:
+        if not self.dryrun and self.setup['kevlar']:
             self.logger.info("Rechecking system inventory")
             self.Inventory()
 

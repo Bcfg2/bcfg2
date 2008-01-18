@@ -235,7 +235,8 @@ class Client:
 
         self.tools = Bcfg2.Client.Frame.Frame(self.config,
                                               self.setup,
-                                              times)
+                                              times, self.setup['drivers'],
+                                              self.setup['dryrun'])
 
         self.tools.Execute()
 
