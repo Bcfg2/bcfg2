@@ -6,7 +6,7 @@ import binascii, difflib, logging, os, re, stat, tempfile, \
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
-specific = re.compile('(.*/)(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
+specific = re.compile('(.*/)?(?P<filename>[\S\-.]+)\.((H_(?P<hostname>\S+))|' +
                       '(G(?P<prio>\d+)_(?P<group>\S+)))$')
 probeData = {}
 
