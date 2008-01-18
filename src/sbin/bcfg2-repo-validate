@@ -14,12 +14,12 @@ if __name__ == '__main__':
             'configfile': Bcfg2.Options.CFILE}
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
-    verbose = opts['verbose']
-    cpath = opts['configfile']
-    prefix = opts['prefix']
+    verbose = setup['verbose']
+    cpath = setup['configfile']
+    prefix = setup['prefix']
     schemadir = "%s/share/bcfg2/schemas" % (prefix)
     os.chdir(schemadir)
-    repo = opts['repo']
+    repo = setup['repo']
 
     filesets = {'metadata':("%s/Metadata/groups.xml", "%s/metadata.xsd"),
                 'clients':("%s/Metadata/clients.xml", "%s/clients.xsd"),
