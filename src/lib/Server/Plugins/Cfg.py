@@ -401,7 +401,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
                 for x in self.entries[entry_name].metadata.iteritems():
                     infofile.write("%s: %s\n" % x)
                 infofile.close()
-        if not diff or fulldata:
+        if not diff and not fulldata:
             raise SystemExit, 0
                 
         hsq = "Found host-specific file %s; Should it be updated (n/Y): "
