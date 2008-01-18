@@ -1,7 +1,7 @@
 '''Option parsing library for utilities'''
 __revision__ = '$Revision$'
 
-import getopt, os, socket, sys, ConfigParser
+import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
 
 def bool_cook(x):
     if x:
@@ -157,7 +157,7 @@ SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
-                       default='/usr')
+                       default='/usr', odesc='</path>')
 SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
                          default='xmlrpc/ssl')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
@@ -175,9 +175,10 @@ CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
 CLIENT_PARANOID = Option('make automatic backups of config files',
                          default=False, cmd='-P', )
 CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default=False, cmd='-A', )
-CLIENT_DRIVERS = Option('Specify tool driver set', default=False,
-                        cmd='-D', cf=('client', 'drivers'),
-                        odesc="<driver1,driver2>")
+CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
+                        cf=('client', 'drivers'),
+                        odesc="<driver1,driver2>", cook=list_split,
+                        default=','.join(Bcfg2.Client.Tools.default))
 CLIENT_CACHE = Option('store the configuration in a file',
                       default=False, cmd='-c', odesc="<cache path>")
 CLIENT_REMOVE = Option('force removal of additional configuration items',
