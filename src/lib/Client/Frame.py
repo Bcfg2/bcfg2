@@ -27,13 +27,6 @@ def promptFilter(prompt, entries):
             continue
     return ret
 
-toolset_defs = {'rh': {'Service':'chkconfig', 'Package':'rpm'},
-                'debian': {'Service':'deb', 'Package':'deb'},
-                'nexenta': {'Service':'smf', 'Package':'deb'},
-                'solaris': {'Service':'smf', 'Package':'sysv'},
-                'gentoo': {'Service':'rc-update', 'Package':'ebuild'},
-                'freebsd': {'Package':'freebsdpkg'}}
-
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
     def __init__(self, config, setup, times, drivers, dryrun):
@@ -49,7 +42,8 @@ class Frame:
         self.removal = []
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
         for driver in drivers[:]:
-            if driver not in Bcfg2.Client.Tools.drivers:
+            if driver not in Bcfg2.Client.Tools.drivers and \
+                   isinstance(driver, types.StringType):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
                 
@@ -67,7 +61,6 @@ class Frame:
             except:
                 self.logger.error("Tool %s unexpectedly failed to load" % tool,
                                   exc_info=1)
-                                  
 
         for tool in tclass.values():
             try:
@@ -93,12 +86,6 @@ class Frame:
                     tool.InstallConfigFile(cfile)
         # find entries not handled by any tools
         problems = [entry for struct in config for entry in struct if entry not in self.handled]
-        if toolset_defs.has_key(config.get('toolset')):
-            tdefs = toolset_defs[config.get('toolset')]
-            for problem in problems[:]:
-                if tdefs.has_key(problem.tag):
-                    problem.set('type', tdefs[problem.tag])
-                    problems.remove(problem)
 
         if problems:
             self.logger.error("The following entries are not handled by any tool:")
