@@ -21,25 +21,47 @@ if __name__ == '__main__':
     os.chdir(schemadir)
     repo = setup['repo']
 
-    filesets = {'metadata':("%s/Metadata/groups.xml", "%s/metadata.xsd"),
-                'clients':("%s/Metadata/clients.xml", "%s/clients.xsd"),
-                'bundle':("%s/Bundler/*.xml", "%s/bundle.xsd"),
-                'pkglist':("%s/Pkgmgr/*.xml", "%s/pkglist.xsd"),
-                'base':("%s/Base/*.xml", "%s/base.xsd"),
-                'rules':("%s/Rules/*.xml", "%s/rules.xsd"),
-                'imageinfo':("%s/etc/report-configuration.xml", "%s/report-configuration.xsd"),
-                'services':("%s/Svcmgr/*.xml", "%s/services.xsd"),
-                'deps':("%s/Deps/*.xml", "%s/deps.xsd")}
+    '''
+    Get a list of all info.xml files
+    in Cfg directory and subdirectories
+    '''
+    info_list = []
+    for root, dirs, files in os.walk('%s/Cfg' % repo):
+	for file in files:
+	    if 'info.xml' in file:
+		info_list.append(os.path.join(root, file))
+
+    # get lists of all other xml files to validate
+    metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
+    clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
+    bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
+    pkg_list = glob.glob("%s/Pkgmgr/*.xml" % repo)
+    base_list = glob.glob("%s/Base/*.xml" % repo)
+    rules_list = glob.glob("%s/Rules/*.xml" % repo)
+    imageinfo_list = glob.glob("%s/etc/report-configuration.xml" % repo)
+    services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
+    deps_list = glob.glob("%s/Deps/*.xml" % repo)
+
+    filesets = {'metadata':(metadata_list, "%s/metadata.xsd"),
+                'clients':(clients_list, "%s/clients.xsd"),
+                'info':(info_list, "%s/info.xsd"),
+                'bundle':(bundle_list, "%s/bundle.xsd"),
+                'pkglist':(pkg_list, "%s/pkglist.xsd"),
+                'base':(base_list, "%s/base.xsd"),
+                'rules':(rules_list, "%s/rules.xsd"),
+                'imageinfo':(imageinfo_list, "%s/report-configuration.xsd"),
+                'services':(services_list, "%s/services.xsd"),
+                'deps':(deps_list, "%s/deps.xsd")}
 
     failures  = 0
-    for k, (spec, schemaname) in filesets.iteritems():
+    for k, (filelist, schemaname) in filesets.iteritems():
         try:
             schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
         except:
             print "Failed to process schema %s" % (schemaname%(schemadir))
             failures = 1
             continue
-        for filename in glob.glob(spec%(repo)):
+        for filename in filelist:
             try:
                 datafile = lxml.etree.parse(open(filename))
             except SyntaxError:
