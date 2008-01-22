@@ -61,7 +61,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     def get_skn(self):
         '''build memory cache of the ssh known hosts file'''
         if not self.__skn:
-            self.__skn = ''
+            static_entries = [key for key in self.entries \
+                              if key.endswith('.static')]
+            if static_entries:
+                self.__skn = "\n".join([self.entries[key].data for \
+                                        key in static_entries])
+            else:
+                self.__skn = ''
             pubkeys = [pubk for pubk in self.entries.keys() \
                        if pubk.find('.pub.H_') != -1]
             pubkeys.sort()
@@ -85,6 +91,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
         '''Local event handler that does skn regen on pubkey change'''
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
         if event and '_key.pub.H_' in event.filename:
+            self.skn = False
+        if event and event.filename.endswith('.static'):
             self.skn = False
         if not self.skn:
             if (len(self.entries.keys())) > (0.95 * len(os.listdir(self.data))):
