@@ -229,7 +229,6 @@ class Component(TLSServer,
             try:
                 pid = os.waitpid(0, os.WNOHANG)[0]
                 if pid:
-                    self.logger.debug("process %d exited" % pid)
                     if pid in self.children:
                         self.children.remove(pid)
                 else:
