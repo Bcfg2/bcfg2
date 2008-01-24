@@ -132,7 +132,7 @@ class Viz(Bcfg2.Server.Admin.Mode):
             dotpipe.tochild.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
             for category in categories:
                 dotpipe.tochild.write(
-                    '''\t''' + category + ''' [label="''' + category + \
+                    '''\t"''' + category + '''" [label="''' + category + \
                     '''", shape="record", style="filled", fillcolor=''' + \
                     categories[category] + '''];\n''')
             dotpipe.tochild.write('''\tlabel="Key";\n''')
