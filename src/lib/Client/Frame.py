@@ -80,10 +80,15 @@ class Frame:
         if not self.dryrun:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
-                tool = [t for t in self.tools if t.handlesEntry(cfile)][0]
-                self.states[cfile] = tool.VerifyConfigFile(cfile, [])
-                if not self.states[cfile]:
-                    tool.InstallConfigFile(cfile)
+                tl= [t for t in self.tools if t.handlesEntry(cfile) \
+                     and t.canVerify(cfile)]
+                if tl:
+                    if not tl[0].VerifyConfigFile(cfile, []):
+                        try:
+                            self.states[cfile] = tool.InstallConfigFile(cfile)
+                        except:
+                            self.logger.error("Unexpected tool failure",
+                                              exc_info=1)
         # find entries not handled by any tools
         problems = [entry for struct in config for entry in struct if entry not in self.handled]
 
