@@ -11,14 +11,20 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}
     __svcrestart__ = 'restart'
-    svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
+    svcre = re.compile("/etc/.*/[SK]\d+(?P<name>\S+)")
 
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry, _):
         '''Verify Service status for entry'''
-        rawfiles = glob.glob("/etc/rc*.d/*%s" % (entry.get('name')))
-        files = [filename for filename in rawfiles if \
-                 self.svcre.match(filename).group('name') == entry.get('name')]
+        rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
+        files = []
+        for filename in rawfiles:
+            match = self.svcre.match(filename)
+            if not match:
+                self.logger.error("Failed to match file: %s" % filename)
+                continue
+            if match.group('name') == entry.get('name'):
+                files.append(filename)
         if entry.get('status') == 'off':
             if files:
                 entry.set('current_status', 'on')
