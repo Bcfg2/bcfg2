@@ -59,9 +59,11 @@ class Viz(Bcfg2.Server.Admin.Mode):
         instances = {}
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
         for group in egroups:
-            if group.get('category', False):
-                if not categories.has_key(group.get('category')):
-                    categories[group.get('category')] = self.colors.pop()
+            if not categories.has_key(group.get('category')):
+                categories[group.get('category')] = self.colors.pop()
+            group.set('color', categories[group.get('category')])
+        if None in categories:
+            del categories[None]
         
         try:
             dotpipe.tochild.write("digraph groups {\n")
@@ -98,7 +100,6 @@ class Viz(Bcfg2.Server.Admin.Mode):
                     % (bundle, bundle))
         gseen = []
         for group in egroups:
-            color = categories[group.get('category', 'default')]
             if group.get('profile', 'false') == 'true':
                 style = "filled, bold"
             else:
@@ -106,7 +107,7 @@ class Viz(Bcfg2.Server.Admin.Mode):
             gseen.append(group.get('name'))
             dotpipe.tochild.write(
                 '\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' %
-                (group.get('name'), group.get('name'), style, color))
+                (group.get('name'), group.get('name'), style, group.get('color')))
             if bundles:
                 for bundle in group.findall('Bundle'):
                     dotpipe.tochild.write('\t"group-%s" -> "bundle-%s";\n' %
