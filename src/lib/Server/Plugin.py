@@ -338,6 +338,7 @@ class PrioDir(Plugin, XMLDirectoryBacked):
     def HandleEvent(self, event):
         '''Handle events and update dispatch table'''
         XMLDirectoryBacked.HandleEvent(self, event)
+        self.Entries = {}
         for src in self.entries.values():
             for itype, children in src.items.iteritems():
                 for child in children:
