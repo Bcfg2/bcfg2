@@ -434,9 +434,9 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
         if ".H_%s" % (meta.hostname) in basefile.name:
             raise SystemExit, 1
         # figure out host-specific filename
-        if '.G_' in basefile.name:
-            idx = basefile.name.find(".G_")
-            newname = basefile.name[:idx] + ".H_%s" % (meta.hostname)
+        reg = re.compile("(.*)\.G\d+.*")
+        if reg.match(basefile.name):
+            newname = reg.match(basefile.name).group(1) + ".H_%s" % (meta.hostname)
         else:
             newname = basefile.name + ".H_%s" % (meta.hostname)
         print "This file will be installed as file %s" % newname
