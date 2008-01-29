@@ -241,6 +241,10 @@ class ConfigFileEntry(object):
 
         if hasattr(self, 'infoxml'):
             mdata = {}
+            if not self.infoxml.pnode:
+                logger.error("Cfg: infoxml error for file %s" % \
+                             (entry.get('name')))
+                raise Bcfg2.Server.Plugin.PluginExecutionError, ('infoxml', name)
             self.infoxml.pnode.Match(metadata, mdata)
             mdata = mdata['Info'][None]
         else:
