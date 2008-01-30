@@ -11,13 +11,19 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}
     __svcrestart__ = 'restart'
-    svcre = re.compile("/etc/.*/[SK]\d+(?P<name>\S+)")
+    svcre = re.compile("/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)")
 
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry, _):
         '''Verify Service status for entry'''
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
+        if entry.get('sequence'):
+            start_sequence = int(entry.get('sequence'))
+            kill_sequence = 100 - start_sequence
+        else:
+            start_sequence = None
+        
         for filename in rawfiles:
             match = self.svcre.match(filename)
             if not match:
@@ -33,6 +39,14 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 return True
         else:
             if files:
+                if start_sequence:
+                    for filename in files:
+                        match = self.svcre.match(filename)
+                        file_sequence = int(match.group('sequence'))
+                        if match.group('action') == 'S' and file_sequence != start_sequence:
+                            return False
+                        if match.group('action') == 'K' and file_sequence != kill_sequence:
+                            return False
                 return True
             else:
                 entry.set('current_status', 'off')
@@ -51,8 +65,15 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             self.cmd.run("/usr/sbin/invoke-rc.d %s stop" % (entry.get('name')))
             cmdrc = self.cmd.run("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
         else:
-            cmdrc = self.cmd.run("/usr/sbin/update-rc.d %s defaults" % \
-                                 (entry.get('name')))[0]
+            command = "/usr/sbin/update-rc.d %s defaults" % (entry.get('name'))
+            if entry.get('sequence'):
+                cmdrc = self.cmd.run("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]
+                if cmdrc != 0:
+                    return False
+                start_sequence = int(entry.get('sequence'))
+                kill_sequence = 100 - start_sequence
+                command = "%s %d %d" % (command, start_sequence, kill_sequence)
+            cmdrc = self.cmd.run(command)[0]
         return cmdrc == 0
 
     def FindExtra(self):
