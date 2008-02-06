@@ -95,5 +95,5 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
             try:
                 lxml.etree.SubElement(newstruct, tag, name=name)
             except:
-                self.logger("Failed to add dep entry for %s:%s" % (tag, name))
+                self.logger.error("Failed to add dep entry for %s:%s" % (tag, name))
         return newstruct
