@@ -128,7 +128,10 @@ class OptionSet(dict):
                 self[key] = val
 
 list_split = lambda x:x.replace(' ','').split(',')
-colon_split = lambda x:x.split(':')
+def colon_split(c_string):
+    if c_string:
+        return c_string.split(':')
+    return []
 
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
