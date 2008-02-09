@@ -8,7 +8,7 @@ class Minestruct(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) != 1:
             self.errExit("minestruct must be called with a client name")
-        extra = self.MineStruct(args[1])
+        extra = self.MineStruct(args[0])
         self.log.info("Found %d extra entries" % (len(extra)))
         self.log.info(["%s: %s" % (entry.tag, entry.get('name')) for entry in extra])
 
