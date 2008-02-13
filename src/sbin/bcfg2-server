@@ -9,7 +9,7 @@ from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, select, signal, socket, sys
+import logging, os, select, signal, socket, sys, time
 import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
@@ -27,7 +27,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
     """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
-    fork_funcs = ['GetConfig', 'GetProbes']
+    fork_funcs = ['GetConfig', 'GetProbes', 'RecvStats']
 
     request_queue_size = 15
 
@@ -162,16 +162,32 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         '''Act on statistics upload'''
         sdata = XML(stats)
         state = sdata.find(".//Statistics")
-        # Versioned stats to prevent tied client/server upgrade
-        if state.get('version') >= '2.0':
-            client = self.Core.metadata.resolve_client(address)
-            meta = self.Core.metadata.get_metadata(client)
-            
-            # Update statistics
-            self.Core.stats.updateStats(sdata, meta.hostname)
+        client = self.Core.metadata.resolve_client(address)
+        meta = self.Core.metadata.get_metadata(client)
 
-        self.logger.info("Client %s reported state %s" % 
-                         (client, state.attrib['state']))
+        for i in [1, 2, 3]:
+            # Versioned stats to prevent tied client/server upgrade
+            if state.get('version') >= '2.0':
+                root = Element('ConfigStatistics')
+                stats = Element('Node', name=meta.hostname)
+                stats.append(state)
+                state.set('time', time.asctime(time.localtime()))
+                root.append(stats)
+                filename = "%s/etc/stats-data-%s-%s.xml" % \
+                           (self.Core.datastore, meta.hostname, time.time())
+                try:
+                    fd = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_RDWR)
+                except IOError:
+                    if i == 3:
+                        self.logger.error("Failed to write statistics file %s" \
+                                          % filename)
+                    continue
+                data = os.fdopen(fd, 'w')
+                data.write(tostring(root))
+                data.close()
+                break
+        self.logger.info("Client %s reported state %s" %
+                         (client, state.get('state')))
         return "<ok/>"
 
     def _authenticate_connection(self, _, user, password, address):

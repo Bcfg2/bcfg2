@@ -85,7 +85,7 @@ class Frame:
                 if tl:
                     if not tl[0].VerifyConfigFile(cfile, []):
                         try:
-                            self.states[cfile] = tool.InstallConfigFile(cfile)
+                            self.states[cfile] = tl[0].InstallConfigFile(cfile)
                         except:
                             self.logger.error("Unexpected tool failure",
                                               exc_info=1)
