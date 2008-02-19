@@ -5,12 +5,11 @@ import Bcfg2.Server.Admin
 class Viz(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = '''bcfg2-admin viz [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]'''
     __longhelp__ = __shorthelp__ + '\n\tProduce graphviz diagrams of metadata structures'
-    def __init__(self):
-        Bcfg2.Server.Admin.Mode.__init__(self)
-        self.colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
-                       'indianred1', 'limegreen', 'orange1', 'lightblue2',
-                       'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
+    colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
+              'indianred1', 'limegreen', 'orange1', 'lightblue2',
+              'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
+    
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         # First get options to the 'viz' subcommand
