@@ -3,8 +3,7 @@
 bcfg2-query \- Print client names by characteristic
 .SH SYNOPSIS
 .B bcfg2-query        
-.I [\-d]
-.I [\-u]
+.I [\-g group]
 .I [\-p profile]
 .I [\-a]
 
@@ -19,17 +18,29 @@ on client characteristics.
 .RS
 Display all clients
 .RE
-.B "\-u"
+.B "\-c"
 .RS
-Display all up clients
+Displays nodes in a comma delimited list
 .RE
-.B "\-d" 
+.B "\-s"
 .RS
-Display all down clients
+Display nodes in a space delimited list
+.RE
+.B "\-n"
+.RS
+Display nodes in a newline delimited list
+.RE
+.B "\-v"
+.RS
+Turns on debugging
 .RE
 .B "\-p <profile>"
 .RS
-Display all clients that are a part of the specified profile.
+Display all clients that are a part of the specified profile
+.RE
+.B "\-g <group>"
+.RS
+Display all clients that are members of the specified group
 .RE
 .SH "SEE ALSO"
 .BR bcfg2(1),
