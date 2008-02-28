@@ -213,6 +213,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("Found a non-directory entry at %s" % (entry.get('name')))
                 try:
                     os.unlink(entry.get('name'))
+                    exists = False
                 except OSError:
                     self.logger.info("Failed to unlink %s" % (entry.get('name')))
                     return False
