@@ -759,7 +759,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             return False
 
         # We don't want to do any checks so we don't care what the entry has in it.
-        if self.pkg_checks == 'false' or entry.get('pkg_checks', 'true') == 'false':
+        if self.pkg_checks == 'false' or entry.get('pkg_checks', 'true').lower() == 'false':
             return True
 
         instances = entry.findall('Instance')
