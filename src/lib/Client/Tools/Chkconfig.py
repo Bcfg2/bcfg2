@@ -25,8 +25,13 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             # Ocurrs when no lines are returned (service not installed)
             entry.set('current_status', 'off')
             return False
-        if entry.get('type') == 'xinetd':
-            return entry.get('status') == srvdata[1]
+        if len(srvdata) == 2:
+            # This is an xinetd service
+            if entry.get('status') == srvdata[1]:
+                return True
+            else:
+                entry.set('current_status', srvdata[1])
+                return False
 
         try:
             onlevels = [level.split(':')[0] for level in srvdata[1:] \
