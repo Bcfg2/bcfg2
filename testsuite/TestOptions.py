@@ -49,6 +49,16 @@ class TestOptionSet(object):
         res = os.buildGetopt()
         assert 'H:' in res and 'G' in res and len(res) == 3
 
+    def test_buildLongGetopt(self):
+        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
+                ('bar', Bcfg2.Options.Option('foo', 'test2')),
+                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='--H',
+                                             odesc='1', long_arg=True))]
+        os = Bcfg2.Options.OptionSet(opts)
+        res = os.buildLongGetopt()
+        print res
+        assert 'H=' in res and len(res) == 1
+
     def test_parse(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),

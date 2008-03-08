@@ -32,12 +32,17 @@ class Option(object):
     value = property(getValue)
     
     def __init__(self, desc, default, cmd=False, odesc=False,
-                 env=False, cf=False, cook=False):
+                 env=False, cf=False, cook=False, long_arg=False):
         self.desc = desc
         self.default = default
         self.cmd = cmd
-        if cmd and (cmd[0] != '-' or len(cmd) != 2):
-            raise OptionFailure("Poorly formed command %s" % cmd)
+        self.long = long_arg
+        if not self.long:
+            if cmd and (cmd[0] != '-' or len(cmd) != 2):
+                raise OptionFailure("Poorly formed command %s" % cmd)
+        else:
+            if cmd and (not cmd.startswith('--')):
+                raise OptionFailure("Poorly formed command %s" % cmd)
         self.odesc = odesc
         self.env = env
         self.cf = cf
@@ -59,11 +64,19 @@ class Option(object):
 
     def buildGetopt(self):
         gstr = ''
+        if self.long:
+            return gstr
         if self.cmd:
             gstr = self.cmd[1]
             if self.odesc:
                 gstr += ':'
         return gstr
+
+    def buildLongGetopt(self):
+        if self.odesc:
+            return self.cmd[2:]+'='
+        else:
+            return self.cmd[2:]
 
     def parse(self, opts, rawopts):
         if self.cmd and opts:
@@ -94,6 +107,9 @@ class OptionSet(dict):
     def buildGetopt(self):
         return ''.join([opt.buildGetopt() for opt in self.values()])
 
+    def buildLongGetopt(self):
+        return [opt.buildLongGetopt() for opt in self.values() if opt.long]
+
     def buildHelpMessage(self):
         return ''.join([opt.buildHelpMessage() for opt in self.values()])
 
@@ -109,7 +125,8 @@ class OptionSet(dict):
         ret = {}
         if do_getopt:
             try:
-                opts, args = getopt.getopt(argv, self.buildGetopt(), [])
+                opts, args = getopt.getopt(argv, self.buildGetopt(),
+                                           self.buildLongGetopt())
             except getopt.GetoptError, err:
                 self.helpExit(err)
             if '-h' in argv:
