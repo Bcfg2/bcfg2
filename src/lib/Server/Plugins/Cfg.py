@@ -276,7 +276,7 @@ class Cfg(Bcfg2.Server.Plugin.Plugin):
     __name__ = 'Cfg'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    tempfile = re.compile("^.*~$|^.*\.swp")
+    tempfile = re.compile("^.*~$|^.*\.swp$")
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
