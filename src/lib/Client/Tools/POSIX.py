@@ -89,9 +89,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.debug("Symlink %s points to %s, should be %s" % \
                               (entry.get('name'), sloc, entry.get('to')))
             entry.set('current_to', sloc)
+            entry.set('qtext', "Link %s to %s? [y/N] " % (entry.get('name'),
+                                                   entry.get('to')))
             return False
         except OSError:
             entry.set('current_exists', 'false')
+            entry.set('qtext', "Link %s to %s? [y/N] " % (entry.get('name'),
+                                                   entry.get('to')))
             return False
 
     def InstallSymLink(self, entry):
