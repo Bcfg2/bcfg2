@@ -4,13 +4,10 @@ __revision__ = '$Revision$'
 
 import os, sys, binascii
 try:
-    import settings
-except ImportError:
-    try:
-        import Bcfg2.Server.Reports.settings
-    except ImportError:
-        sys.stderr.write("Failed to locate settings.py. Is Bcfg2.Server.Reports python module installed?")
-        sys.exit(1)
+    import Bcfg2.Server.Reports.settings
+except:
+    sys.stderr.write("Failed to load configuration settings. is /etc/bcfg2.conf readable?")
+    sys.exit(1)
 
 project_directory = os.path.dirname(settings.__file__)
 project_name = os.path.basename(project_directory)
