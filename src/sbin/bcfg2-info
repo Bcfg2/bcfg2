@@ -260,7 +260,6 @@ Usage: [quit|exit]"""
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
-    print dir(Bcfg2.Options)
     optinfo = {
             'configfile': Bcfg2.Options.CFILE, 
             'help': Bcfg2.Options.HELP,
