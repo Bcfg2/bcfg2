@@ -10,6 +10,12 @@ import Bcfg2.Server.Plugins.Metadata
 
 logger = logging.getLogger('Bcfg2.Core')
 
+try:
+    import psyco
+    psyco.full()
+except:
+    pass
+
 def ShouldIgnore(event):
     '''Test if the event should be suppresed'''
     if event.filename.split('/')[-1] == '.svn':
