@@ -20,7 +20,7 @@ def daemonize(filename):
         raise SystemExit, 1
     except OSError:
         pidfile.close()
-    except IOError: 
+    except (IOError, ValueError): 
         # pid file doesn't
         pass
 
@@ -30,9 +30,12 @@ def daemonize(filename):
     os.setsid()                     # Create new session
     pid = os.fork()
     if pid != 0:
-        pidfile = open(filename, "w")
-        pidfile.write("%i" % pid)
-        pidfile.close()
+        try:
+            pidfile = open(filename, "w")
+            pidfile.write("%i" % pid)
+            pidfile.close()
+        except:
+            print "Failed to write pid file %s" % filename
         os._exit(0)     
     os.chdir("/")         
     os.umask(0)
