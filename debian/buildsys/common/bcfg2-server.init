@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Bcfg2Server - Bcfg2 configuration daemon
+# bcfg-server - Bcfg2 configuration daemon
 #
 # chkconfig: 2345 19 81
 # description: bcfg2 server for configuration requests
@@ -29,57 +29,65 @@ test -x $DAEMON || exit 5
 # Internal variables
 BINARY=$(basename $DAEMON)
 
-case "$1" in
-  start)
+start () {
     echo -n "Starting Configuration Management Server: "
     start_daemon ${DAEMON} ${PARAMS}
     STATUS=$?
     if [ "$STATUS" = 0 ]
     then
 	log_success_msg "bcfg2-server"
+        test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-server
     else
 	log_failure_msg "bcfg2-server"
     fi
-    exit $STATUS
-    ;;
-  stop)
+    return $STATUS
+}
+
+stop () {
     echo -n "Stopping Configuration Management Server: "
     killproc ${BINARY}
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
       log_success_msg "bcfg2-server"
-      exit 0
+      test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-server
     else
       log_failure_msg "bcfg2-server"
     fi
-    exit $STATUS
-    ;;
-  restart|force-reload|reload)
-    $0 stop
-    sleep 5
-    $0 start
-    ;;
-  status)
+    return $STATUS
+}
+
+status () {
     # Inspired by redhat /etc/init.d/functions status() call
     PID=$(pidof -x $BINARY)
     if [ -n "$PID" ]; then
       echo "$BINARY (pid $PID) is running..."
-      exit 0
+      return 0
     fi
 
     if [ -f $PIDFILE ]; then
       if [ -n "$PID" ]; then
 	log_failure_msg "$BINARY dead but pid file exists..."
-	exit 1
+	return 1
       fi
     fi
     
     log_failure_msg "$BINARY is not running"
-    exit 3
+    return 3
+}
+
+case "$1" in
+    start)
+        start
     ;;
-  *)
-    log_success_msg "Usage: $0 {start|stop|status|reload|restart|force-reload}"
-    exit 1
+    stop)
+        stop
+    ;;
+    status)
+        status
+    ;;
+    *)
+        log_success_msg "Usage: $0 {start|stop|status|reload|restart|force-reload}"
+        exit 1
     ;;
 esac
 

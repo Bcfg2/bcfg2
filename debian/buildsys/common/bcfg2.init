@@ -41,19 +41,20 @@ test -f "/etc/default/bcfg2" && . /etc/default/bcfg2
 test -x $BCFG2 || exit 5
 
 # Agent mode daemon capability
-PIDFILE=/var/run/bcfg2.pid
+PIDFILE=/var/run/bcfg2-agent.pid
 # Internal variables
 BINARY=$(basename $BCFG2)
+
+AGENT_EXTRA_OPTS="-A -i ${PIDFILE}"
 
 # Include lsb functions
 . /lib/lsb/init-functions
 
-case "$1" in
-  start)
+start () {
     echo -n "Running configuration management client: "
     if [ "$BCFG2_AGENT" -eq 1 ]
     then
-      start_daemon ${BCFG2} -A -i /var/run/bcfg2-agent.pid ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_AGENT}
+      start_daemon ${BCFG2} ${AGENT_EXTRA_OPTS} ${BCFG2_OPTIONS} ${BCFG2_OPTIONS_AGENT}
       STATUS=$?
     fi
 
@@ -65,16 +66,35 @@ case "$1" in
     if [ "$STATUS" -eq 0 ]
     then
       log_success_msg "bcfg2"
+      if [ "$BCFG2_AGENT" -eq 1 ]; then
+          test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-agent
+      fi
     else
       log_failure_msg "bcfg2"
     fi
-    exit $STATUS
-    ;;
-  status)
-    # Since we are always OK, always return OK as status
-    exit 0
-    ;;
-  stop)
+    return $STATUS
+}
+
+status () {
+    if [ "$BCFG2_AGENT" -eq 1 ]
+    then
+        PID=$(pidof -x $BINARY)
+        if [ -n "$PID" ] ; then
+            log_success_msg "$BINARY (pid $PID) is running..."
+            return 0
+        fi
+        if [ -f $PIDFILE ]; then
+            if [ -n "$PID" ]; then
+	        log_failure_msg "$BINARY dead but pid file exists..."
+	        return 1
+            fi
+        fi
+    else
+        return 0
+    fi
+}
+
+stop () {
     if [ "$BCFG2_AGENT" -eq 1 ]
     then
       echo -n "Stopping configuration management client daemon: "
@@ -83,25 +103,35 @@ case "$1" in
       if [ "$STATUS" -eq 0 ]
       then
         log_success_msg "bcfg2"
-        exit 0
+        if [ "$BCFG2_AGENT" -eq 1 ]; then
+            test -d /var/lock/subsys && rm -f /var/log/subsys/bcfg2-agent
+        fi
       else
         log_failure_msg "bcfg2"
       fi
-      exit $STATUS
+      return $STATUS
+    else
+      return 0
+    fi
+}
 
-    else
-      true
-    fi
+case $"1" in
+    start)
+        start
     ;;
-  restart|reload|force-reload)
-    if [ "$BCFG2_AGENT" -eq 1 ]
-    then
-      $0 stop
-      sleep 5
-      $0 start
-    else
-      true
-    fi
+    stop) 
+        stop
+    ;;
+    status)
+        status
+    ;;
+    restart|reload|force-reload)
+        if [ "$BCFG2_AGENT" -eq 1 ]
+        then
+            stop
+            sleep 5
+            start
+        fi
     ;;
   *)
     echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
