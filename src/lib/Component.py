@@ -25,6 +25,7 @@ class ForkedChild(Exception):
 
 class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
+    masterpid = os.getpid()
 
     def do_POST(self):
         '''Overload do_POST to pass through client address information'''
@@ -59,6 +60,11 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.end_headers()
         else:
             # got a valid XML RPC response
+            if os.getpid() != self.masterpid:
+                pid = os.fork()
+                if pid:
+                    self.cleanup = False
+                    return
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/xml")
