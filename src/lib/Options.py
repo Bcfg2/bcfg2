@@ -54,9 +54,15 @@ class Option(object):
     def buildHelpMessage(self):
         msg = ''
         if self.cmd:
-            msg = self.cmd.ljust(3)
+            if not self.long:
+                msg = self.cmd.ljust(3)
+            else:
+                msg = self.cmd
             if self.odesc:
-                msg += '%-24s' % (self.odesc)
+                if self.long:
+                    msg = "%-27s" % ("%s=%s" % (self.cmd, self.odesc))
+                else:
+                    msg += '%-24s' % (self.odesc)
             else:
                 msg += '%-24s' % ('')
             msg += "%s\n" % self.desc
