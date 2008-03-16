@@ -30,7 +30,6 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     def do_POST(self):
         '''Overload do_POST to pass through client address information'''
         try:
-            self.cleanup = True
             # get arguments
             data = self.rfile.read(int(self.headers["content-length"]))
 
@@ -80,6 +79,7 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
     def setup(self):
         '''Setup a working connection'''
+        self.cleanup = True
         self.connection = self.request
         self.rfile = socket._fileobject(self.request, "rb", self.rbufsize)
         self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
