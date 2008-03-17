@@ -29,8 +29,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'sysv'
     pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
-    def __init__(self, logger, setup, config, states):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
+    def __init__(self, logger, setup, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.noaskname = tempfile.mktemp()
         try:
             open(self.noaskname, 'w+').write(noask)

@@ -13,7 +13,7 @@ class PostInstall(Bcfg2.Client.Tools.Tool):
         '''PostInstalls always verify true'''
         return True
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''Run postinstalls when bundles have been updated'''
         for entry in bundle:
             if entry.tag == 'PostInstall':

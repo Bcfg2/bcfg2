@@ -94,7 +94,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         # Extra services need to be reflected in the config
         return
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''The Bundle has been updated'''
         for entry in bundle:
             if self.handlesEntry(entry):

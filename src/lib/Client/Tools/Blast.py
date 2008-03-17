@@ -13,9 +13,9 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     __handles__ = [('Package', 'blast')]
     __ireq__ = {'Package': ['name', 'version', 'bname']}
 
-    def __init__(self, logger, setup, config, states):
+    def __init__(self, logger, setup, config):
         # dont use the sysv constructor
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.noaskname = tempfile.mktemp()
         try:
             open(self.noaskname, 'w+').write(Bcfg2.Client.Tools.SYSV.noask)

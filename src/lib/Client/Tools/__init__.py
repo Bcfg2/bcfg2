@@ -70,14 +70,13 @@ class Tool:
     __req__ = {}
     __important__ = []
 
-    def __init__(self, logger, setup, config, states):
+    def __init__(self, logger, setup, config):
         self.setup = setup
         self.logger = logger
         if not hasattr(self, '__ireq__'):
             self.__ireq__ = self.__req__
         self.config = config
         self.cmd = executor(logger)
-        self.states = states
         self.modified = []
         self.extra = []
         self.handled = [entry for struct in self.config for entry in struct \
@@ -95,15 +94,15 @@ class Tool:
                 self.logger.debug("%s failed" % filename, exc_info=1)
                 raise toolInstantiationError
 
-    def BundleUpdated(self, _):
+    def BundleUpdated(self, _, states):
         '''This callback is used when bundle updates occur'''
         return
 
-    def BundleNotUpdated(self, _):
+    def BundleNotUpdated(self, _, states):
         '''This callback is used when a bundle is not updated'''
         return
 
-    def Inventory(self, structures=[]):
+    def Inventory(self, states, structures=[]):
         '''Dispatch verify calls to underlying methods'''
         if not structures:
             structures = self.config.getchildren()
@@ -114,19 +113,19 @@ class Tool:
                 func = getattr(self, "Verify%s" % (entry.tag))
                 mods = self.buildModlist(entry, struct)
                 mods += [c.get('name') for c in entry.findall("Ignore")]
-                self.states[entry] = func(entry, mods)
+                states[entry] = func(entry, mods)
             except:
                 self.logger.error(
                     "Unexpected failure of verification method for entry type %s" \
                     % (entry.tag), exc_info=1)
         self.extra = self.FindExtra()
 
-    def Install(self, entries):
+    def Install(self, entries, states):
         '''Install all entries in sublist'''
         for entry in entries:
             try:
                 func = getattr(self, "Install%s" % (entry.tag))
-                self.states[entry] = func(entry)
+                states[entry] = func(entry)
                 self.modified.append(entry)
             except:
                 self.logger.error("Unexpected failure of install method for entry type %s" \
@@ -201,8 +200,8 @@ class PkgTool(Tool):
     pkgtype = 'echo'
     __name__ = 'PkgTool'
 
-    def __init__(self, logger, setup, config, states):
-        Tool.__init__(self, logger, setup, config, states)
+    def __init__(self, logger, setup, config):
+        Tool.__init__(self, logger, setup, config)
         self.installed = {}
         self.Remove = self.RemovePackages
         self.FindExtra = self.FindExtraPackages
@@ -212,7 +211,7 @@ class PkgTool(Tool):
         '''Dummy verification method'''
         return False
 
-    def Install(self, packages):
+    def Install(self, packages, states):
         '''Run a one-pass install, followed by single pkg installs in case of failure'''
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
@@ -228,11 +227,12 @@ class PkgTool(Tool):
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]
-            for entry in [entry for entry in self.states.keys()
-                          if entry.tag == 'Package' and entry.get('type') == self.pkgtype
+            for entry in [entry for entry in states.keys()
+                          if entry.tag == 'Package'
+                          and entry.get('type') == self.pkgtype
                           and entry.get('name') in pkgnames]:
                 self.logger.debug('Setting state to true for pkg %s' % (entry.get('name')))
-                self.states[entry] = True
+                states[entry] = True
             self.RefreshPackages()
         else:
             self.logger.error("Single Pass Failed")
@@ -242,7 +242,7 @@ class PkgTool(Tool):
                 # handle state tracking updates
                 if self.VerifyPackage(pkg, []):
                     self.logger.info("Forcing state to true for pkg %s" % (pkg.get('name')))
-                    self.states[pkg] = True
+                    states[pkg] = True
                 else:
                     self.logger.info("Installing pkg %s version %s" %
                                      (pkg.get('name'), pkg.get('version')))
@@ -250,11 +250,11 @@ class PkgTool(Tool):
                                          (self.pkgtool[1][0] %
                                           tuple([pkg.get(field) for field in self.pkgtool[1][1]])))
                     if cmdrc[0] == 0:
-                        self.states[pkg] = True
+                        states[pkg] = True
                     else:
                         self.logger.error("Failed to install package %s" % (pkg.get('name')))
             self.RefreshPackages()
-        for entry in [ent for ent in packages if self.states[ent]]:
+        for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
 
     def RefreshPackages(self):
@@ -278,7 +278,7 @@ class SvcTool(Tool):
     __name__ = 'SvcTool'
     __svcrestart__ = 'reload'
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''The Bundle has been updated'''
         for entry in bundle:
             if self.handlesEntry(entry):

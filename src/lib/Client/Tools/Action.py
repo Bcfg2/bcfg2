@@ -41,24 +41,23 @@ class Action(Bcfg2.Client.Tools.Tool):
     def InstallAction(self, entry):
         '''Run actions as pre-checks for bundle installation'''
         if entry.get('timing') != 'post':
-            self.states[entry] = self.RunAction(entry)
-            return self.states[entry]
+            return self.RunAction(entry)
         return True
 
     def InstallPostInstall(self, entry):
         return self.InstallAction(self, entry)
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''Run postinstalls when bundles have been updated'''
         for postinst in bundle.findall("PostInstall"):
             self.cmd.run(postinst.get('name'))
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both']:
-                self.states[action] = self.RunAction(action)
+                states[action] = self.RunAction(action)
         
-    def BundleNotUpdated(self, bundle):
+    def BundleNotUpdated(self, bundle, states):
         '''Run Actions when bundles have not been updated'''
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both'] and \
                action.get('when') != 'modified':
-                self.states[action] = self.RunAction(action)
+                states[action] = self.RunAction(action)

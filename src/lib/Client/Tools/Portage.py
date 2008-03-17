@@ -16,8 +16,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     # requires a working PORTAGE_BINHOST in make.conf
     pkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', ['name', 'version']))
     
-    def __init__(self, logger, cfg, setup, states):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup, states)
+    def __init__(self, logger, cfg, setup):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
         self.installed = {}
         self.RefreshPackages()

@@ -49,7 +49,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
     conflicts = ['RPMng']
 
-    def Install(self, packages):
+    def Install(self, packages, states):
         '''
            Try and fix everything that RPMng.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
@@ -60,14 +60,14 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                  installed.
 
            packages is a list of Package Elements that has
-               self.states[<Package Element>] == False
+               states[<Package Element>] == False
 
            The following effects occur:
-           - self.states{} is conditionally updated for each package.
+           - states{} is conditionally updated for each package.
            - self.installed{} is rebuilt, possibly multiple times.
            - self.instance_status{} is conditionally updated for each instance
              of a package.
-           - Each package will be added to self.modified[] if its self.states{}
+           - Each package will be added to self.modified[] if its states{}
              entry is set to True.
         '''
         self.logger.info('Running YUMng.Install()')
@@ -124,7 +124,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
-            self.states[pkg] = self.VerifyPackage(pkg, [])
+            states[pkg] = self.VerifyPackage(pkg, [])
 
         # Install packages.
         if len(install_pkgs) > 0:
@@ -241,10 +241,10 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         if not self.setup['kevlar']:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
-                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                                 self.modlists.get(pkg_entry, []))
+                states[pkg_entry] = self.VerifyPackage(pkg_entry, \
+                                                       self.modlists.get(pkg_entry, []))
 
-        for entry in [ent for ent in packages if self.states[ent]]:
+        for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
 
     def RemovePackages(self, packages):

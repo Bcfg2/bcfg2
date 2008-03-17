@@ -10,8 +10,10 @@ class APT(Bcfg2.Client.Tools.PkgTool):
     the rest from Toolset.Toolset'''
     __name__ = 'APT'
     __execs__ = ['/usr/bin/debsums', '/usr/bin/apt-get', '/usr/bin/dpkg']
-    __important__ = ["/etc/apt/sources.list", "/var/cache/debconf/config.dat", \
-                     "/var/cache/debconf/templates.dat", '/etc/passwd', '/etc/group', \
+    __important__ = ["/etc/apt/sources.list",
+                     "/var/cache/debconf/config.dat", 
+                     "/var/cache/debconf/templates.dat",
+                     '/etc/passwd', '/etc/group', 
                      '/etc/apt/apt.conf', '/etc/dpkg/dpkg.cfg']
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
@@ -21,8 +23,8 @@ class APT(Bcfg2.Client.Tools.PkgTool):
     
     svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
-    def __init__(self, logger, cfg, setup, states):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup, states)
+    def __init__(self, logger, cfg, setup):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.installed = {}
@@ -98,10 +100,10 @@ class APT(Bcfg2.Client.Tools.PkgTool):
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
               
-    def Install(self, packages):
+    def Install(self, packages, states):
         if self.setup['kevlar'] and not self.setup['dryrun'] and not self.updated:
             self.cmd.run("dpkg --force-confold --configure --pending")
             self.cmd.run("apt-get clean")
             self.cmd.run("apt-get -q=2 -y update")
             self.updated = True
-        Bcfg2.Client.Tools.PkgTool.Install(self, packages)
+        Bcfg2.Client.Tools.PkgTool.Install(self, packages, states)

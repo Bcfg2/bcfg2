@@ -82,7 +82,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
                                         in self.getSupportedEntries()] if svc in allsrv]
         return [Bcfg2.Client.XML.Element("Service", type='launchd', name=name, status='on') for name in allsrv]
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''Reload launchd plist'''
         for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
             if not self.canInstall(entry):

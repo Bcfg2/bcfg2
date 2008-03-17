@@ -112,7 +112,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
         return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
                 for name in allsrv]
 
-    def BundleUpdated(self, bundle):
+    def BundleUpdated(self, bundle, states):
         '''Restart smf services'''
         for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
             if not self.canInstall(entry):

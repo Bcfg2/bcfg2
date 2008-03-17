@@ -64,7 +64,7 @@ class Frame:
 
         for tool in tclass.values():
             try:
-                self.tools.append(tool(self.logger, setup, config, self.states))
+                self.tools.append(tool(self.logger, setup, config))
             except Bcfg2.Client.Tools.toolInstantiationError:
                 continue
             except:
@@ -126,7 +126,7 @@ class Frame:
                 self.states[entry] = False
         for tool in self.tools:
             try:
-                tool.Inventory()
+                tool.Inventory(self.states)
             except:
                 self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
 
@@ -205,7 +205,7 @@ class Frame:
             if not handled:
                 continue
             try:
-                tool.Install(handled)
+                tool.Install(handled, self.states)
             except:
                 self.logger.error("%s.Install() call failed:" % tool.__name__, exc_info=1)
 
@@ -225,7 +225,7 @@ class Frame:
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
-                    tool.Inventory([bundle])
+                    tool.Inventory(self.states, [bundle])
                 except:
                     self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
@@ -241,9 +241,9 @@ class Frame:
             for tool in self.tools:
                 try:
                     if bundle in mbundles:
-                        tool.BundleUpdated(bundle)
+                        tool.BundleUpdated(bundle, self.states)
                     else:
-                        tool.BundleNotUpdated(bundle)
+                        tool.BundleNotUpdated(bundle, self.states)
                 except:
                     self.logger.error("%s.BundleNotUpdated() call failed:" % \
                                       (tool.__name__), exc_info=1)

@@ -34,8 +34,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
-    def __init__(self, logger, setup, config, states):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config, states)
+    def __init__(self, logger, setup, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
 
         self.instance_status = {}
         self.extra_instances = []
@@ -524,7 +524,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         return fix
     
-    def Install(self, packages):
+    def Install(self, packages, states):
         '''
            Try and fix everything that RPMng.VerifyPackages() found wrong for 
            each Package Entry.  This can result in individual RPMs being 
@@ -532,14 +532,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
            or upgraded.
 
            packages is a list of Package Elements that has 
-               self.states[<Package Element>] == False
+               states[<Package Element>] == False
 
            The following effects occur:
-           - self.states{} is conditionally updated for each package.
+           - states{} is conditionally updated for each package.
            - self.installed{} is rebuilt, possibly multiple times.
            - self.instance_statusi{} is conditionally updated for each instance 
              of a package.
-           - Each package will be added to self.modified[] if its self.states{} 
+           - Each package will be added to self.modified[] if its states{} 
              entry is set to True. 
         '''
         self.logger.info('Runing RPMng.Install()')
@@ -628,7 +628,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
-            self.states[pkg] = self.VerifyPackage(pkg, [])
+            states[pkg] = self.VerifyPackage(pkg, [])
 
         # Fix upgradeable packages.
         if len(upgrade_pkgs) > 0:
@@ -669,10 +669,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if not self.setup['kevlar']:
             for pkg_entry in packages:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
-                self.states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                                 self.modlists.get(pkg_entry, []))
+                states[pkg_entry] = self.VerifyPackage(pkg_entry, \
+                                                       self.modlists.get(pkg_entry, []))
 
-        for entry in [ent for ent in packages if self.states[ent]]:
+        for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
 
     def canInstall(self, entry):
