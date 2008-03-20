@@ -38,22 +38,25 @@ class Viz(Bcfg2.Server.Admin.Mode):
             elif opt in ("-o", "--outfile"):
                 outputfile = arg
 
-        data = self.Visualize(self.get_repo_path(), rset, hset, bset, kset)
-        if outputfile:
-            open(outputfile, 'w').write(data)
-        else:
-            print data
+        data = self.Visualize(self.get_repo_path(), rset, hset, bset,
+                              kset, outputfile)
+        print data
 
     def Visualize(self, repopath, raw=False, hosts=False,
-                  bundles=False, key=False):
+                  bundles=False, key=False, output=False):
         '''Build visualization of groups file'''
         groupdata = lxml.etree.parse(repopath + '/Metadata/groups.xml')
         groupdata.xinclude()
         groups = groupdata.getroot()
         if raw:
-            dotpipe = popen2.Popen4("dd bs=4M 2>/dev/null")
+            cmd = "dd bs=4M"
+            if output:
+                cmd += " of=%s" % output
         else:
-            dotpipe = popen2.Popen4("dot -Tpng")
+            cmd = "dot -Tpng"
+            if output:
+                cmd += " -o %s" % output
+        dotpipe = popen2.Popen4(cmd)
         categories = {'default':'grey83'}
         instances = {}
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
