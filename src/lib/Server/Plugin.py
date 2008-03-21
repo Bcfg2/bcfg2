@@ -7,6 +7,12 @@ from lxml.etree import XML, XMLSyntaxError
 
 logger = logging.getLogger('Bcfg2.Plugin')
 
+default_file_metadata = {'owner': 'root', 'group': 'root', 'perms': '644'}
+
+info_regex = re.compile( \
+    '^owner:(\s)*(?P<owner>\w+)$|group:(\s)*(?P<group>\w+)$|' +
+    'perms:(\s)*(?P<perms>\w+)$')
+
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
     pass
@@ -378,3 +384,134 @@ class PrioDir(Plugin, XMLDirectoryBacked):
             [entry.append(copy.deepcopy(item)) for item in data['__children__']]
         [entry.attrib.__setitem__(key, data[key]) for key in data.keys() \
          if not key.startswith('__')]
+
+# new unified EntrySet backend
+
+class SpecificityError(Exception):
+    '''Thrown in case of filename parse failure'''
+    pass
+
+class Specificity:
+
+    def __init__(self, reg, fname):
+        self.hostname = None
+        self.all = False
+        self.group = None
+        self.prio = 0
+        data = reg.match(fname)
+        if not data:
+            raise SpecificityError(fname)
+        if data.group('hostname'):
+            self.hostname = data.group('hostname')
+        elif data.group('group'):
+            self.group = data.group('group')
+            self.prio = int(data.group('prio'))
+        else:
+            self.all = True
+
+class EntrySet:
+    '''Entry sets deal with the host- and group-specific entries'''
+    def __init__(self, basename, path, props, entry_type):
+        self.path = path
+        self.entry_type = entry_type
+        self.entries = {}
+        self.properties = props
+        self.metadata = default_file_metadata.copy()
+        self.infoxml = None
+        pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % basename
+        pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
+        self.specific = re.compile(pattern)
+
+    def handle_event(self, event):
+        '''Handle FAM events for the TemplateSet'''
+        action = event.code2str()
+
+        if event.filename in ['info', 'info.xml']:
+            if action in ['exists', 'created', 'changed']:
+                self.update_metadata(event)
+            elif action == 'deleted':
+                self.reset_metadata(event)
+            return
+
+        if action in ['exists', 'created']:
+            self.entry_init(event)
+        elif action == 'changed':
+            self.entries[event.filename].handle_event(event)
+        elif action == 'deleted':
+            del self.entries[event.filename]
+
+    def entry_init(self, event):
+        '''handle template and info file creation'''
+        if event.filename in self.entries:
+            logger.warn("Got duplicate add for %s" % event.filename)
+        else:
+            fpath = "%s/%s" % (self.path, event.filename)
+            spec = Specificity(self.specific, event.filename)
+            self.entries[event.filename] = self.entry_type(fpath,
+                                                           self.properties,
+                                                           spec)
+        self.entries[event.filename].handle_event(event)
+
+    def update_metadata(self, event):
+        '''process info and info.xml files for the templates'''
+        fpath = "%s/%s" % (self.path, event.filename)
+        if event.filename == 'info.xml':
+            if not self.infoxml:
+                self.infoxml = XMLSrc(fpath, True)
+            self.infoxml.HandleEvent(event)
+        elif event.filename == 'info':
+            for line in open(fpath).readlines():
+                match = info_regex.match(line)
+                if not match:
+                    logger.warning("Failed to match line: %s"%line)
+                    continue
+                else:
+                    mgd = match.groupdict()
+                    if mgd['owner']:
+                        self.metadata['owner'] = mgd['owner']
+                    elif mgd['group']:
+                        self.metadata['group'] = mgd['group']
+                    elif mgd['perms']:
+                        self.metadata['perms'] = mgd['perms']
+                        if len(self.metadata['perms']) == 3:
+                            self.metadata['perms'] = "0%s" % (self.metadata['perms'])
+
+    def reset_metadata(self, event):
+        '''reset metadata to defaults if info or info.xml removed'''
+        if event.filename == 'info.xml':
+            self.infoxml = None
+        elif event.filename == 'info':
+            self.metadata = default_file_metadata.copy()
+
+    def group_sortfunc(self, x, y):
+        '''sort groups by their priority'''
+        return cmp(x.specific.prio, y.specific.prio)
+
+    def bind_entry(self, entry, metadata):
+        '''Return the appropriate interpreted template from the set of available templates'''
+        if not self.infoxml:
+            for key in self.metadata:
+                entry.set(key, self.metadata[key])
+        else:
+            mdata = {}
+            self.infoxml.pnode.Match(metadata, mdata)
+            [entry.attrib.__setitem__(key, value) \
+             for (key, value) in mdata['Info'][None].iteritems()]
+            
+        hspec = [ent for ent in self.entries.values() if
+                 ent.specific.hostname == metadata.hostname]
+        if hspec:
+            return hspec[0].bind_entry(entry, metadata)
+
+        gspec = [ent for ent in self.entries.values() if
+                  ent.specific.group in metadata.groups]
+        if gspec:
+            gspec.sort(self.group_sortfunc)
+            return gspec[-1].bind_entry(entry, metadata)
+
+        aspec = [ent for ent in self.entries.values() if ent.specific.all]
+        if aspec:
+            return aspec[0].bind_entry(entry, metadata)
+
+        raise PluginExecutionError
+
