@@ -435,10 +435,13 @@ class EntrySet:
 
         if action in ['exists', 'created']:
             self.entry_init(event)
-        elif action == 'changed':
-            self.entries[event.filename].handle_event(event)
-        elif action == 'deleted':
-            del self.entries[event.filename]
+        else:
+            if event.filename not in self.entries:
+                return
+            if action == 'changed':
+                self.entries[event.filename].handle_event(event)
+            elif action == 'deleted':
+                del self.entries[event.filename]
 
     def entry_init(self, event):
         '''handle template and info file creation'''
@@ -446,7 +449,11 @@ class EntrySet:
             logger.warn("Got duplicate add for %s" % event.filename)
         else:
             fpath = "%s/%s" % (self.path, event.filename)
-            spec = Specificity(self.specific, event.filename)
+            try:
+                spec = Specificity(self.specific, event.filename)
+            except SpecificityError:
+                logger.error("Could not process filename %s; ignoring" % fpath)
+                return
             self.entries[event.filename] = self.entry_type(fpath,
                                                            self.properties,
                                                            spec)
