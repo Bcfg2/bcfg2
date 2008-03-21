@@ -7,7 +7,8 @@ from lxml.etree import XML, XMLSyntaxError
 
 logger = logging.getLogger('Bcfg2.Plugin')
 
-default_file_metadata = {'owner': 'root', 'group': 'root', 'perms': '644'}
+default_file_metadata = {'owner': 'root', 'group': 'root', 'perms': '644',
+                         'encoding': 'ascii'}
 
 info_regex = re.compile( \
     '^owner:(\s)*(?P<owner>\w+)$|group:(\s)*(?P<group>\w+)$|' +
@@ -408,6 +409,15 @@ class Specificity:
             self.prio = int(data.group('prio'))
         else:
             self.all = True
+        if 'delta' in data.groupdict():
+            self.delta = data.group('delta')
+        else:
+            self.delta = False
+
+    def matches(self, metadata):
+        return self.all or \
+               self.hostname == metadata.hostname or \
+               self.group in metadata.group
 
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
@@ -494,8 +504,7 @@ class EntrySet:
         '''sort groups by their priority'''
         return cmp(x.specific.prio, y.specific.prio)
 
-    def bind_entry(self, entry, metadata):
-        '''Return the appropriate interpreted template from the set of available templates'''
+    def bind_info_to_entry(self, entry, metadata):
         if not self.infoxml:
             for key in self.metadata:
                 entry.set(key, self.metadata[key])
@@ -504,19 +513,23 @@ class EntrySet:
             self.infoxml.pnode.Match(metadata, mdata)
             [entry.attrib.__setitem__(key, value) \
              for (key, value) in mdata['Info'][None].iteritems()]
-            
-        hspec = [ent for ent in self.entries.values() if
-                 ent.specific.hostname == metadata.hostname]
+
+    def bind_entry(self, entry, metadata):
+        '''Return the appropriate interpreted template from the set of available templates'''
+        self.bind_info_to_entry(entry, metadata)
+        matching = [ent for ent in self.entries.values() if \
+                    ent.specific.matches(metadata)]
+
+        hspec = [ent for ent in matching if ent.specific.hostname]
         if hspec:
             return hspec[0].bind_entry(entry, metadata)
 
-        gspec = [ent for ent in self.entries.values() if
-                  ent.specific.group in metadata.groups]
+        gspec = [ent for ent in matching if ent.specific.group]
         if gspec:
             gspec.sort(self.group_sortfunc)
             return gspec[-1].bind_entry(entry, metadata)
 
-        aspec = [ent for ent in self.entries.values() if ent.specific.all]
+        aspec = [ent for ent in matching if ent.specific.all]
         if aspec:
             return aspec[0].bind_entry(entry, metadata)
 
@@ -547,6 +560,7 @@ class GroupSpool(Plugin):
     use_props = False
     filename_pattern = ""
     es_child_cls = object
+    es_class = EntrySet
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
@@ -582,10 +596,10 @@ class GroupSpool(Plugin):
             if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             if ident not in self.entries:
-                self.entries[ident] = EntrySet(self.filename_pattern,
-                                               epath,
-                                               self.properties,
-                                               self.es_child_cls)
+                self.entries[ident] = self.es_cls(self.filename_pattern,
+                                                  epath,
+                                                  self.properties,
+                                                  self.es_child_cls)
                 self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
             if not posixpath.isdir(epath):
                 # do not pass through directory events
