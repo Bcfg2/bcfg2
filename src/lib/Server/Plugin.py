@@ -1,7 +1,7 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, re, copy
+import logging, lxml.etree, re, copy, posixpath
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -522,3 +522,92 @@ class EntrySet:
 
         raise PluginExecutionError
 
+# GroupSpool plugin common code (for TGenshi, TCheetah, and Cfg)
+
+class TemplateProperties(SingleXMLFileBacked):
+    '''Class for Genshi properties'''
+    def Index(self):
+        '''Build data into an elementtree object for templating usage'''
+        try:
+            self.properties = lxml.etree.XML(self.data)
+            del self.data
+        except lxml.etree.XMLSyntaxError:
+            logger.error("Failed to parse properties.xml; disabling")
+
+class FakeProperties:
+    '''Dummy class used when properties dont exist'''
+    def __init__(self):
+        self.properties = lxml.etree.Element("Properties")
+
+class GroupSpool(Plugin):
+    '''The TGenshi generator implements a templating mechanism for configuration files'''
+    __name__ = 'GroupSpool'
+    __version__ = '$Id$'
+    __author__ = 'bcfg-dev@mcs.anl.gov'
+    use_props = False
+    filename_pattern = ""
+    es_child_cls = object
+
+    def __init__(self, core, datastore):
+        Plugin.__init__(self, core, datastore)
+        if self.data[-1] == '/':
+            self.data = self.data[:-1]
+        self.Entries['ConfigFile'] = {}
+        self.entries = {}
+        self.handles = {}
+        self.AddDirectoryMonitor('')
+        if self.use_props:
+            try:
+                self.properties = TemplateProperties( \
+                    '%s/../etc/properties.xml' % (self.data), self.core.fam)
+            except:
+                self.properties = FakeProperties()
+                self.logger.info("%s properties disabled" % self.__name__)
+        else:
+            self.properties = FakeProperties()
+
+    def HandleEvent(self, event):
+        '''Unified FAM event handler for DirShadow'''
+        action = event.code2str()
+        if event.filename[0] == '/':
+            return
+        epath = "".join([self.data, self.handles[event.requestID],
+                         event.filename])
+        if posixpath.isdir(epath):
+            ident = self.handles[event.requestID] + event.filename
+        else:
+            ident = self.handles[event.requestID][:-1]
+
+        if action in ['exists', 'created']:
+            if posixpath.isdir(epath):
+                self.AddDirectoryMonitor(epath[len(self.data):])
+            if ident not in self.entries:
+                self.entries[ident] = EntrySet(self.filename_pattern,
+                                               epath,
+                                               self.properties,
+                                               self.es_child_cls)
+                self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
+            if not posixpath.isdir(epath):
+                # do not pass through directory events
+                self.entries[ident].handle_event(event)
+        if action == 'changed':
+            self.entries[ident].handle_event(event)
+        elif action == 'deleted' and ident in self.entries:
+            self.entries[ident].handle_event(event)
+            if not len(self.entries[ident].entries):
+                del self.entries[ident]
+                del self.Entries['ConfigFile'][ident]
+                                 
+    def AddDirectoryMonitor(self, relative):
+        '''Add new directory to FAM structures'''
+        if not relative:
+            relative = '/'
+        if relative[-1] != '/':
+            relative += '/'
+        name = self.data + relative
+        if relative not in self.handles.values():
+            if not posixpath.isdir(name):
+                print "Genshi: Failed to open directory %s" % (name)
+                return
+            reqid = self.core.fam.AddMonitor(name, self)
+            self.handles[reqid] = relative
