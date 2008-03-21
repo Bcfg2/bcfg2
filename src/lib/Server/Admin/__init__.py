@@ -5,6 +5,9 @@ __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
 
 import ConfigParser, lxml.etree, logging
 
+class ModeOperationError(Exception):
+    pass
+
 class Mode(object):
     '''Help message has not yet been added for mode'''
     __shorthelp__ = 'Shorthelp not defined yet'
