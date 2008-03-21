@@ -418,7 +418,7 @@ class Specificity:
     def matches(self, metadata):
         return self.all or \
                self.hostname == metadata.hostname or \
-               self.group in metadata.group
+               self.group in metadata.groups
 
     def __cmp__(self, other):
         '''sort most to least specific'''
@@ -461,7 +461,7 @@ class EntrySet:
         '''Handle FAM events for the TemplateSet'''
         action = event.code2str()
 
-        if event.filename in ['info', 'info.xml']:
+        if event.filename in ['info', 'info.xml', ':info']:
             if action in ['exists', 'created', 'changed']:
                 self.update_metadata(event)
             elif action == 'deleted':
@@ -501,7 +501,7 @@ class EntrySet:
             if not self.infoxml:
                 self.infoxml = XMLSrc(fpath, True)
             self.infoxml.HandleEvent(event)
-        elif event.filename == 'info':
+        elif event.filename in [':info', 'info']:
             for line in open(fpath).readlines():
                 match = info_regex.match(line)
                 if not match:
@@ -583,7 +583,7 @@ class GroupSpool(Plugin):
     use_props = False
     filename_pattern = ""
     es_child_cls = object
-    es_class = EntrySet
+    es_cls = EntrySet
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
