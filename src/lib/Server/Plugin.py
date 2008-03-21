@@ -8,11 +8,12 @@ from lxml.etree import XML, XMLSyntaxError
 logger = logging.getLogger('Bcfg2.Plugin')
 
 default_file_metadata = {'owner': 'root', 'group': 'root', 'perms': '644',
-                         'encoding': 'ascii'}
+                         'encoding': 'ascii', 'paranoid':"false"}
 
 info_regex = re.compile( \
-    '^owner:(\s)*(?P<owner>\w+)$|group:(\s)*(?P<group>\w+)$|' +
-    'perms:(\s)*(?P<perms>\w+)$')
+    '^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
+    'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
+    '(?P<paranoid>paranoid(\s)*)|mtime:(\s)*(?P<mtime>\w+)$' )
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
@@ -419,6 +420,30 @@ class Specificity:
                self.hostname == metadata.hostname or \
                self.group in metadata.group
 
+    def __cmp__(self, other):
+        '''sort most to least specific'''
+        if self.all:
+            return 1
+        if self.group:
+            if other.hostname:
+                return 1
+            if other.group and other.prio > self.prio:
+                return 1
+            if other.group and other.prio == self.prio:
+                return 0
+        return -1
+
+    def more_specific(self, other):
+        '''test if self is more specific than other'''
+        if self.all:
+            True
+        elif self.group:
+            if other.hostname:
+                return True
+            elif other.group and other.prio > self.prio:
+                return True
+        return False
+
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
     def __init__(self, basename, path, props, entry_type):
@@ -484,14 +509,12 @@ class EntrySet:
                     continue
                 else:
                     mgd = match.groupdict()
-                    if mgd['owner']:
-                        self.metadata['owner'] = mgd['owner']
-                    elif mgd['group']:
-                        self.metadata['group'] = mgd['group']
-                    elif mgd['perms']:
-                        self.metadata['perms'] = mgd['perms']
-                        if len(self.metadata['perms']) == 3:
-                            self.metadata['perms'] = "0%s" % (self.metadata['perms'])
+                    for key, value in mgd.iteritems():
+                        if value:
+                            self.metadata[key] = value
+                    if len(self.metadata['perms']) == 3:
+                        self.metadata['perms'] = "0%s" % \
+                                                 (self.metadata['perms'])
 
     def reset_metadata(self, event):
         '''reset metadata to defaults if info or info.xml removed'''
