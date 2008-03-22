@@ -128,14 +128,18 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             self.logger.error("Failed to parse probe data from client %s" % (address[0]))
             return False
 
-        for data in xpdata:
-            if self.Core.plugins.has_key(data.get('source')):
-                try:
-                    self.Core.plugins[data.get('source')].ReceiveData(meta, data)
-                except:
-                    self.logger.error("Failed to process probe data from client %s" % (address[0]), exc_info=1)
-            else:
-                self.logger.warning("Failed to locate plugin %s" % (data.get('source')))
+        sources = []
+        [sources.append(data.get('source')) for data in xpdata
+         if data.get('source') not in sources]
+        for source in sources:
+            if source not in self.Core.plugins:
+                self.logger.warning("Failed to locate plugin %s" % (source))
+                continue
+            dl = [data for data in xpdata if data.get('source') == source]
+            try:
+                self.Core.plugins[source].ReceiveData(meta, dl)
+            except:
+                self.logger.error("Failed to process probe data from client %s" % (address[0]), exc_info=1)
         return True
 
     def Bcfg2AssertProfile(self, address, profile):

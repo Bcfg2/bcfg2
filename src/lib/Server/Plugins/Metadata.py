@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-import lxml.etree, re, socket, time, sys
+import lxml.etree, re, socket, time
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
@@ -247,7 +247,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         except:
             self.logger.error("Failed to read file probed.xml")
             return
-        self.probedata={}
+        self.probedata = {}
         for client in data.getchildren():
             self.probedata[client.get('name')] = {}
             for pdata in client:
@@ -332,7 +332,16 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 ret.append(probe)
         return ret
 
-    def ReceiveData(self, client, data):
+    def ReceiveData(self, client, datalist):
+        self.cgroups[client.hostname] = []
+        self.probedata[client.hostname] = {}
+        for data in datalist:
+            self.ReceiveDataItem(client, data)
+        self.pdirty = True
+        self.ptimes[client.hostname] = time.time()
+        self.write_probedata()
+
+    def ReceiveDataItem(self, client, data):
         '''Receive probe results pertaining to client'''
         if not self.cgroups.has_key(client.hostname):
             self.cgroups[client.hostname] = []
@@ -354,9 +363,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.probedata[client.hostname].update({ data.get('name'):dtext })
         except KeyError:
             self.probedata[client.hostname] = { data.get('name'):dtext }
-        self.pdirty = True
-        self.ptimes[client.hostname] = time.time()
-        self.write_probedata()
 
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''
@@ -420,5 +426,5 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
 
     def GetClientByProfile(self, profile):
         '''Return a list of clients that are members of a given profile'''
-	return [client for client in self.clients \
+        return [client for client in self.clients \
 		if self.clients[client] == profile]
