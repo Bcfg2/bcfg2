@@ -18,6 +18,7 @@ except:
 
 def ShouldIgnore(event):
     '''Test if the event should be suppresed'''
+    # FIXME should move event suppression out of the core
     if event.filename.split('/')[-1] == '.svn':
         return True
     if event.filename.endswith('~') or event.filename.endswith('.tmp') \
