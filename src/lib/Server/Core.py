@@ -50,28 +50,12 @@ class FamFam(object):
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
-            #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
         else:
             handle = self.fm.monitorFile(path, None)
         self.handles[handle.requestID()] = handle
         if obj != None:
             self.users[handle.requestID()] = obj
         return handle.requestID()
-
-    def HandleEvent(self):
-        '''Route a fam event to the proper callback'''
-        event = self.fm.nextEvent()
-        reqid = event.requestID
-        if reqid not in self.users:
-            return
-        if self.debug:
-            logger.info("Dispatching event %s %s to obj %s handle" % \
-                        (event.code2str(), event.filename,
-                         self.users[reqid]))
-        try:
-            self.users[reqid].HandleEvent(event)
-        except:
-            logger.error("handling event for file %s" % (event.filename), exc_info=1)
 
     def Service(self):
         '''Handle all fam work'''
@@ -150,7 +134,6 @@ class GaminFam(object):
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
             self.mon.watch_directory(path, self.queue, handle)
-            #print "adding callback for directory %s to %s, handle :%s:" % ( path, obj, handle.requestID())
         else:
             self.mon.watch_file(path, self.queue, handle)
         self.handles[handle] = obj
