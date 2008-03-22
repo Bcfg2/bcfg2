@@ -619,8 +619,9 @@ class GroupSpool(Plugin):
             if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             if ident not in self.entries:
+                dirpath  = "".join([self.data, ident])
                 self.entries[ident] = self.es_cls(self.filename_pattern,
-                                                  epath,
+                                                  dirpath,
                                                   self.properties,
                                                   self.es_child_cls)
                 self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
