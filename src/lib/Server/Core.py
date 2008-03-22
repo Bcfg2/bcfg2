@@ -38,6 +38,7 @@ class FamFam(object):
         self.fm = _fam.open()
         self.users = {}
         self.handles = {}
+        self.debug = False
 
     def fileno(self):
         '''return fam file handle number'''
@@ -60,12 +61,16 @@ class FamFam(object):
         '''Route a fam event to the proper callback'''
         event = self.fm.nextEvent()
         reqid = event.requestID
-        if self.users.has_key(reqid):
-            #print "dispatching event %s %s to obj %s handle :%s:" % (event.code2str(), event.filename, self.users[reqid], event.requestID)
-            try:
-                self.users[reqid].HandleEvent(event)
-            except:
-                logger.error("handling event for file %s" % (event.filename), exc_info=1)
+        if reqid not in self.users:
+            return
+        if self.debug:
+            logger.info("Dispatching event %s %s to obj %s handle" % \
+                        (event.code2str(), event.filename,
+                         self.users[reqid]))
+        try:
+            self.users[reqid].HandleEvent(event)
+        except:
+            logger.error("handling event for file %s" % (event.filename), exc_info=1)
 
     def Service(self):
         '''Handle all fam work'''
@@ -127,6 +132,7 @@ class GaminFam(object):
         self.handles = {}
         self.counter = 0
         self.events = []
+        self.debug = False
 
     def fileno(self):
         '''return fam file handle number'''
@@ -177,14 +183,19 @@ class GaminFam(object):
                     collapsed += 1
         self.events = []
         for event in unique:
-            if self.handles.has_key(event.requestID):
-                try:
-                    self.handles[event.requestID].HandleEvent(event)
-                except:
-                    logger.error("error in handling of gamin event for %s" % (event.filename), exc_info=1)
-            else:
+            if event.requestID not in self.handles:
                 logger.info("Got event for unexpected id %s, file %s" %
                             (event.requestID, event.filename))
+                continue
+            if self.debug:
+                logger.info("Dispatching event %s %s to obj %s" \
+                            % (event.code2str(), event.filename,
+                               self.handles[event.requestID]))
+            try:
+                self.handles[event.requestID].HandleEvent(event)
+            except:
+                logger.error("error in handling of gamin event for %s" % \
+                             (event.filename), exc_info=1)
         end = time()
         logger.info("Processed %s gamin events in %03.03f seconds. %s collapsed" %
                     (count, (end - start), collapsed))

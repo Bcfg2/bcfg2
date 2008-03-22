@@ -73,6 +73,7 @@ Usage: [quit|exit]"""
         print 'bundles - print out group/bundle information'
         print 'clients - print out client/profile information'
         print 'debug - shell out to native python interpreter'
+        print 'event_debug - display filesystem events as they are processed'
         print 'generators - list current versions of generators'
         print 'groups - list groups'
         print 'help - print this text'
@@ -257,6 +258,9 @@ Usage: [quit|exit]"""
                              generator.Entries.get(etype, {})]:
                     data.append((generator.__name__, etype, name))
         printTabular(data)
+
+    def do_event_debug(self, args):
+        self.fam.debug = True
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
