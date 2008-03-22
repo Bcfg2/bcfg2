@@ -7,10 +7,10 @@
 # 
 ### BEGIN INIT INFO
 # Provides:          bcfg2-server
-# Required-Start:    $network
-# Required-Stop:     
+# Required-Start:    $network $remote_fs $named
+# Required-Stop:     $network $remote_fs $named
 # Default-Start:     2 3 4 5
-# Default-Stop:      S 0 1 6
+# Default-Stop:      0 1 6
 # Short-Description: Configuration management Server
 # Description:       Bcfg2 is a configuration management system that builds
 #                    installs configuration files served by bcfg2-server
