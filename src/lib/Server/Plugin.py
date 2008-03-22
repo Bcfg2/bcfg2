@@ -89,8 +89,6 @@ class FileBacked(object):
         object.__init__(self)
         self.data = ''
         self.name = name
-        #self.readonce = 0
-        #self.HandleEvent()
 
     def HandleEvent(self, _=None):
         '''Read file upon update'''
@@ -446,6 +444,7 @@ class Specificity:
 
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
+    ignore = re.compile("^(.*~|\\..*\\.(tmp|sw[px]))$")
     def __init__(self, basename, path, props, entry_type):
         self.path = path
         self.entry_type = entry_type
@@ -487,7 +486,8 @@ class EntrySet:
             try:
                 spec = Specificity(self.specific, event.filename)
             except SpecificityError:
-                logger.error("Could not process filename %s; ignoring" % fpath)
+                if not self.ignore.match(event.filename):
+                    logger.error("Could not process filename %s; ignoring" % fpath)
                 return
             self.entries[event.filename] = self.entry_type(fpath,
                                                            self.properties,
