@@ -396,24 +396,12 @@ class SpecificityError(Exception):
 
 class Specificity:
 
-    def __init__(self, reg, fname):
-        self.hostname = None
-        self.all = False
-        self.group = None
-        self.prio = 0
-        self.delta = False
-        data = reg.match(fname)
-        if not data:
-            raise SpecificityError(fname)
-        if data.group('hostname'):
-            self.hostname = data.group('hostname')
-        elif data.group('group'):
-            self.group = data.group('group')
-            self.prio = int(data.group('prio'))
-        else:
-            self.all = True
-        if 'delta' in data.groupdict():
-            self.delta = data.group('delta')
+    def __init__(self, all=False, group=False, hostname=False, prio=0, delta=False):
+        self.hostname = hostname
+        self.all = all
+        self.group = group
+        self.prio = prio
+        self.delta = delta
 
     def matches(self, metadata):
         return self.all or \
@@ -486,7 +474,7 @@ class EntrySet:
         else:
             fpath = "%s/%s" % (self.path, event.filename)
             try:
-                spec = Specificity(self.specific, event.filename)
+                spec = self.specificity_from_filename(event.filename)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
                     logger.error("Could not process filename %s; ignoring" % fpath)
@@ -495,6 +483,23 @@ class EntrySet:
                                                            self.properties,
                                                            spec)
         self.entries[event.filename].handle_event(event)
+
+    def specificity_from_filename(self, fname):
+        '''construct a specificity instance from a filename and regex'''
+        data = self.specific.match(fname)
+        if not data:
+            raise SpecificityError(fname)
+        kwargs = {}
+        if data.group('hostname'):
+            kwargs['hostname'] = data.group('hostname')
+        elif data.group('group'):
+            kwargs['group'] = data.group('group')
+            kwargs['prio'] = int(data.group('prio'))
+        else:
+            kwargs['all'] = True
+        if 'delta' in data.groupdict():
+            kwargs['delta'] = data.group('delta')
+        return Specificity(**kwargs)
 
     def update_metadata(self, event):
         '''process info and info.xml files for the templates'''
