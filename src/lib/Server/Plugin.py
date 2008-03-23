@@ -67,7 +67,10 @@ class Plugin(object):
         '''This is the slow-path handler for configuration entry binding'''
         raise PluginExecutionError
 
-    def AcceptEntry(self, metadata, entry_type, entry_name, data):
+    def AcceptChoices(self, entry, metadata):
+        raise PluginExecutionError
+    
+    def AcceptPullData(self, specific, new_entry):
         '''This is the null per-plugin implementation
         of bcfg2-admin pull'''
         raise PluginExecutionError
@@ -398,6 +401,7 @@ class Specificity:
         self.all = False
         self.group = None
         self.prio = 0
+        self.delta = False
         data = reg.match(fname)
         if not data:
             raise SpecificityError(fname)
@@ -410,8 +414,6 @@ class Specificity:
             self.all = True
         if 'delta' in data.groupdict():
             self.delta = data.group('delta')
-        else:
-            self.delta = False
 
     def matches(self, metadata):
         return self.all or \
