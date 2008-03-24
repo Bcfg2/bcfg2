@@ -261,6 +261,9 @@ class Core(object):
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
         for entry in structure.getchildren():
+            if entry.tag.startswith("Bound"):
+                entry.tag = entry.tag[5:]
+                continue
             try:
                 self.Bind(entry, metadata)
             except PluginExecutionError:
