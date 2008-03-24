@@ -32,11 +32,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
-        for i in range(25):
-            print "Filesystem check %d of %d" % (i + 1, 25)
-            self.fam.Service()
-            time.sleep(0.5)
-
+        i = 0
+        while self.fam.Service() or i < 5:
+            i += 1
+        
     def do_loop(self):
         self.cont = True
         while self.cont:
