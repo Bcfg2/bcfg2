@@ -5,7 +5,7 @@ __revision__ = '$Id: create-debian-pkglist.py 11778 2007-12-11 13:46:06Z guillau
 
 # Original code from Bcfg2 sources
 
-import glob, gzip, lxml.etree, os, re, urllib, cStringIO, sys, ConfigParser, commands
+import gzip, os, urllib, cStringIO, sys, ConfigParser, commands
 
 def debug(msg):
     '''print debug messages'''
@@ -127,11 +127,11 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
         return pkgdata
     
     def _get_sorted_pkg_keys(self, pkgdata):
-            pkgs = []
-            for k in pkgdata.keys():
-                pkgs.append(k)
-            pkgs.sort()
-            return pkgs
+        pkgs = []
+        for k in pkgdata.keys():
+            pkgs.append(k)
+        pkgs.sort()
+        return pkgs
 
     def _write_common_entries(self, pkgdata):
         # Write entries for packages that have the same version
@@ -202,18 +202,18 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
         self._rename_file()
 
 if __name__ == '__main__':
-    # Prefix is relative to script path
-    complete_script_path = os.path.join(os.getcwd(), sys.argv[0])
-    prefix = complete_script_path[:-len('etc/create-debian-pkglist.py')]
+    main_conf_parser = ConfigParser.SafeConfigParser()
+    main_conf_parser.read(['/etc/bcfg2.conf'])
+    repo = main_conf_parser.get('server', 'repository')
     
     confparser = ConfigParser.SafeConfigParser()
-    confparser.read(prefix + "etc/debian-pkglist.conf")
+    confparser.read(repo + "etc/debian-pkglist.conf")
     
     # We read the whole configuration file before processing each entries
     # to avoid doing work if there is a problem in the file.
     sources_list = []
     for section in confparser.sections():
-        sources_list.append(Source(confparser, section, prefix))
+        sources_list.append(Source(confparser, section, repo))
 
     for source in sources_list:
         source.process()
