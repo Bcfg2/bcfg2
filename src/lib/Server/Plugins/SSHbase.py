@@ -1,14 +1,8 @@
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 
-import binascii, difflib, os, socket, xml.sax.saxutils
+import binascii, os, socket
 import Bcfg2.Server.Plugin
-
-def update_file(path, diff):
-    '''Update file at path using diff'''
-    newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
-    print "writing file, %s" % path
-    open(path, 'w').write(newdata)
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
@@ -190,17 +184,14 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
 
-    def AcceptEntry(self, meta, _, entry_name, diff, fulldata, metadata_updates={}):
-        '''per-plugin bcfg2-admin pull support'''
-        filename = "%s/%s.H_%s" % (self.data, entry_name.split('/')[-1],
-                                   meta.hostname)
-        print "This file will be installed as file %s" % filename
-        if raw_input("Should it be installed? (N/y): ") in ['Y', 'y']:
-            print "writing file, %s" % filename
-            if fulldata:
-                newdata = fulldata
-            else:
-                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
-            open(filename, 'w').write(newdata)
+    def AcceptChoices(self, _, metadata):
+        return Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)
 
-        
+    def AcceptPullData(self, specific, entry, log):
+        '''per-plugin bcfg2-admin pull support'''
+        # specific will always be host specific
+        filename = "%s/%s.H_%s" % (self.data, entry['name'].split('/')[-1],
+                                   specific.hostname)
+        open(filename, 'w').write(entry['text'])
+        if log:
+            print "Wrote file %s" % filename

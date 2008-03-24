@@ -1,8 +1,7 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-import binascii, difflib, logging, os, re, tempfile, \
-       xml.sax.saxutils, Bcfg2.Server.Plugin, lxml.etree
+import binascii, logging, os, re, tempfile, Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
@@ -53,13 +52,15 @@ class CfgEntry(object):
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(self.data)
         else:
-            entry.text = self.data            
+            entry.text = self.data
+        if not entry.text:
+            entry.set('empty', 'true')
 
 class CfgMatcher:
     def __init__(self, fname):
         name = re.escape(fname)
-        self.basefile_reg = re.compile('^%s(|\\.H_(?P<hostname>\S+)|.G(?P<prio>\d+)_(?P<group>\S+))$' % name)
-        self.delta_reg = re.compile('^%s(|\\.H_(?P<hostname>\S+)|\\.G(?P<prio>\d+)_(?P<group>\S+))\\.(?P<delta>(cat|diff))$' % fname)
+        self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|.G(?P<prio>\d+)_(?P<group>\S+))$' % name)
+        self.delta_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|\\.G(?P<prio>\d+)_(?P<group>\S+))\\.(?P<delta>(cat|diff))$' % fname)
         self.cat_count = fname.count(".cat")
         self.diff_count = fname.count(".diff")
 
@@ -76,28 +77,66 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
-                
-    def bind_entry(self, entry, metadata):
+
+    def get_pertinent_entries(self, metadata):
+        '''return a list of all entries pertinent to a client => [base, delta1, delta2]'''
         matching = [ent for ent in self.entries.values() if \
                     ent.specific.matches(metadata)]
-        if [ent for ent in matching if ent.specific.delta]:
-            self.bind_info_to_entry(entry, metadata)
-            matching.sort(self.sort_by_specific)
-            base = min([matching.index(ent) for ent in matching
-                        if not ent.specific.delta])
-            used = matching[:base+1]
-            used.reverse()
-            # used is now [base, delta1, delta2]            
-            basefile = used.pop()
-            data = basefile.data
-            for delta in used:
-                data = process_delta(data, delta)
-            if entry.get('encoding') == 'base64':
-                entry.text = binascii.b2a_base64(data)
-            else:
-                entry.text = data            
+        matching.sort(self.sort_by_specific)
+        base = min([matching.index(ent) for ent in matching
+                    if not ent.specific.delta])
+        used = matching[:base+1]
+        used.reverse()
+        return used
+
+    def bind_entry(self, entry, metadata):
+        self.bind_info_to_entry(entry, metadata)
+        used = self.get_pertinent_entries(metadata)
+        basefile = used.pop()
+        data = basefile.data
+        for delta in used:
+            data = process_delta(data, delta)
+        if entry.get('encoding') == 'base64':
+            entry.text = binascii.b2a_base64(data)
         else:
-            Bcfg2.Server.Plugin.EntrySet.bind_entry(self, entry, metadata)
+            entry.text = data            
+
+    def list_accept_choices(self, metadata):
+        '''return a list of candidate pull locations'''
+        used = self.get_pertinent_entries(metadata)
+        if len(used) > 1:
+            return []
+        return [used[0].specific]
+
+    def build_filename(self, specific):
+        bfname = self.path + '/' + self.path.split('/')[-1]
+        if specific.all:
+            return bfname
+        elif specific.group:
+            return "%s.G%d_%s" % (bfname, specific.group, specific.prio)
+        elif specific.hostname:
+            return "%s.H_%s" % (bfname, specific.hostname)
+
+    def write_update(self, specific, new_entry, log):
+        name = self.build_filename(specific)
+        open(name, 'w').write(new_entry['text'])
+        if log:
+            logger.info("Wrote file %s" % name)
+        badattr = [attr for attr in ['owner', 'group', 'perms'] if attr in new_entry]
+        if badattr:
+            if hasattr(self.entries[name.split('/')[-1]], 'infoxml'):
+                print "InfoXML support not yet implemented"
+                return
+            metadata_updates = {}
+            metadata_updates.update(self.metadata)
+            for attr in badattr:
+                metadata_updates[attr] = new_entry.get('attr')
+            infofile = open(self.path + '/:info', 'w')
+            for x in metadata_updates.iteritems():
+                infofile.write("%s: %s\n" % x)
+            infofile.close()
+            if log:
+                logger.info("Wrote file %s" % infofile.name)
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool):
     '''This generator in the configuration file repository for bcfg2'''
@@ -108,56 +147,9 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool):
     es_cls = CfgEntrySet
     es_child_cls = CfgEntry
 
-    def AcceptEntry(self, meta, _, entry_name, diff, fulldata, metadata_updates={}):
-        '''per-plugin bcfg2-admin pull support'''
-        if metadata_updates:
-            if hasattr(self.Entries['ConfigFile'][entry_name], 'infoxml'):
-                print "InfoXML support not yet implemented"
-            elif raw_input("Should metadata updates apply to all hosts? (n/Y) ") in ['Y', 'y']:
-                self.entries[entry_name].metadata.update(metadata_updates)
-                infofile = open(self.entries[entry_name].repopath + '/:info', 'w')
-                for x in self.entries[entry_name].metadata.iteritems():
-                    infofile.write("%s: %s\n" % x)
-                infofile.close()
-        if not diff and not fulldata:
-            raise SystemExit, 0
-                
-        hsq = "Found host-specific file %s; Should it be updated (n/Y): "
-        repo_vers = lxml.etree.Element('ConfigFile', name=entry_name)
-        self.Entries['ConfigFile'][entry_name](repo_vers, meta)
-        repo_curr = repo_vers.text
-        # find the file fragment
-        basefile = [frag for frag in \
-                    self.entries[entry_name].fragments \
-                    if frag.applies(meta)][-1]
-        gsq = "Should this change apply to all hosts effected by file %s? (N/y): " % (basefile.name)
-        if ".H_%s" % (meta.hostname) in basefile.name:
-            answer = raw_input(hsq % basefile.name)
-        else:
-            answer = raw_input(gsq)
-        
-        if answer in ['Y', 'y']:
-            print "writing file, %s" % basefile.name
-            if fulldata:
-                newdata = fulldata
-            else:
-                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
-            open(basefile.name, 'w').write(newdata)
-            return
+    def AcceptChoices(self, entry, metadata):
+        return self.entries[entry.get('name')].list_accept_choices(metadata)
 
-        if ".H_%s" % (meta.hostname) in basefile.name:
-            raise SystemExit, 1
-        # figure out host-specific filename
-        reg = re.compile("(.*)\.G\d+.*")
-        if reg.match(basefile.name):
-            newname = reg.match(basefile.name).group(1) + ".H_%s" % (meta.hostname)
-        else:
-            newname = basefile.name + ".H_%s" % (meta.hostname)
-        print "This file will be installed as file %s" % newname
-        if raw_input("Should it be installed? (N/y): ") in ['Y', 'y']:
-            print "writing file, %s" % newname
-            if fulldata:
-                newdata = fulldata
-            else:
-                newdata = '\n'.join(difflib.restore(diff.split('\n'), 1))
-            open(newname, 'w').write(newdata)
+    def AcceptPullData(self, specific, new_entry, log):
+        return self.entries[new_entry.get('name')].write_update(specific, new_entry, log)
+

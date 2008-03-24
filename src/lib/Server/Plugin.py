@@ -70,7 +70,7 @@ class Plugin(object):
     def AcceptChoices(self, entry, metadata):
         raise PluginExecutionError
     
-    def AcceptPullData(self, specific, new_entry):
+    def AcceptPullData(self, specific, new_entry, verbose):
         '''This is the null per-plugin implementation
         of bcfg2-admin pull'''
         raise PluginExecutionError
