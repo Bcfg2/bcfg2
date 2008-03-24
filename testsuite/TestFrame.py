@@ -12,9 +12,8 @@ class DriverInitFail(object):
 
 class DriverInventoryFail(object):
     __name__ = 'dif'
-    def __init__(self, logger, setup, config, states):
+    def __init__(self, logger, setup, config):
         self.config = config
-        self.states = states
         self.handled = []
         self.modified = []
         self.extra = []
