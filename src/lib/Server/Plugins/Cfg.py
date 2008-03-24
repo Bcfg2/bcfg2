@@ -44,17 +44,8 @@ class CfgEntry(object):
             return
         try:
             self.data = open(self.name).read()
-            self.usable = True
         except:
             logger.error("Failed to read file %s" % self.name)
-
-    def bind_entry(self, entry, _):
-        if entry.get('encoding') == 'base64':
-            entry.text = binascii.b2a_base64(self.data)
-        else:
-            entry.text = self.data
-        if not entry.text:
-            entry.set('empty', 'true')
 
 class CfgMatcher:
     def __init__(self, fname):
@@ -100,6 +91,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.text = binascii.b2a_base64(data)
         else:
             entry.text = data            
+        if entry.text in ['', None]:
+            entry.set('empty', 'true')
 
     def list_accept_choices(self, metadata):
         '''return a list of candidate pull locations'''
