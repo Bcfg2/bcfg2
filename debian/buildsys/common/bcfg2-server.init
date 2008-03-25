@@ -85,6 +85,11 @@ case "$1" in
     status)
         status
     ;;
+    restart|reload|force-reload)
+        stop
+        sleep 5
+        start
+    ;;
     *)
         log_success_msg "Usage: $0 {start|stop|status|reload|restart|force-reload}"
         exit 1
