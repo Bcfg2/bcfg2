@@ -207,7 +207,7 @@ if __name__ == '__main__':
     repo = main_conf_parser.get('server', 'repository')
     
     confparser = ConfigParser.SafeConfigParser()
-    confparser.read(repo + "etc/debian-pkglist.conf")
+    confparser.read(os.path.join(repo, "etc/debian-pkglist.conf"))
     
     # We read the whole configuration file before processing each entries
     # to avoid doing work if there is a problem in the file.
