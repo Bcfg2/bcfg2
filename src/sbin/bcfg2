@@ -26,6 +26,10 @@ def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     os._exit(1)
 
+DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
+                                     cmd="--decision-list", odesc='<file>',
+                                     long_arg=True)
+
 class Client:
     ''' The main bcfg2 client class '''
 
@@ -62,6 +66,7 @@ class Client:
             'agent-port': Bcfg2.Options.CLIENT_PORT,
             'agent-background': Bcfg2.Options.CLIENT_BACKGROUND,
             'key': Bcfg2.Options.SERVER_KEY,
+            'decision-list': DECISION_LIST,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -154,7 +159,8 @@ class Client:
             try:
                 proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
                                                    self.setup['user'],
-                                                   self.setup['password'])
+                                                   self.setup['password'],
+                                                   self.setup['fingerprint'])
             except:
                 self.logger.debug("???", exc_info=1)
                 self.fatal_error("failed to instantiate proxy to server")
