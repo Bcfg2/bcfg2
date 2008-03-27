@@ -95,11 +95,16 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,  Bcfg2.Server.Plugin.DirectoryBacked):
     def HandlesEntry(self, entry):
         '''Handle key entries dynamically'''
         return entry.tag == 'ConfigFile' and \
-               [fpat for fpat in self.keypatterns if entry.get('name').endswith(fpat)]
+               ([fpat for fpat in self.keypatterns
+                 if entry.get('name').endswith(fpat)]
+                or entry.get('name').endswith('ssh_known_hosts'))
 
     def HandleEntry(self, entry, metadata):
-        '''Bind key data'''
-        return self.build_hk(entry, metadata)
+        '''Bind data'''
+        if entry.get('name').endswith('ssh_known_hosts'):
+            return self.build_skn(entry, metadata)
+        else:
+            return self.build_hk(entry, metadata)
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
