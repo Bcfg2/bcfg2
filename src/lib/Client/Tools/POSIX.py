@@ -165,6 +165,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     nqtext += ":".join(self.ex_ents)
                     entry.set('qtest', nqtext)
             except OSError:
+                self.ex_ents = []
                 pruneTrue = True
         else:
             pruneTrue = True
