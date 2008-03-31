@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
 
 def bool_cook(x):
+    print "bool_cook got %s" % x
     if x:
         return True
     else:
@@ -24,12 +25,13 @@ class Option(object):
         return self.__cfp
     cfp = property(getCFP)
 
-    def getValue(self):
+    def get_cooked_value(self, value):
+        if self.boolean:
+            return True
         if self.cook:
-            return self.cook(self._value)
+            return self.cook(value)
         else:
-            return self._value
-    value = property(getValue)
+            return value
     
     def __init__(self, desc, default, cmd=False, odesc=False,
                  env=False, cf=False, cook=False, long_arg=False):
@@ -46,10 +48,10 @@ class Option(object):
         self.odesc = odesc
         self.env = env
         self.cf = cf
+        self.boolean = False
         if not odesc and not cook:
-            self.cook = bool_cook
-        else:
-            self.cook = cook
+            self.boolean = True
+        self.cook = cook
 
     def buildHelpMessage(self):
         msg = ''
@@ -90,24 +92,26 @@ class Option(object):
             optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
             if optinfo:
                 if optinfo[0]:
-                    self._value = optinfo[0]
+                    self.value = self.get_cooked_value(optinfo[0])
                 else:
-                    self._value = True
+                    self.value = True
                 return
         if self.cmd and self.cmd in rawopts:
-            self._value = rawopts[rawopts.index(self.cmd) + 1]
+            data = rawopts[rawopts.index(self.cmd) + 1]
+            self.value = self.get_cooked_value(data)
             return
         # no command line option found
         if self.env and self.env in os.environ:
-            self._value = os.environ[self.env]
+            self.value = self.get_cooked_value(os.environ[self.env])
             return
         if self.cf:
             try:
-                self._value = self.cfp.get(*self.cf)
+                self.value = self.get_cooked_value(self.cfp.get(*self.cf))
                 return
             except:
                 pass
-        self._value = self.default
+        # default value not cooked
+        self.value = self.default
 
 class OptionSet(dict):
     def buildGetopt(self):
@@ -146,7 +150,7 @@ class OptionSet(dict):
                 option.parse(opts, [])
             else:
                 option.parse([], argv)
-            if hasattr(option, '_value'):
+            if hasattr(option, 'value'):
                 val = option.value
                 self[key] = val
 
@@ -169,15 +173,16 @@ SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            odesc='<repository path>' )
 SERVER_SVN = Option('Server svn support', False, cf=('server', 'svn'))
 SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),
-                           default='SSHbase,Cfg,Pkgmgr,Rules', cook=list_split)
+                           default=['SSHbase', 'Cfg', 'Pkgmgr', 'Rules'],
+                           cook=list_split)
 SERVER_STRUCTURES = Option('Server structure list', cf=('server', 'structures'),
-                           default='Bundler,Base', cook=list_split)
+                           default=['Bundler', 'Base'], cook=list_split)
 
 SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
                          default='https://localhost:6789', cmd='-S',
                          odesc='https://server:port')
 SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
-                       default='', cook=bool_cook)
+                       default=False, cook=bool_cook)
 SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
                        default=False, cmd='-K', odesc='<ssl key file>')
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
@@ -204,21 +209,21 @@ CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure comm
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
                         odesc="<driver1,driver2>", cook=list_split,
-                        default=','.join(Bcfg2.Client.Tools.default))
+                        default=Bcfg2.Client.Tools.default)
 CLIENT_CACHE = Option('store the configuration in a file',
                       default=False, cmd='-c', odesc="<cache path>")
 CLIENT_REMOVE = Option('force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
-CLIENT_BUNDLE = Option('only configure the given bundle', default='',
+CLIENT_BUNDLE = Option('only configure the given bundle', default=[],
                        cmd='-b', odesc='<bundle>', cook=colon_split)
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_BUILD = Option('run in build mode', default=False, cmd='-B', )
 CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
-SERVER_FINGERPRINT = Option('Server Fingerprint', default=False, cmd='-F',
+SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
                             cf=('communication', 'fingerprint'),
-                            odesc='<fingerprint>')
+                            odesc='<f1:f2>', cook=list_split)
 CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
 CLIENT_BACKGROUND = Option('Daemonize the agent', default=False, cmd='-i', )

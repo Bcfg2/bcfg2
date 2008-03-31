@@ -16,29 +16,30 @@ class TestOption(object):
         o.parse([], ['-F', 'test'])
         assert o.value == 'test'
         o.parse([('-F', 'test2')], [])
-        assert o._value == 'test2'
+        assert o.value == 'test2'
         os.environ['TEST2'] = 'test3'
         o.parse([], [])
-        assert o._value == 'test3'
+        assert o.value == 'test3'
         del os.environ['TEST2']
         o.parse([], [])
-        print o._value
-        assert o._value == 'foobat'
+        print o.value
+        assert o.value == 'foobat'
         o.cf = ('communication', 'pwd')
         o.parse([], [])
-        print o._value
-        assert o._value == 'test4'
+        print o.value
+        assert o.value == 'test4'
         o.cf = False
         o.parse([], [])
-        assert o._value == 'test4'
+        assert o.value == 'test4'
 
     def test_cook(self):
+        # check that default value isn't cooked
         o1 = Bcfg2.Options.Option('foo', 'test4', cook=Bcfg2.Options.bool_cook)
         o1.parse([], [])
-        assert o1.value == True
-        o2 = Bcfg2.Options.Option('foo', '', cook=Bcfg2.Options.bool_cook)
-        o2.parse([], [])
-        assert o2.value == False
+        assert o1.value == 'test4'
+        o2 = Bcfg2.Options.Option('foo', False, cmd='-F')
+        o2.parse([('-F', '')], [])
+        assert o2.value == True
 
 class TestOptionSet(object):
     def test_buildGetopt(self):
