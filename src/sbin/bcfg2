@@ -300,33 +300,6 @@ class Client:
                 self.logger.error("Failed to upload configuration statistics")
                 raise SystemExit(2)
 
-    def GetProxy(self):
-        '''return a proxy instance, verifying fingerprint(s)'''
-        prints = self.setup['fingerprint']
-        if not prints:
-            msg = 'no server x509 fingerprint; no server verification performed!'
-            print >> sys.stderr, msg
-
-        # create the proxy and try to connect - loop for each fingerprint
-        for p in prints:
-            try:
-                proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
-                                                   self.setup['user'],
-                                                   self.setup['password'],
-                                                   p)
-                proxy.CheckConnection()
-                return proxy
-            except Bcfg2.tlslite.errors.TLSFingerprintError:
-                self.logger.warn("Fingerprint %s failed" % p)
-                self.logger.warn('Trying next fingerprint, if any')
-                continue
-            except:
-                break
-
-        self.logger.debug("???", exc_info=1)
-        self.fatal_error("failed to instantiate proxy to server")
-        raise SystemExit, 1
-
 class FingerCheck(object):
     def __init__(self, fprints):
         self.fingerprints = fprints
