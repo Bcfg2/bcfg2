@@ -27,6 +27,12 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     '''CobaltXMLRPCRequestHandler takes care of ssl xmlrpc requests'''
     masterpid = os.getpid()
 
+    def __init__(self, request, client_address, server):
+        self.cleanup = True
+        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, request,
+                                                               client_address,
+                                                               server)
+
     def do_POST(self):
         '''Overload do_POST to pass through client address information'''
         try:
