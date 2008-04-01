@@ -39,14 +39,12 @@ class FPProxyCall(object):
         self.method = getattr(self.proxy.proxy, method)
 
     def __call__(self, *args):
-        while self.proxy.no_fingerprint or self.proxy.fingerprints:
-            try:
-                return self.method(*args)
-            except Bcfg2.tlslite.errors.TLSFingerprintError:
-                self.proxy.proxy = self.proxy.get_proxy()
-                self.method = getattr(self.proxy.proxy, self.method_name)
-        logger.error("Ran out of valid fingerprints; shutting down")
-        raise SystemExit(1)
+        try:
+            return self.method(*args)
+        except Bcfg2.tlslite.errors.TLSFingerprintError:
+            self.proxy.proxy = self.proxy.get_proxy()
+            self.method = getattr(self.proxy.proxy, self.method_name)
+            return self.__call__(*args)
 
 class FPProxy(object):
     def __init__(self, url, user, password, fingerprints):
