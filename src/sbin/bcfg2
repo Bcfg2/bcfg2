@@ -22,6 +22,8 @@ from Bcfg2.tlslite.errors import TLSNoAuthenticationError, TLSFingerprintError
 import Bcfg2.Proxy
 import Bcfg2.Logging
 
+logger = logging.getLogger('bcfg2')
+
 def cb_sigint_handler(signum, frame):
     '''Exit upon CTRL-C'''
     os._exit(1)
@@ -29,6 +31,55 @@ def cb_sigint_handler(signum, frame):
 DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
                                      cmd="--decision-list", odesc='<file>',
                                      long_arg=True)
+
+class FPProxyCall(object):
+    def __init__(self, proxy, method):
+        self.proxy = proxy
+        self.method_name = method
+        self.method = getattr(self.proxy.proxy, method)
+
+    def __call__(self, *args):
+        while self.proxy.no_fingerprint or self.proxy.fingerprints:
+            try:
+                return self.method(*args)
+            except Bcfg2.tlslite.errors.TLSFingerprintError:
+                self.proxy.proxy = self.proxy.get_proxy()
+                self.method = getattr(self.proxy.proxy, self.method_name)
+        logger.error("Ran out of valid fingerprints; shutting down")
+        raise SystemExit(1)
+
+class FPProxy(object):
+    def __init__(self, url, user, password, fingerprints):
+        self.url = url
+        self.user = user
+        self.password = password
+        self.fingerprints = fingerprints
+        self.no_fingerprint = len(fingerprints) == 0
+        self.proxy = self.get_proxy()
+
+    def __getattr__(self, field):
+        if field not in self.__dict__:
+            self.__dict__[field] = FPProxyCall(self, field)
+        return self.__dict__[field]
+
+    def get_proxy(self):
+        if self.fingerprints:
+            fprint = self.fingerprints.pop()
+        elif self.no_fingerprint:
+            msg = 'no server x509 fingerprint; no server verification performed!'
+            print >> sys.stderr, msg
+            fprint = None
+        else:
+            print >> sys.stderr, "Ran out of fingerprints to try"
+            raise SystemExit(1)
+
+        try:
+            proxy = Bcfg2.Proxy.ComponentProxy(self.url, self.user,
+                                               self.password, fprint)
+            return proxy
+        except:
+            logger.error("Unexpected proxy error", exc_info=1)
+            raise SystemExit(1)
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -156,15 +207,8 @@ class Client:
                 return(1)
         else:
             # retrieve config from server
-            try:
-                proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
-                                                   self.setup['user'],
-                                                   self.setup['password'],
-                                                   self.setup['fingerprint'])
-            except:
-                self.logger.debug("???", exc_info=1)
-                self.fatal_error("failed to instantiate proxy to server")
-                return(1)
+            proxy = FPProxy(self.setup['server'], self.setup['user'],
+                            self.setup['password'], self.setup['fingerprint'])
 
             if self.setup['profile']:
                 try:
@@ -256,9 +300,36 @@ class Client:
                 self.logger.error("Failed to upload configuration statistics")
                 raise SystemExit(2)
 
+    def GetProxy(self):
+        '''return a proxy instance, verifying fingerprint(s)'''
+        prints = self.setup['fingerprint']
+        if not prints:
+            msg = 'no server x509 fingerprint; no server verification performed!'
+            print >> sys.stderr, msg
+
+        # create the proxy and try to connect - loop for each fingerprint
+        for p in prints:
+            try:
+                proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
+                                                   self.setup['user'],
+                                                   self.setup['password'],
+                                                   p)
+                proxy.CheckConnection()
+                return proxy
+            except Bcfg2.tlslite.errors.TLSFingerprintError:
+                self.logger.warn("Fingerprint %s failed" % p)
+                self.logger.warn('Trying next fingerprint, if any')
+                continue
+            except:
+                break
+
+        self.logger.debug("???", exc_info=1)
+        self.fatal_error("failed to instantiate proxy to server")
+        raise SystemExit, 1
+
 class FingerCheck(object):
-    def __init__(self, fprint):
-        self.fingerprint = fprint
+    def __init__(self, fprints):
+        self.fingerprints = fprints
         self.logger = logging.getLogger('checker')
 
     def __call__(self, connection):
@@ -270,12 +341,12 @@ class FingerCheck(object):
         if chain == None:
             self.logger.error("Fingerprint authentication error")
             raise TLSNoAuthenticationError()
-        if chain.getFingerprint() != self.fingerprint:
+        if chain.getFingerprint() not in self.fingerprints:
             self.logger.error("Got connection with bad fingerprint %s" \
                               % (chain.getFingerprint()))
             raise TLSFingerprintError(\
                     "X.509 fingerprint mismatch: %s, %s" % \
-                    (chain.getFingerprint(), self.fingerprint))
+                    (chain.getFingerprint(), self.fingerprints))
 
 class Agent(Bcfg2.Component.Component):
     """The Bcfg2 Agent component providing XML-RPC access to 'run'"""

@@ -33,10 +33,7 @@ class RetryMethod(_Method):
                     self.log.error("Server failure: %s" % msg)
                     raise xmlrpclib.Fault(20, msg)
             except Bcfg2.tlslite.errors.TLSFingerprintError, err:
-                self.log.error("Server fingerprint did not match")
-                errmsg = err.message.split()
-                self.log.error("Got %s expected %s" % (errmsg[3], errmsg[4]))
-                raise SystemExit, 1
+                raise
             except Bcfg2.tlslite.errors.TLSError, err:
                 self.log.error("Unexpected TLS Error: %s. Retrying" % \
                                (err.message))
