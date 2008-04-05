@@ -106,6 +106,7 @@ class Frame:
         if multi:
             self.logger.debug("The following entries are included multiple times:")
             self.logger.debug(["%s:%s" % entry for entry in multi])
+            self.logger.debug("")
             
                     
     def __getattr__(self, name):
