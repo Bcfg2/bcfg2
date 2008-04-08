@@ -446,6 +446,10 @@ class EntrySet:
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
         self.specific = re.compile(pattern)
 
+    def get_matching(self, metadata):
+        return [item for item in self.entries.values() \
+                if item.specific.matches(metadata)]
+
     def handle_event(self, event):
         '''Handle FAM events for the TemplateSet'''
         action = event.code2str()
@@ -547,8 +551,7 @@ class EntrySet:
     def bind_entry(self, entry, metadata):
         '''Return the appropriate interpreted template from the set of available templates'''
         self.bind_info_to_entry(entry, metadata)
-        matching = [ent for ent in self.entries.values() if \
-                    ent.specific.matches(metadata)]
+        matching = self.get_matching(metadata)
 
         hspec = [ent for ent in matching if ent.specific.hostname]
         if hspec:
@@ -645,14 +648,12 @@ class GroupSpool(Plugin):
                                  
     def AddDirectoryMonitor(self, relative):
         '''Add new directory to FAM structures'''
-        if not relative:
-            relative = '/'
-        if relative[-1] != '/':
+        if not relative.endswith('/'):
             relative += '/'
         name = self.data + relative
         if relative not in self.handles.values():
             if not posixpath.isdir(name):
-                print "Genshi: Failed to open directory %s" % (name)
+                print "Failed to open directory %s" % (name)
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.handles[reqid] = relative

@@ -4,8 +4,16 @@ __revision__ = '$Revision$'
 from genshi.template import TemplateLoader, TextTemplate, MarkupTemplate, TemplateError
 import logging
 import Bcfg2.Server.Plugin
+import genshi.core
 
 logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
+
+def removecomment(stream):
+    """A genshi filter that removes comments from the stream."""
+    for kind, data, pos in stream:
+        if kind is genshi.core.COMMENT:
+            continue
+        yield kind, data, pos
 
 class TemplateFile:
     '''Template file creates Genshi template structures for the loaded file'''
@@ -38,9 +46,9 @@ class TemplateFile:
         '''Build literal file information'''
         fname = entry.get('realname', entry.get('name'))
         try:
-            stream = self.template.generate(name=fname,
-                                            metadata=metadata,
-                                            properties=self.properties)
+            stream = self.template.generate( \
+                name=fname, metadata=metadata,
+                properties=self.properties).filter(removecomment)
             if isinstance(self.template, TextTemplate):
                 entry.text = stream.render('text')
             else:
