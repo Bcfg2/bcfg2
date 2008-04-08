@@ -360,7 +360,7 @@ class Core(object):
     def read_svn_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
         try:
-            data = os.popen("svn info %s" % (self.datastore)).readlines()
+            data = os.popen("env LC_ALL=C svn info %s" % (self.datastore)).readlines()
             revline = [line.split(': ')[1].strip() for line in data if line[:9] == 'Revision:'][-1]
             self.revision = revline
         except IndexError:
