@@ -1,4 +1,4 @@
-%define release 0.1
+%define release 0.1pre1
 %define __python python
 %{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
@@ -13,14 +13,14 @@
 %define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
 
 Name:             bcfg2
-Version:          0.9.5
+Version:          0.9.6
 Release: %{release}
 Summary:          Configuration management system
 
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.5.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-0.9.6pre1.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
@@ -91,7 +91,7 @@ Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
 %prep
-%setup -q -n bcfg2-0.9.5
+%setup -q -n bcfg2-0.9.6pre1
 
 %build
 %{__python}%{pythonversion} setup.py build
