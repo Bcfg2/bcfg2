@@ -34,19 +34,6 @@ def process_delta(data, delta):
             raise Bcfg2.Server.Plugin.PluginExecutionError, ('delta', delta)
         return output
 
-class CfgEntry(object):
-    def __init__(self, name, _, specific):
-        self.name = name
-        self.specific = specific
-
-    def handle_event(self, event):
-        if event.code2str() == 'deleted':
-            return
-        try:
-            self.data = open(self.name).read()
-        except:
-            logger.error("Failed to read file %s" % self.name)
-
 class CfgMatcher:
     def __init__(self, fname):
         name = re.escape(fname)
@@ -138,7 +125,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     use_props = False
     es_cls = CfgEntrySet
-    es_child_cls = CfgEntry
+    es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(metadata)

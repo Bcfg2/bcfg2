@@ -432,6 +432,19 @@ class Specificity:
                 return True
         return False
 
+class SpecificData(object):
+    def __init__(self, name, _, specific):
+        self.name = name
+        self.specific = specific
+
+    def handle_event(self, event):
+        if event.code2str() == 'deleted':
+            return
+        try:
+            self.data = open(self.name).read()
+        except:
+            logger.error("Failed to read file %s" % self.name)
+
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
     ignore = re.compile("^(.*~|\\..*\\.(tmp|sw[px]))$")
