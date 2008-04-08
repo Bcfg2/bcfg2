@@ -29,6 +29,34 @@ class ClientMetadata(object):
         '''Test to see if client is a member of group'''
         return group in self.groups
 
+class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
+    def __init__(self, path, fam):
+        fpattern = '[A-Za-z]+'
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
+                                              Bcfg2.Server.Plugin.SpecificData)
+        fam.AddMonitor(path, self)
+        self.bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
+
+    def HandleEvent(self, event):
+        if event.filename != self.path:
+            return self.handle_event(event)
+
+    def get_probe_data(self, metadata):
+        ret = []
+        for entry in self.get_matching(metadata):
+            probe = lxml.etree.Element('probe')
+            probe.set('name', entry.name.split('/')[-1])
+            probe.set('source', entry.name)
+            probe.text = entry.data
+            match = self.bangline.match(entry.data.split('\n')[0])
+            if match:
+                probe.set('interpreter', match.group('interpreter'))
+            else:
+                probe.set('interpreter', '/bin/sh')
+            ret.append(probe)
+        return ret
+
+
 class Metadata(Bcfg2.Server.Plugin.Plugin):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
@@ -60,12 +88,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         self.pdirty = False
         try:
             loc = datastore + "/Probes"
-            self.probes = Bcfg2.Server.Plugin.DirectoryBacked(loc, core.fam)
+            self.probes = ProbeSet(loc, core.fam)
         except:
             self.probes = False
         self.probedata = {}
-        self.ptimes = {}
-        self.pctime = 0
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
 
@@ -313,24 +339,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         
     def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''
-        ret = []
-        ctime = time.time() - self.ptimes.get(meta.hostname, 0)
-        diff = ctime > self.pctime
-        if self.probes and (diff or force):
-            bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
-            for name, entry in [(name, entry) for name, entry in \
-                                self.probes.entries.iteritems() if entry.data]:
-                probe = lxml.etree.Element('probe')
-                probe.set('name', name )
-                probe.set('source', self.__name__)
-                probe.text = entry.data
-                match = bangline.match(entry.data.split('\n')[0])
-                if match:
-                    probe.set('interpreter', match.group('interpreter'))
-                else:
-                    probe.set('interpreter', '/bin/sh')
-                ret.append(probe)
-        return ret
+        if self.probes:
+            return self.probes.get_probe_data(meta)
+        return []
 
     def ReceiveData(self, client, datalist):
         self.cgroups[client.hostname] = []
@@ -338,7 +349,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         for data in datalist:
             self.ReceiveDataItem(client, data)
         self.pdirty = True
-        self.ptimes[client.hostname] = time.time()
         self.write_probedata()
 
     def ReceiveDataItem(self, client, data):
