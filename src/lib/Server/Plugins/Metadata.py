@@ -46,7 +46,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         for entry in self.get_matching(metadata):
             probe = lxml.etree.Element('probe')
             probe.set('name', entry.name.split('/')[-1])
-            probe.set('source', entry.name)
+            probe.set('source', "Metadata")
             probe.text = entry.data
             match = self.bangline.match(entry.data.split('\n')[0])
             if match:
