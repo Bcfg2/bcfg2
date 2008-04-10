@@ -127,7 +127,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         keypath = os.path.dirname(os.path.abspath(configfile))
 
         confdata = config % ( 
-                        repo, opts['struct'], opts['gens'], 
+                        repo, ','.join(opts['struct']), ','.join(opts['gens']), 
                         opts['sendmail'], opts['proto'],
                         password, keypath, server_uri 
                     )
