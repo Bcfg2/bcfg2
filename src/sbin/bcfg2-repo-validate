@@ -27,9 +27,9 @@ if __name__ == '__main__':
     '''
     info_list = []
     for root, dirs, files in os.walk('%s/Cfg' % repo):
-	for file in files:
-	    if 'info.xml' in file:
-		info_list.append(os.path.join(root, file))
+	for filename in files:
+            if filename.endswith('info.xml'):
+		info_list.append(os.path.join(root, filename))
 
     # get lists of all other xml files to validate
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
