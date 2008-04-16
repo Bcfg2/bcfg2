@@ -17,11 +17,18 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam):
         fpattern = '[A-Za-z]+\.xml'
+        try:
+            properties = Bcfg2.Server.Plugin.TemplateProperties( \
+                    '%s/../etc/properties.xml' % (path), fam)
+        except:
+            properties = Bcfg2.Server.Plugin.FakeProperties()
+
         Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
-                                              True, SGenshiTemplateFile)
+                                              properties, SGenshiTemplateFile)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
+        '''passthrough event handler for old calling convention'''
         if event.filename != self.path:
             return self.handle_event(event)
 
