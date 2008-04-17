@@ -150,6 +150,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                  (mtime == entry.get('mtime', '-1')))
 
         pruneTrue = True
+        self.ex_ents = []
         if entry.get('prune', 'false') == 'true' \
                and entry.tag == 'Directory':
             try:
@@ -167,8 +168,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             except OSError:
                 self.ex_ents = []
                 pruneTrue = True
-        else:
-            pruneTrue = True
 
         if not pTrue:
             if owner != str(normUid(entry)):
