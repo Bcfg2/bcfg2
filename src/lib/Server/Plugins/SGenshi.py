@@ -9,7 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
     def get_xml_value(self, metadata):
         stream = self.template.generate(metadata=metadata,
-                                        properties=self.properties).filter( \
+                                        properties=self.properties.properties).filter( \
             Bcfg2.Server.Plugins.TGenshi.removecomment)
         data = stream.render('xml')
         return lxml.etree.XML(data)
