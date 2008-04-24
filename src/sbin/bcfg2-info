@@ -171,7 +171,7 @@ Usage: [quit|exit]"""
             etype = args.split()[1]
             for item in structures:
                 for child in item.getchildren():
-                    if child.tag == etype:
+                    if child.tag in [etype, "Bound%s" % etype]:
                         output.append((child.tag, child.get('name')))
         printTabular(output)
 
