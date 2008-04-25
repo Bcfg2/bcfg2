@@ -155,6 +155,7 @@ class OptionSet(dict):
                 self[key] = val
 
 list_split = lambda x:x.replace(' ','').split(',')
+flist_split = lambda x:list_split(x.replace(':', '').lower())
 def colon_split(c_string):
     if c_string:
         return c_string.split(':')
@@ -223,7 +224,7 @@ CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
                             cf=('communication', 'fingerprint'),
-                            odesc='<f1,f2>', cook=list_split)
+                            odesc='<f1,f2>', cook=flist_split)
 CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
 CLIENT_BACKGROUND = Option('Daemonize the agent', default=False, cmd='-i', )

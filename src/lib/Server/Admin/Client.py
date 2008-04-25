@@ -7,10 +7,15 @@ class Client(Bcfg2.Server.Admin.Mode):
     __longhelp__ = __shorthelp__ + '\n\tCreate or delete client entries'
     def __init__(self):
         Bcfg2.Server.Admin.Mode.__init__(self)
-        self.tree = lxml.etree.parse(self.get_repo_path() + \
-                                     '/Metadata/clients.xml')
-        self.root = self.tree.getroot()
-    
+        try:
+            self.bcore = Bcfg2.Server.Core.Core(self.repo, [], ['Metadata'],
+                                                'foo', False)
+        except Bcfg2.Server.Core.CoreInitError, msg:
+            self.errExit("Core load failed because %s" % msg)
+        [bcore.fam.Service() for _ in range(5)]
+        while bcore.fam.Service():
+            pass
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if args[0] == 'add':

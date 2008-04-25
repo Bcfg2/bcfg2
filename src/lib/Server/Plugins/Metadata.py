@@ -31,7 +31,7 @@ class ClientMetadata(object):
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam):
-        fpattern = '[A-Za-z]+'
+        fpattern = '[A-Za-z_\-]+'
         Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
                                               Bcfg2.Server.Plugin.SpecificData)
         fam.AddMonitor(path, self)
@@ -262,7 +262,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             try:
                 datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
             except IOError:
-                self.logger.error("Failed to write clients.xml")
+                self.logger.error("Failed to write probed.xml")
                 raise MetadataRuntimeError
             datafile.write(data)
             self.pdirty = False
