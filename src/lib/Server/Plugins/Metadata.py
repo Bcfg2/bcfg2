@@ -258,6 +258,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
                 for probe in probed:
                     lxml.etree.SubElement(cx, 'Probe', name=probe,
                                           value=self.probedata[client][probe])
+                for group in self.cgroups[client]:
+                    lxml.etree.SubElement(cx, "Group", name=group)
             data = lxml.etree.tostring(top)
             try:
                 datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
@@ -274,10 +276,15 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             self.logger.error("Failed to read file probed.xml")
             return
         self.probedata = {}
+        self.cgroups = {}
         for client in data.getchildren():
             self.probedata[client.get('name')] = {}
+            self.cgroups[client.get('name')]=[]
             for pdata in client:
-                self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
+                if (pdata.tag == 'Probe'):
+                    self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
+                elif (pdata.tag == 'Group'):
+                    self.cgroups[client.get('name')].append(pdata.get('name'))
 
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
