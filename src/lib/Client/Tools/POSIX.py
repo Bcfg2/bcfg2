@@ -403,7 +403,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                             return False
 
         # If we get here, then the parent directory should exist
-        if entry.get("paranoid", False) and self.setup.get("paranoid", False):
+        if entry.get("paranoid", False) and self.setup.get("paranoid", False) \
+               and not (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             if self.cmd.run("cp %s /var/cache/bcfg2/%s" % (entry.get('name'), bkupnam))[0]:
                 self.logger.error("Failed to create backup file for ConfigFile %s" % \
