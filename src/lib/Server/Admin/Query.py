@@ -1,8 +1,8 @@
 import Bcfg2.Server.Admin, Bcfg2.Logging, logging
 
 class Query(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin query <pattern>'
-    __longhelp__ = __shorthelp__ + '\n\tCreate or delete client entries'
+    __shorthelp__ = 'bcfg2-admin query [-n] [-c] g=group p=profile'
+    __longhelp__ = __shorthelp__ + '\n\tQuery clients'
     def __init__(self, cfile):
         logging.root.setLevel(100)
         Bcfg2.Logging.setup_logging(100, to_console=False, to_syslog=False)
@@ -21,18 +21,25 @@ class Query(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        clients = None
+        clients = self.meta.clients.keys()
         for arg in args:
-            k, v = arg.split('=')
+            if arg in ['-n', '-c']:
+                continue
+            try:
+                k, v = arg.split('=')
+            except:
+                print "Unknown argument %s" % arg
+                continue
             if k == 'p':
                 nc = [c for c, p in self.meta.clients.iteritems() if p == v]
             elif k == 'g':
                 nc = [c for c in self.meta.clients if v in
                       self.meta.groups[self.meta.clients[c]][1] or
                       v in self.meta.cgroups.get(c, [])]
-            if clients == None:
-                clients = nc
-            else:
-                clients = [c for c in clients if c in nc]
-            
-        print ','.join(clients)
+            clients = [c for c in clients if c in nc]
+
+        if '-n' in args:
+            for client in clients:
+                print client
+        else:
+            print ','.join(clients)
