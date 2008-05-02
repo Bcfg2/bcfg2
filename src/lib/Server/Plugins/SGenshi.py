@@ -16,7 +16,7 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
 
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam):
-        fpattern = '[A-Za-z]+\.xml'
+        fpattern = '\S+\.xml'
         try:
             properties = Bcfg2.Server.Plugin.TemplateProperties( \
                     '%s/../etc/properties.xml' % (path), fam)
