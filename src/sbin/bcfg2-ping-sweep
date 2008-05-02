@@ -15,8 +15,8 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
 
-    cfpath = opts['configfile']
-    clientdatapath = "%s/Metadata/clients.xml" % opts['repo']
+    cfpath = setup['configfile']
+    clientdatapath = "%s/Metadata/clients.xml" % setup['repo']
     
     clientElement = lxml.etree.parse(clientdatapath)
     hostlist = [client.get('name') for client in clientElement.findall("Client")]
