@@ -9,7 +9,7 @@ except:
     sys.stderr.write("Failed to load configuration settings. is /etc/bcfg2.conf readable?")
     sys.exit(1)
 
-project_directory = os.path.dirname(settings.__file__)
+project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
 project_name = os.path.basename(project_directory)
 sys.path.append(os.path.join(project_directory, '..'))
 project_module = __import__(project_name, '', '', [''])
