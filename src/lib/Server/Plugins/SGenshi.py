@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin, Bcfg2.Server.Plugins.TGenshi
 import lxml.etree, logging
+import genshi.template
 
 logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 
@@ -38,7 +39,8 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
         for entry in self.get_matching(metadata):
             try:
                 ret.append(entry.get_xml_value(metadata))
-            except Bcfg2.Server.Plugin.PluginExecutionError:
+            except genshi.template.TemplateError, terror:
+                logger.error('Genshi template error: %s' % terror)
                 logger.error("SGenshi: Failed to template file %s" % entry.name)
         return ret
 
