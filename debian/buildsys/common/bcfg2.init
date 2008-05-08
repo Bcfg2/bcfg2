@@ -67,7 +67,7 @@ start () {
     then
       log_success_msg "bcfg2"
       if [ "$BCFG2_AGENT" -eq 1 ]; then
-          test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-agent
+          test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-agent
       fi
     else
       log_failure_msg "bcfg2"
@@ -104,7 +104,7 @@ stop () {
       then
         log_success_msg "bcfg2"
         if [ "$BCFG2_AGENT" -eq 1 ]; then
-            test -d /var/lock/subsys && rm -f /var/log/subsys/bcfg2-agent
+            test -d /var/lock/subsys && rm -f /var/lock/subsys/bcfg2-agent
         fi
       else
         log_failure_msg "bcfg2"
