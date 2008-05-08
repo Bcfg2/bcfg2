@@ -2,8 +2,8 @@
 __revision__ = '$Revision$'
 
 __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
-           "FreeBSDPackage", "launchd", "Portage", "POSIX", "RPM",
-           "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "Yum",
+           "FreeBSDInit", "FreeBSDPackage", "launchd", "Portage", "POSIX",
+           "RPM", "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "Yum",
            "YUMng"]
 
 drivers = [item for item in __all__ if item not in ['rpmtools']]

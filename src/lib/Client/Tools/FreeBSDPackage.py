@@ -1,5 +1,9 @@
 '''This is the bcfg2 tool for the FreeBSD package system.'''
-__revision__ = '$Id$'
+__revision__ = '$Rev$'
+
+# TODO
+# - actual package installation
+# - verification of package files
 
 import re
 import Bcfg2.Client.Tools
