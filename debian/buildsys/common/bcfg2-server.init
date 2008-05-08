@@ -36,7 +36,7 @@ start () {
     if [ "$STATUS" = 0 ]
     then
 	log_success_msg "bcfg2-server"
-        test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-server
+        test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-server
     else
 	log_failure_msg "bcfg2-server"
     fi
@@ -49,7 +49,7 @@ stop () {
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
       log_success_msg "bcfg2-server"
-      test -d /var/lock/subsys && touch /var/log/subsys/bcfg2-server
+      test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-server
     else
       log_failure_msg "bcfg2-server"
     fi
