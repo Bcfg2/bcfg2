@@ -20,7 +20,9 @@ class TemplateFile:
         if event.code2str() == 'deleted':
             return
         try:
-            self.template = Cheetah.Template.Template(open(self.name).read())
+            s = {'useStackFrames': False}
+            self.template = Cheetah.Template.Template(open(self.name).read(),
+                                                      compilerSettings=s)
             self.template.properties = self.properties.properties
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
