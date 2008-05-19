@@ -558,6 +558,10 @@ class EntrySet:
         else:
             mdata = {}
             self.infoxml.pnode.Match(metadata, mdata)
+            if 'Info' not in mdata:
+                logger.error("Failed to set metadata for file %s" % \
+                             (entry.get('name')))
+                raise PluginExecutionError
             [entry.attrib.__setitem__(key, value) \
              for (key, value) in mdata['Info'][None].iteritems()]
 
