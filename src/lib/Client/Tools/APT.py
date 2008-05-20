@@ -76,7 +76,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                                          entry.get('name'))
                         self.logger.info(bad)
                         entry.set('qtext',
-                                  "Reinstall Package %s-%s to fix failing md5sums? (y/N) ")
+                                  "Reinstall Package %s-%s to fix failing md5sums? (y/N) " % (entry.get('name'), entry.get('version')))
                         return False
                 return True
             else:
