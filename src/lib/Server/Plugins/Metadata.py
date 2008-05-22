@@ -12,6 +12,8 @@ class MetadataRuntimeError(Exception):
     '''This error is raised when the metadata engine is called prior to reading enough data'''
     pass
 
+probe_matcher = re.compile("(?P<basename>\S+).(?P<mode>[GH])_\S+")
+
 class ClientMetadata(object):
     '''This object contains client metadata'''
     def __init__(self, client, groups, bundles, categories, probed, uuid,
@@ -43,9 +45,24 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
     def get_probe_data(self, metadata):
         ret = []
-        for entry in self.get_matching(metadata):
+        candidates = self.get_matching(metadata)
+        temp = {}
+        for cand in candidates:
+            if cand.specific.all:
+                if cand.name not in temp:
+                    temp[cand.name] = (cand, 0)
+                continue
+            mdata = probe_matcher.match(cand.name).groupdict()
+            if mdata['basename'] in temp:
+                if mdata['mode'] > temp[mdata['basename']][1]:
+                    temp[mdata['basename']] = (cand, mdata['mode'])
+            else:
+                temp[mdata['basename']] = (cand, mdata['mode'])
+        
+        for (name, data) in temp.iteritems():
+            entry, prio = data
             probe = lxml.etree.Element('probe')
-            probe.set('name', entry.name.split('/')[-1])
+            probe.set('name', name.split('/')[-1])
             probe.set('source', "Metadata")
             probe.text = entry.data
             match = self.bangline.match(entry.data.split('\n')[0])
