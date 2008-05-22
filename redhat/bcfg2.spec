@@ -1,3 +1,5 @@
+# This file is licensed under the GPL
+
 Name:           %{_package}
 Version:        %{_version}
 Release:        %{_release}
