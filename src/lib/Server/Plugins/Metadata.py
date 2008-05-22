@@ -66,8 +66,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         self.__name__ = 'Metadata'
-        core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
-        core.fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
+        try:
+            core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
+            core.fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
+        except:
+            raise Bcfg2.Server.Plugin.PluginInitError
         self.states = {'groups.xml':False, 'clients.xml':False}
         self.addresses = {}
         self.clients = {}

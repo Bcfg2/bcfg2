@@ -241,7 +241,10 @@ class Core(object):
                 except:
                     logger.error("Unexpected instantiation failure for plugin %s" % (plugin), exc_info=1)
 
-        self.metadata = self.plugins['Metadata']
+        if 'Metadata' in self.plugins:
+            self.metadata = self.plugins['Metadata']
+        else:
+            raise CoreInitError, "No Metadata plugin loaded"
         for plugin in structures:
             if self.plugins.has_key(plugin):
                 self.structures.append(self.plugins[plugin])
