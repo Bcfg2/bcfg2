@@ -222,7 +222,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
             real = self.groups.keys()
             for client in self.clients.keys():
                 if self.clients[client] not in self.profiles:
-                    self.logger.error("Client %s set as nonexistant or incomplete group %s" \
+                    self.logger.error("Client %s set as nonexistent or incomplete group %s" \
                                       % (client, self.clients[client]))
                     self.logger.error("Removing client mapping for %s" % (client))
                     self.bad_clients[client] = self.clients[client]

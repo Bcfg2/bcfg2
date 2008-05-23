@@ -41,7 +41,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           (child.tag, child.get('name'), noattrmatch)
         if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
             return True
-        if new.tag == 'Independant':
+        if new.tag == 'Independent':
             name = 'Base'
         else:
             name = new.get('name')
@@ -95,8 +95,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
             else:
                 print "Unmatched bundle %s" % (bundle.get('name'))
                 rcs.append(False)
-        i1 = new.find('./Independant')
-        i2 = old.find('./Independant')
+        i1 = new.find('./Independent')
+        i2 = old.find('./Independent')
         if self.compareStructures(i1, i2):
             new.remove(i1)
             old.remove(i2)

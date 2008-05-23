@@ -90,7 +90,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
                             prereqs.append(prq)
             self.cache[(entries, gdata)] = prereqs
             
-        newstruct = lxml.etree.Element("Independant")
+        newstruct = lxml.etree.Element("Independent")
         for tag, name in prereqs:
             try:
                 lxml.etree.SubElement(newstruct, tag, name=name)
