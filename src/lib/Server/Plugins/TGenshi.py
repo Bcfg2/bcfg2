@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from genshi.template import TemplateLoader, TextTemplate, MarkupTemplate, TemplateError
 import logging
 import Bcfg2.Server.Plugin
-import genshi.core
+import genshi.core, genshi.input
 
 logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
 
@@ -41,6 +41,8 @@ class TemplateFile:
             self.template = loader.load(self.name, cls=self.template_cls)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
+        except genshi.input.ParseError, perror:
+            logger.error('Genshi parse error: %s' % perror)
             
     def bind_entry(self, entry, metadata):
         '''Build literal file information'''
