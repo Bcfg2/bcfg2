@@ -49,7 +49,7 @@ class TemplateFile:
         fname = entry.get('realname', entry.get('name'))
         try:
             stream = self.template.generate( \
-                name=fname, metadata=metadata,
+                name=fname, metadata=metadata, path=self.name,
                 properties=self.properties).filter(removecomment)
             if isinstance(self.template, TextTemplate):
                 entry.text = stream.render('text')
