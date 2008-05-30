@@ -180,7 +180,11 @@ if __name__ == '__main__':
             for (xpath, obj, tablename) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
-                    rls = Reason.objects.filter(**kargs)
+                    if '-O3' not in sys.argv:
+                        rls = Reason.objects.filter(**kargs)
+                    else:
+                        rls = []
+
                     if rls:
                         rr = rls[0]
                         if verbose:
@@ -190,9 +194,13 @@ if __name__ == '__main__':
                         rr.save()
                         if verbose:
                             print "Created reason: %s" % rr.id
-                    links = obj.objects.filter(name=x.get('name'),
-                                               kind=x.tag,
-                                               reason=rr)
+                    if '-O3' not in sys.argv:
+                        links = obj.objects.filter(name=x.get('name'),
+                                                   kind=x.tag,
+                                                   reason=rr)
+                    else:
+                        links = []
+                        
                     if links:
                         item_id = links[0].id
                         if verbose:
@@ -204,7 +212,7 @@ if __name__ == '__main__':
                         newitem.save()
                         item_id = newitem.id
                         if verbose:
-                            print "Bad item INSERTED having reason id %s and ID %s" % (rr.id, item_id)
+                            print "%s item INSERTED having reason id %s and ID %s" % (xpath, rr.id, item_id)
                     try:
                         cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
                                        [item_id, current_interaction_id])
@@ -213,7 +221,11 @@ if __name__ == '__main__':
 
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():
-                    mmatch = Performance.objects.filter(metric=metric, value=value)
+                    if '-O3' not in sys.argv:
+                        mmatch = Performance.objects.filter(metric=metric, value=value)
+                    else:
+                        mmatch = []
+                    
                     if mmatch:
                         item_id = mmatch[0].id
                     else:
