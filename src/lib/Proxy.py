@@ -28,10 +28,10 @@ class RetryMethod(_Method):
             except xmlrpclib.ProtocolError:
                 self.log.error("Server failure: Protocol Error")
                 raise xmlrpclib.Fault(20, "Server Failure")
-            except socket.error, (err, msg):
+            except socket.error, err:
                 if retry == 3:
-                    self.log.error("Server failure: %s" % msg)
-                    raise xmlrpclib.Fault(20, msg)
+                    self.log.error("Server failure: %s" % err)
+                    raise xmlrpclib.Fault(20, err)
             except Bcfg2.tlslite.errors.TLSFingerprintError, err:
                 raise
             except Bcfg2.tlslite.errors.TLSError, err:
