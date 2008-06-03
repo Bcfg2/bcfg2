@@ -385,6 +385,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin):
         if data.text == None:
             self.logger.error("Got null response to probe %s from %s" % \
                               (data.get('name'), client.hostname))
+            try:
+                self.probedata[client.hostname].update({data.get('name'): ''})
+            except KeyError:
+                self.probedata[client.hostname] = {data.get('name'): ''}
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" % (client.hostname, 
