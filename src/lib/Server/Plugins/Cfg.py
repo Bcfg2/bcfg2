@@ -61,8 +61,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         matching = [ent for ent in self.entries.values() if \
                     ent.specific.matches(metadata)]
         matching.sort(self.sort_by_specific)
-        base = min([matching.index(ent) for ent in matching
-                    if not ent.specific.delta])
+        non_delta = [matching.index(m) for m in matching if not m.specific.delta]
+        if not non_delta:
+            raise Bcfg2.Server.Plugin.PluginExecutionError
+        base = min(non_delta)
         used = matching[:base+1]
         used.reverse()
         return used
