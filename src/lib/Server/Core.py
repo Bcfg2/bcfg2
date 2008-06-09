@@ -233,28 +233,43 @@ class Core(object):
                 except ImportError, e:
                     logger.error("Failed to load plugin %s: %s" % (plugin, e))
                     continue
-                struct = getattr(mod, plugin)
+                plug = getattr(mod, plugin)
+                if plug.experimental:
+                    logger.info("Loading experimental plugin %s" % (plugin))
+                    logger.info("NOTE: Interface subject to change")
                 try:
-                    self.plugins[plugin] = struct(self, self.datastore)
+                    self.plugins[plugin] = plug(self, self.datastore)
                 except PluginInitError:
                     logger.error("Failed to instantiate plugin %s" % (plugin))
                 except:
                     logger.error("Unexpected instantiation failure for plugin %s" % (plugin), exc_info=1)
 
-        if 'Metadata' in self.plugins:
-            self.metadata = self.plugins['Metadata']
-        else:
-            raise CoreInitError, "No Metadata plugin loaded"
-        for plugin in structures:
-            if self.plugins.has_key(plugin):
-                self.structures.append(self.plugins[plugin])
-            else:
-                logger.error("Plugin %s not loaded. Not enabled as a Structure" % (plugin))
-        for plugin in generators:
-            if self.plugins.has_key(plugin):
-                self.generators.append(self.plugins[plugin])
-            else:
-                logger.error("Plugin %s not loaded. Not enabled as a Generator" % (plugin))
+        plugins = self.plugins.values()
+        while True:
+            plugin = plugins.pop()
+            if isinstance(plugin, Bcfg2.Server.Plugin.MetadataPlugin):
+                self.metadata = plugin
+                break
+            if not plugins:
+                raise CoreInitError, "No Metadata plugin loaded"
+        for plug_names, plug_tname, plug_type, collection in \
+            [(structures, 'structure', Bcfg2.Server.Plugin.StructurePlugin,
+              self.structures),
+             (generators, 'generator', Bcfg2.Server.Plugin.GeneratorPlugin,
+              self.generators)]:
+            for plugin in plug_names:
+                print plugin, self.plugins.keys(), plugin in self.plugins
+                raw_input()
+                if plugin in self.plugins:
+                    if not isinstance(self.plugins[plugin], plug_type):
+                        logger.error("Plugin %s is not a %s plugin; unloading" \
+                                 % (plugin, plug_tname))
+                        del self.plugins[plugin]
+                    else:
+                        collection.append(self.plugins[plugin])
+                else:
+                    logger.error("Plugin %s not loaded. Not enabled as a %s" \
+                                 % (plugin, plug_tname))
                     
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''

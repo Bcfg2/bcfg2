@@ -39,6 +39,7 @@ class Plugin(object):
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __rmi__ = []
+    experimental = False
 
     def __init__(self, core, datastore):
         object.__init__(self)
@@ -47,18 +48,8 @@ class Plugin(object):
         self.data = "%s/%s" % (datastore, self.__name__)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.__name__))
 
-    def BuildStructures(self, _):
-        '''Build a set of structures tailored to the client metadata'''
-        return []
-
-    def GetProbes(self, _):
-        '''Return a set of probes for execution on client'''
-        return []
-
-    def ReceiveData(self, _, dummy):
-        '''Receive probe results pertaining to client'''
-        pass
-
+class GeneratorPlugin(Plugin):
+    '''Generator plugins contribute to literal client configurations'''
     def HandlesEntry(self, entry):
         '''This is the slow path method for routing configuration binding requests'''
         return False
@@ -78,6 +69,26 @@ class Plugin(object):
     def CommitChanges(self):
         '''Handle revctl commits, if needed'''
         # not implemented yet
+        pass
+
+class StructurePlugin(Plugin):
+    '''Structure Plugins contribute to abstract client configurations'''
+    def BuildStructures(self, metadata):
+        '''return a list of abstract goal structures for client'''
+        raise PluginExecutionError
+
+class MetadataPlugin(Plugin):
+    '''Signal metadata capabilities for this plugin'''
+    pass
+
+class ProbingPlugin(Plugin):
+    '''Signal probe capability for this plugin'''
+    def GetProbes(self, _):
+        '''Return a set of probes for execution on client'''
+        return []
+
+    def ReceiveData(self, _, dummy):
+        '''Receive probe results pertaining to client'''
         pass
 
 # the rest of the file contains classes for coherent file caching
@@ -331,7 +342,7 @@ class XMLDirectoryBacked(DirectoryBacked):
     '''Directorybacked for *.xml'''
     patterns = re.compile('.*\.xml')    
 
-class PrioDir(Plugin, XMLDirectoryBacked):
+class PrioDir(GeneratorPlugin, XMLDirectoryBacked):
     '''This is a generator that handles package assignments'''
     __name__ = 'PrioDir'
     __child__ = XMLSrc
@@ -602,7 +613,7 @@ class FakeProperties:
     def __init__(self):
         self.properties = lxml.etree.Element("Properties")
 
-class GroupSpool(Plugin):
+class GroupSpool(GeneratorPlugin):
     '''The TGenshi generator implements a templating mechanism for configuration files'''
     __name__ = 'GroupSpool'
     __version__ = '$Id$'

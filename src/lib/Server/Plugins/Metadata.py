@@ -74,7 +74,8 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         return ret
 
 
-class Metadata(Bcfg2.Server.Plugin.Plugin):
+class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
+               Bcfg2.Server.Plugin.ProbingPlugin):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'

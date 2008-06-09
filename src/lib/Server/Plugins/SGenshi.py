@@ -44,7 +44,7 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 logger.error("SGenshi: Failed to template file %s" % entry.name)
         return ret
 
-class SGenshi(SGenshiEntrySet, Bcfg2.Server.Plugin.Plugin):
+class SGenshi(SGenshiEntrySet, Bcfg2.Server.Plugin.StructurePlugin):
     '''The SGenshi plugin provides templated structures'''
     __name__ = 'SGenshi'
     __version__ = '$Id$'

@@ -3,7 +3,7 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
-class Account(Bcfg2.Server.Plugin.Plugin):
+class Account(Bcfg2.Server.Plugin.GeneratorPlugin):
     '''This module generates account config files,
     based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries

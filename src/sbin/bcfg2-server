@@ -100,7 +100,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             name = self.Core.metadata.resolve_client(address)
             meta = self.Core.metadata.get_metadata(name)
             
-            for plugin in self.Core.plugins.values():
+            for plugin in [p for p in self.Core.plugins.values() \
+                           if isinstance(p, Bcfg2.Server.Plugin.ProbingPlugin)]:
                 for probe in plugin.GetProbes(meta):
                     resp.append(probe)
             return tostring(resp)

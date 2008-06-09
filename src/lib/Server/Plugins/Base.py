@@ -5,7 +5,8 @@ import Bcfg2.Server.Plugin
 import copy
 import lxml.etree
 
-class Base(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.XMLDirectoryBacked):
+class Base(Bcfg2.Server.Plugin.StructurePlugin,
+           Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''This Structure is good for the pile of independent configs needed for most actual systems'''
     __name__ =  'Base'
     __version__ = '$Id$'

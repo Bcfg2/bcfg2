@@ -5,7 +5,7 @@ import sys, os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
 from syslog import syslog, LOG_INFO
-from Bcfg2.Server.Plugin import Plugin, PluginExecutionError, PluginInitError, DirectoryBacked
+from Bcfg2.Server.Plugin import StructurePlugin, PluginExecutionError, PluginInitError, DirectoryBacked
 from time import strftime
 from sets import Set
 from django.template import Context, loader
@@ -37,7 +37,7 @@ import cStringIO
 ##         '''This function is called when underlying data has changed'''
 ##         pass
     
-class Hostbase(Plugin):
+class Hostbase(StructurePlugin):
     '''The Hostbase plugin handles host/network info'''
     __name__ = 'Hostbase'
     __version__ = '$Id$'
