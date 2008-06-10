@@ -258,8 +258,6 @@ class Core(object):
              (generators, 'generator', Bcfg2.Server.Plugin.GeneratorPlugin,
               self.generators)]:
             for plugin in plug_names:
-                print plugin, self.plugins.keys(), plugin in self.plugins
-                raw_input()
                 if plugin in self.plugins:
                     if not isinstance(self.plugins[plugin], plug_type):
                         logger.error("Plugin %s is not a %s plugin; unloading" \
