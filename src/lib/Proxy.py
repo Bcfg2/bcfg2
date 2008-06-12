@@ -28,6 +28,8 @@ class RetryMethod(_Method):
             except xmlrpclib.ProtocolError:
                 self.log.error("Server failure: Protocol Error")
                 raise xmlrpclib.Fault(20, "Server Failure")
+            except xmlrpclib.Fault:
+                raise
             except socket.error, err:
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
