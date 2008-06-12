@@ -5,6 +5,14 @@ import logging, re, Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
+try:
+    pdlist = set
+except:
+    class pdlist(list):
+        def add(self, item):
+            if item not in self:
+                self.append(item)
+
 class FuzzyDict(dict):
     fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
     def __getitem__(self, key):
@@ -53,7 +61,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
     def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
         if not pdict.has_key('Package'):
-            pdict['Package'] = []
+            pdict['Package'] = pdlist()
         for child in data.getchildren():
             for attr in [key for key in data.attrib.keys() \
                          if key != 'name' and not child.attrib.has_key(key)]:
@@ -67,7 +75,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
             self.contents['Package'] = FuzzyDict()
         for pkg in data.findall('./Package'):
             if pkg.attrib.has_key('name') and pkg.get('name') not in pdict['Package']:
-                pdict['Package'].append(pkg.get('name'))
+                pdict['Package'].add(pkg.get('name'))
             if pkg.get('name') != None:
                 self.contents['Package'][pkg.get('name')] = {}
                 if pkg.getchildren():
