@@ -77,7 +77,8 @@ class Frame:
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.__name__ for tool in self.tools])
-        if not self.dryrun:
+        if not self.dryrun and not self.setup['interactive'] and \
+                                    not self.setup['bundle']:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
                 tl= [t for t in self.tools if t.handlesEntry(cfile) \
