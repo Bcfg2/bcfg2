@@ -134,7 +134,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         try:
             open(configfile, "w").write(confdata)
-            os.chmod(configfile, '0600')
+            os.chmod(configfile, 0600)
         except:
             # FIXME how to handle
             print "Failed to write configuration file to '%s'\n" % configfile
@@ -144,7 +144,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         # FIXME key generation may fail as non-root user
         os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:
-            os.chmod('%s/bcfg2.key'% keypath,'0600')
+            os.chmod('%s/bcfg2.key'% keypath, 0600)
         except:
             pass
     
