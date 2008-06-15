@@ -134,6 +134,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         try:
             open(configfile, "w").write(confdata)
+            os.chmod(configfile, '0600')
         except:
             # FIXME how to handle
             print "Failed to write configuration file to '%s'\n" % configfile
