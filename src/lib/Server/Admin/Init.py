@@ -38,7 +38,7 @@ bcfg2 = %s
 
 groups = '''
 <Groups version='3.0'>
-   <Group profile='true' public='false' default='true' name='basic'>
+   <Group profile='true' public='true' default='true' name='basic'>
       <Group name='%s'/>
    </Group>
    <Group name='ubuntu'/>
