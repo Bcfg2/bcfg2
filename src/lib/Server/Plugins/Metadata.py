@@ -1,7 +1,7 @@
 '''This file stores persistent metadata for the BCFG Configuration Repository'''
 __revision__ = '$Revision$'
 
-import lxml.etree, re, socket, time
+import lxml.etree, re, socket, time, fcntl, copy
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
@@ -267,9 +267,20 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         except IOError:
             self.logger.error("Failed to write clients.xml")
             raise MetadataRuntimeError
+        fd = datafile.fileno()
+        while self.locked(fd) == True:
+            pass
         datafile.write(lxml.etree.tostring(self.clientdata.getroot()))
+        fcntl.lockf(fd, fcntl.LOCK_UN)
         datafile.close()
-
+    
+    def locked(self, fd):
+        try:
+            fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            return True
+        return False
+    
     def write_probedata(self):
         '''write probe data out for use with bcfg2-info'''
         if self.pdirty:
@@ -362,8 +373,10 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             [newbundles.append(b) for b in nbundles if b not in newbundles]
             [newgroups.append(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
+        groupscopy = copy.deepcopy(self.groups)
+        profilescopy = copy.deepcopy(self.profiles)
         return ClientMetadata(client, newgroups, newbundles, newcategories,
-                              probed, uuid, password, self)
+                              probed, uuid, password, (groupscopy, profilescopy))
         
     def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''

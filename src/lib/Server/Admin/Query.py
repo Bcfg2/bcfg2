@@ -1,7 +1,7 @@
 import Bcfg2.Server.Admin, Bcfg2.Logging, logging
 
 class Query(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin query [-n] [-c] g=group p=profile'
+    __shorthelp__ = 'bcfg2-admin query [-n] [-c] [-f filename] g=group p=profile'
     __longhelp__ = __shorthelp__ + '\n\tQuery clients'
     def __init__(self, cfile):
         logging.root.setLevel(100)
@@ -22,8 +22,17 @@ class Query(Bcfg2.Server.Admin.Mode):
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         clients = self.meta.clients.keys()
+        filename_arg = False
+        filename = None
         for arg in args:
+            if filename_arg == True:
+                filename = arg
+                filename_arg = False
+                continue
             if arg in ['-n', '-c']:
+                continue
+            if arg in ['-f']:
+                filename_arg = True
                 continue
             try:
                 k, v = arg.split('=')
@@ -37,9 +46,14 @@ class Query(Bcfg2.Server.Admin.Mode):
                       self.meta.groups[self.meta.clients[c]][1] or
                       v in self.meta.cgroups.get(c, [])]
             clients = [c for c in clients if c in nc]
-
         if '-n' in args:
             for client in clients:
                 print client
         else:
             print ','.join(clients)
+        if '-f' in args:
+            f = open(filename, "w")
+            for client in clients:
+                f.write(client + "\n")
+            f.close()
+            print "Wrote results to %s" % (filename)
