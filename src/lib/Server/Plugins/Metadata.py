@@ -115,7 +115,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.probedata = {}
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
-
+	self.load_probedata()
+	
     def HandleEvent(self, event):
         '''Handle update events for data files'''
         filename = event.filename.split('/')[-1]

@@ -13,7 +13,8 @@ def bool_cook(x):
 class OptionFailure(Exception):
     pass
 
-DEFAULT_CONFIG_LOCATION = '/etc/bcfg2.conf'
+DEFAULT_CONFIG_LOCATION = '/etc/bcfg2.conf' #/etc/bcfg2.conf
+DEFAULT_INSTALL_PREFIX = '/usr' #/usr
 
 class Option(object):
     cfpath = DEFAULT_CONFIG_LOCATION
@@ -195,7 +196,7 @@ SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
-                       default='/usr', odesc='</path>')
+                       default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
 SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
                          default='xmlrpc/ssl')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),

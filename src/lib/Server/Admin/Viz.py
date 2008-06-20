@@ -9,7 +9,7 @@ class Viz(Bcfg2.Server.Admin.Mode):
     colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
               'indianred1', 'limegreen', 'orange1', 'lightblue2',
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
-    
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         # First get options to the 'viz' subcommand

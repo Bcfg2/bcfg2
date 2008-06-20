@@ -277,7 +277,7 @@ if __name__ == '__main__':
 
     loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
                     setup['password'], setup['svn'])
-    loop.plugins['Metadata'].load_probedata()
+    loop.plugins['Metadata']
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))
         raise SystemExit(0)

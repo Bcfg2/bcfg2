@@ -2,7 +2,7 @@
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
 import getopt, logging, sys
-import Bcfg2.Server.Core, Bcfg2.Logging
+import Bcfg2.Server.Core, Bcfg2.Logging, Bcfg2.Options
 
 log = logging.getLogger('bcfg-admin')
 
@@ -17,10 +17,8 @@ def mode_import(modename):
 
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-admin', to_console=True)
-
-    # Some sensible defaults
-    configfile = "/etc/bcfg2.conf"
-
+    # Get config file path
+    configfile = Bcfg2.Options.CFILE.default
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hC:', ['help', 'configfile='])
     except getopt.GetoptError, msg:

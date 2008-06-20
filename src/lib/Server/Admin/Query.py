@@ -15,7 +15,6 @@ class Query(Bcfg2.Server.Admin.Mode):
             self.errExit("Core load failed because %s" % msg)
         [self.bcore.fam.Service() for _ in range(1)]
         self.meta = self.bcore.metadata
-        self.meta.load_probedata()
         while self.bcore.fam.Service():
             pass
 
