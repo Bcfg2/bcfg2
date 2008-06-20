@@ -21,7 +21,7 @@ basedir=default
 
 class SYSV(Bcfg2.Client.Tools.PkgTool):
     '''Solaris SYSV package support'''
-    __execs__ = ["/usr/sbin/pkgadd"]
+    __execs__ = ["/usr/sbin/pkgadd", "/usr/bin/pkginfo"]
     __handles__ = [('Package', 'sysv')]
     __req__ = {'Package': ['name', 'version']}
     __ireq__ = {'Package': ['name', 'url', 'version']}

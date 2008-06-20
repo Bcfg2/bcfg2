@@ -9,7 +9,7 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     pkgtype = 'blast'
     pkgtool = ("/opt/csw/bin/pkg-get install %s", ("%s", ["bname"]))
     __name__ = 'Blast'
-    __execs__ = ['/opt/csw/bin/pkg-get']
+    __execs__ = ['/opt/csw/bin/pkg-get', "/usr/bin/pkginfo"]
     __handles__ = [('Package', 'blast')]
     __ireq__ = {'Package': ['name', 'version', 'bname']}
 
