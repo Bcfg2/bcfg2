@@ -18,7 +18,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'deb'
-    pkgtool = ('apt-get --reinstall -q=2  -o DPkg::Options="--force-overwrite --force-confold" --force-yes -y install %s',
+    pkgtool = ('apt-get -o DPkg::Options::=--force-overwrite -o DPkg::Options::=--force-confold --reinstall -q=2 --force-yes -y install %s',
                ('%s=%s', ['name', 'version']))
     
     svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
