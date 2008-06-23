@@ -4,6 +4,10 @@ class Minestruct(Bcfg2.Server.Admin.Mode):
     '''Pull extra entries out of statistics'''
     __shorthelp__ = 'bcfg2-admin minestruct <client>'
     __longhelp__ = __shorthelp__ + '\n\tExtract extra entry lists from statistics'
+
+    def __init__(self, cfile):
+	Bcfg2.Server.Admin.Mode.__init__(self, cfile)
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) != 1:

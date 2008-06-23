@@ -4,6 +4,10 @@ import re, os, socket
 class Tidy(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = 'bcfg2-admin tidy [-f] [-I]'
     __longhelp__ = __shorthelp__ + '\n\tClean up useless files in the repo'
+
+    def __init__(self, cfile):
+	Bcfg2.Server.Admin.Mode.__init__(self, cfile)
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         badfiles = self.buildTidyList()

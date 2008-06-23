@@ -105,6 +105,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.passwords = {}
         self.session_cache = {}
         self.clientdata = None
+        self.clientdata_original = None
         self.default = None
         self.pdirty = False
         try:
@@ -137,6 +138,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             return
         included = [ent.get('href') for ent in \
                     xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        xdata_original = copy.deepcopy(xdata)
         if included:
             for name in included:
                 if name not in self.extra[dest]:
@@ -154,6 +156,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             self.secure = []
             self.floating = []
             self.addresses = {}
+            self.clientdata_original = xdata_original
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 clname = client.get('name').lower()
@@ -271,7 +274,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         fd = datafile.fileno()
         while self.locked(fd) == True:
             pass
-        datafile.write(lxml.etree.tostring(self.clientdata.getroot()))
+        datafile.write(lxml.etree.tostring(self.clientdata_original.getroot()))
         fcntl.lockf(fd, fcntl.LOCK_UN)
         datafile.close()
     

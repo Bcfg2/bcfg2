@@ -7,6 +7,10 @@ class Fingerprint(Bcfg2.Server.Admin.Mode):
     '''Produce server key fingerprint'''
     __shorthelp__ = 'bcfg2-admin fingerprint'
     __longhelp__ = __shorthelp__ + '\n\tPrint the server certificate fingerprint'
+    
+    def __init__(self, cfile):
+	Bcfg2.Server.Admin.Mode.__init__(self, cfile)	
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         print self.getFingerprint()
