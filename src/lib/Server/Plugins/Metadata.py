@@ -248,7 +248,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             raise MetadataConsistencyError
         if self.clients.has_key(client):
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
-            cli = self.clientdata.xpath('/Clients/Client[@name="%s"]' % (client))
+            cli = self.clientdata.xpath('.//Clients/Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
         else:
             if self.session_cache.has_key(addresspair):
