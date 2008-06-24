@@ -149,5 +149,7 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
             logging.root.addHandler(syslog)
         except socket.error:
             logging.root.error("failed to activate syslogging")
+        except:
+            print "Failed to activate syslogging"
     logging.root.setLevel(level)
     logging.already_setup = True
