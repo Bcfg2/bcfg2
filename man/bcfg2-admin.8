@@ -4,8 +4,10 @@ bcfg2-admin \- Perform repository administration tasks
 .SH SYNOPSIS
 .B bcfg2-admin
 .I init
+.I client <action> <client>
+.I query [g=group] [p=profile] [-f output-file] [-n] [-c]
 .I compare <old> <new>
-.I minestruct <client>
+.I minestruct <client> [-g groups] [-f output-file]
 .I pull <client> <entry type> <entry name>
 .I tidy
 .I viz [-h] [-b] [-k] [-o output.png] [-r]
@@ -19,6 +21,14 @@ Perform bcfg2 repository administration
 .B init
 .RS
 Initialize a new repository (interactive)
+.RE
+.B client
+.RS
+Add or remove clients from metadata
+.RE
+.B query
+.RS
+Search for clients based on group or profile
 .RE
 .B compare
 .RS
