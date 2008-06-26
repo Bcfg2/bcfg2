@@ -72,4 +72,7 @@ class Client(Bcfg2.Server.Admin.Mode):
         for node in self.root:
             if node.attrib["name"] == client:
                 return node
+            for child in node:
+                if child.tag == "Alias" and child.attrib["name"] == client:
+                    return node                   
         return None
