@@ -20,7 +20,13 @@ class Client(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        if args[0] == 'add':
+        if len(args) == 0:
+            self.errExit("Client mode requires at least one argument: <add> or <delete>")
+        if "-h" in args:
+            print "Usage: "
+            print self.__shorthelp__
+            raise SystemExit(1)
+	if args[0] == 'add':
             attr_d = {}
             for i in args[2:]:
                 attr, val = i.split('=', 1)
