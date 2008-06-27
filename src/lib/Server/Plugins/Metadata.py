@@ -246,14 +246,9 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         if profile not in self.public:
             self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
-        # resolve aliases
-        for node in self.clients:
-            for child in node:
-                if child.tag == "Alias" and child.attrib["name"] == client:
-                    client = node.attrib["name"]
 	if self.clients.has_key(client):
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
-            cli = self.clientdata.xpath('.//Clients/Client[@name="%s"]' % (client))
+            cli = self.clientdata.xpath('.//Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
         else:
             if self.session_cache.has_key(addresspair):
@@ -341,7 +336,10 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                 raise MetadataConsistencyError
             return self.addresses[address][0]
         try:
-            return socket.gethostbyaddr(address)[0].lower()
+            cname = socket.gethostbyaddr(address)[0].lower()
+            if cname in self.aliases:
+                return self.aliases[cname]
+            return cname
         except socket.herror:
             warning = "address resolution error for %s" % (address)
             self.logger.warning(warning)
