@@ -247,6 +247,9 @@ AGENT_PORT = Option('Agent port', default=6789, cmd='-p', odesc='<port>',
                     cf=('communication', 'agent-port'))
 AGENT_HOST = Option('Remote host', default=False, cmd='-H', odesc='<hostname>')
 
+ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd='-E', odesc='<encoding>',
+                  cf=('components', 'encoding'))
+
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):

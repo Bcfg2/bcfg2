@@ -63,6 +63,6 @@ if __name__ == '__main__':
                 elm.set("pingable",'N')
 
     fout = open(clientdatapath, 'w')
-    fout.write(lxml.etree.tostring(clientElement.getroot()))
+    fout.write(lxml.etree.tostring(clientElement.getroot(), encoding='UTF-8', xml_declaration=True))
     fout.close()
                         

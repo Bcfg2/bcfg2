@@ -49,8 +49,8 @@ class CfgMatcher:
         return self.basefile_reg.match(fname)
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, basename, path, props, entry_type):
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, props, entry_type)
+    def __init__(self, basename, path, props, entry_type, encoding):
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, props, entry_type, encoding)
         self.specific = CfgMatcher(path.split('/')[-1])
 
     def sort_by_specific(self, one, other):
@@ -79,7 +79,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
         else:
-            entry.text = data            
+            entry.text = unicode(data, self.encoding)
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 

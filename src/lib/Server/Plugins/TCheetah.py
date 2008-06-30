@@ -9,10 +9,11 @@ logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
 class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
-    def __init__(self, name, properties, specific):
+    def __init__(self, name, properties, specific, encoding):
         self.name = name
         self.properties = properties
         self.specific = specific
+        self.encoding = encoding
         self.template = None
     
     def handle_event(self, event):
@@ -34,7 +35,11 @@ class TemplateFile:
         self.template.path = entry.get('realname', entry.get('name'))
         
         try:
-            entry.text = str(self.template)
+            if type(self.template) == unicode:
+                entry.text = self.template
+            else :
+                logger.debug("Override encoding of template to %s" % self.encoding)
+                entry.text = unicode(str(self.template), self.encoding)
         except:
             (a, b, c) = sys.exc_info()
             msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]

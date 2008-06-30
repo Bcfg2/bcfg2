@@ -296,7 +296,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                                           value=self.probedata[client][probe])
                 for group in self.cgroups[client]:
                     lxml.etree.SubElement(cx, "Group", name=group)
-            data = lxml.etree.tostring(top)
+            data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True)
             try:
                 datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
             except IOError:

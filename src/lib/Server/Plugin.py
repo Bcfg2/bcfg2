@@ -444,7 +444,7 @@ class Specificity:
         return False
 
 class SpecificData(object):
-    def __init__(self, name, _, specific):
+    def __init__(self, name, _, specific, encoding):
         self.name = name
         self.specific = specific
 
@@ -459,13 +459,14 @@ class SpecificData(object):
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
     ignore = re.compile("^(.*~|\\..*\\.(tmp|sw[px]))$")
-    def __init__(self, basename, path, props, entry_type):
+    def __init__(self, basename, path, props, entry_type, encoding):
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
         self.properties = props
         self.metadata = default_file_metadata.copy()
         self.infoxml = None
+        self.encoding = encoding
         pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % basename
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
         self.specific = re.compile(pattern)
@@ -509,7 +510,7 @@ class EntrySet:
                 return
             self.entries[event.filename] = self.entry_type(fpath,
                                                            self.properties,
-                                                           spec)
+                                                           spec, self.encoding)
         self.entries[event.filename].handle_event(event)
 
     def specificity_from_filename(self, fname):
@@ -631,6 +632,7 @@ class GroupSpool(GeneratorPlugin):
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
+        self.encoding = core.encoding
         if self.use_props:
             try:
                 self.properties = TemplateProperties( \
@@ -661,7 +663,8 @@ class GroupSpool(GeneratorPlugin):
                 self.entries[ident] = self.es_cls(self.filename_pattern,
                                                   dirpath,
                                                   self.properties,
-                                                  self.es_child_cls)
+                                                  self.es_child_cls,
+                                                  self.encoding)
                 self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
             if not posixpath.isdir(epath):
                 # do not pass through directory events

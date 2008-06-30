@@ -23,10 +23,10 @@ def printTabular(rows):
         print fstring % row
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
-    def __init__(self, repo, struct, gens, passwd, svn):
+    def __init__(self, repo, struct, gens, passwd, svn, encoding):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, passwd, svn)
+            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, passwd, svn, encoding)
         except Bcfg2.Server.Core.CoreInitError, msg:
             print "Core load failed because %s" % msg
             raise SystemExit(1)
@@ -97,7 +97,7 @@ Usage: [quit|exit]"""
         if len(args.split()) == 2:
             client, ofile = args.split()
             output = open(ofile, 'w')
-            data = lxml.etree.tostring(self.BuildConfiguration(client))
+            data = lxml.etree.tostring(self.BuildConfiguration(client), encoding='UTF-8', xml_declaration=True)
             output.write(data)
             output.close()
         else:
@@ -121,7 +121,7 @@ Usage: [quit|exit]"""
             entry = lxml.etree.Element('ConfigFile', name=fname)
             metadata = self.metadata.get_metadata(client)
             self.Bind(entry, metadata)
-            print lxml.etree.tostring(entry)
+            print lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True)
         else:
             print 'Usage: buildfile filename hostname'
 
@@ -271,12 +271,13 @@ if __name__ == '__main__':
                     'svn': Bcfg2.Options.SERVER_SVN,
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD})
+                    'password': Bcfg2.Options.SERVER_PASSWORD,
+                    'encoding': Bcfg2.Options.ENCODING})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 
     loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
-                    setup['password'], setup['svn'])
+                    setup['password'], setup['svn'], setup['encoding'])
     loop.plugins['Metadata']
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))

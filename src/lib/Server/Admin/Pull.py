@@ -70,7 +70,7 @@ class Pull(Bcfg2.Server.Admin.Mode):
             new_entry['text'] = '\n'.join(difflib.restore(diff.split('\n'), 1))
         else:
             print "found no data::"
-            print lxml.etree.tostring(cfentry)
+            print lxml.etree.tostring(cfentry, encoding='UTF-8', xml_declaration=True)
             raise SystemExit(1)
         return new_entry
 

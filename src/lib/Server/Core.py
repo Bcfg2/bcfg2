@@ -200,7 +200,7 @@ except ImportError:
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, structures, generators, password, svn):
+    def __init__(self, repo, structures, generators, password, svn, encoding):
         object.__init__(self)
         self.datastore = repo
         try:
@@ -215,6 +215,7 @@ class Core(object):
         self.revision = '-1'
         self.password = password
         self.svn = svn
+        self.encoding = encoding
         try:
             if self.svn:
                 self.read_svn_revision()

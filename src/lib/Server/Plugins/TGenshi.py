@@ -17,10 +17,11 @@ def removecomment(stream):
 
 class TemplateFile:
     '''Template file creates Genshi template structures for the loaded file'''
-    def __init__(self, name, properties, specific):
+    def __init__(self, name, properties, specific, encoding):
         self.name = name
         self.properties = properties
         self.specific = specific
+        self.encoding = encoding
         if self.specific.all:
             matchname = self.name
         elif self.specific.group:
@@ -52,9 +53,19 @@ class TemplateFile:
                 name=fname, metadata=metadata, path=self.name,
                 properties=self.properties).filter(removecomment)
             if isinstance(self.template, TextTemplate):
-                entry.text = stream.render('text')
+                textdata = stream.render('text')
+                if type(textdata) == unicode:
+                    entry.text = textdata
+                else:
+                    logger.debug("Override encoding of template to %s" % self.encoding)
+                    entry.text = unicode(textdata, self.encoding)
             else:
-                entry.text = stream.render('xml')
+                xmldata = stream.render('xml')
+                if type(xmldata) == unicode:
+                    entry.text = xmldata
+                else:
+                    logger.debug("Override encoding of template to %s" % self.encoding)
+                    entry.text = unicode(xmldata, self.encoding)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
             raise Bcfg2.Server.Plugin.PluginExecutionError

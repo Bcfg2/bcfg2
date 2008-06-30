@@ -320,11 +320,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.error("Cannot verify incomplete ConfigFile %s" % (entry.get('name')))
                 return False
             tempdata = entry.text
+            if type(tempdata) == unicode:
+                tempdata = tempdata.encode(self.setup['encoding'])
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
             self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
             return False
+        # comparaison should be done with figerprints or md5sum so it would be faster
+        # for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
             if tbin or not isString(content):
@@ -348,7 +352,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         break
                 if do_diff:
                     diff = '\n'.join(rawdiff)
-                    entry.set("current_bdiff", binascii.b2a_base64(diff))
+#                    entry.set("current_bdiff", binascii.b2a_base64(diff))
+#                    entry.set("current_diff", diff)
                     udiff = '\n'.join([x for x in \
                                        difflib.unified_diff(content.split('\n'), \
                                                             tempdata.split('\n'))])
@@ -356,6 +361,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         eudiff = udiff.encode('ascii')
                     except:
                         eudiff = "Binary file: no diff printed"
+ 
                     nqtext = entry.get('qtext', '')
 
                     if nqtext:
@@ -417,7 +423,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             elif entry.get('empty', 'false') == 'true':
                 filedata = ''
             else:
-                filedata = entry.text
+                if type(entry.text) == unicode:
+                    filedata = entry.text.encode(self.setup['encoding'])
+                else:
+                    filedata = entry.text
             newfile.write(filedata)
             newfile.close()
             try:
