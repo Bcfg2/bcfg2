@@ -16,7 +16,6 @@ class Base(Bcfg2.Server.Plugin.StructurePlugin,
     '''base creates independent clauses based on client metadata'''
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        self.fragements = {}
         try:
             Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
