@@ -16,7 +16,7 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
         return lxml.etree.XML(data)
 
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, path, fam):
+    def __init__(self, path, fam, encoding):
         fpattern = '\S+\.xml'
         try:
             properties = Bcfg2.Server.Plugin.TemplateProperties( \
@@ -24,8 +24,8 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
         except:
             properties = Bcfg2.Server.Plugin.FakeProperties()
 
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
-                                              properties, SGenshiTemplateFile)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, properties
+                                              SGenshiTemplateFile, encoding)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
@@ -53,7 +53,7 @@ class SGenshi(SGenshiEntrySet, Bcfg2.Server.Plugin.StructurePlugin):
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         try:
-            SGenshiEntrySet.__init__(self, self.data, self.core.fam)
+            SGenshiEntrySet.__init__(self, self.data, self.core.fam, core.encoding)
         except:
             logger.error("Failed to load SGenshi repository; disabling SGenshi")
             raise Bcfg2.Server.Plugin.PluginInitError
