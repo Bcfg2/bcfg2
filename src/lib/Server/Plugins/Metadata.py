@@ -32,10 +32,11 @@ class ClientMetadata(object):
         return group in self.groups
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, path, fam):
+    def __init__(self, path, fam, encoding):
         fpattern = '[A-Za-z_\-]+'
         Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
-                                              Bcfg2.Server.Plugin.SpecificData)
+                                              Bcfg2.Server.Plugin.SpecificData,
+                                              encoding)
         fam.AddMonitor(path, self)
         self.bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
 
@@ -110,7 +111,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.pdirty = False
         try:
             loc = datastore + "/Probes"
-            self.probes = ProbeSet(loc, core.fam)
+            self.probes = ProbeSet(loc, core.fam, core.encoding)
         except:
             self.probes = False
         self.probedata = {}
