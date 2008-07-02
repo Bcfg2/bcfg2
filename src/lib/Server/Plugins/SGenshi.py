@@ -24,7 +24,7 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
         except:
             properties = Bcfg2.Server.Plugin.FakeProperties()
 
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, properties
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, properties,
                                               SGenshiTemplateFile, encoding)
         fam.AddMonitor(path, self)
 
