@@ -249,17 +249,19 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             raise MetadataConsistencyError
 	if self.clients.has_key(client):
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
-            cli = self.clientdata.xpath('.//Client[@name="%s"]' % (client))
+            cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
         else:
+            self.logger.info("Creating new client: %s, profile %s" % \
+                             (client, profile))
             if self.session_cache.has_key(addresspair):
                 # we are working with a uuid'd client
-                lxml.etree.SubElement(self.clientdata.getroot(),
+                lxml.etree.SubElement(self.clientdata_original.getroot(),
                                       'Client', name=client,
                                       uuid=client, profile=profile,
                                       address=addresspair[0])
             else:
-                lxml.etree.SubElement(self.clientdata.getroot(),
+                lxml.etree.SubElement(self.clientdata_original.getroot(),
                                       'Client', name=client,
                                       profile=profile)
         self.clients[client] = profile
