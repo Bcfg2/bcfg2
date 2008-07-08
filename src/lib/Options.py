@@ -4,7 +4,6 @@ __revision__ = '$Revision$'
 import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
 
 def bool_cook(x):
-    print "bool_cook got %s" % x
     if x:
         return True
     else:
