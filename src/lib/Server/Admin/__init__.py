@@ -1,7 +1,7 @@
 __revision__ = '$Revision$'
 
 __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
-           'Pull', 'Query', 'Tidy', 'Viz']
+           'Pull', 'Query', 'Reports', 'Tidy', 'Viz']
 
 import ConfigParser, lxml.etree, logging
 
