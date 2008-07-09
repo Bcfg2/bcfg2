@@ -10,7 +10,7 @@ class Query(Bcfg2.Server.Admin.Mode):
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 [], ['Metadata'],
-                                                'foo', False)
+                                                'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
         [self.bcore.fam.Service() for _ in range(1)]

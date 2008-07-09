@@ -21,6 +21,8 @@ def timecompare(client1, client2):
                    client2.current_interaction.timestamp)
 
 class Reports(Bcfg2.Server.Admin.Mode):
+    __shorthelp__ = 'bcfg2-admin reports'
+    __longhelp__ = __shorthelp__ + '\n\t Command line interface for the reporting system'
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)

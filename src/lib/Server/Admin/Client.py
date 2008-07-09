@@ -8,8 +8,9 @@ class Client(Bcfg2.Server.Admin.Mode):
     def __init__(self, configfile):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
         try:
-            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), [], ['Metadata'],
-                                                'foo', False)
+            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
+                                                [], ['Metadata'],
+                                                'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
         [self.bcore.fam.Service() for _ in range(5)]
