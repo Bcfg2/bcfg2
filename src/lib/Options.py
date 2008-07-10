@@ -249,6 +249,8 @@ AGENT_HOST = Option('Remote host', default=False, cmd='-H', odesc='<hostname>')
 ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd='-E', odesc='<encoding>',
                   cf=('components', 'encoding'))
 
+OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
+
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):

@@ -11,6 +11,7 @@ import sys
 import tempfile
 import time
 import xmlrpclib
+import fcntl
 import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
@@ -31,6 +32,7 @@ def cb_sigint_handler(signum, frame):
 DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
                                      cmd="--decision-list", odesc='<file>',
                                      long_arg=True)
+LOCKFILE = "/var/lock/bcfg2.run"
 
 class FPProxyCall(object):
     def __init__(self, proxy, method):
@@ -117,6 +119,7 @@ class Client:
             'key': Bcfg2.Options.SERVER_KEY,
             'decision-list': DECISION_LIST,
             'encoding': Bcfg2.Options.ENCODING,
+            'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -287,8 +290,24 @@ class Client:
                                               times, self.setup['drivers'],
                                               self.setup['dryrun'])
 
+        if not self.setup['omit-lock-check']:
+            #check lock here
+            lockfile = open(LOCKFILE, 'w')
+            try:
+                fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                #otherwise exit and give a warning to the user
+                self.fatal_error("An other instance of bcfg2 is running. If you what to bypass the check, run with %s option" %
+                    (Bcfg2.Options.OMIT_LOCK_CHECK.cmd))
+                return(1)
+        # execute the said configuration
         self.tools.Execute()
 
+        if not self.setup['omit-lock-check']:
+            #unlock here
+            fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
+            os.remove(LOCKFILE)
+        
         if not self.setup['file']:
             # upload statistics
             feedback = self.tools.GenerateStats()
