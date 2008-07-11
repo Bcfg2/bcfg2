@@ -1,3 +1,22 @@
+#! /usr/bin/env python
+'''Imports statistics.xml and clients.xml files in to database backend for new statistics engine'''
+__revision__ = '$Revision: 4639 $'
+
+import os, sys
+try:
+    import Bcfg2.Server.Reports.settings
+except:
+    sys.stderr.write("Failed to load configuration settings. is /etc/bcfg2.conf readable?")
+    sys.exit(1)
+
+project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
+project_name = os.path.basename(project_directory)
+sys.path.append(os.path.join(project_directory, '..'))
+project_module = __import__(project_name, '', '', [''])
+sys.path.pop()
+# Set DJANGO_SETTINGS_MODULE appropriately.
+os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
+
 from Bcfg2.Server.Reports.reports.models import Client
 from getopt import getopt
 import datetime
@@ -59,8 +78,6 @@ def print_fields(fields, cli, max_name):
     print display
 
 class Reports(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin reports'
-    __longhelp__ = __shorthelp__ + '\n\t Command line interface for the reporting system'
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
