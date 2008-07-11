@@ -671,11 +671,14 @@ class GroupSpool(GeneratorPlugin):
                 self.entries[ident].handle_event(event)
         if action == 'changed':
             self.entries[ident].handle_event(event)
-        elif action == 'deleted' and ident in self.entries:
-            self.entries[ident].handle_event(event)
-            if not len(self.entries[ident].entries):
-                del self.entries[ident]
-                del self.Entries['ConfigFile'][ident]
+        elif action == 'deleted':
+            fbase = self.handles[event.requestID] + event.filename
+            if fbase in self.entries:
+                # a directory was deleted
+                del self.entries[fbase]
+                del self.Entries['ConfigFile'][fbase]
+            else:
+                self.entries[ident].handle_event(event)
                                  
     def AddDirectoryMonitor(self, relative):
         '''Add new directory to FAM structures'''
