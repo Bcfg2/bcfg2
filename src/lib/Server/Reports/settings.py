@@ -3,7 +3,12 @@ from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
 c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
 
-if c.get('statistics', 'web_debug') == "True":
+try:
+    dset = c.get('statistics', 'web_debug')
+except:
+    dset = 'false'
+
+if dset == "True":
     DEBUG = True
 else:
     DEBUG = False
