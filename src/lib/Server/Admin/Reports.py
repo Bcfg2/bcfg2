@@ -94,8 +94,13 @@ class Reports(Bcfg2.Server.Admin.Mode):
         c_list = Client.objects.all()
         
         result = list()
-        
-        opts, pargs = getopt(args, 'cd', ['sort=', 'fields='])
+
+        try:
+            opts, pargs = getopt(args, 'cdx:', ['sort=', 'fields='])
+        except:
+            print "error"
+            print self.__shorthelp__
+            raise SystemExit(1)
 
         for option in opts:
             if len(option) > 0:
