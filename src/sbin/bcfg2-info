@@ -23,10 +23,14 @@ def printTabular(rows):
         print fstring % row
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
-    def __init__(self, repo, struct, gens, passwd, svn, encoding):
+
+    def __init__(self, repo, struct, gens, passwd, svn, encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, passwd, svn, encoding)
+            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, 
+                                                passwd, svn, encoding)
+            if event_debug:
+                self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError, msg:
             print "Core load failed because %s" % msg
             raise SystemExit(1)
@@ -272,13 +276,16 @@ if __name__ == '__main__':
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
+                    'event debug': Bcfg2.Options.DEBUG,
                     'encoding': Bcfg2.Options.ENCODING})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-
-    loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
-                    setup['password'], setup['svn'], setup['encoding'])
-    loop.plugins['Metadata']
+    if "-d" in sys.argv:
+        loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
+                    setup['password'], setup['svn'], setup['encoding'], True)
+    else:
+        loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
+                    setup['password'], setup['svn'], setup['encoding'], False)
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))
         raise SystemExit(0)
