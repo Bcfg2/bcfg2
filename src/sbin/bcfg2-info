@@ -265,6 +265,28 @@ Usage: [quit|exit]"""
     def do_event_debug(self, args):
         self.fam.debug = True
 
+    def do_cfgdebug(self, args):
+        try:
+            meta = self.metadata.get_metadata(args)
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+            print "Unable to find metadata for host %s" % client
+            return
+        structures = self.GetStructures(meta)
+        for clist in [struct.findall('ConfigFile') for struct in structures]:
+            for cfile in clist:
+                if cfile.get('name') in self.plugins['Cfg'].Entries['ConfigFile']:
+                    cset = self.plugins['Cfg'].entries[cfile.get('name')]
+                    cand = cset.get_matching(meta)
+                    fields = ['all', 'group']
+                    while len(cand) > 1 and fields:
+                        field = fields.pop(0)
+                        [cand.remove(c) for c in cand[:]
+                         if getattr(c.specific, field)]
+                    if len(cand) != 1:
+                        print >>sys.stderr, "Entry %s failed" % cfile.get('name')
+                        continue
+                    print cand[0].name
+
 if __name__ == '__main__':
     Bcfg2.Logging.setup_logging('bcfg2-info', to_syslog=False)
     optinfo = {
