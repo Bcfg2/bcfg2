@@ -21,11 +21,11 @@ BCFG2_OPTIONS="-q"
 BCFG2_BIN=/usr/sbin/bcfg2
 BCFG2_CFG=/etc/bcfg2.conf
 
-# Check that configuration and executable exists
-[ -x ${BCFG2_BIN} -a -e ${BCFG2_CFG} ] || exit 1
-
 # Read the configuration from /etc/default/bcfg2
 [ -e /etc/default/bcfg2 ] && . /etc/default/bcfg2
+
+# Check that configuration and executable exists
+[ -x ${BCFG2_BIN} -a -e ${BCFG2_CFG} ] || exit 1
 
 invoke_bcfg2 () {
   # Invoke bcfg2 if enabled
