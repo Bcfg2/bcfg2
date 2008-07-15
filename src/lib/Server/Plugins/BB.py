@@ -1,0 +1,170 @@
+'''BB Plugin'''
+
+import Bcfg2.Server.Plugin
+import lxml.etree
+import sys, os
+from socket import gethostbyname
+
+PROFILE_MAP = {"ubuntu-i386":"compute-node", 
+               "ubuntu-amd64":"compute-node-amd64",
+               "fc6":"fc6-compute-node",
+               "peta":"pvfs-server",
+               "bbsto":"fileserver",
+               "bblogin":"head-node"}
+
+
+class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
+         Bcfg2.Server.Plugin.StructurePlugin,
+         Bcfg2.Server.Plugins.Metadata.Metadata,
+         Bcfg2.Server.Plugin.DirectoryBacked):
+    '''BB Plugin handles bb node configuration'''
+    
+    __name__ = 'BB'
+
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.GeneratorPlugin.__init__(self, core, datastore)
+        try:
+            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
+        except OSError, ioerr:
+            self.logger.error("Failed to load BB repository from %s" % (self.data))
+            self.logger.error(ioerr)
+            raise Bcfg2.Server.Plugin.PluginInitError
+        Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, False)
+        print self.addresses
+        self.Entries = {'ConfigFile':{'/etc/security/limits.conf':self.gen_limits,
+            '/root/.ssh/authorized_keys':self.gen_root_keys,
+            '/etc/sudoers':self.gen_sudoers,
+            '/etc/dhcp3/dhcpd.conf':self.gen_dhcpd}}
+        self.nodes = {}
+
+    def gen_dhcpd(self, entry, metadata):
+        '''Generate dhcpd.conf'''
+        entry.text = "host %s {\n" % metadata.hostname
+        host = metadata.hostname.split('.')[0]
+        if self.nodes[host].has_key('loader'):
+            entry.text += " filename %s;\n" % self.nodes[host]['loader']
+        entry.text += " hardware ethernet %s;\n" % (self.nodes[host]
+            ['mac'])
+        try:
+            entry.text += " fixed-address %s;\n}" % \
+                gethostbyname(metadata.hostname)
+        except:
+            sys.stderr.write("LOOKUP failed for %s\n" % (metadata.hostname))
+        perms = {'owner':'root', 'group':'root', 'perms':'644'}
+        [entry.attrib.__setitem__(key, value) for (key, value)
+            in perms.iteritems()]
+    
+    def gen_root_keys(self, entry, metadata):
+        '''Build /root/.ssh/authorized_keys entry'''
+        users = self.get_users(metadata)
+        rdata = self.entries
+        entry.text = "".join([rdata["%s.key" % user].data for user
+            in users if rdata.has_key("%s.key" % user)])
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value)
+            in perms.iteritems()]
+        
+    def gen_sudoers(self, entry, metadata):
+        '''Build /etc/sudoers entry'''
+        users = self.get_users(metadata)
+        entry.text = self.entries['static.sudoers'].data
+        entry.text += "".join(["%s ALL=(ALL) ALL\n" % user
+            for user in users])
+        perms = {'owner':'root', 'group':'root', 'perms':'0440'}
+        [entry.attrib.__setitem__(key, value) for (key, value)
+            in perms.iteritems()]
+
+    def gen_limits(self, entry, metadata):
+        '''Build /etc/security/limits.conf entry'''
+        users = self.get_users(metadata)
+        entry.text = self.entries["static.limits.conf"].data
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+        entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in users])
+        if "*" not in users:
+            entry.text += "* hard maxlogins 0\n"
+    
+    def get_users(self, metadata):
+        '''Get users associated with a specific host'''
+        users = []
+        for host, host_dict in self.nodes.iteritems():
+            if host == metadata.hostname.split('.')[0]:
+                if host_dict.has_key('user'):
+                    if host_dict['user'] != "none":
+                        users.append(host_dict['user'])
+        return users
+
+    def BuildStructures(self, metadata):
+        '''Update build/boot state when client gets configuration'''
+        try:
+            host_attr = self.nodes[metadata.hostname.split('.')[0]]
+        except KeyError:
+            self.logger.error("failed to find metadata for host %s" 
+                % metadata.hostname)
+            return []
+        if host_attr['action'].startswith("build"):
+            # make new action string
+            action = ""
+            if host_attr['action'] == "build":
+                action = "boot"
+            else:
+                action = host_attr['action'].replace("build", "boot", 1)
+            # write changes to file
+            bb_tree = lxml.etree.parse(self.entries["bb.xml"])
+            nodes = bb_tree.getroot().findall(".//Node")
+            for node in nodes:
+                if node.attrib['name'] == metadata.hostname.split('.')[0]:
+                    node.attrib['action'] = action
+                    break
+            bb_tree.write("%s/%s" % (self.data, 'bb.xml'))
+        return []
+
+    def HandleEvent(self, event=None):
+        '''Handle events'''
+        Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
+        # send events to groups.xml back to Metadata plugin
+        if event and "groups.xml" == event.filename:
+            Bcfg2.Server.Plugins.Metadata.Metadata.HandleEvent(self, event)
+        # handle events to bb.xml
+        if event and "bb.xml" == event.filename:
+            bb_tree = lxml.etree.parse(self.entries["bb.xml"])
+            root = bb_tree.getroot()
+            elements = root.findall(".//Node")
+            for node in elements:
+                host = node.attrib['name']
+                node_dict = node.attrib
+                if node.findall("Interface"):
+                    node_dict['mac'] = node.findall("Interface")[0].attrib['mac']
+                # populate self.clients dict
+                full_hostname = host + ".mcs.anl.gov"
+                profile = ""
+                # need to translate image/action into profile name
+                if "ubuntu" in node_dict['action']:
+                    if "amd64" in node_dict['action']:
+                        profile = PROFILE_MAP["ubuntu-amd64"]
+                    else:
+                        profile = PROFILE_MAP["ubuntu-i386"]
+                elif "fc6" in node_dict['action']:
+                    profile = PROFILE_MAP["fc6"]
+                elif "peta" in host:
+                    profile = PROFILE_MAP["peta"]
+                elif "bbsto" in host:
+                    profile = PROFILE_MAP["bbsto"]
+                elif "bblogin" in host:
+                    profile = PROFILE_MAP["head-node"]
+                else:
+                    profile = "basic"
+                self.clients[full_hostname] = profile
+                # check links in tftpboot
+                mac = node_dict['mac'].replace(':','-').lower()
+                linkname = "/tftpboot/pxelinux.cfg/01-%s" % (mac)
+                self.nodes[host] = node_dict
+                try:
+                    if os.readlink(linkname) != node_dict['action']:
+                        os.unlink(linkname)
+                        os.symlink(node_dict['action'], linkname)
+                except OSError:
+                    self.logger.error("failed to find link for mac address %s" % mac)
+                    continue
+                
+                
