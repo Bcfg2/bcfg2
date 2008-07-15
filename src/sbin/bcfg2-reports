@@ -20,6 +20,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 from Bcfg2.Server.Reports.reports.models import Client
 from getopt import getopt
 import datetime
+import fileinput
 
 def timecompare(client1, client2):
     '''compares two clients by their timestamps'''
@@ -131,7 +132,9 @@ Options and arguments (and corresponding environment variables):
                          the current interaction of NAME
 -x NAME                : toggles expired/unexpired state of NAME
 --badentry=KIND,NAME   : shows only hosts whose current interaction has bad
-                         entries in of KIND kind and NAME name
+                         entries in of KIND kind and NAME name; if a single
+                         argument ARG1 is given, then KIND,NAME pairs will be
+                         read from a file of name ARG1
 --fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
                          (name,time,state)'
 --sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)'''
@@ -181,12 +184,23 @@ else:
                 result.append(c_inst)
 
     elif badentry != "":
-        for c_inst in c_list:
-            baditems = c_inst.current_interaction.bad_items.all()
-            for item in baditems:
-                if item.name == badentry[1] and item.kind == badentry[0]:
-                    result.append(c_inst)
-                    break
+        if len(badentry) == 1:
+            fileread =fileinput.input(badentry[0])
+            for line in fileread:
+                badentry = line.strip().split(',')
+                for c_inst in c_list:
+                    baditems = c_inst.current_interaction.bad_items.all()
+                    for item in baditems:
+                        if item.name == badentry[1] and item.kind == badentry[0]:
+                            result.append(c_inst)
+                            break
+        else:
+            for c_inst in c_list:
+                baditems = c_inst.current_interaction.bad_items.all()
+                for item in baditems:
+                    if item.name == badentry[1] and item.kind == badentry[0]:
+                        result.append(c_inst)
+                        break
 
     else:
         for c_inst in c_list:
