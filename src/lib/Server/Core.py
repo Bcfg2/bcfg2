@@ -225,25 +225,11 @@ class Core(object):
         self.stats = Statistics("%s/etc/statistics.xml" % (self.datastore))
 
         [data.remove('') for data in [structures, generators] if '' in data]
-
-        for plugin in structures + generators + ['Metadata']:
-            if not self.plugins.has_key(plugin):
-                try:
-                    mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                             (plugin)).Server.Plugins, plugin)
-                except ImportError, e:
-                    logger.error("Failed to load plugin %s: %s" % (plugin, e))
-                    continue
-                plug = getattr(mod, plugin)
-                if plug.experimental:
-                    logger.info("Loading experimental plugin %s" % (plugin))
-                    logger.info("NOTE: Interface subject to change")
-                try:
-                    self.plugins[plugin] = plug(self, self.datastore)
-                except PluginInitError:
-                    logger.error("Failed to instantiate plugin %s" % (plugin))
-                except:
-                    logger.error("Unexpected instantiation failure for plugin %s" % (plugin), exc_info=1)
+        
+        
+        for plugin in structures + generators:
+                if not self.plugins.has_key(plugin):
+                    self.init_plugins(plugin)    
 
         plugins = self.plugins.values()
         while True:
@@ -252,7 +238,10 @@ class Core(object):
                 self.metadata = plugin
                 break
             if not plugins:
-                raise CoreInitError, "No Metadata plugin loaded"
+                self.init_plugins("Metadata")
+                self.metadata = self.plugins["Metadata"]
+                break
+
         for plug_names, plug_tname, plug_type, collection in \
             [(structures, 'structure', Bcfg2.Server.Plugin.StructurePlugin,
               self.structures),
@@ -269,7 +258,26 @@ class Core(object):
                 else:
                     logger.error("Plugin %s not loaded. Not enabled as a %s" \
                                  % (plugin, plug_tname))
-                    
+    
+    def init_plugins(self, plugin):
+        try:
+            mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
+                                (plugin)).Server.Plugins, plugin)
+        except ImportError, e:
+            logger.error("Failed to load plugin %s: %s" % (plugin, e))
+            return
+        plug = getattr(mod, plugin)
+        if plug.experimental:
+            logger.info("Loading experimental plugin %s" % (plugin))
+            logger.info("NOTE: Interface subject to change")
+        try:
+            self.plugins[plugin] = plug(self, self.datastore)
+        except PluginInitError:
+            logger.error("Failed to instantiate plugin %s" % (plugin))
+        except:
+            logger.error("Unexpected instantiation failure for plugin %s" % 
+                (plugin), exc_info=1)    
+            
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
