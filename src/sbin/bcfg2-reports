@@ -58,7 +58,7 @@ def crit_compare(criterion, client1, client2):
     
     return 0
 
-def print_fields(fields, cli, max_name):
+def print_fields(fields, cli, max_name, entrydict):
     '''prints the fields specified in fields of cli, max_name specifies the column width of the name column'''
     display = ""
     if 'name' in fields:
@@ -74,6 +74,9 @@ def print_fields(fields, cli, max_name):
             display += "clean"
         else:
             display += "dirty"
+    if len(entrydict) > 0:
+        display += "   "
+        display += str(entrydict[cli])
     print display
 
 def print_entry(item, max_name):
@@ -94,9 +97,10 @@ singlehost = ""
 c_list = Client.objects.all()
 
 result = list()
+entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'acdhs:x:', ['sort=', 'fields=', 'badentry='])
+opts, pargs = getopt(args, 'abcdehs:x:', ['sort=', 'fields=', 'badentry='])
 
 for option in opts:
     if len(option) > 0:
@@ -123,11 +127,16 @@ if expire != "":
             c_inst.save()
 
 elif '-h' in args:
-    print '''usage: python [option] ...
+    print '''usage: python bcfg2-reports [option] ...
 Options and arguments (and corresponding environment variables):
 -a                     : shows all hosts, including expired hosts
+-b NAME                : single-host mode - shows bad entries from the
+                         current interaction of NAME
 -c                     : shows only clean hosts
 -d                     : shows only dirty hosts
+-e                     : single-host mode - shows extra entries from the
+                         current interaciton of name
+-h                     : shows help and usage info about bcfg2-reports
 -s NAME                : single-host mode - shows bad and extra entries from
                          the current interaction of NAME
 -x NAME                : toggles expired/unexpired state of NAME
@@ -142,7 +151,7 @@ elif singlehost != "":
     for c_inst in c_list:
         if singlehost == c_inst.name:
             baditems = c_inst.current_interaction.bad_items.all()
-            if len(baditems) > 0:
+            if len(baditems) > 0 and ('-b' in args or '-s' in args):
                 print "Bad Entries:"
                 max_name = -1
                 for item in baditems:
@@ -151,7 +160,7 @@ elif singlehost != "":
                 for item in baditems:
                     print_entry(item, max_name)
             extraitems = c_inst.current_interaction.extra_items.all()
-            if len(extraitems) > 0:
+            if len(extraitems) > 0 and ('-e' in args or '-s' in args):
                 print "Extra Entries:"
                 max_name = -1
                 for item in extraitems:
@@ -193,6 +202,10 @@ else:
                     for item in baditems:
                         if item.name == badentry[1] and item.kind == badentry[0]:
                             result.append(c_inst)
+                            if entrydict.has_key(c_inst):
+                                entrydict.get(c_inst).append(badentry[1])
+                            else:
+                                entrydict[c_inst] = [badentry[1]]
                             break
         else:
             for c_inst in c_list:
@@ -218,4 +231,4 @@ else:
     if fields != "":
         for c_inst in result:
             if '-a' in args or c_inst.expiration == None:
-                print_fields(fields, c_inst, max_name)
+                print_fields(fields, c_inst, max_name, entrydict)
