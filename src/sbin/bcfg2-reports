@@ -59,21 +59,33 @@ def crit_compare(criterion, client1, client2):
     return 0
 
 def print_fields(fields, cli, max_name, entrydict):
+    fdata = tuple([getattr(cli, field) for field in fields])
+    display = fmt % fdata
+
+def print_fields(fields, cli, max_name, entrydict):
     '''prints the fields specified in fields of cli, max_name specifies the column width of the name column'''
-    display = ""
-    if 'name' in fields:
-        display += cli.name
-        for i in range(len(cli.name), max_name):
-            display += " "
-    if 'time' in fields:
-        display += "   "
-        display += str(cli.current_interaction.timestamp)
-    if 'state' in fields:
-        display += "   "
-        if cli.current_interaction.isclean():
-            display += "clean"
+    fmt = ''
+    for field in fields:
+        if field == 'name':
+            fmt += ("%%-%ds   " % (max_name))
         else:
-            display += "dirty"
+            fmt += "%s   "
+    fdata = []
+    for field in fields:
+        if field == 'time':
+            fdata.append(str(cli.current_interaction.timestamp))
+        elif field == 'state':
+            if cli.current_interaction.isclean():
+                fdata.append("clean")
+            else:
+                fdata.append("dirty")
+        else:
+            try:
+                fdata.append(getattr(cli, field))
+            except:
+                fdata.append("N/A")
+
+    display = fmt % tuple(fdata)
     if len(entrydict) > 0:
         display += "   "
         display += str(entrydict[cli])
@@ -145,7 +157,7 @@ Options and arguments (and corresponding environment variables):
                          argument ARG1 is given, then KIND,NAME pairs will be
                          read from a file of name ARG1
 --fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
-                         (name,time,state)'
+                         (name,time,state)
 --sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)'''
 elif singlehost != "":
     for c_inst in c_list:
