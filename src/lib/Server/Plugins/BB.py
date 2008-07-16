@@ -5,6 +5,8 @@ import lxml.etree
 import sys, os
 from socket import gethostbyname
 
+# map of key-words to profiles
+# probably need a better way to do this
 PROFILE_MAP = {"ubuntu-i386":"compute-node", 
                "ubuntu-amd64":"compute-node-amd64",
                "fc6":"fc6-compute-node",
@@ -12,6 +14,9 @@ PROFILE_MAP = {"ubuntu-i386":"compute-node",
                "bbsto":"fileserver",
                "bblogin":"head-node"}
 
+DOMAIN_SUFFIX = "" # default is .mcs.anl.gov
+
+PXE_CONFIG = "pxelinux.0" # default is pxelinux.0
 
 class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
          Bcfg2.Server.Plugin.StructurePlugin,
@@ -30,29 +35,25 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
             self.logger.error(ioerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, False)
-        print self.addresses
         self.Entries = {'ConfigFile':{'/etc/security/limits.conf':self.gen_limits,
             '/root/.ssh/authorized_keys':self.gen_root_keys,
-            '/etc/sudoers':self.gen_sudoers,
-            '/etc/dhcp3/dhcpd.conf':self.gen_dhcpd}}
+            '/etc/sudoers':self.gen_sudoers}}
         self.nodes = {}
 
-    def gen_dhcpd(self, entry, metadata):
-        '''Generate dhcpd.conf'''
-        entry.text = "host %s {\n" % metadata.hostname
-        host = metadata.hostname.split('.')[0]
-        if self.nodes[host].has_key('loader'):
-            entry.text += " filename %s;\n" % self.nodes[host]['loader']
-        entry.text += " hardware ethernet %s;\n" % (self.nodes[host]
-            ['mac'])
-        try:
-            entry.text += " fixed-address %s;\n}" % \
-                gethostbyname(metadata.hostname)
-        except:
-            sys.stderr.write("LOOKUP failed for %s\n" % (metadata.hostname))
-        perms = {'owner':'root', 'group':'root', 'perms':'644'}
-        [entry.attrib.__setitem__(key, value) for (key, value)
-            in perms.iteritems()]
+    def update_dhcpd(self):
+        '''Upadte dhcpd.conf'''
+        entry = self.entries["static.dhcpd.conf"].data
+        for host, data in self.nodes.iteritems():
+            entry += "host %s {\n" % (host + DOMAIN_SUFFIX)
+            if data.has_key('mac') and data.has_key('ip'):
+                entry += " hardware ethernet %s;\n" % (data['mac'])
+                entry += " fixed-address %s;\n" % (data['ip'])
+                entry += " filename \"%s\";\n}\n" % (PXE_CONFIG)
+            else:
+                self.logger.error("incomplete client data")
+        dhcpd = open("/etc/dhcp3/dhcpd.conf",'w')
+        dhcpd.write(entry)
+        dhcpd.close()
     
     def gen_root_keys(self, entry, metadata):
         '''Build /root/.ssh/authorized_keys entry'''
@@ -134,9 +135,12 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 host = node.attrib['name']
                 node_dict = node.attrib
                 if node.findall("Interface"):
-                    node_dict['mac'] = node.findall("Interface")[0].attrib['mac']
+                    iface = node.findall("Interface")[0]
+                    node_dict['mac'] = iface.attrib['mac']
+                    if iface.attrib.has_key('ip'):
+                        node_dict['ip'] = iface.attrib['ip']
                 # populate self.clients dict
-                full_hostname = host + ".mcs.anl.gov"
+                full_hostname = host + DOMAIN_SUFFIX
                 profile = ""
                 # need to translate image/action into profile name
                 if "ubuntu" in node_dict['action']:
@@ -158,7 +162,6 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 # check links in tftpboot
                 mac = node_dict['mac'].replace(':','-').lower()
                 linkname = "/tftpboot/pxelinux.cfg/01-%s" % (mac)
-                self.nodes[host] = node_dict
                 try:
                     if os.readlink(linkname) != node_dict['action']:
                         os.unlink(linkname)
@@ -166,5 +169,15 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 except OSError:
                     self.logger.error("failed to find link for mac address %s" % mac)
                     continue
-                
-                
+                # get ip address from bb.mxl, if available
+                if node_dict.has_key('ip'):
+                    ip = node_dict['ip']
+                    self.addresses[ip] = [host]
+                else:
+                    try:
+                        node_dict['ip'] = gethostbyname(full_hostname)
+                    except:
+                        self.logger.error("failed to resolve host %s" % full_hostname)
+                self.nodes[host] = node_dict
+                # update /etc/dhcp3/dhcpd.conf
+                self.update_dhcpd()
