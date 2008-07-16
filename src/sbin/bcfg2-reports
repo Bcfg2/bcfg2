@@ -59,10 +59,6 @@ def crit_compare(criterion, client1, client2):
     return 0
 
 def print_fields(fields, cli, max_name, entrydict):
-    fdata = tuple([getattr(cli, field) for field in fields])
-    display = fmt % fdata
-
-def print_fields(fields, cli, max_name, entrydict):
     '''prints the fields specified in fields of cli, max_name specifies the column width of the name column'''
     fmt = ''
     for field in fields:
