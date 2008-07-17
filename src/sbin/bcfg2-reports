@@ -88,12 +88,9 @@ def print_fields(fields, cli, max_name, entrydict):
     print display
 
 def print_entry(item, max_name):
-    display = ""
-    display += item.name
-    for i in range(len(item.name), max_name):
-        display += " "
-    display += "   "
-    display += item.kind
+    fmt = ("%%-%dx   " % (max_name))
+    fdata = [item.name, item.kind]
+    dispplay = fmt % tuple(fdata)
     print display
         
 fields = ""
@@ -142,8 +139,8 @@ Options and arguments (and corresponding environment variables):
                          current interaction of NAME
 -c                     : shows only clean hosts
 -d                     : shows only dirty hosts
--e                     : single-host mode - shows extra entries from the
-                         current interaciton of name
+-e NAME                : single-host mode - shows extra entries from the
+                         current interaction of NAME
 -h                     : shows help and usage info about bcfg2-reports
 -s NAME                : single-host mode - shows bad and extra entries from
                          the current interaction of NAME
