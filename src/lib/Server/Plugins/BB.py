@@ -5,7 +5,7 @@ import lxml.etree
 import sys, os
 from socket import gethostbyname
 
-# map of key-words to profiles
+# map of keywords to profiles
 # probably need a better way to do this
 PROFILE_MAP = {"ubuntu-i386":"compute-node", 
                "ubuntu-amd64":"compute-node-amd64",
@@ -14,7 +14,7 @@ PROFILE_MAP = {"ubuntu-i386":"compute-node",
                "bbsto":"fileserver",
                "bblogin":"head-node"}
 
-DOMAIN_SUFFIX = "" # default is .mcs.anl.gov
+DOMAIN_SUFFIX = ".mcs.anl.gov" # default is .mcs.anl.gov
 
 PXE_CONFIG = "pxelinux.0" # default is pxelinux.0
 
@@ -25,6 +25,8 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
     '''BB Plugin handles bb node configuration'''
     
     __name__ = 'BB'
+    experimental = True
+    write_to_disk = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.GeneratorPlugin.__init__(self, core, datastore)
@@ -37,11 +39,27 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, False)
         self.Entries = {'ConfigFile':{'/etc/security/limits.conf':self.gen_limits,
             '/root/.ssh/authorized_keys':self.gen_root_keys,
-            '/etc/sudoers':self.gen_sudoers}}
+            '/etc/sudoers':self.gen_sudoers,
+            '/etc/dhcp3/dhcpd.conf':self.gen_dhcpd}}
         self.nodes = {}
 
+    def gen_dhcpd(self, entry, metadata):
+        '''Generate dhcpd.conf to serve to dhcp server'''
+        entry.text = self.entries["static.dhcpd.conf"].data
+        for host, data in self.nodes.iteritems():
+            entry.text += "host %s {\n" % (host + DOMAIN_SUFFIX)
+            if data.has_key('mac') and data.has_key('ip'):
+                entry.text += " hardware ethernet %s;\n" % (data['mac'])
+                entry.text += " fixed-address %s;\n" % (data['ip'])
+                entry.text += " filename \"%s\";\n}\n" % (PXE_CONFIG)
+            else:
+                self.logger.error("incomplete client data")
+        perms = {'owner':'root', 'group':'root', 'perms':'0600'}
+        [entry.attrib.__setitem__(key, value) for (key, value)
+            in perms.iteritems()]
+
     def update_dhcpd(self):
-        '''Upadte dhcpd.conf'''
+        '''Upadte dhcpd.conf if bcfg2 server is also the bcfg2 server'''
         entry = self.entries["static.dhcpd.conf"].data
         for host, data in self.nodes.iteritems():
             entry += "host %s {\n" % (host + DOMAIN_SUFFIX)
@@ -96,13 +114,25 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         return users
 
     def BuildStructures(self, metadata):
-        '''Update build/boot state when client gets configuration'''
+        '''Update build/boot state and create bundle for server'''
         try:
             host_attr = self.nodes[metadata.hostname.split('.')[0]]
         except KeyError:
             self.logger.error("failed to find metadata for host %s" 
                 % metadata.hostname)
             return []
+        bundles = []
+        # create symlink and dhcp bundle
+        bundle = lxml.etree.Element('Bundle', name='boot-server')
+        for host, data in self.nodes.iteritems():
+            link = lxml.etree.Element('BoundSymLink')
+            link.attrib['name'] = "01-%s" % (data['mac'].replace(':','-').lower())
+            link.attrib['to'] = data['action']
+            bundle.append(link)
+        dhcpd = lxml.etree.Element('BoundConfigFile', name='/etc/dhcp3/dhcpd.conf')
+        bundle.append(dhcpd)
+        bundles.add(bundle)
+        # toggle build/boot in bb.xml
         if host_attr['action'].startswith("build"):
             # make new action string
             action = ""
@@ -118,7 +148,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                     node.attrib['action'] = action
                     break
             bb_tree.write("%s/%s" % (self.data, 'bb.xml'))
-        return []
+        return bundles
 
     def HandleEvent(self, event=None):
         '''Handle events'''
@@ -155,20 +185,10 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 elif "bbsto" in host:
                     profile = PROFILE_MAP["bbsto"]
                 elif "bblogin" in host:
-                    profile = PROFILE_MAP["head-node"]
+                    profile = PROFILE_MAP["bblogin"]
                 else:
                     profile = "basic"
                 self.clients[full_hostname] = profile
-                # check links in tftpboot
-                mac = node_dict['mac'].replace(':','-').lower()
-                linkname = "/tftpboot/pxelinux.cfg/01-%s" % (mac)
-                try:
-                    if os.readlink(linkname) != node_dict['action']:
-                        os.unlink(linkname)
-                        os.symlink(node_dict['action'], linkname)
-                except OSError:
-                    self.logger.error("failed to find link for mac address %s" % mac)
-                    continue
                 # get ip address from bb.mxl, if available
                 if node_dict.has_key('ip'):
                     ip = node_dict['ip']
@@ -179,5 +199,14 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                     except:
                         self.logger.error("failed to resolve host %s" % full_hostname)
                 self.nodes[host] = node_dict
-                # update /etc/dhcp3/dhcpd.conf
-                self.update_dhcpd()
+                # update symlinks and /etc/dhcp3/dhcpd.conf
+                if self.write_to_disk:
+                    mac = node_dict['mac'].replace(':','-').lower()
+                    linkname = "/tftpboot/pxelinux.cfg/01-%s" % (mac)
+                    try:
+                        if os.readlink(linkname) != node_dict['action']:
+                            os.unlink(linkname)
+                            os.symlink(node_dict['action'], linkname)
+                    except OSError:
+                        self.logger.error("failed to find link for mac address %s" % mac)
+                    self.update_dhcpd()
