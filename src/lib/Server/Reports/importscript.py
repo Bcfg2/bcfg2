@@ -19,7 +19,6 @@ os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
 from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason, Ping
 from lxml.etree import XML, XMLSyntaxError
-from sys import argv
 from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime
@@ -46,10 +45,169 @@ def build_reason_kwargs(r_ent):
                 current_exists=r_ent.get('current_exists', default="True").capitalize()=="True",
                 current_diff=rc_diff)
 
+
+def load_stats(cdata, sdata, vlevel):
+    cursor = connection.cursor()
+    clients = {}
+    cursor.execute("SELECT name, id from reports_client;")
+    [clients.__setitem__(a, b) for a, b in cursor.fetchall()]
+    
+    for node in sdata.findall('Node'):
+        name = node.get('name')
+        if not clients.has_key(name):
+            cursor.execute(\
+                "INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)",
+                [datetime.now(), name])
+            clients[name] = cursor.lastrowid
+            if vlevel > 0:
+                print("Client %s added to db" % name)
+        else:
+            if vlevel > 0:
+                print("Client %s already exists in db" % name)
+
+    pingability = {}
+    [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
+     for n in cdata.findall('Client')]
+
+    for node in sdata.findall('Node'):
+        name = node.get('name')
+        c_inst = Client.objects.filter(id=clients[name])[0]
+        try:
+            pingability[name]
+        except KeyError:
+            pingability[name] = 'N'
+        for statistics in node.findall('Statistics'):
+            t = strptime(statistics.get('time'))
+            # Maybe replace with django.core.db typecasts typecast_timestamp()?
+            # import from django.backends util
+            timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
+            ilist = Interaction.objects.filter(client=c_inst,
+                                               timestamp=timestamp)
+            if ilist:
+                current_interaction_id = ilist[0].id
+                if vlevel > 0:
+                    print("Interaction for %s at %s with id %s already exists"%(clients[name],
+                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
+                continue
+            else:
+                newint = Interaction(client=c_inst,
+                                     timestamp=timestamp,
+                                     state=statistics.get('state', default="unknown"),
+                                     repo_revision=statistics.get('revision',default="unknown"),
+                                     client_version=statistics.get('client_version',default="unknown"),
+                                     goodcount=statistics.get('good',default="0"),
+                                     totalcount=statistics.get('total',default="0"))
+                newint.save()
+                current_interaction_id = newint.id
+                if vlevel > 0:
+                    print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
+                        timestamp, current_interaction_id))
+
+
+            pattern = [('Bad/*', Bad, 'reports_bad'),
+                       ('Extra/*', Extra, 'reports_extra'),
+                       ('Modified/*', Modified, 'reports_modified')]
+            for (xpath, obj, tablename) in pattern:
+                for x in statistics.findall(xpath):
+                    kargs = build_reason_kwargs(x)
+                    if '-O3' not in sys.argv:
+                        rls = Reason.objects.filter(**kargs)
+                    else:
+                        rls = []
+
+                    if rls:
+                        rr = rls[0]
+                        if vlevel > 0:
+                            print "Reason exists: %s"% (rr.id)
+                    else:
+                        rr = Reason(**kargs)
+                        rr.save()
+                        if vlevel > 0:
+                            print "Created reason: %s" % rr.id
+                    if '-O3' not in sys.argv:
+                        links = obj.objects.filter(name=x.get('name'),
+                                                   kind=x.tag,
+                                                   reason=rr)
+                    else:
+                        links = []
+                        
+                    if links:
+                        item_id = links[0].id
+                        if vlevel > 0:
+                            print "%s item exists, has reason id %s and ID %s" % (xpath, rr.id, item_id)
+                    else:
+                        newitem = obj(name=x.get('name'),
+                                      kind=x.tag, critical=False,
+                                      reason=rr)
+                        newitem.save()
+                        item_id = newitem.id
+                        if vlevel > 0:
+                            print "%s item INSERTED having reason id %s and ID %s" % (xpath, rr.id, item_id)
+                    try:
+                        cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
+                                       [item_id, current_interaction_id])
+                    except:
+                        pass                    
+
+            for times in statistics.findall('OpStamps'):
+                for metric, value in times.items():
+                    if '-O3' not in sys.argv:
+                        mmatch = Performance.objects.filter(metric=metric, value=value)
+                    else:
+                        mmatch = []
+                    
+                    if mmatch:
+                        item_id = mmatch[0].id
+                    else:
+                        mperf = Performance(metric=metric, value=value)
+                        mperf.save()
+                        item_id = mperf.id
+                    try:
+                        cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
+                                       [item_id, current_interaction_id])
+                    except:
+                        pass
+
+    if vlevel > 1:
+        print("----------------INTERACTIONS SYNCED----------------")
+    cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
+    for row in cursor.fetchall():
+        cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
+                       [row[0],row[1]])
+    if vlevel > 1:
+        print("------------LATEST INTERACTION SET----------------")
+
+    for key in pingability.keys():
+        if key not in clients:
+            #print "Ping Save Problem with client %s" % name
+            continue
+        cmatch = Client.objects.filter(id=clients[key])[0]
+        pmatch = Ping.objects.filter(client=cmatch).order_by('-endtime')
+        if pmatch:
+            if pmatch[0].status == pingability[key]:
+                pmatch[0].endtime = datetime.now()
+                pmatch[0].save()
+            else:
+                newp = Ping(client=cmatch, status=pingability[key],
+                            starttime=datetime.now(),
+                            endtime=datetime.now())
+                newp.save()
+        else:
+            newp = Ping(client=cmatch, status=pingability[key],
+                        starttime=datetime.now(), endtime=datetime.now())
+            newp.save()
+
+    if vlevel > 1:
+        print "---------------PINGDATA SYNCED---------------------"
+
+    connection._commit()
+    #Clients are consistent
+
+    raise SystemExit, 0
+
 if __name__ == '__main__':
-    somewhatverbose = False
-    verbose = False
-    veryverbose = False
+    from sys import argv
+    verb = 0
     cpath = "/etc/bcfg2.conf"
     clientpath = False
     statpath = False
@@ -78,11 +236,11 @@ if __name__ == '__main__':
             cpath = a
 
         if o in ("-v", "--verbose"):
-            verbose = True
+            verb = 1
         if o in ("-u", "--updates"):
-            somewhatverbose = True
+            verb = 2
         if o in ("-d", "--debug"):
-            veryverbose = True
+            verb = 3
         if o in ("-c", "--clients"):
             clientspath = a
 
@@ -117,168 +275,4 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(clientspath))
         raise SystemExit, 1
 
-    cursor = connection.cursor()
-    clients = {}
-    cursor.execute("SELECT name, id from reports_client;")
-    [clients.__setitem__(a, b) for a, b in cursor.fetchall()]
-    
-    for node in statsdata.findall('Node'):
-        name = node.get('name')
-        if not clients.has_key(name):
-            cursor.execute(\
-                "INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)",
-                [datetime.now(), name])
-            clients[name] = cursor.lastrowid
-            if verbose:
-                print("Client %s added to db" % name)
-        else:
-            if verbose:
-                print("Client %s already exists in db" % name)
-
-    pingability = {}
-    [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
-     for n in clientsdata.findall('Client')]
-
-    for node in statsdata.findall('Node'):
-        name = node.get('name')
-        c_inst = Client.objects.filter(id=clients[name])[0]
-        try:
-            pingability[name]
-        except KeyError:
-            pingability[name] = 'N'
-        for statistics in node.findall('Statistics'):
-            t = strptime(statistics.get('time'))
-            # Maybe replace with django.core.db typecasts typecast_timestamp()?
-            # import from django.backends util
-            timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
-            ilist = Interaction.objects.filter(client=c_inst,
-                                               timestamp=timestamp)
-            if ilist:
-                current_interaction_id = ilist[0].id
-                if verbose:
-                    print("Interaction for %s at %s with id %s already exists"%(clients[name],
-                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
-                continue
-            else:
-                newint = Interaction(client=c_inst,
-                                     timestamp=timestamp,
-                                     state=statistics.get('state', default="unknown"),
-                                     repo_revision=statistics.get('revision',default="unknown"),
-                                     client_version=statistics.get('client_version',default="unknown"),
-                                     goodcount=statistics.get('good',default="0"),
-                                     totalcount=statistics.get('total',default="0"))
-                newint.save()
-                current_interaction_id = newint.id
-                if verbose:
-                    print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
-                        timestamp, current_interaction_id))
-
-
-            pattern = [('Bad/*', Bad, 'reports_bad'),
-                       ('Extra/*', Extra, 'reports_extra'),
-                       ('Modified/*', Modified, 'reports_modified')]
-            for (xpath, obj, tablename) in pattern:
-                for x in statistics.findall(xpath):
-                    kargs = build_reason_kwargs(x)
-                    if '-O3' not in sys.argv:
-                        rls = Reason.objects.filter(**kargs)
-                    else:
-                        rls = []
-
-                    if rls:
-                        rr = rls[0]
-                        if verbose:
-                            print "Reason exists: %s"% (rr.id)
-                    else:
-                        rr = Reason(**kargs)
-                        rr.save()
-                        if verbose:
-                            print "Created reason: %s" % rr.id
-                    if '-O3' not in sys.argv:
-                        links = obj.objects.filter(name=x.get('name'),
-                                                   kind=x.tag,
-                                                   reason=rr)
-                    else:
-                        links = []
-                        
-                    if links:
-                        item_id = links[0].id
-                        if verbose:
-                            print "%s item exists, has reason id %s and ID %s" % (xpath, rr.id, item_id)
-                    else:
-                        newitem = obj(name=x.get('name'),
-                                      kind=x.tag, critical=False,
-                                      reason=rr)
-                        newitem.save()
-                        item_id = newitem.id
-                        if verbose:
-                            print "%s item INSERTED having reason id %s and ID %s" % (xpath, rr.id, item_id)
-                    try:
-                        cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
-                                       [item_id, current_interaction_id])
-                    except:
-                        pass                    
-
-            for times in statistics.findall('OpStamps'):
-                for metric, value in times.items():
-                    if '-O3' not in sys.argv:
-                        mmatch = Performance.objects.filter(metric=metric, value=value)
-                    else:
-                        mmatch = []
-                    
-                    if mmatch:
-                        item_id = mmatch[0].id
-                    else:
-                        mperf = Performance(metric=metric, value=value)
-                        mperf.save()
-                        item_id = mperf.id
-                    try:
-                        cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
-                                       [item_id, current_interaction_id])
-                    except:
-                        pass
-
-    if (somewhatverbose or verbose):
-        print("----------------INTERACTIONS SYNCED----------------")
-    cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
-    for row in cursor.fetchall():
-        cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
-                       [row[0],row[1]])
-    if (somewhatverbose or verbose):
-        print("------------LATEST INTERACTION SET----------------")
-
-    for key in pingability.keys():
-        if key not in clients:
-            #print "Ping Save Problem with client %s" % name
-            continue
-        cmatch = Client.objects.filter(id=clients[key])[0]
-        pmatch = Ping.objects.filter(client=cmatch).order_by('-endtime')
-        if pmatch:
-            if pmatch[0].status == pingability[key]:
-                pmatch[0].endtime = datetime.now()
-                pmatch[0].save()
-            else:
-                newp = Ping(client=cmatch, status=pingability[key],
-                            starttime=datetime.now(),
-                            endtime=datetime.now())
-                newp.save()
-        else:
-            newp = Ping(client=cmatch, status=pingability[key],
-                        starttime=datetime.now(), endtime=datetime.now())
-            newp.save()
-
-    if (somewhatverbose or verbose):
-        print "---------------PINGDATA SYNCED---------------------"
-
-    connection._commit()
-    #Clients are consistent
-    if veryverbose:
-        for q in connection.queries:
-            if not (q['sql'].startswith('INSERT INTO reports_bad_interactions')|
-                    q['sql'].startswith('INSERT INTO reports_extra_interactions')|
-                    q['sql'].startswith('INSERT INTO reports_performance_interaction')|
-                    q['sql'].startswith('INSERT INTO reports_modified_interactions')|
-                    q['sql'].startswith('UPDATE reports_client SET current_interaction_id ')):
-                print q
-
-    raise SystemExit, 0
+    load_stats(clientsdata, statsdata, verb)
