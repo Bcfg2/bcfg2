@@ -96,6 +96,9 @@ class StatisticsPlugin(Plugin):
     def StoreStatistics(self, client, xdata):
         pass
 
+    def WriteBack(self):
+        pass
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):

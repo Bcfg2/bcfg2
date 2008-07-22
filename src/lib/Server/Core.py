@@ -3,7 +3,6 @@ __revision__ = '$Revision$'
 
 from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
-from Bcfg2.Server.Statistics import Statistics
 
 import logging, lxml.etree, os, stat
 import Bcfg2.Server.Plugins.Metadata
@@ -222,8 +221,6 @@ class Core(object):
         except:
             self.svn = False
 
-        self.stats = Statistics("%s/etc/statistics.xml" % (self.datastore))
-
         [data.remove('') for data in [structures, generators] if '' in data]
         
         
@@ -240,6 +237,17 @@ class Core(object):
             if not plugins:
                 self.init_plugins("Metadata")
                 self.metadata = self.plugins["Metadata"]
+                break
+
+        plugins = self.plugins.values()
+        while True:
+            plugin = plugins.pop()
+            if isinstance(plugin, Bcfg2.Server.Plugin.StatisticsPlugin):
+                self.stats = plugin
+                break
+            if not plugins:
+                self.init_plugins("Statistics")
+                self.stats = self.plugins["Statistics"]
                 break
 
         for plug_names, plug_tname, plug_type, collection in \

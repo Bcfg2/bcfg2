@@ -6,7 +6,9 @@ from time import asctime, localtime, time, strptime, mktime
 
 import logging, lxml.etree, os
 
-class Statistics(object):
+import Bcfg2.Server.Plugin
+
+class StatisticsStore(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
     __min_write_delay__ = 0
 
@@ -102,3 +104,17 @@ class Statistics(object):
 
         return (now-utime) > secondsPerDay
 
+class Statistics(Bcfg2.Server.Plugin.StatisticsPlugin):
+    __name__ = 'Statistics'
+    __version__ = '$Id$'
+
+    def __init__(self, _, datastore):
+        fpath = "%s/etc/statistics.xml" % datastore
+        self.data = StatisticsStore(fpath)
+
+    def StoreStatistics(self, client, xdata):
+        self.data.updateStats(xdata, client.hostname)
+
+    def WriteBack(self):
+        self.data.WriteBack()
+    
