@@ -174,7 +174,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             meta = self.Core.metadata.get_metadata(client)
             
             # Update statistics
-            self.Core.stats.updateStats(sdata, meta.hostname)
+            self.Core.stats.StoreStatistics(meta, sdata)
 
         self.logger.info("Client %s reported state %s" % 
                          (client, state.attrib['state']))
