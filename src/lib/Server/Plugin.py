@@ -91,6 +91,11 @@ class ProbingPlugin(Plugin):
         '''Receive probe results pertaining to client'''
         pass
 
+class StatisticsPlugin(Plugin):
+    '''Signal statistics handling capability'''
+    def StoreStatistics(self, client, xdata):
+        pass
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):
