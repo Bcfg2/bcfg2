@@ -203,8 +203,6 @@ def load_stats(cdata, sdata, vlevel):
     connection._commit()
     #Clients are consistent
 
-    raise SystemExit, 0
-
 if __name__ == '__main__':
     from sys import argv
     verb = 0
