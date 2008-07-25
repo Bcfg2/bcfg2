@@ -33,7 +33,7 @@ class ClientMetadata(object):
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding):
-        fpattern = '[A-Za-z_\-]+'
+        fpattern = '[0-9A-Za-z_\-]+'
         Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
