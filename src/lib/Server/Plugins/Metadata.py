@@ -172,7 +172,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                         self.addresses[caddr] = [clname]
                 if 'uuid' in client.attrib:
                     self.uuid[client.get('uuid')] = clname
-                if 'secure' in client.attrib:
+                if client.get('secure', 'false') == 'true' :
                     self.secure.append(clname)
                 if client.get('location', 'fixed') == 'floating':
                     self.floating.append(clname)
