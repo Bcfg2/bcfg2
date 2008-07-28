@@ -150,23 +150,23 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                  (mtime == entry.get('mtime', '-1')))
 
         pruneTrue = True
-        self.ex_ents = []
+        ex_ents = []
         if entry.get('prune', 'false') == 'true' \
                and entry.tag == 'Directory':
             try:
                 entries = ['/'.join([entry.get('name'), ent]) \
                            for ent in os.listdir(entry.get('name'))]
-                self.ex_ents = [e for e in entries if e not in modlist]
-                if self.ex_ents:
+                ex_ents = [e for e in entries if e not in modlist]
+                if ex_ents:
                     pruneTrue = False
                     self.logger.debug("Directory %s contains extra entries:" % entry.get('name'))
-                    self.logger.debug(self.ex_ents)
+                    self.logger.debug(ex_ents)
                     nqtext = entry.get('qtext', '') + '\n'
                     nqtext += "Directory %s contains extra entries:" % entry.get('name')
-                    nqtext += ":".join(self.ex_ents)
+                    nqtext += ":".join(ex_ents)
                     entry.set('qtest', nqtext)
             except OSError:
-                self.ex_ents = []
+                ex_ents = []
                 pruneTrue = True
 
         if not pTrue:
@@ -257,8 +257,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             except OSError:
                 self.logger.error('Failed to create directory %s' % (entry.get('name')))
                 return False
-        if entry.get('prune', 'false') == 'true' and self.ex_ents:
-            for pname in self.ex_ents:
+        if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
+            for pname in entry.get("qtest").split(":"):
                 ulfailed = False
                 try:
                     self.logger.debug("Unlinking file %s" % pname)
