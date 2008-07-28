@@ -40,12 +40,15 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             raise SetupError
 
         try:
-            self.Core = Core(setup['repo'], setup['structures'],
+            self.Core = Core(setup['repo'], setup['plugins'], setup['structures'],
                              setup['generators'], setup['password'], 
                              setup['svn'], setup['encoding'])
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
             raise SystemExit, 1
+
+        if 'DBStats' in self.Core.plugins:
+            self.fork_funcs.append("RecvStats")
 
         self.funcs.update({
             "AssertProfile" : self.Bcfg2AssertProfile, 
@@ -195,6 +198,7 @@ if __name__ == '__main__':
 
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
                     'svn': Bcfg2.Options.SERVER_SVN,
+                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD})

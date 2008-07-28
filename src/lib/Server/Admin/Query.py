@@ -8,8 +8,8 @@ class Query(Bcfg2.Server.Admin.Mode):
         Bcfg2.Logging.setup_logging(100, to_console=False, to_syslog=False)
         Bcfg2.Server.Admin.Mode.__init__(self, cfile)
         try:
-            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
-                                                [], ['Metadata'],
+            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), [],
+                                                [], [],
                                                 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)

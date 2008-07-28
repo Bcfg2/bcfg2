@@ -97,8 +97,8 @@ class Pull(Bcfg2.Server.Admin.Mode):
         new_entry = self.BuildNewEntry(client, etype, ename)
 
         try:
-            bcore = Bcfg2.Server.Core.Core(self.repo, [], ['Cfg', 'SSHbase', 'Metadata'],
-                                           'foo', False)
+            bcore = Bcfg2.Server.Core.Core(self.repo, [], [],
+                                           ['Cfg', 'SSHbase'], 'foo', False)
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
         [bcore.fam.Service() for _ in range(5)]

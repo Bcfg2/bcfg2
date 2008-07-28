@@ -199,7 +199,7 @@ except ImportError:
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, structures, generators, password, svn, encoding):
+    def __init__(self, repo, plugins, structures, generators, password, svn, encoding):
         object.__init__(self)
         self.datastore = repo
         try:
@@ -224,28 +224,28 @@ class Core(object):
         [data.remove('') for data in [structures, generators] if '' in data]
         
         
-        for plugin in structures + generators:
+        for plugin in structures + generators + plugins:
                 if not self.plugins.has_key(plugin):
                     self.init_plugins(plugin)    
 
-        plugins = self.plugins.values()
+        chk_plugins = self.plugins.values()
         while True:
-            plugin = plugins.pop()
+            plugin = chk_plugins.pop()
             if isinstance(plugin, Bcfg2.Server.Plugin.MetadataPlugin):
                 self.metadata = plugin
                 break
-            if not plugins:
+            if not chk_plugins:
                 self.init_plugins("Metadata")
                 self.metadata = self.plugins["Metadata"]
                 break
 
-        plugins = self.plugins.values()
+        chk_plugins = self.plugins.values()
         while True:
-            plugin = plugins.pop()
+            plugin = chk_plugins.pop()
             if isinstance(plugin, Bcfg2.Server.Plugin.StatisticsPlugin):
                 self.stats = plugin
                 break
-            if not plugins:
+            if not chk_plugins:
                 self.init_plugins("Statistics")
                 self.stats = self.plugins["Statistics"]
                 break

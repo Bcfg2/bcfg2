@@ -179,6 +179,8 @@ SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
                            odesc='<repository path>' )
 SERVER_SVN = Option('Server svn support', False, cf=('server', 'svn'))
+SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
+                           default=[], cook=list_split)
 SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),
                            default=['SSHbase', 'Cfg', 'Pkgmgr', 'Rules'],
                            cook=list_split)

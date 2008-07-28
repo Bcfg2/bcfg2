@@ -295,6 +295,7 @@ if __name__ == '__main__':
               }
     optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
                     'svn': Bcfg2.Options.SERVER_SVN,
+                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
@@ -303,11 +304,13 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     if "-d" in sys.argv:
-        loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
-                    setup['password'], setup['svn'], setup['encoding'], True)
+        loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
+                        setup['generators'], setup['password'], setup['svn'],
+                        setup['encoding'], True)
     else:
-        loop = infoCore(setup['repo'], setup['structures'], setup['generators'],
-                    setup['password'], setup['svn'], setup['encoding'], False)
+        loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
+                        setup['generators'], setup['password'], setup['svn'],
+                        setup['encoding'], False)
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))
         raise SystemExit(0)
