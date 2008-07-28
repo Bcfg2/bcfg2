@@ -280,7 +280,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         fd = datafile.fileno()
         while self.locked(fd) == True:
             pass
-        datafile.write(lxml.etree.tostring(self.clientdata_original.getroot()))
+        datafile.write(lxml.etree.tostring(self.clientdata_original.getroot(),
+                                           pretty_print='true'))
         fcntl.lockf(fd, fcntl.LOCK_UN)
         datafile.close()
     
@@ -302,7 +303,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                                           value=self.probedata[client][probe])
                 for group in self.cgroups[client]:
                     lxml.etree.SubElement(cx, "Group", name=group)
-            data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True)
+            data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True,
+                                       pretty_print='true')
             try:
                 datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
             except IOError:
