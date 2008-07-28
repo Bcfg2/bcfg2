@@ -19,12 +19,12 @@
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='profile' use='required'/>
-    <xsd:attribute type='xsd:string' name='pingable'/>
+    <xsd:attribute type='xsd:string' name='pingable' use='optional'/>
     <xsd:attribute type='xsd:string' name='uuid'/>
     <xsd:attribute type='xsd:string' name='password'/>
     <xsd:attribute type='xsd:string' name='location'/>
     <xsd:attribute type='xsd:string' name='secure'/>
-    <xsd:attribute type='xsd:string' name='pingtime'/>
+    <xsd:attribute type='xsd:string' name='pingtime' use='optional'/>
     <xsd:attribute type='xsd:string' name='address'/>
   </xsd:complexType>
 
