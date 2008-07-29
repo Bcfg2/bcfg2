@@ -59,7 +59,7 @@ class Editor(Bcfg2.Server.Plugin.GroupSpool,Bcfg2.Server.Plugin.ProbingPlugin):
     es_cls = EditEntrySet
 
     def GetProbes(self, _):
-    '''Return a set of probes for execution on client'''
+        '''Return a set of probes for execution on client'''
         probelist = list()
         for name in self.entries.keys():
             probe = lxml.etree.Element('probe')
