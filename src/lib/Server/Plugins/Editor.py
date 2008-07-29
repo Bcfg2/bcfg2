@@ -5,6 +5,7 @@ import lxml.etree
 from getopt import getopt
 
 def linesub(pattern, repl, filestring):
+    '''Substitutes instances of pattern with repl in filestring'''
     if filestring == None:
         filestring = ''
     output = list()
@@ -14,7 +15,9 @@ def linesub(pattern, repl, filestring):
     return '\n'.join(output)
 
 class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
+    '''This object handles the editing directives'''
     def ProcessDirectives(self, input):
+        '''Processes a list of edit directives on input'''
         temp = input
         for directive in self.data.split('\n'):
             directive = directive.split(',')
@@ -23,6 +26,7 @@ class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
 
 class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, props, entry_type, encoding):
+        self.ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" %path.split('/')[-1])
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, props, entry_type, encoding)
         self.inputs = dict()
 
@@ -36,7 +40,7 @@ class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if not entry.text:
             entry.set('empty', 'true')
         try:
-            f = open(self.path + filename + '.H_' + client, 'w')
+            f = open('%s/%s.H_%s' %(self.path, filename.split('/')[-1], client), 'w')
             f.write(entry.text)
             f.close()
         except:
@@ -55,6 +59,7 @@ class Editor(Bcfg2.Server.Plugin.GroupSpool,Bcfg2.Server.Plugin.ProbingPlugin):
     es_cls = EditEntrySet
 
     def GetProbes(self, _):
+    '''Return a set of probes for execution on client'''
         probelist = list()
         for name in self.entries.keys():
             probe = lxml.etree.Element('probe')
@@ -67,4 +72,3 @@ class Editor(Bcfg2.Server.Plugin.GroupSpool,Bcfg2.Server.Plugin.ProbingPlugin):
     def ReceiveData(self, client, datalist):
         for data in datalist:
             self.entries[data.get('name')].inputs[client.hostname] = data.text
-            print data, data.attrib
