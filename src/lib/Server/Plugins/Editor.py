@@ -35,6 +35,12 @@ class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
         entry.text = self.entries['edits'].ProcessDirectives(self.get_client_data(client))
         if not entry.text:
             entry.set('empty', 'true')
+        try:
+            f = open(self.path + filename + '.H_' + client, 'w')
+            f.write(entry.text)
+            f.close()
+        except:
+            pass
 
     def get_client_data(self, client):
         return self.inputs[client]
