@@ -221,7 +221,7 @@ class Core(object):
         except:
             self.svn = False
 
-        [data.remove('') for data in [structures, generators] if '' in data]
+        [data.remove('') for data in [plugins, structures, generators] if '' in data]
         
         
         for plugin in structures + generators + plugins:
