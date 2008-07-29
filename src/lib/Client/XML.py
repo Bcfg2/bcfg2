@@ -16,7 +16,7 @@ except ImportError:
         SubElement = xml.etree.ElementTree.SubElement
         XML = xml.etree.ElementTree.XML
         def tostring(e, encoding=None, xml_declaration=None):
-            return xml.etree.ElementTree.tostring(e)
+            return xml.etree.ElementTree.tostring(e, encoding=encoding)
         driver = 'etree-py'
     except ImportError:
         try:
