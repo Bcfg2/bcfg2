@@ -24,10 +24,11 @@ def printTabular(rows):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
-    def __init__(self, repo, struct, gens, passwd, svn, encoding, event_debug):
+    def __init__(self, repo, plgs, struct, gens, passwd, svn,
+                 encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, struct, gens, 
+            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, struct, gens, 
                                                 passwd, svn, encoding)
             if event_debug:
                 self.fam.debug = True
