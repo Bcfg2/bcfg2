@@ -14,7 +14,7 @@ PROFILE_MAP = {"ubuntu-i386":"compute-node",
                "bbsto":"fileserver",
                "bblogin":"head-node"}
 
-DOMAIN_SUFFIX = ".mcs.anl.gov" # default is .mcs.anl.gov
+DOMAIN_SUFFIX = "" # default is .mcs.anl.gov
 
 PXE_CONFIG = "pxelinux.0" # default is pxelinux.0
 
@@ -42,6 +42,8 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
             '/etc/sudoers':self.gen_sudoers,
             '/etc/dhcp3/dhcpd.conf':self.gen_dhcpd}}
         self.nodes = {}
+	self.dhcpd_loaded = False
+	self.need_update = False
 
     def gen_dhcpd(self, entry, metadata):
         '''Generate dhcpd.conf to serve to dhcp server'''
@@ -131,7 +133,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
             bundle.append(link)
         dhcpd = lxml.etree.Element('BoundConfigFile', name='/etc/dhcp3/dhcpd.conf')
         bundle.append(dhcpd)
-        bundles.add(bundle)
+        bundles.append(bundle)
         # toggle build/boot in bb.xml
         if host_attr['action'].startswith("build"):
             # make new action string
@@ -153,12 +155,18 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
     def HandleEvent(self, event=None):
         '''Handle events'''
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
+	# static.dhcpd.conf hack
+	if self.entries.has_key('static.dhcpd.conf'):
+	    self.dhcpd_loaded = True
+	if self.need_update and self.dhcpd_loaded:
+	    self.update_dhcpd()
+	    self.need_update = False	
         # send events to groups.xml back to Metadata plugin
         if event and "groups.xml" == event.filename:
             Bcfg2.Server.Plugins.Metadata.Metadata.HandleEvent(self, event)
         # handle events to bb.xml
         if event and "bb.xml" == event.filename:
-            bb_tree = lxml.etree.parse(self.entries["bb.xml"])
+            bb_tree = lxml.etree.parse("%s/%s" % (self.data, event.filename))
             root = bb_tree.getroot()
             elements = root.findall(".//Node")
             for node in elements:
@@ -209,4 +217,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                             os.symlink(node_dict['action'], linkname)
                     except OSError:
                         self.logger.error("failed to find link for mac address %s" % mac)
-                    self.update_dhcpd()
+                    if self.dhcpd_loaded:
+		    	self.update_dhcpd()
+		    else:
+			self.need_update = True			
