@@ -14,7 +14,7 @@ PROFILE_MAP = {"ubuntu-i386":"compute-node",
                "bbsto":"fileserver",
                "bblogin":"head-node"}
 
-DOMAIN_SUFFIX = "" # default is .mcs.anl.gov
+DOMAIN_SUFFIX = ".mcs.anl.gov" # default is .mcs.anl.gov
 
 PXE_CONFIG = "pxelinux.0" # default is pxelinux.0
 
@@ -192,7 +192,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                     profile = PROFILE_MAP["peta"]
                 elif "bbsto" in host:
                     profile = PROFILE_MAP["bbsto"]
-                elif "bblogin" in host:
+                elif "login" in host:
                     profile = PROFILE_MAP["bblogin"]
                 else:
                     profile = "basic"
