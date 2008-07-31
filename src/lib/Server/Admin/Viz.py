@@ -2,7 +2,7 @@
 import getopt, popen2, lxml.etree
 import Bcfg2.Server.Admin
 
-class Viz(Bcfg2.Server.Admin.Mode):
+class Viz(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = '''bcfg2-admin viz [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]'''
     __longhelp__ = __shorthelp__ + '\n\tProduce graphviz diagrams of metadata structures'
 
@@ -11,10 +11,10 @@ class Viz(Bcfg2.Server.Admin.Mode):
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
     def __init__(self, cfile):
-	Bcfg2.Server.Admin.Mode.__init__(self, cfile)
+	Bcfg2.Server.Admin.MetadataCore.__init__(self, cfile)
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
+        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         # First get options to the 'viz' subcommand
         try:
             opts, args = getopt.getopt(args, 'rhbko:',
@@ -48,9 +48,7 @@ class Viz(Bcfg2.Server.Admin.Mode):
     def Visualize(self, repopath, raw=False, hosts=False,
                   bundles=False, key=False, output=False):
         '''Build visualization of groups file'''
-        groupdata = lxml.etree.parse(repopath + '/Metadata/groups.xml')
-        groupdata.xinclude()
-        groups = groupdata.getroot()
+        groups = self.metadata.get_groups()
         if raw:
             cmd = "dd bs=4M"
             if output:
@@ -78,13 +76,12 @@ class Viz(Bcfg2.Server.Admin.Mode):
         dotpipe.tochild.write('\trankdir="LR";\n')
 
         if hosts:
-            clients = lxml.etree.parse(repopath + \
-                                       '/Metadata/clients.xml').getroot()
-            for client in clients.findall('Client'):
-                if instances.has_key(client.get('profile')):
-                    instances[client.get('profile')].append(client.get('name'))
+            clients = self.metadata.clients
+            for client, profile in clients.iteritems():
+                if instances.has_key(profile):
+                    instances[profile].append(client)
                 else:
-                    instances[client.get('profile')] = [client.get('name')]
+                    instances[profile] = [client]
             for profile, clist in instances.iteritems():
                 clist.sort()
                 dotpipe.tochild.write(

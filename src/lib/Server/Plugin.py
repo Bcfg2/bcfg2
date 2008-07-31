@@ -79,7 +79,15 @@ class StructurePlugin(Plugin):
 
 class MetadataPlugin(Plugin):
     '''Signal metadata capabilities for this plugin'''
-    pass
+    def add_client(self, client_name, attribs):
+        '''add client'''
+        pass
+    def remove_client(self, client_name):
+        '''remove client'''
+        pass
+    def get_groups(self):
+        '''get groups xml tree'''
+        pass
 
 class ProbingPlugin(Plugin):
     '''Signal probe capability for this plugin'''

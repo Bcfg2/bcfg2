@@ -121,7 +121,70 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
 	self.load_probedata()
-	
+
+    def get_groups(self):
+        '''return groups xml tree'''
+        groups_tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = groups_tree.getroot()
+        return root
+
+    def search_client(self, client_name, tree):
+        '''find a client'''
+        for node in tree:
+            if node.attrib["name"] == client_name:
+                return node
+            for child in node:
+                if child.tag == "Alias" and child.attrib["name"] == client_name:
+                    return node
+        return None
+
+    def add_client(self, client_name, attribs):
+        '''add client to clients.xml'''
+        tree = lxml.etree.parse(self.data + "/clients.xml")
+        root = tree.getroot()
+        element = lxml.etree.Element("Client", name=client_name)
+        for key, val in attribs.iteritems():
+            element.set(key, val)
+        node = self.search_client(client_name, root)
+        if node != None:
+                self.logger.error("Client \"%s\" already exists" % (client_name))
+                raise MetadataConsistencyError
+        root.append(element)
+        client_tree = open(self.data + "/clients.xml","w")
+        fd = client_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(client_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        client_tree.close()
+
+    def remove_client(self, client_name):
+        '''Remove a client'''
+        tree = lxml.etree.parse(self.data + "/clients.xml")
+        root = tree.getroot()
+        node = self.search_client(client_name, root)
+        if node == None:
+            self.logger.error("Client \"%s\" not found" % (client_name))
+            raise MetadataConsistencyError
+        root.remove(node)
+        client_tree = open(self.data + "/clients.xml","w")
+        fd = client_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(client_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        client_tree.close()
+
     def HandleEvent(self, event):
         '''Handle update events for data files'''
         filename = event.filename.split('/')[-1]

@@ -2,8 +2,9 @@
 
 import Bcfg2.Server.Plugin
 import lxml.etree
-import sys, os
+import os, fcntl
 from socket import gethostbyname
+from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 
 # map of keywords to profiles
 # probably need a better way to do this
@@ -44,6 +45,56 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         self.nodes = {}
 	self.dhcpd_loaded = False
 	self.need_update = False
+    
+    def get_groups(self):
+        '''get groups xml tree'''
+        groups_tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = groups_tree.getroot()
+        return root
+
+    def remove_client(self, client_name):
+        '''Remove client from bb.xml'''
+        bb_tree = lxml.etree.parse(self.data + "/bb.xml")
+        root = bb_tree.getroot()
+        if DOMAIN_SUFFIX in client_name:
+            client_name = client_name.split('.')[0]
+        if len(root.xpath(".//Node[@name='%s']" % client_name)) != 1:
+            self.logger.error("Client \"%s\" does not exist" % client_name)
+            raise MetadataConsistencyError
+        else:
+            root.remove(root.xpath(".//Node[@name='%s']" % client_name)[0])
+        self.write_metadata(bb_tree)
+
+    def add_client(self, client_name, attribs):
+        '''Add a client to bb.xml'''
+        bb_tree = lxml.etree.parse(self.data + "/bb.xml")
+        root = bb_tree.getroot()
+        if DOMAIN_SUFFIX in client_name:
+            client_name = client_name.split('.')[0]
+        if len(root.xpath(".//Node[@name='%s']" % client_name)) != 0:
+            self.logger.error("Client \"%s\" already exists" % client_name)
+            raise MetadataConsistencyError
+        else:
+            element = lxml.etree.Element("Client", name=client_name)
+            for key, val in attribs.iteritems():
+                element.set(key, val)
+            root.append(element)
+        self.write_metadata(bb_tree)
+
+    def write_metadata(self, tree):
+        '''write metadata back to bb.xml'''
+        data_file = open(self.data + "/bb.xml","w")
+        fd = data_file.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(data_file)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        data_file.close()
 
     def gen_dhcpd(self, entry, metadata):
         '''Generate dhcpd.conf to serve to dhcp server'''
@@ -149,7 +200,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 if node.attrib['name'] == metadata.hostname.split('.')[0]:
                     node.attrib['action'] = action
                     break
-            bb_tree.write("%s/%s" % (self.data, 'bb.xml'))
+            self.write_metadata(bb_tree)
         return bundles
 
     def HandleEvent(self, event=None):
@@ -209,6 +260,9 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 self.nodes[host] = node_dict
                 # update symlinks and /etc/dhcp3/dhcpd.conf
                 if self.write_to_disk:
+                    if not node_dict.has_key('mac'):
+                        self.logger.error("no mac address for %s" % host)
+                        continue
                     mac = node_dict['mac'].replace(':','-').lower()
                     linkname = "/tftpboot/pxelinux.cfg/01-%s" % (mac)
                     try:

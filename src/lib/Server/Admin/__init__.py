@@ -3,8 +3,8 @@ __revision__ = '$Revision$'
 __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
            'Pull', 'Query', 'Tidy', 'Viz']
 
-import ConfigParser, lxml.etree, logging
-
+import ConfigParser, lxml.etree, logging, sys
+import Bcfg2.Server.Core
 class ModeOperationError(Exception):
     pass
 
@@ -46,3 +46,30 @@ class Mode(object):
             self.errExit("Could not find stats for client %s" % (client))
         return hostent[0]
 
+class MetadataCore(Mode):
+    '''Base class for admin-modes that handle metadata'''
+    def __init__(self, configfile):
+        Mode.__init__(self, configfile)
+        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
+                   'structures': Bcfg2.Options.SERVER_STRUCTURES,
+                   'generators': Bcfg2.Options.SERVER_GENERATORS}
+        setup = Bcfg2.Options.OptionParser(options)
+        setup.parse(sys.argv[1:])
+        plugins = [plugin for plugin in setup['plugins']
+                   if plugin in ('BB', 'Metadata')]
+        structures = [structure for structure in setup['structures']
+                     if structure in ('BB', 'Metadata')]
+        generators = [generator for generator in setup['generators']
+                      if generator in ('BB', 'Metadata')]
+        try:
+            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), plugins,
+                                                structures, generators, 'foo', False, 'UTF-8')
+        except Bcfg2.Server.Core.CoreInitError, msg:
+            self.errExit("Core load failed because %s" % msg)
+            [self.bcore.fam.Service() for _ in range(5)]
+        while self.bcore.fam.Service():
+                pass
+        self.metadata = self.bcore.metadata
+
+    def __call__(self, args):
+        Bcfg2.Server.Admin.Mode.__call__(self, args)
