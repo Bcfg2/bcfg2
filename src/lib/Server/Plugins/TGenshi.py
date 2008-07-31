@@ -39,7 +39,8 @@ class TemplateFile:
             return
         try:
             loader = TemplateLoader()
-            self.template = loader.load(self.name, cls=self.template_cls)
+            self.template = loader.load(self.name, cls=self.template_cls,
+                                        encoding=self.encoding)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
         except genshi.input.ParseError, perror:
@@ -57,14 +58,16 @@ class TemplateFile:
                 if type(textdata) == unicode:
                     entry.text = textdata
                 else:
-                    logger.debug("Override encoding of template to %s" % self.encoding)
+                    if self.encoding != 'ascii':
+                        logger.debug("Override encoding of %s TGenshi template to %s" % (self.name, self.encoding))
                     entry.text = unicode(textdata, self.encoding)
             else:
                 xmldata = stream.render('xml')
                 if type(xmldata) == unicode:
                     entry.text = xmldata
                 else:
-                    logger.debug("Override encoding of template to %s" % self.encoding)
+                    if self.encoding != 'ascii':
+                        logger.debug("Override encoding of %s TGenshi template to %s" % (self.name, self.encoding))
                     entry.text = unicode(xmldata, self.encoding)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
