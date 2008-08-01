@@ -46,11 +46,70 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
 	self.dhcpd_loaded = False
 	self.need_update = False
     
-    def get_groups(self):
-        '''get groups xml tree'''
+    def viz(self, hosts, bundles, key, colors):
+        '''admin mode viz support'''
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = groups_tree.getroot()
-        return root
+        groups = groups_tree.getroot()
+        categories = {'default':'grey83'}
+        instances = {}
+        viz_str = ""
+        egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
+        for group in egroups:
+            if not categories.has_key(group.get('category')):
+                categories[group.get('category')] = colors.pop()
+            group.set('color', categories[group.get('category')])
+        if None in categories:
+            del categories[None]
+        if hosts:
+            clients = self.clients
+            for client, profile in clients.iteritems():
+                if instances.has_key(profile):
+                    instances[profile].append(client)
+                else:
+                    instances[profile] = [client]
+            for profile, clist in instances.iteritems():
+                clist.sort()
+                viz_str += '''\t"%s-instances" [ label="%s", shape="record" ];\n''' \
+                        % (profile, '|'.join(clist))
+                viz_str += '''\t"%s-instances" -> "group-%s";\n''' \
+                                      % (profile, profile)
+        if bundles:
+            bundles = []
+            [bundles.append(bund.get('name')) \
+                 for bund in groups.findall('.//Bundle') \
+                 if bund.get('name') not in bundles]
+
+            bundles.sort()
+            for bundle in bundles:
+                viz_str +=  '''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' \
+                    % (bundle, bundle)
+        gseen = []
+        for group in egroups:
+            if group.get('profile', 'false') == 'true':
+                style = "filled, bold"
+            else:
+                style = "filled"
+            gseen.append(group.get('name'))
+            viz_str += '\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' % \
+                (group.get('name'), group.get('name'), style, group.get('color'))
+            if bundles:
+                for bundle in group.findall('Bundle'):
+                    viz_str += '\t"group-%s" -> "bundle-%s";\n' % \
+                        (group.get('name'), bundle.get('name'))
+        gfmt = '\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n'
+        for group in egroups:
+            for parent in group.findall('Group'):
+                if parent.get('name') not in gseen:
+                    viz_str += gfmt % (parent.get('name'), parent.get('name'))
+                    gseen.append(parent.get("name"))
+                viz_str += '\t"group-%s" -> "group-%s" ;\n' % \
+                    (group.get('name'), parent.get('name'))
+        if key:
+            for category in categories:
+                viz_str += '''\t"''' + category + '''" [label="''' + category + \
+                    '''", shape="record", style="filled", fillcolor=''' + \
+                    categories[category] + '''];\n'''
+        return viz_str
 
     def remove_client(self, client_name):
         '''Remove client from bb.xml'''

@@ -85,8 +85,8 @@ class MetadataPlugin(Plugin):
     def remove_client(self, client_name):
         '''remove client'''
         pass
-    def get_groups(self):
-        '''get groups xml tree'''
+    def viz(self, hosts, bundles, key, colors):
+        '''create viz str for viz admin mode'''
         pass
 
 class ProbingPlugin(Plugin):
