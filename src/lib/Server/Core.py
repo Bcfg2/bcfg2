@@ -230,10 +230,13 @@ class Core(object):
 
         chk_plugins = self.plugins.values()
         while True:
-            plugin = chk_plugins.pop()
-            if isinstance(plugin, Bcfg2.Server.Plugin.MetadataPlugin):
-                self.metadata = plugin
-                break
+            try:
+                plugin = chk_plugins.pop()
+                if isinstance(plugin, Bcfg2.Server.Plugin.MetadataPlugin):
+                    self.metadata = plugin
+                    break
+            except:
+                pass
             if not chk_plugins:
                 self.init_plugins("Metadata")
                 self.metadata = self.plugins["Metadata"]
@@ -241,10 +244,13 @@ class Core(object):
 
         chk_plugins = self.plugins.values()
         while True:
-            plugin = chk_plugins.pop()
-            if isinstance(plugin, Bcfg2.Server.Plugin.StatisticsPlugin):
-                self.stats = plugin
-                break
+            try:
+                plugin = chk_plugins.pop()
+                if isinstance(plugin, Bcfg2.Server.Plugin.StatisticsPlugin):
+                    self.stats = plugin
+                    break
+            except:
+                pass
             if not chk_plugins:
                 self.init_plugins("Statistics")
                 self.stats = self.plugins["Statistics"]
