@@ -32,7 +32,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         for opt, arg in opts:
             if opt in ("-r", "--raw"):
                 rset = True
-            elif opt in ("-h", "--includehosts"):
+            elif opt in ("-H", "--includehosts"):
                 hset = True
             elif opt in ("-b", "--includebundles"):
                 bset = True
