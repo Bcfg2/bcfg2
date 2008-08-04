@@ -9,7 +9,7 @@ from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, select, signal, socket, sys
+import logging, select, socket, sys
 import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
