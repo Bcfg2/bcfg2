@@ -10,7 +10,7 @@ from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
 import logging, select, socket, sys
-import Bcfg2.Logging, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
+import Bcfg2.Logger, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
 
@@ -217,10 +217,10 @@ if __name__ == '__main__':
 
     level = 0
     if setup['daemon']:
-        Bcfg2.Logging.setup_logging('bcfg2-server', to_console=False, level=level)
+        Bcfg2.Logger.setup_logging('bcfg2-server', to_console=False, level=level)
         Bcfg2.Daemon.daemonize(setup['daemon'])
     else:
-        Bcfg2.Logging.setup_logging('bcfg2-server', level=level)
+        Bcfg2.Logger.setup_logging('bcfg2-server', level=level)
 
     if not setup['key']:
         print "No key specified in '%s'" % setup['configfile']

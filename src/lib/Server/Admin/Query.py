@@ -1,11 +1,11 @@
-import Bcfg2.Server.Admin, Bcfg2.Logging, logging
+import Bcfg2.Server.Admin, Bcfg2.Logger, logging
 
 class Query(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = 'bcfg2-admin query [-n] [-c] [-f filename] g=group p=profile'
     __longhelp__ = __shorthelp__ + '\n\tQuery clients'
     def __init__(self, cfile):
         logging.root.setLevel(100)
-        Bcfg2.Logging.setup_logging(100, to_console=False, to_syslog=False)
+        Bcfg2.Logger.setup_logging(100, to_console=False, to_syslog=False)
         Bcfg2.Server.Admin.Mode.__init__(self, cfile)
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), [],

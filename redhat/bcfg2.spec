@@ -182,7 +182,7 @@ fi
 %{python_sitelib}/Bcfg2/Client
 %{python_sitelib}/Bcfg2/Component.*
 %{python_sitelib}/Bcfg2/Daemon.*
-%{python_sitelib}/Bcfg2/Logging.*
+%{python_sitelib}/Bcfg2/Logger.*
 %{python_sitelib}/Bcfg2/Options.*
 %{python_sitelib}/Bcfg2/Proxy.*
 %{python_sitelib}/Bcfg2/tlslite

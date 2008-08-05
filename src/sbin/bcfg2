@@ -21,7 +21,7 @@ from Bcfg2.Component import SimpleXMLRPCServer, ComponentInitError, ComponentKey
 from Bcfg2.tlslite.errors import TLSNoAuthenticationError, TLSFingerprintError
 
 import Bcfg2.Proxy
-import Bcfg2.Logging
+import Bcfg2.Logger
 
 logger = logging.getLogger('bcfg2')
 
@@ -134,7 +134,7 @@ class Client:
             level = 20
         if self.setup['debug']:
             level = 0
-        Bcfg2.Logging.setup_logging('bcfg2', to_syslog=False, level=level)
+        Bcfg2.Logger.setup_logging('bcfg2', to_syslog=False, level=level)
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
