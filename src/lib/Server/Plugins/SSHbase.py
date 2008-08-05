@@ -1,7 +1,7 @@
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 
-import binascii, os, socket
+import binascii, os, socket, tempfile
 import Bcfg2.Server.Plugin
 
 class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.DirectoryBacked):
@@ -176,7 +176,8 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
             if hostkey not in self.entries.keys():
                 fileloc = "%s/%s" % (self.data, hostkey)
                 publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
-                temploc =  "/tmp/%s" % hostkey
+                tempdir = tempfile.mkdtemp()
+                temploc = "%s/%s" % (tempdir, hostkey)
                 os.system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' %
                           (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
@@ -186,6 +187,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
+                    os.rmdir(tempdir)
                 except OSError:
                     self.logger.error("Failed to unlink temporary ssh keys")
 

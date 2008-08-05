@@ -108,6 +108,16 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             self.verify_fail_action = 'none'
         self.logger.debug('verify_fail_action = %s' % self.verify_fail_action)
 
+        # version_fail_action
+        if RPMng_CP.has_option(self.__name__, 'verify_flags'):
+            self.verify_flags = RPMng_CP.get(self.__name__, 'verify_flags').lower().split(',')
+        else:
+            self.verify_flags = []
+        if '' in self.verify_flags:
+            self.verify_flags.remove('')
+        self.logger.debug('version_fail_action = %s' % self.version_fail_action)
+
+
     def RefreshPackages(self):
         '''
             Creates self.installed{} which is a dict of installed packages.
@@ -202,7 +212,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
          
                                 if self.pkg_verify == 'true' and \
                                    inst.get('pkg_verify', 'true') == 'true':
-                                    flags = inst.get('verify_flags', '').split(',')
+                                    flags = inst.get('verify_flags', '').split(',') + self.verify_flags
                                     if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
                                        entry.get('name') != 'gpg-pubkey':
                                         flags += ['nosignature', 'nodigest']
@@ -257,7 +267,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     
                                     if self.pkg_verify == 'true' and \
                                        inst.get('pkg_verify', 'true') == 'true':
-                                        flags = inst.get('verify_flags', '').split(',') 
+                                        flags = inst.get('verify_flags', '').split(',') + self.verify_flags
                                         if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids:
                                             flags += ['nosignature', 'nodigest']
                                             self.logger.info('WARNING: Package %s %s requires GPG Public key with ID %s'\

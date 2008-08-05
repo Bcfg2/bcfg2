@@ -117,4 +117,11 @@ class Statistics(Bcfg2.Server.Plugin.StatisticsPlugin):
 
     def WriteBack(self):
         self.data.WriteBack()
+
+    def FindCurrent(self, client):
+        rt = self.data.element.xpath('//Node[@name="%s"]' % client)
+        maxtime = max([time.strptime(stat.get('time')) for stat in rt.findall('Statistics')])
+        return [stat for stat in rt.findall('Statistics') if time.strptime(stat.get('time')) == maxtime][0]
     
+    def GetExtra(self, client):
+        return [(entry.tag, entry.get('name')) for entry in self.FindCurrent(client).xpath('.//Extra/*')]
