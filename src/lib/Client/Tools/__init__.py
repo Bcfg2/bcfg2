@@ -148,11 +148,8 @@ class Tool:
         '''Build a list of potentially modified POSIX paths for this entry'''
         if struct.tag != 'Bundle':
             return []
-        basic = [sentry.get('name') for sentry in struct if sentry.tag in \
-                 ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
-        pdir = ["@%s" % (sentry.get('name')) for sentry in struct if entry.tag \
-                == 'Directory' and entry.get('prune', 'false') == 'true']
-        return basic + pdir
+        return [sentry.get('name') for sentry in struct if sentry.tag in \
+                ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
 
     def gatherCurrentData(self, entry):
         '''Default implementation of the information gathering routines'''
