@@ -33,13 +33,6 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
     def __init__(self, setup):
         try:
-            Bcfg2.Component.Component.__init__(self, setup['key'],
-                                               setup['password'],
-                                               setup['location'])
-        except Bcfg2.Component.ComponentInitError:
-            raise SetupError
-
-        try:
             self.Core = Core(setup['repo'], setup['plugins'], setup['structures'],
                              setup['generators'], setup['password'], 
                              setup['svn'], setup['encoding'])
@@ -49,14 +42,6 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
         if 'DBStats' in self.Core.plugins:
             self.fork_funcs.append("RecvStats")
-
-        self.funcs.update({
-            "AssertProfile" : self.Bcfg2AssertProfile, 
-            "GetConfig"     : self.Bcfg2GetConfig,
-            "GetProbes"     : self.Bcfg2GetProbes,
-            "RecvProbeData" : self.Bcfg2RecvProbeData,
-            "RecvStats"     : self.Bcfg2RecvStats
-            })
 
         # init functions to be exposed as XML-RPC functions
         for plugin in self.Core.plugins.values():
@@ -79,6 +64,22 @@ class Bcfg2Serv(Bcfg2.Component.Component):
                 self.Core.Service()
             except socket.error:
                 continue
+        try:
+            Bcfg2.Component.Component.__init__(self, setup['key'],
+                                               setup['password'],
+                                               setup['location'])
+        except Bcfg2.Component.ComponentInitError:
+            raise SetupError
+
+        self.funcs.update({
+            "AssertProfile" : self.Bcfg2AssertProfile, 
+            "GetConfig"     : self.Bcfg2GetConfig,
+            "GetProbes"     : self.Bcfg2GetProbes,
+            "RecvProbeData" : self.Bcfg2RecvProbeData,
+            "RecvStats"     : self.Bcfg2RecvStats
+            })
+
+
 
     def get_request(self):
         '''We need to do work between requests, so select with timeout instead of blocking in accept'''
