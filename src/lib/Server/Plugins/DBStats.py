@@ -1,5 +1,6 @@
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
+from Bcfg2.Server.Reports.reports.models import Client
 import lxml.etree, time
 
 class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
@@ -21,5 +22,10 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         # FIXME need to build a metadata interface to expose a list of clients
         Bcfg2.Server.Reports.importscript.load_stats(
             self.core.metadata.clientdata, container, 0, True)
+
+    def GetExtra(self, client):
+        c_inst = Client.objects.filter(name=client)[0]
+        return [(a.kind, a.name) for a in
+                c_inst.current_interaction.extra_items.all()]
 
 
