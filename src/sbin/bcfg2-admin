@@ -16,7 +16,7 @@ def mode_import(modename):
     return getattr(mod, modname)
 
 if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('bcfg2-admin', to_console=True)
+    Bcfg2.Logger.setup_logging('bcfg2-admin', to_console=True, level=40)
     # Get config file path
     configfile = Bcfg2.Options.CFILE.default
     try:
