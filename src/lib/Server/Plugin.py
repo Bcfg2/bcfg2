@@ -107,6 +107,10 @@ class StatisticsPlugin(Plugin):
     def WriteBack(self):
         pass
 
+    def GetExtra(self, client):
+        return []
+
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):
