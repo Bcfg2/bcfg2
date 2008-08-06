@@ -106,7 +106,7 @@ result = list()
 entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'abcdehs:x:', ['sort=', 'fields=', 'badentry=','extraentry='])
+opts, pargs = getopt(args, 'ab:cde:hs:x:', ['sort=', 'fields=', 'badentry=','extraentry='])
 
 for option in opts:
     if len(option) > 0:
