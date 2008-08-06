@@ -253,6 +253,8 @@ ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd
 
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 
+LOGGING_FILE_PATH = Option('Set path of file log', default=None, cmd='-o', odesc='<path>', cf=('logging', 'path'))
+
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
     def __init__(self, args):

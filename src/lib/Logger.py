@@ -127,7 +127,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                 self.socket.send("Reconnected to syslog")
                 self.socket.send(msg)
 
-def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0):
+def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
         return 
@@ -151,5 +151,10 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
             logging.root.error("failed to activate syslogging")
         except:
             print "Failed to activate syslogging"
+    if not to_file == None:
+        filelog = logging.FileHandler(to_file)
+        filelog.setLevel(logging.DEBUG)
+        filelog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
+        logging.root.addHandler(filelog)
     logging.root.setLevel(level)
     logging.already_setup = True

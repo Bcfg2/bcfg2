@@ -120,6 +120,7 @@ class Client:
             'decision-list': DECISION_LIST,
             'encoding': Bcfg2.Options.ENCODING,
             'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
+            'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -134,7 +135,7 @@ class Client:
             level = 20
         if self.setup['debug']:
             level = 0
-        Bcfg2.Logger.setup_logging('bcfg2', to_syslog=False, level=level)
+        Bcfg2.Logger.setup_logging('bcfg2', to_syslog=False, level=level, to_file=self.setup['filelog'])
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':

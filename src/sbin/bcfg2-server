@@ -208,6 +208,7 @@ if __name__ == '__main__':
                     'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
                     'static'   : Bcfg2.Options.SERVER_STATIC,
                     'encoding' : Bcfg2.Options.ENCODING,
+                    'filelog'  : Bcfg2.Options.LOGGING_FILE_PATH,
                     })
 
 
@@ -217,10 +218,10 @@ if __name__ == '__main__':
 
     level = 0
     if setup['daemon']:
-        Bcfg2.Logger.setup_logging('bcfg2-server', to_console=False, level=level)
+        Bcfg2.Logger.setup_logging('bcfg2-server', to_console=False, level=level, to_file=setup['filelog'])
         Bcfg2.Daemon.daemonize(setup['daemon'])
     else:
-        Bcfg2.Logger.setup_logging('bcfg2-server', level=level)
+        Bcfg2.Logger.setup_logging('bcfg2-server', level=level, to_file=setup['filelog'])
 
     if not setup['key']:
         print "No key specified in '%s'" % setup['configfile']
