@@ -20,6 +20,6 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         
         # FIXME need to build a metadata interface to expose a list of clients
         Bcfg2.Server.Reports.importscript.load_stats(
-            self.core.metadata.clientdata, container, 0)
+            self.core.metadata.clientdata, container, 0, True)
 
 

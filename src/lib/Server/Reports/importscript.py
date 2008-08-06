@@ -46,7 +46,7 @@ def build_reason_kwargs(r_ent):
                 current_diff=rc_diff)
 
 
-def load_stats(cdata, sdata, vlevel):
+def load_stats(cdata, sdata, vlevel, quick=False):
     cursor = connection.cursor()
     clients = {}
     cursor.execute("SELECT name, id from reports_client;")
@@ -110,7 +110,7 @@ def load_stats(cdata, sdata, vlevel):
             for (xpath, obj, tablename) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
-                    if '-O3' not in sys.argv:
+                    if not quick:
                         rls = Reason.objects.filter(**kargs)
                     else:
                         rls = []
@@ -124,7 +124,7 @@ def load_stats(cdata, sdata, vlevel):
                         rr.save()
                         if vlevel > 0:
                             print "Created reason: %s" % rr.id
-                    if '-O3' not in sys.argv:
+                    if not quick:
                         links = obj.objects.filter(name=x.get('name'),
                                                    kind=x.tag,
                                                    reason=rr)
@@ -151,7 +151,7 @@ def load_stats(cdata, sdata, vlevel):
 
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():
-                    if '-O3' not in sys.argv:
+                    if not quick:
                         mmatch = Performance.objects.filter(metric=metric, value=value)
                     else:
                         mmatch = []
@@ -273,4 +273,5 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s"%(clientspath))
         raise SystemExit, 1
 
-    load_stats(clientsdata, statsdata, verb)
+    q = '-O3' in sys.argv
+    load_stats(clientsdata, statsdata, verb, quick=q)
