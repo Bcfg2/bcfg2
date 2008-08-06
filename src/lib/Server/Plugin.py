@@ -110,6 +110,8 @@ class StatisticsPlugin(Plugin):
     def GetExtra(self, client):
         return []
 
+    def GetCurrentEntry(self, client, e_type, e_name):
+        return None
 
 # the rest of the file contains classes for coherent file caching
 
