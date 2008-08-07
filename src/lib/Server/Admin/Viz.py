@@ -17,7 +17,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         # First get options to the 'viz' subcommand
         try:
-            opts, args = getopt.getopt(args, 'rhbko:',
+            opts, args = getopt.getopt(args, 'rHbko:',
                                        ['raw', 'includehosts', 'includebundles',
                                         'includekey', 'outfile='])
         except getopt.GetoptError, msg:
