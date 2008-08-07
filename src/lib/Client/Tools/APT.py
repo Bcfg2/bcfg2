@@ -27,8 +27,6 @@ class APT(Bcfg2.Client.Tools.PkgTool):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        self.installed = {}
-        #self.RefreshPackages()
         self.updated = False
 
     def RefreshPackages(self):
