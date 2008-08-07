@@ -112,7 +112,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
-                metadata_updates[attr] = new_entry.get('attr')
+                metadata_updates[attr] = new_entry.get(attr)
             infofile = open(self.path + '/:info', 'w')
             for x in metadata_updates.iteritems():
                 infofile.write("%s: %s\n" % x)
