@@ -352,7 +352,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         break
                 if do_diff:
                     diff = '\n'.join(rawdiff)
-#                    entry.set("current_bdiff", binascii.b2a_base64(diff))
+                    entry.set("current_bdiff", binascii.b2a_base64(diff))
 #                    entry.set("current_diff", diff)
                     udiff = '\n'.join([x for x in \
                                        difflib.unified_diff(content.split('\n'), \
