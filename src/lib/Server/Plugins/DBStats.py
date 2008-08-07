@@ -1,7 +1,7 @@
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
 from Bcfg2.Server.Reports.reports.models import Client
-import lxml.etree, time
+import difflib, lxml.etree, time
 
 class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
     __name__ = 'DBStats'
@@ -28,4 +28,21 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         return [(a.kind, a.name) for a in
                 c_inst.current_interaction.extra_items.all()]
 
-
+    def GetCurrentEntry(self, client, e_type, e_name):
+        c_inst = Client.objects.filter(name=client)[0]
+        entry = c_inst.current_interaction.bad_items.filter(kind=e_type,
+                                                            name=e_name)[0]
+        ret = []
+        data = ('owner', 'group', 'perms')
+        for t in data:
+            if getattr(entry.reason, "current_%s" % t) == '':
+                ret.append(getattr(entry.reason, t))
+            else:
+                ret.append(getattr(entry.reason, "current_%s" % t))
+                
+        if entry.reason.current_diff != '':
+            ret.append('\n'.join(difflib.restore(\
+                entry.reason.current_diff.split('\n'), 1)))
+        else:
+            ret.append(None)
+        return ret

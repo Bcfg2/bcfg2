@@ -111,7 +111,7 @@ class StatisticsPlugin(Plugin):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
-        return None
+        raise PluginExecutionError
 
 # the rest of the file contains classes for coherent file caching
 

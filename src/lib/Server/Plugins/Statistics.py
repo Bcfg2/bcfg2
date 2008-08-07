@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from time import asctime, localtime, time, strptime, mktime
 
-import logging, lxml.etree, os
+import binascii, logging, lxml.etree, os
 
 import Bcfg2.Server.Plugin
 
@@ -125,3 +125,21 @@ class Statistics(Bcfg2.Server.Plugin.StatisticsPlugin):
     
     def GetExtra(self, client):
         return [(entry.tag, entry.get('name')) for entry in self.FindCurrent(client).xpath('.//Extra/*')]
+
+    def GetCurrentEntry(self, client, e_type, e_name):
+        curr = self.FindCurrent(client)
+        entry = curr.xpath('.//Bad/%s[@name="%s"]' % (e_type, e_name))
+        cfentry = entry[-1]
+
+        owner = cfentry.get('current_owner', cfentry.get('owner'))
+        group = cfentry.get('current_group', cfentry.get('group'))
+        perms = cfentry.get('current_perms', cfentry.get('perms'))
+        if 'current_bfile' in cfentry.attrib:
+            contents = binascii.a2b_base64(cfentry.get('current_bfile'))
+        elif 'current_bdiff' in cfentry.attrib:
+            diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
+            contents = '\n'.join(difflib.restore(diff.split('\n'), 1))
+        else:
+            contents = None
+
+        return (owner, group, perms, contents)
