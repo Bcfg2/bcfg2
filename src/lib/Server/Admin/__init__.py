@@ -67,9 +67,9 @@ class MetadataCore(Mode):
                                                 structures, generators, 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
-            [self.bcore.fam.Service() for _ in range(5)]
+        [self.bcore.fam.Service() for _ in range(5)]
         while self.bcore.fam.Service():
-                pass
+            pass
         self.metadata = self.bcore.metadata
 
 class StructureMode(MetadataCore):
