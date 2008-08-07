@@ -1,8 +1,8 @@
-bcfg2 (0.9.6-svn-4844) unstable; urgency=low
+bcfg2 (0.9.6-0.0pre2) unstable; urgency=low
 
   * new prerelease
 
- -- Narayan Desai <desai@mcs.anl.gov>  Tue, 08 Apr 2008 16:55:24 -0500
+ -- Narayan Desai <desai@mcs.anl.gov>  Thu, 07 Aug 2008 15:49:22 -0500
 
 bcfg2 (0.9.5-0.1) unstable; urgency=low
 
