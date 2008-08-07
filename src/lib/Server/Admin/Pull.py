@@ -2,15 +2,14 @@
 import binascii, difflib, getopt, lxml.etree, time, ConfigParser
 import Bcfg2.Server.Admin
 
-class Pull(Bcfg2.Server.Admin.Mode):
+class Pull(Bcfg2.Server.Admin.MetadataCore):
     '''Pull mode retrieves entries from clients and integrates the information into the repository'''
     __shorthelp__ = 'bcfg2-admin pull [-v] [-f] [-I] <client> <entry type> <entry name>'
     __longhelp__ = __shorthelp__ + '\n\tIntegrate configuration information from clients into the server repository'
+    allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
     def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-        cp = ConfigParser.ConfigParser()
-        cp.read([configfile])
-        self.repo = cp.get('server', 'repository')
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile)
+        self.stats = self.bcore.stats
         self.log = False
         self.mode = 'interactive'
         
@@ -33,45 +32,18 @@ class Pull(Bcfg2.Server.Admin.Mode):
     def BuildNewEntry(self, client, etype, ename):
         '''construct a new full entry for given client/entry from statistics'''
         new_entry = {'type':etype, 'name':ename}
-        sdata = self.load_stats(client)
-        # no entries if state != dirty
-        sxpath = ".//Statistics[@state='dirty']/Bad/ConfigFile[@name='%s']/../.." % \
-                 (ename)
-        sentries = sdata.xpath(sxpath)
-        if not len(sentries):
-            self.errExit("Found %d entries for %s:%s:%s" % \
-                         (len(sentries), client, etype, ename))
-        else:
-            if self.log:
-                print "Found %d entries for %s:%s:%s" % \
-                      (len(sentries), client, etype, ename)
-        maxtime = max([time.strptime(stat.get('time')) for stat in sentries])
-        if self.log:
-            print "Found entry from", time.strftime("%c", maxtime)
-        statblock = [stat for stat in sentries \
-                     if time.strptime(stat.get('time')) == maxtime]
-        entry = statblock[0].xpath('.//Bad/ConfigFile[@name="%s"]' % ename)
-        if not entry:
-            self.errExit("Could not find state data for entry\n" \
-                         "rerun bcfg2 on client system")
-        cfentry = entry[-1]
+        try:
+            (owner, group, perms, contents) = \
+                    self.stats.GetCurrentEntry(client, etype, ename)
+        except Bcfg2.Server.Plugin.PluginExecutionError:
+            print "Statistics plugin failure; could not fetch current state"
+            raise SystemExit, 1
 
-        badfields = [field for field in ['perms', 'owner', 'group'] \
-                     if cfentry.get(field) != cfentry.get('current_' + field) and \
-                     cfentry.get('current_' + field)]
-        if badfields:
-            for field in badfields:
-                new_entry[field] = cfentry.get('current_%s' % field)
-        # now metadata updates are in place
-        if 'current_bfile' in cfentry.attrib:
-            new_entry['text'] = binascii.a2b_base64(cfentry.get('current_bfile'))
-        elif 'current_bdiff' in cfentry.attrib:
-            diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
-            new_entry['text'] = '\n'.join(difflib.restore(diff.split('\n'), 1))
-        else:
-            print "found no data::"
-            print lxml.etree.tostring(cfentry, encoding='UTF-8', xml_declaration=True)
-            raise SystemExit(1)
+        data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
+        for k, v in data.iteritems():
+            if v:
+                new_entry[k] = v
+        print new_entry
         return new_entry
 
     def Choose(self, choices):
@@ -96,17 +68,9 @@ class Pull(Bcfg2.Server.Admin.Mode):
         '''Make currently recorded client state correct for entry'''
         new_entry = self.BuildNewEntry(client, etype, ename)
 
-        try:
-            bcore = Bcfg2.Server.Core.Core(self.repo, [], [],
-                                           ['Cfg', 'SSHbase'], 'foo', False)
-        except Bcfg2.Server.Core.CoreInitError, msg:
-            self.errExit("Core load failed because %s" % msg)
-        [bcore.fam.Service() for _ in range(5)]
-        while bcore.fam.Service():
-            pass
-        meta = bcore.metadata.get_metadata(client)
+        meta = self.bcore.metadata.get_metadata(client)
         # find appropriate plugin in bcore
-        glist = [gen for gen in bcore.generators if
+        glist = [gen for gen in self.bcore.generators if
                  gen.Entries.get(etype, {}).has_key(ename)]
         if len(glist) != 1:
             self.errExit("Got wrong numbers of matching generators for entry:" \
