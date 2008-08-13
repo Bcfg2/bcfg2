@@ -43,20 +43,12 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
         extra = self.statistics.GetExtra(client)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))
-        if len(groups) == 0:
-            for tag, name in extra:
-                self.log.info("%s: %s" % (tag, name))
-                lxml.etree.SubElement(root, tag, name=name)
-        else:
-            groups_root = lxml.etree.Element("Group", name=groups[0])
-            root.append(groups_root) 
-            for i in range (1, len(groups)):
-                temp = lxml.etree.Element("Group", name=groups[i])
-                groups_root.append(temp)
-                groups_root = temp
-            for entry in extra:
-                self.log.info("%s: %s" % (tag, name))
-                lxml.etree.SubElement(groups_root, tag, name=name)
+        add_point = root
+        for g in groups:
+            add_point = lxml.etree.SubElement(add_point, "Group", name=g)
+        for tag, name in extra:
+            self.log.info("%s: %s" % (tag, name))
+            lxml.etree.SubElement(add_point, tag, name=name)
 
         tree = lxml.etree.ElementTree(root)
         if write_to_file == True:
