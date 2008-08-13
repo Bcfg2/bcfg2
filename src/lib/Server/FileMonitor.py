@@ -79,7 +79,7 @@ class FamFam(object):
         return count
 
 class Event(object):
-    def __init(self, request_id, filename, code):
+    def __init__(self, request_id, filename, code):
         self.requestID = request_id
         self.filename = filename
         self.action = code
