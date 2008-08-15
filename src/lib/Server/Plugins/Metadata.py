@@ -32,8 +32,9 @@ class ClientMetadata(object):
         return group in self.groups
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, path, fam, encoding):
+    def __init__(self, path, fam, encoding, plugin_name):
         fpattern = '[0-9A-Za-z_\-]+'
+        self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
@@ -64,7 +65,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             entry, prio = data
             probe = lxml.etree.Element('probe')
             probe.set('name', name.split('/')[-1])
-            probe.set('source', "Metadata")
+            probe.set('source', self.plugin_name)
             probe.text = entry.data
             match = self.bangline.match(entry.data.split('\n')[0])
             if match:
@@ -114,7 +115,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.pdirty = False
         try:
             loc = datastore + "/Probes"
-            self.probes = ProbeSet(loc, core.fam, core.encoding)
+            self.probes = ProbeSet(loc, core.fam, core.encoding, self.__name__)
         except:
             self.probes = False
         self.probedata = {}
