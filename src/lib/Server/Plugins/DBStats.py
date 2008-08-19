@@ -30,8 +30,11 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
 
     def GetCurrentEntry(self, client, e_type, e_name):
         c_inst = Client.objects.filter(name=client)[0]
-        entry = c_inst.current_interaction.bad_items.filter(kind=e_type,
-                                                            name=e_name)[0]
+        result = c_inst.current_interaction.bad_items.filter(kind=e_type,
+                                                             name=e_name)
+        if not result:
+            raise Bcfg2.Server.Plugin.PluginExecutionError
+        entry = result[0]
         ret = []
         data = ('owner', 'group', 'perms')
         for t in data:
