@@ -192,7 +192,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
                     self.logger.error("Failed to unlink temporary ssh keys")
 
     def AcceptChoices(self, _, metadata):
-        return Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)
+        return [Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)]
 
     def AcceptPullData(self, specific, entry, log):
         '''per-plugin bcfg2-admin pull support'''
