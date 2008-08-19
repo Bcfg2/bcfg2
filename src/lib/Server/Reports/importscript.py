@@ -24,12 +24,18 @@ from datetime import datetime
 from time import strptime
 from django.db import connection
 import ConfigParser
+import difflib
 
 def build_reason_kwargs(r_ent):
-    if r_ent.get('current_bdiff', False):
+    if r_ent.get('current_bfile', False):
+        contents = binascii.a2b_base64(r_ent.get('current_bfile'))
+        rc_diff = '\n'.join(difflib.ndiff([], contents.split('\n')))
+    elif r_ent.get('current_bdiff', False):
         rc_diff = binascii.a2b_base64(r_ent.get('current_bdiff'))
+    elif r_ent.get('current_diff', False):
+        rc_diff = r_ent.get('current_diff')
     else:
-        rc_diff = r_ent.get('current_diff', '')
+        rc_diff = ''
     return dict(owner=r_ent.get('owner', default=""),
                 current_owner=r_ent.get('current_owner', default=""),
                 group=r_ent.get('group', default=""),
