@@ -17,12 +17,13 @@ sys.path.pop()
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason, Ping
+from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, Entries_interactions, Performance, Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
 from lxml.etree import XML, XMLSyntaxError
 from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime
 from django.db import connection
+from Bcfg2.Server.Reports.updatefix import update_database
 import ConfigParser
 import difflib
 
@@ -52,7 +53,7 @@ def build_reason_kwargs(r_ent):
                 current_diff=rc_diff)
 
 
-def load_stats(cdata, sdata, vlevel, quick=False):
+def load_stats(cdata, sdata, vlevel, quick=False, location=''):
     cursor = connection.cursor()
     clients = {}
     cursor.execute("SELECT name, id from reports_client;")
@@ -90,10 +91,10 @@ def load_stats(cdata, sdata, vlevel, quick=False):
             ilist = Interaction.objects.filter(client=c_inst,
                                                timestamp=timestamp)
             if ilist:
-                current_interaction_id = ilist[0].id
+                current_interaction = ilist[0]
                 if vlevel > 0:
                     print("Interaction for %s at %s with id %s already exists"%(clients[name],
-                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction_id))
+                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction.id))
                 continue
             else:
                 newint = Interaction(client=c_inst,
@@ -102,18 +103,19 @@ def load_stats(cdata, sdata, vlevel, quick=False):
                                      repo_revision=statistics.get('revision',default="unknown"),
                                      client_version=statistics.get('client_version',default="unknown"),
                                      goodcount=statistics.get('good',default="0"),
-                                     totalcount=statistics.get('total',default="0"))
+                                     totalcount=statistics.get('total',default="0"),
+                                     server=location)
                 newint.save()
-                current_interaction_id = newint.id
+                current_interaction = newint
                 if vlevel > 0:
                     print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
-                        timestamp, current_interaction_id))
+                        timestamp, current_interaction.id))
 
 
-            pattern = [('Bad/*', Bad, 'reports_bad'),
-                       ('Extra/*', Extra, 'reports_extra'),
-                       ('Modified/*', Modified, 'reports_modified')]
-            for (xpath, obj, tablename) in pattern:
+            pattern = [('Bad/*', TYPE_CHOICES[0]),
+                       ('Extra/*', TYPE_CHOICES[2]),
+                       ('Modified/*', TYPE_CHOICES[1]),]
+            for (xpath, type) in pattern:
                 for x in statistics.findall(xpath):
                     kargs = build_reason_kwargs(x)
                     if not quick:
@@ -130,30 +132,23 @@ def load_stats(cdata, sdata, vlevel, quick=False):
                         rr.save()
                         if vlevel > 0:
                             print "Created reason: %s" % rr.id
-                    if not quick:
-                        links = obj.objects.filter(name=x.get('name'),
-                                                   kind=x.tag,
-                                                   reason=rr)
-                    else:
-                        links = []
+
+                    links = Entries.objects.filter(name=x.get('name'),
+                                               kind=x.tag)
                         
                     if links:
-                        item_id = links[0].id
-                        if vlevel > 0:
-                            print "%s item exists, has reason id %s and ID %s" % (xpath, rr.id, item_id)
+                        entry = links[0]
                     else:
-                        newitem = obj(name=x.get('name'),
-                                      kind=x.tag, critical=False,
-                                      reason=rr)
-                        newitem.save()
-                        item_id = newitem.id
-                        if vlevel > 0:
-                            print "%s item INSERTED having reason id %s and ID %s" % (xpath, rr.id, item_id)
-                    try:
-                        cursor.execute("INSERT INTO "+tablename+"_interactions VALUES (NULL, %s, %s);",
-                                       [item_id, current_interaction_id])
-                    except:
-                        pass                    
+                        entry = Entries(name=x.get('name'),
+                                      kind=x.tag)
+                        entry.save()
+
+                    interaction = Entries_interactions(entry=entry, reason=rr,
+                                                        interaction=current_interaction,
+                                                        type=type[0])
+                    interaction.save()
+                    if vlevel > 0:
+                        print "%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id)
 
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():
@@ -170,7 +165,7 @@ def load_stats(cdata, sdata, vlevel, quick=False):
                         item_id = mperf.id
                     try:
                         cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
-                                       [item_id, current_interaction_id])
+                                       [item_id, current_interaction.id])
                     except:
                         pass
 
@@ -280,4 +275,11 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     q = '-O3' in sys.argv
-    load_stats(clientsdata, statsdata, verb, quick=q)
+    try:
+        location = cf.get('components', 'bcfg2')
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        print "Could not read bcfg2 from bcfg2.conf; exiting"
+        raise SystemExit, 1
+    # Be sure the database is ready for new schema
+    update_database()
+    load_stats(clientsdata, statsdata, verb, quick=q, location=location)

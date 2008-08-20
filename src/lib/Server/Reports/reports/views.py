@@ -3,7 +3,8 @@
 from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Bad, Modified, Extra, Performance, Reason
+from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, Entries_interactions, Performance, Reason
+from Bcfg2.Server.Reports.reports.models import TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
 from datetime import datetime, timedelta
 from time import strptime
 from django.db import connection
@@ -14,29 +15,34 @@ from sets import Set
 def index(request):
     return render_to_response('index.html')
 
-def config_item_modified(request, eyedee =None, timestamp = 'now'):
+def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MODIFIED):
     #if eyedee = None, dump with a 404
     timestamp = timestamp.replace("@"," ")
-    mod_or_bad = "modified"
+    if type == TYPE_MODIFIED:
+        mod_or_bad = "modified"
+    else:
+        mod_or_bad = "bad"
     
-    item = Modified.objects.get(id=eyedee)
+    item = Entries_interactions.objects.get(id=eyedee).entry
     #if everything is blank except current_exists, do something special
     cursor = connection.cursor()
     if timestamp == 'now':
-        cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
-                   "WHERE reports_client.current_interaction_id = reports_modified_interactions.interaction_id "+
-                   "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_modified_interactions.modified_id = %s", [eyedee])
+        cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
+                   "WHERE reports_client.current_interaction_id = reports_entries_interactions.interaction_id "+
+                   "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
+                   "AND reports_entries_interactions.entry_id = %s " +
+                   "AND reports_entries_interactions.type = %s", [eyedee, type])
         associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
     else:
         interact_queryset = Interaction.objects.interaction_per_client(timestamp)
         interactionlist = []
         [interactionlist.append(x.id) for x in interact_queryset]
         if not interactionlist == []:
-            cursor.execute("select client_id from reports_interaction, reports_modified_interactions, reports_client "+
-                   "WHERE reports_modified_interactions.interaction_id IN %s "+
-                   "AND reports_modified_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_modified_interactions.modified_id = %s", [interactionlist, eyedee])
+            cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
+                   "WHERE reports_entries_interactions.interaction_id IN %s "+
+                   "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
+                   "AND reports_entries_interactions.modified_id = %s " +
+                   "AND reports_entries_interactions.type = %s ", [interactionlist, eyedee, type])
             associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
         else:
             associated_client_list = []
@@ -50,64 +56,25 @@ def config_item_modified(request, eyedee =None, timestamp = 'now'):
                                                          'timestamp' : timestamp,
                                                          'timestamp_date' : timestamp[:10],
                                                          'timestamp_time' : timestamp[11:19]})
-                                                    
+
 
 def config_item_bad(request, eyedee = None, timestamp = 'now'):
+    return config_item_modified(request, eyedee, timestamp, TYPE_BAD)
+
+def bad_item_index(request, timestamp = 'now', type=TYPE_BAD):
     timestamp = timestamp.replace("@"," ")
-    mod_or_bad = "bad"
-    item = Bad.objects.get(id=eyedee)
-    cursor = connection.cursor()
-    if timestamp == 'now':
-        cursor.execute("select client_id from reports_interaction, reports_bad_interactions, reports_client "+
-                   "WHERE reports_client.current_interaction_id = reports_bad_interactions.interaction_id "+
-                   "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_bad_interactions.bad_id = %s", [eyedee])
-        associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
+    if type == TYPE_BAD:
+        mod_or_bad = "bad"
     else:
-        interact_queryset = Interaction.objects.interaction_per_client(timestamp)
-        interactionlist = []
-        [interactionlist.append(x.id) for x in interact_queryset]
-        if not interactionlist == []:
-            cursor.execute("SELECT DISTINCT client_id from reports_interaction, reports_bad_interactions, reports_client "+
-                           "WHERE reports_bad_interactions.interaction_id IN %s "+
-                           "AND reports_bad_interactions.interaction_id = reports_interaction.id "+
-                           "AND reports_bad_interactions.bad_id = %s", [interactionlist, eyedee])
-            associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
+        mod_or_bad = "modified"
+    
+    current_clients = [c.current_interaction for c in Client.objects.active(timestamp)]
+    item_list_dict = {}
+    for x in Entries_interactions.objects.select_related().filter(interaction__in=current_clients, type=type).distinct():
+        if item_list_dict.get(x.entry.kind, None):
+            item_list_dict[x.entry.kind].append(x)
         else:
-            associated_client_list = None
-
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
-
-    return render_to_response('config_items/index.html', {'item':item,
-                                                         'mod_or_bad':mod_or_bad,
-                                                         'associated_client_list':associated_client_list,
-                                                         'timestamp' : timestamp,
-                                                         'timestamp_date' : timestamp[:10],
-                                                         'timestamp_time' : timestamp[11:19]})
-
-def bad_item_index(request, timestamp = 'now'):
-    timestamp = timestamp.replace("@"," ")
-    mod_or_bad = "bad"
-    cursor = connection.cursor()
-
-    if timestamp == 'now':
-        bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
-                           [c.current_interaction
-                            for c in Client.objects.active(timestamp)]).distinct()])
-        kinds = list(Set(bad_kinds.values()))
-        item_list_dict = dict([(x,[]) for x in kinds])
-        for obj in bad_kinds:
-            item_list_dict[obj.kind].append(obj)
-                                                
-    else: #this isn't done yet
-        bad_kinds = dict([(x,x.kind) for x in Bad.objects.filter(interactions__in=
-                           [c.current_interaction
-                            for c in Client.objects.active(timestamp)]).distinct()])
-        kinds = list(Set(bad_kinds.values()))
-        item_list_dict = dict([(x,[]) for x in kinds])
-        for obj in bad_kinds:
-            item_list_dict[obj.kind].append(obj)
+            item_list_dict[x.entry.kind] = [x]
 
     item_list_pseudodict = item_list_dict.items()
     if timestamp == 'now':
@@ -119,40 +86,7 @@ def bad_item_index(request, timestamp = 'now'):
                                                             'timestamp_date' : timestamp[:10],
                                                             'timestamp_time' : timestamp[11:19]})
 def modified_item_index(request, timestamp = 'now'):
-    timestamp = timestamp.replace("@"," ")
-    mod_or_bad = "modified"
-    cursor = connection.cursor()
-
-    if timestamp == 'now':
-        mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
-                           [c.current_interaction
-                            for c in Client.objects.active(timestamp)]).distinct()])
-                             #this will need expiration support
-        kinds = list(Set(mod_kinds.values()))
-        item_list_dict = dict([(x,[]) for x in kinds])
-        for obj in mod_kinds:
-            item_list_dict[obj.kind].append(obj)
-                                                
-    else: #this isn't done yet
-        mod_kinds = dict([(x,x.kind) for x in Modified.objects.filter(interactions__in=
-                           [c.current_interaction
-                            for c in Client.objects.active(timestamp)]).distinct()])
-                             #this will need expiration support
-        kinds = list(Set(mod_kinds.values()))
-        item_list_dict = dict([(x,[]) for x in kinds])
-        for obj in mod_kinds:
-            item_list_dict[obj.kind].append(obj)
-
-    item_list_pseudodict = item_list_dict.items()
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
-
-    return render_to_response('config_items/listing.html', {'item_list_pseudodict':item_list_pseudodict,
-                                                            'mod_or_bad':mod_or_bad,
-                                                            'timestamp' : timestamp,
-                                                            'timestamp_date' : timestamp[:10],
-                                                            'timestamp_time' : timestamp[11:19]})
-
+    return bad_item_index(request, timestamp, TYPE_MODIFIED)
 
 def client_index(request, timestamp = 'now'):
     timestamp = timestamp.replace("@"," ")
@@ -332,10 +266,10 @@ def prepare_client_lists(request, timestamp = 'now'):
     [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
 
     
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_modified_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_modified_interactions.interaction_id GROUP BY reports_client.id")
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_MODIFIED])
     modified_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_extra_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_extra_interactions.interaction_id GROUP BY reports_client.id")
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_EXTRA])
     extra_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
     if timestamp == 'now':

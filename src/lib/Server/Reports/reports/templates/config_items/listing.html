@@ -15,7 +15,7 @@ YAHOO.example.init = function( ){
     {% for item_list in item_list_pseudodict %}
     tabView.addTab( new YAHOO.widget.Tab({
         label: '{{item_list.0}}',
-        content: '<p><ul style="list-style-type:none;">{% for item in item_list.1|sortwell %}<li><strong>{{item.kind}}: </strong><tt>{% ifequal mod_or_bad "modified" %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}">{{item.name}}</a>{% else %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id%}">{{item.name}}</a>{% endifequal %}</tt></li>{% endfor %}</ul></p>',
+        content: '<p><ul style="list-style-type:none;">{% for item in item_list.1|sortwell %}<li><strong>{{item.entry.kind}}: </strong><tt>{% ifequal mod_or_bad "modified" %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}">{{item.entry.name}}</a>{% else %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id%}">{{item.entry.name}}</a>{% endifequal %}</tt></li>{% endfor %}</ul></p>',
         active: 'True'
     }));
     {% endfor %}

@@ -18,6 +18,15 @@ PING_CHOICES = (
     ('Up (Y)', 'Y'),
     ('Down (N)', 'N')
 )
+TYPE_BAD = 1
+TYPE_MODIFIED = 2
+TYPE_EXTRA = 3
+
+TYPE_CHOICES = (
+    (TYPE_BAD, 'Bad'),
+    (TYPE_MODIFIED, 'Modified'),
+    (TYPE_EXTRA, 'Extra'),
+)
 class ClientManager(models.Manager):
     '''extended client manager functions'''
     def active(self,timestamp='now'):
@@ -56,19 +65,6 @@ class Client(models.Model):
     
     class Admin:
         pass
-
-class Metadata(models.Model):
-    '''insert magical interface to client metadata here'''
-    client = models.ForeignKey(Client)
-    timestamp = models.DateTimeField()
-    def __str__(self):
-        return self.timestamp
-    
-class Repository(models.Model):
-    '''insert magical interface to subversioned repository here'''
-    timestamp = models.DateTimeField()
-    def __str__(self):
-        return self.timestamp
 
 class Ping(models.Model):
     '''represents a ping of a client (sparsely)'''
@@ -116,6 +112,7 @@ class Interaction(models.Model):
     client_version = models.CharField(maxlength=32)#Client Version
     goodcount = models.IntegerField()#of good config-items
     totalcount = models.IntegerField()#of total config-items
+    server = models.CharField(maxlength=256)    # Name of the server used for the interaction
 
     def __str__(self):
         return "With " + self.client.name + " @ " + self.timestamp.isoformat()
@@ -158,7 +155,16 @@ class Interaction(models.Model):
         super(Interaction, self).save() #call the real save...
         self.client.current_interaction = self.client.interactions.latest()
         self.client.save()#save again post update
-            
+
+    def bad(self):
+        return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_BAD)
+
+    def modified(self):
+        return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_MODIFIED)
+
+    def extra(self):
+        return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_EXTRA)
+    
     objects = InteractiveManager()
 
     class Admin:
@@ -187,36 +193,21 @@ class Reason(models.Model):
     def _str_(self):
         return "Reason"
 
-class Modified(models.Model):
-    '''Modified configuration element'''
-    interactions = models.ManyToManyField(Interaction, related_name="modified_items")
-    name = models.CharField(maxlength=128, core=True)
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
-    critical = models.BooleanField()
-    reason = models.ForeignKey(Reason)
+class Entries(models.Model):
+    """ Contains all the entries feed by the client """
+    name = models.CharField(maxlength=128, core=True, db_index=True)
+    kind = models.CharField(maxlength=16, choices=KIND_CHOICES, db_index=True)
+
     def __str__(self):
         return self.name
-   
-class Extra(models.Model):
-    '''Extra configuration element'''
-    interactions = models.ManyToManyField(Interaction, related_name="extra_items")
-    name = models.CharField(maxlength=128, core=True)
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
-    critical = models.BooleanField()
+
+class Entries_interactions(models.Model):
+    """ Define the relation between the reason, the interaction and the entry """
+    entry = models.ForeignKey(Entries)
     reason = models.ForeignKey(Reason)
-    def __str__(self):
-        return self.name
+    interaction = models.ForeignKey(Interaction)
+    type = models.IntegerField(choices=TYPE_CHOICES)
     
-class Bad(models.Model):
-    '''Bad configuration element'''
-    interactions = models.ManyToManyField(Interaction, related_name="bad_items")
-    name = models.CharField(maxlength=128, core=True)
-    kind = models.CharField(maxlength=16, choices=KIND_CHOICES)
-    critical = models.BooleanField()
-    reason = models.ForeignKey(Reason)
-    def __str__(self):
-        return self.name
- 
 class PerformanceManager(models.Manager):
     '''Provides ability to effectively query for performance information
     It is possible this should move to the view'''
@@ -260,3 +251,10 @@ class Performance(models.Model):
  
     objects = PerformanceManager()
  
+class InternalDatabaseVersion(models.Model):
+    '''Object that tell us to witch version is the database'''
+    version = models.IntegerField()
+    updated = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "version %d updated the %s" % (self.version, self.updated.isoformat())

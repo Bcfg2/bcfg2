@@ -1,15 +1,27 @@
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
-from Bcfg2.Server.Reports.reports.models import Client
-import difflib, lxml.etree, time
+from Bcfg2.Server.Reports.reports.models import Client, Entries
+import difflib, lxml.etree, time, logging, datetime
+import Bcfg2.Server.Reports.settings
+
+from Bcfg2.Server.Reports.updatefix import update_database
+import traceback
+# for debugging output only
+logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
 class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
     __name__ = 'DBStats'
-    __version__ = '$Id: $'
-
+    __version__ = '$Id$'
+        
     def __init__(self, core, datastore):
         self.cpath = "%s/Metadata/clients.xml" % datastore
         self.core = core
+        logger.debug("Searching for new models to add to the statistics database")
+        try:
+            update_database()
+        except Exception, inst:
+            logger.debug(str(inst))
+            logger.debug(str(type(inst)))
 
     def StoreStatistics(self, mdata, xdata):
         newstats = xdata.find("Statistics")
@@ -20,18 +32,21 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         container.append(e)
         
         # FIXME need to build a metadata interface to expose a list of clients
+        # FIXME Server processing the request should be mentionned here
+        start = time.time()
         Bcfg2.Server.Reports.importscript.load_stats(
             self.core.metadata.clientdata, container, 0, True)
+        logger.info("Imported data in the reason fast path in %s second" % (time.time() - start))
 
     def GetExtra(self, client):
         c_inst = Client.objects.filter(name=client)[0]
         return [(a.kind, a.name) for a in
-                c_inst.current_interaction.extra_items.all()]
+                c_inst.current_interaction.extra()]
 
     def GetCurrentEntry(self, client, e_type, e_name):
         c_inst = Client.objects.filter(name=client)[0]
-        result = c_inst.current_interaction.bad_items.filter(kind=e_type,
-                                                             name=e_name)
+        result = c_inst.current_interaction.bad().filter(entry__kind=e_type,
+                                                         entry__name=e_name)
         if not result:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         entry = result[0]

@@ -17,8 +17,8 @@ def sortwell(value):
     "sorts a list(or evaluates queryset to list) of bad, extra, or modified items in the best"
     "way for presentation"
     configItems = list(value)
-    configItems.sort(lambda x,y: cmp(x.name, y.name))
-    configItems.sort(lambda x,y: cmp(x.kind, y.kind))
+    configItems.sort(lambda x,y: cmp(x.entry.name, y.entry.name))
+    configItems.sort(lambda x,y: cmp(x.entry.kind, y.entry.kind))
     return configItems
 def sortname(value):
     "sorts a list( or evaluates queryset) by name"

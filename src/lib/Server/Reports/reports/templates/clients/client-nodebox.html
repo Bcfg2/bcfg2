@@ -26,33 +26,33 @@
 	    <div class="warning">
 	        <span class="nodelisttitle">This node did not run within the last 24 hours-- it may be out of date.</span>
 	    </div>
-	    {% endif %}
-	    {% if interaction.bad_items.all %}
+	{% endif %}
+	{% if interaction.bad %}
 	    <div class="bad">
-		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-bad');" title="Click to expand" class="commentLink">{{interaction.bad_items.count}}</a> items did not verify and are considered Dirty.<br /></span>
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-bad');" title="Click to expand" class="commentLink">{{interaction.bad.count}}</a> items did not verify and are considered Dirty.<br /></span>
 		<div class="items" id="{{client.name}}-bad"><ul class="plain">
-		{% for bad in interaction.bad_items.all|sortwell %}
-		    <li><strong>{{bad.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_bad bad.id%}">{{bad.name}}</a></tt></li>
+		{% for bad in interaction.bad|sortwell %}
+		    <li><strong>{{bad.entry.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_bad bad.id%}">{{bad.entry.name}}</a></tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
 	{% endif %}
-	{% if interaction.modified_items.all %}
+	{% if interaction.modified %}
 	    <div class="modified">
-		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-modified');" title="Click to expand" class="commentLink">{{interaction.modified_items.count}}</a> items were modified in the last run.<br /></span>
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-modified');" title="Click to expand" class="commentLink">{{interaction.modified.count}}</a> items were modified in the last run.<br /></span>
 		<div class="items" id="{{client.name}}-modified"><ul class="plain">
-		{% for modified in interaction.modified_items.all|sortwell %}
-		    <li><strong>{{modified.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_modified modified.id %}">{{modified.name}}</a></tt></li>
+		{% for modified in interaction.modified|sortwell %}
+		    <li><strong>{{modified.entry.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_modified modified.id %}">{{modified.name}}</a></tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
 	{% endif %}
-	{% if interaction.extra_items.all %}
+	{% if interaction.extra %}
 	    <div class="extra">
-		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-extra');" title="Click to expand" class="commentLink">{{interaction.extra_items.count}}</a> extra configuration elements on the node.<br /></span>
+		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-extra');" title="Click to expand" class="commentLink">{{interaction.extra.count}}</a> extra configuration elements on the node.<br /></span>
 		<div class="items" id="{{client.name}}-extra"><ul class="plain">
-		{% for extra in interaction.extra_items.all|sortwell %}
-		    <li><strong>{{extra.kind}}: </strong><tt>{{extra.name}}</tt></li>
+		{% for extra in interaction.extra|sortwell %}
+		    <li><strong>{{extra.entry.kind}}: </strong><tt>{{extra.entry.name}}</tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
