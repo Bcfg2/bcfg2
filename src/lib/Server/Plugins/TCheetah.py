@@ -33,6 +33,7 @@ class TemplateFile:
         '''Build literal file information'''
         self.template.metadata = metadata
         self.template.path = entry.get('realname', entry.get('name'))
+        self.template.source_path = self.name
         
         try:
             if type(self.template) == unicode:
