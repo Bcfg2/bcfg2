@@ -11,6 +11,7 @@ logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
 def _merge_database_table_entries():
     cursor = connection.cursor()
     insert_cursor = connection.cursor()
+    find_cursor = connection.cursor()
     cursor.execute("""
     Select name, kind from reports_bad
     union 
@@ -36,7 +37,13 @@ def _merge_database_table_entries():
         inner join reports_extra_interactions on reports_extra.id=reports_extra_interactions.extra_id
     """)
     for row in cursor.fetchall():
-        entry_id = entries_map[(row[0], row[1])]
+        key = (row[0], row[1])
+        if entries_map.get(key, None):
+            entry_id = entries_map[key]
+        else:
+            find_cursor.execute("Select id from reports_entries where name=%s and kind=%s", key)
+            row = find_cursor.fetchone()
+            entry_id = row[0]
         insert_cursor.execute("insert into reports_entries_interactions \
             (entry_id, interaction_id, reason_id, type) values (%s, %s, %s, %s)", (entry_id, row[3], row[2], row[4]))
 
