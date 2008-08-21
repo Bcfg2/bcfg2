@@ -165,7 +165,7 @@ class Tool:
         if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
                               % (entry.tag, entry.get('name')))
-            self.logger.error("\t... due to absense of %s attribute(s)" % \
+            self.logger.error("\t... due to absence of %s attribute(s)" % \
                               (":".join(missing)))
             try:
                 self.gatherCurrentData(entry)
@@ -189,7 +189,7 @@ class Tool:
         if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                               % (entry.tag, entry.get('name')))
-            self.logger.error("\t... due to absense of %s attribute" % \
+            self.logger.error("\t... due to absence of %s attribute" % \
                               (":".join(missing)))
             return False
         return True
