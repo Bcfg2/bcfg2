@@ -31,6 +31,14 @@ if __name__ == '__main__':
             if filename.endswith('info.xml'):
                 info_list.append(os.path.join(root, filename))
 
+    # get all XIncluded bundles
+    ref_bundles = []
+    unref_bundles = []
+    xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
+    xdata.xinclude()
+    for bundle in xdata.findall("//Bundle"):
+	ref_bundles.append("%s/Bundler/%s.xml" % (repo,bundle.get('name')))
+
     # get lists of all other xml files to validate
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
     clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
@@ -41,6 +49,11 @@ if __name__ == '__main__':
     imageinfo_list = glob.glob("%s/etc/report-configuration.xml" % repo)
     services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
     deps_list = glob.glob("%s/Deps/*.xml" % repo)
+
+    # find all unreferenced bundles
+    for bundle in ref_bundles:
+        if bundle not in bundle_list:
+            unref_bundles.append(bundle)
 
     filesets = {'metadata':(metadata_list, "%s/metadata.xsd"),
                 'clients':(clients_list, "%s/clients.xsd"),
@@ -87,4 +100,12 @@ if __name__ == '__main__':
                               (schemaname % schemadir, filename))
                 elif verbose:
                     print "%s checks out" % (filename)
+
+    # print out missing bundle information
+    if verbose:
+        print("")
+        for bundle in unref_bundles:
+            print ("*** Warning: Bundle %s referenced, but does not "
+                                "exist." % bundle)
+
     raise SystemExit, failures
