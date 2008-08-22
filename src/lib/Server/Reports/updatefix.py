@@ -42,8 +42,8 @@ def _merge_database_table_entries():
             entry_id = entries_map[key]
         else:
             find_cursor.execute("Select id from reports_entries where name=%s and kind=%s", key)
-            row = find_cursor.fetchone()
-            entry_id = row[0]
+            rowe = find_cursor.fetchone()
+            entry_id = rowe[0]
         insert_cursor.execute("insert into reports_entries_interactions \
             (entry_id, interaction_id, reason_id, type) values (%s, %s, %s, %s)", (entry_id, row[3], row[2], row[4]))
 
