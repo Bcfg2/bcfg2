@@ -35,17 +35,17 @@ start () {
     STATUS=$?
     if [ "$STATUS" = 0 ]
     then
-	log_success_msg "bcfg2-server"
+        log_success_msg "bcfg2-server"
         test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-server
     else
-	log_failure_msg "bcfg2-server"
+        log_failure_msg "bcfg2-server"
     fi
     return $STATUS
 }
 
 stop () {
     echo -n "Stopping Configuration Management Server: "
-    killproc ${BINARY}
+    killproc -p $PIDFILE ${BINARY}
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
       log_success_msg "bcfg2-server"
@@ -66,8 +66,8 @@ status () {
 
     if [ -f $PIDFILE ]; then
       if [ -n "$PID" ]; then
-	log_failure_msg "$BINARY dead but pid file exists..."
-	return 1
+        log_failure_msg "$BINARY dead but pid file exists..."
+        return 1
       fi
     fi
     

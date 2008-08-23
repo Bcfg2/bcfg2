@@ -85,8 +85,8 @@ status () {
         fi
         if [ -f $PIDFILE ]; then
             if [ -n "$PID" ]; then
-	        log_failure_msg "$BINARY dead but pid file exists..."
-	        return 1
+                log_failure_msg "$BINARY dead but pid file exists..."
+                return 1
             fi
         fi
     else
@@ -98,7 +98,7 @@ stop () {
     if [ "$BCFG2_AGENT" -eq 1 ]
     then
       echo -n "Stopping configuration management client daemon: "
-      killproc ${BINARY}
+      killproc -p $PIDFILE ${BINARY}
       STATUS=$?
       if [ "$STATUS" -eq 0 ]
       then
