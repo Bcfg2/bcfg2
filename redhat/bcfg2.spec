@@ -212,6 +212,7 @@ fi
 %{_sbindir}/bcfg2-info
 %{_sbindir}/bcfg2-ping-sweep
 %{_sbindir}/bcfg2-repo-validate
+%{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-remote
 %{_sbindir}/bcfg2-server
 
