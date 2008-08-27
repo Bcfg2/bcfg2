@@ -12,7 +12,7 @@ class MetadataRuntimeError(Exception):
     '''This error is raised when the metadata engine is called prior to reading enough data'''
     pass
 
-probe_matcher = re.compile("(?P<basename>\S+).(?P<mode>[GH])_\S+")
+probe_matcher = re.compile("(?P<basename>\S+)(.(?P<mode>[GH])_\S+)?")
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
