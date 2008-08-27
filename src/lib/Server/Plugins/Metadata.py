@@ -275,6 +275,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                 # self.groups[group] => (bundles, groups, categories)
                 self.groups[group] = ([], [], {})
                 tocheck = [group]
+                group_cat = self.groups[group][2]
                 while tocheck:
                     now = tocheck.pop()
                     if now not in self.groups[group][1]:
@@ -282,11 +283,17 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                     if grouptmp.has_key(now):
                         (bundles, groups) = grouptmp[now]
                         for ggg in [ggg for ggg in groups if ggg not in self.groups[group][1]]:
-                            if not self.categories.has_key(ggg) or not self.groups[group][2].has_key(self.categories[ggg]):
+                            if ggg not in self.categories or \
+                                   self.categories[ggg] not in self.groups[group][2]:
                                 self.groups[group][1].append(ggg)
                                 tocheck.append(ggg)
-                            if self.categories.has_key(ggg):
-                                self.groups[group][2][self.categories[ggg]] = ggg
+                                if self.categories.has_key(ggg):
+                                    group_cat[self.categories[ggg]] = ggg
+                            elif ggg in self.categories:
+                                self.logger.info("Group %s: %s cat-suppressed %s" % \
+                                                 (group,
+                                                  group_cat[self.categories[ggg]],
+                                                  ggg))
                         [self.groups[group][0].append(bund) for bund in bundles
                          if bund not in self.groups[group][0]]
         self.states[dest] = True
