@@ -40,7 +40,7 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
 
     def GetExtra(self, client):
         c_inst = Client.objects.filter(name=client)[0]
-        return [(a.kind, a.name) for a in
+        return [(a.entry.kind, a.entry.name) for a in
                 c_inst.current_interaction.extra()]
 
     def GetCurrentEntry(self, client, e_type, e_name):
