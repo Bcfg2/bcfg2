@@ -6,7 +6,8 @@ import os, sys
 try:
     import Bcfg2.Server.Reports.settings
 except:
-    sys.stderr.write("Failed to load configuration settings. is /etc/bcfg2.conf readable?")
+    sys.stderr.write("Failed to load configuration settings."
+                     "is /etc/bcfg2.conf readable?")
     sys.exit(1)
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
@@ -24,7 +25,8 @@ import fileinput
 
 def timecompare(client1, client2):
     '''compares two clients by their timestamps'''
-    return cmp(client1.current_interaction.timestamp, client2.current_interaction.timestamp)
+    return cmp(client1.current_interaction.timestamp, \
+               client2.current_interaction.timestamp)
 
 def namecompare(client1, client2):
     '''compares two clients by their names'''
@@ -59,7 +61,10 @@ def crit_compare(criterion, client1, client2):
     return 0
 
 def print_fields(fields, cli, max_name, entrydict):
-    '''prints the fields specified in fields of cli, max_name specifies the column width of the name column'''
+    '''
+    prints the fields specified in fields of cli, max_name
+    specifies the column width of the name column
+    '''
     fmt = ''
     for field in fields:
         if field == 'name':
@@ -89,7 +94,7 @@ def print_fields(fields, cli, max_name, entrydict):
 
 def print_entry(item, max_name):
     fmt = ("%%-%ds   " % (max_name))
-    fdata = item.kind + ":" + item.name
+    fdata = item.entry.kind + ":" + item.entry.name
     display = fmt % (fdata)
     print display
         
@@ -106,7 +111,8 @@ result = list()
 entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'ab:cde:hs:x:', ['sort=', 'fields=', 'badentry=','extraentry='])
+opts, pargs = getopt(args, 'ab:cde:hs:x:',
+                     ['sort=', 'fields=', 'badentry=', 'extraentry='])
 
 for option in opts:
     if len(option) > 0:
@@ -162,16 +168,16 @@ Options and arguments (and corresponding environment variables):
 elif singlehost != "":
     for c_inst in c_list:
         if singlehost == c_inst.name:
-            baditems = c_inst.current_interaction.bad_items.all()
+            baditems = c_inst.current_interaction.bad()
             if len(baditems) > 0 and ('-b' in args or '-s' in args):
                 print "Bad Entries:"
                 max_name = -1
                 for item in baditems:
-                    if len(item.name) > max_name:
-                        max_name = len(item.name)
+                    if len(item.entry.name) > max_name:
+                        max_name = len(item.entry.name)
                 for item in baditems:
                     print_entry(item, max_name)
-            extraitems = c_inst.current_interaction.extra_items.all()
+            extraitems = c_inst.current_interaction.extra()
             if len(extraitems) > 0 and ('-e' in args or '-s' in args):
                 print "Extra Entries:"
                 max_name = -1
@@ -209,11 +215,11 @@ else:
 
     elif badentry != "":
         if len(badentry) == 1:
-            fileread =fileinput.input(badentry[0])
+            fileread = fileinput.input(badentry[0])
             for line in fileread:
                 badentry = line.strip().split(',')
                 for c_inst in c_list:
-                    baditems = c_inst.current_interaction.bad_items.all()
+                    baditems = c_inst.current_interaction.bad()
                     for item in baditems:
                         if item.name == badentry[1] and item.kind == badentry[0]:
                             result.append(c_inst)
@@ -224,18 +230,18 @@ else:
                             break
         else:
             for c_inst in c_list:
-                baditems = c_inst.current_interaction.bad_items.all()
+                baditems = c_inst.current_interaction.bad()
                 for item in baditems:
                     if item.name == badentry[1] and item.kind == badentry[0]:
                         result.append(c_inst)
                         break
     elif extraentry != "":
         if len(extraentry) == 1:
-            fileread =fileinput.input(extraentry[0])
+            fileread = fileinput.input(extraentry[0])
             for line in fileread:
                 extraentry = line.strip().split(',')
                 for c_inst in c_list:
-                    extraitems = c_inst.current_interaction.extra_items.all()
+                    extraitems = c_inst.current_interaction.extra()
                     for item in extraitems:
                         if item.name == extraentry[1] and item.kind == extraentry[0]:
                             result.append(c_inst)
@@ -246,7 +252,7 @@ else:
                             break
         else:
             for c_inst in c_list:
-                extraitems = c_inst.current_interaction.extra_items.all()
+                extraitems = c_inst.current_interaction.extra()
                 for item in extraitems:
                     if item.name == extraentry[1] and item.kind == extraentry[0]:
                         result.append(c_inst)

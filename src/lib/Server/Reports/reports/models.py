@@ -29,12 +29,12 @@ TYPE_CHOICES = (
 )
 class ClientManager(models.Manager):
     '''extended client manager functions'''
-    def active(self,timestamp='now'):
+    def active(self, timestamp='now'):
         '''returns a set of clients that have been created and have not yet been
         expired as of optional timestmamp argument. Timestamp should be a
         string formatted in the fashion: 2006-01-01 00:00:00'''
         
-        if timestamp=='now':
+        if timestamp == 'now':
             timestamp = datetime.now()
         else:
             print timestamp
@@ -42,8 +42,11 @@ class ClientManager(models.Manager):
                 timestamp = datetime(*strptime(timestamp, "%Y-%m-%d %H:%M:%S")[0:6])
             except ValueError:
                 return self.filter(expiration__lt=timestamp, creation__gt=timestamp);
-                #this is a really hacky way to return an empty QuerySet
-                #this should return Client.objects.none() in Django development version.
+                '''
+                - this is a really hacky way to return an empty QuerySet
+                - this should return Client.objects.none() in Django
+                  development version.
+                '''
         
         return self.filter(Q(expiration__gt=timestamp) | Q(expiration__isnull=True),
                            creation__lt=timestamp)
@@ -130,7 +133,7 @@ class Interaction(models.Model):
             return 0
     
     def isclean(self):
-        if (self.bad_items.count() == 0 and self.goodcount == self.totalcount):
+        if (self.bad().count() == 0 and self.goodcount == self.totalcount):
         #if (self.state == "good"):
             return True
         else:
