@@ -12,11 +12,14 @@ import Bcfg2.Options
 
 try:
     pdlist = set
-except:
+except NameError:
     class pdlist(list):
         def add(self, item):
             if item not in self:
                 self.append(item)
+        def discard(self, item):
+            if item in self:
+                self.remove(item)
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
