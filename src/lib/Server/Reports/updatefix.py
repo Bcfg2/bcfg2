@@ -95,6 +95,10 @@ def dosync():
         #we should get here if the database is new
         fresh = True
 
+    # ensure database connection are close, so that the management can do it's job right    
+    cursor.close()
+    connection.close()
+    # Do the syncdb according to the django version
     if "call_command" in dir(django.core.management):
         # this is available since django 1.0 alpha.
         # not yet tested for full functionnality
