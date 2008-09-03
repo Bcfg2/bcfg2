@@ -68,6 +68,11 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                             self.logger.error("Got Unsupported pattern %s from debsums" \
                                               % item)
                             files.append(item)
+                    # We check if there is file in the checksum to do
+                    if files:
+                        # if files are found there we try to be sure our modlist is sane
+                        # with erroneous symlinks
+                        modlist = [os.path.realpath(filename) for filename in modlist]
                     bad = [filename for filename in files if filename not in modlist]
                     if bad:
                         self.logger.info("Package %s failed validation. Bad files are:" % \
