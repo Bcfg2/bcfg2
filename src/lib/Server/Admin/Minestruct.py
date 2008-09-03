@@ -35,7 +35,11 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
             elif opt == '-g':
                 groups = optarg.split(':')
 
-        extra = self.statistics.GetExtra(client)
+        try:
+            extra = self.statistics.GetExtra(client)
+        except:
+            self.log.error("Failed to find extra entry info for client %s" % client)
+            raise SystemExit(1)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))
         add_point = root
