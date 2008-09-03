@@ -1,7 +1,7 @@
 '''Cobalt component base classes'''
 __revision__ = '$Revision$'
 
-import logging, select, signal, socket, sys, urlparse, xmlrpclib, cPickle, os
+import logging, select, signal, socket, sys, urlparse, xmlrpclib, cPickle, os, traceback
 from base64 import decodestring
 
 import BaseHTTPServer, SimpleXMLRPCServer
@@ -230,7 +230,12 @@ class Component(TLSServer,
         except ForkedChild:
             raise
         except:
-            self.logger.error("Unexpected handler failure", exc_info=1)
+            self.logger.error("Unexpected handler failure")
+            trace = sys.exc_info()
+            self.logger.error("%s : %s" % (str(trace[0]), str(trace[1])))
+            for line in traceback.format_exc().splitlines():
+                self.logger.error(line)
+            del trace
             # report exception back to server
             response = xmlrpclib.dumps(xmlrpclib.Fault(1,
                                    "%s:%s" % (sys.exc_type, sys.exc_value)))
