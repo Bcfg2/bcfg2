@@ -42,7 +42,7 @@
 		<span class="nodelisttitle"><a href="javascript:toggleLayer('{{client.name}}-modified');" title="Click to expand" class="commentLink">{{interaction.modified.count}}</a> items were modified in the last run.<br /></span>
 		<div class="items" id="{{client.name}}-modified"><ul class="plain">
 		{% for modified in interaction.modified|sortwell %}
-		    <li><strong>{{modified.entry.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_modified modified.id %}">{{modified.name}}</a></tt></li>
+		    <li><strong>{{modified.entry.kind}}: </strong><tt><a href="{% url Bcfg2.Server.Reports.reports.views.config_item_modified modified.id %}">{{modified.entry.name}}</a></tt></li>
 		{% endfor %}
 		</ul></div>
 	    </div>
