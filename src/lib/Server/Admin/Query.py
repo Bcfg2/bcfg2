@@ -39,11 +39,9 @@ class Query(Bcfg2.Server.Admin.Mode):
                 print "Unknown argument %s" % arg
                 continue
             if k == 'p':
-                nc = [c for c, p in self.meta.clients.iteritems() if p == v]
+		nc = self.meta.GetClientByProfile(v)
             elif k == 'g':
-                nc = [c for c in self.meta.clients if v in
-                      self.meta.groups[self.meta.clients[c]][1] or
-                      v in self.meta.cgroups.get(c, [])]
+		nc = self.meta.GetClientByGroup(v)
             clients = [c for c in clients if c in nc]
         if '-n' in args:
             for client in clients:
