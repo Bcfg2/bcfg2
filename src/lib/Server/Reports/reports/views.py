@@ -10,7 +10,6 @@ from time import strptime
 from django.db import connection
 from django.db.backends import util
 from django.contrib.auth.decorators import login_required
-from sets import Set
 
 def index(request):
     return render_to_response('index.html')
@@ -68,7 +67,8 @@ def bad_item_index(request, timestamp = 'now', type=TYPE_BAD):
     else:
         mod_or_bad = "modified"
     
-    current_clients = [c.current_interaction for c in Client.objects.active(timestamp)]
+    current_clients = [c.current_interaction
+                       for c in Client.objects.active(timestamp)]
     item_list_dict = {}
     for x in Entries_interactions.objects.select_related().filter(interaction__in=current_clients, type=type).distinct():
         if item_list_dict.get(x.entry.kind, None):
@@ -95,11 +95,12 @@ def client_index(request, timestamp = 'now'):
     client_list_a = client_list[len(client_list)/2:]
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
-    return render_to_response('clients/index.html', {'client_list_a': client_list_a,
-                                                     'client_list_b': client_list_b,
-                                                     'timestamp' : timestamp,
-                                                     'timestamp_date' : timestamp[:10],
-                                                     'timestamp_time' : timestamp[11:19]})
+    return render_to_response('clients/index.html',
+           {'client_list_a': client_list_a,
+            'client_list_b': client_list_b,
+            'timestamp' : timestamp,
+            'timestamp_date' : timestamp[:10],
+            'timestamp_time' : timestamp[11:19]})
 
 def client_detail(request, hostname = None, pk = None):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
@@ -115,9 +116,15 @@ def client_manage(request, hostname = None):
     client = get_object_or_404(Client, name=hostname)
     currenttime = datetime.now().isoformat('@')
     if client.expiration != None:
-        message = "This client currently has an expiration date of %s. Reports after %s will not include data for this host. You may change this if you wish by selecting a new time, earlier or later."%(client.expiration,client.expiration)
+        message = ("This client currently has an expiration date of %s. "
+                   "Reports after %s will not include data for this host "
+                   "You may change this if you wish by selecting a new "
+                   "time, earlier or later."
+                   % (client.expiration, client.expiration))
     else:
-        message = "This client is currently active and displayed. You may choose a date after which this client will no longer appear in reports."
+        message = ("This client is currently active and displayed. You "
+                   "may choose a date after which this client will no "
+                   "longer appear in reports.")
     if request.method == 'POST':
         date = request.POST['date1']
         time = request.POST['time']
@@ -125,12 +132,12 @@ def client_manage(request, hostname = None):
             timestamp = datetime(*(strptime(date+"@"+time, "%Y-%m-%d@%H:%M:%S")[0:6]))
         except ValueError:
             timestamp = None
-        if timestamp==None:
+        if timestamp == None:
             message = "Invalid removal date, please try again using the format: yyyy-mm-dd hh:mm:ss."
         else:
             client.expiration = timestamp
             client.save()
-            message = "Expiration for client set to %s."%client.expiration
+            message = "Expiration for client set to %s." % client.expiration
     return render_to_response('clients/manage.html', {'client': client, 'message': message,
                                                       'timestamp_date' : currenttime[:10],
                                                       'timestamp_time' : currenttime[11:19]})
@@ -224,7 +231,7 @@ def prepare_client_lists(request, timestamp = 'now'):
 
     interact_queryset = Interaction.objects.interaction_per_client(timestamp)
     # or you can specify a time like this: '2007-01-01 00:00:00'
-    [client_interaction_dict.__setitem__(x.client_id,x) for x in interact_queryset]
+    [client_interaction_dict.__setitem__(x.client_id, x) for x in interact_queryset]
     client_list = Client.objects.active(timestamp).filter(id__in=client_interaction_dict.keys()).order_by('name')
 
     [clean_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
@@ -237,7 +244,7 @@ def prepare_client_lists(request, timestamp = 'now'):
         cursor.execute("select reports_ping.status, x.client_id from (select client_id, MAX(endtime) "+
                        "as timer from reports_ping GROUP BY client_id) x, reports_ping where "+
                        "reports_ping.client_id = x.client_id AND reports_ping.endtime = x.timer")
-        [client_ping_dict.__setitem__(x[1],x[0]) for x in cursor.fetchall()]
+        [client_ping_dict.__setitem__(x[1], x[0]) for x in cursor.fetchall()]
     except:
         pass #This is to fix problems when you have only zero records returned
 
@@ -266,10 +273,10 @@ def prepare_client_lists(request, timestamp = 'now'):
     [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
 
     
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_MODIFIED])
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id = reports_interaction.client_id AND reports_client.current_interaction_id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_MODIFIED])
     modified_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id=reports_interaction.client_id AND reports_interaction.id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_EXTRA])
+    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id = reports_interaction.client_id AND reports_client.current_interaction_id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_EXTRA])
     extra_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
 
     if timestamp == 'now':
