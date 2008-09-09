@@ -212,6 +212,7 @@ class Component(TLSServer,
             # need to add waitpid code here to enforce maxchild
             if method in self.fork_funcs:
                 self.clean_up_children()
+                self.check_for_free_slot()
                 pid = os.fork()
                 if pid:
                     self.children.append(pid)
@@ -252,11 +253,12 @@ class Component(TLSServer,
                     break
             except OSError:
                 break
+
+    def check_for_free_slot(self):
         if len(self.children) >= self.child_limit:
             self.logger.info("Reached child_limit; waiting for child exit")
             pid = os.waitpid(0, 0)[0]
             self.children.remove(pid)
-            self.logger.debug("process %d exited" % pid)
 
     def _authenticate_connection(self, method, user, password, address):
         '''Authenticate new connection'''

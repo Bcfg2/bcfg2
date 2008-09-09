@@ -24,13 +24,15 @@ class CoreInitError(Exception):
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, plugins, structures, generators, password, svn, encoding):
+    def __init__(self, repo, plugins, structures, generators, password, svn,
+                 encoding, filemonitor='default'):
         object.__init__(self)
         self.datastore = repo
         try:
-            self.fam = Bcfg2.Server.FileMonitor.default()
+            self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
         except IOError:
-            raise CoreInitError, "failed to connect to fam"
+            raise CoreInitError, "failed to instantiate fam driver (used %s)" % \
+                  filemonitor
         self.pubspace = {}
         self.generators = []
         self.structures = []

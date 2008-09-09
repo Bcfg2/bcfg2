@@ -231,5 +231,5 @@ available['pseudo'] = PseudoFam
 
 for fdrv in ['gamin', 'fam', 'pseudo']:
     if fdrv in available:
-        default = available[fdrv]
+        available['default'] = available[fdrv]
         break

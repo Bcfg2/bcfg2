@@ -35,7 +35,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         try:
             self.Core = Core(setup['repo'], setup['plugins'], setup['structures'],
                              setup['generators'], setup['password'], 
-                             setup['svn'], setup['encoding'])
+                             setup['svn'], setup['encoding'], setup['filemonitor'])
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
             raise SystemExit, 1
@@ -86,6 +86,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         rsockinfo = []
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
+            self.clean_up_children()
             if self.shut:
                 raise socket.error
             try:
@@ -202,7 +203,9 @@ if __name__ == '__main__':
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'structures': Bcfg2.Options.SERVER_STRUCTURES,
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD})
+                    'password': Bcfg2.Options.SERVER_PASSWORD,
+                    'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+                    })
     OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
                     'location' : Bcfg2.Options.SERVER_LOCATION,
                     'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
