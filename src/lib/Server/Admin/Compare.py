@@ -1,13 +1,16 @@
-
 import lxml.etree, os
 import Bcfg2.Server.Admin
 
 class Compare(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = "bcfg2-admin compare <file1> <file2>\nbcfg2-admin compare -r <dir1> <dir2>"
-    __longhelp__ =  __shorthelp__ + '''\n\tCompare mode determines differences between directories of client specification instances'''
-    
-    def __init__(self):
-        Bcfg2.Server.Admin.Mode.__init__(self)
+    __shorthelp__ = ("Determine differences between files or "
+                     "directories of client specification instances")
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin compare <file1> <file2>"
+                                    "\nbcfg2-admin compare -r <dir1> <dir2>")
+    __usage__ = ("bcfg2-admin compare <old> <new>\n\n"
+                 "     -r\trecursive")
+
+    def __init__(self, configfile):
+        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
         self.important = {'Package':['name', 'version'],
                           'Service':['name', 'status'],
                           'Directory':['name', 'owner', 'group', 'perms'],
@@ -15,15 +18,17 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           'ConfigFile':['name', 'owner', 'group', 'perms'],
                           'Permissions':['name', 'perms'],
                           'PostInstall':['name']}
-        
+
     def compareStructures(self, new, old):
         for child in new.getchildren():
-            equiv = old.xpath('%s[@name="%s"]' % (child.tag, child.get('name')))
+            equiv = old.xpath('%s[@name="%s"]' %
+                             (child.tag, child.get('name')))
             if child.tag in self.important:
                 print "tag type %s not handled" % (child.tag)
                 continue
             if len(equiv) == 0:
-                print "didn't find matching %s %s" % (child.tag, child.get('name'))
+                print ("didn't find matching %s %s" %
+                      (child.tag, child.get('name')))
                 continue
             elif len(equiv) >= 1:
                 if child.tag == 'ConfigFile':
@@ -106,6 +111,9 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
+        if len(args) == 0:
+            self.errExit("No argument specified.\n"
+                         "Please see bcfg2-admin compare help for usage.")
         if '-r' in args:
             args = list(args)
             args.remove('-r')
@@ -126,6 +134,4 @@ class Compare(Bcfg2.Server.Admin.Mode):
             (old, new) = args
         except IndexError:
             print self.__call__.__doc__
-            raise SystemExit
-
-    
+            raise SystemExit(1)

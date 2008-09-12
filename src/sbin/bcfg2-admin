@@ -26,23 +26,23 @@ if __name__ == '__main__':
         raise SystemExit(1)
 
 
-    do_help = False
     # First get the options...
     for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            do_help = True
         if opt in ("-C", "--configfile"):
             configfile = arg
 
     modes = [x.lower() for x in Bcfg2.Server.Admin.__all__]
     modes.remove('mode')
 
-    if do_help or len(args) < 1 or args[0] == 'help':
+    if len(args) < 1 or args[0] == 'help':
+        sys.stdout.write("Usage: bcfg2-admin MODE [ARGS]\n\n"
+               "Available modes are:")
         if len(args) > 1:
             args = [args[1], args[0]]
         else:
-            for mod in [mode_import(mode) for mode in modes]:
-                print mod.__shorthelp__
+            for mode in modes:
+                sys.stdout.write("\n   %-12s   %s" %
+                                (mode, mode_import(mode).__shorthelp__))
             raise SystemExit(0)
     if args[0] in modes:
         modname = args[0].capitalize()

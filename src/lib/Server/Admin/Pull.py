@@ -1,14 +1,31 @@
-
 import binascii, difflib, getopt, lxml.etree, time, ConfigParser
 import Bcfg2.Server.Admin
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
-    '''Pull mode retrieves entries from clients and integrates the information into the repository'''
-    __shorthelp__ = 'bcfg2-admin pull [-v] [-f] [-I] <client> <entry type> <entry name>'
-    __longhelp__ = __shorthelp__ + '\n\tIntegrate configuration information from clients into the server repository'
+    '''
+    Pull mode retrieves entries from clients and
+    integrates the information into the repository
+    '''
+    __shorthelp__ = ("Integrate configuration information "
+                     "from clients into the server repository")
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I]"
+                                    "<client> <entry type> <entry name>")
+    __usage__ = ("bcfg2-admin pull [options] <client> <entry type> "
+                 "<entry name>\n\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n" %
+                ("-v",
+                 "be verbose",
+                 "-f",
+                 "force",
+                 "-I",
+                 "interactive"))
     allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
+
     def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile)
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
+                                                 self.__usage__)
         self.stats = self.bcore.stats
         self.log = False
         self.mode = 'interactive'
@@ -19,7 +36,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             opts, gargs = getopt.getopt(args, 'vfI')
         except:
             print self.__shorthelp__
-            raise SystemExit(0)
+            raise SystemExit(1)
         for opt in opts:
             if opt[0] == '-v':
                 self.log = True
@@ -37,7 +54,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                     self.stats.GetCurrentEntry(client, etype, ename)
         except Bcfg2.Server.Plugin.PluginExecutionError:
             print "Statistics plugin failure; could not fetch current state"
-            raise SystemExit, 1
+            raise SystemExit(1)
 
         data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
         for k, v in data.iteritems():
@@ -54,7 +71,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             if choices[0].all:
                 print " => global entry"
             elif choices[0].group:
-                print " => group entry: %s (prio %d)" % (choices[0].group, choices[0].prio)
+                print (" => group entry: %s (prio %d)" %
+                      (choices[0].group, choices[0].prio))
             else:
                 print " => host entry: %s" % (choices[0].hostname)
             if raw_input("Use this entry? [yN]: ") in ['y', 'Y']:

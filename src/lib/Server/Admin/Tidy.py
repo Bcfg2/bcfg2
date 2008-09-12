@@ -2,11 +2,19 @@ import Bcfg2.Server.Admin
 import re, os, socket
 
 class Tidy(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin tidy [-f] [-I]'
-    __longhelp__ = __shorthelp__ + '\n\tClean up useless files in the repo'
+    __shorthelp__ = "Clean up useless files in the repo"
+    __longhelp__ = __shorthelp__ + "\nbcfg2-admin tidy [-f] [-I]"
+    __usage__ = ("bcfg2-admin tidy [options]\n\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n" %
+                ("-f",
+                 "force",
+                 "-I",
+                 "interactive"))
 
     def __init__(self, cfile):
-	Bcfg2.Server.Admin.Mode.__init__(self, cfile)
+        Bcfg2.Server.Admin.Mode.__init__(self, cfile)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
@@ -49,7 +57,8 @@ class Tidy(Bcfg2.Server.Admin.Mode):
                 to_remove.append("%s/SSHbase/%s" % (self.get_repo_path(), name))
             else:
                 if hostmatcher.match(name).group(1) in bad:
-                    to_remove.append("%s/SSHbase/%s" % (self.get_repo_path(), name))
+                    to_remove.append("%s/SSHbase/%s" %
+                                    (self.get_repo_path(), name))
         # clean up file~
         # clean up files without parsable names in Cfg
         return to_remove

@@ -1,17 +1,32 @@
-
-import getopt, popen2, lxml.etree
+import getopt, popen2
 import Bcfg2.Server.Admin
 
 class Viz(Bcfg2.Server.Admin.MetadataCore):
-    __shorthelp__ = '''bcfg2-admin viz [--includehosts] [--includebundles] [--includekey] [-o output.png] [--raw]'''
-    __longhelp__ = __shorthelp__ + '\n\tProduce graphviz diagrams of metadata structures'
+    __shorthelp__ = "Produce graphviz diagrams of metadata structures"
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin viz [--includehosts] "
+                                    "[--includebundles] [--includekey] "
+                                    "[-o output.png] [--raw]")
+    __usage__ = ("bcfg2-admin viz [options]\n\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n" %
+                ("-H, --includehosts",
+                 "include hosts in the viz output",
+                 "-b, --includebundles",
+                 "include bundles in the viz output",
+                 "-k, --includekey",
+                 "show a key for different digraph shapes",
+                 "-o, --outfile <file>",
+                 "write viz output to an output file"))
 
     colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
               'indianred1', 'limegreen', 'orange1', 'lightblue2',
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
     def __init__(self, cfile):
-	Bcfg2.Server.Admin.MetadataCore.__init__(self, cfile)
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, cfile,
+                                                 self.__usage__)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
@@ -63,7 +78,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             print "write to dot process failed. Is graphviz installed?"
             raise SystemExit(1)
         dotpipe.tochild.write('\trankdir="LR";\n')
-        dotpipe.tochild.write(self.metadata.viz(hosts, bundles, key, self.colors))
+        dotpipe.tochild.write(self.metadata.viz(hosts, bundles,
+                                                key, self.colors))
         if key:
             dotpipe.tochild.write("\tsubgraph cluster_key {\n")
             dotpipe.tochild.write('''\tstyle="filled";\n''')

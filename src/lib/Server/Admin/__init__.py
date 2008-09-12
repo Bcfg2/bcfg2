@@ -40,7 +40,8 @@ class Mode(object):
         return self.cfp.get('server', 'repository')
 
     def load_stats(self, client):
-        stats = lxml.etree.parse("%s/etc/statistics.xml" % (self.get_repo_path()))
+        stats = lxml.etree.parse("%s/etc/statistics.xml" %
+                                (self.get_repo_path()))
         hostent = stats.xpath('//Node[@name="%s"]' % client)
         if not hostent:
             self.errExit("Could not find stats for client %s" % (client))
@@ -49,12 +50,13 @@ class Mode(object):
 class MetadataCore(Mode):
     allowed = ['Metadata', 'BB']
     '''Base class for admin-modes that handle metadata'''
-    def __init__(self, configfile):
+    def __init__(self, configfile, usage):
         Mode.__init__(self, configfile)
         options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
                    'structures': Bcfg2.Options.SERVER_STRUCTURES,
                    'generators': Bcfg2.Options.SERVER_GENERATORS}
         setup = Bcfg2.Options.OptionParser(options)
+        setup.hm = usage
         setup.parse(sys.argv[1:])
         plugins = [plugin for plugin in setup['plugins']
                    if plugin in self.allowed]
@@ -64,7 +66,8 @@ class MetadataCore(Mode):
                       if generator in self.allowed]
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), plugins,
-                                                structures, generators, 'foo', False, 'UTF-8')
+                                                structures, generators,
+                                                'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
         [self.bcore.fam.Service() for _ in range(5)]

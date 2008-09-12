@@ -70,8 +70,10 @@ os_list = [
 
 
 class Init(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin init'
-    __longhelp__ = __shorthelp__ + '\n\tCompare two client specifications or directories of specifications' # FIXME
+    __shorthelp__ = ("Compare two client specifications or "
+                     "directories of specifications") # FIXME
+    __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
+    __usage__ = "bcfg2-admin init"
     options = {
                 'configfile': Bcfg2.Options.CFILE,
                 'gens'      : Bcfg2.Options.SERVER_GENERATORS,
@@ -87,11 +89,13 @@ class Init(Bcfg2.Server.Admin.Mode):
         opts.parse([])
 
         # FIXME don't overwrite existing bcfg2.conf file
-        configfile = raw_input("Store bcfg2 configuration in [%s]: " % opts['configfile'])
+        configfile = raw_input("Store bcfg2 configuration in [%s]: " %
+                                opts['configfile'])
         if configfile == '':
             configfile = opts['configfile']
 
-        repopath = raw_input("Location of bcfg2 repository [%s]: " % opts['repo'])
+        repopath = raw_input("Location of bcfg2 repository [%s]: " %
+                              opts['repo'])
         if repopath == '':
             repopath = opts['repo']
         
@@ -112,7 +116,8 @@ class Init(Bcfg2.Server.Admin.Mode):
             prompt += "%d: %s\n" % (os_list.index(entry) + 1, entry[0])
         prompt += ': '
         os_sel = os_list[int(raw_input(prompt))-1][1]
-        self.initializeRepo(configfile, repopath, server, password, os_sel, opts)
+        self.initializeRepo(configfile, repopath, server,
+                            password, os_sel, opts)
         print "Repository created successfuly in %s" % (repopath)
 
     def genPassword(self):
@@ -138,11 +143,11 @@ class Init(Bcfg2.Server.Admin.Mode):
         except:
             # FIXME how to handle
             print "Failed to write configuration file to '%s'\n" % configfile
-            pass
 
         # FIXME automate ssl key generation
         # FIXME key generation may fail as non-root user
-        os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
+        os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out' \
+                 '%s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:
             os.chmod('%s/bcfg2.key'% keypath, 0600)
         except:
@@ -161,5 +166,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                 except:
                     continue
             
-        open("%s/Metadata/groups.xml" % repo, "w").write(groups % os_selection)
-        open("%s/Metadata/clients.xml" % repo, "w").write(clients % socket.getfqdn())
+        open("%s/Metadata/groups.xml" %
+             repo, "w").write(groups % os_selection)
+        open("%s/Metadata/clients.xml" %
+             repo, "w").write(clients % socket.getfqdn())

@@ -1,8 +1,20 @@
 import Bcfg2.Server.Admin, Bcfg2.Logger, logging
 
 class Query(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = 'bcfg2-admin query [-n] [-c] [-f filename] g=group p=profile'
-    __longhelp__ = __shorthelp__ + '\n\tQuery clients'
+    __shorthelp__ = "Query clients"
+    __longhelp__ = (__shorthelp__ + "\nbcfg2-admin query [-n] [-c] "
+                                    "[-f filename] g=group p=profile")
+    __usage__ = ("bcfg2-admin query [options] <g=group> <p=profile>\n\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n" %
+                ("-n",
+                 "query results delimited with newlines",
+                 "-c",
+                 "query results delimited with commas",
+                 "-f filename",
+                 "write query to file"))
+
     def __init__(self, cfile):
         logging.root.setLevel(100)
         Bcfg2.Logger.setup_logging(100, to_console=False, to_syslog=False)
@@ -39,9 +51,9 @@ class Query(Bcfg2.Server.Admin.Mode):
                 print "Unknown argument %s" % arg
                 continue
             if k == 'p':
-		nc = self.meta.GetClientByProfile(v)
+                nc = self.meta.GetClientByProfile(v)
             elif k == 'g':
-		nc = self.meta.GetClientByGroup(v)
+                nc = self.meta.GetClientByGroup(v)
             clients = [c for c in clients if c in nc]
         if '-n' in args:
             for client in clients:

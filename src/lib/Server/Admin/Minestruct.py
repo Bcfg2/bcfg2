@@ -4,21 +4,31 @@ import lxml.etree, sys, getopt
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
     '''Pull extra entries out of statistics'''
-    __shorthelp__ = 'bcfg2-admin minestruct [-f file-name] [-g groups] client'
-    __longhelp__ = __shorthelp__ + '\n\tExtract extra entry lists from statistics'
+    __shorthelp__ = "Extract extra entry lists from statistics"
+    __longhelp__ = (__shorthelp__ +
+                    "\n\nbcfg2-admin minestruct [-f filename] "
+                    "[-g groups] client")
+    __usage__ = ("bcfg2-admin minestruct [options] <client>\n\n"
+                 "     %-25s%s\n"
+                 "     %-25s%s\n" %
+                ("-f <filename>",
+                 "build a particular file",
+                 "-g <groups>",
+                 "only build config for groups"))
+
+    def __init__(self, configfile):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
+                                                 self.__usage__)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0:
-            self.errExit("No hostname specified (see bcfg2-admin minestruct -h for help)")
+            self.errExit("No argument specified.\n"
+                         "Please see bcfg2-admin minestruct help for usage.")
         try:
             (opts, args) = getopt.getopt(args, 'f:g:h')
         except:
             self.log.error(self.__shorthelp__)
-            raise SystemExit(1)
-        if "-h" in args or not args:
-            print "Usage:"
-            print self.__shorthelp__
             raise SystemExit(1)
         
         client = args[0]
@@ -38,7 +48,8 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
         try:
             extra = self.statistics.GetExtra(client)
         except:
-            self.log.error("Failed to find extra entry info for client %s" % client)
+            self.log.error("Failed to find extra entry info for client %s" %
+                            client)
             raise SystemExit(1)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))
