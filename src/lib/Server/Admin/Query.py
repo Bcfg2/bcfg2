@@ -2,7 +2,7 @@ import Bcfg2.Server.Admin, Bcfg2.Logger, logging
 
 class Query(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Query clients"
-    __longhelp__ = (__shorthelp__ + "\nbcfg2-admin query [-n] [-c] "
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin query [-n] [-c] "
                                     "[-f filename] g=group p=profile")
     __usage__ = ("bcfg2-admin query [options] <g=group> <p=profile>\n\n"
                  "     %-25s%s\n"
