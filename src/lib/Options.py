@@ -132,8 +132,7 @@ class OptionSet(dict):
     def helpExit(self, msg='', code=1):
         if msg:
             print msg
-        print "Usage:"
-        print self.buildHelpMessage()
+        print "Usage: %s" % self.buildHelpMessage()
         raise SystemExit(code)
 
     def parse(self, argv, do_getopt=True):
