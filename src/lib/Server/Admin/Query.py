@@ -54,6 +54,9 @@ class Query(Bcfg2.Server.Admin.Mode):
                 nc = self.meta.GetClientByProfile(v)
             elif k == 'g':
                 nc = self.meta.GetClientByGroup(v)
+            else:
+                print "One of g= or p= must be specified"
+                raise SystemExit(1)
             clients = [c for c in clients if c in nc]
         if '-n' in args:
             for client in clients:
