@@ -460,9 +460,9 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             [newgroups.append(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
         groupscopy = copy.deepcopy(self.groups)
-        profilescopy = copy.deepcopy(self.profiles)
+        clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, newgroups, newbundles, newcategories,
-                              probed, uuid, password, (groupscopy, profilescopy))
+                              probed, uuid, password, (groupscopy, clientscopy))
         
     def GetProbes(self, meta, force=False):
         '''Return a set of probes for execution on client'''
