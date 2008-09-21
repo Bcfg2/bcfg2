@@ -31,6 +31,26 @@ class ClientMetadata(object):
         '''Test to see if client is a member of group'''
         return group in self.groups
 
+    def get_clients_by_group(self, group):
+        """
+        return a list of clients that are members of a group
+        Arguments:
+        - `group`: group name
+        """
+        profiles = [key for key, value in self.all[0].iteritems() \
+                    if group in value[1]]
+        return [key for key, value in self.all[1].iteritems() \
+                if value in profiles]
+
+    def get_clients_by_profile(self, profile):
+        """
+        return clients with a given profile
+        Arguments:
+        - `profile`: profile name
+        """
+        return [key for key, value in self.all[1].iteritems() \
+                if value == profile]
+
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding, plugin_name):
         fpattern = '[0-9A-Za-z_\-]+'
