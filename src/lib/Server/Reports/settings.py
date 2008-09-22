@@ -1,4 +1,4 @@
-# Django settings for bcfg reports project.
+# Django settings for bcfg2 reports project.
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
 c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
@@ -23,18 +23,22 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = c.get('statistics', 'database_engine')
 # 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-DATABASE_NAME = c.get('statistics', 'database_name')
+if c.has_option('statistics', 'database_name'):
+    DATABASE_NAME = c.get('statistics', 'database_name')
+else:
+    DATABASE_NAME = ''
 # Or path to database file if using sqlite3.
 #<repository>/etc/brpt.sqlite is default path
-DATABASE_USER = c.get('statistics', 'database_user')
-# Not used with sqlite3.
-DATABASE_PASSWORD = c.get('statistics', 'database_password')
-# Not used with sqlite3.
-DATABASE_HOST = c.get('statistics', 'database_host')
-# Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = c.get('statistics', 'database_port')
-# Set to empty string for default. Not used with sqlite3.
 
+if DATABASE_ENGINE != 'sqlite3':
+    DATABASE_USER = c.get('statistics', 'database_user')
+    # Not used with sqlite3.
+    DATABASE_PASSWORD = c.get('statistics', 'database_password')
+    # Not used with sqlite3.
+    DATABASE_HOST = c.get('statistics', 'database_host')
+    # Set to empty string for localhost. Not used with sqlite3.
+    DATABASE_PORT = c.get('statistics', 'database_port')
+    # Set to empty string for default. Not used with sqlite3.
 if DATABASE_ENGINE == 'sqlite3' and DATABASE_NAME == '':
     DATABASE_NAME = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
