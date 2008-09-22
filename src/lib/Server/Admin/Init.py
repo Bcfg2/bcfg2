@@ -8,6 +8,8 @@ config = '''
 repository = %s
 structures = %s
 generators = %s
+# Uncomment to use the DBStats plugin (0.9.6pre2 and later)
+#plugins = DBStats
 
 [statistics]
 sendmailpath = %s
@@ -31,6 +33,8 @@ web_debug = True
 protocol = %s
 password = %s
 key = %s/bcfg2.key
+# fingerprint of server (from bcfg2-admin fingerprint)
+#fingerprint = [server fingerprint]
 
 [components]
 bcfg2 = %s
