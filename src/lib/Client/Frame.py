@@ -148,6 +148,20 @@ class Frame:
 
         candidates = [entry for entry in self.states if not self.states[entry]]
         self.whitelist = [entry for entry in self.states if not self.states[entry]]
+        # Need to process decision stuff early, so that dryrun mode works with it
+        if self.setup['decision'] == 'whitelist':
+            dwl = self.setup['decision_list'][0]
+            self.whitelist = [e for e in self.whitelist \
+                              if (e.tag, e.get('name')) in dwl or \
+                              (e.tag, '*') in dwl or \
+                              ('*', e.get('name')) in dwl]
+        elif self.setup['decision'] == 'blacklist':
+            dbl = self.setup['decision_list'][1]
+            self.whitelist = [e for e in self.whitelist \
+                              if (e.tag, e.get('name'))  not in dbl and \
+                              (e.tag, '*') not in dbl and \
+                              ('*', e.get('name')) not in dbl]
+            
         if self.dryrun:
             if self.whitelist:
                 self.logger.info("In dryrun mode: suppressing entry installation for:")

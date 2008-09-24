@@ -227,6 +227,8 @@ CLIENT_BUNDLE = Option('only configure the given bundle', default=[],
                        cmd='-b', odesc='<bundle>', cook=colon_split)
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
+CLIENT_DLIST = Option('run client in server decision list mode', default=False,
+                       cmd='-l', odesc='<whitelist|blacklist>')
 CLIENT_BUILD = Option('run in build mode', default=False, cmd='-B', )
 CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')

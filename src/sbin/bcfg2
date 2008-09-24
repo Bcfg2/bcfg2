@@ -121,6 +121,7 @@ class Client:
             'encoding': Bcfg2.Options.ENCODING,
             'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
             'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
+            'decision': Bcfg2.Options.CLIENT_DLIST,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -255,6 +256,16 @@ class Client:
                     raise SystemExit(1)
 
             times['probe_upload'] = time.time()
+
+            if self.setup['decision'] in ['whitelist', 'blacklist']:
+                try:
+                    self.setup['decision_list'] = proxy.GetDecisionList()
+                except xmlrpclib.Fault, f:
+                    if f.faultCode == 1:
+                        print "GetDecisionList method not supported by server"
+                    else:
+                        self.logger.error("Failed to de", exc_info=1)
+                    raise SystemExit(1)
 
             try:
                 rawconfig = proxy.GetConfig()
