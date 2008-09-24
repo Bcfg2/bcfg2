@@ -1,38 +1,128 @@
-.TH "bcfg2.conf" 5
-.SH "NAME"
+.TH bcfg2.conf 5
+
+.SH NAME
 bcfg2.conf - configuration parameters for bcfg2
-.SH "DESCRIPTION"
+
+.SH DESCRIPTION
 .TP
 bcfg2.conf includes configuration parameters for the bcfg2 server and client. 
-.SH "SECTIONS"
-.TP
-.B [server]
-.TP
-repository=/path/to/repository
-.TP
-structures=list of enabled structures
-.TP
-bundles=list of enabled bundles
-.TP
-svn=(yes|no) (Repository is svn managed)
-.TP
-.B [communication]
-.TP
-password=communication password
-.TP
-key=/path/to/ssl/key
-.TP
-protocol=xmlrpc/ssl
-.TP
-agent-port=TCP_port
-.TP
-user=client-uuid
-.TP
-.B [components]
-list of component urls
-.PP
-componentname=url
 
-.SH "SEE ALSO"
+.SH FILE FORMAT
+The file is INI-style and consists of sections and options. A section begins with the name of the sections in square brackets and continues until the next section begins. 
+
+Options are specified in the form 'name = value'.
+
+The file is line-based each newline-terminated line represents either a comment, a section name or an option.
+
+Any line beginning with a hash (#) is ignored, as are lines containing only whitespace.
+
+.SH SERVER OPTIONS
+These options are only necessary on the Bcfg2 server. They are specified in the [server] section of the configuration file.
+
+.TP
+.B repository
+Specifies the path to the Bcfg2 repository containing all of the configuration specifications. The repository should be created using the bcfg2-init command.
+
+.TP
+.B svn
+Set this to yes if the repository is SVN managed.
+
+.TP
+.B structures
+A comma-delimited list of all the enabled structures plugins. Currently available plugins are Base, Bundler, and SGenshi. Defaults to Bundler and Base.
+
+.TP
+.B generators
+A comma-delimited list of all enabled generator plugins. Currently available plugins are Actions, Cfg, Deps, Hostbase, Pkgmgr, Rules, SSHbase, TCheetah, and TGenshi. Defaults to SSHbase, Cfg, Pkgmgr, and Rules.
+
+.TP
+.B plugins
+A comma-delimited list of enabled server plugins. Currently available plugins are DBStats.
+
+.TP
+.B bundles
+A list of enabled bundles
+
+.TP
+.B filemonitor
+The file monitor used to watch for changes in the repository. Either 'gamin' or 'fam'.
+
+.SH STATISTICS OPTIONS
+Server-only, specified in the [statistics] section. These options control the statistics collection functionality of the server.
+
+.TP
+.B database_engine
+The database engine used by the statistics module. One of either 'postgresql', 'mysql', 'sqlite3', or 'ado_mssql'.
+
+.TP
+.B database_name
+The name of the database to use for statistics data. If 'database_engine' is set to 'sqlite3' this is a file path to sqlite file and defaults to $REPOSITORY_DIR/etc/brpt.sqlite
+
+.TP
+.B database_user
+User for database connections. Not used for sqlite3.
+
+.TP
+.B database_password
+Password for database connections. Not used for sqlite3.
+
+.TP
+.B database_host
+Host for database connections. Not used for sqlite3.
+
+.TP
+.B database_port
+Port for database connections. Not used for sqlite3.
+
+.SH COMMUNICATION OPTIONS
+Specified in the [communication] section. These options define settings used for client-server communication.
+
+.TP
+.B password
+Required on both the server and clients. On the server, sets the password clients need to use to communicate. On a client, sets the password to use to connect to the server.
+
+.TP
+.B key
+A server-only option. The file system path to the server's SSL key. Required if using xmlrpc/ssl for communication.
+
+.TP
+.B protocol
+Communication protocol to use. Defaults to xmlrpc/ssl.
+
+.TP
+.B retries
+A client-only option. Number of times to retry network communication.
+
+.TP
+.B agent-port
+The TCP port on which to bind for agent mode.
+
+.TP
+.B user
+A client-only option. The UUID of the client.
+
+.TP
+.B fingerprint
+A client-only option. The fingerprint of the server's SSL certificate. Obtainable by running 'bcfg2-admin fingerprint'.
+
+.SH COMPONENT OPTIONS
+Specified in the [components] section.
+
+.TP
+.B bcfg2
+URL of the server. On the server this specifies which interface and port the server listens on. On the client, this specifies where the client will attempt to contact the server. eg: bcfg2 = https://10.3.1.6:6789 
+
+.TP
+.B encoding
+Text encoding of configuration files. Defaults to the system default encoding.
+
+.SH LOGGING OPTIONS
+Specified in the [logging] section. These options control the server logging functionality.
+
+.B path
+Server log file path.
+
+.SH SEE ALSO
 .BR bcfg2(1),
 .BR bcfg2-server(8)
+
