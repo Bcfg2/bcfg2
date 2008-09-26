@@ -72,7 +72,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def bind_entry(self, entry, metadata):
         self.bind_info_to_entry(entry, metadata)
         used = self.get_pertinent_entries(metadata)
-        basefile = used.pop()
+        basefile = used.pop(0)
         data = basefile.data
         for delta in used:
             data = process_delta(data, delta)
