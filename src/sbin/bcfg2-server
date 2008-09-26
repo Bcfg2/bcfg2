@@ -24,7 +24,7 @@ class SetupError(Exception):
     pass
 
 class Bcfg2Serv(Bcfg2.Component.Component):
-    """The Bcfg2 Server component providing XML-RPC access to Bcfg methods"""
+    """The Bcfg2 Server component providing XML-RPC access to Bcfg2 methods"""
     __name__ = 'bcfg2'
     __implementation__ = 'bcfg2'
     fork_funcs = ['GetConfig', 'GetProbes']

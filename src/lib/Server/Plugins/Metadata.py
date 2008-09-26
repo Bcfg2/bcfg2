@@ -1,4 +1,4 @@
-'''This file stores persistent metadata for the BCFG Configuration Repository'''
+'''This file stores persistent metadata for the Bcfg2 Configuration Repository'''
 __revision__ = '$Revision$'
 
 import lxml.etree, re, socket, time, fcntl, copy
@@ -141,7 +141,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.probedata = {}
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
-	self.load_probedata()
+        self.load_probedata()
 
     def get_groups(self):
         '''return groups xml tree'''
@@ -168,8 +168,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             element.set(key, val)
         node = self.search_client(client_name, root)
         if node != None:
-                self.logger.error("Client \"%s\" already exists" % (client_name))
-                raise MetadataConsistencyError
+            self.logger.error("Client \"%s\" already exists" % (client_name))
+            raise MetadataConsistencyError
         root.append(element)
         client_tree = open(self.data + "/clients.xml","w")
         fd = client_tree.fileno()
@@ -341,7 +341,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         if profile not in self.public:
             self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
-	if self.clients.has_key(client):
+        if self.clients.has_key(client):
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
@@ -588,7 +588,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
     def GetClientByProfile(self, profile):
         '''Return a list of clients that are members of a given profile'''
         return [client for client in self.clients \
-		if self.clients[client] == profile]
+                if self.clients[client] == profile]
     
     def viz(self, hosts, bundles, key, colors):
         '''admin mode viz support'''
