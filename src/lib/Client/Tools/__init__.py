@@ -63,7 +63,9 @@ class executor:
         return (cmdstat, output)
 
 class Tool:
-    '''All tools subclass this. It defines all interfaces that need to be defined'''
+    '''
+    All tools subclass this. It defines all interfaces that need to be defined
+    '''
     __name__ = 'Tool'
     __execs__ = []
     __handles__ = []

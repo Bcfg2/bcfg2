@@ -163,10 +163,10 @@ def rpmpackagelist(rts):
     return [ { 'name':header[rpm.RPMTAG_NAME], 
                'epoch':header[rpm.RPMTAG_EPOCH],
                'version':header[rpm.RPMTAG_VERSION], 
-	       'release':header[rpm.RPMTAG_RELEASE],
+               'release':header[rpm.RPMTAG_RELEASE],
                'arch':header[rpm.RPMTAG_ARCH],
                'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1] }
-	       for header in rts.dbMatch()]
+               for header in rts.dbMatch()]
 
 def getindexbykeyword(index_ts, **kwargs):
     """
@@ -262,13 +262,13 @@ def prelink_md5_check(filename):
             if isprelink(plfd):
                 plf.close()
                 cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-		                            % (re.escape(filename))
+                                            % (re.escape(filename))
                 plf = os.popen(cmd, 'rb')
                 prelink = True
         elif whitelist_re.search(filename) and not blacklist_re.search(filename):
             plf.close()
             cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-	                                % (re.escape(filename))
+                                        % (re.escape(filename))
             plf = os.popen(cmd, 'rb')
             prelink = True
 
@@ -309,7 +309,7 @@ def prelink_size_check(filename):
             if isprelink(plfd):
                 plf.close()
                 cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-		                            % (re.escape(filename))
+                                            % (re.escape(filename))
                 plf = os.popen(cmd, 'rb')
 
                 while 1:
@@ -322,7 +322,7 @@ def prelink_size_check(filename):
         #    print "***** Warning isprelink extension failed to import ******"
             plf.close()
             cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-	                                % (re.escape(filename))
+                                        % (re.escape(filename))
             plf = os.popen(cmd, 'rb')
 
             while 1:
@@ -609,12 +609,12 @@ def rpm_verify_package(vp_ts, header, verify_options):
         vp_fi = header.fiFromHeader()
         for fileinfo in vp_fi:
             # Do not bother doing anything with ghost files.  
-	    # This is what RPM does.
+            # This is what RPM does.
             if fileinfo[4] & rpm.RPMFILE_GHOST:
                 continue
 
             # This is only needed because of an inconsistency in the 
-	    # rpm.fi interface.
+            # rpm.fi interface.
             linktos = vp_fi.FLink()
 
             file_stat = rpm_verify_file(fileinfo, linktos, omitmask) 
@@ -736,7 +736,7 @@ class Rpmtscallback(object):
 
     def callback(self, reason, amount, total, key, client_data):
         """
-	    Generic rpmts call back.
+            Generic rpmts call back.
         """
         if   reason == rpm.RPMCALLBACK_INST_OPEN_FILE:
             pass
@@ -748,10 +748,10 @@ class Rpmtscallback(object):
             pass
             #print 'rpm.RPMCALLBACK_INST_START'
         elif reason == rpm.RPMCALLBACK_TRANS_PROGRESS or \
-	     reason == rpm.RPMCALLBACK_INST_PROGRESS:
+             reason == rpm.RPMCALLBACK_INST_PROGRESS:
             pass
             #print 'rpm.RPMCALLBACK_TRANS_PROGRESS or \
-	    #       rpm.RPMCALLBACK_INST_PROGRESS'
+            #       rpm.RPMCALLBACK_INST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_TRANS_START:
             pass
             #print 'rpm.RPMCALLBACK_TRANS_START'

@@ -327,7 +327,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except IOError, error:
             self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
             return False
-        # comparaison should be done with figerprints or md5sum so it would be faster
+        # comparison should be done with fingerprints or md5sum so it would be faster
         # for big binary files
         contentStatus = content == tempdata
         if not contentStatus:

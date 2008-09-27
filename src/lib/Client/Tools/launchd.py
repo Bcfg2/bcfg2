@@ -11,7 +11,10 @@ class launchd(Bcfg2.Client.Tools.Tool):
     __name__ = 'launchd'
     __req__ = {'Service':['name', 'status']}
 
-    #currently requires the path to the plist to load/unload, and Name is acually a reverse-fqdn (or the label)
+    '''
+    currently requires the path to the plist to load/unload,
+    and Name is acually a reverse-fqdn (or the label)
+    '''
     def FindPlist(self, entry):
         '''Locate plist file that provides given reverse-fqdn name
         /Library/LaunchAgents          Per-user agents provided by the administrator.

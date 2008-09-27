@@ -23,12 +23,14 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
             if self.handlesEntry(entry):
                 command = "/usr/local/etc/rc.d/%s" % entry.get('name')
                 if entry.get('status') == 'on' and not self.setup['build']:
-                    self.logger.debug('Restarting service %s' % entry.get('name'))
+                    self.logger.debug('Restarting service %s' % \
+                                      entry.get('name'))
                     rc = self.cmd.run('%s %s' % (command, \
                         entry.get('reload', self.__svcrestart__)))[0]
                 else:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
                     rc = self.cmd.run('%s stop' %  command)[0]
                 if rc:
-                    self.logger.error("Failed to restart service %s" % (entry.get('name')))
+                    self.logger.error("Failed to restart service %s" % \
+                                     (entry.get('name')))
 

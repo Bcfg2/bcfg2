@@ -18,8 +18,14 @@ class APT(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'deb'
-    pkgtool = ('apt-get -o DPkg::Options::=--force-overwrite -o DPkg::Options::=--force-confold --reinstall -q=2 --force-yes -y install %s',
-               ('%s=%s', ['name', 'version']))
+    pkgtool = ('apt-get '
+               '-o DPkg::Options::=--force-overwrite '
+               '-o DPkg::Options::=--force-confold '
+               '--reinstall '
+               '-q=2 '
+               '--force-yes '
+               '-y install %s',
+              ('%s=%s', ['name', 'version']))
     
     svcre = re.compile("/etc/.*/[SK]\d\d(?P<name>\S+)")
 
@@ -79,7 +85,8 @@ class APT(Bcfg2.Client.Tools.PkgTool):
                                          entry.get('name'))
                         self.logger.info(bad)
                         entry.set('qtext',
-                                  "Reinstall Package %s-%s to fix failing md5sums? (y/N) " % (entry.get('name'), entry.get('version')))
+                                  "Reinstall Package %s-%s to fix failing md5sums? (y/N) " % \
+                                 (entry.get('name'), entry.get('version')))
                         return False
                 return True
             else:

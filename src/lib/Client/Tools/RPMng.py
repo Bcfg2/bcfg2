@@ -910,7 +910,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         else: 
             return '%s:%s-%s.%s' % (instance.get('epoch', '*'),
                                     instance.get('version', '*'), 
- 	                            instance.get('release', '*'),
+                                    instance.get('release', '*'),
                                     instance.get('arch', '*')) 
 
     def pkg_vr_equal(self, config_entry, installed_entry):

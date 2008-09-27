@@ -21,14 +21,16 @@ class SMF(Bcfg2.Client.Tools.Tool):
                 entry.set('FMRI', name[0])
                 return True
             else:
-                self.logger.info('Failed to locate FMRI for service %s' % entry.get('name'))
+                self.logger.info('Failed to locate FMRI for service %s' % \
+                                 entry.get('name'))
                 return False
         return True
     
     def VerifyService(self, entry, _):
         '''Verify SMF Service Entry'''
         if not self.GetFMRI(entry):
-            self.logger.error("smf service %s doesn't have FMRI set" % entry.get('name'))
+            self.logger.error("smf service %s doesn't have FMRI set" % \
+                              entry.get('name'))
             return False
         if entry.get('FMRI').startswith('lrc'):
             filename = entry.get('FMRI').split('/')[-1]
@@ -43,7 +45,8 @@ class SMF(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("No service matching %s" % (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
-            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % entry.get('FMRI'))[1][0].split()
+            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % \
+                                   entry.get('FMRI'))[1][0].split()
         except IndexError:
             # Ocurrs when no lines are returned (service not installed)
             return False
@@ -116,7 +119,8 @@ class SMF(Bcfg2.Client.Tools.Tool):
         '''Restart smf services'''
         for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
             if not self.canInstall(entry):
-                self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
+                self.logger.error("Insufficient information to restart service %s" % \
+                                  (entry.get('name')))
             else:
                 if entry.get("FMRI").startswith('lrc'):
                     if entry.get('status') == 'on':
