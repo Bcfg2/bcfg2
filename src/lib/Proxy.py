@@ -25,8 +25,9 @@ class RetryMethod(_Method):
         for retry in range(max_retries):
             try:
                 return _Method.__call__(self, *args)
-            except xmlrpclib.ProtocolError:
-                self.log.error("Server failure: Protocol Error")
+            except xmlrpclib.ProtocolError, err:
+                self.log.error("Server failure: Protocol Error: %s %s" % \
+                              (err.errcode, err.errmsg))
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault:
                 raise
