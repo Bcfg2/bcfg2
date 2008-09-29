@@ -18,7 +18,7 @@ def process_delta(data, delta):
             elif line[0] == '-':
                 if line[1:] in datalines:
                     datalines.remove(line[1:])
-        return "\n".join(datalines) + "\n"
+        return "\n".join(datalines)
     elif delta.op == 'diff':
         basefile = open(tempfile.mktemp(), 'w')
         basefile.write(data)

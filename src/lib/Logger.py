@@ -158,3 +158,58 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
         logging.root.addHandler(filelog)
     logging.root.setLevel(level)
     logging.already_setup = True
+
+def trace_process (**kwargs):
+    
+    """Literally log every line of python code as it runs.
+    
+    Keyword arguments:
+    log -- file (name) to log to (default stderr)
+    scope -- base scope to log to (default Cobalt)"""
+    
+    file_name = kwargs.get("log", None)
+    if file_name is not None:
+        log_file = open(file_name, "w")
+    else:
+        log_file = sys.stderr
+    
+    scope = kwargs.get("scope", "Cobalt")
+    
+    def traceit (frame, event, arg):
+        if event == "line":
+            lineno = frame.f_lineno
+            filename = frame.f_globals["__file__"]
+            if (filename.endswith(".pyc") or
+                filename.endswith(".pyo")):
+                filename = filename[:-1]
+            name = frame.f_globals["__name__"]
+            line = linecache.getline(filename, lineno)
+            print >> log_file, "%s:%s: %s" % (name, lineno, line.rstrip())
+        return traceit
+    
+    sys.settrace(traceit)
+
+def log_to_stderr (logger_name, level=logging.INFO):
+    """Set up console logging."""
+    try:
+        logger = logging.getLogger(logger_name)
+    except:
+        # assume logger_name is already a logger
+        logger = logger_name
+    handler = logging.StreamHandler() # sys.stderr is the default stream
+    handler.setLevel(level)
+    handler.setFormatter(TermiosFormatter()) # investigate this formatter
+    logger.addHandler(handler)
+
+def log_to_syslog (logger_name, level=logging.INFO, format='%(name)s[%(process)d]: %(message)s'):
+    """Set up syslog logging."""
+    try:
+        logger = logging.getLogger(logger_name)
+    except:
+        # assume logger_name is already a logger
+        logger = logger_name
+    # anticipate an exception somewhere below
+    handler = logging.handlers.SysLogHandler() # investigate FragmentingSysLogHandler
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter(format))
+    logger.addHandler(handler)
