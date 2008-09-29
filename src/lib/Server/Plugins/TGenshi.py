@@ -1,7 +1,8 @@
 '''This module implements a templating generator based on Genshi'''
 __revision__ = '$Revision$'
 
-from genshi.template import TemplateLoader, TextTemplate, MarkupTemplate, TemplateError
+from genshi.template import TemplateLoader, NewTextTemplate, \
+                            TextTemplate, MarkupTemplate, TemplateError
 import logging
 import Bcfg2.Server.Plugin
 import genshi.core, genshi.input
@@ -30,6 +31,8 @@ class TemplateFile:
             matchname = self.name[:self.name.find('.H')]
         if matchname.endswith('.txt'):
             self.template_cls = TextTemplate
+        elif matchname.endswith('.newtxt'):
+            self.template_cls = NewTextTemplate
         else:
             self.template_cls = MarkupTemplate
         
@@ -53,7 +56,7 @@ class TemplateFile:
             stream = self.template.generate( \
                 name=fname, metadata=metadata, path=self.name,
                 properties=self.properties).filter(removecomment)
-            if isinstance(self.template, TextTemplate):
+            if isinstance(self.template, TextTemplate) or isinstance(self.template, NewTextTemplate):
                 textdata = stream.render('text')
                 if type(textdata) == unicode:
                     entry.text = textdata
@@ -72,12 +75,18 @@ class TemplateFile:
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
             raise Bcfg2.Server.Plugin.PluginExecutionError
+        except AttributeError, err:
+            logger.error('Genshi template loading error: %s' % err)
+            raise Bcfg2.Server.Plugin.PluginExecutionError
 
 class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
-    '''The TGenshi generator implements a templating mechanism for configuration files'''
+    '''
+    The TGenshi generator implements a templating
+    mechanism for configuration files
+    '''
     __name__ = 'TGenshi'
     __version__ = '$Id$'
     __author__ = 'jeff@ocjtech.us'
     use_props = True
-    filename_pattern = 'template\.(txt|xml)'
+    filename_pattern = 'template\.(txt|newtxt|xml)'
     es_child_cls = TemplateFile
