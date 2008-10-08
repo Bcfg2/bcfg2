@@ -113,6 +113,11 @@ class StatisticsPlugin(Plugin):
     def GetCurrentEntry(self, client, e_type, e_name):
         raise PluginExecutionError
 
+class DecisionPlugin(Plugin):
+    '''Signal decision handling capability'''
+    def GetDecisions(self, metadata, mode):
+        return []
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):

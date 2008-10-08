@@ -76,7 +76,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             "GetConfig"     : self.Bcfg2GetConfig,
             "GetProbes"     : self.Bcfg2GetProbes,
             "RecvProbeData" : self.Bcfg2RecvProbeData,
-            "RecvStats"     : self.Bcfg2RecvStats
+            "RecvStats"     : self.Bcfg2RecvStats,
+            "GetDecisionList" : self.Bcfg2GetDecisionList
             })
 
 
@@ -187,6 +188,18 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
     def _authenticate_connection(self, _, user, password, address):
         return self.Core.metadata.AuthenticateConnection(user, password, address)
+
+    def Bcfg2GetDecisionList(self, address, mode):
+        client = self.Core.metadata.resolve_client(address)
+        meta = self.Core.metadata.get_metadata(client)
+        result = []
+        for plugin in self.Core.plugins.values():
+            try:
+                if isinstance(plugin, Bcfg2.Server.Plugin.DecisionPlugin):
+                    result += plugin.GetDecision(meta, mode)
+            except:
+                self.logger.error("Plugin: %s failed to generate decision list" % plugin.__name__)
+        return []
 
 if __name__ == '__main__':
 
