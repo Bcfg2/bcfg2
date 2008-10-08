@@ -1,8 +1,13 @@
 '''This module implements a templating generator based on Genshi'''
 __revision__ = '$Revision$'
 
-from genshi.template import TemplateLoader, NewTextTemplate, \
+from genshi.template import TemplateLoader, \
                             TextTemplate, MarkupTemplate, TemplateError
+try:
+    from genshi.template import NewTextTemplate
+    have_ntt = True
+except:
+    have_ntt = False
 import logging
 import Bcfg2.Server.Plugin
 import genshi.core, genshi.input
@@ -32,7 +37,10 @@ class TemplateFile:
         if matchname.endswith('.txt'):
             self.template_cls = TextTemplate
         elif matchname.endswith('.newtxt'):
-            self.template_cls = NewTextTemplate
+            if not have_ntt:
+                logger.error("Genshi NewTextTemplates not supported by this version of Genshi")
+            else:
+                self.template_cls = NewTextTemplate
         else:
             self.template_cls = MarkupTemplate
         
@@ -56,7 +64,11 @@ class TemplateFile:
             stream = self.template.generate( \
                 name=fname, metadata=metadata, path=self.name,
                 properties=self.properties).filter(removecomment)
-            if isinstance(self.template, TextTemplate) or isinstance(self.template, NewTextTemplate):
+            if have_ntt:
+                ttypes = [TextTemplate, NewTextTemplate]
+            else:
+                ttypes = [TextTemplate]
+            if True in [isinstance(self.template, t) for t in ttypes]:
                 textdata = stream.render('text')
                 if type(textdata) == unicode:
                     entry.text = textdata
