@@ -4,6 +4,14 @@ import re, os, glob, socket, logging
 import Bcfg2.Server.Plugin
 
 LOGGER = logging.getLogger('Bcfg2.Plugins.NagiosGen')
+
+host_config_fmt = \
+'''define host{
+use             default
+host_name       %s
+alias           %s
+address         %s'''
+
 class NagiosGen(Bcfg2.Server.Plugin.Plugin):
     '''NagiosGen is a Bcfg2 plugin that dynamically generates
        Nagios configuration file based on Bcfg2 data.'''
@@ -25,15 +33,10 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin):
     def createhostconfig(self, entry, metadata):
         '''Build host specific configuration file'''
         host_address = socket.gethostbyname(metadata.hostname)
-        host_groups = filter(lambda x: os.path.isfile('%s/%s-group.cfg' % \
-                            (self.data, x)), metadata.groups)
-        host_config = \
-   'define host{\n\
-    use             default\n\
-    host_name       %s\n\
-    alias           %s\n\
-    address         %s\n' % \
-        (metadata.hostname, metadata.hostname, host_address )
+        host_groups = [grp for grp in metadata.groups if \
+                       os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
+        host_config = host_config_fmt % \
+                      (metadata.hostname, metadata.hostname, host_address )
         if host_groups:
             host_config += ' hostgroups      %s\n' % (",".join(host_groups))
         host_config += ' }\n'
@@ -50,7 +53,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin):
                         (self.data, metadata.hostname))
             LOGGER.error(ioerr)
       
-    def createserverconfig(self, entry, metadata):
+    def createserverconfig(self, entry, _):
         '''Build monolithic server configuration file'''
         host_configs  = glob.glob('%s/*-host.cfg' % self.data)
         group_configs = glob.glob('%s/*-group.cfg' % self.data)
