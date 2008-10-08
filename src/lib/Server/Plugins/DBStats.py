@@ -34,8 +34,16 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         # FIXME need to build a metadata interface to expose a list of clients
         # FIXME Server processing the request should be mentionned here
         start = time.time()
-        Bcfg2.Server.Reports.importscript.load_stats(
-            self.core.metadata.clientdata, container, 0, True)
+        for i in [1,2,3]:
+            try:
+                Bcfg2.Server.Reports.importscript.load_stats(
+                    self.core.metadata.clientdata, container, 0, True)
+                break
+            except:
+                logger.error("DBStats: Failed to write data to database due to lock; retrying")
+            if i == 3:
+                logger.error("DBStats: Retry limit failed; aborting operation")
+                return
         logger.info("Imported data in the reason fast path in %s second" % (time.time() - start))
 
     def GetExtra(self, client):
