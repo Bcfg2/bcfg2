@@ -259,7 +259,8 @@ class Client:
 
             if self.setup['decision'] in ['whitelist', 'blacklist']:
                 try:
-                    self.setup['decision_list'] = proxy.GetDecisionList()
+                    self.setup['decision_list'] = proxy.GetDecisionList( \
+                        self.setup['decision'])
                 except xmlrpclib.Fault, f:
                     if f.faultCode == 1:
                         print "GetDecisionList method not supported by server"
