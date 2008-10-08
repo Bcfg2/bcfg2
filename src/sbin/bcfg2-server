@@ -192,14 +192,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
     def Bcfg2GetDecisionList(self, address, mode):
         client = self.Core.metadata.resolve_client(address)
         meta = self.Core.metadata.get_metadata(client)
-        result = []
-        for plugin in self.Core.plugins.values():
-            try:
-                if isinstance(plugin, Bcfg2.Server.Plugin.DecisionPlugin):
-                    result += plugin.GetDecision(meta, mode)
-            except:
-                self.logger.error("Plugin: %s failed to generate decision list" % plugin.__name__)
-        return []
+        return self.Core.GetDecisions(meta, mode)
 
 if __name__ == '__main__':
 

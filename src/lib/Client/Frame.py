@@ -28,14 +28,14 @@ def promptFilter(prompt, entries):
     return ret
 
 def matches_white_list(entry, whitelist):
-    return (entry.tag, entry.get('name')) in whitelist or \
-           (entry.tag, '*') in whitelist or \
-           ('*', entry.get('name')) in whitelist
+    return [entry.tag, entry.get('name')] in whitelist or \
+           [entry.tag, '*'] in whitelist or \
+           ['*', entry.get('name')] in whitelist
 
 def passes_black_list(entry, blacklist):
-    return (entry.tag, entry.get('name')) not in blacklist and \
-           and (entry.tag, '*') not in blacklist and \
-           ('*', entry.get('name')) not in blacklist
+    return [entry.tag, entry.get('name')] not in blacklist and \
+           [entry.tag, '*'] not in blacklist and \
+           ['*', entry.get('name')] not in blacklist
 
 class Frame:
     '''Frame is the container for all Tool objects and state information'''
@@ -167,6 +167,7 @@ class Frame:
                 self.logger.info("In whitelist mode: suppressing installation of:")
                 self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
                 self.whitelist = [x for x in self.whitelist if x not in w_to_rem]
+
         elif self.setup['decision'] == 'blacklist':
             b_to_rem = [e for e in self.whitelist \
                         if not passes_black_list(e, self.setup['decision_list'])]

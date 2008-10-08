@@ -261,6 +261,8 @@ class Client:
                 try:
                     self.setup['decision_list'] = proxy.GetDecisionList( \
                         self.setup['decision'])
+                    self.logger.info("Got Decision List from server:")
+                    self.logger.info(self.setup['decision_list'])
                 except xmlrpclib.Fault, f:
                     if f.faultCode == 1:
                         print "GetDecisionList method not supported by server"

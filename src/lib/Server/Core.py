@@ -234,3 +234,13 @@ class Core(object):
             logger.error('''Ran command "svn info %s"''' % (self.datastore))
             logger.error("Got output: %s" % data)
             self.svn = False
+
+    def GetDecisions(self, metadata, mode):
+        result = []
+        for plugin in self.plugins.values():
+            try:
+                if isinstance(plugin, Bcfg2.Server.Plugin.DecisionPlugin):
+                    result += plugin.GetDecisions(metadata, mode)
+            except:
+                logger.error("Plugin: %s failed to generate decision list" % plugin.__name__, exc_info=1)
+        return result
