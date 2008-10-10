@@ -6,13 +6,15 @@ import Bcfg2.Server.Plugin
 LOGGER = logging.getLogger('Bcfg2.Plugins.NagiosGen')
 
 host_config_fmt = \
-'''define host{
+'''
+define host{
 use             default
 host_name       %s
 alias           %s
-address         %s'''
+address         %s
+'''
 
-class NagiosGen(Bcfg2.Server.Plugin.Plugin):
+class NagiosGen(Bcfg2.Server.Plugin.GeneratorPlugin):
     '''NagiosGen is a Bcfg2 plugin that dynamically generates
        Nagios configuration file based on Bcfg2 data.'''
     __name__ = 'NagiosGen'
