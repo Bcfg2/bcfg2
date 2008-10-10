@@ -47,6 +47,10 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if entry.get('supervised', 'false') == 'true':
             pstatus, pout = self.cmd.run('/sbin/service %s status' % \
                                          entry.get('name'))
+            if pstatus:
+                self.cmd.run('/sbin/service %s start' % (entry.get('name')))
+            pstatus, pout = self.cmd.run('/sbin/service %s status' % \
+                                         entry.get('name'))
             # chkconfig/init.d service
             if entry.get('status') == 'on':
                 status = status and not pstatus
