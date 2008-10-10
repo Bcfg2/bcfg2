@@ -316,14 +316,16 @@ class Client:
                     self.fatal_error("An other instance of bcfg2 is running. If you what to bypass the check, run with %s option" %
                                      (Bcfg2.Options.OMIT_LOCK_CHECK.cmd))
             except:
+                lockfile = None
                 self.logger.error("Failed to open lockfile")
         # execute the said configuration
         self.tools.Execute()
 
         if not self.setup['omit-lock-check']:
             #unlock here
-            fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-            os.remove(LOCKFILE)
+            if lockfile:
+                fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
+                os.remove(LOCKFILE)
         
         if not self.setup['file']:
             # upload statistics
