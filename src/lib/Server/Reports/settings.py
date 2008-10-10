@@ -16,7 +16,7 @@ else:
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-     ('Bcfg2', 'bcfg-dev@mcs.anl.gov'),
+     ('Bcfg2', 'admin@email.address'),
 )
 
 MANAGERS = ADMINS
