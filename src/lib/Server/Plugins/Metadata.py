@@ -151,8 +151,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
 
     def search_client(self, client_name, tree):
         '''find a client'''
-        for node in tree:
-            if node.attrib["name"] == client_name:
+        for node in tree.findall("//Client"):
+            if node.get("name") == client_name:
                 return node
             for child in node:
                 if child.tag == "Alias" and child.attrib["name"] == client_name:
@@ -166,7 +166,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         element = lxml.etree.Element("Client", name=client_name)
         for key, val in attribs.iteritems():
             element.set(key, val)
-        node = self.search_client(client_name, root)
+        node = self.search_client(client_name, tree)
         if node != None:
             self.logger.error("Client \"%s\" already exists" % (client_name))
             raise MetadataConsistencyError
@@ -188,7 +188,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         '''Remove a client'''
         tree = lxml.etree.parse(self.data + "/clients.xml")
         root = tree.getroot()
-        node = self.search_client(client_name, root)
+        node = self.search_client(client_name, tree)
         if node == None:
             self.logger.error("Client \"%s\" not found" % (client_name))
             raise MetadataConsistencyError
