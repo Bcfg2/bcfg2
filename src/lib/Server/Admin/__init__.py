@@ -77,6 +77,6 @@ class MetadataCore(Mode):
 
 class StructureMode(MetadataCore):
     allowed = ['Statistics', 'DBStats']
-    def __init__(self, configfile):
-        MetadataCore.__init__(self, configfile)
+    def __init__(self, configfile, usage):
+        MetadataCore.__init__(self, configfile, usage)
         self.statistics = self.bcore.stats

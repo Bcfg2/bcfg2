@@ -17,7 +17,7 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                  "only build config for groups"))
 
     def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
+        Bcfg2.Server.Admin.StructureMode.__init__(self, configfile,
                                                  self.__usage__)
 
     def __call__(self, args):
