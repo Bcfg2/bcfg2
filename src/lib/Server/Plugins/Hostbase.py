@@ -5,7 +5,7 @@ import sys, os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
 from syslog import syslog, LOG_INFO
-from Bcfg2.Server.Plugin import StructurePlugin, PluginExecutionError, PluginInitError, DirectoryBacked
+from Bcfg2.Server.Plugin import StructurePlugin, PluginExecutionError, PluginInitError, DirectoryBacked, GeneratorPlugin
 from time import strftime
 from sets import Set
 from django.template import Context, loader
@@ -37,7 +37,7 @@ import cStringIO
 ##         '''This function is called when underlying data has changed'''
 ##         pass
     
-class Hostbase(StructurePlugin):
+class Hostbase(StructurePlugin,GeneratorPlugin):
     '''The Hostbase plugin handles host/network info'''
     __name__ = 'Hostbase'
     __version__ = '$Id$'
@@ -47,7 +47,7 @@ class Hostbase(StructurePlugin):
     def __init__(self, core, datastore):
 
         self.ready = False
-        Plugin.__init__(self, core, datastore)
+        StructurePlugin.__init__(self, core, datastore)
         files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
                  'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
 ##         try:
