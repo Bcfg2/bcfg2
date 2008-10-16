@@ -43,12 +43,6 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         if 'DBStats' in self.Core.plugins:
             self.fork_funcs.append("RecvStats")
 
-        # init functions to be exposed as XML-RPC functions
-        for plugin in self.Core.plugins.values():
-            for method in plugin.__rmi__:
-                self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
-                                       "%s.%s" % (plugin.__name__, method))
-
         famfd = self.Core.fam.fileno()
         events = False
         while True:
@@ -79,6 +73,12 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             "RecvStats"     : self.Bcfg2RecvStats,
             "GetDecisionList" : self.Bcfg2GetDecisionList
             })
+
+        # init functions to be exposed as XML-RPC functions
+        for plugin in self.Core.plugins.values():
+            for method in plugin.__rmi__:
+                self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
+                                       "%s.%s" % (plugin.__name__, method))
 
 
 
