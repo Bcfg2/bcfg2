@@ -255,6 +255,9 @@ class Hostbase(StructurePlugin,GeneratorPlugin):
 
             self.filedata[reversezone[1]] = self.templates['reversesoa'].render(context)
             self.filedata[reversezone[1] + '.external'] = self.templates['reversesoa'].render(context)
+            self.filedata[reversezone[1]] += reversezone[9]
+            self.filedata[reversezone[1] + '.external'] += reversezone[9]
+
             subnet = reversezone[1].split(".")
             subnet.reverse()
             reversenames.append((reversezone[1].rstrip('.rev'),".".join(subnet[1:]))) 
@@ -355,7 +358,7 @@ class Hostbase(StructurePlugin,GeneratorPlugin):
         hosts = []
         hostdata = [dhcphosts[0][0], dhcphosts[0][1], dhcphosts[0][2]]
         if len(dhcphosts) > 1:
-            for x in range(1, len(cursor.fetchall())):
+            for x in range(1, len(dhcphosts)):
                 # if an interface has 2 or more ip addresses
                 # adds the ip to the current interface
                 if hostdata[0].split(".")[0] == dhcphosts[x][0].split(".")[0] and hostdata[1] == dhcphosts[x][1]:
