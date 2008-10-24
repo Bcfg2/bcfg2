@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from time import asctime, localtime, time, strptime, mktime
 
-import binascii, logging, lxml.etree, os
+import binascii, difflib, logging, lxml.etree, os
 
 import Bcfg2.Server.Plugin
 
