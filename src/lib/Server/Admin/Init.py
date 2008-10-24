@@ -150,8 +150,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         # FIXME automate ssl key generation
         # FIXME key generation may fail as non-root user
-        os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out' \
-                 '%s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
+        os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
         try:
             os.chmod('%s/bcfg2.key'% keypath, 0600)
         except:
