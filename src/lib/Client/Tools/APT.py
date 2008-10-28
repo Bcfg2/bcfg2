@@ -105,7 +105,7 @@ class APT(Bcfg2.Client.Tools.PkgTool):
         if len(packages) > 0:
             self.logger.info('Removing packages:')
             self.logger.info(pkgnames)
-            if self.cmd.run("apt-get purge -y --force-yes %s" % pkgnames)[0] == 0:
+            if self.cmd.run("apt-get remove --purge -y --force-yes %s" % pkgnames)[0] == 0:
                 self.modified += packages
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
