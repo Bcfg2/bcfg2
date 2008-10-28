@@ -110,7 +110,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         if pkg.get('multiarch'):
                             self.contents['Package'][pkgname]['multiarch'] = pkg.get('multiarch')
                     if pkgname not in pdict['Package']:
-                        pdict['Package'].append(pkgname)
+                        pdict['Package'].add(pkgname)
                     if pkg.getchildren():
                         self.contents['Package'][pkgname]['__children__'] = pkg.getchildren()
                 else:
