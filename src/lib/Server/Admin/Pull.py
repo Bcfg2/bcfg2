@@ -1,4 +1,4 @@
-import binascii, difflib, getopt, lxml.etree, time, ConfigParser
+import getopt
 import Bcfg2.Server.Admin
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
@@ -60,23 +60,25 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         for k, v in data.iteritems():
             if v:
                 new_entry[k] = v
-        print new_entry
+        #print new_entry
         return new_entry
 
     def Choose(self, choices):
         '''Determine where to put pull data'''
         if self.mode == 'interactive':
-            # FIXME improve bcfg2-admin pull interactive mode to add new entries
-            print "Plugin returned choice:"
-            if choices[0].all:
-                print " => global entry"
-            elif choices[0].group:
-                print (" => group entry: %s (prio %d)" %
-                      (choices[0].group, choices[0].prio))
-            else:
-                print " => host entry: %s" % (choices[0].hostname)
-            if raw_input("Use this entry? [yN]: ") in ['y', 'Y']:
-                return choices[0]
+            for choice in choices:
+                print "Plugin returned choice:"
+                if id(choice) == id(choices[0]):
+                    print "(current entry)", 
+                if choice.all:
+                    print " => global entry"
+                elif choice.group:
+                    print (" => group entry: %s (prio %d)" %
+                           (choice.group, choice.prio))
+                else:
+                    print " => host entry: %s" % (choice.hostname)
+                if raw_input("Use this entry? [yN]: ") in ['y', 'Y']:
+                    return choice
             return False
         else:
             # mode == 'force'

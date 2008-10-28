@@ -86,9 +86,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def list_accept_choices(self, metadata):
         '''return a list of candidate pull locations'''
         used = self.get_pertinent_entries(metadata)
-        if len(used) > 1:
-            return []
-        return [used[0].specific]
+        ret = []
+        if used:
+            ret.append(used[0].specific)
+        if not ret[0].hostname:
+            ret.append(Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname))
+        return ret
 
     def build_filename(self, specific):
         bfname = self.path + '/' + self.path.split('/')[-1]
@@ -106,7 +109,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms'] if attr in new_entry]
         if badattr:
-            if hasattr(self.entries[name.split('/')[-1]], 'infoxml'):
+            if self.infoxml:
                 print "InfoXML support not yet implemented"
                 return
             metadata_updates = {}
