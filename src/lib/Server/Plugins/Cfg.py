@@ -75,6 +75,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         basefile = used.pop(0)
         data = basefile.data
         for delta in used:
+            data = data.strip()
             data = process_delta(data, delta)
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
