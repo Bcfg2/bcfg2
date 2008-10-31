@@ -104,10 +104,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             return "%s.H_%s" % (bfname, specific.hostname)
 
     def write_update(self, specific, new_entry, log):
-        name = self.build_filename(specific)
-        open(name, 'w').write(new_entry['text'])
-        if log:
-            logger.info("Wrote file %s" % name)
+        if 'text' in new_entry:
+            name = self.build_filename(specific)
+            open(name, 'w').write(new_entry['text'])
+            if log:
+                logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms'] if attr in new_entry]
         if badattr:
             if self.infoxml:
