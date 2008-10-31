@@ -82,6 +82,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             return False
         else:
             # mode == 'force'
+            if not choices:
+                return False
             return choices[0]
 
     def PullEntry(self, client, etype, ename):
