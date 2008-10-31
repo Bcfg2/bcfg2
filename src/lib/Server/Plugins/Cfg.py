@@ -99,7 +99,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if specific.all:
             return bfname
         elif specific.group:
-            return "%s.G%d_%s" % (bfname, specific.group, specific.prio)
+            return "%s.G%d_%s" % (bfname, specific.prio, specific.group)
         elif specific.hostname:
             return "%s.H_%s" % (bfname, specific.hostname)
 
