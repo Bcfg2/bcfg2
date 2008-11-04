@@ -5,8 +5,8 @@ __revision__ = '$Revision$'
 import os, sys, binascii
 try:
     import Bcfg2.Server.Reports.settings
-except:
-    sys.stderr.write("Failed to load configuration settings. is /etc/bcfg2.conf readable?")
+except Exception, e:
+    sys.stderr.write("Failed to load configuration settings. %s\n" % e)
     sys.exit(1)
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
