@@ -15,6 +15,7 @@ class TemplateFile:
         self.specific = specific
         self.encoding = encoding
         self.template = None
+        self.searchlist = {'properties': properties}
     
     def handle_event(self, event):
         '''Handle all fs events for this template'''
@@ -23,8 +24,9 @@ class TemplateFile:
         try:
             s = {'useStackFrames': False}
             self.template = Cheetah.Template.Template(open(self.name).read(),
-                                                      compilerSettings=s)
-            self.template.properties = self.properties.properties
+                                                      compilerSettings=s,
+                                                      searchList = [self.searchlist])
+
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
@@ -32,8 +34,11 @@ class TemplateFile:
     def bind_entry(self, entry, metadata):
         '''Build literal file information'''
         self.template.metadata = metadata
+        self.searchlist['metadata'] = metadata
         self.template.path = entry.get('realname', entry.get('name'))
+        self.searchlist['path'] = entry.get('realname', entry.get('name'))
         self.template.source_path = self.name
+        self.searchlist['source_path'] = self.name
         
         try:
             if type(self.template) == unicode:
@@ -45,7 +50,7 @@ class TemplateFile:
             (a, b, c) = sys.exc_info()
             msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]
             logger.error(msg)
-            logger.error("TCheetah template error for %s" % self.template.path)
+            logger.error("TCheetah template error for %s" % self.searchlist['path'])
             del a, b, c
             raise Bcfg2.Server.Plugin.PluginExecutionError
 
