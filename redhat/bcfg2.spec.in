@@ -1,8 +1,8 @@
 # This file is licensed under the GPL
 
-Name:           %{_package}
-Version:        %{_version}
-Release:        %{_release}
+Name:           @PACKAGE@
+Version:        @VERSION@
+Release:        @RELEASE@
 
 %define __python python
 %{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
@@ -33,6 +33,7 @@ BuildRequires: python-setuptools
 %endif
 
 Requires:         %{lxmldep} >= 0.9
+Requires:         initscripts
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
 Requires(preun):  /sbin/service
@@ -69,10 +70,8 @@ deployment strategies.
 Summary:          Configuration management server
 Group:            System Environment/Daemons
 Requires:         bcfg2 = %{version}-%{release}
-Requires:         /usr/sbin/sendmail
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
-Requires:         redhat-lsb
 Requires:         python-genshi
 Requires:         python-cheetah
 Requires(post):   /sbin/chkconfig
@@ -122,8 +121,8 @@ mkdir -p %{buildroot}%{_var}/cache/bcfg2
 
 mv %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 
-install -m 755 debian/buildsys/common/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
-install -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
+install -m 755 redhat/scripts/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
+install -m 755 redhat/scripts/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
 install -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
 install -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
 install -m 755 tools/bcfg2-cron %{buildroot}%{_libexecdir}/bcfg2-cron
@@ -226,6 +225,10 @@ fi
 %dir %{_var}/lib/bcfg2
 
 %changelog
+* Tue Oct 28 2008 Robin Bowes <robin@robinbowes.com> 0.9.6-0.2
+- spec file is now created dynamically so Version & Release
+  can be hard-coded so SRPM can be rebuilt without the Makefile
+
 * Thu May 08 2008 Robin Bowes <robin@robinbowes.com> 0.9.6-0.1
 - Revised spec file to build directly from svn checkout using Makefile
 - copied lots of stuff from the "official" spec file

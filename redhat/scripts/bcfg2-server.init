@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# bcfg2-server - bcfg2 configuration daemon
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 is a configuration management system that builds \
+#              and installs configuration files. \
+#              This is the server that provides the configurations \
+#              to clients.
+
+DAEMON=/usr/sbin/bcfg2-server
+PIDFILE=/var/run/bcfg2-server.pid
+PARAMS="-D $PIDFILE"
+prog=$(basename $DAEMON)
+conf="/etc/bcfg2.conf"
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+
+# Source function library
+. /etc/init.d/functions
+
+# Include default startup configuration if exists
+test -f /etc/sysconfig/$prog && . /etc/sysconfig/$prog
+
+RETVAL=0
+
+start () {
+    test -x $DAEMON || exit 5
+    test -f $conf || exit 6
+    echo -n $"Starting $prog: "
+    daemon $DAEMON ${PARAMS}
+    RETVAL=$?
+    echo
+    if test $RETVAL = 0 ; then
+        test -d /var/lock/subsys && touch /var/lock/subsys/$prog
+    fi
+    return $RETVAL
+}
+
+stop () {
+    echo -n $"Stopping $prog: "
+    killproc -p $PIDFILE ${BINARY}
+    RETVAL=$?
+    echo
+    rm -f /var/lock/subsys/$prog
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status $prog
+        RETVAL=$?
+    ;;
+    restart|reload|force-reload)
+        stop
+        sleep 5
+        start
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload}"
+        RETVAL=3
+    ;;
+esac
+
+exit $RETVAL

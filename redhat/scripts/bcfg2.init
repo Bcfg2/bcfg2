@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# bcfg2 - bcfg2 configuration client
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 is a configuration management system that builds \
+#              and installs configuration files served by bcfg2-server. \
+#              This is a client that installs the server-provided \
+#              configuration.
+#
+
+# Set default options
+#    You can set script specific options with BCFG2_OPTIONS_INIT
+#    You can set agent-mode specific options with BCFG2_OPTIONS_AGENT
+DAEMON=/usr/sbin/bcfg2
+PIDFILE=/var/run/bcfg2-agent.pid
+PARAMS="-q"
+prog=$(basename $DAEMON)
+AGENT_EXTRA_OPTS="-A -i ${PIDFILE}"
+
+# Disabled per default
+BCFG2_ENABLED=0
+BCFG2_INIT=0
+BCFG2_AGENT=0
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+
+# Source function library
+. /etc/init.d/functions
+
+# Include default startup configuration if exists
+test -f /etc/sysconfig/$prog && . /etc/sysconfig/$prog
+
+# bail out if bcfg2 not enabled
+test $BCFG2_ENABLED = 0 && exit 0
+
+RETVAL=0
+
+start () {
+    test -x $DAEMON || exit 5
+    echo -n $"Starting $prog: "
+    if test $BCFG2_AGENT = 1 ; then
+        daemon $DAEMON ${AGENT_EXTRA_OPTS} $PARAMS ${BCFG2_OPTIONS_AGENT}
+        RETVAL=$?
+        echo
+        if test $RETVAL = 0 ; then
+            test -d /var/lock/subsys && touch /var/lock/subsys/$prog
+        else
+            exit $RETVAL
+        fi
+    fi
+
+    if test $BCFG2_INIT = 1 ; then
+        $DAEMON $PARAMS ${BCFG2_OPTIONS_INIT}
+        RETVAL=$?
+        echo
+    fi
+
+    return $RETVAL
+}
+
+stop () {
+    echo -n $"Stopping $prog: "
+    killproc -p $PIDFILE ${BINARY}
+    RETVAL=$?
+    echo
+    rm -f /var/lock/subsys/$prog
+    return $RETVAL
+}
+
+case $"1" in
+    start)
+        start
+    ;;
+    stop) 
+        stop
+    ;;
+    status)
+        status $prog
+        RETVAL=$?
+    ;;
+    restart|reload|force-reload)
+        if test $BCFG2_AGENT = 1 ; then
+            stop
+            sleep 5
+            start
+        fi
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
+        RETVAL=3
+esac
+
+exit $RETVAL
