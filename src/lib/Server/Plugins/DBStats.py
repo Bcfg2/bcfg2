@@ -40,7 +40,7 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
                     self.core.metadata.clientdata, container, 0, True)
                 break
             except:
-                logger.error("DBStats: Failed to write data to database due to lock; retrying")
+                logger.error("DBStats: Failed to write data to database due to lock; retrying", exc_info=1)
             if i == 3:
                 logger.error("DBStats: Retry limit failed; aborting operation")
                 return
