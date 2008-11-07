@@ -6,8 +6,8 @@ bcfg2 \- reconfigure machine based on settings in BCFG2
 .I [-d] [-v] [-p] [-c cache file] [-e] [-f config file] [-I] [-q] [-b bundle]
 [-r removal mode]
 .SH DESCRIPTION
-.PP
-.B bcfg2
+.TP
+.BR bcfg2
 Runs the bcfg2 configuration process on the current host. This process
 consists of first fetching and executing probes, uploading probe
 results, fetching the client configuration, checking the current
@@ -15,76 +15,112 @@ client state, attempting to install the desired configuration, and
 finally uploading statistics about the bcfg2 execution and client
 state.
 .SH OPTIONS
-.PP
-.B "\-d" 
-.RS
-Run bcfg2 in debug mode.
-.RE 
-.B "\-v"
-.RS
-Run bcfg2 in verbose mode.
-.RE
-.B "\-c <cachefile>"
-.RS 
-Cache a copy of the configuration in cachefile
-.RE
-.B "\-b <bundle>"
-.RS
-Run bcfg2 against only one bundle in the configuration. 
-.RE
-.B "\-P" 
-.RS
-Run bcfg2 in paranoid mode. Diffs will be logged for
-configuration files marked as paranoid by the Bcfg2 server.
-.RE
-.B "\-q"
-.RS
-Run bcfg2 in quick mode. Package checksum verification won't be
-performed. This mode relaxes the constraints of correctness, and thus
-should only be used in safe conditions. 
-.RE
-.B "\-D <driver1>,<driver2>"
-.RS
+.TP
+.BR "\-A" 
+Run in agent (continuous) mode, wait for reconfigure command from
+server.
+.TP
+.BR "\-B"
+Run bcfg2 in build mode. Services aren't started, as the system
+may still be in miniroot.
+.TP
+.BR "\-D <driver1>,<driver2>"
 Specify a set of bcfg2 tool drivers. NOTE: only drivers listed will be
 loaded. (IE, if you don't include POSIX, you will be unable to
 verify/install ConfigFiles, etc)
-.RE
-.B "\-I"
-.RS
+.TP
+.BR "\-E <encoding>"
+Specify the encoding of Cfg files.
+.TP
+.BR "\-F <f1,f2>"
+Specify the server fingerprint.
+.TP
+.BR "\-I"
 Run bcfg2 in interactive mode.  The user will be prompted before each 
 change.
-.RE
-.B "\-n"
-.RS
-Run bcfg2 in dry-run mode. No changes will be made to the
-system. 
-.RE
-.B "\-B"
-.RS 
-Run bcfg2 in build mode. Services aren't started, as the system
-may still be in miniroot.
-.RE
-.B "\-r <mode>" 
-.RS
-Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, services, or packages. All removes all entries. Likewise, services and packages remove only the extra configuration elements of the respective type.
-.RE
-.B "\-p <profile>" 
-.RS
-Assert a profile for the current client.
-.RE
-.B "\-e" 
-.RS
+.TP
+.BR "\-K <SSL key file>" 
+Specify the path to the SSL key.
+.TP 
+.BR "\-O" 
+Omit lock check.
+.TP 
+.BR "\-P" 
+Run bcfg2 in paranoid mode. Diffs will be logged for
+configuration files marked as paranoid by the Bcfg2 server.
+.TP
+.BR "\-R <retry count>"
+Specify the number of times that the client will attempt to retry
+network communication.
+.TP
+.BR "\-S https://server:port"
+Manually specify the server location (as opposed to using the value in
+bcfg2.conf).
+.TP
+.BR "\-b <bundle>"
+Run bcfg2 against only one bundle in the configuration. 
+.TP
+.BR "\-c <cachefile>"
+Cache a copy of the configuration in cachefile
+.TP
+.BR "\-d" 
+Run bcfg2 in debug mode.
+.TP 
+.BR "\-e" 
 When in verbose mode, display extra entry information (temporary until
 verbosity rework)
-.RE
-.B "\-k" 
-.RS
+.TP
+.BR "\-f <specification path>" 
+Configure from a file rather than querying the server.
+.TP 
+.BR "\-g <agent port>" 
+Allows you to specify which port to bind.
+.TP 
+.BR "\-h" 
+Print Usage information.
+.TP 
+.BR "\-i" 
+Daemonize the agent.
+.TP 
+.BR "\-k" 
 Run in bulletproof mode. This currently only effect behavior in the
 debian toolset; it calls apt-get update and clean and dpkg --configure --pending.
-.RE
-.B \-o <LogFile Path>
-.RS
+.TP
+.BR "\-l <whitelist|blacklist>"
+Run the client in the server decision list mode. This approach is needed
+when particular changes are deemed "high risk". It gives the ability to
+centrally specify these changes, but only install them on clients when
+administrator supervision is available. Because collaborative
+configuration is one of the remaining hard issues in configuration
+management, these issues typically crop up in environments with several
+administrators and much configuration variety.
+.TP
+.BR "\-n"
+Run bcfg2 in dry-run mode. No changes will be made to the
+system. 
+.TP
+.BR \-o <LogFile Path>
 Writes a log to the specified path.
+.TP
+.BR "\-p <profile>" 
+Assert a profile for the current client.
+.TP
+.BR "\-q"
+Run bcfg2 in quick mode. Package checksum verification won't be
+performed. This mode relaxes the constraints of correctness, and thus
+should only be used in safe conditions. 
+.TP
+.BR "\-r <mode>" 
+Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, Services, or Packages. All removes all entries. Likewise, Services and Packages remove only the extra configuration elements of the respective type.
+.TP
+.BR "\-u <user>" 
+Attempt to authenticate as 'user'.
+.TP
+.BR "\-x <password>" 
+Use 'password' for client communication.
+.TP
+.BR "\-v"
+Run bcfg2 in verbose mode.
 .RE
 .SH "SEE ALSO"
 .BR bcfg2-server(8),
