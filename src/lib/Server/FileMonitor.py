@@ -10,7 +10,7 @@ def ShouldIgnore(event):
         return True
     if event.filename.endswith('~') or event.filename.endswith('.tmp') \
     or event.filename.startswith('#') or event.filename.startswith('.#'):
-        logger.error("Suppressing event for file %s" % (event.filename))
+        #logger.error("Suppressing event for file %s" % (event.filename))
         return True
     return False
 
