@@ -1,3 +1,9 @@
+bcfg2 (0.9.6-0.0rc1) unstable; urgency=low
+
+  * Release candidate
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Fri, 07 Nov 2008 13:52:58 -0600
+
 bcfg2 (0.9.6-0.0pre3) unstable; urgency=low
 
   * new prerelease (hopefully rc)
