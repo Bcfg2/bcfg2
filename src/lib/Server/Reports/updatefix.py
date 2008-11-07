@@ -71,10 +71,14 @@ def rollupdate(current_version):
     """
     if current_version < lastversion:
         for i in range(current_version, lastversion):
-            if type(_fixes[i]) == str:
-                connection.cursor().execute(_fixes[i])
-            else:
-                _fixes[i]()
+            try:
+                if type(_fixes[i]) == str:
+                    connection.cursor().execute(_fixes[i])
+                else:
+                    _fixes[i]()
+            except:
+                logger.error("Failed to perform db update %s" % (_fixes[i]), exc_info=1)
+                continue
             # since array start at 0 but version start at 1 we add 1 to the normal count
             ret = InternalDatabaseVersion.objects.create(version=i+1)
         return ret
