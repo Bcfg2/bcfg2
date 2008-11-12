@@ -36,7 +36,7 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
 
 class Decisions(DecisionSet, Bcfg2.Server.Plugin.DecisionPlugin):
     __name__ = 'Decisions'
-    __version__ = '$Id: $'
+    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
