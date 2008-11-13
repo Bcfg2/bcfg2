@@ -28,6 +28,9 @@ class Core(object):
                  encoding, filemonitor='default'):
         object.__init__(self)
         self.datastore = repo
+        if filemonitor not in Bcfg2.Server.FileMonitor.available:
+            logger.error("File monitor driver %s not available; forcing to default" % filemonitor)
+            filemonitor = 'default'
         try:
             self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
         except IOError:
