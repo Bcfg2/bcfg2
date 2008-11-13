@@ -129,6 +129,8 @@ class Statistics(Bcfg2.Server.Plugin.StatisticsPlugin):
     def GetCurrentEntry(self, client, e_type, e_name):
         curr = self.FindCurrent(client)
         entry = curr.xpath('.//Bad/%s[@name="%s"]' % (e_type, e_name))
+        if not entry:
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         cfentry = entry[-1]
 
         owner = cfentry.get('current_owner', cfentry.get('owner'))
