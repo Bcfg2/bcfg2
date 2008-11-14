@@ -1,4 +1,4 @@
-%define release 0.1rc1
+%define release 0.2
 %define __python python
 %{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
