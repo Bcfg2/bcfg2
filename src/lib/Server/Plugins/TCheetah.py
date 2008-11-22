@@ -26,7 +26,7 @@ class TemplateFile:
             self.template = Cheetah.Template.Template(open(self.name).read(),
                                                       compilerSettings=s,
                                                       searchList = [self.searchlist])
-
+            self.template.properties = self.properties
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
