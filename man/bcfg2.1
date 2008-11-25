@@ -24,6 +24,9 @@ server.
 Run bcfg2 in build mode. Services aren't started, as the system
 may still be in miniroot.
 .TP
+.BR "\-C <configfile>"
+Specify alternate bcfg2.conf location
+.TP
 .BR "\-D <driver1>,<driver2>"
 Specify a set of bcfg2 tool drivers. NOTE: only drivers listed will be
 loaded. (IE, if you don't include POSIX, you will be unable to
@@ -99,7 +102,7 @@ administrators and much configuration variety.
 Run bcfg2 in dry-run mode. No changes will be made to the
 system. 
 .TP
-.BR \-o <LogFile Path>
+.BR "\-o <LogFile Path>"
 Writes a log to the specified path.
 .TP
 .BR "\-p <profile>" 
