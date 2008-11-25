@@ -104,6 +104,8 @@ class APT(Bcfg2.Client.Tools.Tool):
                 desiredVersion = pkg.candidateVersion
             else:
                 desiredVersion = pkg.installedVersion
+        elif entry.get('version') == 'any':
+            desiredVersion = pkg.installedVersion
         else:
             desiredVersion = entry.get('version')
         if desiredVersion != pkg.installedVersion:
