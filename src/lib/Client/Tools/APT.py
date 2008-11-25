@@ -118,6 +118,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                    and checksums:
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
+            return True
 
     def Remove(self, packages):
         '''Deal with extra configuration detected'''
