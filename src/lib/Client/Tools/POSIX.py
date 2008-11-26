@@ -25,7 +25,7 @@ def calcPerms(initial, perms):
 log = logging.getLogger('posix')
 
 def normUid(entry):
-    '''This takes a user name or uid and returns the corrisponding uid or False'''
+    '''This takes a user name or uid and returns the corresponding uid or False'''
     try:
         try:
             return int(entry.get('owner'))
@@ -36,14 +36,13 @@ def normUid(entry):
         return False
 
 def normGid(entry):
-    '''This takes a group name or gid and returns the corrisponding gid or False'''
+    '''This takes a group name or gid and returns the corresponding gid or False'''
     try:
         try:
             return int(entry.get('group'))
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-
         log.error('GID normalization failed for %s' % (entry.get('name')))
         return False
 
