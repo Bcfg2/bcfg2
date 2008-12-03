@@ -38,8 +38,7 @@ class RetryMethod(_Method):
             except Bcfg2.tlslite.errors.TLSFingerprintError, err:
                 raise
             except Bcfg2.tlslite.errors.TLSError, err:
-                self.log.error("Unexpected TLS Error: %s. Retrying" % \
-                               (err.message))
+                self.log.error("Unexpected TLS Error: %s. Retrying" % (err))
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
