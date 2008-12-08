@@ -8,7 +8,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
     '''Support for Mac OS X Launchd Services'''
     __handles__ = [('Service', 'launchd')]
     __execs__ = ['/bin/launchctl', '/usr/bin/defaults']
-    __name__ = 'launchd'
+    name = 'launchd'
     __req__ = {'Service':['name', 'status']}
 
     '''

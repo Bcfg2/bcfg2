@@ -8,7 +8,7 @@ import Bcfg2.Client.Tools
 class APT(Bcfg2.Client.Tools.Tool):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
-    __name__ = 'APT'
+    name = 'APT'
     __execs__ = ['/usr/bin/debsums', '/usr/bin/apt-get', '/usr/bin/dpkg']
     __important__ = ["/etc/apt/sources.list",
                      "/var/cache/debconf/config.dat", 

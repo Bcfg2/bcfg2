@@ -9,7 +9,7 @@ import Bcfg2.Client.Tools
 
 class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
     '''FreeBSD Service Support for Bcfg2'''
-    __name__ = 'FreeBSDInit'
+    name = 'FreeBSDInit'
     __handles__ = [('Service', 'freebsd')]
     __req__ = {'Service': ['name', 'status']}
     __svcrestart__ = 'restart'

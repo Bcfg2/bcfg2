@@ -27,7 +27,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     '''Support for Yum packages'''
     pkgtype = 'yum'
 
-    __name__ = 'YUMng'
+    name = 'YUMng'
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum'), ('Package', 'rpm')]
  

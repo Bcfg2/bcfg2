@@ -8,7 +8,7 @@ import Bcfg2.Client.Tools, Bcfg2.Client.XML
 
 class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     '''Chkconfig support for Bcfg2'''
-    __name__ = 'Chkconfig'
+    name = 'Chkconfig'
     __execs__ = ['/sbin/chkconfig']
     __handles__ = [('Service', 'chkconfig')]
     __req__ = {'Service': ['name', 'status']}

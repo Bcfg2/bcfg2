@@ -10,7 +10,7 @@ import Bcfg2.Client.Tools
 
 class Action(Bcfg2.Client.Tools.Tool):
     '''Implement Actions'''
-    __name__ = 'Action'
+    name = 'Action'
     __handles__ = [('PostInstall', None), ('Action', None)]
     __req__ = {'PostInstall': ['name'],
                'Action':['name', 'timing', 'when', 'command', 'status']}

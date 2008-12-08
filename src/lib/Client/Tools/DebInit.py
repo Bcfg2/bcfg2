@@ -6,7 +6,7 @@ import Bcfg2.Client.Tools
 
 class DebInit(Bcfg2.Client.Tools.SvcTool):
     '''Debian Service Support for Bcfg2'''
-    __name__ = 'DebInit'
+    name = 'DebInit'
     __execs__ = ['/usr/sbin/update-rc.d']
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}

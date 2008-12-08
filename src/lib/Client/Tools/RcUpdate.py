@@ -5,7 +5,7 @@ import Bcfg2.Client.Tools, Bcfg2.Client.XML, commands, os
 
 class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     '''RcUpdate support for Bcfg2'''
-    __name__ = 'RcUpdate'
+    name = 'RcUpdate'
     __execs__ = ['/sbin/rc-update', '/bin/rc-status']
     __handles__ = [('Service', 'rc-update')]
     __req__ = {'Service': ['name', 'status']}

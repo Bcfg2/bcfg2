@@ -6,7 +6,7 @@ import Bcfg2.Client.Tools, time
 
 class RPM(Bcfg2.Client.Tools.PkgTool):
     '''Support for RPM packages'''
-    __name__ = 'RPM'
+    name = 'RPM'
     __execs__ = ['/bin/rpm', '/var/lib/rpm']
     __handles__ = [('Package', 'rpm')]
     __req__ = {'Package': ['name', 'version']}

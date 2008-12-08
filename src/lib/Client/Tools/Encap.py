@@ -6,7 +6,7 @@ import Bcfg2.Client.Tools, glob, re
 
 class Encap(Bcfg2.Client.Tools.PkgTool):
     '''Support for Encap packages'''
-    __name__ = 'Encap'
+    name = 'Encap'
     __execs__ = ['/usr/local/bin/epkg']
     __handles__ = [('Package', 'encap')]
     __req__ = {'Package': ['version', 'url']}

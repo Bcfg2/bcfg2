@@ -8,7 +8,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
     '''Support for Solaris SMF Services'''
     __handles__ = [('Service', 'smf')]
     __execs__ = ['/usr/sbin/svcadm', '/usr/bin/svcs']
-    __name__ = 'SMF'
+    name = 'SMF'
     __req__ = {'Service':['name', 'status']}
     __ireq__ = {'Service': ['name', 'status', 'FMRI']}
 

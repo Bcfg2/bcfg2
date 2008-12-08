@@ -66,7 +66,7 @@ class Tool:
     '''
     All tools subclass this. It defines all interfaces that need to be defined
     '''
-    __name__ = 'Tool'
+    name = 'Tool'
     __execs__ = []
     __handles__ = []
     __req__ = {}
@@ -88,7 +88,7 @@ class Tool:
                 mode = stat.S_IMODE(os.stat(filename)[stat.ST_MODE])
                 if mode & stat.S_IEXEC != stat.S_IEXEC:
                     self.logger.debug("%s: %s not executable" % \
-                                      (self.__name__, filename))
+                                      (self.name, filename))
                     raise toolInstantiationError
             except OSError:
                 raise toolInstantiationError
@@ -200,7 +200,7 @@ class PkgTool(Tool):
     '''PkgTool provides a one-pass install with fallback for use with packaging systems'''
     pkgtool = ('echo %s', ('%s', ['name']))
     pkgtype = 'echo'
-    __name__ = 'PkgTool'
+    name = 'PkgTool'
 
     def __init__(self, logger, setup, config):
         Tool.__init__(self, logger, setup, config)
@@ -277,7 +277,7 @@ class PkgTool(Tool):
 
 class SvcTool(Tool):
     '''This class defines basic Service behavior'''
-    __name__ = 'SvcTool'
+    name = 'SvcTool'
     __svcrestart__ = 'reload'
 
     def BundleUpdated(self, bundle, states):

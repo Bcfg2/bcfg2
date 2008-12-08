@@ -61,7 +61,7 @@ def isString(strng):
 
 class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
-    __name__ = 'POSIX'
+    name = 'POSIX'
     __handles__ = [('ConfigFile', None), ('Directory', None), ('Permissions', None), \
                    ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],

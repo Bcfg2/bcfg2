@@ -7,7 +7,7 @@ import Bcfg2.Client.Tools
 class Portage(Bcfg2.Client.Tools.PkgTool):
     '''The Gentoo toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
-    __name__ = 'Portage'
+    name = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
     __important__ = ['/etc/make.conf']
     __handles__ = [('Package', 'ebuild')]

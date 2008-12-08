@@ -83,10 +83,10 @@ class Frame:
         for tool in self.tools[:]:
             for conflict in getattr(tool, 'conflicts', []):
                 [self.tools.remove(item) for item in self.tools \
-                 if item.__name__ == conflict]
+                 if item.name == conflict]
 
         self.logger.info("Loaded tool drivers:")
-        self.logger.info([tool.__name__ for tool in self.tools])
+        self.logger.info([tool.name for tool in self.tools])
         if not self.dryrun and not self.setup['bundle']:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
@@ -142,7 +142,7 @@ class Frame:
             try:
                 tool.Inventory(self.states)
             except:
-                self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
+                self.logger.error("%s.Inventory() call failed:" % tool.name, exc_info=1)
 
     def Decide(self):
         '''Set self.whitelist based on user interaction'''
@@ -239,7 +239,7 @@ class Frame:
             try:
                 tool.Install(handled, self.states)
             except:
-                self.logger.error("%s.Install() call failed:" % tool.__name__, exc_info=1)
+                self.logger.error("%s.Install() call failed:" % tool.name, exc_info=1)
 
     def Install(self):
         '''Install all entries'''
@@ -259,7 +259,7 @@ class Frame:
                 try:
                     tool.Inventory(self.states, [bundle])
                 except:
-                    self.logger.error("%s.Inventory() call failed:" % tool.__name__, exc_info=1)
+                    self.logger.error("%s.Inventory() call failed:" % tool.name, exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
                          if not self.states[entry] and entry not in self.blacklist]
             if clobbered:
@@ -278,7 +278,7 @@ class Frame:
                         tool.BundleNotUpdated(bundle, self.states)
                 except:
                     self.logger.error("%s.BundleNotUpdated() call failed:" % \
-                                      (tool.__name__), exc_info=1)
+                                      (tool.name), exc_info=1)
                 
     def Remove(self):
         '''Remove extra entries'''
@@ -288,7 +288,7 @@ class Frame:
                 try:
                     tool.Remove(extras)
                 except:
-                    self.logger.error("%s.Remove() failed" % tool.__name__, exc_info=1)
+                    self.logger.error("%s.Remove() failed" % tool.name, exc_info=1)
 
     def CondDisplayState(self, phase):
         '''Conditionally print tracing information'''

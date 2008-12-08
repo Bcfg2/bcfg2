@@ -11,7 +11,7 @@ except NameError:
 
 class RPMng(Bcfg2.Client.Tools.PkgTool):
     '''Support for RPM packages'''
-    __name__ = 'RPMng'
+    name = 'RPMng'
 
     __execs__ = ['/bin/rpm', '/var/lib/rpm']
     __handles__ = [('Package', 'rpm')]
@@ -48,8 +48,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         # installonlypackages
         self.installOnlyPkgs = []
-        if RPMng_CP.has_option(self.__name__, 'installonlypackages'):
-            for i in RPMng_CP.get(self.__name__, 'installonlypackages').split(','):
+        if RPMng_CP.has_option(self.name, 'installonlypackages'):
+            for i in RPMng_CP.get(self.name, 'installonlypackages').split(','):
                 self.installOnlyPkgs.append(i.strip())
         if self.installOnlyPkgs == []:
             self.installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
@@ -63,45 +63,45 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         # erase_flags
         self.erase_flags = []
-        if RPMng_CP.has_option(self.__name__, 'erase_flags'):
-            for i in RPMng_CP.get(self.__name__, 'erase_flags').split(','):
+        if RPMng_CP.has_option(self.name, 'erase_flags'):
+            for i in RPMng_CP.get(self.name, 'erase_flags').split(','):
                 self.erase_flags.append(i.strip())
         if self.erase_flags == []:
             self.erase_flags = ['allmatches']
         self.logger.debug('erase_flags = %s' % self.erase_flags)
 
         # pkg_checks
-        if RPMng_CP.has_option(self.__name__, 'pkg_checks'):
-            self.pkg_checks = RPMng_CP.get(self.__name__, 'pkg_checks').lower()
+        if RPMng_CP.has_option(self.name, 'pkg_checks'):
+            self.pkg_checks = RPMng_CP.get(self.name, 'pkg_checks').lower()
         else:
             self.pkg_checks = 'true'
         self.logger.debug('pkg_checks = %s' % self.pkg_checks)
 
         # pkg_verify
-        if RPMng_CP.has_option(self.__name__, 'pkg_verify'):
-            self.pkg_verify = RPMng_CP.get(self.__name__, 'pkg_verify').lower()
+        if RPMng_CP.has_option(self.name, 'pkg_verify'):
+            self.pkg_verify = RPMng_CP.get(self.name, 'pkg_verify').lower()
         else:
             self.pkg_verify = 'true'
         self.logger.debug('pkg_verify = %s' % self.pkg_verify)
 
         # installed_action
-        if RPMng_CP.has_option(self.__name__, 'installed_action'):
-            self.installed_action = RPMng_CP.get(self.__name__, 'installed_action').lower()
+        if RPMng_CP.has_option(self.name, 'installed_action'):
+            self.installed_action = RPMng_CP.get(self.name, 'installed_action').lower()
         else:
             self.installed_action = 'install'
         self.logger.debug('installed_action = %s' % self.installed_action)
 
         # version_fail_action
-        if RPMng_CP.has_option(self.__name__, 'version_fail_action'):
-            self.version_fail_action = RPMng_CP.get(self.__name__, 'version_fail_action').lower()
+        if RPMng_CP.has_option(self.name, 'version_fail_action'):
+            self.version_fail_action = RPMng_CP.get(self.name, 'version_fail_action').lower()
         else:
             self.version_fail_action = 'upgrade'
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
 
         # verify_fail_action
-        if self.__name__ == "RPMng":
-            if RPMng_CP.has_option(self.__name__, 'verify_fail_action'):
-                self.verify_fail_action = RPMng_CP.get(self.__name__, 'verify_fail_action').lower()
+        if self.name == "RPMng":
+            if RPMng_CP.has_option(self.name, 'verify_fail_action'):
+                self.verify_fail_action = RPMng_CP.get(self.name, 'verify_fail_action').lower()
             else:
                 self.verify_fail_action = 'reinstall'
         else: # yum can't reinstall packages.
@@ -109,8 +109,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug('verify_fail_action = %s' % self.verify_fail_action)
 
         # version_fail_action
-        if RPMng_CP.has_option(self.__name__, 'verify_flags'):
-            self.verify_flags = RPMng_CP.get(self.__name__, 'verify_flags').lower().split(',')
+        if RPMng_CP.has_option(self.name, 'verify_flags'):
+            self.verify_flags = RPMng_CP.get(self.name, 'verify_flags').lower().split(',')
         else:
             self.verify_flags = []
         if '' in self.verify_flags:
@@ -503,7 +503,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                      (inst_status.get('pkg').get('name'),
                                                       self.str_evra(instance)))
 
-        elif inst_status.get('verify_fail', False) == True and self.__name__ == "RPMng":
+        elif inst_status.get('verify_fail', False) == True and self.name == "RPMng":
             # yum can't reinstall packages so only do this for rpm.
             if instance.get('verify_fail_action', 'reinstall') == "reinstall" and \
                self.verify_fail_action == "reinstall":

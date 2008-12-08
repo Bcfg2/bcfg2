@@ -25,7 +25,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'sysv')]
     __req__ = {'Package': ['name', 'version']}
     __ireq__ = {'Package': ['name', 'url', 'version']}
-    __name__ = 'SYSV'
+    name = 'SYSV'
     pkgtype = 'sysv'
     pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
