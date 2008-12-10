@@ -138,6 +138,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         # it looks like you can't install arbitrary versions of software
         # out of the pkg cache, we will still need to call apt-get
         ipkgs = []
+        bad_pkgs = []
         for pkg in packages:
             if not self.pkg_cache.has_key(pkg.get('name')):
                 self.logger.error("APT has no information about package %s" % (pkg.get('name')))
@@ -149,6 +150,13 @@ class APT(Bcfg2.Client.Tools.Tool):
             if pkg.get('version') in \
                [p.VerStr for p in self.pkg_cache[pkg.get('name')]._pkg.VersionList]:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
+                continue
+            bad_pkgs.append(pkg.get('name'))
+        if bad_pkgs:
+            self.logger.error("Cannot find correct versions of packages:")
+            self.logger.error(bad_pkgs)
+        if not ipkgs:
+            return
         rc = self.cmd.run(self.pkgcmd % (" ".join(ipkgs)))[0]
         if rc:
             self.logger.error("APT command failed")
