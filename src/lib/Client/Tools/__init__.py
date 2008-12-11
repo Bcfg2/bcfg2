@@ -139,7 +139,9 @@ class Tool:
 
     def getSupportedEntries(self):
         '''return a list of supported entries'''
-        return [entry for struct in self.config.getchildren() for entry in struct.getchildren() \
+        return [entry for struct in \
+                self.config.getchildren() for entry in \
+                struct.getchildren() \
                 if self.handlesEntry(entry)]
 
     def handlesEntry(self, entry):
@@ -284,12 +286,15 @@ class SvcTool(Tool):
         '''The Bundle has been updated'''
         for entry in bundle:
             if self.handlesEntry(entry):
+                rc = 0
                 if entry.get('status') == 'on' and not self.setup['build']:
                     self.logger.debug('Restarting service %s' % entry.get('name'))
                     rc = self.cmd.run('/etc/init.d/%s %s' % \
                                       (entry.get('name'), entry.get('reload', self.__svcrestart__)))[0]
-                else:
+                elif not self.setup['build']:
                     self.logger.debug('Stopping service %s' % entry.get('name'))
-                    rc = self.cmd.run('/etc/init.d/%s stop' %  (entry.get('name')))[0]
+                    rc = self.cmd.run('/etc/init.d/%s stop' % \
+                                      (entry.get('name')))[0]
                 if rc:
-                    self.logger.error("Failed to restart service %s" % (entry.get('name')))
+                    self.logger.error("Failed to restart service %s" % \
+                                      (entry.get('name')))
