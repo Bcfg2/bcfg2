@@ -39,8 +39,10 @@ if __name__ == '__main__':
     info_list = []
     for root, dirs, files in os.walk('%s' % repo):
         for filename in files:
-            if filename.endswith('info.xml'):
+            if filename == 'info.xml':
                 info_list.append(os.path.join(root, filename))
+        if 'Bundler' in dirs:
+            dirs.remove('Bundler')
 
     # get metadata list (with all included files)
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
