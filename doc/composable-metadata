@@ -1,0 +1,46 @@
+This documents the redesign of the Metadata subsystem. 
+
+Goals
+* Separate core metadata (groups, etc) functionality from augmentors 
+* Enable metadata integration with external data sources
+* Make metadata features (group inclusion, categories) usable from
+  external datasources
+
+The basic idea of this redesign is to split Metadata functions into
+two major components. One master MetadataPlugin instance handles
+client identification/authentication, profile assertion, group
+categories, and metadata instance construction. Multiple
+MetadataConnectorPlugin instances each contribute additional group
+memberships and a set of per-instance key/value pairs. This data is
+merged into the client metadata instance by the master
+MetadataPlugin. 
+
+Use Cases
+* Mapping external data into client metadata instances
+** Probes
+** Properties
+** External network management
+** Monitoring
+** LDAP data
+
+
+API
+
+* Bcfg2.Server.Core.Core
+** get_metadata()
+* Bcfg2.Server.Plugin.MetadataPlugin
+** add_client()
+** remove_client()
+** set_profile()
+** resolve_client()
+** get_initial_metadata()
+** merge_additional_metadata()
+* Bcfg2.Server.Plugin.MetadataConnectorPlugin
+** get_additional_metadata()
+
+Metadata Resolution Control Flow
+1. B.S.P.MP.resolve_client() -> canonical client name
+2. B.S.P.MP.get_initial_metadata() -> partial ClientMetadata inst
+3. [B.S.P.MCP.get_additional_metadata()] -> 
+     [([group list], {data dictionary})]
+4. [B.S.P.MP.merge_additional_metadata()]
