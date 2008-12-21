@@ -1,4 +1,7 @@
-'''Frame is the Client Framework that verifies and installs entries, and generates statistics'''
+"""
+Frame is the Client Framework that verifies and
+installs entries, and generates statistics
+"""
 __revision__ = '$Revision$'
 
 import logging, time, types
@@ -78,7 +81,8 @@ class Frame:
             except Bcfg2.Client.Tools.toolInstantiationError:
                 continue
             except:
-                self.logger.error("Failed to instantiate tool %s" % (tool), exc_info=1)
+                self.logger.error("Failed to instantiate tool %s" % \
+                                  (tool), exc_info=1)
 
         for tool in self.tools[:]:
             for conflict in getattr(tool, 'conflicts', []):
@@ -90,7 +94,7 @@ class Frame:
         if not self.dryrun and not self.setup['bundle']:
             for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
                           if cfl.get('name') in self.__important__]:
-                tl= [t for t in self.tools if t.handlesEntry(cfile) \
+                tl = [t for t in self.tools if t.handlesEntry(cfile) \
                      and t.canVerify(cfile)]
                 if tl:
                     if not tl[0].VerifyConfigFile(cfile, []):
@@ -103,7 +107,8 @@ class Frame:
                             self.logger.error("Unexpected tool failure",
                                               exc_info=1)
         # find entries not handled by any tools
-        problems = [entry for struct in config for entry in struct if entry not in self.handled]
+        problems = [entry for struct in config for \
+                    entry in struct if entry not in self.handled]
 
         if problems:
             self.logger.error("The following entries are not handled by any tool:")
@@ -191,6 +196,12 @@ class Frame:
         # Here is where most of the work goes
         # first perform bundle filtering
         if self.setup['bundle']:
+            all_bundle_names = [b.get('name') for b in
+                                self.config.findall('./Bundle')]
+            # warn if non-existent bundle given
+            for bundle in self.setup['bundle']:
+                if bundle not in all_bundle_names:
+                    self.logger.info("Warning: Bundle %s not found" % bundle)
             bundles = [b for b in self.config.findall('./Bundle') \
                        if b.get('name') in self.setup['bundle']]
             self.whitelist = [e for e in self.whitelist if \
