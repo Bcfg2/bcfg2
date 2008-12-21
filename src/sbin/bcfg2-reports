@@ -112,7 +112,7 @@ entrydict = dict()
 
 args = sys.argv[1:]
 opts, pargs = getopt(args, 'ab:cde:hs:x:',
-                     ['sort=', 'fields=', 'badentry=', 'extraentry='])
+                     ['stale', 'sort=', 'fields=', 'badentry=', 'extraentry='])
 
 for option in opts:
     if len(option) > 0:
@@ -141,7 +141,8 @@ if expire != "":
             c_inst.save()
 
 elif '-h' in args:
-    print '''usage: python bcfg2-reports [option] ...
+    print """Usage: python bcfg2-reports [option] ...
+
 Options and arguments (and corresponding environment variables):
 -a                     : shows all hosts, including expired hosts
 -b NAME                : single-host mode - shows bad entries from the
@@ -164,7 +165,9 @@ Options and arguments (and corresponding environment variables):
                          read from a file of name ARG1
 --fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
                          (name,time,state)
---sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)'''
+--sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)
+--stale                : shows hosts which haven't run in the last 24 hours
+"""
 elif singlehost != "":
     for c_inst in c_list:
         if singlehost == c_inst.name:
@@ -202,12 +205,18 @@ else:
 
     if extraentry != "":
         extraentry = extraentry.split(',')
-
-    if '-c' in args:    
+    
+    # stale hosts
+    if '--stale' in args:
+        for c_inst in c_list:
+            if c_inst.current_interaction.isstale():
+                result.append(c_inst)
+    # clean hosts
+    elif '-c' in args:    
         for c_inst in c_list:
             if c_inst.current_interaction.isclean():
                 result.append(c_inst)
-
+    # dirty hosts
     elif '-d' in args:    
         for c_inst in c_list:
             if not c_inst.current_interaction.isclean():
