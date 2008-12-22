@@ -93,7 +93,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         meta = self.bcore.metadata.get_metadata(client)
         # find appropriate plugin in bcore
         glist = [gen for gen in self.bcore.generators if
-                 gen.Entries.get(etype, {}).has_key(ename)]
+                 ename in gen.Entries.get(etype, {})]
         if len(glist) != 1:
             self.errExit("Got wrong numbers of matching generators for entry:" \
                          + "%s" % ([g.__name__ for g in glist]))

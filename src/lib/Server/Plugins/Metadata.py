@@ -250,7 +250,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                 clname = client.get('name').lower()
                 if 'address' in client.attrib:
                     caddr = client.get('address')
-                    if self.addresses.has_key(caddr):
+                    if caddr in self.addresses:
                         self.addresses[caddr].append(clname)
                     else:
                         self.addresses[caddr] = [clname]
@@ -264,7 +264,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                     self.passwords[clname] = client.get('password')
                 for alias in [alias for alias in client.findall('Alias')\
                               if 'address' in alias.attrib]:
-                    if self.addresses.has_key(alias.get('address')):
+                    if alias.get('address') in self.addresses:
                         self.addresses[alias.get('address')].append(clname)
                     else:
                         self.addresses[alias.get('address')] = [clname]
@@ -289,7 +289,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                     self.profiles.append(group.get('name'))
                 if group.get('public', 'false') == 'true':
                     self.public.append(group.get('name'))
-                if group.attrib.has_key('category'):
+                if 'category' in group.attrib:
                     self.categories[group.get('name')] = group.get('category')
             for group in grouptmp:
                 # self.groups[group] => (bundles, groups, categories)
@@ -300,14 +300,14 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                     now = tocheck.pop()
                     if now not in self.groups[group][1]:
                         self.groups[group][1].append(now)
-                    if grouptmp.has_key(now):
+                    if now in grouptmp:
                         (bundles, groups) = grouptmp[now]
                         for ggg in [ggg for ggg in groups if ggg not in self.groups[group][1]]:
                             if ggg not in self.categories or \
                                    self.categories[ggg] not in self.groups[group][2]:
                                 self.groups[group][1].append(ggg)
                                 tocheck.append(ggg)
-                                if self.categories.has_key(ggg):
+                                if ggg in self.categories:
                                     group_cat[self.categories[ggg]] = ggg
                             elif ggg in self.categories:
                                 self.logger.info("Group %s: %s cat-suppressed %s" % \
@@ -341,14 +341,14 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         if profile not in self.public:
             self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
-        if self.clients.has_key(client):
+        if client in self.clients:
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
             cli[0].set('profile', profile)
         else:
             self.logger.info("Creating new client: %s, profile %s" % \
                              (client, profile))
-            if self.session_cache.has_key(addresspair):
+            if addresspair in self.session_cache:
                 # we are working with a uuid'd client
                 lxml.etree.SubElement(self.clientdata_original.getroot(),
                                       'Client', name=client,
@@ -424,12 +424,12 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
         #print self.session_cache
-        if self.session_cache.has_key(addresspair):
+        if addresspair in self.session_cache:
             (stamp, uuid) = self.session_cache[addresspair]
             if time.time() - stamp < 60:
                 return self.uuid[uuid]
         address = addresspair[0]
-        if self.addresses.has_key(address):
+        if address in self.addresses:
             if len(self.addresses[address]) != 1:
                 self.logger.error("Address %s has multiple reverse assignments; a uuid must be used" % (address))
                 raise MetadataConsistencyError
@@ -447,9 +447,9 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
     def get_metadata(self, client):
         '''Return the metadata for a given client'''
         client = client.lower()
-        if self.aliases.has_key(client):
+        if client in self.aliases:
             client = self.aliases[client]
-        if self.clients.has_key(client):
+        if client in self.clients:
             (bundles, groups, categories) = self.groups[self.clients[client]]
         else:
             if self.default == None:
@@ -462,7 +462,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         newbundles = bundles[:]
         newcategories = {}
         newcategories.update(categories)
-        if self.passwords.has_key(client):
+        if client in self.passwords:
             password = self.passwords[client]
         else:
             password = None
@@ -472,7 +472,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         else:
             uuid = None
         for group in self.cgroups.get(client, []):
-            if self.groups.has_key(group):
+            if group in self.groups:
                 nbundles, ngroups, ncategories = self.groups[group]
             else:
                 nbundles, ngroups, ncategories = ([], [group], {})
@@ -500,7 +500,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
 
     def ReceiveDataItem(self, client, data):
         '''Receive probe results pertaining to client'''
-        if not self.cgroups.has_key(client.hostname):
+        if not client.hostname in self.cgroups:
             self.cgroups[client.hostname] = []
         if data.text == None:
             self.logger.error("Got null response to probe %s from %s" % \
@@ -561,7 +561,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                 self.logger.error("Client %s used incorrect global password" % (address[0]))
                 return False
         if client not in self.secure:
-            if self.passwords.has_key(client):
+            if client in self.passwords:
                 plist = [self.password, self.passwords[client]]
             else:
                 plist = [self.password]
@@ -599,7 +599,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         viz_str = ""
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
         for group in egroups:
-            if not categories.has_key(group.get('category')):
+            if not group.get('category') in categories:
                 categories[group.get('category')] = colors.pop()
             group.set('color', categories[group.get('category')])
         if None in categories:
@@ -607,7 +607,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         if hosts:
             clients = self.clients
             for client, profile in clients.iteritems():
-                if instances.has_key(profile):
+                if profile in instances:
                     instances[profile].append(client)
                 else:
                     instances[profile] = [client]

@@ -62,7 +62,7 @@ class Account(Bcfg2.Server.Plugin.GeneratorPlugin):
         rdata = self.repository.entries
         entry.text = "".join([rdata["%s.key" % user].data for user \
                               in superusers if \
-                              rdata.has_key("%s.key" % user)])
+                              ("%s.key" % user) in rdata])
         perms = {'owner':'root', 'group':'root', 'perms':'0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in perms.iteritems()]

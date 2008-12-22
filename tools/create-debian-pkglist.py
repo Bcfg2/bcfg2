@@ -37,13 +37,13 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
                     pkgname = line.split(' ')[1].strip()
                 elif line[:8] == 'Version:':
                     version = line.split(' ')[1].strip()
-                    if pkgdata.has_key(pkgname):
+                    if pkgname in pkgdata:
                         pkgdata[pkgname][arch] = version
                     else:
                         pkgdata[pkgname] = {arch:version}
                 elif line[:8] == 'Depends:':
                     deps = re.sub(',', '', re.sub('\(.*\)', '', line)).split()[1:]
-                    if pkgdeps.has_key(pkgname):
+                    if pkgname in pkgdeps:
                         pkgdeps[pkgname][arch] = deps
                     else:
                         pkgdeps[pkgname] = {arch:deps}
@@ -69,7 +69,7 @@ def processSource(prefix, source, dists, archs, prio, groups, packages):
             for arch in archs:
                 output.write('<Group name="%s">\n' % (arch))
                 for pkg in pkgdata.keys():
-                    if pkgdata[pkg].has_key(arch):
+                    if arch in pkgdata[pkg]:
                         output.write('<Package name="%s" version="%s"/>\n' % (pkg, pkgdata[pkg][arch]))
                         perarch += 1
                 output.write('</Group>\n')

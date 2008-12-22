@@ -55,7 +55,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         viz_str = ""
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
         for group in egroups:
-            if not categories.has_key(group.get('category')):
+            if not group.get('category') in categories:
                 categories[group.get('category')] = colors.pop()
             group.set('color', categories[group.get('category')])
         if None in categories:
@@ -63,7 +63,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         if hosts:
             clients = self.clients
             for client, profile in clients.iteritems():
-                if instances.has_key(profile):
+                if profile in instances:
                     instances[profile].append(client)
                 else:
                     instances[profile] = [client]
@@ -160,7 +160,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         entry.text = self.entries["static.dhcpd.conf"].data
         for host, data in self.nodes.iteritems():
             entry.text += "host %s {\n" % (host + DOMAIN_SUFFIX)
-            if data.has_key('mac') and data.has_key('ip'):
+            if 'mac' in data and 'ip' in data:
                 entry.text += " hardware ethernet %s;\n" % (data['mac'])
                 entry.text += " fixed-address %s;\n" % (data['ip'])
                 entry.text += " filename \"%s\";\n}\n" % (PXE_CONFIG)
@@ -175,7 +175,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         entry = self.entries["static.dhcpd.conf"].data
         for host, data in self.nodes.iteritems():
             entry += "host %s {\n" % (host + DOMAIN_SUFFIX)
-            if data.has_key('mac') and data.has_key('ip'):
+            if 'mac' in data and 'ip' in data:
                 entry += " hardware ethernet %s;\n" % (data['mac'])
                 entry += " fixed-address %s;\n" % (data['ip'])
                 entry += " filename \"%s\";\n}\n" % (PXE_CONFIG)
@@ -190,7 +190,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         users = self.get_users(metadata)
         rdata = self.entries
         entry.text = "".join([rdata["%s.key" % user].data for user
-            in users if rdata.has_key("%s.key" % user)])
+            in users if ("%s.key" % user) in rdata])
         perms = {'owner':'root', 'group':'root', 'perms':'0600'}
         [entry.attrib.__setitem__(key, value) for (key, value)
             in perms.iteritems()]
@@ -220,7 +220,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         users = []
         for host, host_dict in self.nodes.iteritems():
             if host == metadata.hostname.split('.')[0]:
-                if host_dict.has_key('user'):
+                if 'user' in host_dict:
                     if host_dict['user'] != "none":
                         users.append(host_dict['user'])
         return users
@@ -266,7 +266,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         '''Handle events'''
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
 	# static.dhcpd.conf hack
-	if self.entries.has_key('static.dhcpd.conf'):
+	if 'static.dhcpd.conf' in self.entries:
 	    self.dhcpd_loaded = True
 	if self.need_update and self.dhcpd_loaded:
 	    self.update_dhcpd()
@@ -285,7 +285,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 if node.findall("Interface"):
                     iface = node.findall("Interface")[0]
                     node_dict['mac'] = iface.attrib['mac']
-                    if iface.attrib.has_key('ip'):
+                    if 'ip' in iface.attrib:
                         node_dict['ip'] = iface.attrib['ip']
                 # populate self.clients dict
                 full_hostname = host + DOMAIN_SUFFIX
@@ -308,7 +308,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                     profile = "basic"
                 self.clients[full_hostname] = profile
                 # get ip address from bb.mxl, if available
-                if node_dict.has_key('ip'):
+                if 'ip' in node_dict:
                     ip = node_dict['ip']
                     self.addresses[ip] = [host]
                 else:
@@ -319,7 +319,7 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                 self.nodes[host] = node_dict
                 # update symlinks and /etc/dhcp3/dhcpd.conf
                 if self.write_to_disk:
-                    if not node_dict.has_key('mac'):
+                    if not 'mac' in node_dict:
                         self.logger.error("no mac address for %s" % host)
                         continue
                     mac = node_dict['mac'].replace(':','-').lower()

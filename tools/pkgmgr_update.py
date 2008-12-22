@@ -239,8 +239,8 @@ def updatepkg(pkg):
     if name not in installOnlyPkgs:
         for inst in [inst for inst in pkg if inst.tag == 'Instance']:
             arch = inst.get('arch')
-            if package_dict.has_key(name):
-                if package_dict[name].has_key(arch):
+            if name in package_dict:
+                if arch in package_dict[name]:
                     package_dict[name][arch].sort(cmpRpmHeader)
                     latest = package_dict[name][arch][-1]
                     if cmpRpmHeader(inst, latest) == -1:

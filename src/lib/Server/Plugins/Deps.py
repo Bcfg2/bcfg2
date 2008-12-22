@@ -61,7 +61,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
         gdata = metadata.groups[:]
         gdata.sort()
         gdata = tuple(gdata)
-        if self.cache.has_key((entries, gdata)):
+        if (entries, gdata) in self.cache:
             prereqs = self.cache[(entries, gdata)]
         else:
             [src.Cache(metadata) for src in self.entries.values()]
@@ -70,8 +70,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
             while toexamine:
                 entry = toexamine.pop()
                 matching = [src for src in self.entries.values()
-                            if src.cache and src.cache[1].has_key(entry[0])
-                            and src.cache[1][entry[0]].has_key(entry[1])]
+                            if src.cache and entry[0] in src.cache[1]
+                            and entry[1] in src.cache[1][entry[0]]]
                 if len(matching) > 1:
                     prio = [int(src.priority) for src in matching]
                     if prio.count(max(prio)) > 1:

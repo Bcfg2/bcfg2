@@ -87,7 +87,7 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     def VerifyPackage(self, entry, modlist, checksums=True):
         '''Verify package for entry'''
-        if not entry.attrib.has_key('version'):
+        if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              (entry.attrib['name']))
             return False
@@ -140,7 +140,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if not self.pkg_cache.has_key(pkg.get('name')):
+            if not pkg.get('name') in self.pkg_cache:
                 self.logger.error("APT has no information about package %s" % (pkg.get('name')))
                 continue
             if pkg.get('version') == 'auto':

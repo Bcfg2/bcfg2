@@ -184,7 +184,7 @@ def getindexbykeyword(index_ts, **kwargs):
     else:
         index_mi = index_ts.dbMatch()
 
-    if kwargs.has_key('epoch'):
+    if 'epoch' in kwargs:
         if kwargs['epoch'] != None and kwargs['epoch'] != 'None':
             kwargs['epoch'] = int(kwargs['epoch'])
         else:
@@ -222,7 +222,7 @@ def getheadersbykeyword(header_ts, **kwargs):
     else:
         header_mi = header_ts.dbMatch()
 
-    if kwargs.has_key('epoch'):
+    if 'epoch' in kwargs:
         if kwargs['epoch'] != None and kwargs['epoch'] != 'None':
             kwargs['epoch'] = int(kwargs['epoch'])
         else:

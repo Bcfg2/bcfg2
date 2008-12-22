@@ -68,7 +68,7 @@ class FamFam(object):
                 else:
                     collapsed += 1
         for event in unique:
-            if self.users.has_key(event.requestID):
+            if event.requestID in self.users:
                 try:
                     self.users[event.requestID].HandleEvent(event)
                 except:
@@ -95,7 +95,7 @@ class GaminEvent(Event):
         Event.__init__(self, request_id, filename, code)
         action_map = {GAMCreated: 'created', GAMExists: 'exists', GAMChanged: 'changed',
                       GAMDeleted: 'deleted', GAMEndExist: 'endExist', GAMMoved: 'moved'}
-        if action_map.has_key(code):
+        if code in action_map:
             self.action = action_map[code]
 
 class GaminFam(object):
@@ -211,7 +211,7 @@ class PseudoFam(object):
             rawevents.append(event)
         self.pending = []
         for event in rawevents:
-            if self.users.has_key(event.requestID):
+            if event.requestID in self.users:
                 self.users[event.requestID].HandleEvent(event)
         return count
         

@@ -35,11 +35,11 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
-        if not entry.attrib.has_key('version'):
+        if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                (entry.attrib['name']))
             return False
-        if self.installed.has_key(entry.attrib['name']):
+        if entry.attrib['name'] in self.installed:
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and \
                                 entry.get('verify', 'true') == 'true':

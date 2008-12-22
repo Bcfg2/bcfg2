@@ -23,7 +23,7 @@ class Bundler(Bcfg2.Server.Plugin.StructurePlugin,
         '''Build all structures for client (metadata)'''
         bundleset = []
         for bundlename in metadata.bundles:
-            if not self.entries.has_key("%s.xml"%(bundlename)):
+            if not ("%s.xml" % bundlename) in self.entries:
                 self.logger.error("Client %s requested nonexistent bundle %s" % \
                                   (metadata.hostname, bundlename))
                 continue

@@ -108,7 +108,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
 
     def get_ipcache_entry(self, client):
         '''build a cache of dns results'''
-        if self.ipcache.has_key(client):
+        if client in self.ipcache:
             if self.ipcache[client]:
                 return self.ipcache[client]
             else:
@@ -133,7 +133,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
         client = metadata.hostname
         entry.text = self.skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
-                        if self.entries.has_key(keytmpl % client)]
+                        if (keytmpl % client) in self.entries]
         hostkeys.sort()
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
@@ -147,7 +147,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in self.entries.keys():
             self.GenerateHostKeys(client)
-        if not self.entries.has_key(filename):
+        if not filename in self.entries:
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
         keydata = self.entries[filename].data

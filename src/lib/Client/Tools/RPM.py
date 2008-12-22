@@ -40,7 +40,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             self.logger.debug("Skipping mtime verification for package %s" % \
                               (entry.get('name')))
             rpm_options.append("--nomtime")
-        if self.installed.has_key(entry.get('name')):
+        if entry.get('name') in self.installed:
             if entry.get('version') == self.installed[entry.get('name')]:
                 if entry.get('multiarch'):
                     archs = entry.get('multiarch').split()

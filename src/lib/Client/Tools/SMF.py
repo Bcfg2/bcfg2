@@ -14,7 +14,7 @@ class SMF(Bcfg2.Client.Tools.Tool):
 
     def GetFMRI(self, entry):
         '''Perform FMRI resolution for service'''
-        if not entry.attrib.has_key('FMRI'):
+        if not 'FMRI' in entry.attrib:
             name = self.cmd.run("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % \
                                 entry.get('name'))[1]
             if name:

@@ -106,8 +106,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                             pkgname = line.split(' ')[1].strip()
                         elif line[:8] == 'Version:':
                             version = line.split(' ')[1].strip()
-                            if pkgdata.has_key(pkgname):
-                                if pkgdata[pkgname].has_key(arch):
+                            if pkgname in pkgdata:
+                                if arch in pkgdata[pkgname]:
                                     # The package is listed twice for the same architecture
                                     # We keep the most recent version
                                     old_version = pkgdata[pkgname][arch]
@@ -161,7 +161,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                 self._write_to_file('<Group name="%s">' % (arch))
                 self.indent_level = self.indent_level + 1
                 for pkg in self._get_sorted_pkg_keys(pkgdata):
-                    if pkgdata[pkg].has_key(arch):
+                    if arch in pkgdata[pkg]:
                         self._write_to_file('<Package name="%s" version="%s"/>' % (pkg, pkgdata[pkg][arch]))
                         #perarch += 1
                 self.indent_level = self.indent_level - 1

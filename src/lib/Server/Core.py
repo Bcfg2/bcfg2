@@ -55,7 +55,7 @@ class Core(object):
         
         
         for plugin in structures + generators + plugins:
-                if not self.plugins.has_key(plugin):
+                if not plugin in self.plugins:
                     self.init_plugins(plugin)    
 
         chk_plugins = self.plugins.values()
@@ -162,7 +162,7 @@ class Core(object):
                                                         entry.get('name')))
 
         glist = [gen for gen in self.generators if
-                 gen.Entries.get(entry.tag, {}).has_key(entry.get('name'))]
+                 entry.get('name') in gen.Entries.get(entry.tag, {})]
         if len(glist) == 1:
             return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
@@ -190,7 +190,7 @@ class Core(object):
             logger.error("error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
 
-        if self.plugins.has_key('Deps'):
+        if 'Deps' in self.plugins:
             # do prereq processing
             prereqs = self.plugins['Deps'].GeneratePrereqs(structures, meta)
             structures.append(prereqs)

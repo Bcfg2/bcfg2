@@ -94,7 +94,7 @@ class BaseDB:
 
         self.lock.acquire()
         try:
-            return self.db.has_key(username)
+            return username in self.db
         finally:
             self.lock.release()
 

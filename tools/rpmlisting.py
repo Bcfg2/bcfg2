@@ -162,7 +162,7 @@ pkgs = {
     for filename in rpms:
         (name, version, release, subarch) = parse_rpm_filename(rpmdir, filename)
         rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'subarch':subarch}
-        if pkgs.has_key(name):
+        if name in pkgs:
             pkgs[name].append(rpmblob)
         else:
             pkgs[name] = [rpmblob]

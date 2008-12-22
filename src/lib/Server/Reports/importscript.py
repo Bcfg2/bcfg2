@@ -61,7 +61,7 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
     
     for node in sdata.findall('Node'):
         name = node.get('name')
-        if not clients.has_key(name):
+        if not name in clients:
             cursor.execute(\
                 "INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)",
                 [datetime.now(), name])

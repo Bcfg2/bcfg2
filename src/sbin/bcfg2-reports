@@ -232,7 +232,7 @@ else:
                     for item in baditems:
                         if item.name == badentry[1] and item.kind == badentry[0]:
                             result.append(c_inst)
-                            if entrydict.has_key(c_inst):
+                            if c_inst in entrydict:
                                 entrydict.get(c_inst).append(badentry[1])
                             else:
                                 entrydict[c_inst] = [badentry[1]]
@@ -254,7 +254,7 @@ else:
                     for item in extraitems:
                         if item.name == extraentry[1] and item.kind == extraentry[0]:
                             result.append(c_inst)
-                            if entrydict.has_key(c_inst):
+                            if c_inst in entrydict:
                                 entrydict.get(c_inst).append(extraentry[1])
                             else:
                                 entrydict[c_inst] = [extraentry[1]]

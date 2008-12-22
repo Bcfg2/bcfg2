@@ -133,7 +133,7 @@ class Frame:
             for tool in self.tools:
                 ret += getattr(tool, name)
             return ret
-        elif self.__dict__.has_key(name):
+        elif name in self.__dict__:
             return self.__dict__[name]
         raise AttributeError, name
 

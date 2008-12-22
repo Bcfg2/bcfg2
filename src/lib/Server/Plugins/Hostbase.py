@@ -78,7 +78,7 @@ class Hostbase(StructurePlugin,GeneratorPlugin):
     def FetchFile(self, entry, metadata):
         '''Return prebuilt file data'''
         fname = entry.get('name').split('/')[-1]
-        if not self.filedata.has_key(fname):
+        if not fname in self.filedata:
             raise PluginExecutionError
         perms = {'owner':'root', 'group':'root', 'perms':'644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]

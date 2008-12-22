@@ -166,7 +166,7 @@ class DirectoryBacked(object):
         '''Add new entry to data structures upon file creation'''
         if name == '':
             logger.info("got add for empty name")
-        elif self.entries.has_key(name):
+        elif name in self.entries:
             self.entries[name].HandleEvent()
         else:
             if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
@@ -188,10 +188,10 @@ class DirectoryBacked(object):
         elif action == 'created':
             self.AddEntry(event.filename)
         elif action == 'changed':
-            if self.entries.has_key(event.filename):
+            if event.filename in self.entries:
                 self.entries[event.filename].HandleEvent(event)
         elif action == 'deleted':
-            if self.entries.has_key(event.filename):
+            if event.filename in self.entries:
                 del self.entries[event.filename]
         elif action in ['endExist']:
             pass
@@ -402,8 +402,8 @@ class PrioDir(GeneratorPlugin, XMLDirectoryBacked):
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in self.entries.values()
-                    if src.cache and src.cache[1].has_key(entry.tag)
-                    and src.cache[1][entry.tag].has_key(name)]
+                    if src.cache and entry.tag in src.cache[1]
+                    and name in src.cache[1][entry.tag]]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
@@ -419,9 +419,9 @@ class PrioDir(GeneratorPlugin, XMLDirectoryBacked):
             index = prio.index(max(prio))
 
         data = matching[index].cache[1][entry.tag][name]
-        if data.has_key('__text__'):
+        if '__text__' in data:
             entry.text = data['__text__']
-        if data.has_key('__children__'):
+        if '__children__' in data:
             [entry.append(copy.deepcopy(item)) for item in data['__children__']]
         [entry.attrib.__setitem__(key, data[key]) for key in data.keys() \
          if not key.startswith('__')]

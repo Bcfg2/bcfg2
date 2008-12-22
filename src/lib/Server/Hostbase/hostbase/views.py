@@ -43,7 +43,7 @@ def search(request):
     """Search for hosts in the database
     If more than one field is entered, logical AND is used
     """
-    if request.GET.has_key('sub'):
+    if 'sub' in request.GET:
         querystring = """SELECT DISTINCT h.hostname, h.id, h.status
         FROM (((((hostbase_host h
         INNER JOIN hostbase_interface i ON h.id = i.host_id)
@@ -204,7 +204,7 @@ def edit(request, host_id):
                     text = do_log(text, attrib, host.__dict__[attrib], request.POST[attrib])
                     host.__dict__[attrib] = request.POST[attrib]
 
-            if request.POST.has_key('expiration_date'):
+            if 'expiration_date' in request.POST:
                 ymd = request.POST['expiration_date'].split("-")
                 if date(int(ymd[0]), int(ymd[1]), int(ymd[2])) != host.__dict__['expiration_date']:
                     text = do_log(text, 'expiration_date', host.__dict__['expiration_date'],
@@ -222,8 +222,8 @@ def edit(request, host_id):
                     text = do_log(text, 'hdwr_type', oldtype, request.POST['hdwr_type%d' % inter.id])
                     inter.hdwr_type = request.POST['hdwr_type%d' % inter.id]
                     changetype = True
-                if (request.POST.has_key('dhcp%d' % inter.id) and not inter.dhcp or
-                    not request.POST.has_key('dhcp%d' % inter.id) and inter.dhcp):
+                if (('dhcp%d' % inter.id) in request.POST and not inter.dhcp or
+                    not ('dhcp%d' % inter.id) in request.POST and inter.dhcp):
                     text = do_log(text, 'dhcp', inter.dhcp, int(not inter.dhcp))
                     inter.dhcp = not inter.dhcp
                 for ip in ips:
@@ -357,7 +357,7 @@ def edit(request, host_id):
 
 def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
-    if request.GET.has_key('sub'):
+    if 'sub' in request.GET:
         if item == 'interface':
             for ip in Interface.objects.get(id=item_id).ip_set.all():
                 for name in ip.name_set.all():
@@ -455,7 +455,7 @@ def dnsedit(request, host_id):
     """Edits specific DNS information
     Data is validated before committed to the database"""
     text = ''
-    if request.GET.has_key('sub'):
+    if 'sub' in request.GET:
         hostdata = gethostdata(host_id, True)
         for ip in hostdata['names']:
             ipaddr = IP.objects.get(id=ip)
@@ -550,7 +550,7 @@ def dnsedit(request, host_id):
 def new(request):
     """Function for creating a new host in hostbase
     Data is validated before committed to the database"""
-    if request.GET.has_key('sub'):
+    if 'sub' in request.GET:
         try:
             Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
@@ -566,13 +566,13 @@ def new(request):
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
-            host.outbound_smtp = request.POST.has_key('outbound_smtp')
+            host.outbound_smtp = 'outbound_smtp' in request.POST
             for attrib in attribs:
-                if request.POST.has_key(attrib):
+                if attrib in request.POST:
                     host.__dict__[attrib] = request.POST[attrib].lower()
-            if request.POST.has_key('comments'):
+            if 'comments' in request.POST:
                 host.comments = request.POST['comments']
-            if request.POST.has_key('expiration_date'):
+            if 'expiration_date' in request.POST:
 #                ymd = request.POST['expiration_date'].split("-")
 #                host.__dict__['expiration_date'] = date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
                 host.__dict__['expiration_date'] = date(2000, 1, 1)
@@ -585,9 +585,9 @@ def new(request):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new'].lower().replace('-',':'),
-                                  hdwr_type=request.POST['hdwr_type_new'],
-                                  dhcp=request.POST.has_key('dhcp_new'))
+                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-',':'),
+                                  hdwr_type = request.POST['hdwr_type_new'],
+                                  dhcp = 'dhcp_new' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
@@ -643,9 +643,9 @@ def new(request):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new2'].lower().replace('-',':'),
-                                  hdwr_type=request.POST['hdwr_type_new2'],
-                                  dhcp=request.POST.has_key('dhcp_new2'))
+                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-',':'),
+                                  hdwr_type = request.POST['hdwr_type_new2'],
+                                  dhcp = 'dhcp_new2' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
@@ -714,7 +714,7 @@ def new(request):
 def copy(request, host_id):
     """Function for creating a new host in hostbase
     Data is validated before committed to the database"""
-    if request.GET.has_key('sub'):
+    if 'sub' in request.GET:
         try:
             Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
@@ -730,13 +730,13 @@ def copy(request, host_id):
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
-            host.outbound_smtp = request.POST.has_key('outbound_smtp')
+            host.outbound_smtp = 'outbound_smtp' in request.POST
             for attrib in attribs:
-                if request.POST.has_key(attrib):
+                if attrib in request.POST:
                     host.__dict__[attrib] = request.POST[attrib].lower()
-            if request.POST.has_key('comments'):
+            if 'comments' in request.POST:
                 host.comments = request.POST['comments']
-            if request.POST.has_key('expiration_date'):
+            if 'expiration_date' in request.POST:
 #                ymd = request.POST['expiration_date'].split("-")
 #                host.__dict__['expiration_date'] = date(int(ymd[0]), int(ymd[1]), int(ymd[2]))
                 host.__dict__['expiration_date'] = date(2000, 1, 1)
@@ -749,9 +749,9 @@ def copy(request, host_id):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new'].lower().replace('-',':'),
-                                  hdwr_type=request.POST['hdwr_type_new'],
-                                  dhcp=request.POST.has_key('dhcp_new'))
+                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-',':'),
+                                  hdwr_type = request.POST['hdwr_type_new'],
+                                  dhcp = 'dhcp_new' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
@@ -807,9 +807,9 @@ def copy(request, host_id):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr=request.POST['mac_addr_new2'].lower().replace('-',':'),
-                                  hdwr_type=request.POST['hdwr_type_new2'],
-                                  dhcp=request.POST.has_key('dhcp_new2'))
+                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-',':'),
+                                  hdwr_type = request.POST['hdwr_type_new2'],
+                                  dhcp = 'dhcp_new2' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
@@ -879,7 +879,7 @@ def copy(request, host_id):
     
 def remove(request, host_id):
     host = Host.objects.get(id=host_id)
-    if request.has_key('sub'):
+    if 'sub' in request:
         for interface in host.interface_set.all():
             for ip in interface.ip_set.all():
                 for name in ip.name_set.all():
@@ -935,10 +935,10 @@ def validate(request, new=False, host_id=None):
             and request.POST['mac_addr_new']):
             failures.append('mac_addr (#1)')
         if ((request.POST['mac_addr_new'] or request.POST['ip_addr_new']) and
-            not request.has_key('hdwr_type_new')):
+            not 'hdwr_type_new' in request):
             failures.append('hdwr_type (#1)')
         if ((request.POST['mac_addr_new2'] or request.POST['ip_addr_new2']) and
-            not request.has_key('hdwr_type_new2')):
+            not 'hdwr_type_new2' in request):
             failures.append('hdwr_type (#2)')
 
         if (not regex.macaddr.match(request.POST['mac_addr_new2'])

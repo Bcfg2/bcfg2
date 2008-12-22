@@ -190,7 +190,7 @@ Usage: [quit|exit]"""
                 prof = 'yes'
             else:
                 prof = 'no'
-            if self.metadata.categories.has_key(group):
+            if group in self.metadata.categories:
                 cat = self.metadata.categories[group]
             else:
                 cat = ''
@@ -256,7 +256,7 @@ Usage: [quit|exit]"""
             else:
                 interested = [(etype, generator.Entries[etype]) \
                               for etype in etypes \
-                              if generator.Entries.has_key(etype)]
+                              if etype in generator.Entries]
             for etype, names in interested:
                 for name in [name for name in names if name in \
                              generator.Entries.get(etype, {})]:

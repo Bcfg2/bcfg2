@@ -192,7 +192,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         package_fail = False
         qtext_versions = ''
 
-        if self.installed.has_key(entry.get('name')):
+        if entry.get('name') in self.installed:
             # There is at least one instance installed.
             if self.pkg_checks == 'true' and entry.get('pkg_checks', 'true') == 'true':
                 if entry.get('name') in self.installOnlyPkgs:
