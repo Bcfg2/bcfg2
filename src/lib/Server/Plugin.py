@@ -89,6 +89,18 @@ class MetadataPlugin(Plugin):
         '''create viz str for viz admin mode'''
         pass
 
+    def get_initial_metadata(self, client_name):
+        raise PluginExecutionError
+
+    def merge_additional_metadata(self, imd, source, groups, data):
+        raise PluginExecutionError
+
+class MetadataConnectorPlugin(Plugin):
+    '''MetadataConnectorPlugins augment client metadata instances'''
+    def get_additional_metadata(self, metadata):
+        '''determine additional ([groups], {k:v}) for metadata'''
+        return (list(), dict())
+
 class ProbingPlugin(Plugin):
     '''Signal probe capability for this plugin'''
     def GetProbes(self, _):

@@ -185,6 +185,8 @@ SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),
                            cook=list_split)
 SERVER_STRUCTURES = Option('Server structure list', cf=('server', 'structures'),
                            default=['Bundler', 'Base'], cook=list_split)
+SERVER_MCONNECT = Option('Server Metadata Connector list', cook=list_split,
+                         cf=('server', 'connectors'), default=['Probes'], )
 SERVER_FILEMONITOR = Option('Server file monitor', cf=('server', 'filemonitor'),
                             default='default', odesc='File monitoring driver')
 SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),

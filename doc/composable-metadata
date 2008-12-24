@@ -27,20 +27,33 @@ Use Cases
 API
 
 * Bcfg2.Server.Core.Core
-** get_metadata()
+** build_metadata(client_name)
 * Bcfg2.Server.Plugin.MetadataPlugin
-** add_client()
-** remove_client()
-** set_profile()
-** resolve_client()
-** get_initial_metadata()
-** merge_additional_metadata()
+** get_initial_metadata(client_name)
+** merge_additional_metadata(metadata,
+                             source, 
+                             group, 
+                             data_dict)
 * Bcfg2.Server.Plugin.MetadataConnectorPlugin
-** get_additional_metadata()
+** get_additional_metadata(client_metadata)
 
 Metadata Resolution Control Flow
-1. B.S.P.MP.resolve_client() -> canonical client name
-2. B.S.P.MP.get_initial_metadata() -> partial ClientMetadata inst
-3. [B.S.P.MCP.get_additional_metadata()] -> 
-     [([group list], {data dictionary})]
-4. [B.S.P.MP.merge_additional_metadata()]
+* B.S.P.MP.resolve_client() -> canonical client name
+* B.S.C.C.build_metadata()
+** B.S.P.MP.get_initial_metadata() -> partial ClientMetadata inst
+** [B.S.P.MCP.get_additional_metadata()] -> 
+   [([group list], {data dictionary})]
+** [B.S.P.MP.merge_additional_metadata()]
+
+Implementation Plan (done)
+* Define new plugin classes 
+* Split Probe code out to discrete plugin 
+* Implement connector support in Core 
+* switch callers to Core.build_metadata
+* Implement group inheritance/category safety for Connector groups
+
+Next Steps
+* Figure out new version of properties
+* ICE integration?
+* zultron's host properties
+* other external data sources

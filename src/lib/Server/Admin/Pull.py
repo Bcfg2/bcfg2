@@ -90,7 +90,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         '''Make currently recorded client state correct for entry'''
         new_entry = self.BuildNewEntry(client, etype, ename)
 
-        meta = self.bcore.metadata.get_metadata(client)
+        meta = self.bcore.build_metadata(client)
         # find appropriate plugin in bcore
         glist = [gen for gen in self.bcore.generators if
                  ename in gen.Entries.get(etype, {})]

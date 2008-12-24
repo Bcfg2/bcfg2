@@ -24,12 +24,12 @@ def printTabular(rows):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
-    def __init__(self, repo, plgs, struct, gens, passwd, svn,
+    def __init__(self, repo, plgs, struct, gens, conn, passwd, svn,
                  encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
             Bcfg2.Server.Core.Core.__init__(self, repo, plgs, struct, gens, 
-                                                passwd, svn, encoding)
+                                            conn, passwd, svn, encoding)
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError, msg:
@@ -124,7 +124,7 @@ Usage: [quit|exit]"""
         if len(args.split()) == 2:
             fname, client = args.split()
             entry = lxml.etree.Element('ConfigFile', name=fname)
-            metadata = self.metadata.get_metadata(client)
+            metadata = self.build_metadata(client)
             self.Bind(entry, metadata)
             print lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True)
         else:
@@ -162,7 +162,7 @@ Usage: [quit|exit]"""
             return
         client = args.split()[0]
         try:
-            meta = self.metadata.get_metadata(client)
+            meta = self.build_metadata(client)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             print "Unable to find metadata for host %s" % client
             return
@@ -268,7 +268,7 @@ Usage: [quit|exit]"""
 
     def do_cfgdebug(self, args):
         try:
-            meta = self.metadata.get_metadata(args)
+            meta = self.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             print "Unable to find metadata for host %s" % client
             return
@@ -301,17 +301,15 @@ if __name__ == '__main__':
                     'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'event debug': Bcfg2.Options.DEBUG,
-                    'encoding': Bcfg2.Options.ENCODING})
+                    'encoding': Bcfg2.Options.ENCODING,
+                    'connectors': Bcfg2.Options.SERVER_MCONNECT})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    if "-d" in sys.argv:
-        loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
-                        setup['generators'], setup['password'], setup['svn'],
-                        setup['encoding'], True)
-    else:
-        loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
-                        setup['generators'], setup['password'], setup['svn'],
-                        setup['encoding'], False)
+    print setup
+    loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
+                    setup['generators'], setup['connectors'],
+                    setup['password'], setup['svn'], setup['encoding'],
+                    '-d' in sys.argv)
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))
         raise SystemExit(0)

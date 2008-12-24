@@ -24,8 +24,8 @@ class CoreInitError(Exception):
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, plugins, structures, generators, password, svn,
-                 encoding, filemonitor='default'):
+    def __init__(self, repo, plugins, structures, generators, connectors,
+                 password, svn, encoding, filemonitor='default'):
         object.__init__(self)
         self.datastore = repo
         if filemonitor not in Bcfg2.Server.FileMonitor.available:
@@ -39,6 +39,7 @@ class Core(object):
         self.pubspace = {}
         self.generators = []
         self.structures = []
+        self.connectors = []
         self.cron = {}
         self.plugins = {}
         self.revision = '-1'
@@ -51,12 +52,12 @@ class Core(object):
         except:
             self.svn = False
 
-        [data.remove('') for data in [plugins, structures, generators] if '' in data]
+        [data.remove('') for data in [plugins, structures, generators]
+         if '' in data]
         
-        
-        for plugin in structures + generators + plugins:
-                if not plugin in self.plugins:
-                    self.init_plugins(plugin)    
+        for plugin in structures + generators + plugins + connectors:
+            if not plugin in self.plugins:
+                self.init_plugins(plugin)    
 
         chk_plugins = self.plugins.values()
         while True:
@@ -90,7 +91,10 @@ class Core(object):
             [(structures, 'structure', Bcfg2.Server.Plugin.StructurePlugin,
               self.structures),
              (generators, 'generator', Bcfg2.Server.Plugin.GeneratorPlugin,
-              self.generators)]:
+              self.generators),
+             (connectors, 'connector', Bcfg2.Server.Plugin.MetadataConnectorPlugin,
+              self.connectors),
+             ]:
             for plugin in plug_names:
                 if plugin in self.plugins:
                     if not isinstance(self.plugins[plugin], plug_type):
@@ -179,7 +183,7 @@ class Core(object):
         start = time()
         config = lxml.etree.Element("Configuration", version='2.0', revision=self.revision)
         try:
-            meta = self.metadata.get_metadata(client)
+            meta = self.build_metadata(client)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             logger.error("Metadata consistency error for client %s" % client)
             return lxml.etree.Element("error", type='metadata error')
@@ -247,3 +251,12 @@ class Core(object):
             except:
                 logger.error("Plugin: %s failed to generate decision list" % plugin.__name__, exc_info=1)
         return result
+
+    def build_metadata(self, client_name):
+        imd = self.metadata.get_initial_metadata(client_name)
+        for conn in self.connectors:
+            grps, data = conn.get_additional_metadata(imd)
+            self.metadata.merge_additional_metadata(imd, conn.__name__,
+                                                    grps, data)
+        return imd
+            

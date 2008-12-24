@@ -12,17 +12,14 @@ class MetadataRuntimeError(Exception):
     '''This error is raised when the metadata engine is called prior to reading enough data'''
     pass
 
-probe_matcher = re.compile("(?P<basename>\S+)(.(?P<mode>[GH])_\S+)?")
-
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, categories, probed, uuid,
+    def __init__(self, client, groups, bundles, categories, uuid,
                  password, overall):
         self.hostname = client
         self.bundles = bundles
         self.groups = groups
         self.categories = categories
-        self.probes = probed
         self.uuid = uuid
         self.password = password
         self.all = overall
@@ -51,53 +48,9 @@ class ClientMetadata(object):
         return [key for key, value in self.all[1].iteritems() \
                 if value == profile]
 
-class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, path, fam, encoding, plugin_name):
-        fpattern = '[0-9A-Za-z_\-]+'
-        self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
-                                              Bcfg2.Server.Plugin.SpecificData,
-                                              encoding)
-        fam.AddMonitor(path, self)
-        self.bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
-
-    def HandleEvent(self, event):
-        if event.filename != self.path:
-            return self.handle_event(event)
-
-    def get_probe_data(self, metadata):
-        ret = []
-        candidates = self.get_matching(metadata)
-        temp = {}
-        for cand in candidates:
-            if cand.specific.all:
-                if cand.name not in temp:
-                    temp[cand.name] = (cand, 0)
-                continue
-            mdata = probe_matcher.match(cand.name).groupdict()
-            if mdata['basename'] in temp:
-                if mdata['mode'] > temp[mdata['basename']][1]:
-                    temp[mdata['basename']] = (cand, mdata['mode'])
-            else:
-                temp[mdata['basename']] = (cand, mdata['mode'])
-        
-        for (name, data) in temp.iteritems():
-            entry, prio = data
-            probe = lxml.etree.Element('probe')
-            probe.set('name', name.split('/')[-1])
-            probe.set('source', self.plugin_name)
-            probe.text = entry.data
-            match = self.bangline.match(entry.data.split('\n')[0])
-            if match:
-                probe.set('interpreter', match.group('interpreter'))
-            else:
-                probe.set('interpreter', '/bin/sh')
-            ret.append(probe)
-        return ret
-
 
 class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
-               Bcfg2.Server.Plugin.ProbingPlugin):
+               ):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -133,15 +86,8 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         self.clientdata_original = None
         self.default = None
         self.pdirty = False
-        try:
-            loc = datastore + "/Probes"
-            self.probes = ProbeSet(loc, core.fam, core.encoding, self.__name__)
-        except:
-            self.probes = False
-        self.probedata = {}
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
-        self.load_probedata()
 
     def get_groups(self):
         '''return groups xml tree'''
@@ -383,44 +329,6 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             return True
         return False
     
-    def write_probedata(self):
-        '''write probe data out for use with bcfg2-info'''
-        if self.pdirty:
-            top = lxml.etree.Element("Probed")
-            for client, probed in self.probedata.iteritems():
-                cx = lxml.etree.SubElement(top, 'Client', name=client)
-                for probe in probed:
-                    lxml.etree.SubElement(cx, 'Probe', name=probe,
-                                          value=self.probedata[client][probe])
-                for group in self.cgroups[client]:
-                    lxml.etree.SubElement(cx, "Group", name=group)
-            data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True,
-                                       pretty_print='true')
-            try:
-                datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
-            except IOError:
-                self.logger.error("Failed to write probed.xml")
-                raise MetadataRuntimeError
-            datafile.write(data)
-            self.pdirty = False
-
-    def load_probedata(self):
-        try:
-            data = lxml.etree.parse(self.data + '/probed.xml').getroot()
-        except:
-            self.logger.error("Failed to read file probed.xml")
-            return
-        self.probedata = {}
-        self.cgroups = {}
-        for client in data.getchildren():
-            self.probedata[client.get('name')] = {}
-            self.cgroups[client.get('name')]=[]
-            for pdata in client:
-                if (pdata.tag == 'Probe'):
-                    self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
-                elif (pdata.tag == 'Group'):
-                    self.cgroups[client.get('name')].append(pdata.get('name'))
-
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
         #print self.session_cache
@@ -444,7 +352,7 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
             self.logger.warning(warning)
             raise MetadataConsistencyError
     
-    def get_metadata(self, client):
+    def get_initial_metadata(self, client):
         '''Return the metadata for a given client'''
         client = client.lower()
         if client in self.aliases:
@@ -457,7 +365,6 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
                 raise MetadataConsistencyError
             self.set_profile(client, self.default, (None, None))
             [bundles, groups, categories] = self.groups[self.default]
-        probed = self.probedata.get(client, {})
         newgroups = groups[:]
         newbundles = bundles[:]
         newcategories = {}
@@ -482,49 +389,26 @@ class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
         groupscopy = copy.deepcopy(self.groups)
         clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, newgroups, newbundles, newcategories,
-                              probed, uuid, password, (groupscopy, clientscopy))
+                              uuid, password, (groupscopy, clientscopy))
         
-    def GetProbes(self, meta, force=False):
-        '''Return a set of probes for execution on client'''
-        if self.probes:
-            return self.probes.get_probe_data(meta)
-        return []
-
-    def ReceiveData(self, client, datalist):
-        self.cgroups[client.hostname] = []
-        self.probedata[client.hostname] = {}
-        for data in datalist:
-            self.ReceiveDataItem(client, data)
-        self.pdirty = True
-        self.write_probedata()
-
-    def ReceiveDataItem(self, client, data):
-        '''Receive probe results pertaining to client'''
-        if not client.hostname in self.cgroups:
-            self.cgroups[client.hostname] = []
-        if data.text == None:
-            self.logger.error("Got null response to probe %s from %s" % \
-                              (data.get('name'), client.hostname))
-            try:
-                self.probedata[client.hostname].update({data.get('name'): ''})
-            except KeyError:
-                self.probedata[client.hostname] = {data.get('name'): ''}
-            return
-        dlines = data.text.split('\n')
-        self.logger.debug("%s:probe:%s:%s" % (client.hostname, 
-            data.get('name'), [line.strip() for line in dlines]))
-        for line in dlines[:]:
-            if line.split(':')[0] == 'group':
-                newgroup = line.split(':')[1].strip()
-                if newgroup not in self.cgroups[client.hostname]:
-                    self.cgroups[client.hostname].append(newgroup)
-                dlines.remove(line)
-        dtext = "\n".join(dlines)
-        try:
-            self.probedata[client.hostname].update({ data.get('name'):dtext })
-        except KeyError:
-            self.probedata[client.hostname] = { data.get('name'):dtext }
-
+    def merge_additional_metadata(self, imd, source, groups, data):
+        for group in groups:
+            if group in self.categories and \
+                   self.categories[group] in imd.categories:
+                continue
+            nb, ng, _ = self.groups.get(group, (list(), [group], dict()))
+            for b in nb:
+                if b not in imd.bundles:
+                    imd.bundles.append(b)
+            for g in ng:
+                if g not in imd.groups:
+                    if g in self.categories and \
+                       self.categories[g] in imd.categories:
+                        continue
+                    imd.groups.append(g)
+        if not hasattr(imd, source.lower()):
+            setattr(imd, source.lower(), data)
+    
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''
         if user == 'root':
