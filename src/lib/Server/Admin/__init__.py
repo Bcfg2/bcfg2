@@ -5,6 +5,8 @@ __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
 
 import ConfigParser, lxml.etree, logging, sys
 import Bcfg2.Server.Core
+import Bcfg2.Options
+
 class ModeOperationError(Exception):
     pass
 
@@ -66,7 +68,7 @@ class MetadataCore(Mode):
                       if generator in self.allowed]
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), plugins,
-                                                structures, generators,
+                                                structures, generators, [],
                                                 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
