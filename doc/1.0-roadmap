@@ -1,0 +1,11 @@
+This document details the major work needed before Bcfg2 is ready for
+a 1.0 release. 
+
+* Goals for 1.0
+** Fix the POSIX path problem
+** Build a comprehensive server plugin architecture
+*** Metadata Connectors (done)
+*** Multi-stats 
+*** Structure Verifier/Modifier
+*** Configuration Validator/Modifier
+** Version Control Backend
