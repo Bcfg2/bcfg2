@@ -57,7 +57,7 @@ class TemplateFile:
 
 class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
     '''The TCheetah generator implements a templating mechanism for configuration files'''
-    __name__ = 'TCheetah'
+    name = 'TCheetah'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filename_pattern = 'template'

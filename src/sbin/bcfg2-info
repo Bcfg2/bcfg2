@@ -260,7 +260,7 @@ Usage: [quit|exit]"""
             for etype, names in interested:
                 for name in [name for name in names if name in \
                              generator.Entries.get(etype, {})]:
-                    data.append((generator.__name__, etype, name))
+                    data.append((generator.name, etype, name))
         printTabular(data)
 
     def do_event_debug(self, args):

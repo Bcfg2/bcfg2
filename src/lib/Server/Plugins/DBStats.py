@@ -1,19 +1,23 @@
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
-from Bcfg2.Server.Reports.reports.models import Client, Entries
-import difflib, lxml.etree, time, logging, datetime
+from Bcfg2.Server.Reports.reports.models import Client
+import difflib, lxml.etree, time, logging
 import Bcfg2.Server.Reports.settings
 
 from Bcfg2.Server.Reports.updatefix import update_database
-import traceback
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
-class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
-    __name__ = 'DBStats'
+class DBStats(Bcfg2.Server.Plugin.Plugin,
+              Bcfg2.Server.Plugin.Statistics,
+              Bcfg2.Server.Plugin.PullSource):
+    name = 'DBStats'
     __version__ = '$Id$'
         
     def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.PullSource.__init__(self)
         self.cpath = "%s/Metadata/clients.xml" % datastore
         self.core = core
         logger.debug("Searching for new models to add to the statistics database")
@@ -34,17 +38,19 @@ class DBStats(Bcfg2.Server.Plugin.StatisticsPlugin):
         # FIXME need to build a metadata interface to expose a list of clients
         # FIXME Server processing the request should be mentionned here
         start = time.time()
-        for i in [1,2,3]:
+        for i in [1, 2, 3]:
             try:
                 Bcfg2.Server.Reports.importscript.load_stats(
                     self.core.metadata.clientdata, container, 0, True)
                 break
             except:
-                logger.error("DBStats: Failed to write data to database due to lock; retrying", exc_info=1)
+                logger.error("DBStats: Failed to write to db (lock); retrying",
+                             exc_info=1)
             if i == 3:
                 logger.error("DBStats: Retry limit failed; aborting operation")
                 return
-        logger.info("Imported data in the reason fast path in %s second" % (time.time() - start))
+        logger.info("Imported data in the reason fast path in %s second" \
+                    % (time.time() - start))
 
     def GetExtra(self, client):
         c_inst = Client.objects.filter(name=client)[0]

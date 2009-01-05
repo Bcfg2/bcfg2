@@ -49,16 +49,16 @@ class ClientMetadata(object):
                 if value == profile]
 
 
-class Metadata(Bcfg2.Server.Plugin.MetadataPlugin,
-               ):
+class Metadata(Bcfg2.Server.Plugin.Plugin,
+               Bcfg2.Server.Plugin.Metadata):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __name__ = "Metadata"
+    name = "Metadata"
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        #self.__name__ = 'Metadata'
+        Bcfg2.Server.Plugin.Metadata.__init__(self)
         if watch_clients:
             try:
                 core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)

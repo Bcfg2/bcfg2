@@ -1,11 +1,11 @@
 '''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
 __revision__ = '$Revision$'
 
-import sys, os
+import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
-from syslog import syslog, LOG_INFO
-from Bcfg2.Server.Plugin import StructurePlugin, PluginExecutionError, PluginInitError, DirectoryBacked, GeneratorPlugin
+import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError, PluginInitError
 from time import strftime
 from sets import Set
 from django.template import Context, loader
@@ -13,49 +13,23 @@ from django.db import connection
 import re
 import cStringIO
 
-## class DataNexus(DirectoryBacked):
-##     '''DataNexus is an object that watches multiple files and
-##     handles changes in an intelligent fashion.'''
-##     __name__ = 'DataNexus'
-
-##     def __init__(self, path, filelist, fam):
-##         self.files = filelist
-##         DirectoryBacked.__init__(self, path, fam)
-        
-##     def HandleEvent(self, event):
-##         '''Trap adds and updates, else call baseclass HandleEvent'''
-##         action = event.code2str()
-##         if action in ['exists', 'created']:
-##             if (event.filename != self.name) and (event.filename not in self.files):
-##                 syslog(LOG_INFO, "%s:Got event for unexpected file %s" % (self.__name__, event.filename))
-##                 return
-##         DirectoryBacked.HandleEvent(self, event)
-##         if action != 'endExist' and event.filename != self.name:
-##             self.rebuildState(event)
-
-##     def rebuildState(self, event):
-##         '''This function is called when underlying data has changed'''
-##         pass
-    
-class Hostbase(StructurePlugin,GeneratorPlugin):
+class Hostbase(Bcfg2.Server.Plugin.Plugin,
+               Bcfg2.Server.Plugin.Structure,
+               Bcfg2.Server.Plugin.Generator):
     '''The Hostbase plugin handles host/network info'''
-    __name__ = 'Hostbase'
+    name = 'Hostbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filepath = '/my/adm/hostbase/files/bind'
 
     def __init__(self, core, datastore):
-
+        
         self.ready = False
-        StructurePlugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Structure.__init__(self)
+        Bcfg2.Server.Plugin.Generator.__init__(self)
         files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
                  'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
-##         try:
-##             self.repository = DataNexus(self.data + '/templates/',
-##                                         files, self.core.fam)
-##         except:
-##             self.LogError("Failed to load data directory")
-##             raise PluginInitError
         self.filedata = {}
         self.dnsservers = []
         self.dhcpservers = []

@@ -3,16 +3,18 @@ __revision__ = '$Revision$'
 
 import copy, lxml.etree, Bcfg2.Server.Plugin
 
-class Bundler(Bcfg2.Server.Plugin.StructurePlugin,
+class Bundler(Bcfg2.Server.Plugin.Plugin,
+              Bcfg2.Server.Plugin.Structure,
               Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
-    __name__ =  'Bundler'
+    name =  'Bundler'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Structure.__init__(self)
         try:
             Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:

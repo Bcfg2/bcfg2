@@ -96,7 +96,7 @@ class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     The TGenshi generator implements a templating
     mechanism for configuration files
     '''
-    __name__ = 'TGenshi'
+    name = 'TGenshi'
     __version__ = '$Id$'
     __author__ = 'jeff@ocjtech.us'
     use_props = True

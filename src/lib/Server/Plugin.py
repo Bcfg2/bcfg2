@@ -26,7 +26,7 @@ class PluginExecutionError(Exception):
 class Plugin(object):
     '''This is the base class for all Bcfg2 Server plugins. Several attributes must be defined
     in the subclass:
-    __name__ : the name of the plugin
+    name : the name of the plugin
     __version__ : a version string
     __author__ : the author/contact for the plugin
 
@@ -35,7 +35,7 @@ class Plugin(object):
       - Configuration entry binding (overloading HandlesEntry, or loads the Entries table)
       - Data collection (overloading GetProbes/ReceiveData)
     '''
-    __name__ = 'Plugin'
+    name = 'Plugin'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __rmi__ = []
@@ -45,10 +45,10 @@ class Plugin(object):
         object.__init__(self)
         self.Entries = {}
         self.core = core
-        self.data = "%s/%s" % (datastore, self.__name__)
-        self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.__name__))
+        self.data = "%s/%s" % (datastore, self.name)
+        self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
 
-class GeneratorPlugin(Plugin):
+class Generator(object):
     '''Generator plugins contribute to literal client configurations'''
     def HandlesEntry(self, entry):
         '''This is the slow path method for routing configuration binding requests'''
@@ -66,18 +66,13 @@ class GeneratorPlugin(Plugin):
         of bcfg2-admin pull'''
         raise PluginExecutionError
 
-    def CommitChanges(self):
-        '''Handle revctl commits, if needed'''
-        # not implemented yet
-        pass
-
-class StructurePlugin(Plugin):
+class Structure(object):
     '''Structure Plugins contribute to abstract client configurations'''
     def BuildStructures(self, metadata):
         '''return a list of abstract goal structures for client'''
         raise PluginExecutionError
 
-class MetadataPlugin(Plugin):
+class Metadata(object):
     '''Signal metadata capabilities for this plugin'''
     def add_client(self, client_name, attribs):
         '''add client'''
@@ -95,13 +90,13 @@ class MetadataPlugin(Plugin):
     def merge_additional_metadata(self, imd, source, groups, data):
         raise PluginExecutionError
 
-class MetadataConnectorPlugin(Plugin):
+class Connector(object):
     '''MetadataConnectorPlugins augment client metadata instances'''
     def get_additional_metadata(self, metadata):
         '''determine additional ([groups], {k:v}) for metadata'''
         return (list(), dict())
 
-class ProbingPlugin(Plugin):
+class Probing(object):
     '''Signal probe capability for this plugin'''
     def GetProbes(self, _):
         '''Return a set of probes for execution on client'''
@@ -111,7 +106,7 @@ class ProbingPlugin(Plugin):
         '''Receive probe results pertaining to client'''
         pass
 
-class StatisticsPlugin(Plugin):
+class Statistics(object):
     '''Signal statistics handling capability'''
     def StoreStatistics(self, client, xdata):
         pass
@@ -119,13 +114,15 @@ class StatisticsPlugin(Plugin):
     def WriteBack(self):
         pass
 
+
+class PullSource(object):
     def GetExtra(self, client):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
         raise PluginExecutionError
 
-class DecisionPlugin(Plugin):
+class Decision(object):
     '''Signal decision handling capability'''
     def GetDecisions(self, metadata, mode):
         return []
@@ -381,17 +378,18 @@ class XMLDirectoryBacked(DirectoryBacked):
     '''Directorybacked for *.xml'''
     patterns = re.compile('.*\.xml')    
 
-class PrioDir(GeneratorPlugin, XMLDirectoryBacked):
+class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     '''This is a generator that handles package assignments'''
-    __name__ = 'PrioDir'
+    name = 'PrioDir'
     __child__ = XMLSrc
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
+        Generator.__init__(self)
         try:
             XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError:
-            self.logger.error("Failed to load %s indices" % (self.__name__))
+            self.logger.error("Failed to load %s indices" % (self.name))
             raise PluginInitError
 
     def HandleEvent(self, event):
@@ -653,9 +651,9 @@ class FakeProperties:
     def __init__(self):
         self.properties = lxml.etree.Element("Properties")
 
-class GroupSpool(GeneratorPlugin):
+class GroupSpool(Plugin, Generator):
     '''The TGenshi generator implements a templating mechanism for configuration files'''
-    __name__ = 'GroupSpool'
+    name = 'GroupSpool'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     use_props = False
@@ -665,6 +663,7 @@ class GroupSpool(GeneratorPlugin):
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
+        Generator.__init__(self)
         if self.data[-1] == '/':
             self.data = self.data[:-1]
         self.Entries['ConfigFile'] = {}
@@ -678,7 +677,7 @@ class GroupSpool(GeneratorPlugin):
                     '%s/../etc/properties.xml' % (self.data), self.core.fam)
             except:
                 self.properties = FakeProperties()
-                self.logger.info("%s properties disabled" % self.__name__)
+                self.logger.info("%s properties disabled" % self.name)
         else:
             self.properties = FakeProperties()
 

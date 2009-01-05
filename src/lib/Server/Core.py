@@ -63,7 +63,7 @@ class Core(object):
         while True:
             try:
                 plugin = chk_plugins.pop()
-                if isinstance(plugin, Bcfg2.Server.Plugin.MetadataPlugin):
+                if isinstance(plugin, Bcfg2.Server.Plugin.Metadata):
                     self.metadata = plugin
                     break
             except:
@@ -77,7 +77,7 @@ class Core(object):
         while True:
             try:
                 plugin = chk_plugins.pop()
-                if isinstance(plugin, Bcfg2.Server.Plugin.StatisticsPlugin):
+                if isinstance(plugin, Bcfg2.Server.Plugin.Statistics):
                     self.stats = plugin
                     break
             except:
@@ -88,11 +88,11 @@ class Core(object):
                 break
 
         for plug_names, plug_tname, plug_type, collection in \
-            [(structures, 'structure', Bcfg2.Server.Plugin.StructurePlugin,
+            [(structures, 'structure', Bcfg2.Server.Plugin.Structure,
               self.structures),
-             (generators, 'generator', Bcfg2.Server.Plugin.GeneratorPlugin,
+             (generators, 'generator', Bcfg2.Server.Plugin.Generator,
               self.generators),
-             (connectors, 'connector', Bcfg2.Server.Plugin.MetadataConnectorPlugin,
+             (connectors, 'connector', Bcfg2.Server.Plugin.Connector,
               self.connectors),
              ]:
             for plugin in plug_names:
@@ -170,7 +170,7 @@ class Core(object):
         if len(glist) == 1:
             return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
         elif len(glist) > 1:
-            generators = ", ".join([gen.__name__ for gen in glist])
+            generators = ", ".join([gen.name for gen in glist])
             logger.error("%s %s served by multiple generators: %s" % \
                          (entry.tag, entry.get('name'), generators))
         g2list = [gen for gen in self.generators if gen.HandlesEntry(entry)]
@@ -246,17 +246,16 @@ class Core(object):
         result = []
         for plugin in self.plugins.values():
             try:
-                if isinstance(plugin, Bcfg2.Server.Plugin.DecisionPlugin):
+                if isinstance(plugin, Bcfg2.Server.Plugin.Decision):
                     result += plugin.GetDecisions(metadata, mode)
             except:
-                logger.error("Plugin: %s failed to generate decision list" % plugin.__name__, exc_info=1)
+                logger.error("Plugin: %s failed to generate decision list" % plugin.name, exc_info=1)
         return result
 
     def build_metadata(self, client_name):
         imd = self.metadata.get_initial_metadata(client_name)
         for conn in self.connectors:
             grps, data = conn.get_additional_metadata(imd)
-            self.metadata.merge_additional_metadata(imd, conn.__name__,
-                                                    grps, data)
+            self.metadata.merge_additional_metadata(imd, conn.name, grps, data)
         return imd
             

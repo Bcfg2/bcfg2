@@ -127,7 +127,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool):
     '''This generator in the configuration file repository for bcfg2'''
-    __name__ = 'Cfg'
+    name = 'Cfg'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     use_props = False

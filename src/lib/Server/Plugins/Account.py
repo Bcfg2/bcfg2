@@ -3,7 +3,8 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
-class Account(Bcfg2.Server.Plugin.GeneratorPlugin):
+class Account(Bcfg2.Server.Plugin.Plugin,
+              Bcfg2.Server.Plugin.Generator):
     '''This module generates account config files,
     based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
@@ -12,12 +13,13 @@ class Account(Bcfg2.Server.Plugin.GeneratorPlugin):
     superusers -> users to be granted root privs on all hosts
     rootlike -> users to be granted root privs on some hosts
     '''
-    __name__ = 'Account'
+    name = 'Account'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Generator.__init__(self)
         self.Entries = {'ConfigFile':{'/etc/passwd':self.from_yp_cb,
                                            '/etc/group':self.from_yp_cb,
                                            '/etc/security/limits.conf':self.gen_limits_cb,

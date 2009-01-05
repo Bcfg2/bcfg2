@@ -124,7 +124,7 @@ class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
 
 class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     '''This is a generator that handles package assignments'''
-    __name__ = 'Pkgmgr'
+    name = 'Pkgmgr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = PkgSrc

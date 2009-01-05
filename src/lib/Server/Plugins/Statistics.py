@@ -24,7 +24,6 @@ class StatisticsStore(object):
         '''Write statistics changes back to persistent store'''
         if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time()) ) \
                 or force:
-            #syslog(LOG_INFO, "Statistics: Updated statistics.xml")
             try:
                 fout = open(self.filename + '.new', 'w')
             except IOError, ioerr:
@@ -44,7 +43,6 @@ class StatisticsStore(object):
             fin.close()
             self.element = XML(data)
             self.dirty = 0
-            #syslog(LOG_INFO, "Statistics: Read in statistics.xml")
         except (IOError, XMLSyntaxError):
             self.logger.error("Creating new statistics file %s"%(self.filename))
             self.element = Element('ConfigStatistics')
@@ -68,7 +66,8 @@ class StatisticsStore(object):
         # Find correct node entry in stats data
         # The following list comprehension should be guarenteed to return at
         # most one result
-        nodes = [elem for elem in self.element.findall('Node') if elem.get('name') == client]
+        nodes = [elem for elem in self.element.findall('Node') \
+                 if elem.get('name') == client]
         nummatch = len(nodes)
         if nummatch == 0:
             # Create an entry for this node
@@ -76,11 +75,14 @@ class StatisticsStore(object):
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
             node = nodes[0]
-            [node.remove(elem) for elem in node.findall('Statistics') if self.isOlderThan24h(elem.get('time'))]
+            [node.remove(elem) for elem in node.findall('Statistics') \
+             if self.isOlderThan24h(elem.get('time'))]
         elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
-            [node.remove(elem) for elem in node.findall('Statistics') if (elem.get('state') == 'dirty' and self.isOlderThan24h(elem.get('time')))]
+            [node.remove(elem) for elem in node.findall('Statistics') \
+             if (elem.get('state') == 'dirty' \
+                 and self.isOlderThan24h(elem.get('time')))]
         else:
             # Shouldn't be reached
             self.logger.error("Duplicate node entry for %s"%(client))
@@ -93,7 +95,7 @@ class StatisticsStore(object):
 
         # Set dirty
         self.dirty = 1
-        self.WriteBack()
+        self.WriteBack(force=1)
 
 
     def isOlderThan24h(self, testTime):
@@ -104,27 +106,35 @@ class StatisticsStore(object):
 
         return (now-utime) > secondsPerDay
 
-class Statistics(Bcfg2.Server.Plugin.StatisticsPlugin):
-    __name__ = 'Statistics'
+class Statistics(Bcfg2.Server.Plugin.Plugin,
+                 Bcfg2.Server.Plugin.Statistics,
+                 Bcfg2.Server.Plugin.PullSource):
+    name = 'Statistics'
     __version__ = '$Id$'
 
-    def __init__(self, _, datastore):
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.PullSource.__init__(self)
         fpath = "%s/etc/statistics.xml" % datastore
-        self.data = StatisticsStore(fpath)
+        self.data_file = StatisticsStore(fpath)
 
     def StoreStatistics(self, client, xdata):
-        self.data.updateStats(xdata, client.hostname)
+        self.data_file.updateStats(xdata, client.hostname)
 
     def WriteBack(self):
-        self.data.WriteBack()
+        self.data_file.WriteBack()
 
     def FindCurrent(self, client):
-        rt = self.data.element.xpath('//Node[@name="%s"]' % client)[0]
-        maxtime = max([strptime(stat.get('time')) for stat in rt.findall('Statistics')])
-        return [stat for stat in rt.findall('Statistics') if strptime(stat.get('time')) == maxtime][0]
+        rt = self.data_file.element.xpath('//Node[@name="%s"]' % client)[0]
+        maxtime = max([strptime(stat.get('time')) for stat \
+                       in rt.findall('Statistics')])
+        return [stat for stat in rt.findall('Statistics') \
+                if strptime(stat.get('time')) == maxtime][0]
     
     def GetExtra(self, client):
-        return [(entry.tag, entry.get('name')) for entry in self.FindCurrent(client).xpath('.//Extra/*')]
+        return [(entry.tag, entry.get('name')) for entry \
+                in self.FindCurrent(client).xpath('.//Extra/*')]
 
     def GetCurrentEntry(self, client, e_type, e_name):
         curr = self.FindCurrent(client)

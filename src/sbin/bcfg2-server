@@ -109,7 +109,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             meta = self.Core.build_metadata(name)
             
             for plugin in [p for p in self.Core.plugins.values() \
-                           if isinstance(p, Bcfg2.Server.Plugin.ProbingPlugin)]:
+                           if isinstance(p, Bcfg2.Server.Plugin.Probing)]:
                 for probe in plugin.GetProbes(meta):
                     resp.append(probe)
             return tostring(resp, encoding='UTF-8', xml_declaration=True)

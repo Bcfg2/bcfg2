@@ -14,15 +14,17 @@ alias           %s
 address         %s
 '''
 
-class NagiosGen(Bcfg2.Server.Plugin.GeneratorPlugin):
+class NagiosGen(Bcfg2.Server.Plugin.Plugin,
+                Bcfg2.Server.Plugin.Generator):
     '''NagiosGen is a Bcfg2 plugin that dynamically generates
        Nagios configuration file based on Bcfg2 data.'''
-    __name__ = 'NagiosGen'
+    name = 'NagiosGen'
     __version__ = '0.6'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Generator.__init__(self)
         self.Entries = {'ConfigFile':
                 {'/etc/nagiosgen.status'   : self.createhostconfig,
                 '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}

@@ -34,8 +34,10 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
             ret += c.get_decisions()
         return ret
 
-class Decisions(DecisionSet, Bcfg2.Server.Plugin.DecisionPlugin):
-    __name__ = 'Decisions'
+class Decisions(Bcfg2.Server.Plugin.Plugin,
+                Bcfg2.Server.Plugin.Decision,
+                DecisionSet):
+    name = 'Decisions'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
@@ -46,6 +48,7 @@ class Decisions(DecisionSet, Bcfg2.Server.Plugin.DecisionPlugin):
         - `core`: Bcfg2.Core instance
         - `datastore`: File repository location
         """
-        Bcfg2.Server.Plugin.DecisionPlugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Decision.__init__(self)
         DecisionSet.__init__(self, self.data, core.fam, core.encoding)
     

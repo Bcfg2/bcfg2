@@ -35,7 +35,7 @@ class DepXMLSrc(Bcfg2.Server.Plugin.XMLSrc):
     __node__ = DNode
 
 class Deps(Bcfg2.Server.Plugin.PrioDir):
-    __name__ = 'Deps'
+    name = 'Deps'
     __version__ = '$Id:$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = DepXMLSrc

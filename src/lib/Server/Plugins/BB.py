@@ -19,18 +19,16 @@ DOMAIN_SUFFIX = ".mcs.anl.gov" # default is .mcs.anl.gov
 
 PXE_CONFIG = "pxelinux.0" # default is pxelinux.0
 
-class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
-         Bcfg2.Server.Plugin.StructurePlugin,
-         Bcfg2.Server.Plugins.Metadata.Metadata,
+class BB(Bcfg2.Server.Plugins.Metadata.Metadata,
          Bcfg2.Server.Plugin.DirectoryBacked):
     '''BB Plugin handles bb node configuration'''
     
-    __name__ = 'BB'
+    name = 'BB'
     experimental = True
     write_to_disk = True
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.GeneratorPlugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         try:
             Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
         except OSError, ioerr:
@@ -43,8 +41,8 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
             '/etc/sudoers':self.gen_sudoers,
             '/etc/dhcp3/dhcpd.conf':self.gen_dhcpd}}
         self.nodes = {}
-	self.dhcpd_loaded = False
-	self.need_update = False
+        self.dhcpd_loaded = False
+        self.need_update = False
     
     def viz(self, hosts, bundles, key, colors):
         '''admin mode viz support'''
@@ -266,11 +264,11 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
         '''Handle events'''
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
 	# static.dhcpd.conf hack
-	if 'static.dhcpd.conf' in self.entries:
-	    self.dhcpd_loaded = True
-	if self.need_update and self.dhcpd_loaded:
-	    self.update_dhcpd()
-	    self.need_update = False	
+        if 'static.dhcpd.conf' in self.entries:
+            self.dhcpd_loaded = True
+        if self.need_update and self.dhcpd_loaded:
+            self.update_dhcpd()
+            self.need_update = False	
         # send events to groups.xml back to Metadata plugin
         if event and "groups.xml" == event.filename:
             Bcfg2.Server.Plugins.Metadata.Metadata.HandleEvent(self, event)
@@ -331,6 +329,6 @@ class BB(Bcfg2.Server.Plugin.GeneratorPlugin,
                     except OSError:
                         self.logger.error("failed to find link for mac address %s" % mac)
                     if self.dhcpd_loaded:
-		    	self.update_dhcpd()
-		    else:
-			self.need_update = True			
+                        self.update_dhcpd()
+                    else:
+                        self.need_update = True			

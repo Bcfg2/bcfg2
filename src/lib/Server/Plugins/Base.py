@@ -5,10 +5,12 @@ import Bcfg2.Server.Plugin
 import copy
 import lxml.etree
 
-class Base(Bcfg2.Server.Plugin.StructurePlugin,
+class Base(Bcfg2.Server.Plugin.Plugin,
+           Bcfg2.Server.Plugin.Structure, 
            Bcfg2.Server.Plugin.XMLDirectoryBacked):
-    '''This Structure is good for the pile of independent configs needed for most actual systems'''
-    __name__ =  'Base'
+    '''This Structure is good for the pile of independent configs
+    needed for most actual systems'''
+    name =  'Base'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
@@ -16,8 +18,11 @@ class Base(Bcfg2.Server.Plugin.StructurePlugin,
     '''base creates independent clauses based on client metadata'''
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Structure.__init__(self)
         try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
+                                                            self.data,
+                                                            self.core.fam)
         except OSError:
             self.logger.error("Failed to load Base repository")
             raise Bcfg2.Server.Plugin.PluginInitError
@@ -26,6 +31,7 @@ class Base(Bcfg2.Server.Plugin.StructurePlugin,
         '''Build structures for client described by metadata'''
         ret = lxml.etree.Element("Independant", version='2.0')
         fragments = reduce(lambda x, y: x+y,
-                           [base.Match(metadata) for base in self.entries.values()], [])
+                           [base.Match(metadata) for base
+                            in self.entries.values()], [])
         [ret.append(copy.deepcopy(frag)) for frag in fragments]
         return [ret]

@@ -4,7 +4,9 @@ __revision__ = '$Revision$'
 import binascii, os, socket, tempfile
 import Bcfg2.Server.Plugin
 
-class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.DirectoryBacked):
+class SSHbase(Bcfg2.Server.Plugin.Plugin,
+              Bcfg2.Server.Plugin.Generator,
+              Bcfg2.Server.Plugin.DirectoryBacked):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
     for hosts.  It also manages the ssh_known_hosts file. It can
     integrate host keys from other management domains and similarly
@@ -22,7 +24,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
     ssh_known_hosts -> the current known hosts file. this
       is regenerated each time a new key is generated.
 '''
-    __name__ = 'SSHbase'
+    name = 'SSHbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
@@ -31,14 +33,18 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
     hostkeys = ["ssh_host_dsa_key.H_%s",
                 "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
     keypatterns = ['ssh_host_dsa_key', 'ssh_host_rsa_key', 'ssh_host_key',
-                   'ssh_host_dsa_key.pub', 'ssh_host_rsa_key.pub', 'ssh_host_key.pub']
+                   'ssh_host_dsa_key.pub', 'ssh_host_rsa_key.pub',
+                   'ssh_host_key.pub']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Generator.__init__(self)
         try:
-            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, self.core.fam)
+            Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data,
+                                                         self.core.fam)
         except OSError, ioerr:
-            self.logger.error("Failed to load SSHbase repository from %s" % (self.data))
+            self.logger.error("Failed to load SSHbase repository from %s" \
+                              % (self.data))
             self.logger.error(ioerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         self.Entries = {'ConfigFile':
@@ -90,7 +96,7 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
             self.skn = False
         if not self.skn:
             if (len(self.entries.keys())) > (0.95 * len(os.listdir(self.data))):
-                a = self.skn
+                _ = self.skn
 
     def HandlesEntry(self, entry):
         '''Handle key entries dynamically'''
@@ -120,7 +126,8 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
-                ipaddr = os.popen("getent hosts %s" % client).read().strip().split()
+                cmd = "getent hosts %s" % client
+                ipaddr = os.popen(cmd).read().strip().split()
                 if ipaddr:
                     self.ipcache[client] = (ipaddr, client)
                     return (ipaddr, client)
@@ -175,7 +182,9 @@ class SSHbase(Bcfg2.Server.Plugin.GeneratorPlugin,  Bcfg2.Server.Plugin.Director
 
             if hostkey not in self.entries.keys():
                 fileloc = "%s/%s" % (self.data, hostkey)
-                publoc = self.data + '/' + ".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client])
+                publoc = self.data + '/' + ".".join([hostkey.split('.')[0],
+                                                     'pub',
+                                                     "H_%s" % client])
                 tempdir = tempfile.mkdtemp()
                 temploc = "%s/%s" % (tempdir, hostkey)
                 os.system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' %

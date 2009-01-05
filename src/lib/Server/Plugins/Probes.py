@@ -46,19 +46,21 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             ret.append(probe)
         return ret
 
-class Probes(Bcfg2.Server.Plugin.MetadataConnectorPlugin,
-             Bcfg2.Server.Plugin.ProbingPlugin):
-    __name__ = 'Probes'
+class Probes(Bcfg2.Server.Plugin.Plugin,
+             Bcfg2.Server.Plugin.Probing,
+             Bcfg2.Server.Plugin.Connector):
+    name = 'Probes'
     __version__ = '$Id: $'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.MetadataConnectorPlugin.__init__(self, core,
-                                                             datastore)
-        self.__name__ = 'Probes'
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
+        Bcfg2.Server.Plugin.Probing.__init__(self)
+        
         try:
             self.probes = ProbeSet(self.data, core.fam, core.encoding,
-                                   self.__name__)
+                                   self.name)
         except:
             raise Bcfg2.Server.Plugin.PluginInitError
 
