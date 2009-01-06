@@ -194,10 +194,16 @@ class Core(object):
             logger.error("error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
 
-        if 'Deps' in self.plugins:
-            # do prereq processing
-            prereqs = self.plugins['Deps'].GeneratePrereqs(structures, meta)
-            structures.append(prereqs)
+        for plugin in self.plugins.values():
+            if isinstance(plugin, Bcfg2.Server.Plugin.StructureValidator):
+                try:
+                    plugin.validate_structures(meta, structures)
+                except Bcfg2.Server.Plugin.ValidationError, err:
+                    logger.error("Plugin %s structure validation failed: %s" \
+                                 % (plugin.name, err.message))
+                except:
+                    logger.error("Plugin %s: unexpected structure val failure" \
+                                 % (plugin.name), exc_info=1)
 
         # Perform altsrc consistency checking
         esrcs = {}

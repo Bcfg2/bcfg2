@@ -127,6 +127,19 @@ class Decision(object):
     def GetDecisions(self, metadata, mode):
         return []
 
+class ValidationError(Exception):
+    pass
+
+class StructureValidator(object):
+    '''Validate/modify goal structures'''
+    def validate_structures(self, metadata, structures):
+        raise ValidationError, "not implemented"
+
+class GoalValidator(object):
+    '''Validate/modify configuration goals'''
+    def validate_goals(self, metadata, goals):
+        raise ValidationError, "not implemented"
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):

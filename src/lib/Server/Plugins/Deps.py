@@ -34,7 +34,8 @@ class DNode(Bcfg2.Server.Plugin.INode):
 class DepXMLSrc(Bcfg2.Server.Plugin.XMLSrc):
     __node__ = DNode
 
-class Deps(Bcfg2.Server.Plugin.PrioDir):
+class Deps(Bcfg2.Server.Plugin.PrioDir,
+           Bcfg2.Server.Plugin.StructureValidator):
     name = 'Deps'
     __version__ = '$Id:$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -42,13 +43,14 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         self.cache = {}
 
     def HandleEvent(self, event):
         self.cache = {}
         Bcfg2.Server.Plugin.PrioDir.HandleEvent(self, event)
         
-    def GeneratePrereqs(self, structures, metadata):
+    def validate_structures(self, metadata, structures):
         entries = []
         prereqs = []
         for structure in structures:
@@ -96,4 +98,4 @@ class Deps(Bcfg2.Server.Plugin.PrioDir):
                 lxml.etree.SubElement(newstruct, tag, name=name)
             except:
                 self.logger.error("Failed to add dep entry for %s:%s" % (tag, name))
-        return newstruct
+        structures.append(newstruct)

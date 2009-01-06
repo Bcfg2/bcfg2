@@ -1,0 +1,30 @@
+This documents available plugin roles. 
+
+1) list of plugin roles
+
+| Role          | Class              | Status        |
+|---------------+--------------------+---------------|
+| Generator     | Generator          | done          |
+| Structure     | Structure          | done          |
+| Pull          | PullSource         | class defined |
+| Metadata      | Metadata           | done          |
+| Connector     | Connector          | class defined |
+| Probing       | Probing            | done          |
+| Decision      | Decision           | done          |
+| Remote        | Remote             | none          |
+| Statistics    | Statistics         | class defined |
+| Structure Val | StructureValidator | done          |
+| Goals Val     | GoalValidator      | class defined |
+| Syncing       | Syncing            | none          |
+|---------------+--------------------+---------------|
+
+
+2) Configuration of plugins
+
+3) Implementation Plan
+
+* Switch Plugin.__name__ => Plugin.name (Fix spurious pylint errors) [done]
+* Switch all plugins to new class hierarchy [done]
+* Fix Core to use memberships in new classes
+
+
