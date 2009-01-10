@@ -14,9 +14,10 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, groups, bundles, categories, uuid,
+    def __init__(self, client, profile, groups, bundles, categories, uuid,
                  password, overall):
         self.hostname = client
+        self.profile = profile
         self.bundles = bundles
         self.groups = groups
         self.categories = categories
@@ -358,7 +359,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if client in self.aliases:
             client = self.aliases[client]
         if client in self.clients:
-            (bundles, groups, categories) = self.groups[self.clients[client]]
+            profile = self.clients[client]
+            (bundles, groups, categories) = self.groups[profile]
         else:
             if self.default == None:
                 self.logger.error("Cannot set group for client %s; no default group set" % (client))
@@ -388,8 +390,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             newcategories.update(ncategories)
         groupscopy = copy.deepcopy(self.groups)
         clientscopy = copy.deepcopy(self.clients)
-        return ClientMetadata(client, newgroups, newbundles, newcategories,
-                              uuid, password, (groupscopy, clientscopy))
+        return ClientMetadata(client, profile, newgroups, newbundles,
+                              newcategories, uuid, password,
+                              (groupscopy, clientscopy))
         
     def merge_additional_metadata(self, imd, source, groups, data):
         for group in groups:

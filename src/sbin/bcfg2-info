@@ -211,29 +211,28 @@ Usage: [quit|exit]"""
             print "Usage:\nshowclient <client> ... <clientN>"
             return
         for client in args.split():
-            if client not in self.metadata.clients:
+            try:
+                client_meta = self.build_metadata(client)
+            except:
                 print "Client %s not defined" % client
                 continue
-            profile = self.metadata.clients[client]
-            bds, gps, cgs = \
-                 copy.deepcopy(self.metadata.groups[profile])
-            gps.remove(profile)
-            numbundles = len(bds)
-            numgroups = len(gps)
+                
+            numbundles = len(client_meta.bundles)
+            numgroups = len(client_meta.groups)
             num = max((numbundles, numgroups))
             for i in range(0, num):
                 if i == 0:
-                    c = client
-                    p = profile
+                    c = client_meta.hostname
+                    p = client_meta.profile
                 else:
                     c = ""
                     p = ""
                 if i < numbundles:
-                    b = bds[i]
+                    b = client_meta.bundles[i]
                 else:
                     b = ""
                 if i < numgroups:
-                    g = gps[i]
+                    g = client_meta.groups[i]
                 else:
                     g = ""
                 data.append((c, p, g, b))
