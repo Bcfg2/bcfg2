@@ -3,6 +3,7 @@ import Bcfg2.Server.Plugin, lxml.etree, re
 probe_matcher = re.compile("(?P<basename>\S+)(.(?P<mode>[GH])_\S+)?")
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
+    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
     def __init__(self, path, fam, encoding, plugin_name):
         fpattern = '[0-9A-Za-z_\-]+'
         self.plugin_name = plugin_name
