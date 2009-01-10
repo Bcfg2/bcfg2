@@ -18,13 +18,27 @@ This documents available plugin roles.
 | Syncing       | Syncing            | none          |
 |---------------+--------------------+---------------|
 
+2) Interactions between plugins and the core
+* Metadata Construction
+** Get Base Metadata from (single) Metadata plugin instance
+** Get additional data from each Connector plugin instance
+** Merge in additional connector data into single ClientMetadata instance
+* 
 
-2) Configuration of plugins
+3) Configuration of plugins
 
-3) Implementation Plan
-
-* Switch Plugin.__name__ => Plugin.name (Fix spurious pylint errors) [done]
-* Switch all plugins to new class hierarchy [done]
-* Fix Core to use memberships in new classes
-
-
+Plugin configuration will be simplified substantially. Now, a single
+list of plugins (including plugins of all capabilities) is specified
+upon startup (either via bcfg2.conf or equivalent). This mechanism
+replaces the current split configuration mechanism where generators,
+structures, and other plugins are listed independently. Instead, all
+plugins included in the startup list will be initialized, and each
+will be enabled in all roles that it supports. This will remove a
+current source of confusion and potential configuration errors,
+wherein a plugin is enabled for an improper set of goals. (ie Cfg
+enabled as a structure, etc) This does remove the possibility of
+partially enabling a plugin for one of its roles without activating it
+across the board, but I think this is a corner case, which will be
+poorly supported by plugin implementers. If needed, this use case can
+be explicitly supported by the plugin author, through use of a config
+file directive. 

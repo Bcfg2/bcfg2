@@ -126,10 +126,28 @@ class Core(object):
             logger.error("Unexpected instantiation failure for plugin %s" % 
                 (plugin), exc_info=1)    
             
+
+    def validate_data(self, metadata, data, base_cls):
+        for plugin in self.plugins.values():
+            if isinstance(plugin, base_cls):
+                try:
+                    if base_cls == Bcfg2.Server.Plugin.StructureValidator:
+                        plugin.validate_structures(metadata, data)
+                    elif base_cls == Bcfg2.Server.Plugin.GoalValidator:
+                        plugin.validate_goals(metadata, data)
+                except Bcfg2.Server.Plugin.ValidationError, err:
+                    logger.error("Plugin %s structure validation failed: %s" \
+                                 % (plugin.name, err.message))
+                    raise
+                except:
+                    logger.error("Plugin %s: unexpected structure val failure" \
+                                 % (plugin.name), exc_info=1)
+
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
         return reduce(lambda x, y:x+y,
-                      [struct.BuildStructures(metadata) for struct in self.structures], [])
+                      [struct.BuildStructures(metadata) for struct \
+                       in self.structures], [])
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
@@ -140,10 +158,11 @@ class Core(object):
             try:
                 self.Bind(entry, metadata)
             except PluginExecutionError:
-                logger.error("Failed to bind entry: %s %s" %  (entry.tag, entry.get('name')))
+                logger.error("Failed to bind entry: %s %s" % \
+                             (entry.tag, entry.get('name')))
             except:
-                logger.error("Unexpected failure in BindStructure: %s %s" % (entry.tag, entry.get('name')),
-                             exc_info=1)
+                logger.error("Unexpected failure in BindStructure: %s %s" \
+                             % (entry.tag, entry.get('name')), exc_info=1)
 
     def Bind(self, entry, metadata):
         '''Bind an entry using the appropriate generator'''
@@ -194,16 +213,8 @@ class Core(object):
             logger.error("error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
 
-        for plugin in self.plugins.values():
-            if isinstance(plugin, Bcfg2.Server.Plugin.StructureValidator):
-                try:
-                    plugin.validate_structures(meta, structures)
-                except Bcfg2.Server.Plugin.ValidationError, err:
-                    logger.error("Plugin %s structure validation failed: %s" \
-                                 % (plugin.name, err.message))
-                except:
-                    logger.error("Plugin %s: unexpected structure val failure" \
-                                 % (plugin.name), exc_info=1)
+        self.validate_data(meta, structures,
+                           Bcfg2.Server.Plugin.StructureValidator)
 
         # Perform altsrc consistency checking
         esrcs = {}
@@ -223,7 +234,9 @@ class Core(object):
                 config.append(astruct)
             except:
                 logger.error("error in BindStructure", exc_info=1)
-        logger.info("Generated config for %s in %s seconds"%(client, time() - start))
+        self.validate_data(meta, config, Bcfg2.Server.Plugin.GoalValidator)
+        logger.info("Generated config for %s in %s seconds" % \
+                    (client, time() - start))
         return config
 
     def Service(self):
@@ -239,8 +252,10 @@ class Core(object):
     def read_svn_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
         try:
-            data = os.popen("env LC_ALL=C svn info %s" % (self.datastore)).readlines()
-            revline = [line.split(': ')[1].strip() for line in data if line[:9] == 'Revision:'][-1]
+            data = os.popen("env LC_ALL=C svn info %s" \
+                            % (self.datastore)).readlines()
+            revline = [line.split(': ')[1].strip() for line in data \
+                       if line[:9] == 'Revision:'][-1]
             self.revision = revline
         except IndexError:
             logger.error("Failed to read svn info; disabling svn support")
@@ -255,7 +270,8 @@ class Core(object):
                 if isinstance(plugin, Bcfg2.Server.Plugin.Decision):
                     result += plugin.GetDecisions(metadata, mode)
             except:
-                logger.error("Plugin: %s failed to generate decision list" % plugin.name, exc_info=1)
+                logger.error("Plugin: %s failed to generate decision list" \
+                             % plugin.name, exc_info=1)
         return result
 
     def build_metadata(self, client_name):

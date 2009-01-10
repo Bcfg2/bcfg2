@@ -1,12 +1,12 @@
 This document details the major work needed before Bcfg2 is ready for
-a 1.0 release. 
+a 1.0 release. The high-level goal for 1.0 is to fix long-standing
+architecture warts and provide a reasonable internal API for the
+server. 
 
 * Goals for 1.0
 ** Fix the POSIX path problem
 ** Build a comprehensive server plugin architecture
-*** Metadata Connectors (done)
-*** Multi-stats 
-*** Structure Verifier/Modifier
-*** Configuration Validator/Modifier
+*** see plugin-roles for details and implementation status
 ** Version Control Backend
 ** Clean up client/server statistics data format
+** Multithreaded server (sync from Cobalt)
