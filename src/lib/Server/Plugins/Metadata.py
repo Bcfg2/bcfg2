@@ -24,6 +24,7 @@ class ClientMetadata(object):
         self.uuid = uuid
         self.password = password
         self.all = overall
+        self.connectors = []
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
@@ -409,8 +410,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                        self.categories[g] in imd.categories:
                         continue
                     imd.groups.append(g)
-        if not hasattr(imd, source.lower()):
-            setattr(imd, source.lower(), data)
+        if not hasattr(imd, source):
+            setattr(imd, source, data)
+            imd.connectors.append(source)
     
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''

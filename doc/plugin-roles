@@ -4,26 +4,29 @@ This documents available plugin roles.
 
 | Role          | Class              | Status        |
 |---------------+--------------------+---------------|
+| Metadata      | Metadata           | done          |
+| Connector     | Connector          | done          |
 | Generator     | Generator          | done          |
 | Structure     | Structure          | done          |
 | Pull          | PullSource         | class defined |
-| Metadata      | Metadata           | done          |
-| Connector     | Connector          | class defined |
 | Probing       | Probing            | done          |
 | Decision      | Decision           | done          |
 | Remote        | Remote             | none          |
 | Statistics    | Statistics         | class defined |
 | Structure Val | StructureValidator | done          |
-| Goals Val     | GoalValidator      | class defined |
+| Goals Val     | GoalValidator      | done          |
 | Syncing       | Syncing            | none          |
 |---------------+--------------------+---------------|
 
-2) Interactions between plugins and the core
-* Metadata Construction
-** Get Base Metadata from (single) Metadata plugin instance
-** Get additional data from each Connector plugin instance
-** Merge in additional connector data into single ClientMetadata instance
-* 
+2) Plugin Functions
+
+* Metadata
+** Initial metadata construction
+** Connector data accumulation
+** ClientMetadata instance delivery
+** Introspection interface (for bcfg2-info & co)
+* Connector
+** Provide additional data for ClientMetadata instances 
 
 3) Configuration of plugins
 
@@ -42,3 +45,15 @@ across the board, but I think this is a corner case, which will be
 poorly supported by plugin implementers. If needed, this use case can
 be explicitly supported by the plugin author, through use of a config
 file directive. 
+
+4) User Visible Changes
+
+Connector data is added to ClientMetadata instances using the name of
+the connector plugin. This means that the dictionary of key/val probe
+pairs included with metadata is now available as metadata.Probes
+(instead of metadata.probes). Once properties are available the same
+way, they will likewise change names to metadata.Properties from their
+current name. 
+
+5) Notes
+* Need to fix host specific probe behavior (with basenames) 
