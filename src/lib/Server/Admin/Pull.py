@@ -96,8 +96,11 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  ename in gen.Entries.get(etype, {})]
         if len(glist) != 1:
             self.errExit("Got wrong numbers of matching generators for entry:" \
-                         + "%s" % ([g.__name__ for g in glist]))
+                         + "%s" % ([g.name for g in glist]))
         plugin = glist[0]
+        if not isinstance(plugin, Bcfg2.Server.Plugin.PullSource):
+            self.errExit("Configuration upload not supported by plugin %s" \
+                         % (plugin.name))
         try:
             choices = plugin.AcceptChoices(new_entry, meta)
             specific = self.Choose(choices)
@@ -105,5 +108,5 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 plugin.AcceptPullData(specific, new_entry, self.log)
         except Bcfg2.Server.Plugin.PluginExecutionError:
             self.errExit("Configuration upload not supported by plugin %s" \
-                         % (plugin.__name__))
+                         % (plugin.name))
         # FIXME svn commit if running under svn

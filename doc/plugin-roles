@@ -6,15 +6,15 @@ This documents available plugin roles.
 |---------------+--------------------+---------------|
 | Metadata      | Metadata           | done          |
 | Connector     | Connector          | done          |
-| Generator     | Generator          | done          |
-| Structure     | Structure          | done          |
-| Pull          | PullSource         | class defined |
 | Probing       | Probing            | done          |
+| Structure     | Structure          | done          |
+| Structure Val | StructureValidator | done          |
+| Generator     | Generator          | done          |
+| Goals Val     | GoalValidator      | done          |
+| Statistics    | Statistics         | class defined |
+| Pull          | PullSource         | done          |
 | Decision      | Decision           | done          |
 | Remote        | Remote             | none          |
-| Statistics    | Statistics         | class defined |
-| Structure Val | StructureValidator | done          |
-| Goals Val     | GoalValidator      | done          |
 | Syncing       | Syncing            | none          |
 |---------------+--------------------+---------------|
 
@@ -27,6 +27,13 @@ This documents available plugin roles.
 ** Introspection interface (for bcfg2-info & co)
 * Connector
 ** Provide additional data for ClientMetadata instances 
+* Probing
+* Structure
+* Structure Validation
+* Generator
+* Goals Validation
+* Pull
+* Decision
 
 3) Configuration of plugins
 

@@ -6,7 +6,8 @@ import Bcfg2.Server.Plugin
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
-              Bcfg2.Server.Plugin.DirectoryBacked):
+              Bcfg2.Server.Plugin.DirectoryBacked,
+              Bcfg2.Server.Plugin.PullSource):
     '''The sshbase generator manages ssh host keys (both v1 and v2)
     for hosts.  It also manages the ssh_known_hosts file. It can
     integrate host keys from other management domains and similarly

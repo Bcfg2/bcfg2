@@ -125,7 +125,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             if log:
                 logger.info("Wrote file %s" % infofile.name)
 
-class Cfg(Bcfg2.Server.Plugin.GroupSpool):
+class Cfg(Bcfg2.Server.Plugin.GroupSpool,
+          Bcfg2.Server.Plugin.PullSource):
     '''This generator in the configuration file repository for bcfg2'''
     name = 'Cfg'
     __version__ = '$Id$'
