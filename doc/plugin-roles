@@ -12,13 +12,14 @@ This documents available plugin roles.
 | Generator     | Generator          | done          |
 | Goals Val     | GoalValidator      | done          |
 | Statistics    | Statistics         | class defined |
-| Pull          | PullSource         | done          |
+| Pull Source   | PullSource         | class defined |
+| Pull Target   | PullTarget         | done          |
 | Decision      | Decision           | done          |
 | Remote        | Remote             | none          |
 | Syncing       | Syncing            | none          |
 |---------------+--------------------+---------------|
 
-2) Plugin Functions
+2) Plugin Capabilities
 
 * Metadata
 ** Initial metadata construction
@@ -28,11 +29,19 @@ This documents available plugin roles.
 * Connector
 ** Provide additional data for ClientMetadata instances 
 * Probing
+** send executable probes to clients and receive data responses
 * Structure
+** Produce a list of configuration entries that should be included in
+   client configurations
 * Structure Validation
+** Validate a client entry list's internal consistency, modifying if needed
 * Generator
 * Goals Validation
-* Pull
+** Validate client goals, modifying if needed
+* Pull Source
+** Plugin can provide entry information about clients
+* Pull Target
+** Plugin can accept entry data and merge it into the specification
 * Decision
 
 3) Configuration of plugins
@@ -61,6 +70,10 @@ pairs included with metadata is now available as metadata.Probes
 (instead of metadata.probes). Once properties are available the same
 way, they will likewise change names to metadata.Properties from their
 current name. 
+
+Plugin configuration will change. A single field "plugins" in
+bcfg2.conf will supercede the combination of the "generators" and 
+"structures" fields. 
 
 5) Notes
 * Need to fix host specific probe behavior (with basenames) 

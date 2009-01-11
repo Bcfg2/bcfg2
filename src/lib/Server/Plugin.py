@@ -58,14 +58,6 @@ class Generator(object):
         '''This is the slow-path handler for configuration entry binding'''
         raise PluginExecutionError
 
-    def AcceptChoices(self, entry, metadata):
-        raise PluginExecutionError
-    
-    def AcceptPullData(self, specific, new_entry, verbose):
-        '''This is the null per-plugin implementation
-        of bcfg2-admin pull'''
-        raise PluginExecutionError
-
 class Structure(object):
     '''Structure Plugins contribute to abstract client configurations'''
     def BuildStructures(self, metadata):
@@ -120,6 +112,15 @@ class PullSource(object):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
+        raise PluginExecutionError
+
+class PullTarget(object):
+    def AcceptChoices(self, entry, metadata):
+        raise PluginExecutionError
+    
+    def AcceptPullData(self, specific, new_entry, verbose):
+        '''This is the null per-plugin implementation
+        of bcfg2-admin pull'''
         raise PluginExecutionError
 
 class Decision(object):

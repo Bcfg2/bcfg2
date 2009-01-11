@@ -98,7 +98,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             self.errExit("Got wrong numbers of matching generators for entry:" \
                          + "%s" % ([g.name for g in glist]))
         plugin = glist[0]
-        if not isinstance(plugin, Bcfg2.Server.Plugin.PullSource):
+        if not isinstance(plugin, Bcfg2.Server.Plugin.PullTarget):
             self.errExit("Configuration upload not supported by plugin %s" \
                          % (plugin.name))
         try:
