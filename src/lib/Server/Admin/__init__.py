@@ -50,25 +50,18 @@ class Mode(object):
         return hostent[0]
 
 class MetadataCore(Mode):
-    allowed = ['Metadata', 'BB']
     '''Base class for admin-modes that handle metadata'''
     def __init__(self, configfile, usage):
         Mode.__init__(self, configfile)
-        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                   'structures': Bcfg2.Options.SERVER_STRUCTURES,
-                   'generators': Bcfg2.Options.SERVER_GENERATORS}
+        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS}
         setup = Bcfg2.Options.OptionParser(options)
         setup.hm = usage
         setup.parse(sys.argv[1:])
         plugins = [plugin for plugin in setup['plugins']
                    if plugin in self.allowed]
-        structures = [structure for structure in setup['structures']
-                     if structure in self.allowed]
-        generators = [generator for generator in setup['generators']
-                      if generator in self.allowed]
         try:
-            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(), plugins,
-                                                structures, generators, [],
+            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
+                                                setup['plugins'],
                                                 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
@@ -78,7 +71,4 @@ class MetadataCore(Mode):
         self.metadata = self.bcore.metadata
 
 class StructureMode(MetadataCore):
-    allowed = ['Statistics', 'DBStats']
-    def __init__(self, configfile, usage):
-        MetadataCore.__init__(self, configfile, usage)
-        self.statistics = self.bcore.stats
+    pass

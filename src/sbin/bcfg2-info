@@ -24,12 +24,11 @@ def printTabular(rows):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
-    def __init__(self, repo, plgs, struct, gens, conn, passwd, svn,
-                 encoding, event_debug):
+    def __init__(self, repo, plgs, passwd, svn, encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, struct, gens, 
-                                            conn, passwd, svn, encoding)
+            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd, svn,
+                                            encoding)
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError, msg:
@@ -296,17 +295,13 @@ if __name__ == '__main__':
     optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
                     'svn': Bcfg2.Options.SERVER_SVN,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'structures': Bcfg2.Options.SERVER_STRUCTURES,
-                    'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'event debug': Bcfg2.Options.DEBUG,
-                    'encoding': Bcfg2.Options.ENCODING,
-                    'connectors': Bcfg2.Options.SERVER_MCONNECT})
+                    'encoding': Bcfg2.Options.ENCODING})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     print setup
-    loop = infoCore(setup['repo'], setup['plugins'], setup['structures'],
-                    setup['generators'], setup['connectors'],
+    loop = infoCore(setup['repo'], setup['plugins'], 
                     setup['password'], setup['svn'], setup['encoding'],
                     '-d' in sys.argv)
     if "args" in setup and setup['args']:

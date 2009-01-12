@@ -6,7 +6,7 @@ from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 import Bcfg2.Server.FileMonitor
 
-import logging, lxml.etree, os
+import copy, logging, lxml.etree, os
 import Bcfg2.Server.Plugins.Metadata
 
 logger = logging.getLogger('Bcfg2.Core')
@@ -24,8 +24,8 @@ class CoreInitError(Exception):
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, plugins, structures, generators, connectors,
-                 password, svn, encoding, filemonitor='default'):
+    def __init__(self, repo, plugins, password, svn, encoding,
+                 filemonitor='default'):
         object.__init__(self)
         self.datastore = repo
         if filemonitor not in Bcfg2.Server.FileMonitor.available:
@@ -37,9 +37,6 @@ class Core(object):
             raise CoreInitError, "failed to instantiate fam driver (used %s)" % \
                   filemonitor
         self.pubspace = {}
-        self.generators = []
-        self.structures = []
-        self.connectors = []
         self.cron = {}
         self.plugins = {}
         self.revision = '-1'
@@ -52,51 +49,29 @@ class Core(object):
         except:
             self.svn = False
 
-        [data.remove('') for data in [plugins, structures, generators]
-         if '' in data]
+        if '' in plugins:
+            plugins.remove('')
         
-        for plugin in structures + generators + plugins + connectors:
+        for plugin in plugins:
             if not plugin in self.plugins:
                 self.init_plugins(plugin)    
 
-        chk_plugins = self.plugins.values()
-        while True:
-            try:
-                plugin = chk_plugins.pop()
-                if isinstance(plugin, Bcfg2.Server.Plugin.Metadata):
-                    self.metadata = plugin
-                    break
-            except:
-                pass
-            if not chk_plugins:
-                self.init_plugins("Metadata")
-                self.metadata = self.plugins["Metadata"]
-                break
-
-        for plug_names, plug_tname, plug_type, collection in \
-            [(structures, 'structure', Bcfg2.Server.Plugin.Structure,
-              self.structures),
-             (generators, 'generator', Bcfg2.Server.Plugin.Generator,
-              self.generators),
-             (connectors, 'connector', Bcfg2.Server.Plugin.Connector,
-              self.connectors),
-             ]:
-            for plugin in plug_names:
-                if plugin in self.plugins:
-                    if not isinstance(self.plugins[plugin], plug_type):
-                        logger.error("Plugin %s is not a %s plugin; unloading" \
-                                 % (plugin, plug_tname))
-                        del self.plugins[plugin]
-                    else:
-                        collection.append(self.plugins[plugin])
-                else:
-                    logger.error("Plugin %s not loaded. Not enabled as a %s" \
-                                 % (plugin, plug_tname))
-
+        mlist = [p for p in self.plugins.values() if \
+                 isinstance(p, Bcfg2.Server.Plugin.Metadata)]
+        if len(mlist) == 1:
+            self.metadata = mlist[0]
+        else:
+            raise CoreInitError, "No Metadata Plugin"
         self.statistics = [plugin for plugin in self.plugins.values() \
                            if isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
         self.pull_sources = [plugin for plugin in self.statistics if \
                              isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
+        self.generators = [plugin for plugin in self.plugins.values() if \
+                             isinstance(plugin, Bcfg2.Server.Plugin.Generator)]
+        self.structures = [plugin for plugin in self.plugins.values() if \
+                             isinstance(plugin, Bcfg2.Server.Plugin.Structure)]
+        self.connectors = [plugin for plugin in self.plugins.values() if \
+                           isinstance(plugin, Bcfg2.Server.Plugin.Connector)]
     
     def init_plugins(self, plugin):
         try:
@@ -274,11 +249,13 @@ class Core(object):
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
             for plugin in self.statistics:
+                mc = copy.deepcopy(meta)
+                ms = copy.deepcopy(statistics)
                 try:
-                    plugin.process_statistics(meta, statistics)
+                    plugin.process_statistics(mc, ms)
                 except:
                     logger.error("Plugin %s failed to process stats from %s" \
-                                 % (plugin.name, metadata.hostname),
+                                 % (plugin.name, mc.hostname),
                                  exc_info=1)
 
         logger.info("Client %s reported state %s" % (client_name,

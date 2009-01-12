@@ -33,8 +33,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
     def __init__(self, setup):
         try:
-            self.Core = Core(setup['repo'], setup['plugins'], setup['structures'],
-                             setup['generators'], setup['connectors'],
+            self.Core = Core(setup['repo'], setup['plugins'], 
                              setup['password'], 
                              setup['svn'], setup['encoding'], setup['filemonitor'])
         except CoreInitError, msg:
@@ -200,8 +199,6 @@ if __name__ == '__main__':
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
                     'svn': Bcfg2.Options.SERVER_SVN,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'structures': Bcfg2.Options.SERVER_STRUCTURES,
-                    'generators': Bcfg2.Options.SERVER_GENERATORS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
                     })
@@ -211,7 +208,6 @@ if __name__ == '__main__':
                     'static'   : Bcfg2.Options.SERVER_STATIC,
                     'encoding' : Bcfg2.Options.ENCODING,
                     'filelog'  : Bcfg2.Options.LOGGING_FILE_PATH,
-                    'connectors': Bcfg2.Options.SERVER_MCONNECT, 
                     })
 
 
