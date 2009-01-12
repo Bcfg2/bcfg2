@@ -57,8 +57,6 @@ class MetadataCore(Mode):
         setup = Bcfg2.Options.OptionParser(options)
         setup.hm = usage
         setup.parse(sys.argv[1:])
-        plugins = [plugin for plugin in setup['plugins']
-                   if plugin in self.allowed]
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 setup['plugins'],
