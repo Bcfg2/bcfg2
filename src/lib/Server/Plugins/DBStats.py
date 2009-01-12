@@ -27,7 +27,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
             logger.debug(str(inst))
             logger.debug(str(type(inst)))
 
-    def StoreStatistics(self, mdata, xdata):
+    def process_statistics(self, mdata, xdata):
         newstats = xdata.find("Statistics")
         newstats.set('time', time.asctime(time.localtime()))
         e = lxml.etree.Element('Node', name=mdata.hostname)

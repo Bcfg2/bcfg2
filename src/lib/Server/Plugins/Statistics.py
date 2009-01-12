@@ -22,6 +22,7 @@ class StatisticsStore(object):
 
     def WriteBack(self, force=0):
         '''Write statistics changes back to persistent store'''
+        # FIXME switch to a thread writer
         if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time()) ) \
                 or force:
             try:
@@ -119,11 +120,8 @@ class Statistics(Bcfg2.Server.Plugin.Plugin,
         fpath = "%s/etc/statistics.xml" % datastore
         self.data_file = StatisticsStore(fpath)
 
-    def StoreStatistics(self, client, xdata):
+    def process_statistics(self, client, xdata):
         self.data_file.updateStats(xdata, client.hostname)
-
-    def WriteBack(self):
-        self.data_file.WriteBack()
 
     def FindCurrent(self, client):
         rt = self.data_file.element.xpath('//Node[@name="%s"]' % client)[0]

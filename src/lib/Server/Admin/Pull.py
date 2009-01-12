@@ -26,7 +26,6 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
     def __init__(self, configfile):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
                                                  self.__usage__)
-        self.stats = self.bcore.stats
         self.log = False
         self.mode = 'interactive'
         
@@ -49,12 +48,15 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
     def BuildNewEntry(self, client, etype, ename):
         '''construct a new full entry for given client/entry from statistics'''
         new_entry = {'type':etype, 'name':ename}
-        try:
-            (owner, group, perms, contents) = \
-                    self.stats.GetCurrentEntry(client, etype, ename)
-        except Bcfg2.Server.Plugin.PluginExecutionError:
-            print "Statistics plugin failure; could not fetch current state"
-            raise SystemExit(1)
+        for plugin in self.bcore.pull_sources:
+            try:
+                (owner, group, perms, contents) = \
+                        plugin.GetCurrentEntry(client, etype, ename)
+                break
+            except Bcfg2.Server.Plugin.PluginExecutionError:
+                if plugin == self.bcore.pull_sources[-1]:
+                    print "Pull Source failure; could not fetch current state"
+                    raise SystemExit(1)
 
         data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
         for k, v in data.iteritems():

@@ -100,12 +100,8 @@ class Probing(object):
 
 class Statistics(object):
     '''Signal statistics handling capability'''
-    def StoreStatistics(self, client, xdata):
+    def process_statistics(self, client, xdata):
         pass
-
-    def WriteBack(self):
-        pass
-
 
 class PullSource(object):
     def GetExtra(self, client):

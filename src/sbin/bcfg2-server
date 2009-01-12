@@ -166,7 +166,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         '''Build config for a client'''
         try:
             client = self.Core.metadata.resolve_client(address)
-            return tostring(self.Core.BuildConfiguration(client), encoding='UTF-8', xml_declaration=True)
+            return tostring(self.Core.BuildConfiguration(client),
+                            encoding='UTF-8', xml_declaration=True)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             self.logger.warning("Metadata consistency failure for %s" % (address))
             raise Fault, (6, "Metadata consistency failure")
@@ -174,17 +175,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
     def Bcfg2RecvStats(self, address, stats):
         '''Act on statistics upload'''
         sdata = XML(stats)
-        state = sdata.find(".//Statistics")
-        # Versioned stats to prevent tied client/server upgrade
-        if state.get('version') >= '2.0':
-            client = self.Core.metadata.resolve_client(address)
-            meta = self.Core.build_metadata(client)
-            
-            # Update statistics
-            self.Core.stats.StoreStatistics(meta, sdata)
-
-        self.logger.info("Client %s reported state %s" % 
-                         (client, state.attrib['state']))
+        client = self.Core.metadata.resolve_client(address)        
+        self.Core.process_statistics(client, sdata)
         return "<ok/>"
 
     def _authenticate_connection(self, _, user, password, address):

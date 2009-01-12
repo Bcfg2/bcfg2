@@ -2,22 +2,22 @@ This documents available plugin roles.
 
 1) list of plugin roles
 
-| Role          | Class              | Status        |
-|---------------+--------------------+---------------|
-| Metadata      | Metadata           | done          |
-| Connector     | Connector          | done          |
-| Probing       | Probing            | done          |
-| Structure     | Structure          | done          |
-| Structure Val | StructureValidator | done          |
-| Generator     | Generator          | done          |
-| Goals Val     | GoalValidator      | done          |
-| Statistics    | Statistics         | class defined |
-| Pull Source   | PullSource         | class defined |
-| Pull Target   | PullTarget         | done          |
-| Decision      | Decision           | done          |
-| Remote        | Remote             | none          |
-| Syncing       | Syncing            | none          |
-|---------------+--------------------+---------------|
+| Role          | Class              | Status |
+|---------------+--------------------+--------|
+| Metadata      | Metadata           | done   |
+| Connector     | Connector          | done   |
+| Probing       | Probing            | done   |
+| Structure     | Structure          | done   |
+| Structure Val | StructureValidator | done   |
+| Generator     | Generator          | done   |
+| Goals Val     | GoalValidator      | done   |
+| Statistics    | Statistics         | done   |
+| Pull Source   | PullSource         | done   |
+| Pull Target   | PullTarget         | done   |
+| Decision      | Decision           | done   |
+| Remote        | Remote             | none   |
+| Syncing       | Syncing            | none   |
+|---------------+--------------------+--------|
 
 2) Plugin Capabilities
 
@@ -74,6 +74,10 @@ current name.
 Plugin configuration will change. A single field "plugins" in
 bcfg2.conf will supercede the combination of the "generators" and 
 "structures" fields. 
+
+Default loading of needed plugins is now explicit; this means that
+Statistics (if used) should be listed in the plugins line of
+bcfg2.conf. 
 
 5) Notes
 * Need to fix host specific probe behavior (with basenames) 

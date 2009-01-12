@@ -73,20 +73,6 @@ class Core(object):
                 self.metadata = self.plugins["Metadata"]
                 break
 
-        chk_plugins = self.plugins.values()
-        while True:
-            try:
-                plugin = chk_plugins.pop()
-                if isinstance(plugin, Bcfg2.Server.Plugin.Statistics):
-                    self.stats = plugin
-                    break
-            except:
-                pass
-            if not chk_plugins:
-                self.init_plugins("Statistics")
-                self.stats = self.plugins["Statistics"]
-                break
-
         for plug_names, plug_tname, plug_type, collection in \
             [(structures, 'structure', Bcfg2.Server.Plugin.Structure,
               self.structures),
@@ -106,6 +92,11 @@ class Core(object):
                 else:
                     logger.error("Plugin %s not loaded. Not enabled as a %s" \
                                  % (plugin, plug_tname))
+
+        self.statistics = [plugin for plugin in self.plugins.values() \
+                           if isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
+        self.pull_sources = [plugin for plugin in self.statistics if \
+                             isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
     
     def init_plugins(self, plugin):
         try:
@@ -244,10 +235,6 @@ class Core(object):
         count = self.fam.Service()
         if count and self.svn:
             self.read_svn_revision()
-        try:
-            self.stats.WriteBack()
-        except:
-            logger.error("error in Statistics", exc_info=1)
             
     def read_svn_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
@@ -281,3 +268,18 @@ class Core(object):
             self.metadata.merge_additional_metadata(imd, conn.name, grps, data)
         return imd
             
+
+    def process_statistics(self, client_name, statistics):
+        meta = self.build_metadata(client_name)
+        state = statistics.find(".//Statistics")
+        if state.get('version') >= '2.0':
+            for plugin in self.statistics:
+                try:
+                    plugin.process_statistics(meta, statistics)
+                except:
+                    logger.error("Plugin %s failed to process stats from %s" \
+                                 % (plugin.name, metadata.hostname),
+                                 exc_info=1)
+
+        logger.info("Client %s reported state %s" % (client_name,
+                                                     state.get('state')))
