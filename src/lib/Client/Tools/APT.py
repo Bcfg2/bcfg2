@@ -140,7 +140,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if not pkg.get('name') in self.pkg_cache:
+            if not self.pkg_cache.has_key(pkg.get('name')):
                 self.logger.error("APT has no information about package %s" % (pkg.get('name')))
                 continue
             if pkg.get('version') in ['auto', 'any']:
