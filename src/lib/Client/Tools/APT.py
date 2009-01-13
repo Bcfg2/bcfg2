@@ -143,7 +143,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             if not pkg.get('name') in self.pkg_cache:
                 self.logger.error("APT has no information about package %s" % (pkg.get('name')))
                 continue
-            if pkg.get('version') == 'auto':
+            if pkg.get('version') in ['auto', 'any']:
                 ipkgs.append("%s=%s" % (pkg.get('name'),
                                         self.pkg_cache[pkg.get('name')].candidateVersion))
                 continue
@@ -151,8 +151,6 @@ class APT(Bcfg2.Client.Tools.Tool):
                [p.VerStr for p in self.pkg_cache[pkg.get('name')]._pkg.VersionList]:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
-            if pkg.get('version') == 'any':
-                self.logger.error("Cannot choose appropriate version for pkg %s; version=any" % pkg.get('name'))
             bad_pkgs.append(pkg.get('name'))
         if bad_pkgs:
             self.logger.error("Cannot find correct versions of packages:")
