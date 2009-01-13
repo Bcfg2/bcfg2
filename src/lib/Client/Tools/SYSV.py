@@ -54,14 +54,19 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         if not entry.get('version'):
             self.logger.info("Insufficient information of Package %s; cannot Verify" % entry.get('name'))
             return False
+
+        desiredVersion = entry.get('version')
+        if desiredVersion == 'any':
+            desiredVersion = self.installed.get(entry.get('name'), desiredVersion)
+        
         cmdrc = self.cmd.run("/usr/bin/pkginfo -q -v \"%s\" %s" % \
-                             (entry.get('version'), entry.get('name')))[0]
+                             (desiredVersion, entry.get('name')))[0]
 
         if cmdrc != 0:
             if entry.get('name') in self.installed:
                 self.logger.debug("Package %s version incorrect: have %s want %s" \
                                   % (entry.get('name'), self.installed[entry.get('name')],
-                                     entry.get('version')))
+                                     desiredVersion))
             else:
                 self.logger.debug("Package %s not installed" % (entry.get("name")))
         else:
