@@ -147,10 +147,15 @@ class APT(Bcfg2.Client.Tools.Tool):
                 ipkgs.append("%s=%s" % (pkg.get('name'),
                                         self.pkg_cache[pkg.get('name')].candidateVersion))
                 continue
-            if pkg.get('version') in \
-               [p.VerStr for p in self.pkg_cache[pkg.get('name')]._pkg.VersionList]:
+            avail_vers = [x.VerStr for x in \
+                          self.pkg_cache[pkg.get('name')]._pkg.VersionList]
+            if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
+            else:
+                self.logger.error("Package %s: desired version %s not in %s" \
+                                  % (pkg.get('name'), pkg.get('version'),
+                                     avail_vers))
             bad_pkgs.append(pkg.get('name'))
         if bad_pkgs:
             self.logger.error("Cannot find correct versions of packages:")
