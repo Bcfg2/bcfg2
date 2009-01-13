@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 '''Imports statistics.xml and clients.xml files in to database backend for new statistics engine'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 4999 $'
 
 import os, sys, binascii
 try:
@@ -98,13 +98,13 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                 continue
             else:
                 newint = Interaction(client=c_inst,
-                                     timestamp=timestamp,
-                                     state=statistics.get('state', default="unknown"),
-                                     repo_revision=statistics.get('revision',default="unknown"),
-                                     client_version=statistics.get('client_version',default="unknown"),
-                                     goodcount=statistics.get('good',default="0"),
-                                     totalcount=statistics.get('total',default="0"),
-                                     server=location)
+                                     timestamp = timestamp,
+                                     state = statistics.get('state', default="unknown"),
+                                     repo_rev_code = statistics.get('revision',default="unknown"),
+                                     client_version = statistics.get('client_version',default="unknown"),
+                                     goodcount = statistics.get('good',default="0"),
+                                     totalcount = statistics.get('total',default="0"),
+                                     server = location)
                 newint.save()
                 current_interaction = newint
                 if vlevel > 0:

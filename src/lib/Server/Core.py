@@ -1,5 +1,9 @@
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 5014 $'
+
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+c = ConfigParser()
+c.read('/etc/bcfg2.conf')
 
 from time import time
 
@@ -24,7 +28,7 @@ class CoreInitError(Exception):
 class Core(object):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
 
-    def __init__(self, repo, plugins, password, svn, encoding,
+    def __init__(self, repo, plugins, password, vcs, encoding,
                  filemonitor='default'):
         object.__init__(self)
         self.datastore = repo
@@ -41,13 +45,15 @@ class Core(object):
         self.plugins = {}
         self.revision = '-1'
         self.password = password
-        self.svn = svn
         self.encoding = encoding
         try:
-            if self.svn:
+            self.vcs = c.get('server', 'vcs')
+            if self.vcs == 'svn':
                 self.read_svn_revision()
+            elif self.vcs == 'git':
+                self.read_git_revision()
         except:
-            self.svn = False
+            self.vcs = 'none'
 
         if '' in plugins:
             plugins.remove('')
@@ -208,8 +214,24 @@ class Core(object):
     def Service(self):
         '''Perform periodic update tasks'''
         count = self.fam.Service()
-        if count and self.svn:
-            self.read_svn_revision()
+        if count:
+            if self.vcs == 'svn':
+                self.read_svn_revision()
+            elif self.vcs == 'git':
+                self.read_git_revision()
+
+    def read_git_revision(self):
+        try:
+            data = os.popen("env LC_ALL=C git ls-remote %s" %
+                            (self.datastore)).readlines()
+            revline = [line.split('\t')[0].strip() for line in data if \
+                       line.split('\t')[1].strip() == 'refs/heads/master'][-1]
+            self.revision = revline
+        except IndexError:
+            logger.error("Failed to read git ls-remote; disabling git support")
+            logger.error('''Ran command "git ls-remote %s"''' % (self.datastore))
+            logger.error("Got output: %s" % data)
+            self.vcs = 'none'
             
     def read_svn_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
@@ -223,7 +245,7 @@ class Core(object):
             logger.error("Failed to read svn info; disabling svn support")
             logger.error('''Ran command "svn info %s"''' % (self.datastore))
             logger.error("Got output: %s" % data)
-            self.svn = False
+            self.vcs = 'none'
 
     def GetDecisions(self, metadata, mode):
         result = []

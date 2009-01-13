@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''The XML-RPC Bcfg2 Server'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 5014 $'
 
 import Bcfg2.Server.Plugins.Metadata 
 
@@ -35,7 +35,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         try:
             self.Core = Core(setup['repo'], setup['plugins'], 
                              setup['password'], 
-                             setup['svn'], setup['encoding'], setup['filemonitor'])
+                             setup['vcs'], setup['encoding'], setup['filemonitor'])
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
             raise SystemExit, 1
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         }
 
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'svn': Bcfg2.Options.SERVER_SVN,
+                    'vcs': Bcfg2.Options.SERVER_VCS,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,

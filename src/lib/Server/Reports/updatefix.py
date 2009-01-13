@@ -60,6 +60,8 @@ _fixes = [_merge_database_table_entries,
           "drop table reports_repository;",
           "drop table reports_metadata;",
           "alter table reports_interaction add server varchar(256) not null default 'N/A';",
+          # fix revision data type to support $VCS hashes
+          "alter table reports_interaction add repo_rev_code varchar(64) default '';",
 ]
 
 # this will calculate the last possible version of the database
@@ -95,7 +97,7 @@ def dosync():
         # if we get here with no error then the database has existing tables
         fresh = False
     except:
-        logger.debug("there was an error while detecting the freshnest of the database")
+        logger.debug("there was an error while detecting the freshness of the database")
         #we should get here if the database is new
         fresh = True
 

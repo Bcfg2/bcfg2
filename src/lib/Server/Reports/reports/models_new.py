@@ -111,7 +111,7 @@ class Interaction(models.Model):
     client = models.ForeignKey(Client, related_name="interactions",)
     timestamp = models.DateTimeField()#Timestamp for this record
     state = models.CharField(max_length=32)#good/bad/modified/etc
-    repo_revision = models.IntegerField()#repo revision at time of interaction
+    repo_rev_code = models.CharField(max_length=64)#repo revision at time of interaction
     client_version = models.CharField(max_length=32)#Client Version
     goodcount = models.IntegerField()#of good config-items
     totalcount = models.IntegerField()#of total config-items

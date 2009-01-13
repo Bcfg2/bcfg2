@@ -1,6 +1,6 @@
 #!/usr/bin/python -i
 '''This tool loads the Bcfg2 core into an interactive debugger'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 5014 $'
 
 import copy, logging, lxml.etree, sys, time, cmd
 import Bcfg2.Logger, Bcfg2.Server.Core, os
@@ -24,10 +24,10 @@ def printTabular(rows):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
-    def __init__(self, repo, plgs, passwd, svn, encoding, event_debug):
+    def __init__(self, repo, plgs, passwd, vcs, encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd, svn,
+            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd, vcs,
                                             encoding)
             if event_debug:
                 self.fam.debug = True
@@ -293,7 +293,7 @@ if __name__ == '__main__':
             'help': Bcfg2.Options.HELP,
               }
     optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'svn': Bcfg2.Options.SERVER_SVN,
+                    'vcs': Bcfg2.Options.SERVER_VCS,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'event debug': Bcfg2.Options.DEBUG,
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     setup.parse(sys.argv[1:])
     print setup
     loop = infoCore(setup['repo'], setup['plugins'], 
-                    setup['password'], setup['svn'], setup['encoding'],
+                    setup['password'], setup['vcs'], setup['encoding'],
                     '-d' in sys.argv)
     if "args" in setup and setup['args']:
         loop.onecmd(" ".join(setup['args']))

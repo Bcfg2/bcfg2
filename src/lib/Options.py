@@ -1,5 +1,5 @@
 '''Option parsing library for utilities'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 5000 $'
 
 import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
 
@@ -127,7 +127,7 @@ class OptionSet(dict):
     def buildHelpMessage(self):
         if hasattr(self, 'hm'):
             return self.hm
-        return ''.join([opt.buildHelpMessage() for opt in self.values()])
+        return '     '.join([opt.buildHelpMessage() for opt in self.values()])
 
     def helpExit(self, msg='', code=1):
         if msg:
@@ -177,7 +177,8 @@ DAEMON = Option("Daemonize process, storing pid", False,
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
                            odesc='<repository path>' )
-SERVER_SVN = Option('Server svn support', False, cf=('server', 'svn'))
+SERVER_VCS = Option('Server vcs support', cf=('server', 'vcs'),
+                    default='default')
 SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
                            default=[], cook=list_split)
 SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),

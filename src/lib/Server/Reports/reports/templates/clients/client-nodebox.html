@@ -9,7 +9,7 @@
             <tr><td width="43%"><h2>Node: <span class="nodename">
 	    <a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name,pk=i.id %}">{{client.name}}</a></span></h2></td>
             <td width="23%">
-	    {% if interaction.repo_revision %}Revision: {{interaction.repo_revision}}{% endif %}
+	    {% if interaction.repo_rev_code %}Revision: {{interaction.repo_rev_code}}{% endif %}
 	    </td>
             <td width="33%"><div class="statusborder">
 	        <div class="greenbar" style="width: {{interaction.percentgood}}%;">&nbsp;</div>
