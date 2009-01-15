@@ -58,7 +58,8 @@ class SGenshi(SGenshiEntrySet,
         try:
             SGenshiEntrySet.__init__(self, self.data, self.core.fam, core.encoding)
         except:
-            logger.error("Failed to load SGenshi repository; disabling SGenshi")
+            logger.error("Failed to load %s repository; disabling %s" \
+                         % (self.name, self.name))
             raise Bcfg2.Server.Plugin.PluginInitError
         
 

@@ -10,3 +10,4 @@ server.
 ** Version Control Backend
 ** Clean up client/server statistics data format
 ** Multithreaded server (sync from Cobalt)
+** properties switch to connector plugin

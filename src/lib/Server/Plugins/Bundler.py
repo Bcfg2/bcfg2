@@ -26,8 +26,6 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         bundleset = []
         for bundlename in metadata.bundles:
             if not ("%s.xml" % bundlename) in self.entries:
-                self.logger.error("Client %s requested nonexistent bundle %s" % \
-                                  (metadata.hostname, bundlename))
                 continue
             bundle = lxml.etree.Element('Bundle', name=bundlename)
             [bundle.append(copy.deepcopy(item))

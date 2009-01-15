@@ -33,6 +33,8 @@ This documents available plugin roles.
 * Structure
 ** Produce a list of configuration entries that should be included in
    client configurations
+** Each structure plugin is produces a list of structures
+** Core verifies that each bundle listed has been constructed
 * Structure Validation
 ** Validate a client entry list's internal consistency, modifying if needed
 * Generator
@@ -81,3 +83,4 @@ bcfg2.conf.
 
 5) Notes
 * Need to fix host specific probe behavior (with basenames) 
+* Need to ensure bundle accumulation occurs with connector groups

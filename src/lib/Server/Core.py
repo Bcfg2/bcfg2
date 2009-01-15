@@ -1,5 +1,5 @@
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
-__revision__ = '$Revision: 5014 $'
+__revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
@@ -117,9 +117,15 @@ class Core(object):
 
     def GetStructures(self, metadata):
         '''Get all structures for client specified by metadata'''
-        return reduce(lambda x, y:x+y,
-                      [struct.BuildStructures(metadata) for struct \
-                       in self.structures], [])
+        structures = reduce(lambda x, y:x+y,
+                            [struct.BuildStructures(metadata) for struct \
+                             in self.structures], [])
+        sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
+        missing = [b for b in metadata.bundles if b not in sbundles]
+        if missing:
+            logger.error("Client %s configuration missing bundles: %s" \
+                         % (metadata.hostname, ':'.join(missing)))
+        return structures
 
     def BindStructure(self, structure, metadata):
         '''Bind a complete structure'''
