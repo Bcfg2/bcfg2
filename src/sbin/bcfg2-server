@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''The XML-RPC Bcfg2 Server'''
-__revision__ = '$Revision: 5014 $'
+__revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugins.Metadata 
 

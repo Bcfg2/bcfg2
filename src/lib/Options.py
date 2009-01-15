@@ -1,5 +1,5 @@
 '''Option parsing library for utilities'''
-__revision__ = '$Revision: 5000 $'
+__revision__ = '$Revision$'
 
 import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
 

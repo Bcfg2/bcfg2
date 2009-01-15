@@ -19,7 +19,6 @@ import datetime
 import glob
 import urllib
 import gzip
-import time
 import urlparse
 from elementtree.ElementTree import parse
 
@@ -75,7 +74,7 @@ def cmpRpmHeader(a, b):
 
     ret = cmp(n1, n2)
     if ret == 0:
-        ret = rpm.labelCompare((e1, v1, r1),(e2, v2, r2))
+        ret = rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
     return ret
 
 def loadRpms(dirs):
@@ -291,7 +290,7 @@ def printPackage(entry, group_count):
         if len(arch_dict[arch]) > 1:
             arch_dict[arch].sort()
             for s in arch_dict[arch][:-1]:
-               del subarch_dict[s]
+                del subarch_dict[s]
     
     # Sort packages within each architecture into version order
     for arch in subarch_dict:
@@ -465,7 +464,7 @@ if __name__ == "__main__":
 
     # Set up list of architectures to include and some mappings
     # to use later.
-    arch_mapping = {'x86':['i686','i586','i486','i386','athlon'], 
+    arch_mapping = {'x86':['i686', 'i586', 'i486', 'i386', 'athlon'], 
                     'x86_64':['x86_64'], 
                     'ia64':['ia64'], 
                     'ppc':['ppc'], 

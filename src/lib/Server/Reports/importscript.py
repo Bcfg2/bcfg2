@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 '''Imports statistics.xml and clients.xml files in to database backend for new statistics engine'''
-__revision__ = '$Revision: 4999 $'
+__revision__ = '$Revision$'
 
 import os, sys, binascii
 try:

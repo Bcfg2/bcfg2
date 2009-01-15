@@ -1,8 +1,8 @@
 #!/usr/bin/python -i
 '''This tool loads the Bcfg2 core into an interactive debugger'''
-__revision__ = '$Revision: 5014 $'
+__revision__ = '$Revision$'
 
-import copy, logging, lxml.etree, sys, time, cmd
+import copy, logging, lxml.etree, sys, cmd
 import Bcfg2.Logger, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 import Bcfg2.Options
@@ -14,7 +14,8 @@ class dummyError(Exception):
 
 def printTabular(rows):
     '''print data in tabular format'''
-    cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 for index in xrange(len(rows[0]))])
+    cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
+                    for index in xrange(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
     fstring = ('|'.join([" %%-%ss "] * len(cmax))) % cmax
     print fstring % rows[0]
@@ -282,7 +283,7 @@ Usage: [quit|exit]"""
                         [cand.remove(c) for c in cand[:]
                          if getattr(c.specific, field)]
                     if len(cand) != 1:
-                        print >>sys.stderr, "Entry %s failed" % cfile.get('name')
+                        sys.stderr.write("Entry %s failed" % cfile.get('name'))
                         continue
                     print cand[0].name
 
