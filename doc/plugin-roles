@@ -82,5 +82,4 @@ Statistics (if used) should be listed in the plugins line of
 bcfg2.conf. 
 
 5) Notes
-* Need to fix host specific probe behavior (with basenames) 
 * Need to ensure bundle accumulation occurs with connector groups

@@ -1,6 +1,7 @@
 import Bcfg2.Server.Plugin, lxml.etree, re
 
-probe_matcher = re.compile("(?P<basename>\S+)(.(?P<mode>[GH])_\S+)?")
+specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH])_\S+)")
+probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
@@ -19,22 +20,18 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
     def get_probe_data(self, metadata):
         ret = []
+        build = dict()
         candidates = self.get_matching(metadata)
-        temp = {}
-        for cand in candidates:
-            if cand.specific.all:
-                if cand.name not in temp:
-                    temp[cand.name] = (cand, 0)
-                continue
-            mdata = probe_matcher.match(cand.name).groupdict()
-            if mdata['basename'] in temp:
-                if mdata['mode'] > temp[mdata['basename']][1]:
-                    temp[mdata['basename']] = (cand, mdata['mode'])
-            else:
-                temp[mdata['basename']] = (cand, mdata['mode'])
-        
-        for (name, data) in temp.iteritems():
-            entry, prio = data
+        candidates.sort(lambda x,y: cmp(x.specific, y.specific))
+        for entry in candidates:
+            rem = specific_probe_matcher.match(entry.name)
+            if not rem:
+                rem = probe_matcher.match(entry.name)
+            pname = rem.group('basename')
+            if pname not in build:
+                build[pname] = entry
+       
+        for (name, entry) in build.iteritems():
             probe = lxml.etree.Element('probe')
             probe.set('name', name.split('/')[-1])
             probe.set('source', self.plugin_name)
