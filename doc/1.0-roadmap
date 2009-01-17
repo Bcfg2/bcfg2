@@ -3,11 +3,15 @@ a 1.0 release. The high-level goal for 1.0 is to fix long-standing
 architecture warts and provide a reasonable internal API for the
 server. 
 
-* Goals for 1.0
-** Fix the POSIX path problem
-** Build a comprehensive server plugin architecture
-*** see plugin-roles for details and implementation status
+* Major Goals
+** Build a comprehensive server plugin architecture [done]
 ** Version Control Backend
+** Fix the POSIX path problem
 ** Clean up client/server statistics data format
 ** Multithreaded server (sync from Cobalt)
+** Reporting System and Database
+*** Schema fixes
+*** Performance 
+* Other Goals
 ** properties switch to connector plugin
+** ticket triage
