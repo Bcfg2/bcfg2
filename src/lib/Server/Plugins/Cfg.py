@@ -49,8 +49,9 @@ class CfgMatcher:
         return self.basefile_reg.match(fname)
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, basename, path, props, entry_type, encoding):
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, props, entry_type, encoding)
+    def __init__(self, basename, path, entry_type, encoding):
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, entry_type,
+                                              encoding)
         self.specific = CfgMatcher(path.split('/')[-1])
 
     def sort_by_specific(self, one, other):
@@ -131,7 +132,6 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     name = 'Cfg'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    use_props = False
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 

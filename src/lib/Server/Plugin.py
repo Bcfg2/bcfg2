@@ -491,7 +491,7 @@ class Specificity:
         return False
 
 class SpecificData(object):
-    def __init__(self, name, _, specific, encoding):
+    def __init__(self, name, specific, encoding):
         self.name = name
         self.specific = specific
 
@@ -506,11 +506,10 @@ class SpecificData(object):
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px]))$")
-    def __init__(self, basename, path, props, entry_type, encoding):
+    def __init__(self, basename, path, entry_type, encoding):
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
-        self.properties = props
         self.metadata = default_file_metadata.copy()
         self.infoxml = None
         self.encoding = encoding
@@ -556,7 +555,6 @@ class EntrySet:
                     logger.error("Could not process filename %s; ignoring" % fpath)
                 return
             self.entries[event.filename] = self.entry_type(fpath,
-                                                           self.properties,
                                                            spec, self.encoding)
         self.entries[event.filename].handle_event(event)
 
@@ -644,29 +642,11 @@ class EntrySet:
 
         raise PluginExecutionError
 
-# GroupSpool plugin common code (for TGenshi, TCheetah, and Cfg)
-
-class TemplateProperties(SingleXMLFileBacked):
-    '''Class for Genshi properties'''
-    def Index(self):
-        '''Build data into an elementtree object for templating usage'''
-        try:
-            self.properties = lxml.etree.XML(self.data)
-            del self.data
-        except lxml.etree.XMLSyntaxError:
-            logger.error("Failed to parse properties.xml; disabling")
-
-class FakeProperties:
-    '''Dummy class used when properties dont exist'''
-    def __init__(self):
-        self.properties = lxml.etree.Element("Properties")
-
 class GroupSpool(Plugin, Generator):
     '''The TGenshi generator implements a templating mechanism for configuration files'''
     name = 'GroupSpool'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    use_props = False
     filename_pattern = ""
     es_child_cls = object
     es_cls = EntrySet
@@ -681,15 +661,6 @@ class GroupSpool(Plugin, Generator):
         self.handles = {}
         self.AddDirectoryMonitor('')
         self.encoding = core.encoding
-        if self.use_props:
-            try:
-                self.properties = TemplateProperties( \
-                    '%s/../etc/properties.xml' % (self.data), self.core.fam)
-            except:
-                self.properties = FakeProperties()
-                self.logger.info("%s properties disabled" % self.name)
-        else:
-            self.properties = FakeProperties()
 
     def HandleEvent(self, event):
         '''Unified FAM event handler for DirShadow'''
@@ -710,7 +681,6 @@ class GroupSpool(Plugin, Generator):
                 dirpath  = "".join([self.data, ident])
                 self.entries[ident] = self.es_cls(self.filename_pattern,
                                                   dirpath,
-                                                  self.properties,
                                                   self.es_child_cls,
                                                   self.encoding)
                 self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry

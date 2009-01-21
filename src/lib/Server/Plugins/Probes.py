@@ -8,7 +8,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding, plugin_name):
         fpattern = '[0-9A-Za-z_\-]+'
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, True, 
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
         fam.AddMonitor(path, self)

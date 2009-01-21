@@ -9,8 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 
 class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
     def get_xml_value(self, metadata):
-        stream = self.template.generate(metadata=metadata,
-                                        properties=self.properties.properties).filter( \
+        stream = self.template.generate(metadata=metadata,).filter( \
             Bcfg2.Server.Plugins.TGenshi.removecomment)
         data = stream.render('xml')
         return lxml.etree.XML(data)
@@ -18,13 +17,7 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding):
         fpattern = '\S+\.xml'
-        try:
-            properties = Bcfg2.Server.Plugin.TemplateProperties( \
-                    '%s/../etc/properties.xml' % (path), fam)
-        except:
-            properties = Bcfg2.Server.Plugin.FakeProperties()
-
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, properties,
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, 
                                               SGenshiTemplateFile, encoding)
         fam.AddMonitor(path, self)
 

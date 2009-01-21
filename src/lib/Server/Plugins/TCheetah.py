@@ -9,13 +9,11 @@ logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
 class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
-    def __init__(self, name, properties, specific, encoding):
+    def __init__(self, name, specific, encoding):
         self.name = name
-        self.properties = properties
         self.specific = specific
         self.encoding = encoding
         self.template = None
-        self.searchlist = {'properties': properties}
     
     def handle_event(self, event):
         '''Handle all fs events for this template'''
@@ -24,9 +22,7 @@ class TemplateFile:
         try:
             s = {'useStackFrames': False}
             self.template = Cheetah.Template.Template(open(self.name).read(),
-                                                      compilerSettings=s,
-                                                      searchList = [self.searchlist])
-            self.template.properties = self.properties.properties
+                                                      compilerSettings=s)
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
@@ -62,4 +58,4 @@ class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filename_pattern = 'template'
     es_child_cls = TemplateFile
-    use_props = True
+

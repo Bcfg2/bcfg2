@@ -23,9 +23,8 @@ def removecomment(stream):
 
 class TemplateFile:
     '''Template file creates Genshi template structures for the loaded file'''
-    def __init__(self, name, properties, specific, encoding):
+    def __init__(self, name, specific, encoding):
         self.name = name
-        self.properties = properties
         self.specific = specific
         self.encoding = encoding
         if self.specific.all:
@@ -62,8 +61,8 @@ class TemplateFile:
         fname = entry.get('realname', entry.get('name'))
         try:
             stream = self.template.generate( \
-                name=fname, metadata=metadata, path=self.name,
-                properties=self.properties).filter(removecomment)
+                name=fname, metadata=metadata,
+                path=self.name).filter(removecomment)
             if have_ntt:
                 ttypes = [TextTemplate, NewTextTemplate]
             else:
@@ -99,6 +98,5 @@ class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     name = 'TGenshi'
     __version__ = '$Id$'
     __author__ = 'jeff@ocjtech.us'
-    use_props = True
     filename_pattern = 'template\.(txt|newtxt|xml)'
     es_child_cls = TemplateFile
