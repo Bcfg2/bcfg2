@@ -15,3 +15,7 @@ server.
 * Other Goals
 ** properties switch to connector plugin
 ** ticket triage
+** make out of tree plugins work
+** bind failure annotations
+** plugin self-bootstrap (get out of bcfg2-admin init)
+** core plugin filtering (for bcfg2-admin & co)

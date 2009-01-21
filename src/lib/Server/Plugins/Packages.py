@@ -108,7 +108,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for s in xdata.findall('APTSource'):
             self.sources.append(APTSource(cachepath, **apt_source_from_xml(s)))
         for source in self.sources:
-            source.read_files()
+            try:
+                source.read_files()
+            except:
+                source.update()
+                source.read_files()
         self.pkgmap = dict()
 
     def find_deps(self, metadata, pkgname):
