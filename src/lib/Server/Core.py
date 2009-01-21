@@ -87,7 +87,7 @@ class Core(object):
             try:
                 mod = __import__(plugin)
             except:
-                logger.error("Failed to load plugin %s" % (plugin), exc_info=1)
+                logger.error("Failed to load plugin %s" % (plugin))
                 return
         plug = getattr(mod, plugin)
         if plug.experimental:
