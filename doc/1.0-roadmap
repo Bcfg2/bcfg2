@@ -7,6 +7,7 @@ server.
 ** Done
 *** Build a comprehensive server plugin architecture 
 *** make out of tree plugins work 
+*** properties switch to connector plugin
 ** Left
 *** Version Control Backend
 *** Fix the POSIX path problem
@@ -17,9 +18,19 @@ server.
 **** Performance 
 
 * Other Goals
-** properties switch to connector plugin
 ** ticket triage
-
 ** bind failure annotations
 ** plugin self-bootstrap (get out of bcfg2-admin init)
 ** core plugin filtering (for bcfg2-admin & co)
+
+* Pie in the sky
+** Rework XMLRPC interfaces
+
+* User visible changes
+** Properties
+*** switched over to a connector interface
+*** now supports multiple file of XML
+*** data available as metadata.Properties[filename]
+** Probes
+*** switched over to a connector interface
+*** data available as metadata.Probes
