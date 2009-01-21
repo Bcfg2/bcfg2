@@ -50,7 +50,7 @@ class Plugin(object):
 
 class Generator(object):
     '''Generator plugins contribute to literal client configurations'''
-    def HandlesEntry(self, entry):
+    def HandlesEntry(self, entry, metadata):
         '''This is the slow path method for routing configuration binding requests'''
         return False
 

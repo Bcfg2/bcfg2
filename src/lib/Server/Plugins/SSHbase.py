@@ -99,7 +99,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             if (len(self.entries.keys())) > (0.95 * len(os.listdir(self.data))):
                 _ = self.skn
 
-    def HandlesEntry(self, entry):
+    def HandlesEntry(self, entry, _):
         '''Handle key entries dynamically'''
         return entry.tag == 'ConfigFile' and \
                ([fpat for fpat in self.keypatterns
