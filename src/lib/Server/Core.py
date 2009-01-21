@@ -84,8 +84,11 @@ class Core(object):
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                 (plugin)).Server.Plugins, plugin)
         except ImportError, e:
-            logger.error("Failed to load plugin %s: %s" % (plugin, e))
-            return
+            try:
+                mod = __import__(plugin)
+            except:
+                logger.error("Failed to load plugin %s" % (plugin), exc_info=1)
+                return
         plug = getattr(mod, plugin)
         if plug.experimental:
             logger.info("Loading experimental plugin %s" % (plugin))
