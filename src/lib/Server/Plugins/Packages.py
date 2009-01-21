@@ -124,7 +124,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         return ()
 
     def HandlesEntry(self, entry, metadata):
-        if [x for x in metadata.groups if x in ['debian', 'ubuntu']]:
+        if [x for x in metadata.groups if x in ['debian', 'ubuntu']] and \
+           entry.tag == 'Package':
             return True
         return False
 
