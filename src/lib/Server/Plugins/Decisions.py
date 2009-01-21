@@ -18,7 +18,7 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
         - `encoding`: XML character encoding
         """
         pattern = '(white|black)list'
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, pattern, path, False, \
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, pattern, path, \
                                               DecisionFile, encoding)
         fam.AddMonitor(path, self)
 
