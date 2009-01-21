@@ -4,18 +4,22 @@ architecture warts and provide a reasonable internal API for the
 server. 
 
 * Major Goals
-** Build a comprehensive server plugin architecture [done]
-** Version Control Backend
-** Fix the POSIX path problem
-** Clean up client/server statistics data format
-** Multithreaded server (sync from Cobalt)
-** Reporting System and Database
-*** Schema fixes
-*** Performance 
+** Done
+*** Build a comprehensive server plugin architecture 
+*** make out of tree plugins work 
+** Left
+*** Version Control Backend
+*** Fix the POSIX path problem
+*** Clean up client/server statistics data format
+*** Multithreaded server (sync from Cobalt)
+*** Reporting System and Database
+**** Schema fixes
+**** Performance 
+
 * Other Goals
 ** properties switch to connector plugin
 ** ticket triage
-** make out of tree plugins work
+
 ** bind failure annotations
 ** plugin self-bootstrap (get out of bcfg2-admin init)
 ** core plugin filtering (for bcfg2-admin & co)
