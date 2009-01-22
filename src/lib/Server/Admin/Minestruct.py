@@ -1,6 +1,7 @@
 '''Minestruct Admin Mode'''
 import Bcfg2.Server.Admin
 import lxml.etree, sys, getopt
+import sets
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
     '''Pull extra entries out of statistics'''
@@ -46,7 +47,11 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                 groups = optarg.split(':')
 
         try:
-            extra = self.statistics.GetExtra(client)
+            extra = set()
+            for source in self.bcore.pull_sources:
+                for item in source.GetExtra(client):
+                    extra.add(item)
+            print extra
         except:
             self.log.error("Failed to find extra entry info for client %s" %
                             client)
