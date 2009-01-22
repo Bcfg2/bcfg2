@@ -1,4 +1,5 @@
 import copy, gzip, lxml.etree, re, urllib
+import os
 import Bcfg2.Server.Plugin
 
 # build sources.list?
@@ -103,6 +104,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         cachepath = self.data + '/cache'
+        if not os.path.exists(cachepath):
+            # create cache directory if needed
+            os.mkdir(cachepath)
         xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
         self.sources = []
         for s in xdata.findall('APTSource'):
