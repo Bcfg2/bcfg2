@@ -98,7 +98,6 @@ class Client:
             'drivers': Bcfg2.Options.CLIENT_DRIVERS,
             'fingerprint': Bcfg2.Options.SERVER_FINGERPRINT,
             'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
-            'build': Bcfg2.Options.CLIENT_BUILD,
             'paranoid': Bcfg2.Options.CLIENT_PARANOID,
             'bundle': Bcfg2.Options.CLIENT_BUNDLE,
             'file': Bcfg2.Options.CLIENT_FILE,
@@ -122,6 +121,7 @@ class Client:
             'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
             'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
             'decision': Bcfg2.Options.CLIENT_DLIST,
+            'servicemode': Bcfg2.Options.CLIENT_SERVICE_MODE,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)

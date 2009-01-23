@@ -4,13 +4,24 @@ __revision__ = '$Revision$'
 import glob, os
 import Bcfg2.Client.Tools
 
-class SMF(Bcfg2.Client.Tools.Tool):
+class SMF(Bcfg2.Client.Tools.SvcTool):
     '''Support for Solaris SMF Services'''
     __handles__ = [('Service', 'smf')]
     __execs__ = ['/usr/sbin/svcadm', '/usr/bin/svcs']
     name = 'SMF'
     __req__ = {'Service':['name', 'status']}
     __ireq__ = {'Service': ['name', 'status', 'FMRI']}
+
+    def get_svc_command(self, service, action):
+        if service.get('type') == 'lrc':
+            return Bcfg2.Client.Tools.SvcTool.get_svc_command(self,
+                                                              service, action)
+        if action == 'stop':
+            return "/usr/sbin/svcadm disable %s" % (service.get('FMRI'))
+        elif action == 'restart':
+            return "/usr/sbin/svcadm restart %s" % (service.get('FMRI'))
+        elif action == 'start':
+            return "/usr/sbin/svcadm enable %s" % (service.get('FMRI'))
 
     def GetFMRI(self, entry):
         '''Perform FMRI resolution for service'''
@@ -114,23 +125,3 @@ class SMF(Bcfg2.Client.Tools.Tool):
          if svc.get("FMRI") in allsrv]
         return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
                 for name in allsrv]
-
-    def BundleUpdated(self, bundle, states):
-        '''Restart smf services'''
-        for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
-            if not self.canInstall(entry):
-                self.logger.error("Insufficient information to restart service %s" % \
-                                  (entry.get('name')))
-            else:
-                if entry.get("FMRI").startswith('lrc'):
-                    if entry.get('status') == 'on':
-                        self.logger.info("Restarting smf/lrc service %s"%(entry.get("name")))
-                        self.cmd.run("/etc/init.d/%s %s" % (entry.get('name'),
-                                                            entry.get('reload', 'reload')))
-                else:
-                    if entry.get('status') == 'on':
-                        self.logger.info("Restarting smf service %s" % (entry.get("FMRI")))
-                        self.cmd.run("/usr/sbin/svcadm restart %s" % (entry.get("FMRI")))
-                    else:
-                        self.cmd.run("/usr/sbin/svcadm disable %s" % (entry.get("FMRI")))
-

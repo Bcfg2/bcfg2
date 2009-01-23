@@ -272,7 +272,8 @@ class PkgTool(Tool):
     def FindExtraPackages(self):
         '''Find extra packages'''
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
-        extras = [data for data in self.installed.iteritems() if data[0] not in packages]
+        extras = [data for data in self.installed.iteritems() \
+                  if data[0] not in packages]
         return [Bcfg2.Client.XML.Element('Package', name=name, \
                                          type=self.pkgtype, version=version) \
                                          for (name, version) in extras]
@@ -280,21 +281,47 @@ class PkgTool(Tool):
 class SvcTool(Tool):
     '''This class defines basic Service behavior'''
     name = 'SvcTool'
-    __svcrestart__ = 'reload'
+
+    def get_svc_command(self, service, action):
+        '''Return the basename of the command used to start/stop services'''
+        return '/etc/init.d/%s %s' % (service.get('name'), action)
+
+    def start_service(self, service):
+        self.logger.debug('Starting service %s' % service.get('name'))
+        return self.cmd.run(self.get_svc_command(service, 'start'))[0]
+
+    def stop_service(self, service):
+        self.logger.debug('Stopping service %s' % service.get('name'))
+        return self.cmd.run(self.get_svc_command(service, 'stop'))[0]
+
+    def restart_service(self, service):
+        self.logger.debug('Restarting service %s' % service.get('name'))
+        restart_target = 'restart'
+        if service.get('mode', 'default') == 'custom':
+            restart_target = service.get('custom', 'restart')
+        return self.cmd.run(self.get_svc_command(service, restart_target))[0]
+
+    def check_service(self, service):
+        # not supported for this driver
+        return 0
 
     def BundleUpdated(self, bundle, states):
         '''The Bundle has been updated'''
-        for entry in bundle:
-            if self.handlesEntry(entry):
-                rc = 0
-                if entry.get('status') == 'on' and not self.setup['build']:
-                    self.logger.debug('Restarting service %s' % entry.get('name'))
-                    rc = self.cmd.run('/etc/init.d/%s %s' % \
-                                      (entry.get('name'), entry.get('reload', self.__svcrestart__)))[0]
-                elif not self.setup['build']:
-                    self.logger.debug('Stopping service %s' % entry.get('name'))
-                    rc = self.cmd.run('/etc/init.d/%s stop' % \
-                                      (entry.get('name')))[0]
-                if rc:
-                    self.logger.error("Failed to restart service %s" % \
-                                      (entry.get('name')))
+        if self.setup['servicemode'] == 'disabled':
+            return
+
+        for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
+            if entry.get('mode', 'default') == 'manual':
+                continue
+            # need to handle servicemode = (build|default)
+            # need to handle mode = (default|supervised|custom)
+            if entry.get('status') == 'on':
+                if self.setup['servicemode'] == 'build':
+                    rc = self.stop_service(entry)
+                else:
+                    rc = self.restart_service(entry)
+            else:
+                rc = self.stop_service(entry)
+            if rc:
+                self.logger.error("Failed to manipulate service %s" % \
+                                  (entry.get('name')))

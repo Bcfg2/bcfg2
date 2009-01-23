@@ -7,10 +7,9 @@ import Bcfg2.Client.Tools
 class DebInit(Bcfg2.Client.Tools.SvcTool):
     '''Debian Service Support for Bcfg2'''
     name = 'DebInit'
-    __execs__ = ['/usr/sbin/update-rc.d']
+    __execs__ = ['/usr/sbin/update-rc.d', '/usr/sbin/invoke-rc.d']
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}
-    __svcrestart__ = 'restart'
     svcre = re.compile("/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)")
 
     # implement entry (Verify|Install) ops
@@ -94,18 +93,5 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         # Extra services need to be reflected in the config
         return
 
-    def BundleUpdated(self, bundle, states):
-        '''The Bundle has been updated'''
-        for entry in bundle:
-            if self.handlesEntry(entry):
-                command = "/usr/sbin/invoke-rc.d %s" % entry.get('name')
-                if entry.get('status') == 'on' and not self.setup['build']:
-                    self.logger.debug('Restarting service %s' % entry.get('name'))
-                    rc = self.cmd.run('%s %s' % (command, \
-                                                 entry.get('reload', self.__svcrestart__)))[0]
-                else:
-                    self.logger.debug('Stopping service %s' % entry.get('name'))
-                    rc = self.cmd.run('%s stop' %  command)[0]
-                if rc:
-                    self.logger.error("Failed to restart service %s" % (entry.get('name')))
-
+    def get_svc_command(self, service, action):
+        return '/usr/sbin/invoke-rc.d %s %s' % (service.get('name'), action)

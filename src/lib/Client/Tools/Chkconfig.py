@@ -13,6 +13,9 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'chkconfig')]
     __req__ = {'Service': ['name', 'status']}
 
+    def get_svc_command(self, service, action):
+        return "/sbin/service %s %s" % (service.get('name'), action)
+
     def VerifyService(self, entry, _):
         '''Verify Service status for entry'''
         try:
@@ -44,7 +47,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         else:
             status = (len(onlevels) == 0)
 
-        if entry.get('supervised', 'false') == 'true':
+        if entry.get('mode', 'default') == 'supervised':
             pstatus, pout = self.cmd.run('/sbin/service %s status' % \
                                          entry.get('name'))
             if pstatus:

@@ -22,6 +22,8 @@ server.
 ** bind failure annotations
 ** plugin self-bootstrap (get out of bcfg2-admin init)
 ** core plugin filtering (for bcfg2-admin & co)
+** Change to mode attribute for services
+*** Document
 
 * Pie in the sky
 ** Rework XMLRPC interfaces
@@ -34,3 +36,14 @@ server.
 ** Probes
 *** switched over to a connector interface
 *** data available as metadata.Probes
+** Service changes
+*** Add overall client service mode
+**** default (perform all service manipulations)
+**** disabled (perform no service manipulations)
+**** build (attempt to stop all services started) (deprecates/replaces -B)
+*** Add per service mode
+**** mode='manual' (do not start/stop/restart this service)
+**** mode='default' (perform appropriate service ops)
+**** mode='supervised' (default + ensure service is running when verification is performed)
+     (deprecates supervised='true')
+**** mode='custom' (set non-default restart target in conjunction with target attr)

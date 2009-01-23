@@ -1,4 +1,4 @@
-.TH "bcfg2" 1
+        .TH "bcfg2" 1
 .SH NAME
 bcfg2 \- reconfigure machine based on settings in BCFG2
 .SH SYNOPSIS
@@ -19,10 +19,6 @@ state.
 .BR "\-A" 
 Run in agent (continuous) mode, wait for reconfigure command from
 server.
-.TP
-.BR "\-B"
-Run bcfg2 in build mode. Services aren't started, as the system
-may still be in miniroot.
 .TP
 .BR "\-C <configfile>"
 Specify alternate bcfg2.conf location
@@ -55,6 +51,9 @@ configuration files marked as paranoid by the Bcfg2 server.
 .BR "\-R <retry count>"
 Specify the number of times that the client will attempt to retry
 network communication.
+.TP
+.BR "\-s <service mode>"
+Set bcfg2 interaction level for services. Default behavior is to modify all services effected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
 .TP
 .BR "\-S https://server:port"
 Manually specify the server location (as opposed to using the value in

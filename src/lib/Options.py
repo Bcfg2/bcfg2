@@ -232,7 +232,6 @@ CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_DLIST = Option('run client in server decision list mode', default=False,
                        cmd='-l', odesc='<whitelist|blacklist>')
-CLIENT_BUILD = Option('run in build mode', default=False, cmd='-B', )
 CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
@@ -259,6 +258,9 @@ ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 
 LOGGING_FILE_PATH = Option('Set path of file log', default=None, cmd='-o', odesc='<path>', cf=('logging', 'path'))
+
+CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
+                             cmd='-s', odesc='<default|disabled|build>') 
 
 class OptionParser(OptionSet):
     '''OptionParser bootstraps option parsing, getting the value of the config file'''
