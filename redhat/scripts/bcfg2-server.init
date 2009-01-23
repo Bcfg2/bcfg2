@@ -39,7 +39,7 @@ start () {
 
 stop () {
     echo -n $"Stopping $prog: "
-    killproc $PIDFILE ${BINARY}
+    killproc ${prog}
     RETVAL=$?
     echo
     rm -f /var/lock/subsys/$prog
