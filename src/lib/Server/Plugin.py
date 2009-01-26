@@ -137,6 +137,13 @@ class GoalValidator(object):
     def validate_goals(self, metadata, goals):
         raise ValidationError, "not implemented"
 
+class Version(object):
+    '''Interact with various version control systems'''
+    def get_revision(self):
+        return []
+    def commit_data(self):
+        pass
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):

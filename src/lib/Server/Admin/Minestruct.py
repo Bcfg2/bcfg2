@@ -51,7 +51,6 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
             for source in self.bcore.pull_sources:
                 for item in source.GetExtra(client):
                     extra.add(item)
-            print extra
         except:
             self.log.error("Failed to find extra entry info for client %s" %
                             client)

@@ -8,8 +8,8 @@ server.
 *** Build a comprehensive server plugin architecture 
 *** make out of tree plugins work 
 *** properties switch to connector plugin
-** Left
 *** Version Control Backend
+** Left
 *** Fix the POSIX path problem
 *** Clean up client/server statistics data format
 *** Multithreaded server (sync from Cobalt)

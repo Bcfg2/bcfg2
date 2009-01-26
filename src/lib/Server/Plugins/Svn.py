@@ -1,0 +1,44 @@
+import os
+import Bcfg2.Server.Plugin
+
+# for debugging output only
+import logging
+logger = logging.getLogger('Bcfg2.Plugins.Svn')
+
+class Svn(Bcfg2.Server.Plugin.Plugin,
+          Bcfg2.Server.Plugin.Version):
+    name = 'Svn'
+    __version__ = '$Id$'
+    __author__ = 'bcfg-dev@mcs.anl.gov'
+
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        self.core = core
+        self.datastore = datastore
+
+        # path to svn directory for bcfg2 repo
+        svn_dir = "%s/.svn" % datastore
+
+        # Read revision from bcfg2 repo
+        if os.path.isdir(svn_dir):
+            self.get_revision()
+        else:
+            logger.error("%s is not a directory" % svn_dir)
+            raise Bcfg2.Server.Plugin.PluginInitError
+
+        logger.debug("Initialized svn plugin with svn directory = %s" % svn_dir)
+
+    def get_revision(self):
+        '''Read svn revision information for the bcfg2 repository'''
+        try:
+            data = os.popen("env LC_ALL=C svn info %s" \
+                            % (self.datastore)).readlines()
+            revline = [line.split(': ')[1].strip() for line in data \
+                       if line[:9] == 'Revision:'][-1]
+            revision = revline
+        except IndexError:
+            logger.error("Failed to read svn info; disabling svn support")
+            logger.error('''Ran command "svn info %s"''' % (self.datastore))
+            logger.error("Got output: %s" % data)
+            raise Bcfg2.Server.Plugin.PluginInitError
+        return revision

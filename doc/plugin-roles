@@ -14,6 +14,7 @@ This documents available plugin roles.
 | Statistics    | Statistics         | done   |
 | Pull Source   | PullSource         | done   |
 | Pull Target   | PullTarget         | done   |
+| Version       | Version            | started|
 | Decision      | Decision           | done   |
 | Remote        | Remote             | none   |
 | Syncing       | Syncing            | none   |
@@ -44,6 +45,10 @@ This documents available plugin roles.
 ** Plugin can provide entry information about clients
 * Pull Target
 ** Plugin can accept entry data and merge it into the specification
+* Version
+** Plugin can read revision information from VCS of choice
+** Will provide an interface for producing commits made by the
+   bcfg2-server
 * Decision
 
 3) Configuration of plugins

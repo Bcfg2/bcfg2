@@ -1,7 +1,7 @@
 '''imports for Bcfg2.Server.Plugins'''
 __revision__ = '$Revision$'
 
-__all__ = ['Account', 'Base', 'Bundler', 'Cfg', 'Decisions', 'GBundler',
+__all__ = ['Account', 'Base', 'Bundler', 'Cfg', 'Decisions', 'GBundler', 'Git',
            'Hostbase', 'Metadata', 'NagiosGen', 'Packages', 'Properties',
            'Probes', 'Pkgmgr', 'Rules', 'SSHbase', 'Statistics', 'Svcmgr',
-           'TCheetah', 'SGenshi', 'TGenshi', 'Vhost']
+           'Svn', 'TCheetah', 'SGenshi', 'TGenshi', 'Vhost']
