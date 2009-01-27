@@ -47,3 +47,7 @@ server.
 **** mode='supervised' (default + ensure service is running when verification is performed)
      (deprecates supervised='true')
 **** mode='custom' (set non-default restart target in conjunction with target attr)
+** Version Control backend
+*** Now implemented as plugins (Git, Svn)
+*** Enable either Git or Svn plugin in the plugins line of /etc/bcfg2.conf
+*** the svn option in /etc/bcfg2.conf is no longer respected
