@@ -216,7 +216,7 @@ class Core(object):
                 if isinstance(plugin, Bcfg2.Server.Plugin.Version):
                     self.revision = plugin.get_revision()
                 else:
-                    self.revision = -1
+                    self.revision = '-1'
 
     def GetDecisions(self, metadata, mode):
         result = []
