@@ -16,9 +16,10 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     def __init__(self, logger, setup, config):
         # dont use the sysv constructor
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.noaskname = tempfile.mktemp()
+        noaskfile = tempfile.NamedTemporaryFile()
+        self.noaskname = noaskfile.name
         try:
-            open(self.noaskname, 'w+').write(Bcfg2.Client.Tools.SYSV.noask)
+            noaskfile.write(Bcfg2.Client.Tools.SYSV.noask)
         except:
             pass
         

@@ -166,12 +166,14 @@ class Client:
         self.logger.info("Running probe %s" % name)
         ret = Bcfg2.Client.XML.Element("probe-data", name=name, source=probe.get('source'))
         try:
-            script = open(tempfile.mktemp(), 'w+')
+            scripthandle, scriptname = tempfile.mkstemp()
+            script = open(scriptname, 'w+')
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))
                 script.write(probe.text)
                 script.close()
+                os.close(scripthandle)
                 os.chmod(script.name, 0755)
                 ret.text = os.popen(script.name).read().strip()
                 self.logger.info("Probe %s has result:\n%s" % (name, ret.text))

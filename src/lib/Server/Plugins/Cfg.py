@@ -20,12 +20,16 @@ def process_delta(data, delta):
                     datalines.remove(line[1:])
         return "\n".join(datalines)
     elif delta.op == 'diff':
-        basefile = open(tempfile.mktemp(), 'w')
+        basehandle, basename = tempfile.mkstemp()
+        basefile = open(basename, 'w')
         basefile.write(data)
         basefile.close()
-        dfile = open(tempfile.mktemp(), 'w')
+        os.close(basehandle)
+        dhandle, dname = tempfile.mkstemp()
+        dfile = open(dname, 'w')
         dfile.write(delta.data)
         dfile.close()
+        os.close(dhandle)
         ret = os.system("patch -uf %s < %s > /dev/null 2>&1" \
                         % (basefile.name, dfile.name))
         output = open(basefile.name, 'r').read()
