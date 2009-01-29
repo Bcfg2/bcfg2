@@ -6,7 +6,7 @@ from time import time
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 import Bcfg2.Server.FileMonitor
 
-import copy, logging, lxml.etree, os
+import copy, logging, lxml.etree
 import Bcfg2.Server.Plugins.Metadata
 
 logger = logging.getLogger('Bcfg2.Core')
@@ -56,8 +56,8 @@ class Core(object):
             self.metadata = mlist[0]
         else:
             raise CoreInitError, "No Metadata Plugin"
-        self.statistics = [plugin for plugin in self.plugins.values() \
-                           if isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
+        self.statistics = [plugin for plugin in self.plugins.values() if \
+                             isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
         self.pull_sources = [plugin for plugin in self.statistics if \
                              isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
         self.generators = [plugin for plugin in self.plugins.values() if \
@@ -161,7 +161,8 @@ class Core(object):
             generators = ", ".join([gen.name for gen in glist])
             logger.error("%s %s served by multiple generators: %s" % \
                          (entry.tag, entry.get('name'), generators))
-        g2list = [gen for gen in self.generators if gen.HandlesEntry(entry, metadata)]
+        g2list = [gen for gen in self.generators if
+                  gen.HandlesEntry(entry, metadata)]
         if len(g2list) == 1:
             return g2list[0].HandleEntry(entry, metadata)
         raise PluginExecutionError, (entry.tag, entry.get('name'))
@@ -169,7 +170,8 @@ class Core(object):
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time()
-        config = lxml.etree.Element("Configuration", version='2.0', revision=self.revision)
+        config = lxml.etree.Element("Configuration", version='2.0', \
+                                    revision=self.revision)
         try:
             meta = self.build_metadata(client)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
@@ -215,8 +217,6 @@ class Core(object):
             for plugin in self.plugins.values():
                 if isinstance(plugin, Bcfg2.Server.Plugin.Version):
                     self.revision = plugin.get_revision()
-                else:
-                    self.revision = '-1'
 
     def GetDecisions(self, metadata, mode):
         result = []
