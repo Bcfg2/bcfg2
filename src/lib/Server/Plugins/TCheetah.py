@@ -14,6 +14,7 @@ class TemplateFile:
         self.specific = specific
         self.encoding = encoding
         self.template = None
+        self.searchlist = dict()
     
     def handle_event(self, event):
         '''Handle all fs events for this template'''
@@ -22,7 +23,8 @@ class TemplateFile:
         try:
             s = {'useStackFrames': False}
             self.template = Cheetah.Template.Template(open(self.name).read(),
-                                                      compilerSettings=s)
+                                                      compilerSettings=s,
+                                                      searchList=self.searchlist)
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
@@ -40,7 +42,6 @@ class TemplateFile:
             if type(self.template) == unicode:
                 entry.text = self.template
             else :
-                logger.debug("Override encoding of template to %s" % self.encoding)
                 entry.text = unicode(str(self.template), self.encoding)
         except:
             (a, b, c) = sys.exc_info()

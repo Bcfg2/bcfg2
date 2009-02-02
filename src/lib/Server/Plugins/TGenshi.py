@@ -72,16 +72,12 @@ class TemplateFile:
                 if type(textdata) == unicode:
                     entry.text = textdata
                 else:
-                    if self.encoding != 'ascii':
-                        logger.debug("Override encoding of %s TGenshi template to %s" % (self.name, self.encoding))
                     entry.text = unicode(textdata, self.encoding)
             else:
                 xmldata = stream.render('xml')
                 if type(xmldata) == unicode:
                     entry.text = xmldata
                 else:
-                    if self.encoding != 'ascii':
-                        logger.debug("Override encoding of %s TGenshi template to %s" % (self.name, self.encoding))
                     entry.text = unicode(xmldata, self.encoding)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
