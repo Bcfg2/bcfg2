@@ -5,6 +5,7 @@ import Bcfg2.Server.Plugin
 # build sources.list?
 # caching
 # pinning
+# multi apt-source from xml
 
 def apt_source_from_xml(xsource):
     ret = dict()
@@ -43,7 +44,11 @@ class APTSource(object):
             bin = [x for x in fname.split('_') if x.startswith('binary-')][0][7:]
             if bin not in bdeps:
                 bdeps[bin] = dict()
-            reader = gzip.GzipFile(fname)
+            try:
+                reader = gzip.GzipFile(fname)
+            except:
+                print "failed to read file %s" % fname
+                continue
             for line in reader.readlines():
                 words = line.strip().split(':', 1)
                 if words[0] == 'Package':
