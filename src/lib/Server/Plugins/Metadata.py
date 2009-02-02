@@ -15,7 +15,7 @@ class MetadataRuntimeError(Exception):
 class ClientMetadata(object):
     '''This object contains client metadata'''
     def __init__(self, client, profile, groups, bundles, categories, uuid,
-                 password, overall, aliases):
+                 password, overall):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
@@ -23,7 +23,6 @@ class ClientMetadata(object):
         self.categories = categories
         self.uuid = uuid
         self.password = password
-        self.aliases = aliases
         self.all = overall
         self.connectors = []
 
@@ -373,7 +372,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         newbundles = bundles[:]
         newcategories = {}
         newcategories.update(categories)
-        aliases = [key for key, value in self.aliases.iteritems() if value == client]
         if client in self.passwords:
             password = self.passwords[client]
         else:
@@ -395,7 +393,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, profile, newgroups, newbundles,
                               newcategories, uuid, password,
-                              (groupscopy, clientscopy), aliases)
+                              (groupscopy, clientscopy))
         
     def merge_additional_groups(self, imd, groups):
         for group in groups:
