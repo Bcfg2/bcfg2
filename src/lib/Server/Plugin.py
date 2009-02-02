@@ -83,10 +83,14 @@ class Metadata(object):
         raise PluginExecutionError
 
 class Connector(object):
-    '''MetadataConnectorPlugins augment client metadata instances'''
-    def get_additional_metadata(self, metadata):
-        '''determine additional ([groups], {k:v}) for metadata'''
-        return (list(), dict())
+    '''Connector Plugins augment client metadata instances'''
+    def get_additional_groups(self, metadata):
+        '''determine additional groups for metadata'''
+        return list()
+
+    def get_additional_data(self, metadata):
+        '''determine additional data for metadata inst'''
+        return dict()
 
 class Probing(object):
     '''Signal probe capability for this plugin'''

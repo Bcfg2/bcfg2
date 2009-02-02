@@ -395,7 +395,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                               newcategories, uuid, password,
                               (groupscopy, clientscopy))
         
-    def merge_additional_metadata(self, imd, source, groups, data):
+    def merge_additional_groups(self, imd, groups):
         for group in groups:
             if group in self.categories and \
                    self.categories[group] in imd.categories:
@@ -410,9 +410,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                        self.categories[g] in imd.categories:
                         continue
                     imd.groups.append(g)
+
+    def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
             setattr(imd, source, data)
-            imd.connectors.append(source)
+            imd.connectors.append(source)        
     
     def AuthenticateConnection(self, user, password, address):
         '''This function checks user and password'''

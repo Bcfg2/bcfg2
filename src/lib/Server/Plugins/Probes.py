@@ -139,6 +139,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         except KeyError:
             self.probedata[client.hostname] = { data.get('name'):dtext }
 
-    def get_additional_metadata(self, meta):
-        return (self.cgroups.get(meta.hostname, list()),
-                self.probedata.get(meta.hostname, dict()))
+    def get_additional_groups(self, meta):
+        return self.cgroups.get(meta.hostname, list())
+
+    def get_additional_data(self, meta):
+        return self.probedata.get(meta.hostname, dict())

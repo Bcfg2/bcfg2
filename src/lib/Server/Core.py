@@ -232,10 +232,12 @@ class Core(object):
     def build_metadata(self, client_name):
         imd = self.metadata.get_initial_metadata(client_name)
         for conn in self.connectors:
-            grps, data = conn.get_additional_metadata(imd)
-            self.metadata.merge_additional_metadata(imd, conn.name, grps, data)
+            grps = conn.get_additional_groups(imd)
+            self.metadata.merge_additional_groups(imd, grps)
+        for conn in self.connectors:
+            data = conn.get_additional_data(imd)
+            self.metadata.merge_additional_data(imd, conn.name, data)
         return imd
-            
 
     def process_statistics(self, client_name, statistics):
         meta = self.build_metadata(client_name)

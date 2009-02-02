@@ -9,20 +9,20 @@ server.
 *** make out of tree plugins work 
 *** properties switch to connector plugin
 *** Version Control Backend
+*** Change to mode attribute for services
 ** Left
 *** Fix the POSIX path problem
 *** Clean up client/server statistics data format
 *** Multithreaded server (sync from Cobalt)
 *** Reporting System and Database
+*** add support for pre/post connectors
 **** Schema fixes
 **** Performance 
-
 * Other Goals
 ** ticket triage
 ** bind failure annotations
 ** plugin self-bootstrap (get out of bcfg2-admin init)
 ** core plugin filtering (for bcfg2-admin & co)
-** Change to mode attribute for services
 *** Document
 
 * Pie in the sky

@@ -20,11 +20,10 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
     version = '$Revision: $'
     experimental = True
 
-
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.store = PropDirectoryBacked(self.data, core.fam)
 
-    def get_additional_metadata(self, _):
-        return ((), copy.deepcopy(self.store.entries))
+    def get_additional_data(self, _):
+        return copy.deepcopy(self.store.entries)
