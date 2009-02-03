@@ -49,8 +49,11 @@ class TemplateFile:
             return
         try:
             loader = TemplateLoader()
-            self.template = loader.load(self.name, cls=self.template_cls,
-                                        encoding=self.encoding)
+            try:
+                self.template = loader.load(self.name, cls=self.template_cls,
+                                            encoding=self.encoding)
+            except LookupError, lerror:
+                logger.error('Genshi lookup error: %s' % lerror)
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
         except genshi.input.ParseError, perror:
