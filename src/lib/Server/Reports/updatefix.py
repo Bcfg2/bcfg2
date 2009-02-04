@@ -71,6 +71,7 @@ def rollupdate(current_version):
     """ function responsible to coordinates all the updates
     need current_version as integer
     """
+    ret = None
     if current_version < lastversion:
         for i in range(current_version, lastversion):
             try:
@@ -80,7 +81,6 @@ def rollupdate(current_version):
                     _fixes[i]()
             except:
                 logger.error("Failed to perform db update %s" % (_fixes[i]), exc_info=1)
-                continue
             # since array start at 0 but version start at 1 we add 1 to the normal count
             ret = InternalDatabaseVersion.objects.create(version=i+1)
         return ret
