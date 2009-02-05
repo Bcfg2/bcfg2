@@ -28,6 +28,7 @@ class APTSource(object):
         self.files = [self.mk_fname(url) for url in self.urls]
         self.groups = groups
         self.deps = dict()
+        self.provides = {}
 
     def get_aptsrc(self):
         return ["deb %s %s %s" % (self.url, self.version,
@@ -40,10 +41,12 @@ class APTSource(object):
 
     def read_files(self):
         bdeps = dict()
+        bprov = dict()
         for fname in self.files:
             bin = [x for x in fname.split('_') if x.startswith('binary-')][0][7:]
             if bin not in bdeps:
                 bdeps[bin] = dict()
+                bprov[bin] = dict()
             try:
                 reader = gzip.GzipFile(fname)
             except:
@@ -62,11 +65,20 @@ class APTSource(object):
                             raw_dep = raw_dep.split('|')[0]
                         raw_dep = raw_dep.rstrip().strip()
                         bdeps[bin][pkgname].append(raw_dep)
+                elif words[0] == 'Provides':
+                    for pkg in words[1].split(','):
+                        dname = pkg.rstrip().strip()
+                        if dname not in bprov[bin]:
+                            bprov[bin][dname] = set()
+                        bprov[bin][dname].add(pkgname)
+
         pkgnames = set()
         self.deps['global'] = dict()
+        self.provides['global'] = dict()
         for bin in bdeps:
             [pkgnames.add(pname) for pname in bdeps[bin]]
             self.deps[bin] = dict()
+            self.provides[bin] = dict()
         for pkgname in pkgnames:
             pset = set()
             for bin in bdeps:
@@ -78,7 +90,22 @@ class APTSource(object):
             else:
                 for bin in bdeps:
                     self.deps[bin][pkgname] = bdeps[bin][pkgname]
-        
+        provided = set()
+        for bin in bprov:
+            for prov in bprov[bin]:
+                provided.add(prov)
+        for prov in provided:
+            prset = set()
+            for bin in bprov:
+                if prov not in bprov[bin]:
+                    continue
+                prset.add(tuple(bprov[bin].get(prov, ())))
+            if len(prset) == 1:
+                self.provides['global'][prov] = prset.pop()
+            else:
+                for bin in bprov:
+                    self.provides[bin][prov] = bprov[bin].get(prov, ())
+
 
     def update(self):
         for url in self.urls:
@@ -91,18 +118,37 @@ class APTSource(object):
         return len([g for g in metadata.groups if g in self.groups]) \
                == len(self.groups)
 
+    def find_provides(self, metadata, pkgname):
+        arches = [ar for ar in self.provides if ar in metadata.groups]
+        for arch in ['global'] + arches:
+            if pkgname in self.provides[arch]:
+                # FIXME next round of provides HACK alert
+                return self.provides[arch][pkgname][0]
+        return False
+
     def get_deps(self, metadata, pkgname):
+        data = False
         if pkgname in self.deps['global']:
-            return self.deps['global'][pkgname]
+            data = self.deps['global'][pkgname]
         for arch in [ar for ar in self.deps if ar in metadata.groups]:
             if pkgname in self.deps[arch]:
-                return self.deps[arch][pkgname]
+                data = self.deps[arch][pkgname]
+        if data:
+            ret = list()
+            for item in data:
+                prov = self.find_provides(metadata, item)
+                if prov:
+                    ret.append(prov)
+                else:
+                    ret.append(item)
+            return tuple(ret)
         return False
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator):
     name = 'Packages'
+    experimental = True
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -120,6 +166,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             try:
                 source.read_files()
             except:
+                self.logger.info("File read failed; updating sources", exc_info=1)
                 source.update()
                 source.read_files()
         self.pkgmap = dict()
