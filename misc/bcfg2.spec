@@ -140,7 +140,7 @@ deployment strategies.
 
 %{python_sitelib}/Bcfg2/Server
 
-%if "%{pythonversion}" == "2.5"
+%if "%{pythonversion}" >= "2.5"
 %{python_sitelib}/*egg-info
 %endif
 
