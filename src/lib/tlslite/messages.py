@@ -8,8 +8,12 @@ from constants import *
 from X509 import X509
 from X509CertChain import X509CertChain
 
-import sha
-import md5
+try:
+    import hashlib as sha
+    import hashlib as md5
+except:
+    import sha
+    import md5
 
 class RecordHeader3:
     def __init__(self):

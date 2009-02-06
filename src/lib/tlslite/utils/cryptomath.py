@@ -6,7 +6,10 @@ import os
 import math
 import base64
 import binascii
-import sha
+try:
+    import hashlib as sha
+except:
+    import sha
 
 from compat import *
 
