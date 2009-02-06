@@ -9,16 +9,24 @@ __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
 drivers = [item for item in __all__ if item not in ['rpmtools']]
 default = [item for item in drivers if item not in ['RPM', 'Yum']]
 
-import os, popen2, stat, sys, Bcfg2.Client.XML, time
+import os
+try:
+    from subprocess import Popen
+except:
+    from popen2 import Popen4 as Popen
+import stat
+import sys
+import time
+import Bcfg2.Client.XML
 
 class toolInstantiationError(Exception):
     '''This error is called if the toolset cannot be instantiated'''
     pass
 
-class readonlypipe(popen2.Popen4):
+class readonlypipe(Popen):
     '''This pipe sets up stdin --> /dev/null'''
     def __init__(self, cmd, bufsize=-1):
-        popen2._cleanup()
+        self.__module__._cleanup()
         c2pread, c2pwrite = os.pipe()
         null = open('/dev/null', 'w+')
         self.pid = os.fork()
@@ -31,7 +39,7 @@ class readonlypipe(popen2.Popen4):
             self._run_child(cmd)
         os.close(c2pwrite)
         self.fromchild = os.fdopen(c2pread, 'r', bufsize)
-        popen2._active.append(self)
+        self.__module__._active.append(self)
 
 class executor:
     '''this class runs stuff for us'''
