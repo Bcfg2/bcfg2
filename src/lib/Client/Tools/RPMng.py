@@ -150,7 +150,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         refresh_ts.closeDB()
         del refresh_ts
 
-    def VerifyPackage(self, entry, modlist):
+    def VerifyPackage(self, entry, modlist, pinned_version=None):
         '''
             Verify Package status for entry.
             Performs the following:
@@ -183,7 +183,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             for attrib in entry.attrib.keys():
                 instance.attrib[attrib] = entry.attrib[attrib]
             if self.pkg_checks == 'true' and entry.get('pkg_checks', 'true') == 'true':
-                version, release = entry.get('version').split('-')
+                if entry.get('version') == 'any':
+                    # FIXME not sure if this is synthesized properly
+                    version, release = 'any', 'any'
+                elif entry.get('version') == 'auto':
+                    # FIXME ditto
+                    version, release = pinned_version.split('-')
+                else:
+                    version, release = entry.get('version').split('-')
                 instance.set('version', version)
                 instance.set('release', release)
             instances = [ instance ]
@@ -206,7 +213,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             self.logger.error("WARNING: Multiple instances of package %s are installed." % \
                                                                              (entry.get('name')))
                         for pkg in self.installed[entry.get('name')]:
-                            if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
+                            if inst.get('version') == 'any' or self.pkg_vr_equal(inst, pkg) \
+                               or self.inst_evra_equal(inst, pkg):
+                                if inst.get('version') == 'any':
+                                    self.logger.error("got any version")
                                 self.logger.debug("        %s" % self.str_evra(inst))
                                 self.instance_status[inst]['installed'] = True
          
@@ -261,7 +271,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             # There is only one installed like there should be.
                             # Check that it is the right version.
                             for pkg in arch_match:
-                                if self.pkg_vr_equal(inst, pkg) or self.inst_evra_equal(inst, pkg):
+                                if inst.get('version') == 'any' or self.pkg_vr_equal(inst, pkg) or \
+                                       self.inst_evra_equal(inst, pkg):
                                     self.logger.debug("        %s" % self.str_evra(inst))
                                     self.instance_status[inst]['installed'] = True
     
@@ -833,8 +844,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             if name not in packages:
                 extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
-                    self.logger.info("Extra Package %s %s." % \
-                                               (name, self.str_evra(installed_inst)))
+                    if self.setup['extra']:
+                        self.logger.info("Extra Package %s %s." % \
+                                         (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
                                      version = installed_inst.get('version'), \
                                      release = installed_inst.get('release'))
