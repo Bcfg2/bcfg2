@@ -34,9 +34,9 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
             ret += c.get_decisions()
         return ret
 
-class Decisions(Bcfg2.Server.Plugin.Plugin,
-                Bcfg2.Server.Plugin.Decision,
-                DecisionSet):
+class Decisions(DecisionSet,
+                Bcfg2.Server.Plugin.Plugin,
+                Bcfg2.Server.Plugin.Decision):
     name = 'Decisions'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
