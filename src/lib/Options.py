@@ -180,12 +180,17 @@ SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
 SERVER_VCS = Option('Server vcs support', cf=('server', 'vcs'),
                     default='default')
 SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
-                           default=[], cook=list_split)
-SERVER_GENERATORS = Option('Server generator list', cf=('server', 'generators'),
-                           default=['SSHbase', 'Cfg', 'Pkgmgr', 'Rules'],
-                           cook=list_split)
-SERVER_STRUCTURES = Option('Server structure list', cf=('server', 'structures'),
-                           default=['Bundler', 'Base'], cook=list_split)
+                        # default server plugins
+                        default=[
+                                 'Base',
+                                 'Bundler',
+                                 'Cfg',
+                                 'Metadata',
+                                 'Pkgmgr',
+                                 'Rules',
+                                 'SSHbase',
+                                ],
+                        cook=list_split)
 SERVER_MCONNECT = Option('Server Metadata Connector list', cook=list_split,
                          cf=('server', 'connectors'), default=['Probes'], )
 SERVER_FILEMONITOR = Option('Server file monitor', cf=('server', 'filemonitor'),

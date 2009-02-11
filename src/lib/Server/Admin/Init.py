@@ -6,10 +6,7 @@ import Bcfg2.Options
 config = '''
 [server]
 repository = %s
-structures = %s
-generators = %s
-# Uncomment to use the DBStats plugin (0.9.6pre2 and later)
-#plugins = DBStats
+plugins = %s
 
 [statistics]
 sendmailpath = %s
@@ -80,11 +77,10 @@ class Init(Bcfg2.Server.Admin.Mode):
     __usage__ = "bcfg2-admin init"
     options = {
                 'configfile': Bcfg2.Options.CFILE,
-                'gens'      : Bcfg2.Options.SERVER_GENERATORS,
+                'plugins'   : Bcfg2.Options.SERVER_PLUGINS,
                 'proto'     : Bcfg2.Options.SERVER_PROTOCOL,
                 'repo'      : Bcfg2.Options.SERVER_REPOSITORY,
                 'sendmail'  : Bcfg2.Options.SENDMAIL_PATH,
-                'struct'    : Bcfg2.Options.SERVER_STRUCTURES,
               }
     
     def __call__(self, args):
@@ -136,7 +132,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         keypath = os.path.dirname(os.path.abspath(configfile))
 
         confdata = config % ( 
-                        repo, ','.join(opts['struct']), ','.join(opts['gens']), 
+                        repo, ','.join(opts['plugins']),
                         opts['sendmail'], opts['proto'],
                         password, keypath, server_uri 
                     )
