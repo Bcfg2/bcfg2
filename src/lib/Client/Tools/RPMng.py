@@ -279,7 +279,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                     if self.pkg_verify == 'true' and \
                                        inst.get('pkg_verify', 'true') == 'true':
                                         flags = inst.get('verify_flags', '').split(',') + self.verify_flags
-                                        if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids:
+                                        if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
+                                           'nosignature' not in flags:
                                             flags += ['nosignature', 'nodigest']
                                             self.logger.info('WARNING: Package %s %s requires GPG Public key with ID %s'\
                                                          % (pkg.get('name'), self.str_evra(pkg), \
