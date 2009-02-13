@@ -3,7 +3,8 @@ from sqlalchemy import Table, Column, Integer, Unicode, MetaData, ForeignKey, Bo
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
-# TODO add administrators models
+# TODO pingtime?
+# TODO modified entries?
 
 Base = declarative_base()
 
