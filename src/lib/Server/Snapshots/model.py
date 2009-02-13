@@ -22,6 +22,7 @@ class Client(Base):
     id = Column(Integer, primary_key=True)        
     name = Column(Unicode(64))
     admins = relation("Administrator", secondary=admin_client)
+    active = Column(Boolean)
 
 class Group(Base):
     __tablename__ = 'group'
