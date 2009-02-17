@@ -4,11 +4,6 @@ import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-# TODO pingtime?
-# backlinks Client -> Snapshot
-# entry missing fields
-# extra entries
-
 class Uniquer(object):
     @classmethod
     def by_value(cls, session, **kwargs):
@@ -35,6 +30,8 @@ class Client(Uniquer, Base):
     name = Column(Unicode(64), unique=True)
     admins = relation("Administrator", secondary=admin_client)
     active = Column(Boolean, default=True)
+    online = Column(Boolean, default=True)
+    online_ts = Column(DateTime)
 
 class Group(Uniquer, Base):
     __tablename__ = 'group'
@@ -63,6 +60,7 @@ class Metadata(Base):
     client = relation(Client)
     groups = relation("Group", secondary=meta_group)
     keyvals = relation(ConnectorKeyVal, secondary=meta_conn)
+    timestamp = Column(DateTime)
 
     @classmethod
     def from_metadata(cls, session, metadata):
@@ -147,12 +145,28 @@ file_snap = Table('file_snap', Base.metadata,
                   Column('fpair_id', Integer, ForeignKey('file_pair.id')),
                   Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
+extra_pkg_snap = Table('extra_pkg_snap', Base.metadata,
+                       Column('package_id', Integer, ForeignKey('package.id')),
+                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+
+extra_file_snap = Table('extra_file_snap', Base.metadata,
+                       Column('file_id', Integer, ForeignKey('file.id')),
+                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+
+extra_service_snap = Table('extra_service_snap', Base.metadata,
+                       Column('service_id', Integer, ForeignKey('service.id')),
+                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+
 class Action(Base):
     __tablename__ = 'action'
     id = Column(Integer, primary_key=True)    
     command = Column(UnicodeText)
     return_code = Column(Integer)
     output = Column(UnicodeText)
+
+action_snap = Table('action_snap', Base.metadata,
+                    Column('action_id', Integer, ForeignKey('action.id')),
+                    Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
 class Snapshot(Base):
     __tablename__ = 'snapshot'
@@ -161,14 +175,19 @@ class Snapshot(Base):
     client_metadata = relation(Metadata, primaryjoin=metadata_id==Metadata.id)
     timestamp = Column(DateTime)
     client_id = Column(Integer, ForeignKey('client.id'))
-    client = relation(Client, backref=backref('snapshots', order_by=timestamp))
+    client = relation(Client, backref=backref('snapshots'))
     packages = relation(PackageCorrespondence, secondary=package_snap)
     services = relation(ServiceCorrespondence, secondary=service_snap)
     files = relation(FileCorrespondence, secondary=file_snap)
+    actions = relation(Action, secondary=action_snap)
+    extra_packages = relation(Package, secondary=extra_pkg_snap)
+    extra_services = relation(Service, secondary=extra_service_snap)
+    extra_files = relation(File, secondary=extra_file_snap)
 
-engine = create_engine('sqlite:///:memory:', echo=True)
-metadata = Base.metadata
-metadata.create_all(engine) 
-Session = sessionmaker()
-Session.configure(bind=engine)
-session = Session()
+if __name__ == '__main__':
+    engine = create_engine('sqlite:///:memory:', echo=True)
+    metadata = Base.metadata
+    metadata.create_all(engine) 
+    Session = sessionmaker()
+    Session.configure(bind=engine)
+    session = Session()
