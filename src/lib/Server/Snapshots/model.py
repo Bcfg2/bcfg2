@@ -92,11 +92,12 @@ class Package(Base):
 class PackageCorrespondence(Base):
     __tablename__ = 'package_pair'
     id = Column(Integer, primary_key=True)    
-    desired_id = Column(Integer, ForeignKey('package.id'))
-    desired = relation(Package, primaryjoin=desired_id == Package.id)
-    incorrect_id = Column(Integer, ForeignKey('package.id'), nullable=True)
-    incorrect = relation(Package, primaryjoin=incorrect_id == Package.id)
+    start_id = Column(Integer, ForeignKey('package.id'))
+    start = relation(Package, primaryjoin=start_id == Package.id)
+    end_id = Column(Integer, ForeignKey('package.id'), nullable=True)
+    end = relation(Package, primaryjoin=end_id == Package.id)
     modified = Column(Boolean)
+    correct = Column(Boolean)
 
 package_snap = Table('package_snap', Base.metadata,
                      Column('ppair_id', Integer, ForeignKey('package_pair.id')),
@@ -112,11 +113,12 @@ class Service(Base):
 class ServiceCorrespondence(Base):
     __tablename__ = 'service_pair'
     id = Column(Integer, primary_key=True)    
-    desired_id = Column(Integer, ForeignKey('service.id'))
-    desired = relation(Service, primaryjoin=desired_id == Service.id)
-    incorrect_id = Column(Integer, ForeignKey('service.id'), nullable=True)
-    incorrect = relation(Service, primaryjoin=incorrect_id == Service.id)
+    start_id = Column(Integer, ForeignKey('service.id'))
+    start = relation(Service, primaryjoin=start_id == Service.id)
+    end_id = Column(Integer, ForeignKey('service.id'), nullable=True)
+    end = relation(Service, primaryjoin=end_id == Service.id)
     modified = Column(Boolean)
+    correct = Column(Boolean)    
 
 service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
@@ -135,11 +137,12 @@ class File(Base):
 class FileCorrespondence(Base):
     __tablename__ = 'file_pair'
     id = Column(Integer, primary_key=True)    
-    desired_id = Column(Integer, ForeignKey('file.id'))
-    desired = relation(File, primaryjoin=desired_id == File.id)
-    incorrect_id = Column(Integer, ForeignKey('file.id'), nullable=True)
-    incorrect = relation(File, primaryjoin=incorrect_id == File.id)
+    start_id = Column(Integer, ForeignKey('file.id'))
+    start = relation(File, primaryjoin=start_id == File.id)
+    end_id = Column(Integer, ForeignKey('file.id'), nullable=True)
+    end = relation(File, primaryjoin=end_id == File.id)
     modified = Column(Boolean)
+    correct = Column(Boolean)    
 
 file_snap = Table('file_snap', Base.metadata,
                   Column('fpair_id', Integer, ForeignKey('file_pair.id')),
