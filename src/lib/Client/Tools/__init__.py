@@ -164,6 +164,11 @@ class Tool:
         if not self.handlesEntry(entry):
             return False
 
+        if 'failure' in entry.attrib:
+            self.logger.error("Entry %s:%s reports bind failure: %s" % \
+                              (entry.tag, entry.get('name'), entry.get('failure')))
+            return False
+
         missing = [attr for attr in self.__req__[entry.tag] \
                    if attr not in entry.attrib]
         if missing:
@@ -186,6 +191,11 @@ class Tool:
     def canInstall(self, entry):
         '''test if entry has enough information to be installed'''
         if not self.handlesEntry(entry):
+            return False
+
+        if 'failure' in entry.attrib:
+            self.logger.error("Cannot install entry %s:%s with bind failure" % \
+                              (entry.tag, entry.get('name')))
             return False
 
         missing = [attr for attr in self.__ireq__[entry.tag] \

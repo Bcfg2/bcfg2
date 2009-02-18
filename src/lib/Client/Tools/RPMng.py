@@ -704,6 +704,12 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if not self.handlesEntry(entry):
             return False
 
+        if 'failure' in entry.attrib:
+            self.logger.error("Cannot install entry %s:%s with bind failure" % \
+                              (entry.tag, entry.get('name')))
+            return False
+
+
         instances = entry.findall('Instance')
 
         # If the entry wasn't verifiable, then we really don't want to try and fix something
@@ -780,8 +786,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if not self.handlesEntry(entry):
             return False
 
+        if 'failure' in entry.attrib:
+            self.logger.error("Entry %s:%s reports bind failure: %s" % \
+                              (entry.tag, entry.get('name'), entry.get('failure')))
+            return False
+
         # We don't want to do any checks so we don't care what the entry has in it.
-        if self.pkg_checks == 'false' or entry.get('pkg_checks', 'true').lower() == 'false':
+        if self.pkg_checks == 'false' or \
+               entry.get('pkg_checks', 'true').lower() == 'false':
             return True
 
         instances = entry.findall('Instance')
