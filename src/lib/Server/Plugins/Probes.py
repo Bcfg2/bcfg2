@@ -12,7 +12,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
         fam.AddMonitor(path, self)
-        self.bangline = re.compile('^#!(?P<interpreter>(/\w+)+)$')
+        self.bangline = re.compile('^#!(?P<interpreter>.*)$')
 
     def HandleEvent(self, event):
         if event.filename != self.path:
