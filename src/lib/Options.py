@@ -132,7 +132,7 @@ class OptionSet(dict):
     def helpExit(self, msg='', code=1):
         if msg:
             print msg
-        print "Usage: %s" % self.buildHelpMessage()
+        print "Usage:\n     %s" % self.buildHelpMessage()
         raise SystemExit(code)
 
     def parse(self, argv, do_getopt=True):
@@ -177,8 +177,6 @@ DAEMON = Option("Daemonize process, storing pid", False,
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
                            odesc='<repository path>' )
-SERVER_VCS = Option('Server vcs support', cf=('server', 'vcs'),
-                    default='default')
 SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
                         # default server plugins
                         default=[

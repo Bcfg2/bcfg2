@@ -197,7 +197,6 @@ if __name__ == '__main__':
         }
 
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'vcs': Bcfg2.Options.SERVER_VCS,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
                     'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
