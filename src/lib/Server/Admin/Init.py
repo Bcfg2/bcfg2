@@ -87,6 +87,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         opts = Bcfg2.Options.OptionParser(self.options)
         opts.parse([])
+        self.response = ""
 
         # FIXME don't overwrite existing bcfg2.conf file
         configfile = raw_input("Store bcfg2 configuration in [%s]: " %
@@ -94,10 +95,13 @@ class Init(Bcfg2.Server.Admin.Mode):
         if configfile == '':
             configfile = opts['configfile']
 
-        repopath = raw_input("Location of bcfg2 repository [%s]: " %
+        self.repopath = raw_input("Location of bcfg2 repository [%s]: " %
                               opts['repo'])
-        if repopath == '':
-            repopath = opts['repo']
+        if self.repopath == '':
+            self.repopath = opts['repo']
+        if os.path.isdir(self.repopath):
+            self.response = raw_input("Directory %s exists. Overwrite? [Y/n]:"\
+                                  % self.repopath)
         
         password = getpass.getpass(
                 "Input password used for communication verification "
@@ -116,9 +120,8 @@ class Init(Bcfg2.Server.Admin.Mode):
             prompt += "%d: %s\n" % (os_list.index(entry) + 1, entry[0])
         prompt += ': '
         os_sel = os_list[int(raw_input(prompt))-1][1]
-        self.initializeRepo(configfile, repopath, server,
+        self.initializeRepo(configfile, self.repopath, server,
                             password, os_sel, opts)
-        print "Repository created successfuly in %s" % (repopath)
 
     def genPassword(self):
         chars = string.letters + string.digits
@@ -152,20 +155,25 @@ class Init(Bcfg2.Server.Admin.Mode):
         except:
             pass
     
-        # FIXME don't overwrite existing directory/repo?
-        # FIXME repo creation may fail as non-root user
-        for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 'etc', 'Metadata',
-                       'Base', 'Bundler']:
-            path = "%s/%s" % (repo, subdir)
-            newpath = ''
-            for subdir in path.split('/'):
-                newpath = newpath + subdir + '/'
-                try:
-                    os.mkdir(newpath)
-                except:
-                    continue
-            
-        open("%s/Metadata/groups.xml" %
-             repo, "w").write(groups % os_selection)
-        open("%s/Metadata/clients.xml" %
-             repo, "w").write(clients % socket.getfqdn())
+        # Overwrite existing directory/repo?
+        if self.response == "n":
+            print "Kept old repository in %s" % (self.repopath)
+            return
+        else:
+            # FIXME repo creation may fail as non-root user
+            for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 'etc', 'Metadata',
+                           'Base', 'Bundler']:
+                path = "%s/%s" % (repo, subdir)
+                newpath = ''
+                for subdir in path.split('/'):
+                    newpath = newpath + subdir + '/'
+                    try:
+                        os.mkdir(newpath)
+                    except:
+                        continue
+
+            open("%s/Metadata/groups.xml" %
+                 repo, "w").write(groups % os_selection)
+            open("%s/Metadata/clients.xml" %
+                 repo, "w").write(clients % socket.getfqdn())
+            print "Repository created successfuly in %s" % (self.repopath)
