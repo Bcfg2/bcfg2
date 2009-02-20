@@ -1,4 +1,5 @@
-import getopt, popen2
+import getopt
+from subprocess import Popen, PIPE
 import Bcfg2.Server.Admin
 
 class Viz(Bcfg2.Server.Admin.MetadataCore):
@@ -71,25 +72,26 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             cmd = "dot -Tpng"
             if output:
                 cmd += " -o %s" % output
-        dotpipe = popen2.Popen4(cmd)
+        dotpipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, close_fds=True)
         try:
-            dotpipe.tochild.write("digraph groups {\n")
+            dotpipe.stdin.write("digraph groups {\n")
         except:
             print "write to dot process failed. Is graphviz installed?"
             raise SystemExit(1)
-        dotpipe.tochild.write('\trankdir="LR";\n')
-        dotpipe.tochild.write(self.metadata.viz(hosts, bundles,
+        dotpipe.stdin.write('\trankdir="LR";\n')
+        dotpipe.stdin.write(self.metadata.viz(hosts, bundles,
                                                 key, self.colors))
         if key:
-            dotpipe.tochild.write("\tsubgraph cluster_key {\n")
-            dotpipe.tochild.write('''\tstyle="filled";\n''')
-            dotpipe.tochild.write('''\tcolor="lightblue";\n''')
-            dotpipe.tochild.write('''\tBundle [ shape="septagon" ];\n''')
-            dotpipe.tochild.write('''\tGroup [shape="ellipse"];\n''')
-            dotpipe.tochild.write('''\tProfile [style="bold", shape="ellipse"];\n''')
-            dotpipe.tochild.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
-            dotpipe.tochild.write('''\tlabel="Key";\n''')
-            dotpipe.tochild.write("\t}\n")
-        dotpipe.tochild.write("}\n")
-        dotpipe.tochild.close()
-        return dotpipe.fromchild.read()
+            dotpipe.stdin.write("\tsubgraph cluster_key {\n")
+            dotpipe.stdin.write('''\tstyle="filled";\n''')
+            dotpipe.stdin.write('''\tcolor="lightblue";\n''')
+            dotpipe.stdin.write('''\tBundle [ shape="septagon" ];\n''')
+            dotpipe.stdin.write('''\tGroup [shape="ellipse"];\n''')
+            dotpipe.stdin.write('''\tProfile [style="bold", shape="ellipse"];\n''')
+            dotpipe.stdin.write('''\tHblock [label="Host1|Host2|Host3", shape="record"];\n''')
+            dotpipe.stdin.write('''\tlabel="Key";\n''')
+            dotpipe.stdin.write("\t}\n")
+        dotpipe.stdin.write("}\n")
+        dotpipe.stdin.close()
+        return dotpipe.stdout.read()

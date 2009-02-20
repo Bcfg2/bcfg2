@@ -1,4 +1,5 @@
 import os
+from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
 # for debugging output only
@@ -31,8 +32,9 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
     def get_revision(self):
         '''Read svn revision information for the bcfg2 repository'''
         try:
-            data = os.popen("env LC_ALL=C svn info %s" \
-                            % (self.datastore)).readlines()
+            data = Popen(("env LC_ALL=C svn info %s" %
+                         (self.datastore)), shell=True,
+                         stdout=PIPE).stdout.readlines()
             revline = [line.split(': ')[1].strip() for line in data \
                        if line[:9] == 'Revision:'][-1]
             revision = revline

@@ -1,4 +1,5 @@
 import os
+from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
 # for debugging output only
@@ -31,8 +32,9 @@ class Git(Bcfg2.Server.Plugin.Plugin,
     def get_revision(self):
         '''Read git revision information for the bcfg2 repository'''
         try:
-            data = os.popen("env LC_ALL=C git ls-remote %s" %
-                            (self.datastore)).readlines()
+            data = Popen(("env LC_ALL=C git ls-remote %s" %
+                         (self.datastore)), shell=True,
+                         stdout=PIPE).stdout.readlines()
             revline = [line.split('\t')[0].strip() for line in data if \
                        line.split('\t')[1].strip() == 'refs/heads/master'][-1]
             revision = revline

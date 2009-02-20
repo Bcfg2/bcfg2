@@ -1,7 +1,11 @@
 '''This module manages ssh key files for bcfg2'''
 __revision__ = '$Revision$'
 
-import binascii, os, socket, tempfile
+import binascii
+import os
+import socket
+import tempfile
+from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
@@ -128,7 +132,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 return (ipaddr, client)
             except socket.gaierror:
                 cmd = "getent hosts %s" % client
-                ipaddr = os.popen(cmd).read().strip().split()
+                ipaddr = Popen(cmd, shell=True, stdout=PIPE).stdout.read().strip().split()
                 if ipaddr:
                     self.ipcache[client] = (ipaddr, client)
                     return (ipaddr, client)

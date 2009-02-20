@@ -1,4 +1,9 @@
-import getpass, os, random, socket, string
+import getpass
+import os
+import random
+import socket
+import string
+import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Options
 
@@ -130,7 +135,8 @@ class Init(Bcfg2.Server.Admin.Mode):
             newpasswd = newpasswd + random.choice(chars)
         return newpasswd
 
-    def initializeRepo(self, configfile, repo, server_uri, password, os_selection, opts):
+    def initializeRepo(self, configfile, repo, server_uri,
+                       password, os_selection, opts):
         '''Setup a new repo'''
         keypath = os.path.dirname(os.path.abspath(configfile))
 
@@ -149,7 +155,10 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         # FIXME automate ssl key generation
         # FIXME key generation may fail as non-root user
-        os.popen('openssl req -x509 -nodes -days 1000 -newkey rsa:1024 -out %s/bcfg2.key -keyout %s/bcfg2.key' % (keypath, keypath))
+        subprocess.call(("openssl " \
+                         "req -x509 -nodes -days 1000 -newkey rsa:1024 " \
+                         "-out %s/bcfg2.key -keyout %s/bcfg2.key" % \
+                         (keypath, keypath)), shell=True)
         try:
             os.chmod('%s/bcfg2.key'% keypath, 0600)
         except:
@@ -161,8 +170,8 @@ class Init(Bcfg2.Server.Admin.Mode):
             return
         else:
             # FIXME repo creation may fail as non-root user
-            for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 'etc', 'Metadata',
-                           'Base', 'Bundler']:
+            for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
+                           'etc', 'Metadata', 'Base', 'Bundler']:
                 path = "%s/%s" % (repo, subdir)
                 newpath = ''
                 for subdir in path.split('/'):
