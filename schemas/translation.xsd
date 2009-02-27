@@ -11,10 +11,10 @@
   <xsd:complexType name='SystemType'>
     <xsd:choice minOccurs='1' maxOccurs='unbounded'>
       <xsd:element name='Image'>
-	<xsd:complexType>
-	  <xsd:attribute name='name' type='xsd:string'
-	  use='required'/>
-	</xsd:complexType>
+        <xsd:complexType>
+          <xsd:attribute name='name' type='xsd:string'
+          use='required'/>
+        </xsd:complexType>
       </xsd:element>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string' use='required'/>
@@ -25,9 +25,9 @@
   <xsd:element name='SystemSet'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='System' type='SystemType'/>
+        <xsd:element name='System' type='SystemType'/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>
-	
+
 </xsd:schema>

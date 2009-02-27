@@ -27,7 +27,7 @@
   <xsd:element name='Base'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Group' type='ContainerType'/>
+        <xsd:element name='Group' type='ContainerType'/>
         <xsd:element name='Package' type='StructureEntry'/>
         <xsd:element name='Service' type='StructureEntry'/>
         <xsd:element name='ConfigFile' type='StructureEntry'/>

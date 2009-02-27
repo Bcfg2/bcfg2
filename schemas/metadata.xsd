@@ -27,14 +27,14 @@
   <xsd:complexType name='groupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Bundle'>
-	<xsd:complexType>
-	  <xsd:attribute type='xsd:string' name='name' use='required'/>
-	</xsd:complexType>
+        <xsd:complexType>
+          <xsd:attribute type='xsd:string' name='name' use='required'/>
+        </xsd:complexType>
       </xsd:element>
       <xsd:element name='Group' >
-	<xsd:complexType>
-	  <xsd:attribute name='name' use='required'/>
-	</xsd:complexType>
+        <xsd:complexType>
+          <xsd:attribute name='name' use='required'/>
+        </xsd:complexType>
       </xsd:element>
     </xsd:choice>
     <xsd:attribute type='booleanType' name='profile' use='optional'/>

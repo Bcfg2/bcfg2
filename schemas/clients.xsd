@@ -31,7 +31,7 @@
   <xsd:element name='Clients'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Client' type='ClientType'/>
+        <xsd:element name='Client' type='ClientType'/>
         <xsd:element name='Clients'>
           <xsd:complexType>
             <xsd:choice>

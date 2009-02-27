@@ -8,56 +8,14 @@
     </xsd:documentation>
   </xsd:annotation>
   
+  <xsd:include schemaLocation="pkgtype.xsd"/>
   <xsd:include schemaLocation="types.xsd"/>
 
-  <xsd:complexType name='PackageType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Ignore'>
-        <xsd:complexType>
-          <xsd:attribute type='xsd:string' name='name'/>
-        </xsd:complexType>
-      </xsd:element>
-      <xsd:element name='Instance'>
-        <xsd:complexType>
-          <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-            <xsd:element name='Ignore'>
-              <xsd:complexType>
-                <xsd:attribute type='xsd:string' name='name'/>
-              </xsd:complexType>
-            </xsd:element>
-          </xsd:choice>
-          <xsd:attribute name='arch' type='xsd:string'/>
-          <xsd:attribute name='epoch' type='xsd:string'/>
-          <xsd:attribute name='version' type='xsd:string'/>
-          <xsd:attribute name='release' type='xsd:string'/>
-          <xsd:attribute name='simplefile' type='xsd:string'/>
-          <xsd:attribute name='pkg_verify' type='xsd:string'/>
-          <xsd:attribute name='verify_flags' type='xsd:string'/>
-          <xsd:attribute name='installed_action' type='xsd:string'/>
-          <xsd:attribute name='version_fail_action' type='xsd:string'/>
-          <xsd:attribute name='verify_fail_action' type='xsd:string'/>
-        </xsd:complexType>
-      </xsd:element>
-    </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name'/>
-    <xsd:attribute type='xsd:string' name='version'/>
-    <xsd:attribute type='xsd:string' name='file'/>
-    <xsd:attribute type='xsd:string' name='verify'/>
-    <xsd:attribute type='xsd:string' name='simplefile'/>
-    <xsd:attribute type='xsd:string' name='reloc'/>
-    <xsd:attribute type='xsd:string' name='multiarch'/>
-    <xsd:attribute type='xsd:string' name='srcs'/>
-    <xsd:attribute type='xsd:string' name='type'/>
-    <xsd:attribute type='xsd:string' name='bname'/>
-    <xsd:attribute name='pkg_checks' type='xsd:string'/>
-    <xsd:attribute name='verify_flags' type='xsd:string'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='ContainerType'>
+  <xsd:complexType name='PackageContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
-      <xsd:element name='Group' type='ContainerType'/>
-      <xsd:element name='Client' type='ContainerType'/>
+      <xsd:element name='Group' type='PackageContainerType'/>
+      <xsd:element name='Client' type='PackageContainerType'/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
     <xsd:attribute name='negate' type='xsd:string'/>
@@ -66,7 +24,7 @@
   <xsd:element name='PackageList'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Group' type='ContainerType'/>
+        <xsd:element name='Group' type='PackageContainerType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attribute name='type' use='optional' type='PackageTypeEnum' />

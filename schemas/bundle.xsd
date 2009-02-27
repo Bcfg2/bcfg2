@@ -8,6 +8,9 @@
   </xsd:annotation>
 
   <xsd:include schemaLocation="atom.xsd"/>
+  <xsd:include schemaLocation="pkglist.xsd"/>
+  <xsd:include schemaLocation="rules.xsd"/>
+  <xsd:include schemaLocation="services.xsd"/>
 
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
@@ -18,6 +21,12 @@
       <xsd:element name='SymLink' type='StructureEntry'/>
       <xsd:element name='Permissions' type='StructureEntry'/>
       <xsd:element name='Action' type='StructureEntry'/>
+      <xsd:element name='BoundPackage' type='PackageType'/>
+      <xsd:element name='BoundService' type='ServiceType'/>
+      <xsd:element name='BoundDirectory' type='DirectoryType'/>
+      <xsd:element name='BoundSymLink' type='SymLinkType'/>
+      <xsd:element name='BoundPermissions' type='PermissionsType'/>
+      <xsd:element name='BoundAction' type='ActionType'/>
       <xsd:element name='Group' type='GroupType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
@@ -27,14 +36,20 @@
   <xsd:element name='Bundle'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Package' type='StructureEntry'/>
-	<xsd:element name='Service' type='StructureEntry'/>
-	<xsd:element name='ConfigFile' type='StructureEntry'/>
-	<xsd:element name='Directory' type='StructureEntry'/>
-	<xsd:element name='SymLink' type='StructureEntry'/>
-	<xsd:element name='Permissions' type='StructureEntry'/>
+        <xsd:element name='Package' type='StructureEntry'/>
+        <xsd:element name='Service' type='StructureEntry'/>
+        <xsd:element name='ConfigFile' type='StructureEntry'/>
+        <xsd:element name='Directory' type='StructureEntry'/>
+        <xsd:element name='SymLink' type='StructureEntry'/>
+        <xsd:element name='Permissions' type='StructureEntry'/>
         <xsd:element name='Action' type='StructureEntry'/>       
-	<xsd:element name='Group' type='GroupType'/>
+        <xsd:element name='BoundPackage' type='PackageType'/>
+        <xsd:element name='BoundService' type='ServiceType'/>
+        <xsd:element name='BoundDirectory' type='DirectoryType'/>
+        <xsd:element name='BoundSymLink' type='SymLinkType'/>
+        <xsd:element name='BoundPermissions' type='PermissionsType'/>
+        <xsd:element name='BoundAction' type='ActionType'/>
+        <xsd:element name='Group' type='GroupType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>

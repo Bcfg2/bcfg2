@@ -8,42 +8,10 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:include schemaLocation="pkgtype.xsd"/>
+  <xsd:include schemaLocation="servicetype.xsd"/>
   <xsd:include schemaLocation="types.xsd"/>
 
-  <xsd:complexType name='PackageType'>
-    <xsd:attribute type='xsd:string' name='name'/>
-    <xsd:attribute type='xsd:string' name='version'/>
-    <xsd:attribute type='xsd:string' name='file'/>
-    <xsd:attribute type='xsd:string' name='verify'/>
-    <xsd:attribute type='xsd:string' name='simplefile'/>
-    <xsd:attribute type='xsd:string' name='reloc'/>
-    <xsd:attribute type='xsd:string' name='multiarch'/>
-    <xsd:attribute type='xsd:string' name='srcs'/>
-    <xsd:attribute type='xsd:string' name='type'/>
-    <xsd:attribute type='xsd:string' name='bname'/>
-  </xsd:complexType>
-
-  <xsd:complexType name='ServiceType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='User'>
-	<xsd:complexType>
-	  <xsd:attribute name='address' type='xsd:string' use='required'/>
-	  <xsd:attribute name='mask' type='xsd:string' use='required'/>
-	</xsd:complexType>
-      </xsd:element>
-    </xsd:choice>
-    <xsd:attribute name='name' type='xsd:string' use='required'/>
-    <xsd:attribute name='status' type='xsd:string' use='required'/>
-    <xsd:attribute name='port' type='xsd:string'/>
-    <xsd:attribute name='protocol' type='xsd:string'/>
-    <xsd:attribute name='reload' type='xsd:string'/>
-    <xsd:attribute name='FMRI' type='xsd:string'/>
-    <xsd:attribute name='supervised' type='xsd:string'/>
-    <xsd:attribute name='type' type='xsd:string'/>
-    <xsd:attribute name='sequence' type='xsd:string'/>
-  </xsd:complexType>
-
-  
   <xsd:complexType name='DirectoryType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='perms'/>
@@ -91,14 +59,14 @@
   <xsd:element name='Rules'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-	<xsd:element name='Service' type='ServiceType'/>
-	<xsd:element name='Directory' type='DirectoryType'/>
-	<xsd:element name='SymLink' type='SymLinkType'/>
-	<xsd:element name='Package' type='PackageType'/>
-	<xsd:element name='Permissions' type='PermissionsType'/>
-	<xsd:element name='Action' type='ActionType'/>
-	<xsd:element name='Group' type='RContainerType'/>
-	<xsd:element name='Client' type='RContainerType'/>
+        <xsd:element name='Service' type='ServiceType'/>
+        <xsd:element name='Directory' type='DirectoryType'/>
+        <xsd:element name='SymLink' type='SymLinkType'/>
+        <xsd:element name='Package' type='PackageType'/>
+        <xsd:element name='Permissions' type='PermissionsType'/>
+        <xsd:element name='Action' type='ActionType'/>
+        <xsd:element name='Group' type='RContainerType'/>
+        <xsd:element name='Client' type='RContainerType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
     </xsd:complexType>
