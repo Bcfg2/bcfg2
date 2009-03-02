@@ -82,6 +82,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         for delta in used:
             data = data.strip()
             data = process_delta(data, delta)
+        if used:
+            data += '\n'
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
         else:
