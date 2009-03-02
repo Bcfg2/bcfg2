@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, Integer, Unicode, MetaData, ForeignKey, Boolean, DateTime, create_engine, UnicodeText
-
+import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -63,11 +63,11 @@ class Metadata(Base):
     timestamp = Column(DateTime)
 
     @classmethod
-    def from_metadata(cls, session, metadata):
-        client = Client.by_value(session, name=metadata.hostname)
+    def from_metadata(cls, mysession, mymetadata):
+        client = Client.by_value(mysession, name=unicode(mymetadata.hostname))
         m = cls(client=client)
         for group in metadata.groups:
-            m.groups.append(Group.by_value(session, name=unicode(group)))
+            m.groups.append(Group.by_value(mysession, name=unicode(group)))
         for connector in metadata.connectors:
             data = getattr(metadata, connector)
             if not isinstance(data, dict):
@@ -75,13 +75,13 @@ class Metadata(Base):
             for key, value in data.iteritems():
                 if not isinstance(value, str):
                     continue
-                m.keyvals.append(ConnectorKeyVal.by_value(session,
+                m.keyvals.append(ConnectorKeyVal.by_value(mysession,
                                                           connector=unicode(connector),
                                                           key=unicode(key),
                                                           value=unicode(value)))
         return m
 
-class Package(Base):
+class Package(Base, Uniquer):
     __tablename__ = 'package'
     id = Column(Integer, primary_key=True)        
     name = Column(Unicode(24))
@@ -98,6 +98,18 @@ class PackageCorrespondence(Base):
     end = relation(Package, primaryjoin=end_id == Package.id)
     modified = Column(Boolean)
     correct = Column(Boolean)
+
+    @classmethod
+    def from_record(cls, mysession, name, record):
+        (mod, corr, ptype, s_vers, e_vers) = record
+        start = Package.by_value(mysession, name=unicode(name), type=ptype,
+                                 version=s_vers)
+        if s_vers != e_vers:
+            start = Package.by_value(mysession, name=unicode(name), type=ptype,
+                                     version=e_vers)
+        else:
+            end = start
+        return cls(start=start, end=end, modified=mod, correct=corr)
 
 package_snap = Table('package_snap', Base.metadata,
                      Column('ppair_id', Integer, ForeignKey('package_pair.id')),
@@ -142,7 +154,7 @@ class FileCorrespondence(Base):
     end_id = Column(Integer, ForeignKey('file.id'), nullable=True)
     end = relation(File, primaryjoin=end_id == File.id)
     modified = Column(Boolean)
-    correct = Column(Boolean)    
+    correct = Column(Boolean)
 
 file_snap = Table('file_snap', Base.metadata,
                   Column('fpair_id', Integer, ForeignKey('file_pair.id')),
@@ -176,7 +188,7 @@ class Snapshot(Base):
     id = Column(Integer, primary_key=True)
     metadata_id = Column(Integer, ForeignKey('metadata.id'))
     client_metadata = relation(Metadata, primaryjoin=metadata_id==Metadata.id)
-    timestamp = Column(DateTime)
+    timestamp = Column(DateTime, default=datetime.datetime.now)
     client_id = Column(Integer, ForeignKey('client.id'))
     client = relation(Client, backref=backref('snapshots'))
     packages = relation(PackageCorrespondence, secondary=package_snap)
@@ -187,8 +199,20 @@ class Snapshot(Base):
     extra_services = relation(Service, secondary=extra_service_snap)
     extra_files = relation(File, secondary=extra_file_snap)
 
+    @classmethod
+    def from_data(cls, session, metadata, entries, extra):
+        dbm = Metadata.from_metadata(session, metadata)
+        snap = cls(client_metadata=dbm, timestamp=datetime.datetime.now())
+        for pkg, pdata in entries['Package'].iteritems():
+            snap.packages.append(\
+                PackageCorrespondence.from_record(session, pkg, pdata))
+        for data in extra['Package']:
+            extra_pkg = Package.by_value(session, **data)
+            snap.extra_packages.append(extra_pkg)
+        return snap
+
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///:memory:', echo=True)
+    engine = create_engine('sqlite:////tmp/snapshots.db', echo=True)
     metadata = Base.metadata
     metadata.create_all(engine) 
     Session = sessionmaker()
