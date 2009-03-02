@@ -211,10 +211,3 @@ class Snapshot(Base):
             snap.extra_packages.append(extra_pkg)
         return snap
 
-if __name__ == '__main__':
-    engine = create_engine('sqlite:////tmp/snapshots.db', echo=True)
-    metadata = Base.metadata
-    metadata.create_all(engine) 
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    session = Session()
