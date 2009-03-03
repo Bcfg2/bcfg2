@@ -66,10 +66,10 @@ class Metadata(Base):
     def from_metadata(cls, mysession, mymetadata):
         client = Client.by_value(mysession, name=unicode(mymetadata.hostname))
         m = cls(client=client)
-        for group in metadata.groups:
+        for group in mymetadata.groups:
             m.groups.append(Group.by_value(mysession, name=unicode(group)))
-        for connector in metadata.connectors:
-            data = getattr(metadata, connector)
+        for connector in mymetadata.connectors:
+            data = getattr(mymetadata, connector)
             if not isinstance(data, dict):
                 continue
             for key, value in data.iteritems():
@@ -105,7 +105,7 @@ class PackageCorrespondence(Base):
         start = Package.by_value(mysession, name=unicode(name), type=ptype,
                                  version=s_vers)
         if s_vers != e_vers:
-            start = Package.by_value(mysession, name=unicode(name), type=ptype,
+            end = Package.by_value(mysession, name=unicode(name), type=ptype,
                                      version=e_vers)
         else:
             end = start
@@ -115,7 +115,7 @@ package_snap = Table('package_snap', Base.metadata,
                      Column('ppair_id', Integer, ForeignKey('package_pair.id')),
                      Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
-class Service(Base):
+class Service(Base, Uniquer):
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)        
     name = Column(Unicode(16))
@@ -131,6 +131,18 @@ class ServiceCorrespondence(Base):
     end = relation(Service, primaryjoin=end_id == Service.id)
     modified = Column(Boolean)
     correct = Column(Boolean)    
+
+    @classmethod
+    def from_record(cls, mysession, name, record):
+        (mod, corr, ptype, s_status, e_status) = record
+        start = Service.by_value(mysession, name=unicode(name), type=ptype,
+                                 status=s_status)
+        if s_status != e_status:
+            end = Service.by_value(mysession, name=unicode(name), type=ptype,
+                                   status=e_status)
+        else:
+            end = start
+        return cls(start=start, end=end, modified=mod, correct=corr)
 
 service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
@@ -209,5 +221,11 @@ class Snapshot(Base):
         for data in extra['Package']:
             extra_pkg = Package.by_value(session, **data)
             snap.extra_packages.append(extra_pkg)
+        for pkg, pdata in entries['Service'].iteritems():
+            snap.services.append(\
+                ServiceCorrespondence.from_record(session, pkg, pdata))
+        for data in extra['Service']:
+            extra_svc = Service.by_value(session, **data)
+            snap.extra_services.append(extra_svc)
         return snap
 
