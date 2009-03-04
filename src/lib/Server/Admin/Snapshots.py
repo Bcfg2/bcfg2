@@ -28,7 +28,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             for result in results:
                 print result.name
         elif args[0] == 'init':
-            engine = create_engine(Bcfg2.Server.Snapshots.db_from_config(), echo=True)
+            dbpath = Bcfg2.Server.Snapshots.db_from_config()
+            engine = sqlalchemy.create_engine(dbpath, echo=True)
             metadata = Base.metadata
             metadata.create_all(engine) 
             Session = sessionmaker()
