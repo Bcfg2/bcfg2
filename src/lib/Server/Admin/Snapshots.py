@@ -2,6 +2,7 @@ import Bcfg2.Server.Admin
 import sqlalchemy, sqlalchemy.orm
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
+from sqlalchemy.ext.declarative import declarative_base
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"
@@ -30,6 +31,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
         elif args[0] == 'init':
             dbpath = Bcfg2.Server.Snapshots.db_from_config()
             engine = sqlalchemy.create_engine(dbpath, echo=True)
+            Base = declarative_base()
             metadata = Base.metadata
             metadata.create_all(engine) 
             Session = sqlalchemy.orm.sessionmaker()
