@@ -3,5 +3,5 @@ __revision__ = '$Revision$'
 
 __all__ = ['Account', 'Base', 'Bundler', 'Cfg', 'Decisions', 'GBundler', 'Git',
            'Hostbase', 'Metadata', 'NagiosGen', 'Packages', 'Properties',
-           'Probes', 'Pkgmgr', 'Rules', 'SSHbase', 'Statistics', 'Svcmgr',
-           'Svn', 'TCheetah', 'SGenshi', 'TGenshi', 'Vhost']
+           'Probes', 'Pkgmgr', 'Rules', 'SSHbase', 'Snapshots' 'Statistics',
+	   'Svcmgr', 'Svn', 'TCheetah', 'SGenshi', 'TGenshi', 'Vhost']
