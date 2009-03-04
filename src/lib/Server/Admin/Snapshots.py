@@ -32,7 +32,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             engine = sqlalchemy.create_engine(dbpath, echo=True)
             metadata = Base.metadata
             metadata.create_all(engine) 
-            Session = sessionmaker()
+            Session = sqlalchemy.orm.sessionmaker()
             Session.configure(bind=engine)
             session = Session()
             session.commit()
