@@ -6,6 +6,8 @@ import Bcfg2.Server.Snapshots
 from Bcfg2.Server.Snapshots.model import Snapshot
 import time
 
+ftypes = ['ConfigFile', 'SymLink', 'Directory']
+
 class Snapshots(Bcfg2.Server.Plugin.Statistics,
                 Bcfg2.Server.Plugin.Plugin):
     name = 'Snapshots'
@@ -27,7 +29,9 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         extra = dict([('Package', dict()), ('Service', dict()),
                       ('Path', dict())])
         pdisp = {'Package': ['name', 'type', 'version'],
-                 'Service': ['name', 'type', 'status']}
+                 'Service': ['name', 'type', 'status'],
+                 'ConfigFile': ['name', 'owner', 'group', 'perms']}
+
         for entry in xdata.find('.//Bad'):
             if entry.tag not in pdisp:
                 print "Not Found", entry.tag, entry.get('name')
