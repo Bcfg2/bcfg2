@@ -24,36 +24,36 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         t1 = time.time()
         entries = dict([('Package', dict()),
                         ('Service', dict()), ('Path', dict())])
-        extra = dict([('Package', list()), ('Service', list()),
-                      ('Path', list())])
-        pdisp = {'Package': 'version',
-                 'Service': 'status'}
+        extra = dict([('Package', dict()), ('Service', dict()),
+                      ('Path', dict())])
+        pdisp = {'Package': ['name', 'type', 'version'],
+                 'Service': ['name', 'type', 'status']}
         for entry in xdata.find('.//Bad'):
             if entry.tag not in pdisp:
                 print "Not Found", entry.tag, entry.get('name')
                 continue
             else:
-                data = [False, False, unicode(entry.get('type')),
-                        unicode(entry.get('%s_%s' % ('current', pdisp[entry.tag]))),
-                        unicode(entry.get('%s_%s' % ('current', pdisp[entry.tag])))]
+                edata = dict([(key, unicode(entry.get('current_%s' % key))) \
+                              for key in pdisp[entry.tag]])
+                data = [False, False, edata, edata]
                 entries[entry.tag][entry.get('name')] = data
         for entry in xdata.find('.//Modified'):
             if entry.tag in pdisp:
                 if entry.get('name') in entries[entry.tag]:
                     entries[entry.tag][entry.get('name')][0] = True
                 else:
-                    data = [False, False, unicode(entry.get('type')),
-                            unicode(entry.get('%s_%s' % ('current', pdisp[entry.tag]))),
-                            unicode(entry.get(pdisp[entry.tag]))]
+                    current = dict([(key, unicode(entry.get('current_%s' % key))) \
+                                    for key in pdisp[entry.tag]])
+                    desired = dict([(key, unicode(entry.get(key))) \
+                                    for key in pdisp[entry.tag]])
+                    data = [False, False, current, desired]
                     entries[entry.tag][entry.get('name')] = data
             else:
                 print entry.tag, entry.get('name')
         for entry in xdata.find('.//Extra'):
             if entry.tag in pdisp:
-                tname = pdisp[entry.tag]
-                data = dict([('name', unicode(entry.get('name'))),
-                              ('type', unicode(entry.get('type'))),
-                              (tname, unicode(entry.get(tname)))])
+                current = dict([(key, unicode(entry.get(key))) for key in pdisp[entry.tag]])
+                extra[entry.tag][entry.get('name')] = current
             else:
                 print "extra", entry.tag, entry.get('name')
         t2 = time.time()

@@ -1,7 +1,7 @@
-from sqlalchemy import Table, Column, Integer, Unicode, MetaData, ForeignKey, Boolean, DateTime, create_engine, UnicodeText
+from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, create_engine, UnicodeText
 import datetime
 import sqlalchemy.exceptions
-from sqlalchemy.orm import relation, backref, sessionmaker
+from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 class Uniquer(object):
@@ -11,6 +11,10 @@ class Uniquer(object):
             return session.query(cls).filter_by(**kwargs).one()
         except sqlalchemy.exceptions.InvalidRequestError:
             return cls(**kwargs)
+
+    @classmethod
+    def from_record(cls, session, data):
+        return cls.by_value(session, **data)
 
 Base = declarative_base()
 
@@ -89,7 +93,20 @@ class Package(Base, Uniquer):
     version = Column(Unicode(16))
     verification_status = Column(Boolean)
 
-class PackageCorrespondence(Base):
+class CorrespondenceType(object):
+    mtype = Package
+    @classmethod
+    def from_record(cls, mysession, record):
+        (mod, corr, s_dict, e_dict) = record
+        start = cls.mtype.by_value(mysession, **s_dict)
+        if s_dict != e_dict:
+            end = cls.mtype.by_value(mysession, **e_dict)
+        else:
+            end = start
+        return cls(start=start, end=end, modified=mod, correct=corr)
+
+class PackageCorrespondence(Base, CorrespondenceType):
+    mtype = Package
     __tablename__ = 'package_pair'
     id = Column(Integer, primary_key=True)    
     start_id = Column(Integer, ForeignKey('package.id'))
@@ -98,18 +115,6 @@ class PackageCorrespondence(Base):
     end = relation(Package, primaryjoin=end_id == Package.id)
     modified = Column(Boolean)
     correct = Column(Boolean)
-
-    @classmethod
-    def from_record(cls, mysession, name, record):
-        (mod, corr, ptype, s_vers, e_vers) = record
-        start = Package.by_value(mysession, name=unicode(name), type=ptype,
-                                 version=s_vers)
-        if s_vers != e_vers:
-            end = Package.by_value(mysession, name=unicode(name), type=ptype,
-                                     version=e_vers)
-        else:
-            end = start
-        return cls(start=start, end=end, modified=mod, correct=corr)
 
 package_snap = Table('package_snap', Base.metadata,
                      Column('ppair_id', Integer, ForeignKey('package_pair.id')),
@@ -122,7 +127,8 @@ class Service(Base, Uniquer):
     type = Column(Unicode(12))
     status = Column(Boolean)
 
-class ServiceCorrespondence(Base):
+class ServiceCorrespondence(Base, CorrespondenceType):
+    mtype = Service
     __tablename__ = 'service_pair'
     id = Column(Integer, primary_key=True)    
     start_id = Column(Integer, ForeignKey('service.id'))
@@ -131,18 +137,6 @@ class ServiceCorrespondence(Base):
     end = relation(Service, primaryjoin=end_id == Service.id)
     modified = Column(Boolean)
     correct = Column(Boolean)    
-
-    @classmethod
-    def from_record(cls, mysession, name, record):
-        (mod, corr, ptype, s_status, e_status) = record
-        start = Service.by_value(mysession, name=unicode(name), type=ptype,
-                                 status=s_status)
-        if s_status != e_status:
-            end = Service.by_value(mysession, name=unicode(name), type=ptype,
-                                   status=e_status)
-        else:
-            end = start
-        return cls(start=start, end=end, modified=mod, correct=corr)
 
 service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
@@ -158,7 +152,8 @@ class File(Base):
     perms = Column(Integer(5))
     contents = Column(UnicodeText)
 
-class FileCorrespondence(Base):
+class FileCorrespondence(Base, CorrespondenceType):
+    mtype = File
     __tablename__ = 'file_pair'
     id = Column(Integer, primary_key=True)    
     start_id = Column(Integer, ForeignKey('file.id'))
@@ -211,21 +206,22 @@ class Snapshot(Base):
     extra_services = relation(Service, secondary=extra_service_snap)
     extra_files = relation(File, secondary=extra_file_snap)
 
+    c_dispatch = dict([('Package', ('packages', PackageCorrespondence)),
+                       ('Service', ('services', ServiceCorrespondence)),
+                       ('Path', ('files', FileCorrespondence))])
+    e_dispatch = dict([('Package', ('extra_packages', Package)),
+                       ('Service', ('extra_services', Service)),
+                       ('Path', ('extra_files', File))])
+
     @classmethod
     def from_data(cls, session, metadata, entries, extra):
         dbm = Metadata.from_metadata(session, metadata)
         snap = cls(client_metadata=dbm, timestamp=datetime.datetime.now())
-        for pkg, pdata in entries['Package'].iteritems():
-            snap.packages.append(\
-                PackageCorrespondence.from_record(session, pkg, pdata))
-        for data in extra['Package']:
-            extra_pkg = Package.by_value(session, **data)
-            snap.extra_packages.append(extra_pkg)
-        for pkg, pdata in entries['Service'].iteritems():
-            snap.services.append(\
-                ServiceCorrespondence.from_record(session, pkg, pdata))
-        for data in extra['Service']:
-            extra_svc = Service.by_value(session, **data)
-            snap.extra_services.append(extra_svc)
+        for (dispatch, data) in [(cls.c_dispatch, entries),
+                                 (cls.e_dispatch, extra)]:
+            for key in dispatch:
+                dest, ecls = dispatch[key]
+                for edata in data[key].values():
+                    getattr(snap, dest).append(ecls.from_record(session, edata))
         return snap
 
