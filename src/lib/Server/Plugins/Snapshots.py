@@ -29,8 +29,7 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         extra = dict([('Package', dict()), ('Service', dict()),
                       ('Path', dict())])
         pdisp = {'Package': ['name', 'type', 'version'],
-                 'Service': ['name', 'type', 'status'],
-                 'ConfigFile': ['name', 'owner', 'group', 'perms']}
+                 'Service': ['name', 'type', 'status']}
 
         for entry in xdata.find('.//Bad'):
             if entry.tag not in pdisp:
