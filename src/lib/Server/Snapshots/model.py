@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, UnicodeText
+from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, UnicodeText, desc
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
@@ -232,3 +232,10 @@ class Snapshot(Base):
                     getattr(snap, dest).append(ecls.from_record(session, edata))
         return snap
 
+    @classmethod
+    def by_client(cls, session, clientname):
+        return session.query(cls).join(cls.client_metadata, Metadata.client).filter(Client.name==clientname)
+
+    @classmethod
+    def get_current(cls, session, clientname):
+        return session.query(Snapshot).join(Snapshot.client_metadata, Metadata.client).filter(Client.name==clientname).order_by(desc(Snapshot.timestamp)).first()
