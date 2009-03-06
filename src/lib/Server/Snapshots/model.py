@@ -1,15 +1,19 @@
-from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, create_engine, UnicodeText
+from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, UnicodeText
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 class Uniquer(object):
+    force_rt = True
     @classmethod
     def by_value(cls, session, **kwargs):
-        try:
-            return session.query(cls).filter_by(**kwargs).one()
-        except sqlalchemy.exceptions.InvalidRequestError:
+        if cls.force_rt:
+            try:
+                return session.query(cls).filter_by(**kwargs).one()
+            except sqlalchemy.exceptions.InvalidRequestError:
+                return cls(**kwargs)
+        else:
             return cls(**kwargs)
 
     @classmethod
@@ -97,10 +101,13 @@ class CorrespondenceType(object):
     mtype = Package
     @classmethod
     def from_record(cls, mysession, record):
-        (mod, corr, s_dict, e_dict) = record
-        start = cls.mtype.by_value(mysession, **s_dict)
+        (mod, corr, name, s_dict, e_dict) = record
+        if not s_dict:
+            start=None
+        else:
+            start = cls.mtype.by_value(mysession, name=name, **s_dict)
         if s_dict != e_dict:
-            end = cls.mtype.by_value(mysession, **e_dict)
+            end = cls.mtype.by_value(mysession, name=name, **e_dict)
         else:
             end = start
         return cls(start=start, end=end, modified=mod, correct=corr)
@@ -142,7 +149,7 @@ service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
                      Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
-class File(Base):
+class File(Base, Uniquer):
     __tablename__ = 'file'
     id = Column(Integer, primary_key=True)        
     name = Column(UnicodeText)
