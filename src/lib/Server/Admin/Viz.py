@@ -72,8 +72,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             cmd = "dot -Tpng"
             if output:
                 cmd += " -o %s" % output
-        dotpipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, close_fds=True)
+        dotpipe = Popen(cmd, shell=True, stdin=PIPE,
+                        stdout=PIPE, close_fds=True)
         try:
             dotpipe.stdin.write("digraph groups {\n")
         except:
