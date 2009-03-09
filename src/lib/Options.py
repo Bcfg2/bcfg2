@@ -220,6 +220,8 @@ CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
                               default=False, cmd='-e', )
 CLIENT_PARANOID = Option('make automatic backups of config files',
                          default=False, cmd='-P', )
+CORE_PROFILE = Option('profile server core',
+                      default=False, cmd='-p', )
 CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default=False, cmd='-A', )
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
