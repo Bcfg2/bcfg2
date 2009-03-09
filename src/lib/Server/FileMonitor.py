@@ -134,7 +134,7 @@ class GaminFam(object):
         collapsed = 0
         start = time()
         now = time()
-        while (time() - now) < 0.10:
+        while (time() - now) < 0.01:
             if self.mon.event_pending():
                 while self.mon.event_pending():
                     count += 1
