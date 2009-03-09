@@ -133,13 +133,12 @@ class GaminFam(object):
         count = 0
         collapsed = 0
         start = time()
-        now = time()
-        while (time() - now) < 0.01:
-            if self.mon.event_pending():
-                while self.mon.event_pending():
-                    count += 1
-                    self.mon.handle_one_event()
-                now = time()
+        if self.mon.event_pending():
+            while self.mon.event_pending():
+                count += 1
+                self.mon.handle_one_event()
+        else:
+            return 0
         unique = []
         bookkeeping = []
         for event in self.events:
