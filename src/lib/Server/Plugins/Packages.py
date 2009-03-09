@@ -51,6 +51,7 @@ class APTSource(object):
                 reader = gzip.GzipFile(fname)
             except:
                 print "failed to read file %s" % fname
+                raise Exception()
                 continue
             for line in reader.readlines():
                 words = line.strip().split(':', 1)
