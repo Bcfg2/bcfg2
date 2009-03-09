@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import copy, logging, lxml.etree, sys, cmd
+import copy, logging, lxml.etree, sys, cmd, time
 import Bcfg2.Logger, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 import Bcfg2.Options
@@ -38,8 +38,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         self.prompt = '> '
         self.cont = True
         i = 0
-        while self.fam.Service() or i < 5:
+        while self.fam.Service() or i < 10:
             i += 1
+            time.sleep(0.1)
         
     def do_loop(self):
         self.cont = True

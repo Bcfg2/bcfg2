@@ -9,7 +9,7 @@ from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, select, socket, sys
+import logging, select, socket, sys, time
 import Bcfg2.Logger, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
@@ -55,7 +55,10 @@ class Bcfg2Serv(Bcfg2.Component.Component):
                         logger.error("Hit event timeout without getting any events; GAMIN/FAM problem?")
                         continue
                 events = True
-                self.Core.Service()
+                i = 0
+                while self.Core.fam.Service() or i < 10:
+                    i += 1
+                    time.sleep(0.1)
             except socket.error:
                 continue
         try:
