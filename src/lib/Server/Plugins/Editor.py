@@ -25,9 +25,9 @@ class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
         return temp
 
 class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
-    def __init__(self, basename, path, props, entry_type, encoding):
+    def __init__(self, basename, path, entry_type, encoding):
         self.ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" %path.split('/')[-1])
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, props, entry_type, encoding)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, entry_type, encoding)
         self.inputs = dict()
 
     def bind_entry(self, entry, metadata):
