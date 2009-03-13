@@ -183,12 +183,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             for attrib in entry.attrib.keys():
                 instance.attrib[attrib] = entry.attrib[attrib]
             if self.pkg_checks == 'true' and entry.get('pkg_checks', 'true') == 'true':
-                if entry.get('version') == 'any':
-                    # FIXME not sure if this is synthesized properly
+                if 'any' in [entry.get('version'), pinned_version]:
                     version, release = 'any', 'any'
                 elif entry.get('version') == 'auto':
-                    # FIXME ditto
-                    version, release = pinned_version.split('-')
+                    if pinned_version != None:
+                        version, release = pinned_version.split('-')
+                    else:
+                        return False
                 else:
                     version, release = entry.get('version').split('-')
                 instance.set('version', version)

@@ -1,7 +1,9 @@
 '''This provides bcfg2 support for yum'''
 __revision__ = '$Revision: $'
 
-import Bcfg2.Client.Tools.RPMng, ConfigParser, sys, os.path
+import Bcfg2.Client.XML
+import Bcfg2.Client.Tools.RPMng
+import ConfigParser, sys, os.path, copy
 
 try:
     set
@@ -49,6 +51,53 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
     conflicts = ['RPMng']
 
+    def __init__(self, logger, setup, config):
+        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+        self.yum_avail = dict()
+        self.yum_installed = dict()
+        for line in self.cmd.run('yum list updates --noplugins')[1][1:]:
+            try:
+                pinfo, vers, _ = line.split()
+                pkg, arch = pinfo.split('.')
+                if pkg in self.yum_avail:
+                    self.yum_avail[pkg].update([(arch, vers)])
+                else:
+                    self.yum_avail[pkg] = dict([(arch, vers)])
+            except:
+                continue
+        for line in self.cmd.run('yum list installed --noplugins')[1][1:]:
+            try:
+                pinfo, vers, _ = line.split()
+                pkg, arch = pinfo.split('.')
+                if pkg in self.yum_installed:
+                    self.yum_installed[pkg].update([(arch, vers)])
+                else:
+                    self.yum_installed[pkg] = dict([(arch, vers)])
+            except:
+                continue
+
+    def VerifyPackage(self, entry, modlist):
+        pinned_version = None
+        if entry.get('version', False) == 'auto':
+            # old style entry; synthesize Instances from current installed
+            if entry.get('name') not in self.yum_installed and \
+                   entry.get('name') not in self.yum_avail:
+                # new entry; fall back to default
+                entry.set('version', 'any')
+            else:
+                data = copy.copy(self.yum_installed[entry.get('name')])
+                if entry.get('name') in self.yum_avail:
+                    # installed but out of date
+                    data.update(self.yum_avail[entry.get('name')])
+                for (arch, vdata) in data.iteritems():
+                    vers, rel = vdata.split('-')
+                    Bcfg2.Client.XML.SubElement(entry, "Instance",
+                                                name=entry.get('name'),
+                                                version=vers, arch=arch,
+                                                release=rel)
+        return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
+                                                            modlist)
+        
     def Install(self, packages, states):
         '''
            Try and fix everything that RPMng.VerifyPackages() found wrong for
@@ -92,16 +141,22 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
         for pkg in packages:
-            for inst in [pinst for pinst in pkg \
-                         if pinst.tag in ['Instance', 'Package']]:
-                if self.FixInstance(inst, self.instance_status[inst]):
-                    if self.instance_status[inst].get('installed', False) == False:
-                        if pkg.get('name') == 'gpg-pubkey':
-                            gpg_keys.append(inst)
-                        else:
-                            install_pkgs.append(inst)
-                    elif self.instance_status[inst].get('version_fail', False) == True:
-                        upgrade_pkgs.append(inst)
+            insts = [pinst for pinst in pkg \
+                     if pinst.tag in ['Instance', 'Package']]
+            if insts:
+                for inst in insts:
+                    if self.FixInstance(inst, self.instance_status[inst]):
+                        if self.instance_status[inst].get('installed', False) \
+                               == False:
+                            if pkg.get('name') == 'gpg-pubkey':
+                                gpg_keys.append(inst)
+                            else:
+                                install_pkgs.append(inst)
+                        elif self.instance_status[inst].get('version_fail', \
+                                                            False) == True:
+                            upgrade_pkgs.append(inst)
+            else:
+                install_pkgs.append(pkg)
 
         # Install GPG keys.
         # Alternatively specify the required keys using 'gpgkey' in the 
@@ -142,11 +197,12 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
                               '-' + inst.get('release') + '.' + inst.get('arch')
                 else:
-                    if inst.get('version', False):
+                    if inst.get('version', False) and \
+                       inst.get('version') != 'any':
                         pkg_arg = pkg_arg + '-' + inst.get('version')
                         if inst.get('release', False):
                             pkg_arg = pkg_arg + '-' + inst.get('release')
-                    if inst.get('arch', False):
+                    if inst.get('arch', False) and inst.get('arch') != 'any':
                         pkg_arg = pkg_arg + '.' + inst.get('arch')
                 install_args.append(pkg_arg)
             
