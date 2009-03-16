@@ -321,7 +321,7 @@ if __name__ == '__main__':
         prof = hotshot.Profile(setup['profile'])
         try:
             prof.runcall(main, setup['repo'], setup['plugins'], setup['password'],
-                         setup['encoding'], '-d' in sys.argv, ['exit'])
+                         setup['encoding'], '-d' in sys.argv, [])
         except SystemExit:
             stats = hotshot.stats.load(setup['profile'])
             stats.strip_dirs()
