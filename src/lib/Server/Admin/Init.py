@@ -76,8 +76,7 @@ os_list = [
 
 
 class Init(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = ("Compare two client specifications or "
-                     "directories of specifications") # FIXME
+    __shorthelp__ = ("Interactively initialize a new repository")
     __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
     __usage__ = "bcfg2-admin init"
     options = {
@@ -87,14 +86,14 @@ class Init(Bcfg2.Server.Admin.Mode):
                 'repo'      : Bcfg2.Options.SERVER_REPOSITORY,
                 'sendmail'  : Bcfg2.Options.SENDMAIL_PATH,
               }
+    repopath = ""
+    response = ""
     
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         opts = Bcfg2.Options.OptionParser(self.options)
         opts.parse([])
-        self.response = ""
 
-        # FIXME don't overwrite existing bcfg2.conf file
         configfile = raw_input("Store bcfg2 configuration in [%s]: " %
                                 opts['configfile'])
         if configfile == '':
@@ -146,12 +145,18 @@ class Init(Bcfg2.Server.Admin.Mode):
                         password, keypath, server_uri 
                     )
 
-        try:
-            open(configfile, "w").write(confdata)
-            os.chmod(configfile, 0600)
-        except:
-            # FIXME how to handle
-            print "Failed to write configuration file to '%s'\n" % configfile
+        # don't overwrite existing bcfg2.conf file
+        if os.path.exists(configfile):
+            print("\nWarning: %s already exists. Will not be "
+                  "overwritten...\n" % configfile)
+        else:
+            try:
+                open(configfile, "w").write(confdata)
+                os.chmod(configfile, 0600)
+            except Exception, e:
+                print("Error %s occured while trying to write configuration "
+                      "file to '%s'\n" %
+                       (e, configfile))
 
         # FIXME automate ssl key generation
         # FIXME key generation may fail as non-root user
