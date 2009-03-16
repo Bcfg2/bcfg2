@@ -169,7 +169,6 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         try:
             client = self.Core.metadata.resolve_client(address)
             config = self.Core.BuildConfiguration(client)
-            print checksum
             if checksum:
                 for cfile in config.findall('.//ConfigFile'):
                     if cfile.text != None:
