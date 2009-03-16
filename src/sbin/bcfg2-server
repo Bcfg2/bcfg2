@@ -9,7 +9,7 @@ from Bcfg2.Server.Core import Core, CoreInitError
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, select, socket, sys, time
+import logging, md5, select, socket, sys, time
 import Bcfg2.Logger, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
 
 logger = logging.getLogger('bcfg2-server')
@@ -164,12 +164,19 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             raise Fault, (6, warning)
         return True
 
-    def Bcfg2GetConfig(self, address, _=False, profile=False):
+    def Bcfg2GetConfig(self, address, checksum=False):
         '''Build config for a client'''
         try:
             client = self.Core.metadata.resolve_client(address)
-            return tostring(self.Core.BuildConfiguration(client),
-                            encoding='UTF-8', xml_declaration=True)
+            config = self.Core.BuildConfiguration(client)
+            print checksum
+            if checksum:
+                for cfile in config.findall('.//ConfigFile'):
+                    if cfile.text != None:
+                        csum = md5.md5(cfile.text)
+                        cfile.set('checksum', csum.hexdigest())
+                        cfile.text = None
+            return tostring(config, encoding='UTF-8', xml_declaration=True)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             self.logger.warning("Metadata consistency failure for %s" % (address))
             raise Fault, (6, "Metadata consistency failure")
