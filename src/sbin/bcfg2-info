@@ -297,6 +297,7 @@ def main(repo, plugins, password, encoding, debug, args=[]):
         raise SystemExit(0)
     else:
         loop.do_loop()
+    return loop
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
@@ -314,8 +315,8 @@ if __name__ == '__main__':
     setup.parse(sys.argv[1:])
     print setup
     if not setup['profile']:
-        main(setup['repo'], setup['plugins'], setup['password'], setup['encoding'],
-             '-d' in sys.argv, [])
+        loop = main(setup['repo'], setup['plugins'], setup['password'],
+                    setup['encoding'], '-d' in sys.argv, [])
     else:
         import hotshot, hotshot.stats
         prof = hotshot.Profile(setup['profile'])
