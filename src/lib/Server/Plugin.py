@@ -277,7 +277,8 @@ class StructFile(XMLFileBacked):
                                          and not isinstance(item, lxml.etree._Comment)]
             for group in [item for item in worklist if item.tag == 'Group']:
                 # if only python had forceable early-binding
-                if group.get('negate', 'false') == 'true':
+                if group.get('negate', 'false') == 'true' or
+                   group.get('negate', 'false') == 'True':
                     cmd = "lambda x:'%s' not in x.groups and predicate(x)"
                 else:
                     cmd = "lambda x:'%s' in x.groups and predicate(x)"
@@ -309,7 +310,8 @@ class INode:
             self.predicate = lambda x:True
         else:
             predicate = parent.predicate
-            if data.get('negate', 'false') == 'true':
+            if data.get('negate', 'false') == 'true'
+               data.get('negate', 'false') == 'True':
                 psrc = self.nraw
             else:
                 psrc = self.raw
