@@ -5,6 +5,8 @@ import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
 import ConfigParser, sys, os.path, copy
 
+import yum
+
 try:
     set
 except NameError:
@@ -55,26 +57,16 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
         self.yum_avail = dict()
         self.yum_installed = dict()
-        for line in self.cmd.run('yum list updates --noplugins')[1][1:]:
-            try:
-                pinfo, vers, _ = line.split()
-                pkg, arch = pinfo.split('.')
-                if pkg in self.yum_avail:
-                    self.yum_avail[pkg].update([(arch, vers)])
+        self.yb = yum.YumBase()
+        yup = self.yb.doPackageLists(pkgnarrow='updates')
+        for dest, source in [(self.yum_avail, yup.updates),
+                             (self.yum_installed, self.yb.rpmdb)]:
+            for pkg in source:
+                data = [(pkg.arch, '-'.join((pkg.version, pkg.release)))]
+                if pkg.name in dest:
+                    dest[pkg.name].update(data)
                 else:
-                    self.yum_avail[pkg] = dict([(arch, vers)])
-            except:
-                continue
-        for line in self.cmd.run('yum list installed --noplugins')[1][1:]:
-            try:
-                pinfo, vers, _ = line.split()
-                pkg, arch = pinfo.split('.')
-                if pkg in self.yum_installed:
-                    self.yum_installed[pkg].update([(arch, vers)])
-                else:
-                    self.yum_installed[pkg] = dict([(arch, vers)])
-            except:
-                continue
+                    dest[pkg.name] = dict(data)
 
     def VerifyPackage(self, entry, modlist):
         pinned_version = None
