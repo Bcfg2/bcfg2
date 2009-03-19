@@ -103,7 +103,9 @@ Usage: [quit|exit]"""
         if len(args.split()) == 2:
             client, ofile = args.split()
             output = open(ofile, 'w')
-            data = lxml.etree.tostring(self.BuildConfiguration(client), encoding='UTF-8', xml_declaration=True)
+            data = lxml.etree.tostring(self.BuildConfiguration(client),
+                                       encoding='UTF-8', xml_declaration=True,
+                                       pretty_print=True)
             output.write(data)
             output.close()
         else:
