@@ -40,6 +40,17 @@ class launchd(Bcfg2.Client.Tools.Tool):
         except KeyError:
             return None
 
+    def os_version(self):
+        version = ""
+        try:
+            vers = self.cmd.run('sw_vers')[1]
+        except:
+            return version
+
+        for line in vers:
+            if line.startswith("ProductVersion"):
+                version = line.split()[-1]
+        return version
 
     def VerifyService(self, entry, _):
         '''Verify Launchd Service Entry'''
@@ -47,6 +58,10 @@ class launchd(Bcfg2.Client.Tools.Tool):
             services = self.cmd.run("/bin/launchctl list")[1]
         except IndexError:#happens when no services are running (should be never)
             services = []
+        # launchctl output changed in 10.5
+        # It is now three columns, with the last column being the name of the # service
+        if self.os_version().startswith('10.5'):
+            services = [s.split()[-1] for s in services]
         if entry.get('name') in services:#doesn't check if non-spawning services are Started
             return entry.get('status') == 'on'
         else:
