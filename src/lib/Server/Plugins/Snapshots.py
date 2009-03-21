@@ -88,9 +88,10 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
                        build_snap_ent(entry)
         for entry in xdata.find('.//Extra'):
             if entry.tag in datafields:
-                current = dict([(key, unicode(entry.get(key))) \
-                                for key in datafields[entry.tag]])
-                extra[entry.tag][unicode(entry.get('name'))] = current
+                data = build_snap_ent(entry)[1]
+                ename = unicode(entry.get('name'))
+                data['name'] = ename
+                extra[entry.tag][ename] = data
             else:
                 print "extra", entry.tag, entry.get('name')
         t2 = time.time()
