@@ -32,11 +32,16 @@ admin_client = Table('admin_client', Base.metadata,
                      Column('admin_id', Integer, ForeignKey('administrator.id')),
                      Column('client_id', Integer, ForeignKey('client.id')))
 
+admin_group = Table('admin_group', Base.metadata,
+                    Column('admin_id', Integer, ForeignKey('administrator.id')),
+                    Column('group_id', Integer, ForeignKey('group.id')))
+
 class Client(Uniquer, Base):
     __tablename__ = 'client'
     id = Column(Integer, primary_key=True)        
     name = Column(Unicode(64), unique=True)
-    admins = relation("Administrator", secondary=admin_client)
+    admins = relation("Administrator", secondary=admin_client,
+                      backref='clients')
     active = Column(Boolean, default=True)
     online = Column(Boolean, default=True)
     online_ts = Column(DateTime)
@@ -45,6 +50,8 @@ class Group(Uniquer, Base):
     __tablename__ = 'group'
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(32), unique=True)
+    admins = relation("Administrator", secondary=admin_group,
+                      backref='groups')
 
 class ConnectorKeyVal(Uniquer, Base):
     __tablename__ = 'connkeyval'
