@@ -200,6 +200,8 @@ action_snap = Table('action_snap', Base.metadata,
 class Snapshot(Base):
     __tablename__ = 'snapshot'
     id = Column(Integer, primary_key=True)
+    correct = Column(Boolean)
+    revision = Column(Unicode(36))
     metadata_id = Column(Integer, ForeignKey('metadata.id'))
     client_metadata = relation(Metadata, primaryjoin=metadata_id==Metadata.id)
     timestamp = Column(DateTime, default=datetime.datetime.now)
@@ -221,9 +223,10 @@ class Snapshot(Base):
                        ('Path', ('extra_files', File))])
 
     @classmethod
-    def from_data(cls, session, metadata, entries, extra):
+    def from_data(cls, session, correct, revision, metadata, entries, extra):
         dbm = Metadata.from_metadata(session, metadata)
-        snap = cls(client_metadata=dbm, timestamp=datetime.datetime.now())
+        snap = cls(correct=correct, client_metadata=dbm, revision=revision,
+                   timestamp=datetime.datetime.now())
         for (dispatch, data) in [(cls.c_dispatch, entries),
                                  (cls.e_dispatch, extra)]:
             for key in dispatch:

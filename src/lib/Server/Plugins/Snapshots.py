@@ -65,6 +65,8 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         extra = dict([('Package', dict()), ('Service', dict()),
                       ('Path', dict())])
         bad = []
+        correct = xdata.get('state') == 'clean'
+        revision = unicode(xdata.get('revision', '-1'))
         for entry in xdata.find('.//Bad'):
             data = [False, False, unicode(entry.get('name'))] \
                    + build_snap_ent(entry)
@@ -92,7 +94,8 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
             else:
                 print "extra", entry.tag, entry.get('name')
         t2 = time.time()
-        snap = Snapshot.from_data(self.session, metadata, entries, extra)
+        snap = Snapshot.from_data(self.session, correct, revision,
+                                  metadata, entries, extra)
         self.session.add(snap)
         self.session.commit()
         t3 = time.time()
