@@ -1,17 +1,23 @@
 import Bcfg2.Server.Admin
-import sqlalchemy, sqlalchemy.orm
+import sys
+
+try:
+    import sqlalchemy, sqlalchemy.orm
+except:
+    # FIXME should probably do something smarter here for folks without SA
+    pass
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
-from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, Group
+from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
+     Group, Package
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"
     __longhelp__ = (__shorthelp__)
     __usage__ = ("bcfg2-admin snapshots [init|query qtype] ")
 
-    q_dispatch = {'client':Client,
-                  'group':Bcfg2.Server.Snapshots.model.Group,
-                  'snapshot':Snapshot,
+    q_dispatch = {'client':Client, 'group':Group,
+                  'snapshot':Snapshot,'package': Package, 'metadata':Metadata, 
                   }
 
     def __init__(self, configfile):
@@ -39,4 +45,11 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             session.commit()
         elif args[0] == 'dump':
             client, etype, ename = args[1:]
-            snap = Snapshot.get_current(self.session, client)
+            snap = Snapshot.get_current(self.session, unicode(client))
+            if not snap:
+                print "Current snapshot for %s not found" % client
+                sys.exit(1)
+            for pkg in snap.packages:
+                print pkg.correct, pkg.modified
+                print pkg.start.name, pkg.start.version
+            print snap.packages
