@@ -78,6 +78,7 @@ if __name__ == '__main__':
     services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
     deps_list = glob.glob("%s/Deps/*.xml" % repo)
     dec_list = glob.glob("%s/Decisions/*" % repo)
+    pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
 
     filesets = {'metadata':(metadata_list, "%s/metadata.xsd"),
                 'clients':(clients_list, "%s/clients.xsd"),
@@ -89,7 +90,9 @@ if __name__ == '__main__':
                 'imageinfo':(imageinfo_list, "%s/report-configuration.xsd"),
                 'services':(services_list, "%s/services.xsd"),
                 'deps':(deps_list, "%s/deps.xsd"),
-                'decisions': (dec_list, "%s/decisions.xsd")}
+                'decisions': (dec_list, "%s/decisions.xsd"),
+                'packages': (pkgcfg_list, "%s/packages.xsd"), 
+                }
 
     failures  = 0
     for k, (filelist, schemaname) in filesets.iteritems():

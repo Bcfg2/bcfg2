@@ -1,0 +1,32 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      bundle schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name='SourceType'>
+    <xsd:sequence>
+      <xsd:element name="Group" type="xsd:string" minOccurs='1' 
+                   maxOccurs='unbounded'/>
+      <xsd:element name="URL" type="xsd:string" minOccurs='1' 
+                   maxOccurs='unbounded'/>
+      <xsd:element name="Version" type="xsd:string"/>
+      <xsd:element name="Component" type="xsd:string" minOccurs='1'
+                   maxOccurs='unbounded'/>    
+      <xsd:element name="Arch" type="xsd:string"  minOccurs='1'
+                   maxOccurs='unbounded'/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name='Sources'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='1' maxOccurs='unbounded'>
+        <xsd:element name='APTSource' type='SourceType'/>
+        <xsd:element name='YUMSource' type='SourceType'/>
+      </xsd:choice>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
