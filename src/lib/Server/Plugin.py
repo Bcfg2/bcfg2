@@ -442,10 +442,12 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         else:
             prio = [int(src.priority) for src in matching]
             if prio.count(max(prio)) > 1:
-                self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
-                                  (entry.tag.lower(), metadata.hostname, entry.get('name')))
+                self.logger.error("Found conflicting sources with "
+                                  "same priority for %s, %s %s" %
+                                  (metadata.hostname,
+                                   entry.tag.lower(), entry.get('name')))
                 self.logger.error([item.name for item in matching])
-                self.logger.error("Prio was %s" % max(prio))
+                self.logger.error("Priority was %s" % max(prio))
                 raise PluginExecutionError
             index = prio.index(max(prio))
 
