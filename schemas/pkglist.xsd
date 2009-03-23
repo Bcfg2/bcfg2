@@ -25,6 +25,7 @@
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Group' type='PackageContainerType'/>
+        <xsd:element name='Package' type='PackageType'/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attribute name='type' use='optional' type='PackageTypeEnum' />

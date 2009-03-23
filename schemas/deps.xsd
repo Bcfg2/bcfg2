@@ -43,7 +43,7 @@
         <xsd:element name='Permission' type='StructureEntry'/>
         <xsd:element name='Group' type='GroupType'/>
       </xsd:choice>
-      <xsd:attribute type='xsd:string' name='priority' use='required'/>
+      <xsd:attribute type='xsd:string' name='priority' />
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>
