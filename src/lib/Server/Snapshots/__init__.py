@@ -9,8 +9,14 @@ def db_from_config(fname='/etc/bcfg2.conf'):
     if driver == 'sqlite':
         path = cp.get('snapshots', 'database')
         return 'sqlite:///%s' % path
+    elif driver in ['mysql', 'postgres']:
+        user = cp.get('snapshots', 'user')
+        password = cp.get('snapshots', 'password')
+        host = cp.get('snapshots', 'host')
+        db = cp.get('snapshots', 'database')
+        return '%s://%s:%s@%s/@s' % (driver, user, password, host, db)
     else:
-        raise Exception, "not done yet"
+        raise Exception, "unsupported db driver %s" % driver
 
 
 def setup_session(debug=False):
