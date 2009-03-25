@@ -233,7 +233,7 @@ class Snapshot(Base):
     def from_data(cls, session, correct, revision, metadata, entries, extra):
         dbm = Metadata.from_metadata(session, metadata)
         snap = cls(correct=correct, client_metadata=dbm, revision=revision,
-                   timestamp=datetime.datetime.now())
+                   timestamp=datetime.datetime.now(), client=dbm.client)
         for (dispatch, data) in [(cls.c_dispatch, entries),
                                  (cls.e_dispatch, extra)]:
             for key in dispatch:
