@@ -1,7 +1,7 @@
 PKG="SCbcfg2-server"
 NAME="bcfg2-server"
 ARCH="sparc"
-VERSION="1.0pre1-1"
+VERSION="1.0pre2-1"
 CATEGORY="application"
 VENDOR="Argonne National Labratory"
 EMAIL="zach@mcs.anl.gov"
