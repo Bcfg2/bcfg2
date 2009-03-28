@@ -25,13 +25,15 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
         cache = self.cmd.run("equery -q list")[1]
+        pattern = re.compile('(.*)-(\d.*)')
         self.installed = {}
         for pkg in cache:
-            pattern = re.compile('(.*)-(\d.*)')
             if pattern.match(pkg):
                 name = pattern.match(pkg).group(1)
                 version = pattern.match(pkg).group(2)
-            self.installed[name] = version
+                self.installed[name] = version
+            else:
+                self.logger.info("Failed to parse pkg name %s" % pkg)
 
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
