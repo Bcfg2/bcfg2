@@ -1,7 +1,7 @@
 '''This contains all Bcfg2 Tool modules'''
 __revision__ = '$Revision$'
 
-__all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap",
+__all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "IPS",
            "FreeBSDInit", "FreeBSDPackage", "launchd", "Portage", "POSIX",
            "RPM", "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "Yum",
            "YUMng"]
