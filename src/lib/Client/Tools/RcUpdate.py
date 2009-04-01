@@ -23,7 +23,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         # ...but as i can't figure out a way to
         #    test that right now, i'll do the one 
         #    that works in python's interactive interpreter.
-        rc = commands.getoutput('/bin/rc-status | grep %s | grep started' % \
+        rc = commands.getoutput('/bin/rc-status -s | grep %s | grep started' % \
                                 entry.get('name'))
         status = len(rc) > 0
 
@@ -59,7 +59,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     def FindExtra(self):
         '''Locate extra rc-update Services'''
         allsrv = [line.split()[0] for line in \
-                  self.cmd.run("/bin/rc-status | grep started")[1]]
+                  self.cmd.run("/bin/rc-status -s | grep started")[1]]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
