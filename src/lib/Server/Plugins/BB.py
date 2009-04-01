@@ -73,16 +73,15 @@ class BB(Bcfg2.Server.Plugin.Plugin,
     def get_additional_metadata(self, metadata):
         
         users = {}
-        for user in self.store.entries['bb.xml'].users.get(metadata.hostname, []):
+        for user in self.store.entries['bb.xml'].users.get(metadata.hostname.split(".")[0], []):
             pubkeys = []
             for fname in glob.glob('/home/%s/.ssh/*.pub'%user):
                 pubkeys.append(open(fname).read())
             
             users[user] = pubkeys            
         
-        return ([],
-                dict([('users', users), 
-                      ('macs', self.store.entries['bb.xml'].macs)]))
+        return  dict([('users', users), 
+                      ('macs', self.store.entries['bb.xml'].macs)])
 
 
 
