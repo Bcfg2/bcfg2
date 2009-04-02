@@ -294,7 +294,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         cachepath = self.data + '/cache'
-        self.sentinals = set()
+        self.sentinels = set()
         if not os.path.exists(cachepath):
             # create cache directory if needed
             os.mkdir(cachepath)
@@ -311,13 +311,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 self.logger.info("File read failed; updating sources", exc_info=1)
                 source.update()
                 source.read_files()
-            self.sentinals.update(source.basegroups)
+            self.sentinels.update(source.basegroups)
 
     def get_matching_sources(self, meta):
         return [s for s in self.sources if s.applies(meta)]
 
     def HandlesEntry(self, entry, metadata):
-        if [x for x in metadata.groups if x in self.sentinals] \
+        if [x for x in metadata.groups if x in self.sentinels] \
                and entry.tag == 'Package':
             return True
         return False
