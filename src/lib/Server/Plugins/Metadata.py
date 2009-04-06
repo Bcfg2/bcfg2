@@ -367,6 +367,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 self.logger.error("Cannot set group for client %s; no default group set" % (client))
                 raise MetadataConsistencyError
             self.set_profile(client, self.default, (None, None))
+            profile = self.default
             [bundles, groups, categories] = self.groups[self.default]
         newgroups = groups[:]
         newbundles = bundles[:]
