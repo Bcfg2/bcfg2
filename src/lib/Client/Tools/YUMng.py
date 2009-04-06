@@ -62,7 +62,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         for dest, source in [(self.yum_avail, yup.updates),
                              (self.yum_installed, self.yb.rpmdb)]:
             for pkg in source:
-                data = [(pkg.arch, '-'.join((pkg.version, pkg.release)))]
+                data = [(pkg.arch, (pkg.epoch, pkg.version, pkg.release))]
                 if pkg.name in dest:
                     dest[pkg.name].update(data)
                 else:
@@ -81,12 +81,11 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 if entry.get('name') in self.yum_avail:
                     # installed but out of date
                     data.update(self.yum_avail[entry.get('name')])
-                for (arch, vdata) in data.iteritems():
-                    vers, rel = vdata.split('-')
+                for (arch, (epoch, vers, rel)) in data.iteritems():
                     Bcfg2.Client.XML.SubElement(entry, "Instance",
                                                 name=entry.get('name'),
                                                 version=vers, arch=arch,
-                                                release=rel)
+                                                release=rel, epoch=epoch)
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
         
