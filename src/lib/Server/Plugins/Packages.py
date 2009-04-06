@@ -152,8 +152,6 @@ class YUMSource(Source):
             self.packages[arch].add(pkgname)
 
             pdata = pkg.find(self.xp + 'format')
-            if pkgname in self.deps[arch]:
-                continue
             pre = pdata.find(self.rp + 'requires')
             self.deps[arch][pkgname] = set()
             for entry in pre.getchildren():
