@@ -91,7 +91,13 @@ class Source(object):
             else:
                 # provides dep
                 try:
-                    work.update(self.get_provides(metadata, item))
+                    pset = self.get_provides(metadata, item)
+                    if len(pset) == 1:
+                        work.update(pset)
+                    else:
+                        if True not in [p in newpkg for p in pset]:
+                            # FIXME: still hacky; unchosen multiple provides still not handled
+                            unknown.add(item)
                 except NoData:
                     unknown.add(item)
             work = work.difference(seen)
@@ -277,8 +283,7 @@ class APTSource(Source):
         arches = [ar for ar in self.provides if ar in metadata.groups]
         for arch in ['global'] + arches:
             if pkgname in self.provides[arch]:
-                # FIXME next round of provides HACK alert
-                return set([self.provides[arch][pkgname][0]])
+                return set(self.provides[arch][pkgname])
         raise NoData
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
