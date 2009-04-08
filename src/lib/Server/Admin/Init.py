@@ -42,8 +42,7 @@ key = %s/bcfg2.key
 bcfg2 = %s
 '''
 
-groups = '''
-<Groups version='3.0'>
+groups = '''<Groups version='3.0'>
    <Group profile='true' public='true' default='true' name='basic'>
       <Group name='%s'/>
    </Group>
@@ -58,8 +57,7 @@ groups = '''
 </Groups>
 '''
 
-clients = '''
-<Clients version="3.0">
+clients = '''<Clients version="3.0">
    <Client profile="basic" pingable="Y" pingtime="0" name="%s"/>
 </Clients>
 '''
