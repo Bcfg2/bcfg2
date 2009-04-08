@@ -286,7 +286,7 @@ class StructFile(XMLFileBacked):
                 work[newpred] = group.getchildren()
 
     def Match(self, metadata):
-        '''Return matching fragments of independant'''
+        '''Return matching fragments of independent'''
         matching = [frag for (pred, frag) in self.fragments.iteritems() if pred(metadata)]
         if matching:
             return reduce(lambda x, y:x+y, matching)

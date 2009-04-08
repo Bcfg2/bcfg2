@@ -29,7 +29,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
         
     def BuildStructures(self, metadata):
         '''Build structures for client described by metadata'''
-        ret = lxml.etree.Element("Independant", version='2.0')
+        ret = lxml.etree.Element("Independent", version='2.0')
         fragments = reduce(lambda x, y: x+y,
                            [base.Match(metadata) for base
                             in self.entries.values()], [])
