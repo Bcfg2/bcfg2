@@ -18,7 +18,10 @@ class Fingerprint(Bcfg2.Server.Admin.Mode):
 
     def getFingerprint(self):
         '''calculate key fingerprint'''
-        keypath = self.cfp.get('communication', 'key')
+        try:
+            keypath = self.cfp.get('communication', 'certificate')
+        except:
+            keypath = self.cfp.get('communication', 'key')
         x509 = Bcfg2.tlslite.api.X509()
         x509.parse(open(keypath).read())
         return x509.getFingerprint()

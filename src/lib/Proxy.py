@@ -12,6 +12,8 @@ __revision__ = '$Revision: $'
 from ConfigParser import SafeConfigParser, NoSectionError
 import logging, socket, urlparse, time, Bcfg2.tlslite.errors
 from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
+import Bcfg2.tlslite.X509, Bcfg2.tlslite.X509CertChain
+import Bcfg2.tlslite.utils.keyfactory
 import xmlrpclib
 from xmlrpclib import _Method
 
@@ -48,7 +50,8 @@ class RetryMethod(_Method):
 # sorry jon
 xmlrpclib._Method = RetryMethod
 
-def ComponentProxy (url, user=None, password=None, fingerprint=None):
+def ComponentProxy (url, user=None, password=None, fingerprint=None,
+                    key=None, cert=None):
     
     """Constructs proxies to components.
     
@@ -63,6 +66,17 @@ def ComponentProxy (url, user=None, password=None, fingerprint=None):
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    return xmlrpclib.ServerProxy(newurl, allow_none=True,
-                                 transport=XMLRPCTransport(x509Fingerprint=fingerprint))
+    if key and cert:
+        pdata = open(key).read()
+        pemkey = Bcfg2.tlslite.utils.keyfactory.parsePEMKey(pdata, private=True)
+        xcert = Bcfg2.tlslite.X509.X509()
+        cdata = open(cert).read()
+        xcert.parse(cdata)
+        certChain = Bcfg2.tlslite.X509CertChain.X509CertChain([xcert])
+    else:
+        certChain = None
+        pemkey = None
+    ssl_trans = XMLRPCTransport(x509Fingerprint=fingerprint, certChain=certChain,
+                                privateKey=pemkey)
+    return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
 

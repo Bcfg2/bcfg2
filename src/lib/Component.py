@@ -93,17 +93,19 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
                 BaseHTTPServer.HTTPServer):
     '''This class is an tlslite-using SSLServer'''
-    def __init__(self, address, keyfile, handler, checker=None,
+    def __init__(self, address, keyfile, certfile, handler, checker=None,
                  reqCert=False):
+        print keyfile, certfile
         self.sc = Bcfg2.tlslite.api.SessionCache()
         self.rc = reqCert
         self.master = os.getpid()
         x509 = Bcfg2.tlslite.api.X509()
-        s = open(keyfile).read()
-        x509.parse(s)
+        cdata = open(certfile).read()
+        x509.parse(cdata)
         self.checker = checker
+        kdata = open(keyfile).read()
         try:
-            self.key = Bcfg2.tlslite.api.parsePEMKey(s, private=True)
+            self.key = Bcfg2.tlslite.api.parsePEMKey(kdata, private=True)
         except:
             raise ComponentKeyError
         self.chain = Bcfg2.tlslite.api.X509CertChain([x509])
@@ -148,7 +150,7 @@ class Component(TLSServer,
     fork_funcs = []
     child_limit = 32
 
-    def __init__(self, keyfile, password, location):
+    def __init__(self, keyfile, certfile, password, location):
         # need to get addr
         self.shut = False
         signal.signal(signal.SIGINT, self.start_shutdown)
@@ -162,7 +164,8 @@ class Component(TLSServer,
         self.password = password
 
         try:
-            TLSServer.__init__(self, sock_loc, keyfile, CobaltXMLRPCRequestHandler)
+            TLSServer.__init__(self, sock_loc, keyfile, certfile,
+                               CobaltXMLRPCRequestHandler)
         except socket.error:
             self.logger.error("Failed to bind to socket")
             raise ComponentInitError
