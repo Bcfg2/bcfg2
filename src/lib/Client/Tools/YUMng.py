@@ -344,7 +344,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                         if inst.haskey('epoch'):
                             pkg_arg = pkg_arg + inst.get('epoch') + ':'
                         pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                        if inst.haskey('arch'):
+                        if 'arch' in inst.attrib:
                             pkg_arg = pkg_arg + '.' + inst.get('arch')
                     else:
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
