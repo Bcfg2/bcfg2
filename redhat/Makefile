@@ -59,7 +59,6 @@ debug:
 	echo TARBALL: ${TARBALL} && \
 	echo DIRNAME: ${DIRNAME} && \
 	echo DIRBASE: ${DIRBASE}
-		
 
 buildrpm: specfile buildtargz
 	@rpmbuild \
@@ -73,6 +72,7 @@ buildtarball: prepbuildtarball
 	  --create \
 	  --directory ./build/ \
 	  --file      ./build/$(TARBALL) \
+	  --exclude misc/bcfg2.spec \
 	  ${CURRENT_PACKAGE}
 
 buildtargz: buildtarball
