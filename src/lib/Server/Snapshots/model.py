@@ -38,7 +38,7 @@ admin_group = Table('admin_group', Base.metadata,
 
 class Client(Uniquer, Base):
     __tablename__ = 'client'
-    id = Column(Integer, primary_key=True)        
+    id = Column(Integer, primary_key=True)
     name = Column(Unicode(64), unique=True)
     admins = relation("Administrator", secondary=admin_client,
                       backref='clients')
@@ -55,7 +55,7 @@ class Group(Uniquer, Base):
 
 class ConnectorKeyVal(Uniquer, Base):
     __tablename__ = 'connkeyval'
-    id = Column(Integer, primary_key=True)    
+    id = Column(Integer, primary_key=True)
     connector = Column(Unicode(16))
     key = Column(Unicode(32))
     value = Column(UnicodeText)
@@ -98,7 +98,7 @@ class Metadata(Base):
 
 class Package(Base, Uniquer):
     __tablename__ = 'package'
-    id = Column(Integer, primary_key=True)        
+    id = Column(Integer, primary_key=True)
     name = Column(Unicode(24))
     type = Column(Unicode(16))
     version = Column(Unicode(16))
@@ -122,7 +122,7 @@ class CorrespondenceType(object):
 class PackageCorrespondence(Base, CorrespondenceType):
     mtype = Package
     __tablename__ = 'package_pair'
-    id = Column(Integer, primary_key=True)    
+    id = Column(Integer, primary_key=True)
     start_id = Column(Integer, ForeignKey('package.id'))
     start = relation(Package, primaryjoin=start_id == Package.id)
     end_id = Column(Integer, ForeignKey('package.id'), nullable=True)
@@ -136,7 +136,7 @@ package_snap = Table('package_snap', Base.metadata,
 
 class Service(Base, Uniquer):
     __tablename__ = 'service'
-    id = Column(Integer, primary_key=True)        
+    id = Column(Integer, primary_key=True)
     name = Column(Unicode(16))
     type = Column(Unicode(12))
     status = Column(Boolean)
@@ -144,13 +144,13 @@ class Service(Base, Uniquer):
 class ServiceCorrespondence(Base, CorrespondenceType):
     mtype = Service
     __tablename__ = 'service_pair'
-    id = Column(Integer, primary_key=True)    
+    id = Column(Integer, primary_key=True)
     start_id = Column(Integer, ForeignKey('service.id'))
     start = relation(Service, primaryjoin=start_id == Service.id)
     end_id = Column(Integer, ForeignKey('service.id'), nullable=True)
     end = relation(Service, primaryjoin=end_id == Service.id)
     modified = Column(Boolean)
-    correct = Column(Boolean)    
+    correct = Column(Boolean)
 
 service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
@@ -158,7 +158,7 @@ service_snap = Table('service_snap', Base.metadata,
 
 class File(Base, Uniquer):
     __tablename__ = 'file'
-    id = Column(Integer, primary_key=True)        
+    id = Column(Integer, primary_key=True)
     name = Column(UnicodeText)
     type = Column(Unicode(12))
     owner = Column(Unicode(12))
@@ -169,7 +169,7 @@ class File(Base, Uniquer):
 class FileCorrespondence(Base, CorrespondenceType):
     mtype = File
     __tablename__ = 'file_pair'
-    id = Column(Integer, primary_key=True)    
+    id = Column(Integer, primary_key=True)
     start_id = Column(Integer, ForeignKey('file.id'))
     start = relation(File, primaryjoin=start_id == File.id)
     end_id = Column(Integer, ForeignKey('file.id'), nullable=True)
@@ -195,7 +195,7 @@ extra_service_snap = Table('extra_service_snap', Base.metadata,
 
 class Action(Base):
     __tablename__ = 'action'
-    id = Column(Integer, primary_key=True)    
+    id = Column(Integer, primary_key=True)
     command = Column(UnicodeText)
     return_code = Column(Integer)
     output = Column(UnicodeText)

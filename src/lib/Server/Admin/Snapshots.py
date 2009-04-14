@@ -1,15 +1,46 @@
-import Bcfg2.Server.Admin
 import sys
-
 try:
     import sqlalchemy, sqlalchemy.orm
 except:
     # FIXME should probably do something smarter here for folks without SA
     pass
+
+import Bcfg2.Server.Admin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
      Group, Package
+
+def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
+    """Pretty print a table
+
+    rows - list of rows ([[row 1], [row 2], ..., [row n]])
+    hdr - if True the first row is treated as a table header
+    vdelim - vertical delimiter betwee columns
+    padding - # of spaces around the longest element in the column
+    justify - may be left,center,right
+    """
+    hdelim = "="
+    justify = {'left':str.ljust,
+               'center':str.center,
+               'right':str.rjust}[justify.lower()]
+
+    '''calculate column widths (longest item in each column
+       plus padding on both sides)'''
+    cols = zip(*rows)
+    colWidths = [max([len(str(item))+2*padding for \
+                 item in col]) for col in cols]
+    borderline = vdelim.join([w*hdelim for w in colWidths])
+
+    # print out the table
+    print(borderline)
+    for row in rows:
+        print(vdelim.join([justify(str(item), width) for \
+             (item, width) in zip(row, colWidths)]))
+        if hdr:
+            print(borderline)
+            hdr = False
+    print(borderline)
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"
@@ -37,12 +68,19 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             if args[1] in self.q_dispatch:
                 q_obj = self.q_dispatch[args[1]]
                 if q_obj == Client:
-                    print("\nInactive hosts:")
-                    for host in self.session.query(q_obj).filter(q_obj.active == False):
-                        print(" %s" % host.name)
-                    print("\nActive hosts:")
-                    for host in self.session.query(q_obj).filter(q_obj.active == True):
-                        print(" %s" % host.name)
+                    rows = []
+                    labels = ('Client', 'Active')
+                    for host in \
+                       self.session.query(q_obj).filter(q_obj.active == False):
+                        rows.append([host.name, 'No'])
+                    for host in \
+                       self.session.query(q_obj).filter(q_obj.active == True):
+                        rows.append([host.name, 'Yes'])
+                    print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
+                elif q_obj == Group:
+                    print("Groups:")
+                    for group in self.session.query(q_obj).all():
+                        print(" %s" % group.name)
                 else:
                     results = self.session.query(q_obj).all()
             else:
@@ -80,9 +118,11 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                        Snapshot.correct,
                                        Snapshot.timestamp).filter(Client.id==Snapshot.client_id)\
                                        .group_by(Client.id)
-                print "Client\tCorrect\tTime"
-                print 60* '='
+                rows = []
+                labels = ('Client', 'Correct', 'Time')
                 for item in q.all():
-                    print "%s\t%s\t%s" % (item)
+                    cli, cor, time = item
+                    rows.append([cli, cor, time])
+                print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
             else:
                 print "Unknown options: ", args[1:]
