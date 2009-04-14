@@ -108,7 +108,7 @@ done
 
 %install
 rm -rf %{buildroot}
-%{__python} -c 'import setuptools; execfile("setup.py")' install --skip-build --root %{buildroot}
+%{__python} -c 'import setuptools; execfile("setup.py")' install --skip-build --root %{buildroot} --prefix=/usr
 
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_initrddir}
