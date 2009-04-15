@@ -65,9 +65,10 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         extra = dict([('Package', dict()), ('Service', dict()),
                       ('Path', dict())])
         bad = []
-        correct = xdata.get('state') == 'clean'
-        revision = unicode(xdata.get('revision', '-1'))
-        for entry in xdata.find('.//Bad'):
+        state = xdata.find('.//Statistics')
+        correct = state.get('state') == 'clean'
+        revision = unicode(state.get('revision', '-1'))
+        for entry in state.find('.//Bad'):
             data = [False, False, unicode(entry.get('name'))] \
                    + build_snap_ent(entry)
             if entry.tag in ftypes:
@@ -75,7 +76,7 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
             else:
                 etag = entry.tag
             entries[etag][entry.get('name')] = data
-        for entry in xdata.find('.//Modified'):
+        for entry in state.find('.//Modified'):
             if entry.tag in ftypes:
                 etag = 'Path'
             else:
@@ -86,7 +87,7 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
             else:
                 data = [True, False, unicode(entry.get('name'))] + \
                        build_snap_ent(entry)
-        for entry in xdata.find('.//Extra'):
+        for entry in state.find('.//Extra'):
             if entry.tag in datafields:
                 data = build_snap_ent(entry)[1]
                 ename = unicode(entry.get('name'))
