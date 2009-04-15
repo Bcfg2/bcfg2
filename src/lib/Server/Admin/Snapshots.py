@@ -16,7 +16,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
 
     rows - list of rows ([[row 1], [row 2], ..., [row n]])
     hdr - if True the first row is treated as a table header
-    vdelim - vertical delimiter betwee columns
+    vdelim - vertical delimiter between columns
     padding - # of spaces around the longest element in the column
     justify - may be left,center,right
     """
@@ -116,13 +116,14 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             if '-a' in args[1:]:
                 q = self.session.query(Client.name,
                                        Snapshot.correct,
+                                       Snapshot.revision,
                                        Snapshot.timestamp).filter(Client.id==Snapshot.client_id)\
                                        .group_by(Client.id)
                 rows = []
-                labels = ('Client', 'Correct', 'Time')
+                labels = ('Client', 'Correct', 'Revision', 'Time')
                 for item in q.all():
-                    cli, cor, time = item
-                    rows.append([cli, cor, time])
+                    cli, cor, time, rev = item
+                    rows.append([cli, cor, time, rev])
                 print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
             else:
                 print "Unknown options: ", args[1:]
