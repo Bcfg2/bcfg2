@@ -334,7 +334,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def complete(self, meta, packages):
         sources = self.get_matching_sources(meta)
         ptype = set([s.ptype for s in sources])
-        if len(ptype) > 1:
+        if len(ptype) < 1:
             return set(), set(), 'failed'
         pkgs = set(packages)
         unknown = set(packages)
