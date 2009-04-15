@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 '''Query reporting system for client status'''
-__revision__ = '$Revision: 4639 $'
+__revision__ = '$Revision$'
 
 import os, sys
 try:
