@@ -1,4 +1,3 @@
-import os
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('Bcfg2.Server.Hostbase.hostbase.views',

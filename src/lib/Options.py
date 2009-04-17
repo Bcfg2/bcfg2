@@ -1,7 +1,11 @@
 '''Option parsing library for utilities'''
 __revision__ = '$Revision$'
 
-import getopt, os, socket, sys, ConfigParser, Bcfg2.Client.Tools
+import ConfigParser
+import getopt
+import os
+import sys
+import Bcfg2.Client.Tools
 
 def bool_cook(x):
     if x:

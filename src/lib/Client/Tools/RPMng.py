@@ -2,7 +2,11 @@
 
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools, rpmtools, os.path, rpm, ConfigParser, sys
+import ConfigParser
+import os.path
+import rpm
+import rpmtools
+import Bcfg2.Client.Tools
 
 try:
     set

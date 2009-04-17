@@ -1,7 +1,6 @@
 '''Minestruct Admin Mode'''
 import Bcfg2.Server.Admin
 import lxml.etree, sys, getopt
-import sets
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
     '''Pull extra entries out of statistics'''

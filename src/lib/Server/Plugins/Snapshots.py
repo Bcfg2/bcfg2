@@ -1,8 +1,8 @@
-import lxml.etree
+#import lxml.etree
 import binascii
 import difflib
-import sqlalchemy
-import sqlalchemy.orm
+#import sqlalchemy
+#import sqlalchemy.orm
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Snapshots
 from Bcfg2.Server.Snapshots.model import Snapshot

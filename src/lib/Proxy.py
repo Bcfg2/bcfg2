@@ -9,13 +9,16 @@ load_config -- read configuration files
 
 __revision__ = '$Revision: $'
 
-from ConfigParser import SafeConfigParser, NoSectionError
-import logging, socket, urlparse, time, Bcfg2.tlslite.errors
+import logging
+import socket
+import time
+import urlparse
+import xmlrpclib
+from xmlrpclib import _Method
+import Bcfg2.tlslite.errors
 from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
 import Bcfg2.tlslite.X509, Bcfg2.tlslite.X509CertChain
 import Bcfg2.tlslite.utils.keyfactory
-import xmlrpclib
-from xmlrpclib import _Method
 
 __all__ = ["ComponentProxy", "RetryMethod"]
 

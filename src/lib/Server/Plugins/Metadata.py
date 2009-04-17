@@ -1,7 +1,11 @@
 '''This file stores persistent metadata for the Bcfg2 Configuration Repository'''
 __revision__ = '$Revision$'
 
-import lxml.etree, re, socket, time, fcntl, copy
+import copy
+import fcntl
+import lxml.etree
+import socket
+import time
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):

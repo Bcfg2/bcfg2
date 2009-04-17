@@ -2,7 +2,7 @@
 __revision__ = '$Revision$'
 
 import apt.cache
-import os, re
+import os
 import Bcfg2.Client.Tools
 
 class APT(Bcfg2.Client.Tools.Tool):

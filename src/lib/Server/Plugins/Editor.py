@@ -1,8 +1,6 @@
 import Bcfg2.Server.Plugin
-import fileinput
 import re
 import lxml.etree
-from getopt import getopt
 
 def linesub(pattern, repl, filestring):
     '''Substitutes instances of pattern with repl in filestring'''
