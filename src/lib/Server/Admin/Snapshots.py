@@ -9,7 +9,7 @@ import Bcfg2.Server.Admin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
-     Group, Package
+     File, Group, Package, Service
 
 def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
     """Pretty print a table
@@ -25,8 +25,10 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
                'center':str.center,
                'right':str.rjust}[justify.lower()]
 
-    '''calculate column widths (longest item in each column
-       plus padding on both sides)'''
+    '''
+       calculate column widths (longest item in each column
+       plus padding on both sides)
+    '''
     cols = zip(*rows)
     colWidths = [max([len(str(item))+2*padding for \
                  item in col]) for col in cols]
@@ -87,6 +89,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 print 'error'
                 raise SystemExit, 1
         elif args[0] == 'init':
+            # Initialize the Snapshots database
             dbpath = Bcfg2.Server.Snapshots.db_from_config()
             engine = sqlalchemy.create_engine(dbpath, echo=True)
             metadata = Base.metadata
@@ -106,14 +109,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 print "C:", pkg.correct, 'M:', pkg.modified
                 print "start", pkg.start.name, pkg.start.version
                 print "end", pkg.end.name, pkg.end.version
-            #print("\nExtra packages:")
-            #for pkg in snap.extra_packages:
-            #    print("  %s" % pkg.name)
-            #print("\nExtra services:")
-            #for svc in snap.extra_services:
-            #    print("  %s" % svc.name)
         elif args[0] == 'reports':
+            # bcfg2-admin reporting interface for Snapshots
             if '-a' in args[1:]:
+                # Query all hosts for Name, Status, Revision, Timestamp
                 q = self.session.query(Client.name,
                                        Snapshot.correct,
                                        Snapshot.revision,
@@ -125,5 +124,43 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     cli, cor, time, rev = item
                     rows.append([cli, cor, time, rev])
                 print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
+            elif '-b' in args[1:]:
+                # Query a single host for extra entries
+                client = args[2]
+                snap = Snapshot.get_current(self.session, unicode(client))
+                if not snap:
+                    print("Current snapshot for %s not found" % client)
+                    sys.exit(1)
+                print("Bad entries:")
+                bad_pkgs = [self.session.query(Package)
+                                .filter(Package.id==p.start_id).one().name \
+                            for p in snap.packages if p.correct == False]
+                for p in bad_pkgs:
+                    print(" Package:%s" % p)
+                bad_files = [self.session.query(File)
+                                .filter(File.id==f.start_id).one().name \
+                            for f in snap.files if f.correct == False]
+                for filename in bad_files:
+                    print(" File:%s" % filename)
+                bad_svcs = [self.session.query(Service)
+                                .filter(Service.id==s.start_id).one().name \
+                            for s in snap.services if s.correct == False]
+                for svc in bad_svcs:
+                    print(" Service:%s" % svc)
+            elif '-e' in args[1:]:
+                # Query a single host for extra entries
+                client = args[2]
+                snap = Snapshot.get_current(self.session, unicode(client))
+                if not snap:
+                    print("Current snapshot for %s not found" % client)
+                    sys.exit(1)
+                print("Extra entries:")
+                for pkg in snap.extra_packages:
+                    print(" Package:%s" % pkg.name)
+                # FIXME: Do we know about extra files yet?
+                for f in snap.extra_files:
+                    print(" File:%s" % f.name)
+                for svc in snap.extra_services:
+                    print(" Service:%s" % svc.name)
             else:
                 print "Unknown options: ", args[1:]
