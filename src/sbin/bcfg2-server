@@ -3,21 +3,28 @@
 '''The XML-RPC Bcfg2 Server'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugins.Metadata 
-
-from Bcfg2.Server.Core import Core, CoreInitError
+import logging
+import md5
+import select
+import socket
+import sys
+import time
 from xmlrpclib import Fault
 from lxml.etree import XML, Element, tostring
 
-import logging, md5, select, socket, sys, time
-import Bcfg2.Logger, Bcfg2.Options, Bcfg2.Component, Bcfg2.Daemon
+import Bcfg2.Logger
+import Bcfg2.Options
+import Bcfg2.Component
+import Bcfg2.Daemon
+import Bcfg2.Server.Plugins.Metadata
+from Bcfg2.Server.Core import Core, CoreInitError
 
 logger = logging.getLogger('bcfg2-server')
 
 def critical_error(operation):
     '''Log and err, traceback and return an xmlrpc fault to client'''
     logger.error(operation, exc_info=1)
-    raise Fault, (7, "Critical unexpected failure: %s" % (operation))
+    raise Fault(7, "Critical unexpected failure: %s" % (operation))
 
 class SetupError(Exception):
     '''Used when the server cant be setup'''
@@ -38,7 +45,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
                              setup['encoding'], setup['filemonitor'])
         except CoreInitError, msg:
             logger.critical("Fatal error: %s" % (msg))
-            raise SystemExit, 1
+            raise SystemExit(1)
 
         if 'DBStats' in self.Core.plugins:
             self.fork_funcs.append("RecvStats")
@@ -52,7 +59,8 @@ class Bcfg2Serv(Bcfg2.Component.Component):
                     if events:
                         break
                     else:
-                        logger.error("Hit event timeout without getting any events; GAMIN/FAM problem?")
+                        logger.error("Hit event timeout without getting "
+                                     "any events; GAMIN/FAM problem?")
                         continue
                 events = True
                 i = 0
@@ -79,7 +87,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             })
 
         # init functions to be exposed as XML-RPC functions
-        for plugin in self.Core.plugins.values():
+        for plugin in list(self.Core.plugins.values()):
             for method in plugin.__rmi__:
                 self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
                                        "%s.%s" % (plugin.__name__, method))
@@ -87,7 +95,10 @@ class Bcfg2Serv(Bcfg2.Component.Component):
 
 
     def get_request(self):
-        '''We need to do work between requests, so select with timeout instead of blocking in accept'''
+        '''
+           We need to do work between requests, so select
+           with timeout instead of blocking in accept
+        '''
         rsockinfo = []
         famfd = self.Core.fam.fileno()
         while self.socket not in rsockinfo:
@@ -111,7 +122,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             name = self.Core.metadata.resolve_client(address)
             meta = self.Core.build_metadata(name)
             
-            for plugin in [p for p in self.Core.plugins.values() \
+            for plugin in [p for p in list(self.Core.plugins.values()) \
                            if isinstance(p, Bcfg2.Server.Plugin.Probing)]:
                 for probe in plugin.GetProbes(meta):
                     resp.append(probe)
@@ -119,7 +130,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             warning = 'Client metadata resolution error for %s; check server log' % address[0]
             self.logger.warning(warning)
-            raise Fault, (6, warning)
+            raise Fault(6, warning)
         except:
             critical_error("error determining client probes")
 
@@ -131,7 +142,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             warning = 'metadata consistency error'
             self.logger.warning(warning)
-            raise Fault, (6, warning)
+            raise Fault(6, warning)
         # clear dynamic groups
         self.Core.metadata.cgroups[meta.hostname] = []
         try:
@@ -162,7 +173,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
         except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError, Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
             warning = 'metadata consistency error'
             self.logger.warning(warning)
-            raise Fault, (6, warning)
+            raise Fault(6, warning)
         return True
 
     def Bcfg2GetConfig(self, address, checksum=False):
@@ -179,7 +190,7 @@ class Bcfg2Serv(Bcfg2.Component.Component):
             return tostring(config, encoding='UTF-8', xml_declaration=True)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             self.logger.warning("Metadata consistency failure for %s" % (address))
-            raise Fault, (6, "Metadata consistency failure")
+            raise Fault(6, "Metadata consistency failure")
 
     def Bcfg2RecvStats(self, address, stats):
         '''Act on statistics upload'''
@@ -227,19 +238,24 @@ if __name__ == '__main__':
 
     level = 0
     if setup['daemon']:
-        Bcfg2.Logger.setup_logging('bcfg2-server', to_console=False, level=level, to_file=setup['filelog'])
+        Bcfg2.Logger.setup_logging('bcfg2-server',
+                                   to_console=False,
+                                   level=level,
+                                   to_file=setup['filelog'])
         Bcfg2.Daemon.daemonize(setup['daemon'])
     else:
-        Bcfg2.Logger.setup_logging('bcfg2-server', level=level, to_file=setup['filelog'])
+        Bcfg2.Logger.setup_logging('bcfg2-server',
+                                   level=level,
+                                   to_file=setup['filelog'])
 
     if not setup['key']:
-        print "No key specified in '%s'" % setup['configfile']
-        raise SystemExit, 1
+        print("No key specified in '%s'" % setup['configfile'])
+        raise SystemExit(1)
 
     try:
         BSERV = Bcfg2Serv(setup)
     except SetupError:
-        raise SystemExit, 1
+        raise SystemExit(1)
     while not BSERV.shut:
         try:
             BSERV.serve_forever()

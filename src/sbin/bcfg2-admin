@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import getopt, logging, sys
-import Bcfg2.Server.Core, Bcfg2.Logger, Bcfg2.Options
+import getopt
+import logging
+import sys
+import Bcfg2.Server.Core
+import Bcfg2.Logger
+import Bcfg2.Options
 
 log = logging.getLogger('bcfg-admin')
 
@@ -23,7 +27,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hC:', ['help', 'configfile='])
     except getopt.GetoptError, msg:
-        print msg
+        print(msg)
         raise SystemExit(1)
 
 
@@ -38,7 +42,7 @@ if __name__ == '__main__':
     if len(args) < 1 or args[0] == 'help':
         print ("Usage: bcfg2-admin [OPTIONS] MODE [ARGS]\n\n"
                "Available options are:")
-        for (opt, arg) in avail_opts.items():
+        for (opt, arg) in list(avail_opts.items()):
             print(("   %-15s   " % opt + arg))
         print ("\nAvailable modes are:")
         if len(args) > 1:

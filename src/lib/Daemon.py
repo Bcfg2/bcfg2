@@ -1,7 +1,8 @@
 '''Bcfg2 daemon support'''
 __revision__ = '$Revision$'
 
-import os, sys
+import os
+import sys
 
 def daemonize(filename):
     '''Do the double fork/setsession dance'''
@@ -15,9 +16,9 @@ def daemonize(filename):
 
         # If we got this far without exceptions, there is another instance
         # running. Exit gracefully.
-        print "PID File (%s) exists and listed PID (%d) is active." % \
-              (filename, oldpid)
-        raise SystemExit, 1
+        print("PID File (%s) exists and listed PID (%d) is active." % \
+              (filename, oldpid))
+        raise SystemExit(1)
     except OSError:
         pidfile.close()
     except (IOError, ValueError): 
@@ -35,7 +36,7 @@ def daemonize(filename):
             pidfile.write("%i" % pid)
             pidfile.close()
         except:
-            print "Failed to write pid file %s" % filename
+            print("Failed to write pid file %s" % filename)
         os._exit(0)     
     os.chdir("/")         
     os.umask(0)

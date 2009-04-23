@@ -123,20 +123,20 @@ class OptionSet(dict):
         self.hm = self.buildHelpMessage()
         
     def buildGetopt(self):
-        return ''.join([opt.buildGetopt() for opt in self.values()])
+        return ''.join([opt.buildGetopt() for opt in list(self.values())])
 
     def buildLongGetopt(self):
-        return [opt.buildLongGetopt() for opt in self.values() if opt.long]
+        return [opt.buildLongGetopt() for opt in list(self.values()) if opt.long]
 
     def buildHelpMessage(self):
         if hasattr(self, 'hm'):
             return self.hm
-        return '     '.join([opt.buildHelpMessage() for opt in self.values()])
+        return '     '.join([opt.buildHelpMessage() for opt in list(self.values())])
 
     def helpExit(self, msg='', code=1):
         if msg:
-            print msg
-        print "Usage:\n     %s" % self.buildHelpMessage()
+            print(msg)
+        print("Usage:\n     %s" % self.buildHelpMessage())
         raise SystemExit(code)
 
     def parse(self, argv, do_getopt=True):
@@ -151,7 +151,7 @@ class OptionSet(dict):
             if '-h' in argv:
                 self.helpExit('', 0)
             self['args'] = args
-        for key in self.keys():
+        for key in list(self.keys()):
             if key == 'args':
                 continue
             option = self[key]
@@ -268,13 +268,17 @@ ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd
 
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 
-LOGGING_FILE_PATH = Option('Set path of file log', default=None, cmd='-o', odesc='<path>', cf=('logging', 'path'))
+LOGGING_FILE_PATH = Option('Set path of file log', default=None,
+                           cmd='-o', odesc='<path>', cf=('logging', 'path'))
 
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>') 
 
 class OptionParser(OptionSet):
-    '''OptionParser bootstraps option parsing, getting the value of the config file'''
+    '''
+       OptionParser bootstraps option parsing,
+       getting the value of the config file
+    '''
     def __init__(self, args):
         self.Bootstrap = OptionSet([('configfile', CFILE)])
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
