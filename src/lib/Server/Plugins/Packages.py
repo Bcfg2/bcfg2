@@ -1,4 +1,4 @@
-import copy, gzip, lxml.etree, re, urllib
+import copy, gzip, lxml.etree, re, urllib2
 import os
 import Bcfg2.Server.Plugin
 
@@ -45,7 +45,7 @@ class Source(object):
         for url in self.urls:
             print "updating", url
             fname = self.mk_fname(url)
-            data = urllib.urlopen(url).read()
+            data = urllib2.urlopen(url).read()
             file(fname, 'w').write(data)
 
     def applies(self, metadata):
@@ -313,8 +313,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 source.read_files()
             except:
                 self.logger.info("File read failed; updating sources", exc_info=1)
-                source.update()
-                source.read_files()
+                try:
+                    source.update()
+                    source.read_files()
+                except IOError, e:
+                    self.logger.error("Failed to update sources: " + str(e.code))
             self.sentinels.update(source.basegroups)
 
     def get_matching_sources(self, meta):
