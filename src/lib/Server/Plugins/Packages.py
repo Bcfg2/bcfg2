@@ -163,11 +163,12 @@ class YUMSource(Source):
             for entry in pre.getchildren():
                 self.deps[arch][pkgname].add(entry.get('name'))
             pro = pdata.find(self.rp + 'provides')
-            for entry in pro.getchildren():
-                prov = entry.get('name')
-                if prov not in self.provides[arch]:
-                    self.provides[arch][prov] = list()
-                self.provides[arch][prov].append(pkgname)
+            if pro != None: 
+                for entry in pro.getchildren():
+                    prov = entry.get('name')
+                    if prov not in self.provides[arch]:
+                        self.provides[arch][prov] = list()
+                    self.provides[arch][prov].append(pkgname)
 
     def is_package(self, metadata, item):
         arch = [a for a in self.arches if a in metadata.groups][0]
@@ -345,7 +346,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             oldp = pkgs
             oldu = unknown
             for source in sources:
-                pkgs, unknown = source.complete(meta, pkgs, unknown)
+                try:
+                    pkgs, unknown = source.complete(meta, pkgs, unknown)
+                except:
+                    self.logger.error("Packages: complete call failed unexpectedly:", exc_info=1)
         return pkgs, unknown, ptype.pop()
 
     def validate_structures(self, meta, structures):
