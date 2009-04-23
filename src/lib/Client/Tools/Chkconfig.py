@@ -72,7 +72,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.info("Installing Service %s" % (entry.get('name')))
         pass1 = True
         if entry.get('status') == 'off':
-            rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')) + " --level 1")[0]
+            rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')) + " --level 0123456")[0]
             pass1 = rc == 0
         rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')))[0]
         return pass1 and rc == 0
