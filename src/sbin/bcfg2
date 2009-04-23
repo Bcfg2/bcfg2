@@ -128,8 +128,8 @@ class Client:
         self.setup.parse(sys.argv[1:])
 
         if self.setup['args']:
-            print "Bcfg2 takes no arguments, only options"
-            print self.setup.buildHelpMessage()
+            print("Bcfg2 takes no arguments, only options")
+            print(self.setup.buildHelpMessage())
             raise SystemExit(1)
         level = 30
         if self.setup['verbose']:
@@ -148,16 +148,16 @@ class Client:
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
-            print "cannot use -f and -c together"
+            print("cannot use -f and -c together")
             raise SystemExit(1)
         if (self.setup["agent"] != False) and (self.setup["interactive"] != False):
-            print "cannot use -A and -I together"
+            print("cannot use -A and -I together")
             raise SystemExit(1)
         if (self.setup["agent"] and not self.setup["fingerprint"]):
-            print "Agent mode requires specification of x509 fingerprint"
+            print("Agent mode requires specification of x509 fingerprint")
             raise SystemExit(1)
         if (self.setup["agent"] and not self.setup["key"]):
-            print "Agent mode requires specification of ssl cert + key file"
+            print("Agent mode requires specification of ssl cert + key file")
             raise SystemExit(1)
 
     def run_probe(self, probe):
@@ -267,7 +267,7 @@ class Client:
                     self.logger.info(self.setup['decision_list'])
                 except xmlrpclib.Fault, f:
                     if f.faultCode == 1:
-                        print "GetDecisionList method not supported by server"
+                        print("GetDecisionList method not supported by server")
                     else:
                         self.logger.error("Failed to de", exc_info=1)
                     raise SystemExit(1)
@@ -380,8 +380,8 @@ class Agent(Bcfg2.Component.Component):
         elif self.setup["server"]:
             port = int(self.setup["server"].split(':')[1])
         else:
-            print "port or server URL not specified"
-            raise SystemExit, 1
+            print("port or server URL not specified")
+            raise SystemExit(1)
 
         location = (socket.gethostname(), port)
 

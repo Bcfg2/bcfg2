@@ -15,13 +15,13 @@ class dummyError(Exception):
 def printTabular(rows):
     '''print data in tabular format'''
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
-                    for index in xrange(len(rows[0]))])
+                    for index in range(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
     fstring = ('|'.join([" %%-%ss "] * len(cmax))) % cmax
-    print fstring % rows[0]
-    print (sum(cmax)  + (len(cmax) * 2) + (len(cmax) - 1)) * '='
+    print(fstring % rows[0])
+    print((sum(cmax)  + (len(cmax) * 2) + (len(cmax) - 1)) * '=')
     for row in rows[1:]:
-        print fstring % row
+        print(fstring % row)
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
@@ -33,7 +33,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError, msg:
-            print "Core load failed because %s" % msg
+            print("Core load failed because %s" % msg)
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
@@ -58,7 +58,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_debug(self, _):
         self.cont = False
-        print "dropping to python interpreter; run loop.do_loop() to resume"
+        print("dropping to python interpreter; run loop.do_loop() to resume")
         raise dummyError
 
     def do_quit(self, _):
@@ -96,7 +96,7 @@ Usage: [quit|exit]"""
 
     def do_version(self, _):
         '''print out code version'''
-        print __revision__
+        print(__revision__)
         
     def do_build(self, args):
         '''build client configuration'''
@@ -109,11 +109,11 @@ Usage: [quit|exit]"""
             output.write(data)
             output.close()
         else:
-            print 'Usage: build <hostname> <output file>'
+            print('Usage: build <hostname> <output file>')
 
     def do_buildall(self, args):
         if len(args.split()) != 1:
-            print "Usage: buildall <directory>"
+            print("Usage: buildall <directory>")
             return
         try:
             os.mkdir(args)
@@ -129,14 +129,14 @@ Usage: [quit|exit]"""
             entry = lxml.etree.Element('ConfigFile', name=fname)
             metadata = self.build_metadata(client)
             self.Bind(entry, metadata)
-            print lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True)
+            print(lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True))
         else:
-            print 'Usage: buildfile filename hostname'
+            print('Usage: buildfile filename hostname')
 
     def do_bundles(self, _):
         '''print out group/bundle info'''
         data = [('Group', 'Bundles')]
-        groups = self.metadata.groups.keys()
+        groups = list(self.metadata.groups.keys())
         groups.sort()
         for group in groups:
             data.append((group,
@@ -146,7 +146,7 @@ Usage: [quit|exit]"""
     def do_clients(self, _):
         '''print out client info'''
         data = [('Client', 'Profile')]
-        clist = self.metadata.clients.keys()
+        clist = list(self.metadata.clients.keys())
         clist.sort()
         for client in clist:
             data.append((client, self.metadata.clients[client]))
@@ -155,19 +155,19 @@ Usage: [quit|exit]"""
     def do_generators(self, _):
         '''print out generator info'''
         for generator in self.generators:
-            print generator.__version__
+            print(generator.__version__)
 
     def do_showentries(self, args):
         '''show abstract configuration entries for a given host'''
         arglen = len(args.split())
         if arglen not in [2, 3]:
-            print "Usage: showentries <hostname> <type>"
+            print("Usage: showentries <hostname> <type>")
             return
         client = args.split()[0]
         try:
             meta = self.build_metadata(client)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            print "Unable to find metadata for host %s" % client
+            print("Unable to find metadata for host %s" % client)
             return
         structures = self.GetStructures(meta)
         output = [('entrytype', 'name')]
@@ -186,7 +186,7 @@ Usage: [quit|exit]"""
     def do_groups(self, _):
         '''print out group info'''
         data = [("Groups", "Profile", "Category", "Contains")]
-        grouplist = self.metadata.groups.keys()
+        grouplist = list(self.metadata.groups.keys())
         grouplist.sort()
         for group in grouplist:
             if group in self.metadata.profiles:
@@ -211,13 +211,13 @@ Usage: [quit|exit]"""
         ''' print host metadata'''
         data = [('Client', 'Profile', "Groups", "Bundles")]
         if not len(args):
-            print "Usage:\nshowclient <client> ... <clientN>"
+            print("Usage:\nshowclient <client> ... <clientN>")
             return
         for client in args.split():
             try:
                 client_meta = self.build_metadata(client)
             except:
-                print "Client %s not defined" % client
+                print("Client %s not defined" % client)
                 continue
                 
             numbundles = len(client_meta.bundles)
@@ -249,7 +249,7 @@ Usage: [quit|exit]"""
         arglen = len(args.split())
         for generator in self.generators:
             if arglen == 0:
-                etypes = generator.Entries.keys()
+                etypes = list(generator.Entries.keys())
             else:
                 etypes = [args.split()[0]]
             if arglen == 2:
@@ -272,7 +272,7 @@ Usage: [quit|exit]"""
         try:
             meta = self.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            print "Unable to find metadata for host %s" % client
+            print("Unable to find metadata for host %s" % client)
             return
         structures = self.GetStructures(meta)
         for clist in [struct.findall('ConfigFile') for struct in structures]:
@@ -288,7 +288,7 @@ Usage: [quit|exit]"""
                     if len(cand) != 1:
                         sys.stderr.write("Entry %s failed" % cfile.get('name'))
                         continue
-                    print cand[0].name
+                    print(cand[0].name)
 
 def main(repo, plugins, password, encoding, debug, args=[]):
     loop = infoCore(repo, plugins, password, encoding, debug)
@@ -315,7 +315,7 @@ if __name__ == '__main__':
                     'encoding': Bcfg2.Options.ENCODING})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    print setup
+    print(setup)
     if not setup['profile']:
         loop = main(setup['repo'], setup['plugins'], setup['password'],
                     setup['encoding'], '-d' in sys.argv, [])

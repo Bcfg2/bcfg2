@@ -38,15 +38,15 @@ if __name__ == '__main__':
     if len(args) < 1 or args[0] == 'help':
         print ("Usage: bcfg2-admin [OPTIONS] MODE [ARGS]\n\n"
                "Available options are:")
-        for (opt, arg) in avail_opts.iteritems():
-            print ("   %-15s   " % opt + arg)
+        for (opt, arg) in avail_opts.items():
+            print(("   %-15s   " % opt + arg))
         print ("\nAvailable modes are:")
         if len(args) > 1:
             args = [args[1], args[0]]
         else:
             for mode in modes:
-                print ("   %-15s   %s" %
-                      (mode, mode_import(mode).__shorthelp__))
+                print(("   %-15s   %s" %
+                      (mode, mode_import(mode).__shorthelp__)))
             raise SystemExit(0)
     if args[0] in modes:
         modname = args[0].capitalize()
@@ -57,5 +57,5 @@ if __name__ == '__main__':
         mode = mode_cls(configfile)
         mode(args[1:])
     else:
-        print "unknown mode %s" % args[0]
+        print("unknown mode %s" % args[0])
 
