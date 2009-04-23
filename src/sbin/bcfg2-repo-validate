@@ -6,20 +6,11 @@ repos against their respective XML schemas
 '''
 __revision__ = '$Revision$'
 
-import glob, lxml.etree, os, sys
-
+import glob
+import lxml.etree
+import os
+import sys
 import Bcfg2.Options
-
-try:
-    pdlist = set
-except NameError:
-    class pdlist(list):
-        def add(self, item):
-            if item not in self:
-                self.append(item)
-        def discard(self, item):
-            if item in self:
-                self.remove(item)
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
@@ -46,10 +37,10 @@ if __name__ == '__main__':
 
     # get metadata list (with all included files)
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
-    ref_bundles = pdlist()
+    ref_bundles = set()
     xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
-    included = pdlist([ent.get('href') for ent in \
-                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
+    included = set([ent.get('href') for ent in \
+                   xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
     while included:
         try:
             filename = included.pop()

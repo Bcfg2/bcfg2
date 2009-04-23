@@ -1,17 +1,11 @@
 '''This module implements a package management scheme for all images'''
 __revision__ = '$Revision$'
 
-import logging, re, Bcfg2.Server.Plugin
+import logging
+import re
+import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
-
-try:
-    pdlist = set
-except:
-    class pdlist(list):
-        def add(self, item):
-            if item not in self:
-                self.append(item)
 
 class FuzzyDict(dict):
     fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
@@ -61,7 +55,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
     def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
         if not pdict.has_key('Package'):
-            pdict['Package'] = pdlist()
+            pdict['Package'] = set()
         for child in data.getchildren():
             for attr in [key for key in data.attrib.keys() \
                          if key != 'name' and not child.attrib.has_key(key)]:
