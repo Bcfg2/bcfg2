@@ -9,6 +9,9 @@ logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 
 class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
     def get_xml_value(self, metadata):
+        if not hasattr(self, 'template'):
+            logger.error("No parsed template information for %s" % (self.name))
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         stream = self.template.generate(metadata=metadata,).filter( \
             Bcfg2.Server.Plugins.TGenshi.removecomment)
         data = stream.render('xml')
