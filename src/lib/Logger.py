@@ -125,13 +125,13 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             try:
                 self.socket.send(msg)
             except socket.error:
-                while True:
+                for i in xrange(10):
                     try:
                         if isinstance(self.address, tuple):
                             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            self.socket.connect(self.address)
                         else:
-                            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-                        self.socket.connect(self.address)
+                            self._connect_unixsocket(self.address)
                         break
                     except socket.error:
                         continue
