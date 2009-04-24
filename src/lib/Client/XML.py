@@ -30,8 +30,8 @@ except ImportError:
                 return elementtree.ElementTree.tostring(e)
 
         except ImportError:
-            print "Failed to load lxml, xml.etree and elementtree.ElementTree"
-            print "Cannot continue"
-            raise SystemExit, 1
+            print("Failed to load lxml, xml.etree and elementtree.ElementTree")
+            print("Cannot continue")
+            raise SystemExit(1)
 
 len([Element, SubElement, XML, tostring, ParseError])

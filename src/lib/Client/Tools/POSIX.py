@@ -4,20 +4,28 @@ __revision__ = '$Revision$'
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
-
-import binascii, difflib, grp, os, pwd, string, logging, time
+import binascii
+import difflib
+import grp
+import logging
+import os
+import pwd
+import string
+import time
 import Bcfg2.Client.Tools
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
-    pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID}, {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
-             {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP}, {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}]
+    pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID},
+             {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
+             {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP},
+             {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}]
     tempperms = initial
     if len(perms) == 3:
         perms = '0%s' % (perms)
     pdigits = [int(perms[digit]) for digit in range(4)]
     for index in range(4):
-        for (num, perm) in pdisp[index].iteritems():
+        for (num, perm) in list(pdisp[index].items()):
             if pdigits[index] & num:
                 tempperms |= perm
     return tempperms
@@ -25,7 +33,10 @@ def calcPerms(initial, perms):
 log = logging.getLogger('posix')
 
 def normUid(entry):
-    '''This takes a user name or uid and returns the corresponding uid or False'''
+    '''
+       This takes a user name or uid and
+       returns the corresponding uid or False
+    '''
     try:
         try:
             return int(entry.get('owner'))
@@ -36,7 +47,10 @@ def normUid(entry):
         return False
 
 def normGid(entry):
-    '''This takes a group name or gid and returns the corresponding gid or False'''
+    '''
+       This takes a group name or gid and
+       returns the corresponding gid or False
+    '''
     try:
         try:
             return int(entry.get('group'))
@@ -62,8 +76,8 @@ def isString(strng):
 class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
     name = 'POSIX'
-    __handles__ = [('ConfigFile', None), ('Directory', None), ('Permissions', None), \
-                   ('SymLink', None)]
+    __handles__ = [('ConfigFile', None), ('Directory', None),
+                   ('Permissions', None), ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],
                'Directory': ['name', 'owner', 'group', 'perms'],
                'Permissions': ['name', 'owner', 'group', 'perms'],
@@ -134,7 +148,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             owner = str(ondisk[ST_UID])
             group = str(ondisk[ST_GID])
         except (OSError, KeyError):
-            self.logger.error('User/Group resolution failed for path %s' % (entry.get('name')))
+            self.logger.error('User/Group resolution failed for path %s' % \
+                              entry.get('name'))
             owner = 'root'
             group = '0'
         finfo = os.stat(entry.get('name'))
@@ -158,7 +173,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 ex_ents = [e for e in entries if e not in modlist]
                 if ex_ents:
                     pruneTrue = False
-                    self.logger.debug("Directory %s contains extra entries:" % entry.get('name'))
+                    self.logger.debug("Directory %s contains extra entries:" % \
+                                      entry.get('name'))
                     self.logger.debug(ex_ents)
                     nqtext = entry.get('qtext', '') + '\n'
                     nqtext += "Directory %s contains extra entries:" % entry.get('name')
@@ -171,7 +187,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if not pTrue:
             if owner != str(normUid(entry)):
                 entry.set('current_owner', owner)
-                self.logger.debug("%s %s ownership wrong" % (entry.tag, entry.get('name')))
+                self.logger.debug("%s %s ownership wrong" % \
+                                  (entry.tag, entry.get('name')))
                 nqtext = entry.get('qtext', '') + '\n'
                 nqtext += "%s owner wrong. is %s should be %s" % \
                           (entry.get('name'), owner, entry.get('owner'))
@@ -213,7 +230,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         try:
             fmode = os.lstat(entry.get('name'))
             if not S_ISDIR(fmode[ST_MODE]):
-                self.logger.debug("Found a non-directory entry at %s" % (entry.get('name')))
+                self.logger.debug("Found a non-directory entry at %s" % \
+                                  (entry.get('name')))
                 try:
                     os.unlink(entry.get('name'))
                     exists = False
@@ -221,7 +239,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     self.logger.info("Failed to unlink %s" % (entry.get('name')))
                     return False
             else:
-                self.logger.debug("Found a pre-existing directory at %s" % (entry.get('name')))
+                self.logger.debug("Found a pre-existing directory at %s" % \
+                                  (entry.get('name')))
                 exists = True
         except OSError:
             # stat failed
@@ -234,7 +253,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     os.stat(parent)
                 except:
                     self.logger.debug('Creating parent path for directory %s' % (entry.get('name')))
-                    for idx in xrange(len(parent.split('/')[:-1])):
+                    for idx in range(len(parent.split('/')[:-1])):
                         current = '/'+'/'.join(parent.split('/')[1:2+idx])
                         try:
                             sloc = os.stat(current)
@@ -254,7 +273,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 os.mkdir(entry.get('name'))
             except OSError:
-                self.logger.error('Failed to create directory %s' % (entry.get('name')))
+                self.logger.error('Failed to create directory %s' % \
+				  (entry.get('name')))
                 return False
         if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
             for pname in entry.get("qtest").split(":"):
@@ -280,7 +300,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
-            self.logger.error('Permission fixup failed for %s' % (entry.get('name')))
+            self.logger.error('Permission fixup failed for %s' % \
+			      (entry.get('name')))
             return False
 
     def gatherCurrentData(self, entry):
@@ -316,7 +337,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             tempdata = ''
         else:
             if entry.text == None:
-                self.logger.error("Cannot verify incomplete ConfigFile %s" % (entry.get('name')))
+                self.logger.error("Cannot verify incomplete ConfigFile %s" % \
+				  (entry.get('name')))
                 return False
             tempdata = entry.text
             if type(tempdata) == unicode:
@@ -324,10 +346,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
-            self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
+            self.logger.error("Failed to read %s: %s" % \
+			      (error.filename, error.strerror))
             return False
-        # comparison should be done with fingerprints or md5sum so it would be faster
-        # for big binary files
+        # comparison should be done with fingerprints or
+	# md5sum so it would be faster for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
             if tbin or not isString(content):
@@ -343,10 +366,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     now = time.time()
                     rawdiff.append(x)
                     if now - start > 5 and not longtime:
-                        self.logger.info("Diff of %s taking a long time" % (entry.get('name')))
+                        self.logger.info("Diff of %s taking a long time" % \
+					 (entry.get('name')))
                         longtime = True
                     elif now - start > 30:
-                        self.logger.error("Diff of %s took too long; giving up" % (entry.get('name')))
+                        self.logger.error("Diff of %s took too long; giving up" % \
+					  (entry.get('name')))
                         do_diff = False
                         break
                 if do_diff:
@@ -450,5 +475,5 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if err.errno == 13:
                 self.logger.info("Failed to open %s for writing" % (entry.get('name')))
             else:
-                print err
+                print(err)
             return False

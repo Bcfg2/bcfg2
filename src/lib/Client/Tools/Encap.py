@@ -2,7 +2,9 @@
 
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools, glob, re
+import glob
+import re
+import Bcfg2.Client.Tools
 
 class Encap(Bcfg2.Client.Tools.PkgTool):
     '''Support for Encap packages'''
@@ -25,9 +27,9 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
             if match:
                 self.installed[match.group('name')] = match.group('version')
             else:
-                print "Failed to split name %s" % pkg
+                print("Failed to split name %s" % pkg)
         self.logger.debug("Encap.py: RefreshPackages: self.installed.keys() are:")
-        self.logger.debug("%s" % self.installed.keys())
+        self.logger.debug("%s" % list(self.installed.keys()))
 
     def VerifyPackage(self, entry, _):
         '''Verify Package status for entry'''

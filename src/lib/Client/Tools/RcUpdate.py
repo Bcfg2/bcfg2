@@ -1,7 +1,9 @@
 '''This is rc-update support'''
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 4991 $'
 
-import Bcfg2.Client.Tools, Bcfg2.Client.XML, commands, os
+import os
+import Bcfg2.Client.Tools
+import Bcfg2.Client.XML
 
 class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     '''RcUpdate support for Bcfg2'''
@@ -15,17 +17,9 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         Verify Service status for entry.
         Assumes we run in the "default" runlevel.
         '''
-        # mrj - i think this should be:
-        # rc = self.cmd.run('/bin/rc-status | \
-        #                    grep %s | \
-        #                    grep started"' % entry.attrib['name'])
-        #
-        # ...but as i can't figure out a way to
-        #    test that right now, i'll do the one 
-        #    that works in python's interactive interpreter.
-        rc = commands.getoutput('/bin/rc-status -s | grep %s | grep started' % \
-                                entry.get('name'))
-        status = len(rc) > 0
+        rc, output = self.cmd.run('/bin/rc-status | grep %s | grep started' % \
+                                  entry.attrib['name'])
+        status = rc > 0
 
         if not status:
             # service is off
@@ -59,7 +53,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     def FindExtra(self):
         '''Locate extra rc-update Services'''
         allsrv = [line.split()[0] for line in \
-                  self.cmd.run("/bin/rc-status -s | grep started")[1]]
+                  self.cmd.run("/bin/rc-status | grep started")[1]]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]

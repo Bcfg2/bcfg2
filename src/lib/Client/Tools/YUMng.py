@@ -1,16 +1,13 @@
 '''This provides bcfg2 support for yum'''
 __revision__ = '$Revision: $'
 
+import ConfigParser
+import copy
+import os.path
+import sys
+import yum
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
-import ConfigParser, sys, os.path, copy
-
-import yum
-
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 YAD = True
 CP = ConfigParser.ConfigParser()
@@ -81,7 +78,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 if entry.get('name') in self.yum_avail:
                     # installed but out of date
                     data.update(self.yum_avail[entry.get('name')])
-                for (arch, (epoch, vers, rel)) in data.iteritems():
+                for (arch, (epoch, vers, rel)) in list(data.items()):
                     Bcfg2.Client.XML.SubElement(entry, "Instance",
                                                 name=entry.get('name'),
                                                 version=vers, arch=arch,

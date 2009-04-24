@@ -20,8 +20,14 @@
 """
 __revision__ = '$Revision$'
 
-import rpm, optparse, pwd, grp
-import sys, os, md5, stat
+import grp
+import md5
+import optparse
+import os
+import pwd
+import rpm
+import stat
+import sys
 
 # Determine what prelink tools we have available.
 # The isprelink module is a python extension that examines the ELF headers
@@ -190,7 +196,7 @@ def getindexbykeyword(index_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [ key for key in kwargs.keys() \
+    keywords = [ key for key in list(kwargs.keys()) \
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in index_mi:
@@ -228,7 +234,7 @@ def getheadersbykeyword(header_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [ key for key in kwargs.keys() \
+    keywords = [ key for key in list(kwargs.keys()) \
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in header_mi:
@@ -340,68 +346,68 @@ def debug_verify_flags(vflags):
         Decodes the verify flags bits.
     """
     if vflags & RPMVERIFY_MD5:
-        print 'RPMVERIFY_MD5'
+        print('RPMVERIFY_MD5')
     if vflags & RPMVERIFY_FILESIZE:
-        print 'RPMVERIFY_FILESIZE'
+        print('RPMVERIFY_FILESIZE')
     if vflags & RPMVERIFY_LINKTO:
-        print 'RPMVERIFY_LINKTO'
+        print('RPMVERIFY_LINKTO')
     if vflags & RPMVERIFY_USER:
-        print 'RPMVERIFY_USER'
+        print('RPMVERIFY_USER')
     if vflags & RPMVERIFY_GROUP:
-        print 'RPMVERIFY_GROUP'
+        print('RPMVERIFY_GROUP')
     if vflags & RPMVERIFY_MTIME:
-        print 'RPMVERIFY_MTIME'
+        print('RPMVERIFY_MTIME')
     if vflags & RPMVERIFY_MODE:
-        print 'RPMVERIFY_MODE'
+        print('RPMVERIFY_MODE')
     if vflags & RPMVERIFY_RDEV:
-        print 'RPMVERIFY_RDEV'
+        print('RPMVERIFY_RDEV')
     if vflags & RPMVERIFY_CONTEXTS:
-        print 'RPMVERIFY_CONTEXTS'
+        print('RPMVERIFY_CONTEXTS')
     if vflags & RPMVERIFY_READLINKFAIL:
-        print 'RPMVERIFY_READLINKFAIL'
+        print('RPMVERIFY_READLINKFAIL')
     if vflags & RPMVERIFY_READFAIL:
-        print 'RPMVERIFY_READFAIL'
+        print('RPMVERIFY_READFAIL')
     if vflags & RPMVERIFY_LSTATFAIL:
-        print 'RPMVERIFY_LSTATFAIL'
+        print('RPMVERIFY_LSTATFAIL')
     if vflags & RPMVERIFY_LGETFILECONFAIL:
-        print 'RPMVERIFY_LGETFILECONFAIL'
+        print('RPMVERIFY_LGETFILECONFAIL')
 
 def debug_file_flags(fflags):
     """
         Decodes the file flags bits.
     """
     if fflags & rpm.RPMFILE_CONFIG:
-        print 'rpm.RPMFILE_CONFIG'
+        print('rpm.RPMFILE_CONFIG')
 
     if fflags & rpm.RPMFILE_DOC:
-        print 'rpm.RPMFILE_DOC'
+        print('rpm.RPMFILE_DOC')
 
     if fflags & rpm.RPMFILE_ICON:
-        print 'rpm.RPMFILE_ICON'
+        print('rpm.RPMFILE_ICON')
 
     if fflags & rpm.RPMFILE_MISSINGOK:
-        print 'rpm.RPMFILE_MISSINGOK'
+        print('rpm.RPMFILE_MISSINGOK')
 
     if fflags & rpm.RPMFILE_NOREPLACE:
-        print 'rpm.RPMFILE_NOREPLACE'
+        print('rpm.RPMFILE_NOREPLACE')
 
     if fflags & rpm.RPMFILE_GHOST:
-        print 'rpm.RPMFILE_GHOST'
+        print('rpm.RPMFILE_GHOST')
 
     if fflags & rpm.RPMFILE_LICENSE:
-        print 'rpm.RPMFILE_LICENSE'
+        print('rpm.RPMFILE_LICENSE')
 
     if fflags & rpm.RPMFILE_README:
-        print 'rpm.RPMFILE_README'
+        print('rpm.RPMFILE_README')
 
     if fflags & rpm.RPMFILE_EXCLUDE:
-        print 'rpm.RPMFILE_EXLUDE'
+        print('rpm.RPMFILE_EXLUDE')
 
     if fflags & rpm.RPMFILE_UNPATCHED:
-        print 'rpm.RPMFILE_UNPATCHED'
+        print('rpm.RPMFILE_UNPATCHED')
 
     if fflags & rpm.RPMFILE_PUBKEY:
-        print 'rpm.RPMFILE_PUBKEY'
+        print('rpm.RPMFILE_PUBKEY')
 
 def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
     """
@@ -789,7 +795,7 @@ class Rpmtscallback(object):
             pass
             #print 'rpm.RPMCALLBACK_UNKNOWN'
         else:
-            print 'ERROR - Fell through callBack'
+            print('ERROR - Fell through callBack')
     
         #print reason, amount, total, key, client_data
 
@@ -816,7 +822,7 @@ def rpm_erase(erase_pkgspecs, erase_flags):
         idx_list = getindexbykeyword(erase_ts, **pkgspec)
         if len(idx_list) > 1 and not 'allmatches' in erase_flags:
             #pass
-            print 'ERROR - Multiple package match for erase', pkgspec
+            print('ERROR - Multiple package match for erase', pkgspec)
         else:
             for idx in idx_list:
                 erase_ts.addErase(idx)
@@ -898,7 +904,7 @@ def display_verify_file(file_results):
         else:
             result_string = result_string + '.'
   
-    print result_string + '  ' + filetype + ' ' + filename
+    print(result_string + '  ' + filetype + ' ' + filename)
     sys.stdout.flush()
 
 #===============================================================================
@@ -1091,10 +1097,10 @@ if __name__ == "__main__":
            
     elif options.list:
         for p in rpmpackagelist(main_ts):
-            print p
+            print(p)
 
     elif options.erase:
         if options.name:
             rpm_erase([cmdline_pkgspec], rpm_options)
         else:
-            print 'You must specify the "--name" option'
+            print('You must specify the "--name" option')

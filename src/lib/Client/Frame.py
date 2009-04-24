@@ -4,7 +4,8 @@ installs entries, and generates statistics
 """
 __revision__ = '$Revision$'
 
-import logging, time, types
+import logging
+import time
 import Bcfg2.Client.Tools
 
 def cmpent(ent1, ent2):
@@ -27,6 +28,7 @@ def promptFilter(prompt, entries):
             if raw_input(iprompt) in ['y', 'Y']:
                 ret.append(entry)
         except:
+            print("Error while reading input")
             continue
     return ret
 
@@ -56,13 +58,13 @@ class Frame:
         self.logger = logging.getLogger("Bcfg2.Client.Frame")
         for driver in drivers[:]:
             if driver not in Bcfg2.Client.Tools.drivers and \
-                   isinstance(driver, types.StringType):
+                   isinstance(driver, str):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
                 
         tclass = {}
         for tool in drivers:
-            if not isinstance(tool, types.StringType):
+            if not isinstance(tool, str):
                 tclass[time.time()] = tool
             tool_class = "Bcfg2.Client.Tools.%s" % tool
             try:
@@ -75,7 +77,7 @@ class Frame:
                 self.logger.error("Tool %s unexpectedly failed to load" % tool,
                                   exc_info=1)
 
-        for tool in tclass.values():
+        for tool in list(tclass.values()):
             try:
                 self.tools.append(tool(self.logger, setup, config))
             except Bcfg2.Client.Tools.toolInstantiationError:
@@ -135,10 +137,14 @@ class Frame:
             return ret
         elif name in self.__dict__:
             return self.__dict__[name]
-        raise AttributeError, name
+        raise AttributeError(name)
 
     def Inventory(self):
-        '''Verify all entries, find extra entries, and build up workqueues'''
+        '''
+           Verify all entries,
+           find extra entries,
+           and build up workqueues
+        '''
         # initialize all states
         for struct in self.config.getchildren():
             for entry in struct.getchildren():
@@ -157,13 +163,17 @@ class Frame:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
             elif self.setup['remove'] == 'services':
-                self.removal = [entry for entry in self.extra if entry.tag == 'Service']
+                self.removal = [entry for entry in self.extra \
+                                if entry.tag == 'Service']
             elif self.setup['remove'] == 'packages':
-                self.removal = [entry for entry in self.extra if entry.tag == 'Package']
+                self.removal = [entry for entry in self.extra \
+                                if entry.tag == 'Package']
 
-        candidates = [entry for entry in self.states if not self.states[entry]]
-        self.whitelist = [entry for entry in self.states if not self.states[entry]]
-        # Need to process decision stuff early, so that dryrun mode works with it
+        candidates = [entry for entry in self.states \
+                      if not self.states[entry]]
+        self.whitelist = [entry for entry in self.states \
+                          if not self.states[entry]]
+        # Need to process decision stuff early so that dryrun mode works with it
         if self.setup['decision'] == 'whitelist':
             dwl = self.setup['decision_list']
             w_to_rem = [e for e in self.whitelist \
@@ -171,7 +181,8 @@ class Frame:
             if w_to_rem:
                 self.logger.info("In whitelist mode: suppressing installation of:")
                 self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
-                self.whitelist = [x for x in self.whitelist if x not in w_to_rem]
+                self.whitelist = [x for x in self.whitelist \
+                                  if x not in w_to_rem]
 
         elif self.setup['decision'] == 'blacklist':
             b_to_rem = [e for e in self.whitelist \
@@ -304,12 +315,12 @@ class Frame:
     def CondDisplayState(self, phase):
         '''Conditionally print tracing information'''
         self.logger.info('\nPhase: %s' % phase)
-        self.logger.info('Correct entries:\t%d' % self.states.values().count(True))
-        self.logger.info('Incorrect entries:\t%d' % self.states.values().count(False))
-        if phase == 'final' and self.states.values().count(False):
+        self.logger.info('Correct entries:\t%d' % list(self.states.values()).count(True))
+        self.logger.info('Incorrect entries:\t%d' % list(self.states.values()).count(False))
+        if phase == 'final' and list(self.states.values()).count(False):
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for \
                               entry in self.states if not self.states[entry]])
-        self.logger.info('Total managed entries:\t%d' % len(self.states.values()))
+        self.logger.info('Total managed entries:\t%d' % len(list(self.states.values())))
         self.logger.info('Unmanaged entries:\t%d' % len(self.extra))
         if phase == 'final' and self.setup['extra']:
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) \
@@ -317,7 +328,7 @@ class Frame:
                 
         self.logger.info("")
 
-        if ((self.states.values().count(False) == 0) and not self.extra):
+        if ((list(self.states.values()).count(False) == 0) and not self.extra):
             self.logger.info('All entries correct.')
 
     def ReInventory(self):
@@ -345,13 +356,15 @@ class Frame:
     def GenerateStats(self):
         '''Generate XML summary of execution statistics'''
         feedback = Bcfg2.Client.XML.Element("upload-statistics")
-        stats = Bcfg2.Client.XML.SubElement(feedback, \
-                                            'Statistics', total=str(len(self.states)),
-                                            client_version=__revision__, version='2.0',
+        stats = Bcfg2.Client.XML.SubElement(feedback,
+                                            'Statistics',
+                                            total=str(len(self.states)),
+                                            client_version=__revision__,
+                                            version='2.0',
                                             revision=self.config.get('revision', '-1'))
-        good = len([key for key, val in self.states.iteritems() if val])
+        good = len([key for key, val in list(self.states.items()) if val])
         stats.set('good', str(good))
-        if len([key for key, val in self.states.iteritems() if not val]) == 0:
+        if len([key for key, val in list(self.states.items()) if not val]) == 0:
             stats.set('state', 'clean')
         else:
             stats.set('state', 'dirty')
@@ -368,7 +381,7 @@ class Frame:
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")
         feedback.append(stats)
-        for (event, timestamp) in self.times.iteritems():
+        for (event, timestamp) in list(self.times.items()):
             timeinfo.set(event, str(timestamp))
         stats.append(timeinfo)
         return feedback

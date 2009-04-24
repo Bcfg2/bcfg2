@@ -8,11 +8,6 @@ import rpm
 import rpmtools
 import Bcfg2.Client.Tools
 
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 class RPMng(Bcfg2.Client.Tools.PkgTool):
     '''Support for RPM packages'''
     name = 'RPMng'
@@ -59,7 +54,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             self.installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
                                'kernel-modules', 'kernel-debug', 'kernel-unsupported',
                                'kernel-source', 'kernel-devel', 'kernel-default',
-                               'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen', 
+                               'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
                                'gpg-pubkey']
         if 'gpg-pubkey' not in self.installOnlyPkgs:
             self.installOnlyPkgs.append('gpg-pubkey')
@@ -131,11 +126,11 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
             e.g.
 
-            self.installed['foo'] = [ {'name':'foo', 'epoch':None, 
-                                       'version':'1', 'release':2, 
+            self.installed['foo'] = [ {'name':'foo', 'epoch':None,
+                                       'version':'1', 'release':2,
                                        'arch':'i386'},
-                                      {'name':'foo', 'epoch':None, 
-                                       'version':'1', 'release':2, 
+                                      {'name':'foo', 'epoch':None,
+                                       'version':'1', 'release':2,
                                        'arch':'x86_64'} ]
         '''
         self.installed = {}
@@ -146,8 +141,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         for nevra in rpmtools.rpmpackagelist(refresh_ts):
             self.installed.setdefault(nevra['name'], []).append(nevra)
         if self.setup['debug']:
-            print "The following package instances are installed:"
-            for name, instances in self.installed.iteritems():
+            print("The following package instances are installed:")
+            for name, instances in list(self.installed.items()):
                 self.logger.debug("    " + name)
                 for inst in instances:
                     self.logger.debug("        %s" %self.str_evra(inst)) 
@@ -171,7 +166,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                          'verify_fail': True|False,
                                          'pkg': <Package Element Object>,
                                          'modlist': [ <filename>, ... ],
-                                         'verify' : [ <rpm --verify results> ]  
+                                         'verify' : [ <rpm --verify results> ]
                                        }, ......
                                   }
 
@@ -184,7 +179,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if instances == []:
             # We have an old style no Instance entry. Convert it to new style.
             instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
-            for attrib in entry.attrib.keys():
+            for attrib in list(entry.attrib.keys()):
                 instance.attrib[attrib] = entry.attrib[attrib]
             if self.pkg_checks == 'true' and entry.get('pkg_checks', 'true') == 'true':
                 if 'any' in [entry.get('version'), pinned_version]:
@@ -216,7 +211,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         self.instance_status[inst]['version_fail'] = False
                         if inst.tag == 'Package' and len(self.installed[entry.get('name')]) > 1:
                             self.logger.error("WARNING: Multiple instances of package %s are installed." % \
-                                                                             (entry.get('name')))
+                                              (entry.get('name')))
                         for pkg in self.installed[entry.get('name')]:
                             if inst.get('version') == 'any' or self.pkg_vr_equal(inst, pkg) \
                                or self.inst_evra_equal(inst, pkg):
@@ -358,7 +353,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     
                         if instance_fail == True:
                             self.logger.debug("*** Instance %s failed RPM verification ***" % \
-                                                                           self.str_evra(inst))
+                                              self.str_evra(inst))
                             qtext_versions = qtext_versions + 'R(%s) ' % self.str_evra(inst)
                             self.modlists[entry] = modlist
 
@@ -417,7 +412,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             if bcfg2_versions != '':
                 entry.set('version', bcfg2_versions)
             entry.set('qtext', "Install Package %s Instance(s) %s? (y/N) " % \
-                                                        (entry.get('name'), qtext_versions))
+                      (entry.get('name'), qtext_versions))
 
             return False
         return True
@@ -508,8 +503,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 fix = True
             else:
                 self.logger.debug('Installed Action for %s %s is to not install' % \
-                                                     (inst_status.get('pkg').get('name'),
-                                                      self.str_evra(instance)))
+                                  (inst_status.get('pkg').get('name'),
+                                   self.str_evra(instance)))
 
         elif inst_status.get('version_fail', False) == True:
             if instance.get('version_fail_action', 'upgrade') == "upgrade" and \
@@ -517,8 +512,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 fix = True
             else:
                 self.logger.debug('Version Fail Action for %s %s is to not upgrade' % \
-                                                     (inst_status.get('pkg').get('name'),
-                                                      self.str_evra(instance)))
+                                  (inst_status.get('pkg').get('name'),
+                                   self.str_evra(instance)))
 
         elif inst_status.get('verify_fail', False) == True and self.name == "RPMng":
             # yum can't reinstall packages so only do this for rpm.
@@ -858,7 +853,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = []
 
-        for (name, instances) in self.installed.iteritems():
+        for (name, instances) in list(self.installed.items()):
             if name not in packages:
                 extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
@@ -896,7 +891,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 if not_found == True:
                     # Extra package.
                     self.logger.info("Extra InstallOnlyPackage %s %s." % \
-                                               (name, self.str_evra(installed_inst)))
+                                     (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
                                      version = installed_inst.get('version'), \
                                      release = installed_inst.get('release'))
@@ -915,7 +910,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         break
                 if not_found:
                     self.logger.info("Extra Normal Package Instance %s %s" % \
-                                                        (name, self.str_evra(installed_inst)))
+                                     (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
                                      version = installed_inst.get('version'), \
                                      release = installed_inst.get('release'))

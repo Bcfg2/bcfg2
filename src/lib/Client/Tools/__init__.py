@@ -183,7 +183,10 @@ class Tool:
         return True
 
 class PkgTool(Tool):
-    '''PkgTool provides a one-pass install with fallback for use with packaging systems'''
+    '''
+       PkgTool provides a one-pass install with
+       fallback for use with packaging systems
+    '''
     pkgtool = ('echo %s', ('%s', ['name']))
     pkgtype = 'echo'
     name = 'PkgTool'
@@ -200,7 +203,10 @@ class PkgTool(Tool):
         return False
 
     def Install(self, packages, states):
-        '''Run a one-pass install, followed by single pkg installs in case of failure'''
+        '''
+	   Run a one-pass install, followed by
+	   single pkg installs in case of failure
+	'''
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
 
@@ -215,7 +221,7 @@ class PkgTool(Tool):
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]
-            for entry in [entry for entry in states.keys()
+            for entry in [entry for entry in list(states.keys())
                           if entry.tag == 'Package'
                           and entry.get('type') == self.pkgtype
                           and entry.get('name') in pkgnames]:
@@ -256,7 +262,7 @@ class PkgTool(Tool):
     def FindExtraPackages(self):
         '''Find extra packages'''
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
-        extras = [data for data in self.installed.iteritems() \
+        extras = [data for data in list(self.installed.items()) \
                   if data[0] not in packages]
         return [Bcfg2.Client.XML.Element('Package', name=name, \
                                          type=self.pkgtype, version=version) \
