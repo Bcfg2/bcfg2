@@ -1,5 +1,5 @@
 '''This is rc-update support'''
-__revision__ = '$Revision: 4991 $'
+__revision__ = '$Revision$'
 
 import os
 import Bcfg2.Client.Tools
