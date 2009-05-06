@@ -421,8 +421,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             setattr(imd, source, data)
             imd.connectors.append(source)        
     
-    def AuthenticateConnection(self, user, password, address):
-        '''This function checks user and password'''
+    def AuthenticateConnection(self, cert, user, password, address):
+        '''This function checks auth creds'''
+        if cert:
+            self.logger.error("Cert checking not yet implemented")
+            return False
         if user == 'root':
             # we aren't using per-client keys
             try:

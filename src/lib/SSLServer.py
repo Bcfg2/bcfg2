@@ -30,10 +30,11 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         self.allow_none = allow_none
         self.encoding = encoding
 
-    def _marshaled_dispatch (self, data):
+    def _marshaled_dispatch (self, address, data):
         method_func = None
         params, method = xmlrpclib.loads(data)
         try:
+            params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             response = (response,)
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
@@ -89,11 +90,16 @@ class SSLServer (SocketServer.TCPServer, object):
         self.certfile = certfile
         self.ca = ca
         self.reqCert = reqCert
+        if ca and certfile:
+            self.mode = ssl.CERT_OPTIONAL
+        else:
+            self.mode = ssl.CERT_NONE
         
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
         sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
-                                  keyfile=self.keyfile)
+                                  keyfile=self.keyfile, cert_reqs=self.mode,
+                                  ca_certs=self.ca)
         return sslsock, sockinfo
         
     def _get_url (self):
@@ -119,19 +125,12 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     """
     logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
     
-    class CouldNotAuthenticate (Exception):
-        """Client did not present acceptible authentication information."""
-    
-    require_auth = True
-    credentials = {'root':'default'}
-    
     def authenticate (self):
-        """Authenticate the credentials of the latest client."""
         try:
             header = self.headers['Authorization']
         except KeyError:
             self.logger.error("No authentication data presented")
-            raise self.CouldNotAuthenticate("client did not present credentials")
+            return False
         auth_type, auth_content = header.split()
         auth_content = base64.standard_b64decode(auth_content)
         try:
@@ -139,12 +138,10 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         except ValueError:
             username = auth_content
             password = ""
-        try:
-            valid_password = self.credentials[username]
-        except KeyError:
-            raise self.CouldNotAuthenticate("unknown user: %s" % username)
-        if password != valid_password:
-            raise self.CouldNotAuthenticate("invalid password for %s" % username)
+        cert = self.request.getpeercert()
+        client_address = self.request.getpeername()
+        return self.server.instance.authenticate(cert, username,
+                                                 password, client_address)
     
     def parse_request (self):
         """Extends parse_request.
@@ -152,18 +149,18 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         Optionally check HTTP authentication when parsing."""
         if not SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.parse_request(self):
             return False
-        if self.require_auth:
-            try:
-                self.authenticate()
-            except self.CouldNotAuthenticate, e:
-                self.logger.error("Authentication failed: %s" % e.args[0])
-                code = 401
-                message, _ = self.responses[401]
-                self.send_error(code, message)
+        try:
+            if not self.authenticate():
+                self.logger.error("Authentication Failure")
+                self.send_error(401, self.responses[401][0])
                 return False
+        except:
+            self.logger.error("Unexpected Authentication Failure", exc_info=1)
+            self.send_error(401, self.responses[401][0])
+            return False
         return True
 
-    ### FIXME need to override do_POST here
+    ### need to override do_POST here
     def do_POST(self):
         try:
             max_chunk_size = 10*1024*1024
@@ -175,7 +172,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 size_remaining -= len(L[-1])
             data = ''.join(L)
 
-            response = self.server._marshaled_dispatch(data)
+            response = self.server._marshaled_dispatch(self.client_address, data)
         except: 
             raise
             self.send_response(500)
@@ -215,7 +212,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     """
     
     def __init__ (self, server_address, RequestHandlerClass=None,
-                  keyfile=None, certfile=None,
+                  keyfile=None, certfile=None, ca=None,
                   timeout=10,
                   logRequests=False,
                   register=True, allow_none=True, encoding=None):
@@ -242,7 +239,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 """A subclassed request handler to prevent class-attribute conflicts."""
 
         SSLServer.__init__(self,
-            server_address, RequestHandlerClass,
+            server_address, RequestHandlerClass, ca=ca,
             timeout=timeout, keyfile=keyfile, certfile=certfile)
         self.logRequests = logRequests
         self.serve = False
@@ -291,7 +288,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         except AttributeError:
             name = "unknown"
         self.logger.info("serving %s at %s" % (name, self.url))
-    
+
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True

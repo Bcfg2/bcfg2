@@ -4,208 +4,18 @@
 __revision__ = '$Revision$'
 
 import logging
-import md5
-import select
-import socket
 import sys
-import time
 from xmlrpclib import Fault
-from lxml.etree import XML, Element, tostring
 
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Component
 import Bcfg2.Daemon
 import Bcfg2.Server.Plugins.Metadata
-from Bcfg2.Server.Core import Core, CoreInitError
+from Bcfg2.Server.Core import CoreInitError
+import Bcfg2.Server.XMLRPC
 
 logger = logging.getLogger('bcfg2-server')
-
-def critical_error(operation):
-    '''Log and err, traceback and return an xmlrpc fault to client'''
-    logger.error(operation, exc_info=1)
-    raise Fault(7, "Critical unexpected failure: %s" % (operation))
-
-class SetupError(Exception):
-    '''Used when the server cant be setup'''
-    pass
-
-class Bcfg2Serv(Bcfg2.Component.Component):
-    """The Bcfg2 Server component providing XML-RPC access to Bcfg2 methods"""
-    __name__ = 'bcfg2'
-    __implementation__ = 'bcfg2'
-    fork_funcs = ['GetConfig', 'GetProbes']
-
-    request_queue_size = 15
-
-    def __init__(self, setup):
-        try:
-            self.Core = Core(setup['repo'], setup['plugins'], 
-                             setup['password'], 
-                             setup['encoding'], setup['filemonitor'])
-        except CoreInitError, msg:
-            logger.critical("Fatal error: %s" % (msg))
-            raise SystemExit(1)
-
-        if 'DBStats' in self.Core.plugins:
-            self.fork_funcs.append("RecvStats")
-
-        famfd = self.Core.fam.fileno()
-        events = False
-        while True:
-            try:
-                rsockinfo = select.select([famfd], [], [], 15)[0]
-                if not rsockinfo:
-                    if events:
-                        break
-                    else:
-                        logger.error("Hit event timeout without getting "
-                                     "any events; GAMIN/FAM problem?")
-                        continue
-                events = True
-                i = 0
-                while self.Core.fam.Service() or i < 10:
-                    i += 1
-                    time.sleep(0.1)
-            except socket.error:
-                continue
-        try:
-            Bcfg2.Component.Component.__init__(self, setup['key'],
-                                               setup['cert'],
-                                               setup['password'],
-                                               setup['location'])
-        except Bcfg2.Component.ComponentInitError:
-            raise SetupError
-
-        self.funcs.update({
-            "AssertProfile" : self.Bcfg2AssertProfile, 
-            "GetConfig"     : self.Bcfg2GetConfig,
-            "GetProbes"     : self.Bcfg2GetProbes,
-            "RecvProbeData" : self.Bcfg2RecvProbeData,
-            "RecvStats"     : self.Bcfg2RecvStats,
-            "GetDecisionList" : self.Bcfg2GetDecisionList
-            })
-
-        # init functions to be exposed as XML-RPC functions
-        for plugin in list(self.Core.plugins.values()):
-            for method in plugin.__rmi__:
-                self.register_function(getattr(self.Core.plugins[plugin.__name__], method),
-                                       "%s.%s" % (plugin.__name__, method))
-
-
-
-    def get_request(self):
-        '''
-           We need to do work between requests, so select
-           with timeout instead of blocking in accept
-        '''
-        rsockinfo = []
-        famfd = self.Core.fam.fileno()
-        while self.socket not in rsockinfo:
-            self.clean_up_children()
-            if self.shut:
-                raise socket.error
-            try:
-                rsockinfo = select.select([self.socket, famfd], [], [], 15)[0]
-            except select.error:
-                continue
-            
-            if famfd in rsockinfo:
-                self.Core.Service()
-            if self.socket in rsockinfo:
-                return self.socket.accept()
-
-    def Bcfg2GetProbes(self, address):
-        '''Fetch probes for a particular client'''
-        resp = Element('probes')
-        try:
-            name = self.Core.metadata.resolve_client(address)
-            meta = self.Core.build_metadata(name)
-            
-            for plugin in [p for p in list(self.Core.plugins.values()) \
-                           if isinstance(p, Bcfg2.Server.Plugin.Probing)]:
-                for probe in plugin.GetProbes(meta):
-                    resp.append(probe)
-            return tostring(resp, encoding='UTF-8', xml_declaration=True)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            warning = 'Client metadata resolution error for %s; check server log' % address[0]
-            self.logger.warning(warning)
-            raise Fault(6, warning)
-        except:
-            critical_error("error determining client probes")
-
-    def Bcfg2RecvProbeData(self, address, probedata):
-        '''Receive probe data from clients'''
-        try:
-            name = self.Core.metadata.resolve_client(address)
-            meta = self.Core.build_metadata(name)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            warning = 'metadata consistency error'
-            self.logger.warning(warning)
-            raise Fault(6, warning)
-        # clear dynamic groups
-        self.Core.metadata.cgroups[meta.hostname] = []
-        try:
-            xpdata = XML(probedata)
-        except:
-            self.logger.error("Failed to parse probe data from client %s" % (address[0]))
-            return False
-
-        sources = []
-        [sources.append(data.get('source')) for data in xpdata
-         if data.get('source') not in sources]
-        for source in sources:
-            if source not in self.Core.plugins:
-                self.logger.warning("Failed to locate plugin %s" % (source))
-                continue
-            dl = [data for data in xpdata if data.get('source') == source]
-            try:
-                self.Core.plugins[source].ReceiveData(meta, dl)
-            except:
-                self.logger.error("Failed to process probe data from client %s" % (address[0]), exc_info=1)
-        return True
-
-    def Bcfg2AssertProfile(self, address, profile):
-        '''Set profile for a client'''
-        try:
-            client = self.Core.metadata.resolve_client(address)
-            self.Core.metadata.set_profile(client, profile, address)
-        except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError, Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
-            warning = 'metadata consistency error'
-            self.logger.warning(warning)
-            raise Fault(6, warning)
-        return True
-
-    def Bcfg2GetConfig(self, address, checksum=False):
-        '''Build config for a client'''
-        try:
-            client = self.Core.metadata.resolve_client(address)
-            config = self.Core.BuildConfiguration(client)
-            if checksum:
-                for cfile in config.findall('.//ConfigFile'):
-                    if cfile.text != None:
-                        csum = md5.md5(cfile.text)
-                        cfile.set('checksum', csum.hexdigest())
-                        cfile.text = None
-            return tostring(config, encoding='UTF-8', xml_declaration=True)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            self.logger.warning("Metadata consistency failure for %s" % (address))
-            raise Fault(6, "Metadata consistency failure")
-
-    def Bcfg2RecvStats(self, address, stats):
-        '''Act on statistics upload'''
-        sdata = XML(stats)
-        client = self.Core.metadata.resolve_client(address)        
-        self.Core.process_statistics(client, sdata)
-        return "<ok/>"
-
-    def _authenticate_connection(self, _, user, password, address):
-        return self.Core.metadata.AuthenticateConnection(user, password, address)
-
-    def Bcfg2GetDecisionList(self, address, mode):
-        client = self.Core.metadata.resolve_client(address)
-        meta = self.Core.build_metadata(client)
-        return self.Core.GetDecisions(meta, mode)
 
 if __name__ == '__main__':
 
@@ -235,30 +45,14 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
 
-
-    level = 0
-    if setup['daemon']:
-        Bcfg2.Logger.setup_logging('bcfg2-server',
-                                   to_console=False,
-                                   level=level,
-                                   to_file=setup['filelog'])
-        Bcfg2.Daemon.daemonize(setup['daemon'])
-    else:
-        Bcfg2.Logger.setup_logging('bcfg2-server',
-                                   level=level,
-                                   to_file=setup['filelog'])
-
-    if not setup['key']:
-        print("No key specified in '%s'" % setup['configfile'])
-        raise SystemExit(1)
-
     try:
-        BSERV = Bcfg2Serv(setup)
-    except SetupError:
-        raise SystemExit(1)
-    while not BSERV.shut:
-        try:
-            BSERV.serve_forever()
-        except:
-            critical_error('error in service loop')
-    logger.info("Shutting down")
+        Bcfg2.Component.run_component(Bcfg2.Server.XMLRPC.bcfg2_server,
+                                      register=False, cls_kwargs={'setup':setup},
+                                      keyfile='/home/desai/tmp/cert2/b2-s/priv.key',
+                                      certfile='/home/desai/tmp/cert2/b2-s/cert.pem',
+                                      ca='/home/desai/tmp/cert2/ca-cert.pem',
+                                      )
+    except KeyboardInterrupt:
+        sys.exit(1)
+    sys.exit(1)
+

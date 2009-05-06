@@ -19,7 +19,8 @@ import Bcfg2.Logger
 from Bcfg2.SSLServer import XMLRPCServer
 
 def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt='', time_out=10):
+                   cls_kwargs={}, extra_getopt='', time_out=10, certfile=None, keyfile=None,
+                   ca=None):
     if argv is None:
         argv = sys.argv
     try:
@@ -46,7 +47,6 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
             level = logging.DEBUG
     
     logging.getLogger().setLevel(level)
-    Bcfg2.Logger.log_to_stderr(logging.getLogger())
     Bcfg2.Logger.setup_logging(component_cls.implementation, True, True)
 
     if daemon:
@@ -73,13 +73,11 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         pidfile.close()
 
     component = component_cls(**cls_kwargs)
-        
+    # FIXME
     location = ('', 6789)
-    keypath = '/etc/bcfg2.key'
-    certfile = '/etc/bcfg2.key'
 
-    server = XMLRPCServer(location, keyfile=keypath, certfile=keypath,
-                          register=register, timeout=time_out)
+    server = XMLRPCServer(location, keyfile=keyfile, certfile=certfile,
+                          register=register, timeout=time_out, ca=ca)
     server.register_instance(component)
     
     try:
