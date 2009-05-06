@@ -53,10 +53,9 @@ class SSLHTTPConnection(httplib.HTTPConnection):
     def connect(self):
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         rawsock.settimeout(90)
-        self.sock = ssl.SSLSocket(rawsock, do_handshake_on_connect=False,
+        self.sock = ssl.SSLSocket(rawsock, 
                                   suppress_ragged_eofs=True)
         self.sock.connect((self.host, self.port))
-        self.sock.do_handshake()
         self.sock.closeSocket = True
 
 
