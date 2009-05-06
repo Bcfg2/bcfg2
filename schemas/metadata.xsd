@@ -41,6 +41,7 @@
     <xsd:attribute type='booleanType' name='public' use='optional'/>
     <xsd:attribute type='booleanType' name='default' use='optional'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='auth' use='optional'/>
     <xsd:attribute type='toolsetType' name='toolset' use='optional'/>
     <xsd:attribute type='xsd:string' name='category' use='optional'/>
     <xsd:attribute type='xsd:string' name='comment' use='optional'/>
