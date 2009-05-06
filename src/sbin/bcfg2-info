@@ -37,10 +37,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
-        i = 0
-        while self.fam.Service() or i < 10:
-            i += 1
-            time.sleep(0.1)
+        self.fam.handle_events_in_interval(10)
         
     def do_loop(self):
         self.cont = True

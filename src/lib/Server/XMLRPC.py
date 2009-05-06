@@ -4,10 +4,11 @@ import logging
 import lxml.etree
 import select
 import socket
+import threading
 import time
 import xmlrpclib
 
-from Bcfg2.Component import Component, exposed
+from Bcfg2.Component import Component, automatic, exposed, locking
 import Bcfg2.Server.Core
 
 logger = logging.getLogger('server')
@@ -25,6 +26,7 @@ class bcfg2_server(Component,
                    Bcfg2.Server.Core.Core):
     '''XML RPC interfaces for the server core'''
     name = 'bcfg2-server'
+    implementation = 'bcfg2-server'
     
     def __init__(self, setup):
         Component.__init__(self)
@@ -32,26 +34,20 @@ class bcfg2_server(Component,
                                         setup['password'], 
                                         setup['encoding'], setup['filemonitor'])
         self.ca = setup['ca']
-        self.process_initial_fam_events()
+        self.fam_thread = threading.Thread(target=self._file_monitor_thread)
+        self.fam_thread.start()
 
-    def process_initial_fam_events(self):
-        events = False
+    def _file_monitor_thread(self):
+        famfd = self.fam.fileno()
         while True:
             try:
-                rsockinfo = select.select([self.fam.fileno()], [], [], 15)[0]
-                if not rsockinfo:
-                    if events:
-                        break
-                    else:
-                        logger.error("Hit event timeout without getting "
-                                     "any events; GAMIN/FAM problem?")
-                        continue
-                events = True
-                i = 0
-                while self.fam.Service() or i < 10:
-                    i += 1
-                    time.sleep(0.1)
-            except socket.error:
+                if famfd:
+                    rsockinfo = select.select([famfd], [], [])
+                else:
+                    while not self.fam.pending():
+                        time.sleep(15)
+                self.fam.handle_event_set(self.lock)
+            except:
                 continue
 
     @exposed
