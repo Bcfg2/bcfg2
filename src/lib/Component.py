@@ -79,7 +79,10 @@ class CobaltXMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 
                 # shut down the connection
                 self.wfile.flush()
-                #self.connection.shutdown()
+                self.rfile.close()
+                self.wfile.close()
+                self.connection.sock.shutdown(2)
+                #self.wfile.close()
             except socket.error:
                 pass
 
@@ -120,6 +123,8 @@ class TLSServer(Bcfg2.tlslite.api.TLSSocketServerMixIn,
                 tlsConnection.close()
             if os.getpid() != self.master:
                 os._exit(0)
+        else:
+            log.error("Handshake failed")
 
     def handshake(self, tlsConnection):
         try:
