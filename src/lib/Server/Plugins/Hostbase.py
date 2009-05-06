@@ -281,7 +281,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                          if (host[1].split("."), host[0]) not in hosts]
                 hosts_external = [(host[1].split("."), host[0])
                                   for host in reversehosts
-                                  if ((host[1].split("."), host[0]) not in hosts
+                                  if ((host[1].split("."), host[0]) not in hosts_external
                                   and host[2] == 'global')]
                 context = Context({
                     'hosts': hosts,
