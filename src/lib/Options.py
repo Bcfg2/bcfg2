@@ -68,9 +68,9 @@ class Option(object):
                 if self.long:
                     msg = "%-27s" % ("%s=%s" % (self.cmd, self.odesc))
                 else:
-                    msg += '%-24s' % (self.odesc)
+                    msg += '%-25s' % (self.odesc)
             else:
-                msg += '%-24s' % ('')
+                msg += '%-25s' % ('')
             msg += "%s\n" % self.desc
         return msg
 
