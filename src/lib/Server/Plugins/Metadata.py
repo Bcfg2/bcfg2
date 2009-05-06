@@ -75,6 +75,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if watch_clients:
             self.states = {"groups.xml":False, "clients.xml":False}
         self.addresses = {}
+        self.auth = dict()
         self.clients = {}
         self.aliases = {}
         self.groups = {}
@@ -206,6 +207,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                         self.addresses[caddr].append(clname)
                     else:
                         self.addresses[caddr] = [clname]
+                if 'auth' in client.attrib:
+                    self.auth[client.get('name')] = client.get('auth')
                 if 'uuid' in client.attrib:
                     self.uuid[client.get('uuid')] = clname
                 if client.get('secure', 'false') == 'true' :
@@ -420,12 +423,37 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if not hasattr(imd, source):
             setattr(imd, source, data)
             imd.connectors.append(source)        
+
+    def validate_client_address(self, client, address):
+        '''Check address against client'''
+        if client in self.floating:
+            return True
+        if address in self.addresses:
+            if client == self.addresses[address]:
+                return True
+            else:
+                self.logger.error("Got request for non-float client %s from %s" \
+                                  % (client, address))
+                return False
+        resolved = self.resolve_client(address)
+        if resolved == client:
+            return True
+        else:
+            self.logger.error("Got request for %s from incorrect address %s" \
+                              % (client, address))
+            return False
     
     def AuthenticateConnection(self, cert, user, password, address):
         '''This function checks auth creds'''
         if cert:
-            self.logger.error("Cert checking not yet implemented")
-            return False
+            certinfo = dict([x[0] for x in cert['subject']])
+            # look at cert.cN
+            client = certinfo['commonName']
+            auth_type = self.auth.get(client, 'cert+password')
+            addr_check = self.validate_client_address(client, address)
+            if auth_type == 'cert':
+                # we can't continue to password auth
+                return addr_check
         if user == 'root':
             # we aren't using per-client keys
             try:

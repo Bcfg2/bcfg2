@@ -149,7 +149,6 @@ class bcfg2_server(Component,
         return "<ok/>"
 
     def authenticate(self, cert, user, password, address):
-        print cert, user, password, address
         return self.metadata.AuthenticateConnection(cert, user, password, address)
 
     @exposed
