@@ -206,7 +206,13 @@ SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
                        default=False, cmd='-K', odesc='<ssl key file>')
 SERVER_CERT = Option('Path to SSL certificate', default='/etc/bcfg2.key',
                      cf=('communication', 'certificate'), odesc='<ssl cert>')
-SERVER_CA = Option('Path to SSL CA Cert', default=False,
+SERVER_CA = Option('Path to SSL CA Cert', default=None,
+                     cf=('communication', 'ca'), odesc='<ca cert>')
+CLIENT_KEY = Option('Path to SSL key', cf=('communication', 'key'),
+                       default=None, odesc='<ssl key>')
+CLIENT_CERT = Option('Path to SSL certificate', default=None,
+                     cf=('communication', 'certificate'), odesc='<ssl cert>')
+CLIENT_CA = Option('Path to SSL CA Cert', default=None,
                      cf=('communication', 'ca'), odesc='<ca cert>')
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
