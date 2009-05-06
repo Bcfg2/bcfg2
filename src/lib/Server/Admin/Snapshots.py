@@ -29,7 +29,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
        calculate column widths (longest item in each column
        plus padding on both sides)
     '''
-    cols = zip(*rows)
+    cols = list(zip(*rows))
     colWidths = [max([len(str(item))+2*padding for \
                  item in col]) for col in cols]
     borderline = vdelim.join([w*hdelim for w in colWidths])
@@ -38,7 +38,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
     print(borderline)
     for row in rows:
         print(vdelim.join([justify(str(item), width) for \
-             (item, width) in zip(row, colWidths)]))
+              (item, width) in zip(row, colWidths)]))
         if hdr:
             print(borderline)
             hdr = False
@@ -78,7 +78,11 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     for host in \
                        self.session.query(q_obj).filter(q_obj.active == True):
                         rows.append([host.name, 'Yes'])
-                    print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
+                    print_table([labels]+rows,
+                                justify='left',
+                                hdr=True,
+                                vdelim=" ",
+                                padding=1)
                 elif q_obj == Group:
                     print("Groups:")
                     for group in self.session.query(q_obj).all():
@@ -86,8 +90,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 else:
                     results = self.session.query(q_obj).all()
             else:
-                print 'error'
-                raise SystemExit, 1
+                print('error')
+                raise SystemExit(1)
         elif args[0] == 'init':
             # Initialize the Snapshots database
             dbpath = Bcfg2.Server.Snapshots.db_from_config()
@@ -106,9 +110,9 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 sys.exit(1)
             print("Client %s last run at %s" % (client, snap.timestamp))
             for pkg in snap.packages:
-                print "C:", pkg.correct, 'M:', pkg.modified
-                print "start", pkg.start.name, pkg.start.version
-                print "end", pkg.end.name, pkg.end.version
+                print("C:", pkg.correct, 'M:', pkg.modified)
+                print("start", pkg.start.name, pkg.start.version)
+                print("end", pkg.end.name, pkg.end.version)
         elif args[0] == 'reports':
             # bcfg2-admin reporting interface for Snapshots
             if '-a' in args[1:]:
@@ -116,16 +120,20 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 q = self.session.query(Client.name,
                                        Snapshot.correct,
                                        Snapshot.revision,
-                                       Snapshot.timestamp).filter(Client.id==Snapshot.client_id)\
+                                       Snapshot.timestamp)\
+                                       .filter(Client.id==Snapshot.client_id)\
                                        .group_by(Client.id)
                 rows = []
                 labels = ('Client', 'Correct', 'Revision', 'Time')
                 for item in q.all():
                     cli, cor, time, rev = item
                     rows.append([cli, cor, time, rev])
-                print_table([labels]+rows, justify='left', hdr=True, vdelim=" ", padding=1)
+                print_table([labels]+rows,
+                            justify='left',
+                            hdr=True, vdelim=" ",
+                            padding=1)
             elif '-b' in args[1:]:
-                # Query a single host for extra entries
+                # Query a single host for bad entries
                 client = args[2]
                 snap = Snapshot.get_current(self.session, unicode(client))
                 if not snap:
@@ -139,7 +147,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     print(" Package:%s" % p)
                 bad_files = [self.session.query(File)
                                 .filter(File.id==f.start_id).one().name \
-                            for f in snap.files if f.correct == False]
+                             for f in snap.files if f.correct == False]
                 for filename in bad_files:
                     print(" File:%s" % filename)
                 bad_svcs = [self.session.query(Service)
@@ -163,4 +171,4 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 for svc in snap.extra_services:
                     print(" Service:%s" % svc.name)
             else:
-                print "Unknown options: ", args[1:]
+                print("Unknown options: ", args[1:])
