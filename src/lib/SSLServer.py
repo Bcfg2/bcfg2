@@ -12,6 +12,7 @@ import socket
 import SocketServer
 import SimpleXMLRPCServer
 import base64
+import select
 import signal
 import logging
 import ssl
@@ -302,6 +303,8 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 try:
                     self.handle_request()
                 except socket.timeout:
+                    pass
+                except select.error:
                     pass
                 except:
                     self.logger.error("Got unexpected error in handle_request",
