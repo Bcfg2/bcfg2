@@ -4,7 +4,6 @@ __revision__ = '$Revision$'
 
 __all__ = [
     "SSLServer", "XMLRPCRequestHandler", "XMLRPCServer",
-    "find_intended_location",
 ]
 
 import sys
