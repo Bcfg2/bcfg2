@@ -9,18 +9,18 @@ load_config -- read configuration files
 
 __revision__ = '$Revision: $'
 
+
+from xmlrpclib import _Method
+
+import httplib
 import logging
 import socket
+import ssl
 import time
 import urlparse
 import xmlrpclib
-from xmlrpclib import _Method
-import Bcfg2.tlslite.errors
-from Bcfg2.tlslite.integration.XMLRPCTransport import XMLRPCTransport
-import Bcfg2.tlslite.X509, Bcfg2.tlslite.X509CertChain
-import Bcfg2.tlslite.utils.keyfactory
 
-__all__ = ["ComponentProxy", "RetryMethod"]
+__all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
 
 class RetryMethod(_Method):
     """Method with error handling and retries built in"""
@@ -40,10 +40,6 @@ class RetryMethod(_Method):
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)
-            except Bcfg2.tlslite.errors.TLSFingerprintError, err:
-                raise
-            except Bcfg2.tlslite.errors.TLSError, err:
-                self.log.error("Unexpected TLS Error: %s. Retrying" % (err))
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
@@ -52,6 +48,25 @@ class RetryMethod(_Method):
 
 # sorry jon
 xmlrpclib._Method = RetryMethod
+
+class SSLHTTPConnection(httplib.HTTPConnection):
+    def connect(self):
+        rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        rawsock.settimeout(90)
+        self.sock = ssl.SSLSocket(rawsock, do_handshake_on_connect=False,
+                                  suppress_ragged_eofs=True)
+        self.sock.connect((self.host, self.port))
+        self.sock.do_handshake()
+        self.sock.closeSocket = True
+
+
+class XMLRPCTransport(xmlrpclib.Transport):
+    def make_connection(self, host):
+        host = self.get_host_info(host)[0]
+        http = SSLHTTPConnection(host)
+        https = httplib.HTTP()
+        https._setup(http)
+        return https
 
 def ComponentProxy (url, user=None, password=None, fingerprint=None,
                     key=None, cert=None):
@@ -69,17 +84,6 @@ def ComponentProxy (url, user=None, password=None, fingerprint=None,
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    if key and cert:
-        pdata = open(key).read()
-        pemkey = Bcfg2.tlslite.utils.keyfactory.parsePEMKey(pdata, private=True)
-        xcert = Bcfg2.tlslite.X509.X509()
-        cdata = open(cert).read()
-        xcert.parse(cdata)
-        certChain = Bcfg2.tlslite.X509CertChain.X509CertChain([xcert])
-    else:
-        certChain = None
-        pemkey = None
-    ssl_trans = XMLRPCTransport(x509Fingerprint=fingerprint, certChain=certChain,
-                                privateKey=pemkey)
+    ssl_trans = XMLRPCTransport()
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
 

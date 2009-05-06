@@ -34,52 +34,6 @@ DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
                                      long_arg=True)
 LOCKFILE = "/var/lock/bcfg2.run"
 
-class FPProxyCall(object):
-    def __init__(self, proxy, method):
-        self.proxy = proxy
-        self.method_name = method
-        self.method = getattr(self.proxy.proxy, method)
-
-    def __call__(self, *args):
-        try:
-            return self.method(*args)
-        except Bcfg2.tlslite.errors.TLSFingerprintError:
-            self.proxy.proxy = self.proxy.get_proxy()
-            self.method = getattr(self.proxy.proxy, self.method_name)
-            return self.__call__(*args)
-
-class FPProxy(object):
-    def __init__(self, url, user, password, fingerprints):
-        self.url = url
-        self.user = user
-        self.password = password
-        self.fingerprints = fingerprints
-        self.no_fingerprint = len(fingerprints) == 0
-        self.proxy = self.get_proxy()
-
-    def __getattr__(self, field):
-        if field not in self.__dict__:
-            self.__dict__[field] = FPProxyCall(self, field)
-        return self.__dict__[field]
-
-    def get_proxy(self):
-        if self.fingerprints:
-            fprint = self.fingerprints.pop()
-        elif self.no_fingerprint:
-            msg = 'no server x509 fingerprint; no server verification performed!'
-            print >> sys.stderr, msg
-            fprint = None
-        else:
-            print >> sys.stderr, "Ran out of fingerprints to try"
-            raise SystemExit(1)
-
-        try:
-            proxy = Bcfg2.Proxy.ComponentProxy(self.url, self.user,
-                                               self.password, fprint)
-            return proxy
-        except:
-            logger.error("Unexpected proxy error", exc_info=1)
-            raise SystemExit(1)
 
 class Client:
     ''' The main bcfg2 client class '''
@@ -213,8 +167,10 @@ class Client:
                 return(1)
         else:
             # retrieve config from server
-            proxy = FPProxy(self.setup['server'], self.setup['user'],
-                            self.setup['password'], self.setup['fingerprint'])
+            proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
+                                               self.setup['user'],
+                                               self.setup['password'],
+                                               self.setup['fingerprint'])
 
             if self.setup['profile']:
                 try:
