@@ -50,16 +50,34 @@ class RetryMethod(_Method):
 xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
+    def __init__(self, host, port=None, strict=None, timeout=90, key=None,
+                 cert=None, ca=None):
+        httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
+        self.key = key
+        self.cert = cert
+        self.ca = ca
+        if self.ca:
+            self.ca_mode = ssl.CERT_REQUIRED
+        else:
+            self.ca_mode = ssl.CERT_NONE
+
     def connect(self):
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        rawsock.settimeout(90)
-        self.sock = ssl.SSLSocket(rawsock, 
-                                  suppress_ragged_eofs=True)
+        rawsock.settimeout(self.timeout)
+        self.sock = ssl.SSLSocket(rawsock, cert_reqs=self.ca_mode,
+                                  ca_certs=self.ca, suppress_ragged_eofs=True,
+                                  keyfile=self.key, certfile=self.cert)
         self.sock.connect((self.host, self.port))
         self.sock.closeSocket = True
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
+    def __init__(self, key=None, cert=None, ca=None, use_datetime=0):
+        xmlrpclib.Transport.__init__(self, use_datetime)
+        self.key = key
+        self.cert = cert
+        self.ca = ca
+
     def make_connection(self, host):
         host = self.get_host_info(host)[0]
         http = SSLHTTPConnection(host)
@@ -68,7 +86,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         return https
 
 def ComponentProxy (url, user=None, password=None, fingerprint=None,
-                    key=None, cert=None):
+                    key=None, cert=None, ca=None):
     
     """Constructs proxies to components.
     
@@ -83,6 +101,6 @@ def ComponentProxy (url, user=None, password=None, fingerprint=None,
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport()
+    ssl_trans = XMLRPCTransport(key, cert, ca)
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
 
