@@ -80,13 +80,12 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
     def make_connection(self, host):
         host = self.get_host_info(host)[0]
-        http = SSLHTTPConnection(host)
+        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca)
         https = httplib.HTTP()
         https._setup(http)
         return https
 
-def ComponentProxy (url, user=None, password=None, fingerprint=None,
-                    key=None, cert=None, ca=None):
+def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None):
     
     """Constructs proxies to components.
     
