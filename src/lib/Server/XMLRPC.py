@@ -31,6 +31,7 @@ class bcfg2_server(Component,
         Bcfg2.Server.Core.Core.__init__(self, setup['repo'], setup['plugins'], 
                                         setup['password'], 
                                         setup['encoding'], setup['filemonitor'])
+        self.ca = setup['ca']
         self.process_initial_fam_events()
 
     def process_initial_fam_events(self):
@@ -149,7 +150,12 @@ class bcfg2_server(Component,
         return "<ok/>"
 
     def authenticate(self, cert, user, password, address):
-        return self.metadata.AuthenticateConnection(cert, user, password, address)
+        if self.ca:
+            acert = cert
+        else:
+            # no ca, so no cert validation can be done
+            acert = None
+        return self.metadata.AuthenticateConnection(acert, user, password, address)
 
     @exposed
     def GetDecisionList(self, address, mode):
