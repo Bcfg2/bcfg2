@@ -5,46 +5,28 @@ __revision__ = '$Revision$'
 __all__ = ["Component", "exposed", "automatic", "run_component"]
 
 import inspect
+import logging
 import os
-import cPickle
 import pydoc
 import sys
-import getopt
-import logging
 import time
 import threading
+import urlparse
 import xmlrpclib
 
 import Bcfg2.Logger
 from Bcfg2.SSLServer import XMLRPCServer
 
-def run_component (component_cls, argv=None, register=True, state_name=False,
-                   cls_kwargs={}, extra_getopt='', time_out=10, certfile=None, keyfile=None,
-                   ca=None):
-    if argv is None:
-        argv = sys.argv
-    try:
-        (opts, arg) = getopt.getopt(argv[1:], 'C:D:d' + extra_getopt)
-    except getopt.GetoptError, e:
-        print >> sys.stderr, e
-        print >> sys.stderr, "Usage:"
-        print >> sys.stderr, "%s [-d] [-D pidfile] [-C config file]" % (os.path.basename(argv[0]))
-        sys.exit(1)
+class NoExposedMethod (Exception):
+    """There is no method exposed with the given name."""
+
+def run_component (component_cls, location, daemon, pidfile_name, argv=None,
+                   register=True, state_name=False, cls_kwargs={},
+                   extra_getopt='', time_out=10,
+                   certfile=None, keyfile=None, ca=None):
     
     # default settings
-    daemon = False
-    pidfile = ""
     level = logging.INFO
-    # get user input
-    for item in opts:
-        if item[0] == '-C':
-            #FIXME
-            cf = (item[1], )
-        elif item[0] == '-D':
-            daemon = True
-            pidfile_name = item[1]
-        elif item[0] == '-d':
-            level = logging.DEBUG
     
     logging.getLogger().setLevel(level)
     Bcfg2.Logger.setup_logging(component_cls.implementation, True, True)
@@ -73,10 +55,11 @@ def run_component (component_cls, argv=None, register=True, state_name=False,
         pidfile.close()
 
     component = component_cls(**cls_kwargs)
-    # FIXME
-    location = ('', 6789)
+    up = urlparse.urlparse(location)
+    port = tuple(up[1].split(':'))
+    port = (port[0], int(port[1]))
 
-    server = XMLRPCServer(location, keyfile=keyfile, certfile=certfile,
+    server = XMLRPCServer(port, keyfile=keyfile, certfile=certfile,
                           register=register, timeout=time_out, ca=ca)
     server.register_instance(component)
     
@@ -119,24 +102,6 @@ def readonly (func):
     func.readonly = True
     return func
 
-def query (func=None, **kwargs):
-    """Mark a method to be marshalled as a query."""
-    def _query (func):
-        if kwargs.get("all_fields", True):
-            func.query_all_fields = True
-        func.query = True
-        return func
-    if func is not None:
-        return _query(func)
-    return _query
-
-def marshal_query_result (items, specs=None):
-    if specs is not None:
-        fields = get_spec_fields(specs)
-    else:
-        fields = None
-    return [item.to_rx(fields) for item in items]
-
 class Component (object):
     
     """Base component.
@@ -168,28 +133,6 @@ class Component (object):
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         self.lock = threading.Lock()
         
-    def save (self, statefile=None):
-        """Pickle the component.
-        
-        Arguments:
-        statefile -- use this file, rather than component.statefile
-        """
-        statefile = statefile or self.statefile
-        if statefile:
-            temp_statefile = statefile + ".temp"
-            data = cPickle.dumps(self)
-            try:
-                fd = file(temp_statefile, "wb")
-                fd.write(data)
-                fd.close()
-            except IOError, e:
-                self.logger.error("statefile failure : %s" % e)
-                return str(e)
-            else:
-                os.rename(temp_statefile, statefile)
-                return "state saved to file: %s" % statefile
-    save = exposed(save)
-    
     def do_tasks (self):
         """Perform automatic tasks for the component.
         
@@ -264,12 +207,6 @@ class Component (object):
         finally:
             if need_to_lock:
                 self.lock.release()
-        if getattr(method_func, "query", False):
-            if not getattr(method_func, "query_all_methods", False):
-                margs = args[:1]
-            else:
-                margs = []
-            result = marshal_query_result(result, *margs)
         return result
 
     @exposed
