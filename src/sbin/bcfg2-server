@@ -34,6 +34,7 @@ if __name__ == '__main__':
                     })
     OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
                     'cert'     : Bcfg2.Options.SERVER_CERT,
+                    'ca'       : Bcfg2.Options.SERVER_CA,
                     'location' : Bcfg2.Options.SERVER_LOCATION,
                     'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
                     'static'   : Bcfg2.Options.SERVER_STATIC,
@@ -51,9 +52,9 @@ if __name__ == '__main__':
                                       daemon = setup['daemon'],
                                       pidfile_name = setup['daemon'],
                                       register=False, cls_kwargs={'setup':setup},
-                                      keyfile='/home/desai/tmp/cert2/b2-s/priv.key',
-                                      certfile='/home/desai/tmp/cert2/b2-s/cert.pem',
-                                      ca='/home/desai/tmp/cert2/ca-cert.pem',
+                                      keyfile=setup['key'],
+                                      certfile=setup['cert'],
+                                      ca=setup['ca'],
                                       )
     except KeyboardInterrupt:
         sys.exit(1)
