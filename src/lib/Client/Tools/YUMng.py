@@ -55,6 +55,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
+        self.yb.doGenericSetup()
         yup = self.yb.doPackageLists(pkgnarrow='updates')
         for dest, source in [(self.yum_avail, yup.updates),
                              (self.yum_installed, self.yb.rpmdb)]:
