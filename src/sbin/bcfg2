@@ -16,7 +16,6 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
-import Bcfg2.Daemon
 
 import Bcfg2.Proxy
 import Bcfg2.Logger
@@ -302,17 +301,4 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)
     client = Client()
     spid = os.getpid()
-    if client.setup["agent"]:
-        agent = Agent(client)
-        if client.setup["agent-background"]:
-            Bcfg2.Daemon.daemonize(client.setup["agent-background"])
-        while not agent.shut:
-            try:
-                agent.serve_forever()
-            except:
-                agent.logger.error('Error in service loop')
-                agent.logger.error('Continuing')
-        if os.getpid() == spid:
-            print("Shutting down")
-    else:
-        client.run()
+    client.run()
