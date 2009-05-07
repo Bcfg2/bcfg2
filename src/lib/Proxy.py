@@ -16,9 +16,14 @@ import httplib
 import logging
 import socket
 import ssl
+import string
+import sys
 import time
 import urlparse
 import xmlrpclib
+
+version = string.split(string.split(sys.version)[0], ".")
+has_py26 = map(int, version) >= [2, 6]
 
 __all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
 
@@ -52,7 +57,10 @@ xmlrpclib._Method = RetryMethod
 class SSLHTTPConnection(httplib.HTTPConnection):
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
                  cert=None, ca=None):
-        httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
+	if not has_py26:
+            httplib.HTTPConnection.__init__(self, host, port, strict)
+	else:
+            httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
         self.key = key
         self.cert = cert
         self.ca = ca
@@ -63,7 +71,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
     def connect(self):
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        rawsock.settimeout(self.timeout)
+	if has_py26:
+            rawsock.settimeout(self.timeout)
         self.sock = ssl.SSLSocket(rawsock, cert_reqs=self.ca_mode,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert)
