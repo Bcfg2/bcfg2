@@ -1,10 +1,7 @@
 import sys
-try:
-    import sqlalchemy, sqlalchemy.orm
-except:
-    # FIXME should probably do something smarter here for folks without SA
-    pass
 
+# prereq issues can be signaled with ImportError, so no try needed
+import sqlalchemy, sqlalchemy.orm
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
