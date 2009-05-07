@@ -40,6 +40,7 @@ class Plugin(object):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __rmi__ = []
     experimental = False
+    deprecated = False
 
     def __init__(self, core, datastore):
         object.__init__(self)

@@ -48,7 +48,19 @@ class Core(object):
         
         for plugin in plugins:
             if not plugin in self.plugins:
-                self.init_plugins(plugin)    
+                self.init_plugins(plugin)
+        expl = [plug for (name, plug) in self.plugins.iteritems()
+                if plug.experimental]
+        if expl:
+            logger.info("Loading experimental plugin(s): %s" % \
+                        (" ".join([x.name for x in expl])))
+            logger.info("NOTE: Interfaces subject to change")
+        depr = [plug for (name, plug) in self.plugins.iteritems()
+                if plug.deprecated]
+        if depr:
+            logger.info("Loading deprecated plugin(s): %s" % \
+                        (" ".join([x.name for x in depr])))
+
 
         mlist = [p for p in self.plugins.values() if \
                  isinstance(p, Bcfg2.Server.Plugin.Metadata)]
@@ -78,9 +90,6 @@ class Core(object):
                 logger.error("Failed to load plugin %s" % (plugin))
                 return
         plug = getattr(mod, plugin)
-        if plug.experimental:
-            logger.info("Loading experimental plugin %s" % (plugin))
-            logger.info("NOTE: Interface subject to change")
         try:
             self.plugins[plugin] = plug(self, self.datastore)
         except PluginInitError:

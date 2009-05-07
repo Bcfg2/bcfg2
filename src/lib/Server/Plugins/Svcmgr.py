@@ -8,3 +8,4 @@ class Svcmgr(Bcfg2.Server.Plugin.PrioDir):
     name = 'Svcmgr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    deprecated = True
