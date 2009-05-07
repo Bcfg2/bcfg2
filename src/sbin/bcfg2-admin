@@ -49,8 +49,11 @@ if __name__ == '__main__':
             args = [args[1], args[0]]
         else:
             for mode in modes:
-                print(("   %-15s   %s" %
-                      (mode, mode_import(mode).__shorthelp__)))
+                try:
+                    print(("   %-15s   %s" %
+                           (mode, mode_import(mode).__shorthelp__)))
+                except ImportError:
+                    continue
             raise SystemExit(0)
     if args[0] in modes:
         modname = args[0].capitalize()
