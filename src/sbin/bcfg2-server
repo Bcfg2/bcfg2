@@ -10,7 +10,6 @@ from xmlrpclib import Fault
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Component
-import Bcfg2.Daemon
 import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Server.Core import CoreInitError
 import Bcfg2.Server.XMLRPC
