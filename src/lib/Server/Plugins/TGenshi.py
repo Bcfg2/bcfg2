@@ -42,10 +42,11 @@ class TemplateFile:
                 self.template_cls = NewTextTemplate
         else:
             self.template_cls = MarkupTemplate
+        self.HandleEvent = self.handle_event
         
-    def handle_event(self, event):
+    def handle_event(self, event=None):
         '''Handle all fs events for this template'''
-        if event.code2str() == 'deleted':
+        if event and event.code2str() == 'deleted':
             return
         try:
             loader = TemplateLoader()

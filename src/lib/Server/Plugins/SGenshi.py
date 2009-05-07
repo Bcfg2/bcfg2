@@ -47,6 +47,7 @@ class SGenshi(SGenshiEntrySet,
     name = 'SGenshi'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    deprecated = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
