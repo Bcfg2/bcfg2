@@ -209,7 +209,7 @@ class Core(object):
             except:
                 logger.error("error in BindStructure", exc_info=1)
         self.validate_data(meta, config, Bcfg2.Server.Plugin.GoalValidator)
-        logger.info("Generated config for %s in %s seconds" % \
+        logger.info("Generated config for %s in %.03fs" % \
                     (client, time() - start))
         return config
 

@@ -77,7 +77,7 @@ class FileMonitor(object):
         if lock:
             lock.release()
         end = time()
-        logger.info("Handled %d events in %.02fs" % (count, (end-start)))
+        logger.info("Handled %d events in %.03fs" % (count, (end-start)))
 
     def handle_events_in_interval(self, interval):
         start = time()
