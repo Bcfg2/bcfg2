@@ -191,7 +191,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.wfile.flush()
             self.wfile.close()
         self.rfile.close()
-        self.connection.unwrap()
+        #self.connection.unwrap()
         self.connection.shutdown(1)
    
 
