@@ -172,7 +172,6 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 L.append(self.rfile.read(chunk_size))
                 size_remaining -= len(L[-1])
             data = ''.join(L)
-
             response = self.server._marshaled_dispatch(self.client_address, data)
         except: 
             raise
@@ -186,9 +185,14 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.end_headers()
             self.wfile.write(response)
 
-            # shut down the connection
+    def finish(self):
+        # shut down the connection
+        if not self.wfile.closed:
             self.wfile.flush()
-            self.connection.shutdown(1)
+            self.wfile.close()
+        self.rfile.close()
+        self.connection.unwrap()
+        self.connection.shutdown(1)
    
 
 class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer, 
