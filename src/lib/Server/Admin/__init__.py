@@ -3,7 +3,11 @@ __revision__ = '$Revision$'
 __all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
            'Pull', 'Query', 'Snapshots', 'Tidy', 'Viz']
 
-import ConfigParser, lxml.etree, logging, sys
+import ConfigParser
+import logging
+import lxml.etree
+import sys
+
 import Bcfg2.Server.Core
 import Bcfg2.Options
 
@@ -63,9 +67,7 @@ class MetadataCore(Mode):
                                                 'foo', 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
-        [self.bcore.fam.Service() for _ in range(5)]
-        while self.bcore.fam.Service():
-            pass
+        self.bcore.fam.handle_events_in_interval(5)
         self.metadata = self.bcore.metadata
 
 class StructureMode(MetadataCore):

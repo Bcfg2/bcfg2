@@ -1,4 +1,6 @@
-import Bcfg2.Server.Admin, Bcfg2.Logger, logging
+import logging
+import Bcfg2.Logger
+import Bcfg2.Server.Admin
 
 class Query(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Query clients"
@@ -25,10 +27,8 @@ class Query(Bcfg2.Server.Admin.Mode):
                                                 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
-        [self.bcore.fam.Service() for _ in range(1)]
+        self.bcore.fam.handle_events_in_interval(1)
         self.meta = self.bcore.metadata
-        while self.bcore.fam.Service():
-            pass
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
