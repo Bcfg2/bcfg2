@@ -82,7 +82,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 class XMLRPCTransport(xmlrpclib.Transport):
     def __init__(self, key=None, cert=None, ca=None, use_datetime=0):
-        xmlrpclib.Transport.__init__(self, use_datetime)
+        if hasattr(xmlrpclib.Transport, '__init__'):
+            xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
         self.cert = cert
         self.ca = ca
