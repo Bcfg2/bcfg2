@@ -94,6 +94,45 @@ class XMLRPCTransport(xmlrpclib.Transport):
         https._setup(http)
         return https
 
+    def request(self, host, handler, request_body, verbose=0):
+        '''send request to server and return response'''
+        h = self.make_connection(host)
+        self.send_request(h, handler, request_body)
+        self.send_host(h, host)
+        self.send_user_agent(h)
+        self.send_content(h, request_body)
+
+        errcode, errmsg, headers = h.getreply()
+        msglen = int(headers.dict['content-length'])
+
+        if errcode != 200:
+            raise ProtocolError(host + handler, errcode, errmsg, headers)
+
+        self.verbose = verbose
+
+        return self._get_response(h.getfile(), msglen)
+
+    def _get_response(self, fd, length):
+        # read response from input file/socket, and parse it
+        recvd = 0
+
+        p, u = self.getparser()
+
+        while recvd < length:
+            rlen = min(length - recvd, 1024)
+            response = fd.read(rlen)
+            recvd += len(response)
+            if not response:
+                break
+            if self.verbose:
+                print "body:", repr(response), len(response)
+            p.feed(response)
+
+        fd.close()
+        p.close()
+
+        return u.close()
+
 def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None):
     
     """Constructs proxies to components.
