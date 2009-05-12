@@ -6,7 +6,6 @@ __revision__ = '$Revision$'
 import logging
 import os
 import signal
-import socket
 import sys
 import tempfile
 import time
@@ -63,9 +62,6 @@ class Client:
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'retries': Bcfg2.Options.CLIENT_RETRIES,
             'kevlar': Bcfg2.Options.CLIENT_KEVLAR,
-            'agent': Bcfg2.Options.CLIENT_AGENT,
-            'agent-port': Bcfg2.Options.CLIENT_PORT,
-            'agent-background': Bcfg2.Options.CLIENT_BACKGROUND,
             'key': Bcfg2.Options.SERVER_KEY,
             'decision-list': DECISION_LIST,
             'encoding': Bcfg2.Options.ENCODING,
@@ -90,7 +86,10 @@ class Client:
             level = 20
         if self.setup['debug']:
             level = 0
-        Bcfg2.Logger.setup_logging('bcfg2', to_syslog=False, level=level, to_file=self.setup['filelog'])
+        Bcfg2.Logger.setup_logging('bcfg2',
+                                   to_syslog=False,
+                                   level=level,
+                                   to_file=self.setup['filelog'])
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
@@ -104,21 +103,14 @@ class Client:
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print("cannot use -f and -c together")
             raise SystemExit(1)
-        if (self.setup["agent"] != False) and (self.setup["interactive"] != False):
-            print("cannot use -A and -I together")
-            raise SystemExit(1)
-        if (self.setup["agent"] and not self.setup["fingerprint"]):
-            print("Agent mode requires specification of x509 fingerprint")
-            raise SystemExit(1)
-        if (self.setup["agent"] and not self.setup["key"]):
-            print("Agent mode requires specification of ssl cert + key file")
-            raise SystemExit(1)
 
     def run_probe(self, probe):
         '''Execute probe'''
         name = probe.get('name')
         self.logger.info("Running probe %s" % name)
-        ret = Bcfg2.Client.XML.Element("probe-data", name=name, source=probe.get('source'))
+        ret = Bcfg2.Client.XML.Element("probe-data",
+                                       name=name,
+                                       source=probe.get('source'))
         try:
             scripthandle, scriptname = tempfile.mkstemp()
             script = open(scriptname, 'w+')
@@ -141,10 +133,7 @@ class Client:
     def fatal_error(self, message):
         '''Signal a fatal error'''
         self.logger.error("Fatal error: %s" % (message))
-        if not self.setup["agent"]:
-            raise SystemExit(1)
-        else:
-            self.logger.error("Continuing...")
+        raise SystemExit(1)
         
     def run(self):
         ''' Perform client execution phase '''
@@ -292,7 +281,9 @@ class Client:
             feedback = self.tools.GenerateStats()
 
             try:
-                proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback, encoding='UTF-8', xml_declaration=True))
+                proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
+                                                          encoding='UTF-8',
+                                                          xml_declaration=True))
             except xmlrpclib.Fault:
                 self.logger.error("Failed to upload configuration statistics")
                 raise SystemExit(2)

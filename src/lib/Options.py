@@ -66,7 +66,7 @@ class Option(object):
                 msg = self.cmd
             if self.odesc:
                 if self.long:
-                    msg = "%-27s" % ("%s=%s" % (self.cmd, self.odesc))
+                    msg = "%-28s" % ("%s=%s" % (self.cmd, self.odesc))
                 else:
                     msg += '%-25s' % (self.odesc)
             else:
@@ -203,25 +203,28 @@ SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
 SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
                        default=False, cook=bool_cook)
 SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
-                       default=False, cmd='-K', odesc='<ssl key file>')
+                    default=False, cmd='-K', odesc='<ssl key file>')
 SERVER_CERT = Option('Path to SSL certificate', default='/etc/bcfg2.key',
                      cf=('communication', 'certificate'), odesc='<ssl cert>')
 SERVER_CA = Option('Path to SSL CA Cert', default=None,
-                     cf=('communication', 'ca'), odesc='<ca cert>')
+                   cf=('communication', 'ca'), odesc='<ca cert>')
 CLIENT_KEY = Option('Path to SSL key', cf=('communication', 'key'),
-                       default=None, odesc='<ssl key>')
-CLIENT_CERT = Option('Path to SSL certificate', default=None,
-                     cf=('communication', 'certificate'), odesc='<ssl cert>')
-CLIENT_CA = Option('Path to SSL CA Cert', default=None,
-                     cf=('communication', 'ca'), odesc='<ca cert>')
+                    default=None, cmd="--ssl-key", odesc='<ssl key>',
+                    long_arg=True)
+CLIENT_CERT = Option('Path to SSL certificate', default=None, cmd="--ssl-cert",
+                     cf=('communication', 'certificate'), odesc='<ssl cert>',
+                     long_arg=True)
+CLIENT_CA = Option('Path to SSL CA Cert', default=None, cmd="--ca-cert",
+                   cf=('communication', 'ca'), odesc='<ca cert>',
+                   long_arg=True)
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
-                       default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
+                        default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
 SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
                          default='xmlrpc/ssl')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
-                         default='/usr/lib/sendmail')
+                       default='/usr/lib/sendmail')
 
 CLIENT_PROFILE = Option('assert the given profile for the host',
                         default=False, cmd='-p', odesc="<profile>")
@@ -236,7 +239,6 @@ CLIENT_PARANOID = Option('make automatic backups of config files',
                          default=False, cmd='-P', )
 CORE_PROFILE = Option('profile server core', odesc='<profile trace path>',
                       default=False, cmd='-p', )
-CLIENT_AGENT = Option('run in agent (continuous) mode, wait for reconfigure command from server', default=False, cmd='-A', )
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
                         odesc="<driver1,driver2>", cook=list_split,
@@ -250,7 +252,7 @@ CLIENT_BUNDLE = Option('only configure the given bundle', default=[],
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_DLIST = Option('run client in server decision list mode', default=False,
-                       cmd='-l', odesc='<whitelist|blacklist>')
+                      cmd='-l', odesc='<whitelist|blacklist>')
 CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
@@ -258,18 +260,10 @@ SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
                             odesc='<f1,f2>', cook=flist_split)
 CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
-CLIENT_BACKGROUND = Option('Daemonize the agent', default=False, cmd='-i', )
-CLIENT_PORT = Option('the port on which to bind for agent mode', default='6789',
-                     cmd='-g', cf=('communication', 'agent-port'),
-                     odesc='<agent port>')
 CLIENT_USER = Option('the user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
 INTERACTIVE = Option('prompt the user for each change', default=False,
                      cmd='-I', )
-
-AGENT_PORT = Option('Agent port', default=6789, cmd='-p', odesc='<port>',
-                    cf=('communication', 'agent-port'))
-AGENT_HOST = Option('Remote host', default=False, cmd='-H', odesc='<hostname>')
 
 ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd='-E', odesc='<encoding>',
                   cf=('components', 'encoding'))
