@@ -274,7 +274,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 os.mkdir(entry.get('name'))
             except OSError:
                 self.logger.error('Failed to create directory %s' % \
-				  (entry.get('name')))
+                                  (entry.get('name')))
                 return False
         if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
             for pname in entry.get("qtest").split(":"):
@@ -301,7 +301,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return True
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % \
-			      (entry.get('name')))
+                              (entry.get('name')))
             return False
 
     def gatherCurrentData(self, entry):
@@ -338,7 +338,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         else:
             if entry.text == None:
                 self.logger.error("Cannot verify incomplete ConfigFile %s" % \
-				  (entry.get('name')))
+                                  (entry.get('name')))
                 return False
             tempdata = entry.text
             if type(tempdata) == unicode:
@@ -346,11 +346,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
-            self.logger.error("Failed to read %s: %s" % \
-			      (error.filename, error.strerror))
-            return False
+            if error.strerror == "No such file or directory":
+                # print diff for files that don't exist (yet)
+                content = ''
+            else:
+                self.logger.error("Failed to read %s: %s" % \
+                                  (error.filename, error.strerror))
+                return False
         # comparison should be done with fingerprints or
-	# md5sum so it would be faster for big binary files
+        # md5sum so it would be faster for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
             if tbin or not isString(content):
@@ -367,11 +371,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     rawdiff.append(x)
                     if now - start > 5 and not longtime:
                         self.logger.info("Diff of %s taking a long time" % \
-					 (entry.get('name')))
+                                         (entry.get('name')))
                         longtime = True
                     elif now - start > 30:
                         self.logger.error("Diff of %s took too long; giving up" % \
-					  (entry.get('name')))
+                                          (entry.get('name')))
                         do_diff = False
                         break
                 if do_diff:
