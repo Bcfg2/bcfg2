@@ -49,7 +49,8 @@ if __name__ == '__main__':
         metadata_list.append("%s/Metadata/%s" % (repo, filename))
         groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
         group_ents = [ent.get('href') for ent in \
-                      groupdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+                      groupdata.
+                      findall('./{http://www.w3.org/2001/XInclude}include')]
         for ent in group_ents:
             included.add(ent)
         included.discard(filename)
@@ -70,6 +71,27 @@ if __name__ == '__main__':
     deps_list = glob.glob("%s/Deps/*.xml" % repo)
     dec_list = glob.glob("%s/Decisions/*" % repo)
     pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
+
+    # warn on duplicate Pkgmgr entries with the same priority
+    pset = set()
+    for plist in pkg_list:
+        xdata = lxml.etree.parse(plist)
+        # get priority, type, group
+        priority = xdata.getroot().get('priority')
+        ptype = xdata.getroot().get('type')
+        for pkg in xdata.findall("//Package"):
+            if pkg.getparent().tag == 'Group':
+                grp = pkg.getparent().get('name')
+            else:
+                grp = 'none'
+            ptuple = (pkg.get('name'), priority, ptype, grp)
+            # check if package is already listed with same priority,
+            # type, grp
+            if ptuple in pset:
+                print("Duplicate Package %s, priority:%s, type:%s"\
+                       % (pkg.get('name'), priority, ptype))
+            else:
+                pset.add(ptuple)
 
     filesets = {'metadata':(metadata_list, "%s/metadata.xsd"),
                 'clients':(clients_list, "%s/clients.xsd"),
