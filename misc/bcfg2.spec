@@ -120,7 +120,6 @@ deployment strategies.
 %defattr(-,root,root,-)
 %{_sbindir}/bcfg2
 %{python_sitelib}/Bcfg2/*.py*
-%{python_sitelib}/Bcfg2/tlslite/*
 %{python_sitelib}/Bcfg2/Client/*
 %{_mandir}/man1/*
 %{_mandir}/man5/*
@@ -153,7 +152,6 @@ deployment strategies.
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-server
-%{_sbindir}/bcfg2-remote
 
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
