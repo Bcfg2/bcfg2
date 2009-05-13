@@ -180,11 +180,9 @@ fi
 %{python_sitelib}/Bcfg2/__init__.*
 %{python_sitelib}/Bcfg2/Client
 %{python_sitelib}/Bcfg2/Component.*
-%{python_sitelib}/Bcfg2/Daemon.*
 %{python_sitelib}/Bcfg2/Logger.*
 %{python_sitelib}/Bcfg2/Options.*
 %{python_sitelib}/Bcfg2/Proxy.*
-%{python_sitelib}/Bcfg2/tlslite
 
 %{_sbindir}/bcfg2
 %{_mandir}/man1/bcfg2.1*
@@ -212,14 +210,12 @@ fi
 %{_sbindir}/bcfg2-ping-sweep
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
-%{_sbindir}/bcfg2-remote
 %{_sbindir}/bcfg2-server
 
 %{_mandir}/man8/bcfg2-admin.8*
 %{_mandir}/man8/bcfg2-build-reports.8*
 %{_mandir}/man8/bcfg2-info.8*
 %{_mandir}/man8/bcfg2-repo-validate.8*
-%{_mandir}/man8/bcfg2-remote.8*
 %{_mandir}/man8/bcfg2-server.8*
 
 %dir %{_var}/lib/bcfg2
