@@ -15,6 +15,7 @@ import urlparse
 import xmlrpclib
 
 import Bcfg2.Logger
+from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
 
 class NoExposedMethod (Exception):
@@ -132,6 +133,7 @@ class Component (object):
         self.statefile = kwargs.get("statefile", None)
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         self.lock = threading.Lock()
+        self.instance_statistics = Statistics()
         
     def do_tasks (self):
         """Perform automatic tasks for the component.
@@ -145,7 +147,10 @@ class Component (object):
                 if (time.time() - func.automatic_ts) > \
                    func.automatic_period:
                     if need_to_lock:
+                        t1 = time.time()
                         self.lock.acquire()
+                        t2 = time.time()
+                        self.instance_statistics.add_value('component_lock', t2-t1)
                     try:
                         mt1 = time.time()
                         func()
@@ -157,6 +162,7 @@ class Component (object):
 
                     if need_to_lock:
                         self.lock.release()
+                    self.instance_statistics.add_value(name, mt2-mt1)
                     func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method (self, method_name):
@@ -207,6 +213,9 @@ class Component (object):
         finally:
             if need_to_lock:
                 self.lock.release()
+                self.instance_statistics.add_value('component_lock',
+                                                   lock_done - lock_start)
+        self.instance_statistics.add_value(method, method_done - method_start)
         return result
 
     @exposed
@@ -239,3 +248,8 @@ class Component (object):
         """The implementation of the component."""
         return self.implementation
     get_implementation = exposed(get_implementation)
+
+    def get_statistics (self):
+        """Get current statistics about component execution"""
+        return self.instance_statistics.display()
+    get_statistics = exposed(get_statistics)
