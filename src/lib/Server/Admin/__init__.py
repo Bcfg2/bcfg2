@@ -1,6 +1,6 @@
 __revision__ = '$Revision$'
 
-__all__ = ['Mode', 'Client', 'Compare', 'Fingerprint', 'Init', 'Minestruct',
+__all__ = ['Mode', 'Client', 'Compare', 'Init', 'Minestruct',
            'Pull', 'Query', 'Snapshots', 'Tidy', 'Viz']
 
 import ConfigParser
