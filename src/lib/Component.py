@@ -153,10 +153,11 @@ class Component (object):
                         self.instance_statistics.add_value('component_lock', t2-t1)
                     try:
                         mt1 = time.time()
-                        func()
-                    except:
-                        self.logger.error("Automatic method %s failed" \
-                                          % (name), exc_info=1)
+                        try:
+                            func()
+                        except:
+                            self.logger.error("Automatic method %s failed" \
+                                              % (name), exc_info=1)
                     finally:
                         mt2 = time.time()
 
