@@ -204,18 +204,19 @@ class Component (object):
             lock_done = time.time()
         try:
             method_start = time.time()
-            result = method_func(*args)
-            method_done = time.time()
+            try:
+                result = method_func(*args)
+            finally:
+                method_done = time.time()
+                if need_to_lock:
+                    self.lock.release()
+                    self.instance_statistics.add_value('component_lock',
+                                                       lock_done - lock_start)
+                self.instance_statistics.add_value(method, method_done - method_start)
         except Exception, e:
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
-        finally:
-            if need_to_lock:
-                self.lock.release()
-                self.instance_statistics.add_value('component_lock',
-                                                   lock_done - lock_start)
-        self.instance_statistics.add_value(method, method_done - method_start)
         return result
 
     @exposed
