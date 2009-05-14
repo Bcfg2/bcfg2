@@ -1,6 +1,6 @@
 __revision__ = '$Revision$'
 
-__all__ = ['Mode', 'Client', 'Compare', 'Init', 'Minestruct',
+__all__ = ['Mode', 'Client', 'Compare', 'Init', 'Minestruct', 'Perf',
            'Pull', 'Query', 'Snapshots', 'Tidy', 'Viz']
 
 import ConfigParser
@@ -52,6 +52,38 @@ class Mode(object):
         if not hostent:
             self.errExit("Could not find stats for client %s" % (client))
         return hostent[0]
+
+    def print_table(self, rows, justify='left', hdr=True, vdelim=" ", padding=1):
+        """Pretty print a table
+
+        rows - list of rows ([[row 1], [row 2], ..., [row n]])
+        hdr - if True the first row is treated as a table header
+        vdelim - vertical delimiter between columns
+        padding - # of spaces around the longest element in the column
+        justify - may be left,center,right
+        """
+        hdelim = "="
+        justify = {'left':str.ljust,
+                   'center':str.center,
+                   'right':str.rjust}[justify.lower()]
+
+        '''
+        calculate column widths (longest item in each column
+        plus padding on both sides)
+        '''
+        cols = list(zip(*rows))
+        colWidths = [max([len(str(item))+2*padding for \
+                          item in col]) for col in cols]
+        borderline = vdelim.join([w*hdelim for w in colWidths])
+
+        # print out the table
+        print(borderline)
+        for row in rows:
+            print(vdelim.join([justify(str(item), width) for \
+                               (item, width) in zip(row, colWidths)]))
+            if hdr:
+                print(borderline)
+                hdr = False
 
 class MetadataCore(Mode):
     '''Base class for admin-modes that handle metadata'''

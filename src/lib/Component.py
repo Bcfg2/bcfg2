@@ -249,7 +249,7 @@ class Component (object):
         return self.implementation
     get_implementation = exposed(get_implementation)
 
-    def get_statistics (self):
+    def get_statistics (self, _):
         """Get current statistics about component execution"""
         return self.instance_statistics.display()
     get_statistics = exposed(get_statistics)

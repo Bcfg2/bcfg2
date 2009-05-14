@@ -8,39 +8,6 @@ import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
      File, Group, Package, Service
 
-def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
-    """Pretty print a table
-
-    rows - list of rows ([[row 1], [row 2], ..., [row n]])
-    hdr - if True the first row is treated as a table header
-    vdelim - vertical delimiter between columns
-    padding - # of spaces around the longest element in the column
-    justify - may be left,center,right
-    """
-    hdelim = "="
-    justify = {'left':str.ljust,
-               'center':str.center,
-               'right':str.rjust}[justify.lower()]
-
-    '''
-       calculate column widths (longest item in each column
-       plus padding on both sides)
-    '''
-    cols = list(zip(*rows))
-    colWidths = [max([len(str(item))+2*padding for \
-                 item in col]) for col in cols]
-    borderline = vdelim.join([w*hdelim for w in colWidths])
-
-    # print out the table
-    print(borderline)
-    for row in rows:
-        print(vdelim.join([justify(str(item), width) for \
-              (item, width) in zip(row, colWidths)]))
-        if hdr:
-            print(borderline)
-            hdr = False
-    print(borderline)
-
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"
     __longhelp__ = (__shorthelp__)
@@ -75,11 +42,11 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     for host in \
                        self.session.query(q_obj).filter(q_obj.active == True):
                         rows.append([host.name, 'Yes'])
-                    print_table([labels]+rows,
-                                justify='left',
-                                hdr=True,
-                                vdelim=" ",
-                                padding=1)
+                    self.print_table([labels]+rows,
+                                     justify='left',
+                                     hdr=True,
+                                     vdelim=" ",
+                                     padding=1)
                 elif q_obj == Group:
                     print("Groups:")
                     for group in self.session.query(q_obj).all():
@@ -125,10 +92,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 for item in q.all():
                     cli, cor, time, rev = item
                     rows.append([cli, cor, time, rev])
-                print_table([labels]+rows,
-                            justify='left',
-                            hdr=True, vdelim=" ",
-                            padding=1)
+                self.print_table([labels]+rows,
+                                 justify='left',
+                                 hdr=True, vdelim=" ",
+                                 padding=1)
             elif '-b' in args[1:]:
                 # Query a single host for bad entries
                 client = args[2]
