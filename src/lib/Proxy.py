@@ -57,9 +57,9 @@ xmlrpclib._Method = RetryMethod
 class SSLHTTPConnection(httplib.HTTPConnection):
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
                  cert=None, ca=None):
-	if not has_py26:
+        if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
-	else:
+        else:
             httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
         self.key = key
         self.cert = cert
@@ -71,7 +71,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
     def connect(self):
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	if has_py26:
+        if has_py26:
             rawsock.settimeout(self.timeout)
         self.sock = ssl.SSLSocket(rawsock, cert_reqs=self.ca_mode,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
@@ -107,7 +107,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         msglen = int(headers.dict['content-length'])
 
         if errcode != 200:
-            raise ProtocolError(host + handler, errcode, errmsg, headers)
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
 
         self.verbose = verbose
 
