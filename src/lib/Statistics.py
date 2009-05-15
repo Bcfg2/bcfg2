@@ -16,7 +16,7 @@ class Statistic(object):
         self.ave = (((self.ave * (self.count - 1)) + value) / self.count )
 
     def get_value(self):
-        return (self.name, (self.min, self.max, self.ave))
+        return (self.name, (self.min, self.max, self.ave, self.count))
 
 class Statistics(object):
     def __init__(self):
