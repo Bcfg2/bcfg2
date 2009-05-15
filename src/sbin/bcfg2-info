@@ -37,7 +37,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
-        self.fam.handle_events_in_interval(10)
+        self.fam.handle_events_in_interval(8)
         
     def do_loop(self):
         self.cont = True
@@ -61,7 +61,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_quit(self, _):
         """Exit program.
 Usage: [quit|exit]"""
-        raise SystemExit(0)
+        os._exit(0)
 
     do_EOF = do_quit
     do_exit = do_quit
