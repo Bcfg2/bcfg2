@@ -1,5 +1,7 @@
+import logging
+import os
+import stat
 from time import sleep, time
-import logging, os, stat
 
 logger = logging.getLogger('Bcfg2.Server.FileMonitor')
 
@@ -26,11 +28,20 @@ class Event(object):
 
 
 class GaminEvent(Event):
-    '''This class provides an event analogous to python-fam events based on gamin sources'''
+    '''
+       This class provides an event analogous to
+       python-fam events based on gamin sources
+    '''
     def __init__(self, request_id, filename, code):
         Event.__init__(self, request_id, filename, code)
-        action_map = {GAMCreated: 'created', GAMExists: 'exists', GAMChanged: 'changed',
-                      GAMDeleted: 'deleted', GAMEndExist: 'endExist', GAMMoved: 'moved'}
+        action_map = {}
+        if 'fam' not in available and 'gamin' not in available:
+            pass
+        else:
+            # Only works if Gamin or Fam is present
+            action_map = {GAMCreated: 'created', GAMExists: 'exists',
+                          GAMChanged: 'changed', GAMDeleted: 'deleted',
+                          GAMEndExist: 'endExist', GAMMoved: 'moved'}
         if code in action_map:
             self.action = action_map[code]
 
@@ -89,7 +100,10 @@ class FileMonitor(object):
                 sleep(0.5)
 
 class Fam(FileMonitor):
-    '''The fam object is a set of callbacks for file alteration events (FAM support)'''
+    '''
+       The fam object is a set of callbacks for
+       file alteration events (FAM support)
+    '''
     
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug)
@@ -116,7 +130,10 @@ class Fam(FileMonitor):
         return self.fm.nextEvent()
 
 class Gamin(FileMonitor):
-    '''The fam object is a set of callbacks for file alteration events (Gamin support)'''
+    '''
+       The fam object is a set of callbacks for
+       file alteration events (Gamin support)
+    '''
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug)
         self.mon = WatchMonitor()
@@ -150,7 +167,10 @@ class Gamin(FileMonitor):
         return self.events.pop()
 
 class Pseudo(FileMonitor):
-    '''The fam object is a set of callbacks for file alteration events (FAM support)'''
+    '''
+       The fam object is a set of callbacks for
+       file alteration events (static monitor support)
+    '''
     
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug=False)
@@ -179,7 +199,7 @@ class Pseudo(FileMonitor):
             self.handles[handleID] = obj
         return handleID
 
-       
+
 available = {}
 try:
     from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted, GAMMoved
@@ -191,7 +211,7 @@ try:
     import _fam
     available['fam'] = Fam
 except ImportError:
-    pass
+    print("Gamin or Fam not found. Loading Pseudo FileMonitor.")
 available['pseudo'] = Pseudo
 
 for fdrv in ['gamin', 'fam', 'pseudo']:
