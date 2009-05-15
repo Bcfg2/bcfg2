@@ -108,6 +108,10 @@ class Core(Component):
                 self.fam.handle_event_set(self.lock)
             except:
                 continue
+            # VCS plugin periodic updates
+            for plugin in self.plugins.values():
+                if isinstance(plugin, Bcfg2.Server.Plugin.Version):
+                    self.revision = plugin.get_revision()
 
     def init_plugins(self, plugin):
         try:
