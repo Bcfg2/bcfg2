@@ -12,7 +12,6 @@ import Bcfg2.Options
 import Bcfg2.Component
 import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Server.Core import CoreInitError
-import Bcfg2.Server.XMLRPC
 
 logger = logging.getLogger('bcfg2-server')
 
@@ -29,7 +28,7 @@ if __name__ == '__main__':
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
                     'plugins': Bcfg2.Options.SERVER_PLUGINS,
                     'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+                    'fm': Bcfg2.Options.SERVER_FILEMONITOR,
                     })
     OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
                     'cert'     : Bcfg2.Options.SERVER_CERT,
@@ -46,11 +45,18 @@ if __name__ == '__main__':
     setup.parse(sys.argv[1:])
     print setup
     try:
-        Bcfg2.Component.run_component(Bcfg2.Server.XMLRPC.bcfg2_server,
+        Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
                                       location=setup['location'],
                                       daemon = setup['daemon'],
                                       pidfile_name = setup['daemon'],
-                                      register=False, cls_kwargs={'setup':setup},
+                                      register=False,
+                                      cls_kwargs={'repo':setup['repo'],
+                                                  'plugins':setup['plugins'],
+                                                  'password':setup['password'],
+                                                  'encoding':setup['encoding'],
+                                                  'ca':setup['ca'],
+                                                  'filemonitor':setup['fm'],
+                                                  'start_fam_thread':True},
                                       keyfile=setup['key'],
                                       certfile=setup['cert'],
                                       ca=setup['ca'],

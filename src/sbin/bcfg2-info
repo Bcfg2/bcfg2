@@ -89,7 +89,7 @@ Usage: [quit|exit]"""
 
     def do_update(self, _):
         '''Process pending fs events'''
-        self.fam.Service()
+        self.fam.handle_events_in_interval(0.1)
 
     def do_version(self, _):
         '''print out code version'''
