@@ -211,7 +211,7 @@ try:
     import _fam
     available['fam'] = Fam
 except ImportError:
-    print("Gamin or Fam not found. Loading Pseudo FileMonitor.")
+    pass
 available['pseudo'] = Pseudo
 
 for fdrv in ['gamin', 'fam', 'pseudo']:
