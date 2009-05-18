@@ -23,7 +23,7 @@ class Query(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__init__(self, cfile)
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
-                                                ['Metadata'],
+                                                ['Metadata', 'Probes'],
                                                 'foo', False, 'UTF-8')
         except Bcfg2.Server.Core.CoreInitError, msg:
             self.errExit("Core load failed because %s" % msg)
@@ -54,6 +54,13 @@ class Query(Bcfg2.Server.Admin.Mode):
                 nc = self.meta.GetClientByProfile(v)
             elif k == 'g':
                 nc = self.meta.GetClientByGroup(v)
+                # add probed groups (if present)
+                for conn in self.bcore.connectors:
+                    if isinstance(conn, Bcfg2.Server.Plugins.Probes.Probes):
+                        for c, glist in conn.cgroups.items():
+                            for g in glist:
+                                if g == v:
+                                    nc.append(c)
             else:
                 print "One of g= or p= must be specified"
                 raise SystemExit(1)
