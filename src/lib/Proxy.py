@@ -27,6 +27,10 @@ has_py26 = map(int, version) >= [2, 6]
 
 __all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
 
+class CertificateError(Exception):
+    def __init__(self, commonName):
+        self.commonName = commonName
+
 class RetryMethod(_Method):
     """Method with error handling and retries built in"""
     log = logging.getLogger('xmlrpc')
@@ -45,6 +49,10 @@ class RetryMethod(_Method):
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)
+            except CertificateError, ce:
+                self.log.error("Got unallowed commonName %s from server" \
+                               % ce.commonName)
+                break
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
@@ -56,7 +64,7 @@ xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
-                 cert=None, ca=None):
+                 cert=None, ca=None, scns=None):
         if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
         else:
@@ -64,6 +72,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.key = key
         self.cert = cert
         self.ca = ca
+        self.scns = scns
         if self.ca:
             self.ca_mode = ssl.CERT_REQUIRED
         else:
@@ -77,20 +86,27 @@ class SSLHTTPConnection(httplib.HTTPConnection):
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert)
         self.sock.connect((self.host, self.port))
+        pc = self.sock.getpeercert()
+        if pc and self.scns:
+            scn = [x[0][1] for x in pc['subject'] if x[0][0] == 'commonName'][0]
+            if scn not in self.scns:
+                raise CertificateError, scn
         self.sock.closeSocket = True
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
-    def __init__(self, key=None, cert=None, ca=None, use_datetime=0):
+    def __init__(self, key=None, cert=None, ca=None, scns=None, use_datetime=0):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
         self.cert = cert
         self.ca = ca
+        self.scns = scns
 
     def make_connection(self, host):
         host = self.get_host_info(host)[0]
-        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca)
+        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
+                                 scns=self.scns)
         https = httplib.HTTP()
         https._setup(http)
         return https
@@ -134,7 +150,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
         return u.close()
 
-def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None):
+def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None,
+                    allowedServerCNs=None):
     
     """Constructs proxies to components.
     
@@ -149,6 +166,6 @@ def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None)
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca)
+    ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs)
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
 

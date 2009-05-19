@@ -217,6 +217,11 @@ CLIENT_CERT = Option('Path to SSL certificate', default=None, cmd="--ssl-cert",
 CLIENT_CA = Option('Path to SSL CA Cert', default=None, cmd="--ca-cert",
                    cf=('communication', 'ca'), odesc='<ca cert>',
                    long_arg=True)
+CLIENT_SCNS = Option('list of server commonNames', default=None, cmd="--ssl-cns",
+                     cf=('communication', 'serverCommonNames'),
+                     odesc='<commonName1:commonName2>', cook=list_split,
+                     long_arg=True)
+
 SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
@@ -275,6 +280,7 @@ LOGGING_FILE_PATH = Option('Set path of file log', default=None,
 
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>') 
+
 
 class OptionParser(OptionSet):
     '''

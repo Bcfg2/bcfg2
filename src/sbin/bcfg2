@@ -46,7 +46,6 @@ class Client:
             'quick': Bcfg2.Options.CLIENT_QUICK,
             'debug': Bcfg2.Options.DEBUG,
             'drivers': Bcfg2.Options.CLIENT_DRIVERS,
-            'fingerprint': Bcfg2.Options.SERVER_FINGERPRINT,
             'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
             'paranoid': Bcfg2.Options.CLIENT_PARANOID,
             'bundle': Bcfg2.Options.CLIENT_BUNDLE,
@@ -72,6 +71,7 @@ class Client:
             'key'             : Bcfg2.Options.CLIENT_KEY,
             'certificate'     : Bcfg2.Options.CLIENT_CERT,
             'ca'              : Bcfg2.Options.CLIENT_CA,
+            'serverCN'        : Bcfg2.Options.CLIENT_SCNS, 
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -161,7 +161,8 @@ class Client:
                                                self.setup['password'],
                                                key = self.setup['key'],
                                                cert = self.setup['certificate'],
-                                               ca = self.setup['ca'])
+                                               ca = self.setup['ca'],
+                                               allowedServerCNs = self.setup['serverCN'])
 
             if self.setup['profile']:
                 try:
