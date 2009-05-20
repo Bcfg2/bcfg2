@@ -435,7 +435,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
             raise PluginExecutionError
         matching = [src for src in self.entries.values()
                     if src.cache and entry.tag in src.cache[1]
-                    and name in src.cache[1][entry.tag]]
+                    and src.cache[1][entry.tag].has_key(name)]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
