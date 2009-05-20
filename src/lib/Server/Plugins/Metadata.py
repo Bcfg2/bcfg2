@@ -56,7 +56,8 @@ class ClientMetadata(object):
 
 
 class Metadata(Bcfg2.Server.Plugin.Plugin,
-               Bcfg2.Server.Plugin.Metadata):
+               Bcfg2.Server.Plugin.Metadata,
+               Bcfg2.Server.Plugin.Statistics):
     '''This class contains data for bcfg2 server metadata'''
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -208,7 +209,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                     else:
                         self.addresses[caddr] = [clname]
                 if 'auth' in client.attrib:
-                    self.auth[client.get('name')] = client.get('auth')
+                    self.auth[client.get('name')] = client.get('auth',
+                                                               'cert+password')
                 if 'uuid' in client.attrib:
                     self.uuid[client.get('uuid')] = clname
                 if client.get('secure', 'false') == 'true' :
@@ -516,6 +518,15 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         '''Return a list of clients that are members of a given profile'''
         return [client for client in self.clients \
                 if self.clients[client] == profile]
+
+    def process_statistics(self, meta, _):
+        '''Hook into statistics interface to toggle clients in bootstrap mode'''
+        client = meta.hostname
+        if client in self.auth and self.auth[client] == 'bootstrap':
+            cli = self.clientdata_original.xpath('.//Client[@name="%s"]' \
+                                                 % (client))
+            cli[0].set('auth', 'cert')
+            self.write_back_clients()
     
     def viz(self, hosts, bundles, key, colors):
         '''admin mode viz support'''
