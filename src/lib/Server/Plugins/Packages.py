@@ -85,14 +85,13 @@ class Source(object):
             item = work.pop()
             seen.add(item)
             if self.is_package(metadata, item):
-                if debug:
-                    logger.debug("Added Package %s" % item)
                 newpkg.add(item)
                 try:
                     newdeps = [x for x in self.get_deps(metadata, item) \
                                if x not in newpkg and x not in work]
                     if debug and newdeps:
-                        logger.debug("Adding new deps " + str(newdeps))
+                        logger.debug("Package %s: adding new deps %s" \
+                                     %(item, str(newdeps)))
                     work.update(newdeps)
                 except NoData:
                     continue
@@ -101,8 +100,8 @@ class Source(object):
                 try:
                     pset = self.get_provides(metadata, item)
                     if debug:
-                        logger.debug("Got provides for %s" % item)
-                        logger.debug(pset)
+                        logger.debug("VPackage %s: got provides %s" \
+                                     % (item, list(pset)))
                     if len(pset) == 1:
                         work.update(pset)
                     else:
