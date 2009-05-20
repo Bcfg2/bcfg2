@@ -1,4 +1,4 @@
-import copy, gzip, lxml.etree, re, urllib2
+import copy, gzip, lxml.etree, re, urllib2, logging
 import os
 import Bcfg2.Server.Plugin
 
@@ -9,6 +9,8 @@ import Bcfg2.Server.Plugin
 
 class NoData(Exception):
     pass
+
+logger = logging.getLogger('Packages')
 
 def source_from_xml(xsource):
     ret = dict()
@@ -71,7 +73,7 @@ class Source(object):
     def is_package(self, metadata, _):
         return False
 
-    def complete(self, metadata, packages, unresolved):
+    def complete(self, metadata, packages, unresolved, debug=False):
         # perhaps cache arch?
         #arch = [a for a in self.arches if a in metadata.groups][0]
         # return newpkg, unknown
@@ -83,15 +85,24 @@ class Source(object):
             item = work.pop()
             seen.add(item)
             if self.is_package(metadata, item):
+                if debug:
+                    logger.debug("Added Package %s" % item)
                 newpkg.add(item)
                 try:
-                    work.update(self.get_deps(metadata, item))
+                    newdeps = [x for x in self.get_deps(metadata, item) \
+                               if x not in newpkg and x not in work]
+                    if debug and newdeps:
+                        logger.debug("Adding new deps " + str(newdeps))
+                    work.update(newdeps)
                 except NoData:
                     continue
             else:
                 # provides dep
                 try:
                     pset = self.get_provides(metadata, item)
+                    if debug:
+                        logger.debug("Got provides for %s" % item)
+                        logger.debug(pset)
                     if len(pset) == 1:
                         work.update(pset)
                     else:
@@ -189,8 +200,8 @@ class YUMSource(Source):
             raise NoData
         return ret
 
-    def complete(self, metadata, packages, unknown):
-        p1, u1 = Source.complete(self, metadata, packages, unknown)
+    def complete(self, metadata, packages, unknown, debug):
+        p1, u1 = Source.complete(self, metadata, packages, unknown, debug)
         return (p1, set([u for u in u1 if not u.startswith('rpmlib')]))
 
 class APTSource(Source):
@@ -335,7 +346,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if [x for x in metadata.groups if x in source.basegroups]:
                 entry.set('type', source.ptype)                
 
-    def complete(self, meta, packages):
+    def complete(self, meta, packages, debug=False):
         sources = self.get_matching_sources(meta)
         ptype = set([s.ptype for s in sources])
         if len(ptype) < 1:
@@ -350,7 +361,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             oldu = unknown
             for source in sources:
                 try:
-                    pkgs, unknown = source.complete(meta, pkgs, unknown)
+                    pkgs, unknown = source.complete(meta, pkgs, unknown, debug)
                 except:
                     self.logger.error("Packages: complete call failed unexpectedly:", exc_info=1)
         return pkgs, unknown, ptype.pop()
