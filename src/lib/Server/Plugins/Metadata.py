@@ -523,6 +523,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         '''Hook into statistics interface to toggle clients in bootstrap mode'''
         client = meta.hostname
         if client in self.auth and self.auth[client] == 'bootstrap':
+            self.logger.info("Asserting client %s auth mode to cert" % client)
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' \
                                                  % (client))
             cli[0].set('auth', 'cert')
