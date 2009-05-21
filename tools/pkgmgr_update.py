@@ -253,14 +253,32 @@ def updatepkg(pkg):
                         inst.attrib['release'] = latest['release']
                         if inst.get('simplefile', False):
                             inst.attrib['simplefile'] = latest['filename']
+                        if options.altconfigfile:
+                            ignoretags = pkg.xpath(".//Ignore")
+                            # if we find Ignore tags, then assume they're correct;
+                            # otherwise, check the altconfigfile
+                            if not ignoretags:
+                                altpkgs = alttree.xpath(".//Package[@name='%s'][Ignore]"%name)
+                                if (len(altpkgs) == 1):
+                                    for ignoretag in altpkgs[0].xpath(".//Ignore"):
+                                        if options.verbose:
+                                            print("    Found Ignore tag in altconfigfile for package %s" % name)
+                                        pkg.append(ignoretag)
 
 def main():
     global package_dict
+    global alttree
     if options.verbose:
         print 'Loading Pkgmgr config file %s.' % (options.configfile)
 
     tree = parse(options.configfile)
     config = tree.getroot()
+ 
+    if options.altconfigfile:
+        if options.verbose:
+            print 'Loading Pkgmgr alternate config file %s.' % (options.altconfigfile)
+
+        alttree = parse(options.altconfigfile)
  
     if options.verbose:
         print 'Loading package headers'
@@ -285,6 +303,11 @@ if __name__ == "__main__":
     p.add_option('--configfile', '-c', action='store', \
                                    type='string', \
                                    help='Existing Pkgmgr configuration  file name.')
+
+    p.add_option('--altconfigfile', '-a', action='store', \
+                                   type='string', \
+                                   help='''Alternate, existing Pkgmgr configuration file name to read
+                                           Ignore tags from (used for upgrades).''')
 
     p.add_option('--rpmdirs', '-d', action='store', 
                                    type='string', \
