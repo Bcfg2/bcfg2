@@ -128,7 +128,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         if len(packages) > 0:
             self.logger.info('Removing packages:')
             self.logger.info(pkgnames)
-            for pkg in pkgnames:
+            for pkg in pkgnames.split(" "):
                 self.pkg_cache[pkg].markDelete(purge=True)
             self.pkg_cache.commit()
             self.modified += packages
