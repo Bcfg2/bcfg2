@@ -34,13 +34,12 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
         try:
             data = Popen(("env LC_ALL=C svn info %s" %
                          (self.datastore)), shell=True,
-                         stdout=PIPE).stdout.readlines()
-            revline = [line.split(': ')[1].strip() for line in data \
-                       if line[:9] == 'Revision:'][-1]
-            revision = revline
+                         stdout=PIPE).communicate()[0].split('\n')
+            return [line.split(': ')[1] for line in data \
+                    if line[:9] == 'Revision:'][-1]
         except IndexError:
             logger.error("Failed to read svn info; disabling svn support")
             logger.error('''Ran command "svn info %s"''' % (self.datastore))
             logger.error("Got output: %s" % data)
             raise Bcfg2.Server.Plugin.PluginInitError
-        return revision
+
