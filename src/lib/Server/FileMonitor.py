@@ -34,14 +34,9 @@ class GaminEvent(Event):
     '''
     def __init__(self, request_id, filename, code):
         Event.__init__(self, request_id, filename, code)
-        action_map = {}
-        if 'fam' not in available and 'gamin' not in available:
-            pass
-        else:
-            # Only works if Gamin or Fam is present
-            action_map = {GAMCreated: 'created', GAMExists: 'exists',
-                          GAMChanged: 'changed', GAMDeleted: 'deleted',
-                          GAMEndExist: 'endExist', GAMMoved: 'moved'}
+        action_map = {GAMCreated: 'created', GAMExists: 'exists',
+                      GAMChanged: 'changed', GAMDeleted: 'deleted',
+                      GAMEndExist: 'endExist', GAMMoved: 'moved'}
         if code in action_map:
             self.action = action_map[code]
 
@@ -191,10 +186,10 @@ class Pseudo(FileMonitor):
             dirList = os.listdir(path)
             self.pending_events.append(handle)
             for includedFile in dirList:
-                self.pending_events.append(GaminEvent(handleID, includedFile, 'exists'))
-            self.pending_events.append(GaminEvent(handleID, path, 'endExist'))
+                self.pending_events.append(Event(handleID, includedFile, 'exists'))
+            self.pending_events.append(Event(handleID, path, 'endExist'))
         else:
-            self.pending_events.append(GaminEvent(handleID, path, 'exists'))
+            self.pending_events.append(Event(handleID, path, 'exists'))
         if obj != None:
             self.handles[handleID] = obj
         return handleID
