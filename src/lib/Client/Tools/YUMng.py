@@ -9,6 +9,12 @@ import yum
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
 
+# Fix for python2.3
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 YAD = True
 CP = ConfigParser.ConfigParser()
 try:

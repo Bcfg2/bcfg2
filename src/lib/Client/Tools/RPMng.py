@@ -8,6 +8,12 @@ import rpm
 import rpmtools
 import Bcfg2.Client.Tools
 
+# Fix for python2.3
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 class RPMng(Bcfg2.Client.Tools.PkgTool):
     '''Support for RPM packages'''
     name = 'RPMng'
