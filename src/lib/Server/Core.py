@@ -2,7 +2,6 @@
 __revision__ = '$Revision$'
 
 import copy
-import hashlib
 import logging
 import lxml.etree
 import select
@@ -369,13 +368,6 @@ class Core(Component):
         try:
             client = self.metadata.resolve_client(address)
             config = self.BuildConfiguration(client)
-            if checksum:
-                for cfile in config.findall('.//ConfigFile'):
-                    if cfile.text != None:
-                        csum = hashlib.md5()
-                        csum.update(cfile.text)
-                        cfile.set('checksum', csum.hexdigest())
-                        cfile.text = None
             return lxml.etree.tostring(config, encoding='UTF-8',
                                        xml_declaration=True)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
