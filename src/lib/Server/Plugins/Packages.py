@@ -181,12 +181,17 @@ class YUMSource(Source):
                     self.provides[arch][prov].append(pkgname)
 
     def is_package(self, metadata, item):
-        arch = [a for a in self.arches if a in metadata.groups][0]
-        return item in self.packages['global'] or item in self.packages[arch]
+        arch = [a for a in self.arches if a in metadata.groups]
+        if not arch:
+            return False
+        return item in self.packages['global'] or item in self.packages[arch[0]]
 
     def get_provides(self, metadata, required):
         ret = set()
-        arch = [a for a in self.arches if a in metadata.groups][0]
+        arches = [a for a in self.arches if a in metadata.groups]
+        if not arches:
+            raise NoData
+        arch = arches[0]
         if required in self.provides['global']: 
             ret.update(Source.get_provides(self, metadata, required))
         elif required in self.provides[arch]:
