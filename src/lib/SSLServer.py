@@ -236,7 +236,10 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         encoding -- encoding to use for xml-rpc (default UTF-8)
         """
         
-        XMLRPCDispatcher.__init__(self, allow_none, encoding)
+        try:
+            XMLRPCDispatcher.__init__(self, allow_none, encoding)
+        except:
+            XMLRPCDispatcher.__init__(self)
         
         if not RequestHandlerClass:
             class RequestHandlerClass (XMLRPCRequestHandler):
