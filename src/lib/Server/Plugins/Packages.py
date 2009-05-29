@@ -315,8 +315,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
         except IOError, e:
-            print("Failed to read Packages configuration. Have you"
-                  " created your config.xml file?")
+            self.logger.error("Failed to read Packages configuration. Have"
+                              " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
         self.sources = []
         for s in xdata.findall('APTSource'):
