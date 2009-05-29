@@ -312,7 +312,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not os.path.exists(cachepath):
             # create cache directory if needed
             os.makedirs(cachepath)
-        xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
+        try:
+            xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
+        except IOError, e:
+            print("Failed to read Packages configuration. Have you"
+                  " created your config.xml file?")
+            raise Bcfg2.Server.Plugin.PluginInitError
         self.sources = []
         for s in xdata.findall('APTSource'):
             self.sources.append(APTSource(cachepath, **source_from_xml(s)))
