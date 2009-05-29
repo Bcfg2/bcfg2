@@ -25,9 +25,14 @@ class ForkedChild(Exception):
 class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     logger = logging.getLogger("Cobalt.Server.XMLRPCDispatcher")
     def __init__ (self, allow_none, encoding):
-        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
-                                                           allow_none,
-                                                           encoding)
+        try:
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
+                                                               allow_none,
+                                                               encoding)
+        except:
+            # Python 2.4?
+            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
+
         self.allow_none = allow_none
         self.encoding = encoding
 
@@ -54,28 +59,28 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         return raw_response
 
 class SSLServer (SocketServer.TCPServer, object):
-    
+
     """TCP server supporting SSL encryption.
-    
+
     Methods:
     handshake -- perform a SSL/TLS handshake
-    
+
     Properties:
     url -- A url pointing to this server.
     """
-    
+
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
-    
+
     def __init__ (self, server_address, RequestHandlerClass, keyfile=None,
                   certfile=None, reqCert=False, ca=None, timeout=None):
-        
+
         """Initialize the SSL-TCP server.
-        
+
         Arguments:
         server_address -- address to bind to the server
         RequestHandlerClass -- class to handle requests
-        
+
         Keyword arguments:
         keyfile -- private encryption key filename (enables ssl encryption)
         certfile -- certificate file (enables ssl encryption)
@@ -86,7 +91,7 @@ class SSLServer (SocketServer.TCPServer, object):
         all_iface_address = ('', server_address[1])
         SocketServer.TCPServer.__init__(self, all_iface_address,
                                         RequestHandlerClass)
-        
+
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
         self.certfile = certfile
@@ -96,14 +101,14 @@ class SSLServer (SocketServer.TCPServer, object):
             self.mode = ssl.CERT_OPTIONAL
         else:
             self.mode = ssl.CERT_NONE
-        
+
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
         sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
                                   keyfile=self.keyfile, cert_reqs=self.mode,
                                   ca_certs=self.ca)
         return sslsock, sockinfo
-        
+
     def _get_url (self):
         port = self.socket.getsockname()[1]
         hostname = socket.gethostname()
@@ -113,20 +118,20 @@ class SSLServer (SocketServer.TCPServer, object):
 
 
 class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
-    
+
     """Component XML-RPC request handler.
-    
+
     Adds support for HTTP authentication.
-    
+
     Exceptions:
     CouldNotAuthenticate -- client did not present acceptable authentication information
-    
+
     Methods:
     authenticate -- prompt a check of a client's provided username and password
     handle_one_request -- handle a single rpc (optionally authenticating)
     """
     logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
-    
+
     def authenticate (self):
         try:
             header = self.headers['Authorization']
@@ -144,10 +149,10 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         client_address = self.request.getpeername()
         return self.server.instance.authenticate(cert, username,
                                                  password, client_address)
-    
+
     def parse_request (self):
         """Extends parse_request.
-        
+
         Optionally check HTTP authentication when parsing."""
         if not SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.parse_request(self):
             return False
@@ -174,7 +179,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 size_remaining -= len(L[-1])
             data = ''.join(L)
             response = self.server._marshaled_dispatch(self.client_address, data)
-        except: 
+        except:
             raise
             self.send_response(500)
             self.end_headers()
@@ -194,39 +199,39 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         self.rfile.close()
         self.connection.unwrap()
 
-class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer, 
+class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                     XMLRPCDispatcher, object):
-    
+
     """Component XMLRPCServer.
-    
+
     Methods:
     serve_daemon -- serve_forever in a daemonized process
     serve_forever -- handle_one_request until not self.serve
     shutdown -- stop serve_forever (by setting self.serve = False)
     ping -- return all arguments received
-    
+
     RPC methods:
     ping
-    
+
     (additional system.* methods are inherited from base dispatcher)
-    
+
     Properties:
     require_auth -- the request handler is requiring authorization
     credentials -- valid credentials being used for authentication
     """
-    
+
     def __init__ (self, server_address, RequestHandlerClass=None,
                   keyfile=None, certfile=None, ca=None,
                   timeout=10,
                   logRequests=False,
                   register=True, allow_none=True, encoding=None):
-        
+
         """Initialize the XML-RPC server.
-        
+
         Arguments:
         server_address -- address to bind to the server
         RequestHandlerClass -- request handler used by TCP server (optional)
-        
+
         Keyword arguments:
         keyfile -- private encryption key filename
         certfile -- certificate file
@@ -235,12 +240,9 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         allow_none -- allow None values in xml-rpc
         encoding -- encoding to use for xml-rpc (default UTF-8)
         """
-        
-        try:
-            XMLRPCDispatcher.__init__(self, allow_none, encoding)
-        except:
-            XMLRPCDispatcher.__init__(self)
-        
+
+        XMLRPCDispatcher.__init__(self, allow_none, encoding)
+
         if not RequestHandlerClass:
             class RequestHandlerClass (XMLRPCRequestHandler):
                 """A subclassed request handler to prevent class-attribute conflicts."""
@@ -268,17 +270,17 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 time.sleep(self.timeout)
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
-    
+
     def server_close (self):
         SSLServer.server_close(self)
         self.logger.info("server_close()")
-    
+
     def _get_require_auth (self):
         return getattr(self.RequestHandlerClass, "require_auth", False)
     def _set_require_auth (self, value):
         self.RequestHandlerClass.require_auth = value
     require_auth = property(_get_require_auth, _set_require_auth)
-    
+
     def _get_credentials (self):
         try:
             return self.RequestHandlerClass.credentials
@@ -317,14 +319,14 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                                       exc_info=1)
         finally:
             self.logger.info("serve_forever() [stop]")
-    
+
     def shutdown (self):
         """Signal that automatic service should stop."""
         self.serve = False
-    
+
     def _handle_shutdown_signal (self, *_):
         self.shutdown()
-    
+
     def ping (self, *args):
         """Echo response."""
         self.logger.info("ping(%s)" % (", ".join([repr(arg) for arg in args])))
