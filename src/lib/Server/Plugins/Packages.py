@@ -311,7 +311,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.sentinels = set()
         if not os.path.exists(cachepath):
             # create cache directory if needed
-            os.mkdir(cachepath)
+            os.makedirs(cachepath)
         xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
         self.sources = []
         for s in xdata.findall('APTSource'):
