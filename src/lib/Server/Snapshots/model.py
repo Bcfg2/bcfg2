@@ -249,3 +249,12 @@ class Snapshot(Base):
     @classmethod
     def get_current(cls, session, clientname):
         return session.query(Snapshot).join(Snapshot.client_metadata, Metadata.client).filter(Client.name==clientname).order_by(desc(Snapshot.timestamp)).first()
+
+    @classmethod
+    def get_by_date(cls, session, clientname, timestamp):
+        return session.query(Snapshot)\
+                      .join(Snapshot.client_metadata, Metadata.client)\
+                      .filter(Snapshot.timestamp < timestamp)\
+                      .filter(Client.name==clientname)\
+                      .order_by(desc(Snapshot.timestamp))\
+                      .first()

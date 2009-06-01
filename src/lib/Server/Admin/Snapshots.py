@@ -1,3 +1,4 @@
+from datetime import date
 import sys
 
 # prereq issues can be signaled with ImportError, so no try needed
@@ -134,5 +135,25 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     print(" File:%s" % f.name)
                 for svc in snap.extra_services:
                     print(" Service:%s" % svc.name)
+            elif '--date' in args[1:]:
+                year, month, day = args[2:]
+                timestamp = date(int(year), int(month), int(day))
+                snaps = []
+                for client in self.session.query(Client).filter(Client.active == True):
+                    snaps.append(Snapshot.get_by_date(self.session,
+                                                      client.name,
+                                                      timestamp))
+                rows = []
+                labels = ('Client', 'Correct', 'Revision', 'Time')
+                for snap in snaps:
+                        rows.append([snap.client.name,
+                                    snap.correct,
+                                    snap.revision,
+                                    snap.timestamp])
+                self.print_table([labels]+rows,
+                                 justify='left',
+                                 hdr=True,
+                                 vdelim=" ",
+                                 padding=1)
             else:
                 print("Unknown options: ", args[1:])
