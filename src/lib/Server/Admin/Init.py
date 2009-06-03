@@ -30,13 +30,11 @@ database_port =
 # Set to empty string for default. Not used with sqlite3.
 web_debug = True
 
-
 [communication]
 protocol = %s
 password = %s
+certificate = %s/bcfg2.key
 key = %s/bcfg2.key
-# fingerprint of server (from bcfg2-admin fingerprint)
-#fingerprint = [server fingerprint]
 
 [components]
 bcfg2 = %s
