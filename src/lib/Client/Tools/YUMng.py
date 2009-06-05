@@ -61,16 +61,30 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
-        self.yb.doGenericSetup()
+        if hasattr(self.yb, 'doGenericSetup'):
+            self.yb.doGenericSetup()
+        else:
+            self.yb.doConfigSetup()
+            self.yb.doTsSetup()
+            self.yb.doRpmDBSetup()
         yup = self.yb.doPackageLists(pkgnarrow='updates')
+        if hasattr(self.yb.rpmdb, 'pkglist'):
+            yinst = self.yb.rpmdb.pkglist
+        else:
+            yinst = self.yb.rpmdb.getPkgList()
         for dest, source in [(self.yum_avail, yup.updates),
-                             (self.yum_installed, self.yb.rpmdb)]:
+                             (self.yum_installed, yinst)]:
             for pkg in source:
-                data = [(pkg.arch, (pkg.epoch, pkg.version, pkg.release))]
-                if pkg.name in dest:
-                    dest[pkg.name].update(data)
+                if dest is self.yum_avail:
+                    pname = pkg.name
+                    data = [(pkg.arch, (pkg.epoch, pkg.version, pkg.release))]
                 else:
-                    dest[pkg.name] = dict(data)
+                    pname = pkg[0]
+                    data = [(pkg[1], (pkg[2], pkg[3], pkg[4]))]
+                if pname in dest:
+                    dest[pname].update(data)
+                else:
+                    dest[pname] = dict(data)
 
     def VerifyPackage(self, entry, modlist):
         pinned_version = None
