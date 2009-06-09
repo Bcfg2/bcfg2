@@ -138,7 +138,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         confdata = config % ( 
                         repo, ','.join(opts['plugins']),
                         opts['sendmail'], opts['proto'],
-                        password, keypath, server_uri 
+                        password, keypath, keypath, server_uri 
                     )
 
         # don't overwrite existing bcfg2.conf file
