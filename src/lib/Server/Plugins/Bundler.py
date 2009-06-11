@@ -5,7 +5,7 @@ import copy, lxml.etree, Bcfg2.Server.Plugin, re
 
 try:
     import Bcfg2.Server.Plugins.SGenshi
-    import genshi.template
+    import genshi.template, genshi.template.base
     have_genshi = True
 except:
     have_genshi = False
@@ -58,7 +58,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             elif len(entries) == 1:
                 try:
                     bundleset.append(entries[0].get_xml_value(metadata))
-                except genshi.template.TemplateError, t:
+                except genshi.template.base.TemplateError, t:
                     self.logger.error("Bundler: Failed to template genshi bundle %s" \
                                       % (bundlename))
                     self.logger.error(t)
