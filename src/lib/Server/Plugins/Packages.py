@@ -125,7 +125,7 @@ class YUMSource(Source):
     
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         if not rawurl:
-            urlbase = url + '%%(version)s/%(component)s/%(arch)s/repodata/' % url
+            urlbase = url + '%%(version)s/%(component)s/%(arch)s/repodata/'
         else:
             urlbase = rawurl
         usettings = [{'version': version, 'component':part, 'arch':arch}
