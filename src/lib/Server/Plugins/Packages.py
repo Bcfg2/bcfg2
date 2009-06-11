@@ -13,12 +13,15 @@ class NoData(Exception):
 logger = logging.getLogger('Packages')
 
 def source_from_xml(xsource):
-    ret = dict()
+    ret = dict([('rawurl', False), ('url', False)])
     for key, tag in [('groups', 'Group'), ('components', 'Component'),
                      ('arches', 'Arch')]:
         ret[key] = [item.text for item in xsource.findall(tag)]
     ret['version'] = xsource.find('Version').text
-    ret['url'] = xsource.find('URL').text
+    if xsource.find('RawURL') is not None:
+        ret['rawurl'] = xsource.find('RawURL').text
+    else:
+        ret['url'] = xsource.find('URL').text
     return ret
 
 class Source(object):
@@ -120,10 +123,16 @@ class YUMSource(Source):
     basegroups = ['redhat', 'centos']
     ptype = 'yum'
     
-    def __init__(self, basepath, url, version, arches, components, groups):
-        self.urls = ["%s/%s/%s/%s/repodata/%s.xml.gz" % \
-                     (url, version, part, arch, basename) for part in components \
-                     for arch in arches for basename in ['primary', 'filelists']]
+    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
+        if not rawurl:
+            urlbase = url + '%%(version)s/%(component)s/%(arch)s/repodata/' % url
+        else:
+            urlbase = rawurl
+        usettings = [{'version': version, 'component':part, 'arch':arch}
+                     for part in components for arch in arches]
+        fnames = ['primary.xml.gz', 'filelists.xml.gz']
+        self.urls = [urlbase % item + fname \
+                     for item in usettings for fname in fnames]
         Source.__init__(self, basepath, url, version, arches, components, groups)
         self.packages = dict()
         self.deps = dict([('global', dict())])
@@ -212,7 +221,7 @@ class APTSource(Source):
     basegroups = ['debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
     
-    def __init__(self, basepath, url, version, arches, components, groups):
+    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         self.urls = ["%s/dists/%s/%s/binary-%s/Packages.gz" % \
                      (url, version, part, arch) for part in components \
                      for arch in arches]
