@@ -26,16 +26,24 @@ def source_from_xml(xsource):
 
 class Source(object):
     basegroups = []
-    def __init__(self, basepath, url, version, arches, components, groups):
+    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         self.basepath = basepath
         self.version = version
         self.components = components
         self.url = url
+        self.rawurl = rawurl
         self.groups = groups
         self.arches = arches
         self.deps = dict()
         self.provides = dict()
-        self.files = [self.mk_fname(url) for url in self.urls]
+
+    def get_urls(self):
+        return []
+    urls = property(get_urls)
+
+    def get_files(self):
+        return [self.mk_fname(url) for url in self.urls]
+    files = property(get_files)
 
     def mk_fname(self, url):
         return "%s/%s" % (self.basepath, url.replace('/', '@'))
@@ -119,25 +127,44 @@ class Source(object):
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
     rp = '{http://linux.duke.edu/metadata/rpm}'
+    rpo = '{http://linux.duke.edu/metadata/repo}'
     fl = '{http://linux.duke.edu/metadata/filelists}'
     basegroups = ['redhat', 'centos']
     ptype = 'yum'
     
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
-        if not rawurl:
-            urlbase = url + '%%(version)s/%(component)s/%(arch)s/repodata/'
-        else:
-            urlbase = rawurl
-        usettings = [{'version': version, 'component':part, 'arch':arch}
-                     for part in components for arch in arches]
-        fnames = ['primary.xml.gz', 'filelists.xml.gz']
-        self.urls = [urlbase % item + fname \
-                     for item in usettings for fname in fnames]
-        Source.__init__(self, basepath, url, version, arches, components, groups)
+        Source.__init__(self, basepath, url, version, arches, components,
+                        groups, rawurl)
         self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
         self.filemap = dict([(x, dict()) for x in ['global'] + self.arches])
+
+    def get_urls(self):
+        logger.error('in gu')
+        if not self.rawurl:
+            urlbase = self.url + '%(version)s/%(component)s/%(arch)s/'
+        else:
+            urlbase = rawurl
+        usettings = [{'version': self.version, 'component':comp, 'arch':arch}
+                     for comp in self.components for arch in self.arches]
+        baseurls = [urlbase % setting for setting in usettings]
+        urls = []
+        for baseurl in baseurls:
+            rmdurl = baseurl + '/repodata/repomd.xml'
+            try:
+                repomd = urllib2.urlopen(rmdurl).read()
+                xdata = lxml.etree.XML(repomd)
+            except:
+                logger.error("Failed to process url %s" % rmdurl)
+                continue
+            for elt in xdata.findall(self.rpo + 'data'):
+                if elt.get('type') not in ['filelists', 'primary']:
+                    continue
+                floc = elt.find(self.rpo + 'location')
+                urls.append(baseurl + floc.get('href'))
+        return urls
+    urls = property(get_urls)
 
     def read_files(self):
         for fname in self.files:
@@ -222,11 +249,13 @@ class APTSource(Source):
     ptype = 'deb'
     
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
-        self.urls = ["%s/dists/%s/%s/binary-%s/Packages.gz" % \
-                     (url, version, part, arch) for part in components \
-                     for arch in arches]
-        Source.__init__(self, basepath, url, version, arches, components, groups)
+        Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
         self.pkgnames = set()
+
+    def get_urls(self):
+        return ["%s/dists/%s/%s/binary-%s/Packages.gz" % \
+                (self.url, self.version, part, arch) for part in self.components \
+                for arch in self.arches]
 
     def get_aptsrc(self):
         return ["deb %s %s %s" % (self.url, self.version,
