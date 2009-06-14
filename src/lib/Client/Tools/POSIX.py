@@ -279,6 +279,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
             for pname in entry.get("qtest").split(":"):
                 ulfailed = False
+                if os.path.isdir(pname): 
+                    self.logger.info("Not removing extra directory %s, please check and remove manually" % pname)
+                    continue
                 try:
                     self.logger.debug("Unlinking file %s" % pname)
                     os.unlink(pname)
