@@ -29,15 +29,13 @@ class APT(Bcfg2.Client.Tools.Tool):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
-        self.pkg_cache = apt.cache.Cache()
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
             self.cmd.run("dpkg --force-confold --configure --pending")
             self.cmd.run("apt-get clean")
-            try:
-                self.pkg_cache.update()
-            except:
-                self.logger.error("Failed to update apt cache")
+            self.pkg_cache = apt.cache.Cache()
+            self.pkg_cache.update()
+        self.pkg_cache = apt.cache.Cache()
 
     def FindExtra(self):
         '''Find extra packages'''
