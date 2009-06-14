@@ -1,11 +1,9 @@
 import copy, gzip, lxml.etree, re, urllib2, logging
-import os
-import Bcfg2.Server.Plugin
+import os, cPickle
+import Bcfg2.Server.Plugin, Bcfg2.Logger
 
 # build sources.list?
-# caching
-# pinning
-# multi apt-source from xml
+# caching for yum 
 
 class NoData(Exception):
     pass
@@ -37,15 +35,36 @@ class Source(object):
         self.deps = dict()
         self.provides = dict()
 
+    def setup_data(self):
+        should_read = True
+        should_download = False
+        if os.path.exists(self.cachefile):
+            try:
+                self.load_state()
+                should_read = False
+            except:
+                logger.error("Cachefile %s load failed; falling back to file read"\
+                             % (self.cachefile))
+        if should_read:
+            try:
+                self.read_files()
+            except:
+                logger.error("Packages: File read failed; falling back to file download")
+                should_download = True
+
+        if should_download:
+            self.update()
+            self.read_files()
+
     def get_urls(self):
         return []
     urls = property(get_urls)
 
     def get_files(self):
-        return [self.mk_fname(url) for url in self.urls]
+        return [self.escape_url(url) for url in self.urls]
     files = property(get_files)
 
-    def mk_fname(self, url):
+    def escape_url(self, url):
         return "%s/%s" % (self.basepath, url.replace('/', '@'))
 
     def file_init(self):
@@ -57,7 +76,7 @@ class Source(object):
     def update(self):
         for url in self.urls:
             print "updating", url
-            fname = self.mk_fname(url)
+            fname = self.escape_url(url)
             data = urllib2.urlopen(url).read()
             file(fname, 'w').write(data)
 
@@ -135,23 +154,32 @@ class YUMSource(Source):
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         Source.__init__(self, basepath, url, version, arches, components,
                         groups, rawurl)
+        if not self.rawurl:
+            self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
+        else:
+            self.baseurl = self.rawurl
+        self.cachefile = self.escape_url(self.baseurl) + '.data'
         self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
         self.filemap = dict([(x, dict()) for x in ['global'] + self.arches])
 
+    def save_state(self):
+        cache = file(self.cachefile, 'wb')
+        data = cPickle.dump((self.packages, self.deps, self.provides,
+                             self.filemap), cache, 2)
+        cache.close()
+
+    def load_state(self):
+        data = cPickle.loads(file())
+
     def get_urls(self):
-        logger.error('in gu')
-        if not self.rawurl:
-            urlbase = self.url + '%(version)s/%(component)s/%(arch)s/'
-        else:
-            urlbase = rawurl
         usettings = [{'version': self.version, 'component':comp, 'arch':arch}
                      for comp in self.components for arch in self.arches]
-        baseurls = [urlbase % setting for setting in usettings]
+        surls = [self.baseurl % setting for setting in usettings]
         urls = []
-        for baseurl in baseurls:
-            rmdurl = baseurl + '/repodata/repomd.xml'
+        for surl in surls:
+            rmdurl = surl + '/repodata/repomd.xml'
             try:
                 repomd = urllib2.urlopen(rmdurl).read()
                 xdata = lxml.etree.XML(repomd)
@@ -162,7 +190,7 @@ class YUMSource(Source):
                 if elt.get('type') not in ['filelists', 'primary']:
                     continue
                 floc = elt.find(self.rpo + 'location')
-                urls.append(baseurl + floc.get('href'))
+                urls.append(surl + floc.get('href'))
         return urls
     urls = property(get_urls)
 
@@ -250,12 +278,24 @@ class APTSource(Source):
     
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
+        self.cachefile = self.escape_url(self.url) + '.data'
         self.pkgnames = set()
+
+    def save_state(self):
+        cache = file(self.cachefile, 'wb')
+        data = cPickle.dump((self.pkgnames, self.deps, self.provides),
+                             cache, 2)
+        cache.close()
+
+    def load_state(self):
+        data = file(self.cachefile)
+        self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def get_urls(self):
         return ["%s/dists/%s/%s/binary-%s/Packages.gz" % \
                 (self.url, self.version, part, arch) for part in self.components \
                 for arch in self.arches]
+    urls = property(get_urls)
 
     def get_aptsrc(self):
         return ["deb %s %s %s" % (self.url, self.version,
@@ -329,6 +369,7 @@ class APTSource(Source):
             else:
                 for bin in bprov:
                     self.provides[bin][prov] = bprov[bin].get(prov, ())
+        self.save_state()
 
     def is_package(self, _, pkg):
         return pkg in self.pkgnames
@@ -367,15 +408,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for s in xdata.findall('YUMSource'):
             self.sources.append(YUMSource(cachepath, **source_from_xml(s)))
         for source in self.sources:
-            try:
-                source.read_files()
-            except:
-                self.logger.info("File read failed; updating sources", exc_info=1)
-                try:
-                    source.update()
-                    source.read_files()
-                except IOError, e:
-                    self.logger.error("Failed to update sources: " + str(e.code))
+            source.setup_data()
             self.sentinels.update(source.basegroups)
 
     def get_matching_sources(self, meta):
@@ -427,4 +460,5 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         structures.append(news)
 
 if __name__ == '__main__':
+    Bcfg2.Logger.setup_logging('Packages',to_console=True)
     aa = Packages(None, '/home/desai/tmp/bcfg2')
