@@ -252,8 +252,10 @@ CLIENT_CACHE = Option('store the configuration in a file',
                       default=False, cmd='-c', odesc="<cache path>")
 CLIENT_REMOVE = Option('force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
-CLIENT_BUNDLE = Option('only configure the given bundle', default=[],
-                       cmd='-b', odesc='<bundle>', cook=colon_split)
+CLIENT_BUNDLE = Option('only configure the given bundle(s)', default=[],
+                       cmd='-b', odesc='<bundle:bundle>', cook=colon_split)
+CLIENT_INDEP = Option('only configure the given bundle(s)', default=False,
+                       cmd='-z')
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_DLIST = Option('run client in server decision list mode', default=False,

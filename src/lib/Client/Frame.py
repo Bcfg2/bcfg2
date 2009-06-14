@@ -217,6 +217,9 @@ class Frame:
                        if b.get('name') in self.setup['bundle']]
             self.whitelist = [e for e in self.whitelist if \
                               True in [e in b for b in bundles]]
+        elif self.setup['indep']:
+            bundles = [nb for nb in self.config.getchildren() if nb.tag != \
+                       'Bundle']
         else:
             bundles = self.config.getchildren()
 

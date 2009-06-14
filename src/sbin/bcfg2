@@ -49,6 +49,7 @@ class Client:
             'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
             'paranoid': Bcfg2.Options.CLIENT_PARANOID,
             'bundle': Bcfg2.Options.CLIENT_BUNDLE,
+            'indep': Bcfg2.Options.CLIENT_INDEP,
             'file': Bcfg2.Options.CLIENT_FILE,
             'interactive': Bcfg2.Options.INTERACTIVE,
             'cache': Bcfg2.Options.CLIENT_CACHE,
