@@ -519,7 +519,7 @@ class SpecificData(object):
 
 class EntrySet:
     '''Entry sets deal with the host- and group-specific entries'''
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px]))$")
+    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px]))$")
     def __init__(self, basename, path, entry_type, encoding):
         self.path = path
         self.entry_type = entry_type
