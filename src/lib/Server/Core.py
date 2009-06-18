@@ -274,6 +274,7 @@ class Core(Component):
         for conn in self.connectors:
             data = conn.get_additional_data(imd)
             self.metadata.merge_additional_data(imd, conn.name, data)
+        imd.build_metadata = self.build_metadata
         return imd
 
     def process_statistics(self, client_name, statistics):

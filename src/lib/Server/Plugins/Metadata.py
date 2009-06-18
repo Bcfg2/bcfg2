@@ -19,7 +19,7 @@ class MetadataRuntimeError(Exception):
 class ClientMetadata(object):
     '''This object contains client metadata'''
     def __init__(self, client, profile, groups, bundles, categories, uuid,
-                 password, overall):
+                 password, overall, clients_func):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
@@ -29,6 +29,7 @@ class ClientMetadata(object):
         self.password = password
         self.all = overall
         self.connectors = []
+        self.all_clients = clients_func
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
@@ -339,7 +340,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         except IOError:
             return True
         return False
-    
+
+    def get_clients(self):
+        return self.clients.keys()
+
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
         #print self.session_cache
@@ -403,7 +407,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, profile, newgroups, newbundles,
                               newcategories, uuid, password,
-                              (groupscopy, clientscopy))
+                              (groupscopy, clientscopy), self.get_clients)
         
     def merge_additional_groups(self, imd, groups):
         for group in groups:
