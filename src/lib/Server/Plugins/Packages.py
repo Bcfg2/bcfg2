@@ -163,6 +163,7 @@ class YUMSource(Source):
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
         self.filemap = dict([(x, dict()) for x in ['global'] + self.arches])
+        self.needed_paths = set()
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
@@ -195,13 +196,16 @@ class YUMSource(Source):
     urls = property(get_urls)
 
     def read_files(self):
-        for fname in self.files:
+        for fname in [f for f in self.files if f.endswith('primary.xml.gz')]:
+            print fname
             farch = fname.split('@')[-3]
             fdata = lxml.etree.parse(fname).getroot()
-            if fname.endswith('primary.xml.gz'):
-                self.parse_primary(fdata, farch)
-            elif fname.endswith('filelists.xml.gz'):
-                self.parse_filelist(fdata, farch)
+            self.parse_primary(fdata, farch)
+        for fname in [f for f in self.files if f.endswith('filelists.xml.gz')]:
+            print fname
+            farch = fname.split('@')[-3]
+            fdata = lxml.etree.parse(fname).getroot()
+            self.parse_filelist(fdata, farch)
         # merge data
         sdata = self.packages.values()
         self.packages['global'] = copy.deepcopy(sdata.pop())
@@ -216,7 +220,8 @@ class YUMSource(Source):
     def parse_filelist(self, data, arch):
         for pkg in data.findall(self.fl + 'package'):
             for fentry in pkg.findall(self.fl + 'file'):
-                self.filemap[arch][fentry.text] = pkg.get('name')
+                if fentry in self.needed_paths:
+                    self.filemap[arch][fentry.text] = pkg.get('name')
 
     def parse_primary(self, data, arch):
         if arch not in self.packages:
@@ -236,6 +241,8 @@ class YUMSource(Source):
             self.deps[arch][pkgname] = set()
             for entry in pre.getchildren():
                 self.deps[arch][pkgname].add(entry.get('name'))
+                if entry.get('name').startswith('/'):
+                    self.needed_paths.add(entry.get('name'))
             pro = pdata.find(self.rp + 'provides')
             if pro != None: 
                 for entry in pro.getchildren():
