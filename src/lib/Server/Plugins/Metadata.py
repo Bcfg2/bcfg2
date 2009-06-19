@@ -19,7 +19,7 @@ class MetadataRuntimeError(Exception):
 class ClientMetadata(object):
     '''This object contains client metadata'''
     def __init__(self, client, profile, groups, bundles, categories, uuid,
-                 password, overall, clients_func):
+                 password, query):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
@@ -27,34 +27,29 @@ class ClientMetadata(object):
         self.categories = categories
         self.uuid = uuid
         self.password = password
-        self.all = overall
         self.connectors = []
-        self.all_clients = clients_func
+        self.query = query
 
     def inGroup(self, group):
         '''Test to see if client is a member of group'''
         return group in self.groups
 
-    def get_clients_by_group(self, group):
-        """
-        return a list of clients that are members of a group
-        Arguments:
-        - `group`: group name
-        """
-        profiles = [key for key, value in self.all[0].iteritems() \
-                    if group in value[1]]
-        return [key for key, value in self.all[1].iteritems() \
-                if value in profiles]
+class MetadataQuery(object):
+    def __init__(self, get_clients, by_groups, by_profiles):
+        # resolver is set later
+        self.by_name = None
+        self.names_by_groups = by_groups
+        self.names_by_profiles = by_profiles
+        self.all_names = get_clients
 
-    def get_clients_by_profile(self, profile):
-        """
-        return clients with a given profile
-        Arguments:
-        - `profile`: profile name
-        """
-        return [key for key, value in self.all[1].iteritems() \
-                if value == profile]
+    def by_groups(self, groups):
+        return [self.by_name(name) for name in self.names_by_groups(groups)]
 
+    def by_profiles(self, profiles):
+        return [self.by_name(name) for name in self.names_by_profiles(profiles)]
+
+    def all(self):
+        return [self.by_name(name) for name in self.all_names()]
 
 class Metadata(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Metadata,
@@ -97,6 +92,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.pdirty = False
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
+        self.query = MetadataQuery(lambda:self.clients.keys(),
+                                   self.get_client_names_by_groups,
+                                   self.get_client_names_by_profiles)
 
     def get_groups(self):
         '''return groups xml tree'''
@@ -251,19 +249,18 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                     self.categories[group.get('name')] = group.get('category')
             for group in grouptmp:
                 # self.groups[group] => (bundles, groups, categories)
-                self.groups[group] = ([], [], {})
+                self.groups[group] = (set(), set(), {})
                 tocheck = [group]
                 group_cat = self.groups[group][2]
                 while tocheck:
                     now = tocheck.pop()
-                    if now not in self.groups[group][1]:
-                        self.groups[group][1].append(now)
+                    self.groups[group][1].add(now)
                     if now in grouptmp:
                         (bundles, groups) = grouptmp[now]
                         for ggg in [ggg for ggg in groups if ggg not in self.groups[group][1]]:
                             if ggg not in self.categories or \
                                    self.categories[ggg] not in self.groups[group][2]:
-                                self.groups[group][1].append(ggg)
+                                self.groups[group][1].add(ggg)
                                 tocheck.append(ggg)
                                 if ggg in self.categories:
                                     group_cat[self.categories[ggg]] = ggg
@@ -272,8 +269,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                                  (group,
                                                   group_cat[self.categories[ggg]],
                                                   ggg))
-                        [self.groups[group][0].append(bund) for bund in bundles
-                         if bund not in self.groups[group][0]]
+                        [self.groups[group][0].add(bund) for bund in bundles]
         self.states[dest] = True
         if False not in self.states.values():
             # check that all client groups are real and complete
@@ -341,9 +337,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             return True
         return False
 
-    def get_clients(self):
-        return self.clients.keys()
-
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
         #print self.session_cache
@@ -366,7 +359,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             warning = "address resolution error for %s" % (address)
             self.logger.warning(warning)
             raise MetadataConsistencyError
-    
+
     def get_initial_metadata(self, client):
         '''Return the metadata for a given client'''
         client = client.lower()
@@ -382,8 +375,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.set_profile(client, self.default, (None, None))
             profile = self.default
             [bundles, groups, categories] = self.groups[self.default]
-        newgroups = groups[:]
-        newbundles = bundles[:]
+        newgroups = set(groups)
+        newbundles = set(bundles)
         newcategories = {}
         newcategories.update(categories)
         if client in self.passwords:
@@ -400,15 +393,23 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 nbundles, ngroups, ncategories = self.groups[group]
             else:
                 nbundles, ngroups, ncategories = ([], [group], {})
-            [newbundles.append(b) for b in nbundles if b not in newbundles]
-            [newgroups.append(g) for g in ngroups if g not in newgroups]
+            [newbundles.add(b) for b in nbundles if b not in newbundles]
+            [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
         groupscopy = copy.deepcopy(self.groups)
         clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, profile, newgroups, newbundles,
-                              newcategories, uuid, password,
-                              (groupscopy, clientscopy), self.get_clients)
+                              newcategories, uuid, password, self.query)
         
+    def get_client_names_by_profiles(self, profiles):
+        return [client for client, profile in self.clients.iteritems() \
+                if profile in profiles]
+
+    def get_client_names_by_groups(self, groups):
+        gprofiles = [profile for profile in self.profiles if \
+                     self.groups[profile][1].issuperset(groups)]
+        return self.get_client_names_by_profiles(gprofiles)
+
     def merge_additional_groups(self, imd, groups):
         for group in groups:
             if group in self.categories and \
