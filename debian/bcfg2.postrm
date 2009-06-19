@@ -23,7 +23,7 @@ case "$1" in
            rm -f $i
 
 	   if which ucf >/dev/null; then
-	     ucf --purge $1
+	     ucf --purge $i
 	   fi
 	   if which ucfr >/dev/null; then
 	     ucfr --purge bcfg2 $i
