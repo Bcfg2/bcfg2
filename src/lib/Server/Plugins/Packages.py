@@ -172,7 +172,9 @@ class YUMSource(Source):
         cache.close()
 
     def load_state(self):
-        data = cPickle.loads(file())
+        data = file(self.cachefile)
+        (self.packages, self.deps, self.provides, \
+         self.filemap) = cPickle.load(data)
 
     def get_urls(self):
         usettings = [{'version': self.version, 'component':comp, 'arch':arch}
@@ -197,12 +199,10 @@ class YUMSource(Source):
 
     def read_files(self):
         for fname in [f for f in self.files if f.endswith('primary.xml.gz')]:
-            print fname
             farch = fname.split('@')[-3]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_primary(fdata, farch)
         for fname in [f for f in self.files if f.endswith('filelists.xml.gz')]:
-            print fname
             farch = fname.split('@')[-3]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_filelist(fdata, farch)
@@ -216,6 +216,7 @@ class YUMSource(Source):
             if key == 'global':
                 continue
             self.packages[key] = self.packages['global'].difference(self.packages[key])
+        self.save_state()
         
     def parse_filelist(self, data, arch):
         for pkg in data.findall(self.fl + 'package'):
