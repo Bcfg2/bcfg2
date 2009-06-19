@@ -396,8 +396,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [newbundles.add(b) for b in nbundles if b not in newbundles]
             [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        groupscopy = copy.deepcopy(self.groups)
-        clientscopy = copy.deepcopy(self.clients)
         return ClientMetadata(client, profile, newgroups, newbundles,
                               newcategories, uuid, password, self.query)
         
