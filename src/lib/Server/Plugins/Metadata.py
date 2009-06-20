@@ -512,16 +512,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.session_cache[address] = (time.time(), user)
         return True
 
-    def GetClientByGroup(self, group):
-        '''Return a list of clients that are in a given group'''
-        return [client for client in self.clients \
-                if group in self.groups[self.clients[client]][1]]
-
-    def GetClientByProfile(self, profile):
-        '''Return a list of clients that are members of a given profile'''
-        return [client for client in self.clients \
-                if self.clients[client] == profile]
-
     def process_statistics(self, meta, _):
         '''Hook into statistics interface to toggle clients in bootstrap mode'''
         client = meta.hostname

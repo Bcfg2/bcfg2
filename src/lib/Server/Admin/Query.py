@@ -51,15 +51,15 @@ class Query(Bcfg2.Server.Admin.Mode):
                 print "Unknown argument %s" % arg
                 continue
             if k == 'p':
-                nc = self.meta.GetClientByProfile(v)
+                nc = self.meta.get_client_names_by_profiles(v.split(','))
             elif k == 'g':
-                nc = self.meta.GetClientByGroup(v)
+                nc = self.meta.get_client_names_by_groups(v.split(','))
                 # add probed groups (if present)
                 for conn in self.bcore.connectors:
                     if isinstance(conn, Bcfg2.Server.Plugins.Probes.Probes):
                         for c, glist in conn.cgroups.items():
                             for g in glist:
-                                if g == v:
+                                if g in v.split(','):
                                     nc.append(c)
             else:
                 print "One of g= or p= must be specified"
