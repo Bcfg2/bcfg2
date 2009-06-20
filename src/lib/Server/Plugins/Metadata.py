@@ -416,13 +416,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             nb, ng, _ = self.groups.get(group, (list(), [group], dict()))
             for b in nb:
                 if b not in imd.bundles:
-                    imd.bundles.append(b)
+                    imd.bundles.add(b)
             for g in ng:
                 if g not in imd.groups:
                     if g in self.categories and \
                        self.categories[g] in imd.categories:
                         continue
-                    imd.groups.append(g)
+                    imd.groups.add(g)
 
     def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
