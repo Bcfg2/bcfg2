@@ -242,7 +242,7 @@ CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
                               default=False, cmd='-e', )
 CLIENT_PARANOID = Option('make automatic backups of config files',
                          default=False, cmd='-P', )
-CORE_PROFILE = Option('profile server core', odesc='<profile trace path>',
+CORE_PROFILE = Option('profile',
                       default=False, cmd='-p', )
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),

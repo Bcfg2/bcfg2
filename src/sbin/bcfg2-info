@@ -2,7 +2,7 @@
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
-import copy, logging, lxml.etree, sys, cmd, time
+import copy, logging, lxml.etree, sys, cmd, time, tempfile, profile, pstats
 import Bcfg2.Logger, Bcfg2.Server.Core, os
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin
 import Bcfg2.Options
@@ -22,6 +22,11 @@ def printTabular(rows):
     print((sum(cmax)  + (len(cmax) * 2) + (len(cmax) - 1)) * '=')
     for row in rows[1:]:
         print(fstring % row)
+
+def displayTrace(trace, num=80, sort=('time', 'calls')):
+    stats = pstats.Stats(trace)
+    stats.sort_stats('time', 'calls')
+    stats.print_stats(100)
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
@@ -80,6 +85,7 @@ Usage: [quit|exit]"""
         print 'groups - list groups'
         print 'help - print this text'
         print 'mappings <type*> <name*>- print generator mappings for optional type and name'
+        print 'profile <command> <args> - profile a single bcfg2-info command'
         print 'quit'
         print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
         print 'showclient <client1> <client2> - show metadata for given hosts'
@@ -287,16 +293,18 @@ Usage: [quit|exit]"""
                         continue
                     print(cand[0].name)
 
-def main(repo, plugins, password, encoding, debug, args=[]):
-    loop = infoCore(repo, plugins, password, encoding, debug)
-    if args == ['exit']:
-        raise SystemExit(0)
-    elif args: 
-        loop.onecmd(" ".join(args))
-        raise SystemExit(0)
-    else:
-        loop.do_loop()
-    return loop
+    def do_profile(self, arg):
+        tracefname = tempfile.mktemp()
+        p = profile.Profile()
+        p.runcall(self.onecmd, arg)
+        displayTrace(p)
+
+    def Run(self, args):
+        if args:
+            self.onecmd(" ".join(args))
+            os._exit(0)
+        else:
+            self.do_loop()
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
@@ -313,18 +321,14 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     print(setup)
-    if not setup['profile']:
-        loop = main(setup['repo'], setup['plugins'], setup['password'],
-                    setup['encoding'], '-d' in sys.argv, [])
+    if setup['profile']:
+        prof = profile.Profile()
+        loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
+                            setup['password'], setup['encoding'],
+                            setup['event debug'])
+        displayTrace(prof)
     else:
-        import hotshot, hotshot.stats
-        prof = hotshot.Profile(setup['profile'])
-        try:
-            prof.runcall(main, setup['repo'], setup['plugins'], setup['password'],
-                         setup['encoding'], '-d' in sys.argv, [])
-        except SystemExit:
-            stats = hotshot.stats.load(setup['profile'])
-            stats.strip_dirs()
-            stats.sort_stats('time', 'calls')
-            stats.print_stats(80)
-            raise
+        loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
+                        setup['encoding'], setup['event debug'])
+
+    loop.Run(setup['args'])
