@@ -1,4 +1,4 @@
 debian/tmp/usr/bin/bcfg2-* usr/sbin
-debian/tmp/usr/lib/python*/dist-packages/Bcfg2/Server/*
+debian/tmp/usr/lib/python*/*-packages/Bcfg2/Server/*
 debian/tmp/usr/share/bcfg2/*
 debian/tmp/usr/share/man/man8/*
