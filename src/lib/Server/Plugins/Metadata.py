@@ -18,11 +18,12 @@ class MetadataRuntimeError(Exception):
 
 class ClientMetadata(object):
     '''This object contains client metadata'''
-    def __init__(self, client, profile, groups, bundles, categories, uuid,
-                 password, query):
+    def __init__(self, client, profile, groups, bundles,
+                 addresses, categories, uuid, password, query):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
+        self.addresses = addresses
         self.groups = groups
         self.categories = categories
         self.uuid = uuid
@@ -375,6 +376,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.set_profile(client, self.default, (None, None))
             profile = self.default
             [bundles, groups, categories] = self.groups[self.default]
+        '''
+        Handle aliases listed in clients.xml
+        addresses - contains address information for all aliases
+                    mapping is as follows:
+                    {alias: (ip, realname)}
+        '''
+        addresses = {}
+        for alias, host in self.aliases.iteritems():
+            for ip in self.addresses:
+                for name in self.addresses[ip]:
+                    if name == host:
+                        addresses[alias] = (ip, host)
+            if alias not in addresses:
+                addresses[alias] = (None, host)
         newgroups = set(groups)
         newbundles = set(bundles)
         newcategories = {}
@@ -396,7 +411,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [newbundles.add(b) for b in nbundles if b not in newbundles]
             [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        return ClientMetadata(client, profile, newgroups, newbundles,
+        return ClientMetadata(client, profile, newgroups, newbundles, addresses,
                               newcategories, uuid, password, self.query)
         
     def get_client_names_by_profiles(self, profiles):

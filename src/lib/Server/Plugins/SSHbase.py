@@ -28,7 +28,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
       public key for (hostname)
     ssh_known_hosts -> the current known hosts file. this
       is regenerated each time a new key is generated.
-'''
+    '''
     name = 'SSHbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -143,6 +143,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
+        addresses = metadata.addresses
         entry.text = self.skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
                         if (keytmpl % client) in self.entries]
@@ -150,6 +151,20 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.entries[hostkey].data)
+        # add entries listed in clients.xml
+        for addr, (ip, host) in addresses.iteritems():
+            shortname = addr.split('.')[0]
+            fqdn = addr
+            if ip == None:
+                ipaddr = self.get_ipcache_entry(addr)[0]
+            else:
+                ipaddr = ip
+            for key in self.entries.keys():
+                if key.find('.pub.H_%s' % host) != -1:
+                    entry.text += "%s,%s,%s %s" % (shortname,
+                                                   fqdn,
+                                                   ipaddr,
+                                                   self.entries[key].data)
         permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
