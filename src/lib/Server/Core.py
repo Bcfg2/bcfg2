@@ -1,7 +1,6 @@
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
 __revision__ = '$Revision$'
 
-import copy
 import logging
 import lxml.etree
 import select
@@ -282,10 +281,8 @@ class Core(Component):
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
             for plugin in self.statistics:
-                mc = copy.deepcopy(meta)
-                ms = copy.deepcopy(statistics)
                 try:
-                    plugin.process_statistics(mc, ms)
+                    plugin.process_statistics(meta, statistics)
                 except:
                     logger.error("Plugin %s failed to process stats from %s" \
                                  % (plugin.name, mc.hostname),
