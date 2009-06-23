@@ -164,6 +164,7 @@ class YUMSource(Source):
         self.provides = dict([('global', dict())])
         self.filemap = dict([(x, dict()) for x in ['global'] + self.arches])
         self.needed_paths = set()
+        self.file_to_arch = dict()
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
@@ -177,33 +178,38 @@ class YUMSource(Source):
          self.filemap) = cPickle.load(data)
 
     def get_urls(self):
-        usettings = [{'version': self.version, 'component':comp, 'arch':arch}
-                     for comp in self.components for arch in self.arches]
-        surls = [self.baseurl % setting for setting in usettings]
+        surls = list()
+        for arch in self.arches:
+            usettings = [{'version': self.version, 'component':comp,
+                          'arch':arch} for comp in self.components]
+            surls.append((arch, [self.baseurl % setting for setting in usettings]))
         urls = []
-        for surl in surls:
-            rmdurl = surl + '/repodata/repomd.xml'
-            try:
-                repomd = urllib2.urlopen(rmdurl).read()
-                xdata = lxml.etree.XML(repomd)
-            except:
-                logger.error("Failed to process url %s" % rmdurl)
-                continue
-            for elt in xdata.findall(self.rpo + 'data'):
-                if elt.get('type') not in ['filelists', 'primary']:
+        for (sarch, surl_list) in surls:
+            for surl in surl_list:
+                rmdurl = surl + '/repodata/repomd.xml'
+                try:
+                    repomd = urllib2.urlopen(rmdurl).read()
+                    xdata = lxml.etree.XML(repomd)
+                except:
+                    logger.error("Failed to process url %s" % rmdurl)
                     continue
-                floc = elt.find(self.rpo + 'location')
-                urls.append(surl + floc.get('href'))
+                for elt in xdata.findall(self.rpo + 'data'):
+                    if elt.get('type') not in ['filelists', 'primary']:
+                        continue
+                    floc = elt.find(self.rpo + 'location')
+                    fullurl = surl + floc.get('href')
+                    urls.append(fullurl)
+                    self.file_to_arch[self.escape_url(fullurl)] = arch
         return urls
     urls = property(get_urls)
 
     def read_files(self):
         for fname in [f for f in self.files if f.endswith('primary.xml.gz')]:
-            farch = fname.split('@')[-3]
+            farch = self.file_to_arch[fname]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_primary(fdata, farch)
         for fname in [f for f in self.files if f.endswith('filelists.xml.gz')]:
-            farch = fname.split('@')[-3]
+            farch = self.file_to_arch[fname]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_filelist(fdata, farch)
         # merge data
