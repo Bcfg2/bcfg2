@@ -6,6 +6,7 @@ __all__ = [
     "SSLServer", "XMLRPCRequestHandler", "XMLRPCServer",
 ]
 
+import os
 import sys
 import xmlrpclib
 import socket
@@ -89,13 +90,29 @@ class SSLServer (SocketServer.TCPServer, object):
         """
 
         all_iface_address = ('', server_address[1])
-        SocketServer.TCPServer.__init__(self, all_iface_address,
-                                        RequestHandlerClass)
+        try:
+            SocketServer.TCPServer.__init__(self, all_iface_address,
+                                            RequestHandlerClass)
+        except socket.error:
+            self.logger.error("Failed to bind to socket")
+            raise
 
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
+        if keyfile != None:
+            if not os.path.exists(keyfile):
+                self.logger.error("Keyfile %s does not exist" % keyfile)
+                raise Exception, "keyfile doesn't exist"
         self.certfile = certfile
+        if certfile != None:
+            if not os.path.exists(certfile):
+                self.logger.error("Certfile %s does not exist" % certfile)
+                raise Exception, "certfile doesn't exist"
         self.ca = ca
+        if ca != None:
+            if not os.path.exists(ca):
+                self.logger.error("CA %s does not exist" % ca)
+                raise Exception, "ca doesn't exist"
         self.reqCert = reqCert
         if ca and certfile:
             self.mode = ssl.CERT_OPTIONAL
@@ -255,7 +272,6 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         self.register = register
         self.register_introspection_functions()
         self.register_function(self.ping)
-        self.task_thread = threading.Thread(target=self._tasks_thread)
         self.logger.info("service available at %s" % self.url)
         self.timeout = timeout
 
@@ -301,6 +317,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     def serve_forever (self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
+        self.task_thread = threading.Thread(target=self._tasks_thread)
         self.task_thread.start()
         self.logger.info("serve_forever() [start]")
         signal.signal(signal.SIGINT, self._handle_shutdown_signal)

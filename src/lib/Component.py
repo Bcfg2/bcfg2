@@ -18,6 +18,8 @@ import Bcfg2.Logger
 from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
 
+logger = logging.getLogger()
+
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
@@ -59,9 +61,12 @@ def run_component (component_cls, location, daemon, pidfile_name, argv=None,
     up = urlparse.urlparse(location)
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))
-
-    server = XMLRPCServer(port, keyfile=keyfile, certfile=certfile,
-                          register=register, timeout=time_out, ca=ca)
+    try:
+        server = XMLRPCServer(port, keyfile=keyfile, certfile=certfile,
+                              register=register, timeout=time_out, ca=ca)
+    except:
+        logger.error("Server startup failed")
+        os._exit(1)
     server.register_instance(component)
     
     try:
