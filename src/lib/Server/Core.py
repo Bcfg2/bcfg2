@@ -45,6 +45,8 @@ class Core(Component):
         try:
             self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
         except IOError:
+            logger.error("Failed to instantiate fam driver %s" % filemonitor,
+                         exc_info=1)
             raise CoreInitError, "failed to instantiate fam driver (used %s)" % \
                   filemonitor
         self.pubspace = {}
@@ -285,7 +287,7 @@ class Core(Component):
                     plugin.process_statistics(meta, statistics)
                 except:
                     logger.error("Plugin %s failed to process stats from %s" \
-                                 % (plugin.name, mc.hostname),
+                                 % (plugin.name, meta.hostname),
                                  exc_info=1)
 
         logger.info("Client %s reported state %s" % (client_name,
