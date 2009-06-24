@@ -25,7 +25,7 @@ class NoExposedMethod (Exception):
 
 def run_component (component_cls, location, daemon, pidfile_name, argv=None,
                    register=True, state_name=False, cls_kwargs={},
-                   extra_getopt='', time_out=10,
+                   extra_getopt='', time_out=10, protocol='xmlrpc/ssl',
                    certfile=None, keyfile=None, ca=None):
     
     # default settings
@@ -63,7 +63,8 @@ def run_component (component_cls, location, daemon, pidfile_name, argv=None,
     port = (port[0], int(port[1]))
     try:
         server = XMLRPCServer(port, keyfile=keyfile, certfile=certfile,
-                              register=register, timeout=time_out, ca=ca)
+                              register=register, timeout=time_out, ca=ca,
+                              protocol=protocol)
     except:
         logger.error("Server startup failed")
         os._exit(1)

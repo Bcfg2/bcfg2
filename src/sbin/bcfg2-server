@@ -38,6 +38,7 @@ if __name__ == '__main__':
                     'static'   : Bcfg2.Options.SERVER_STATIC,
                     'encoding' : Bcfg2.Options.ENCODING,
                     'filelog'  : Bcfg2.Options.LOGGING_FILE_PATH,
+                    'protocol'  : Bcfg2.Options.SERVER_PROTOCOL,
                     })
 
 
@@ -49,6 +50,7 @@ if __name__ == '__main__':
                                       location=setup['location'],
                                       daemon = setup['daemon'],
                                       pidfile_name = setup['daemon'],
+                                      protocol = setup['protocol'],
                                       register=False,
                                       cls_kwargs={'repo':setup['repo'],
                                                   'plugins':setup['plugins'],

@@ -64,7 +64,7 @@ xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
-                 cert=None, ca=None, scns=None):
+                 cert=None, ca=None, scns=None, protocol='xmlrpc/ssl'):
         if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
         else:
@@ -77,6 +77,14 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.ca_mode = ssl.CERT_REQUIRED
         else:
             self.ca_mode = ssl.CERT_NONE
+        if protocol == 'xmlrpc/ssl':
+            self.ssl_protocol = ssl.PROTOCOL_SSLv23
+        elif protocol == 'xmlrpc/tlsv1':
+            self.ssl_protocol = ssl.PROTOCOL_TLSv1
+        else:
+            self.logger.error("Unknown protocol %s" % (protocol))
+            raise Exception, "unknown protocol %s" % protocol
+
 
     def connect(self):
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -84,7 +92,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             rawsock.settimeout(self.timeout)
         self.sock = ssl.SSLSocket(rawsock, cert_reqs=self.ca_mode,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
-                                  keyfile=self.key, certfile=self.cert)
+                                  keyfile=self.key, certfile=self.cert,
+                                  ssl_version=self.ssl_protocol)
         self.sock.connect((self.host, self.port))
         pc = self.sock.getpeercert()
         if pc and self.scns:

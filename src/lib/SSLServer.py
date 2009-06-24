@@ -74,7 +74,7 @@ class SSLServer (SocketServer.TCPServer, object):
     logger = logging.getLogger("Cobalt.Server.TCPServer")
 
     def __init__ (self, server_address, RequestHandlerClass, keyfile=None,
-                  certfile=None, reqCert=False, ca=None, timeout=None):
+                  certfile=None, reqCert=False, ca=None, timeout=None, protocol='xmlrpc/ssl'):
 
         """Initialize the SSL-TCP server.
 
@@ -118,12 +118,19 @@ class SSLServer (SocketServer.TCPServer, object):
             self.mode = ssl.CERT_OPTIONAL
         else:
             self.mode = ssl.CERT_NONE
+        if protocol == 'xmlrpc/ssl':
+            self.ssl_protocol = ssl.PROTOCOL_SSLv23
+        elif protocol == 'xmlrpc/tlsv1':
+            self.ssl_protocol = ssl.PROTOCOL_TLSv1
+        else:
+            self.logger.error("Unknown protocol %s" % (protocol))
+            raise Exception, "unknown protocol %s" % protocol
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
         sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
                                   keyfile=self.keyfile, cert_reqs=self.mode,
-                                  ca_certs=self.ca)
+                                  ca_certs=self.ca, ssl_version=self.ssl_protocol)
         return sslsock, sockinfo
 
     def _get_url (self):
@@ -238,7 +245,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     """
 
     def __init__ (self, server_address, RequestHandlerClass=None,
-                  keyfile=None, certfile=None, ca=None,
+                  keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
                   timeout=10,
                   logRequests=False,
                   register=True, allow_none=True, encoding=None):
@@ -266,7 +273,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
 
         SSLServer.__init__(self,
             server_address, RequestHandlerClass, ca=ca,
-            timeout=timeout, keyfile=keyfile, certfile=certfile)
+            timeout=timeout, keyfile=keyfile, certfile=certfile, protocol=protocol)
         self.logRequests = logRequests
         self.serve = False
         self.register = register
