@@ -70,7 +70,7 @@ class BB(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.store = BBDirectoryBacked(self.data, core.fam)
 
-    def get_additional_metadata(self, metadata):
+    def get_additional_data(self, metadata):
         
         users = {}
         for user in self.store.entries['bb.xml'].users.get(metadata.hostname.split(".")[0], []):
