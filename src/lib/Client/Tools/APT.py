@@ -1,6 +1,10 @@
 '''This is the bcfg2 support for apt-get'''
 __revision__ = '$Revision$'
 
+# suppress apt API warnings
+import warnings
+warnings.filterwarnings("ignore", "apt API not stable yet",
+                        FutureWarning)
 import apt.cache
 import os
 import Bcfg2.Client.Tools

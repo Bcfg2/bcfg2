@@ -8,7 +8,17 @@ __all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "IPS",
 drivers = [item for item in __all__ if item not in ['rpmtools']]
 default = [item for item in drivers if item not in ['RPM', 'Yum']]
 
-import os, popen2, stat, sys, Bcfg2.Client.XML, time
+# suppress popen2 warnings for python 2.3
+import warnings
+warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
+                        DeprecationWarning)
+import os
+import popen2
+import stat
+import sys
+import time
+
+import Bcfg2.Client.XML
 
 class toolInstantiationError(Exception):
     '''This error is called if the toolset cannot be instantiated'''
