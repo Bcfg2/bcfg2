@@ -199,7 +199,7 @@ class YUMSource(Source):
                     floc = elt.find(self.rpo + 'location')
                     fullurl = surl + floc.get('href')
                     urls.append(fullurl)
-                    self.file_to_arch[self.escape_url(fullurl)] = arch
+                    self.file_to_arch[self.escape_url(fullurl)] = sarch
         return urls
     urls = property(get_urls)
 
