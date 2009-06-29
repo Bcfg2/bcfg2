@@ -36,12 +36,13 @@ class ClientMetadata(object):
         return group in self.groups
 
 class MetadataQuery(object):
-    def __init__(self, get_clients, by_groups, by_profiles):
+    def __init__(self, get_clients, by_groups, by_profiles, all_groups):
         # resolver is set later
         self.by_name = None
         self.names_by_groups = by_groups
         self.names_by_profiles = by_profiles
-        self.all_names = get_clients
+        self.all_clients = get_clients
+        self.all_groups = all_groups
 
     def by_groups(self, groups):
         return [self.by_name(name) for name in self.names_by_groups(groups)]
@@ -95,7 +96,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.password = core.password
         self.query = MetadataQuery(lambda:self.clients.keys(),
                                    self.get_client_names_by_groups,
-                                   self.get_client_names_by_profiles)
+                                   self.get_client_names_by_profiles,
+                                   self.get_all_group_names)
 
     def get_groups(self):
         '''return groups xml tree'''
@@ -413,6 +415,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             newcategories.update(ncategories)
         return ClientMetadata(client, profile, newgroups, newbundles, addresses,
                               newcategories, uuid, password, self.query)
+
+    def get_all_group_names(self):
+        return self.groups.keys()
         
     def get_client_names_by_profiles(self, profiles):
         return [client for client, profile in self.clients.iteritems() \
