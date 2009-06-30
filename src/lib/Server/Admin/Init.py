@@ -5,7 +5,15 @@ import socket
 import string
 import subprocess
 import Bcfg2.Server.Admin
+import Bcfg2.Server.Plugin
 import Bcfg2.Options
+
+from Bcfg2.Server.Plugins import (Account, Base, Bundler, Cfg,  
+                                  Decisions, Deps, Metadata, 
+                                  Packages,  Pkgmgr, Probes, 
+                                  Properties, Rules, Snapshots, 
+                                  SSHbase, Svcmgr, TCheetah, 
+                                  TGenshi)
 
 # default config file
 config = '''
@@ -171,19 +179,41 @@ class Init(Bcfg2.Server.Admin.Mode):
             return
         else:
             # FIXME repo creation may fail as non-root user
-            for subdir in ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
-                           'etc', 'Metadata', 'Base', 'Bundler']:
-                path = "%s/%s" % (repo, subdir)
-                newpath = ''
-                for subdir in path.split('/'):
-                    newpath = newpath + subdir + '/'
-                    try:
-                        os.mkdir(newpath)
-                    except:
-                        continue
+            plug_list = ['Account', 'Base', 'Bundler', 'Cfg', 
+                         'Decisions', 'Deps', 'Metadata', 'Packages', 
+                         'Pkgmgr', 'Probes', 'Properties', 'Rules', 
+                         'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr', 
+                         'TCheetah', 'TGenshi']
+            default_repo = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 
+                            'Metadata', 'Base', 'Bundler']
+            plugins = []
+            print 'Repository configuration, choose plugins:'
+            default = raw_input("Use default plugins? [Y/n]: ").lower()
+            if default == 'y' or default == '':
+                plugins = default_repo
+            else:
+                while True:
+                    plugins_are_valid = True
+                    plug_str = raw_input("Specify plugins: ")
+                    plugins = plug_str.split(',')
+                    for plugin in plugins:
+                        plugin = plugin.strip()
+                        if not plugin in plug_list:
+                            plugins_are_valid = False
+                            print "ERROR: plugin %s not recognized" % plugin
+                    if plugins_are_valid:
+                        break
+                
+            path = "%s/%s" % (repo, 'etc')                              
+            newpath = ''                                                 
+            for subdir in path.split('/'):                               
+                newpath = newpath + subdir + '/'                         
+                try:                                                     
+                    os.mkdir(newpath)                                    
+                except:                                                  
+                    continue
 
-            open("%s/Metadata/groups.xml" %
-                 repo, "w").write(groups % os_selection)
-            open("%s/Metadata/clients.xml" %
-                 repo, "w").write(clients % socket.getfqdn())
+            for plugin in plugins:
+                getattr(getattr(getattr(Bcfg2.Server.Plugins, plugin), plugin), 'init_repo')(repo)
+            
             print "Repository created successfuly in %s" % (self.repopath)

@@ -99,6 +99,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                    self.get_client_names_by_profiles,
                                    self.get_all_group_names)
 
+    @classmethod
+    def init_repo(self, repo):
+        Bcfg2.Server.Plugin.init_repo(repo)
+        open("%s/Metadata/groups.xml" %                              
+             repo, "w").write(groups % os_selection)                 
+        open("%s/Metadata/clients.xml" %                             
+             repo, "w").write(clients % socket.getfqdn())
+
     def get_groups(self):
         '''return groups xml tree'''
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
@@ -149,6 +157,28 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Client \"%s\" not found" % (client_name))
             raise MetadataConsistencyError
         root.remove(node)
+        client_tree = open(self.data + "/clients.xml","w")
+        fd = client_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(client_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        client_tree.close()
+
+    def update_client(self, client_name, attribs):
+        '''Update a client's attributes'''
+        tree = lxml.etree.parse(self.data + "/clients.xml")
+        root = tree.getroot()
+        node = self.search_client(client_name, tree)
+        if node == None:
+            self.logger.error("Client \"%s\" not found" % (client_name))
+            raise MetadataConsistencyError
+        node.attrib.update(attribs)
         client_tree = open(self.data + "/clients.xml","w")
         fd = client_tree.fileno()
         while True:

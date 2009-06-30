@@ -48,6 +48,17 @@ class Plugin(object):
         self.core = core
         self.data = "%s/%s" % (datastore, self.name)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
+        
+    @classmethod
+    def init_repo(self, repo):
+        path = "%s/%s" % (repo, self.name)                              
+        newpath = ''                                                 
+        for subdir in path.split('/'):                               
+            newpath = newpath + subdir + '/'                         
+            try:                                                     
+                os.mkdir(newpath)                                    
+            except:                                                  
+                return
 
 class Generator(object):
     '''Generator plugins contribute to literal client configurations'''
