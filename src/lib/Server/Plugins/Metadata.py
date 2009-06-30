@@ -51,7 +51,7 @@ class MetadataQuery(object):
         return [self.by_name(name) for name in self.names_by_profiles(profiles)]
 
     def all(self):
-        return [self.by_name(name) for name in self.all_names()]
+        return [self.by_name(name) for name in self.all_clients()]
 
 class Metadata(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Metadata,
