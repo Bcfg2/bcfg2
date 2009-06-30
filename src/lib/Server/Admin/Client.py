@@ -2,11 +2,14 @@ import Bcfg2.Server.Admin
 from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 
 class Client(Bcfg2.Server.Admin.MetadataCore):
-    __shorthelp__ = "Create or delete client entries"
+    __shorthelp__ = "Create, delete, or modify client entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin client add <client> "
                                     "attr1=val1 attr2=val2\n"
+                                    "\n\nbcfg2-admin client update <client> "
+                                    "attr1=val1 attr2=val2\n"
+                                    "\n\nbcfg2-admin client list\n"
                                     "bcfg2-admin client del <client>")
-    __usage__ = ("bcfg2-admin client [options] [add|del] [attr=val]")
+    __usage__ = ("bcfg2-admin client [options] [add|del|update|list] [attr=val]")
 
     def __init__(self, configfile):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
@@ -21,8 +24,8 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             attr_d = {}
             for i in args[2:]:
                 attr, val = i.split('=', 1)
-                if attr not in ['profile', 'user', 'state', 'image',
-                                'action']:
+                if attr not in ['profile', 'uuid', 'password', 
+                                'location', 'secure', 'address']:
                     print "Attribute %s unknown" % attr
                     raise SystemExit(1)
                 attr_d[attr] = val
@@ -31,12 +34,30 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             except MetadataConsistencyError:
                 print "Error in adding client"
                 raise SystemExit(1)
+        elif args[0] in ['update', 'up']:
+            attr_d = {}
+            for i in args[2:]:
+                attr, val = i.split('=', 1)
+                if attr not in ['profile', 'uuid', 'password', 
+                                'location', 'secure', 'address']:
+                    print "Attribute %s unknown" % attr
+                    raise SystemExit(1)
+                attr_d[attr] = val
+            try:
+                self.metadata.update_client(args[1], attr_d)
+            except MetadataConsistencyError:
+                print "Error in updating client"
+                raise SystemExit(1)
         elif args[0] in ['delete', 'remove', 'del', 'rm']:
             try:
                 self.metadata.remove_client(args[1])
             except MetadataConsistencyError:
                 print "Error in deleting client"
                 raise SystemExit(1)
+        elif args[0] in ['list', 'ls']:
+            tree = lxml.etree.parse(self.metadata.data + "/clients.xml")
+            for node in tree.findall("//Client"):
+                print node.attrib["name"]
         else:
             print "No command specified"
             raise SystemExit(1)
