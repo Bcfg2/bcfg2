@@ -1,14 +1,28 @@
 '''This module provides the baseclass for Bcfg2 Server Plugins'''
 __revision__ = '$Revision$'
 
-import logging, lxml.etree, re, copy, posixpath
+import copy
+import logging
+import lxml.etree
+import posixpath
+import re
 
 from lxml.etree import XML, XMLSyntaxError
 
+import Bcfg2.Options
+
+# grab default metadata info from bcfg2.conf
+opts = {'owner':Bcfg2.Options.MDATA_OWNER,
+        'group':Bcfg2.Options.MDATA_GROUP,
+        'perms':Bcfg2.Options.MDATA_PERMS,
+        'paranoid':Bcfg2.Options.MDATA_PARANOID}
+mdata_setup = Bcfg2.Options.OptionParser(opts)
+mdata_setup.parse([])
+del mdata_setup['args']
+
 logger = logging.getLogger('Bcfg2.Plugin')
 
-default_file_metadata = {'owner': 'root', 'group': 'root', 'perms': '644',
-                         'encoding': 'ascii', 'paranoid':"false"}
+default_file_metadata = mdata_setup
 
 info_regex = re.compile( \
     '^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
@@ -24,8 +38,8 @@ class PluginExecutionError(Exception):
     pass
 
 class Plugin(object):
-    '''This is the base class for all Bcfg2 Server plugins. Several attributes must be defined
-    in the subclass:
+    '''This is the base class for all Bcfg2 Server plugins.
+    Several attributes must be defined in the subclass:
     name : the name of the plugin
     __version__ : a version string
     __author__ : the author/contact for the plugin
@@ -211,7 +225,10 @@ class DirectoryBacked(object):
         elif name in self.entries:
             self.entries[name].HandleEvent()
         else:
-            if ((name[-1] == '~') or (name[:2] == '.#') or (name[-4:] == '.swp') or (name in ['SCCS', '.svn'])):
+            if ((name[-1] == '~') or
+                (name[:2] == '.#') or
+                (name[-4:] == '.swp') or
+                (name in ['SCCS', '.svn'])):
                 return
             if not self.patterns.match(name):
                 return
@@ -238,7 +255,9 @@ class DirectoryBacked(object):
         elif action in ['endExist']:
             pass
         else:
-            print "Got unknown event %s %s %s" % (event.requestID, event.code2str(), event.filename)
+            print "Got unknown event %s %s %s" % (event.requestID,
+                                                  event.code2str(),
+                                                  event.filename)
 
 class XMLFileBacked(FileBacked):
     '''This object is a coherent cache for an XML file to be used as a part of DirectoryBacked.'''

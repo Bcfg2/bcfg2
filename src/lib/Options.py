@@ -176,6 +176,18 @@ DEBUG = Option("Enable debugging output", False, cmd='-d')
 VERBOSE = Option("Enable verbose output", False, cmd='-v')
 DAEMON = Option("Daemonize process, storing pid", False,
                 cmd='-D', odesc="<pidfile>")
+MDATA_OWNER = Option('Default ConfigFile owner',
+                     default='root', cf=('mdata', 'owner'),
+                     odesc='owner permissions')
+MDATA_GROUP = Option('Default ConfigFile group',
+                     default='root', cf=('mdata', 'group'),
+                     odesc='group permissions')
+MDATA_PERMS = Option('Default ConfigFile permissions',
+                     '644', cf=('mdata', 'perms'),
+                     odesc='octal permissions')
+MDATA_PARANOID = Option('Default ConfigFile paranoid setting',
+                     'false', cf=('mdata', 'paranoid'),
+                     odesc='ConfigFile paranoid setting')
 
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',

@@ -48,6 +48,26 @@ The file monitor used to watch for changes in the repository.
 Values of 'gamin', 'fam', or 'pseudo' are valid.
 
 
+.SH MDATA OPTIONS
+These options affect the default metadata settings for ConfigFiles.
+
+.TP
+.B owner
+Global owner for ConfigFiles (defaults to root)
+
+.TP
+.B group
+Global group for ConfigFiles (defaults to root)
+
+.TP
+.B perms
+Global permissions for ConfigFiles (defaults to 644)
+
+.TP
+.B paranoid
+Global paranoid settings for ConfigFiles (defaults to false)
+
+
 .SH CLIENT OPTIONS
 These options only affect client functionality, specified in the
 [client] section.
