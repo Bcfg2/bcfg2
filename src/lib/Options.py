@@ -141,7 +141,6 @@ class OptionSet(dict):
 
     def parse(self, argv, do_getopt=True):
         '''Parse options'''
-        ret = {}
         if do_getopt:
             try:
                 opts, args = getopt.getopt(argv, self.buildGetopt(),
