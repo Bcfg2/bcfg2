@@ -33,8 +33,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         # First get options to the 'viz' subcommand
         try:
-            opts, args = getopt.getopt(args, 'rHbko:',
-                                       ['raw', 'includehosts', 'includebundles',
+            opts, args = getopt.getopt(args, 'Hbko:',
+                                       ['includehosts', 'includebundles',
                                         'includekey', 'outfile='])
         except getopt.GetoptError, msg:
             print msg
@@ -46,9 +46,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         kset = False
         outputfile = False
         for opt, arg in opts:
-            if opt in ("-r", "--raw"):
-                rset = True
-            elif opt in ("-H", "--includehosts"):
+            if opt in ("-H", "--includehosts"):
                 hset = True
             elif opt in ("-b", "--includebundles"):
                 bset = True
@@ -57,21 +55,21 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             elif opt in ("-o", "--outfile"):
                 outputfile = arg
 
-        data = self.Visualize(self.get_repo_path(), rset, hset, bset,
+        data = self.Visualize(self.get_repo_path(), hset, bset,
                               kset, outputfile)
         print data
 
-    def Visualize(self, repopath, raw=False, hosts=False,
+    def Visualize(self, repopath, hosts=False,
                   bundles=False, key=False, output=False):
         '''Build visualization of groups file'''
-        if raw:
-            cmd = "dd bs=4M"
-            if output:
-                cmd += " of=%s" % output
+        if output:
+            format = output.split('.')[-1]
         else:
-            cmd = "dot -Tpng"
-            if output:
-                cmd += " -o %s" % output
+            format = 'png'
+
+        cmd = "dot -T%s" % (format)
+        if output:
+            cmd += " -o %s" % output
         dotpipe = Popen(cmd, shell=True, stdin=PIPE,
                         stdout=PIPE, close_fds=True)
         try:
