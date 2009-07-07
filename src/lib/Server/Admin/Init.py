@@ -214,7 +214,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                     continue
 
             for plugin in plugins:
-                if plugin = 'Metadata':
+                if plugin == 'Metadata':
                     Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(repo, groups, os_selection, clients)
                 else:
                     try:
