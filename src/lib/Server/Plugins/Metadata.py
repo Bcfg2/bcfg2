@@ -100,8 +100,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                    self.get_all_group_names)
 
     @classmethod
-    def init_repo(self, repo):
-        Bcfg2.Server.Plugin.init_repo(repo)
+    def init_repo(self, repo, groups, os_selection, clients):
+        Bcfg2.Server.Plugin.Plugin.init_repo(repo)
         open("%s/Metadata/groups.xml" %                              
              repo, "w").write(groups % os_selection)                 
         open("%s/Metadata/clients.xml" %                             
@@ -112,6 +112,130 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
         root = groups_tree.getroot()
         return root
+
+    def search_group(self, group_name, tree):
+        '''find a group'''
+        for node in tree.findall("//Group"):
+            if node.get("name") == group_name:
+                return node
+            for child in node:
+                if child.tag == "Alias" and child.attrib["name"] == group_name:
+                    return node
+        return None
+
+    def add_group(self, group_name, attribs):
+        '''add group to groups.xml'''
+        tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = tree.getroot()
+        element = lxml.etree.Element("Group", name=group_name)
+        for key, val in attribs.iteritems():
+            element.set(key, val)
+        node = self.search_group(group_name, tree)
+        if node != None:
+            self.logger.error("Group \"%s\" already exists" % (group_name))
+            raise MetadataConsistencyError
+        root.append(element)
+        group_tree = open(self.data + "/groups.xml","w")
+        fd = group_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(group_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        group_tree.close()
+
+    def update_group(self, group_name, attribs):
+        '''Update a group's attributes'''
+        tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = tree.getroot()
+        node = self.search_group(group_name, tree)
+        if node == None:
+            self.logger.error("Group \"%s\" not found" % (group_name))
+            raise MetadataConsistencyError
+        node.attrib.update(attribs)
+        group_tree = open(self.data + "/groups.xml","w")
+        fd = group_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(group_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        group_tree.close()
+
+    def remove_group(self, group_name):
+        '''Remove a group'''
+        tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = tree.getroot()
+        node = self.search_group(group_name, tree)
+        if node == None:
+            self.logger.error("Client \"%s\" not found" % (group_name))
+            raise MetadataConsistencyError
+        root.remove(node)
+        group_tree = open(self.data + "/groups.xml","w")
+        fd = group_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(group_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        group_tree.close()
+
+    def add_bundle(self, bundle_name):
+        '''add bundle to groups.xml'''
+        tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = tree.getroot()
+        element = lxml.etree.Element("Bundle", name=bundle_name)
+        node = self.search_group(bundle_name, tree)
+        if node != None:
+            self.logger.error("Bundle \"%s\" already exists" % (bundle_name))
+            raise MetadataConsistencyError
+        root.append(element)
+        group_tree = open(self.data + "/groups.xml","w")
+        fd = group_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(group_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        group_tree.close()
+
+    def remove_bundle(self, bundle_name):
+        '''Remove a bundle'''
+        tree = lxml.etree.parse(self.data + "/groups.xml")
+        root = tree.getroot()
+        node = self.search_group(bundle_name, tree)
+        if node == None:
+            self.logger.error("Bundle \"%s\" not found" % (bundle_name))
+            raise MetadataConsistencyError
+        root.remove(node)
+        group_tree = open(self.data + "/groups.xml","w")
+        fd = group_tree.fileno()
+        while True:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                continue
+            else:
+                break
+        tree.write(group_tree)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        group_tree.close()
 
     def search_client(self, client_name, tree):
         '''find a client'''
@@ -135,28 +259,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Client \"%s\" already exists" % (client_name))
             raise MetadataConsistencyError
         root.append(element)
-        client_tree = open(self.data + "/clients.xml","w")
-        fd = client_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(client_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        client_tree.close()
-
-    def remove_client(self, client_name):
-        '''Remove a client'''
-        tree = lxml.etree.parse(self.data + "/clients.xml")
-        root = tree.getroot()
-        node = self.search_client(client_name, tree)
-        if node == None:
-            self.logger.error("Client \"%s\" not found" % (client_name))
-            raise MetadataConsistencyError
-        root.remove(node)
         client_tree = open(self.data + "/clients.xml","w")
         fd = client_tree.fileno()
         while True:

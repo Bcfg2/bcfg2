@@ -214,6 +214,12 @@ class Init(Bcfg2.Server.Admin.Mode):
                     continue
 
             for plugin in plugins:
-                getattr(getattr(getattr(Bcfg2.Server.Plugins, plugin), plugin), 'init_repo')(repo)
+                if plugin = 'Metadata':
+                    Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(repo, groups, os_selection, clients)
+                else:
+                    try:
+                        getattr(getattr(getattr(Bcfg2.Server.Plugins, plugin), plugin), 'init_repo')(repo)
+                    except:
+                        print 'Plugin setup for %s failed. Check that dependencies are installed?' % plugin
             
             print "Repository created successfuly in %s" % (self.repopath)
