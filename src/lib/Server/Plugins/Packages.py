@@ -227,7 +227,7 @@ class YUMSource(Source):
     def parse_filelist(self, data, arch):
         for pkg in data.findall(self.fl + 'package'):
             for fentry in pkg.findall(self.fl + 'file'):
-                if fentry in self.needed_paths:
+                if fentry.text in self.needed_paths:
                     self.filemap[arch][fentry.text] = pkg.get('name')
 
     def parse_primary(self, data, arch):
