@@ -226,9 +226,12 @@ class YUMSource(Source):
         
     def parse_filelist(self, data, arch):
         for pkg in data.findall(self.fl + 'package'):
-            for fentry in pkg.findall(self.fl + 'file'):
-                if fentry.text in self.needed_paths:
-                    self.filemap[arch][fentry.text] = pkg.get('name')
+            for fentry in [fe for fe in pkg.findall(self.fl + 'file') \
+                           if fe.text in self.needed_paths]:
+                if fentry.text in self.filemap[arch]:
+                    self.filemap[arch][fentry.text].add(pkg.get('name'))
+                else:
+                    self.filemap[arch][fentry.text] = set([pkg.get('name')])
 
     def parse_primary(self, data, arch):
         if arch not in self.packages:
@@ -269,18 +272,18 @@ class YUMSource(Source):
         arches = [a for a in self.arches if a in metadata.groups]
         if not arches:
             raise NoData
-        arch = arches[0]
         if required in self.provides['global']: 
             ret.update(Source.get_provides(self, metadata, required))
-        elif required in self.provides[arch]:
+        elif required in self.provides[arches[0]]:
             ret.update(Source.get_provides(self, metadata, required))
-        elif required in self.filemap['global']:
-            ret.update([self.filemap['global'][required]])
-        elif required in self.filemap[arch]:
-            ret.update([self.filemap[arch][required]])
+        else:
+            for arch in ['global'] + arches:
+                if required in self.filemap[arch]:
+                    ret.update(self.filemap[arch][required])
+        if ret:
+            return ret
         else:
             raise NoData
-        return ret
 
     def complete(self, metadata, packages, unknown, debug):
         p1, u1 = Source.complete(self, metadata, packages, unknown, debug)
