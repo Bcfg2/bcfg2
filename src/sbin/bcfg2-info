@@ -226,6 +226,8 @@ Usage: [quit|exit]"""
             numbundles = len(client_meta.bundles)
             numgroups = len(client_meta.groups)
             num = max((numbundles, numgroups))
+            blist = list(client_meta.bundles)
+            glist = list(client_meta.groups)
             for i in range(0, num):
                 if i == 0:
                     c = client_meta.hostname
@@ -234,11 +236,11 @@ Usage: [quit|exit]"""
                     c = ""
                     p = ""
                 if i < numbundles:
-                    b = client_meta.bundles[i]
+                    b = blist[i]
                 else:
                     b = ""
                 if i < numgroups:
-                    g = client_meta.groups[i]
+                    g = glist[i]
                 else:
                     g = ""
                 data.append((c, p, g, b))
