@@ -60,7 +60,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                     entries.append((entry.tag, entry.get('name')))
         entries.sort()
         entries = tuple(entries)
-        gdata = metadata.groups[:]
+        gdata = list(metadata.groups)
         gdata.sort()
         gdata = tuple(gdata)
         if (entries, gdata) in self.cache:
