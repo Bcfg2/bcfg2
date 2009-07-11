@@ -19,10 +19,11 @@ class MetadataRuntimeError(Exception):
 class ClientMetadata(object):
     '''This object contains client metadata'''
     def __init__(self, client, profile, groups, bundles,
-                 addresses, categories, uuid, password, query):
+                 aliases, addresses, categories, uuid, password, query):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
+        self.aliases = aliases
         self.addresses = addresses
         self.groups = groups
         self.categories = categories
@@ -36,9 +37,9 @@ class ClientMetadata(object):
         return group in self.groups
 
 class MetadataQuery(object):
-    def __init__(self, get_clients, by_groups, by_profiles, all_groups):
+    def __init__(self, by_name, get_clients, by_groups, by_profiles, all_groups):
         # resolver is set later
-        self.by_name = None
+        self.by_name = by_name
         self.names_by_groups = by_groups
         self.names_by_profiles = by_profiles
         self.all_clients = get_clients
@@ -64,6 +65,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Metadata.__init__(self)
+        Bcfg2.Server.Plugin.Statistics.__init__(self)
         if watch_clients:
             try:
                 core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
@@ -94,13 +96,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.pdirty = False
         self.extra = {'groups.xml':[], 'clients.xml':[]}
         self.password = core.password
-        self.query = MetadataQuery(lambda:self.clients.keys(),
+        self.query = MetadataQuery(core.build_metadata,
+                                   lambda:self.clients.keys(),
                                    self.get_client_names_by_groups,
                                    self.get_client_names_by_profiles,
                                    self.get_all_group_names)
 
     @classmethod
-    def init_repo(self, repo, groups, os_selection, clients):
+    def init_repo(cls, repo, groups, os_selection, clients):
         Bcfg2.Server.Plugin.Plugin.init_repo(repo)
         open("%s/Metadata/groups.xml" %                              
              repo, "w").write(groups % os_selection)                 
@@ -328,10 +331,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if dest == 'clients.xml':
             self.clients = {}
             self.aliases = {}
+            self.raliases = {}
             self.bad_clients = {}
             self.secure = []
             self.floating = []
             self.addresses = {}
+            self.raddresses = {}
             self.clientdata_original = xdata_original
             self.clientdata = xdata
             for client in xdata.findall('.//Client'):
@@ -342,6 +347,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                         self.addresses[caddr].append(clname)
                     else:
                         self.addresses[caddr] = [clname]
+                    if clname not in self.raddresses:
+                        self.raddresses[clname] = set()
+                    self.raddresses[clname].add(caddr)
                 if 'auth' in client.attrib:
                     self.auth[client.get('name')] = client.get('auth',
                                                                'cert+password')
@@ -359,10 +367,15 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                         self.addresses[alias.get('address')].append(clname)
                     else:
                         self.addresses[alias.get('address')] = [clname]
-                    
+                    if clname not in self.raddresses:
+                        self.raddresses[clname] = set()
+                    self.raddresses[clname].add(alias.get('address'))
                 self.clients.update({clname: client.get('profile')})
                 [self.aliases.update({alias.get('name'): clname}) \
                  for alias in client.findall('Alias')]
+                self.raliases[clname] = set()
+                [self.raliases[clname].add(alias.get('name')) for alias \
+                 in client.findall('Alias')]
         elif dest == 'groups.xml':
             self.public = []
             self.profiles = []
@@ -510,20 +523,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.set_profile(client, self.default, (None, None))
             profile = self.default
             [bundles, groups, categories] = self.groups[self.default]
-        '''
-        Handle aliases listed in clients.xml
-        addresses - contains address information for all aliases
-                    mapping is as follows:
-                    {alias: (ip, realname)}
-        '''
-        addresses = {}
-        for alias, host in self.aliases.iteritems():
-            for ip in self.addresses:
-                for name in self.addresses[ip]:
-                    if name == host:
-                        addresses[alias] = (ip, host)
-            if alias not in addresses:
-                addresses[alias] = (None, host)
+        aliases = self.raliases.get(client, set())
+        addresses = self.raddresses.get(client, set())
         newgroups = set(groups)
         newbundles = set(bundles)
         newcategories = {}
@@ -545,8 +546,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [newbundles.add(b) for b in nbundles if b not in newbundles]
             [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
-        return ClientMetadata(client, profile, newgroups, newbundles, addresses,
-                              newcategories, uuid, password, self.query)
+        return ClientMetadata(client, profile, newgroups, newbundles, aliases,
+                              addresses, newcategories, uuid, password, self.query)
 
     def get_all_group_names(self):
         return self.groups.keys()

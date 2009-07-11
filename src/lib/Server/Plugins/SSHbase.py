@@ -44,6 +44,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Generator.__init__(self)
+        Bcfg2.Server.Plugin.PullTarget.__init__(self)
         try:
             Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data,
                                                          self.core.fam)
@@ -66,25 +67,33 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def get_skn(self):
         '''build memory cache of the ssh known hosts file'''
         if not self.__skn:
-            static_entries = [key for key in self.entries \
-                              if key.endswith('.static')]
-            if static_entries:
-                self.__skn = "\n".join([self.entries[key].data for \
-                                        key in static_entries])
-            else:
-                self.__skn = ''
+            self.__skn = "\n".join([value.data for key, value in \
+                                    self.entries.iteritems() if \
+                                    key.endswith('.static')])
+            names = dict()
+            # this next part is terrible
+            for cmeta in self.core.metadata.query.all():
+                names[cmeta.hostname] = set([cmeta.hostname])
+                names[cmeta.hostname].update(cmeta.aliases)
+                newnames = set()
+                for name in names[cmeta.hostname]:
+                    newnames.add(name.split('.')[0])
+                    try:
+                        newnames.add(self.get_ipcache_entry(name)[0])
+                    except:
+                        continue
+                names[cmeta.hostname].update(newnames)
+                names[cmeta.hostname].update(cmeta.addresses)
+            # now we have our name cache
             pubkeys = [pubk for pubk in self.entries.keys() \
                        if pubk.find('.pub.H_') != -1]
             pubkeys.sort()
             for pubkey in pubkeys:
                 hostname = pubkey.split('H_')[1]
-                try:
-                    (ipaddr, fqdn) = self.get_ipcache_entry(hostname)
-                except socket.gaierror:
+                if hostname not in names:
                     continue
-                shortname = hostname.split('.')[0]
-                self.__skn += "%s,%s,%s %s" % (shortname, fqdn, ipaddr,
-                                               self.entries[pubkey].data)
+                self.__skn += "%s %s" % (','.join(names[hostname]),
+                                         self.entries[pubkey].data)
         return self.__skn
 
     def set_skn(self, value):
@@ -132,7 +141,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 return (ipaddr, client)
             except socket.gaierror:
                 cmd = "getent hosts %s" % client
-                ipaddr = Popen(cmd, shell=True, stdout=PIPE).stdout.read().strip().split()
+                ipaddr = Popen(cmd, shell=True, \
+                               stdout=PIPE).stdout.read().strip().split()
                 if ipaddr:
                     self.ipcache[client] = (ipaddr, client)
                     return (ipaddr, client)
@@ -143,7 +153,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
         client = metadata.hostname
-        addresses = metadata.addresses
         entry.text = self.skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
                         if (keytmpl % client) in self.entries]
@@ -151,20 +160,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.entries[hostkey].data)
-        # add entries listed in clients.xml
-        for addr, (ip, host) in addresses.iteritems():
-            shortname = addr.split('.')[0]
-            fqdn = addr
-            if ip == None:
-                ipaddr = self.get_ipcache_entry(addr)[0]
-            else:
-                ipaddr = ip
-            for key in self.entries.keys():
-                if key.find('.pub.H_%s' % host) != -1:
-                    entry.text += "%s,%s,%s %s" % (shortname,
-                                                   fqdn,
-                                                   ipaddr,
-                                                   self.entries[key].data)
         permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
@@ -207,12 +202,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                                                      "H_%s" % client])
                 tempdir = tempfile.mkdtemp()
                 temploc = "%s/%s" % (tempdir, hostkey)
-                os.system('ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' %
-                          (temploc, keytype, client))
+                cmd = 'ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' 
+                os.system(cmd % (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())
                 self.AddEntry(hostkey)
-                self.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" % client]))
+                self.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" \
+                                                                % client]))
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
