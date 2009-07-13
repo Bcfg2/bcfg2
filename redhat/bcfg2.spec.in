@@ -73,7 +73,6 @@ Requires:         bcfg2 = %{version}-%{release}
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
 Requires:         python-genshi
-Requires:         python-cheetah
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
 Requires(preun):  /sbin/service

@@ -1,11 +1,13 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
-import Cheetah.Template, Cheetah.Parser
-import logging, sys, traceback
+import logging
+import sys
+import traceback
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
+
 
 class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
@@ -60,3 +62,10 @@ class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
     filename_pattern = 'template'
     es_child_cls = TemplateFile
 
+    def __init__(self, core, datastore):
+        try:
+            import Cheetah.Template
+            import Cheetah.Parser
+        except:
+            logger.error("Failed to import TCheetah. Is it installed?")
+            raise Bcfg2.Server.Plugin.PluginInitError
