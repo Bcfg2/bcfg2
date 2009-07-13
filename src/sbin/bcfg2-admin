@@ -60,7 +60,7 @@ if __name__ == '__main__':
         try:
             mode_cls = mode_import(modname)
         except ImportError, e:
-            log.error("Failed to load admin mod %s: %s" % (modname, e))
+            log.error("Failed to load admin mode %s: %s" % (modname, e))
         mode = mode_cls(configfile)
         mode(args[1:])
     else:
