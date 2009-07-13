@@ -100,17 +100,17 @@ class SSLServer (SocketServer.TCPServer, object):
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
         if keyfile != None:
-            if not os.path.exists(keyfile):
+            if keyfile == False or not os.path.exists(keyfile):
                 self.logger.error("Keyfile %s does not exist" % keyfile)
                 raise Exception, "keyfile doesn't exist"
         self.certfile = certfile
         if certfile != None:
-            if not os.path.exists(certfile):
+            if certfile == False or not os.path.exists(certfile):
                 self.logger.error("Certfile %s does not exist" % certfile)
                 raise Exception, "certfile doesn't exist"
         self.ca = ca
         if ca != None:
-            if not os.path.exists(ca):
+            if ca == False or not os.path.exists(ca):
                 self.logger.error("CA %s does not exist" % ca)
                 raise Exception, "ca doesn't exist"
         self.reqCert = reqCert
