@@ -104,7 +104,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     @classmethod
     def init_repo(cls, repo, groups, os_selection, clients):
-        Bcfg2.Server.Plugin.Plugin.init_repo(repo)
+        path = '%s/%s' % (repo, cls.name)
+        cls.make_path(path)
         open("%s/Metadata/groups.xml" %                              
              repo, "w").write(groups % os_selection)                 
         open("%s/Metadata/clients.xml" %                             
@@ -152,7 +153,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def update_group(self, group_name, attribs):
-        '''Update a group's attributes'''
+        '''Update a groups attributes'''
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         node = self.search_group(group_name, tree)

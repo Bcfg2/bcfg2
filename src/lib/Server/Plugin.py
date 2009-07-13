@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import copy
 import logging
 import lxml.etree
+import os
 import posixpath
 import re
 
@@ -62,17 +63,21 @@ class Plugin(object):
         self.core = core
         self.data = "%s/%s" % (datastore, self.name)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
+
+    @staticmethod
+    def make_path(path):
+        p_comp = path.split('/')
+        for i in range(2, len(p_comp) + 1):
+            ppath = '/' + '/'.join(p_comp[1:i])
+            try:
+                os.stat(ppath)
+            except:
+                os.mkdir(ppath)
         
     @classmethod
-    def init_repo(self, repo):
-        path = "%s/%s" % (repo, self.name)                              
-        newpath = ''                                                 
-        for subdir in path.split('/'):                               
-            newpath = newpath + subdir + '/'                         
-            try:                                                     
-                os.mkdir(newpath)                                    
-            except:                                                  
-                return
+    def init_repo(cls, repo):
+        path = "%s/%s" % (repo, cls.name)
+        cls.make_path(path)
 
 class Generator(object):
     '''Generator plugins contribute to literal client configurations'''
