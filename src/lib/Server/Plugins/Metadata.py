@@ -551,7 +551,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                               addresses, newcategories, uuid, password, self.query)
 
     def get_all_group_names(self):
-        return self.groups.keys()
+        all_groups = set()
+        [all_groups.update(g[1]) for g in self.groups.values()]
+        return all_groups
         
     def get_client_names_by_profiles(self, profiles):
         return [client for client, profile in self.clients.iteritems() \
