@@ -88,9 +88,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             pubkeys = [pubk for pubk in self.entries.keys() \
                        if pubk.find('.pub.H_') != -1]
             pubkeys.sort()
+            badnames = set()
             for pubkey in pubkeys:
                 hostname = pubkey.split('H_')[1]
                 if hostname not in names:
+                    if hostname not in badnames:
+                        badnames.add(hostname)
+                        self.logger.error("SSHbase: Unknown host %s; ignoring public keys" % hostname)
                     continue
                 self.__skn += "%s %s" % (','.join(names[hostname]),
                                          self.entries[pubkey].data)
