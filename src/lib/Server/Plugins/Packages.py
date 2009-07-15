@@ -445,6 +445,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def complete(self, meta, packages, debug=False):
         sources = self.get_matching_sources(meta)
+        # reverse list so that priorities correspond to file order
+        sources.reverse()
         ptype = set([s.ptype for s in sources])
         if len(ptype) < 1:
             return set(), set(), 'failed'
