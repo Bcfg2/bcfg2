@@ -1,0 +1,26 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  
+  <xsd:annotation>
+    <xsd:documentation>
+      group patterns config schema for bcfg2
+      Narayan Desai, Argonne National Laboratory
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name='PatternType'>
+    <xsd:sequence>
+      <xsd:element name="NamePattern" type="xsd:string" minOccurs='1' 
+                   maxOccurs='1'/>
+      <xsd:element name="Group" type="xsd:string" minOccurs='1' 
+                   maxOccurs='1'/>
+    </xsd:sequence>
+  </xsd:complexType>
+
+  <xsd:element name='GroupPatterns'>
+    <xsd:complexType>
+      <xsd:choice minOccurs='1' maxOccurs='unbounded'>
+        <xsd:element name='GroupPattern' type='PatternType'/>
+      </xsd:choice>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

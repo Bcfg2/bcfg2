@@ -71,6 +71,7 @@ if __name__ == '__main__':
     deps_list = glob.glob("%s/Deps/*.xml" % repo)
     dec_list = glob.glob("%s/Decisions/*" % repo)
     pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
+    gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
 
     # warn on duplicate Pkgmgr entries with the same priority
     pset = set()
@@ -104,7 +105,8 @@ if __name__ == '__main__':
                 'services':(services_list, "%s/services.xsd"),
                 'deps':(deps_list, "%s/deps.xsd"),
                 'decisions': (dec_list, "%s/decisions.xsd"),
-                'packages': (pkgcfg_list, "%s/packages.xsd"), 
+                'packages': (pkgcfg_list, "%s/packages.xsd"),
+                'grouppatterns': (gp_list, "%s/grouppatterns.xsd"),
                 }
 
     failures  = 0
