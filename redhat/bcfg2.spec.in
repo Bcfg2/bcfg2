@@ -222,6 +222,9 @@ fi
 %dir %{_var}/lib/bcfg2
 
 %changelog
+* Wed Jun 15 2009 Sol Jerome <solj@ices.utexas.edu> 1.0pre4-0.1
+- Remove python-cheetah dependency
+
 * Tue Oct 28 2008 Robin Bowes <robin@robinbowes.com> 0.9.6-0.2
 - spec file is now created dynamically so Version & Release
   can be hard-coded so SRPM can be rebuilt without the Makefile
