@@ -19,10 +19,10 @@ class PackedDigitRange(object):
 
 class PatternMap(object):
     range_finder = '\\[\\[[\d\-,]+\\]\\]'
-    def __init__(self, pattern, rangestr, groupname):
+    def __init__(self, pattern, rangestr, groups):
         self.pattern = pattern
         self.rangestr = rangestr
-        self.groupname = groupname
+        self.groups = groups
         if pattern != None:
             self.re = re.compile(pattern)
             self.process = self.process_re
@@ -42,16 +42,19 @@ class PatternMap(object):
         for i in range(len(digits)):
             if not self.dranges[i].includes(digits[i]):
                 return None
-        return self.groupname
+        return self.groups
 
     def process_re(self, name):
         match = self.re.match(name)
         if not match:
             return None
-        ret = self.groupname
+        ret = list()
         sub = match.groups()
-        for idx in range(len(sub)):
-            ret = ret.replace('$%s' % (idx+1), sub[idx])
+        for group in self.groups:
+            newg = group
+            for idx in range(len(sub)):
+                newg = newg.replace('$%s' % (idx+1), sub[idx])
+            ret.append(newg)
         return ret
 
 class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
@@ -74,8 +77,8 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
                     pat = entry.find('NamePattern').text
                 if entry.find('NameRange') is not None:
                     rng = entry.find('NameRange').text
-                grp = entry.find('Group').text
-                self.patterns.append(PatternMap(pat, rng, grp))
+                groups = [g.text for g in entry.findall('Group')]
+                self.patterns.append(PatternMap(pat, rng, groups))
             except:
                 Bcfg2.Server.Plugin.logger.error(\
                     "GroupPatterns: Failed to initialize pattern %s" % \
@@ -86,8 +89,8 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
         for pattern in self.patterns:
             try:
                 gn = pattern.process(hostname)
-                if gn:
-                    ret.append(gn)
+                if gn is not None:
+                    ret.extend(gn)
             except:
                 Bcfg2.Server.Plugin.logger.error(\
                     "GroupPatterns: Failed to process pattern %s for %s" % \
