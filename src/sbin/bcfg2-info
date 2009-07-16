@@ -25,8 +25,8 @@ def printTabular(rows):
 
 def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats = pstats.Stats(trace)
-    stats.sort_stats('time', 'calls')
-    stats.print_stats(100)
+    stats.sort_stats('cumulative', 'calls', 'time')
+    stats.print_stats(200)
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
