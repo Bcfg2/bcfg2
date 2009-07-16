@@ -112,8 +112,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.skn = False
         if event and event.filename.endswith('.static'):
             self.skn = False
-        if not self.skn:
-            if (len(self.entries.keys())) > (0.95 * len(os.listdir(self.data))):
+        if not self.__skn:
+            if (len(self.entries.keys())) >= (len(os.listdir(self.data))-1):
                 _ = self.skn
 
     def HandlesEntry(self, entry, _):
