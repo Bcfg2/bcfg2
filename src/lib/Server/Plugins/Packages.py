@@ -34,6 +34,10 @@ class Source(object):
         self.arches = arches
         self.deps = dict()
         self.provides = dict()
+        self.cachefile = None
+
+    def load_state(self):
+        pass
 
     def setup_data(self):
         should_read = True
@@ -479,5 +483,5 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         structures.append(news)
 
 if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('Packages',to_console=True)
+    Bcfg2.Logger.setup_logging('Packages', to_console=True)
     aa = Packages(None, '/home/desai/tmp/bcfg2')
