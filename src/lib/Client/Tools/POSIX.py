@@ -114,19 +114,20 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def InstallSymLink(self, entry):
         '''Install SymLink Entry'''
         self.logger.info("Installing Symlink %s" % (entry.get('name')))
-        try:
-            fmode = os.lstat(entry.get('name'))[ST_MODE]
-            if S_ISREG(fmode) or S_ISLNK(fmode):
-                self.logger.debug("Non-directory entry already exists at %s" % \
-                                  (entry.get('name')))
-                os.unlink(entry.get('name'))
-            elif S_ISDIR(fmode):
-                self.logger.debug("Directory entry already exists at %s" % (entry.get('name')))
-                self.cmd.run("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
-            else:
-                os.unlink(entry.get('name'))
-        except OSError:
-            self.logger.info("Symlink %s cleanup failed" % (entry.get('name')))
+        if os.path.exists(entry.get('name')):
+            try:
+                fmode = os.lstat(entry.get('name'))[ST_MODE]
+                if S_ISREG(fmode) or S_ISLNK(fmode):
+                    self.logger.debug("Non-directory entry already exists at %s" % \
+                                      (entry.get('name')))
+                    os.unlink(entry.get('name'))
+                elif S_ISDIR(fmode):
+                    self.logger.debug("Directory entry already exists at %s" % (entry.get('name')))
+                    self.cmd.run("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
+                else:
+                    os.unlink(entry.get('name'))
+            except OSError:
+                self.logger.info("Symlink %s cleanup failed" % (entry.get('name')))
         try:
             os.symlink(entry.get('to'), entry.get('name'))
             return True
