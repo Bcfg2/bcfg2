@@ -14,8 +14,12 @@ class PackedDigitRange(object):
 
     def includes(self, other):
         iother = int(other)
-        return iother in self.sparse or True in \
-               [iother in range(rng[0], rng[1]+1) for rng in self.ranges]
+        if iother in self.sparse:
+            return True
+        for (start, end) in self.ranges:
+            if iother in xrange(start, end+1):
+                return True
+        return False
 
 class PatternMap(object):
     range_finder = '\\[\\[[\d\-,]+\\]\\]'
