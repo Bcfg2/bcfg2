@@ -42,7 +42,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
-        self.fam.handle_events_in_interval(8)
+        self.fam.handle_events_in_interval(4)
         
     def do_loop(self):
         self.cont = True
