@@ -194,7 +194,7 @@ class FileBacked(object):
 
     def HandleEvent(self, event=None):
         '''Read file upon update'''
-        if event and event.code2str() not in ['exists', 'changed']:
+        if event and event.code2str() not in ['exists', 'changed', 'created']:
             return
         try:
             self.data = file(self.name).read()
