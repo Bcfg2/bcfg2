@@ -79,11 +79,11 @@ class FileMonitor(object):
         logger.info("Handled %d events in %.03fs" % (count, (end-start)))
 
     def handle_events_in_interval(self, interval):
-        start = time()
-        end = start + interval
+        end = time() + interval
         while time() < end:
             if self.pending():
                 self.handle_event_set()
+                end = time() + interval
             else:
                 sleep(0.5)
 
