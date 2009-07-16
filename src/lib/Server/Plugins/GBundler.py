@@ -1,5 +1,6 @@
 
 import logging, re
+import genshi.template
 import SGenshi
 
 pattern = '(.*/)?(\S+)\.xml(\.((H_(?P<hostname>\S+))|' 
