@@ -286,6 +286,13 @@ INTERACTIVE = Option('prompt the user for each change', default=False,
 ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd='-E', odesc='<encoding>',
                   cf=('components', 'encoding'))
 
+PARANOID_PATH = Option('Specify path for paranoid file backups',
+                       default='/var/cache/bcfg2', cf=('paranoid', 'path'),
+                       odesc='<paranoid backup path>')
+PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
+                             default=1, cf=('paranoid', 'max_copies'),
+                             odesc='<max paranoid copies>')
+
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 
 LOGGING_FILE_PATH = Option('Set path of file log', default=None,

@@ -1,6 +1,7 @@
 '''All POSIX Type client support for Bcfg2'''
 __revision__ = '$Revision$'
 
+from datetime import datetime
 from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
 from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
@@ -10,9 +11,11 @@ import grp
 import logging
 import os
 import pwd
+import shutil
 import string
 import time
 import Bcfg2.Client.Tools
+import Bcfg2.Options
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -82,6 +85,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                'Directory': ['name', 'owner', 'group', 'perms'],
                'Permissions': ['name', 'owner', 'group', 'perms'],
                'SymLink': ['name', 'to']}
+
+    # grab paranoid options from /etc/bcfg2.conf
+    opts = {'ppath': Bcfg2.Options.PARANOID_PATH,
+            'max_copies': Bcfg2.Options.PARANOID_MAX_COPIES}
+    setup = Bcfg2.Options.OptionParser(opts)
+    setup.parse([])
+    ppath = setup['ppath']
+    max_copies = setup['max_copies']
 
     def canInstall(self, entry):
         '''Check if entry is complete for installation'''
@@ -444,9 +455,30 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if entry.get("paranoid", False) and self.setup.get("paranoid", False) \
                and not (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
-            if self.cmd.run("cp %s /var/cache/bcfg2/%s" % (entry.get('name'), bkupnam))[0]:
+            # current list of backups for this ConfigFile
+            bkuplist = [f for f in os.listdir(self.ppath) if
+                              f.startswith(bkupnam)]
+            bkuplist.sort()
+            if len(bkuplist) == int(self.max_copies):
+                # remove the oldest backup available
+                oldest = bkuplist.pop(0)
+                self.logger.info("Removing %s" % oldest)
+                try:
+                    os.remove("%s/%s" % (self.ppath, oldest))
+                except:
+                    self.logger.error("Failed to remove %s/%s" % \
+                                      (self.ppath, oldest))
+                    return False
+            try:
+                # backup existing file
+                shutil.copy(entry.get('name'),
+                            "%s/%s_%s" % (self.ppath, bkupnam, datetime.now()))
+                self.logger.info("Backup of %s saved to %s" %
+                                 (entry.get('name'), self.ppath))
+            except IOError, e:
                 self.logger.error("Failed to create backup file for ConfigFile %s" % \
                                   (entry.get('name')))
+                self.logger.error(e)
                 return False
         try:
             newfile = open("%s.new"%(entry.get('name')), 'w')
