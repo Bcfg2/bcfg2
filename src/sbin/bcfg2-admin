@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 '''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
 
-import getopt
+from optparse import OptionParser
+from StringIO import StringIO
 import logging
 import sys
 import Bcfg2.Server.Core
 import Bcfg2.Logger
 import Bcfg2.Options
 
-log = logging.getLogger('bcfg-admin')
+log = logging.getLogger('bcfg2-admin')
 
 import Bcfg2.Server.Admin
 
@@ -19,50 +20,57 @@ def mode_import(modename):
                              (modname)).Server.Admin, modname)
     return getattr(mod, modname)
 
-if __name__ == '__main__':
+def get_modes():
+    """Get all available modes, except for the base mode"""
+    return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
+
+def create_description():
+    """Create the description string from the list of modes"""
+    modes = get_modes()
+    description = StringIO()
+    description.write("Available modes are:\n\n")
+    for mode in modes:
+        try:
+            description.write(("   %-15s   %s\n" %
+                   (mode, mode_import(mode).__shorthelp__)))
+        except ImportError:
+            continue
+    return description.getvalue()
+
+def main():
     Bcfg2.Logger.setup_logging('bcfg2-admin', to_console=True, level=40)
-    avail_opts = {'-C <configfile>': 'Set alternate bcfg2.conf location'}
-    # Get config file path
-    configfile = Bcfg2.Options.CFILE.default
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hC:', ['help', 'configfile='])
-    except getopt.GetoptError, msg:
-        print(msg)
-        raise SystemExit(1)
+    usage="Usage: %prog [options] MODE [args]"
+    parser = OptionParser(usage=usage)
+    parser.set_defaults(configfile=Bcfg2.Options.CFILE.default)
+    parser.add_option("-C", "--configfile", dest="configfile", help="Path to bcfg2.conf", metavar="FILE")
+    parser.disable_interspersed_args()
+    (options, args) = parser.parse_args()
 
-
-    # First get the options...
-    for opt, arg in opts:
-        if opt in ("-C", "--configfile"):
-            configfile = arg
-
-    modes = [x.lower() for x in Bcfg2.Server.Admin.__all__]
-    modes.remove('mode')
-
+    # Provide help if requested or no args were specified
     if len(args) < 1 or args[0] == 'help':
-        print ("Usage: bcfg2-admin [OPTIONS] MODE [ARGS]\n\n"
-               "Available options are:")
-        for (opt, arg) in list(avail_opts.items()):
-            print(("   %-15s   " % opt + arg))
-        print ("\nAvailable modes are:")
         if len(args) > 1:
+            # Get help for a specific mode by passing it the help argument
             args = [args[1], args[0]]
         else:
-            for mode in modes:
-                try:
-                    print(("   %-15s   %s" %
-                           (mode, mode_import(mode).__shorthelp__)))
-                except ImportError:
-                    continue
+            # Print short help for all modes
+            parser.print_help()
+            print create_description()
             raise SystemExit(0)
-    if args[0] in modes:
+
+    if args[0] in get_modes():
         modname = args[0].capitalize()
         try:
             mode_cls = mode_import(modname)
         except ImportError, e:
             log.error("Failed to load admin mode %s: %s" % (modname, e))
-        mode = mode_cls(configfile)
+            raise SystemExit(1)
+        mode = mode_cls(options.configfile)
         mode(args[1:])
     else:
-        print("unknown mode %s" % args[0])
+        log.error("Unknown mode %s" % args[0])
+        parser.print_help()
+        print create_description()
+        raise SystemExit(1)
 
+if __name__ == '__main__':
+    main()

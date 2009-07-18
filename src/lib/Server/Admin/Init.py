@@ -8,13 +8,6 @@ import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
 
-from Bcfg2.Server.Plugins import (Account, Base, Bundler, Cfg,  
-                                  Decisions, Deps, Metadata, 
-                                  Packages,  Pkgmgr, Probes, 
-                                  Properties, Rules, Snapshots, 
-                                  SSHbase, Svcmgr, TCheetah, 
-                                  TGenshi)
-
 # default config file
 config = '''
 [server]
@@ -48,6 +41,7 @@ key = %s/bcfg2.key
 bcfg2 = %s
 '''
 
+# Default groups
 groups = '''<Groups version='3.0'>
    <Group profile='true' public='true' default='true' name='basic'>
       <Group name='%s'/>
@@ -63,11 +57,13 @@ groups = '''<Groups version='3.0'>
 </Groups>
 '''
 
+# Default contents of clients.xml
 clients = '''<Clients version="3.0">
    <Client profile="basic" pingable="Y" pingtime="0" name="%s"/>
 </Clients>
 '''
 
+# Mapping of operating system names to groups
 os_list = [
            ('Redhat/Fedora/RHEL/RHAS/Centos',   'redhat'),
            ('SUSE/SLES',                        'suse'),
@@ -77,6 +73,48 @@ os_list = [
            ('Gentoo',                           'gentoo'),
            ('FreeBSD',                          'freebsd')
           ]
+
+# Complete list of plugins
+plugin_list = ['Account', 'Base', 'Bundler', 'Cfg', 
+             'Decisions', 'Deps', 'Metadata', 'Packages', 
+             'Pkgmgr', 'Probes', 'Properties', 'Rules', 
+             'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr', 
+             'TCheetah', 'TGenshi']
+
+# Default list of plugins to use
+default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 
+                'Metadata', 'Base', 'Bundler']
+
+def gen_password(length):
+    """Generates a random alphanumeric password with length characters"""
+    chars = string.letters + string.digits
+    newpasswd = ''
+    for i in range(length):
+        newpasswd = newpasswd + random.choice(chars)
+    return newpasswd
+
+def create_key(keypath):
+    """Creates a bcfg2.key at the directory specifed by keypath"""
+    subprocess.call(("openssl " \
+                     "req -x509 -nodes -days 1000 -newkey rsa:1024 " \
+                     "-out %s/bcfg2.key -keyout %s/bcfg2.key" % \
+                     (keypath, keypath)), shell=True)
+    os.chmod('%s/bcfg2.key' % keypath, 0600)
+
+def create_conf(confpath, confdata):
+    # don't overwrite existing bcfg2.conf file
+    if os.path.exists(confpath):
+        print("\nWarning: %s already exists. Will not be "
+              "overwritten...\n" % confpath)
+    else:
+        try:
+            open(confpath, "w").write(confdata)
+            os.chmod(confpath, 0600)
+        except Exception, e:
+            print("Error %s occured while trying to write configuration "
+                  "file to '%s'\n" %
+                   (e, confpath))
+            raise SystemExit(1)
 
 
 class Init(Bcfg2.Server.Admin.Mode):
@@ -92,134 +130,133 @@ class Init(Bcfg2.Server.Admin.Mode):
               }
     repopath = ""
     response = ""
-    
+    def __init__(self, configfile):
+        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
+
+    def _set_defaults(self):
+        """Set default parameters"""
+        self.configfile = self.opts['configfile']
+        self.repopath = self.opts['repo']
+        self.password = gen_password(8)
+        self.server_uri = "https://%s:6789" % socket.getfqdn()
+        self.plugins = default_plugins
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        opts = Bcfg2.Options.OptionParser(self.options)
-        opts.parse([])
 
-        configfile = raw_input("Store bcfg2 configuration in [%s]: " %
-                                opts['configfile'])
-        if configfile == '':
-            configfile = opts['configfile']
+        # Parse options
+        self.opts = Bcfg2.Options.OptionParser(self.options)
+        self.opts.parse(args)
+        self._set_defaults()
 
-        self.repopath = raw_input("Location of bcfg2 repository [%s]: " %
-                              opts['repo'])
-        if self.repopath == '':
-            self.repopath = opts['repo']
-        if os.path.isdir(self.repopath):
-            self.response = raw_input("Directory %s exists. Overwrite? [Y/n]:"\
-                                  % self.repopath)
-        
-        password = getpass.getpass(
+        # Prompt the user for input
+        self._prompt_config()
+        self._prompt_repopath()
+        self._prompt_password()
+        self._prompt_server()
+        self._prompt_groups()
+
+        # Initialize the repository
+        self.init_repo()
+
+    def _prompt_config(self):
+        """Ask for the configuration file path"""
+        newconfig = raw_input("Store bcfg2 configuration in [%s]: " %
+                                self.configfile)
+        if newconfig != '':
+            self.configfile = newconfig
+
+    def _prompt_repopath(self):
+        """Ask for the repository path"""
+        while True:
+            newrepo = raw_input("Location of bcfg2 repository [%s]: " %
+                                  self.repopath)
+            if newrepo != '':
+                self.repopath = newrepo
+            if os.path.isdir(self.repopath):
+                response = raw_input("Directory %s exists. Overwrite? [y/N]:"\
+                                      % self.repopath)
+                if response.lower().strip() == 'y':
+                    break
+            else:
+                break
+
+    def _prompt_password(self):
+        """Ask for a password or generate one if none is provided"""
+        newpassword = getpass.getpass(
                 "Input password used for communication verification "
-                "(without echoing; leave blank for a random): ")
-        if len(password.strip()) == 0:
-            password = self.genPassword()
+                "(without echoing; leave blank for a random): ").strip()
+        if len(newpassword) != 0:
+            self.password = newpassword
         
-        server = "https://%s:6789" % socket.getfqdn()
-        rs = raw_input( "Input the server location [%s]: " % server)
-        if rs:
-            server = rs
-
-        # create the groups.xml file
+    def _prompt_server(self):
+        """Ask for the server name"""
+        newserver = raw_input( "Input the server location [%s]: " % self.server_uri)
+        if newserver != '':
+            self.server_uri = newserver
+        
+    def _prompt_groups(self):
+        """Create the groups.xml file"""
         prompt = '''Input base Operating System for clients:\n'''
         for entry in os_list:
             prompt += "%d: %s\n" % (os_list.index(entry) + 1, entry[0])
         prompt += ': '
-        os_sel = os_list[int(raw_input(prompt))-1][1]
-        self.initializeRepo(configfile, self.repopath, server,
-                            password, os_sel, opts)
+        while True:
+            try:
+                self.os_sel = os_list[int(raw_input(prompt))-1][1]
+                break
+            except ValueError:
+                continue
 
-    def genPassword(self):
-        chars = string.letters + string.digits
-        newpasswd = ''
-        for i in range(8):
-            newpasswd = newpasswd + random.choice(chars)
-        return newpasswd
+    def _prompt_plugins(self):
+        default = raw_input("Use default plugins? (%s) [Y/n]: " % ''.join(default_plugins)).lower()
+        if default != 'y' or default != '':
+            while True:
+                plugins_are_valid = True
+                plug_str = raw_input("Specify plugins: ")
+                plugins = plug_str.split(',')
+                for plugin in plugins:
+                    plugin = plugin.strip()
+                    if not plugin in plugin_list:
+                        plugins_are_valid = False
+                        print "ERROR: plugin %s not recognized" % plugin
+                if plugins_are_valid:
+                    break
 
-    def initializeRepo(self, configfile, repo, server_uri,
-                       password, os_selection, opts):
+    def _init_plugins(self):
+        # Initialize each plugin-specific portion of the repository
+        for plugin in self.plugins:
+            if plugin == 'Metadata':
+                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, groups, self.os_sel, clients)
+            else:
+                try:
+                    module = __import__("Bcfg2.Server.Plugins.%s" % plugin, fromlist=["Bcfg2.Server.Plugins"])
+                    cls = getattr(module, plugin)
+                    cls.init_repo(self.repopath)
+                except Exception, e:
+                    print 'Plugin setup for %s failed: %s\n Check that dependencies are installed?' % (plugin, e)
+
+    def init_repo(self):
         '''Setup a new repo'''
-        keypath = os.path.dirname(os.path.abspath(configfile))
-
+        # Create the contents of the configuration file
+        keypath = os.path.dirname(os.path.abspath(self.configfile))
         confdata = config % ( 
-                        repo, ','.join(opts['plugins']),
-                        opts['sendmail'], opts['proto'],
-                        password, keypath, keypath, server_uri 
+                        self.repopath, 
+                        ','.join(self.opts['plugins']),
+                        self.opts['sendmail'], 
+                        self.opts['proto'],
+                        self.password, 
+                        keypath, 
+                        keypath, 
+                        self.server_uri 
                     )
 
-        # don't overwrite existing bcfg2.conf file
-        if os.path.exists(configfile):
-            print("\nWarning: %s already exists. Will not be "
-                  "overwritten...\n" % configfile)
-        else:
-            try:
-                open(configfile, "w").write(confdata)
-                os.chmod(configfile, 0600)
-            except Exception, e:
-                print("Error %s occured while trying to write configuration "
-                      "file to '%s'\n" %
-                       (e, configfile))
+        # Create the configuration file and SSL key
+        create_conf(self.configfile, confdata)
+        create_key(keypath)
 
-        # FIXME automate ssl key generation
-        # FIXME key generation may fail as non-root user
-        subprocess.call(("openssl " \
-                         "req -x509 -nodes -days 1000 -newkey rsa:1024 " \
-                         "-out %s/bcfg2.key -keyout %s/bcfg2.key" % \
-                         (keypath, keypath)), shell=True)
-        try:
-            os.chmod('%s/bcfg2.key'% keypath, 0600)
-        except:
-            pass
-    
-        # Overwrite existing directory/repo?
-        if self.response == "n":
-            print "Kept old repository in %s" % (self.repopath)
-            return
-        else:
-            # FIXME repo creation may fail as non-root user
-            plug_list = ['Account', 'Base', 'Bundler', 'Cfg', 
-                         'Decisions', 'Deps', 'Metadata', 'Packages', 
-                         'Pkgmgr', 'Probes', 'Properties', 'Rules', 
-                         'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr', 
-                         'TCheetah', 'TGenshi']
-            default_repo = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 
-                            'Metadata', 'Base', 'Bundler']
-            plugins = []
-            print 'Repository configuration, choose plugins:'
-            default = raw_input("Use default plugins? [Y/n]: ").lower()
-            if default == 'y' or default == '':
-                plugins = default_repo
-            else:
-                while True:
-                    plugins_are_valid = True
-                    plug_str = raw_input("Specify plugins: ")
-                    plugins = plug_str.split(',')
-                    for plugin in plugins:
-                        plugin = plugin.strip()
-                        if not plugin in plug_list:
-                            plugins_are_valid = False
-                            print "ERROR: plugin %s not recognized" % plugin
-                    if plugins_are_valid:
-                        break
-                
-            path = "%s/%s" % (repo, 'etc')                              
-            newpath = ''                                                 
-            for subdir in path.split('/'):                               
-                newpath = newpath + subdir + '/'                         
-                try:                                                     
-                    os.mkdir(newpath)                                    
-                except:                                                  
-                    continue
-
-            for plugin in plugins:
-                if plugin == 'Metadata':
-                    Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(repo, groups, os_selection, clients)
-                else:
-                    try:
-                        getattr(getattr(getattr(Bcfg2.Server.Plugins, plugin), plugin), 'init_repo')(repo)
-                    except:
-                        print 'Plugin setup for %s failed. Check that dependencies are installed?' % plugin
-            
-            print "Repository created successfuly in %s" % (self.repopath)
+        # Create the repository
+        path = "%s/%s" % (self.repopath, 'etc') 
+        os.makedirs(path)
+        self._init_plugins()
+        print "Repository created successfuly in %s" % (self.repopath)
