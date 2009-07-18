@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 from time import asctime, localtime, time, strptime, mktime
 
-import binascii, difflib, logging, lxml.etree, os
+import binascii, difflib, logging, lxml.etree, os, copy
 
 import Bcfg2.Server.Plugin
 
@@ -121,7 +121,7 @@ class Statistics(Bcfg2.Server.Plugin.Plugin,
         self.data_file = StatisticsStore(fpath)
 
     def process_statistics(self, client, xdata):
-        self.data_file.updateStats(xdata, client.hostname)
+        self.data_file.updateStats(copy.deepcopy(xdata), client.hostname)
 
     def FindCurrent(self, client):
         rt = self.data_file.element.xpath('//Node[@name="%s"]' % client)[0]
