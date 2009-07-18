@@ -206,10 +206,6 @@ Usage: [quit|exit]"""
             data.append((group, prof, cat, ','.join(gdata)))
         printTabular(data)
 
-    def complete_showclient(self, text, line, begidx, endidx):
-        return [entry for entry in self.metadata.clients \
-                if entry.startswith(text)] 
-
     def do_showclient(self, args):
         ''' print host metadata'''
         data = [('Client', 'Profile', "Groups", "Bundles")]
@@ -222,30 +218,16 @@ Usage: [quit|exit]"""
             except:
                 print("Client %s not defined" % client)
                 continue
-                
-            numbundles = len(client_meta.bundles)
-            numgroups = len(client_meta.groups)
-            num = max((numbundles, numgroups))
-            blist = list(client_meta.bundles)
-            glist = list(client_meta.groups)
-            for i in range(0, num):
-                if i == 0:
-                    c = client_meta.hostname
-                    p = client_meta.profile
-                else:
-                    c = ""
-                    p = ""
-                if i < numbundles:
-                    b = blist[i]
-                else:
-                    b = ""
-                if i < numgroups:
-                    g = glist[i]
-                else:
-                    g = ""
-                data.append((c, p, g, b))
-        if len(data) > 1:
-            printTabular(data)
+            print "Hostname:\t", client_meta.hostname
+            print "Profile:\t", client_meta.profile
+            print "Groups:\t\t", ",".join(client_meta.groups)
+            print "Bundles:\t", ",".join(client_meta.bundles)
+            if client_meta.connectors:
+                print "Connector data"
+                print "=" * 80
+                for conn in client_meta.connectors:
+                    print "%s:\t" % (conn), getattr(client_meta, conn)
+                    print "=" * 80
 
     def do_mappings(self, args):
         '''print out mapping info'''
