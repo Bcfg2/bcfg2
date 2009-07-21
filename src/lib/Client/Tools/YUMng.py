@@ -368,6 +368,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkg.get('name'), self.str_evra(pkg)))
                         self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
+                        continue
 
                     cmdrc, output = self.cmd.run(self.pkgtool % pkg_arg)
                     if cmdrc == 0:
