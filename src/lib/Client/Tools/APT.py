@@ -132,8 +132,15 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.logger.info('Removing packages:')
             self.logger.info(pkgnames)
             for pkg in pkgnames.split(" "):
-                self.pkg_cache[pkg].markDelete(purge=True)
-            self.pkg_cache.commit()
+                try:
+                    self.pkg_cache[pkg].markDelete(purge=True)
+                except:
+                    self.pkg_cache[pkg].markDelete()
+            try:
+                self.pkg_cache.commit()
+            except SystemExit:
+                # thank you python-apt 0.6
+                pass
             self.pkg_cache = apt.cache.Cache()
             self.modified += packages
             self.extra = self.FindExtra()
