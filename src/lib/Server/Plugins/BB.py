@@ -28,10 +28,10 @@ class BBfile(Bcfg2.Server.Plugin.XMLFileBacked):
 
         for node in self.data.findall('Node'):
             iface = node.find('Interface')
-            mac = "01-%s" % (iface.get('mac'.replace(':','-').lower()))
-            self.actions[node.get('name')] = node.get('action')
-            self.bootlinks.append(mac, node.get('action'))
             if iface != None:
+                mac = "01-%s" % (iface.get('mac'.replace(':','-').lower()))
+                self.actions[node.get('name')] = node.get('action')
+                self.bootlinks.append((mac, node.get('action')))
                 try:
                     ip = socket.gethostbyname(node.get('name'))
                 except:
@@ -80,7 +80,7 @@ class BB(Bcfg2.Server.Plugin.Plugin,
             
             users[user] = pubkeys            
         
-        return  dict([('users', users), 
+        return dict([('users', users), 
                       ('macs', self.store.entries['bb.xml'].macs)])
 
 
