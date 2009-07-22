@@ -141,6 +141,17 @@ The TCP port on which to bind for agent mode.
 .B user
 A client-only option. The UUID of the client.
 
+.SH PARANOID OPTIONS
+These options allow for finer-grained control of the paranoid mode on the Bcfg2 client. They are specified in the [paranoid] section of the configuration file.
+
+.TP
+.B path
+Custom path for backups created in paranoid mode. The default is in /var/cache/bcfg2.
+
+.TP
+.B max_copies
+Specify a maximum number of copies for the server to keep when running in paranoid mode. Only the most recent versions of these copies will be kept.
+
 .SH COMPONENT OPTIONS
 Specified in the [components] section.
 
