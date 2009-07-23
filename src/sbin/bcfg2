@@ -275,8 +275,11 @@ class Client:
         if not self.setup['omit-lock-check']:
             #unlock here
             if lockfile:
-                fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-                os.remove(LOCKFILE)
+                try:
+                    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
+                    os.remove(LOCKFILE)
+                except OSError:
+                    self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
         
         if not self.setup['file']:
             # upload statistics
