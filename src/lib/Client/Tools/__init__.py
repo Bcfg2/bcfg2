@@ -117,13 +117,12 @@ class Tool:
         '''Dispatch verify calls to underlying methods'''
         if not structures:
             structures = self.config.getchildren()
+        mods = self.buildModlist()
         for (struct, entry) in [(struct, entry) for struct in structures \
                                 for entry in struct.getchildren() \
                                 if self.canVerify(entry)]:
             try:
                 func = getattr(self, "Verify%s" % (entry.tag))
-                mods = self.buildModlist(entry, struct)
-                mods += [c.get('name') for c in entry.findall("Ignore")]
                 states[entry] = func(entry, mods)
             except:
                 self.logger.error(
@@ -157,12 +156,12 @@ class Tool:
         '''return if entry is handled by this Tool'''
         return (entry.tag, entry.get('type')) in self.__handles__
 
-    def buildModlist(self, entry, struct):
+    def buildModlist(self):
         '''Build a list of potentially modified POSIX paths for this entry'''
-        if struct.tag != 'Bundle':
-            return []
-        return [sentry.get('name') for sentry in struct if sentry.tag in \
-                ['ConfigFile', 'SymLink', 'Directory', 'Permissions']]
+        return [entry.get('name') for struct in self.config.getchildren() \
+                for entry in struct.getchildren() \
+                if entry.tag in ['ConfigFile', 'SymLink', 'Directory',
+                                 'Permissions', 'Ignore', 'Path']]
 
     def gatherCurrentData(self, entry):
         '''Default implementation of the information gathering routines'''
