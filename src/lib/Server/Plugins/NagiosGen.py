@@ -8,10 +8,9 @@ LOGGER = logging.getLogger('Bcfg2.Plugins.NagiosGen')
 host_config_fmt = \
 '''
 define host{
-use             default
-host_name       %s
-alias           %s
-address         %s
+        host_name       %s
+        alias           %s
+        address         %s
 '''
 
 class NagiosGen(Bcfg2.Server.Plugin.Plugin,
@@ -41,9 +40,20 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                        os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
         host_config = host_config_fmt % \
                       (metadata.hostname, metadata.hostname, host_address )
+
         if host_groups:
-            host_config += ' hostgroups      %s\n' % (",".join(host_groups))
-        host_config += ' }\n'
+            host_config += '        hostgroups      %s\n' % (",".join(host_groups))
+
+        if 'NagiosGen.xml' in metadata.Properties and \
+            metadata.Properties['NagiosGen.xml'].data.find(metadata.hostname) is not None:
+            directives = list (metadata.Properties['NagiosGen.xml'].data.find(metadata.hostname))
+            for item in directives:
+                host_config += '        %-32s %s\n' % ( item.tag, item.text )
+
+        else:
+            host_config += '        use             default\n'
+
+        host_config += '}\n'
         entry.text = host_config
         [entry.attrib.__setitem__(key, value) for \
             (key, value) in self.client_attrib.iteritems()]      
