@@ -6,7 +6,9 @@ import difflib
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Snapshots
 from Bcfg2.Server.Snapshots.model import Snapshot
+import Queue
 import time
+import threading
 
 ftypes = ['ConfigFile', 'SymLink', 'Directory']
 datafields = {'Package': ['version'],
@@ -52,9 +54,17 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
         self.session = Bcfg2.Server.Snapshots.setup_session()
+        self.work_queue = Queue.Queue()
+        self.loader = threading.Thread(target=self.load_snapshot)
+        self.loader.start()
+
+    def load_snapshot(self):
+        while True:
+            (metadata, data) = self.work_queue.get(block=True)
+            self.statistics_from_old_stats(metadata, data)
 
     def process_statistics(self, metadata, data):
-        return self.statistics_from_old_stats(metadata, data)
+        return self.work_queue.put((metadata, data))
 
     def statistics_from_old_stats(self, metadata, xdata):
         # entries are name -> (modified, correct, start, desired, end)
