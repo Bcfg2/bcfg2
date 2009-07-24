@@ -44,8 +44,10 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         if host_groups:
             host_config += '        hostgroups      %s\n' % (",".join(host_groups))
 
-        if 'NagiosGen.xml' in metadata.Properties and \
-            metadata.Properties['NagiosGen.xml'].data.find(metadata.hostname) is not None:
+        if hasattr(metadata, 'Properties') and  \
+               'NagiosGen.xml' in metadata.Properties and \
+               metadata.Properties['NagiosGen.xml'].data.find(metadata.hostname) \
+               is not None:
             directives = list (metadata.Properties['NagiosGen.xml'].data.find(metadata.hostname))
             for item in directives:
                 host_config += '        %-32s %s\n' % ( item.tag, item.text )
