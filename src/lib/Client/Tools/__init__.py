@@ -343,6 +343,10 @@ class SvcTool(Tool):
                 if self.setup['servicemode'] == 'build':
                     rc = self.stop_service(entry)
                 else:
+                    if self.setup['interactive']:
+                        prompt = 'Restart service %s?: (y/N): ' % entry.get('name')
+                        if raw_input(prompt) not in ['y', 'Y']:
+                            continue
                     rc = self.restart_service(entry)
             else:
                 rc = self.stop_service(entry)
