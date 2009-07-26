@@ -266,6 +266,11 @@ try:
             handle = self.counter
             self.counter += 1
             mode = os.stat(path)[stat.ST_MODE]
+
+            # flush queued gamin events
+            while self.mon.event_pending():
+                self.mon.handle_one_event()
+
             if stat.S_ISDIR(mode):
                 self.mon.watch_directory(path, self.queue, handle)
             else:
@@ -274,10 +279,11 @@ try:
             return handle
 
         def pending(self):
-            return self.mon.event_pending()
+            return len(self.events) > 0 or self.mon.event_pending()
 
         def get_event(self):
-            self.mon.handle_one_event()
+            if self.mon.event_pending():
+                self.mon.handle_one_event()
             return self.events.pop()
 
     available['gamin'] = Gamin
