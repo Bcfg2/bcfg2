@@ -44,7 +44,6 @@ if __name__ == '__main__':
 
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
-    print setup
     try:
         Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
                                       location=setup['location'],
