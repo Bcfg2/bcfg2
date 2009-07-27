@@ -284,7 +284,7 @@ try:
         def get_event(self):
             if self.mon.event_pending():
                 self.mon.handle_one_event()
-            return self.events.pop()
+            return self.events.pop(0)
 
     available['gamin'] = Gamin
 except ImportError:
