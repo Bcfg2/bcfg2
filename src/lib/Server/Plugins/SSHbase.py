@@ -71,7 +71,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                                     self.entries.iteritems() if \
                                     key.endswith('.static')])
             names = dict()
-            # this next part is terrible
+            # if no metadata is registered yet, defer
+            if len(self.core.metadata.query.all()) == 0:
+                self.__skn = False
+                return self.__skn
             for cmeta in self.core.metadata.query.all():
                 names[cmeta.hostname] = set([cmeta.hostname])
                 names[cmeta.hostname].update(cmeta.aliases)
