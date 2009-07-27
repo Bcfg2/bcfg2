@@ -20,7 +20,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python-lxml (>= 0.9), python-fam | python-gamin, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), openssl
+Depends: ${python:Depends}, python-lxml (>= 0.9), python-fam | python-gamin, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), openssl, python-profiler
 Recommends: python-genshi (>= 0.4.4), graphviz
 XB-Python-Version: ${python:Versions}
 Description: Configuration management server
