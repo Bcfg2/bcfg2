@@ -14,7 +14,7 @@ def db_from_config(fname='/etc/bcfg2.conf'):
         password = cp.get('snapshots', 'password')
         host = cp.get('snapshots', 'host')
         db = cp.get('snapshots', 'database')
-        return '%s://%s:%s@%s/@s' % (driver, user, password, host, db)
+        return '%s://%s:%s@%s/%s' % (driver, user, password, host, db)
     else:
         raise Exception, "unsupported db driver %s" % driver
 
