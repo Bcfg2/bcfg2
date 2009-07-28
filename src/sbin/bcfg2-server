@@ -62,6 +62,9 @@ if __name__ == '__main__':
                                       certfile=setup['cert'],
                                       ca=setup['ca'],
                                       )
+    except CoreInitError, msg:
+        logger.error(msg)
+        logger.error("exiting")
     except KeyboardInterrupt:
         sys.exit(1)
     sys.exit(0)

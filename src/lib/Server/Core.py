@@ -80,6 +80,7 @@ class Core(Component):
         if len(mlist) == 1:
             self.metadata = mlist[0]
         else:
+            logger.error("No Metadata Plugin loaded; failed to instantiate Core")
             raise CoreInitError, "No Metadata Plugin"
         self.statistics = [plugin for plugin in self.plugins.values() if \
                              isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
