@@ -174,6 +174,9 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(gpg_keys) > 0:
             for inst in gpg_keys:
                 self.logger.info("Installing GPG keys.")
+                if inst.get('simplefile') is None:
+                    self.logger.error("GPG key has no simplefile attribute")
+                    continue
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                      inst.get('simplefile'))
                 cmdrc, output = self.cmd.run("rpm --import %s" % key_arg)
