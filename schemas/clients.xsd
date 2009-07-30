@@ -20,6 +20,7 @@
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='profile' use='required'/>
     <xsd:attribute type='xsd:string' name='pingable' use='optional'/>
+    <xsd:attribute type='xsd:string' name='auth' use='optional'/>
     <xsd:attribute type='xsd:string' name='uuid'/>
     <xsd:attribute type='xsd:string' name='password'/>
     <xsd:attribute type='xsd:string' name='location'/>
