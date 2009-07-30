@@ -28,12 +28,11 @@ if __name__ == '__main__':
 
     # Get a list of all info.xml files in the bcfg2 repository
     info_list = []
-    for root, dirs, files in os.walk('%s' % repo):
-        for filename in files:
-            if filename == 'info.xml':
-                info_list.append(os.path.join(root, filename))
-        if 'Bundler' in dirs:
-            dirs.remove('Bundler')
+    for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
+        for root, dirs, files in os.walk('%s/%s' % (repo, infodir)):
+            for filename in files:
+                if filename == 'info.xml':
+                    info_list.append(os.path.join(root, filename))
 
     # get metadata list (with all included files)
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
