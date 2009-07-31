@@ -45,11 +45,15 @@ Build structure entries based on client statistics extra entries
 Install configuration information into repo based on client bad
 entries
 .RE
+.B snapshots [init|dump|query|reports]
+.RS
+Interact with the Snapshots database
+.RE
 .B tidy
 .RS
 Remove unused files from repository
 .RE
-.B viz [-h] [-b] [-k] [-o png-file] [-r]
+.B viz [-H] [-b] [-k] [-o png-file] [-r]
 .RS
 Create a graphviz diagram of client, group and bundle information
 .RE
@@ -127,9 +131,27 @@ Specify the type of the entry to pull
 .RS
 Specify the name of the entry to pull
 .RE
+.SH SNAPSHOTS OPTIONS
+.PP
+.B init
+.RS
+Initialize the snapshots database
+.RE
+.B query
+.RS
+Query the snapshots database
+.RE
+.B dump
+.RS
+Dump some of the contents of the snapshots database
+.RE
+.B reports [-a] [-b] [-e] [--date=<MM-DD-YYYY>]
+.RS
+Generate reports for clients in the snapshots database
+.RE
 .SH VIZ OPTIONS
 .PP
-.B \-h
+.B \-H
 .RS
 Include hosts in diagram
 .RE
