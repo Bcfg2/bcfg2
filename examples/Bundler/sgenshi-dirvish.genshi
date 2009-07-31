@@ -1,0 +1,23 @@
+<!--
+vim: ft=xml
+-->
+<Bundle name='sgenshi-dirvish' xmlns:py="http://genshi.edgewall.org/">
+<py:for each="user in metadata.Properties['dirvish.xml'].data.find('users')">
+<!-- Generate configs for all users in dirvish.xml -->
+<BoundConfigFile
+	name='/backup/homes/${user.tag}/dirvish/default.conf'
+	owner='root'
+	group='root'
+	perms='0644'>client: nfs-host
+tree: /export/homes/${user.text}
+exclude:
+	*~
+	.nfs*
+</BoundConfigFile>
+</py:for>
+
+<Package name='dirvish'/>
+<ConfigFile name='/etc/cron.d/dirvish'/>
+<ConfigFile name='/etc/dirvish/dirvish-cronjob'/>
+<ConfigFile name='/etc/dirvish/master.conf'/>
+</Bundle>

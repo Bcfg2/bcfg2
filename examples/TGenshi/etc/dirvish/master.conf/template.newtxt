@@ -1,0 +1,25 @@
+bank:
+	/backup
+
+image-default: %Y-%m-%d
+log: bzip2
+index: bzip2
+xdev: 1
+
+exclude:
+	lost+found/
+	*~
+	.nfs*
+
+Runall:
+{% for user in metadata.Properties['dirvish.xml'].data.find('users') %}\
+	homes/${user.tag}
+{% end %}\
+
+expire-default: +2 weeks
+
+expire-rule:
+#	MIN	HR	DOM	MON		DOW	STRFTIME_FMT
+	*	*	*  	*		1	+6 weeks
+	*	*	1-7	*		1	+6 months
+	*	*	1-7	1,4,7,10	1	never

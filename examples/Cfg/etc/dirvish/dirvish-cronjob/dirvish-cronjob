@@ -1,0 +1,44 @@
+#! /bin/sh
+#
+# daily cron job for the dirvish package
+#
+# NOTE: This is the sample cron job included in Debian. You may need to
+#	change the executable paths if running on a different OS.
+if [ ! -x /usr/sbin/dirvish-expire  ]; then exit 0; fi
+if [ ! -s /etc/dirvish/master.conf ]; then exit 0; fi
+
+mount_check() {
+	mntout=`tempfile -p mount`
+	mount $1 >$mntout 2>&1
+	if [ ! -d $1/lost+found ]; then # only works for "real" filesystems :-)
+					# (Yes, I know about reiserfs.)
+		echo "'mount $1' failed?! Stopping."
+		echo "mount output:"
+		cat $mntout
+		rm -f $mntout
+		exit 2
+	fi
+
+	if stat $1 | grep 'Inode: 2[^0-9]' >/dev/null; then # ditto
+		rm -f $mntout
+		return 0 # ok
+	fi
+	echo "$1 isn't inode 2 ?! Mount must have failed; stopping."
+	echo ''
+	stat $1
+	echo "mount output:"
+	cat $mntout
+	rm -f $mntout
+	umount $1
+	exit 2
+}
+
+## Example of how to mount and umount a backup partition...
+# mount_check /backup
+
+/usr/sbin/dirvish-expire --quiet && /usr/sbin/dirvish-runall --quiet
+rc=$?
+
+# umount /backup || rc=$?
+
+exit $rc

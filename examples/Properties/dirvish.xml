@@ -1,0 +1,9 @@
+<Properties>
+	<users>
+		<!-- FORMAT: -->
+		<!-- <username>homedir</username> -->
+		<user1>user1homedir</user1>
+		<user2>user2homedir</user2>
+		<user3>user3homedir</user3>
+	</users>
+</Properties>

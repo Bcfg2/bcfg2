@@ -1,0 +1,8 @@
+# /etc/cron.d/dirvish: crontab fragment for dirvish
+
+SHELL=/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+
+# run every night
+4 22 * * *     root     /etc/dirvish/dirvish-cronjob
