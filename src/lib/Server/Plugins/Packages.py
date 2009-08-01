@@ -482,6 +482,23 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                   type=ptype, version='auto')
         structures.append(news)
 
+    def make_non_redundant(self, meta, plname):
+        '''build a non-redundant version of a list of packages
+
+        Arguments:
+        meta - client metadata instance
+        plname - name of file containing a list of packages
+        '''
+        pkgnames = set([x.strip() for x in open(plname).readlines()])
+        redundant = set()
+        sources = self.get_matching_sources(meta)
+        for source in sources:
+            for pkgname in pkgnames:
+                for rpkg in source.get_deps(meta, pkgname):
+                    if rpkg in pkgnames:
+                        redundant.add(rpkg)
+        return pkgnames.difference(redundant), redundant
+
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('Packages', to_console=True)
     aa = Packages(None, '/home/desai/tmp/bcfg2')
