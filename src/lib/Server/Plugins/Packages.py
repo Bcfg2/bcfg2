@@ -494,7 +494,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         sources = self.get_matching_sources(meta)
         for source in sources:
             for pkgname in pkgnames:
-                for rpkg in source.get_deps(meta, pkgname):
+                try:
+                    deps = source.get_deps(meta, pkgname)
+                except:
+                    continue
+                for rpkg in deps:
                     if rpkg in pkgnames:
                         redundant.add(rpkg)
         return pkgnames.difference(redundant), redundant
