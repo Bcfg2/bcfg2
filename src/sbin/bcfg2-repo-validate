@@ -78,7 +78,7 @@ if __name__ == '__main__':
         try:
             xdata = lxml.etree.parse(plist)
         except lxml.etree.XMLSyntaxError, e:
-            print("Failed to %s: %s" % (plist, e))
+            print("Failed to parse %s: %s" % (plist, e))
         # get priority, type, group
         priority = xdata.getroot().get('priority')
         ptype = xdata.getroot().get('type')
