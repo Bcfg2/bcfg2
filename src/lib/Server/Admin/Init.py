@@ -230,7 +230,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                 Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, groups, self.os_sel, clients)
             else:
                 try:
-                    module = __import__("Bcfg2.Server.Plugins.%s" % plugin, fromlist=["Bcfg2.Server.Plugins"])
+                    module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
+                                        '', ["Bcfg2.Server.Plugins"])
                     cls = getattr(module, plugin)
                     cls.init_repo(self.repopath)
                 except Exception, e:
