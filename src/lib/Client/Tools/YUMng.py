@@ -30,6 +30,21 @@ except:
 if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
     raise ImportError
 
+def build_yname(pkgname, inst):
+    '''build yum appropriate package name'''
+    ypname = pkgname
+    if inst.get('version') != 'any':
+        ypname += '-'
+    if inst.get('epoch', False):
+        ypname += "%s:" % inst.get('epoch')
+    if inst.get('version', False) and inst.get('version') != 'any':
+        ypname += "%s" % (inst.get('version'))
+    if inst.get('release', False) and inst.get('release') != 'any':
+        ypname += "-%s" % (inst.get('release'))
+    if inst.get('arch', False) and inst.get('arch') != 'any':
+        ypname += ".%s" % (inst.get('arch'))
+    return ypname
+
 class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     '''Support for Yum packages'''
     pkgtype = 'yum'
@@ -205,18 +220,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             install_args = []
             for inst in install_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                if inst.get('epoch', False):
-                    pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
-                              '-' + inst.get('release') + '.' + inst.get('arch')
-                else:
-                    if inst.get('version', False) and \
-                       inst.get('version') != 'any':
-                        pkg_arg = pkg_arg + '-' + inst.get('version')
-                        if inst.get('release', False):
-                            pkg_arg = pkg_arg + '-' + inst.get('release')
-                    if inst.get('arch', False) and inst.get('arch') != 'any':
-                        pkg_arg = pkg_arg + '.' + inst.get('arch')
-                install_args.append(pkg_arg)
+                install_args.append(build_yname(pkg_arg, inst))
             
             cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
             if cmdrc == 0:
@@ -229,17 +233,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.logger.error("Single Pass Install of Packages Failed")
                 installed_instances = []
                 for inst in install_pkgs:
-                    pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                    if inst.get('epoch', False):
-                        pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
-                                  '-' + inst.get('release') + '.' + inst.get('arch')
-                    else:
-                        if inst.get('version', False):
-                            pkg_arg = pkg_arg + '-' + inst.get('version')
-                            if inst.get('release', False):
-                                pkg_arg = pkg_arg + '-' + inst.get('release')
-                        if inst.get('arch', False):
-                            pkg_arg = pkg_arg + '.' + inst.get('arch')
+                    pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
     
                     cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
                     if cmdrc == 0:
@@ -261,17 +255,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
             upgrade_args = []
             for inst in upgrade_pkgs:
-                pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                if inst.get('epoch', False):
-                    pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
-                              '-' + inst.get('release') + '.' + inst.get('arch')
-                else:
-                    if inst.get('version', False):
-                        pkg_arg = pkg_arg + '-' + inst.get('version')
-                        if inst.get('release', False):
-                            pkg_arg = pkg_arg + '-' + inst.get('release')
-                    if inst.get('arch', False):
-                        pkg_arg = pkg_arg + '.' + inst.get('arch')
+                pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
                 upgrade_args.append(pkg_arg)
             
             cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
@@ -285,17 +269,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 self.logger.error("Single Pass Install of Packages Failed")
                 installed_instances = []
                 for inst in upgrade_pkgs:
-                    pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                    if inst.get('epoch', False):
-                        pkg_arg = pkg_arg + '-' + inst.get('epoch') + ':' + inst.get('version') + \
-                                  '-' + inst.get('release') + '.' + inst.get('arch')
-                    else:
-                        if inst.get('version', False):
-                            pkg_arg = pkg_arg + '-' + inst.get('version')
-                            if inst.get('release', False):
-                                pkg_arg = pkg_arg + '-' + inst.get('release')
-                        if inst.get('arch', False):
-                            pkg_arg = pkg_arg + '.' + inst.get('arch')
+                    pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
                     cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
                     if cmdrc == 0:
                         installed_instances.append(inst)
