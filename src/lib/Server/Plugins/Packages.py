@@ -79,9 +79,14 @@ class Source(object):
     
     def update(self):
         for url in self.urls:
-            print "updating", url
+            logger.info("Packages: Updating %s" % url)
             fname = self.escape_url(url)
-            data = urllib2.urlopen(url).read()
+            try:
+                data = urllib2.urlopen(url).read()
+            except urllib2.HTTPError, h:
+                logger.error("Packages: Failed to fetch url %s. code=%s" \
+                             % (url, h.code))
+                continue
             file(fname, 'w').write(data)
 
     def applies(self, metadata):
