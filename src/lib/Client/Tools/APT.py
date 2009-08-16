@@ -15,9 +15,9 @@ class APT(Bcfg2.Client.Tools.Tool):
     name = 'APT'
     __execs__ = ['/usr/bin/debsums', '/usr/bin/apt-get', '/usr/bin/dpkg']
     __important__ = ["/etc/apt/sources.list",
-                     "/var/cache/debconf/config.dat", 
+                     "/var/cache/debconf/config.dat",
                      "/var/cache/debconf/templates.dat",
-                     '/etc/passwd', '/etc/group', 
+                     '/etc/passwd', '/etc/group',
                      '/etc/apt/apt.conf', '/etc/dpkg/dpkg.cfg']
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
@@ -28,7 +28,7 @@ class APT(Bcfg2.Client.Tools.Tool):
              '-q=2 ' + \
              '--force-yes ' + \
              '-y install %s'
-    
+
     def __init__(self, logger, cfg, setup):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
@@ -99,7 +99,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
-            
+
         pkg = self.pkg_cache[pkgname]
         if entry.get('version') == 'auto':
             if self.pkg_cache._depcache.IsUpgradable(pkg._pkg):
@@ -144,7 +144,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.pkg_cache = apt.cache.Cache()
             self.modified += packages
             self.extra = self.FindExtra()
-              
+
     def Install(self, packages, states):
         # it looks like you can't install arbitrary versions of software
         # out of the pkg cache, we will still need to call apt-get

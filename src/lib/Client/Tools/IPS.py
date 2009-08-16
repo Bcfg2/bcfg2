@@ -55,6 +55,6 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
                                   % (pname, self.installed[pname],
                                      entry.get('version')))
                 return False
-        
+
         # need to implement pkg chksum validation
         return True

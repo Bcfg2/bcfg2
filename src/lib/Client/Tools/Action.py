@@ -32,7 +32,7 @@ class Action(Bcfg2.Client.Tools.Tool):
                 return rc == 0
         else:
             return False
-    
+
     def VerifyAction(self, dummy, _):
         '''Actions always verify true'''
         return True
@@ -57,7 +57,7 @@ class Action(Bcfg2.Client.Tools.Tool):
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both']:
                 states[action] = self.RunAction(action)
-        
+
     def BundleNotUpdated(self, bundle, states):
         '''Run Actions when bundles have not been updated'''
         for action in bundle.findall("Action"):

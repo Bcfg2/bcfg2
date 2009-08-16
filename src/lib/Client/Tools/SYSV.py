@@ -59,7 +59,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         desiredVersion = entry.get('version')
         if desiredVersion == 'any':
             desiredVersion = self.installed.get(entry.get('name'), desiredVersion)
-        
+
         cmdrc = self.cmd.run("/usr/bin/pkginfo -q -v \"%s\" %s" % \
                              (desiredVersion, entry.get('name')))[0]
 

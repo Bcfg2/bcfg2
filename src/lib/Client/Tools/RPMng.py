@@ -23,14 +23,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
     __req__ = {'Package': ['name', 'version']}
     __ireq__ = {'Package': ['url']}
-    
+
     __new_req__ = {'Package': ['name'], 'Instance': ['version', 'release', 'arch']}
     __new_ireq__ = {'Package': ['uri'], \
                     'Instance': ['simplefile']}
-    
+
     __gpg_req__ = {'Package': ['name', 'version']}
     __gpg_ireq__ = {'Package': ['name', 'version']}
-    
+
     __new_gpg_req__ = {'Package': ['name'], 'Instance': ['version', 'release']}
     __new_gpg_ireq__ = {'Package': ['name'], 'Instance': ['version', 'release']}
 
@@ -150,7 +150,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         '''
         self.installed = {}
         refresh_ts = rpmtools.rpmtransactionset()
-        # Don't bother with signature checks at this stage. The GPG keys might 
+        # Don't bother with signature checks at this stage. The GPG keys might
         # not be installed.
         refresh_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
         for nevra in rpmtools.rpmpackagelist(refresh_ts):
@@ -160,7 +160,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             for name, instances in list(self.installed.items()):
                 self.logger.debug("    " + name)
                 for inst in instances:
-                    self.logger.debug("        %s" %self.str_evra(inst)) 
+                    self.logger.debug("        %s" %self.str_evra(inst))
         refresh_ts.closeDB()
         del refresh_ts
 
@@ -234,7 +234,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                     self.logger.error("got any version")
                                 self.logger.debug("        %s" % self.str_evra(inst))
                                 self.instance_status[inst]['installed'] = True
-         
+
                                 if self.pkg_verify == 'true' and \
                                    inst.get('pkg_verify', 'true') == 'true':
                                     flags = inst.get('verify_flags', '').split(',') + self.verify_flags
@@ -245,24 +245,24 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                            % (pkg.get('name'), self.str_evra(pkg), \
                                                               pkg.get('gpgkeyid', '')))
                                         self.logger.debug('         Disabling signature check.')
-        
+
                                     if self.setup.get('quick', False):
                                         if rpmtools.prelink_exists:
                                             flags += ['nomd5', 'nosize']
                                         else:
                                             flags += ['nomd5']
-                                    self.logger.debug("        verify_flags = %s" % flags) 
-        
+                                    self.logger.debug("        verify_flags = %s" % flags)
+
                                     vp_ts = rpmtools.rpmtransactionset()
                                     self.instance_status[inst]['verify'] = \
                                                            rpmtools.rpm_verify( vp_ts, pkg, flags)
                                     vp_ts.closeDB()
                                     del vp_ts
-    
+
                         if self.instance_status[inst]['installed'] == False:
                             self.logger.info("        Package %s %s not installed." % \
                                          (entry.get('name'), self.str_evra(inst)))
-                                
+
                             qtext_versions = qtext_versions + 'I(%s) ' % self.str_evra(inst)
                             entry.set('current_exists', 'false')
                 else:
@@ -270,7 +270,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     for inst in instances:
                         self.instance_status.setdefault(inst, {})['installed'] = False
                         self.instance_status[inst]['version_fail'] = False
-    
+
                         # Only installed packages with the same architecture are
                         # relevant.
                         if inst.get('arch', None) == None:
@@ -278,7 +278,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                         else:
                             arch_match = [pkg for pkg in self.installed[entry.get('name')] \
                                               if pkg.get('arch', None) == inst.get('arch', None)]
-    
+
                         if len(arch_match) > 1:
                             self.logger.error("Multiple instances of package %s installed with the same achitecture." % \
                                                   (entry.get('name')))
@@ -290,7 +290,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                        self.inst_evra_equal(inst, pkg):
                                     self.logger.debug("        %s" % self.str_evra(inst))
                                     self.instance_status[inst]['installed'] = True
-    
+
                                     if self.pkg_verify == 'true' and \
                                        inst.get('pkg_verify', 'true') == 'true':
                                         flags = inst.get('verify_flags', '').split(',') + self.verify_flags
@@ -301,26 +301,26 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                          % (pkg.get('name'), self.str_evra(pkg), \
                                                             pkg.get('gpgkeyid', '')))
                                             self.logger.info('         Disabling signature check.')
-        
+
                                         if self.setup.get('quick', False):
                                             if rpmtools.prelink_exists:
                                                 flags += ['nomd5', 'nosize']
                                             else:
                                                 flags += ['nomd5']
-                                        self.logger.debug("        verify_flags = %s" % flags) 
-        
+                                        self.logger.debug("        verify_flags = %s" % flags)
+
                                         vp_ts = rpmtools.rpmtransactionset()
                                         self.instance_status[inst]['verify'] = \
                                                          rpmtools.rpm_verify( vp_ts, pkg, flags )
                                         vp_ts.closeDB()
                                         del vp_ts
-    
+
                                 else:
                                     # Wrong version installed.
                                     self.instance_status[inst]['version_fail'] = True
                                     self.logger.info("        Wrong version installed.  Want %s, but have %s"\
                                                     % (self.str_evra(inst), self.str_evra(pkg)))
-                            
+
                                     qtext_versions = qtext_versions + 'U(%s -> %s) ' % \
                                                           (self.str_evra(pkg), self.str_evra(inst))
                         elif len(arch_match) == 0:
@@ -328,32 +328,32 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             self.instance_status[inst]['installed'] = False
                             self.logger.info("        %s is not installed." % self.str_evra(inst))
                             qtext_versions = qtext_versions + 'I(%s) ' % self.str_evra(inst)
-    
+
                 # Check the rpm verify results.
                 for inst in instances:
                     instance_fail = False
-                    # Dump the rpm verify results. 
+                    # Dump the rpm verify results.
                     #****Write something to format this nicely.*****
                     if self.setup['debug'] and self.instance_status[inst].get('verify', None):
                         self.logger.debug(self.instance_status[inst]['verify'])
-    
+
                     self.instance_status[inst]['verify_fail'] = False
                     if self.instance_status[inst].get('verify', None):
                         if len(self.instance_status[inst].get('verify')) > 1:
                             self.logger.info("WARNING: Verification of more than one package instance.")
- 
+
                         for result in self.instance_status[inst]['verify']:
-    
+
                             # Check header results
                             if result.get('hdr', None):
                                 instance_fail = True
                                 self.instance_status[inst]['verify_fail'] = True
-        
+
                             # Check dependency results
                             if result.get('deps', None):
                                 instance_fail = True
                                 self.instance_status[inst]['verify_fail'] = True
-                             
+
                             # Check the rpm verify file results against the modlist
                             # and per Instance Ignores.
                             for file_result in result.get('files', []):
@@ -365,7 +365,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                 else:
                                     self.logger.debug("        Modlist/Ignore match: %s" % \
                                                                                  (file_result[-1]))
-    
+
                         if instance_fail == True:
                             self.logger.debug("*** Instance %s failed RPM verification ***" % \
                                               self.str_evra(inst))
@@ -374,14 +374,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
                             # Attach status structure for return to server for reporting.
                             inst.set('verify_status', str(self.instance_status[inst]))
-    
+
                     if self.instance_status[inst]['installed'] == False or \
                        self.instance_status[inst].get('version_fail', False)== True or \
                        self.instance_status[inst].get('verify_fail', False) == True:
                         package_fail = True
                         self.instance_status[inst]['pkg'] = entry
                         self.modlists[entry] = modlist
-    
+
                 # Find Installed Instances that are not in the Config.
                 extra_installed = self.FindExtraInstances(entry, self.installed[entry.get('name')])
                 if extra_installed != None:
@@ -390,25 +390,25 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     for inst in extra_installed.findall('Instance'):
                         qtext_versions = qtext_versions + 'D(%s) ' % self.str_evra(inst)
                     self.logger.debug("Found Extra Instances %s" % qtext_versions)
-               
+
                 if package_fail == True:
                     self.logger.info("        Package %s failed verification." % \
                                                               (entry.get('name')))
                     qtext = 'Install/Upgrade/delete Package %s instance(s) - %s (y/N) ' % \
                                                   (entry.get('name'), qtext_versions)
                     entry.set('qtext', qtext)
-    
+
                     bcfg2_versions = ''
                     for bcfg2_inst in [inst for inst in instances if inst.tag == 'Instance']:
                         bcfg2_versions = bcfg2_versions + '(%s) ' % self.str_evra(bcfg2_inst)
                     if bcfg2_versions != '':
                         entry.set('version', bcfg2_versions)
                     installed_versions = ''
-    
+
                     for installed_inst in self.installed[entry.get('name')]:
                         installed_versions = installed_versions + '(%s) ' % \
                                                                       self.str_evra(installed_inst)
-    
+
                     entry.set('current_version', installed_versions)
                     return False
 
@@ -436,7 +436,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         '''
            Remove specified entries.
 
-           packages is a list of Package Entries with Instances generated 
+           packages is a list of Package Entries with Instances generated
            by FindExtraPackages().
         '''
         self.logger.debug('Running RPMng.RemovePackages()')
@@ -460,7 +460,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
                 #pkgspec_list.append(pkg_spec)
 
-        erase_results = rpmtools.rpm_erase(pkgspec_list, self.erase_flags) 
+        erase_results = rpmtools.rpm_erase(pkgspec_list, self.erase_flags)
         if erase_results == []:
             self.modified += packages
             for pkg in pkgspec_list:
@@ -488,7 +488,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
                         continue # Don't delete the gpg-pubkey packages for now.
-                    erase_results = rpmtools.rpm_erase([pkgspec], self.erase_flags) 
+                    erase_results = rpmtools.rpm_erase([pkgspec], self.erase_flags)
                     if erase_results == []:
                         pkg_modified = True
                         self.logger.info("Deleted %s %s" % \
@@ -505,7 +505,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
     def FixInstance(self, instance, inst_status):
         '''
-           Control if a reinstall of a package happens or not based on the 
+           Control if a reinstall of a package happens or not based on the
            results from RPMng.VerifyPackage().
 
            Return True to reinstall, False to not reintstall.
@@ -535,14 +535,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             if instance.get('verify_fail_action', 'reinstall') == "reinstall" and \
                self.verify_fail_action == "reinstall":
                 for inst in inst_status.get('verify'):
-                    # This needs to be a for loop rather than a straight get() 
+                    # This needs to be a for loop rather than a straight get()
                     # because the underlying routines handle multiple packages
                     # and return a list of results.
                     self.logger.debug('reinstall_check: %s %s:%s-%s.%s' % inst.get('nevra'))
 
                     if inst.get("hdr", False):
                         fix = True
-    
+
                     elif inst.get('files', False):
                         # Parse rpm verify file results
                         for file_result in inst.get('files', []):
@@ -560,24 +560,24 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                       self.str_evra(instance)))
 
         return fix
-    
+
     def Install(self, packages, states):
         '''
-           Try and fix everything that RPMng.VerifyPackages() found wrong for 
-           each Package Entry.  This can result in individual RPMs being 
-           installed (for the first time), reinstalled, deleted, downgraded 
+           Try and fix everything that RPMng.VerifyPackages() found wrong for
+           each Package Entry.  This can result in individual RPMs being
+           installed (for the first time), reinstalled, deleted, downgraded
            or upgraded.
 
-           packages is a list of Package Elements that has 
+           packages is a list of Package Elements that has
                states[<Package Element>] == False
 
            The following effects occur:
            - states{} is conditionally updated for each package.
            - self.installed{} is rebuilt, possibly multiple times.
-           - self.instance_statusi{} is conditionally updated for each instance 
+           - self.instance_statusi{} is conditionally updated for each instance
              of a package.
-           - Each package will be added to self.modified[] if its states{} 
-             entry is set to True. 
+           - Each package will be added to self.modified[] if its states{}
+             entry is set to True.
         '''
         self.logger.info('Runing RPMng.Install()')
 
@@ -789,13 +789,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     def canVerify(self, entry):
         '''
             Test if entry has enough information to be verified.
- 
+
             Three types of entries are checked.
                Old style Package
                New style Package with Instances
                pgp-pubkey packages
 
-           Also the old style entries get modified after the first 
+           Also the old style entries get modified after the first
            VerifyPackage() run, so there needs to be a second test.
         '''
         if not self.handlesEntry(entry):
@@ -816,7 +816,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if not instances:
             # Old non Instance format, unmodified.
             if entry.get('name') == 'gpg-pubkey':
-                # gpg-pubkey packages aren't really pacakges, so we have to do 
+                # gpg-pubkey packages aren't really pacakges, so we have to do
                 # something a little different.
                 # Check that the Package Level has what we need for verification.
                 if [attr for attr in self.__gpg_req__[entry.tag] if attr not in entry.attrib]:
@@ -830,7 +830,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     return False
         else:
             if entry.get('name') == 'gpg-pubkey':
-                # gpg-pubkey packages aren't really pacakges, so we have to do 
+                # gpg-pubkey packages aren't really pacakges, so we have to do
                 # something a little different.
                 # Check that the Package Level has what we need for verification.
                 if [attr for attr in self.__new_gpg_req__[entry.tag] if attr not in entry.attrib]:
@@ -944,14 +944,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             Convert evra dict entries to a string.
         '''
         if instance.get('epoch', '*') in ['*', None]:
-            return '%s-%s.%s' % (instance.get('version', '*'), 
+            return '%s-%s.%s' % (instance.get('version', '*'),
                                  instance.get('release', '*'),
-                                 instance.get('arch', '*')) 
-        else: 
+                                 instance.get('arch', '*'))
+        else:
             return '%s:%s-%s.%s' % (instance.get('epoch', '*'),
-                                    instance.get('version', '*'), 
+                                    instance.get('version', '*'),
                                     instance.get('release', '*'),
-                                    instance.get('arch', '*')) 
+                                    instance.get('arch', '*'))
 
     def pkg_vr_equal(self, config_entry, installed_entry):
         '''
@@ -987,12 +987,12 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             return False
 
     def getinstalledgpg(self):
-        ''' 
+        '''
            Create a list of installed GPG key IDs.
 
            The pgp-pubkey package version is the least significant 4 bytes
            (big-endian) of the key ID which is good enough for our purposes.
-        ''' 
+        '''
         init_ts = rpmtools.rpmtransactionset()
         init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
         gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name':'gpg-pubkey'})

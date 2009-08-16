@@ -234,7 +234,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nnqtext += '\nInstall %s %s: (y/N) ' % (entry.tag, entry.get('name'))
                 entry.set('qtext', nnqtext)
         return pTrue and pruneTrue
-        
+
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
@@ -291,7 +291,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
             for pname in entry.get("qtest").split(":"):
                 ulfailed = False
-                if os.path.isdir(pname): 
+                if os.path.isdir(pname):
                     self.logger.info("Not removing extra directory %s, please check and remove manually" % pname)
                     continue
                 try:
@@ -404,12 +404,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         eudiff = udiff.encode('ascii')
                     except:
                         eudiff = "Binary file: no diff printed"
- 
+
                     nqtext = entry.get('qtext', '')
 
                     if nqtext:
                         nqtext += '\n'
-                    nqtext += eudiff 
+                    nqtext += eudiff
                 else:
                     entry.set('current_bfile', binascii.b2a_base64(content))
                     nqtext = entry.get('qtext', '')

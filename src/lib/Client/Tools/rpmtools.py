@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-    Module that uses rpm-python to implement the following rpm 
+    Module that uses rpm-python to implement the following rpm
     functionality for the bcfg2 RPM and YUM client drivers:
 
         rpm -qa
@@ -11,8 +11,8 @@
 
     The code was written to be used in the bcfg2 RPM/YUM drivers.
 
-    Some command line options have been provided to assist with 
-    testing and development, but the output isn't pretty and looks 
+    Some command line options have been provided to assist with
+    testing and development, but the output isn't pretty and looks
     nothing like rpm output.
 
     Run 'rpmtools' -h for the options.
@@ -40,14 +40,14 @@ except ImportError:
     isprelink_imported = False
     #print '*********************** isprelink not loaded ***********************'
 
-# If the prelink command is installed on the system then we need to do 
+# If the prelink command is installed on the system then we need to do
 # prelink -y on files.
 if os.access('/usr/sbin/prelink', os.X_OK):
     prelink_exists = True
 else:
     prelink_exists = False
 
-# If we don't have isprelink then we will use the prelink configuration file to 
+# If we don't have isprelink then we will use the prelink configuration file to
 # filter what we have to put through prelink -y.
 import re
 blacklist = []
@@ -75,7 +75,7 @@ blacklist_re = re.compile('|'.join(blacklist))
 whitelist_re = re.compile('|'.join(whitelist))
 
 # Flags that are not defined in rpm-python.
-# They are defined in lib/rpmcli.h  
+# They are defined in lib/rpmcli.h
 # Bit(s) for verifyFile() attributes.
 #
 RPMVERIFY_NONE            = 0                      #  /*!< */
@@ -135,11 +135,11 @@ VERIFY_ALL =     \
 
 
 # Some masks for what checks to NOT do on these file types.
-# The C code actiually resets these up for every file. 
+# The C code actiually resets these up for every file.
 DIR_FLAGS = ~(RPMVERIFY_MD5 | RPMVERIFY_FILESIZE | RPMVERIFY_MTIME | \
               RPMVERIFY_LINKTO)
 
-# These file types all have the same mask, but hopefully this will make the 
+# These file types all have the same mask, but hopefully this will make the
 # code more readable.
 FIFO_FLAGS = CHR_FLAGS = BLK_FLAGS = GHOST_FLAGS = DIR_FLAGS
 
@@ -161,14 +161,14 @@ def rpmpackagelist(rts):
         Equivalent of rpm -qa.  Intended for RefreshPackages() in the RPM Driver.
         Requires rpmtransactionset() to be run first to get a ts.
         Returns a list of pkgspec dicts.
-    
+
         e.g. [ {'name':'foo', 'epoch':'20', 'version':'1.2', 'release':'5', 'arch':'x86_64' },
                {'name':'bar', 'epoch':'10', 'version':'5.2', 'release':'2', 'arch':'x86_64' } ]
 
     """
-    return [ { 'name':header[rpm.RPMTAG_NAME], 
+    return [ { 'name':header[rpm.RPMTAG_NAME],
                'epoch':header[rpm.RPMTAG_EPOCH],
-               'version':header[rpm.RPMTAG_VERSION], 
+               'version':header[rpm.RPMTAG_VERSION],
                'release':header[rpm.RPMTAG_RELEASE],
                'arch':header[rpm.RPMTAG_ARCH],
                'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1] }
@@ -178,8 +178,8 @@ def getindexbykeyword(index_ts, **kwargs):
     """
         Return list of indexs from the rpmdb matching keywords
         ex: getHeadersByKeyword(name='foo', version='1', release='1')
- 
-        Can be passed any structure that can be indexed by the pkgspec 
+
+        Can be passed any structure that can be indexed by the pkgspec
         keyswords as other keys are filtered out.
 
     """
@@ -216,8 +216,8 @@ def getheadersbykeyword(header_ts, **kwargs):
 
         Return list of headers from the rpmdb matching keywords
         ex: getHeadersByKeyword(name='foo', version='1', release='1')
- 
-        Can be passed any structure that can be indexed by the pkgspec 
+
+        Can be passed any structure that can be indexed by the pkgspec
         keyswords as other keys are filtered out.
 
     """
@@ -249,7 +249,7 @@ def getheadersbykeyword(header_ts, **kwargs):
 
 def prelink_md5_check(filename):
     """
-        Checks if a file is prelinked.  If it is run it through prelink -y 
+        Checks if a file is prelinked.  If it is run it through prelink -y
         to get the unprelinked md5 and file size.
 
         Return 0 if the file was not prelinked, otherwise return the file size.
@@ -297,7 +297,7 @@ def prelink_size_check(filename):
     """
        This check is only done if the prelink_md5_check() is not done first.
 
-       Checks if a file is prelinked.  If it is run it through prelink -y 
+       Checks if a file is prelinked.  If it is run it through prelink -y
        to get the unprelinked file size.
 
        Return 0 if the file was not prelinked, otherwise return the file size.
@@ -413,14 +413,14 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
     """
         Verify all the files in a package.
 
-        Returns a list of error flags, the file type and file name.  The list 
-        entries are strings that are the same as the labels for the bitwise 
+        Returns a list of error flags, the file type and file name.  The list
+        entries are strings that are the same as the labels for the bitwise
         flags used in the C code.
 
     """
     (fname, fsize, fmode, fmtime, fflags, frdev, finode, fnlink, fstate, \
             vflags, fuser, fgroup, fmd5) = fileinfo
- 
+
     # 1. rpmtsRootDir stuff.  What does it do and where to I get it from?
 
     file_results = []
@@ -441,7 +441,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
         return file_results
 
     # 5. Contexts?  SELinux stuff?
-       
+
     # Setup what checks to do.  This is straight out of the C code.
     if stat.S_ISDIR(lstat.st_mode):
         flags &= DIR_FLAGS
@@ -458,7 +458,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     if (fflags & rpm.RPMFILE_GHOST):
         flags &= GHOST_FLAGS
-   
+
     flags &= ~(omitmask | RPMVERIFY_FAILURES)
 
     # 8. SELinux stuff.
@@ -483,7 +483,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     if flags & RPMVERIFY_FILESIZE:
         if not (flags & RPMVERIFY_MD5): # prelink check hasn't been done.
-            prelink_size = prelink_size_check(fname) 
+            prelink_size = prelink_size_check(fname)
         if (prelink_size != 0):         # This is a prelinked file.
             if (prelink_size != fsize):
                 file_results.append('RPMVERIFY_FILESIZE')
@@ -531,7 +531,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
             group = None
         if not group or not fgroup or (group != fgroup):
             file_results.append('RPMVERIFY_GROUP')
- 
+
     return file_results
 
 def rpm_verify_dependencies(header):
@@ -540,11 +540,11 @@ def rpm_verify_dependencies(header):
 
         Don't like opening another ts to do this, but
         it was the only way I could find of clearing the ts
-        out.  
+        out.
 
-        Have asked on the rpm-maint list on how to do 
-        this the right way (28 Feb 2007). 
-    
+        Have asked on the rpm-maint list on how to do
+        this the right way (28 Feb 2007).
+
         ts.check() returns:
 
         ((name, version, release), (reqname, reqversion), \
@@ -560,7 +560,7 @@ def rpm_verify_dependencies(header):
 def rpm_verify_package(vp_ts, header, verify_options):
     """
         Verify a single package specified by header.  Header is an rpm.hdr.
- 
+
         If errors are found it returns a dictionary of errors.
 
     """
@@ -609,21 +609,21 @@ def rpm_verify_package(vp_ts, header, verify_options):
         dep_stat = rpm_verify_dependencies(header)
         if dep_stat:
             package_results['deps'] = dep_stat
-    
+
     # Check all the package files.
     if 'nofiles' not in verify_options:
         vp_fi = header.fiFromHeader()
         for fileinfo in vp_fi:
-            # Do not bother doing anything with ghost files.  
+            # Do not bother doing anything with ghost files.
             # This is what RPM does.
             if fileinfo[4] & rpm.RPMFILE_GHOST:
                 continue
 
-            # This is only needed because of an inconsistency in the 
+            # This is only needed because of an inconsistency in the
             # rpm.fi interface.
             linktos = vp_fi.FLink()
 
-            file_stat = rpm_verify_file(fileinfo, linktos, omitmask) 
+            file_stat = rpm_verify_file(fileinfo, linktos, omitmask)
 
             #if len(file_stat) > 0 or options.verbose:
             if len(file_stat) > 0:
@@ -642,7 +642,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
                     file_stat.append('r')
                 else:
                     file_stat.append(' ')
-        
+
                 file_stat.append(fileinfo[0]) # The filename.
                 package_results.setdefault('files', []).append(file_stat)
 
@@ -673,7 +673,7 @@ def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
        Requires rpmtransactionset() to be run first to get a ts.
 
        pkgspec is a dict specifying the package
-       e.g.: 
+       e.g.:
            For a single package
            { name='foo', epoch='20', version='1', release='1', arch='x86_64'}
 
@@ -684,27 +684,27 @@ def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
 
        options is a list of 'rpm --verify' options. Default is to check everything.
        e.g.:
-           [ 'nodeps', 'nodigest', 'nofiles', 'noscripts', 'nosignature', 
-             'nolinkto' 'nomd5', 'nosize', 'nouser', 'nogroup', 'nomtime', 
+           [ 'nodeps', 'nodigest', 'nofiles', 'noscripts', 'nosignature',
+             'nolinkto' 'nomd5', 'nosize', 'nouser', 'nogroup', 'nomtime',
              'nomode', 'nordev' ]
 
-       Returns a list.  One list entry per package.  Each list entry is a 
-       dictionary.  Dict keys are 'files', 'deps', 'nevra' and 'hdr'.  
-       Entries only get added for the failures. If nothing failed, None is 
+       Returns a list.  One list entry per package.  Each list entry is a
+       dictionary.  Dict keys are 'files', 'deps', 'nevra' and 'hdr'.
+       Entries only get added for the failures. If nothing failed, None is
        returned.
 
        Its all a bit messy and probably needs reviewing.
 
        [ { 'hdr': [???],
-           'deps: [((name, version, release), (reqname, reqversion), 
+           'deps: [((name, version, release), (reqname, reqversion),
                     flags, suggest, sense), .... ]
-           'files': [ ['filename1', 'RPMVERIFY_GROUP', 'RPMVERIFY_USER' ], 
+           'files': [ ['filename1', 'RPMVERIFY_GROUP', 'RPMVERIFY_USER' ],
                       ['filename2', 'RPMVERFIY_LSTATFAIL']]
            'nevra': ['name1', 'epoch1', 'version1', 'release1', 'arch1'] }
          { 'hdr': [???],
-           'deps: [((name, version, release), (reqname, reqversion), 
+           'deps: [((name, version, release), (reqname, reqversion),
                     flags, suggest, sense), .... ]
-           'files': [ ['filename', 'RPMVERIFY_GROUP', 'RPMVERIFY_USER" ], 
+           'files': [ ['filename', 'RPMVERIFY_GROUP', 'RPMVERIFY_USER" ],
                       ['filename2', 'RPMVERFIY_LSTATFAIL']]
            'nevra': ['name2', 'epoch2', 'version2', 'release2', 'arch2'] } ]
 
@@ -715,7 +715,7 @@ def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
         result = rpm_verify_package(verify_ts, header, verify_options)
         if result:
             verify_results.append(result)
-    
+
     return verify_results
 
 def rpmtransactionset():
@@ -730,10 +730,10 @@ def rpmtransactionset():
 class Rpmtscallback(object):
     """
         Callback for ts.run().  Used for adding, upgrading and removing packages.
-        Starting with all possible reasons codes, but bcfg2 will probably only 
+        Starting with all possible reasons codes, but bcfg2 will probably only
         make use of a few of them.
 
-        Mostly just printing stuff at the moment to understand how the callback 
+        Mostly just printing stuff at the moment to understand how the callback
         is used.
 
     """
@@ -796,13 +796,13 @@ class Rpmtscallback(object):
             #print 'rpm.RPMCALLBACK_UNKNOWN'
         else:
             print('ERROR - Fell through callBack')
-    
+
         #print reason, amount, total, key, client_data
 
 def rpm_erase(erase_pkgspecs, erase_flags):
     """
        pkgspecs is a list of pkgspec dicts specifying packages
-       e.g.: 
+       e.g.:
            For a single package
            { name='foo', epoch='20', version='1', release='1', arch='x86_64'}
 
@@ -836,7 +836,7 @@ def rpm_erase(erase_pkgspecs, erase_flags):
 
     if erase_problems == []:
         erase_ts.order()
-        erase_callback = Rpmtscallback() 
+        erase_callback = Rpmtscallback()
         erase_ts.run(erase_callback.callback, 'Erase')
     #else:
     #    print 'ERROR - Dependency failures on package erase'
@@ -862,12 +862,12 @@ def display_verify_file(file_results):
             result_string = result_string + 'S'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_MODE' in file_results:
             result_string = result_string + 'M'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_MD5' in file_results:
             if 'RPMVERIFY_READFAIL' in file_results:
                 result_string = result_string + '?'
@@ -875,12 +875,12 @@ def display_verify_file(file_results):
                 result_string = result_string + '5'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_RDEV' in file_results:
             result_string = result_string + 'D'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_LINKTO' in file_results:
             if 'RPMVERIFY_READLINKFAIL' in file_results:
                 result_string = result_string + '?'
@@ -888,22 +888,22 @@ def display_verify_file(file_results):
                 result_string = result_string + 'L'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_USER' in file_results:
             result_string = result_string + 'U'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_GROUP' in file_results:
             result_string = result_string + 'G'
         else:
             result_string = result_string + '.'
-      
+
         if 'RPMVERIFY_MTIME' in file_results:
             result_string = result_string + 'T'
         else:
             result_string = result_string + '.'
-  
+
     print(result_string + '  ' + filetype + ' ' + filename)
     sys.stdout.flush()
 
@@ -916,13 +916,13 @@ if __name__ == "__main__":
 
     p.add_option('--name', action='store', \
                  default=None, \
-                 help='''Package name to verify.  
+                 help='''Package name to verify.
 
                          ******************************************
                          NOT SPECIFYING A NAME MEANS 'ALL' PACKAGES.
                          ******************************************
 
-                         The specified operation will be carried out on  all 
+                         The specified operation will be carried out on  all
                          instances of packages that match the package specification
                          (name, epoch, version, release, arch).''')
 
@@ -945,24 +945,24 @@ if __name__ == "__main__":
     p.add_option('--erase', '-e', action='store_true', \
                  default=None, \
                  help='''****************************************************
-                         REMOVE PACKAGES.  THERE ARE NO WARNINGS.  MULTIPLE 
-                         PACKAGES WILL BE REMOVED IF A FULL PACKAGE SPEC IS NOT 
+                         REMOVE PACKAGES.  THERE ARE NO WARNINGS.  MULTIPLE
+                         PACKAGES WILL BE REMOVED IF A FULL PACKAGE SPEC IS NOT
                          GIVEN. E.G. IF JUST A NAME IS GIVEN ALL INSTALLED
-                         INSTANCES OF THAT PACKAGE WILL BE REMOVED PROVIDED 
-                         DEPENDENCY CHECKS PASS.  IF JUST AN EPOCH IS GIVEN 
+                         INSTANCES OF THAT PACKAGE WILL BE REMOVED PROVIDED
+                         DEPENDENCY CHECKS PASS.  IF JUST AN EPOCH IS GIVEN
                          ALL PACKAGE INSTANCES WITH THAT EPOCH WILL BE REMOVED.
                          ****************************************************''')
 
     p.add_option('--list', '-l', action='store_true', \
-                 help='''List package identity info. rpm -qa ish equivalent 
+                 help='''List package identity info. rpm -qa ish equivalent
                          intended for use in RefreshPackages().''')
 
     p.add_option('--verify', action='store_true', \
-                 help='''Verify Package(s).  Output is only produced after all 
+                 help='''Verify Package(s).  Output is only produced after all
                          packages has been verified. Be patient.''')
 
     p.add_option('--verbose', '-v', action='store_true', \
-                 help='''Verbose output for --verify option.  Output is the 
+                 help='''Verbose output for --verify option.  Output is the
                          same as rpm -v --verify.''')
 
     p.add_option('--nodeps', action='store_true', \
@@ -985,11 +985,11 @@ if __name__ == "__main__":
                  help='Do not do symlink tests.')
 
     p.add_option('--nomd5', action='store_true', \
-                 help='''Do not do MD5 checksums on files.  Note that this does 
+                 help='''Do not do MD5 checksums on files.  Note that this does
                                             not work for prelink files yet.''')
 
     p.add_option('--nosize', action='store_true', \
-                 help='''Do not do file size tests. Note that this does not work 
+                 help='''Do not do file size tests. Note that this does not work
                                             for prelink files yet.''')
 
     p.add_option('--nouser', action='store_true', \
@@ -1011,15 +1011,15 @@ if __name__ == "__main__":
                  help='Do not do not generate triggers on erase.')
 
     p.add_option('--repackage', action='store_true', \
-                 help='''Do repackage on erase.i Packages are put 
+                 help='''Do repackage on erase.i Packages are put
                                             in /var/spool/repackage.''')
 
     p.add_option('--allmatches', action='store_true', \
-                 help='''Remove all package instances that match the 
-                         pkgspec.  
+                 help='''Remove all package instances that match the
+                         pkgspec.
 
                          ***************************************************
-                         NO WARNINGS ARE GIVEN.  IF THERE IS NO PACKAGE SPEC 
+                         NO WARNINGS ARE GIVEN.  IF THERE IS NO PACKAGE SPEC
                          THAT MEANS ALL PACKAGES!!!!
                          ***************************************************''')
 
@@ -1072,9 +1072,9 @@ if __name__ == "__main__":
 
     if options.allmatches:
         rpm_options.append('allmatches')
-                                    
+
     main_ts = rpmtransactionset()
-        
+
     cmdline_pkgspec = {}
     if options.name != 'all':
         if options.name:
@@ -1089,12 +1089,12 @@ if __name__ == "__main__":
             cmdline_pkgspec['arch'] = str(options.arch)
 
     if options.verify:
-        results = rpm_verify(main_ts, cmdline_pkgspec, rpm_options) 
+        results = rpm_verify(main_ts, cmdline_pkgspec, rpm_options)
         for r in results:
             files = r.get('files', '')
             for f in files:
                 display_verify_file(f)
-           
+
     elif options.list:
         for p in rpmpackagelist(main_ts):
             print(p)

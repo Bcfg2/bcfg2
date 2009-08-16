@@ -238,9 +238,9 @@ class PkgTool(Tool):
 
     def Install(self, packages, states):
         '''
-	   Run a one-pass install, followed by
-	   single pkg installs in case of failure
-	'''
+           Run a one-pass install, followed by
+           single pkg installs in case of failure
+        '''
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
 

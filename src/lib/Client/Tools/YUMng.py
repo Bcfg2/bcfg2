@@ -52,11 +52,11 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     name = 'YUMng'
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum'), ('Package', 'rpm')]
- 
+
     __req__ = {'Package': ['name', 'version']}
     __ireq__ = {'Package': ['name']}
     #__ireq__ = {'Package': ['name', 'version']}
- 
+
     __new_req__ = {'Package': ['name'], 'Instance': ['version', 'release', 'arch']}
     __new_ireq__ = {'Package': ['name'], \
                     'Instance': []}
@@ -121,13 +121,13 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                                                 release=rel, epoch=epoch)
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
-        
+
     def Install(self, packages, states):
         '''
            Try and fix everything that RPMng.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
            installed (for the first time), deleted, downgraded
-           or upgraded. 
+           or upgraded.
 
            NOTE: YUM can not reinstall a package that it thinks is already
                  installed.
@@ -183,8 +183,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 install_pkgs.append(pkg)
 
         # Install GPG keys.
-        # Alternatively specify the required keys using 'gpgkey' in the 
-        # repository definition in yum.conf.  YUM will install the keys 
+        # Alternatively specify the required keys using 'gpgkey' in the
+        # repository definition in yum.conf.  YUM will install the keys
         # automatically.
         if len(gpg_keys) > 0:
             for inst in gpg_keys:
@@ -221,7 +221,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             for inst in install_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 install_args.append(build_yname(pkg_arg, inst))
-            
+
             cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
             if cmdrc == 0:
                 # The yum command succeeded.  All packages installed.
@@ -257,7 +257,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             for inst in upgrade_pkgs:
                 pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
                 upgrade_args.append(pkg_arg)
-            
+
             cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
             if cmdrc == 0:
                 # The yum command succeeded.  All packages installed.

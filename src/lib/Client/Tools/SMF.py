@@ -36,7 +36,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                                  entry.get('name'))
                 return False
         return True
-    
+
     def VerifyService(self, entry, _):
         '''Verify SMF Service Entry'''
         if not self.GetFMRI(entry):

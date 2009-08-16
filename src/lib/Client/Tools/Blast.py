@@ -22,7 +22,7 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
             noaskfile.write(Bcfg2.Client.Tools.SYSV.noask)
         except:
             pass
-        
+
     # VerifyPackage comes from Bcfg2.Client.Tools.SYSV
     # Install comes from Bcfg2.Client.Tools.PkgTool
     # Extra comes from Bcfg2.Client.Tools.Tool

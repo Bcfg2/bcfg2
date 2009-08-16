@@ -22,7 +22,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             kill_sequence = 100 - start_sequence
         else:
             start_sequence = None
-        
+
         for filename in rawfiles:
             match = self.svcre.match(filename)
             if not match:
@@ -59,7 +59,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         except OSError:
             self.logger.debug("Init script for service %s does not exist" % entry.get('name'))
             return False
-        
+
         if entry.get('status') == 'off':
             self.cmd.run("/usr/sbin/invoke-rc.d %s stop" % (entry.get('name')))
             cmdrc = self.cmd.run("/usr/sbin/update-rc.d -f %s remove" % entry.get('name'))[0]

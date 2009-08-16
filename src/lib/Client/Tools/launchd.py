@@ -86,7 +86,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
     def Remove(self, svcs):
         '''Remove Extra launchd entries'''
         pass
-        
+
 
 
     def FindExtra(self):

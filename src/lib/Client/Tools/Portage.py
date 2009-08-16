@@ -15,13 +15,13 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'ebuild'
     # requires a working PORTAGE_BINHOST in make.conf
     pkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', ['name', 'version']))
-    
+
     def __init__(self, logger, cfg, setup):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
         self.cfg = cfg
         self.installed = {}
         self.RefreshPackages()
-        
+
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
         cache = self.cmd.run("equery -q list")[1]
@@ -66,5 +66,5 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             self.cmd.run("emerge --unmerge --quiet =%s" % " =".join(packages))
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
-              
-        
+
+
