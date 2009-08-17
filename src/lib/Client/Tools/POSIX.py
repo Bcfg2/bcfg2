@@ -80,9 +80,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
     name = 'POSIX'
     __handles__ = [('ConfigFile', None), ('Directory', None),
-                   ('Permissions', None), ('SymLink', None)]
+                   ('Path', 'ConfigFile'), ('Path', 'Device'),
+                   ('Path', 'Directory'), ('Path', 'Perms'),
+                   ('Path', 'SymLink'), ('Permissions', None),
+                   ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],
                'Directory': ['name', 'owner', 'group', 'perms'],
+               'Path': ['name', 'type'],
                'Permissions': ['name', 'owner', 'group', 'perms'],
                'SymLink': ['name', 'to']}
 
@@ -522,3 +526,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             else:
                 print(err)
             return False
+
+    def InstallPath(self, entry):
+        ret = getattr(self, 'Install%s' % entry.get('type'))
+        return ret(entry)
+
+    def VerifyPath(self, entry, _):
+        ret = getattr(self, 'Verify%s' % entry.get('type'))
+        return ret(entry, _)
