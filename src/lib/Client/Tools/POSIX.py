@@ -357,7 +357,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 return False
             tempdata = entry.text
             if type(tempdata) == unicode:
-                tempdata = tempdata.encode(self.setup['encoding'])
+                try:
+                    tempdata = tempdata.encode(self.setup['encoding'])
+                except UnicodeEncodeError, e:
+                    self.logger.error("Error encoding file %s:\n %s" % \
+                                      (entry.get('name'), e))
+                return False
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
