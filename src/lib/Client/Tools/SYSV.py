@@ -31,10 +31,10 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        noaskfile = tempfile.NamedTemporaryFile()
-        self.noaskname = noaskfile.name
+        self.noaskfile = tempfile.NamedTemporaryFile()
+        self.noaskname = self.noaskfile.name
         try:
-            noaskfile.write(noask)
+            self.noaskfile.write(noask)
             self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)), \
                             self.pkgtool[1])
         except:
