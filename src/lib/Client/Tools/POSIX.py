@@ -129,16 +129,22 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def InstallSymLink(self, entry):
         '''Install SymLink Entry'''
         self.logger.info("Installing Symlink %s" % (entry.get('name')))
-        if os.path.exists(entry.get('name')):
+        if os.path.lexists(entry.get('name')):
             try:
                 fmode = os.lstat(entry.get('name'))[ST_MODE]
                 if S_ISREG(fmode) or S_ISLNK(fmode):
-                    self.logger.debug("Non-directory entry already exists at %s" % \
-                                      (entry.get('name')))
+                    self.logger.debug("Non-directory entry already exists at "
+                                      "%s. Unlinking entry." % (entry.get('name')))
                     os.unlink(entry.get('name'))
                 elif S_ISDIR(fmode):
-                    self.logger.debug("Directory entry already exists at %s" % (entry.get('name')))
-                    self.cmd.run("mv %s/ %s.bak" % (entry.get('name'), entry.get('name')))
+                    self.logger.debug("Directory entry already exists at %s" % \
+                                      (entry.get('name')))
+                    self.cmd.run("mv %s/ %s.bak" % \
+                                 (entry.get('name'),
+                                  entry.get('name')))
+                elif S_ISLNK(fmode):
+                    self.logger.debug("Replacing existing SymLink with the one "
+                                      "specified in bcfg2")
                 else:
                     os.unlink(entry.get('name'))
             except OSError:
