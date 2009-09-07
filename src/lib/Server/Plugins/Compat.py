@@ -6,11 +6,13 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
-COMPAT_DICT = {'configfile': 'ConfigFile',
-               'device': 'Device',
-               'directory': 'Directory',
-               'permissions': 'Permissions',
-               'symlink': 'SymLink'}
+# FIXME: We will need this mapping if we decide to change the
+#        specification to use lowercase types for new POSIX entry types
+#COMPAT_DICT = {'configfile': 'ConfigFile',
+#               'device': 'Device',
+#               'directory': 'Directory',
+#               'permissions': 'Permissions',
+#               'symlink': 'SymLink'}
 
 class Compat(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.GoalValidator):
@@ -27,6 +29,8 @@ class Compat(Bcfg2.Server.Plugin.Plugin,
             for entry in goal.getchildren():
                 if entry.tag == 'Path':
                     oldentry = entry
-                    entry.tag = COMPAT_DICT['%s' % entry.get('type')]
-                    entry.set('type', 'Compat')
+                    entry.tag = entry.get('type')
+                    # FIXME: use another attribute? old clients only
+                    #        know about type=None
+                    #entry.set('type', 'Compat')
                     goal.replace(oldentry, entry)
