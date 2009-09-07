@@ -82,8 +82,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     __handles__ = [('ConfigFile', None), ('ConfigFile', 'Compat'),
                    ('Directory', None), ('Path', 'ConfigFile'),
                    ('Path', 'Device'), ('Path', 'Directory'),
-                   ('Path', 'Perms'), ('Path', 'SymLink'),
-                   ('Permissions', None), ('SymLink', None)]
+                   ('Path', 'HardLink'), ('Path', 'Perms'),
+                   ('Path', 'SymLink'), ('Permissions', None),
+                   ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],
                'Directory': ['name', 'owner', 'group', 'perms'],
                'Path': ['name', 'type'],
@@ -142,9 +143,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     self.cmd.run("mv %s/ %s.bak" % \
                                  (entry.get('name'),
                                   entry.get('name')))
-                elif S_ISLNK(fmode):
-                    self.logger.debug("Replacing existing SymLink with the one "
-                                      "specified in bcfg2")
                 else:
                     os.unlink(entry.get('name'))
             except OSError:
@@ -319,6 +317,50 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if ulfailed:
                 return False
         return self.InstallPermissions(entry)
+
+    def VerifyHardLink(self, entry, _):
+        '''Verify HardLink Entry'''
+        try:
+            if os.path.samefile(entry.get('name'), entry.get('to')):
+                return True
+            self.logger.debug("Hardlink %s is incorrect" % \
+                              entry.get('name'))
+            entry.set('qtext', "Link %s to %s? [y/N] " % \
+                      (entry.get('name'),
+                       entry.get('to')))
+            return False
+        except OSError:
+            entry.set('current_exists', 'false')
+            entry.set('qtext', "Link %s to %s? [y/N] " % \
+                      (entry.get('name'),
+                       entry.get('to')))
+            return False
+
+    def InstallHardLink(self, entry):
+        '''Install HardLink Entry'''
+        self.logger.info("Installing Hardlink %s" % (entry.get('name')))
+        if os.path.lexists(entry.get('name')):
+            try:
+                fmode = os.lstat(entry.get('name'))[ST_MODE]
+                if S_ISREG(fmode) or S_ISLNK(fmode):
+                    self.logger.debug("Non-directory entry already exists at "
+                                      "%s. Unlinking entry." % (entry.get('name')))
+                    os.unlink(entry.get('name'))
+                elif S_ISDIR(fmode):
+                    self.logger.debug("Directory entry already exists at %s" % \
+                                      (entry.get('name')))
+                    self.cmd.run("mv %s/ %s.bak" % \
+                                 (entry.get('name'),
+                                  entry.get('name')))
+                else:
+                    os.unlink(entry.get('name'))
+            except OSError:
+                self.logger.info("Hardlink %s cleanup failed" % (entry.get('name')))
+        try:
+            os.link(entry.get('to'), entry.get('name'))
+            return True
+        except OSError:
+            return False
 
     def VerifyPermissions(self, entry, _):
         '''Verify Permissions entry'''
