@@ -2,7 +2,7 @@
    This plugin provides a compatibility layer which turns new-style
    POSIX entries into old-style entries.
 '''
-__revision__ = '$Revision:$'
+__revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
@@ -15,7 +15,7 @@ COMPAT_DICT = {'configfile': 'ConfigFile',
 class Compat(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.GoalValidator):
     name = 'Compat'
-    __version__ = '$Id:$'
+    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

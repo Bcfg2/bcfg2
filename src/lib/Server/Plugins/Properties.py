@@ -17,7 +17,7 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Connector):
     '''The properties plugin maps property files into client metadata instances'''
     name = 'Properties'
-    version = '$Revision: $'
+    version = '$Revision$'
     experimental = True
 
     def __init__(self, core, datastore):

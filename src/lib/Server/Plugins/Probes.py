@@ -48,7 +48,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.Connector):
     name = 'Probes'
-    __version__ = '$Id: $'
+    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

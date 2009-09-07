@@ -35,5 +35,5 @@ class GBundlerEntrySet(SGenshi.SGenshiEntrySet):
 
 class GBundler(GBundlerEntrySet, SGenshi.SGenshi):
     name = 'GBundler'
-    __version__ = '$Revision: $'
+    __version__ = '$Revision$'
     
