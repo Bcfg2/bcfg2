@@ -708,6 +708,7 @@ class GroupSpool(Plugin, Generator):
         if self.data[-1] == '/':
             self.data = self.data[:-1]
         self.Entries['ConfigFile'] = {}
+        self.Entries['Path'] = {}
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
@@ -735,6 +736,7 @@ class GroupSpool(Plugin, Generator):
                                                   self.es_child_cls,
                                                   self.encoding)
                 self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
+                self.Entries['Path'][ident] =  self.entries[ident].bind_entry
             if not posixpath.isdir(epath):
                 # do not pass through directory events
                 self.entries[ident].handle_event(event)
@@ -746,6 +748,7 @@ class GroupSpool(Plugin, Generator):
                 # a directory was deleted
                 del self.entries[fbase]
                 del self.Entries['ConfigFile'][fbase]
+                del self.Entries['Path'][fbase]
             else:
                 self.entries[ident].handle_event(event)
                                  
