@@ -1,12 +1,12 @@
 #!/usr/bin/python
-""" Program to generate a bcfg2 Pkgmgr configuration file from a list 
-    of directories that contain RPMS.  
-    
+""" Program to generate a bcfg2 Pkgmgr configuration file from a list
+    of directories that contain RPMS.
+
     All versions or only the latest may be included in the output.
-    rpm.labelCompare is used to compare the package versions, so that 
+    rpm.labelCompare is used to compare the package versions, so that
     a proper rpm version comparison is done (epoch:version-release).
 
-    The output file may be formated for use with the RPM or Yum 
+    The output file may be formated for use with the RPM or Yum
     bcfg2 client drivers.  The output can also contain the PackageList
     and nested group headers.
 """
@@ -26,7 +26,7 @@ def info(object, spacing=10, collapse=1):
     """Print methods and doc strings.
        Takes module, class, list, dictionary, or string.
     """
-    methodList = [method for method in dir(object) 
+    methodList = [method for method in dir(object)
                          if callable(getattr(object, method))]
     processFunc = collapse and (lambda s: " ".join(s.split())) or (lambda s: s)
     print "\n".join(["%s %s" %
@@ -35,8 +35,8 @@ def info(object, spacing=10, collapse=1):
                      for method in methodList])
 
 def readRpmHeader(ts, filename):
-    """ 
-        Read an rpm header from an RPM file. 
+    """
+        Read an rpm header from an RPM file.
     """
     try:
         fd = os.open(filename, os.O_RDONLY)
@@ -48,8 +48,8 @@ def readRpmHeader(ts, filename):
     return h
 
 def sortedDictValues(adict):
-    """ 
-        Sort a dictionary by its keys and return the items in sorted key order. 
+    """
+        Sort a dictionary by its keys and return the items in sorted key order.
     """
     keys = adict.keys()
     keys.sort()
@@ -59,8 +59,8 @@ def cmpRpmHeader(a, b):
     """
         cmp() implemetation suitable for use with sort.
 
-        a and b are dictionaries as created by loadRpms().  Comparison is made 
-        by package name and then by the full rpm version (epoch, version, release).  
+        a and b are dictionaries as created by loadRpms().  Comparison is made
+        by package name and then by the full rpm version (epoch, version, release).
         rpm.labelCompare is used for the version part of the comparison.
     """
     n1 = str(a['name'])
@@ -81,27 +81,27 @@ def loadRpms(dirs):
     """
        dirs is a list of directories to search for rpms.
 
-       Builds a dictionary keyed by the package name.  Dictionary item is a list, 
+       Builds a dictionary keyed by the package name.  Dictionary item is a list,
        one entry per package instance found.
-       
-       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
-       'arch', 'epoch', 'version' and 'release'.  
- 
+
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name',
+       'arch', 'epoch', 'version' and 'release'.
+
        e.g.
 
        packages = {
        'bcfg2' : [
-           {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+           {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-           {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+           {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
        'bcfg2-server' : [
-           {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+           {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2-server',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-           {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+           {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
        }
-       
+
     """
     packages = {}
     ts = rpm.TransactionSet()
@@ -114,16 +114,16 @@ def loadRpms(dirs):
         if options.verbose:
             print 'Scanning directory: %s' % dir
 
-        for file in [files for files in os.listdir(dir) 
+        for file in [files for files in os.listdir(dir)
                            if files.endswith('.rpm')]:
 
             filename = os.path.join( dir, file )
-             
+
             # Get the mtime of the RPM file.
             file_mtime = datetime.date.fromtimestamp(os.stat(filename).st_mtime)
 
             # Get the RPM header
-            header = readRpmHeader( ts, filename ) 
+            header = readRpmHeader( ts, filename )
 
             # Get what we are interesting in out of the header.
             name = header[rpm.RPMTAG_NAME]
@@ -134,7 +134,7 @@ def loadRpms(dirs):
 
             # Only load RPMs with subarchitectures as calculated from the --archs option.
             if subarch in subarchs or 'all' in subarchs:
-                
+
                 # Store what we want in our structure.
                 packages.setdefault(name, []).append({'filename':file, 'mtime':file_mtime, 'name':name, \
                                                       'arch':subarch, 'epoch':epoch, 'version':version, \
@@ -163,38 +163,59 @@ def loadRepos(repolist):
     '''
        repolist is a list of urls to yum repositories.
 
-       Builds a dictionary keyed by the package name.  Dictionary item is a list, 
+       Builds a dictionary keyed by the package name.  Dictionary item is a list,
        one entry per package instance found.
-       
-       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
-       'arch', 'epoch', 'version' and 'release'.  
- 
+
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name',
+       'arch', 'epoch', 'version' and 'release'.
+
        e.g.
 
        packages = {
        'bcfg2' : [
-           {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+           {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-           {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2', 
+           {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
        'bcfg2-server' : [
-           {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+           {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'' 'name':"bcfg2-server',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc1'}
-           {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server', 
+           {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'' 'name':"bcfg2-server',
             ''arch':'noarch', 'epoch':None, 'version':'0.9.2', 'release':'0.0rc5'}],
        }
-       
+
     '''
     packages = {}
     for repo in repolist:
-        url = urlparse.urljoin(repo, './repodata/primary.xml.gz')
+        url = urlparse.urljoin(repo, './repodata/repomd.xml')
+
+        try:
+            opener = pkgmgr_URLopener()
+            file, message = opener.retrieve(url)
+        except:
+            sys.exit()
+
+        try:
+            tree = parse(file)
+        except IOError:
+            print "ERROR: Unable to parse retrieved repomd.xml."
+            sys.exit()
+
+        repomd = tree.getroot()
+        for element in repomd:
+            if element.tag.endswith('data') and element.attrib['type'] == 'primary':
+                for property in element:
+                    if property.tag.endswith('location'):
+                        primaryhref = property.attrib['href']
+
+        url = urlparse.urljoin(repo, './' + primaryhref)
 
         if options.verbose:
             print 'Loading : %s' % url
 
         try:
             opener = pkgmgr_URLopener()
-            file, message = opener.retrieve(url) 
+            file, message = opener.retrieve(url)
         except:
             sys.exit()
 
@@ -219,7 +240,7 @@ def loadRepos(repolist):
                         release = property.get('rel')
                     elif property.tag.endswith('location'):
                         file = property.get('href')
-               
+
                 # Only load RPMs with subarchitectures as calculated from the --archs option.
                 if subarch in subarchs or 'all' in subarchs:
                     packages.setdefault(name, []).append({'filename':file, 'name':name, \
@@ -237,7 +258,7 @@ def loadRepos(repolist):
 
 def printInstance(instance, group_count):
     """
-        Print the details for a package instance with the appropriate indentation and 
+        Print the details for a package instance with the appropriate indentation and
         in the specified format (rpm or yum).
     """
     group_count = group_count + 1
@@ -277,25 +298,25 @@ def printPackage(entry, group_count):
             subarch_dict[instance['arch']].append(instance)
         else:
             subarch_dict[instance['arch']] = [ instance ]
-    
+
         # Keep track of the subarchitectures we have found in each architecture.
         if subarch_mapping[instance['arch']] in arch_dict:
             if instance['arch'] not in arch_dict[subarch_mapping[instance['arch']]]:
                 arch_dict[subarch_mapping[instance['arch']]].append(instance['arch'])
         else:
             arch_dict[subarch_mapping[instance['arch']]] = [ instance['arch'] ]
-    
+
     # Only keep the 'highest' subarchitecture in each architecture.
     for arch in arch_dict.iterkeys():
         if len(arch_dict[arch]) > 1:
             arch_dict[arch].sort()
             for s in arch_dict[arch][:-1]:
                 del subarch_dict[s]
-    
+
     # Sort packages within each architecture into version order
     for arch in subarch_dict:
         subarch_dict[arch].sort(cmpRpmHeader)
- 
+
         if options.release == 'all':
             # Output all instances
             for header in subarch_dict[arch]:
@@ -343,7 +364,7 @@ def main():
 
     if options.pkgmgrhdr:
         output.write( '</PackageList>\n' )
- 
+
     if options.verbose:
         print '%i package instances were processed' % len(package_dict)
 
@@ -355,21 +376,21 @@ if __name__ == "__main__":
     p.add_option('--archs', '-a',  action='store', \
                                    default='all', \
                                    type='string', \
-                                   help='''Comma separated list of subarchitectures to include. 
-                                           The highest subarichitecture required in an 
-                                           architecture group should specified.   Lower 
-                                           subarchitecture packages will be loaded if that 
-                                           is all that is available. e.g. The higher of i386, 
-                                           i486 and i586 packages will be loaded if -a i586 
+                                   help='''Comma separated list of subarchitectures to include.
+                                           The highest subarichitecture required in an
+                                           architecture group should specified.   Lower
+                                           subarchitecture packages will be loaded if that
+                                           is all that is available. e.g. The higher of i386,
+                                           i486 and i586 packages will be loaded if -a i586
                                            is specified. (Default: all).
                                         ''')
 
-    p.add_option('--rpmdirs', '-d', action='store', 
+    p.add_option('--rpmdirs', '-d', action='store',
                                    type='string', \
-                                   help='''Comma separated list of directories to scan for RPMS. 
+                                   help='''Comma separated list of directories to scan for RPMS.
                                            Wilcards are permitted.
                                         ''')
-    
+
     p.add_option('--enddate', '-e', action='store', \
                                    type='string', \
                                    help='End date for RPM file selection.')
@@ -378,34 +399,34 @@ if __name__ == "__main__":
                                    default='yum', \
                                    type='choice', \
                                    choices=('yum','rpm'), \
-                                   help='''Format of the Output. Choices are yum or rpm. 
+                                   help='''Format of the Output. Choices are yum or rpm.
                                            (Default: yum)
                                         ''')
 
     p.add_option('--groups', '-g', action='store', \
                                    type='string', \
-                                   help='''List of comma separated groups to nest Package 
+                                   help='''List of comma separated groups to nest Package
                                            entities in.
                                         ''')
-                                  
+
     p.add_option('--indent', '-i', action='store', \
                                    default=4, \
                                    type='int', \
-                                   help='''Number of leading spaces to indent nested entries in the 
+                                   help='''Number of leading spaces to indent nested entries in the
                                            output. (Default:4)
                                         ''')
 
     p.add_option('--outfile', '-o', action='store', \
                                    type='string', \
                                    help='Output file name.')
-                                  
+
     p.add_option('--pkgmgrhdr', '-P', action='store_true', \
                                    help='Include PackageList header in output.')
-                                  
+
     p.add_option('--priority', '-p', action='store', \
                                    default=0, \
                                    type='int', \
-                                   help='''Value to set priority attribute in the PackageList Tag. 
+                                   help='''Value to set priority attribute in the PackageList Tag.
                                            (Default: 0)
                                         ''')
 
@@ -413,13 +434,13 @@ if __name__ == "__main__":
                                    default='latest', \
                                    type='choice', \
                                    choices=('all','latest'), \
-                                   help='''Which releases to include in the output. Choices are 
+                                   help='''Which releases to include in the output. Choices are
                                            all or latest.  (Default: latest).''')
-    
+
     p.add_option('--startdate', '-s', action='store', \
                                    type='string', \
                                    help='Start date for RPM file selection.')
-                                  
+
     p.add_option('--uri', '-u',    action='store', \
                                    type='string', \
                                    help='URI for PackageList header required for RPM format ouput.')
@@ -427,7 +448,7 @@ if __name__ == "__main__":
     p.add_option('--verbose', '-v', action='store_true', \
                                     help='Enable verbose output.')
 
-    p.add_option('--yumrepos', '-y', action='store', 
+    p.add_option('--yumrepos', '-y', action='store',
                                    type='string', \
                                    help='''Comma separated list of YUM repository URLs to load.
                                            NOTE: Each URL must end in a '/' character.''')
@@ -441,18 +462,18 @@ if __name__ == "__main__":
     if not options.rpmdirs and not options.yumrepos:
         print "One of --rpmdirs and --yumrepos must be specified"
         sys.exit(1)
-        
+
     # Set up list of directories to search
     if options.rpmdirs:
         search_dirs = []
         for d in options.rpmdirs.split(','):
-            search_dirs += glob.glob(d) 
+            search_dirs += glob.glob(d)
         if options.verbose:
             print 'The following directories will be scanned:'
             for d in search_dirs:
                 print '    %s' % d
- 
-    # Setup list of repos   
+
+    # Setup list of repos
     if options.yumrepos:
         repos = []
         for r in options.yumrepos.split(','):
@@ -464,19 +485,19 @@ if __name__ == "__main__":
 
     # Set up list of architectures to include and some mappings
     # to use later.
-    arch_mapping = {'x86':['i686', 'i586', 'i486', 'i386', 'athlon'], 
-                    'x86_64':['x86_64'], 
-                    'ia64':['ia64'], 
-                    'ppc':['ppc'], 
-                    'ppc64':['ppc64'], 
-                    'sparc':['sparc'], 
+    arch_mapping = {'x86':['i686', 'i586', 'i486', 'i386', 'athlon'],
+                    'x86_64':['x86_64'],
+                    'ia64':['ia64'],
+                    'ppc':['ppc'],
+                    'ppc64':['ppc64'],
+                    'sparc':['sparc'],
                     'noarch':['noarch']}
-    subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'athlon':'x86', 
-                       'x86_64':'x86_64', 
-                       'ia64':'ia64', 
-                       'ppc':'ppc', 
-                       'ppc64':'ppc64', 
-                       'sparc':'sparc', 
+    subarch_mapping = {'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'athlon':'x86',
+                       'x86_64':'x86_64',
+                       'ia64':'ia64',
+                       'ppc':'ppc',
+                       'ppc64':'ppc64',
+                       'sparc':'sparc',
                        'noarch':'noarch' }
     commandline_subarchs = options.archs.split(',')
     arch_list = []
@@ -491,7 +512,7 @@ if __name__ == "__main__":
             # Only allow one subarchitecture per architecture to be specified.
             if s not in arch_list:
                 arch_list.append(s)
-        
+
                 # Add subarchitectures lower than the one specified to the list.
                 # e.g. If i486 is specified this will add i386 to the list of
                 # subarchitectures to load.
@@ -508,7 +529,7 @@ if __name__ == "__main__":
         groups_list = options.groups.split(',')
     else:
         groups_list = None
-    
+
     if options.outfile:
         output = file(options.outfile, "w")
     else:

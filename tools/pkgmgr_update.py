@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-""" 
-    Program to update an existing bcfg2 Pkgmgr configuration file from a list 
-    of directories that contain RPMS.  
- 
-    Only the epoch, version, release and simplefiles attributes are updated 
-    in existing entries.  All other entries and attributes are preserved.   
+"""
+    Program to update an existing bcfg2 Pkgmgr configuration file from a list
+    of directories that contain RPMS.
+
+    Only the epoch, version, release and simplefiles attributes are updated
+    in existing entries.  All other entries and attributes are preserved.
 
     This is a total hack until a proper more generalised system for managing
     Pkgmgr configuation files is developed.
@@ -20,20 +20,20 @@ import optparse
 import datetime
 import glob
 try:
-    from lxml.etree import parse, XML, fromstring, tostring
+    from lxml.etree import parse, XML, tostring
 except:
-    from elementtree.ElementTree import parse, XML, fromstring, tostring
+    from elementtree.ElementTree import parse, XML, tostring
 import urlparse, urllib, gzip
 
 installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
                    'kernel-modules', 'kernel-debug', 'kernel-unsupported',
                    'kernel-source', 'kernel-devel', 'kernel-default',
-                   'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen', 
+                   'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
                    'gpg-pubkey']
 
 def readRpmHeader(ts, filename):
-    """ 
-        Read an rpm header from an RPM file. 
+    """
+        Read an rpm header from an RPM file.
     """
     try:
         fd = os.open(filename, os.O_RDONLY)
@@ -45,8 +45,8 @@ def readRpmHeader(ts, filename):
     return h
 
 def sortedDictValues(adict):
-    """ 
-        Sort a dictionary by its keys and return the items in sorted key order. 
+    """
+        Sort a dictionary by its keys and return the items in sorted key order.
     """
     keys = adict.keys()
     keys.sort()
@@ -65,32 +65,32 @@ def cmpRpmHeader(a, b):
     v2 = str(b.get('version'))
     r2 = str(b.get('release'))
 
-    return rpm.labelCompare((e1, v1, r1),(e2, v2, r2))
+    return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
 
 def loadRpms(dirs):
     """
        dirs is a list of directories to search for rpms.
 
-       Builds a multilevel dictionary keyed by the package name and arch. 
+       Builds a multilevel dictionary keyed by the package name and arch.
        Arch dictionary item is a list, one entry per package instance found.
-       
-       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
-       'arch', 'epoch', 'version' and 'release'.  
- 
+
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name',
+       'arch', 'epoch', 'version' and 'release'.
+
        e.g.
-       
+
        packages = {
        'bcfg2' : { 'noarch' : [ {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
-                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2',
                                  'release':'0.0rc1'}
                                 {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
-                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2',
                                  'release':'0.0rc5'}]},
        'bcfg2-server' { 'noarch' : [ {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
-                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None,
                                       'version':'0.9.2', 'release':'0.0rc1'}
                                      {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
-                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None,
                                       'version':'0.9.2', 'release':'0.0rc5'}]},
        }
     """
@@ -105,16 +105,16 @@ def loadRpms(dirs):
         if options.verbose:
             print 'Scanning directory: %s' % dir
 
-        for file in [files for files in os.listdir(dir) 
+        for file in [files for files in os.listdir(dir)
                            if files.endswith('.rpm')]:
 
             filename = os.path.join( dir, file )
-             
+
             # Get the mtime of the RPM file.
             file_mtime = datetime.date.fromtimestamp(os.stat(filename).st_mtime)
 
             # Get the RPM header
-            header = readRpmHeader( ts, filename ) 
+            header = readRpmHeader( ts, filename )
 
             # Get what we are interesting in out of the header.
             name = header[rpm.RPMTAG_NAME]
@@ -149,33 +149,54 @@ def loadRepos(repolist):
     """
        repolist is a list of urls to yum repositories.
 
-       Builds a multilevel dictionary keyed by the package name and arch. 
+       Builds a multilevel dictionary keyed by the package name and arch.
        Arch dictionary item is a list, one entry per package instance found.
-       
-       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name', 
-       'arch', 'epoch', 'version' and 'release'.  
- 
+
+       The list entries are dictionaries.  Keys are 'filename', 'mtime' 'name',
+       'arch', 'epoch', 'version' and 'release'.
+
        e.g.
 
        packages = {
        'bcfg2' : { 'noarch' : [ {'filename':'bcfg2-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
-                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2',
                                  'release':'0.0rc1'}
                                 {'filename':'bcfg2-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
-                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2', 
+                                 'name':'bcfg2', 'arch':'noarch', 'epoch':None, 'version':'0.9.2',
                                  'release':'0.0rc5'}]},
        'bcfg2-server' { 'noarch' : [ {'filename':'bcfg2-server-0.9.2-0.0rc1.noarch.rpm', 'mtime':'',
-                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'name':'bcfg2-server', 'arch':'noarch', 'epoch':None,
                                       'version':'0.9.2', 'release':'0.0rc1'}
                                      {'filename':'bcfg2-server-0.9.2-0.0rc5.noarch.rpm', 'mtime':'',
-                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None, 
+                                      'name':"bcfg2-server', 'arch':'noarch', 'epoch':None,
                                       'version':'0.9.2', 'release':'0.0rc5'}]},
        }
-       
+
     """
     packages = {}
     for repo in repolist:
-        url = urlparse.urljoin(repo, './repodata/primary.xml.gz')
+        url = urlparse.urljoin(repo, './repodata/repomd.xml')
+
+        try:
+            opener = pkgmgr_URLopener()
+            file, message = opener.retrieve(url)
+        except:
+            sys.exit();
+
+        try:
+            tree = parse(file)
+        except IOError:
+            print "ERROR: Unable to parse retrieved repomd.xml."
+            sys.exit()
+
+        repomd = tree.getroot()
+        for element in repomd:
+            if element.tag.endswith('data') and element.attrib['type'] == 'primary':
+                for property in element:
+                    if property.tag.endswith('location'):
+                        primaryhref = property.attrib['href']
+
+        url = urlparse.urljoin(repo, './' + primaryhref)
 
         if options.verbose:
             print 'Loading : %s' % url
@@ -207,7 +228,7 @@ def loadRepos(repolist):
                         release = property.get('rel')
                     elif property.tag.endswith('location'):
                         file = property.get('href')
-    
+
                 if name not in installOnlyPkgs:
                     packages.setdefault(name, {}).setdefault(subarch, []).append({'filename':file, \
                                               'name':name, 'arch':subarch, \
@@ -224,12 +245,12 @@ def str_evra(instance):
     """
         Convert evra dict entries to a string.
     """
-    if instance.get('epoch', '*') == '*' or instance.get('epoch', '*') == None: 
-        return '%s-%s.%s' % (instance.get('version', '*'), instance.get('release', '*'), 
-                             instance.get('arch', '*')) 
-    else: 
-        return '%s:%s-%s.%s' % (instance.get('epoch', '*'), instance.get('version', '*'), 
-                                instance.get('release', '*'), instance.get('arch', '*')) 
+    if instance.get('epoch', '*') == '*' or instance.get('epoch', '*') == None:
+        return '%s-%s.%s' % (instance.get('version', '*'), instance.get('release', '*'),
+                             instance.get('arch', '*'))
+    else:
+        return '%s:%s-%s.%s' % (instance.get('epoch', '*'), instance.get('version', '*'),
+                                instance.get('release', '*'), instance.get('arch', '*'))
 
 def updatepkg(pkg):
     """
@@ -273,13 +294,13 @@ def main():
 
     tree = parse(options.configfile)
     config = tree.getroot()
- 
+
     if options.altconfigfile:
         if options.verbose:
             print 'Loading Pkgmgr alternate config file %s.' % (options.altconfigfile)
 
         alttree = parse(options.altconfigfile)
- 
+
     if options.verbose:
         print 'Loading package headers'
 
@@ -303,21 +324,20 @@ if __name__ == "__main__":
     p.add_option('--configfile', '-c', action='store', \
                                    type='string', \
                                    help='Existing Pkgmgr configuration  file name.')
-
     p.add_option('--altconfigfile', '-a', action='store', \
                                    type='string', \
                                    help='''Alternate, existing Pkgmgr configuration file name to read
                                            Ignore tags from (used for upgrades).''')
 
-    p.add_option('--rpmdirs', '-d', action='store', 
+    p.add_option('--rpmdirs', '-d', action='store',
                                    type='string', \
-                                   help='''Comma separated list of directories to scan for RPMS. 
+                                   help='''Comma separated list of directories to scan for RPMS.
                                            Wilcards are permitted.''')
-    
+
     p.add_option('--outfile', '-o', action='store', \
                                    type='string', \
                                    help='Output file name or new Pkgrmgr file.')
-                                  
+
     p.add_option('--verbose', '-v', action='store_true', \
                                     help='Enable verbose output.')
 
