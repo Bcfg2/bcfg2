@@ -466,6 +466,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         sources = self.get_matching_sources(meta)
         # reverse list so that priorities correspond to file order
         sources.reverse()
+        if len(sources) == 0:
+            self.logger.error("Packages: No matching sources for client %s; improper group memberships?" % (meta.hostname))
+            return set(), set(), 'failed'
         ptype = set([s.ptype for s in sources])
         if len(ptype) < 1:
             return set(), set(), 'failed'
