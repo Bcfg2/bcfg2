@@ -15,7 +15,13 @@ def source_from_xml(xsource):
     for key, tag in [('groups', 'Group'), ('components', 'Component'),
                      ('arches', 'Arch')]:
         ret[key] = [item.text for item in xsource.findall(tag)]
-    ret['version'] = xsource.find('Version').text
+    # version and component need to both contain data for sources to work
+    try:
+        ret['version'] = xsource.find('Version').text
+    except:
+        ret['version'] = 'placeholder'
+    if ret['component'] == []:
+        ret['component'] = ['placeholder']
     if xsource.find('RawURL') is not None:
         ret['rawurl'] = xsource.find('RawURL').text
     else:
