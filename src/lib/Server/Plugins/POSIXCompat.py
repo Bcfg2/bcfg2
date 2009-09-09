@@ -14,9 +14,9 @@ import Bcfg2.Server.Plugin
 #               'permissions': 'Permissions',
 #               'symlink': 'SymLink'}
 
-class Compat(Bcfg2.Server.Plugin.Plugin,
+class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.GoalValidator):
-    name = 'Compat'
+    name = 'POSIXCompat'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
@@ -33,5 +33,5 @@ class Compat(Bcfg2.Server.Plugin.Plugin,
                     del entry.attrib['type']
                     # FIXME: use another attribute? old clients only
                     #        know about type=None
-                    #entry.set('type', 'Compat')
+                    #entry.set('type', 'POSIXCompat')
                     goal.replace(oldentry, entry)
