@@ -30,6 +30,7 @@ class Compat(Bcfg2.Server.Plugin.Plugin,
                 if entry.tag == 'Path':
                     oldentry = entry
                     entry.tag = entry.get('type')
+                    del entry.attrib['type']
                     # FIXME: use another attribute? old clients only
                     #        know about type=None
                     #entry.set('type', 'Compat')
