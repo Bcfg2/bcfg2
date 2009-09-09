@@ -24,8 +24,12 @@ def source_from_xml(xsource):
         ret['component'] = ['placeholder']
     if xsource.find('RawURL') is not None:
         ret['rawurl'] = xsource.find('RawURL').text
+        if not ret['rawurl'].endswith('/'):
+            ret['rawurl'] += '/'
     else:
         ret['url'] = xsource.find('URL').text
+        if not ret['url'].endswith('/'):
+            ret['url'] += '/'
     return ret
 
 class Source(object):
