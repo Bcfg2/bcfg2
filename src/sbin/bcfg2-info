@@ -220,14 +220,19 @@ Usage: [quit|exit]"""
                 continue
             print "Hostname:\t", client_meta.hostname
             print "Profile:\t", client_meta.profile
-            print "Groups:\t\t", ",".join(client_meta.groups)
-            print "Bundles:\t", ",".join(client_meta.bundles)
+            print "Groups:\t\t", list(client_meta.groups)[0]
+            for grp in list(client_meta.groups)[1:]:
+                print '\t\t%s' % grp
+            print "Bundles:\t", list(client_meta.bundles)[0]
+            for bnd in list(client_meta.bundles)[1:]:
+                print '\t\t%s' % bnd
             if client_meta.connectors:
                 print "Connector data"
                 print "=" * 80
                 for conn in client_meta.connectors:
-                    print "%s:\t" % (conn), getattr(client_meta, conn)
-                    print "=" * 80
+                    if getattr(client_meta, conn):
+                        print "%s:\t" % (conn), getattr(client_meta, conn)
+                        print "=" * 80
 
     def do_mappings(self, args):
         '''print out mapping info'''
