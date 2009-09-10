@@ -149,8 +149,8 @@ class Source(object):
                 try:
                     pset = self.get_provides(metadata, item)
                     if debug:
-                        logger.debug("VPackage %s: got provides %s" \
-                                     % (item, list(pset)))
+                        logger.debug("Package(s) %s provide(s) %s" \
+                                     % (list(pset), item))
                     if len(pset) == 1:
                         work.update(pset)
                     else:
