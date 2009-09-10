@@ -20,8 +20,8 @@ def source_from_xml(xsource):
         ret['version'] = xsource.find('Version').text
     except:
         ret['version'] = 'placeholder'
-    if ret['component'] == []:
-        ret['component'] = ['placeholder']
+    if ret['components'] == []:
+        ret['components'] = ['placeholder']
     if xsource.find('RawURL') is not None:
         ret['rawurl'] = xsource.find('RawURL').text
         if not ret['rawurl'].endswith('/'):
