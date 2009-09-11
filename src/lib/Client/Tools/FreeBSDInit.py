@@ -5,6 +5,7 @@ __revision__ = '$Rev$'
 # - hardcoded path to ports rc.d
 # - doesn't know about /etc/rc.d/
 
+import os
 import Bcfg2.Client.Tools
 
 class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
@@ -12,6 +13,10 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
     name = 'FreeBSDInit'
     __handles__ = [('Service', 'freebsd')]
     __req__ = {'Service': ['name', 'status']}
+
+    def __init__(self, logger, cfg, setup):
+        if os.uname()[0] != 'FreeBSD':
+            raise Bcfg2.Client.Tools.toolInstantiationError
 
     def VerifyService(self, entry, _):
         return True
