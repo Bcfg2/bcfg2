@@ -14,7 +14,7 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
             raise Bcfg2.Server.Plugin.PluginExecutionError
         stream = self.template.generate(metadata=metadata,).filter( \
             Bcfg2.Server.Plugins.TGenshi.removecomment)
-        data = stream.render('xml')
+        data = stream.render('xml', strip_whitespace=False)
         return lxml.etree.XML(data)
 
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
