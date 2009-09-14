@@ -58,7 +58,12 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                     print "Pull Source failure; could not fetch current state"
                     raise SystemExit(1)
 
-        data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
+        try:
+            data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
+        except UnboundLocalError:
+            print("Unable to build entry. "
+                  "Do you have a statistics plugin enabled?")
+            raise SystemExit(1)
         for k, v in data.iteritems():
             if v:
                 new_entry[k] = v
