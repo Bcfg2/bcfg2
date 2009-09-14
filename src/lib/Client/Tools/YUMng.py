@@ -227,7 +227,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
             if cmdrc == 0:
                 # The yum command succeeded.  All packages installed.
-                self.logger.info("Single Pass for Install Succeded")
+                self.logger.info("Single Pass for Install Succeeded")
                 self.RefreshPackages()
             else:
                 # The yum command failed.  No packages installed.
@@ -263,7 +263,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
             if cmdrc == 0:
                 # The yum command succeeded.  All packages installed.
-                self.logger.info("Single Pass for Install Succeded")
+                self.logger.info("Single Pass for Install Succeeded")
                 self.RefreshPackages()
             else:
                 # The yum command failed.  No packages installed.
