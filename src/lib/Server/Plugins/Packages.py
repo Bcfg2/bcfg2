@@ -422,6 +422,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Generator):
     name = 'Packages'
     experimental = True
+    __rmi__ = ['update_cache']
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -520,6 +521,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     if rpkg in pkgnames:
                         redundant.add(rpkg)
         return pkgnames.difference(redundant), redundant
+
+    def update_cache(self):
+        for source in self.sources:
+            try:
+                source.update()
+            except:
+                self.logger.error("Failed to update source", exc_info=1)
+            source.read_files()
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('Packages', to_console=True)
