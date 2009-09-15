@@ -34,9 +34,9 @@ class CertificateError(Exception):
 class RetryMethod(_Method):
     """Method with error handling and retries built in"""
     log = logging.getLogger('xmlrpc')
+    max_retries = 4
     def __call__(self, *args):
-        max_retries = 4
-        for retry in range(max_retries):
+        for retry in range(self.max_retries):
             try:
                 return _Method.__call__(self, *args)
             except xmlrpclib.ProtocolError, err:
@@ -104,18 +104,19 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
-    def __init__(self, key=None, cert=None, ca=None, scns=None, use_datetime=0):
+    def __init__(self, key=None, cert=None, ca=None, scns=None, use_datetime=0, timeout=90):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
         self.cert = cert
         self.ca = ca
         self.scns = scns
+        self.timeout = timeout
 
     def make_connection(self, host):
         host = self.get_host_info(host)[0]
         http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
-                                 scns=self.scns)
+                                 scns=self.scns, timeout=self.timeout)
         https = httplib.HTTP()
         https._setup(http)
         return https
@@ -160,7 +161,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         return u.close()
 
 def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None,
-                    allowedServerCNs=None):
+                    allowedServerCNs=None, timeout=90):
     
     """Constructs proxies to components.
     
@@ -175,6 +176,6 @@ def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None,
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs)
+    ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs, timeout=timeout)
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
 
