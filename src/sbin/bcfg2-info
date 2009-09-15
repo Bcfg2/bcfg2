@@ -223,7 +223,8 @@ Usage: [quit|exit]"""
             print "Groups:\t\t", list(client_meta.groups)[0]
             for grp in list(client_meta.groups)[1:]:
                 print '\t\t%s' % grp
-            print "Bundles:\t", list(client_meta.bundles)[0]
+            if client_meta.bundles:
+                print "Bundles:\t", list(client_meta.bundles)[0]
             for bnd in list(client_meta.bundles)[1:]:
                 print '\t\t%s' % bnd
             if client_meta.connectors:
