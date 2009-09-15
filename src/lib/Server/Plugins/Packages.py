@@ -350,7 +350,7 @@ class APTSource(Source):
             try:
                 reader = gzip.GzipFile(fname)
             except:
-                print "failed to read file %s" % fname
+                print("Failed to read file %s" % fname)
                 raise Exception()
                 continue
             for line in reader.readlines():
@@ -497,7 +497,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.logger.info(list(unknown))
         for pkg in packages.difference(initial):
             lxml.etree.SubElement(news, 'BoundPackage', name=pkg,
-                                  type=ptype, version='auto')
+                                  type=ptype, version='auto', origin='Packages')
         structures.append(news)
 
     def make_non_redundant(self, meta, plname):

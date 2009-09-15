@@ -118,6 +118,7 @@ class Frame:
                                              entry.get('name')) for entry in problems])
             self.logger.error("")
         entries = [(entry.tag, entry.get('name')) for struct in config for entry in struct]
+	pkgs = [(entry.get('name'), entry.get('origin')) for struct in config for entry in struct if entry.tag == 'Package']
         multi = []
         for entry in entries[:]:
             if entries.count(entry) > 1:
@@ -127,6 +128,11 @@ class Frame:
             self.logger.debug("The following entries are included multiple times:")
             self.logger.debug(["%s:%s" % entry for entry in multi])
             self.logger.debug("")
+        if pkgs:
+            self.logger.debug("The following packages are specified in bcfg2:")
+            self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
+            self.logger.debug("The following packages are prereqs added by Packages:")
+            self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
             
                     
     def __getattr__(self, name):
