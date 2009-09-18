@@ -41,7 +41,8 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         method_func = None
         params, method = xmlrpclib.loads(data)
         try:
-            params = (address, ) + params
+            if '.' not in method:
+                params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             response = (response,)
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
