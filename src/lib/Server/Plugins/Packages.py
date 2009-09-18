@@ -422,28 +422,29 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Generator):
     name = 'Packages'
     experimental = True
-    __rmi__ = ['update_cache']
+    __rmi__ = ['Refresh']
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
-        cachepath = self.data + '/cache'
-        self.sentinels = set()
-        if not os.path.exists(cachepath):
+        self.cachepath = self.data + '/cache'
+
+        if not os.path.exists(self.cachepath):
             # create cache directory if needed
-            os.makedirs(cachepath)
+            os.makedirs(self.cachepath)
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
         except IOError, e:
             self.logger.error("Failed to read Packages configuration. Have"
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
+        self.sentinels = set()
         self.sources = []
         for s in xdata.findall('APTSource'):
-            self.sources.append(APTSource(cachepath, **source_from_xml(s)))
+            self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
         for s in xdata.findall('YUMSource'):
-            self.sources.append(YUMSource(cachepath, **source_from_xml(s)))
+            self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
         for source in self.sources:
             source.setup_data()
             self.sentinels.update(source.basegroups)
@@ -522,13 +523,31 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                         redundant.add(rpkg)
         return pkgnames.difference(redundant), redundant
 
-    def update_cache(self):
+    def Refresh(self):
+        '''Packages.Refresh() => True|False\nReload configuration specification and sources\n'''
+        try:
+            xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
+        except IOError, e:
+            self.logger.error("Failed to read Packages configuration. Have"
+                              " you created your config.xml file?")
+            raise Bcfg2.Server.Plugin.PluginInitError
+        self.sentinels = set()
+        self.sources = []
+        for s in xdata.findall('APTSource'):
+            self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
+        for s in xdata.findall('YUMSource'):
+            self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
+        for source in self.sources:
+            source.setup_data()
+            self.sentinels.update(source.basegroups)
         for source in self.sources:
             try:
                 source.update()
             except:
                 self.logger.error("Failed to update source", exc_info=1)
+                continue
             source.read_files()
+        return True
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('Packages', to_console=True)
