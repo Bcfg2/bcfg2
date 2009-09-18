@@ -41,7 +41,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
         try:
             data = apply(getattr(proxy, cmd), args)
         except xmlrpclib.Fault, flt:
-            if flt.faultCode == 1:
+            if flt.faultCode == 7:
                 print("Unknown method %s" % cmd)
                 return
             else:

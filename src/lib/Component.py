@@ -198,6 +198,9 @@ class Component (object):
         else:
             try:
                 method_func = self._resolve_exposed_method(method)
+            except NoExposedMethod:
+                self.logger.error("Unknown method %s" % (method))
+                raise xmlrpclib.Fault(7, "Unknown method %s" % method)
             except Exception, e:
                 if getattr(e, "log", True):
                     self.logger.error(e, exc_info=True)
