@@ -103,8 +103,16 @@ Usage: [quit|exit]"""
         
     def do_build(self, args):
         '''build client configuration'''
-        if len(args.split()) == 2:
-            client, ofile = args.split()
+        alist = args.split()
+        path_force = False
+        if '-f' in args:
+            alist.remove('-f')
+            path_force = True
+        if len(alist) == 2:
+            client, ofile = alist
+            if not ofile.startswith('/tmp') and not path_force:
+                print("Refusing to write files outside of /tmp without -f option")
+                return
             output = open(ofile, 'w')
             data = lxml.etree.tostring(self.BuildConfiguration(client),
                                        encoding='UTF-8', xml_declaration=True,
@@ -112,7 +120,7 @@ Usage: [quit|exit]"""
             output.write(data)
             output.close()
         else:
-            print('Usage: build <hostname> <output file>')
+            print('Usage: build [-f] <hostname> <output file>')
 
     def do_buildall(self, args):
         if len(args.split()) != 1:
