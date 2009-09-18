@@ -3,6 +3,7 @@ import Bcfg2.Proxy
 import Bcfg2.Server.Admin
 
 import sys
+import xmlrpclib
 
 class Xcmd(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("XML-RPC Command Interface")
@@ -30,7 +31,20 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
                                            key = setup['key'],
                                            cert = setup['certificate'],
                                            ca = setup['ca'], timeout=180)
+        if len(setup['args']) == 0:
+            print("Usage: xcmd <xmlrpc method> <optional arguments>")
+            return
         cmd = setup['args'][0]
-        data = getattr(proxy, cmd)()
+        args = ()
+        if len(setup['args']) > 1:
+            args = tuple(setup['args'][1:])
+        try:
+            data = apply(getattr(proxy, cmd), args)
+        except xmlrpclib.Fault, flt:
+            if flt.faultCode == 1:
+                print("Unknown method %s" % cmd)
+                return
+            else:
+                raise
         if data != None:
             print data
