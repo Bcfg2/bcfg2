@@ -325,7 +325,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 for mname in pinst.__rmi__:
                     xmname = "%s.%s" % (pname, mname)
                     fn = getattr(pinst, mname)
-                    self.register_function(lambda x: fn(), name=xmname)
+                    self.register_function(fn, name=xmname)
         self.logger.info("serving %s at %s" % (name, self.url))
 
     def serve_forever (self):
