@@ -322,7 +322,7 @@ class SvcTool(Tool):
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = 'restart'
         if service.get('mode', 'default') == 'custom':
-            restart_target = service.get('custom', 'restart')
+            restart_target = service.get('target', 'restart')
         return self.cmd.run(self.get_svc_command(service, restart_target))[0]
 
     def check_service(self, service):
