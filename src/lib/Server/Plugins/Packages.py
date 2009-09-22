@@ -205,7 +205,9 @@ class YUMSource(Source):
         urls = []
         for (sarch, surl_list) in surls:
             for surl in surl_list:
-                rmdurl = surl + '/repodata/repomd.xml'
+                if not surl.endswith('/'):
+                    surl += '/'
+                rmdurl = surl + 'repodata/repomd.xml'
                 try:
                     repomd = urllib2.urlopen(rmdurl).read()
                     xdata = lxml.etree.XML(repomd)
