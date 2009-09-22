@@ -499,7 +499,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if unknown:
             self.logger.info("Got unknown entries")
             self.logger.info(list(unknown))
-        for pkg in packages.difference(initial):
+        newpkgs = list(packages.difference(initial))
+        newpkgs.sort()
+        for pkg in newpkgs:
             lxml.etree.SubElement(news, 'BoundPackage', name=pkg,
                                   type=ptype, version='auto', origin='Packages')
         structures.append(news)
