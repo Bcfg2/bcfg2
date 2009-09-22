@@ -133,33 +133,64 @@ class Source(object):
         while work:
             item = work.pop()
             seen.add(item)
-            if self.is_package(metadata, item):
+            item_is_pkg = self.is_package(metadata, item)
+            try:
+                pset = self.get_provides(metadata, item)
+                item_is_virt = True
+            except NoData:
+                item_is_virt = False
+
+            if item_is_pkg and not item_is_virt:
                 newpkg.add(item)
                 try:
-                    newdeps = [x for x in self.get_deps(metadata, item) \
-                               if x not in newpkg and x not in work]
+                    newdeps = set(self.get_deps(metadata, item))
                     if debug and newdeps:
                         logger.debug("Package %s: adding new deps %s" \
                                      %(item, str(newdeps)))
-                    work.update(newdeps)
+                    work.update(newdeps.difference(newpkg))
                 except NoData:
                     continue
             else:
-                # provides dep
-                try:
-                    pset = self.get_provides(metadata, item)
+                # item_is_virt
+                if item_is_pkg:
+                    pset.add(item)
+                if debug:
+                    logger.debug("Package(s) %s provide(s) %s" \
+                                 % (list(pset), item))
+
+                if len(pset) == 1:
                     if debug:
-                        logger.debug("Package(s) %s provide(s) %s" \
-                                     % (list(pset), item))
-                    if len(pset) == 1:
-                        work.update(pset)
+                        logger.debug("Using package %s for requirement %s" \
+                                     % (list(pset)[0], item))
+                    work.update(pset.difference(newpkg))
+                else:
+                    if True in [p in newpkg for p in pset]:
+                        # dep satisfied
+                        try:
+                            newdeps = set(self.get_deps(metadata, item))
+                            if debug and newdeps:
+                                logger.debug("Package %s: adding new deps %s" \
+                                             %(item, str(newdeps)))
+                            work.update(newdeps.difference(newpkg))
+                        except NoData:
+                            pass
+                    elif item_is_pkg:
+                        # add this pkg as a default action
+                        if debug:
+                            logger.debug("Adding Package %s" % item)
+                        newpkg.add(item)
+                        try:
+                            newdeps = set(self.get_deps(metadata, item))
+                            if debug and newdeps:
+                                logger.debug("Package %s: adding new deps %s" \
+                                             %(item, str(newdeps)))
+                            work.update(newdeps.difference(newpkg))
+                        except NoData:
+                            pass
                     else:
-                        if True not in [p in newpkg for p in pset]:
-                            # FIXME: still hacky; unchosen multiple provides still not handled
-                            unknown.add(item)
-                except NoData:
-                    unknown.add(item)
-            work = work.difference(seen)
+                        # dep unsatisfied
+                        # FIXME: hacky; multiple provides still not handled
+                        unknown.add(item)
         return (newpkg, unknown)
 
 class YUMSource(Source):
