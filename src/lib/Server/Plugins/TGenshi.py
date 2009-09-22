@@ -72,13 +72,19 @@ class TemplateFile:
             else:
                 ttypes = [TextTemplate]
             if True in [isinstance(self.template, t) for t in ttypes]:
-                textdata = stream.render('text', strip_whitespace=False)
+                try:
+                    textdata = stream.render('text', strip_whitespace=False)
+                except TypeError:
+                    textdata = stream.render('text')
                 if type(textdata) == unicode:
                     entry.text = textdata
                 else:
                     entry.text = unicode(textdata, self.encoding)
             else:
-                xmldata = stream.render('xml', strip_whitespace=False)
+                try:
+                    xmldata = stream.render('xml', strip_whitespace=False)
+                except TypeError:
+                    xmldata = stream.render('xml')
                 if type(xmldata) == unicode:
                     entry.text = xmldata
                 else:
