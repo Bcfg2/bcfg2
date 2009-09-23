@@ -395,13 +395,18 @@ class APTSource(Source):
                     self.pkgnames.add(pkgname)
                 elif words[0] == 'Depends':
                     bdeps[bin][pkgname] = []
+                    vindex = 0
                     for dep in words[1].split(','):
                         raw_dep = re.sub('\(.*\)', '', dep)
                         if '|' in raw_dep:
-                            # FIXME hack alert
-                            raw_dep = raw_dep.split('|')[0]
-                        raw_dep = raw_dep.rstrip().strip()
-                        bdeps[bin][pkgname].append(raw_dep)
+                            dyn_dname = "choice-%s-%s-%s" % (pkgname, bin, vindex)
+                            vindex += 1
+                            bdeps[bin][pkgname].append(dyn_dname)
+                            dyn_list = [x.strip() for x in raw_dep.split('|')]
+                            bprov[bin][dyn_dname] = set(dyn_list)
+                        else:
+                            raw_dep = raw_dep.rstrip().strip()
+                            bdeps[bin][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':
                     for pkg in words[1].split(','):
                         dname = pkg.rstrip().strip()
