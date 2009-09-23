@@ -5,6 +5,7 @@ __all__ = [
            'Account',
            'Base',
            'Bundler',
+           'Bzr',
            'Cfg',
            'Decisions',
            'GBundler',
