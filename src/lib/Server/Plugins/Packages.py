@@ -150,8 +150,7 @@ class Source(object):
                     work.update(newdeps.difference(newpkg))
                 except NoData:
                     continue
-            else:
-                # item_is_virt
+            elif item_is_virt:
                 if item_is_pkg:
                     pset.add(item)
                 if debug:
@@ -191,6 +190,8 @@ class Source(object):
                         # dep unsatisfied
                         # FIXME: hacky; multiple provides still not handled
                         unknown.add(item)
+            else:
+                unknown.add(item)
         return (newpkg, unknown)
 
 class YUMSource(Source):
