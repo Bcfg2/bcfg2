@@ -51,7 +51,6 @@ def run_component (component_cls, location, daemon, pidfile_name, argv=None,
         os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
         
         os.chdir(os.sep)
-        os.umask(0)
         
         pidfile = open(pidfile_name or "/dev/null", "w")
         print >> pidfile, os.getpid()
