@@ -192,6 +192,7 @@ class Source(object):
                         unknown.add(item)
             else:
                 unknown.add(item)
+            work.difference_update(seen)
         return (newpkg, unknown)
 
 class YUMSource(Source):
