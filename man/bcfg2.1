@@ -52,9 +52,6 @@ configuration files marked as paranoid by the Bcfg2 server.
 Specify the number of times that the client will attempt to retry
 network communication.
 .TP
-.BR "\-s <service mode>"
-Set bcfg2 interaction level for services. Default behavior is to modify all services effected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
-.TP
 .BR "\-S https://server:port"
 Manually specify the server location (as opposed to using the value in
 bcfg2.conf).
@@ -114,6 +111,9 @@ should only be used in safe conditions.
 .TP
 .BR "\-r <mode>" 
 Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, Services, or Packages. All removes all entries. Likewise, Services and Packages remove only the extra configuration elements of the respective type.
+.TP
+.BR "\-s <service mode>"
+Set bcfg2 interaction level for services. Default behavior is to modify all services effected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
 .TP
 .BR "\-u <user>" 
 Attempt to authenticate as 'user'.
