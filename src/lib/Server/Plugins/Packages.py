@@ -133,6 +133,8 @@ class Source(object):
         while work:
             item = work.pop()
             seen.add(item)
+            if debug:
+                logger.debug("Handling pkg %s" % item)
             item_is_pkg = self.is_package(metadata, item)
             try:
                 pset = self.get_provides(metadata, item)
@@ -158,10 +160,17 @@ class Source(object):
                                  % (list(pset), item))
 
                 if len(pset) == 1:
+                    provider = list(pset)[0]
                     if debug:
                         logger.debug("Using package %s for requirement %s" \
-                                     % (list(pset)[0], item))
+                                     % (provider, item))
                     work.update(pset.difference(newpkg))
+                    # add deps for provider
+                    try:
+                        newdeps = set(self.get_deps(metadata, provider))
+                        work.update(newdeps.difference(newpkg))
+                    except NoData:
+                        pass
                 else:
                     if True in [p in newpkg for p in pset]:
                         # dep satisfied
