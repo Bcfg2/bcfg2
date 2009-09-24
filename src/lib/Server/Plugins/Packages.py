@@ -123,6 +123,14 @@ class Source(object):
         return False
 
     def complete(self, metadata, packages, unresolved, debug=False):
+        '''Construct the transitive closure of package dependencies for client
+
+        Arguments:
+        metadata - client metadata instance
+        packages - set of package names
+        unresolved - set of unresolved dependency package names
+        debug - boolean debug mode
+        '''
         # perhaps cache arch?
         #arch = [a for a in self.arches if a in metadata.groups][0]
         # return newpkg, unknown
@@ -197,7 +205,7 @@ class Source(object):
                             pass
                     else:
                         # dep unsatisfied
-                        # FIXME: hacky; multiple provides still not handled
+                        # FIXME: hacky; multiple provides still not forced
                         unknown.add(item)
             else:
                 unknown.add(item)
@@ -229,8 +237,8 @@ class YUMSource(Source):
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
-        data = cPickle.dump((self.packages, self.deps, self.provides,
-                             self.filemap), cache, 2)
+        cPickle.dump((self.packages, self.deps, self.provides,
+                      self.filemap), cache, 2)
         cache.close()
 
     def load_state(self):
@@ -363,8 +371,8 @@ class APTSource(Source):
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
-        data = cPickle.dump((self.pkgnames, self.deps, self.provides),
-                             cache, 2)
+        cPickle.dump((self.pkgnames, self.deps, self.provides),
+                     cache, 2)
         cache.close()
 
     def load_state(self):
@@ -387,73 +395,71 @@ class APTSource(Source):
         bdeps = dict()
         bprov = dict()
         for fname in self.files:
-            bin = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
-            if bin not in bdeps:
-                bdeps[bin] = dict()
-                bprov[bin] = dict()
+            barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
+            if barch not in bdeps:
+                bdeps[barch] = dict()
+                bprov[barch] = dict()
             try:
                 reader = gzip.GzipFile(fname)
             except:
                 print("Failed to read file %s" % fname)
-                raise Exception()
-                continue
+                raise
             for line in reader.readlines():
                 words = line.strip().split(':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
                 elif words[0] == 'Depends':
-                    bdeps[bin][pkgname] = []
+                    bdeps[barch][pkgname] = []
                     vindex = 0
                     for dep in words[1].split(','):
                         raw_dep = re.sub('\(.*\)', '', dep)
                         if '|' in raw_dep:
-                            dyn_dname = "choice-%s-%s-%s" % (pkgname, bin, vindex)
+                            dyn_dname = "choice-%s-%s-%s" % (pkgname, barch, vindex)
                             vindex += 1
-                            bdeps[bin][pkgname].append(dyn_dname)
+                            bdeps[barch][pkgname].append(dyn_dname)
                             dyn_list = [x.strip() for x in raw_dep.split('|')]
-                            bprov[bin][dyn_dname] = set(dyn_list)
+                            bprov[barch][dyn_dname] = set(dyn_list)
                         else:
                             raw_dep = raw_dep.rstrip().strip()
-                            bdeps[bin][pkgname].append(raw_dep)
+                            bdeps[barch][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':
                     for pkg in words[1].split(','):
                         dname = pkg.rstrip().strip()
-                        if dname not in bprov[bin]:
-                            bprov[bin][dname] = set()
-                        bprov[bin][dname].add(pkgname)
+                        if dname not in bprov[barch]:
+                            bprov[barch][dname] = set()
+                        bprov[barch][dname].add(pkgname)
 
         self.deps['global'] = dict()
         self.provides['global'] = dict()
-        for bin in bdeps:
-            self.deps[bin] = dict()
-            self.provides[bin] = dict()
+        for barch in bdeps:
+            self.deps[barch] = dict()
+            self.provides[barch] = dict()
         for pkgname in self.pkgnames:
             pset = set()
-            for bin in bdeps:
-                if pkgname not in bdeps[bin]:
-                    bdeps[bin][pkgname] = []
-                pset.add(tuple(bdeps[bin][pkgname]))
+            for barch in bdeps:
+                if pkgname not in bdeps[barch]:
+                    bdeps[barch][pkgname] = []
+                pset.add(tuple(bdeps[barch][pkgname]))
             if len(pset) == 1:
                 self.deps['global'][pkgname] = pset.pop()
             else:
-                for bin in bdeps:
-                    self.deps[bin][pkgname] = bdeps[bin][pkgname]
+                for barch in bdeps:
+                    self.deps[barch][pkgname] = bdeps[barch][pkgname]
         provided = set()
-        for bin in bprov:
-            for prov in bprov[bin]:
-                provided.add(prov)
+        for bprovided in bprov.values():
+            provided.update(set(bprovided))
         for prov in provided:
             prset = set()
-            for bin in bprov:
-                if prov not in bprov[bin]:
+            for barch in bprov:
+                if prov not in bprov[barch]:
                     continue
-                prset.add(tuple(bprov[bin].get(prov, ())))
+                prset.add(tuple(bprov[barch].get(prov, ())))
             if len(prset) == 1:
                 self.provides['global'][prov] = prset.pop()
             else:
-                for bin in bprov:
-                    self.provides[bin][prov] = bprov[bin].get(prov, ())
+                for barch in bprov:
+                    self.provides[barch][prov] = bprov[barch].get(prov, ())
         self.save_state()
 
     def is_package(self, _, pkg):
@@ -484,7 +490,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             os.makedirs(self.cachepath)
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
-        except IOError, e:
+        except IOError:
             self.logger.error("Failed to read Packages configuration. Have"
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
@@ -514,6 +520,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 entry.set('type', source.ptype)                
 
     def complete(self, meta, packages, debug=False):
+        '''Build the transitive closure of all package dependencies
+
+        Arguments:
+        meta - client metadata instance
+        packages - set of package names
+        debug - print out debug information for the decision making process
+        '''
         sources = self.get_matching_sources(meta)
         # reverse list so that priorities correspond to file order
         sources.reverse()
@@ -539,6 +552,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         return pkgs, unknown, ptype.pop()
 
     def validate_structures(self, meta, structures):
+        '''Ensure client configurations include all needed prerequisites
+
+        Arguments:
+        meta - client metadata instance
+        structures - a list of structure-stage entry combinations
+        '''
         initial = set([pkg.get('name') for struct in structures \
                        for pkg in struct.findall('Package')])
         news = lxml.etree.Element('Independent')
@@ -553,14 +572,17 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                   type=ptype, version='auto', origin='Packages')
         structures.append(news)
 
-    def make_non_redundant(self, meta, plname):
+    def make_non_redundant(self, meta, plname=None, plist=None):
         '''build a non-redundant version of a list of packages
 
         Arguments:
         meta - client metadata instance
         plname - name of file containing a list of packages
         '''
-        pkgnames = set([x.strip() for x in open(plname).readlines()])
+        if plname is not None:
+            pkgnames = set([x.strip() for x in open(plname).readlines()])
+        elif plist is not None:
+            pkgnames = set(plist)
         redundant = set()
         sources = self.get_matching_sources(meta)
         for source in sources:
@@ -578,8 +600,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         '''Packages.Refresh() => True|False\nReload configuration specification and sources\n'''
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
-        except IOError, e:
-            self.logger.error("Failed to read Packages configuration. Have"
+        except IOError:
+            self.logger.error("Failed to read Packages configuration. Have" +
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
         self.sentinels = set()
