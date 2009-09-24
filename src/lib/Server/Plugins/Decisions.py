@@ -1,4 +1,7 @@
-import Bcfg2.Server.Plugin, lxml.etree
+import logging
+import lxml.etree
+import Bcfg2.Server.Plugin
+logger = logging.getLogger('Bcfg2.Plugins.Decisions')
 
 class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
     def handle_event(self, event):
@@ -20,7 +23,12 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
         pattern = '(white|black)list'
         Bcfg2.Server.Plugin.EntrySet.__init__(self, pattern, path, \
                                               DecisionFile, encoding)
-        fam.AddMonitor(path, self)
+        try:
+            fam.AddMonitor(path, self)
+        except OSError, e:
+            logger.error('Adding filemonitor for %s failed. '
+                         'Make sure directory exists' % path)
+            raise Bcfg2.Server.Plugin.PluginInitError(e)
 
     def HandleEvent(self, event):
         if event.filename != self.path:
