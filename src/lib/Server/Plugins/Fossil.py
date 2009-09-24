@@ -22,7 +22,7 @@ class Fossil(Bcfg2.Server.Plugin.Plugin,
 
         # Read revision from bcfg2 repo
         if os.path.isfile(fossil_file):
-            self.get_revision()
+            revision = self.get_revision()
         elif not os.path.isdir(datastore):
             logger.error("%s is not a directory" % datastore)
             raise Bcfg2.Server.Plugin.PluginInitError
@@ -30,7 +30,8 @@ class Fossil(Bcfg2.Server.Plugin.Plugin,
             logger.error("%s is not a file" % fossil_file)
             raise Bcfg2.Server.Plugin.PluginInitError
 
-        logger.debug("Initialized fossil plugin with fossil file = %s" % fossil_file)
+        logger.debug("Initialized Fossil.py plugin with %(ffile)s at revision %(frev)s" \
+                    % {'ffile': fossil_file, 'frev': revision} )
 
     def get_revision(self):
         '''Read fossil revision information for the bcfg2 repository'''
