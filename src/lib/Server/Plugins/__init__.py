@@ -8,6 +8,7 @@ __all__ = [
            'Bzr',
            'Cfg',
            'Decisions',
+           'Fossil',
            'GBundler',
            'Git',
            'GroupPatterns',
