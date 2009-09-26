@@ -32,8 +32,8 @@ class CoreInitError(Exception):
 
 class Core(Component):
     '''The Core object is the container for all Bcfg2 Server logic, and modules'''
-    name = 'bcfg2'
-    implementation = 'bcfg2'
+    name = 'bcfg2-server'
+    implementation = 'bcfg2-server'
 
     def __init__(self, repo, plugins, password, encoding, ca=None,
                  filemonitor='default', start_fam_thread=False):
