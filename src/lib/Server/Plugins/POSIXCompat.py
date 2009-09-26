@@ -27,7 +27,7 @@ class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
     def validate_goals(self, metadata, goals):
         for goal in goals:
             for entry in goal.getchildren():
-                if entry.tag == 'Path':
+                if entry.tag == 'Path' and entry.get('type') != 'nonexistent':
                     oldentry = entry
                     entry.tag = entry.get('type')
                     del entry.attrib['type']

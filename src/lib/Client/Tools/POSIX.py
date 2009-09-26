@@ -79,11 +79,17 @@ def isString(strng):
 class POSIX(Bcfg2.Client.Tools.Tool):
     '''POSIX File support code'''
     name = 'POSIX'
-    __handles__ = [('ConfigFile', None), ('Directory', None),
-                   ('Path', 'ConfigFile'), ('Path', 'Device'),
-                   ('Path', 'Directory'), ('Path', 'HardLink'),
-                   ('Path', 'Perms'), ('Path', 'SymLink'),
-                   ('Permissions', None), ('SymLink', None)]
+    __handles__ = [('ConfigFile', None),
+                   ('Directory', None),
+                   ('Path', 'ConfigFile'),
+                   ('Path', 'Device'),
+                   ('Path', 'Directory'),
+                   ('Path', 'HardLink'),
+                   ('Path', 'Perms'),
+                   ('Path', 'SymLink'),
+                   ('Path', 'nonexistent'),
+                   ('Permissions', None),
+                   ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],
                'Directory': ['name', 'owner', 'group', 'perms'],
                'Path': ['name', 'type'],
@@ -374,6 +380,20 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % \
                               (entry.get('name')))
+            return False
+
+    def Verifynonexistent(self, entry, _):
+        '''Verify nonexistent entry'''
+        # return true if path does _not_ exist
+        return not os.path.lexists(entry.get('name'))
+
+    def Installnonexistent(self, entry):
+        '''Remove nonexistent entries'''
+        try:
+            os.remove(entry.get('name'))
+            return True
+        except OSError:
+            self.logger.error('Failed to remove %s' % entry.get('name'))
             return False
 
     def gatherCurrentData(self, entry):

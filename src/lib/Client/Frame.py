@@ -118,7 +118,7 @@ class Frame:
                                              entry.get('name')) for entry in problems])
             self.logger.error("")
         entries = [(entry.tag, entry.get('name')) for struct in config for entry in struct]
-	pkgs = [(entry.get('name'), entry.get('origin')) for struct in config for entry in struct if entry.tag == 'Package']
+        pkgs = [(entry.get('name'), entry.get('origin')) for struct in config for entry in struct if entry.tag == 'Package']
         multi = []
         for entry in entries[:]:
             if entries.count(entry) > 1:
