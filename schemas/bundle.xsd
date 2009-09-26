@@ -8,6 +8,7 @@
   </xsd:annotation>
 
   <xsd:include schemaLocation="atom.xsd"/>
+  <xsd:include schemaLocation="pathentry.xsd"/>
   <xsd:include schemaLocation="pkglist.xsd"/>
   <xsd:include schemaLocation="rules.xsd"/>
   <xsd:include schemaLocation="services.xsd"/>
@@ -15,6 +16,7 @@
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='ConfigFile' type='StructureEntry'/>
       <xsd:element name='Directory' type='StructureEntry'/>
@@ -22,6 +24,7 @@
       <xsd:element name='Permissions' type='StructureEntry'/>
       <xsd:element name='Action' type='StructureEntry'/>
       <xsd:element name='BoundPackage' type='PackageType'/>
+      <xsd:element name='BoundPath' type='PathEntry'/>
       <xsd:element name='BoundService' type='ServiceType'/>
       <xsd:element name='BoundDirectory' type='DirectoryType'/>
       <xsd:element name='BoundSymLink' type='SymLinkType'/>
@@ -37,6 +40,7 @@
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Package' type='StructureEntry'/>
+        <xsd:element name='Path' type='PathEntry'/>
         <xsd:element name='Service' type='StructureEntry'/>
         <xsd:element name='ConfigFile' type='StructureEntry'/>
         <xsd:element name='Directory' type='StructureEntry'/>
@@ -44,6 +48,7 @@
         <xsd:element name='Permissions' type='StructureEntry'/>
         <xsd:element name='Action' type='StructureEntry'/>       
         <xsd:element name='BoundPackage' type='PackageType'/>
+        <xsd:element name='BoundPath' type='PathEntry'/>
         <xsd:element name='BoundService' type='ServiceType'/>
         <xsd:element name='BoundDirectory' type='DirectoryType'/>
         <xsd:element name='BoundSymLink' type='SymLinkType'/>
