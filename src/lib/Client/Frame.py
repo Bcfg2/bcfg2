@@ -61,7 +61,7 @@ class Frame:
                    isinstance(driver, str):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
-                
+
         tclass = {}
         for tool in drivers:
             if not isinstance(tool, str):
@@ -101,8 +101,8 @@ class Frame:
                 if tl:
                     if not tl[0].VerifyConfigFile(cfile, []):
                         if self.setup['interactive'] and not \
-                               promptFilter("Install %s: %s? (y/N):", [cfile]): 
-                            continue 
+                               promptFilter("Install %s: %s? (y/N):", [cfile]):
+                            continue
                         try:
                             self.states[cfile] = tl[0].InstallConfigFile(cfile)
                         except:
@@ -133,8 +133,8 @@ class Frame:
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
             self.logger.debug("The following packages are prereqs added by Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
-            
-                    
+
+
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
             ret = []
@@ -197,7 +197,7 @@ class Frame:
                 self.logger.info("In blacklist mode: suppressing installation of:")
                 self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
                 self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
-            
+
         if self.dryrun:
             if self.whitelist:
                 self.logger.info("In dryrun mode: suppressing entry installation for:")
@@ -254,8 +254,8 @@ class Frame:
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
         if self.setup['interactive']:
-            self.whitelist = promptFilter(prompt, self.whitelist) 
-            self.removal = promptFilter(rprompt, self.removal) 
+            self.whitelist = promptFilter(prompt, self.whitelist)
+            self.removal = promptFilter(rprompt, self.removal)
 
         for entry in candidates:
             if entry not in self.whitelist:
@@ -301,6 +301,9 @@ class Frame:
                     self.DispatchInstallCalls(clobbered)
 
         for bundle in self.config.findall('.//Bundle'):
+            if self.setup['bundle'] and bundle not in self.setup['bundle']:
+                # prune out unspecified bundles when running with -b
+                continue
             for tool in self.tools:
                 try:
                     if bundle in mbundles:
@@ -310,7 +313,7 @@ class Frame:
                 except:
                     self.logger.error("%s.BundleNotUpdated() call failed:" % \
                                       (tool.name), exc_info=1)
-                
+
     def Remove(self):
         '''Remove extra entries'''
         for tool in self.tools:
@@ -334,7 +337,7 @@ class Frame:
         if phase == 'final' and self.setup['extra']:
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) \
                               for entry in self.extra])
-                
+
         self.logger.info("")
 
         if ((list(self.states.values()).count(False) == 0) and not self.extra):
