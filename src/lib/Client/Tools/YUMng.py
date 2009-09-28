@@ -338,7 +338,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 for inst in pkg:
                     if pkg.get('name') != 'gpg-pubkey':
                         pkg_arg = pkg.get('name') + '-'
-                        if inst.haskey('epoch'):
+                        if inst.attrib.has_key('epoch'):
                             pkg_arg = pkg_arg + inst.get('epoch') + ':'
                         pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
                         if 'arch' in inst.attrib:
