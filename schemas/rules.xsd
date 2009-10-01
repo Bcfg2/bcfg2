@@ -33,6 +33,18 @@
     <xsd:attribute type='xsd:string' name='to' use='required'/>
   </xsd:complexType>
   
+  <xsd:complexType name='PathType'>
+    <xsd:attribute type='PathTypeEnum' name='type' use='required'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='dev_type'/>
+    <xsd:attribute type='xsd:string' name='major'/>
+    <xsd:attribute type='xsd:string' name='minor'/>
+    <xsd:attribute type='xsd:string' name='mode'/>
+    <xsd:attribute type='xsd:string' name='perms'/>
+    <xsd:attribute type='xsd:string' name='owner'/>
+    <xsd:attribute type='xsd:string' name='group'/>
+  </xsd:complexType>
+
   <xsd:complexType name='PermissionsType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='perms' use='required'/>
@@ -63,6 +75,7 @@
         <xsd:element name='Directory' type='DirectoryType'/>
         <xsd:element name='SymLink' type='SymLinkType'/>
         <xsd:element name='Package' type='PackageType'/>
+        <xsd:element name='Path' type='PathType'/>
         <xsd:element name='Permissions' type='PermissionsType'/>
         <xsd:element name='Action' type='ActionType'/>
         <xsd:element name='Group' type='RContainerType'/>

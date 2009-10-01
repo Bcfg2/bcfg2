@@ -24,7 +24,7 @@
   <xsd:simpleType name='PathTypeEnum'>
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='ConfigFile' />
-      <xsd:enumeration value='Device' />
+      <xsd:enumeration value='device' />
       <xsd:enumeration value='Directory' />
       <xsd:enumeration value='HardLink' />
       <xsd:enumeration value='Perms' />

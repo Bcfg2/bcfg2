@@ -8,10 +8,7 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:include schemaLocation="types.xsd"/>
-
   <xsd:complexType name='PathEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute name='type' use='required' type='PathTypeEnum' />
   </xsd:complexType>
 </xsd:schema>

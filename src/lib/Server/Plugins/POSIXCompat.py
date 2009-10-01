@@ -8,11 +8,12 @@ import Bcfg2.Server.Plugin
 
 # FIXME: We will need this mapping if we decide to change the
 #        specification to use lowercase types for new POSIX entry types
-#COMPAT_DICT = {'configfile': 'ConfigFile',
-#               'device': 'Device',
-#               'directory': 'Directory',
-#               'permissions': 'Permissions',
-#               'symlink': 'SymLink'}
+COMPAT_DICT = {'configfile': 'ConfigFile',
+               'device': 'device',
+               'directory': 'Directory',
+               'nonexistent': 'nonexistent',
+               'permissions': 'Permissions',
+               'symlink': 'SymLink'}
 
 class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.GoalValidator):
@@ -27,9 +28,10 @@ class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
     def validate_goals(self, metadata, goals):
         for goal in goals:
             for entry in goal.getchildren():
-                if entry.tag == 'Path' and entry.get('type') != 'nonexistent':
+                if entry.tag == 'Path' and \
+                   entry.get('type') not in ['nonexistent', 'device']:
                     oldentry = entry
-                    entry.tag = entry.get('type')
+                    entry.tag = COMPAT_DICT[entry.get('type')]
                     del entry.attrib['type']
                     # FIXME: use another attribute? old clients only
                     #        know about type=None

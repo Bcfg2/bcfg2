@@ -12,10 +12,19 @@ import logging
 import os
 import pwd
 import shutil
+import stat
 import string
 import time
 import Bcfg2.Client.Tools
 import Bcfg2.Options
+
+log = logging.getLogger('posix')
+
+# map between dev_type attribute and stat constants
+device_map = {'block': stat.S_IFBLK,
+              'char': stat.S_IFCHR,
+              'fifo': stat.S_IFIFO}
+
 
 def calcPerms(initial, perms):
     '''This compares ondisk permissions with specified ones'''
@@ -32,8 +41,6 @@ def calcPerms(initial, perms):
             if pdigits[index] & num:
                 tempperms |= perm
     return tempperms
-
-log = logging.getLogger('posix')
 
 def normUid(entry):
     '''
@@ -82,7 +89,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     __handles__ = [('ConfigFile', None),
                    ('Directory', None),
                    ('Path', 'ConfigFile'),
-                   ('Path', 'Device'),
+                   ('Path', 'device'),
                    ('Path', 'Directory'),
                    ('Path', 'HardLink'),
                    ('Path', 'Perms'),
@@ -140,10 +147,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 fmode = os.lstat(entry.get('name'))[ST_MODE]
                 if S_ISREG(fmode) or S_ISLNK(fmode):
                     self.logger.debug("Non-directory entry already exists at "
-                                      "%s. Unlinking entry." % (entry.get('name')))
+                                      "%s. Unlinking entry." % \
+                                      (entry.get('name')))
                     os.unlink(entry.get('name'))
                 elif S_ISDIR(fmode):
-                    self.logger.debug("Directory entry already exists at %s" % \
+                    self.logger.debug("Directory entry already exists at %s" %\
                                       (entry.get('name')))
                     self.cmd.run("mv %s/ %s.bak" % \
                                  (entry.get('name'),
@@ -157,12 +165,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return True
         except OSError:
             return False
-
-    def VerifyDevice(self, entry, _):
-        return False
-
-    def InstallDevice(self, entry):
-        return False
 
     def VerifyDirectory(self, entry, modlist):
         '''Verify Directory Entry'''
@@ -253,7 +255,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nnqtext += '\nInstall %s %s: (y/N) ' % (entry.tag, entry.get('name'))
                 entry.set('qtext', nnqtext)
         return pTrue and pruneTrue
-
 
     def InstallDirectory(self, entry):
         '''Install Directory Entry'''
@@ -381,6 +382,82 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.error('Permission fixup failed for %s' % \
                               (entry.get('name')))
             return False
+
+    def Verifydevice(self, entry, _):
+        '''Verify device entry'''
+        try:
+            # check for file existence
+            filestat = os.stat(entry.get('name'))
+        except OSError:
+            entry.set('current_exists', 'false')
+            self.logger.debug("%s %s does not exist" %
+                              (entry.tag, entry.get('name')))
+            return False
+
+        try:
+            # attempt to verify device properties as specified in config
+            dev_type = entry.get('dev_type')
+            mode = calcPerms(device_map[dev_type],
+                             entry.get('mode', '0600'))
+            owner = entry.get('owner')
+            group = entry.get('group')
+            if dev_type in ['block', 'char']:
+                major = int(entry.get('major'))
+                minor = int(entry.get('minor'))
+                if major == os.major(filestat.st_rdev) and \
+                   minor == os.minor(filestat.st_rdev) and \
+                   mode == filestat.st_mode and \
+                   owner == filestat.st_uid and \
+                   group == filestat.st_gid:
+                    return True
+                else:
+                    return False
+            elif dev_type == 'fifo' and \
+                 mode == filestat.st_mode and \
+                 owner == filestat.st_uid and \
+                 group == filestat.st_gid:
+                return True
+            else:
+                self.logger.info('Device properties for %s incorrect' % \
+                                 entry.get('name'))
+                return False
+        except OSError:
+            self.logger.debug("%s %s failed to verify" %
+                              (entry.tag, entry.get('name')))
+            return False
+
+    def Installdevice(self, entry):
+        '''Install device entries'''
+        try:
+            # check for existing paths and remove them
+            filestat = os.lstat(entry.get('name'))
+            try:
+                os.unlink(entry.get('name'))
+                exists = False
+            except OSError:
+                self.logger.info('Failed to unlink %s' % \
+                                 entry.get('name'))
+                return False
+        except OSError:
+            exists = False
+
+        if not exists:
+            try:
+                dev_type = entry.get('dev_type')
+                mode = calcPerms(device_map[dev_type],
+                                 entry.get('mode', '0600'))
+                if dev_type in ['block', 'char']:
+                    major = int(entry.get('major'))
+                    minor = int(entry.get('minor'))
+                    device = os.makedev(major, minor)
+                    os.mknod(entry.get('name'), mode, device)
+                else:
+                    os.mknod(entry.get('name'), mode)
+                os.chown(entry.get('name'), normUid(entry), normGid(entry))
+                return True
+            except OSError:
+                self.logger.error('Failed to install %s' % entry.get('name'))
+                return False
 
     def Verifynonexistent(self, entry, _):
         '''Verify nonexistent entry'''
