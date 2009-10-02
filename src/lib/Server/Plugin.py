@@ -63,6 +63,7 @@ class Plugin(object):
         self.core = core
         self.data = "%s/%s" % (datastore, self.name)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
+        self.running = True
 
     @staticmethod
     def make_path(path):
@@ -78,6 +79,9 @@ class Plugin(object):
     def init_repo(cls, repo):
         path = "%s/%s" % (repo, cls.name)
         cls.make_path(path)
+
+    def shutdown(self):
+        self.running = False
 
 class Generator(object):
     '''Generator plugins contribute to literal client configurations'''

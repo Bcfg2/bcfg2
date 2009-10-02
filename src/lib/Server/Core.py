@@ -1,6 +1,7 @@
 '''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
 __revision__ = '$Revision$'
 
+import atexit
 import logging
 import lxml.etree
 import select
@@ -55,6 +56,7 @@ class Core(Component):
         self.revision = '-1'
         self.password = password
         self.encoding = encoding
+        atexit.register(self.shutdown)
 
         if '' in plugins:
             plugins.remove('')
@@ -132,7 +134,10 @@ class Core(Component):
         except:
             logger.error("Unexpected instantiation failure for plugin %s" % 
                 (plugin), exc_info=1)    
-            
+
+    def shutdown(self):
+        for plugin in self.plugins.values():
+            plugin.shutdown()
 
     def validate_data(self, metadata, data, base_cls):
         for plugin in self.plugins.values():

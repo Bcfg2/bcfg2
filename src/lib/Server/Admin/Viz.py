@@ -58,6 +58,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         data = self.Visualize(self.get_repo_path(), hset, bset,
                               kset, outputfile)
         print data
+        raise SystemExit, 0
 
     def Visualize(self, repopath, hosts=False,
                   bundles=False, key=False, output=False):

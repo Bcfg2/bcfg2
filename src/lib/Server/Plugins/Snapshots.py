@@ -59,8 +59,11 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         self.loader.start()
 
     def load_snapshot(self):
-        while True:
-            (metadata, data) = self.work_queue.get(block=True)
+        while self.running:
+            try:
+                (metadata, data) = self.work_queue.get(block=True, timeout=5)
+            except:
+                continue
             self.statistics_from_old_stats(metadata, data)
 
     def process_statistics(self, metadata, data):
