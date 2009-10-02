@@ -38,7 +38,6 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
                                         'includekey', 'outfile='])
         except getopt.GetoptError, msg:
             print msg
-            raise SystemExit(1)
 
         rset = False
         hset = False
