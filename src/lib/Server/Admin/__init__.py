@@ -87,12 +87,16 @@ class Mode(object):
 
 class MetadataCore(Mode):
     '''Base class for admin-modes that handle metadata'''
-    def __init__(self, configfile, usage):
+    def __init__(self, configfile, usage, pwhitelist=None, pblacklist=None):
         Mode.__init__(self, configfile)
         options = {'plugins': Bcfg2.Options.SERVER_PLUGINS}
         setup = Bcfg2.Options.OptionParser(options)
         setup.hm = usage
         setup.parse(sys.argv[1:])
+        if pwhitelist is not None:
+            setup['plugins'] = [x for x in setup['plugins'] if x in pwhitelist]
+        elif pblacklist is not None:
+            setup['plugins'] = [x for x in setup['plugins'] if x not in pblacklist]
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 setup['plugins'],
