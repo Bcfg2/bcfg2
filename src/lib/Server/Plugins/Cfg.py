@@ -54,8 +54,8 @@ class CfgMatcher:
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, entry_type, encoding):
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, entry_type,
-                                              encoding)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
+                                              entry_type, encoding)
         self.specific = CfgMatcher(path.split('/')[-1])
 
     def sort_by_specific(self, one, other):
@@ -79,6 +79,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         used = self.get_pertinent_entries(metadata)
         basefile = used.pop(0)
         data = basefile.data
+        if entry.tag == 'Path':
+            entry.set('type', 'configfile')
         for delta in used:
             data = data.strip()
             data = process_delta(data, delta)
