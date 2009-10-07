@@ -9,7 +9,6 @@ __all__ = [
            'Cfg',
            'Decisions',
            'Fossil',
-           'GBundler',
            'Git',
            'GroupPatterns',
            'Hostbase',
