@@ -1,11 +1,16 @@
 '''This provides bundle clauses with translation functionality'''
 __revision__ = '$Revision$'
 
-import copy, lxml.etree, Bcfg2.Server.Plugin, re
+import copy
+import lxml.etree
+import re
+
+import Bcfg2.Server.Plugin
 
 try:
+    import genshi.template
+    import genshi.template.base
     import Bcfg2.Server.Plugins.SGenshi
-    import genshi.template, genshi.template.base
     have_genshi = True
 except:
     have_genshi = False
@@ -21,11 +26,11 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure,
               Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
-    name =  'Bundler'
+    name = 'Bundler'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
-    
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
@@ -69,4 +74,3 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                 self.logger.error("Got multiple matches for bundle %s" \
                                   % (bundlename))
         return bundleset
-

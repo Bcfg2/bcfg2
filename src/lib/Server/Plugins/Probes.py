@@ -1,4 +1,7 @@
-import Bcfg2.Server.Plugin, lxml.etree, re
+import lxml.etree
+import re
+
+import Bcfg2.Server.Plugin
 
 specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH])_\S+)")
 probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
@@ -22,7 +25,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         ret = []
         build = dict()
         candidates = self.get_matching(metadata)
-        candidates.sort(lambda x,y: cmp(x.specific, y.specific))
+        candidates.sort(lambda x, y: cmp(x.specific, y.specific))
         for entry in candidates:
             rem = specific_probe_matcher.match(entry.name)
             if not rem:
@@ -30,7 +33,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             pname = rem.group('basename')
             if pname not in build:
                 build[pname] = entry
-       
+
         for (name, entry) in build.iteritems():
             probe = lxml.etree.Element('probe')
             probe.set('name', name.split('/')[-1])
@@ -55,7 +58,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Probing.__init__(self)
-        
+
         try:
             self.probes = ProbeSet(self.data, core.fam, core.encoding,
                                    self.name)
@@ -65,7 +68,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.probedata = dict()
         self.cgroups = dict()
         self.load_data()
-    
+
     def write_data(self):
         '''write probe data out for use with bcfg2-info'''
         top = lxml.etree.Element("Probed")
@@ -125,7 +128,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                 self.probedata[client.hostname] = {data.get('name'): ''}
             return
         dlines = data.text.split('\n')
-        self.logger.debug("%s:probe:%s:%s" % (client.hostname, 
+        self.logger.debug("%s:probe:%s:%s" % (client.hostname,
             data.get('name'), [line.strip() for line in dlines]))
         for line in dlines[:]:
             if line.split(':')[0] == 'group':
@@ -135,9 +138,9 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                 dlines.remove(line)
         dtext = "\n".join(dlines)
         try:
-            self.probedata[client.hostname].update({ data.get('name'):dtext })
+            self.probedata[client.hostname].update({data.get('name'):dtext})
         except KeyError:
-            self.probedata[client.hostname] = { data.get('name'):dtext }
+            self.probedata[client.hostname] = {data.get('name'):dtext}
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())

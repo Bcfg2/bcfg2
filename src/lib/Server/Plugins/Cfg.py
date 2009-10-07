@@ -1,7 +1,13 @@
 '''This module implements a config file repository'''
 __revision__ = '$Revision$'
 
-import binascii, logging, os, re, tempfile, Bcfg2.Server.Plugin
+import binascii
+import logging
+import os
+import re
+import tempfile
+
+import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
@@ -148,4 +154,3 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
 
     def AcceptPullData(self, specific, new_entry, log):
         return self.entries[new_entry.get('name')].write_update(specific, new_entry, log)
-

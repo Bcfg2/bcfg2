@@ -31,12 +31,12 @@ class Fossil(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
         logger.debug("Initialized Fossil.py plugin with %(ffile)s at revision %(frev)s" \
-                    % {'ffile': fossil_file, 'frev': revision} )
+                    % {'ffile': fossil_file, 'frev': revision})
 
     def get_revision(self):
         '''Read fossil revision information for the bcfg2 repository'''
         try:
-            data = Popen("env LC_ALL=C fossil info", 
+            data = Popen("env LC_ALL=C fossil info",
                         shell=True,
                         cwd=self.datastore,
                         stdout=PIPE).stdout.readlines()

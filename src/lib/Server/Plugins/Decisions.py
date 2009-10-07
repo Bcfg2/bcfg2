@@ -14,7 +14,7 @@ class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
 class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding):
         """Container for decision specification files
-        
+
         Arguments:
         - `path`: repository path
         - `fam`: reference to the file monitor
@@ -51,7 +51,7 @@ class Decisions(DecisionSet,
 
     def __init__(self, core, datastore):
         """Decisions plugins
-        
+
         Arguments:
         - `core`: Bcfg2.Core instance
         - `datastore`: File repository location
@@ -59,4 +59,4 @@ class Decisions(DecisionSet,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Decision.__init__(self)
         DecisionSet.__init__(self, self.data, core.fam, core.encoding)
-    
+

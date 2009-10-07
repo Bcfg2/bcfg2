@@ -13,10 +13,10 @@ from lxml.etree import XML, XMLSyntaxError
 import Bcfg2.Options
 
 # grab default metadata info from bcfg2.conf
-opts = {'owner':Bcfg2.Options.MDATA_OWNER,
-        'group':Bcfg2.Options.MDATA_GROUP,
-        'perms':Bcfg2.Options.MDATA_PERMS,
-        'paranoid':Bcfg2.Options.MDATA_PARANOID}
+opts = {'owner': Bcfg2.Options.MDATA_OWNER,
+        'group': Bcfg2.Options.MDATA_GROUP,
+        'perms': Bcfg2.Options.MDATA_PERMS,
+        'paranoid': Bcfg2.Options.MDATA_PARANOID}
 mdata_setup = Bcfg2.Options.OptionParser(opts)
 mdata_setup.parse([])
 del mdata_setup['args']
@@ -28,7 +28,7 @@ default_file_metadata = mdata_setup
 info_regex = re.compile( \
     '^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
-    '(?P<paranoid>paranoid(\s)*)|mtime:(\s)*(?P<mtime>\w+)$' )
+    '(?P<paranoid>paranoid(\s)*)|mtime:(\s)*(?P<mtime>\w+)$')
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
@@ -74,7 +74,7 @@ class Plugin(object):
                 os.stat(ppath)
             except:
                 os.mkdir(ppath)
-        
+
     @classmethod
     def init_repo(cls, repo):
         path = "%s/%s" % (repo, cls.name)
@@ -152,7 +152,7 @@ class PullSource(object):
 class PullTarget(object):
     def AcceptChoices(self, entry, metadata):
         raise PluginExecutionError
-    
+
     def AcceptPullData(self, specific, new_entry, verbose):
         '''This is the null per-plugin implementation
         of bcfg2-admin pull'''
@@ -190,7 +190,7 @@ class FileBacked(object):
     HandleEvent is called whenever fam registers an event.
     Index can parse the data into member data as required.
     This object is meant to be used as a part of DirectoryBacked.'''
-    
+
     def __init__(self, name):
         object.__init__(self)
         self.data = ''
@@ -205,7 +205,7 @@ class FileBacked(object):
             self.Index()
         except IOError:
             logger.error("Failed to read file %s" % (self.name))
-            
+
     def Index(self):
         '''Update local data structures based on current file state'''
         pass
@@ -323,7 +323,7 @@ class StructFile(XMLFileBacked):
                     cmd = "lambda x:'%s' not in x.groups and predicate(x)"
                 else:
                     cmd = "lambda x:'%s' in x.groups and predicate(x)"
-                    
+
                 newpred = eval(cmd % (group.get('name')), {'predicate':predicate})
                 work[newpred] = group.getchildren()
 
@@ -343,7 +343,7 @@ class INode:
             'Group':"lambda x:'%s' not in x.groups and predicate(x)"}
     containers = ['Group', 'Client']
     ignore = []
-    
+
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
@@ -439,7 +439,7 @@ class XMLSrc(XMLFileBacked):
 
 class XMLDirectoryBacked(DirectoryBacked):
     '''Directorybacked for *.xml'''
-    patterns = re.compile('.*\.xml')    
+    patterns = re.compile('.*\.xml')
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     '''This is a generator that handles package assignments'''
@@ -734,13 +734,13 @@ class GroupSpool(Plugin, Generator):
             if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
             if ident not in self.entries:
-                dirpath  = "".join([self.data, ident])
+                dirpath = "".join([self.data, ident])
                 self.entries[ident] = self.es_cls(self.filename_pattern,
                                                   dirpath,
                                                   self.es_child_cls,
                                                   self.encoding)
-                self.Entries['ConfigFile'][ident] =  self.entries[ident].bind_entry
-                self.Entries['Path'][ident] =  self.entries[ident].bind_entry
+                self.Entries['ConfigFile'][ident] = self.entries[ident].bind_entry
+                self.Entries['Path'][ident] = self.entries[ident].bind_entry
             if not posixpath.isdir(epath):
                 # do not pass through directory events
                 self.entries[ident].handle_event(event)
@@ -755,7 +755,7 @@ class GroupSpool(Plugin, Generator):
                 del self.Entries['Path'][fbase]
             else:
                 self.entries[ident].handle_event(event)
-                                 
+
     def AddDirectoryMonitor(self, relative):
         '''Add new directory to FAM structures'''
         if not relative.endswith('/'):

@@ -146,10 +146,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 rows = []
                 labels = ('Client', 'Correct', 'Revision', 'Time')
                 for snap in snaps:
-                        rows.append([snap.client.name,
-                                    snap.correct,
-                                    snap.revision,
-                                    snap.timestamp])
+                    rows.append([snap.client.name,
+                                 snap.correct,
+                                 snap.revision,
+                                 snap.timestamp])
                 self.print_table([labels]+rows,
                                  justify='left',
                                  hdr=True,

@@ -23,14 +23,14 @@ logger = logging.getLogger()
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
-def run_component (component_cls, location, daemon, pidfile_name, argv=None,
-                   register=True, state_name=False, cls_kwargs={},
-                   extra_getopt='', time_out=10, protocol='xmlrpc/ssl',
-                   certfile=None, keyfile=None, ca=None):
-    
+def run_component(component_cls, location, daemon, pidfile_name, argv=None,
+                  register=True, state_name=False, cls_kwargs={},
+                  extra_getopt='', time_out=10, protocol='xmlrpc/ssl',
+                  certfile=None, keyfile=None, ca=None):
+
     # default settings
     level = logging.INFO
-    
+
     logging.getLogger().setLevel(level)
     Bcfg2.Logger.setup_logging(component_cls.implementation, True, True)
 
@@ -38,20 +38,20 @@ def run_component (component_cls, location, daemon, pidfile_name, argv=None,
         child_pid = os.fork()
         if child_pid != 0:
             return
-        
+
         os.setsid()
-        
+
         child_pid = os.fork()
         if child_pid != 0:
             os._exit(0)
-        
+
         redirect_file = open("/dev/null", "w+")
         os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
         os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
-        
+
         os.chdir(os.sep)
-        
+
         pidfile = open(pidfile_name or "/dev/null", "w")
         print >> pidfile, os.getpid()
         pidfile.close()
@@ -68,21 +68,21 @@ def run_component (component_cls, location, daemon, pidfile_name, argv=None,
         logger.error("Server startup failed")
         os._exit(1)
     server.register_instance(component)
-    
+
     try:
         server.serve_forever()
     finally:
         server.server_close()
 
-def exposed (func):
+def exposed(func):
     """Mark a method to be exposed publically.
-    
+
     Examples:
     class MyComponent (Component):
         @expose
         def my_method (self, param1, param2):
             do_stuff()
-    
+
     class MyComponent (Component):
         def my_method (self, param1, param2):
             do_stuff()
@@ -91,47 +91,47 @@ def exposed (func):
     func.exposed = True
     return func
 
-def automatic (func, period=10):
+def automatic(func, period=10):
     """Mark a method to be run periodically."""
     func.automatic = True
     func.automatic_period = period
     func.automatic_ts = -1
     return func
 
-def locking (func):
+def locking(func):
     """Mark a function as being internally thread safe"""
     func.locking = True
     return func
 
-def readonly (func):
+def readonly(func):
     """Mark a function as read-only -- no data effects in component inst"""
     func.readonly = True
     return func
 
 class Component (object):
-    
+
     """Base component.
-    
+
     Intended to be served as an instance by Cobalt.Component.XMLRPCServer
     >>> server = Cobalt.Component.XMLRPCServer(location, keyfile)
     >>> component = Cobalt.Component.Component()
     >>> server.serve_instance(component)
-    
+
     Class attributes:
     name -- logical component name (e.g., "queue-manager", "process-manager")
     implementation -- implementation identifier (e.g., "BlueGene/L", "BlueGene/P")
-    
+
     Methods:
     save -- pickle the component to a file
     do_tasks -- perform automatic tasks for the component
     """
-    
+
     name = "component"
     implementation = "generic"
-    
-    def __init__ (self, **kwargs):
+
+    def __init__(self, **kwargs):
         """Initialize a new component.
-        
+
         Keyword arguments:
         statefile -- file in which to save state automatically
         """
@@ -139,10 +139,10 @@ class Component (object):
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         self.lock = threading.Lock()
         self.instance_statistics = Statistics()
-        
-    def do_tasks (self):
+
+    def do_tasks(self):
         """Perform automatic tasks for the component.
-        
+
         Automatic tasks are member callables with an attribute
         automatic == True.
         """
@@ -171,9 +171,9 @@ class Component (object):
                     self.instance_statistics.add_value(name, mt2-mt1)
                     func.__dict__['automatic_ts'] = time.time()
 
-    def _resolve_exposed_method (self, method_name):
+    def _resolve_exposed_method(self, method_name):
         """Resolve an exposed method.
-        
+
         Arguments:
         method_name -- name of the method to resolve
         """
@@ -185,9 +185,9 @@ class Component (object):
             raise NoExposedMethod(method_name)
         return func
 
-    def _dispatch (self, method, args, dispatch_dict):
+    def _dispatch(self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.
-        
+
         method -- XML-RPC method name
         args -- tuple of paramaters to method
         """
@@ -204,7 +204,7 @@ class Component (object):
                 if getattr(e, "log", True):
                     self.logger.error(e, exc_info=True)
                 raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
-        
+
         if getattr(method_func, 'locking', False):
             need_to_lock = False
         if need_to_lock:
@@ -229,7 +229,7 @@ class Component (object):
         return result
 
     @exposed
-    def listMethods (self):
+    def listMethods(self):
         """Custom XML-RPC introspective method list."""
         return [
             name for name, func in inspect.getmembers(self, callable)
@@ -237,9 +237,9 @@ class Component (object):
         ]
 
     @exposed
-    def methodHelp (self, method_name):
+    def methodHelp(self, method_name):
         """Custom XML-RPC introspective method help.
-        
+
         Arguments:
         method_name -- name of method to get help on
         """
@@ -248,18 +248,18 @@ class Component (object):
         except NoExposedMethod:
             return ""
         return pydoc.getdoc(func)
-    
-    def get_name (self):
+
+    def get_name(self):
         """The name of the component."""
         return self.name
     get_name = exposed(get_name)
-    
-    def get_implementation (self):
+
+    def get_implementation(self):
         """The implementation of the component."""
         return self.implementation
     get_implementation = exposed(get_implementation)
 
-    def get_statistics (self, _):
+    def get_statistics(self, _):
         """Get current statistics about component execution"""
         return self.instance_statistics.display()
     get_statistics = exposed(get_statistics)

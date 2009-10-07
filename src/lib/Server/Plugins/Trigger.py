@@ -1,6 +1,7 @@
 import os
 import Bcfg2.Server.Plugin
 
+
 def async_run(prog, args):
     pid = os.fork()
     if pid:
@@ -10,6 +11,7 @@ def async_run(prog, args):
         if not dpid:
             os.system(" ".join([prog] + args))
         os._exit(0)
+
 
 class Trigger(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Statistics):

@@ -64,7 +64,7 @@ class Editor(Bcfg2.Server.Plugin.GroupSpool,
             probe = lxml.etree.Element('probe')
             probe.set('name', name)
             probe.set('source', "Editor")
-            probe.text = "cat %s" %name
+            probe.text = "cat %s" % name
             probelist.append(probe)
         return probelist
 

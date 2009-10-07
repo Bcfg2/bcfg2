@@ -106,9 +106,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def init_repo(cls, repo, groups, os_selection, clients):
         path = '%s/%s' % (repo, cls.name)
         cls.make_path(path)
-        open("%s/Metadata/groups.xml" %                              
-             repo, "w").write(groups % os_selection)                 
-        open("%s/Metadata/clients.xml" %                             
+        open("%s/Metadata/groups.xml" %
+             repo, "w").write(groups % os_selection)
+        open("%s/Metadata/clients.xml" %
              repo, "w").write(clients % socket.getfqdn())
 
     def get_groups(self):
@@ -356,7 +356,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                                                'cert+password')
                 if 'uuid' in client.attrib:
                     self.uuid[client.get('uuid')] = clname
-                if client.get('secure', 'false') == 'true' :
+                if client.get('secure', 'false') == 'true':
                     self.secure.append(clname)
                 if client.get('location', 'fixed') == 'floating':
                     self.floating.append(clname)
@@ -478,7 +478,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                            pretty_print='true'))
         fcntl.lockf(fd, fcntl.LOCK_UN)
         datafile.close()
-    
+
     def locked(self, fd):
         try:
             fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -554,7 +554,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         all_groups = set()
         [all_groups.update(g[1]) for g in self.groups.values()]
         return all_groups
-        
+
     def get_client_names_by_profiles(self, profiles):
         return [client for client, profile in self.clients.iteritems() \
                 if profile in profiles]
@@ -583,7 +583,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
             setattr(imd, source, data)
-            imd.connectors.append(source)        
+            imd.connectors.append(source)
 
     def validate_client_address(self, client, address):
         '''Check address against client'''
@@ -603,7 +603,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Got request for %s from incorrect address %s" \
                               % (client, address))
             return False
-    
+
     def AuthenticateConnection(self, cert, user, password, address):
         '''This function checks auth creds'''
         if cert:
@@ -677,7 +677,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                                  % (client))
             cli[0].set('auth', 'cert')
             self.write_back_clients()
-    
+
     def viz(self, hosts, bundles, key, colors):
         '''admin mode viz support'''
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
@@ -712,7 +712,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                  if bund.get('name') not in bundles]
             bundles.sort()
             for bundle in bundles:
-                viz_str +=  '''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' \
+                viz_str += '''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' \
                     % (bundle, bundle)
         gseen = []
         for group in egroups:

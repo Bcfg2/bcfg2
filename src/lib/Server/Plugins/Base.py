@@ -6,15 +6,15 @@ import copy
 import lxml.etree
 
 class Base(Bcfg2.Server.Plugin.Plugin,
-           Bcfg2.Server.Plugin.Structure, 
+           Bcfg2.Server.Plugin.Structure,
            Bcfg2.Server.Plugin.XMLDirectoryBacked):
     '''This Structure is good for the pile of independent configs
     needed for most actual systems'''
-    name =  'Base'
+    name = 'Base'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
-    
+
     '''base creates independent clauses based on client metadata'''
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -26,7 +26,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
         except OSError:
             self.logger.error("Failed to load Base repository")
             raise Bcfg2.Server.Plugin.PluginInitError
-        
+
     def BuildStructures(self, metadata):
         '''Build structures for client described by metadata'''
         ret = lxml.etree.Element("Independent", version='2.0')

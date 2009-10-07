@@ -60,7 +60,7 @@ class Core(Component):
 
         if '' in plugins:
             plugins.remove('')
-        
+
         for plugin in plugins:
             if not plugin in self.plugins:
                 self.init_plugins(plugin)
@@ -132,8 +132,8 @@ class Core(Component):
         except PluginInitError:
             logger.error("Failed to instantiate plugin %s" % (plugin))
         except:
-            logger.error("Unexpected instantiation failure for plugin %s" % 
-                (plugin), exc_info=1)    
+            logger.error("Unexpected instantiation failure for plugin %s" %
+                (plugin), exc_info=1)
 
     def shutdown(self):
         for plugin in self.plugins.values():
@@ -216,9 +216,9 @@ class Core(Component):
                   gen.HandlesEntry(entry, metadata)]
         if len(g2list) == 1:
             return g2list[0].HandleEntry(entry, metadata)
-        entry.set('failure',  'no matching generator')
+        entry.set('failure', 'no matching generator')
         raise PluginExecutionError, (entry.tag, entry.get('name'))
-                
+
     def BuildConfiguration(self, client):
         '''Build Configuration for client'''
         start = time.time()
@@ -250,7 +250,7 @@ class Core(Component):
                 else:
                     esrcs[key] = entry.get('altsrc', None)
         del esrcs
-        
+
         for astruct in structures:
             try:
                 self.BindStructure(astruct, meta)

@@ -1,6 +1,9 @@
 __all__ = ['models', 'db_from_config', 'setup_session']
 
-import sqlalchemy, sqlalchemy.orm, ConfigParser
+import sqlalchemy
+import sqlalchemy.orm
+import ConfigParser
+
 
 def db_from_config(fname='/etc/bcfg2.conf'):
     cp = ConfigParser.ConfigParser()

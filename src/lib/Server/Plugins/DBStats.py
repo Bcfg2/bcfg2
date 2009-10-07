@@ -13,7 +13,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.PullSource):
     name = 'DBStats'
     __version__ = '$Id$'
-        
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
@@ -34,7 +34,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         e.append(newstats)
         container = lxml.etree.Element("ConfigStatistics")
         container.append(e)
-        
+
         # FIXME need to build a metadata interface to expose a list of clients
         # FIXME Server processing the request should be mentionned here
         start = time.time()
@@ -71,7 +71,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 ret.append(getattr(entry.reason, t))
             else:
                 ret.append(getattr(entry.reason, "current_%s" % t))
-                
+
         if entry.reason.current_diff != '':
             ret.append('\n'.join(difflib.restore(\
                 entry.reason.current_diff.split('\n'), 1)))

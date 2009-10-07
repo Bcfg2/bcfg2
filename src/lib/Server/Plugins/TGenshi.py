@@ -10,9 +10,11 @@ except:
     have_ntt = False
 import logging
 import Bcfg2.Server.Plugin
-import genshi.core, genshi.input
+import genshi.core
+import genshi.input
 
 logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
+
 
 def removecomment(stream):
     """A genshi filter that removes comments from the stream."""
@@ -21,8 +23,10 @@ def removecomment(stream):
             continue
         yield kind, data, pos
 
+
 class TemplateFile:
     '''Template file creates Genshi template structures for the loaded file'''
+
     def __init__(self, name, specific, encoding):
         self.name = name
         self.specific = specific
@@ -43,7 +47,7 @@ class TemplateFile:
         else:
             self.template_cls = MarkupTemplate
         self.HandleEvent = self.handle_event
-        
+
     def handle_event(self, event=None):
         '''Handle all fs events for this template'''
         if event and event.code2str() == 'deleted':
@@ -59,7 +63,7 @@ class TemplateFile:
             logger.error('Genshi template error: %s' % terror)
         except genshi.input.ParseError, perror:
             logger.error('Genshi parse error: %s' % perror)
-            
+
     def bind_entry(self, entry, metadata):
         '''Build literal file information'''
         fname = entry.get('realname', entry.get('name'))
@@ -95,6 +99,7 @@ class TemplateFile:
         except AttributeError, err:
             logger.error('Genshi template loading error: %s' % err)
             raise Bcfg2.Server.Plugin.PluginExecutionError
+
 
 class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     '''

@@ -1,4 +1,4 @@
-import lxml.etree 
+import lxml.etree
 import Bcfg2.Server.Plugin
 import glob
 import os
@@ -41,7 +41,7 @@ class BBfile(Bcfg2.Server.Plugin.XMLFileBacked):
             else:
                 logger.error("%s" % lxml.etree.tostring(node))
             self.users[node.get('name')] = node.get('user',"").split(':')
-        
+
     def enforce_bootlinks(self):
         for mac, target in self.bootlinks:
             path = self.tftppath + '/' + mac
@@ -53,7 +53,7 @@ class BBfile(Bcfg2.Server.Plugin.XMLFileBacked):
                     os.symlink(target, path)
                 except:
                     logger.error("Failed to modify link %s" % path)
-        
+
 class BBDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
     __child__ = BBfile
 
@@ -71,21 +71,14 @@ class BB(Bcfg2.Server.Plugin.Plugin,
         self.store = BBDirectoryBacked(self.data, core.fam)
 
     def get_additional_data(self, metadata):
-        
+
         users = {}
         for user in self.store.entries['bb.xml'].users.get(metadata.hostname.split(".")[0], []):
             pubkeys = []
             for fname in glob.glob('/home/%s/.ssh/*.pub'%user):
                 pubkeys.append(open(fname).read())
-            
-            users[user] = pubkeys            
-        
-        return dict([('users', users), 
+
+            users[user] = pubkeys
+
+        return dict([('users', users),
                       ('macs', self.store.entries['bb.xml'].macs)])
-
-
-
-
-
-    
-

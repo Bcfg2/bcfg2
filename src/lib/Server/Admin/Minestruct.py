@@ -1,6 +1,9 @@
 '''Minestruct Admin Mode'''
+import getopt
+import lxml.etree
+import sys
+
 import Bcfg2.Server.Admin
-import lxml.etree, sys, getopt
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
     '''Pull extra entries out of statistics'''
@@ -30,7 +33,7 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
         except:
             self.log.error(self.__shorthelp__)
             raise SystemExit(1)
-        
+
         client = args[0]
         output = sys.stdout
         groups = []
@@ -65,4 +68,3 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
 
         tree = lxml.etree.ElementTree(root)
         tree.write(output, pretty_print=True)
-

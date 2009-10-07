@@ -1,12 +1,17 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
 __revision__ = '$Revision$'
 
+import binascii
+import copy
+import difflib
+import logging
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
+import lxml.etree
+import os
 from time import asctime, localtime, time, strptime, mktime
 
-import binascii, difflib, logging, lxml.etree, os, copy
-
 import Bcfg2.Server.Plugin
+
 
 class StatisticsStore(object):
     '''Manages the memory and file copy of statistics collected about client runs'''
@@ -23,7 +28,7 @@ class StatisticsStore(object):
     def WriteBack(self, force=0):
         '''Write statistics changes back to persistent store'''
         # FIXME switch to a thread writer
-        if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time()) ) \
+        if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time())) \
                 or force:
             try:
                 fout = open(self.filename + '.new', 'w')
@@ -53,11 +58,11 @@ class StatisticsStore(object):
     def updateStats(self, xml, client):
         '''Updates the statistics of a current node with new data'''
 
-        # Current policy: 
+        # Current policy:
         # - Keep anything less than 24 hours old
         #   - Keep latest clean run for clean nodes
         #   - Keep latest clean and dirty run for dirty nodes
-        newstat =  xml.find('Statistics')
+        newstat = xml.find('Statistics')
 
         if newstat.get('state') == 'clean':
             node_dirty = 0
@@ -98,7 +103,6 @@ class StatisticsStore(object):
         self.dirty = 1
         self.WriteBack(force=1)
 
-
     def isOlderThan24h(self, testTime):
         '''Helper function to determine if <time> string is older than 24 hours'''
         now = time()
@@ -106,6 +110,7 @@ class StatisticsStore(object):
         secondsPerDay = 60*60*24
 
         return (now-utime) > secondsPerDay
+
 
 class Statistics(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Statistics,
@@ -129,7 +134,7 @@ class Statistics(Bcfg2.Server.Plugin.Plugin,
                        in rt.findall('Statistics')])
         return [stat for stat in rt.findall('Statistics') \
                 if strptime(stat.get('time')) == maxtime][0]
-    
+
     def GetExtra(self, client):
         return [(entry.tag, entry.get('name')) for entry \
                 in self.FindCurrent(client).xpath('.//Extra/*')]

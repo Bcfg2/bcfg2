@@ -44,7 +44,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         except getopt.GetoptError, msg:
             print msg
 
-        rset = False
+        #FIXME: is this for --raw?
+        #rset = False
         hset = False
         bset = False
         kset = False

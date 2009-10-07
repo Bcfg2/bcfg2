@@ -8,6 +8,7 @@ import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
+
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.DirectoryBacked,
@@ -54,13 +55,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.logger.error(ioerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         self.Entries = {'ConfigFile':
-                        {'/etc/ssh/ssh_known_hosts':self.build_skn, 
-                         '/etc/ssh/ssh_host_dsa_key':self.build_hk,
-                         '/etc/ssh/ssh_host_rsa_key':self.build_hk,
-                         '/etc/ssh/ssh_host_dsa_key.pub':self.build_hk,
-                         '/etc/ssh/ssh_host_rsa_key.pub':self.build_hk,
-                         '/etc/ssh/ssh_host_key':self.build_hk,
-                         '/etc/ssh/ssh_host_key.pub':self.build_hk}}
+                        {'/etc/ssh/ssh_known_hosts': self.build_skn,
+                         '/etc/ssh/ssh_host_dsa_key': self.build_hk,
+                         '/etc/ssh/ssh_host_rsa_key': self.build_hk,
+                         '/etc/ssh/ssh_host_dsa_key.pub': self.build_hk,
+                         '/etc/ssh/ssh_host_rsa_key.pub': self.build_hk,
+                         '/etc/ssh/ssh_host_key': self.build_hk,
+                         '/etc/ssh/ssh_host_key.pub': self.build_hk}}
         self.ipcache = {}
         self.__skn = False
 
@@ -209,7 +210,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                                                      "H_%s" % client])
                 tempdir = tempfile.mkdtemp()
                 temploc = "%s/%s" % (tempdir, hostkey)
-                cmd = 'ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null' 
+                cmd = 'ssh-keygen -q -f %s -N "" -t %s -C root@%s < /dev/null'
                 os.system(cmd % (temploc, keytype, client))
                 open(fileloc, 'w').write(open(temploc).read())
                 open(publoc, 'w').write(open("%s.pub" % temploc).read())

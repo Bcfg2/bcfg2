@@ -147,7 +147,7 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
                 [entry.remove(inst) for inst in \
                  entry.findall('Instance') \
                  if inst.get('arch') not in arches]
-                
+
     def HandlesEntry(self, entry, metadata):
         return entry.tag == 'Package' and entry.get('name').split(':')[0] in self.Entries['Package'].keys()
 

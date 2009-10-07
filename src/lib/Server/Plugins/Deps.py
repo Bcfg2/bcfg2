@@ -1,13 +1,15 @@
 '''This plugin provides automatic dependency handling'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugin, lxml.etree
+import lxml.etree
+
+import Bcfg2.Server.Plugin
 
 class DNode(Bcfg2.Server.Plugin.INode):
     '''DNode provides supports for single predicate types for dependencies'''
     raw = {'Group':"lambda x:'%s' in x.groups and predicate(x)"}
     containers = ['Group']
-    
+
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
@@ -49,7 +51,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
     def HandleEvent(self, event):
         self.cache = {}
         Bcfg2.Server.Plugin.PrioDir.HandleEvent(self, event)
-        
+
     def validate_structures(self, metadata, structures):
         entries = []
         prereqs = []
@@ -67,7 +69,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
             prereqs = self.cache[(entries, gdata)]
         else:
             [src.Cache(metadata) for src in self.entries.values()]
-            
+
             toexamine = list(entries[:])
             while toexamine:
                 entry = toexamine.pop()
@@ -91,7 +93,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                             toexamine.append(prq)
                             prereqs.append(prq)
             self.cache[(entries, gdata)] = prereqs
-            
+
         newstruct = lxml.etree.Element("Independent")
         for tag, name in prereqs:
             try:

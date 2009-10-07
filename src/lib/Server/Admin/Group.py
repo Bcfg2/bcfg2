@@ -25,8 +25,8 @@ class Group(Bcfg2.Server.Admin.MetadataCore):
             attr_d = {}
             for i in args[2:]:
                 attr, val = i.split('=', 1)
-                if attr not in ['profile', 'public', 'default', 
-                               'name', 'auth', 'toolset', 'category', 
+                if attr not in ['profile', 'public', 'default',
+                               'name', 'auth', 'toolset', 'category',
                                'comment']:
                     print "Attribute %s unknown" % attr
                     raise SystemExit(1)
@@ -40,8 +40,8 @@ class Group(Bcfg2.Server.Admin.MetadataCore):
             attr_d = {}
             for i in args[2:]:
                 attr, val = i.split('=', 1)
-                if attr not in ['profile', 'public', 'default', 
-                                'name', 'auth', 'toolset', 'category', 
+                if attr not in ['profile', 'public', 'default',
+                                'name', 'auth', 'toolset', 'category',
                                 'comment']:
                     print "Attribute %s unknown" % attr
                     raise SystemExit(1)

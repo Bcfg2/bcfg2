@@ -25,7 +25,7 @@ class ForkedChild(Exception):
 
 class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     logger = logging.getLogger("Cobalt.Server.XMLRPCDispatcher")
-    def __init__ (self, allow_none, encoding):
+    def __init__(self, allow_none, encoding):
         try:
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
                                                                allow_none,
@@ -37,14 +37,14 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         self.allow_none = allow_none
         self.encoding = encoding
 
-    def _marshaled_dispatch (self, address, data):
+    def _marshaled_dispatch(self, address, data):
         method_func = None
         params, method = xmlrpclib.loads(data)
         try:
             if '.' not in method:
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
-            response = (response,)
+            response = (response, )
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
@@ -74,8 +74,8 @@ class SSLServer (SocketServer.TCPServer, object):
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
 
-    def __init__ (self, server_address, RequestHandlerClass, keyfile=None,
-                  certfile=None, reqCert=False, ca=None, timeout=None, protocol='xmlrpc/ssl'):
+    def __init__(self, server_address, RequestHandlerClass, keyfile=None,
+                 certfile=None, reqCert=False, ca=None, timeout=None, protocol='xmlrpc/ssl'):
 
         """Initialize the SSL-TCP server.
 
@@ -134,7 +134,7 @@ class SSLServer (SocketServer.TCPServer, object):
                                   ca_certs=self.ca, ssl_version=self.ssl_protocol)
         return sslsock, sockinfo
 
-    def _get_url (self):
+    def _get_url(self):
         port = self.socket.getsockname()[1]
         hostname = socket.gethostname()
         protocol = "https"
@@ -157,7 +157,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     """
     logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
 
-    def authenticate (self):
+    def authenticate(self):
         try:
             header = self.headers['Authorization']
         except KeyError:
@@ -175,7 +175,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         return self.server.instance.authenticate(cert, username,
                                                  password, client_address)
 
-    def parse_request (self):
+    def parse_request(self):
         """Extends parse_request.
 
         Optionally check HTTP authentication when parsing."""
@@ -245,11 +245,11 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     credentials -- valid credentials being used for authentication
     """
 
-    def __init__ (self, server_address, RequestHandlerClass=None,
-                  keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
-                  timeout=10,
-                  logRequests=False,
-                  register=True, allow_none=True, encoding=None):
+    def __init__(self, server_address, RequestHandlerClass=None,
+                 keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
+                 timeout=10,
+                 logRequests=False,
+                 register=True, allow_none=True, encoding=None):
 
         """Initialize the XML-RPC server.
 
@@ -283,7 +283,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         self.logger.info("service available at %s" % self.url)
         self.timeout = timeout
 
-    def _tasks_thread (self):
+    def _tasks_thread(self):
         try:
             while self.serve:
                 try:
@@ -295,26 +295,26 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         except:
             self.logger.error("tasks_thread failed", exc_info=1)
 
-    def server_close (self):
+    def server_close(self):
         SSLServer.server_close(self)
         self.logger.info("server_close()")
 
-    def _get_require_auth (self):
+    def _get_require_auth(self):
         return getattr(self.RequestHandlerClass, "require_auth", False)
-    def _set_require_auth (self, value):
+    def _set_require_auth(self, value):
         self.RequestHandlerClass.require_auth = value
     require_auth = property(_get_require_auth, _set_require_auth)
 
-    def _get_credentials (self):
+    def _get_credentials(self):
         try:
             return self.RequestHandlerClass.credentials
         except AttributeError:
             return dict()
-    def _set_credentials (self, value):
+    def _set_credentials(self, value):
         self.RequestHandlerClass.credentials = value
     credentials = property(_get_credentials, _set_credentials)
 
-    def register_instance (self, instance, *args, **kwargs):
+    def register_instance(self, instance, *args, **kwargs):
         XMLRPCDispatcher.register_instance(self, instance, *args, **kwargs)
         try:
             name = instance.name
@@ -328,7 +328,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                     self.register_function(fn, name=xmname)
         self.logger.info("serving %s at %s" % (name, self.url))
 
-    def serve_forever (self):
+    def serve_forever(self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
         self.task_thread = threading.Thread(target=self._tasks_thread)
@@ -351,14 +351,14 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         finally:
             self.logger.info("serve_forever() [stop]")
 
-    def shutdown (self):
+    def shutdown(self):
         """Signal that automatic service should stop."""
         self.serve = False
 
-    def _handle_shutdown_signal (self, *_):
+    def _handle_shutdown_signal(self, *_):
         self.shutdown()
 
-    def ping (self, *args):
+    def ping(self, *args):
         """Echo response."""
         self.logger.info("ping(%s)" % (", ".join([repr(arg) for arg in args])))
         return args

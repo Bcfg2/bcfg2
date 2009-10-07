@@ -75,14 +75,14 @@ os_list = [
           ]
 
 # Complete list of plugins
-plugin_list = ['Account', 'Base', 'Bundler', 'Cfg', 
-             'Decisions', 'Deps', 'Metadata', 'Packages', 
-             'Pkgmgr', 'Probes', 'Properties', 'Rules', 
-             'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr', 
+plugin_list = ['Account', 'Base', 'Bundler', 'Cfg',
+             'Decisions', 'Deps', 'Metadata', 'Packages',
+             'Pkgmgr', 'Probes', 'Properties', 'Rules',
+             'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr',
              'TCheetah', 'TGenshi']
 
 # Default list of plugins to use
-default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules', 
+default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
                 'Metadata', 'Base', 'Bundler']
 
 def gen_password(length):
@@ -188,13 +188,13 @@ class Init(Bcfg2.Server.Admin.Mode):
                 "(without echoing; leave blank for a random): ").strip()
         if len(newpassword) != 0:
             self.password = newpassword
-        
+
     def _prompt_server(self):
         """Ask for the server name"""
-        newserver = raw_input( "Input the server location [%s]: " % self.server_uri)
+        newserver = raw_input("Input the server location [%s]: " % self.server_uri)
         if newserver != '':
             self.server_uri = newserver
-        
+
     def _prompt_groups(self):
         """Create the groups.xml file"""
         prompt = '''Input base Operating System for clients:\n'''
@@ -241,15 +241,15 @@ class Init(Bcfg2.Server.Admin.Mode):
         '''Setup a new repo'''
         # Create the contents of the configuration file
         keypath = os.path.dirname(os.path.abspath(self.configfile))
-        confdata = config % ( 
-                        self.repopath, 
+        confdata = config % (
+                        self.repopath,
                         ','.join(self.opts['plugins']),
-                        self.opts['sendmail'], 
+                        self.opts['sendmail'],
                         self.opts['proto'],
-                        self.password, 
-                        keypath, 
-                        keypath, 
-                        self.server_uri 
+                        self.password,
+                        keypath,
+                        keypath,
+                        self.server_uri
                     )
 
         # Create the configuration file and SSL key
@@ -257,7 +257,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         create_key(keypath)
 
         # Create the repository
-        path = "%s/%s" % (self.repopath, 'etc') 
+        path = "%s/%s" % (self.repopath, 'etc')
         os.makedirs(path)
         self._init_plugins()
         print "Repository created successfuly in %s" % (self.repopath)

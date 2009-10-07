@@ -28,7 +28,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                                                  self.__usage__)
         self.log = False
         self.mode = 'interactive'
-        
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         try:
@@ -76,7 +76,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             for choice in choices:
                 print "Plugin returned choice:"
                 if id(choice) == id(choices[0]):
-                    print "(current entry)", 
+                    print "(current entry)",
                 if choice.all:
                     print " => global entry"
                 elif choice.group:

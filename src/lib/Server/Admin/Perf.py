@@ -15,12 +15,12 @@ class Perf(Bcfg2.Server.Admin.Mode):
     def __call__(self, args):
         output = [('Name', 'Min', 'Max', 'Mean', 'Count')]
         optinfo = {
+            'ca': Bcfg2.Options.CLIENT_CA
+            'certificate': Bcfg2.Options.CLIENT_CERT,
+            'key': Bcfg2.Options.SERVER_KEY,
+            'password': Bcfg2.Options.SERVER_PASSWORD,
             'server': Bcfg2.Options.SERVER_LOCATION,
             'user': Bcfg2.Options.CLIENT_USER,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'key': Bcfg2.Options.SERVER_KEY,
-            'certificate'     : Bcfg2.Options.CLIENT_CERT,
-            'ca'              : Bcfg2.Options.CLIENT_CA
             }
         setup = Bcfg2.Options.OptionParser(optinfo)
         setup.parse(sys.argv[2:])
@@ -35,4 +35,3 @@ class Perf(Bcfg2.Server.Admin.Mode):
             data = tuple(["%.06f" % (item) for item in value[:-1]] + [value[-1]])
             output.append((key, ) + data)
         self.print_table(output)
-

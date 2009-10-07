@@ -21,7 +21,7 @@ def print_text(text):
     ''' Add text to the output (which will need normalising '''
     charmap = {'<':'&lt;', '>':'&gt;', '&':'&amp;'}
     return ''.join([charmap.get(char, char) for char in text]) + '\n'
-        
+
 def xml_print(element, running_indent=0, indent=4):
     ''' Add an element and its children to the return string '''
     if (len(element.getchildren()) == 0) and (not element.text):
@@ -31,11 +31,11 @@ def xml_print(element, running_indent=0, indent=4):
         child_indent = running_indent + indent
         ret = (' ' * running_indent)
         ret += '<%s%s>\n' % (element.tag, print_attributes(element))
-        if element.text:                
+        if element.text:
             ret += (' '* child_indent) + print_text(element.text)
         for child in element.getchildren():
             ret += xml_print(child, child_indent, indent)
-            ret += (' ' * running_indent) +  '</%s>\n' % (element.tag)
+            ret += (' ' * running_indent) + '</%s>\n' % (element.tag)
         if element.tail:
             ret += (' ' * child_indent) + print_text(element.tail)
     return ret
@@ -141,7 +141,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
     '''setup logging for bcfg2 software'''
     if hasattr(logging, 'already_setup'):
-        return 
+        return
     # add the handler to the root logger
     if to_console:
         console = logging.StreamHandler(sys.stdout)
@@ -170,23 +170,23 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
     logging.root.setLevel(level)
     logging.already_setup = True
 
-def trace_process (**kwargs):
-    
+def trace_process(**kwargs):
+
     """Literally log every line of python code as it runs.
-    
+
     Keyword arguments:
     log -- file (name) to log to (default stderr)
     scope -- base scope to log to (default Cobalt)"""
-    
+
     file_name = kwargs.get("log", None)
     if file_name is not None:
         log_file = open(file_name, "w")
     else:
         log_file = sys.stderr
-    
+
     scope = kwargs.get("scope", "Cobalt")
-    
-    def traceit (frame, event, arg):
+
+    def traceit(frame, event, arg):
         if event == "line":
             lineno = frame.f_lineno
             filename = frame.f_globals["__file__"]
@@ -197,10 +197,10 @@ def trace_process (**kwargs):
             line = linecache.getline(filename, lineno)
             print >> log_file, "%s:%s: %s" % (name, lineno, line.rstrip())
         return traceit
-    
+
     sys.settrace(traceit)
 
-def log_to_stderr (logger_name, level=logging.INFO):
+def log_to_stderr(logger_name, level=logging.INFO):
     """Set up console logging."""
     try:
         logger = logging.getLogger(logger_name)
@@ -212,7 +212,7 @@ def log_to_stderr (logger_name, level=logging.INFO):
     handler.setFormatter(TermiosFormatter()) # investigate this formatter
     logger.addHandler(handler)
 
-def log_to_syslog (logger_name, level=logging.INFO, format='%(name)s[%(process)d]: %(message)s'):
+def log_to_syslog(logger_name, level=logging.INFO, format='%(name)s[%(process)d]: %(message)s'):
     """Set up syslog logging."""
     try:
         logger = logging.getLogger(logger_name)

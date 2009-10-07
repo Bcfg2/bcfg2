@@ -5,7 +5,6 @@ __revision__ = '$Revision$'
 
 import logging
 import sys
-from xmlrpclib import Fault
 
 import Bcfg2.Logger
 import Bcfg2.Options

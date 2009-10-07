@@ -15,15 +15,17 @@ except:
     logger.error("TCheetah: Failed to import Cheetah. Is it installed?")
     raise
 
+
 class TemplateFile:
     '''Template file creates Cheetah template structures for the loaded file'''
+
     def __init__(self, name, specific, encoding):
         self.name = name
         self.specific = specific
         self.encoding = encoding
         self.template = None
         self.searchlist = dict()
-    
+
     def handle_event(self, event):
         '''Handle all fs events for this template'''
         if event.code2str() == 'deleted':
@@ -36,7 +38,7 @@ class TemplateFile:
         except Cheetah.Parser.ParseError, perror:
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
-    
+
     def bind_entry(self, entry, metadata):
         '''Build literal file information'''
         self.template.metadata = metadata
@@ -45,11 +47,11 @@ class TemplateFile:
         self.searchlist['path'] = entry.get('realname', entry.get('name'))
         self.template.source_path = self.name
         self.searchlist['source_path'] = self.name
-        
+
         try:
             if type(self.template) == unicode:
                 entry.text = self.template
-            else :
+            else:
                 entry.text = unicode(str(self.template), self.encoding)
         except:
             (a, b, c) = sys.exc_info()

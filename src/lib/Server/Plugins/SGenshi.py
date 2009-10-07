@@ -1,13 +1,18 @@
 '''This module implements a templating generator based on Genshi'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugin, Bcfg2.Server.Plugins.TGenshi
-import lxml.etree, logging
 import genshi.template
+import lxml.etree
+import logging
+
+import Bcfg2.Server.Plugin
+import Bcfg2.Server.Plugins.TGenshi
 
 logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 
+
 class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
+
     def get_xml_value(self, metadata):
         if not hasattr(self, 'template'):
             logger.error("No parsed template information for %s" % (self.name))
@@ -17,10 +22,12 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
         data = stream.render('xml', strip_whitespace=False)
         return lxml.etree.XML(data)
 
+
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
+
     def __init__(self, path, fam, encoding):
         fpattern = '\S+\.xml'
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path, 
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
                                               SGenshiTemplateFile, encoding)
         fam.AddMonitor(path, self)
 
@@ -40,6 +47,7 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 logger.error("SGenshi: Failed to template file %s" % entry.name)
         return ret
 
+
 class SGenshi(SGenshiEntrySet,
               Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure):
@@ -58,5 +66,3 @@ class SGenshi(SGenshiEntrySet,
             logger.error("Failed to load %s repository; disabling %s" \
                          % (self.name, self.name))
             raise Bcfg2.Server.Plugin.PluginInitError
-        
-

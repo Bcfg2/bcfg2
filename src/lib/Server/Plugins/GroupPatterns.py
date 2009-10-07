@@ -1,5 +1,6 @@
+import lxml.etree
+import re
 
-import re, lxml.etree
 import Bcfg2.Server.Plugin
 
 class PackedDigitRange(object):

@@ -15,6 +15,7 @@ datafields = {'Package': ['version'],
               'Service': ['status'],
               'ConfigFile': ['owner', 'group', 'perms']}
 
+
 def build_snap_ent(entry):
     basefields = []
     if entry.tag in ['Package', 'Service']:
@@ -39,17 +40,19 @@ def build_snap_ent(entry):
             diff = binascii.a2b_base64(entry.get('current_bdiff'))
             state['contents'] = unicode( \
                 '\n'.join(difflib.restore(diff.split('\n'), 1)))
-                             
+
     state.update([(key, unicode(entry.get('current_' + key, entry.get(key)))) \
                   for key in datafields[entry.tag]])
     if entry.tag == 'ConfigFile' and entry.get('exists', 'true') == 'false':
         state = None
     return [desired, state]
 
+
 class Snapshots(Bcfg2.Server.Plugin.Statistics,
                 Bcfg2.Server.Plugin.Plugin):
     name = 'Snapshots'
     experimental = True
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Statistics.__init__(self)

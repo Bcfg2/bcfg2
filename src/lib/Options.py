@@ -22,6 +22,7 @@ DEFAULT_INSTALL_PREFIX = '/usr' #/usr
 class Option(object):
     cfpath = DEFAULT_CONFIG_LOCATION
     __cfp = False
+
     def getCFP(self):
         if not self.__cfp:
             self.__cfp = ConfigParser.ConfigParser()
@@ -36,7 +37,7 @@ class Option(object):
             return self.cook(value)
         else:
             return value
-    
+
     def __init__(self, desc, default, cmd=False, odesc=False,
                  env=False, cf=False, cook=False, long_arg=False):
         self.desc = desc
@@ -121,7 +122,7 @@ class OptionSet(dict):
     def __init__(self, *args):
         dict.__init__(self, *args)
         self.hm = self.buildHelpMessage()
-        
+
     def buildGetopt(self):
         return ''.join([opt.buildGetopt() for opt in list(self.values())])
 
@@ -191,7 +192,7 @@ MDATA_PARANOID = Option('Default ConfigFile paranoid setting',
 
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
-                           odesc='<repository path>' )
+                           odesc='<repository path>')
 SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
                         # default server plugins
                         default=[
@@ -299,7 +300,7 @@ LOGGING_FILE_PATH = Option('Set path of file log', default=None,
                            cmd='-o', odesc='<path>', cf=('logging', 'path'))
 
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
-                             cmd='-s', odesc='<default|disabled|build>') 
+                             cmd='-s', odesc='<default|disabled|build>')
 
 
 class OptionParser(OptionSet):

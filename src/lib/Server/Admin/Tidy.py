@@ -1,5 +1,8 @@
+import os
+import re
+import socket
+
 import Bcfg2.Server.Admin
-import re, os, socket
 
 class Tidy(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Clean up useless files in the repo"

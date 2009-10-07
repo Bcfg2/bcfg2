@@ -4,7 +4,6 @@
 from optparse import OptionParser
 from StringIO import StringIO
 import logging
-import sys
 import Bcfg2.Server.Core
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -39,10 +38,13 @@ def create_description():
 
 def main():
     Bcfg2.Logger.setup_logging('bcfg2-admin', to_console=True, level=40)
-    usage="Usage: %prog [options] MODE [args]"
+    usage = "Usage: %prog [options] MODE [args]"
     parser = OptionParser(usage=usage)
     parser.set_defaults(configfile=Bcfg2.Options.CFILE.default)
-    parser.add_option("-C", "--configfile", dest="configfile", help="Path to bcfg2.conf", metavar="FILE")
+    parser.add_option("-C", "--configfile",
+                      dest="configfile",
+                      help="Path to bcfg2.conf",
+                      metavar="FILE")
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
 

@@ -1,9 +1,17 @@
-import copy, gzip, lxml.etree, re, urllib2, logging
-import os, cPickle
-import Bcfg2.Server.Plugin, Bcfg2.Logger
+import cPickle
+import copy
+import gzip
+import logging
+import lxml.etree
+import os
+import re
+import urllib2
+
+import Bcfg2.Logger
+import Bcfg2.Server.Plugin
 
 # build sources.list?
-# caching for yum 
+# caching for yum
 
 class NoData(Exception):
     pass
@@ -86,7 +94,7 @@ class Source(object):
 
     def read_files(self):
         pass
-    
+
     def update(self):
         for url in self.urls:
             logger.info("Packages: Updating %s" % url)
@@ -102,7 +110,7 @@ class Source(object):
     def applies(self, metadata):
         return len([g for g in self.basegroups if g in metadata.groups]) != 0 and \
                len([g for g in metadata.groups if g in self.groups]) \
-               == len(self.groups) 
+               == len(self.groups)
 
     def get_arches(self, metadata):
         return ['global'] + [a for a in self.arches if a in metadata.groups]
@@ -219,7 +227,7 @@ class YUMSource(Source):
     fl = '{http://linux.duke.edu/metadata/filelists}'
     basegroups = ['redhat', 'centos']
     ptype = 'yum'
-    
+
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         Source.__init__(self, basepath, url, version, arches, components,
                         groups, rawurl)
@@ -294,7 +302,7 @@ class YUMSource(Source):
                 continue
             self.packages[key] = self.packages['global'].difference(self.packages[key])
         self.save_state()
-        
+
     def parse_filelist(self, data, arch):
         for pkg in data.findall(self.fl + 'package'):
             for fentry in [fe for fe in pkg.findall(self.fl + 'file') \
@@ -325,7 +333,7 @@ class YUMSource(Source):
                 if entry.get('name').startswith('/'):
                     self.needed_paths.add(entry.get('name'))
             pro = pdata.find(self.rp + 'provides')
-            if pro != None: 
+            if pro != None:
                 for entry in pro.getchildren():
                     prov = entry.get('name')
                     if prov not in self.provides[arch]:
@@ -343,7 +351,7 @@ class YUMSource(Source):
         arches = [a for a in self.arches if a in metadata.groups]
         if not arches:
             raise NoData
-        if required in self.provides['global']: 
+        if required in self.provides['global']:
             ret.update(Source.get_provides(self, metadata, required))
         elif required in self.provides[arches[0]]:
             ret.update(Source.get_provides(self, metadata, required))
@@ -363,7 +371,7 @@ class YUMSource(Source):
 class APTSource(Source):
     basegroups = ['debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
-    
+
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
         self.cachefile = self.escape_url(self.url) + '.data'
@@ -478,7 +486,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     name = 'Packages'
     experimental = True
     __rmi__ = ['Refresh']
-    
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
@@ -517,7 +525,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         entry.set('version', 'auto')
         for source in self.sources:
             if [x for x in metadata.groups if x in source.basegroups]:
-                entry.set('type', source.ptype)                
+                entry.set('type', source.ptype)
 
     def complete(self, meta, packages, debug=False):
         '''Build the transitive closure of all package dependencies

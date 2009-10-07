@@ -11,7 +11,7 @@ class OhaiCache(object):
 
     def __setitem__(self, item, value):
         self.cache[item] = json.loads(value)
-        file("%s/%s.json" % (self.dirname, item), 'w').write(value)        
+        file("%s/%s.json" % (self.dirname, item), 'w').write(value)
 
     def __getitem__(self, item):
         if item not in self.cache:

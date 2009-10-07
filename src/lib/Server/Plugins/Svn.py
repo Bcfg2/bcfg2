@@ -6,6 +6,7 @@ import Bcfg2.Server.Plugin
 import logging
 logger = logging.getLogger('Bcfg2.Plugins.Svn')
 
+
 class Svn(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
     name = 'Svn'
@@ -42,4 +43,3 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
             logger.error('''Ran command "svn info %s"''' % (self.datastore))
             logger.error("Got output: %s" % data)
             raise Bcfg2.Server.Plugin.PluginInitError
-

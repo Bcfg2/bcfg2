@@ -1,11 +1,14 @@
-from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, DateTime, UnicodeText, desc
+from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, \
+                       DateTime, UnicodeText, desc
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
+
 class Uniquer(object):
     force_rt = True
+
     @classmethod
     def by_value(cls, session, **kwargs):
         if cls.force_rt:
@@ -22,6 +25,7 @@ class Uniquer(object):
 
 Base = declarative_base()
 
+
 class Administrator(Uniquer, Base):
     __tablename__ = 'administrator'
     id = Column(Integer, primary_key=True)
@@ -36,6 +40,7 @@ admin_group = Table('admin_group', Base.metadata,
                     Column('admin_id', Integer, ForeignKey('administrator.id')),
                     Column('group_id', Integer, ForeignKey('group.id')))
 
+
 class Client(Uniquer, Base):
     __tablename__ = 'client'
     id = Column(Integer, primary_key=True)
@@ -46,12 +51,14 @@ class Client(Uniquer, Base):
     online = Column(Boolean, default=True)
     online_ts = Column(DateTime)
 
+
 class Group(Uniquer, Base):
     __tablename__ = 'group'
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(32), unique=True)
     admins = relation("Administrator", secondary=admin_group,
                       backref='groups')
+
 
 class ConnectorKeyVal(Uniquer, Base):
     __tablename__ = 'connkeyval'
@@ -67,6 +74,7 @@ meta_group = Table('meta_group', Base.metadata,
 meta_conn = Table('meta_conn', Base.metadata,
                   Column('metadata_id', Integer, ForeignKey('metadata.id')),
                   Column('connkeyval_id', Integer, ForeignKey('connkeyval.id')))
+
 
 class Metadata(Base):
     __tablename__ = 'metadata'
@@ -96,6 +104,7 @@ class Metadata(Base):
                                                           value=unicode(value)))
         return m
 
+
 class Package(Base, Uniquer):
     __tablename__ = 'package'
     id = Column(Integer, primary_key=True)
@@ -104,13 +113,15 @@ class Package(Base, Uniquer):
     version = Column(Unicode(16))
     verification_status = Column(Boolean)
 
+
 class CorrespondenceType(object):
     mtype = Package
+
     @classmethod
     def from_record(cls, mysession, record):
         (mod, corr, name, s_dict, e_dict) = record
         if not s_dict:
-            start=None
+            start = None
         else:
             start = cls.mtype.by_value(mysession, name=name, **s_dict)
         if s_dict != e_dict:
@@ -118,6 +129,7 @@ class CorrespondenceType(object):
         else:
             end = start
         return cls(start=start, end=end, modified=mod, correct=corr)
+
 
 class PackageCorrespondence(Base, CorrespondenceType):
     mtype = Package
@@ -134,12 +146,14 @@ package_snap = Table('package_snap', Base.metadata,
                      Column('ppair_id', Integer, ForeignKey('package_pair.id')),
                      Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
+
 class Service(Base, Uniquer):
     __tablename__ = 'service'
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(16))
     type = Column(Unicode(12))
     status = Column(Boolean)
+
 
 class ServiceCorrespondence(Base, CorrespondenceType):
     mtype = Service
@@ -156,6 +170,7 @@ service_snap = Table('service_snap', Base.metadata,
                      Column('spair_id', Integer, ForeignKey('service_pair.id')),
                      Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
+
 class File(Base, Uniquer):
     __tablename__ = 'file'
     id = Column(Integer, primary_key=True)
@@ -165,6 +180,7 @@ class File(Base, Uniquer):
     group = Column(Unicode(16))
     perms = Column(Integer(5))
     contents = Column(UnicodeText)
+
 
 class FileCorrespondence(Base, CorrespondenceType):
     mtype = File
@@ -193,6 +209,7 @@ extra_service_snap = Table('extra_service_snap', Base.metadata,
                        Column('service_id', Integer, ForeignKey('service.id')),
                        Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
 
+
 class Action(Base):
     __tablename__ = 'action'
     id = Column(Integer, primary_key=True)
@@ -203,6 +220,7 @@ class Action(Base):
 action_snap = Table('action_snap', Base.metadata,
                     Column('action_id', Integer, ForeignKey('action.id')),
                     Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+
 
 class Snapshot(Base):
     __tablename__ = 'snapshot'

@@ -160,17 +160,17 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
         return u.close()
 
-def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None,
-                    allowedServerCNs=None, timeout=90):
-    
+def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
+                   allowedServerCNs=None, timeout=90):
+
     """Constructs proxies to components.
-    
+
     Arguments:
     component_name -- name of the component to connect to
-    
+
     Additional arguments are passed to the ServerProxy constructor.
     """
-    
+
     if user and password:
         method, path = urlparse.urlparse(url)[:2]
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
@@ -178,4 +178,3 @@ def ComponentProxy (url, user=None, password=None, key=None, cert=None, ca=None,
         newurl = url
     ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs, timeout=timeout)
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
-

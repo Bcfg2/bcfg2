@@ -15,6 +15,7 @@ COMPAT_DICT = {'configfile': 'ConfigFile',
                'permissions': 'Permissions',
                'symlink': 'SymLink'}
 
+
 class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.GoalValidator):
     name = 'POSIXCompat'

@@ -90,7 +90,7 @@ class FileMonitor(object):
 
 class FamFam(object):
     '''The fam object is a set of callbacks for file alteration events (FAM support)'''
-    
+
     def __init__(self):
         object.__init__(self)
         self.fm = _fam.open()
@@ -168,7 +168,7 @@ class Fam(FileMonitor):
        The fam object is a set of callbacks for
        file alteration events (FAM support)
     '''
-    
+
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug)
         self.fm = _fam.open()
@@ -198,7 +198,7 @@ class Pseudo(FileMonitor):
        The fam object is a set of callbacks for
        file alteration events (static monitor support)
     '''
-    
+
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug=False)
         self.pending_events = []
@@ -228,7 +228,8 @@ class Pseudo(FileMonitor):
 
 
 try:
-    from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, GAMChanged, GAMDeleted, GAMMoved
+    from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, \
+                      GAMChanged, GAMDeleted, GAMMoved
 
     class GaminEvent(Event):
         '''
