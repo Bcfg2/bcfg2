@@ -15,7 +15,7 @@ class Perf(Bcfg2.Server.Admin.Mode):
     def __call__(self, args):
         output = [('Name', 'Min', 'Max', 'Mean', 'Count')]
         optinfo = {
-            'ca': Bcfg2.Options.CLIENT_CA
+            'ca': Bcfg2.Options.CLIENT_CA,
             'certificate': Bcfg2.Options.CLIENT_CERT,
             'key': Bcfg2.Options.SERVER_KEY,
             'password': Bcfg2.Options.SERVER_PASSWORD,
