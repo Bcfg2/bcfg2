@@ -3,6 +3,7 @@
 __revision__ = '$Revision$'
 
 import cmd
+import errno
 import logging
 import lxml.etree
 import os
@@ -21,6 +22,14 @@ logger = logging.getLogger('bcfg2-info')
 class dummyError(Exception):
     pass
 
+class ConfigFileNotBuilt(Exception):
+    ''' Thrown when ConfigFile entry contains no content'''
+    def __init__(self, value):
+        Exception.__init__(self)
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
 def printTabular(rows):
     '''print data in tabular format'''
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
@@ -36,6 +45,28 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats = pstats.Stats(trace)
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
+
+def write_config_file(outputdir, cfg):
+    '''Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+    in the appropriate directory under the output directory.'''
+    name = cfg.get('name')
+
+    # directory creation
+    try:
+        os.makedirs(os.path.dirname(outputdir + name))
+    except OSError,err:
+        if err.errno != errno.EEXIST:
+            raise
+    except:
+        raise
+
+    # write config file
+    config_file = open(outputdir + name, "w" )
+    try:
+        config_file.write(cfg.text)
+    except: # plugin throw an exception and therefore there is no content => None
+        raise ConfigFileNotBuilt(name)
+    config_file.close()
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
@@ -84,6 +115,7 @@ Usage: [quit|exit]"""
         '''print out usage info'''
         print 'Commands:'
         print 'build <hostname> <filename> - build config for hostname, writing to filename'
+        print 'builddir <hostname> <dirname> - build config for hostname, writing separate files to dirname'
         print 'buildall <directory> - build configs for all clients in directory'
         print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
         print 'bundles - print out group/bundle information'
@@ -130,6 +162,55 @@ Usage: [quit|exit]"""
             output.close()
         else:
             print('Usage: build [-f] <hostname> <output file>')
+
+    def help_builddir(self):
+        '''Display help for builddir command'''
+        print('Usage: builddir [-f] <hostname> <output dir>')
+        print('')
+        print('Generates a config for client <hostname> and writes the')
+        print('individual configuration files out separately in a tree')
+        print('under <output dir>.  The <output dir> directory must be')
+        print('rooted under /tmp unless the -f argument is provided, in')
+        print('which case it can be located anywhere.')
+        print('')
+        print('NOTE: Currently only handles ConfigFile entries and writes')
+        print('all content with the default owner and permissions.  These')
+        print('could be much more permissive than would be created by the')
+        print('bcfg2 client itself.')
+
+    def do_builddir(self, args):
+        '''build client configuration as separate files within a dir'''
+        alist = args.split()
+        path_force = False
+        if '-f' in args:
+            alist.remove('-f')
+            path_force = True
+        if len(alist) == 2:
+            client, odir = alist
+            if not odir.startswith('/tmp') and not path_force:
+                print("Refusing to write files outside of /tmp without -f option")
+                return
+            client_config = self.BuildConfiguration(client)
+            if client_config.tag == 'error':
+                print("Building client configuration failed.")
+                return
+
+            # handle <ConfigFile> entries
+            for configfile in [cfile for cfile in client_config.findall(".//ConfigFile")]:
+                try:
+                    write_config_file(odir, configfile)
+                except ConfigFileNotBuilt, ex:
+                    print("Warning: No file content generated for ConfigFile %s!" % ex)
+                    pass
+                except Exception, ex:
+                    print("unknown error, I give up: %s" %ex)
+                    return
+
+            print("Config for %s written to %s" % (client, odir))
+
+        else:
+            print('Error: Incorrect number of parameters')
+            self.help_builddir()
 
     def do_buildall(self, args):
         if len(args.split()) != 1:
