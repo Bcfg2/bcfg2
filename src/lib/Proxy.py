@@ -15,7 +15,19 @@ from xmlrpclib import _Method
 import httplib
 import logging
 import socket
-import ssl
+
+# The ssl module is provided by either Python 2.6 or a separate ssl
+# package that works on older versions of Python (see
+# http://pypi.python.org/pypi/ssl).  If neither can be found, look for
+# M2Crypto instead.
+try:
+    import ssl
+    SSL_LIB = 'py26_ssl'
+except ImportError, e:
+    from M2Crypto import SSL
+    SSL_LIB = 'm2crypto'
+
+
 import string
 import sys
 import time
@@ -23,6 +35,7 @@ import urlparse
 import xmlrpclib
 
 version = string.split(string.split(sys.version)[0], ".")
+has_py23 = map(int, version) >= [2, 3]
 has_py26 = map(int, version) >= [2, 6]
 
 __all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
@@ -63,8 +76,57 @@ class RetryMethod(_Method):
 xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
+
+    """Extension of HTTPConnection that implements SSL and related behaviors"""
+
+    logger = logging.getLogger('Bcfg2.Proxy.SSLHTTPConnection')
+
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
                  cert=None, ca=None, scns=None, protocol='xmlrpc/ssl'):
+        """Initializes the `httplib.HTTPConnection` object and stores security
+        parameters
+
+        Parameters
+        ----------
+        host : string
+            Name of host to contact
+        port : int, optional
+            Port on which to contact the host.  If none is specified,
+            the default port of 80 will be used unless the `host`
+            string has a port embedded in the form host:port.
+        strict : Boolean, optional
+            Passed to the `httplib.HTTPConnection` constructor and if
+            True, causes the `BadStatusLine` exception to be raised if
+            the status line cannot be parsed as a valid HTTP 1.0 or
+            1.1 status.
+        timeout : int, optional
+            Causes blocking operations to timeout after `timeout`
+            seconds.
+        key : string, optional
+            The file system path to the local endpoint's SSL key.  May
+            specify the same file as `cert` if using a file that
+            contains both.  See
+            http://docs.python.org/library/ssl.html#ssl-certificates
+            for details.  Required if using xmlrpc/ssl with client
+            certificate authentication.
+        cert : string, optional
+            The file system path to the local endpoint's SSL
+            certificate.  May specify the same file as `cert` if using
+            a file that contains both.  See
+            http://docs.python.org/library/ssl.html#ssl-certificates
+            for details.  Required if using xmlrpc/ssl with client
+            certificate authentication.
+        ca : string, optional
+            The file system path to a set of concatenated certificate
+            authority certs, which are used to validate certificates
+            passed from the other end of the connection.
+        scns : array-like, optional
+            List of acceptable server commonNames.  The peer cert's
+            common name must appear in this list, otherwise the
+            connect() call will throw a `CertificateError`.
+        protocol : {'xmlrpc/ssl', 'xmlrpc/tlsv1'}, optional
+            Communication protocol to use.
+        """
         if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
         else:
@@ -73,34 +135,86 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.cert = cert
         self.ca = ca
         self.scns = scns
-        if self.ca:
-            self.ca_mode = ssl.CERT_REQUIRED
-        else:
-            self.ca_mode = ssl.CERT_NONE
-        if protocol == 'xmlrpc/ssl':
-            self.ssl_protocol = ssl.PROTOCOL_SSLv23
-        elif protocol == 'xmlrpc/tlsv1':
-            self.ssl_protocol = ssl.PROTOCOL_TLSv1
-        else:
-            self.logger.error("Unknown protocol %s" % (protocol))
-            raise Exception, "unknown protocol %s" % protocol
-
+        self.protocol = protocol
+        self.timeout = timeout
 
     def connect(self):
+        """Initiates a connection using previously set attributes"""
+        if SSL_LIB == 'py26_ssl':
+            self._connect_py26ssl()
+        elif SSL_LIB == 'm2crypto':
+            self._connect_m2crypto()
+        else:
+            raise Exception, "No SSL module support"
+
+
+    def _connect_py26ssl(self):
+        """Initiates a connection using the ssl module"""
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if has_py26:
+        if self.protocol == 'xmlrpc/ssl':
+            ssl_protocol_ver = ssl.PROTOCOL_SSLv23
+        elif self.protocol == 'xmlrpc/tlsv1':
+            ssl_protocol_ver = ssl.PROTOCOL_TLSv1
+        else:
+            self.logger.error("Unknown protocol %s" % (self.protocol))
+            raise Exception, "unknown protocol %s" % self.protocol
+        if self.ca:
+            other_side_required = ssl.CERT_REQUIRED
+        else:
+            other_side_required = ssl.CERT_NONE
+            self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
+        if self.cert and not self.key:
+            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+            self.cert = None
+        if self.key and not self.cert:
+            self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
+            self.key = None
+
+        if has_py23:
             rawsock.settimeout(self.timeout)
-        self.sock = ssl.SSLSocket(rawsock, cert_reqs=self.ca_mode,
+        self.sock = ssl.SSLSocket(rawsock, cert_reqs=other_side_required,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
-                                  ssl_version=self.ssl_protocol)
+                                  ssl_version=ssl_protocol_ver)
         self.sock.connect((self.host, self.port))
-        pc = self.sock.getpeercert()
-        if pc and self.scns:
-            scn = [x[0][1] for x in pc['subject'] if x[0][0] == 'commonName'][0]
+        peer_cert = self.sock.getpeercert()
+        if peer_cert and self.scns:
+            scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
             if scn not in self.scns:
                 raise CertificateError, scn
         self.sock.closeSocket = True
+
+    def _connect_m2crypto(self):
+        """Initiates a connection using the M2Crypto module"""
+
+        if self.protocol == 'xmlrpc/ssl':
+            ctx = SSL.Context('sslv23')
+        elif self.protocol == 'xmlrpc/tlsv1':
+            ctx = SSL.Context('tlsv1')
+        else:
+            self.logger.error("Unknown protocol %s" % (self.protocol))
+            raise Exception, "unknown protocol %s" % self.protocol
+
+        if self.ca:
+            # Use the certificate authority to validate the cert
+            # presented by the server
+            ctx.set_verify(SSL.verify_peer | SSL.verify_fail_if_no_peer_cert, depth=9)
+            if ctx.load_verify_locations(self.ca) != 1:
+                raise Exception('No CA certs')
+        else:
+            self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
+
+        if self.cert and self.key:
+            # A cert/key is defined, use them to support client
+            # authentication to the server
+            ctx.load_cert(self.cert, self.key)
+        elif self.cert:
+            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+        elif self.key:
+            self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
+
+        self.sock = SSL.Connection(ctx)
+        self.sock.connect((self.host, self.port)) # automatically checks cert matches host
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
