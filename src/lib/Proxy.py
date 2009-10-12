@@ -34,7 +34,7 @@ import time
 import urlparse
 import xmlrpclib
 
-version = string.split(string.split(sys.version)[0], ".")
+version = sys.version_info[:2]
 has_py23 = map(int, version) >= [2, 3]
 has_py26 = map(int, version) >= [2, 6]
 
