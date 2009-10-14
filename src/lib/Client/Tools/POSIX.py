@@ -611,8 +611,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                             return False
 
         # If we get here, then the parent directory should exist
-        if entry.get("paranoid", False) and self.setup.get("paranoid", False) \
-               and not (entry.get('current_exists', 'true') == 'false'):
+        if (entry.get("paranoid", False) == 'true') and \
+           self.setup.get("paranoid", False) and not \
+           (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             # current list of backups for this ConfigFile
             bkuplist = [f for f in os.listdir(self.ppath) if
