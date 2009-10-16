@@ -31,10 +31,13 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+        # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name
         try:
             self.noaskfile.write(noask)
+            # flush admin file contents to disk
+            self.noaskfile.flush()
             self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)), \
                             self.pkgtool[1])
         except:
@@ -46,7 +49,12 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         # Build list of packages
         lines = self.cmd.run("/usr/bin/pkginfo -x")[1]
         while lines:
-            version = lines.pop().split()[1]
+	    # Splitting on whitespace means that packages with spaces in
+	    # their version numbers don't work right.  Found this with
+	    # IBM TSM software with package versions like
+	    #		"Version 6 Release 1 Level 0.0"
+	    # Should probably be done with a regex but this works.
+            version = lines.pop().split(') ')[1]
             pkg = lines.pop().split()[0]
             self.installed[pkg] = version
 
