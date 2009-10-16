@@ -1,7 +1,8 @@
-#!/usr/bin/python -i
+#!/usr/bin/python
 '''This tool loads the Bcfg2 core into an interactive debugger'''
 __revision__ = '$Revision$'
 
+from code import InteractiveConsole
 import cmd
 import errno
 import logging
@@ -11,6 +12,7 @@ import profile
 import pstats
 import sys
 import tempfile
+
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
@@ -21,6 +23,38 @@ logger = logging.getLogger('bcfg2-info')
 
 class dummyError(Exception):
     pass
+
+class debug_fcacher:
+    "Cache the stdout text so we can analyze it before returning it"
+    def __init__(self): self.reset()
+    def reset(self): self.out = []
+    def write(self, line): self.out.append(line)
+    def flush(self):
+        output = '\n'.join(self.out)
+        self.reset()
+        return output
+
+class debug_shell(InteractiveConsole):
+    "Wrapper around Python that can filter input/output to the shell"
+    def __init__(self, mylocals):
+        self.stdout = sys.stdout
+        self.cache = debug_fcacher()
+        InteractiveConsole.__init__(self, mylocals)
+
+    def get_output(self): sys.stdout = self.cache
+    def return_output(self): sys.stdout = self.stdout
+
+    def push(self, line):
+        self.get_output()
+        # you can filter input here by doing something like
+        # line = filter(line)
+        rc = InteractiveConsole.push(self, line)
+        self.return_output()
+        output = self.cache.flush()
+        # you can filter the output here by doing something like
+        # output = filter(output)
+        sys.stdout.write(output)
+        return rc
 
 class ConfigFileNotBuilt(Exception):
     ''' Thrown when ConfigFile entry contains no content'''
@@ -37,7 +71,7 @@ def printTabular(rows):
     fstring = (" %%-%ss |" * len(cmax)) % cmax
     fstring = ('|'.join([" %%-%ss "] * len(cmax))) % cmax
     print(fstring % rows[0])
-    print((sum(cmax)  + (len(cmax) * 2) + (len(cmax) - 1)) * '=')
+    print((sum(cmax) + (len(cmax) * 2) + (len(cmax) - 1)) * '=')
     for row in rows[1:]:
         print(fstring % row)
 
@@ -54,14 +88,14 @@ def write_config_file(outputdir, cfg):
     # directory creation
     try:
         os.makedirs(os.path.dirname(outputdir + name))
-    except OSError,err:
+    except OSError, err:
         if err.errno != errno.EEXIST:
             raise
     except:
         raise
 
     # write config file
-    config_file = open(outputdir + name, "w" )
+    config_file = open(outputdir + name, "w")
     try:
         config_file.write(cfg.text)
     except: # plugin throw an exception and therefore there is no content => None
@@ -83,16 +117,20 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
-        
+
     def do_loop(self):
         self.cont = True
         while self.cont:
             try:
-                self.cmdloop()
+                self.cmdloop('Welcome to bcfg2-info\n'
+                             'Type "help" for more information')
             except SystemExit, val:
                 raise
             except Bcfg2.Server.Plugin.PluginExecutionError:
                 continue
+            except KeyboardInterrupt:
+                print("Ctrl-C pressed exiting...")
+                self.do_exit([])
             except dummyError:
                 continue
             except:
@@ -100,12 +138,15 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_debug(self, _):
         self.cont = False
-        print("dropping to python interpreter; run loop.do_loop() to resume")
-        raise dummyError
+        print("dropping to python interpreter; press ^D to resume")
+        sh = debug_shell(locals())
+        sh.interact()
 
     def do_quit(self, _):
         """Exit program.
 Usage: [quit|exit]"""
+        for plugin in self.plugins.values():
+            plugin.shutdown()
         os._exit(0)
 
     do_EOF = do_quit
@@ -141,7 +182,7 @@ Usage: [quit|exit]"""
     def do_version(self, _):
         '''print out code version'''
         print(__revision__)
-        
+
     def do_build(self, args):
         '''build client configuration'''
         alist = args.split()
@@ -397,7 +438,7 @@ Usage: [quit|exit]"""
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
     optinfo = {
-            'configfile': Bcfg2.Options.CFILE, 
+            'configfile': Bcfg2.Options.CFILE,
             'help': Bcfg2.Options.HELP,
               }
     optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
