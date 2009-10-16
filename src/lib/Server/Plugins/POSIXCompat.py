@@ -6,9 +6,7 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
-# FIXME: We will need this mapping if we decide to change the
-#        specification to use lowercase types for new POSIX entry types
-COMPAT_DICT = {'configfile': 'ConfigFile',
+COMPAT_DICT = {'file': 'ConfigFile',
                'device': 'device',
                'directory': 'Directory',
                'nonexistent': 'nonexistent',

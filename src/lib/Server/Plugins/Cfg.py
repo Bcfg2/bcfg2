@@ -86,7 +86,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         basefile = used.pop(0)
         data = basefile.data
         if entry.tag == 'Path':
-            entry.set('type', 'configfile')
+            entry.set('type', 'file')
         for delta in used:
             data = data.strip()
             data = process_delta(data, delta)

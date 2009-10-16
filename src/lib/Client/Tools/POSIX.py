@@ -92,7 +92,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                    ('Path', 'device'),
                    ('Path', 'Directory'),
                    ('Path', 'HardLink'),
-                   ('Path', 'Perms'),
+                   ('Path', 'Permissions'),
                    ('Path', 'SymLink'),
                    ('Path', 'nonexistent'),
                    ('Permissions', None),
