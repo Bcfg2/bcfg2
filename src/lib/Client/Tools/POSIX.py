@@ -89,12 +89,17 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     __handles__ = [('ConfigFile', None),
                    ('Directory', None),
                    ('Path', 'ConfigFile'),
-                   ('Path', 'device'),
                    ('Path', 'Directory'),
                    ('Path', 'HardLink'),
                    ('Path', 'Permissions'),
                    ('Path', 'SymLink'),
+                   ('Path', 'device'),
+                   ('Path', 'directory'),
+                   ('Path', 'file'),
+                   ('Path', 'hardlink'),
                    ('Path', 'nonexistent'),
+                   ('Path', 'permissions'),
+                   ('Path', 'symlink'),
                    ('Permissions', None),
                    ('SymLink', None)]
     __req__ = {'ConfigFile': ['name', 'owner', 'group', 'perms'],
@@ -324,7 +329,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 return False
         return self.InstallPermissions(entry)
 
-    def VerifyHardLink(self, entry, _):
+    def VerifyhardLink(self, entry, _):
         '''Verify HardLink Entry'''
         try:
             if os.path.samefile(entry.get('name'), entry.get('to')):
@@ -342,7 +347,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                        entry.get('to')))
             return False
 
-    def InstallHardLink(self, entry):
+    def InstallhardLink(self, entry):
         '''Install HardLink Entry'''
         self.logger.info("Installing Hardlink %s" % (entry.get('name')))
         if os.path.lexists(entry.get('name')):
@@ -677,6 +682,46 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             else:
                 print(err)
             return False
+
+    def Verifydirectory(self, entry, _):
+        ret = getattr(self, 'VerifyDirectory')
+        return ret(entry, _)
+
+    def Installdirectory(self, entry):
+        ret = getattr(self, 'InstallDirectory')
+        return ret(entry)
+
+    def Verifyfile(self, entry, _):
+        ret = getattr(self, 'VerifyConfigFile')
+        return ret(entry, _)
+
+    def Installfile(self, entry):
+        ret = getattr(self, 'InstallConfigFile')
+        return ret(entry)
+
+    def Verifynonexistent(self, entry, _):
+        # FIXME: not implemented
+        return True
+
+    def Installnonexistent(self, entry):
+        # FIXME: not implemented
+        return True
+
+    def Verifypermissions(self, entry, _):
+        ret = getattr(self, 'VerifyPermissions')
+        return ret(entry, _)
+
+    def Installpermissions(self, entry):
+        ret = getattr(self, 'InstallPermissions')
+        return ret(entry)
+
+    def Verifysymlink(self, entry, _):
+        ret = getattr(self, 'VerifySymLink')
+        return ret(entry, _)
+
+    def Installsymlink(self, entry):
+        ret = getattr(self, 'InstallSymLink')
+        return ret(entry)
 
     def InstallPath(self, entry):
         ret = getattr(self, 'Install%s' % entry.get('type'))
