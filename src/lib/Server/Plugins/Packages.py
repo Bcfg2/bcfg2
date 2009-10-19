@@ -150,7 +150,7 @@ class Source(object):
             item = work.pop()
             seen.add(item)
             if debug:
-                logger.debug("Handling pkg %s" % item)
+                logger.debug("Handling item %s" % item)
             item_is_pkg = self.is_package(metadata, item)
             try:
                 pset = self.get_provides(metadata, item)
@@ -180,7 +180,7 @@ class Source(object):
                     if debug:
                         logger.debug("Using package %s for requirement %s" \
                                      % (provider, item))
-                    work.update(pset.difference(newpkg))
+                    newpkg.add(provider)
                     # add deps for provider
                     try:
                         newdeps = set(self.get_deps(metadata, provider))
@@ -217,6 +217,7 @@ class Source(object):
                         unknown.add(item)
             else:
                 unknown.add(item)
+            logger.debug("===> Removing entries %s" % (work.intersection(seen)))
             work.difference_update(seen)
         return (newpkg, unknown)
 
