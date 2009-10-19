@@ -217,7 +217,6 @@ class Source(object):
                         unknown.add(item)
             else:
                 unknown.add(item)
-            logger.debug("===> Removing entries %s" % (work.intersection(seen)))
             work.difference_update(seen)
         return (newpkg, unknown)
 
