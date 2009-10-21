@@ -158,6 +158,10 @@ class Source(object):
             except NoData:
                 item_is_virt = False
 
+            #print "%s:%s:%s" % (item, item_is_pkg, item_is_virt)
+            if (not item_is_pkg) and (not item_is_virt):
+                unknown.add(item)
+                continue
             if item_is_pkg and not item_is_virt:
                 newpkg.add(item)
                 try:

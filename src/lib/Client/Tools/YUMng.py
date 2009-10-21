@@ -78,10 +78,9 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.yb = yum.YumBase()
         if hasattr(self.yb, 'doGenericSetup'):
             self.yb.doGenericSetup()
-        else:
-            self.yb.doConfigSetup()
-            self.yb.doTsSetup()
-            self.yb.doRpmDBSetup()
+        self.yb.doConfigSetup()
+        self.yb.doTsSetup()
+        self.yb.doRpmDBSetup()
         yup = self.yb.doPackageLists(pkgnarrow='updates')
         if hasattr(self.yb.rpmdb, 'pkglist'):
             yinst = self.yb.rpmdb.pkglist
