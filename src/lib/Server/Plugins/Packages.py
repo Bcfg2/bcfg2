@@ -130,99 +130,93 @@ class Source(object):
     def is_package(self, metadata, _):
         return False
 
-    def complete(self, metadata, packages, unresolved, debug=False):
-        '''Construct the transitive closure of package dependencies for client
+    def resolve_requirement(self, metadata, requirement, packages, debug=False):
+        '''Resolve requirement to packages and or additional requirements
 
         Arguments:
-        metadata - client metadata instance
-        packages - set of package names
-        unresolved - set of unresolved dependency package names
-        debug - boolean debug mode
+        metadata -- client metadata instance
+        requirement -- name of requirement
+        debug -- boolean debug flag
+
+        Returns => (packages, unresolved requirements)
         '''
-        # perhaps cache arch?
-        #arch = [a for a in self.arches if a in metadata.groups][0]
-        # return newpkg, unknown
-        newpkg = set(packages)
-        unknown = set()
-        work = set(unresolved)
-        seen = set()
-        while work:
-            item = work.pop()
-            seen.add(item)
+        if self.is_package(metadata, requirement):
+            item_is_pkg = True
+        else:
+            item_is_pkg = False
+
+        try:
+            provset = self.get_provides(metadata, requirement)
+            item_is_virt = True
+        except:
+            item_is_virt = False
+
+        if True not in [item_is_pkg, item_is_virt]:
+            raise NoData
+
+        if debug:
+            logger.debug("Handling requirement %s" % (requirement))
+
+        if item_is_pkg and not item_is_virt:
+            deps = set()
             if debug:
-                logger.debug("Handling item %s" % item)
-            item_is_pkg = self.is_package(metadata, item)
+                logger.debug("Adding Package %s" % requirement)
             try:
-                pset = self.get_provides(metadata, item)
-                item_is_virt = True
-            except NoData:
-                item_is_virt = False
-
-            #print "%s:%s:%s" % (item, item_is_pkg, item_is_virt)
-            if (not item_is_pkg) and (not item_is_virt):
-                unknown.add(item)
-                continue
-            if item_is_pkg and not item_is_virt:
-                newpkg.add(item)
-                try:
-                    newdeps = set(self.get_deps(metadata, item))
-                    if debug and newdeps:
-                        logger.debug("Package %s: adding new deps %s" \
-                                     %(item, str(newdeps)))
-                    work.update(newdeps.difference(newpkg))
-                except NoData:
-                    continue
-            elif item_is_virt:
-                if item_is_pkg:
-                    pset.add(item)
+                deps = self.get_deps(metadata, requirement)
                 if debug:
-                    logger.debug("Package(s) %s provide(s) %s" \
-                                 % (list(pset), item))
+                    logger.debug("Package %s: adding new deps %s" \
+                                 % (requirement, deps))
+            except:
+                pass
+            return (set([requirement]), deps)
+        if item_is_virt:
+            if item_is_pkg:
+                # requirement can be used to satisfy virt requirement
+                provset.add(requirement)
+            if debug:
+                logger.debug("Requirement %s provided by %s" \
+                             % (requirement, provset))
 
-                if len(pset) == 1:
-                    provider = list(pset)[0]
+            if len(provset) == 1:
+                # single choice for requirement
+                deps = set()
+                pname = list(provset)[0]
+                if debug:
+                    logger.debug("Adding Package %s for %s" % (pname, requirement))
+                try:
+                    deps = self.get_deps(metadata, pname)
                     if debug:
-                        logger.debug("Using package %s for requirement %s" \
-                                     % (provider, item))
-                    newpkg.add(provider)
-                    # add deps for provider
-                    try:
-                        newdeps = set(self.get_deps(metadata, provider))
-                        work.update(newdeps.difference(newpkg))
-                    except NoData:
-                        pass
-                else:
-                    if True in [p in newpkg for p in pset]:
-                        # dep satisfied
-                        try:
-                            newdeps = set(self.get_deps(metadata, item))
-                            if debug and newdeps:
-                                logger.debug("Package %s: adding new deps %s" \
-                                             %(item, str(newdeps)))
-                            work.update(newdeps.difference(newpkg))
-                        except NoData:
-                            pass
-                    elif item_is_pkg:
-                        # add this pkg as a default action
-                        if debug:
-                            logger.debug("Adding Package %s" % item)
-                        newpkg.add(item)
-                        try:
-                            newdeps = set(self.get_deps(metadata, item))
-                            if debug and newdeps:
-                                logger.debug("Package %s: adding new deps %s" \
-                                             %(item, str(newdeps)))
-                            work.update(newdeps.difference(newpkg))
-                        except NoData:
-                            pass
-                    else:
-                        # dep unsatisfied
-                        # FIXME: hacky; multiple provides still not forced
-                        unknown.add(item)
-            else:
-                unknown.add(item)
-            work.difference_update(seen)
-        return (newpkg, unknown)
+                        logger.debug("Package %s: adding new deps %s" \
+                                     % (pname, deps))
+                except:
+                    pass
+                return (set([pname]), deps)
+
+            satisfiers = provset.intersection(packages)
+            if satisfiers:
+                # requirement already satisfied
+                if debug:
+                    logger.debug("Requirement %s satisfied by %s" \
+                                 % (requirement, satisfiers))
+                return (set(), set())
+
+            if item_is_pkg:
+                # fall back to package with name of requirement
+                deps = set()
+                if debug:
+                    logger.debug("Adding Package %s for %s" \
+                                 % (requirement, requirement))
+                try:
+                    deps = self.get_deps(metadata, requirement)
+                    if debug:
+                        logger.debug("Package %s: adding new deps %s" \
+                                     % (requirement, deps))
+                except:
+                    pass
+                return (set([requirement]), deps)
+
+            print "wtf man. %s" % requirement
+            raise NoData
 
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
@@ -368,9 +362,11 @@ class YUMSource(Source):
         else:
             raise NoData
 
-    def complete(self, metadata, packages, unknown, debug):
-        p1, u1 = Source.complete(self, metadata, packages, unknown, debug)
-        return (p1, set([u for u in u1 if not u.startswith('rpmlib')]))
+    def resolve_requirement(self, m, r, p, d):
+        if r.startswith('rpmlib'):
+            return (set(), set())
+        else:
+            return Source.resolve_requirement(self, m, r, p, d)
 
 class APTSource(Source):
     basegroups = ['debian', 'ubuntu', 'nexenta']
@@ -549,18 +545,32 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if len(ptype) < 1:
             return set(), set(), 'failed'
         pkgs = set(packages)
-        unknown = set(packages)
-        oldp = set()
-        oldu = set()
-        while unknown and (pkgs != oldp or unknown != oldu):
-            # loop through sources until no progress is made
-            oldp = pkgs
-            oldu = unknown
+        needed = set(packages)
+        unknown = set()
+        examined = set()
+
+        while needed:
+            # process requirements until all done or no progress
+            current = needed.pop()
+            examined.add(current)
+            found = False
             for source in sources:
                 try:
-                    pkgs, unknown = source.complete(meta, pkgs, unknown, debug)
+                    newp, newr = source.resolve_requirement(meta, current,
+                                                            packages, debug)
+                    found = True
+                    break
+                except NoData:
+                    continue
                 except:
-                    self.logger.error("Packages: complete call failed unexpectedly:", exc_info=1)
+                    self.logger.error("Packages: resolve_requirement call failed unexpectedly", exc_info=1)
+            if found:
+                pkgs = pkgs.union(newp)
+                needed = needed.union(newr)
+                needed.difference_update(examined)
+            else:
+                unknown.add(current)
+
         return pkgs, unknown, ptype.pop()
 
     def validate_structures(self, meta, structures):
