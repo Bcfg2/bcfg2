@@ -16,6 +16,9 @@ import Bcfg2.Server.Plugin
 class NoData(Exception):
     pass
 
+class SomeData(Exception):
+    pass
+
 logger = logging.getLogger('Packages')
 
 def source_from_xml(xsource):
@@ -215,8 +218,8 @@ class Source(object):
                     pass
                 return (set([requirement]), deps)
 
-            print "wtf man. %s" % requirement
-            raise NoData
+            # choice data is here, but not forced by currently resolved requirements
+            raise SomeData
 
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
@@ -549,6 +552,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         unknown = set()
         examined = set()
 
+        final_pass = set()
+        in_final_pass = False
+
         while needed:
             # process requirements until all done or no progress
             current = needed.pop()
@@ -562,14 +568,23 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     break
                 except NoData:
                     continue
+                except SomeData:
+                    if not in_final_pass:
+                        final_pass.add(current)
                 except:
                     self.logger.error("Packages: resolve_requirement call failed unexpectedly", exc_info=1)
             if found:
+                in_final_pass = False
                 pkgs = pkgs.union(newp)
                 needed = needed.union(newr)
                 needed.difference_update(examined)
             else:
                 unknown.add(current)
+
+            if not needed:
+                in_final_pass = True
+                needed.update(final_pass)
+                final_pass = set()
 
         return pkgs, unknown, ptype.pop()
 
