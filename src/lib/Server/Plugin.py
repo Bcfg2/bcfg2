@@ -114,7 +114,7 @@ class Metadata(object):
     def get_initial_metadata(self, client_name):
         raise PluginExecutionError
 
-    def merge_additional_metadata(self, imd, source, groups, data):
+    def merge_additional_data(self, imd, source, groups, data):
         raise PluginExecutionError
 
 class Connector(object):
