@@ -29,10 +29,10 @@
 </form>
 </span><br/><br/><br/></div>
 
-{% if client_list_a %}
+{% if client_list_b %}
 <table><tr><td align="top">
     <ul style="list-style-type:none;">
-    {% for client in client_list_a %}
+    {% for client in client_list_b %}
         <li><div class="{{client.current_interaction.state}}-lineitem">
 		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
 		</div></li>
@@ -40,8 +40,8 @@
     </ul>
 </td><td align="top">
     <ul style="list-style-type:none;">
-    {% if client_list_b %}
-      {% for client in client_list_b %}
+    {% if client_list_a %}
+      {% for client in client_list_a %}
 	    <li><div class="{{client.current_interaction.state}}-lineitem">
 		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
 		</div></li>
