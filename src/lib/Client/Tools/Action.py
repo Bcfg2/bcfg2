@@ -22,6 +22,10 @@ class Action(Bcfg2.Client.Tools.Tool):
                 prompt = 'Run Action %s, %s: (y/N): ' % (entry.get('name'), entry.get('command'))
                 if raw_input(prompt) not in ['y', 'Y']:
                     return False
+            if self.setup['servicemode'] == 'build':
+                if entry.get('build', 'true') == 'false':
+                    self.logger.debug("Action: Deferring execution of %s due to build mode" % (entry.get('command')))
+                    return False
             self.logger.debug("Running Action %s" % (entry.get('name')))
             rc = self.cmd.run(entry.get('command'))[0]
             self.logger.debug("Action: %s got rc %s" % (entry.get('command'), rc))
