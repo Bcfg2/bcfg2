@@ -82,6 +82,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.groups = {}
         self.cgroups = {}
         self.public = []
+        self.private = []
         self.profiles = []
         self.categories = {}
         self.bad_clients = {}
@@ -277,7 +278,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         client_tree.close()
 
     def update_client(self, client_name, attribs):
-        '''Update a client's attributes'''
+        '''Update a clients attributes'''
         tree = lxml.etree.parse(self.data + "/clients.xml")
         root = tree.getroot()
         node = self.search_client(client_name, tree)
@@ -379,6 +380,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                  in client.findall('Alias')]
         elif dest == 'groups.xml':
             self.public = []
+            self.private = []
             self.profiles = []
             self.groups = {}
             grouptmp = {}
@@ -394,6 +396,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                     self.profiles.append(group.get('name'))
                 if group.get('public', 'false') == 'true':
                     self.public.append(group.get('name'))
+                elif group.get('public', 'true') == 'false':
+                    self.private.append(group.get('name'))
                 if 'category' in group.attrib:
                     self.categories[group.get('name')] = group.get('category')
             for group in grouptmp:
@@ -577,6 +581,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 if g not in imd.groups:
                     if g in self.categories and \
                        self.categories[g] in imd.categories:
+                        continue
+                    if g in self.private:
+                        self.logger.error("Refusing to add dynamic membership in private group %s for client %s" % (g, imd.hostname))
                         continue
                     imd.groups.add(g)
 
