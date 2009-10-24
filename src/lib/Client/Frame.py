@@ -301,7 +301,8 @@ class Frame:
                     self.DispatchInstallCalls(clobbered)
 
         for bundle in self.config.findall('.//Bundle'):
-            if self.setup['bundle'] and bundle not in self.setup['bundle']:
+            if self.setup['bundle'] and \
+                   bundle.get('name') not in self.setup['bundle']:
                 # prune out unspecified bundles when running with -b
                 continue
             for tool in self.tools:
