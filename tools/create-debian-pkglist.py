@@ -50,6 +50,10 @@ class Source:
         self.filename = "%s/Pkgmgr/%s.xml" % (bcfg2_repos_prefix, section)
         self.groups = get_as_list(confparser.get(section, "group_names"))
         self.priority = confparser.getint(section, "priority")
+        try:
+            self.pattern = confparser.get(section, "pattern", raw=True)
+        except:
+            self.pattern = '.*'
         self.architectures = get_as_list(confparser.get(section, "architectures"))
         self.arch_specialurl = set()
 
@@ -143,7 +147,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                             continue
                 except:
                     raise Exception("Could not process URL %s\n%s\nPlease verify the URL." % (url, sys.exc_value))
-        return pkgdata
+        return dict((k,v) for (k,v) in pkgdata.items() \
+                    if re.search(self.pattern, k))
     
     def _get_sorted_pkg_keys(self, pkgdata):
             pkgs = []
