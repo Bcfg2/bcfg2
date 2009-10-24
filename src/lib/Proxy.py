@@ -59,6 +59,9 @@ class RetryMethod(_Method):
             except xmlrpclib.Fault:
                 raise
             except socket.error, err:
+                if err.errno == 336265218:
+                    self.log.error("SSL Key error")
+                    break
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)
