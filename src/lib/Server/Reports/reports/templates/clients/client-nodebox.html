@@ -7,7 +7,7 @@
             
             <table class="invisitable">
             <tr><td width="43%"><h2>Node: <span class="nodename">
-	    <a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name,pk=i.id %}">{{client.name}}</a></span></h2></td>
+	    <a href="{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=client.name, pk=client.current_interaction.id %}">{{client.name}}</a></span></h2></td>
             <td width="23%">
 	    {% if interaction.repo_rev_code %}Revision: {{interaction.repo_rev_code}}{% endif %}
 	    </td>

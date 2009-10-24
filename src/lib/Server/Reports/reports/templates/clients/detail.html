@@ -7,11 +7,11 @@
 <b>Select time: </b>
 <select name=quick onChange="MM_jumpMenu('parent',this,0)">
     {% for i in client.interactions.all %}
-        <option {% ifequal i.id interaction.id %}selected {% endifequal %} value="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name,pk=i.id %}"> {{i.timestamp}}
+        <option {% ifequal i.id interaction.id %}selected {% endifequal %} value="{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=client.name, pk=i.id %}"> {{i.timestamp}}
     {% endfor %}
 </select>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="{% url Bcfg2.Server.Reports.reports.views.client_manage client.name %}">Manage</a> {{client.name}} options.<br/>
+<a href="{% url Bcfg2.Server.Reports.reports.views.client_manage hostname=client.name %}">Manage</a> {{client.name}} options.<br/>
 
 {% include "clients/client-nodebox.html" %}
 {% endblock %}
