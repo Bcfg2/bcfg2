@@ -208,6 +208,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     version, release = entry.get('version').split('-')
                 instance.set('version', version)
                 instance.set('release', release)
+                if entry.get('verify', 'true') == 'false':
+                    instance.set('verify', 'false')
             instances = [ instance ]
 
         self.logger.debug("Verifying package instances for %s" % entry.get('name'))
@@ -253,11 +255,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                             flags += ['nomd5']
                                     self.logger.debug("        verify_flags = %s" % flags)
 
-                                    vp_ts = rpmtools.rpmtransactionset()
-                                    self.instance_status[inst]['verify'] = \
-                                                           rpmtools.rpm_verify( vp_ts, pkg, flags)
-                                    vp_ts.closeDB()
-                                    del vp_ts
+                                    if inst.get('verify', 'true') == 'false':
+                                        self.instance_status[inst]['verify'] = None
+                                    else:
+                                        vp_ts = rpmtools.rpmtransactionset()
+                                        self.instance_status[inst]['verify'] = \
+                                                                             rpmtools.rpm_verify( vp_ts, pkg, flags)
+                                        vp_ts.closeDB()
+                                        del vp_ts
 
                         if self.instance_status[inst]['installed'] == False:
                             self.logger.info("        Package %s %s not installed." % \
@@ -309,11 +314,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                 flags += ['nomd5']
                                         self.logger.debug("        verify_flags = %s" % flags)
 
-                                        vp_ts = rpmtools.rpmtransactionset()
-                                        self.instance_status[inst]['verify'] = \
-                                                         rpmtools.rpm_verify( vp_ts, pkg, flags )
-                                        vp_ts.closeDB()
-                                        del vp_ts
+                                        if inst.get('verify', 'true') == 'false':
+                                            self.instance_status[inst]['verify'] = None
+                                        else:
+                                            vp_ts = rpmtools.rpmtransactionset()
+                                            self.instance_status[inst]['verify'] = \
+                                                                                 rpmtools.rpm_verify( vp_ts, pkg, flags )
+                                            vp_ts.closeDB()
+                                            del vp_ts
 
                                 else:
                                     # Wrong version installed.
