@@ -66,6 +66,9 @@ class RetryMethod(_Method):
                 self.log.error("Got unallowed commonName %s from server" \
                                % ce.commonName)
                 break
+            except KeyError:
+                self.log.error("Server disallowed connection")
+                break
             except:
                 self.log.error("Unknown failure", exc_info=1)
                 break
