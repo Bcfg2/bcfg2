@@ -120,6 +120,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                                                    release=rel, epoch=epoch)
                     if 'verify_flags' in entry.attrib:
                         x.set('verify_flags', entry.get('verify_flags'))
+                    if 'verify' in entry.attrib:
+                        x.set('verify', entry.get('verify'))
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
 
