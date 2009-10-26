@@ -5,6 +5,7 @@ __revision__ = '$Revision$'
 from code import InteractiveConsole
 import cmd
 import errno
+import getopt
 import logging
 import lxml.etree
 import os
@@ -104,11 +105,29 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except:
                 logger.error("command failure", exc_info=1)
 
-    def do_debug(self, _):
+    def do_debug(self, args):
+        try:
+            opts, _ = getopt.getopt(args.split(), 'nf:')
+        except:
+            print "Usage: debug [-n] [-f <command list>]"
+            return
         self.cont = False
-        print("dropping to python interpreter; press ^D to resume")
+        scriptmode = False
+        interactive = True
+        for opt in opts:
+            if opt[0] == '-f':
+                scriptmode = True
+                spath = opt[1]
+            elif opt[0] == '-n':
+                interactive = False
         sh = InteractiveConsole(locals())
-        sh.interact()
+        if scriptmode:
+            for command in [c.strip() for c in open(spath).readlines()]:
+                if command:
+                    sh.push(command)
+        if interactive:
+            print("dropping to python interpreter; press ^D to resume")
+            sh.interact()
 
     def do_quit(self, _):
         """Exit program.
