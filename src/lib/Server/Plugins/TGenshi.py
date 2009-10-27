@@ -67,6 +67,8 @@ class TemplateFile:
     def bind_entry(self, entry, metadata):
         '''Build literal file information'''
         fname = entry.get('realname', entry.get('name'))
+        if entry.tag == 'Path':
+            entry.set('type', 'file')
         try:
             stream = self.template.generate( \
                 name=fname, metadata=metadata,

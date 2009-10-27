@@ -48,6 +48,8 @@ class TemplateFile:
         self.template.source_path = self.name
         self.searchlist['source_path'] = self.name
 
+        if entry.tag == 'Path':
+            entry.set('type', 'file')
         try:
             if type(self.template) == unicode:
                 entry.text = self.template
