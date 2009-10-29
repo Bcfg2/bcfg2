@@ -25,7 +25,7 @@ def process_delta(data, delta):
                 if line[1:] in datalines:
                     datalines.remove(line[1:])
         return "\n".join(datalines)
-    elif delta.op == 'diff':
+    elif delta.specific.delta == 'diff':
         basehandle, basename = tempfile.mkstemp()
         basefile = open(basename, 'w')
         basefile.write(data)
