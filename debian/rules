@@ -1,44 +1,9 @@
 #!/usr/bin/make -f
-# -*- mode: makefile; coding: utf-8 -*-
+%:
+	dh --with python-support $@
 
-# Generate debian/control fron control.in with the following command:
-# DEB_AUTO_UPDATE_DEBIAN_CONTROL=yes fakeroot debian/rules clean
-
-# Comment this line if you wish to build without pycentral or pysupport
-DEB_PYTHON_SYSTEM := pycentral
-DEB_PYTHON_MODULE_PACKAGE := bcfg2
-ifdef DEB_PYTHON_SYSTEM
-DEB_DH_INSTALLINIT_ARGS := -n
-else
-DEB_DH_INSTALLINIT_ARGS := --no-start
-endif
-DEB_COMPRESS_EXCLUDE :=*.tif
-
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/python-distutils.mk
-
-# By default use 2.3 as the python version (follow the original behaviour)
-# This only affects the build system if built without pycentral or pysupport
-DEB_PYTHON_VERSIONS = 2.3
-
-# Since cdbs is able to handle only one python package at once do things here:
-binary-install/bcfg2-server :: binary-install/%:
-# Mostly borrowed from /usr/share/cdbs/1/class/python-distutils.mk
-ifdef DEB_PYTHON_SYSTEM
-  ifeq (pysupport, $(DEB_PYTHON_SYSTEM))
-        dh_pysupport -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
-  else
-	dh_pycentral -pbcfg2-server
-  endif
-endif
-	dh_python -pbcfg2-server $(DEB_PYTHON_PRIVATE_MODULES_DIRS)
-
-ifdef DEB_PYTHON_SYSTEM
-# Invoke dh_installinit after compiling python modules
-binary-install/bcfg2 ::
-	dh_installinit -p$(cdbs_curpkg) -o --no-start
-
-binary-install/bcfg2-server ::
-	dh_installinit -p$(cdbs_curpkg) -o
-endif
-
+override_dh_installinit:
+	# Install bcfg2 initscript without staring it on postinst
+	dh_installinit -p bcfg2 --no-start
+	# Install everything else normally
+	dh_installinit -N bcfg2

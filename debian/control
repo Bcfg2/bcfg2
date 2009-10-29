@@ -2,28 +2,29 @@ Source: bcfg2
 Section: admin
 Priority: optional
 Maintainer: Sami Haahtinen <ressu@debian.org>
-Build-Depends: @cdbs@, python2.4-dev
-Standards-Version: 3.7.2.0
+Build-Depends: debhelper (>= 7.0.50~), python-dev (>= 2.3.5-11), python-support
+Standards-Version: 3.8.3.0
+XS-Python-Version: >= 2.3
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, debsums, python2.4-apt, python-lxml (>=0.9) | python2.4-lxml (>= 0.9), ucf, lsb-base (>= 3.1)
+Depends: ${python:Depends}, ${misc:Depends}, debsums, python-apt, python-lxml (>= 0.9), ucf, lsb-base (>= 3.1-9)
+XB-Python-Version: ${python:Versions}
+Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
 Description: Configuration management client
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
  bcfg2 is the client portion of bcfg2 system which installs configuration
  images provided by bcfg2-server
- .
- Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, python-lxml (>=0.9) | python2.4-lxml (>= 0.9), python2.4-gamin | python2.4-fam, python2.4-pyopenssl, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1), ucf, bcfg2 (= ${Source-Version}), openssl
-Recommends: graphviz, python-profiler
+Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), python-fam | python-gamin, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), openssl, python-profiler
+Recommends: python-genshi (>= 0.4.4), graphviz
+XB-Python-Version: ${python:Versions}
+Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
 Description: Configuration management server
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
  bcfg2-server is the server for bcfg2 clients, which generates configuration
  sets and stores statistics of client system states.
- .
- Homepage: http://trac.mcs.anl.gov/projects/bcfg2/

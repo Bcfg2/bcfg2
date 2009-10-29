@@ -4,7 +4,7 @@
 #
 # chkconfig: 2345 19 81
 # description: bcfg2 server for configuration requests
-# 
+#
 ### BEGIN INIT INFO
 # Provides:          bcfg2-server
 # Required-Start:    $network $remote_fs $named
@@ -70,7 +70,7 @@ status () {
         return 1
       fi
     fi
-    
+
     log_failure_msg "$BINARY is not running"
     return 3
 }
