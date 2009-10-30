@@ -76,8 +76,6 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
-        if hasattr(self.yb, 'doGenericSetup'):
-            self.yb.doGenericSetup()
         self.yb.doConfigSetup()
         self.yb.doTsSetup()
         self.yb.doRpmDBSetup()
