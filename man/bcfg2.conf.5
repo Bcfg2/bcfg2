@@ -25,8 +25,16 @@ These options are only necessary on the Bcfg2 server. They are specified in the 
 Specifies the path to the Bcfg2 repository containing all of the configuration specifications. The repository should be created using the bcfg2-init command.
 
 .TP
-.B bundles
-A list of enabled bundles
+.B key
+Specifies the path to a file containing the SSL Key. This is required on the server in all cases, and required on clients if using client certificates. 
+
+.TP
+.B certificate
+The path to a file containing a PEM formatted certificate which signs the key with the ca certificate. This setting is required on the server in all cases, and required on clients if using client certificates. 
+
+.TP
+.B ca
+The path to a file containing the CA certificate. This file is required on the server, and optional on clients. However, if the cacert is not present on clients, the server cannot be verified. 
 
 .TP
 .B filemonitor
