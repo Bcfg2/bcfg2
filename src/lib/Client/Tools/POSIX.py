@@ -521,7 +521,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 except UnicodeEncodeError, e:
                     self.logger.error("Error encoding file %s:\n %s" % \
                                       (entry.get('name'), e))
-                return False
         try:
             content = open(entry.get('name')).read()
         except IOError, error:
