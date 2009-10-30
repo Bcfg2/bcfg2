@@ -9,10 +9,15 @@ import getopt
 import logging
 import lxml.etree
 import os
-import profile
-import pstats
 import sys
 import tempfile
+
+try:
+    import profile
+    import pstats
+    have_profile = True
+except:
+    have_profile = False
 
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -410,6 +415,9 @@ Usage: [quit|exit]"""
                     print(cand[0].name)
 
     def do_profile(self, arg):
+        if not have_profile:
+            print("Profiling functionality not available")
+            return
         tracefname = tempfile.mktemp()
         p = profile.Profile()
         p.runcall(self.onecmd, arg)
@@ -436,14 +444,15 @@ if __name__ == '__main__':
                     'encoding': Bcfg2.Options.ENCODING})
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    print(setup)
-    if setup['profile']:
+    if setup['profile'] and have_profile:
         prof = profile.Profile()
         loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
                             setup['password'], setup['encoding'],
                             setup['event debug'])
         displayTrace(prof)
     else:
+        if setup['profile']:
+            print("Profiling functionality not available")
         loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
                         setup['encoding'], setup['event debug'])
 

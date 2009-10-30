@@ -1,10 +1,10 @@
 bcfg2 (1.0.0rc1-1) unstable; urgency=low
 
   * Update packaging
-    * Switch to plain debhelper
-    * Switch from pycentral to python-support
-    * Move homepage to the dedicated Homepage field
-    * Update Standards-Version to 3.8.3.0
+  * Switch to plain debhelper
+  * Switch from pycentral to python-support
+  * Move homepage to the dedicated Homepage field
+  * Update Standards-Version to 3.8.3.0
 
  -- Sami Haahtinen <ressu@debian.org>  Sat, 24 Oct 2009 00:20:51 +0300
 
