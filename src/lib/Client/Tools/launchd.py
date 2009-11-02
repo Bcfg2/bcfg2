@@ -59,7 +59,8 @@ class launchd(Bcfg2.Client.Tools.Tool):
             services = []
         # launchctl output changed in 10.5
         # It is now three columns, with the last column being the name of the # service
-        if self.os_version().startswith('10.5'):
+        version = self.os_version()
+        if version.startswith('10.5') or version.startswith('10.6'):
             services = [s.split()[-1] for s in services]
         if entry.get('name') in services:#doesn't check if non-spawning services are Started
             return entry.get('status') == 'on'
