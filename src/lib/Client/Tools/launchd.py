@@ -3,6 +3,27 @@ __revision__ = '$Revision$'
 
 import os
 import Bcfg2.Client.Tools
+import popen2
+
+'''Locate plist file that provides given reverse-fqdn name
+/Library/LaunchAgents          Per-user agents provided by the administrator.
+/Library/LaunchDaemons         System wide daemons provided by the administrator.
+/System/Library/LaunchAgents   Mac OS X Per-user agents.
+/System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
+plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
+plistMapping = {}
+for directory in plistLocations:
+    for daemon in os.listdir(directory):
+        try:
+            if daemon.endswith(".plist"):
+                d = daemon[:-6]
+            else:
+                d = daemon
+            (stdout, _) = popen2.popen2('defaults read %s/%s Label' % (directory, d))
+            label = stdout.read().strip()
+            plistMapping[label] = "%s/%s" % (directory, daemon)
+        except KeyError: #perhaps this could be more robust
+            pass
 
 class launchd(Bcfg2.Client.Tools.Tool):
     '''Support for Mac OS X Launchd Services'''
@@ -16,29 +37,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
     and Name is acually a reverse-fqdn (or the label)
     '''
     def FindPlist(self, entry):
-        '''Locate plist file that provides given reverse-fqdn name
-        /Library/LaunchAgents          Per-user agents provided by the administrator.
-        /Library/LaunchDaemons         System wide daemons provided by the administrator.
-        /System/Library/LaunchAgents   Mac OS X Per-user agents.
-        /System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
-        plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
-        plistMapping = {}
-        for directory in plistLocations:
-            for daemon in os.listdir(directory):
-                try:
-                    if daemon.endswith(".plist"):
-                        d = daemon[:(len(daemon)-6)]
-                    else:
-                        d = daemon
-                    plistMapping[self.cmd.run( \
-                        "defaults read %s/%s Label" % (directory, d))[1][0]] = \
-                        "%s/%s"%(directory, daemon)
-                except KeyError: #perhaps this could be more robust
-                    pass
-        try:
-            return plistMapping[entry.get('name')]
-        except KeyError:
-            return None
+        return plistMapping.get(entry.get('name'), None)
 
     def os_version(self):
         version = ""
@@ -77,11 +76,16 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
     def InstallService(self, entry):
         '''Enable or Disable launchd Item'''
+        name = entry.get('name')
         if entry.get('status') == 'on':
+            self.logger.error("Installing service %s" % name)
             cmdrc = self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))[0]
+            cmdrc = self.cmd.run("/bin/launchctl start %s" % name)
         else:
+            self.logger.error("Uninstalling service %s" % name)
+            cmdrc = self.cmd.run("/bin/launchctl stop %s" % name)
             cmdrc = self.cmd.run("/bin/launchctl unload -w %s" % self.FindPlist(entry))[0]
-        return cmdrc == 0
+        return cmdrc[0] == 0
 
     def Remove(self, svcs):
         '''Remove Extra launchd entries'''
@@ -106,12 +110,16 @@ class launchd(Bcfg2.Client.Tools.Tool):
             if not self.canInstall(entry):
                 self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
             else:
+                name = entry.get('name')
                 if entry.get('status') == 'on' and self.FindPlist(entry):
-                    self.logger.info("Reloading launchd  service %s" % (entry.get("name")))
+                    self.logger.info("Reloading launchd  service %s" % name)
                     #stop?
+                    self.cmd.run("/bin/launchctl stop %s" % name)
                     self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
                     self.cmd.run("/bin/launchctl load -w %s" % (self.FindPlist(entry)))
+                    self.cmd.run("/bin/launchctl start %s" % name)
                 else:
                     #only if necessary....
+                    self.cmd.run("/bin/launchctl stop %s" % name)
                     self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))
 
