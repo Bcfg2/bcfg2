@@ -85,15 +85,15 @@ Configuration management server
 %setup -q -n %{name}-%{version}-%{release}
 
 # fixup some paths
-%{__perl} -pi -e 's@/etc/default@%{_sysconfdir}/sysconfig@g' debian/buildsys/common/bcfg2.init
+%{__perl} -pi -e 's@/etc/default@%{_sysconfdir}/sysconfig@g' debian/bcfg2.init
 %{__perl} -pi -e 's@/etc/default@%{_sysconfdir}/sysconfig@g' tools/bcfg2-cron
 
 %{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.daily
 %{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.hourly
 
 # don't start servers by default
-%{__perl} -pi -e 's@chkconfig: (\d+)@chkconfig: -@' debian/buildsys/common/bcfg2.init
-%{__perl} -pi -e 's@chkconfig: (\d+)@chkconfig: -@' debian/buildsys/common/bcfg2-server.init
+%{__perl} -pi -e 's@chkconfig: (\d+)@chkconfig: -@' debian/bcfg2.init
+%{__perl} -pi -e 's@chkconfig: (\d+)@chkconfig: -@' debian/bcfg2-server.init
 
 # get rid of extraneous shebangs
 for f in `find src/lib -name \*.py`

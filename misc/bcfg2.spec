@@ -106,8 +106,8 @@ deployment strategies.
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
 %{__install} -d %{buildroot}%{_prefix}/lib/bcfg2
 %{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}%{_sbindir}
-%{__install} -m 755 debian/buildsys/common/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
-%{__install} -m 755 debian/buildsys/common/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
+%{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
+%{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
