@@ -5,26 +5,6 @@ import os
 import Bcfg2.Client.Tools
 import popen2
 
-'''Locate plist file that provides given reverse-fqdn name
-/Library/LaunchAgents          Per-user agents provided by the administrator.
-/Library/LaunchDaemons         System wide daemons provided by the administrator.
-/System/Library/LaunchAgents   Mac OS X Per-user agents.
-/System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
-plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
-plistMapping = {}
-for directory in plistLocations:
-    for daemon in os.listdir(directory):
-        try:
-            if daemon.endswith(".plist"):
-                d = daemon[:-6]
-            else:
-                d = daemon
-            (stdout, _) = popen2.popen2('defaults read %s/%s Label' % (directory, d))
-            label = stdout.read().strip()
-            plistMapping[label] = "%s/%s" % (directory, daemon)
-        except KeyError: #perhaps this could be more robust
-            pass
-
 class launchd(Bcfg2.Client.Tools.Tool):
     '''Support for Mac OS X Launchd Services'''
     __handles__ = [('Service', 'launchd')]
@@ -36,8 +16,31 @@ class launchd(Bcfg2.Client.Tools.Tool):
     currently requires the path to the plist to load/unload,
     and Name is acually a reverse-fqdn (or the label)
     '''
+    def __init__(self, logger, setup, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+
+        '''Locate plist file that provides given reverse-fqdn name
+        /Library/LaunchAgents          Per-user agents provided by the administrator.
+        /Library/LaunchDaemons         System wide daemons provided by the administrator.
+        /System/Library/LaunchAgents   Mac OS X Per-user agents.
+        /System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
+        plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
+        self.plistMapping = {}
+        for directory in plistLocations:
+            for daemon in os.listdir(directory):
+                try:
+                    if daemon.endswith(".plist"):
+                        d = daemon[:-6]
+                    else:
+                        d = daemon
+                    (stdout, _) = popen2.popen2('defaults read %s/%s Label' % (directory, d))
+                    label = stdout.read().strip()
+                    self.plistMapping[label] = "%s/%s" % (directory, daemon)
+                except KeyError: #perhaps this could be more robust
+                    pass
+
     def FindPlist(self, entry):
-        return plistMapping.get(entry.get('name'), None)
+        return self.plistMapping.get(entry.get('name'), None)
 
     def os_version(self):
         version = ""
