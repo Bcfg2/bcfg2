@@ -27,7 +27,7 @@ class Bzr(Bcfg2.Server.Plugin.Plugin,
         try:
             working_tree = WorkingTree.open(self.datastore)
             revision = str(working_tree.branch.revno())
-            if working_tree.changes_from(working_tree.basis_tree()).has_changed:
+            if working_tree.has_changes(working_tree.basis_tree()) or working_tree.unknowns():
                 revision += "+"
         except errors.NotBranchError:
             logger.error("Failed to read Bazaar branch; disabling Bazaar support")
