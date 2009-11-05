@@ -1,0 +1,4 @@
+# format version number, currently 3; this line is compulsory!
+version=3
+
+ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-(.*)\.tar\.gz
