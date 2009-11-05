@@ -34,8 +34,8 @@ class Bzr(Bcfg2.Server.Plugin.Plugin,
         try:
             data = Popen(("env LC_ALL=C bzr revno %s" %
                          (self.datastore)), shell=True,
-                         stdout=PIPE).stdout.readlines()
-            revision = data[0].rstrip('\n')
+                         stdout=PIPE).communicate()[0].split('\n')
+            revision = data[0]
         except IndexError:
             logger.error("Failed to read bzr revno; disabling Bazaar support")
             logger.error('''Ran command "bzr revno %s"''' % \
