@@ -478,12 +478,16 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         fd = datafile.fileno()
         while self.locked(fd) == True:
             pass
-        for item in self.clientdata_original.getroot().iter():
+        dataroot = self.clientdata_original.getroot()
+        if hasattr(dataroot, 'iter'):
+            items = dataroot.iter()
+        else:
+            items = dataroot.getchildren()
+        for item in items:
             # no items have text data of any sort
             item.tail = None
             item.text = None
-        datafile.write(lxml.etree.tostring(self.clientdata_original.getroot(),
-                                           pretty_print=True))
+        datafile.write(lxml.etree.tostring(dataroot, pretty_print=True))
         fcntl.lockf(fd, fcntl.LOCK_UN)
         datafile.close()
 
