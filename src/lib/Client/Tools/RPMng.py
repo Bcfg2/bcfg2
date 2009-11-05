@@ -365,9 +365,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                             # Check the rpm verify file results against the modlist
                             # and per Instance Ignores.
                             for file_result in result.get('files', []):
-                                if file_result[-1] not in modlist and \
-                                   file_result[-1] not in \
-                                         [ignore.get('name') for ignore in inst.findall('Ignore')]:
+                                if file_result[-1] not in modlist + \
+                                       [ignore.get('name') for ignore \
+                                        in inst.findall('Ignore')]:
                                     instance_fail = True
                                     self.instance_status[inst]['verify_fail'] = True
                                 else:
