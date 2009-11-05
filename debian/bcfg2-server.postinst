@@ -19,6 +19,10 @@ set -e
 
 case "$1" in
     configure)
+	ucf /usr/share/bcfg2/bcfg2-server.default /etc/default/bcfg2-server
+        if [ -x /usr/bin/ucfr ] ; then
+            ucfr bcfg2 /etc/default/bcfg2-server
+        fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

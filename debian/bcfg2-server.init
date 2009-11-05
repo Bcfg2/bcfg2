@@ -20,6 +20,15 @@ DAEMON=/usr/sbin/bcfg2-server
 PIDFILE=/var/run/bcfg2-server.pid
 PARAMS="-D $PIDFILE"
 
+# Disabled per default
+BCFG2_SERVER_OPTIONS=""
+BCFG2_SERVER_ENABLED=0
+
+# Include default startup configuration if exists
+test -f "/etc/default/bcfg2-server" && . /etc/default/bcfg2-server
+
+[ "$BCFG2_SERVER_ENABLED" -eq 0 ] && exit 0
+
 # Exit if $DAEMON doesn't exist and is not executable
 test -x $DAEMON || exit 5
 
@@ -31,7 +40,7 @@ BINARY=$(basename $DAEMON)
 
 start () {
     echo -n "Starting Configuration Management Server: "
-    start_daemon ${DAEMON} ${PARAMS}
+    start_daemon ${DAEMON} ${PARAMS} ${BCFG2_SERVER_OPTIONS}
     STATUS=$?
     if [ "$STATUS" = 0 ]
     then

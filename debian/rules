@@ -5,5 +5,7 @@
 override_dh_installinit:
 	# Install bcfg2 initscript without staring it on postinst
 	dh_installinit -p bcfg2 --no-start
+	# Install bcfg2-server initscript without staring it on postinst
+	dh_installinit -p bcfg2-server --no-start
 	# Install everything else normally
 	dh_installinit -N bcfg2

@@ -19,6 +19,17 @@ set -e
 
 case "$1" in
        purge)
+         for i in /etc/default/bcfg2-server; do
+           rm -f $i
+
+	   if which ucf >/dev/null; then
+	     ucf --purge $i
+	   fi
+	   if which ucfr >/dev/null; then
+	     ucfr --purge bcfg2 $i
+	   fi
+
+	 done
 	 ;;
        remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
 

@@ -1,0 +1,13 @@
+# Configuration options for bcfg2 server
+
+# BCFG2_SERVER_OPTIONS:
+# Set the default options for Bcfg2 Server on startup
+#   Default: ""
+#BCFG2_SERVER_OPTIONS=""
+
+# BCFG2_SERVER_ENABLED:
+# Should Bcfg2 Server be run automatically by system scripts
+#
+# Uncomment the following line to enable any of the below selections
+#   Default: 0 (disable)
+#BCFG2_SERVER_ENABLED=1
