@@ -599,9 +599,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                        for pkg in struct.findall('Package')])
         news = lxml.etree.Element('Independent')
         packages, unknown, ptype = self.complete(meta, initial)
-        if unknown:
+        logged_unknown = [x for x in unknown if not x.startswith('choice')]
+        if logged_unknown:
             self.logger.info("Got unknown entries")
-            self.logger.info(list(unknown))
+            self.logger.info(logged_unknown)
         newpkgs = list(packages.difference(initial))
         newpkgs.sort()
         for pkg in newpkgs:
