@@ -30,8 +30,11 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
     def process_statistics(self, mdata, xdata):
         newstats = xdata.find("Statistics")
         newstats.set('time', time.asctime(time.localtime()))
+        # ick
+        xdata = lxml.etree.tostring(newstats)
+        ndx = lxml.etree.XML(xdata)
         e = lxml.etree.Element('Node', name=mdata.hostname)
-        e.append(newstats)
+        e.append(ndx)
         container = lxml.etree.Element("ConfigStatistics")
         container.append(e)
 

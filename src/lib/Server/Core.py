@@ -2,7 +2,6 @@
 __revision__ = '$Revision$'
 
 import atexit
-import copy
 import logging
 import lxml.etree
 import select
@@ -287,7 +286,6 @@ class Core(Component):
 
     def process_statistics(self, client_name, statistics):
         meta = self.build_metadata(client_name)
-        state = copy.deepcopy(statistics.find(".//Statistics"))
         if state.get('version') >= '2.0':
             for plugin in self.statistics:
                 try:
