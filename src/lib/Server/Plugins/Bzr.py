@@ -1,6 +1,6 @@
-import os
-from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
+from bzrlib.workingtree import WorkingTree
+from bzrlib import errors
 
 # for debugging output only
 import logging
@@ -17,29 +17,19 @@ class Bzr(Bcfg2.Server.Plugin.Plugin,
         self.core = core
         self.datastore = datastore
 
-        # path to bzr directory for bcfg2 repo
-        bzr_dir = "%s/.bzr" % datastore
-
         # Read revision from bcfg2 repo
-        if os.path.isdir(bzr_dir):
-            revision = self.get_revision()
-        else:
-            logger.error("%s is not a directory" % bzr_dir)
-            raise Bcfg2.Server.Plugin.PluginInitError
+        revision = self.get_revision()
 
-        logger.debug("Initialized Bazaar plugin with directory = %(dir)s at revision = %(rev)s" % {'dir': bzr_dir, 'rev': revision})
+        logger.debug("Initialized Bazaar plugin with directory = %(dir)s at revision = %(rev)s" % {'dir': datastore, 'rev': revision})
 
     def get_revision(self):
-        '''Read Bazaar revision information for the bcfg2 repository'''
+        '''Read Bazaar revision information for the BCFG2 repository'''
         try:
-            data = Popen(("env LC_ALL=C bzr revno %s" %
-                         (self.datastore)), shell=True,
-                         stdout=PIPE).communicate()[0].split('\n')
-            revision = data[0]
-        except IndexError:
-            logger.error("Failed to read bzr revno; disabling Bazaar support")
-            logger.error('''Ran command "bzr revno %s"''' % \
-                            (self.datastore))
-            logger.error("Got output: %s" % data)
+            working_tree = WorkingTree.open(self.datastore)
+            revision = str(working_tree.branch.revno())
+            if working_tree.changes_from(working_tree.basis_tree()).has_changed:
+                revision += "+"
+        except errors.NotBranchError:
+            logger.error("Failed to read Bazaar branch; disabling Bazaar support")
             raise Bcfg2.Server.Plugin.PluginInitError
         return revision
