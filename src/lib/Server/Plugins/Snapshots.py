@@ -1,14 +1,18 @@
 #import lxml.etree
+import logging
 import binascii
 import difflib
 #import sqlalchemy
 #import sqlalchemy.orm
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Snapshots
+import Bcfg2.Logger
 from Bcfg2.Server.Snapshots.model import Snapshot
 import Queue
 import time
 import threading
+
+logger = logging.getLogger('Snapshots')
 
 ftypes = ['ConfigFile', 'SymLink', 'Directory']
 datafields = {'Package': ['version'],
@@ -118,5 +122,5 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         self.session.add(snap)
         self.session.commit()
         t3 = time.time()
-        print "Storage took", t3-t2
+        logger.info("Snapshot storage took %fs" % (t3-t2))
         return True
