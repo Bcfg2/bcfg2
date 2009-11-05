@@ -60,11 +60,10 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
     def RemovePackages(self, packages):
         '''Deal with extra configuration detected'''
+        pkgnames = " ".join([pkg.get('name') for pkg in packages])
         if len(packages) > 0:
             self.logger.info('Removing packages:')
-            self.logger.info(packages)
-            self.cmd.run("emerge --unmerge --quiet =%s" % " =".join(packages))
+            self.logger.info(pkgnames)
+            self.cmd.run("emerge --unmerge --quiet %s" % " ".join(pkgnames.split(' ')))
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()
-
-

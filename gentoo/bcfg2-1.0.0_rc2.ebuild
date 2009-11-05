@@ -20,7 +20,7 @@ IUSE="server"
 DEPEND=">=dev-lang/python-2.5"
 
 RDEPEND="app-portage/gentoolkit
-	|| ( dev-python/ssl-py26 >=dev-lang/python-2.6 )
+	>=dev-lang/python-2.6
 	server? (
 		dev-python/lxml
 		app-admin/gam-server )"
@@ -45,11 +45,10 @@ src_install() {
 }
 
 pkg_postinst () {
-	depscan.sh
 	use server && einfo "If this is a new installation, you probably need to run: "
 	use server && einfo "    bcfg2-admin init"
 }
 
 pkg_postrm () {
-	depscan.sh
+	python_mod_cleanup
 }
