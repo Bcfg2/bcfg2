@@ -1,16 +1,16 @@
-bcfg2 (1.0.0~1.0.0rc2-0.1) unstable; urgency=low
+bcfg2 (1.0.0~rc2-1) unstable; urgency=low
 
+  [ Narayan Desai ]
   * new release candidate
 
- -- Narayan Desai <desai@mcs.anl.gov>  Sat, 31 Oct 2009 21:38:35 -0500
-
-bcfg2 (1.0.0rc1-1) unstable; urgency=low
-
+  [ Sami Haahtinen ]
   * Update packaging
   * Switch to plain debhelper
   * Switch from pycentral to python-support
   * Move homepage to the dedicated Homepage field
   * Update Standards-Version to 3.8.3.0
+  * Add python-m2crypto as dependency
+  * bcfg2-server needs python2.4+
 
  -- Sami Haahtinen <ressu@debian.org>  Sat, 24 Oct 2009 00:20:51 +0300
 
