@@ -104,17 +104,19 @@ def create_key(keypath):
 def create_conf(confpath, confdata):
     # don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
-        print("\nWarning: %s already exists. Will not be "
-              "overwritten...\n" % confpath)
-    else:
-        try:
-            open(confpath, "w").write(confdata)
-            os.chmod(confpath, 0600)
-        except Exception, e:
-            print("Error %s occured while trying to write configuration "
-                  "file to '%s'\n" %
-                   (e, confpath))
-            raise SystemExit(1)
+        result = raw_input("\nWarning: %s already exists. "
+                    "Overwrite? [y/N]: " % confpath)
+        if result not in ['Y', 'y']:
+            print("Leaving %s unchanged" % confpath)
+            return
+    try:
+        open(confpath, "w").write(confdata)
+        os.chmod(confpath, 0600)
+    except Exception, e:
+        print("Error %s occured while trying to write configuration "
+              "file to '%s'\n" %
+               (e, confpath))
+        raise SystemExit(1)
 
 
 class Init(Bcfg2.Server.Admin.Mode):
