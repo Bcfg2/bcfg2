@@ -5,6 +5,8 @@ __revision__ = '$Revision$'
 import warnings
 warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
+warnings.filterwarnings("ignore", "Accessed deprecated property Package.installedVersion, please see the Version class for alternatives.", DeprecationWarning)
+warnings.filterwarnings("ignore", "Accessed deprecated property Package.candidateVersion, please see the Version class for alternatives.", DeprecationWarning)
 import apt.cache
 import os
 import Bcfg2.Client.Tools
