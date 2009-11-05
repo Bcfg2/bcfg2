@@ -99,6 +99,9 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                  padding=1)
             elif '-b' in args[1:]:
                 # Query a single host for bad entries
+                if len(args) < 3:
+                    print("Usage: bcfg2-admin snapshots -b <client>")
+                    return
                 client = args[2]
                 snap = Snapshot.get_current(self.session, unicode(client))
                 if not snap:
