@@ -101,7 +101,6 @@ def create_key(hostname, keypath, certpath):
     ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
     subprocess.call((ccstr), shell=True)
     os.chmod(keypath, 0600)
-    os.chmod(certpath, 0600)
 
 def create_conf(confpath, confdata):
     # don't overwrite existing bcfg2.conf file
