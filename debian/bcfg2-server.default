@@ -10,4 +10,4 @@
 #
 # Uncomment the following line to enable any of the below selections
 #   Default: 0 (disable)
-#BCFG2_SERVER_ENABLED=1
+BCFG2_SERVER_ENABLED=1
