@@ -4,7 +4,7 @@ from distutils.core import setup
 from glob import glob
 
 setup(name="Bcfg2",
-      version="1.0.0rc3",
+      version="1.0.0rc4",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
