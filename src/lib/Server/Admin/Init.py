@@ -34,8 +34,9 @@ web_debug = True
 [communication]
 protocol = %s
 password = %s
-certificate = %s/bcfg2.key
-key = %s/bcfg2.key
+certificate = %s/%s
+key = %s/%s
+ca = %s/%s
 
 [components]
 bcfg2 = %s
@@ -93,13 +94,14 @@ def gen_password(length):
         newpasswd = newpasswd + random.choice(chars)
     return newpasswd
 
-def create_key(keypath):
+def create_key(hostname, keypath, certpath):
     """Creates a bcfg2.key at the directory specifed by keypath"""
-    subprocess.call(("openssl " \
-                     "req -x509 -nodes -days 1000 -newkey rsa:1024 " \
-                     "-out %s/bcfg2.key -keyout %s/bcfg2.key" % \
-                     (keypath, keypath)), shell=True)
-    os.chmod('%s/bcfg2.key' % keypath, 0600)
+    kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:1024 -keyout %s -noout" % (hostname, keypath)
+    subprocess.call((kcstr), shell=True)
+    ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
+    subprocess.call((ccstr), shell=True)
+    os.chmod(keypath, 0600)
+    os.chmod(certpath, 0600)
 
 def create_conf(confpath, confdata):
     # don't overwrite existing bcfg2.conf file
@@ -155,11 +157,20 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_config()
         self._prompt_repopath()
         self._prompt_password()
+        self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
 
         # Initialize the repository
         self.init_repo()
+
+    def _prompt_hostname(self):
+        '''Ask for the server hostname'''
+        data = raw_input("What is the server's hostname: [%s]" % socket.getfqdn())
+        if data != '':
+            self.shostname = data
+        else:
+            self.shostname = socket.getfqdn()
 
     def _prompt_config(self):
         """Ask for the configuration file path"""
@@ -249,14 +260,17 @@ class Init(Bcfg2.Server.Admin.Mode):
                         self.opts['sendmail'],
                         self.opts['proto'],
                         self.password,
-                        keypath,
-                        keypath,
+                        keypath, 'bcfg2.crt',
+                        keypath, 'bcfg2.key',
+                        keypath, 'bcfg2.crt',
                         self.server_uri
                     )
 
         # Create the configuration file and SSL key
         create_conf(self.configfile, confdata)
-        create_key(keypath)
+        kpath = keypath + '/bcfg2.key'
+        cpath = keypath + '/bcfg2.crt'
+        create_key(self.shostname, kpath, cpath)
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')
