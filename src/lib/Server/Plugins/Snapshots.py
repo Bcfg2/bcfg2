@@ -13,8 +13,9 @@ import threading
 ftypes = ['ConfigFile', 'SymLink', 'Directory']
 datafields = {'Package': ['version'],
               'Service': ['status'],
-              'ConfigFile': ['owner', 'group', 'perms']}
-
+              'ConfigFile': ['owner', 'group', 'perms'], 
+              'Directory': ['owner', 'group', 'perms'],
+              'SymLink': ['to']}
 
 def build_snap_ent(entry):
     basefields = []
