@@ -48,9 +48,11 @@ esac
 ##     import Bcfg2.Server.Plugins.Metadata
 ## ImportError: No module named Server.Plugins.Metadata
 ## * bcfg2-server
-echo "Restarting bcfg2-server after initial install or upgrade..."
-/etc/init.d/bcfg2-server restart
+case "$1" in
+    configure)
+	echo "Restarting bcfg2-server after initial install or upgrade..."
+	/etc/init.d/bcfg2-server restart
+    ;;
+esac
 
 exit 0
-
-
