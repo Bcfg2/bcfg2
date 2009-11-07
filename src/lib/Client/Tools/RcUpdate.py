@@ -17,7 +17,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         Verify Service status for entry.
         Assumes we run in the "default" runlevel.
         '''
-        rc, output = self.cmd.run('/bin/rc-status | grep %s | grep started' % \
+        rc, output = self.cmd.run('/bin/rc-status -s | grep %s | grep started' % \
                                   entry.attrib['name'])
         status = (rc == 0)
 
