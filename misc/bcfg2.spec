@@ -1,4 +1,4 @@
-%define release 0.2
+%define release 1
 %define __python python
 %{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
@@ -109,6 +109,7 @@ deployment strategies.
 %{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
+%{__install} -m 755 debian/bcfg2-server.default %{buildroot}%{_sysconfdir}/default/bcfg2-server
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
 %{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
@@ -144,7 +145,7 @@ deployment strategies.
 %endif
 
 %{_datadir}/bcfg2
-
+%config(noreplace) %{_sysconfdir}/default/bcfg2-server
 %{_sbindir}/bcfg2-admin
 %{_sbindir}/bcfg2-build-reports
 %{_sbindir}/bcfg2-info
