@@ -1,9 +1,13 @@
+import difflib
+import logging
+import lxml.etree
+import platform
+import time
+
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
 from Bcfg2.Server.Reports.reports.models import Client
-import difflib, lxml.etree, time, logging
 import Bcfg2.Server.Reports.settings
-
 from Bcfg2.Server.Reports.updatefix import update_database
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
@@ -39,12 +43,14 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         container.append(e)
 
         # FIXME need to build a metadata interface to expose a list of clients
-        # FIXME Server processing the request should be mentionned here
         start = time.time()
         for i in [1, 2, 3]:
             try:
-                Bcfg2.Server.Reports.importscript.load_stats(
-                    self.core.metadata.clientdata, container, 0, True)
+                Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clientdata,
+                                                             container,
+                                                             0,
+                                                             True,
+                                                             platform.node())
                 break
             except:
                 logger.error("DBStats: Failed to write to db (lock); retrying",
