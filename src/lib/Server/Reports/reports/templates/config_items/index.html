@@ -20,11 +20,11 @@
 
 {% ifequal mod_or_bad "bad" %}
 <div class="bad">
-<h2>Bad {{item.kind}}: {{item.name}}</h2>
+<h2>Bad {{item.entry.kind}}: {{item.entry.name}}</h2>
 </div>
 {% else %}
 <div class="modified">
-<h2>Modified {{item.kind}}: {{item.name}}</h2>
+<h2>Modified {{item.entry.kind}}: {{item.entry.name}}</h2>
 </div>
 {% endifequal %}
 <center>
@@ -58,11 +58,23 @@
 <a href="" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
    name="anchor1" ID="anchor1">Calendar</A>
 {% ifequal mod_or_bad "modified" %}
-    <input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}';"/>
+    <input type="button"
+           name="go"
+           value="Go"
+           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.entry.id%}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
+    | <input type="button"
+             name="now"
+             value="Now"
+             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.entry.id%}';"/>
 {% else %}
-    <input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id%}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id%}';"/>
+    <input type="button"
+           name="go"
+           value="Go"
+           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.entry.id %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;"/>
+    | <input type="button"
+             name="now"
+             value="Now"
+             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.entry.id %}';"/>
 {% endifequal %}
 </form>
 </span><br/><br/><br/></div>

@@ -22,14 +22,14 @@ def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MOD
     else:
         mod_or_bad = "bad"
     
-    item = Entries_interactions.objects.get(id=eyedee).entry
+    item = get_object_or_404(Entries_interactions, id=eyedee)
     #if everything is blank except current_exists, do something special
     cursor = connection.cursor()
     if timestamp == 'now':
         cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
                    "WHERE reports_client.current_interaction_id = reports_entries_interactions.interaction_id "+
                    "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_entries_interactions.entry_id = %s " +
+                   "AND reports_entries_interactions.id = %s " +
                    "AND reports_entries_interactions.type = %s", [eyedee, type])
         associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
     else:
