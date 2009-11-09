@@ -102,6 +102,53 @@ def client_index(request, timestamp = 'now'):
             'timestamp_date' : timestamp[:10],
             'timestamp_time' : timestamp[11:19]})
 
+def client_detailed_list(request, **kwargs):
+    '''
+    Provides a more detailed list view of the clients.  Allows for extra
+    filters to be passed in.  Somewhat clunky now that dates are allowed.
+    '''
+    context = dict(path=request.path)
+    timestamp = 'now'
+    entry_max = None
+    if request.GET:
+        context['qsa']='?%s' % request.GET.urlencode()
+        if request.GET.has_key('date1') and request.GET.has_key('time'):
+            timestamp = "%s %s" % (request.GET['date1'],request.GET['time'])
+            entry_max = datetime(*strptime(timestamp, "%Y-%m-%d %H:%M:%S")[0:6])
+    client_list = Client.objects.active(timestamp).order_by('name')
+    if timestamp == 'now':
+        timestamp = datetime.now().isoformat('@')
+    context['timestamp_date'] = timestamp[:10]
+    context['timestamp_time'] = timestamp[11:19]
+
+    if 'server' in kwargs and kwargs['server']:
+        context['server'] = kwargs['server']
+    if 'state' in kwargs and kwargs['state']:
+        context['state'] = kwargs['state']
+
+    # build the entry list from available clients
+    entry_list = []
+    if entry_max:
+        for client in client_list:
+            try:
+                e = interaction.objects.filter(client=client).filter(timestamp__lt=entry_max).order_by('-timestamp')[0]
+                if 'server' in context and e.server != context['server']:
+                    continue
+                if 'state' in context and e.state != context['state']:
+                    continue
+                entry_list.append(e)
+            except IndexError:
+                # Should never see this.. but skip clients with no data
+                pass
+    else:
+        if 'server' in context:
+            client_list = client_list.filter(current_interaction__server__exact=kwargs['server'])
+        if 'state' in context:
+            client_list = client_list.filter(current_interaction__state__exact=kwargs['state'])
+        [ entry_list.append(x.current_interaction) for x in client_list ]
+    context['entry_list'] = entry_list
+    return render_to_response('clients/detailed-list.html', context)
+
 def client_detail(request, hostname = None, pk = None):
     #SETUP error pages for when you specify a client or interaction that doesn't exist
     client = get_object_or_404(Client, name=hostname)

@@ -159,6 +159,9 @@ class Interaction(models.Model):
         self.client.current_interaction = self.client.interactions.latest()
         self.client.save()#save again post update
 
+    def badcount(self):
+        return self.totalcount - self.goodcount
+
     def bad(self):
         return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_BAD)
 

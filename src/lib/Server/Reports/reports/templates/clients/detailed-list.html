@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Detailed Client Listing{% endblock %}
+
+{% block extra_header_info %}
+<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
+<script type="text/javascript">var cal = new CalendarPopup();</script>
+<style type="text/css">
+#client_list_header {
+  font-weight: bold;
+  border-bottom:1px solid;
+  /*color: #333366;*/
+}
+/*#client_list_box {
+  min-width:875px;
+}*/
+.listview {
+  padding-top:3px;
+  padding-bottom:3px;
+}
+.listview_alt {
+  background:#f1ffc9;
+  padding-top:3px;
+  padding-bottom:3px;
+}
+</style>
+{% endblock%}
+
+{% block pagebanner %}
+  <div class="header">
+      <h1>Detailed Client List</h1>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block content %}
+<div>
+<form name="timestamp-select" action='{{ path }}' method='get'>
+<span class="mini-date">
+<b>Enter date or use calendar popup: </b>
+<input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
+<input type="text" name="time" value="{{timestamp_time}}" size="8" />
+<a href=""onclick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
+   name="anchor1" id="anchor1">Calendar</a>
+<input type="button" value="Go" onclick="document.forms['timestamp-select'].submit();"/>
+ | <input type="button" name="now" value="Now" onclick="location.href='{{ path }}';"/>
+</span><br/><br/>
+</form>
+</div>
+
+<div id='client_list_box'>
+{% if entry_list %}
+  <table cellpadding="3">
+  <tr id='client_list_header' class='listview'>
+    <td class='left_column'>Node</td>
+    <td class='right_column' style='width:75px'>State</td>
+    <td class='right_column_narrow'>Good</td>
+    <td class='right_column_narrow'>Bad</td>
+    <td class='right_column_narrow'>Extra</td>
+    <td class='right_column'>Last Run</td>
+    <td class='right_column_wide'>Server</td>
+  </tr>
+  {% for entry in entry_list %}
+  <tr class='{% cycle listview,listview_alt %}'>
+    <td class='left_column'><a href='{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=entry.client.name, pk=entry.id %}'>{{ entry.client.name }}</a></td>
+    <td class='right_column' style='width:75px'><a href=
+      {% if server %}
+        '{% url Bcfg2.Server.Reports.reports.views.client_detailed_list server=server,state=entry.state %}{{ qsa }}'
+      {% else %}
+        '{% url Bcfg2.Server.Reports.reports.views.client_detailed_list state=entry.state %}{{ qsa }}'
+      {% endif %}
+    {% ifequal entry.state 'dirty' %}style='background:#FF6A6A'{% endifequal %}>{{ entry.state }}</a></td>
+    <td class='right_column_narrow'>{{ entry.goodcount }}</td>
+    <td class='right_column_narrow'>{{ entry.badcount }}</td>
+    <td class='right_column_narrow'>{{ entry.extra|length }}</td>
+    <td class='right_column'><span {% if entry.isstale %}style='background:#FF6A6A'{% endif %}>{{ entry.timestamp|date:"Y-m-d H:i" }}</span></td>
+    <td class='right_column_wide'>
+       {% if entry.server %}
+         <a href=
+           {% if state %}
+             '{% url Bcfg2.Server.Reports.reports.views.client_detailed_list server=entry.server,state=state %}{{ qsa }}'
+           {% else %}
+             '{% url Bcfg2.Server.Reports.reports.views.client_detailed_list server=entry.server %}{{ qsa }}'
+           {% endif %}
+         >{{ entry.server }}</a>
+       {% else %}
+         &nbsp;
+       {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </table>
+{% else %}
+    <p>No client records are available.</p>
+{% endif %}
+</div>
+{% endblock %}
