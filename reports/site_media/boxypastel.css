@@ -101,12 +101,6 @@ div.nodebox {
     text-align: left;
     position:relative;
     }
-div.header {
-    background-color: #DDD;
-    padding: 8px;
-    text-indent:50px;
-    position:relative;
-    }
 /*Divs For Statusbar*/
 div.redbar {
     border: 0px solid #660000;

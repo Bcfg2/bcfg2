@@ -10,20 +10,21 @@
 </head>
 
 <body>
-    <div id="header">
+  <div id="header">
         <div id="branding">
             <h1>Bcfg2 Reporting System</h1>
 	</div>
 	<div id="user-tools">...Change is Coming...</div>
-    </div>
+  </div>
+  <div id="content-main">
     <div id="sidebar">
         {% block sidebar %}
         <ul class="sidebar">
             <li><a href="{% url Bcfg2.Server.Reports.reports.views.client_index %}../" class="sidebar">Home</a></li>
             <li><a href="{% url Bcfg2.Server.Reports.reports.views.client_index %}" class="sidebar">Clients</a></li>
-                <ul class="sidebar-level2">
-                    <li><a href="{% url Bcfg2.Server.Reports.reports.views.client_detailed_list %}" class="sidebar">Detailed List</a></li>
-                </ul>
+        <ul class="sidebar-level2">
+            <li><a href="{% url Bcfg2.Server.Reports.reports.views.client_detailed_list %}" class="sidebar">Detailed List</a></li>
+        </ul>
 	    <li>
 	    <a href="{% url Bcfg2.Server.Reports.reports.views.display_index %}" class="sidebar">Displays</a>
 	    <ul class="sidebar-level2">
@@ -43,12 +44,10 @@
         {% endblock %}
     </div>
 
-    <div id="content-main">
-        <div id="container">
-	{% block pagebanner %}{% endblock %}
-	{% block content %}{% endblock %}
-
-	</div>
-    </div>
+      <div id="container">
+        {% block pagebanner %}{% endblock %}
+        {% block content %}{% endblock %}
+      </div>
+  </div>
 </body>
 </html>
