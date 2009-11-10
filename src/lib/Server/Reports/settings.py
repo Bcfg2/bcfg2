@@ -95,7 +95,10 @@ AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
 # The NIS group authorized to login to BCFG2's reportinvg system
 AUTHORIZED_GROUP = ''
 #create login url area:
-import django.contrib.auth
+try:
+    import django.contrib.auth
+except ImportError:
+    print('Import of Django module failed. Is Django installed?')
 django.contrib.auth.LOGIN_URL = '/login'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

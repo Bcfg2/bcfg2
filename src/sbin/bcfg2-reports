@@ -2,13 +2,10 @@
 '''Query reporting system for client status'''
 __revision__ = '$Revision$'
 
-import os, sys
-try:
-    import Bcfg2.Server.Reports.settings
-except:
-    sys.stderr.write("Failed to load configuration settings."
-                     "is /etc/bcfg2.conf readable?")
-    sys.exit(1)
+import os
+import sys
+
+import Bcfg2.Server.Reports.settings
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
 project_name = os.path.basename(project_directory)
