@@ -44,6 +44,7 @@
     <xsd:attribute type='xsd:string' name='owner'/>
     <xsd:attribute type='xsd:string' name='group'/>
     <xsd:attribute type='xsd:string' name='prune'/>
+    <xsd:attribute type='xsd:string' name='to'/>
   </xsd:complexType>
 
   <xsd:complexType name='PermissionsType'>
