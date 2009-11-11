@@ -123,7 +123,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
         # Force a re- prelink of all packages if prelink exists.
         # Many, if not most package verifies can be caused by out of date prelinking.
-        if os.path.isfile('/usr/sbin/prelink'):
+        if os.path.isfile('/usr/sbin/prelink') and not self.setup['dryrun']:
             cmdrc, output = self.cmd.run('/usr/sbin/prelink -a -mR')
             if cmdrc == 0:
                 self.logger.debug('Pre-emptive prelink succeeded')
