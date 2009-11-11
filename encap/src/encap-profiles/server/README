@@ -1,6 +1,0 @@
-You must build and install the client packages in ".." before building here.
-
-Type "make".
-
-Bcfg2 Server does not work on all of the platforms supported by Bcfg2 client.
-GNU/Linux on x86_32 or x86_64 are recommended.
