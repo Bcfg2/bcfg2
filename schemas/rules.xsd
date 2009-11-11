@@ -43,6 +43,7 @@
     <xsd:attribute type='xsd:string' name='perms'/>
     <xsd:attribute type='xsd:string' name='owner'/>
     <xsd:attribute type='xsd:string' name='group'/>
+    <xsd:attribute type='xsd:string' name='prune'/>
   </xsd:complexType>
 
   <xsd:complexType name='PermissionsType'>
@@ -58,6 +59,7 @@
       <xsd:element name='Directory' type='DirectoryType'/>
       <xsd:element name='SymLink' type='SymLinkType'/>
       <xsd:element name='Package' type='PackageType'/>
+      <xsd:element name='Path' type='PathType'/>
       <xsd:element name='Permissions' type='PermissionsType'/>
       <xsd:element name='Action' type='ActionType'/>
       <xsd:element name='Group' type='RContainerType'/>
