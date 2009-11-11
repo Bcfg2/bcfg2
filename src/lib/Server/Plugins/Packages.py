@@ -379,6 +379,7 @@ class APTSource(Source):
         Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
         self.cachefile = self.escape_url(self.url) + '.data'
         self.pkgnames = set()
+        print self.url
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
@@ -391,7 +392,7 @@ class APTSource(Source):
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def get_urls(self):
-        return ["%s/dists/%s/%s/binary-%s/Packages.gz" % \
+        return ["%sdists/%s/%s/binary-%s/Packages.gz" % \
                 (self.url, self.version, part, arch) for part in self.components \
                 for arch in self.arches]
     urls = property(get_urls)
