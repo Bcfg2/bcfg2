@@ -303,9 +303,11 @@ def prepare_client_lists(request, timestamp = 'now'):
         cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
         results = cursor.fetchall()
         for x in results:
-            if type(x[1]) == type(""):
-                x[1] = util.typecast_timestamp(x[1])
-        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetime.now() - x[1] > timedelta(days=1)])
+            if type(x[1]) == type("") or type(x[1]) == type(u""):
+                ts = util.typecast_timestamp(x[1])
+            else:
+                ts = x[1]
+        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetime.now() - ts > timedelta(days=1)])
     else:
         cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
                        "WHERE timestamp < %s GROUP BY client_id", [timestamp])
