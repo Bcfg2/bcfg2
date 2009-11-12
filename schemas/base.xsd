@@ -9,10 +9,12 @@
   </xsd:annotation>
   
   <xsd:include schemaLocation="atom.xsd"/>
+  <xsd:include schemaLocation="pathentry.xsd"/>
 
   <xsd:complexType name='ContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='ConfigFile' type='StructureEntry'/>
       <xsd:element name='SymLink' type='StructureEntry'/>
@@ -29,6 +31,7 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Group' type='ContainerType'/>
         <xsd:element name='Package' type='StructureEntry'/>
+        <xsd:element name='Path' type='PathEntry'/>
         <xsd:element name='Service' type='StructureEntry'/>
         <xsd:element name='ConfigFile' type='StructureEntry'/>
         <xsd:element name='SymLink' type='StructureEntry'/>
