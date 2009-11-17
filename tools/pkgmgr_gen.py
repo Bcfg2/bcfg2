@@ -20,7 +20,9 @@ import glob
 import urllib
 import gzip
 import urlparse
-from elementtree.ElementTree import parse
+from lxml.etree import parse
+import xml.sax
+from xml.sax.handler import ContentHandler
 
 def info(object, spacing=10, collapse=1):
     """Print methods and doc strings.
@@ -159,6 +161,56 @@ class pkgmgr_URLopener(urllib.FancyURLopener):
         """
         print "ERROR %s: Unable to retrieve %s" % (errcode, url)
 
+class PrimaryParser(ContentHandler):
+    def __init__(self, packages):
+       self.inPackage = 0
+       self.inName = 0
+       self.inArch = 0
+       self.packages = packages
+
+    def startElement(self, name, attrs):
+       if name == "package":
+           self.package = {'file': None, 'name': '', 'subarch': '',
+                           'epoch': None, 'version': None, 'release': None}
+           self.inPackage = 1
+       elif self.inPackage:
+           if name == "name":
+               self.inName = 1
+           elif name == "arch":
+               self.inArch = 1
+           elif name == "version":
+               self.package['epoch'] = attrs.getValue('epoch')
+               self.package['version'] = attrs.getValue('ver')
+               self.package['release'] = attrs.getValue('rel')
+           elif name == "location":
+               self.package['file'] = attrs.getValue('href')
+
+    def endElement(self, name):
+       if name == "package":
+           self.inPackage = 0
+           # Only load RPMs with subarchitectures as calculated from the --archs option.
+           if self.package['subarch'] in subarchs or 'all' in subarchs:
+               self.packages.setdefault(self.package['name'], []).append(
+                   {'filename':self.package['file'], 'name':self.package['name'],
+                    'arch':self.package['subarch'], 'epoch':self.package['epoch'],
+                    'version':self.package['version'], 'release':self.package['release']})
+           # Print '.' for each package. stdio is line buffered, so have to flush it.
+           if options.verbose:
+               sys.stdout.write('.')
+               sys.stdout.flush()
+       elif self.inPackage:
+           if name == "name":
+               self.inName = 0
+           elif name == "arch":
+               self.inArch = 0
+
+    def characters(self, content):
+       if self.inPackage:
+           if self.inName:
+               self.package['name'] += content
+           if self.inArch:
+               self.package['subarch'] += content
+
 def loadRepos(repolist):
     '''
        repolist is a list of urls to yum repositories.
@@ -189,6 +241,9 @@ def loadRepos(repolist):
     for repo in repolist:
         url = urlparse.urljoin(repo, './repodata/repomd.xml')
 
+        if options.verbose:
+            print 'Loading repo metadata : %s' % url
+
         try:
             opener = pkgmgr_URLopener()
             file, message = opener.retrieve(url)
@@ -203,10 +258,10 @@ def loadRepos(repolist):
 
         repomd = tree.getroot()
         for element in repomd:
-            if element.tag.endswith('data') and element.attrib['type'] == 'primary':
+            if element.tag.endswith('data') and element.get('type') == 'primary':
                 for property in element:
                     if property.tag.endswith('location'):
-                        primaryhref = property.attrib['href']
+                        primaryhref = property.get('href')
 
         url = urlparse.urljoin(repo, './' + primaryhref)
 
@@ -221,36 +276,14 @@ def loadRepos(repolist):
 
         try:
             repo_file = gzip.open(file)
-            tree = parse(repo_file)
         except IOError:
             print "ERROR: Unable to parse retrieved file."
             sys.exit()
 
-        repo = tree.getroot()
-        for element in repo:
-            if element.tag.endswith('package'):
-                for property in element:
-                    if property.tag.endswith('name'):
-                        name = property.text
-                    elif property.tag.endswith('arch'):
-                        subarch = property.text
-                    elif property.tag.endswith('version'):
-                        version = property.get('ver')
-                        epoch = property.get('epoch')
-                        release = property.get('rel')
-                    elif property.tag.endswith('location'):
-                        file = property.get('href')
+        parser = xml.sax.make_parser()
+        parser.setContentHandler(PrimaryParser(packages))
+        parser.parse(repo_file)
 
-                # Only load RPMs with subarchitectures as calculated from the --archs option.
-                if subarch in subarchs or 'all' in subarchs:
-                    packages.setdefault(name, []).append({'filename':file, 'name':name, \
-                                                          'arch':subarch, 'epoch':epoch, \
-                                                          'version':version, 'release':release})
-
-                # Print '.' for each package. stdio is line buffered, so have to flush it.
-                if options.verbose:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
         if options.verbose:
             sys.stdout.write('\n')
         repo_file.close()
@@ -294,6 +327,9 @@ def printPackage(entry, group_count):
     arch_dict = {}
     # Split instances of this package into subarchitectures.
     for instance in entry:
+        if instance['arch'] == 'src':
+            continue
+
         if instance['arch'] in subarch_dict:
             subarch_dict[instance['arch']].append(instance)
         else:
