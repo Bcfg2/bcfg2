@@ -733,7 +733,7 @@ class GroupSpool(Plugin, Generator):
         if action in ['exists', 'created']:
             if posixpath.isdir(epath):
                 self.AddDirectoryMonitor(epath[len(self.data):])
-            if ident not in self.entries:
+            if ident not in self.entries and posixpath.isfile(epath):
                 dirpath = "".join([self.data, ident])
                 self.entries[ident] = self.es_cls(self.filename_pattern,
                                                   dirpath,
