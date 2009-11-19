@@ -29,14 +29,20 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Generator.__init__(self)
-        self.Entries = {'ConfigFile':
+        self.Entries = {'Path':
                 {'/etc/nagiosgen.status'   : self.createhostconfig,
                 '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}
 
-        self.client_attrib = {'encoding': 'ascii', 'owner':'root', \
-                         'group':'root', 'perms':'0400'}
-        self.server_attrib = {'encoding': 'ascii', 'owner':'nagios', \
-                         'group':'nagios', 'perms':'0440'}
+        self.client_attrib = {'encoding':'ascii',
+                              'owner':'root',
+                              'group':'root',
+                              'type':'file',
+                              'perms':'0400'}
+        self.server_attrib = {'encoding':'ascii',
+                              'owner':'nagios',
+                              'group':'nagios',
+                              'type':'file',
+                              'perms':'0440'}
 
     def createhostconfig(self, entry, metadata):
         '''Build host specific configuration file'''

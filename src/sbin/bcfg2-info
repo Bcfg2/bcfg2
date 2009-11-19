@@ -30,8 +30,8 @@ logger = logging.getLogger('bcfg2-info')
 class dummyError(Exception):
     pass
 
-class ConfigFileNotBuilt(Exception):
-    ''' Thrown when ConfigFile entry contains no content'''
+class FileNotBuilt(Exception):
+    ''' Thrown when File entry contains no content'''
     def __init__(self, value):
         Exception.__init__(self)
         self.value = value
@@ -73,7 +73,7 @@ def write_config_file(outputdir, cfg):
     try:
         config_file.write(cfg.text)
     except: # plugin throw an exception and therefore there is no content => None
-        raise ConfigFileNotBuilt(name)
+        raise FileNotBuilt(name)
     config_file.close()
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
@@ -228,11 +228,11 @@ Usage: [quit|exit]"""
                 print("Building client configuration failed.")
                 return
 
-            # handle <ConfigFile> entries
-            for configfile in [cfile for cfile in client_config.findall(".//ConfigFile")]:
+            # handle <Path type='file'> entries
+            for configfile in [cfile for cfile in client_config.findall(".//Path[@type = 'file']")]:
                 try:
                     write_config_file(odir, configfile)
-                except ConfigFileNotBuilt, ex:
+                except FileNotBuilt, ex:
                     print("Warning: No file content generated for ConfigFile %s!" % ex)
                     pass
                 except Exception, ex:
@@ -260,7 +260,7 @@ Usage: [quit|exit]"""
         '''build a config file for client'''
         if len(args.split()) == 2:
             fname, client = args.split()
-            entry = lxml.etree.Element('ConfigFile', name=fname)
+            entry = lxml.etree.Element('Path', type='file', name=fname)
             metadata = self.build_metadata(client)
             self.Bind(entry, metadata)
             print(lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True))
@@ -399,7 +399,7 @@ Usage: [quit|exit]"""
             print("Unable to find metadata for host %s" % client)
             return
         structures = self.GetStructures(meta)
-        for clist in [struct.findall('ConfigFile') for struct in structures]:
+        for clist in [struct.findall('Path') for struct in structures]:
             for cfile in clist:
                 if cfile.get('name') in self.plugins['Cfg'].Entries['ConfigFile']:
                     cset = self.plugins['Cfg'].entries[cfile.get('name')]

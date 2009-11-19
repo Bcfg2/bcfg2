@@ -6,12 +6,12 @@ from time import strptime
 
 KIND_CHOICES = (
     #These are the kinds of config elements
-    ('ConfigFile', 'ConfigFile'),
     ('Package', 'Package'),
+    ('Path', 'directory'),
+    ('Path', 'file'),
+    ('Path', 'permissions'),
+    ('Path', 'symlink'),
     ('Service', 'Service'),
-    ('SymLink', 'SymLink'),
-    ('Directory', 'Directory'),
-    ('Permissions','Permissions'),
 )
 PING_CHOICES = (
     #These are possible ping states

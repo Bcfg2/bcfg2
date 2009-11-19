@@ -14,12 +14,11 @@ import threading
 
 logger = logging.getLogger('Snapshots')
 
-ftypes = ['ConfigFile', 'SymLink', 'Directory']
-datafields = {'Package': ['version'],
+datafields = {
+              'Package': ['version'],
+              'Path': ['type'],
               'Service': ['status'],
-              'ConfigFile': ['owner', 'group', 'perms'], 
-              'Directory': ['owner', 'group', 'perms'],
-              'SymLink': ['to']}
+             }
 
 def build_snap_ent(entry):
     basefields = []
@@ -29,7 +28,7 @@ def build_snap_ent(entry):
     state = dict([(key, unicode(entry.get(key))) for key in basefields])
     desired.update([(key, unicode(entry.get(key))) for key in \
                  datafields[entry.tag]])
-    if entry.tag == 'ConfigFile':
+    if (entry.tag == 'Path') and (entry.get('type') == 'file'):
         if entry.text == None:
             desired['contents'] = None
         else:
@@ -48,7 +47,7 @@ def build_snap_ent(entry):
 
     state.update([(key, unicode(entry.get('current_' + key, entry.get(key)))) \
                   for key in datafields[entry.tag]])
-    if entry.tag == 'ConfigFile' and entry.get('exists', 'true') == 'false':
+    if entry.tag == 'Path' and entry.get('exists', 'true') == 'false':
         state = None
     return [desired, state]
 
@@ -92,16 +91,10 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
         for entry in state.find('.//Bad'):
             data = [False, False, unicode(entry.get('name'))] \
                    + build_snap_ent(entry)
-            if entry.tag in ftypes:
-                etag = 'Path'
-            else:
-                etag = entry.tag
+            etag = entry.tag
             entries[etag][entry.get('name')] = data
         for entry in state.find('.//Modified'):
-            if entry.tag in ftypes:
-                etag = 'Path'
-            else:
-                etag = entry.tag
+            etag = entry.tag
             if entry.get('name') in entries[etag]:
                 data = [True, False, unicode(entry.get('name'))] + \
                        build_snap_ent(entry)

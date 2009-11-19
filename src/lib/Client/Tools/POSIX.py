@@ -88,11 +88,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     name = 'POSIX'
     __handles__ = [('ConfigFile', None),
                    ('Directory', None),
-                   ('Path', 'ConfigFile'),
-                   ('Path', 'Directory'),
-                   ('Path', 'HardLink'),
-                   ('Path', 'Permissions'),
-                   ('Path', 'SymLink'),
                    ('Path', 'device'),
                    ('Path', 'directory'),
                    ('Path', 'file'),

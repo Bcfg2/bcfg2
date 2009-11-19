@@ -13,22 +13,23 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.DirectoryBacked,
               Bcfg2.Server.Plugin.PullTarget):
-    '''The sshbase generator manages ssh host keys (both v1 and v2)
-    for hosts.  It also manages the ssh_known_hosts file. It can
-    integrate host keys from other management domains and similarly
-    export its keys. The repository contains files in the following
-    formats:
+    '''
+       The sshbase generator manages ssh host keys (both v1 and v2)
+       for hosts.  It also manages the ssh_known_hosts file. It can
+       integrate host keys from other management domains and similarly
+       export its keys. The repository contains files in the following
+       formats:
 
-    ssh_host_key.H_(hostname) -> the v1 host private key for
-      (hostname)
-    ssh_host_key.pub.H_(hostname) -> the v1 host public key
-      for (hostname)
-    ssh_host_(dr)sa_key.H_(hostname) -> the v2 ssh host
-      private key for (hostname)
-    ssh_host_(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
-      public key for (hostname)
-    ssh_known_hosts -> the current known hosts file. this
-      is regenerated each time a new key is generated.
+       ssh_host_key.H_(hostname) -> the v1 host private key for
+         (hostname)
+       ssh_host_key.pub.H_(hostname) -> the v1 host public key
+         for (hostname)
+       ssh_host_(dr)sa_key.H_(hostname) -> the v2 ssh host
+         private key for (hostname)
+       ssh_host_(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
+         public key for (hostname)
+       ssh_known_hosts -> the current known hosts file. this
+         is regenerated each time a new key is generated.
     '''
     name = 'SSHbase'
     __version__ = '$Id$'
@@ -54,7 +55,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                               % (self.data))
             self.logger.error(ioerr)
             raise Bcfg2.Server.Plugin.PluginInitError
-        self.Entries = {'ConfigFile':
+        self.Entries = {'Path':
                         {'/etc/ssh/ssh_known_hosts': self.build_skn,
                          '/etc/ssh/ssh_host_dsa_key': self.build_hk,
                          '/etc/ssh/ssh_host_rsa_key': self.build_hk,
@@ -122,7 +123,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def HandlesEntry(self, entry, _):
         '''Handle key entries dynamically'''
-        return entry.tag == 'ConfigFile' and \
+        return entry.tag == 'Path' and \
                ([fpat for fpat in self.keypatterns
                  if entry.get('name').endswith(fpat)]
                 or entry.get('name').endswith('ssh_known_hosts'))
@@ -168,7 +169,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.entries[hostkey].data)
-        permdata = {'owner':'root', 'group':'root', 'perms':'0644'}
+        permdata = {'owner':'root',
+                    'group':'root',
+                    'type':'file',
+                    'perms':'0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
     def build_hk(self, entry, metadata):
@@ -181,8 +185,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
         keydata = self.entries[filename].data
-        permdata = {'owner':'root', 'group':'root'}
-        permdata['perms'] = '0600'
+        permdata = {'owner':'root',
+                    'group':'root',
+                    'type':'file',
+                    'perms':'0600'}
         if entry.get('name')[-4:] == '.pub':
             permdata['perms'] = '0644'
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
