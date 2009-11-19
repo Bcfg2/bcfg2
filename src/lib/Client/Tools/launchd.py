@@ -116,7 +116,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
             else:
                 name = entry.get('name')
                 if entry.get('status') == 'on' and self.FindPlist(entry):
-                    self.logger.info("Reloading launchd  service %s" % name)
+                    self.logger.info("Reloading launchd service %s" % name)
                     #stop?
                     self.cmd.run("/bin/launchctl stop %s" % name)
                     self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
