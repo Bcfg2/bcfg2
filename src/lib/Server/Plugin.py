@@ -53,7 +53,7 @@ class Plugin(object):
     name = 'Plugin'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __rmi__ = []
+    __rmi__ = ['toggle_debug']
     experimental = False
     deprecated = False
 
@@ -64,6 +64,14 @@ class Plugin(object):
         self.data = "%s/%s" % (datastore, self.name)
         self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
         self.running = True
+        self.debug_flag = False
+
+    def toggle_debug(self):
+        self.debug_flag = not self.debug_flag
+
+    def debug_log(self, message, flag=None):
+        if (flag is None) and self.debug_flag or flag:
+            self.logger.error(message)
 
     @staticmethod
     def make_path(path):
