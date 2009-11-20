@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# ${3} is the destination volume so that this works correctly
+# when being installed to volumes other than the current OS.
+
+# set proper perms
+/usr/bin/find "${3}"{SITELIBDIR}/Bcfg2* -type f -exec chmod 0644 {} \;
+chmod 0644 "${3}"{DATADIR}/share/man/man1/bcfg2.1
+chmod 0644 "${3}"{DATADIR}/share/man/man5/bcfg2.conf.5
+chmod 0644 "${3}"/Library/LaunchDaemons/{LAUNCHD}
+chmod 0755 "${3}"/usr/local/bin/bcfg2
+
+# add the launchd script
+/bin/launchctl load -w "${3}"/Library/LaunchDaemons/{LAUNCHD}
