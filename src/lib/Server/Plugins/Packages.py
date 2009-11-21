@@ -379,7 +379,6 @@ class APTSource(Source):
         Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
         self.cachefile = self.escape_url(self.url) + '.data'
         self.pkgnames = set()
-        print self.url
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
@@ -489,7 +488,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Generator):
     name = 'Packages'
     experimental = True
-    __rmi__ = ['Refresh']
+    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -599,7 +598,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         initial = set([pkg.get('name') for struct in structures \
                        for pkg in struct.findall('Package')])
         news = lxml.etree.Element('Independent')
-        packages, unknown, ptype = self.complete(meta, initial)
+        packages, unknown, ptype = self.complete(meta, initial,
+                                                 debug=self.debug_flag)
         logged_unknown = [x for x in unknown if not x.startswith('choice')]
         if logged_unknown:
             self.logger.info("Got unknown entries")
