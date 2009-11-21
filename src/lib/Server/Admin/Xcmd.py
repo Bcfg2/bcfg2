@@ -10,9 +10,6 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin xcmd command")
     __usage__ = ("bcfg2-admin xcmd <command>")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-
     def __call__(self, args):
         optinfo = {
             'server': Bcfg2.Options.SERVER_LOCATION,
