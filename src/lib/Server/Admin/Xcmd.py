@@ -44,6 +44,8 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             if flt.faultCode == 7:
                 print("Unknown method %s" % cmd)
                 return
+            elif flt.faultCode == 20:
+                return
             else:
                 raise
         if data != None:
