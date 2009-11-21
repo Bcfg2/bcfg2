@@ -304,7 +304,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         filename = event.filename.split('/')[-1]
         if filename in ['groups.xml', 'clients.xml']:
             dest = filename
-        elif filename in reduce(lambda x,y:x+y, self.extra.values()):
+        elif filename in reduce(lambda x, y:x+y, self.extra.values()):
             if event.code2str() == 'exists':
                 return
             dest = [key for key, value in self.extra.iteritems() if filename in value][0]
@@ -600,44 +600,47 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             setattr(imd, source, data)
             imd.connectors.append(source)
 
-    def validate_client_address(self, client, address):
+    def validate_client_address(self, client, addresspair):
         '''Check address against client'''
+        address = addresspair[0]
         if client in self.floating:
+            self.debug_log("Client %s is floating" % client)
             return True
         if address in self.addresses:
             if client == self.addresses[address]:
+                self.debug_log("Client %s matches address %s" % (client, address))
                 return True
             else:
                 self.logger.error("Got request for non-float client %s from %s" \
                                   % (client, address))
                 return False
-        resolved = self.resolve_client(address)
+        resolved = self.resolve_client(addresspair)
         if resolved == client:
             return True
         else:
             self.logger.error("Got request for %s from incorrect address %s" \
                               % (client, address))
+            self.logger.error("Resolved to %s" % resolved)
             return False
 
     def AuthenticateConnection(self, cert, user, password, address):
         '''This function checks auth creds'''
         if cert:
+            id_method = 'cert'
             certinfo = dict([x[0] for x in cert['subject']])
             # look at cert.cN
             client = certinfo['commonName']
+            self.debug_log("Got cN %s; using as client name" % client)
             auth_type = self.auth.get(client, 'cert+password')
-            addr_check = self.validate_client_address(client, address)
-            if auth_type == 'cert':
-                # we can't continue to password auth
-                return addr_check
-        if user == 'root':
-            # we aren't using per-client keys
+        elif user == 'root':
+            id_method = 'address'
             try:
                 client = self.resolve_client(address)
             except MetadataConsistencyError:
-                self.logger.error("Client %s failed to authenticate due to metadata problem" % (address[0]))
+                self.logger.error("Client %s failed to resolve; metadata problem" % (address[0]))
                 return False
         else:
+            id_method = 'uuid'
             # user maps to client
             if user not in self.uuid:
                 client = user
@@ -645,17 +648,22 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             else:
                 client = self.uuid[user]
 
-        # we have the client
-        if client not in self.floating and user != 'root':
-            if address[0] in self.addresses:
-                # we are using manual resolution
-                if client not in self.addresses[address[0]]:
-                    self.logger.error("Got request for non-floating UUID %s from %s" % (user, address[0]))
-                    return False
-            elif client != self.resolve_client(address):
-                self.logger.error("Got request for non-floating UUID %s from %s" \
-                                  % (user, address[0]))
-                return False
+        # we have the client name
+        self.debug_log("Authenticating client %s" % client)
+
+        # next we validate the address
+        if id_method == 'uuid':
+            addr_is_valid = True
+        else:
+            addr_is_valid = self.validate_client_address(client, address)
+
+        if not addr_is_valid:
+            return False
+
+        if id_method == 'cert' and auth_type != 'cert+password':
+            # we are done if cert+password not required
+            return True
+
         if client not in self.passwords:
             if client in self.secure:
                 self.logger.error("Client %s in secure mode but has no password" % (address[0]))
