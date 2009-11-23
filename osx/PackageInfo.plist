@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
         <key>CFBundleIdentifier</key>
-        <string>gov.anl.mcs</string>
+        <string>gov.anl.mcs.bcfg2</string>
         <key>CFBundleShortVersionString</key>
         <string>{SHORTVERSION}</string>
         <key>IFMajorVersion</key>
