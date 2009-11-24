@@ -574,7 +574,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     nqtext += '\nDiff took too long to compute, no printable diff'
             entry.set('qtext', nqtext)
         qtxt = entry.get('qtext', '')
-        qtxt += "\nInstall ConfigFile %s: (y/N): " % (entry.get('name'))
+        qtxt += "\nInstall %s %s: (y/N): " % (entry.tag, entry.get('name'))
         entry.set('qtext', qtxt)
         return contentStatus and permissionStatus
 
