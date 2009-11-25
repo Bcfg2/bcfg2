@@ -83,12 +83,12 @@ class launchd(Bcfg2.Client.Tools.Tool):
         name = entry.get('name')
         if entry.get('status') == 'on':
             self.logger.error("Installing service %s" % name)
-            cmdrc = self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))[0]
+            cmdrc = self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))
             cmdrc = self.cmd.run("/bin/launchctl start %s" % name)
         else:
             self.logger.error("Uninstalling service %s" % name)
             cmdrc = self.cmd.run("/bin/launchctl stop %s" % name)
-            cmdrc = self.cmd.run("/bin/launchctl unload -w %s" % self.FindPlist(entry))[0]
+            cmdrc = self.cmd.run("/bin/launchctl unload -w %s" % self.FindPlist(entry))
         return cmdrc[0] == 0
 
     def Remove(self, svcs):
