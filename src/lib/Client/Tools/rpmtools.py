@@ -59,7 +59,7 @@ try:
             continue
         option, pattern = line.split()
         if pattern.startswith('*.'):
-            pattern = pattern.replace('*.','\.')
+            pattern = pattern.replace('*.', '\.')
             pattern += '$'
         elif pattern.startswith('/'):
             pattern = '^' + pattern
@@ -126,12 +126,12 @@ VERIFY_FOR_DUMPFILES = 1 << 27  #  /*!< query:  from --dump */
 
 # Comes from C cource.  lib/rpmcli.h
 VERIFY_ATTRS =   \
-  ( VERIFY_MD5 | VERIFY_SIZE | VERIFY_LINKTO | VERIFY_USER | VERIFY_GROUP | \
-    VERIFY_MTIME | VERIFY_MODE | VERIFY_RDEV | VERIFY_CONTEXTS )
+  (VERIFY_MD5 | VERIFY_SIZE | VERIFY_LINKTO | VERIFY_USER | VERIFY_GROUP | \
+   VERIFY_MTIME | VERIFY_MODE | VERIFY_RDEV | VERIFY_CONTEXTS)
 
 VERIFY_ALL =     \
-  ( VERIFY_ATTRS | VERIFY_FILES | VERIFY_DEPS | VERIFY_SCRIPT | VERIFY_DIGEST |\
-    VERIFY_SIGNATURE | VERIFY_HDRCHK )
+  (VERIFY_ATTRS | VERIFY_FILES | VERIFY_DEPS | VERIFY_SCRIPT | VERIFY_DIGEST |\
+   VERIFY_SIGNATURE | VERIFY_HDRCHK)
 
 
 # Some masks for what checks to NOT do on these file types.
@@ -166,13 +166,13 @@ def rpmpackagelist(rts):
                {'name':'bar', 'epoch':'10', 'version':'5.2', 'release':'2', 'arch':'x86_64' } ]
 
     """
-    return [ { 'name':header[rpm.RPMTAG_NAME],
-               'epoch':header[rpm.RPMTAG_EPOCH],
-               'version':header[rpm.RPMTAG_VERSION],
-               'release':header[rpm.RPMTAG_RELEASE],
-               'arch':header[rpm.RPMTAG_ARCH],
-               'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1] }
-               for header in rts.dbMatch()]
+    return [{'name':header[rpm.RPMTAG_NAME],
+             'epoch':header[rpm.RPMTAG_EPOCH],
+             'version':header[rpm.RPMTAG_VERSION],
+             'release':header[rpm.RPMTAG_RELEASE],
+             'arch':header[rpm.RPMTAG_ARCH],
+             'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1]}
+             for header in rts.dbMatch()]
 
 def getindexbykeyword(index_ts, **kwargs):
     """
@@ -196,7 +196,7 @@ def getindexbykeyword(index_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [ key for key in list(kwargs.keys()) \
+    keywords = [key for key in list(kwargs.keys()) \
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in index_mi:
@@ -234,7 +234,7 @@ def getheadersbykeyword(header_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [ key for key in list(kwargs.keys()) \
+    keywords = [key for key in list(kwargs.keys()) \
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in header_mi:
@@ -258,7 +258,7 @@ def prelink_md5_check(filename):
     """
     prelink = False
     try:
-        plf = open(filename,"rb")
+        plf = open(filename, "rb")
     except IOError:
         return False, 0
 
@@ -305,7 +305,7 @@ def prelink_size_check(filename):
     """
     fsize = 0
     try:
-        plf = open(filename,"rb")
+        plf = open(filename, "rb")
     except IOError:
         return False
 
@@ -655,11 +655,11 @@ def rpm_verify_package(vp_ts, header, verify_options):
 
     # If there have been any errors, add the package nevra to the result.
     if len(package_results) > 0:
-        package_results.setdefault('nevra', ( header[rpm.RPMTAG_NAME], \
-                                              header[rpm.RPMTAG_EPOCH], \
-                                              header[rpm.RPMTAG_VERSION], \
-                                              header[rpm.RPMTAG_RELEASE], \
-                                              header[rpm.RPMTAG_ARCH] ) )
+        package_results.setdefault('nevra', (header[rpm.RPMTAG_NAME], \
+                                             header[rpm.RPMTAG_EPOCH], \
+                                             header[rpm.RPMTAG_VERSION], \
+                                             header[rpm.RPMTAG_RELEASE], \
+                                             header[rpm.RPMTAG_ARCH]))
     else:
         package_results = None
 
@@ -908,7 +908,7 @@ def display_verify_file(file_results):
     sys.stdout.flush()
 
 #===============================================================================
-# Some options and output to assit with developenment and testing.
+# Some options and output to assist with development and testing.
 # These are not intended for normal use.
 if __name__ == "__main__":
 
