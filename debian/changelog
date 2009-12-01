@@ -1,3 +1,69 @@
+bcfg2 (1.0.0-1+r5598~testing6~lucid6) unstable; urgency=low
+
+  * backport to ppa testing, dist lucid, try 6, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 04:06:05 -0500
+
+bcfg2 (1.0.0-1+r5598~testing6~karmic6) unstable; urgency=low
+
+  * backport to ppa testing, dist karmic, try 6, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 04:05:24 -0500
+
+bcfg2 (1.0.0-1+r5598~testing6~jaunty6) unstable; urgency=low
+
+  * backport to ppa testing, dist jaunty, try 6, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 04:04:49 -0500
+
+bcfg2 (1.0.0-1+r5598~testing6~intrepid6) unstable; urgency=low
+
+  * backport to ppa testing, dist intrepid, try 6, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 04:04:15 -0500
+
+bcfg2 (1.0.0-1+r5598~testing6~hardy6) unstable; urgency=low
+
+  * backport to ppa testing, dist hardy, try 6, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 04:03:40 -0500
+
+bcfg2 (1.0.0-1+r5598~testing5~lucid5) unstable; urgency=low
+
+  * backport to ppa testing, dist lucid, try 5, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:42:17 -0500
+
+bcfg2 (1.0.0-1+r5598~testing5~karmic5) unstable; urgency=low
+
+  * backport to ppa testing, dist karmic, try 5, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:42:06 -0500
+
+bcfg2 (1.0.0-1+r5598~testing5~jaunty5) unstable; urgency=low
+
+  * backport to ppa testing, dist jaunty, try 5, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:41:54 -0500
+
+bcfg2 (1.0.0-1+r5598~testing5~intrepid5) unstable; urgency=low
+
+  * backport to ppa testing, dist intrepid, try 5, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:41:42 -0500
+
+bcfg2 (1.0.0-1+r5598~testing5~hardy5) unstable; urgency=low
+
+  * backport to ppa testing, dist hardy, try 5, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:41:29 -0500
+
+bcfg2 (1.0.0-1+r5598~testing4~hardy4) unstable; urgency=low
+
+  * backport to ppa testing, dist hardy, try 4, svn revision 5598
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Tue, 01 Dec 2009 03:34:23 -0500
+
 bcfg2 (1.0.0-1) unstable; urgency=low
 
   * final release

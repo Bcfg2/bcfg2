@@ -1,40 +1,41 @@
 In chronological order: 
 
 - Narayan Desai <desai@mcs.anl.gov> has written most of bcfg2,
-including all parts not explicitly mentioned in this file
+  including all parts not explicitly mentioned in this file
 
 - Joey Hagedorn <hagedorn@mcs.anl.gov> has written the reporting
-subsystem, including StatReports, GenerateHostinfo, and the xslt, css
-and javascript associated with it.
+  subsystem, including StatReports, GenerateHostinfo, and the xslt,
+  css and javascript associated with it.
 
 - Ed Smith <esmith4@inf.ed.ac.uk> has done substantial hardening of
-the bcfg client and server and implemented a common logging infrastructure.
+  the bcfg client and server and implemented a common logging
+  infrastructure.
 
 - Rick Bradshaw <bradshaw@mcs.anl.gov> has written several of the
-tools included in the tools/ subdirectory
+  tools included in the tools/ subdirectory
 
 - Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written
-the Hostbase plugin
+  the Hostbase plugin
 
 - Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written
-the VHost plugin
+  the VHost plugin
 
 - Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function
-in bcfg2-info
+  in bcfg2-info
 
 - Chris Vuletich <vuletich@mcs.anl.gov> wrote some SSL code and the
-verification debugging code
+  verification debugging code
 
-- Daniel Clark <dclark@member.fsf.org> has written all of the encap
-packaging specifications
+- Daniel Clark <dclark@pobox.com> created encap packages for bcfg2 and
+  deps, wrote fossil-scm dvcs support, and helps with debian packaging
 
 - Jason Pepas <cell@ices.utexas.edu> has written a rpm package list
-creator has contributed patches to the redhat toolset
+  creator has contributed patches to the redhat toolset
 
 - Sami Haahtinen <ressu@ressukka.net> has writen debian packaging
-logic.
+  logic.
 
 - Brian Pellin and Andrew Lusk did substantial work on Bcfg1, some of
-which was used in the bcfg2 client.
+  which was used in the bcfg2 client.
 
 - Michael Jinks <mjinks@uchicago.edu> wrote the gentoo tool drivers.
