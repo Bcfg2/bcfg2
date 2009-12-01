@@ -20,7 +20,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), python-fam | python-gamin, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), openssl, python-ssl | python (>= 2.6)
+Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), python-fam | python-gamin, libxml2-utils (>= 2.6.23), gamin | fam, lsb-base (>= 3.1-9), ucf, bcfg2 (= ${Source-Version}), openssl, python-ssl | python2.6 | python3.0 | python3.1
 XB-Python-Version: >= 2.4
 Recommends: python-genshi (>= 0.4.4), graphviz, python-profiler
 Homepage: http://trac.mcs.anl.gov/projects/bcfg2/
