@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+
+# Unset the environment variables set by dpkg-buildpackage. (This is
+# necessary because distutils is brittle with compiler/linker flags
+# set. Specifically, packages using f2py will break without this.)
+unexport CPPFLAGS
+unexport CFLAGS
+unexport CXXFLAGS
+unexport FFLAGS
+unexport LDFLAGS
+
+PYVERS=$(shell pyversions -vr)
+
+%:
+	dh --with python-support $@
+
+# The tests include network-based tests that fail under
+# Launchpad PPA and probably sbuild, so for now disable
+# all tests. Should figure out how to run only non-network
+# tests later.
+override_dh_auto_test:
+
+# The default auto_install target gives this error:
+# copying build/lib.linux-i686-2.5/ssl/_ssl2.so -> /usr/lib/python2.5/site-packages/ssl
+# error: could not delete '/usr/lib/python2.5/site-packages/ssl/_ssl2.so': Permission denied
+override_dh_auto_install:
+	python$* setup.py install --root $(CURDIR)/debian/python-ssl

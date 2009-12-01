@@ -1,0 +1,6 @@
+python-ssl (1.15-1) unstable; urgency=low
+
+  * first debian packaged release
+
+ -- Daniel Joseph Barnhart Clark <dclark@pobox.com>  Wed, 25 Nov 2009 20:40:46 -0500
+
