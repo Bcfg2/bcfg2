@@ -5,6 +5,7 @@ PortSystem          1.0
 PortGroup           python26 1.0
 
 name                bcfg2
+license             BSD
 version             1.0.0
 categories          sysutils python
 maintainers         ices.utexas.edu:solj
