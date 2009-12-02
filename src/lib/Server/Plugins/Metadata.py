@@ -607,7 +607,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.debug_log("Client %s is floating" % client)
             return True
         if address in self.addresses:
-            if client == self.addresses[address]:
+            if client in self.addresses[address]:
                 self.debug_log("Client %s matches address %s" % (client, address))
                 return True
             else:
