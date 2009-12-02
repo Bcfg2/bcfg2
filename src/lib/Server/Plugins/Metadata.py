@@ -686,9 +686,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 self.logger.error("Client %s failed to use client password in secure mode" % \
                                   (address[0]))
                 return False
-
-        if id_method != 'address':
-            # populate the session cache
+        # populate the session cache
+        if user != 'root':
             self.session_cache[address] = (time.time(), user)
         return True
 
