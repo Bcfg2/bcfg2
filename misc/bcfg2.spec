@@ -59,6 +59,9 @@ Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
 Requires: bcfg2
+%if 0%{?py_ver} < 2.6
+Requires:         python-ssl
+%endif
 Requires:         %{lxmldep} >= 1.2.1
 %if "%{_vendor}" == "redhat"
 Requires: gamin-python

@@ -70,6 +70,9 @@ deployment strategies.
 Summary:          Configuration management server
 Group:            System Environment/Daemons
 Requires:         bcfg2 = %{version}-%{release}
+%if 0%{?py_ver} < 2.6
+Requires:         python-ssl
+%endif
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
 Requires:         python-genshi
