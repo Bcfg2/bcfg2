@@ -33,7 +33,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
             pversion = pfmri.version.get_short_version()
             self.installed[pname] = pversion
             if pinfo['upgradable']:
-                self.pending_updates.add(pname)
+                self.pending_upgrades.add(pname)
 
     def VerifyPackage(self, entry, modlist):
         '''Verify package for entry'''
@@ -45,7 +45,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
             self.logger.debug("IPS: Package %s not installed" % pname)
             return False
         if entry.get('version') == 'auto':
-            if pname in self.pending_updates:
+            if pname in self.pending_upgrades:
                 return False
         elif entry.get('version') == 'any':
             pass
