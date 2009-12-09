@@ -14,6 +14,7 @@ from xmlrpclib import _Method
 
 import httplib
 import logging
+import re
 import socket
 
 # The ssl module is provided by either Python 2.6 or a separate ssl
@@ -25,6 +26,7 @@ try:
     SSL_LIB = 'py26_ssl'
 except ImportError, e:
     from M2Crypto import SSL
+    import M2Crypto.SSL.Checker
     SSL_LIB = 'm2crypto'
 
 
@@ -220,7 +222,20 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
 
         self.sock = SSL.Connection(ctx)
-        self.sock.connect((self.host, self.port)) # automatically checks cert matches host
+        if re.match('\\d+\\.\\d+\\.\\d+\\.\\d+', self.host):
+            # host is ip address
+            try:
+                hostname = socket.gethostbyaddr(self.host)[0]
+            except:
+                # fall back to ip address
+                hostname = self.host
+        else:
+            hostname = self.host
+        try:
+            self.sock.connect((hostname, self.port))
+            # automatically checks cert matches host
+        except M2Crypto.SSL.Checker.WrongHost, wr:
+            raise CertificateError, wr
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
