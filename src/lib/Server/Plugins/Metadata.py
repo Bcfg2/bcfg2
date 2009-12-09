@@ -458,7 +458,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             if addresspair in self.session_cache:
                 # we are working with a uuid'd client
                 lxml.etree.SubElement(self.clientdata_original.getroot(),
-                                      'Client', name=client,
+                                      'Client',
+                                      name=self.session_cache[addresspair][1],
                                       uuid=client, profile=profile,
                                       address=addresspair[0])
             else:
@@ -503,8 +504,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         #print self.session_cache
         if addresspair in self.session_cache:
             (stamp, uuid) = self.session_cache[addresspair]
-            if time.time() - stamp < 60:
-                return self.uuid[uuid]
+            if time.time() - stamp < 90:
+                return self.session_cache[addresspair][1]
         address = addresspair[0]
         if address in self.addresses:
             if len(self.addresses[address]) != 1:
