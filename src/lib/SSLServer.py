@@ -223,6 +223,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.wfile.close()
         self.rfile.close()
         self.connection.unwrap()
+        self.connection.close()
+        os.close(self.connection.fileno())
 
 class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                     XMLRPCDispatcher, object):
