@@ -1,3 +1,15 @@
+bcfg2 (1.0.0-4) unstable; urgency=low
+
+  * final 1.0.0 release + debian directory from r5621
+
+ -- Daniel Clark <dclark@pobox.com>  Sun, 15 Dec 2009 06:12:33 -0500
+
+bcfg2 (1.0.0-2) unstable; urgency=low
+
+  * final 1.0.0 release + debian directory from r5619
+
+ -- Daniel Clark <dclark@pobox.com>  Sun, 11 Dec 2009 15:59:33 -0500
+
 bcfg2 (1.0.0-1) unstable; urgency=low
 
   * final release
