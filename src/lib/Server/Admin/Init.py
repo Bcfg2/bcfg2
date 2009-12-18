@@ -96,7 +96,7 @@ def gen_password(length):
 
 def create_key(hostname, keypath, certpath):
     """Creates a bcfg2.key at the directory specifed by keypath"""
-    kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:1024 -keyout %s -noout" % (hostname, keypath)
+    kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (hostname, keypath)
     subprocess.call((kcstr), shell=True)
     ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
     subprocess.call((ccstr), shell=True)
