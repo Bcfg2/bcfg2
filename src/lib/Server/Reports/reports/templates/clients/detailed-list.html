@@ -40,7 +40,7 @@
 <b>Enter date or use calendar popup: </b>
 <input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
 <input type="text" name="time" value="{{timestamp_time}}" size="8" />
-<a href="" onclick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
+<a href="#" onclick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
    name="anchor1" id="anchor1">Calendar</a>
 <input type="button" value="Go" onclick="document.forms['timestamp-select'].submit();"/>
  | <input type="button" name="now" value="Now" onclick="location.href='{{ path }}';"/>

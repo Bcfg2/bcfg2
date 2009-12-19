@@ -5,7 +5,7 @@
 {% block extra_header_info %}
 <link rel="stylesheet" type="text/css" href="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/syntax-coloring.css" />
 <script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
-<script language="JavaScript">var cal = new CalendarPopup();</script>
+<script language="JavaScript" type="text/javascript">var cal = new CalendarPopup();</script>
 {% endblock%}
 {% block title %}Configuration Element Details{% endblock %}
 
@@ -52,10 +52,12 @@
 <div>
 <span class="mini-date">
 <b>Enter date or use calendar popup: </b>
-<form name="timestamp-select">
-<input type="text" name="date1" value="{{timestamp_date}}" size=10>@
-<input type="text" name="time" value="{{timestamp_time}}" size=8>
-<a href="" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
+</span>
+<form name="timestamp-select" action="{{path}}" method="get">
+<span class="mini-date">
+<input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
+<input type="text" name="time" value="{{timestamp_time}}" size="8" />
+<a href="#" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
    name="anchor1" ID="anchor1">Calendar</A>
 {% ifequal mod_or_bad "modified" %}
     <input type="button"
@@ -76,8 +78,8 @@
              value="Now"
              onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.entry.id %}';"/>
 {% endifequal %}
-</form>
-</span><br/><br/><br/></div>
+</span></form>
+<br/><br/><br/></div>
 {% if associated_client_list %}
     <p>The following clients had this problem as of {{timestamp_date}}@{{timestamp_time}}:</p>
     {% for client in associated_client_list %}

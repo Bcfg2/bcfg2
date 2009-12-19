@@ -5,7 +5,7 @@
 <xsl:output method="html" indent="no"/>
 <xsl:variable name="sorttable-js">
 
-<script language="JavaScript"><xsl:comment>
+<script language="JavaScript" type="text/javascript"><xsl:comment>
 <![CDATA[
 
 // 
