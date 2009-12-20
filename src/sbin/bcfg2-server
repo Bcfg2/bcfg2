@@ -22,6 +22,7 @@ if __name__ == '__main__':
         'debug'     : Bcfg2.Options.DEBUG,
         'help'      : Bcfg2.Options.HELP,
         'verbose'   : Bcfg2.Options.VERBOSE,
+        'to_file'   : Bcfg2.Options.LOGGING_FILE_PATH,
         }
 
     OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,

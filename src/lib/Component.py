@@ -23,8 +23,8 @@ logger = logging.getLogger()
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
-def run_component(component_cls, location, daemon, pidfile_name, argv=None,
-                  register=True, state_name=False, cls_kwargs={},
+def run_component(component_cls, location, daemon, pidfile_name, to_file,
+                  argv=None, register=True, state_name=False, cls_kwargs={},
                   extra_getopt='', time_out=10, protocol='xmlrpc/ssl',
                   certfile=None, keyfile=None, ca=None):
 
@@ -32,7 +32,10 @@ def run_component(component_cls, location, daemon, pidfile_name, argv=None,
     level = logging.INFO
 
     logging.getLogger().setLevel(level)
-    Bcfg2.Logger.setup_logging(component_cls.implementation, True, True)
+    Bcfg2.Logger.setup_logging(component_cls.implementation,
+                               True,
+                               True,
+                               to_file=to_file)
 
     if daemon:
         child_pid = os.fork()
