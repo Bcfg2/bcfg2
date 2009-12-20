@@ -265,13 +265,12 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.send_content(h, request_body)
 
         errcode, errmsg, headers = h.getreply()
-        msglen = int(headers.dict['content-length'])
 
         if errcode != 200:
             raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
 
         self.verbose = verbose
-
+        msglen = int(headers.dict['content-length'])
         return self._get_response(h.getfile(), msglen)
 
     def _get_response(self, fd, length):
