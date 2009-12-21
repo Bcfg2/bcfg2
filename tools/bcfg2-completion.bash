@@ -4,7 +4,7 @@ _bcfg2-admin() {
 	COMPREPLY=()
 	cur="${COMP_WORDS[COMP_CWORD]}"
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
-	sedcmd='sed -n -e s/^[[:space:]]\+\([[:alpha:]]\+\)[[:space:]]\+.*$/\1/p'
+	sedcmd='sed -n -e s/^[[:space:]][[:space:]][[:space:]]\([[:alpha:]]\+\)[[:space:]]\+.*$/\1/p'
 
 	if [[ ${COMP_CWORD} -eq 1 ]] || [[ -n "${prev}" && ${prev} == -* ]]
 	then
