@@ -28,7 +28,7 @@ default_file_metadata = mdata_setup
 info_regex = re.compile( \
     '^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
-    '(?P<paranoid>paranoid(\s)*)|mtime:(\s)*(?P<mtime>\w+)$')
+    'paranoid:(\s)*(?P<paranoid>\S+)|mtime:(\s)*(?P<mtime>\w+)$')
 
 class PluginInitError(Exception):
     '''Error raised in cases of Plugin initialization errors'''
