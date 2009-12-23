@@ -1,0 +1,29 @@
+.. -*- mode: rst -*-
+
+Welcome to Bcfg2's documentation!
+=================================
+
+.. toctree::
+   :maxdepth: 2
+
+   intro
+   testimonials
+   sites
+
+   getting_started/index
+
+   authentication
+
+   unsorted/index
+
+.. FIXME: Platform-specific pages would be good here
+
+   glossary
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

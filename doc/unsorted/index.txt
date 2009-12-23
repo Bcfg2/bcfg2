@@ -1,0 +1,149 @@
+.. -*- mode: rst -*-
+
+=============
+Unsorted Docs
+=============
+
+These docs have yet to be sorted properly. The content for them can be
+found at the TitleIndex_ page on Trac. Most should be converted to
+sphinx. Some may not need any conversion (e.g. The Download page). Once
+converted and put in the proper place, you can remove the item from the
+list below.
+
+.. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
+
+* `Agent with ssh`
+* `Annotated Examples`
+* `Architecture`
+* `Audio/Video`
+* `Bcfg2Doc`
+* `Bcfg2 Subversion How To`
+* `Bound Entry`
+* `Building Debian Packages`
+* `Building RPM Packages`
+* `Client/Debugging`
+* `Client/Metadata`
+* `ClientTools/RPMng`
+* `Comparison`
+* `Configuration Entries`
+* `Contribute`
+* `Contributors`
+* `Converging on verification with RHEL 5`
+* `Debian Pkgmgr creation script`
+* `Developing for Bcfg2`
+* `Development/WritingPlugins`
+* `Development Tips`
+* `Doc:Architecture`
+* `Documentation`
+* `Download`
+* `Dynamic groups`
+* `Emacs snippet support`
+* `Encap`
+* `FAQ`
+* `FeatureWindows`
+* `Gentoo`
+* `Group names`
+* `Help`
+* `Hostbase`
+* `HostbaseInstallation`
+* `Howtos`
+* `IRCChannel`
+* `Install`
+* `IptablesDeadmanScript`
+* `LearningPython`
+* `MailingList`
+* `ManualPages`
+* `NAT_HOWTO`
+* `NISAuth`
+* `NewDynamicReports`
+* `NewDynamicReportsInstallation`
+* `News`
+* `Overview`
+* `ParanoidMode`
+* `Plugins`
+* `Plugins/Account`
+* `Plugins/Actions`
+* `Plugins/Base`
+* `Plugins/Bundler`
+* `Plugins/Bundler/examples`
+* `Plugins/Bundler/examples/kernel.xml`
+* `Plugins/Bundler/examples/moab.xml`
+* `Plugins/Bundler/examples/nagios.xml`
+* `Plugins/Bundler/examples/ntp.xml`
+* `Plugins/Bundler/examples/snmpd.xml`
+* `Plugins/Bundler/examples/torque.xml`
+* `Plugins/Bundler/examples/yp.xml`
+* `Plugins/Bzr`
+* `Plugins/Cfg`
+* `Plugins/Decisions`
+* `Plugins/Deps`
+* `Plugins/Fossil`
+* `Plugins/Git`
+* `Plugins/GroupPatterns`
+* `Plugins/Hostbase`
+* `Plugins/Metadata`
+* `Plugins/NagiosGen`
+* `Plugins/Ohai`
+* `Plugins/Packages`
+* `Plugins/Pkgmgr`
+* `Plugins/Probes`
+* `Plugins/Probes/examples`
+* `Plugins/Probes/examples/current-kernel`
+* `Plugins/Probes/examples/group`
+* `Plugins/Probes/examples/grub-serial-order`
+* `Plugins/Probes/examples/manufacturer`
+* `Plugins/Probes/examples/producttype`
+* `Plugins/Probes/examples/serial-console-speed`
+* `Plugins/Properties`
+* `Plugins/Rules`
+* `Plugins/SGenshi`
+* `Plugins/SSHbase`
+* `Plugins/Snapshots`
+* `Plugins/Svn`
+* `Plugins/TCheetah`
+* `Plugins/TGenshi`
+* `Plugins/TGenshi/examples`
+* `Plugins/TGenshi/examples/bcfg2_cron`
+* `Plugins/TGenshi/examples/clients.xml`
+* `Plugins/TGenshi/examples/ganglia`
+* `Plugins/TGenshi/examples/grub.conf`
+* `Plugins/TGenshi/examples/hosts`
+* `Plugins/TGenshi/examples/iptables`
+* `Plugins/TGenshi/examples/motd`
+* `Plugins/TGenshi/examples/my.cnf`
+* `Plugins/TGenshi/examples/test`
+* `Plugins/Trigger`
+* `PrecompiledPackages`
+* `Prereqs`
+* `Publications`
+* `QuickStart`
+* `QuickStart/CentOS`
+* `QuickStart/Ubuntu`
+* `QuickStart2`
+* `QuickStart3`
+* `RecentChanges`
+* `RefactorClient`
+* `Reports`
+* `Reports/Dynamic`
+* `Reports/Dynamic/Installation`
+* `Reports/Static`
+* `SandBox`
+* `SchemaEvolution`
+* `SecurityDevPlan`
+* `ServerSideOverview`
+* `TGenshi/examples`
+* `TGenshi/examples/Templated_Access`
+* `TGenshi/examples/bcfg2_cron`
+* `TGenshi/examples/clients.xml`
+* `TGenshi/examples/test`
+* `TOC`
+* `TrackingDevelopmentTrunk`
+* `Troubleshooting`
+* `UpgradeTesting`
+* `UsingRcache`
+* `VimSnippetSupport`
+* `WritingClientToolDrivers`
+* `WritingSpecification`
+* `altsrc`
+* `mrepo`
+* `ssl`

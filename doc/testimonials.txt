@@ -1,0 +1,35 @@
+.. -*- mode: rst -*-
+
+.. _testimonials_toplevel:
+
+============
+Testimonials
+============
+
+Here are a few things that users of Bcfg2 have to say about it:
+
+* `... With so many machines and so much variation and subtleties
+  between machines, I would simply go crazy trying to manage and
+  maintain these machines. Bcfg makes my life much
+  simpler. <http://www-unix.mcs.anl.gov/web-mail-archive/lists/bcfg-dev/2006/03/msg00023.html>`_
+  -- Ti Leggett
+
+* When I took over managing a compute cluster, its configuration
+  management was a mess.  A liberal dose of Bcfg cleaned up the
+  machines, made them more secure, and gave me the information needed
+  to keep an eye on them.  I definitely trust the cluster more now
+  that its configuration is well-defined and well-managed. -- Cory
+  Lueninghoener
+
+* "`Bcfg2 propaganda
+  <http://it.toolbox.com/blogs/unix-sysadmin/bcfg2-propaganda-29441>`_"
+  - Two days ago Mathieu Jobin had sent a message to bcfg-dev mailing
+  list containing a link to Yahoo!'s grid white paper mentioning
+  Bcfg2. As I don't think Bcfg2 is getting as much attention as it
+  should, I thought about mentioning it
+  here.
+  -- Cezary Morga
+
+ * http://blog.mozilla.com/aravind/
+
+See also :ref:`sites_toplevel`.

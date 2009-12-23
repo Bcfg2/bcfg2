@@ -1,0 +1,56 @@
+.. -*- mode: rst -*-
+
+===========
+Using Bcfg2
+===========
+
+These are many of the resources available to help new users get started.
+
+(If you find anything wrong or missing please go to our :term:`IRC
+Channel` and let us know)
+
+* `QuickStart` or `QuickStart2` or `QuickStart3` (FIXME: merge
+  these at some point)
+
+* `Bcfg2 from scratch on Ubuntu <Quickstart/Ubuntu>`
+
+* `Bcfg2 from scratch on CentOS <QuickStart/CentOS>`
+
+Must Reads
+==========
+
+* `Documentation`
+* `WritingSpecification`
+* `Bcfg2 Architecture <Doc/Architecture>`
+* `ServerSideOverview`
+* `UpgradeTesting`
+* `Troubleshooting`
+* `Bcfg2 Server Plugins <Plugins>`
+
+Misc/Others
+===========
+
+* `Probes <Plugins/Probes>`
+* `AgentMode`
+* `DynamicGroups`
+* `Client Tool Drivers <ClientTools>`
+* `Developing for Bcfg2 <DevelopingForBcfg2>`
+* `Howtos`
+
+Reporting
+=========
+
+* `Reports`
+
+Examples
+========
+
+* `Demo Repository <GroupNames>`
+* `Plugins/Bundler/examples`
+* `Plugins/Probes/examples`
+* `Plugins/TGenshi/examples`
+
+Man Pages
+=========
+
+* `Manual Pages <ManualPages>`

@@ -1,0 +1,10 @@
+.. -*- mode: rst -*-
+
+========
+Glossary
+========
+
+.. glossary::
+
+   IRC Channel
+       what now?

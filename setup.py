@@ -1,25 +1,31 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+try:
+    from sphinx.setup_command import BuildDoc
+    cmdclass = {'build_sphinx': BuildDoc}
+except ImportError:
+    cmdclass = {}
 from glob import glob
 
-setup(name="Bcfg2",
+setup(cmdclass=cmdclass,
+      name="Bcfg2",
       version="1.0.0",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
-      packages=["Bcfg2", 
-                "Bcfg2.Client", 
+      packages=["Bcfg2",
+                "Bcfg2.Client",
                 "Bcfg2.Client.Tools",
-                'Bcfg2.Server', 
+                'Bcfg2.Server',
                 "Bcfg2.Server.Admin",
-                "Bcfg2.Server.Hostbase", 
-                "Bcfg2.Server.Hostbase.hostbase", 
-                "Bcfg2.Server.Plugins", 
-                "Bcfg2.Server.Reports", 
+                "Bcfg2.Server.Hostbase",
+                "Bcfg2.Server.Hostbase.hostbase",
+                "Bcfg2.Server.Plugins",
+                "Bcfg2.Server.Reports",
                 "Bcfg2.Server.Reports.reports",
                 "Bcfg2.Server.Reports.reports.templatetags",
-                "Bcfg2.Server.Snapshots", 
+                "Bcfg2.Server.Snapshots",
                 ],
       package_dir = {'Bcfg2':'src/lib'},
       package_data = {'Bcfg2.Server.Reports.reports':['fixtures/*.xml']},
