@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import copy
 import fcntl
 import lxml.etree
+import os
 import socket
 import time
 import Bcfg2.Server.Plugin
@@ -472,13 +473,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def write_back_clients(self):
         '''Write changes to client.xml back to disk'''
         try:
-            datafile = open("%s/%s" % (self.data, 'clients.xml'), 'w')
+            datafile = open("%s/%s" % (self.data, 'clients.xml.new'), 'w')
         except IOError:
-            self.logger.error("Failed to write clients.xml")
+            self.logger.error("Failed to write clients.xml.new")
             raise MetadataRuntimeError
-        fd = datafile.fileno()
-        while self.locked(fd) == True:
-            pass
+        # prep data
         dataroot = self.clientdata_original.getroot()
         if hasattr(dataroot, 'iter'):
             items = dataroot.iter()
@@ -488,9 +487,26 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             # no items have text data of any sort
             item.tail = None
             item.text = None
-        datafile.write(lxml.etree.tostring(dataroot, pretty_print=True))
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        datafile.close()
+        newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
+
+        fd = datafile.fileno()
+        while self.locked(fd) == True:
+            pass
+        try:
+            datafile.write(newcontents)
+        except:
+            fcntl.lockf(fd, fcntl.LOCK_UN)
+            self.logger.error("Metadata: Failed to write new clients data to clients.xml.new", exc_info=1)
+            os.unlink("%s/%s" % (self.data, "clients.xml.new"))
+            raise MetadataRuntimeError
+        datafile.close()            
+
+        try:
+            os.rename("%s/%s" % (self.data, 'clients.xml.new'),
+                      "%s/%s" % (self.data, 'clients.xml'))
+        except:
+            self.logger.error("Metadata: Failed to rename clients.xml.new")
+            raise MetadataRuntimeError
 
     def locked(self, fd):
         try:
