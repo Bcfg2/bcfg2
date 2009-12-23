@@ -318,6 +318,10 @@ class Core(Component):
             warning = 'Client metadata resolution error for %s; check server log' % address[0]
             self.logger.warning(warning)
             raise xmlrpclib.Fault(6, warning)
+        except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
+            err_msg = 'metadata system runtime failure'
+            self.logger.error(err_msg)
+            raise xmlrpclib.Fault(6, err_msg)
         except:
             critical_error("error determining client probes")
 
