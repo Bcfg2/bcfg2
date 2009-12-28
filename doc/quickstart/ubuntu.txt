@@ -78,7 +78,7 @@ Run bcfg2 to be sure you are able to communicate with the server ::
 
     root@lucid:~# bcfg2 -vqn
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX   
+     APT      Action   DebInit  POSIX
 
     Phase: initial
     Correct entries:        0
@@ -190,7 +190,7 @@ The last thing we need is for the client to have the proper arch group membershi
     root@lucid:~# grep plugins /etc/bcfg2.conf
     plugins = Base,Bundler,Cfg,Metadata,Packages,Probes,Rules,SSHbase
     root@lucid:~# mkdir /var/lib/bcfg2/Probes
-    root@lucid:~# cat /var/lib/bcfg2/Probes/groups 
+    root@lucid:~# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh
 
     ARCH=`uname -m`
@@ -229,7 +229,7 @@ Add a base-packages bundle. Let's see what happens when we just populate it with
 
 .. code-block:: xml
 
-    root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml 
+    root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
     <Bundle name='base-packages'>
             <Package name='ubuntu-standard'/>
     </Bundle>
@@ -250,23 +250,23 @@ Now if we run the client in debug mode (-d), we can see what this has done for u
     Probe groups has result:
     amd64
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX   
+     APT      Action   DebInit  POSIX
     The following packages are specified in bcfg2:
-     ubuntu-standard 
+     ubuntu-standard
     The following packages are prereqs added by Packages:
-     adduser             debconf             hdparm              libdevmapper1.02.1  libk5crypto3        libparted1.8-12     libxml2             passwd              upstart            
-     apt                 debianutils         info                libdns53            libkeyutils1        libpci3             logrotate           pciutils            usbutils           
-     aptitude            dmidecode           install-info        libelf1             libkrb5-3           libpopt0            lsb-base            perl-base           wget               
-     at                  dnsutils            iptables            libept0             libkrb5support0     libreadline5        lshw                popularity-contest  zlib1g             
-     base-files          dosfstools          libacl1             libgcc1             liblwres50          libreadline6        lsof                psmisc             
-     base-passwd         dpkg                libattr1            libgdbm3            libmagic1           libselinux1         ltrace              readline-common    
-     bsdmainutils        ed                  libbind9-50         libgeoip1           libmpfr1ldbl        libsigc++-2.0-0c2a  man-db              rsync              
-     bsdutils            file                libc-bin            libgmp3c2           libncurses5         libssl0.9.8         memtest86+          sed                
-     cpio                findutils           libc6               libgssapi-krb5-2    libncursesw5        libstdc++6          mime-support        sensible-utils     
-     cpp                 ftp                 libcap2             libisc50            libpam-modules      libusb-0.1-4        ncurses-bin         strace             
-     cpp-4.4             gcc-4.4-base        libcomerr2          libisccc50          libpam-runtime      libuuid1            netbase             time               
-     cron                groff-base          libcwidget3         libisccfg50         libpam0g            libxapian15         parted              tzdata             
- 
+     adduser             debconf             hdparm              libdevmapper1.02.1  libk5crypto3        libparted1.8-12     libxml2             passwd              upstart
+     apt                 debianutils         info                libdns53            libkeyutils1        libpci3             logrotate           pciutils            usbutils
+     aptitude            dmidecode           install-info        libelf1             libkrb5-3           libpopt0            lsb-base            perl-base           wget
+     at                  dnsutils            iptables            libept0             libkrb5support0     libreadline5        lshw                popularity-contest  zlib1g
+     base-files          dosfstools          libacl1             libgcc1             liblwres50          libreadline6        lsof                psmisc
+     base-passwd         dpkg                libattr1            libgdbm3            libmagic1           libselinux1         ltrace              readline-common
+     bsdmainutils        ed                  libbind9-50         libgeoip1           libmpfr1ldbl        libsigc++-2.0-0c2a  man-db              rsync
+     bsdutils            file                libc-bin            libgmp3c2           libncurses5         libssl0.9.8         memtest86+          sed
+     cpio                findutils           libc6               libgssapi-krb5-2    libncursesw5        libstdc++6          mime-support        sensible-utils
+     cpp                 ftp                 libcap2             libisc50            libpam-modules      libusb-0.1-4        ncurses-bin         strace
+     cpp-4.4             gcc-4.4-base        libcomerr2          libisccc50          libpam-runtime      libuuid1            netbase             time
+     cron                groff-base          libcwidget3         libisccfg50         libpam0g            libxapian15         parted              tzdata
+
     Phase: initial
     Correct entries:        101
     Incorrect entries:      0

@@ -10,6 +10,7 @@ Welcome to Bcfg2's documentation!
    quickstart/index
    authentication
    getting_started/index
+   plugins/index
    testimonials
    sites
 
