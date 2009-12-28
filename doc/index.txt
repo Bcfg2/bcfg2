@@ -7,16 +7,15 @@ Welcome to Bcfg2's documentation!
    :maxdepth: 2
 
    intro
+   quickstart/index
+   authentication
+   getting_started/index
    testimonials
    sites
 
-   getting_started/index
-
-   authentication
-
    unsorted/index
 
-.. FIXME: Platform-specific pages would be good here
+   .. FIXME: Platform-specific pages would be good here
 
    glossary
 

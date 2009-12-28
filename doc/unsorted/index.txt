@@ -116,9 +116,6 @@ list below.
 * `PrecompiledPackages`
 * `Prereqs`
 * `Publications`
-* `QuickStart`
-* `QuickStart/CentOS`
-* `QuickStart/Ubuntu`
 * `QuickStart2`
 * `QuickStart3`
 * `RecentChanges`
