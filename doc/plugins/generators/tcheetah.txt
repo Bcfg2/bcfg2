@@ -1,0 +1,149 @@
+.. -*- mode: rst -*-
+
+========
+TCheetah
+========
+
+This document reflects the [source:trunk/bcfg2/src/lib/Server/Plugins/TCheetah.py TCheetah plugin] in bcfg2 0.8.4 and later.
+
+The TCheetah plugin allows you to use the [http://www.cheetahtemplate.org/ cheetah templating system] to create files, instead of the various diff-based methods offered by the Cfg plugin. It also allows you to include the results of probes executed on the client in the created files.
+
+To begin, you will need to download and install the Cheetah templating engine from [http://www.cheetahtemplate.org/].  Once it is installed, you can enable it by adding `TCheetah` to the `plugins` line in `/etc/bcfg2.conf` on your Bcfg server.
+For example::
+
+    generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules,TCheetah
+
+The TCheetah plugin makes use of a Cfg-like directory structure located in in a `TCheetah` subdirectory of your repository, usually `/var/lib/bcfg2/TCheetah`. Each file has a directory containing two files, `template` and `info`. The template is a standard Cheetah template with two additions:
+
+* `self.metadata` is the client's metadata
+* `self.properties` is an xml document of unstructured data
+
+The `info` file is formatted like `:info` files from Cfg.
+
+Mostly, people will want to use client metadata.
+
+self.metadata variables
+=======================
+
+The following variables are available for self.metadata:
+
+* hostname
+* bundles
+* groups
+* toolset
+* categories
+* probes
+* uuid
+* password
+
+self.metadata is an instance of the class ClientMetadata of file [http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py Bcfg2/Server/Plugins/Metadata.py].
+
+self.properties
+===============
+
+properties is a python [http://codespeak.net/lxml/ ElementTree] object, loaded from the data in /var/lib/bcfg2/etc/properties.xml.  That file should have a Properties node at its root.
+
+Example properties.xml:
+
+.. code-block:: xml
+
+    <Properties>
+     <host>
+       <www.example.com>
+         <rootdev>/dev/sda</rootdev>
+       </www.example.com>
+     </host>
+    </Properties>
+
+You may use any of the ElementTree methods to access data in your template.  Several examples follow, each producing an identical result on the host 'www.example.com'::
+
+    $self.properties.find('host').find('www.example.com').find('rootdev').text
+    $self.properties.find('host').find($self.metadata.hostname).find('rootdev').text
+    ${self.properties.xpath('host/www.example.com/rootdev')[0].text}
+    ${self.properties.xpath('host/' + self.metadata.hostname + '/rootdev')[0].text}
+    #set $path = 'host/' + $self.metadata.hostname + '/rootdev'
+    ${self.properties.xpath($path)[0].text}
+    ${self.properties.xpath(path)[0].text}
+
+Simple Example
+==============
+
+bcfg2/TCheetah/foo/template
+---------------------------
+
+.. code-block:: none
+
+    > buildfile /foo <clientname>
+    Hostname is $self.metadata.hostname
+    Groups:
+    #for $group in $self.metadata.groups:
+     * $group
+    #end for
+    Categories:
+    #for $category in $self.metadata.categories:
+     * $category -- $self.metadata.categories[$category]
+    #end for
+
+    Probes:
+    #for $probe in $self.metadata.probes:
+     * $probe -- $self.metadata.probes[$probe]
+    #end for
+
+bcfg2/TCheetah/foo/info
+-----------------------
+
+.. code-block:: none
+
+    perms: 624
+
+Output
+------
+
+The following output can be generated with bcfg2-info. Note that probe information is not persistent, hence, it only works when clients directly query the server. For this reason, bcfg2-info output doesn't reflect current client probe state.
+
+.. code-block:: xml
+
+    <Path type="file" name="/foo" owner="root" perms="0624" group="root">
+    Hostname is topaz.mcs.anl.gov
+    Groups:
+     * desktop
+     * mcs-base
+     * ypbound
+     * workstation
+     * xserver
+     * debian-sarge
+     * debian
+     * a
+    Categories:
+     * test -- a
+
+    Probes:
+    </Path>
+
+Example: Replace the crontab plugin
+===================================
+
+In many cases you can use the TCheetah plugin to avoid writing custom plugins in Python. This example replaces the [source:tags/bcfg2_0_8_4/bcfg2/src/lib/Server/Plugins/Crontab.py crontab plugin] (Bcfg2.Server.Plugins.Crontab). This plugin randomizes the time of cron.daily execution with a stable result. Cron.daily is run at a consistent, randomized time between midnight and 7am.::
+
+    #import random
+    #silent random.seed($self.metadata.hostname)
+
+    # /etc/crontab: system-wide crontab
+    # Unlike any other crontab you don't have to run the `crontab`
+    # command to install the new version when you edit this file.
+    # This file also has a username field, that none of the other crontabs do.
+
+    SHELL=/bin/sh
+    PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin://bin
+
+    # m h dom mon dow user  command
+    17 *    * * *   root    run-parts --report /etc/cron.hourly
+    $random.randrange(0,59) $random.randrange(0,6)    * * *   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.daily
+    47 6    * * 7   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.weekly
+    52 6    1 * *   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.monthly.
+
+.. note:: Comments and Cheetah
+    As Cheetah processes your templates it will consider hash "#" style comments to be actual comments in the template and will strip them from the final config file.  If you would like to preserve the comment in the final config file you need to escape the hash character '\#' which will tell Cheetah (and Python) that you do in fact want the comment to appear in the final config file.::
+
+        # This is a comment in my template which will be stripped when it's processed through Cheetah
+        \# This comment will appear in the generated config file.

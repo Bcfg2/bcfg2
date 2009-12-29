@@ -1,0 +1,24 @@
+.. -*- mode: rst -*-
+
+=======
+Account
+=======
+
+The account plugin manages authentication data, including
+
+* /etc/passwd
+* /etc/group
+* /etc/security/limits.conf
+* /etc/sudoers
+* /root/.ssh/authorized_keys
+
+User access data is stored in three files in the Account directory:
+
+* superusers (a list of users who always have root privs)
+* rootlist (a list of user:host pairs for scoped root privs)
+* useraccess (a list of user:host pairs for login access)
+
+SSH keys are stored in files named $username.key; these are installed into root's authorized keys for users in the superusers list as well as for the pertitent users in the rootlike file (for the current system). 
+
+Authentication data is read in from (static|dyn).(passwd|group) The static ones are for system local ones, while the dyn. versions are for external synchronization (from ldap/nis/etc)
+There is also a static.limits.conf that provides the limits.conf header and any static entries.

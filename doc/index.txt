@@ -16,8 +16,6 @@ Welcome to Bcfg2's documentation!
 
    unsorted/index
 
-   .. FIXME: Platform-specific pages would be good here
-
    glossary
 
 Indices and tables
