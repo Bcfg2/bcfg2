@@ -3,6 +3,9 @@ In chronological order:
 - Narayan Desai <desai@mcs.anl.gov> has written most of bcfg2,
   including all parts not explicitly mentioned in this file
 
+- Sol Jerome <solj@ices.utexas.edu> squashes bugs, helps manage the
+  project roadmap, and implements various interesting features.
+
 - Joey Hagedorn <hagedorn@mcs.anl.gov> has written the reporting
   subsystem, including StatReports, GenerateHostinfo, and the xslt,
   css and javascript associated with it.
