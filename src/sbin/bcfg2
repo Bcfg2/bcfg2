@@ -57,7 +57,7 @@ class Client:
             'remove': Bcfg2.Options.CLIENT_REMOVE,
             'help': Bcfg2.Options.HELP,
             'setup': Bcfg2.Options.CFILE,
-            'server': Bcfg2.Options.SERVER_LOCATION, 
+            'server': Bcfg2.Options.SERVER_LOCATION,
             'user': Bcfg2.Options.CLIENT_USER,
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'retries': Bcfg2.Options.CLIENT_RETRIES,
@@ -72,7 +72,7 @@ class Client:
             'key'             : Bcfg2.Options.CLIENT_KEY,
             'certificate'     : Bcfg2.Options.CLIENT_CERT,
             'ca'              : Bcfg2.Options.CLIENT_CA,
-            'serverCN'        : Bcfg2.Options.CLIENT_SCNS, 
+            'serverCN'        : Bcfg2.Options.CLIENT_SCNS,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -135,7 +135,7 @@ class Client:
         '''Signal a fatal error'''
         self.logger.error("Fatal error: %s" % (message))
         raise SystemExit(1)
-        
+
     def run(self):
         ''' Perform client execution phase '''
         times = {}
@@ -243,7 +243,7 @@ class Client:
         except Bcfg2.Client.XML.ParseError, syntax_error:
             self.fatal_error("the configuration could not be parsed: %s" %
                              (syntax_error))
-            return(1)            
+            return(1)
 
         times['config_parse'] = time.time()
 
@@ -280,7 +280,7 @@ class Client:
                     os.remove(LOCKFILE)
                 except OSError:
                     self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
-        
+
         if not self.setup['file']:
             # upload statistics
             feedback = self.tools.GenerateStats()

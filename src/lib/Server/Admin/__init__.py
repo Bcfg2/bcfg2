@@ -40,7 +40,7 @@ class Mode(object):
     def errExit(self, emsg):
         print emsg
         raise SystemExit(1)
-        
+
     def get_repo_path(self):
         '''return repository path'''
         return self.cfp.get('server', 'repository')

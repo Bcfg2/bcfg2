@@ -235,7 +235,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 installed_instances = []
                 for inst in install_pkgs:
                     pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
-    
+
                     cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
                     if cmdrc == 0:
                         installed_instances.append(inst)
