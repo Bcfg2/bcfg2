@@ -10,7 +10,7 @@ override_dh_auto_install:
 	test -d debian/tmp/usr/local && rmdir debian/tmp/usr/local || exit 0
 
 override_dh_installinit:
-	# Install bcfg2 initscript without staring it on postinst
+	# Install bcfg2 initscript without starting it on postinst
 	dh_installinit --package=bcfg2 --no-start
-	# Install bcfg2-server initscript without staring it on postinst
+	# Install bcfg2-server initscript without starting it on postinst
 	dh_installinit --package=bcfg2-server --no-start

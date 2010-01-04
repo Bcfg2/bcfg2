@@ -50,6 +50,7 @@ if __name__ == '__main__':
                                       daemon = setup['daemon'],
                                       pidfile_name = setup['daemon'],
                                       protocol = setup['protocol'],
+                                      to_file=setup['to_file'],
                                       register=False,
                                       cls_kwargs={'repo':setup['repo'],
                                                   'plugins':setup['plugins'],
