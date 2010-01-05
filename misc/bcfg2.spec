@@ -1,6 +1,6 @@
 %define release 1
 %define __python python
-%{!?py_ver: %define py_ver %(python -c 'import sys;print(sys.version[0:3])')}
+%{!?py_ver: %define py_ver %(%{__python} -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
@@ -59,7 +59,7 @@ Version: %{version}
 Summary: Bcfg2 Server
 Group: System Tools
 Requires: bcfg2
-%if 0%{?py_ver} < 2.6
+%if "%{py_ver}" < "2.6"
 Requires:         python-ssl
 %endif
 Requires:         %{lxmldep} >= 1.2.1
