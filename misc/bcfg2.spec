@@ -20,7 +20,7 @@ Summary:          Configuration management system
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-1.0.0.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
@@ -94,7 +94,7 @@ Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
 %prep
-%setup -q -n bcfg2-1.0.0
+%setup -q -n bcfg2-%{version}
 
 %build
 %{__python}%{pythonversion} setup.py build
