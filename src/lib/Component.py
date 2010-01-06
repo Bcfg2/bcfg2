@@ -225,6 +225,8 @@ class Component (object):
                     self.instance_statistics.add_value('component_lock',
                                                        lock_done - lock_start)
                 self.instance_statistics.add_value(method, method_done - method_start)
+        except xmlrpclib.Fault:
+            raise
         except Exception, e:
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
