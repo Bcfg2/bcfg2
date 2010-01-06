@@ -129,6 +129,7 @@ class SSLServer (SocketServer.TCPServer, object):
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
+        sock.settimeout(90)
         sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
                                   keyfile=self.keyfile, cert_reqs=self.mode,
                                   ca_certs=self.ca, ssl_version=self.ssl_protocol)
