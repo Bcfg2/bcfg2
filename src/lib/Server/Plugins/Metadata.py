@@ -632,7 +632,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                   % (client, address))
                 return False
         resolved = self.resolve_client(addresspair)
-        if resolved == client:
+        if resolved.lower() == client.lower():
             return True
         else:
             self.logger.error("Got request for %s from incorrect address %s" \
