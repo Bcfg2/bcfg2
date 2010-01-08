@@ -706,7 +706,7 @@ class EntrySet:
         raise PluginExecutionError
 
 class GroupSpool(Plugin, Generator):
-    '''The TGenshi generator implements a templating mechanism for configuration files'''
+    '''Unified interface for handling group-specific data (e.g. .G## files)'''
     name = 'GroupSpool'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
