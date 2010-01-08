@@ -25,18 +25,6 @@ These options are only necessary on the Bcfg2 server. They are specified in the 
 Specifies the path to the Bcfg2 repository containing all of the configuration specifications. The repository should be created using the bcfg2-init command.
 
 .TP
-.B key
-Specifies the path to a file containing the SSL Key. This is required on the server in all cases, and required on clients if using client certificates. 
-
-.TP
-.B certificate
-The path to a file containing a PEM formatted certificate which signs the key with the ca certificate. This setting is required on the server in all cases, and required on clients if using client certificates. 
-
-.TP
-.B ca
-The path to a file containing the CA certificate. This file is required on the server, and optional on clients. However, if the cacert is not present on clients, the server cannot be verified. 
-
-.TP
 .B filemonitor
 The file monitor used to watch for changes in the repository. Values of 'gamin', 'fam', or 'pseudo' are valid.
 
@@ -239,12 +227,24 @@ Port for database connections. Not used for sqlite3.
 Specified in the [communication] section. These options define settings used for client-server communication.
 
 .TP
-.B password
-Required on both the server and clients. On the server, sets the password clients need to use to communicate. On a client, sets the password to use to connect to the server.
+.B agent-port
+The TCP port on which to bind for agent mode.
+
+.TP
+.B ca
+The path to a file containing the CA certificate. This file is required on the server, and optional on clients. However, if the cacert is not present on clients, the server cannot be verified. 
+
+.TP
+.B certificate
+The path to a file containing a PEM formatted certificate which signs the key with the ca certificate. This setting is required on the server in all cases, and required on clients if using client certificates. 
 
 .TP
 .B key
-A server-only option. The file system path to the server's SSL key. Required if using xmlrpc/ssl for communication.
+Specifies the path to a file containing the SSL Key. This is required on the server in all cases, and required on clients if using client certificates. 
+
+.TP
+.B password
+Required on both the server and clients. On the server, sets the password clients need to use to communicate. On a client, sets the password to use to connect to the server.
 
 .TP
 .B protocol
@@ -253,10 +253,6 @@ Communication protocol to use. Defaults to xmlrpc/ssl.
 .TP
 .B retries
 A client-only option. Number of times to retry network communication.
-
-.TP
-.B agent-port
-The TCP port on which to bind for agent mode.
 
 .TP
 .B user
