@@ -77,8 +77,8 @@ per-client passwords set will not be able to connect.
 SSL Cert-based client authentication
 ====================================
 
-As of 1.0pre3, SSL-based client authentication is supported. This
-requires several things:
+SSL-based client authentication is supported. This requires several
+things:
 
 #. Certificate Authority (to sign all keys)
 
@@ -97,6 +97,21 @@ using the following set of steps:
    signing cert
 
    http://www.flatmtn.com/article/setting-ssl-certificates-apache
+
+   .. note::
+       The client CN must be the FQDN of the client (as returned by a
+       reverse DNS lookup of the ip address. Otherwise, you will end up
+       with an error message on the client that looks like::
+
+           Server failure: Protocol Error: 401 Unauthorized
+	   Failed to download probes from bcfg2
+	   Server Failure
+
+       on the client. You will also see an error message on the server
+       that looks something like::
+
+           cmssrv01 bcfg2-server[9785]: Got request for cmssrv115 from incorrect address 131.225.206.122
+           cmssrv01 bcfg2-server[9785]: Resolved to cmssrv115.fnal.gov
 
 #. Distribute the keys and certs to the appropriate locations
 
