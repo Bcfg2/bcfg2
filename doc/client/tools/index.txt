@@ -1,0 +1,108 @@
+.. _client-tools-index:
+
+Client Tool Drivers
+===================
+
+Client tool drivers allow bcfg2 to execute configuration operations by interfacing with platform and distribution specific tools.
+
+Tool drivers handle any reconfiguration or verification operation. So far we have tools that primarily deal with packaging systems and service management. The POSIX tool also handles file system and permissions/groups operations.
+
+To write your own tool driver, to handle a new packaging format, or new service architecture see WritingClientToolDrivers.
+
+When the bcfg2 client is run, it attempts to instantiate each of these drivers. The succeeding list of drivers are printed as a debug message after this process has completed. Drivers can supercede one another, for example, the Yum driver conflicts (and unloads) the RPM driver. This behavior can be overridden by running the bcfg2 client with the -D flag. This flag takes a colon delimited list of drivers to use on the system.
+
+Currently these are the tool drivers that are distributed with bcfg2:
+
+Action
+------
+
+Pre and post-install tests and actions. This driver executes commands and supplies status information to the bcfg2 server via the statistics mechanism. It can also be used to prevent bundle installation when pre-conditions are not met. See the UsingActions page for more details.
+
+APT
+---
+
+Debian Packages. This tool driver is used to handle packages on dpkg based systems and employs the "apt" executable.
+
+Blast
+-----
+
+Blastwave Packages. This tool driver is for blastwave packages on solaris
+
+Chkconfig
+---------
+
+Tool to manage services (primarily on Redhat based distros).
+
+.. note:: Start and stop are standard arguments, but the one for reload isn't consistent across services. You can specify which argument to use with the `reload` property in Service tags. Example: `<Service name="ftp" reload="condrestart" status="on" type="chkconfig">`
+
+DebInit
+-------
+
+Debian Service Support; exec's update-rc.d to configure services.
+
+Encap
+-----
+
+`Encap <http://www.encap.org>`_ Packages.
+
+FreeBSDInit
+-----------
+
+FreeBSD Service Support. Only bundle updates will work.
+
+FreeBSDPackage
+--------------
+
+FreeBSD Packages. Verifies packages and their version numbers but can't install packages.
+
+launchd
+-------
+
+Mac OS X Services. To use this tool, you must maintain a standard launch daemon .plist file in `/Library/LaunchDaemons/` (example ssh.plist) and setup a `<Service name="com.openssh.sshd" type="launchd" status="on" />` entry in your config to load or unload the service. Note the name is the ''Label'' specified inside of the .plist file
+
+Portage
+-------
+
+Support for Gentoo Packages.
+
+POSIX
+-----
+
+Files and Permissions are handled by the POSIX driver. Usage well documented other places.
+
+RcUpdate
+--------
+
+Uses the rc-update executable to manage services on distributions such as Gentoo.
+
+RPM
+---
+
+Executes rpm to manage packages most often on redhat based systems.
+'''DEPRECATED:''' in favor of RPMng
+
+RPMng
+-----
+
+Next-generation RPM tool, will be default in upcoming release. Handles RPM sublties like epoch and prelinking and 64-bit platforms better than RPM client tool. [wiki:ClientTools/RPMng RPMng/YUMng Documentation.]
+
+SMF
+---
+
+Solaris Service Support.
+
+SYSV
+----
+
+Handles System V Packaging format that is available on Solaris.
+
+Yum
+---
+
+Handles RPMs using the YUM package manager.
+'''DEPRECATED: ''' in favor of YUMng
+
+YUMng
+-----
+
+Handles RPMs using the YUM package manager. Handles sublties better than the Yum client tool. [wiki:ClientTools/RPMng RPMng/YUMng Documentation.]

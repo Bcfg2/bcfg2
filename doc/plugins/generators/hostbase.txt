@@ -34,9 +34,9 @@ Create the hostbase database and a user.  For MySQL users::
 
     mysql> CREATE DATABASE hostbase
     mysql> quit
-    
+
     systemprompt#:  mysql -u root hostbase
-    mysql> GRANT ALL PRIVILEGES ON *.* TO hostbaseuser@mycomputer.private.net IDENTIFIED 
+    mysql> GRANT ALL PRIVILEGES ON *.* TO hostbaseuser@mycomputer.private.net IDENTIFIED
            BY 'password' WITH GRANT OPTION;
     mysql> quit
 
@@ -164,7 +164,7 @@ Authentication
 Edit Django settings
 --------------------
 
-Django allows for custom authentication backends to its login procedure.  Hostbase has an NIS authentication backend that verifies a user to be in the unix group allowed to modify Hostbase.  
+Django allows for custom authentication backends to its login procedure.  Hostbase has an NIS authentication backend that verifies a user to be in the unix group allowed to modify Hostbase.
 
 To enable this feature:
  * first edit your {{{Hostbase/settings.py}}} file and uncomment the line {{{'Hostbase.backends.NISBackend',}}} in the list of {{{AUTHENTICATION_BACKENDS}}}

@@ -1,0 +1,10 @@
+.. _faq-index:
+
+=========
+Bcfg2 FAQ
+=========
+
+.. toctree::
+   :maxdepth: 2
+
+   general

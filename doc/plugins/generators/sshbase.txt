@@ -21,13 +21,13 @@ Interacting with SSHbase
 Aliases
 =======
 
-As of 1.0pre4, SSHbase has support for Aliases listed in clients.xml. The address for the entries are specified either through DNS (e.g. a CNAME), or via the address attribute to the Alias.
+SSHbase has support for Aliases listed in clients.xml. The address for the entries are specified either through DNS (e.g. a CNAME), or via the address attribute to the Alias.
 
 Getting started
 ===============
 
 #. Add SSHbase to the generators line (plugins line in 1.0 or greater) in /etc/bcfg2.conf and restart the server -- This enables the SSHbase plugin in the bcfg2 server.
-#. Add ConfigFile entries for /etc/ssh/ssh_known_hosts, and /etc/ssh/ssh_host_dsa_key, etc to a bundle or base.
+#. Add Path entries for /etc/ssh/ssh_known_hosts, and /etc/ssh/ssh_host_dsa_key, etc to a bundle or base.
 #. Enjoy.
 
 At this point, SSHbase will generate new keys for any client without a recorded key in the repository, and will generate an ssh_known_hosts file appropriately.
@@ -35,4 +35,4 @@ At this point, SSHbase will generate new keys for any client without a recorded 
 Blog post
 =========
 
-[http://www.ducea.com/2008/08/24/using-the-bcfg2-sshbase-plugin/]
+http://www.ducea.com/2008/08/24/using-the-bcfg2-sshbase-plugin/

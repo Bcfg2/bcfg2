@@ -1,0 +1,10 @@
+.. client-index:
+
+The Bcfg2 Client
+================
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   tools/*

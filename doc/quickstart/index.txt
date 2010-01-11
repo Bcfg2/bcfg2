@@ -6,7 +6,7 @@ Quickstart
 
 The steps below should get you from just thinking about a
 configuration management system to an operational installation of
-:ref:`Bcfg2`. If you get stuck, be sure to check the `mailing list`_
+Bcfg2. If you get stuck, be sure to check the `mailing list`_
 or to drop in on our `IRC channel`_.
 
 .. _mailing list: https://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
@@ -23,14 +23,15 @@ Get and Install Bcfg2 Server
 We recommend running the server on a Linux machine for ease of
 deployment due to the availability of packages for the dependencies.
 
-First, you need to download and install Bcfg2. Our :ref:`Download` has
-both source and packages for common environments, while our
-:ref:`Install` page describes what to do once you have the packages in
-hand. To start you will need to install the server on one machine and
-the client on one or more machines. Yes, your server can also be a
-client (and should be by the time your environment is fully
-managed). Detailed installation instructions can be found on the
-:ref:`Install` page.
+First, you need to download and install Bcfg2. The `Bcfg2 download
+page`_ has both source and packages for common environments, while our
+`Install page`_ describes what to do once you have the packages in hand.
+To start, you will need to install the server on one machine and the
+client on one or more machines. Yes, your server can also be a client
+(and should be by the time your environment is fully managed).
+
+.. _Bcfg2 download page: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
+.. _Install page: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Install
 
 Set up Repository
 =================
@@ -226,9 +227,9 @@ you will find that we now have a correct entry::
 
 Done! Now we just have 242 (or more) entries to take care of!
 
-:ref:`Bundler` is a relatively easy directory to populate. You can find
-many samples of Bundles in the `Bundle Repository`_, many of which can be
-used without editing.
+:ref:`plugins-structures-bundler` is a relatively easy directory to
+populate. You can find many samples of Bundles in the `Bundle
+Repository`_, many of which can be used without editing.
 
 .. _Bundle Repository: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Bundler/examples
 

@@ -3,3 +3,5 @@
 ====
 Base
 ====
+
+The Base plugin is a structure plugin that provides the ability to add lists of unrelated entries into client configuration entry inventories. Base works much like Bundler in its file format. The main difference between Base and Bundler is that Base files are included in all clients' configuration whereas bundles must be included explicitly in your Metadata. See the :doc:`bundler` page for details.

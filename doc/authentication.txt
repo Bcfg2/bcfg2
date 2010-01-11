@@ -12,7 +12,7 @@ Scenarios
    Default settings work well; machines do not float, and a per-client
    password is not required.
 
-2. :doc:`NAT_HOWTO`
+2. `NAT_HOWTO <http://trac.mcs.anl.gov/projects/bcfg2/wiki/NAT_HOWTO>`_
 
  * Build client records in advance with bcfg2-admin, setting a uuid
    for each new client.

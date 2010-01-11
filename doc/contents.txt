@@ -1,0 +1,46 @@
+.. _contents:
+
+=================================
+Welcome to Bcfg2's documentation!
+=================================
+
+.. toctree::
+   :maxdepth: 2
+
+   quickstart/index
+   faq/index
+   authentication
+   getting_started/index
+   plugins/index
+   client/index
+   testimonials
+   sites
+
+   unsorted/index
+
+   glossary
+
+Indices, glossary and tables
+============================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`glossary`
+* :ref:`search`
+
+Deprecated/obsolete documentation
+=================================
+
+The following documentation covers features that have been deprecated or that
+have been replaced in newer versions of Django.
+
+.. toctree::
+   :maxdepth: 2
+
+   obsolete/index
+
+
+.. toctree::
+   :hidden:
+
+   index

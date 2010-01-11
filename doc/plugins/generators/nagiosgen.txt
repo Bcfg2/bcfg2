@@ -4,7 +4,7 @@
 NagiosGen
 =========
 
-This page describes the installation and use of the [http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/NagiosGen.py NagiosGen] plugin. 
+This page describes the installation and use of the [http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/NagiosGen.py NagiosGen] plugin.
 
 Update /etc/bcfg2.conf, adding NagiosGen to plugins::
 
@@ -55,7 +55,7 @@ Create default host, and group specs in:
             retain_status_information       1
             retain_nonstatus_information    1
             is_volatile                     0
-    
+
             check_period                    24x7
             max_check_attempts              4
             check_interval                  5
