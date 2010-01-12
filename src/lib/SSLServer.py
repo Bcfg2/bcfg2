@@ -136,7 +136,6 @@ class SSLServer (SocketServer.TCPServer, object):
 
     def close_request(self, request):
         request.unwrap()
-        request.shutdown(2)
         request.close()
 
     def _get_url(self):
