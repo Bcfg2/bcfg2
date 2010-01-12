@@ -517,7 +517,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def resolve_client(self, addresspair):
         '''Lookup address locally or in DNS to get a hostname'''
-        #print self.session_cache
         if addresspair in self.session_cache:
             (stamp, uuid) = self.session_cache[addresspair]
             if time.time() - stamp < 90:
@@ -705,7 +704,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 return False
         # populate the session cache
         if user != 'root':
-            self.session_cache[address] = (time.time(), user)
+            self.session_cache[address] = (time.time(), client)
         return True
 
     def process_statistics(self, meta, _):
