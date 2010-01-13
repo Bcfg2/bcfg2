@@ -173,7 +173,7 @@ latex_font_size = '11pt'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'bcfg2.tex', u'Bcfg2 Documentation',
+  ('contents', 'bcfg2.tex', u'Bcfg2 Documentation',
    u'Narayan Desai and Thorsten Lockert', 'manual', True),
 ]
 
