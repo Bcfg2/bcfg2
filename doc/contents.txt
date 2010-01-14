@@ -13,8 +13,6 @@ Welcome to Bcfg2's documentation!
    getting_started/index
    plugins/index
    client/index
-   testimonials
-   sites
 
    unsorted/index
 
@@ -32,7 +30,7 @@ Deprecated/obsolete documentation
 =================================
 
 The following documentation covers features that have been deprecated or that
-have been replaced in newer versions of Django.
+have been replaced in newer versions of Bcfg2.
 
 .. toctree::
    :maxdepth: 2
