@@ -4,7 +4,26 @@
 Glossary
 ========
 
-.. glossary::
+.. glossary:: :sorted:
 
-   IRC Channel
-       what now?
+   client
+
+   generator
+        A type of plugin which provides file contents. For example Cfg or TGenshi.
+
+   Genshi
+        A Python-based templating engine. `Genshi Homepage`_.
+
+
+   group
+        A "tag" assigned to a client through a probe or other plugin.
+
+   probe
+        A script that executes on a client machine and sets client metadata such as group membership.
+
+   profile
+        A special type of group that a client is explicitly assigned to.
+        
+   structure
+
+.. _Genshi Homepage: http://genshi.edgewall.org/
