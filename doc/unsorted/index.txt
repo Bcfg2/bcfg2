@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _unsorted-index:
+
 =============
 Unsorted Docs
 =============

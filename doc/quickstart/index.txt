@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _quickstart-index:
+
 ==========
 Quickstart
 ==========
@@ -14,8 +16,8 @@ or to drop in on our `IRC channel`_.
 
 For distribution-specific guides, choose one of the following:
 
- * :doc:`centos`
- * :doc:`ubuntu`
+ * :ref:`quickstart-centos`
+ * :ref:`quickstart-ubuntu`
 
 Get and Install Bcfg2 Server
 ============================

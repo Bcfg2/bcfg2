@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _quickstart-centos:
+
 This is a complete getting started guide for CentOS
 ===================================================
 

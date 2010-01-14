@@ -1,12 +1,14 @@
 .. -*- mode: rst -*-
 
+.. _plugins-probes:
+
 ======
 Probes
 ======
 
 At times you need to gather information from a client machine before you can generate its configuration.  For example, if some of your machines have both a local scratch disk and a system disk while others only have the system disk, you would want to know this information to correctly generate an `/etc/auto.master` autofs config file for each type.  Here we will look at how to do this.
 
-First you will need to set up the TCheetah plugin, as described on the :doc:`generators/tcheetah` page.
+First you will need to set up the TCheetah plugin, as described on the :ref:`plugins-generators-tcheetah` page.
 
 Next, we need to create a `Probes` directory in our toplevel repository location::
 

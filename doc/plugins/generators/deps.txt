@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _plugins-generators-deps:
+
 ====
 Deps
 ====

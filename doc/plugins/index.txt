@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _plugins-index:
+
 =======
 Plugins
 =======
@@ -8,8 +10,8 @@ Plugins are the source of all logic used in building a config. They can perform 
 
 #. Generating configuration inventory lists for clients
 #. Generating configuration entry contents for clients
-#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :doc:`probes`.
-#. Automating administrative tasks (e.g. :doc:`generators/sshbase` which automates ssh key management)
+#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :ref:`plugins-probes`.
+#. Automating administrative tasks (e.g. :ref:`plugins-generators-sshbase` which automates ssh key management)
 #. Generating client per-entry installation decision-lists
 
 Enabling Plugins
@@ -82,7 +84,7 @@ Plugin Roles (in 1.0)
 
 In version 1.0, plugins have been refactored into a series of roles. This are fine-grained plugin capabilities that govern how the server core interacts with plugins.
 
-More details can be found in :doc:`plugin-roles`
+More details can be found in :ref:`plugins-plugin-roles`
 
 .. toctree::
    :hidden:

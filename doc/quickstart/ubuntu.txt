@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _quickstart-ubuntu:
+
 This is a complete getting started guide for Ubuntu
 ===================================================
 

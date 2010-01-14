@@ -1,5 +1,7 @@
 .. -*- mode: rst -*-
 
+.. _getting_started-index:
+
 ===========
 Using Bcfg2
 ===========

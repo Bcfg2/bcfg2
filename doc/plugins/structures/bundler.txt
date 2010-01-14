@@ -1,3 +1,5 @@
+.. -*- mode: rst -*-
+
 .. _plugins-structures-bundler:
 
 =======
@@ -90,7 +92,7 @@ In some cases, configuration files need to include the client's hostname in thei
         <Path name='/etc/package-${metadata.hostname}'/>
     </Bundle>
 
-Depending on the circumstance, these configuration files can either be handled by individual entries in :doc:`../generators/cfg`, :doc:`../generators/tcheetah`, or :doc:`../generators/tgenshi`, or can be mapped to a single entry by using the [wiki:altsrc] feature.
+Depending on the circumstance, these configuration files can either be handled by individual entries in :ref:`plugins-generators-cfg`, :ref:`plugins-generators-tcheetah`, or :ref:`plugins-generators-tgenshi`, or can be mapped to a single entry by using the [wiki:altsrc] feature.
 
 In this example, configuration file names are built using probed results from the client. getmac is a probe that gathers client MAC addresses and returns them in a newline delimited string.
 
