@@ -14,9 +14,7 @@ list below.
 
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
-* `Agent with ssh`
 * `Annotated Examples`
-* `Architecture`
 * `Audio/Video`
 * `Bcfg2Doc`
 * `Bcfg2 Subversion How To`

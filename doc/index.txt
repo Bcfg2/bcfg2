@@ -1,7 +1,9 @@
+.. -*- mode: rst -*-
+
 .. _index:
 
 =====================
-Bcfg2 Manual (v1.0.1)
+Bcfg2 Manual (v1.1.0)
 =====================
 
 What is Bcfg2?
@@ -34,6 +36,28 @@ Finally, due to the rapid pace of updates on modern networks, client
 systems are constantly changing; if required in your environment,
 Bcfg2 can enable the construction of complex change management and
 deployment strategies.
+
+Architecture
+------------
+
+Bcfg2 provides a declarative interface to system configuration. It was
+designed and implemented in-house at Argonne National Laboratory, but has matured to the
+point that external sites have begun using it. Its configuration
+specifications describe a literal configuration goal state for
+clients. In this architecture, the Bcfg2 client tool is responsible
+for determining what, if any, configuration operations must occur and
+then performing those operations. The client also uploads statistics and client
+configuration state information. The design and implementation of the reporting system is described in a separate [wiki:Reports page].
+
+Server
+^^^^^^
+
+The role of the bcfg2 server is rendering a client-specific target configuration description from a global specification. The specification consists of a directory structure containing data for a variety of server plugins. The bcfg2 server has a plugin interface that can be used to interpret parts configuration specification.
+
+Client
+^^^^^^
+
+Read on for more information about :ref:`client-index`.
 
 What Operating Systems Does Bcfg2 Support?
 ==========================================
