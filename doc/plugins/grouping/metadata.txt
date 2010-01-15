@@ -39,36 +39,69 @@ Clients Tag
 
 The Clients tag has the following possible attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| version || Client schema version || String ||
++---------+-----------------------+--------+
+| Name    | Description           | Values |
++=========+=======================+========+
+| version | Client schema version | String |
++---------+-----------------------+--------+
 
 Client Tag
 ----------
 
-Each entry in clients.xml '''must''' have the following properties:
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name || Host name of client.  This needs do be the name (possibly a FQDN) returned by a reverse lookup on the connecting IP address. || String ||
-|| profile || Profile group name to associate this client with || String ||
+Each entry in clients.xml **must** have the following properties:
+
++---------+---------------------------------------+--------+
+| Name    | Description                           | Values |
++=========+=======================================+========+
+| name    | Host name of client. This needs to be | String |
+|         | the name (possibly a FQDN) returned   |        |
+|         | by a reverse lookup on the connecting |        |
+|         | IP address.                           |        |
++---------+---------------------------------------+--------+
+| profile | Profile group name to associate this  | String |
+|         | client with.                          |        |
++---------+---------------------------------------+--------+
 
 Additionally, the following properties can be specified:
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| Alias || Alternative name and address for the client || XML Element ||
-|| address || Establishes an extra ip address that resolves to this client || ip address ||
-|| location || Requires requests to come from an IP address that matches the client record || fixed|floating ||
-|| password  || Establishes a per-node password that can be used instead of the global password || String ||
-|| pingable || If the client is pingable (deprecated; for old reporting system) || (Y|N) ||
-|| pingtime || Last time the client was pingable (deprecated; for old reporting system) || String ||
-|| secure || Requires the use of the per-client password for this client || true|false ||
-|| uuid || Establishes a per-node name that can be used to bypass dns-based client resolution || String ||
 
++----------+----------------------------------------+----------------+
+| Name     | Description                            | Values         |
++==========+========================================+================+
+| Alias    | Alternative name and address for the   | XML Element    |
+|          | client.                                |                |
++----------+----------------------------------------+----------------+
+| address  | Establishes an extra IP address that   | ip address     |
+|          | resolves to this client.               |                |
++----------+----------------------------------------+----------------+
+| location | Requires requests to come from an IP   | fixed|floating |
+|          | address that matches the client        |                |
+|          | record.                                |                |
++----------+----------------------------------------+----------------+
+| password | Establishes a per-node password that   | String         |
+|          | can be used instead of the global      |                |
+|          | password.                              |                |
++----------+----------------------------------------+----------------+
+| pingable | If the client is pingable (deprecated; | Y|N            |
+|          | for old reporting system)              |                |
++----------+----------------------------------------+----------------+
+| pingtime | Last time the client was pingable      | String         |
+|          | (deprecated; for old reporting system) |                |
++----------+----------------------------------------+----------------+
+| secure   | Requires the use of the per-client     | true|false     |
+|          | password for this client.              |                |
++----------+----------------------------------------+----------------+
+| uuid     | Establishes a per-node name that can   | String         |
+|          | be used to bypass dns-based client     |                |
+|          | resolution.                            |                |
++----------+----------------------------------------+----------------+
 
-For detailed information on client authentication see [wiki:Authentication]
+For detailed information on client authentication see :ref:`authentication`
 
 Metadata/groups.xml
 -------------------
 
-The Metadata/groups.xml file contains Group and Profile definitions. Here's a simple
-Metadata/groups.xml file:
+The ``Metadata/groups.xml`` file contains Group and Profile
+definitions. Here's a simple ``Metadata/groups.xml`` file:
 
 .. code-block:: xml
 
@@ -93,10 +126,10 @@ Metadata/groups.xml file:
     </Groups>
 
 
-Nested/chained groups definitions are conjunctive (logical and). For instance, in
-the above example, a client associated with the Profile Group 'mail-server' is
-also a member of the apache-server, rhel-as-4-x86, nfs-client, server and rhel
-groups.
+Nested/chained groups definitions are conjunctive (logical and). For
+instance, in the above example, a client associated with the Profile
+Group ``mail-server`` is also a member of the ``apache-server``,
+``rhel-as-4-x86``, ``nfs-client``, ``server`` and ``rhel`` groups.
 
 Groups describe clients in terms for abstract, disjoint aspects. Groups can be
 combined to form complex descriptions of clients that use configuration commonality
@@ -108,31 +141,65 @@ Metadata Groups Tag
 
 The Groups tag has the following possible attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| version || Group schema version || String ||
-|| origin || URL of master version (for common repo) || String ||
-|| revision || Master version control revision || String ||
++----------+---------------------------------+--------+
+| Name     | Description                     | Values |
++==========+=================================+========+
+| version  | Group schema version            | String |
++----------+---------------------------------+--------+
+| origin   | URL of master version           | String |
+|          | (for common repository)         |        |
++----------+---------------------------------+--------+
+| revision | Master version control revision | String |
++----------+---------------------------------+--------+
 
 Metadata Group Tag
 ------------------
 
 The Group Tag has the following possible attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name || Name of the group || String ||
-|| profile || If a client can be directly associated with this group || (True|False*) ||
-|| public || If a client can freely associate itself with this group.  For use with bcfg2 -p option on the client. || (True|False*) ||
-|| toolset || Describes which client-side logic should be used to make configuration changes || (rh|debian|solaris|aix|auto|gentoo) ||
-|| category || A group can only contain one instance of a group in any category. This provides the basis for representing groups which are conjugates of one another in a rigorous way. It also provides the basis for negation. || String ||
-|| default || Set as the profile to use for clients that are not associated with a profile in clients.xml. || (True|False*) ||
-|| comment || English text description of group || String ||
++----------+------------------------------------------+--------------+
+| Name     | Description                              | Values       |
++==========+==========================================+==============+
+| name     | Name of the group                        | String       |
++----------+------------------------------------------+--------------+
+| profile  | If a client can be directly associated   | True|False   |
+|          | with this group                          |              |
++----------+------------------------------------------+--------------+
+| public   | If a client can freely associate itself  | True|False   |
+|          | with this group. For use with the        |              |
+|          | *bcfg2 -p* option on the client.         |              |
++----------+------------------------------------------+--------------+
+| toolset  | Describes which client-side logic should | rh|debian|   |
+|          | be used to make configuration changes    | solaris|aix| |
+|          |                                          | auto|gentoo  |
++----------+------------------------------------------+--------------+
+| category | A group can only contain one instance of | String       |
+|          | a group in any one category. This        |              |
+|          | provides the basis for representing      |              |
+|          | groups which are conjugates of one       |              |
+|          | another in a rigorous way. It also       |              |
+|          | provides the basis for negation.         |              |
++----------+------------------------------------------+--------------+
+| default  | Set as the profile to use for clients    | True|False   |
+|          | that are not associated with a profile   |              |
+|          | in ``clients.xml``                       |              |
++----------+------------------------------------------+--------------+
+| comment  | English text description of group        | String       |
++----------+------------------------------------------+--------------+
 
 Groups can also contain other groups and bundles.
 
 Use of XInclude
 ===============
 
-[http://www.w3.org/TR/xinclude/ XInclude] is a W3C specification for the inclusion of external XML documents into XML source files. Much like the use of #include in C, this allows complex definitions to be split into smaller, more manageable pieces. As of bcfg2-0.9.0pre1, the Metadata plugin supports the use of XInclude specifications to split the clients.xml and groups.xml files. This mechanism allows the following specification to produce useful results:
+`XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
+for the inclusion of external XML documents into XML source
+files. Much like the use of ``#include`` in C, this allows complex
+definitions to be split into smaller, more manageable pieces. As of
+bcfg2-0.9.0pre1, the `Metadata`_ plugin supports the use of XInclude
+specifications to split the ``clients.xml`` and ``groups.xml``
+files. This mechanism allows the following specification to produce
+useful results:
 
 .. code-block:: xml
 
@@ -141,9 +208,13 @@ Use of XInclude
      <xi:include href="their-groups.xml" />
     </Groups>
 
-Each of the included groups files has the same format. These files are properly validated by bcfg2-repo-validate. This mechanism is useful for composing group definitions from multiple sources, or setting different permissions in an svn repository.
+Each of the included groups files has the same format. These files are
+properly validated by ``bcfg2-repo-validate``. This mechanism is
+useful for composing group definitions from multiple sources, or
+setting different permissions in an svn repository.
 
 Probes
 ======
 
-The metadata plugin includes client-side probing functionality. This is fully documented [wiki:Probes here].
+The metadata plugin includes client-side probing functionality. This
+is fully documented :ref:`here <plugins-probes>`.

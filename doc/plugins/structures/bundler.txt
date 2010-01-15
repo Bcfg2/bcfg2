@@ -44,23 +44,41 @@ The following is an annotated copy of a bundle:
 
 In this bundle, most of the entries are common to all systems. Clients in group "deb" get one extra package and service, while clients in group "rpm" get two extra packages and an extra service. In addition, clients in group "fedora" and group "rpm" get one extra package entries, unless they are not in the fc4 group, in which case, they get an extra package. Notice that this file doesn't describe which versions of these entries that clients should get, only that they should get them. (Admittedly, this example is slightly contrived, but demonstrates how group entries can be used in bundles)
 
-|| '' '''Group''' '' || '' '''Entry''' '' ||
-|| all || /etc/ssh/ssh_host_dsa_key ||
-|| all || /etc/ssh/ssh_host_rsa_key ||
-|| all || /etc/ssh/ssh_host_dsa_key.pub ||
-|| all || /etc/ssh/ssh_host_rsa_key.pub ||
-|| all || /etc/ssh/ssh_host_key ||
-|| all || /etc/ssh/ssh_host_key.pub ||
-|| all || /etc/ssh/sshd_config ||
-|| all || /etc/ssh/ssh_config ||
-|| all || /etc/ssh/ssh_known_hosts ||
-|| rpm || Package openssh ||
-|| rpm || Package openssh-askpass ||
-|| rpm || Service sshd ||
-|| rpm and fedora || Package openssh-server ||
-|| rpm and fedora and not fc4 || Package openssh-clients ||
-|| deb || Package ssh ||
-|| deb || Service ssh ||
++----------------------------+-------------------------------+
+| Group                      | Entry                         |
++============================+===============================+
+| all                        | /etc/ssh/ssh_host_dsa_key     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_rsa_key     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_dsa_key.pub |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_rsa_key.pub |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_key         |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_key.pub     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/sshd_config          |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_config           |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_known_hosts      |
++----------------------------+-------------------------------+
+| rpm                        | Package openssh               |
++----------------------------+-------------------------------+
+| rpm                        | Package openssh-askpass       |
++----------------------------+-------------------------------+
+| rpm                        | Service sshd                  |
++----------------------------+-------------------------------+
+| rpm and fedora             | Package openssh-server        |
++----------------------------+-------------------------------+
+| rpm and fedora and not fc4 | Package openssh-clients       |
++----------------------------+-------------------------------+
+| deb                        | Package ssh                   |
++----------------------------+-------------------------------+
+| deb                        | Service ssh                   |
++----------------------------+-------------------------------+
 
 Genshi templates
 ================
@@ -72,7 +90,9 @@ Motivation
 
 Static Bundles have served us relatively well, but have a relatively weak set of interal per-client differentiation mechanisms. In static Bundles, the group hierarchy (from the perspective of the current client) is available for use via boolean constraints with negation. This notion does not mesh well with the use of Probes, which can result in freeform data. In the presence of probe results, clients can have a wide array of data, and rendering down to a boolean logic may not always be desirable. Moreover, while static Bundles allow entry inclusion or exclusion based on group memberships, they do not allow programatic entry rendering. Hence, Genshi templates not only provide more control options, but it also provide the ability to perform new entry rendering operations.
 
-The [http://genshi.edgewall.org/ Genshi templating system] is used internally.
+The `Genshi templating system`_ is used internally.
+
+.. _Genshi templating system: http://genshi.edgewall.org/
 
 Use
 ---

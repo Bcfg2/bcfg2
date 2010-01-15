@@ -6,21 +6,31 @@
 TCheetah
 ========
 
-This document reflects the [source:trunk/bcfg2/src/lib/Server/Plugins/TCheetah.py TCheetah plugin] in bcfg2 0.8.4 and later.
+This document reflects the ``TCheetah`` plugin.
 
-The TCheetah plugin allows you to use the [http://www.cheetahtemplate.org/ cheetah templating system] to create files, instead of the various diff-based methods offered by the Cfg plugin. It also allows you to include the results of probes executed on the client in the created files.
+The ``TCheetah`` plugin allows you to use the `cheetah templating system
+<http://www.cheetahtemplate.org/>`_ to create files, instead of the
+various diff-based methods offered by the ``Cfg`` plugin. It also allows
+you to include the results of probes executed on the client in the
+created files.
 
-To begin, you will need to download and install the Cheetah templating engine from [http://www.cheetahtemplate.org/].  Once it is installed, you can enable it by adding `TCheetah` to the `plugins` line in `/etc/bcfg2.conf` on your Bcfg server.
-For example::
+To begin, you will need to download and install the Cheetah templating
+engine from http://www.cheetahtemplate.org/.  Once it is installed,
+you can enable it by adding ``TCheetah`` to the ``plugins`` line in
+``/etc/bcfg2.conf`` on your Bcfg server.  For example::
 
     generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules,TCheetah
 
-The TCheetah plugin makes use of a Cfg-like directory structure located in in a `TCheetah` subdirectory of your repository, usually `/var/lib/bcfg2/TCheetah`. Each file has a directory containing two files, `template` and `info`. The template is a standard Cheetah template with two additions:
+The ``TCheetah`` plugin makes use of a ``Cfg``-like directory structure
+located in in a ``TCheetah`` subdirectory of your repository, usually
+``/var/lib/bcfg2/TCheetah``. Each file has a directory containing two
+files, ``template`` and ``info``. The template is a standard Cheetah
+template with two additions:
 
 * `self.metadata` is the client's metadata
 * `self.properties` is an xml document of unstructured data
 
-The `info` file is formatted like `:info` files from Cfg.
+The ``info`` file is formatted like ``:info`` files from Cfg.
 
 Mostly, people will want to use client metadata.
 
@@ -38,14 +48,16 @@ The following variables are available for self.metadata:
 * uuid
 * password
 
-self.metadata is an instance of the class ClientMetadata of file [http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py Bcfg2/Server/Plugins/Metadata.py].
+self.metadata is an instance of the class ClientMetadata of file `Bcfg2/Server/Plugins/Metadata.py <http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py>`_.
 
 self.properties
 ===============
 
-properties is a python [http://codespeak.net/lxml/ ElementTree] object, loaded from the data in /var/lib/bcfg2/etc/properties.xml.  That file should have a Properties node at its root.
+properties is a python `ElementTree <http://codespeak.net/lxml/>`_
+object, loaded from the data in ``/var/lib/bcfg2/etc/properties.xml``.
+That file should have a ``Properties`` node at its root.
 
-Example properties.xml:
+Example ``properties.xml``:
 
 .. code-block:: xml
 

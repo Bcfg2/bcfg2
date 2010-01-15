@@ -6,7 +6,13 @@
 Pkgmgr
 ======
 
-.. note:: See [wiki:ClientTools/RPMng#PackageTagNewStyleandAttributes RPMng#PackageTagNewStyleandAttributes].''' The way of showing the architecture of the RPM has changed. The new way is "arch". The old way is "multiarch". '''This document needs to be updated and include version of Bcfg2 where change took place.'''
+.. note::
+
+    See [wiki:ClientTools/RPMng#PackageTagNewStyleandAttributes
+    RPMng#PackageTagNewStyleandAttributes].''' The way of showing the
+    architecture of the RPM has changed. The new way is "arch". The
+    old way is "multiarch". '''This document needs to be updated and
+    include version of Bcfg2 where change took place.'''
 
 The Pkgmgr plugin resolves the Abstract Configuration Entity "Package" to a package specification that the client can use to detect, verify and install the specified package.
 
@@ -37,36 +43,75 @@ PackageList Tag
 
 The PackageList Tag may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| priority || Sets the priority for packages in the package list.The high value wins. || Integer ||
-|| type || Package type that applies to all packages in the list. This value is inherited by all packages without an explicit type attribute. || (deb|rpm|blast|encap|sysv|portage|yum) ||
-|| uri || URI to prepend to filenames to fetch packages in this list. || String ||
-|| multiarch || Comma separated list of architectures that apply to all packages in this list.  Inherited by all package entries in the file that do not have this attribute explicitly. || String ||
-|| srcs || To be used with multiarch support.  Inherited by all Package entries without this attribute. || String ||
++-----------+-----------------------------------------------+----------------+
+| Name      | Description                                   | Values         |
++===========+===============================================+================+
+| priority  | Sets the priority for packages in the package | Integer        |
+|           | list. The higher value wins.                  |                |
++-----------+-----------------------------------------------+----------------+
+| type      | Package type that applies to all packages in  | deb|rpm|blast| |
+|           | the list. This value is inherited by all      | encap|sysv|    |
+|           | packages without an explicit type attribute.  | portage|yum    |
++-----------+-----------------------------------------------+----------------+
+| uri       | URI to prepend to filename sto fetch packages | String         |
+|           | in this list.                                 |                |
++-----------+-----------------------------------------------+----------------+
+| multiarch | Comma-separated list of architectures that    | String         |
+|           | apply to all packages in this list. Inherited |                |
+|           | by all package entries in the file that does  |                |
+|           | not have this attribute explicitly.           |                |
++-----------+-----------------------------------------------+----------------+
+| srcs      | To be used with multiarch support. Inherited  | String         |
+|           | by all Package entries without this attribute |                |
++-----------+-----------------------------------------------+----------------+
 
 Pkgmgr Group Tag
 ----------------
 
 The Pkgmgr Group Tag may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name  || Group Name || String ||
-|| negate || Negate group membership (is not a member of) || (True|False) ||
++--------+----------------------------------------------+------------+
+| Name   | Description                                  | Values     |
++========+==============================================+============+
+| name   | Group Name                                   | String     |
++--------+----------------------------------------------+------------+
+| negate | Negate group membership (is not a member of) | True|False |
++--------+----------------------------------------------+------------+
 
 Package Tag
 -----------
 
 The Package Tag may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name  || Package Name || String ||
-|| version || Package Version, version='auto' to install the latest version in the client's cache, or version='any' to verify that any version of the package is installed on the client || String ||
-|| file || Package file name.  Several other attributes (name, version) can be automatically defined based on regular expressions defined in the Pkgmgr plugin. || String ||
-|| simplefile || Package file name. No name parsing is performed, so no extra fields get set || String ||
-|| verify || verify='false' - do not do package verification || String ||
-|| multiarch || Comma separated list of the architectures of this package that should be installed. (Temporary Work around) || String ||
-|| srcs || File name creation rules for multiarch packages.  (Temporary Work around) || String ||
-|| type || Package type. (rpm, yum, apt,sysv,blast) || String ||
++------------+----------------------------------------------+------------+
+| Name       | Description                                  | Values     |
++============+==============================================+============+
+| name       | Package Name                                 | String     |
++------------+----------------------------------------------+------------+
+| version    | Package version, set to ``auto`` to install  | String     |
+|            | the latest version in the client's cache, or |            |
+|            | ``any`` to verify that any version of the    |            |
+|            | package is installed on the client           |            |
++------------+----------------------------------------------+------------+
+| file       | Package file name. Several other attributes  | String     |
+|            | (name, version) can be automatically defined |            |
+|            | based on regular expressions defined in the  |            |
+|            | Pkgmgr plugin.                               |            |
++------------+----------------------------------------------+------------+
+| simplefile | Package file name. No name parsing is        | String     |
+|            | performed, so no extra fields get set        |            |
++------------+----------------------------------------------+------------+
+| verify     | Whether package verification should be done  | True|False |
++------------+----------------------------------------------+------------+
+| multiarch  | Comma-separated list of the architectures of | String     |
+|            | this package that should be installed.       |            |
+|            | (Temporary work-around)                      |            |
++------------+----------------------------------------------+------------+
+| srcs       | File name creation rules for multiarch       | String     |
+|            | packages. (Temporary work-around)            |            |
++------------+----------------------------------------------+------------+
+| type       | Package type (rpm, yum, apt, sysv, blast)    | String     |
++------------+----------------------------------------------+------------+
 
 Client Tag
 ----------
@@ -78,9 +123,13 @@ The Client Tag is used in a PackageList for selecting the package entries to inc
 
 The Client Tag may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name  || Client Name || String ||
-|| negate || Negate client selection (if not client name) || (True|False) ||
++--------+----------------------------------------------+------------+
+| Name   | Description                                  | Values     |
++========+==============================================+============+
+| name   | Client Name                                  | String     |
++--------+----------------------------------------------+------------+
+| negate | Negate client selection (if not client name) | True|False |
++--------+----------------------------------------------+------------+
 
 Pkgmgr Directory
 ================

@@ -6,7 +6,9 @@
 NagiosGen
 =========
 
-This page describes the installation and use of the [http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/NagiosGen.py NagiosGen] plugin.
+This page describes the installation and use of the `NagiosGen
+<http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/NagiosGen.py>`_
+plugin.
 
 Update /etc/bcfg2.conf, adding NagiosGen to plugins::
 

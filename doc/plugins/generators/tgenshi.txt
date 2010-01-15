@@ -8,7 +8,11 @@ TGenshi
 
 This page documents the TGenshi plugin. This plugin works with version 0.4 and newer of the genshi library.
 
-The TGenshi plugin allows you to use the [http://genshi.edgewall.org Genshi] templating system to create files, instead of the various diff-based methods offered by the Cfg plugin. It also allows you to include the results of probes executed on the client in the created files.
+The TGenshi plugin allows you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system to create files,
+instead of the various diff-based methods offered by the Cfg
+plugin. It also allows you to include the results of probes executed
+on the client in the created files.
 
 To begin, you will need to download and install the Genshi templating engine.
 
@@ -16,15 +20,24 @@ To install on CentOS or RHEL 5, run::
 
     sudo yum install python-genshi
 
-Once it is installed, you can enable it by adding TGenshi to the generators line in /etc/bcfg2.conf on your Bcfg server. For example::
+Once it is installed, you can enable it by adding ``TGenshi`` to the
+generators line in ``/etc/bcfg2.conf`` on your Bcfg server. For example::
 
     generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules,TGenshi
 
-The TGenshi plugin makes use of a Cfg-like directory structure located in in a TGenshi subdirectory of your repository, usually `/var/lib/bcfg2/TGenshi`. Each file has a directory containing two file types, template and info. Templates are named according to the genshi format used; template.txt uses the genshi text format, and template.xml uses the XML format.
+The TGenshi plugin makes use of a Cfg-like directory structure located in in a TGenshi subdirectory of your repository, usually ``/var/lib/bcfg2/TGenshi``. Each file has a directory containing two file types, template and info. Templates are named according to the genshi format used; template.txt uses the genshi text format, and template.xml uses the XML format.
 
-If used with Genshi 0.5 or later the plugin also supports the [http://genshi.edgewall.org/wiki/Documentation/0.5.x/text-templates.html new style] text template format for files named template.newtxt. One of the advantages of the new format is that it does not use # as a command delimiter, making it easier to utilize for configuration files that use # as a comment character.
+If used with Genshi 0.5 or later the plugin also supports the `new
+style
+<http://genshi.edgewall.org/wiki/Documentation/0.5.x/text-templates.html>`_
+text template format for files named template.newtxt. One of the
+advantages of the new format is that it does not use # as a command
+delimiter, making it easier to utilize for configuration files that
+use # as a comment character.
 
-Only one template format may be used per file served. Info files are identical to those used in Cfg, and info.xml files are supported.
+Only one template format may be used per file served. Info files are
+identical to those used in ``Cfg``, and ``info.xml`` files are
+supported.
 
 Inside of templates
 ===================
@@ -32,7 +45,9 @@ Inside of templates
 * metadata is the client's metadata
 * properties.properties is an xml document of unstructured data
 
-See the genshi [http://genshi.edgewall.org/wiki/Documentation documentation] for examples of Genshi syntax.
+See the genshi `documentation
+<http://genshi.edgewall.org/wiki/Documentation>`_ for examples of
+Genshi syntax.
 
 Examples
 ========
@@ -43,7 +58,6 @@ Examples: Old Genshi Syntax
 ---------------------------
 
 Genshi's web pages recommend against using this syntax, as it may disappear from future releases.
-
 
 Group Negation
 --------------
@@ -72,4 +86,9 @@ FAQs
 
 '''Question:''' How do I escape the $ (dollar sign) in a TGenshi text template? For example, if I want to include SVN (subversion) keywords like $Id$ or $HeadURL$ in TGenshi-generated files, or am templating a bourne shell (sh/bash) script or Makefile (make).
 
-'''Answer:''' Use $$ (double dollar sign) to output a literal $ (dollarsign) in a TGenshi text template. So instead of $Id$, you'd use $$Id$$. See also Genshi tickets [http://genshi.edgewall.org/ticket/282 #282: Document $$ escape convention] and [http://genshi.edgewall.org/ticket/283 #283: Allow for redefinition of template syntax per-file].
+'''Answer:''' Use $$ (double dollar sign) to output a literal $
+(dollarsign) in a TGenshi text template. So instead of $Id$, you'd use
+$$Id$$. See also Genshi tickets `#282: Document $$ escape convention
+<http://genshi.edgewall.org/ticket/282>`_ and `#283: Allow for
+redefinition of template syntax per-file
+<http://genshi.edgewall.org/ticket/283>`_.
