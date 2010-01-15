@@ -305,6 +305,8 @@ class YUMSource(Source):
         self.save_state()
 
     def parse_filelist(self, data, arch):
+        if arch not in self.filemap:
+            self.filemap[arch] = dict()
         for pkg in data.findall(self.fl + 'package'):
             for fentry in [fe for fe in pkg.findall(self.fl + 'file') \
                            if fe.text in self.needed_paths]:
