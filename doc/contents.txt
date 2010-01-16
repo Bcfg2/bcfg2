@@ -9,6 +9,7 @@ Welcome to Bcfg2's documentation!
 .. toctree::
    :maxdepth: 2
 
+   index
    quickstart/index
    faq/index
    authentication
@@ -39,9 +40,3 @@ have been replaced in newer versions of Bcfg2.
    :maxdepth: 2
 
    obsolete/index
-
-
-.. toctree::
-   :hidden:
-
-   index

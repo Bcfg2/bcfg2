@@ -2,6 +2,7 @@
 
 .. _client-index:
 
+================
 The Bcfg2 Client
 ================
 
