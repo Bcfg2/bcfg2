@@ -27,8 +27,18 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                 # we want it on, it's not
                 entry.set('current_status', 'off')
             else:
+                # we want it off, check if it is
+                rc, output = self.cmd.run('/bin/rc-status -u | grep %s | grep stopped' % \
+                                        entry.get('name'))
+                status = (rc == 0)
+                if not status:
+                    # it's not off and should be
+                    entry.set('current_status', 'on')
+        else:
+            if entry.get('status') == 'off':
                 # we want it off, it's not
                 entry.set('current_status', 'on')
+                return False;
         return status
 
     def InstallService(self, entry):
