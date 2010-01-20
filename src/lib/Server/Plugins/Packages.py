@@ -426,14 +426,14 @@ class APTSource(Source):
                     bdeps[barch][pkgname] = []
                     vindex = 0
                     for dep in words[1].split(','):
-                        raw_dep = re.sub('\(.*\)', '', dep)
-                        if '|' in raw_dep:
+                        if '|' in dep:
+                            cdeps = [re.sub('\(.*\)', '', cdep) for cdep in dep.split('|')]
                             dyn_dname = "choice-%s-%s-%s" % (pkgname, barch, vindex)
                             vindex += 1
                             bdeps[barch][pkgname].append(dyn_dname)
-                            dyn_list = [x.strip() for x in raw_dep.split('|')]
-                            bprov[barch][dyn_dname] = set(dyn_list)
+                            bprov[barch][dyn_dname] = set(cdeps)
                         else:
+                            raw_dep = re.sub('\(.*\)', '', dep)
                             raw_dep = raw_dep.rstrip().strip()
                             bdeps[barch][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':
