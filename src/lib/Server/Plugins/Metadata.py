@@ -5,6 +5,7 @@ import copy
 import fcntl
 import lxml.etree
 import os
+import os.path
 import socket
 import time
 import Bcfg2.Server.Plugin
@@ -501,9 +502,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             raise MetadataRuntimeError
         datafile.close()            
 
+        # check if clients.xml is a symlink
+        clientsxml = "%s/%s" % (self.data, 'clients.xml')
+        if os.path.islink(clientsxml):
+            clientsxml = os.readlink(clientsxml)
+
         try:
             os.rename("%s/%s" % (self.data, 'clients.xml.new'),
-                      "%s/%s" % (self.data, 'clients.xml'))
+                      "%s/%s" % (clientsxml))
         except:
             self.logger.error("Metadata: Failed to rename clients.xml.new")
             raise MetadataRuntimeError
