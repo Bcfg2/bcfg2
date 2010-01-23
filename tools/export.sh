@@ -8,12 +8,13 @@ tarname="/tmp/${name}-${version}.tar.gz"
 url=`svn info | grep URL | awk '{print $2}'`
 
 if [ -z "${version}" ] ; then
-    echo "must supply version number"
+    echo "Usage: $0 <version>"
     exit 1
 fi
 
 # update the version
-deblogtmp=`mktemp`
+tmpbase=`basename $0`
+deblogtmp=`mktemp /tmp/${tmpbase}.XXXXXX`
 majorver=`/usr/bin/python -c "print '${version}'[:5]"`
 minorver=`/usr/bin/python -c "print '${version}'[5:]"`
 printf "name: "
