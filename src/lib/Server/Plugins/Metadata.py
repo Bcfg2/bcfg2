@@ -500,7 +500,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Metadata: Failed to write new clients data to clients.xml.new", exc_info=1)
             os.unlink("%s/%s" % (self.data, "clients.xml.new"))
             raise MetadataRuntimeError
-        datafile.close()            
+        datafile.close()
 
         # check if clients.xml is a symlink
         clientsxml = "%s/%s" % (self.data, 'clients.xml')
@@ -508,8 +508,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             clientsxml = os.readlink(clientsxml)
 
         try:
-            os.rename("%s/%s" % (self.data, 'clients.xml.new'),
-                      "%s/%s" % (clientsxml))
+            os.rename("%s/%s" % (self.data, 'clients.xml.new'), clientsxml)
         except:
             self.logger.error("Metadata: Failed to rename clients.xml.new")
             raise MetadataRuntimeError
