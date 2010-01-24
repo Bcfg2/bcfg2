@@ -2,7 +2,6 @@
 
 .. _client-index:
 
-================
 The Bcfg2 Client
 ================
 
@@ -12,13 +11,19 @@ processing of the target configuration description. We chose this
 architecture, as opposed to one with a smarter client, for a few reasons:
 
 * Client failure forces administrators to perform an O(n) reconfiguration operation. Simpler code is easier to debug and maintain.
-* Minimize the bootstrap size; a complicated client can require more aspects of the system to function in order for reconfiguration to work. 
-* Isolate configuration generation functionality on the server, where it can be readily observed. This is the most complicated task that Bcfg2 performs. 
+* Minimize the bootstrap size; a complicated client can require more aspects of the system to function in order for reconfiguration to work.
+* Isolate configuration generation functionality on the server, where it can be readily observed. This is the most complicated task that Bcfg2 performs.
 * The results of the configuration process fit a fairly simple model. We wanted to validate it. The result is that Bcfg2 has a programmable deployment engine that can be driven by anything that writes a compatible configuration description.
+
+.. toctree::
+   :maxdepth: 2
+
+   agent
+   debugging
+   metadata
 
 .. toctree::
    :maxdepth: 2
    :glob:
 
-   *
    tools/*

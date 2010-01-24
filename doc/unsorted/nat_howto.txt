@@ -1,0 +1,56 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-nat_howto:
+
+=========
+NAT HOWTO
+=========
+
+This page describes how to setup bcfg2 to properly function with a collection of clients behind NAT. It describes the issues, how the underlying portions of the bcfg2 system function, and how to correctly setup client metadata to cope with this environment.
+
+Issues
+======
+
+Bcfg2, by default, uses ip address lookup to determine the identity of a client that has connected. This process doesn't work properly in the case of NATted hosts, because all requests from these clients come from the same external address when connecting to the server.
+
+These client identification issues will manifest themselves in a number of ways:
+
+* Inability to setup discrete clients with different profiles
+* Incorrect sharing of probe results across clients in the same NAT pool
+* Inability to bootstrap clients properly when client data is not predefined
+
+Architectural Issues
+====================
+
+Client identification is performed as the beginning of each client/server interaction. As of 0.9.3pre3, client identification via IP address can be completely short-circuited through the use of a client uuid. Setup of client uuids requires actions of both the client and server. On the server side, the client uuid must be added to the client record in Metadata/clients.xml. This attribute allows the server to use the user part of the authentication to resolve the client's metadata. Also, either the location attribute should be set to floating, or the IP address of the NAT must be reflected in the address attribute.
+Once added, the Client entry in clients.xml will look like:
+
+.. code-block:: xml
+
+    <Client profile="desktop" name="test1" pingable="N"
+     uuid='9001ec29-1531-4b16-8198-a71bea093d0a' location='floating'/>
+
+Alternatively, the Client entry can be setup like:
+
+.. code-block:: xml
+
+    <Client profile="desktop" name="test1" pingable="N"
+     uuid='9001ec29-1531-4b16-8198-a71bea093d0a' address='ip-address-of-NAT'/>
+
+The difference between these definitions is explained in detail on the [wiki:Authentication] page, but in short, the second form requires that the client access the server from the NAT address, while the first form allows it to connect from any address provided it uses the proper uuid. (Client identification is orthogonal to the use of per-client passwords; this can be set in addition to the attributes above.)
+
+Once this setup is done, each client must be configured to use the proper uuid upon any server interaction. This can be done using either the command line argument -u, or the setting "user" in the "communication" section of /etc/bcfg2.conf.
+
+UUID Choice
+===========
+
+When determining client UUIDs, one must take care to ensure that UUIDs are unique to the client. Any hardware-specific attribute, like a hash of a mac address would be sufficient. Alternatively, if a local hostname is unique, it may be used as well.
+
+Automated Client Bootstrapping
+==============================
+
+Automated setup of new clients from behind NAT works by using the common password. For example::
+
+    /usr/sbin/bcfg2 -u ubik3 -p desktop -x <password>
+
+It is not possible at this time to do automated setup without setting up a pre-shared per-client key.

@@ -2,7 +2,6 @@
 
 .. _unsorted-index:
 
-=============
 Unsorted Docs
 =============
 
@@ -15,46 +14,7 @@ list below.
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
 * `Annotated Examples`
-* `Audio/Video`
-* `Bcfg2Doc`
-* `Bcfg2 Subversion How To`
-* `Bound Entry`
-* `Building Debian Packages`
-* `Building RPM Packages`
-* `Client/Debugging`
-* `Client/Metadata`
-* `ClientTools/RPMng`
-* `Comparison`
-* `Configuration Entries`
-* `Contribute`
-* `Contributors`
-* `Converging on verification with RHEL 5`
-* `Debian Pkgmgr creation script`
-* `Developing for Bcfg2`
-* `Development/WritingPlugins`
-* `Development Tips`
-* `Doc:Architecture`
-* `Documentation`
-* `Download`
-* `Dynamic groups`
-* `Emacs snippet support`
-* `Encap`
-* `FAQ`
-* `FeatureWindows`
-* `Gentoo`
-* `Group names`
-* `Help`
-* `Hostbase`
-* `HostbaseInstallation`
-* `Howtos`
-* `IRCChannel`
-* `Install`
-* `IptablesDeadmanScript`
-* `LearningPython`
-* `MailingList`
 * `ManualPages`
-* `NAT_HOWTO`
-* `NISAuth`
 * `NewDynamicReports`
 * `NewDynamicReportsInstallation`
 * `News`
@@ -126,7 +86,9 @@ list below.
 * `UsingRcache`
 * `VimSnippetSupport`
 * `WritingClientToolDrivers`
-* `WritingSpecification`
-* `altsrc`
-* `mrepo`
-* `ssl`
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   *

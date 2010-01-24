@@ -13,6 +13,7 @@
 
 import os
 import sys
+import time
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -39,7 +40,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'Bcfg2'
-copyright = u'2009, Narayan Desai'
+copyright = u'2009-%s, Narayan Desai' % time.strftime('%Y')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

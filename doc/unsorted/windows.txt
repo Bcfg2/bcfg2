@@ -1,0 +1,51 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-windows:
+
+=================================
+Notes on possible Windows support
+=================================
+
+* Windows Management Instrumentation (WMI) should be used wherever possible; there is an excellent [http://tgolden.sc.sabren.com/python/wmi.html WMI Python Module] available, which also comes with a [http://tgolden.sc.sabren.com/python/wmi_cookbook.html WMI Cookbook].
+* Before Windows 2003 SP1, on 64-bit machines there are [http://msdn2.microsoft.com/en-us/library/aa393067.aspx no API or WMI calls] to get to many 32-bit windows functions (such as the 32-bit registry) from 64-bit programs, and vice versa. There also is no (official) x86_64 native python distributions for Windows pre-Python 2.5. So the choice would be:
+
+ #. Only support Windows in Python 2.5+ (which wouldn't be that bad because part of the build process would probably be to create stand-alone bcfg2 executables using [http://www.py2exe.org/ py2exe]). For 64-bit support there would have to be some kind of convoluted py2exe build process that built some things with 32-bit python and some things with 64-bit python.
+ #. Wrap external command-line programs such as winreg, which is part of [http://dmst.aueb.gr/dds/sw/outwit/ outwit], and screen scrape. Each external command-line program would need to be compiled into 32 and 64 bit versions. This approach might lead to licensing annoyances and having binary blobs in source control.
+
+Services
+========
+
+With the exception of 32/64 bit issues, Windows Services support should be pretty trivial; it would differ from *nix services in that it would be done via WMI API calls and not a 3rd party python module or wrapping a binary.
+
+Registry
+========
+
+The best way of handling the registry may be to map it into a file-based representation on the server end. The Cfg and TCheetah plugins could then be used to set registry values as needed.
+
+Files
+=====
+
+For a first run there may be some way of utilizing [http://cygwin.com/ cygwin] to make use of the existing *nix POSIX module for manipulating files. There would probably need to be some changes to deal with the fact that open files can't be manipulated/moved/deleted at all in Windows (other than to do some registry magic that makes the changes on the next reboot).
+
+Packages
+========
+
+Listing and removal of packages should be pretty easy via WMI. For installation in most cases the admin would need to figure out the correct silent install flags (there is a [http://www.appdeploy.com/ web site] that catalogs a lot of this information), and include that in the bcfg2 server-side XML along with a URL (like with the RPM plugin); the bcfg2 client itself would need to take care of download, perhaps via the [http://linux.duke.edu/projects/urlgrabber/ urlgrabber python module].
+
+Another option would be to utilize one of the existing FLOSS tools for dealing with Windows packages, such as [http://wpkg.org/ WPKG].
+
+Prior FLOSS Art
+===============
+
+* [http://www.autoitscript.com/autoit3/ AutoIt] - For dealing with packages that don't have a silent install option
+* [http://www.opensysadmin.com/trac/ticket/4 French Stuff]
+ * [http://ocsinventory.sourceforge.net/ Open Computers and Software Inventory - Next Generation]
+ * [http://www.glpi-project.org/spip.php?lang=en GLPI - Gestionnaire libre de parc informatique]
+* Javascript thing a colleague of Desai's at ANL wrote - Desai was going to see if this can be released
+* [http://sial.org/howto/cfengine/windows/ Managing Windows with CFEngine and Perl]
+* [http://www.dmst.aueb.gr/dds/sw/outwit/ Outwit] - Small unixy utilities for Windows stuff like the registry and clipboard
+* [http://www.cfengine.org/docs/cfengine-NT/ Porting cfengine to Windows NT]
+* [http://isg.ee.ethz.ch/tools/realmen/ Real Men Don't Click] - Tobi Oetiker's stuff
+ * [http://isg.ee.ethz.ch/tools/realmen/res/index.en.html More Prior FLOSS Art]
+* [http://unattended.sourceforge.net/ Unattended] - Bare Metal Installs, Package Management
+* [http://wpkg.org/ WPKG] - Package Management

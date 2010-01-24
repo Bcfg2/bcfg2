@@ -1,0 +1,32 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-configurationentries:
+
+=====================
+Configuration Entries
+=====================
+
+This page describes the names and semantics of each of the configuration entries used by Bcfg2.
+
+Common non-POSIX entries
+========================
+
+|| '''!TagName''' || '''Description''' || '''Attributes''' ||
+|| Action || Command || name, command, when, timing ||
+|| Package || Software Packages || name, type, version, url ||
+|| !PostInstall || !PostInstall command || name ||
+|| Service || System Services || name, type, status, reload ||
+
+Bcfg2 >= 1.0.0: New unified POSIX entries
+=========================================
+
+In 1.0.0, there are new unified POSIX Path entries which prevent inconsistent configuration specifications of multiple entries for a given path. The following table describes the various types available for new `Path` entries.
+
+|| '''Type''' || '''Replacement/New''' || '''Description''' || '''Attributes''' ||
+|| device || New || Create block, character, and fifo devices || name, dev_type (block, char, fifo), owner, group, major/minor (for block or char devices) ||
+|| directory || Replaces Directory entries || Directories || name, owner, group, perms, prune ||
+|| file || Replaces !ConfigFile entries || Configuration File || name, owner, group, perms, encoding, empty ||
+|| hardlink || New || Create hardlinks || name, to ||
+|| nonexistent (not yet implemented) || New || Specify a path that should not exist || name ||
+|| permissions || Replaces Permissions entries || Permissions of POSIX entities || name, owner, group, perms ||
+|| symlink || Replaces !SymLink entries || !SymLinks || name, to ||

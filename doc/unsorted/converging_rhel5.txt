@@ -1,0 +1,116 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-converging_rhel5:
+
+======================================
+Converging on Verification with RHEL 5
+======================================
+
+Running verification
+====================
+
+To get complete verification status, run::
+
+    bcfg2 -vqned
+
+Unmanaged entries
+=================
+
+* Package (top-level)
+
+ #. Enable the "Packages" plugin in {{{/etc/bcfg2.conf}}}, and configure the Yum repositories in {{{/var/lib/bcfg2/Packages/config.xml}}}.
+ #. If a package is unwanted, remove it::
+
+        sudo yum remove PACKAGE
+
+ #. Otherwise, add {{{<Package name="PACKAGE" />}}} to the Base or Bundler configuration.
+
+* Package (dependency)
+
+ #. Ensure the Yum repository sources configured in {{{/var/lib/bcfg2/Packages/config.xml}}} are correct.
+ #. Ensure the Yum repositories themselves are up-to-date with the main package and dependencies.
+ #. Rebuild the Packages plugin cache::
+
+        bcfg2-admin xcmd Packages.Refresh
+
+* Service
+
+ #. Add {{{<Service name="SERVICE" />}}} to the Base or Bundler configuration.
+ #. Add {{{<Service name="SERVICE" status="on" type="chkconfig" />}}} to {{{/var/lib/bcfg2/Rules/services.xml}}}.
+
+Incorrect entries
+=================
+
+For a "Package"
+---------------
+
+* Failed RPM verification
+
+ #. Run {{{rpm -V PACKAGE}}}
+ #. Add configuration files (the ones with "c" next to them in the verification output) to {{{/var/lib/bcfg2/Cfg/}}}.
+
+  * For example, {{{/etc/motd}}} to {{{/var/lib/bcfg2/Cfg/etc/motd/motd}}}. Yes, there is an extra directory level named after the file.
+
+ #. Specify configuration files as {{{<ConfigFile name='PATH' />}}} in the Base or Bundler configuration.
+ #. Add directories to {{{/var/lib/bcfg2/Rules/directories.xml}}}. For example:
+
+    .. code-block:: xml
+
+        <Rules priority="0">
+          <Directory name="/etc/cron.hourly" group="root" owner="root" perms="0700" />
+          <Directory name="/etc/cron.daily" group="root" owner="root" perms="0700" />
+        </Rules>
+
+* Multiple instances
+
+ * Option A: Explicitly list the instances
+
+  #. Drop the {{{<Package />}}} from the Base or Bundler configuration.
+  #. Add an explicit {{{<BoundPackage>}}} and {{{<Instance />}}} configuration to a new Bundle, like the following:
+
+     .. code-block:: xml
+
+         <Bundle name='keys'>
+           <!-- GPG keys -->
+           <BoundPackage name="gpg-pubkey" type="yum">
+             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
+             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release" version="37017186" release="45761324"/>
+           </BoundPackage>
+         </Bundle>
+
+  #. Add the bundle to the applicable groups in {{{/var/lib/bcfg2/Metadata/groups.xml}}}.
+
+ * Option B: Disable verification of the package
+
+  #. Add {{{pkg_checks="false"}}} to the {{{<Package />}}} tag.
+
+For a "ConfigFile"
+-------------------
+
+ * Unclear verification problem (no details from BCFG2)
+
+  1. Run {{{bcfg2 -vqI}}} to see detailed verification issues (but deny any suggested actions).
+
+ * Permissions mismatch
+
+  1. Create an {{{info.xml}}} file in the same directory as the configuration file. Example:
+
+     .. code-block:: xml
+
+         <FileInfo>
+           <Group name='webserver'>
+             <Info owner='root' group='root' perms='0652'/>
+           </Group>
+           <Info owner='root' group='sys' perms='0651'/>
+         </FileInfo>
+
+Other troubleshooting tools
+===========================
+
+ * Generate the physical configuration from the server side::
+
+       bcfg2-info buildfile /test test.example.com
+
+ * Generate the physical configuration from the client side::
+
+       bcfg2 -vqn -c/root/bcfg2-physical.xml

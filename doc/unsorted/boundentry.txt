@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-boundentry:
+
+=============
+Bound Entries
+=============
+
+This feature is a mechanism to specify a full entry at once from a bundle. Traditionally, entries are defined in two stages. First, an abstract entry is defined in a bundle. This entry includes a type (the XML tag) and a name attribute. Then this entry is bound for a client, providing the appropriate instance of that entry for the client. Specifying a bound entry short-circuits this process; the only second stage processing on Bound entries is to remove the "Bound" prefix from the element tag. The use of a bound entry allows the single stage definition of a complete entry. Bound entries can be used for any type.
+
+.. code-block:: xml
+
+    <Bundle name='ntp'>
+       <BoundPackage name='ntp' type='deb' version='1:4.2.4p4+dfsg-3ubuntu2.1'/>
+    </Bundle>

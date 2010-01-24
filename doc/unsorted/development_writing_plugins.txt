@@ -1,0 +1,77 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-development_writing_plugins:
+
+===============
+Writing Plugins
+===============
+
+Server Plugin Types
+===================
+
+Generator
+---------
+
+Generator plugins contribute to literal client configurations
+
+Structure
+---------
+
+Structure Plugins contribute to abstract client configurations
+
+Metadata
+--------
+
+Signal metadata capabilities
+
+Connector
+---------
+
+Connector Plugins augment client metadata instances
+
+Probing
+-------
+
+Signal probe capability
+
+Statistics
+----------
+
+Signal statistics handling capability
+
+Decision
+--------
+
+Signal decision handling capability
+
+Version
+-------
+
+Interact with various version control systems
+
+Writing Server Plugins
+======================
+
+Metadata
+--------
+
+If you would like to define your own Metadata plugin (to extend/change functionality of the existing Metadata plugin), here are the steps to do so. We will call our new plugin `MyMetadata`.
+
+#. Add MyMetadata.py
+
+   .. code-block:: python
+
+       __revision__ = '$Revision$'
+
+       import Bcfg2.Server.Plugins.Metadata
+
+       class MyMetadata(Bcfg2.Server.Plugins.Metadata.Metadata):
+           '''This class contains data for bcfg2 server metadata'''
+           __version__ = '$Id$'
+           __author__ = 'bcfg-dev@mcs.anl.gov'
+
+           def __init__(self, core, datastore, watch_clients=True):
+               Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, watch_clients)
+
+#. Add MyMetadata to `src/lib/Server/Plugins/__init__.py`
+#. Replace Metadata with MyMetadata in the plugins line of bcfg2.conf

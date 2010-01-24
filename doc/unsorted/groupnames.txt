@@ -1,0 +1,17 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-groupnames:
+
+===========
+Group Names
+===========
+
+This pages describes a set of common group names. The goal is to build a small set of common group names that can be used across installations. With any luck, this will increase portability of repository contents. Use of these names is, and will continue to be entirely optional. None of these groups are profile groups. This will result in a highly functional example repository, hosted in [source:/trunk/repository svn]
+
+|| '''Group Name''' || '''Category''' || '''Semantic Content''' ||
+|| linux || os || Clients running the Linux kernel ||
+|| solaris || os || Clients running the Solaris kernel ||
+
+The following image describes the base compatibility OS groups for bcfg2. This file is available from [source:/trunk/repository/Metadata/bcfg2-os.xml].
+
+.. image:: viz.png

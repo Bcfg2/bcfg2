@@ -1,0 +1,44 @@
+.. -*- mode: rst -*-
+
+.. _client-metadata:
+
+===============
+Client Metadata
+===============
+
+This page describes ClientMetadata objects. These are used to describe clients in terms of a variety of parameters, group memberships, and so forth.
+
+Construction
+============
+
+ClientMetadata instances are constructed whenever the server needs to recognize a client. This occurs in every aspect of client server interaction:
+
+* Probing
+* Configuration Generation
+* Statistics Upload
+
+This construction process spans several server plugins. The [wiki:Plugins/Metadata Metadata plugin] is responsible for initial instance creation, including the client hostname, profile, and basic group memberships. After this initial creation, Connector plugins (such as [wiki:Plugins/Probes Probes] or [wiki:Plugins/Properties Properties]) can add additional group memberships for clients. These memberships are merged into the instance; that is, the new group memberships are treated as if they were included in groups.xml. If any of these groups are defined in groups.xml, then groups included there are included in the ClientMetadata instance group list. At the end of this process, the ClientMetadata instance has its complete set of group memberships. At this point, each connector plugin has the opportunity to return an additional object which will be placed in an attribute corresponding to the Connector name. For example, the Probes plugin returns a dictionary of probe name to probe result mappings for the client. This dictionary is available as the "Probes" attribute. With this, ClientMetadata resolution is complete, and the ClientMetadata instance can be used by the rest of the system.
+
+Contents
+========
+
+ClientMetadata instances contain all of the information needed to differentiate clients from one another. This data includes:
+
+* hostname
+* groups
+* profile group
+* address information (if specified)
+
+ClientMetadata instances also contain a query object. This can be used to query the metadata of other clients. Currently, several methods are supported. In this table, we refer to the instance as meta. Each of these is a function that must be called.
+
+|| Name || Description || Return Type ||
+|| meta.query.names_by_groups([group list]) || Returns names of clients which are members of all groups || List of client names ||
+|| meta.query.names_by_profile(profile) || Returns names of clients which use profile group || List of client names ||
+|| meta.query.all_clients() || Returns names of all clients || List of client names ||
+|| meta.query.all_groups() || Returns names of all groups || List of group names ||
+|| meta.query.all() || Returns metadata for all clients || List of ClientMetadata instances ||
+|| meta.query.by_name(name) || Returns metadata for named client || ClientMetadata instance ||
+|| meta.query.by_groups([group list]) || Returns metadata for all members of all groups || List of ClientMetadata instances ||
+|| meta.query.by_profile(profile) || Returns metadata for all profile havers || List of ClientMetadata instances ||
+
+In general, there is no substantial benefit to using name returning versions of the query functions; metadata resolution is (in general) fast.

@@ -1,0 +1,39 @@
+.. -*- mode: rst -*-
+
+.. _client-agent:
+
+=============================
+Agent Functionality using SSH
+=============================
+
+The Bcfg2 agent code provides the ability to trigger a client update from the server using a secure mechanism that is restricted to running the bcfg2 client with the options the agent was started with. This same capability is provided by SSH keypairs, if properly configured. Setup is pretty easy:
+
+#. Create an ssh keypair that is to be used solely for triggering bcfg2 client runs. This key may or may not have a password associated with it; a keyphrase will make things more secure, but will require a person to enter the key passphrase, so it will not be usable automatically.::
+
+    $ ssh-keygen -t dsa -b 1024 -f /path/to/key -N ""
+    Generating public/private dsa key pair.
+    Your identification has been saved in /path/to/key.
+    Your public key has been saved in /path/to/key.pub.
+    The key fingerprint is:
+    aa:25:9b:a7:10:60:f3:eb:2b:ae:4b:1a:42:1b:63:5d desai@ubik
+
+#. Add this this public key to root's authorized_keys file, with several commands prepended to it::
+
+    command="/usr/sbin/bcfg2 -q <other options>",no-port-forwarding,no-X11-forwarding,no-pty,no-agent-forwarding,from="<bcfg2-server ipaddr>" <pub key>
+
+   This key is now only useful to call the bcfg2 client, from the bcfg2-server's ip address. If PermitRootLogin was set to no in sshd_config, you will need to set it to forced-commands-only. Adding a & to the end of the command will cause the command to immediately return. 
+
+#. Now, to cause a client to reconfigure, call::
+
+    $ ssh -i /path/to/key root@client /usr/sbin/bcfg2
+
+   Note that you will not be able to alter the command line options from the ones specified in authorized_keys in any way. Also, it is not needed that the invocation of bcfg2 in the ssh command match. The following will have the same result.::
+
+    $ ssh -i /path/to/key root@client /bin/true
+
+   If a passphrase was used to create the keypair, then it will need to be entered here. 
+
+See Also
+========
+
+`SSH "triggers" <http://blog.ganneff.de/blog/2007/12/29/ssh-triggers.html>`_ (from Ganneff's Little Blog)
