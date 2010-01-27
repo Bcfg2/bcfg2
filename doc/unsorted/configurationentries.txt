@@ -27,6 +27,6 @@ In 1.0.0, there are new unified POSIX Path entries which prevent inconsistent co
 || directory || Replaces Directory entries || Directories || name, owner, group, perms, prune ||
 || file || Replaces !ConfigFile entries || Configuration File || name, owner, group, perms, encoding, empty ||
 || hardlink || New || Create hardlinks || name, to ||
-|| nonexistent (not yet implemented) || New || Specify a path that should not exist || name ||
+|| nonexistent || New || Specify a path that should not exist || name ||
 || permissions || Replaces Permissions entries || Permissions of POSIX entities || name, owner, group, perms ||
 || symlink || Replaces !SymLink entries || !SymLinks || name, to ||
