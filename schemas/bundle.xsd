@@ -24,7 +24,7 @@
       <xsd:element name='Permissions' type='StructureEntry'/>
       <xsd:element name='Action' type='StructureEntry'/>
       <xsd:element name='BoundPackage' type='PackageType'/>
-      <xsd:element name='BoundPath' type='PathEntry'/>
+      <xsd:element name='BoundPath' type='BoundPathEntry'/>
       <xsd:element name='BoundService' type='ServiceType'/>
       <xsd:element name='BoundDirectory' type='DirectoryType'/>
       <xsd:element name='BoundSymLink' type='SymLinkType'/>
@@ -48,7 +48,7 @@
         <xsd:element name='Permissions' type='StructureEntry'/>
         <xsd:element name='Action' type='StructureEntry'/>       
         <xsd:element name='BoundPackage' type='PackageType'/>
-        <xsd:element name='BoundPath' type='PathEntry'/>
+        <xsd:element name='BoundPath' type='BoundPathEntry'/>
         <xsd:element name='BoundService' type='ServiceType'/>
         <xsd:element name='BoundDirectory' type='DirectoryType'/>
         <xsd:element name='BoundSymLink' type='SymLinkType'/>
