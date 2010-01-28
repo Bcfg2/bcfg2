@@ -18,17 +18,10 @@
       <xsd:element name='Package' type='StructureEntry'/>
       <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='ConfigFile' type='StructureEntry'/>
-      <xsd:element name='Directory' type='StructureEntry'/>
-      <xsd:element name='SymLink' type='StructureEntry'/>
-      <xsd:element name='Permissions' type='StructureEntry'/>
       <xsd:element name='Action' type='StructureEntry'/>
       <xsd:element name='BoundPackage' type='PackageType'/>
       <xsd:element name='BoundPath' type='BoundPathEntry'/>
       <xsd:element name='BoundService' type='ServiceType'/>
-      <xsd:element name='BoundDirectory' type='DirectoryType'/>
-      <xsd:element name='BoundSymLink' type='SymLinkType'/>
-      <xsd:element name='BoundPermissions' type='PermissionsType'/>
       <xsd:element name='BoundAction' type='ActionType'/>
       <xsd:element name='Group' type='GroupType'/>
     </xsd:choice>
@@ -42,17 +35,10 @@
         <xsd:element name='Package' type='StructureEntry'/>
         <xsd:element name='Path' type='PathEntry'/>
         <xsd:element name='Service' type='StructureEntry'/>
-        <xsd:element name='ConfigFile' type='StructureEntry'/>
-        <xsd:element name='Directory' type='StructureEntry'/>
-        <xsd:element name='SymLink' type='StructureEntry'/>
-        <xsd:element name='Permissions' type='StructureEntry'/>
         <xsd:element name='Action' type='StructureEntry'/>       
         <xsd:element name='BoundPackage' type='PackageType'/>
         <xsd:element name='BoundPath' type='BoundPathEntry'/>
         <xsd:element name='BoundService' type='ServiceType'/>
-        <xsd:element name='BoundDirectory' type='DirectoryType'/>
-        <xsd:element name='BoundSymLink' type='SymLinkType'/>
-        <xsd:element name='BoundPermissions' type='PermissionsType'/>
         <xsd:element name='BoundAction' type='ActionType'/>
         <xsd:element name='Group' type='GroupType'/>
       </xsd:choice>

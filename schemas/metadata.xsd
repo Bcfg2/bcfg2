@@ -11,18 +11,11 @@
   <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
               schemaLocation="xml.xsd"/>
 
-  <xsd:simpleType name='toolsetType'>
-    <xsd:restriction base="xsd:string">
-      <xsd:pattern value="rh|debian|solaris|aix|gentoo|auto|freebsd"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
   <xsd:simpleType name='booleanType'>
     <xsd:restriction base="xsd:string">
       <xsd:pattern value="true|false"/>
     </xsd:restriction>
   </xsd:simpleType>
-
 
   <xsd:complexType name='groupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
@@ -42,7 +35,6 @@
     <xsd:attribute type='booleanType' name='default' use='optional'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='auth' use='optional'/>
-    <xsd:attribute type='toolsetType' name='toolset' use='optional'/>
     <xsd:attribute type='xsd:string' name='category' use='optional'/>
     <xsd:attribute type='xsd:string' name='comment' use='optional'/>
   </xsd:complexType>

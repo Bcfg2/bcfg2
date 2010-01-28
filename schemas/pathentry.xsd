@@ -10,7 +10,7 @@
 
   <xsd:complexType name='PathEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='altsrc' />
+    <xsd:attribute type='xsd:string' name='altsrc' use='optional'/>
   </xsd:complexType>
 
   <xsd:complexType name='BoundPathEntry'>
