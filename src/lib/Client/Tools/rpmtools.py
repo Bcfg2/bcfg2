@@ -21,7 +21,13 @@
 __revision__ = '$Revision$'
 
 import grp
-import md5
+try:
+    import hashlib
+    py24compat = False
+except:
+    # FIXME: Remove when client python dep is 2.5 or greater
+    py24compat = True
+    import md5
 import optparse
 import os
 import pwd
@@ -279,7 +285,10 @@ def prelink_md5_check(filename):
             prelink = True
 
     fsize = 0
-    chksum = md5.new()
+    if py24compat:
+        chksum = md5.new()
+    else:
+        chksum = hashlib.md5()
     while 1:
         data = plf.read()
         if not data:
