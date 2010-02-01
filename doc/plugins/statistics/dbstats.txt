@@ -1,9 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _plugins-statistics-dbstats:
-
-=======
-DBStats
-=======
-
-

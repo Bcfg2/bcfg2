@@ -1,0 +1,220 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-grouping-metadata:
+
+========
+Metadata
+========
+
+The metadata mechanism has two types of information, client metadata and group metadata. The client metadata describes which top level group a client is associated with.The group metadata describes groups in terms of what bundles and other groups they include. Each aspect grouping and clients' memberships are reflected in the Metadata/groups.xml and Metadata/clients.xml files, respectively.
+
+Usage of Groups in Metadata
+===========================
+
+Clients are assigned membership of groups in the Metadata descriptions. Clients can be directly assigned to 'profile' or 'public' groups.  Client membership of all other groups is by those groups being associated with the profile or public groups. This file can be indirectly modified from clients through use of the -p flag to bcfg2.
+
+Clients are associated with profile groups in Metadata/clients.xml as shown below.
+
+Metadata/clients.xml
+====================
+
+The Metadata/clients.xml file contains the mappings of Profile Groups to clients. The
+file is just a series of <Client /> tags, each of which describe one host. A sample
+file is below:
+
+.. code-block:: xml
+
+    <Clients version="3.0">
+      <Client profile="backup-server" pingable="Y" pingtime="0" name="backup.example.com"/>
+      <Client profile="console-server" pingable="Y" pingtime="0" name="con.example.com"/>
+      <Client profile="kerberos-master" pingable="Y" pingtime="0" name="kdc.example.com"/>
+      <Client profile="mail-server" pingable="Y" pingtime="0" name="mail.example.com"/>
+      <Client name='foo' address='10.0.0.1' pingable='N' pingtime='-1'>
+          <Alias name='foo-mgmt' address='10.1.0.1'/>
+      </Client>
+    </Clients>
+
+Clients Tag
+-----------
+
+The Clients tag has the following possible attributes:
+
++---------+-----------------------+--------+
+| Name    | Description           | Values |
++=========+=======================+========+
+| version | Client schema version | String |
++---------+-----------------------+--------+
+
+Client Tag
+----------
+
+Each entry in clients.xml **must** have the following properties:
+
++---------+---------------------------------------+--------+
+| Name    | Description                           | Values |
++=========+=======================================+========+
+| name    | Host name of client. This needs to be | String |
+|         | the name (possibly a FQDN) returned   |        |
+|         | by a reverse lookup on the connecting |        |
+|         | IP address.                           |        |
++---------+---------------------------------------+--------+
+| profile | Profile group name to associate this  | String |
+|         | client with.                          |        |
++---------+---------------------------------------+--------+
+
+Additionally, the following properties can be specified:
+
++----------+----------------------------------------+----------------+
+| Name     | Description                            | Values         |
++==========+========================================+================+
+| Alias    | Alternative name and address for the   | XML Element    |
+|          | client.                                |                |
++----------+----------------------------------------+----------------+
+| address  | Establishes an extra IP address that   | ip address     |
+|          | resolves to this client.               |                |
++----------+----------------------------------------+----------------+
+| location | Requires requests to come from an IP   | fixed|floating |
+|          | address that matches the client        |                |
+|          | record.                                |                |
++----------+----------------------------------------+----------------+
+| password | Establishes a per-node password that   | String         |
+|          | can be used instead of the global      |                |
+|          | password.                              |                |
++----------+----------------------------------------+----------------+
+| pingable | If the client is pingable (deprecated; | Y|N            |
+|          | for old reporting system)              |                |
++----------+----------------------------------------+----------------+
+| pingtime | Last time the client was pingable      | String         |
+|          | (deprecated; for old reporting system) |                |
++----------+----------------------------------------+----------------+
+| secure   | Requires the use of the per-client     | true|false     |
+|          | password for this client.              |                |
++----------+----------------------------------------+----------------+
+| uuid     | Establishes a per-node name that can   | String         |
+|          | be used to bypass dns-based client     |                |
+|          | resolution.                            |                |
++----------+----------------------------------------+----------------+
+
+For detailed information on client authentication see :ref:`authentication`
+
+Metadata/groups.xml
+-------------------
+
+The ``Metadata/groups.xml`` file contains Group and Profile
+definitions. Here's a simple ``Metadata/groups.xml`` file:
+
+.. code-block:: xml
+
+    <Groups version='3.0'>
+      <Group name='mail-server' profile='true'
+                                public='false'
+                                comment='Top level mail server group' >
+        <Bundle name='mail-server'/>
+        <Bundle name='mailman-server'/>
+        <Group name='apache-server'/>
+        <Group name='rhel-as-4-x86'/>
+        <Group name='nfs-client'/>
+        <Group name='server'/>
+      </Group>
+      <Group name='rhel-as-4-x86' toolset='rh'>
+         <Group name='rhel'/>
+      </Group>
+      <Group name='apache-server'/>
+      <Group name='nfs-client'/>
+      <Group name='server'/>
+      <Group name='rhel'/>
+    </Groups>
+
+
+Nested/chained groups definitions are conjunctive (logical and). For
+instance, in the above example, a client associated with the Profile
+Group ``mail-server`` is also a member of the ``apache-server``,
+``rhel-as-4-x86``, ``nfs-client``, ``server`` and ``rhel`` groups.
+
+Groups describe clients in terms for abstract, disjoint aspects. Groups can be
+combined to form complex descriptions of clients that use configuration commonality
+and inheritance. Groups have several attributes, described below:
+
+
+Metadata Groups Tag
+-------------------
+
+The Groups tag has the following possible attributes:
+
++----------+---------------------------------+--------+
+| Name     | Description                     | Values |
++==========+=================================+========+
+| version  | Group schema version            | String |
++----------+---------------------------------+--------+
+| origin   | URL of master version           | String |
+|          | (for common repository)         |        |
++----------+---------------------------------+--------+
+| revision | Master version control revision | String |
++----------+---------------------------------+--------+
+
+Metadata Group Tag
+------------------
+
+The Group Tag has the following possible attributes:
+
++----------+------------------------------------------+--------------+
+| Name     | Description                              | Values       |
++==========+==========================================+==============+
+| name     | Name of the group                        | String       |
++----------+------------------------------------------+--------------+
+| profile  | If a client can be directly associated   | True|False   |
+|          | with this group                          |              |
++----------+------------------------------------------+--------------+
+| public   | If a client can freely associate itself  | True|False   |
+|          | with this group. For use with the        |              |
+|          | *bcfg2 -p* option on the client.         |              |
++----------+------------------------------------------+--------------+
+| toolset  | Describes which client-side logic should | rh|debian|   |
+|          | be used to make configuration changes    | solaris|aix| |
+|          |                                          | auto|gentoo  |
++----------+------------------------------------------+--------------+
+| category | A group can only contain one instance of | String       |
+|          | a group in any one category. This        |              |
+|          | provides the basis for representing      |              |
+|          | groups which are conjugates of one       |              |
+|          | another in a rigorous way. It also       |              |
+|          | provides the basis for negation.         |              |
++----------+------------------------------------------+--------------+
+| default  | Set as the profile to use for clients    | True|False   |
+|          | that are not associated with a profile   |              |
+|          | in ``clients.xml``                       |              |
++----------+------------------------------------------+--------------+
+| comment  | English text description of group        | String       |
++----------+------------------------------------------+--------------+
+
+Groups can also contain other groups and bundles.
+
+Use of XInclude
+===============
+
+`XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
+for the inclusion of external XML documents into XML source
+files. Much like the use of ``#include`` in C, this allows complex
+definitions to be split into smaller, more manageable pieces. As of
+bcfg2-0.9.0pre1, the `Metadata`_ plugin supports the use of XInclude
+specifications to split the ``clients.xml`` and ``groups.xml``
+files. This mechanism allows the following specification to produce
+useful results:
+
+.. code-block:: xml
+
+    <Groups version='3.0' xmlns:xi="http://www.w3.org/2001/XInclude">
+     <xi:include href="my-groups.xml" />
+     <xi:include href="their-groups.xml" />
+    </Groups>
+
+Each of the included groups files has the same format. These files are
+properly validated by ``bcfg2-repo-validate``. This mechanism is
+useful for composing group definitions from multiple sources, or
+setting different permissions in an svn repository.
+
+Probes
+======
+
+The metadata plugin includes client-side probing functionality. This
+is fully documented :ref:`here <server-plugins-probes>`.

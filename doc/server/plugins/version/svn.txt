@@ -1,0 +1,20 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-version-svn:
+
+===
+Svn
+===
+
+Why use the Svn plugin
+======================
+
+The Svn plugin is useful if you would like to track changes to your bcfg2 repository using a `Subversion <http://subversion.tigris.org/>`_ backend. It deprecates the previous Subversion integration mentioned here at ftp://ftp.mcs.anl.gov/pub/bcfg/papers/directing-change-with-bcfg2.pdf. Currently, It enables you to get revision information out of your repository for reporting purposes. Future plans are to commit changes to the repo which are made by the server.
+
+How to enable the Svn plugin
+============================
+
+Simply add Svn to your plugins line in /etc/bcfg2.conf::
+
+    [server]
+    plugins = Base,Bundler,Cfg,DBStats,Decisions,Metadata,NagiosGen,Pkgmgr,Probes,Rules,SSHbase,TGenshi,Svn

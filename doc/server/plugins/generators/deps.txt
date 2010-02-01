@@ -1,0 +1,50 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-deps:
+
+====
+Deps
+====
+
+The Deps Plugin allows you to make a series of assertions like "Package X requires Package Y (and optionally also Package Z etc.)
+Note that only configuration entries, like Package, !ConfigFile, etc can be used. Groupings (like Bundle) are not supported.
+
+Here are some examples:
+
+Deps/bcfg2.xml
+==============
+
+.. code-block:: xml
+
+    <Dependencies priority='0'>
+        <Package name='bcfg2'>
+            <Package name='python-lxml'/>
+            <Package name='isprelink'/>
+        </Package>
+    </Dependencies>
+
+This basically causes any configuration specification that includes Package bcfg2 to include python-lxml and isprelink, in a second base clause.
+
+Deps/bcfg2-server.xml
+=====================
+
+.. code-block:: xml
+
+    <Dependencies priority='0'>
+        <Package name='bcfg2-server'>
+            <Package name='python-cheetah'/>
+            <Package name='gamin-python'/>
+            <Package name='sqlite'/>
+            <Package name='python-sqlite'/>
+            <Package name='Django'/>
+            <Package name='mod_python'/>
+            <Package name='graphviz'/>
+            <Package name='xorg-x11-font-utils'/>
+            <Package name='chkfontpath'/>
+            <Package name='ttmkfdir'/>
+            <Package name='xorg-x11-xfs'/>
+            <Package name='urw-fonts'/>
+        </Package>
+    </Dependencies>
+
+This states that the bcfg2-server package (it's a separate package on some distros) depends on a long list of other packages.

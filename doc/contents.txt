@@ -14,7 +14,7 @@ Welcome to Bcfg2's documentation!
    faq/index
    authentication
    getting_started/index
-   plugins/index
+   server/index
    client/index
    gettinghelp
 

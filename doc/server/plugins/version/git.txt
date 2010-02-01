@@ -1,0 +1,20 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-version-git:
+
+===
+Git
+===
+
+Why use the Git plugin
+======================
+
+The Git plugin is useful if you would like to track changes to your bcfg2 repository using a `Git <http://git-scm.com/>`_ backend. Currently, It enables you to get revision information out of your repository for reporting purposes. Future plans are to commit changes to the repo which are made by the server.
+
+How to enable the Git plugin
+============================
+
+The Git plugin uses `Dulwich <http://samba.org/~jelmer/dulwich/>`_ to interface with git repositories. Therefore, you will need to install Dulwich on the bcfg2 server first. Once installed, simply add Git to your plugins line in /etc/bcfg2.conf::
+
+    [server]
+    plugins = Base,Bundler,Cfg,...,Git

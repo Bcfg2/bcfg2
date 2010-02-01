@@ -229,7 +229,7 @@ you will find that we now have a correct entry::
 
 Done! Now we just have 242 (or more) entries to take care of!
 
-:ref:`plugins-structures-bundler` is a relatively easy directory to
+:ref:`server-plugins-structures-bundler` is a relatively easy directory to
 populate. You can find many samples of Bundles in the `Bundle
 Repository`_, many of which can be used without editing.
 

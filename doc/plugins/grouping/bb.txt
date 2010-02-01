@@ -1,7 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _plugins-grouping-bb:
-
-==
-BB
-==

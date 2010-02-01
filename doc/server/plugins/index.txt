@@ -1,0 +1,93 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-index:
+
+=======
+Plugins
+=======
+
+Plugins are the source of all logic used in building a config. They can perform one of several tasks:
+
+#. Generating configuration inventory lists for clients
+#. Generating configuration entry contents for clients
+#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :ref:`server-plugins-probes`.
+#. Automating administrative tasks (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh key management)
+#. Generating client per-entry installation decision-lists
+
+Enabling Plugins
+================
+
+In order for the bcfg2 server to use a plugin, it needs to be listed on the *plugins* line in bcfg2.conf.
+
+Default Plugins
+===============
+
+The `Bcfg2 repository`_ has the default plugin list currently distributed with Bcfg2: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
+
+.. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
+
+Metadata (Grouping)
+-------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   grouping/*
+
+Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+
+Abstract Configuration (Structures)
+-----------------------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   structures/*
+
+Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+
+Literal Configuration (Generators)
+----------------------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   generators/*
+
+Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+
+Statistics Plugins
+------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   statistics/*
+
+DBStats can be enabled by adding it to the plugins line in /etc/bcfg2.conf.
+
+Version Plugins
+---------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   version/*
+
+Plugin Roles (in 1.0)
+=====================
+
+In version 1.0, plugins have been refactored into a series of roles. This are fine-grained plugin capabilities that govern how the server core interacts with plugins.
+
+More details can be found in :ref:`server-plugins-plugin-roles`
+
+.. toctree::
+   :hidden:
+
+   plugin-roles
+   probes

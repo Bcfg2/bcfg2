@@ -19,7 +19,11 @@ Examples of this are:
 * YUM always installs, as opposed to upgrades, kernel packages.  This is hard coded in YUM (actually it can be overridden in yum.conf), so systems using YUM will eventually have multiple kernel packages installed.
 * Red Hat family x86_64 based systems frequently have both an x86_64 and an i386 version of the same package installed.
 
-The new Pkgmgr format files with Instances are therefore the only way to accurately describe an RPM based system.  It is recommended that all RPM based systems be changed to use the new format configuration files and the RPMng driver. Alternatively, you can use the newer :ref:`Packages <plugins-generators-packages>` plugin.
+The new Pkgmgr format files with Instances are therefore the only way to
+accurately describe an RPM based system.  It is recommended that all RPM
+based systems be changed to use the new format configuration files and
+the RPMng driver. Alternatively, you can use the newer :ref:`Packages
+<server-plugins-generators-packages>` plugin.
 
 Development Status
 ==================
@@ -357,7 +361,7 @@ Example gpg-pubkey Pkgmgr configuration file.
 Pkgmgr Configuration
 --------------------
 
-Also see the general :ref:`Pkgmgr <plugins-generators-pkgmgr>` and [wiki:altsrc altsrc] pages.
+Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>` and [wiki:altsrc altsrc] pages.
  
 Package Tag (Old style)
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -456,7 +460,7 @@ Automated Generation of Pkgmgr Configuration Files
 
 The two utilities detailed below are provided in the tools directory of the source tarball.
 
-Also see the general :ref:`Pkgmgr <plugins-generators-pkgmgr>` and [wiki:altsrc altsrc] pages.
+Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>` and [wiki:altsrc altsrc] pages.
 
 pkgmgr_gen.py
 ^^^^^^^^^^^^^

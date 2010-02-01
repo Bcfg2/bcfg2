@@ -1,0 +1,13 @@
+.. -*- mode: rst -*-
+
+.. _server-index:
+
+============
+Bcfg2 Server
+============
+
+.. toctree::
+   :maxdepth: 2
+
+   plugins/index
+   reports/index

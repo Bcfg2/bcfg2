@@ -1,0 +1,7 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-statistics-statistics:
+
+==========
+Statistics
+==========

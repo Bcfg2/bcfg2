@@ -1,0 +1,288 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-pkgmgr:
+
+======
+Pkgmgr
+======
+
+.. note::
+
+    See [wiki:ClientTools/RPMng#PackageTagNewStyleandAttributes
+    RPMng#PackageTagNewStyleandAttributes].''' The way of showing the
+    architecture of the RPM has changed. The new way is "arch". The
+    old way is "multiarch". '''This document needs to be updated and
+    include version of Bcfg2 where change took place.'''
+
+The Pkgmgr plugin resolves the Abstract Configuration Entity "Package" to a package specification that the client can use to detect, verify and install the specified package.
+
+For a package specification to be included in the Literal configuration the name attribute from an Abstract Package Tag (from Base or Bundler) must match the name attribute of a Package tag in Pkgmgr, along with the appropriate group associations of course.
+
+Each file in the Pkgmgr directory has a priority.  This allows the same package to be served by multiple files.  The priorities can be used to break ties in the case that multiple files serve data for the same package.
+
+Usage of Groups in Pkgmgr
+=========================
+
+Groups are used by the Pkgmgr plugin, along with host metadata, for selecting the package entries to include in the clients literal configuration.  They can be thought of as::
+
+    if client is a member of group1 then
+        assign to literal config
+
+Nested groups are conjunctive (logical and).::
+
+    if client is a member of group1 and group2 then
+        assign to literal config
+
+Group membership may be negated.
+
+Tag Attributes in Pkgmgr
+========================
+
+PackageList Tag
+---------------
+
+The PackageList Tag may have the following attributes:
+
++-----------+-----------------------------------------------+----------------+
+| Name      | Description                                   | Values         |
++===========+===============================================+================+
+| priority  | Sets the priority for packages in the package | Integer        |
+|           | list. The higher value wins.                  |                |
++-----------+-----------------------------------------------+----------------+
+| type      | Package type that applies to all packages in  | deb|rpm|blast| |
+|           | the list. This value is inherited by all      | encap|sysv|    |
+|           | packages without an explicit type attribute.  | portage|yum    |
++-----------+-----------------------------------------------+----------------+
+| uri       | URI to prepend to filename sto fetch packages | String         |
+|           | in this list.                                 |                |
++-----------+-----------------------------------------------+----------------+
+| multiarch | Comma-separated list of architectures that    | String         |
+|           | apply to all packages in this list. Inherited |                |
+|           | by all package entries in the file that does  |                |
+|           | not have this attribute explicitly.           |                |
++-----------+-----------------------------------------------+----------------+
+| srcs      | To be used with multiarch support. Inherited  | String         |
+|           | by all Package entries without this attribute |                |
++-----------+-----------------------------------------------+----------------+
+
+Pkgmgr Group Tag
+----------------
+
+The Pkgmgr Group Tag may have the following attributes:
+
++--------+----------------------------------------------+------------+
+| Name   | Description                                  | Values     |
++========+==============================================+============+
+| name   | Group Name                                   | String     |
++--------+----------------------------------------------+------------+
+| negate | Negate group membership (is not a member of) | True|False |
++--------+----------------------------------------------+------------+
+
+Package Tag
+-----------
+
+The Package Tag may have the following attributes:
+
++------------+----------------------------------------------+------------+
+| Name       | Description                                  | Values     |
++============+==============================================+============+
+| name       | Package Name                                 | String     |
++------------+----------------------------------------------+------------+
+| version    | Package version, set to ``auto`` to install  | String     |
+|            | the latest version in the client's cache, or |            |
+|            | ``any`` to verify that any version of the    |            |
+|            | package is installed on the client           |            |
++------------+----------------------------------------------+------------+
+| file       | Package file name. Several other attributes  | String     |
+|            | (name, version) can be automatically defined |            |
+|            | based on regular expressions defined in the  |            |
+|            | Pkgmgr plugin.                               |            |
++------------+----------------------------------------------+------------+
+| simplefile | Package file name. No name parsing is        | String     |
+|            | performed, so no extra fields get set        |            |
++------------+----------------------------------------------+------------+
+| verify     | Whether package verification should be done  | True|False |
++------------+----------------------------------------------+------------+
+| multiarch  | Comma-separated list of the architectures of | String     |
+|            | this package that should be installed.       |            |
+|            | (Temporary work-around)                      |            |
++------------+----------------------------------------------+------------+
+| srcs       | File name creation rules for multiarch       | String     |
+|            | packages. (Temporary work-around)            |            |
++------------+----------------------------------------------+------------+
+| type       | Package type (rpm, yum, apt, sysv, blast)    | String     |
++------------+----------------------------------------------+------------+
+
+Client Tag
+----------
+
+The Client Tag is used in a PackageList for selecting the package entries to include in the clients literal configuration.  Its function is similar to the Group tag in this context.  It can be thought of as::
+
+    if client is name then
+        assign to literal config
+
+The Client Tag may have the following attributes:
+
++--------+----------------------------------------------+------------+
+| Name   | Description                                  | Values     |
++========+==============================================+============+
+| name   | Client Name                                  | String     |
++--------+----------------------------------------------+------------+
+| negate | Negate client selection (if not client name) | True|False |
++--------+----------------------------------------------+------------+
+
+Pkgmgr Directory
+================
+
+The Pkgmgr/ directory keeps the XML files that define what packages are available for a host or image and where to find those packages.  All the files in the directory are processed.
+
+The names of the XML files have no special meaning to Bcfg2; they are simply named so it's easy for the administrator to know what the contents hold.  All Packages could be kept in a single file if so desired.  Bcfg2 simply uses the Groups in the files and priorities to determine how to assign Packages to a host's literal configuration.
+
+Listed detailed below is one possible structure for the Pkgmgr directory.
+
+The files are structured to contain particular portions of distribution repositories.
+
+The files  in the directory are::
+
+    $ ls Pkgmgr/
+    centos-4-noarch-updates.xml
+    centos-4-x86_64-updates.xml
+    centos-4-x86_64.xml
+    backup.example.com.xml
+    fedora-core-4-noarch-updates.xml
+    fedora-core-4-x86-updates.xml
+    fedora-core-4-x86.xml
+    rhel-as-4-noarch-updates.xml
+    rhel-as-4-x86-updates.xml
+    rhel-as-4-x86.xml
+    rhel-es-4-noarch-updates.xml
+    rhel-es-4-x86-updates.xml
+    rhel-es-4-x86.xml
+    rhel-ws-4-noarch-udpates.xml
+    rhel-ws-4-x86_64-updates.xml
+    rhel-ws-4-x86_64.xml
+    rhel-ws-4-x86-updates.xml
+    rhel-ws-4-x86.xml
+
+As can be seen the file names have been selected to indicate what the contents are and have been split by Vendor, product and repository area.
+
+A partial listing of the centos-4-x86_64.xml is below
+
+.. code-block:: xml
+
+    $ cat centos-4-x86_64.xml
+    <PackageList uri='http://www.example.com/yam/Centos44-x86_64/RPMS.os/' type='yum' priority='0'>
+        <Group name='Centos4.4-Standard'>
+            <Group name='x86_64'>
+                <Package name='audit-libs' version='1.0.13-1.EL4' type='yum'/>
+                <Package name='audit' version='1.0.13-1.EL4' type='yum'/>
+                <Package name='basesystem' version='8.0-2' type='yum'/>
+                <Package name='bash' version='3.0-18.1' type='yum'/>
+                <Package name='bcfg2' version='0.9.1-0.1' type='yum'/>
+                <Package name='beecrypt' version='3.1.0-3' type='yum'/>
+                ...
+                <Package name='VMwareTools' version='6530-29996' type='yum'/>
+                <Package name='yum' version='2.4.2-1' type='yum'/>
+                <Package name='zlib' version='1.2.1.2-1.2' type='yum'/>
+            </Group>
+      </Group>
+    </PackageList>
+
+.. code-block:: xml
+
+    $ cat centos-4-x86_64-updates.xml
+    <PackageList uri='http://www.example.com/yam/Centos44-x86_64/RPMS.updates/' type='yum' priority='5'>
+        <Group name='Centos4.4-Standard'>
+            <Group name='x86_64'>
+                <Package name='audit-libs' version='1.0.14-1.EL4' type='yum'/>
+                <Package name='audit' version='1.0.14-1.EL4' type='yum'/>
+                <Package name='basesystem' version='8.0-4' type='yum'/>
+                <Package name='bash' version='3.0-19.3' type='yum'/>
+                <Package name='bcfg2' version='0.9.2-0.1' type='yum'/>
+                <Package name='beecrypt' version='3.1.0-6' type='yum'/>
+                ...
+                <Package name='VMwareTools' version='6530-29996' type='yum'/>
+                <Package name='yum' version='2.4.3-1' type='yum'/>
+                <Package name='zlib' version='1.2.1.2-1.2' type='yum'/>
+            </Group>
+      </Group>
+    </PackageList>
+
+Here it can be seen that the data is encapsulated in a !PackageList Tag which describes the URI of the files described, the type of package, and the priority of the files in this list.
+
+The priority is used to decide which specific file to use when there are multiple files that could be used for a particular host.  The highest priority file is the one that is used.
+
+Using this system, it is possible to have a file that contains all the Packages from the original installation, centos-4-x86_64.xml in this case, and then create a new file that contains updates that are made available afterwards, centos-4-x86_64-updates.xml and centos-4-noarch-updates.xml in this case.   The priority of the update PackageLists just needs to be higher so that they will be selected instead of the original installation Packages.
+
+The backup.example.com.xml contains a packalist for a specific host which is qualified by the Client tag.  Its Packages have a higher priority than the update Packages.  This is because this particular host requires special Packages that are older than the ones available in the updates.
+
+.. code-block:: xml
+
+    <PackageList uri='http://www.example.com/yam/Centos44-x86_64/RPMS.os/' type='yum' priority='1000'>
+        <Client name='server86.example.com'>
+            <Package name='audit-libs' version='1.0.13-1.EL4' type='yum'/>
+            <Package name='audit' version='1.0.13-1.EL4' type='yum'/>
+            <Package name='basesystem' version='8.0-2' type='yum'/>
+            <Package name='bash' version='3.0-18.1' type='yum'/>
+            <Package name='bcfg2' version='0.9.1-0.1' type='yum'/>
+            <Package name='beecrypt' version='3.1.0-3' type='yum'/>
+            ...
+            <Package name='VMwareTools' version='6530-29996' type='yum'/>
+            <Package name='yum' version='2.4.2-1' type='yum'/>
+            <Package name='zlib' version='1.2.1.2-1.2' type='yum'/>
+        </Client>
+    </PackageList>
+
+Simplifying Multi-Architecture Environments with [wiki:altsrc Altsrc]
+=====================================================================
+
+This feature is available in 0.9.5pre3 or newer versions of the bcfg2 server.
+
+Frequently multi-architecture environments (typically x86_64) will run into problems needing to specify different architectures on different groups for clients. For example, desktop machines may install 32-bit compatibility packages in addition to 64-bit ones, while servers may install only 64-bit packages. Specifying this in the Pkgmgr was onerous, because different package targets (64bit, 32+64, etc) needed to be specified on a package by group basis. Two features have been implemented that should ease this situation considerably.
+* the [wiki:altsrc] feature adds the ability to add a "bind as" directive to entries. For example, the following entry, in a bundle:
+
+.. code-block:: xml
+
+    <Package name='foo' altsrc='bar'/>
+
+  would bind as if it were named bar, while the entry would still appear named "foo" in the client configuration specification.
+
+* Pkgmgr now builds virtual package targets for any package with Instance client elements. This means that if a client attempts to bind:
+
+.. code-block:: xml
+
+    <Package name='libfoo:x86_64,i686'/>
+  It will only include the instances listed in the package.
+  By using these features together, a bundle can include:
+
+.. code-block:: xml
+
+    <Package name='libfoo' altsrc='libfoo:i386,i686'/>
+
+  This in conjunction with a Pkgmgr entry that looks like:
+
+.. code-block:: xml
+
+    <Package name='libfoo'>
+      <Instance arch='i386' version='1.0.4-12'/>
+      <Instance arch='i586' version='1.0.4-12'/>
+      <Instance arch='i686' version='1.0.4-12'/>
+      <Instance arch='x86_64' version='1.0.4-12'/>
+    </Package>
+
+  Will result in a bound entry that looks like:
+
+.. code-block:: xml
+
+    <Package name='libfoo'>
+      <Instance arch='i386' version='1.0.4-12'/>
+      <Instance arch='i686' version='1.0.4-12'/>
+    </Package>
+
+Altogether, this should move policy decisions about package architectures to bundles/base.
+
+Client Driver (Plugins) Specific Attributes
+===========================================
+
+Not all the attributes that are available in Pkgmgr are honoured by all the client drivers.  The following client drivers (plugins) have driver specific attributes:
+* [wiki:RPMng RPMng/YUMng]

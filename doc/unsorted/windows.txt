@@ -15,7 +15,8 @@ Notes on possible Windows support
 Services
 ========
 
-With the exception of 32/64 bit issues, Windows Services support should be pretty trivial; it would differ from *nix services in that it would be done via WMI API calls and not a 3rd party python module or wrapping a binary.
+With the exception of 32/64 bit issues, Windows Services support should
+be pretty trivial; it would differ from \*nix services in that it would be done via WMI API calls and not a 3rd party python module or wrapping a binary.
 
 Registry
 ========
@@ -25,7 +26,8 @@ The best way of handling the registry may be to map it into a file-based represe
 Files
 =====
 
-For a first run there may be some way of utilizing [http://cygwin.com/ cygwin] to make use of the existing *nix POSIX module for manipulating files. There would probably need to be some changes to deal with the fact that open files can't be manipulated/moved/deleted at all in Windows (other than to do some registry magic that makes the changes on the next reboot).
+For a first run there may be some way of utilizing [http://cygwin.com/
+cygwin] to make use of the existing \*nix POSIX module for manipulating files. There would probably need to be some changes to deal with the fact that open files can't be manipulated/moved/deleted at all in Windows (other than to do some registry magic that makes the changes on the next reboot).
 
 Packages
 ========
@@ -39,13 +41,17 @@ Prior FLOSS Art
 
 * [http://www.autoitscript.com/autoit3/ AutoIt] - For dealing with packages that don't have a silent install option
 * [http://www.opensysadmin.com/trac/ticket/4 French Stuff]
+
  * [http://ocsinventory.sourceforge.net/ Open Computers and Software Inventory - Next Generation]
  * [http://www.glpi-project.org/spip.php?lang=en GLPI - Gestionnaire libre de parc informatique]
+
 * Javascript thing a colleague of Desai's at ANL wrote - Desai was going to see if this can be released
 * [http://sial.org/howto/cfengine/windows/ Managing Windows with CFEngine and Perl]
 * [http://www.dmst.aueb.gr/dds/sw/outwit/ Outwit] - Small unixy utilities for Windows stuff like the registry and clipboard
 * [http://www.cfengine.org/docs/cfengine-NT/ Porting cfengine to Windows NT]
 * [http://isg.ee.ethz.ch/tools/realmen/ Real Men Don't Click] - Tobi Oetiker's stuff
+
  * [http://isg.ee.ethz.ch/tools/realmen/res/index.en.html More Prior FLOSS Art]
+
 * [http://unattended.sourceforge.net/ Unattended] - Bare Metal Installs, Package Management
 * [http://wpkg.org/ WPKG] - Package Management

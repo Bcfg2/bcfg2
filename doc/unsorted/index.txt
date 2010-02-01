@@ -13,14 +13,12 @@ list below.
 
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
-* `Annotated Examples`
 * `ManualPages`
 * `NewDynamicReports`
 * `NewDynamicReportsInstallation`
 * `News`
 * `Overview`
 * `ParanoidMode`
-* `Plugins`
 * `Plugins/Account`
 * `Plugins/Actions`
 * `Plugins/Bundler/examples`
@@ -66,19 +64,10 @@ list below.
 * `QuickStart3`
 * `RecentChanges`
 * `RefactorClient`
-* `Reports`
-* `Reports/Dynamic`
-* `Reports/Dynamic/Installation`
-* `Reports/Static`
-* `SandBox`
 * `SchemaEvolution`
 * `SecurityDevPlan`
 * `ServerSideOverview`
-* `TGenshi/examples`
 * `TGenshi/examples/Templated_Access`
-* `TGenshi/examples/bcfg2_cron`
-* `TGenshi/examples/clients.xml`
-* `TGenshi/examples/test`
 * `TOC`
 * `TrackingDevelopmentTrunk`
 * `Troubleshooting`

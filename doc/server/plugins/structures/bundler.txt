@@ -1,0 +1,163 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler:
+
+=======
+Bundler
+=======
+
+Bundler is used to describe groups of inter-dependent configuration entries, such as the combination of packages, configuration files, and service activations that comprise typical Unix daemons. Bundles are used to add groups of configuration entries to the inventory of client configurations, as opposed to describing particular versions of those entries. For example, a bundle could say that the configuration file "/etc/passwd" should be included in a configuration, but will not describe the particular version of "/etc/passwd" that a given client will receive.
+
+Groups can be used inside of bundles to differentiate which entries particular clients will recieve; this is useful for the case where entries are named differently across systems; for example, one linux distro may have a package called openssh while another uses the name ssh. Configuration entries nested inside of Group elements only apply to clients who are a member of those groups; multiply nested groups must all apply. Also, groups may be negated; entries included in such groups will only apply to clients who are not a member of said group.
+
+The following is an annotated copy of a bundle:
+
+.. code-block:: xml
+
+    <Bundle revision='$Revision: 2668 $' name='ssh' version='2.0'
+            origin='https://svn.mcs.anl.gov/repos/bcfg/trunk/repository/Bundler/ssh.xml'>
+      <Path name='/etc/ssh/ssh_host_dsa_key'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key'/>
+      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_key'/>
+      <Path name='/etc/ssh/ssh_host_key.pub'/>
+      <Path name='/etc/ssh/sshd_config'/>
+      <Path name='/etc/ssh/ssh_config'/>
+      <Path name='/etc/ssh/ssh_known_hosts'/>
+      <Group name='rpm'>
+        <Package name='openssh'/>
+        <Package name='openssh-askpass'/>
+        <Service name='sshd'/>
+        <Group name='fedora' >
+           <Group name='fc4' negate='true'>
+             <Package name='openssh-clients'/>
+           </Group>
+           <Package name='openssh-server'/>
+        </Group>
+      </Group>
+      <Group name='deb'>
+        <Package name='ssh'/>
+        <Service name='ssh'/>
+      </Group>
+    </Bundle>
+
+In this bundle, most of the entries are common to all systems. Clients in group "deb" get one extra package and service, while clients in group "rpm" get two extra packages and an extra service. In addition, clients in group "fedora" and group "rpm" get one extra package entries, unless they are not in the fc4 group, in which case, they get an extra package. Notice that this file doesn't describe which versions of these entries that clients should get, only that they should get them. (Admittedly, this example is slightly contrived, but demonstrates how group entries can be used in bundles)
+
++----------------------------+-------------------------------+
+| Group                      | Entry                         |
++============================+===============================+
+| all                        | /etc/ssh/ssh_host_dsa_key     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_rsa_key     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_dsa_key.pub |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_rsa_key.pub |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_key         |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_host_key.pub     |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/sshd_config          |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_config           |
++----------------------------+-------------------------------+
+| all                        | /etc/ssh/ssh_known_hosts      |
++----------------------------+-------------------------------+
+| rpm                        | Package openssh               |
++----------------------------+-------------------------------+
+| rpm                        | Package openssh-askpass       |
++----------------------------+-------------------------------+
+| rpm                        | Service sshd                  |
++----------------------------+-------------------------------+
+| rpm and fedora             | Package openssh-server        |
++----------------------------+-------------------------------+
+| rpm and fedora and not fc4 | Package openssh-clients       |
++----------------------------+-------------------------------+
+| deb                        | Package ssh                   |
++----------------------------+-------------------------------+
+| deb                        | Service ssh                   |
++----------------------------+-------------------------------+
+
+Genshi templates
+================
+
+Genshi templates are used by adding a Genshi xml-style template to the Bundler directory with a `.genshi` file extension. Version 0.4 or newer of genshi is required.
+
+Motivation
+----------
+
+Static Bundles have served us relatively well, but have a relatively weak set of interal per-client differentiation mechanisms. In static Bundles, the group hierarchy (from the perspective of the current client) is available for use via boolean constraints with negation. This notion does not mesh well with the use of Probes, which can result in freeform data. In the presence of probe results, clients can have a wide array of data, and rendering down to a boolean logic may not always be desirable. Moreover, while static Bundles allow entry inclusion or exclusion based on group memberships, they do not allow programatic entry rendering. Hence, Genshi templates not only provide more control options, but it also provide the ability to perform new entry rendering operations.
+
+The `Genshi templating system`_ is used internally.
+
+.. _Genshi templating system: http://genshi.edgewall.org/
+
+Use
+---
+
+Bcfg uses the Genshi API for templates, and performs a XML format stream rendering of the template into an lxml entry, which is included in the client configuration. Client metadata is avilable inside of the template using the 'metadata' name. Note that only the markup Genshi template format can be used, as the target output format is XML.
+
+An Genshi template looks much like a Bundler file, except the Bundle tag has an additional `xmlns:py` attribute. See the examples.
+
+Examples
+--------
+
+In some cases, configuration files need to include the client's hostname in their name. The following template produces such a config file entry.
+
+.. code-block:: xml
+
+    <Bundle name='foo'  xmlns:py="http://genshi.edgewall.org/">
+        <Path name='/etc/package-${metadata.hostname}'/>
+    </Bundle>
+
+Depending on the circumstance, these configuration files can either be
+handled by individual entries in :ref:`server-plugins-generators-cfg`,
+:ref:`server-plugins-generators-tcheetah`, or :ref:`server-plugins-generators-tgenshi`, or can be mapped to a single entry by using the [wiki:altsrc] feature.
+
+In this example, configuration file names are built using probed results from the client. getmac is a probe that gathers client MAC addresses and returns them in a newline delimited string.
+
+.. code-block:: xml
+
+    <Bundle name='networkinterfaces' xmlns:py="http://genshi.edgewall.org/">
+        <?python
+          files = $metadata.Probes["getmacs"].split("\n")
+        ?>
+        <Path py:for="file in files" name="/etc/sysconfig/network/ifcfg-eth-${file}" altsrc='/etc/ifcfg-template'/>
+    </Bundle>
+
+.. note::
+   * The use of the altsrc directive causes all ifcfg files to be handled by the same plugin and entry.
+   * The <?python ?> blocks have only been available in genshi since 0.4 (http://genshi.edgewall.org/ticket/84)
+
+If you want a file to be only on a per-client basis, you can use an if declaration:
+
+.. code-block:: xml
+
+    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+         <Path name="/etc/bacula/bconsole.conf"/>
+         <Path name="/etc/bacula/bacula-fd.conf"/>
+         <Path name="/etc/bacula/bacula-sd.conf"/>
+         <Path py:if="metadata.hostname == 'foo.bar.com'" name="/etc/bacula/bacula-dir.conf"/>
+    </Bundle>
+
+or alternately:
+
+.. code-block:: xml
+
+    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+        <Path name="/etc/bacula/bconsole.conf"/>
+        <Path name="/etc/bacula/bacula-fd.conf"/>
+        <Path name="/etc/bacula/bacula-sd.conf"/>
+        <py:if test="metadata.hostname == 'foo.bar.com'">
+            <Path name="/etc/bacula/bacula-dir.conf"/>
+        </py:if>
+    </Bundle>
+
+The latter form is preferred if the if block contains multiple files. While this example is simple, the test in the if block can in fact be any python statement.
+
+Examples
+--------
+
+See [wiki:Plugins/Bundler/examples this] page for more Bundler examples.
