@@ -82,7 +82,7 @@ Print Usage information.
 Daemonize the agent.
 .TP 
 .BR "\-k" 
-Run in bulletproof mode. This currently only effect behavior in the
+Run in bulletproof mode. This currently only affects behavior in the
 debian toolset; it calls apt-get update and clean and dpkg --configure --pending.
 .TP
 .BR "\-l <whitelist|blacklist>"
@@ -113,7 +113,7 @@ should only be used in safe conditions.
 Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, Services, or Packages. All removes all entries. Likewise, Services and Packages remove only the extra configuration elements of the respective type.
 .TP
 .BR "\-s <service mode>"
-Set bcfg2 interaction level for services. Default behavior is to modify all services effected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
+Set bcfg2 interaction level for services. Default behavior is to modify all services affected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
 .TP
 .BR "\-u <user>" 
 Attempt to authenticate as 'user'.
