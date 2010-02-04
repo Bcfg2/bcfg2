@@ -45,16 +45,13 @@ bcfg2.conf from the per-client metadata::
     #else
     password = my-password-foobat
     #endif
-    fingerprint = d8b7423da5d8ccd0f3db29742fc8eed00b9d0848
 
     [components]
     bcfg2 = https://localhost:6789
 
 In this setup, this will cause any clients that have uuids established
 to be set to use them in bcfg2.conf. It will also cause any clients
-with passwords set to use them instead of the global password. The
-fingerprint needs to be manually set, per-server, using the output of
-"bcfg2-admin fingerprint".
+with passwords set to use them instead of the global password.
 
 How Authentication Works
 ========================

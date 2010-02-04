@@ -274,9 +274,6 @@ CLIENT_DLIST = Option('run client in server decision list mode', default=False,
                       cmd='-l', odesc='<whitelist|blacklist>')
 CLIENT_FILE = Option('configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
-SERVER_FINGERPRINT = Option('Server Fingerprint', default=[], cmd='-F',
-                            cf=('communication', 'fingerprint'),
-                            odesc='<f1,f2>', cook=flist_split)
 CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
 CLIENT_USER = Option('the user to provide for authentication', default='root',

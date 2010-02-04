@@ -367,7 +367,6 @@ Generate Pkgmgr listing
 Now when we run bcfg2, we see Correct entries::
 
     [root@centos ~]# bcfg2 -vqn
-    no server x509 fingerprint; no server verification performed!
     Loaded tool drivers:
      Action       Chkconfig    FreeBSDInit  POSIX        YUMng
 
@@ -499,8 +498,6 @@ section of bcfg2.conf::
     protocol = xmlrpc/ssl
     password = N41lMNeW
     key = /etc/bcfg2.key
-    # fingerprint of server (from bcfg2-admin fingerprint)
-    #fingerprint = [server fingerprint]
 
     [components]
     bcfg2 = https://centos:6789

@@ -136,7 +136,6 @@ A number of paramters can be set in the client configuration for both the RPMng 
     protocol = xmlrpc/ssl
     password = xxxxxx
     user = yyyyyyy
-    fingerprint = 1234567890abcdef
 
     [components]
     bcfg2 = https://bcfg2:6789
