@@ -43,7 +43,7 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
         try:
             os.stat(self.data)
         except:
-            self.make_path(self.data)
+            os.makedirs(self.data)
         self.cache = OhaiCache(self.data)
 
     def GetProbes(self, meta, force=False):

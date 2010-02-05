@@ -73,20 +73,10 @@ class Plugin(object):
         if (flag is None) and self.debug_flag or flag:
             self.logger.error(message)
 
-    @staticmethod
-    def make_path(path):
-        p_comp = path.split('/')
-        for i in range(2, len(p_comp) + 1):
-            ppath = '/' + '/'.join(p_comp[1:i])
-            try:
-                os.stat(ppath)
-            except:
-                os.mkdir(ppath)
-
     @classmethod
     def init_repo(cls, repo):
         path = "%s/%s" % (repo, cls.name)
-        cls.make_path(path)
+        os.makedirs(path)
 
     def shutdown(self):
         self.running = False

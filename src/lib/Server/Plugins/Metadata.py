@@ -108,7 +108,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     @classmethod
     def init_repo(cls, repo, groups, os_selection, clients):
         path = '%s/%s' % (repo, cls.name)
-        cls.make_path(path)
+        os.makedirs(path)
         open("%s/Metadata/groups.xml" %
              repo, "w").write(groups % os_selection)
         open("%s/Metadata/clients.xml" %
