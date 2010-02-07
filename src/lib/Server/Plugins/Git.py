@@ -1,3 +1,5 @@
+"""The Git plugin provides a revision interface for bcfg2 repos using git"""
+
 import os
 from dulwich.repo import Repo
 import Bcfg2.Server.Plugin
@@ -6,14 +8,17 @@ import Bcfg2.Server.Plugin
 import logging
 logger = logging.getLogger('Bcfg2.Plugins.Git')
 
+
 class Git(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
+    """Git is a version plugin for dealing with bcfg2 repos"""
     name = 'Git'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Version.__init__(self)
         self.core = core
         self.datastore = datastore
 
@@ -27,10 +32,10 @@ class Git(Bcfg2.Server.Plugin.Plugin,
             logger.error("%s is not a directory" % git_dir)
             raise Bcfg2.Server.Plugin.PluginInitError
 
-        logger.debug("Initialized git plugin with git directory = %s" % git_dir)
+        logger.debug("Initialized git plugin with git directory %s" % git_dir)
 
     def get_revision(self):
-        '''Read git revision information for the bcfg2 repository'''
+        """Read git revision information for the bcfg2 repository"""
         try:
             repo = Repo(self.datastore)
             revision = repo.head()
