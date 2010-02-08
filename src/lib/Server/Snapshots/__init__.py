@@ -5,9 +5,9 @@ import sqlalchemy.orm
 import ConfigParser
 
 
-def db_from_config(fname='/etc/bcfg2.conf'):
+def db_from_config(cfile):
     cp = ConfigParser.ConfigParser()
-    cp.read([fname])
+    cp.read([cfile])
     driver = cp.get('snapshots', 'driver')
     if driver == 'sqlite':
         path = cp.get('snapshots', 'database')
@@ -22,8 +22,8 @@ def db_from_config(fname='/etc/bcfg2.conf'):
         raise Exception, "unsupported db driver %s" % driver
 
 
-def setup_session(debug=False):
-    engine = sqlalchemy.create_engine(db_from_config(),
+def setup_session(cfile, debug=False):
+    engine = sqlalchemy.create_engine(db_from_config(cfile),
                                       echo=debug)
     Session = sqlalchemy.orm.sessionmaker()
     Session.configure(bind=engine)

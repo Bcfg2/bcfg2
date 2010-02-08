@@ -36,7 +36,8 @@ class Core(Component):
     name = 'bcfg2-server'
     implementation = 'bcfg2-server'
 
-    def __init__(self, repo, plugins, password, encoding, ca=None,
+    def __init__(self, repo, plugins, password, encoding,
+                 cfile='/etc/bcfg2.conf', ca=None,
                  filemonitor='default', start_fam_thread=False):
         Component.__init__(self)
         self.datastore = repo
@@ -51,6 +52,7 @@ class Core(Component):
             raise CoreInitError, "failed to instantiate fam driver (used %s)" % \
                   filemonitor
         self.pubspace = {}
+        self.cfile = cfile
         self.cron = {}
         self.plugins = {}
         self.revision = '-1'

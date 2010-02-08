@@ -23,7 +23,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
     def __init__(self, configfile):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
         #self.session = Bcfg2.Server.Snapshots.setup_session(debug=True)
-        self.session = Bcfg2.Server.Snapshots.setup_session()
+        self.session = Bcfg2.Server.Snapshots.setup_session(configfile)
+        self.cfile = configfile
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
@@ -59,7 +60,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 raise SystemExit(1)
         elif args[0] == 'init':
             # Initialize the Snapshots database
-            dbpath = Bcfg2.Server.Snapshots.db_from_config()
+            dbpath = Bcfg2.Server.Snapshots.db_from_config(self.cfile)
             engine = sqlalchemy.create_engine(dbpath, echo=True)
             metadata = Base.metadata
             metadata.create_all(engine)

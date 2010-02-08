@@ -51,6 +51,7 @@ if __name__ == '__main__':
                                       pidfile_name = setup['daemon'],
                                       protocol = setup['protocol'],
                                       to_file=setup['to_file'],
+                                      cfile=setup['configfile'],
                                       register=False,
                                       cls_kwargs={'repo':setup['repo'],
                                                   'plugins':setup['plugins'],

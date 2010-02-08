@@ -65,7 +65,7 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
-        self.session = Bcfg2.Server.Snapshots.setup_session()
+        self.session = Bcfg2.Server.Snapshots.setup_session(core.cfile)
         self.work_queue = Queue.Queue()
         self.loader = threading.Thread(target=self.load_snapshot)
         self.loader.start()

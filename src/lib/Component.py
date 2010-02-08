@@ -24,9 +24,9 @@ class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
 def run_component(component_cls, location, daemon, pidfile_name, to_file,
-                  argv=None, register=True, state_name=False, cls_kwargs={},
-                  extra_getopt='', time_out=10, protocol='xmlrpc/ssl',
-                  certfile=None, keyfile=None, ca=None):
+                  cfile='/etc/bcfg2.conf', argv=None, register=True,
+                  state_name=False, cls_kwargs={}, extra_getopt='', time_out=10,
+                  protocol='xmlrpc/ssl', certfile=None, keyfile=None, ca=None):
 
     # default settings
     level = logging.INFO
@@ -59,7 +59,7 @@ def run_component(component_cls, location, daemon, pidfile_name, to_file,
         print >> pidfile, os.getpid()
         pidfile.close()
 
-    component = component_cls(**cls_kwargs)
+    component = component_cls(cfile=cfile, **cls_kwargs)
     up = urlparse.urlparse(location)
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))
