@@ -16,12 +16,7 @@ list below.
 * `ManualPages`
 * `NewDynamicReports`
 * `NewDynamicReportsInstallation`
-* `News`
-* `Overview`
-* `ParanoidMode`
-* `Plugins/Account`
 * `Plugins/Actions`
-* `Plugins/Bundler/examples`
 * `Plugins/Bundler/examples/kernel.xml`
 * `Plugins/Bundler/examples/moab.xml`
 * `Plugins/Bundler/examples/nagios.xml`
@@ -29,13 +24,7 @@ list below.
 * `Plugins/Bundler/examples/snmpd.xml`
 * `Plugins/Bundler/examples/torque.xml`
 * `Plugins/Bundler/examples/yp.xml`
-* `Plugins/GroupPatterns`
-* `Plugins/Hostbase`
-* `Plugins/Metadata`
-* `Plugins/NagiosGen`
 * `Plugins/Ohai`
-* `Plugins/Probes`
-* `Plugins/Probes/examples`
 * `Plugins/Probes/examples/current-kernel`
 * `Plugins/Probes/examples/group`
 * `Plugins/Probes/examples/grub-serial-order`
@@ -43,10 +32,7 @@ list below.
 * `Plugins/Probes/examples/producttype`
 * `Plugins/Probes/examples/serial-console-speed`
 * `Plugins/Properties`
-* `Plugins/Rules`
-* `Plugins/SSHbase`
 * `Plugins/Snapshots`
-* `Plugins/TGenshi/examples`
 * `Plugins/TGenshi/examples/bcfg2_cron`
 * `Plugins/TGenshi/examples/clients.xml`
 * `Plugins/TGenshi/examples/ganglia`
@@ -62,8 +48,6 @@ list below.
 * `Publications`
 * `QuickStart2`
 * `QuickStart3`
-* `RecentChanges`
-* `RefactorClient`
 * `SchemaEvolution`
 * `SecurityDevPlan`
 * `ServerSideOverview`
@@ -74,7 +58,6 @@ list below.
 * `UpgradeTesting`
 * `UsingRcache`
 * `VimSnippetSupport`
-* `WritingClientToolDrivers`
 
 .. toctree::
    :maxdepth: 2

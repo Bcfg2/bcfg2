@@ -1,0 +1,38 @@
+.. -*- mode: rst -*-
+
+.. _client-paranoid:
+
+=============
+Paranoid Mode
+=============
+
+What is paranoid mode?
+======================
+
+Paranoid mode creates a backup of a local configuration file before
+Bcfg2 replaces the file. This allows for easier recovery by the local
+administrator.
+
+How do I use it?
+================
+
+#. In the Bcfg2 repository, put `paranoid='true'` in the `info.xml` file.
+#. On the client, create `/var/cache/bcfg2` (in 1.0, you can specify an alternate path in the [paranoid] section of /etc/bcfg2).
+#. On the client, run `bcfg2` with the `-P` option.
+
+This will save a copy of the replaced file in `/var/cache/bcfg2`, but
+it'll be named as the path to the file with /'s replaced by _'s. For
+example, the old `/etc/hosts` will be named `/var/cache/bcfg2/etc_hosts`.
+
+Extra configuration
+===================
+
+Here is an example of how to use the extra paranoid features available
+in 1.0. For the following section in bcfg2.conf::
+
+    [paranoid]
+    path = /my/custom/backup/path
+    max_copies = 5
+
+You will have the file backups store in /my/custom/backup/path. This
+will also keep the five most recent backups of files.

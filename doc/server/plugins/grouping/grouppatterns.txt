@@ -1,0 +1,92 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-grouping-grouppatterns:
+
+=============
+GroupPatterns
+=============
+
+The GroupPatterns plugin is a connector that can assign clients
+group membership pased on patterns in client hostnames. Two basic
+methods are supported: regular expressions (NamePatterns) and ranges
+(NameRange). Hosts that match the specification are placed in the group
+or groups specified by the pattern.
+
+Setup
+=====
+
+#. Enable the GroupPatterns plugin
+#. Create the GroupPatterns/config.xml file (similar to the example below).
+#. Client groups will be augmented based on the specification
+
+Pattern Types
+=============
+
+NamePatterns use regular expressions to match client hostnames. All
+matching clients are placed in the resulting groups. NamePatterns also
+have the ability to use regular expression matched groups to dynamically
+create group names. The first two examples below are NamePatterns. The
+first adds client hostname to both groups gp-test1 and gp-test2. The
+second matches the hostname as a group and places the client in a group
+called group-<hostname>.
+
+NameRange patterns allow the use of the application of numeric ranges
+to host names. The final pattern below matches any of node1-node32 and
+places them all into the rack1 group. Dynamically generated group names
+are not supported with NameRange.
+
+Examples
+========
+
+.. code-block:: xml
+
+    <GroupPatterns>
+      <GroupPattern>
+        <NamePattern>hostname</NamePattern>
+        <Group>gp-test1</Group>
+        <Group>gp-test2</Group>
+      </GroupPattern>
+      <GroupPattern>
+        <NamePattern>(.*)</NamePattern>
+        <Group>group-$1'</Group>
+      </GroupPattern>
+      <GroupPattern>
+        <NameRange>node[[1-32]]</NameRange>
+        <Group>rack1</Group>
+      </GroupPattern>
+    </GroupPatterns>
+
+Cluster Example
+---------------
+
+Functional aspects are extracted from hostname strings, and dynamic
+groups are created.
+
+Expected hostname to group mapping::
+
+    xnfs1.example.com     -> nfs-server
+    xnfs2.example.com     -> nfs-server
+    xlogin1.example.com   -> login-server
+    xlogin2.example.com   -> login-server
+    xpvfs1.example.com    -> pvfs-server
+    xpvfs2.example.com    -> pvfs-server
+    xwww.example.com      -> www-server
+
+GroupPatterns configuration:
+
+.. code-block:: xml
+
+    <GroupPatterns>
+      <GroupPattern>
+        <NamePattern>^x(\w[^\d|\.]+)\d*\..*</NamePattern>
+        <Group>$1-server</Group>
+      </GroupPattern>
+    </GroupPatterns>
+
+Regex explanation:
+
+#. !^x Match any hostname that begins with "x"
+#. (\w[!^\d|\.]+) followed by one or more word characters that are not a decimal digit or "." and save the string to $1
+#. \d* followed by 0 or more decimal digit(s)
+#. \..* followed by a "."
+#. .* followed by 1 or more of anything else.

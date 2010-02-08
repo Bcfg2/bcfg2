@@ -17,6 +17,7 @@ Welcome to Bcfg2's documentation!
    server/index
    client/index
    gettinghelp
+   development/index
 
    unsorted/index
 
