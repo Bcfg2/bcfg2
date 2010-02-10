@@ -693,14 +693,6 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         ret = getattr(self, 'InstallConfigFile')
         return ret(entry)
 
-    def Verifynonexistent(self, entry, _):
-        # FIXME: not implemented
-        return True
-
-    def Installnonexistent(self, entry):
-        # FIXME: not implemented
-        return True
-
     def Verifypermissions(self, entry, _):
         ret = getattr(self, 'VerifyPermissions')
         return ret(entry, _)
