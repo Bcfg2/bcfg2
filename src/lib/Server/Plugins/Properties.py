@@ -27,7 +27,6 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
     '''
     name = 'Properties'
     version = '$Revision$'
-    experimental = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
