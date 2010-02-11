@@ -1,0 +1,49 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-serial-console-speed:
+
+serial-console-speed
+====================
+
+A probe to tell us what the serial console speed should be for a given
+piece of hardware. This pre-supposed some knowledge of the hardware
+because you define the speeds in here instead of attempting to probe
+bios or something in the hardware in most cases (like x86).
+
+.. code-block:: sh
+
+    #!/bin/sh
+    #
+    #
+    # figure out what serial speed we should tell bcfg2 to use.
+    # since there's no way to probe, we need to set this up by external
+    # knowledge of the system hardware type (and just make sure we
+    # standardize on that serial speed for that hardware class)
+
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin; export PATH
+    # let's figure out what product type this is
+    os=`uname -s`
+    productname="product-no-dmidecode"
+
+    if [ $os = "Linux" ] ; then
+        productname=`dmidecode -s system-product-name 2>&1`
+        case $productname in
+        "PowerEdge M600")
+            echo "115200"
+            ;;
+        *)
+            echo "9600"
+            ;;
+        esac
+    fi
+    if [ $os = "SunOS" ]; then
+        platform=`uname -i`
+        case $platform in
+        SUNW,*)
+    	eeprom ttya-mode | sed 's/ttya-mode=//'|awk -F, '{print $1}'
+    	;;
+        *)
+    	echo "9600"
+    	;;
+        esac
+    fi

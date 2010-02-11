@@ -1,0 +1,49 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-manufacturer:
+
+manufacturer
+============
+
+Probe to output some standardized group names based on the manufacturer
+information.
+
+.. code-block:: sh
+
+    #!/bin/sh
+    #
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin; export PATH
+
+    manufacturer=manuf-no-demidecode
+
+    os=`uname -s`
+    if [ $os = "Linux" ] ; then
+        manufacturer=`dmidecode -s system-manufacturer 2>&1| sed -e 's/[ ]\+$//g'`
+        case $manufacturer in
+        "Dell Inc.")
+            manufacturer="manuf-dell"
+            ;;
+        "Sun Microsystems")
+            manufacturer="manuf-sun"
+            ;;
+        "VMware, Inc.")
+            manufacturer="manuf-vmware"
+            ;;
+        *)
+            manufacturer="manuf-unknown"
+            ;;
+        esac
+    fi
+
+    if [ $os = "SunOS" ]; then
+        case `uname -i` in
+        SUNW,*)
+            manufacturer="manuf-sun"
+            ;;
+        *)
+            manufacturer="manuf-unknown"
+            ;;
+        esac
+    fi
+
+    echo group:$manufacturer

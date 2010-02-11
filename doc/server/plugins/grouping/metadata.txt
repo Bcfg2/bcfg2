@@ -217,4 +217,4 @@ Probes
 ======
 
 The metadata plugin includes client-side probing functionality. This
-is fully documented :ref:`here <server-plugins-probes>`.
+is fully documented :ref:`here <server-plugins-probes-index>`.

@@ -1,0 +1,46 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-grub-serial-order:
+
+grub-serial-order
+=================
+
+A basic hardware probe to determine if you should change the default
+serial ordering in grub.conf. This pre-supposes that you know your
+hardware is broken. You can tell something is wrong with your hardware
+if it takes lots of time to iterate through the "Press a key" option
+and present you with the grub menu. In some cases, I've seen this take
+as long as 20 minutes.
+
+.. code-block:: sh
+
+    #!/bin/sh
+    #
+    #
+    # We need to modify the order of the --serial line in grub
+    # in order to fix silly hardware bugs.  In some cases, having
+    # this in the wrong order causes grub to take an inordinate
+    # amount of time to do anything before it actually auto-picks
+    # the default menu option to boot.
+    #
+
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin; export PATH
+    # let's figure out what product type this is
+    os=`uname -s`
+    productname="product-no-dmidecode"
+
+    if [ $os = "Linux" ] ; then
+        productname=`dmidecode -s system-product-name 2>&1`
+        case $productname in
+        "PowerEdge M600")
+            echo "console serial"
+            ;;
+        *)
+            echo "serial console"
+            ;;
+        esac
+    fi
+    if [ $os = "SunOS" ] ; then
+       # Bcfg2 server is unhappy with null output from probes
+       echo "console"
+    fi

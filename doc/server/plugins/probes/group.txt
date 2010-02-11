@@ -1,0 +1,88 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-group:
+
+group
+=====
+
+Probe used to dynamically set client groups based on OS/distro.
+
+.. note::
+
+    Some parts of this script may depend on having lsb-release
+    installed.
+
+.. code-block:: sh
+
+    #!/bin/sh
+
+    OUTPUT=""
+    ARGS=""
+
+    if [ -e /etc/debian_version ]; then
+            # debian based
+            OUTPUT=$OUTPUT'\n'`echo group:deb`
+            if [ -e /etc/lsb-release ]; then
+                    # variant
+                    . /etc/lsb-release
+                    OS_GROUP=$DISTRIB_CODENAME
+                    DEBIAN_VERSION=$(echo "$DISTRIB_ID" | tr '[A-Z' '[a-z]')
+                    case "$OS_GROUP" in
+                            "hardy")
+                            OUTPUT=$OUTPUT'\n'`echo group:$DISTRIB_CODENAME`
+                            OUTPUT=$OUTPUT'\n'`echo group:$DEBIAN_VERSION`
+                            ;;
+                    esac
+            else
+                    # debian
+                    ARGS="-e"
+                    OS_GROUP=`cat /etc/debian_version`
+                    OUTPUT=$OUTPUT'\n'`echo group:debian`
+                    case "$OS_GROUP" in
+                            "5.0")
+                            OUTPUT=$OUTPUT'\n'`echo group:lenny`
+                            ;;
+                            "sid")
+                            OUTPUT=$OUTPUT'\n'`echo group:sid`
+                            ;;
+                    esac
+            fi
+    elif [ -e /etc/redhat-release ]; then
+            # redhat based
+            ARGS="-e"
+            OUTPUT=$OUTPUT'\n'`echo group:rpm`
+            OS_GROUP=`cat /etc/redhat-release | cut -d' ' -f1 | tr '[A-Z]' '[a-z]'`
+            REDHAT_VERSION=`cat /etc/redhat-release | cut -d' ' -f3`
+            case "$OS_GROUP" in
+                    "centos" | "fedora")
+                    OUTPUT=$OUTPUT'\n'`echo group:$OS_GROUP`
+                    OUTPUT=$OUTPUT'\n'`echo group:$OS_GROUP$REDHAT_VERSION`
+                    ;;
+            esac
+    elif [ -e /etc/gentoo-release ]; then
+            # gentoo
+            ARGS="-e"
+            OUTPUT=$OUTPUT'\n'`echo group:gentoo`
+    elif [ -x /usr/sbin/system_profiler ]; then
+            # os x
+            ### NOTE: Think about using system_profiler SPSoftwareDataType here
+            OSX_VERSION=`sw_vers | grep 'ProductVersion:' | grep -o '[0-9]*\.[0-9]*\.[0-9]*'`
+            OUTPUT=$OUTPUT'\n'`echo group:osx`
+            OUTPUT=$OUTPUT'\n'`echo group:$OSX_VERSION`
+    else
+            exit 0
+    fi
+    # get the proper architecture
+    ARCH=`uname -m`
+    case "$ARCH" in
+            "x86_64")
+            OUTPUT=$OUTPUT'\n'`echo group:amd64`
+            ;;
+            "i386" | "i686")
+            OUTPUT=$OUTPUT'\n'`echo group:i386`
+            ;;
+    esac
+
+    # output the result of all the group probing
+    # (interpreting the backslashed newlines)
+    echo $ARGS $OUTPUT

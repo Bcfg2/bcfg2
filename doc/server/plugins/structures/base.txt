@@ -11,4 +11,5 @@ lists of unrelated entries into client configuration entry inventories.
 Base works much like Bundler in its file format. The main difference
 between Base and Bundler is that Base files are included in all clients'
 configuration whereas bundles must be included explicitly in your
-Metadata. See the :ref:`server-plugins-structures-bundler` page for details.
+Metadata. See the :ref:`server-plugins-structures-bundler-index` page
+for details.

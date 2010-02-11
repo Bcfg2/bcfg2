@@ -21,6 +21,7 @@ architecture, as opposed to one with a smarter client, for a few reasons:
    agent
    debugging
    metadata
+   paranoid
 
 .. toctree::
    :maxdepth: 2

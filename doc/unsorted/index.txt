@@ -25,13 +25,6 @@ list below.
 * `Plugins/Bundler/examples/torque.xml`
 * `Plugins/Bundler/examples/yp.xml`
 * `Plugins/Ohai`
-* `Plugins/Probes/examples/current-kernel`
-* `Plugins/Probes/examples/group`
-* `Plugins/Probes/examples/grub-serial-order`
-* `Plugins/Probes/examples/manufacturer`
-* `Plugins/Probes/examples/producttype`
-* `Plugins/Probes/examples/serial-console-speed`
-* `Plugins/Properties`
 * `Plugins/Snapshots`
 * `Plugins/TGenshi/examples/bcfg2_cron`
 * `Plugins/TGenshi/examples/clients.xml`
@@ -42,7 +35,6 @@ list below.
 * `Plugins/TGenshi/examples/motd`
 * `Plugins/TGenshi/examples/my.cnf`
 * `Plugins/TGenshi/examples/test`
-* `Plugins/Trigger`
 * `PrecompiledPackages`
 * `Prereqs`
 * `Publications`
@@ -53,7 +45,6 @@ list below.
 * `ServerSideOverview`
 * `TGenshi/examples/Templated_Access`
 * `TOC`
-* `TrackingDevelopmentTrunk`
 * `Troubleshooting`
 * `UpgradeTesting`
 * `UsingRcache`

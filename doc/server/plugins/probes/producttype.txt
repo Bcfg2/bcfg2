@@ -1,0 +1,79 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-producttype:
+
+producttype
+===========
+
+A probe to set up dynamic groups based on the producttype and possibly
+some internal components of the system.
+
+Defined products are product-name.
+
+Defined component information is has_some_component. In the example
+below, we can infer that we have Emulex Lightpulse gear and set the
+group has_hardware_emulex_lightpulse.
+
+.. code-block:: sh
+
+    !/bin/sh
+    #
+    #
+
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin; export PATH
+    # let's figure out what product type this is
+    os=`uname -s`
+    productname="product-no-dmidecode"
+
+    if [ $os = "Linux" ] ; then
+        productname=`dmidecode -s system-product-name 2>&1`
+        case $productname in
+        "PowerEdge M600") 
+            productname="product-bladem600"
+            ;;
+        "Sun Fire X4100 M2")
+            productname="product-x4100m2"
+            ;;
+        "Sun Fire X4440")
+            productname="product-x4440"
+            ;;
+        "VMware Virtual Platform")
+            productname="product-vmware-vm"
+            ;;
+        *)
+            productname="product-unknown"
+            ;;
+        esac
+ 
+        # check for emulex lightpulse fiber channel HBA
+        check_emulex_lightpulse=`lspci -d 10df: | grep -c LightPulse`
+        if [ $check_emulex_lightpulse -gt 0 ]; then
+            echo group:has_hardware_emulex_lightpulse
+        fi
+
+        # check for broadcom nics
+        check_broadcom_nic=`lspci -d 14e4: | grep -c NetXtreme`
+        if [ $check_broadcom_nic -gt 0 ]; then
+            echo group:has_hardware_broadcom_nic
+        fi
+
+        # check for intel pro/1000 MT nics
+        check_intel_pro1000mt_nic=`lspci -d 8086:1010 | wc -l`
+        if [ $check_intel_pro1000mt_nic -gt 0 ]; then
+            echo group:has_hardware_intel_pro1000mt_nic
+        fi
+
+    fi
+
+    if [ $os = "SunOS" ] ; then
+        case `uname -i` in
+        SUNW,*)
+            productname=`uname -i`
+            ;;
+        *)
+            productname=product-unknown
+            ;;
+        esac
+    fi
+
+    echo group:$productname

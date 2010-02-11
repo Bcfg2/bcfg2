@@ -10,7 +10,7 @@ Plugins are the source of all logic used in building a config. They can perform 
 
 #. Generating configuration inventory lists for clients
 #. Generating configuration entry contents for clients
-#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :ref:`server-plugins-probes`.
+#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :ref:`server-plugins-probes-index`.
 #. Automating administrative tasks (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh key management)
 #. Generating client per-entry installation decision-lists
 
@@ -44,6 +44,7 @@ Abstract Configuration (Structures)
    :maxdepth: 2
    :glob:
 
+   structures/bundler/index
    structures/*
 
 Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
@@ -90,4 +91,6 @@ More details can be found in :ref:`server-plugins-plugin-roles`
    :hidden:
 
    plugin-roles
-   probes
+   probes/index
+   properties
+   trigger

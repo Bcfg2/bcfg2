@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-probes-current-kernel:
+
+current-kernel
+==============
+
+Probe the currently running kernel.
+
+.. code-block:: sh
+
+    #!/bin/sh
+    #
+    # PROBE_NAME : current-kernel
+    echo `uname -r`
