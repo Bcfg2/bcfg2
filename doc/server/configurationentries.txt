@@ -1,0 +1,62 @@
+.. -*- mode: rst -*-
+
+.. _server-configurationentries:
+
+Configuration Entries
+---------------------
+
+This page describes the names and semantics of each of the configuration
+entries used by Bcfg2.
+
+Common non-POSIX entries
+^^^^^^^^^^^^^^^^^^^^^^^^
+
++-------------+---------------------+-----------------------------+
+| TagName     | Description         | Attributes                  |
++=============+=====================+=============================+
+| Action      | Command             | name, command, when, timing |
++-------------+---------------------+-----------------------------+
+| Package     | Software Packages   | name, type, version, url    |
++-------------+---------------------+-----------------------------+
+| PostInstall | PostInstall command | name                        |
++-------------+---------------------+-----------------------------+
+| Service     | System Services     | name, type, status, reload  |
++-------------+---------------------+-----------------------------+
+
+POSIX entries
+^^^^^^^^^^^^^
+
+In 1.0.0, there are new unified POSIX Path entries which prevent
+inconsistent configuration specifications of multiple entries for a given
+path. The following table describes the various types available for new
+**Path** entries.
+
++-------------+----------------------+-----------------+--------------------------+
+| Type        | Replacement/New      | Description     | Attributes               |
++=============+======================+=================+==========================+
+| device      | New                  | Create block,   | name, owner, group,      |
+|             |                      | character, and  | dev_type                 |
+|             |                      | fifo devices    | (block, char, fifo),     |
+|             |                      |                 | major/minor              |
+|             |                      |                 | (for block/char devices) |
++-------------+----------------------+-----------------+--------------------------+
+| directory   | Replaces Directory   | Directories     | name, owner, group,      |
+|             | entries              |                 | perms, prune             |
++-------------+----------------------+-----------------+--------------------------+
+| file        | Replaces ConfigFile  | Configuration   | name, owner, group,      |
+|             | entries              | File            | perms, encoding, empty   |
++-------------+----------------------+-----------------+--------------------------+
+| hardlink    | New                  | Create          | name, to                 |
+|             |                      | hardlinks       |                          |
++-------------+----------------------+-----------------+--------------------------+
+| nonexistent | New                  | Specify a path  | name                     |
+|             |                      | that should not |                          |
+|             |                      | exist           |                          |
++-------------+----------------------+-----------------+--------------------------+
+| permissions | Replaces Permissions | Permissions of  | name, owner,             |
+|             | entries              | POSIX entities  | group, perms             |
+|             |                      |                 |                          |
++-------------+----------------------+-----------------+--------------------------+
+| symlink     | Replaces SymLink     | SymLinks        | name, to                 |
+|             | entries              |                 |                          |
++-------------+----------------------+-----------------+--------------------------+

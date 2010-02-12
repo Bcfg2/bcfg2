@@ -125,10 +125,10 @@ Create a nagios bcfg2 bundle /var/lib/bcfg2/Bundler/nagios.xml
 .. code-block:: xml
 
     <Bundle name='nagios' version='2.0'>
-      <ConfigFile name='/etc/nagiosgen.status'/>
+      <Path name='/etc/nagiosgen.status'/>
       <Group name='rh'>
         <Group name='nagios-server'>
-          <ConfigFile name='/etc/nagios/nagiosgen.cfg'/>
+          <Path name='/etc/nagios/nagiosgen.cfg'/>
           <Package name='libtool-libs'/>
           <Package name='nagios'/>
           <Package name='nagios-www'/>
@@ -137,7 +137,7 @@ Create a nagios bcfg2 bundle /var/lib/bcfg2/Bundler/nagios.xml
       </Group>
       <Group name='debian-lenny'>
         <Group name='nagios-server'>
-          <ConfigFile name='/etc/nagios3/nagiosgen.cfg'
+          <Path name='/etc/nagios3/nagiosgen.cfg'
                       altsrc='/etc/nagios/nagiosgen.cfg'/>
           <Package name='nagios3'/>
           <Package name='nagios3-common'/>

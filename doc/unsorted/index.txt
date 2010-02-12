@@ -17,13 +17,6 @@ list below.
 * `NewDynamicReports`
 * `NewDynamicReportsInstallation`
 * `Plugins/Actions`
-* `Plugins/Bundler/examples/kernel.xml`
-* `Plugins/Bundler/examples/moab.xml`
-* `Plugins/Bundler/examples/nagios.xml`
-* `Plugins/Bundler/examples/ntp.xml`
-* `Plugins/Bundler/examples/snmpd.xml`
-* `Plugins/Bundler/examples/torque.xml`
-* `Plugins/Bundler/examples/yp.xml`
 * `Plugins/Ohai`
 * `Plugins/Snapshots`
 * `Plugins/TGenshi/examples/bcfg2_cron`

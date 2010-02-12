@@ -99,4 +99,4 @@ Examples
         <Path name='/etc/sysconfig/network-scripts/ifcfg-eth2' altsrc='/etc/ifcfg-template'/>
       </Bundle>
 
-  altsrc can be used as a parameter for any entry type, and can be used in any structure, including Bundler, Base, and SGenshi.
+  altsrc can be used as a parameter for any entry type, and can be used in any structure, including Bundler and Base.
