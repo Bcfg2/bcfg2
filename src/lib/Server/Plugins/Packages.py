@@ -414,7 +414,7 @@ class APTSource(Source):
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
-                            cdeps = [re.sub('\(.*\)', '', cdep) for cdep in dep.split('|')]
+                            cdeps = [re.sub('\s+', '', re.sub('\(.*\)', '', cdep)) for cdep in dep.split('|')]
                             dyn_dname = "choice-%s-%s-%s" % (pkgname, barch, vindex)
                             vindex += 1
                             bdeps[barch][pkgname].append(dyn_dname)
