@@ -180,46 +180,33 @@ class Source(object):
                 logger.debug("Requirement %s provided by %s" \
                              % (requirement, provset))
 
+            satisfiers = provset.intersection(packages)
             if len(provset) == 1:
                 # single choice for requirement
-                deps = set()
-                pname = list(provset)[0]
-                if debug:
-                    logger.debug("Adding Package %s for %s" % (pname, requirement))
-                try:
-                    deps = self.get_deps(metadata, pname)
-                    if debug:
-                        logger.debug("Package %s: adding new deps %s" \
-                                     % (pname, deps))
-                except:
-                    pass
-                return (set([pname]), deps)
+                pkg_to_add = list(provset)[0]
+            elif satisfiers:
+                if item_is_pkg and requirement in satisfiers:
+                    # still need to add requirement prereqs
+                    pkg_to_add = requirement
+                else:
+                    pkg_to_add = list(satisfiers)[0]
+            elif item_is_pkg:
+                pkg_to_add = requirement
+            else:
+                # choice data is here, but not forced by currently resolved requirements
+                raise SomeData
 
-            satisfiers = provset.intersection(packages)
-            if satisfiers:
-                # requirement already satisfied
-                if debug:
-                    logger.debug("Requirement %s satisfied by %s" \
-                                 % (requirement, satisfiers))
-                return (set(), set())
+            if debug:
+                logger.debug("Adding Package %s for %s" % (pkg_to_add, requirement))
 
-            if item_is_pkg:
-                # fall back to package with name of requirement
-                deps = set()
+            try:
+                deps = self.get_deps(metadata, pkg_to_add)
                 if debug:
-                    logger.debug("Adding Package %s for %s" \
-                                 % (requirement, requirement))
-                try:
-                    deps = self.get_deps(metadata, requirement)
-                    if debug:
-                        logger.debug("Package %s: adding new deps %s" \
-                                     % (requirement, deps))
-                except:
-                    pass
-                return (set([requirement]), deps)
-
-            # choice data is here, but not forced by currently resolved requirements
-            raise SomeData
+                    logger.debug("Package %s: adding new deps %s" \
+                                     % (pkg_to_add, deps))
+            except:
+                pass
+            return (set([pkg_to_add]), deps)
 
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
@@ -236,7 +223,7 @@ class YUMSource(Source):
             self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
         else:
             self.baseurl = self.rawurl
-        self.cachefile = self.escape_url(self.baseurl) + '.data'
+        self.cachefile = self.escape_url(self.baseurl + '@' + version) + '.data'
         self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
@@ -379,7 +366,7 @@ class APTSource(Source):
 
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
         Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
-        self.cachefile = self.escape_url(self.url) + '.data'
+        self.cachefile = self.escape_url(self.url + '@' + version) + '.data'
         self.pkgnames = set()
 
     def save_state(self):
