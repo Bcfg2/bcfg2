@@ -409,7 +409,7 @@ class APTSource(Source):
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
-                elif words[0] == 'Depends':
+                elif words[0] in ['Depends', 'Pre-Depends']:
                     bdeps[barch][pkgname] = []
                     vindex = 0
                     for dep in words[1].split(','):
