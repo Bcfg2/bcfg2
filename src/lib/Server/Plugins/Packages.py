@@ -205,7 +205,7 @@ class Source(object):
                     logger.debug("Package %s: adding new deps %s" \
                                      % (pkg_to_add, deps))
             except:
-                pass
+                deps = set()
             return (set([pkg_to_add]), deps)
 
 class YUMSource(Source):
