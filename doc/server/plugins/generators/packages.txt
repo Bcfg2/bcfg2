@@ -85,6 +85,31 @@ Yum sources can be similarly specified:
       </YUMSource>
     </Sources>
 
+.. note:: There is also a RawURL syntax for specifying sources that
+          don't follow the conventional layout:
+
+          .. code-block:: xml
+
+              <Sources>
+                <!-- CentOS (5.4) sources -->
+                <YUMSource>
+                  <Group>centos5.4</Group>
+                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.os</RawURL>
+                  <Arch>x86_64</Arch>
+                </YUMSource>
+                <YUMSource>
+                  <Group>centos5.4</Group>
+                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.updates</RawURL>
+                  <Arch>x86_64</Arch>
+                </YUMSource>
+                <YUMSource>
+                  <Group>centos5.4</Group>
+                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.extras</RawURL>
+                  <Arch>x86_64</Arch>
+                </YUMSource>
+              </Sources>
+
+
 Configuration Updates
 =====================
 
