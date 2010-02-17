@@ -59,7 +59,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % \
                                    entry.get('FMRI'))[1][0].split()
         except IndexError:
-            # Ocurrs when no lines are returned (service not installed)
+            # Occurs when no lines are returned (service not installed)
             return False
 
         if entry.get('status') == 'on':
