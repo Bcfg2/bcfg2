@@ -165,7 +165,7 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
     if not to_file == None:
         filelog = logging.FileHandler(to_file)
         filelog.setLevel(logging.DEBUG)
-        filelog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
+        filelog.setFormatter(logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(filelog)
     logging.root.setLevel(level)
     logging.already_setup = True
