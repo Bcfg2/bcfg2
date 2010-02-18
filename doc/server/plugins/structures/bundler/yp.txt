@@ -1,0 +1,32 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-yp:
+
+yp
+==
+
+= yp.xml =
+
+Note that this Bundle includes **Group** sections.  Toplevel elements
+go to anybody that includes this Bundle, but clients that belong to
+the **yp-client** and **yp-server** groups get their own specialized
+treatment too.
+
+.. code-block:: xml
+
+    <Bundle name='yp' version='2.0'>
+      <Package name='yp-tools'/>
+      <Path name='/etc/nsswitch.conf'/>
+      <Path name='/etc/yp.conf'/>
+      <Path name='/etc/defaultdomain'/>
+      <Group name='yp-client'>
+        <Package name='ypbind'/>
+        <Service name='ypbind'/>
+        <Service name='portmap'/>
+      </Group>
+      <Group name='yp-server'>
+        <Package name='ypserv'/>
+        <Service name='ypserv'/>
+        <Path name='/etc/ypserv.conf'/>
+      </Group>
+    </Bundle>

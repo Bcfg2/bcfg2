@@ -204,7 +204,16 @@ The latter form is preferred if the if block contains multiple
 files. While this example is simple, the test in the if block can in
 fact be any python statement.
 
-Examples
---------
+Other examples
+==============
 
-See [wiki:Plugins/Bundler/examples this] page for more Bundler examples.
+.. toctree::
+   :maxdepth: 1
+
+   kernel
+   moab
+   nagios
+   ntp
+   snmpd
+   torque
+   yp

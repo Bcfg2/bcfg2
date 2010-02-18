@@ -1,0 +1,49 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-torque:
+
+torque
+======
+
+= torque.xml =
+
+A longer Bundle that includes many group-specific entries.
+
+.. code-block:: xml
+
+    <Bundle name='torque' version='1.0'>
+      <Service name='nfs'/>
+      <Service name='nfslock'/>
+      <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque'/>
+      <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/spool'/>
+      <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/undelivered'/>
+      <Path name='/var/spool/torque/pbs_environment'/>
+      <Path name='/var/spool/torque/torque.server'/>
+      <Path name='/var/spool/torque/server_name'/>
+      <Service name='jumbo'/>
+      <Group name='torque-mom'>
+        <Service name='torque_mom'/>
+        <Path name='/etc/init.d/torque_mom'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/aux'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/checkpoint'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/mom_logs'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/mom_priv'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/mom_priv/jobs'/>
+        <Path name='/var/spool/torque/mom_priv/config'/>
+        <Path name='/var/spool/torque/mom_priv/prologue'/>
+        <Path name='/var/spool/torque/mom_priv/epilogue'/>
+      </Group>
+      <Group name='torque-server'>
+        <Service name='torque_server'/>
+        <Path name='/etc/init.d/torque_server'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_logs'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/accounting'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/acl_groups'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/acl_hosts'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/acl_svr'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/acl_users'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/jobs'/>
+        <BoundPath type='directory' owner='root' group='root' perms='0755' name='/var/spool/torque/server_priv/queues'/>
+      </Group>
+    </Bundle>

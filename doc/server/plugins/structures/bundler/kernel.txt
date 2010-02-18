@@ -1,0 +1,78 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-kernel:
+
+kernel
+======
+
+This is a rather complex Bundle for the Linux kernel from a system with
+a history of complexity. There are two kernel versions present on the
+systems at all times (the current and the previous), so the package
+names all contain versioning information. This includes kernel-specific
+modules for various specialties - ``gm`` for Myrinet boards, ``gpfs``
+and ``pvfs`` for storage clients, and ``nvidia`` modules for machines
+with Nvidia cards. Note that only the ``ia32`` machines have Nvidia
+cards in them, and thus those entries only exist in that section.
+
+It is easy to see that there is duplication of effort between the
+two architectures - both have the same ``linux`` package entry names,
+for example. This Bundle could be arranged in many different ways,
+some of which might be better than this one. Feel free to hack as needed.
+
+.. code-block:: xml
+
+    <Bundle name='kernel' version='2.0'>
+      <Group name='sles8'>
+        <!-- =================== ia32 ==================== -->
+        <Group name='ia32'>
+          <Path name='/etc/lilo.conf'/>
+          <Path name='/boot/vmlinuz'/>
+          <Path name='/boot/initrd'/>
+          <Path name='/boot/vmlinuz.old'/>
+          <Path name='/boot/initrd.old'/>
+          <PostInstall name='/sbin/lilo'/>
+          <!-- Current kernel -->
+          <Package name='linux-2.4.21-314.tg1'/>
+          <Package name='linux-2.4.21-314.tg1-source'/>
+          <!-- Old kernel -->
+          <Package name='linux-2.4.21-309.tg1'/>
+          <Group name='gm'>
+            <Package name='gm-kernel-2.4.21-314.tg1'/>
+            <Package name='gm-kernel-2.4.21-309.tg1'/>
+          </Group>
+          <Group name='storage-client'>
+            <!-- Current kernel -->
+            <Package name='gpfs-modules-2.4.21-314.tg1'/>
+            <Package name='pvfs2-kernel-2.4.21-314.tg1'/>
+            <!-- Old kernel -->
+            <Package name='gpfs-modules-2.4.21-309.tg1'/>
+            <Package name='pvfs2-kernel-2.4.21-309.tg1'/>
+          </Group>
+          <Group name='nvidia'>
+            <Package name='NVIDIA-kernel-2.4.21-314.tg1'/>
+            <Package name='NVIDIA-kernel-2.4.21-309.tg1'/>
+          </Group>
+        </Group>
+        <!-- =================== ia64 ==================== -->
+        <Group name='ia64'>
+          <Path name='/boot/efi/SuSE/elilo.conf'/>
+          <!-- Current kernel -->
+          <Package name='linux-2.4.21-314.tg1'/>
+          <Package name='linux-2.4.21-314.tg1-source'/>
+          <!-- Old kernel -->
+          <Package name='linux-2.4.21-309.tg1'/>
+          <Group name='gm'>
+            <Package name='gm-kernel-2.4.21-314.tg1'/>
+            <Package name='gm-kernel-2.4.21-309.tg1'/>
+          </Group>
+          <Group name='storage-client'>
+            <!-- Current kernel -->
+            <Package name='gpfs-modules-2.4.21-314.tg1'/>
+            <Package name='pvfs2-kernel-2.4.21-314.tg1'/>
+            <!-- Old kernel -->
+            <Package name='gpfs-modules-2.4.21-309.tg1'/>
+            <Package name='pvfs2-kernel-2.4.21-309.tg1'/>
+          </Group>
+        </Group>
+      </Group>
+    </Bundle>

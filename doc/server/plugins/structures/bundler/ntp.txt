@@ -1,0 +1,21 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-ntp:
+
+ntp
+===
+
+Despite its lack of groups, this Bundle controls both ``ntp`` servers
+and clients. It does this through the use of host-specific entries in the
+``Cfg`` repository. It is left as an exercise for the reader to do this
+better through use of groups.
+
+.. code-block:: xml
+
+    <Bundle name='ntp'>
+      <Package name='xntp'/>
+      <Path name='/etc/sysconfig/xntp'/>
+      <Path name='/etc/sysconfig/clock'/>
+      <Path name='/etc/ntp.conf'/>
+      <Service name='xntpd'/>
+    </Bundle>

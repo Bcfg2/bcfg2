@@ -1,0 +1,59 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-nagios:
+
+nagios
+======
+
+A Bundle for the Nagios service. This Bundle installs all of our local
+Nagios plugins, takes into account that the SNMP package changed names
+between SLES 8 and SLES 9, and works on both the Nagios server and
+the clients.
+
+.. code-block:: xml
+
+    <Bundle name='nagios-client' version='2.0'>
+      <Group name='sles8'>
+        <Package name='ucdsnmp'/>
+      </Group>
+      <Group name='sles9'>
+        <Package name='net-snmp'/>
+      </Group>
+      <Package name='nagios-plugins'/>
+      <Package name='perl-SNMP'/>
+      <Package name='radiusclient' />
+      <Package name='postgresql-libs' />
+      <Package name='mysql-shared' />
+      <Path name='/etc/hosts.deny'/>
+      <Path name='/etc/services'/>
+      <Path name='/etc/snmpd.conf'/>
+      <Path name='/usr/lib/nagios/plugins/check_disks_scratchgpfs1.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_fs.mds'/>
+      <Path name='/usr/lib/nagios/plugins/check_gm_network.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_gpfs_wan.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_hung_jobs.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_mem.mds'/>
+      <Path name='/usr/lib/nagios/plugins/check_mem.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_nvidia_acceleration.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_os.mds'/>
+      <Path name='/usr/lib/nagios/plugins/check_procinfo.mds'/>
+      <Path name='/usr/lib/nagios/plugins/check_torque.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_uname_r.tg'/>
+      <Path name='/usr/lib/nagios/plugins/check_uname_r.tg.conf'/>
+      <Service name='snmpd'/>
+      <Group name='nagios-server'>
+        <Package name='nagios'/>
+        <Package name='nagios-devel'/>
+        <Package name='nagios-www'/>
+        <Path name='/etc/httpd/conf.d/nagios.conf'/>
+        <Path name='/etc/nagios/cgi.cfg'/>
+        <Path name='/etc/nagios/checkcommands.cfg'/>
+        <Path name='/etc/nagios/nagios.cfg'/>
+        <Path name='/etc/nagios/resource.cfg'/>
+      </Group>
+    </Bundle>
+
+.. note::
+
+    You may also want to have a look at the :ref:`NagiosGen
+    <server-plugins-generators-nagiosgen>` plugin.
