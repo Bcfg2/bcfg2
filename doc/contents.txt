@@ -17,6 +17,7 @@ Welcome to Bcfg2's documentation!
    server/index
    client/index
    gettinghelp
+   bcfg2.conf-options
    development/index
 
    unsorted/index

@@ -172,6 +172,10 @@ def colon_split(c_string):
 
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
+LOCKFILE = Option('Specify lockfile',
+           "/var/lock/bcfg2.run",
+           cf=('components', 'lockfile'),
+           odesc='<Path to lockfile>')
 HELP = Option('Print this usage message', False, cmd='-h')
 DEBUG = Option("Enable debugging output", False, cmd='-d')
 VERBOSE = Option("Enable verbose output", False, cmd='-v')

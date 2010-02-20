@@ -28,7 +28,6 @@ def cb_sigint_handler(signum, frame):
 DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
                                      cmd="--decision-list", odesc='<file>',
                                      long_arg=True)
-LOCKFILE = "/var/lock/bcfg2.run"
 
 
 class Client:
@@ -45,6 +44,7 @@ class Client:
             'extra': Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
             'quick': Bcfg2.Options.CLIENT_QUICK,
             'debug': Bcfg2.Options.DEBUG,
+            'lockfile': Bcfg2.Options.LOCKFILE,
             'drivers': Bcfg2.Options.CLIENT_DRIVERS,
             'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
             'paranoid': Bcfg2.Options.CLIENT_PARANOID,
@@ -259,7 +259,7 @@ class Client:
         if not self.setup['omit-lock-check']:
             #check lock here
             try:
-                lockfile = open(LOCKFILE, 'w')
+                lockfile = open(self.setup['lockfile'], 'w')
                 try:
                     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
@@ -277,7 +277,7 @@ class Client:
             if lockfile:
                 try:
                     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-                    os.remove(LOCKFILE)
+                    os.remove(self.setup['lockfile'])
                 except OSError:
                     self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
 
