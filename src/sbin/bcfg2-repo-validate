@@ -57,11 +57,12 @@ if __name__ == '__main__':
     # get all XIncluded bundles
     xdata.xinclude()
     for bundle in xdata.findall("//Bundle"):
-        ref_bundles.add("%s/Bundler/%s.xml" % (repo, bundle.get('name')))
+        ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
 
     # get lists of all other xml files to validate
     clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
     bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
+    genshibundle_list = glob.glob("%s/Bundler/*.genshi" % repo)
     pkg_list = glob.glob("%s/Pkgmgr/*.xml" % repo)
     base_list = glob.glob("%s/Base/*.xml" % repo)
     rules_list = glob.glob("%s/Rules/*.xml" % repo)
@@ -150,7 +151,12 @@ if __name__ == '__main__':
     if verbose:
         print("")
         for bundle in ref_bundles:
-            if bundle not in bundle_list:
+            # check for both regular and genshi bundles
+            xmlbundle = "%s.xml" % bundle
+            genshibundle = "%s.genshi" % bundle
+            allbundles = bundle_list + genshibundle_list
+            if xmlbundle not in allbundles and \
+               genshibundle not in allbundles:
                 print("*** Warning: Bundle %s referenced, but does not "
                                     "exist." % bundle)
 
