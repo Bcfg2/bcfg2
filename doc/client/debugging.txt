@@ -6,9 +6,13 @@
 Client Debugging
 ================
 
-When working on the Bcfg2 client, it is helpful to employ a few specific techniques to isolate and remedy problems.
+When working on the Bcfg2 client, it is helpful to employ a few specific
+techniques to isolate and remedy problems.
 
-First, running the client with the -f flag allows configuration from a local file, rather than querying the server. This helps rule out server configuration problems, and allows for rapid development. For example: `bcfg2 -f test-config.conf` with the following test-config.conf:
+First, running the client with the -f flag allows configuration from a
+local file, rather than querying the server. This helps rule out server
+configuration problems, and allows for rapid development. For example:
+``bcfg2 -f test-config.conf`` with the following test-config.conf:
 
 .. code-block:: rst
 
@@ -18,7 +22,15 @@ First, running the client with the -f flag allows configuration from a local fil
         </Bundle>
     </Configuration>
 
-Next, it is important to look at the interactive mode. This is similar to the interactive mode on the server and provides an interactive Python interpreter with which one may manipulate all the objects in the client. It will setup all the infrastructure so you will have the appropriate objects to play with. It will run the client through once, then present you with an interpreter. Try it out with: `python -i /usr/bin/bcfg2` or, for more fun, a local config file and also enable Debugging and Verbose output with `-d` and `-v`, yielding `python -i /usr/bin/bcfg2 -d -v -f test-config.conf`
+Next, it is important to look at the interactive mode. This is similar
+to the interactive mode on the server and provides an interactive
+Python interpreter with which one may manipulate all the objects in
+the client. It will setup all the infrastructure so you will have the
+appropriate objects to play with. It will run the client through once,
+then present you with an interpreter. Try it out with: ``python -i
+/usr/bin/bcfg2`` or, for more fun, a local config file and also enable
+Debugging and Verbose output with `-d` and `-v`, yielding ``python -i
+/usr/bin/bcfg2 -d -v -f test-config.conf``.
 
-Now we just explore; use `dir()` to examine different objects in the client, or run a reconfiguration again by calling `client.run()`
-
+Now we just explore; use ``dir()`` to examine different objects in the
+client, or run a reconfiguration again by calling `client.run()`
