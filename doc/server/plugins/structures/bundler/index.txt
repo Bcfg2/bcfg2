@@ -155,7 +155,7 @@ in their name. The following template produces such a config file entry.
 Depending on the circumstance, these configuration files can either be
 handled by individual entries in :ref:`server-plugins-generators-cfg`,
 :ref:`server-plugins-generators-tcheetah`, or
-:ref:`server-plugins-generators-tgenshi`, or can be mapped to a single
+:ref:`server-plugins-generators-tgenshi-index`, or can be mapped to a single
 entry by using the [wiki:altsrc] feature.
 
 In this example, configuration file names are built using probed results

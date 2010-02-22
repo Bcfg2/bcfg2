@@ -14,20 +14,16 @@ list below.
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
 * `ManualPages`
-* `NewDynamicReports`
-* `NewDynamicReportsInstallation`
 * `Plugins/Actions`
 * `Plugins/Ohai`
 * `Plugins/Snapshots`
 * `PrecompiledPackages`
-* `Prereqs`
 * `Publications`
 * `QuickStart2`
 * `QuickStart3`
 * `SchemaEvolution`
 * `SecurityDevPlan`
 * `ServerSideOverview`
-* `TGenshi/examples/Templated_Access`
 * `TOC`
 * `Troubleshooting`
 * `UpgradeTesting`

@@ -85,6 +85,49 @@ Produces:
 This flexibility provides the ability to build much more compact and
 succinct definitions of configuration contents than Cfg can.
 
+Templating Access Data
+======================
+
+These examples depend on the :ref:`server-plugins-grouping-BB` plugin. The
+BB plugin provides additional data about users that have been allocated
+nodes. It maps in a dictionary of user priviledges to client metadata
+instances.  Each of these plugins use this data. On this system, node
+allocations map to sudo and root access.
+
+``/var/lib/bcfg2/TGenshi/etc/sudoers/template.newtxt``::
+
+    # /etc/sudoers
+    #
+    # This file MUST be edited with the 'visudo' command as root.
+    #
+    # See the man page for details on how to write a sudoers file.
+    # Host alias specification
+
+    # User alias specification
+    User_Alias ADMIN =
+    ${','.join(metadata.BB['users'].keys())},admin1,admin2
+    User_Alias IMAGERS = user1,user2,user3
+
+    # Cmnd alias specification
+    Cmnd_Alias      SYSTEMIMAGER = /usr/sbin/getimage [A-z]* [A-z]*
+
+    # Defaults
+
+    Defaults        !lecture,tty_tickets,!fqdn
+
+    # User privilege specification
+    root    ALL=(ALL) ALL
+    IMAGERS login=SYSTEMIMAGER
+
+    # Members of the admin group may gain root privileges
+    ADMIN ALL=(ALL) ALL
+
+``/var/lib/bcfg2/TGenshi/root/.ssh/authorized_keys/template.newtxt``::
+
+    {% for user in metadata.BB['users'] %}
+    ${"\n".join(metadata.BB['users'][user])}
+    {% end %}
+
 FAQs
 ====
 

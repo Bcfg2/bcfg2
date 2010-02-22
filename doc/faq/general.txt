@@ -6,13 +6,23 @@ FAQ: General
 What does Bcfg2 stand for?
 --------------------------
 
-Initially, Bcfg stood for the bundle configuration system. Bcfg2 is the second major revision. At this point, the acronym is meaningless, but the name has stuck. Luckily, Bcfg2 googles better than Bcfg does. No, seriously. Try it. All I know is that I have no interest in a billion cubic feet of gas.
+Initially, Bcfg stood for the bundle configuration system. Bcfg2 is the
+second major revision. At this point, the acronym is meaningless, but
+the name has stuck. Luckily, Bcfg2 googles better than Bcfg does. No,
+seriously. Try it. All I know is that I have no interest in a billion
+cubic feet of gas.
 
 What architectures does Bcfg2 support?
 --------------------------------------
 
-Bcfg2 should run on any POSIX compatible operating system, however direct support for an operating system's package and service formats are limited by the currently available :ref:`client-tools-index` (although new client tools are pretty easy to add). The following is an incomplete but more exact list of platforms on which Bcfg2 works.
+Bcfg2 should run on any POSIX compatible operating system, however direct
+support for an operating system's package and service formats are limited
+by the currently available :ref:`client-tools-index` (although new client
+tools are pretty easy to add). The following is an incomplete but more
+exact list of platforms on which Bcfg2 works.
 
 * GNU/Linux deb based distros
 * GNU/Linux rpm based distros
 * Solaris pkg based
+* Gentoo portage based
+* OSX (POSIX/launchd support)

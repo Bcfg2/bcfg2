@@ -13,7 +13,9 @@ This is a complete getting started guide for Ubuntu
 Install Bcfg2
 -------------
 
-We first need to install the server. For this example, we will use the bcfg2 server package from the bcfg2 `PPA`_ (note that there is also a version available in the ubuntu archives, but it is not as up to date).
+We first need to install the server. For this example, we will use the
+bcfg2 server package from the bcfg2 `PPA`_ (note that there is also a
+version available in the ubuntu archives, but it is not as up to date).
 
 .. _PPA: https://launchpad.net/~bcfg2/+archive/ppa
 
@@ -35,7 +37,9 @@ Remove the default configuration preseeded by the ubuntu package::
 Initialize your repository
 --------------------------
 
-Now that you're done with the install, you need to intialize your repository and setup your bcfg2.conf. bcfg2-admin init is a tool which allows you to automate this process. ::
+Now that you're done with the install, you need to intialize your
+repository and setup your bcfg2.conf. bcfg2-admin init is a tool which
+allows you to automate this process.::
 
     root@lucid:~# bcfg2-admin init
     Store bcfg2 configuration in [/etc/bcfg2.conf]: 
@@ -68,7 +72,7 @@ Of course, change responses as necessary.
 Start the server
 ----------------
 
-You are now ready to start your bcfg2 server for the first time. ::
+You are now ready to start your bcfg2 server for the first time.::
 
     root@lucid:~# /etc/init.d/bcfg2-server start
     root@lucid:~# tail /var/log/syslog
@@ -76,7 +80,7 @@ You are now ready to start your bcfg2 server for the first time. ::
     Dec 17 22:07:02 lucid bcfg2-server[17523]: serve_forever() [start]
     Dec 17 22:07:02 lucid bcfg2-server[17523]: Processed 16 fam events in 0.502 seconds. 0 coalesced
 
-Run bcfg2 to be sure you are able to communicate with the server ::
+Run bcfg2 to be sure you are able to communicate with the server::
 
     root@lucid:~# bcfg2 -vqn
     Loaded tool drivers:
@@ -98,7 +102,8 @@ Run bcfg2 to be sure you are able to communicate with the server ::
 Bring your first machine under Bcfg2 control
 --------------------------------------------
 
-Now it is time to get your first machine's configuration into your Bcfg2 repository. Let's start with the server itself.
+Now it is time to get your first machine's configuration into your Bcfg2
+repository. Let's start with the server itself.
 
 Setup the `Packages`_ plugin
 +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -139,7 +144,8 @@ Replace Pkgmgr with Packages in the plugins line of bcfg2.conf::
     [components]
     bcfg2 = https://lucid:6789
 
-Create Packages layout (as per [wiki:Plugins/Packages#Exampleusage]) in /var/lib/bcfg2
+Create Packages layout (as per [wiki:Plugins/Packages#Exampleusage])
+in ``/var/lib/bcfg2``
 
 .. code-block:: xml
 
@@ -159,7 +165,10 @@ Create Packages layout (as per [wiki:Plugins/Packages#Exampleusage]) in /var/lib
       </APTSource>
     </Sources>
 
-Due to the `Magic Groups`_, we need to modify our Metadata. Let's add an **ubuntu-lucid** group which inherits the **ubuntu** group already present in /var/lib/bcfg2/Metadata/groups.xml. The resulting file should look something like this
+Due to the `Magic Groups`_, we need to modify our Metadata. Let's add
+an **ubuntu-lucid** group which inherits the **ubuntu** group already
+present in /var/lib/bcfg2/Metadata/groups.xml. The resulting file should
+look something like this
 
 .. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
 
@@ -185,7 +194,10 @@ Due to the `Magic Groups`_, we need to modify our Metadata. Let's add an **ubunt
 .. note::
     When editing your xml files by hand, it is useful to occasionally run `bcfg2-repo-validate` to ensure that your xml validates properly.
 
-The last thing we need is for the client to have the proper arch group membership. For this, we will make use of the [wiki:DynamicGroups] capabilities of the Probes plugin. Add Probes to your plugins line in bcfg2.conf and create the Probe.
+The last thing we need is for the client to have the proper arch group
+membership. For this, we will make use of the [wiki:DynamicGroups]
+capabilities of the Probes plugin. Add Probes to your plugins line in
+bcfg2.conf and create the Probe.
 
 .. code-block:: sh
 
@@ -227,7 +239,8 @@ Now we restart the bcfg2-server::
 Start managing packages
 +++++++++++++++++++++++
 
-Add a base-packages bundle. Let's see what happens when we just populate it with the ubuntu-standard package.
+Add a base-packages bundle. Let's see what happens when we just populate
+it with the ubuntu-standard package.
 
 .. code-block:: xml
 
@@ -236,7 +249,8 @@ Add a base-packages bundle. Let's see what happens when we just populate it with
             <Package name='ubuntu-standard'/>
     </Bundle>
 
-You need to reference the bundle from your Metadata. The resulting profile group might look something like this
+You need to reference the bundle from your Metadata. The resulting
+profile group might look something like this
 
 .. code-block:: xml
 
@@ -245,7 +259,8 @@ You need to reference the bundle from your Metadata. The resulting profile group
        <Group name='ubuntu-lucid'/>
     </Group>
 
-Now if we run the client in debug mode (-d), we can see what this has done for us. ::
+Now if we run the client in debug mode (-d), we can see what this has
+done for us.::
 
     root@lucid:~# bcfg2 -vqdn
     Running probe groups
@@ -282,7 +297,11 @@ Now if we run the client in debug mode (-d), we can see what this has done for u
     Total managed entries:  101
     Unmanaged entries:      281
 
-As you can see, the Packages plugin has generated the dependencies required for the ubuntu-standard package for us automatically. The ultimate goal should be to move all the packages from the **Unmanaged** entries section to the **Managed** entries section. So, what exactly *are* those Unmanaged entries? ::
+As you can see, the Packages plugin has generated the dependencies
+required for the ubuntu-standard package for us automatically. The
+ultimate goal should be to move all the packages from the **Unmanaged**
+entries section to the **Managed** entries section. So, what exactly *are*
+those Unmanaged entries?::
 
     root@lucid:~# bcfg2 -vqen
     Running probe groups
@@ -308,7 +327,11 @@ As you can see, the Packages plugin has generated the dependencies required for 
      Package:apport
      ...
 
-Now you can go through these and continue adding the packages you want to your Bundle. Note that `aptitude why` is useful when trying to figure out the reason for a package being installed. Also, deborphan is helpful for removing leftover dependencies which are no longer needed. After a while, I ended up with a minimal bundle that looks like this
+Now you can go through these and continue adding the packages you want to
+your Bundle. Note that ``aptitude why`` is useful when trying to figure
+out the reason for a package being installed. Also, deborphan is helpful
+for removing leftover dependencies which are no longer needed. After a
+while, I ended up with a minimal bundle that looks like this
 
 .. code-block:: xml
 
@@ -383,7 +406,8 @@ As you can see below, I no longer have any unmanaged packages. ::
 Manage services
 +++++++++++++++
 
-Now let's clear up the unmanaged service entries by adding the following entries to our bundle...
+Now let's clear up the unmanaged service entries by adding the following
+entries to our bundle...
 
 .. code-block:: xml
 
@@ -448,6 +472,7 @@ Dynamic (web) Reports
 ---------------------
 
 First, `aptitude install python-django apache2 libapache2-mod-python`.
+
  * Now we need to create the sqlite database::
 
     root@lucid:~# python /usr/share/pyshared/Bcfg2/Server/Reports/manage.py syncdb
