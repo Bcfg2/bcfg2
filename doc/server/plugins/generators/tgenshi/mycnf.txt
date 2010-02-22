@@ -1,0 +1,34 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-mycnf:
+
+mycnf
+=====
+
+The following template generates a ``server-id`` based on the last two
+numeric parts of the IP address. The "slave" portion of the configuration
+only applies to machines in the "slave" group.::
+
+    {% python
+    from genshi.builder import tag
+    import socket
+    parts = socket.gethostbyname(metadata.hostname).split('.')
+    server_id = parts[2] + parts[3]
+    %}\
+    [mysqld]
+
+    # [snip]
+
+    server-id = ${server_id}
+
+    # Replication configuration
+
+    {% if "slave" in metadata.groups %}\
+    relay-log = /data01/mysql/log/mysql-relay-bin
+    log-slave-updates = 1
+    {% end %}\
+    sync-binlog = 1
+    #read-only = 1
+    #report-host = <server fqdn>
+
+    # [snip]

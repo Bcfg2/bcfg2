@@ -1,0 +1,301 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-iptables:
+
+iptables
+========
+
+* Setup a TGenshi base iptables file that contains the basic rules you
+  want every host to have
+* Create a custom dir that has group and host specific rules you want
+  to apply
+* To be safe you should have a client side IptablesDeadmanScript if you
+  intend on having bcfg2 bounce iptables upon rule updates
+
+/repository/TGenshi/etc/sysconfig/iptables/template.newtxt
+----------------------------------------------------------
+
+::
+
+    {% python
+        from genshi.builder import tag
+        import os,sys
+        import Bcfg2.Options
+
+        opts = { 'repo': Bcfg2.Options.SERVER_REPOSITORY }
+        setup = Bcfg2.Options.OptionParser(opts)
+        setup.parse('--')
+        repo = setup['repo']
+        basedir = '%s' % (repo)
+
+        # for instance: /var/lib/bcfg2/custom/etc/sysconfig/iptables/
+        bcfg2BaseDir = basedir + '/includes' + name + '/'
+
+
+        def checkHostFile(hostName, type):
+            fileName = bcfg2BaseDir + type + '.H_' + hostName
+            if os.path.isfile(fileName)==True :
+               return fileName
+            else:
+               return fileName
+
+        def checkGroupFile(groupName, type):
+            fileName = bcfg2BaseDir + type + '.G_' + groupName
+            if os.path.isfile(fileName)==True :
+               return fileName
+            else:
+               return fileName
+
+    %}\
+    # BCFG2 GENERATED IPTABLES
+    # DO NOT CHANGE THIS
+    # $$Id$$
+    # $$HeadURL$$
+    # Templates live in ${bcfg2BaseDir}
+    # Manual customization of this file will get reverted.
+    # ----------------------------- FILTER --------------------------------- #
+    # Default CHAINS for FILTER:
+    *filter
+    :INPUT DROP [0:0]
+    :FORWARD DROP [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :NO-SMTP - [0:0]
+
+    #Default rules
+    #discard malicious packets
+    -A INPUT -p tcp --tcp-flags ALL ACK,RST,SYN,FIN -j DROP
+    -A INPUT -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
+    -A INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
+    #Allow incoming ICMP
+    -A INPUT -p icmp -m icmp -j ACCEPT
+    #Accept localhost traffic
+    -A INPUT -i lo -j ACCEPT
+    # Allow already established sessions to remain
+    -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+    # Deny inbound SMTP delivery (still allows outbound connections)
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 25 -j NO-SMTP
+    -A NO-SMTP -j LOG --log-prefix " Incoming SMTP (denied) "
+    -A NO-SMTP -j DROP
+
+    # Allow SSH Access
+    -A INPUT  -p tcp -m state --state NEW -m tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 22 -j SSH
+    -A SSH -s 192.0.0.0/255.0.0.0  -j ACCEPT
+
+    # Allow Ganglia Access
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1 --dport 8649 -j ACCEPT
+    # Gmetad access to gmond
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1  --dport 8649 -j ACCEPT
+    # Gmond UDP multicast
+    -A INPUT -m state --state NEW -m udp -p udp --dport 8649 -j ACCEPT
+
+    {% if metadata.groups %}\
+    # group custom FILTER rules:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'custom-filter')} %}\
+    {% end %}\
+    {% end %}\
+
+    # host-specific FILTER rules:
+    {% include ${checkHostFile(metadata.hostname, 'custom-filter')} %}\
+
+    COMMIT
+    # ------------------------------- NAT ---------------------------------- #
+    *nat
+
+    # Default CHAINS for NAT:
+    :PREROUTING ACCEPT [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :POSTROUTING ACCEPT [0:0]
+
+    {% if metadata.groups %}\
+    # group NAT for PREROUTING:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'nat-prerouting')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group NAT for OUTPUT:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'nat-output')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group NAT for POSTROUTING:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'nat-postrouting')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group custom NAT rules:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'custom-nat')} %}\
+    {% end %}\
+    {% end %}\
+
+    # host-specific NAT ruls:
+    {% include ${checkHostFile(metadata.hostname, 'custom-nat')} %}\
+    COMMIT
+    # ----------------------------- MANGLE -------------------------------- #
+    *mangle
+
+    # Default CHAINS for MANGLE:
+    :PREROUTING ACCEPT [0:0]
+    :INPUT ACCEPT [0:0]
+    :FORWARD ACCEPT [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :POSTROUTING ACCEPT [0:0]
+
+    {% if metadata.groups %}\
+    # group MANGLE for PREROUTING:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'mangle-prerouting')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group MANGLE for INPUT:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'mangle-input')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group MANGLE for FORWARD:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'mangle-forward')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group MANGLE for OUTPUT:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'mangle-output')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group MANGLE for POSTROUTING rules:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'mangle-postrouting')} %}\
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.groups %}\
+    # group custom MANGLE rules:
+    {% for group in metadata.groups %}\
+    {% include ${checkGroupFile(group,'custom-mangle')} %}\
+    {% end %}\
+    {% end %}\
+
+    # host-specific MANGLE rules:
+    {% include ${checkHostFile(metadata.hostname, 'custom-mangle')} %}\
+    COMMIT
+
+/var/lib/bcfg2/custom/etc/sysconfig/iptables/custom-filter.G_mysql-server
+-------------------------------------------------------------------------
+
+::
+
+    :MYSQL - [0:0]
+    -A INPUT  -p tcp -m state --state NEW -m tcp --dport 3306 --tcp-flags FIN,SYN,RST,ACK SYN -j MYSQL
+    -A MYSQL -s 192.168.0.0/255.0.0.0  -j ACCEPT
+
+For a host that is in the mysql-server group you get an iptables file
+that looks like the following::
+
+    # BCFG2 GENERATED IPTABLES
+    # DO NOT CHANGE THIS
+    # $Id: template.newtxt 5402 2009-08-19 22:50:06Z unixmouse$
+    # $HeadURL: https://svn.fakecompany.net/bcfg2/trunk/repository/TGenshi/etc/sysconfig/iptables/template.newtxt $
+    # Templates live in /var/lib/bcfg2/custom/etc/sysconfig/iptables/
+    # Manual customization of this file will get reverted.
+    # ----------------------------- FILTER --------------------------------- #
+    # Default CHAINS for FILTER:
+    *filter
+    :INPUT DROP [0:0]
+    :FORWARD DROP [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :NO-SMTP - [0:0]
+
+    #Default rules
+    #discard malicious packets
+    -A INPUT -p tcp --tcp-flags ALL ACK,RST,SYN,FIN -j DROP
+    -A INPUT -p tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
+    -A INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j DROP
+    # Allow incoming ICMP
+    -A INPUT -p icmp -m icmp -j ACCEPT
+    # Accept localhost traffic
+    -A INPUT -i lo -j ACCEPT
+    # Allow already established sessions to remain
+    -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+    # Deny inbound SMTP delivery (still allows outbound connections)
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 25 -j NO-SMTP
+    -A NO-SMTP -j LOG --log-prefix " Incoming SMTP (denied) "
+    -A NO-SMTP -j DROP
+
+    # Allow SSH Access
+    :SSH - [0:0]
+    -A INPUT  -p tcp -m state --state NEW -m tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 22 -j SSH
+    -A SSH -s 192.168.0.0/255.0.0.0  -j ACCEPT
+
+    # Allow Ganglia Access
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1 --dport 8649 -j ACCEPT
+    #Gmetad access to gmond
+    -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1  --dport 8649 -j ACCEPT
+    #Gmond UDP multicast
+    -A INPUT -m state --state NEW -m udp -p udp --dport 8649 -j ACCEPT
+
+    # group custom FILTER rules:
+    :MYSQL - [0:0]
+    -A INPUT  -p tcp -m state --state NEW -m tcp --dport 3306 --tcp-flags FIN,SYN,RST,ACK SYN -j MYSQL
+    -A MYSQL -s 192.168.0.0/255.0.0.0  -j ACCEPT
+
+    # host-specific FILTER rules:
+
+    COMMIT
+    # ------------------------------- NAT ---------------------------------- #
+    *nat
+
+    # Default CHAINS for NAT:
+    :PREROUTING ACCEPT [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :POSTROUTING ACCEPT [0:0]
+
+    # group NAT for PREROUTING:
+
+    # group NAT for OUTPUT:
+
+    # group NAT for POSTROUTING:
+
+    # group custom NAT rules:
+
+    # host-specific NAT rules:
+    COMMIT
+    # ----------------------------- MANGLE -------------------------------- #
+    *mangle
+
+    # Default CHAINS for MANGLE:
+    :PREROUTING ACCEPT [0:0]
+    :INPUT ACCEPT [0:0]
+    :FORWARD ACCEPT [0:0]
+    :OUTPUT ACCEPT [0:0]
+    :POSTROUTING ACCEPT [0:0]
+
+    # group MANGLE for PREROUTING:
+
+    # group MANGLE for INPUT:
+    # group MANGLE for FORWARD:
+
+    # group MANGLE for OUTPUT:
+
+    # group MANGLE for POSTROUTING rules:
+
+    # group custom MANGLE rules:
+
+    # host-specific MANGLE rules:
+    COMMIT

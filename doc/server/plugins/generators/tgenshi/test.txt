@@ -1,0 +1,157 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-test:
+
+test
+====
+
+As submitted by dclark
+
+This file just shows you what's available. It assumes a
+``/var/lib/bcfg2/etc/properties.xml`` file with an entry like this:
+
+.. code-block:: xml
+
+    #!text/xml
+    <Properties>
+      <password>
+        <bcfg2>fakeBCFG2password</bcfg2>
+      </password>
+    </Properties>
+
+::
+
+    Hostname is ${metadata.hostname}
+
+    Groups:
+    {% for group in metadata.groups %}\
+    ${group} \
+    {% end %}\
+
+    {% if metadata.categories %}\
+    Categories:
+    {% for category in metadata.categories %}\
+    ${category} \
+    {% end %}\
+    {% end %}\
+
+    {% if metadata.probes %}\
+    Probes:
+    {% for probe, value in metadata.probes.iteritems() %}\
+    $probe $value
+    {% end %}\
+    {% end %}\
+
+    Two main ways to get the same property value:
+    ${properties.properties.find('password').find('bcfg2').text}
+    ${properties.properties.xpath('password/bcfg2')[0].text}
+
+    One way to get information about metadata and properties:
+
+    dir(metadata):
+    {% for var in dir(metadata) %}\
+    ${var} \
+    {% end %}
+
+    dir(properties):
+    {% for var in dir(properties) %}\
+    ${var} \
+    {% end %}
+
+    dir(properties.entries):
+    {% for var in dir(properties.entries) %}\
+    ${var} \
+    {% end %}
+
+    dir(properties.label):
+    {% for var in dir(properties.label) %}\
+    ${var} \
+    {% end %}
+
+    dir(properties.name):
+    {% for var in dir(properties.name) %}\
+    ${var} \
+    {% end %}
+
+    dir(properties.properties):
+    {% for var in dir(properties.properties) %}\
+    ${var} \
+    {% end %}
+
+When the above file is saved as
+``/var/lib/bcfg2/TGenshi/test/template.newtxt`` and generated with
+``bcfg2-info buildfile /test test.hostname.org``, the results look like
+this (below reformatted a little bit to fit in 80 columns)::
+
+    Failed to read file probed.xml
+    Processed 44 gamin events in 0.108 seconds. 0 collapsed
+    Processed 17 gamin events in 0.245 seconds. 0 collapsed
+    Processed 17 gamin events in 0.163 seconds. 0 collapsed
+    Processed 21 gamin events in 0.197 seconds. 0 collapsed
+    Processed 0 gamin events in 0.100 seconds. 0 collapsed
+    Processed 12 gamin events in 0.105 seconds. 0 collapsed
+    Processed 0 gamin events in 0.100 seconds. 0 collapsed
+    <?xml version='1.0' encoding='UTF-8'?>
+    <ConfigFile name="/test" owner="root" perms="644" encoding="ascii" group="root" paranoid="false">
+    Hostname is test.hostname.org
+
+    Groups:
+    bcfg2-server
+
+
+    Two main ways to get the same property value:
+    fakeBCFG2password
+    fakeBCFG2password
+
+    One way to get information about metadata and properties:
+
+    dir(metadata):
+    __class__ __delattr__ __dict__ __doc__ __getattribute__ __hash__ __init__
+     __module__ __new__ __reduce__ __reduce_ex__ __repr__ __setattr__ __str__
+     __weakref__ all bundles categories get_clients_by_group get_clients_by_profile
+     groups hostname inGrouppassword probes uuid
+
+    dir(properties):
+    HandleEvent Index __class__ __delattr__ __dict__ __doc__ __getattribute__
+     __hash__ __identifier__ __init__ __iter__ __module__ __new__ __reduce__
+     __reduce_ex__ __repr__ __setattr__ __str__ __weakref__ entries label name
+     properties
+
+    dir(properties.entries):
+    __add__ __class__ __contains__ __delattr__ __delitem__ __delslice__ __doc__
+     __eq__ __ge__ __getattribute__ __getitem__ __getslice__ __gt__ __hash__
+     __iadd__ __imul__ __init__ __iter__ __le__ __len__ __lt__ __mul__ __ne__
+     __new__ __reduce__ __reduce_ex__ __repr__ __reversed__ __rmul__ __setattr__
+     __setitem__ __setslice__ __str__ append count extend index insert pop remove
+     reverse sort
+
+    dir(properties.label):
+    __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
+     __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
+     __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
+     __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __str__ capitalize center
+     count decode encode endswith expandtabs find index isalnum isalpha isdigit
+     islower isspace istitle isupper join ljust lower lstrip partition replace
+     rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
+     swapcase title translate upper zfill
+
+    dir(properties.name):
+    __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
+     __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
+     __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
+     __reduce_ex__ __repr__ __rmod__ __rmul__ __setattr__ __str__ capitalize center
+     count decode encode endswith expandtabs find index isalnum isalpha isdigit
+     islower isspace istitle isupper join ljust lower lstrip partition replace
+     rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
+     swapcase title translate upper zfill
+
+    dir(properties.properties):
+    __class__ __contains__ __copy__ __deepcopy__ __delattr__ __delitem__
+     __delslice__ __doc__ __getattribute__ __getitem__ __getslice__ __hash__
+     __init__ __iter__ __len__ __new__ __nonzero__ __reduce__ __reduce_ex__
+     __repr__ __reversed__ __setattr__ __setitem__ __setslice__ __str__ _init
+     addnext addprevious append attrib clear extend find findall findtext get
+     getchildren getiterator getnext getparent getprevious getroottree index insert
+     items iterancestors iterchildren iterdescendants itersiblings keys makeelement
+     nsmap prefix remove replace set sourceline tag tail text values xpath
+    </ConfigFile>

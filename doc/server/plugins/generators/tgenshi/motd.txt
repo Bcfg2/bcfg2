@@ -1,0 +1,169 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-motd:
+
+motd
+====
+
+The following template automatically generates a MOTD (message of the
+day) file that describes the system in terms of its Bcfg2 metadata
+and probe responses.  It conditionally displays groups, categories,
+and probe responses, if there exists any data for them.
+
+New Style of TGenshi
+--------------------
+
+This is the preferred way of creating TGenshi contents. It requires
+Genshi 0.5 or later.
+
+On the Bcfg2 server
+^^^^^^^^^^^^^^^^^^^
+
+Where, **$bcfg2** is your Bcfg2 repository on your Bcfg2 server, the
+following files need to be created:
+
+::
+
+    $bcfg2/TGenshi/etc/motd/info.xml
+    $bcfg2/TGenshi/etc/motd/template.newtxt
+
+The contents of ``motd/template.newtxt`` could be something like this::
+
+    ------------------------------------------------------------------------
+                        GOALS FOR SERVER MANGED BY BCFG2
+    ------------------------------------------------------------------------
+    Hostname is ${metadata.hostname}
+
+    Groups:
+    {% for group in metadata.groups %}\
+     * ${group}
+    {% end %}\
+
+    {% if metadata.categories %}\
+    Categories:
+    {% for category in metadata.categories %}\
+     * ${category}
+    {% end %}\
+    {% end %}\
+
+
+    {% if metadata.Probes %}\
+    Probes:
+    {% for probe, value in metadata.Probes.iteritems() %}\
+     * ${probe} \
+       ${value}
+    {% end %}\
+    {% end %}\
+
+    -------------------------------------------------------------------------
+                            ITOPS MOTD
+    -------------------------------------------------------------------------
+    Please create a Ticket for any system level changes you need from IT.
+
+This template gets the hostname, groups membership of the host, categories
+of the host (if any), and result of probes on the host (if any). The
+template formats this in with a header and footer that makes it visually
+more appealing.
+
+A ``motd/info.xml`` file isn't strictly needed, because ``/etc/motd``
+has the Bcfg2 default permissions (i.e. root:root 0644), but it can be
+included for completeness.
+
+Output
+^^^^^^
+
+One possible output of this template would be the following::
+
+    ------------------------------------------------------------------------
+                        GOALS FOR SERVER MANGED BY BCFG2
+    ------------------------------------------------------------------------
+    Hostname is cobra.example.com
+
+    Groups:
+     * oracle-server
+     * centos5-5.2
+     * centos5
+     * redhat
+     * x86_64
+     * sys-vmware
+
+    Categories:
+     * os-variant
+     * os
+     * database-server
+     * os-version
+
+
+    Probes:
+     * arch    x86_64
+     * network    intranet_network
+     * diskspace    Filesystem            Size  Used Avail Use% Mounted on
+    /dev/mapper/VolGroup00-LogVol00
+                           18G  2.1G   15G  13% /
+    /dev/sda1              99M   13M   82M  13% /boot
+    tmpfs                 3.8G     0  3.8G   0% /dev/shm
+    /dev/mapper/mhcdbo-clear
+                          1.5T  198M  1.5T   1% /mnt/san-oracle
+     * virtual    vmware
+
+    -------------------------------------------------------------------------
+                            IT MOTD
+    -------------------------------------------------------------------------
+    Please create a Ticket for any system level changes you need from IT.
+
+Taking it to the next level
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One way to make this even more useful, is to only include the result of
+certain probes. It would also be a nice feature to be able to include
+customer messages on a host or group level.
+
+Old Style of TGenshi
+--------------------
+
+The following is a way to do the same thing using the older,
+it-may-be-depreciated, style of Genshi (pre-0.5).::
+
+    Hostname is $metadata.hostname
+
+    Groups:
+    #for group in metadata.groups
+     * $group
+    #end
+
+    #if metadata.categories
+    Categories:
+    #for category in metadata.categories
+     * $category
+    #end
+    #end
+
+    #if metadata.probes
+    Probes:
+    #for probe, value in metadata.probes.iteritems()
+     * $probe $value
+    #end
+    #end
+
+This template results in::
+
+    > buildfile /bar.conf ubik3
+    <ConfigFile name="/bar.conf" owner="root" perms="0644" group="root">Hostname is ubik3
+
+    Groups:
+     * desktop
+     * computeserver
+     * mcs-base
+     * ypbound
+     * workstation
+     * mysql-4
+     * debian-sarge-base
+     * debian-sarge
+     * base
+     * debian
+
+    Categories:
+     * noyp
+     * mysql
+
+    </ConfigFile>

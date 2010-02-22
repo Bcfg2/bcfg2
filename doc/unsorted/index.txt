@@ -19,15 +19,6 @@ list below.
 * `Plugins/Actions`
 * `Plugins/Ohai`
 * `Plugins/Snapshots`
-* `Plugins/TGenshi/examples/bcfg2_cron`
-* `Plugins/TGenshi/examples/clients.xml`
-* `Plugins/TGenshi/examples/ganglia`
-* `Plugins/TGenshi/examples/grub.conf`
-* `Plugins/TGenshi/examples/hosts`
-* `Plugins/TGenshi/examples/iptables`
-* `Plugins/TGenshi/examples/motd`
-* `Plugins/TGenshi/examples/my.cnf`
-* `Plugins/TGenshi/examples/test`
 * `PrecompiledPackages`
 * `Prereqs`
 * `Publications`

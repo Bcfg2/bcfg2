@@ -1,0 +1,174 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-ganglia:
+
+ganglia
+=======
+
+Another interesting example of **TGenshi** templating is to automatically
+generate ``gmond``/``gmetad`` configuration files. The idea is that each
+cluster is headless: it communicates with the rest of the cluster members
+on an isolated multicast IP address and port. Any of the cluster members
+is therefore isolated on that particular ip/port pair. Additionally,
+each ``gmond`` instance **also** listens on UDP. This allows for any of
+the cluster members to be polled for information on the entire cluster!
+
+The second part of the trick is in ``gmetad.conf``. Here, we dynamically
+generate a list of clusters (based on profiles names) and a list of
+members to poll (based on the clients in said profiles). As the number of
+profiles and client grows, this list will grow automatically as well. When
+a new host is added, ``gmetad`` will receive an updated configuration and
+act accordingly.
+
+There **is** one caveat though. The ``gmetad.conf`` parser is hard coded
+to read 16 arguments per ``data_source`` line. If you have more than 15
+nodes in a cluster, you will see a warning in the logs. You can either
+ignore it, or truncate the list to the first 15 members.
+
+In our environment, a profile is a one to one match with the role of
+that particular host. You can also do this based on groups, or any other
+client property.
+
+Bundler/ganglia.xml
+-------------------
+
+.. code-block:: xml
+
+    <Bundle name='ganglia' version='2.0' revision='$Revision$' origin='$HeadURL$' >
+        <Package name='ganglia-gmond' />
+        <Package name='ganglia-gmond-modules-python' />
+        <ConfigFile name='/etc/ganglia/gmond.conf' />
+        <Service name='gmond' />
+        <Action name='gmond-reload' />
+
+        <Group name='gmetad-server'>
+          <Package name='ganglia-gmetad'/>
+          <Package name='ganglia-web'/>
+          <Package name='rrdtool'/>
+          <ConfigFile name='/etc/ganglia/gmetad.conf' />
+          <Service name='gmetad' />
+        </Group>
+    </Bundle>
+
+Rules/services-ganglia.xml
+--------------------------
+
+.. code-block:: xml
+
+    <Rules priority='10' revision='$Revision$' origin='$HeadURL$' >
+        <Service name='gmond' type='chkconfig' status='on' />
+        <Group name='gmetad-server'>
+            <Service name='gmetad' type='chkconfig' status='on' />
+        </Group>
+    </Rules>
+
+TGenshi/etc/ganglia/gmetad.conf/template.newtxt
+-----------------------------------------------
+
+::
+
+    {% python
+       client_metadata =  metadata.query.all()
+       profile_array = {}
+       seen = []
+       for item in client_metadata:
+           if item.profile not in seen:
+               seen.append(item.profile)
+               profile_array[item.profile]=[]
+           profile_array[item.profile].append(item.hostname)
+       seen.sort()
+    %}\
+
+    gridname "Our Grid"
+
+    {% for profile in seen %}
+    data_source "${profile}" \
+    {% for host in profile_array[profile] %}\
+    ${host} \
+    {% end %}\
+    {% end %}
+
+    rrd_rootdir "/var/lib/ganglia/rrds"
+
+TGenshi/etc/ganglia/gmond.conf/template.newtxt
+----------------------------------------------
+
+::
+
+    {% python
+    from genshi.builder import tag
+    import random
+    random.seed(metadata.profile)
+    last_octet=random.randint(2,254)
+    %}\
+    /*
+     $$Id$$
+     $$HeadURL$$
+    */
+
+    /* This configuration is as close to 2.5.x default behavior as possible
+       The values closely match ./gmond/metric.h definitions in 2.5.x */
+    globals {
+      daemonize = yes
+      setuid = yes
+      user = nobody
+      debug_level = 0
+      max_udp_msg_len = 1472
+      mute = no
+      deaf = no
+      host_dmax = 1800 /* 30 minutes */
+      cleanup_threshold = 604800 /*secs=1 week */
+      gexec = no
+      send_metadata_interval = 0
+    }
+
+    /* If a cluster attribute is specified, then all gmond hosts are wrapped inside
+     * of a <CLUSTER> tag.  If you do not specify a cluster tag, then all <HOSTS> will
+     * NOT be wrapped inside of a <CLUSTER> tag. */
+    cluster {
+      name = "${metadata.profile}"
+      owner = "user@company.net"
+      latlong = "unspecified"
+      url = "unspecified"
+    }
+
+    /* The host section describes attributes of the host, like the location */
+    host {
+      location = "unspecified"
+    }
+
+    /* Feel free to specify as many udp_send_channels as you like.  Gmond
+       used to only support having a single channel */
+    udp_send_channel {
+      host = ${metadata.hostname}
+      port = 8649
+    }
+    udp_send_channel {
+      mcast_join = 239.2.11.${last_octet}
+      port = 8649
+      ttl = 1
+    }
+
+    /* You can specify as many udp_recv_channels as you like as well. */
+    udp_recv_channel {
+      port = 8649
+      bind = ${metadata.hostname}
+    }
+    udp_recv_channel {
+      mcast_join = 239.2.11.${last_octet}
+      bind       = 239.2.11.${last_octet}
+      port = 8649
+    }
+
+    /* You can specify as many tcp_accept_channels as you like to share
+       an xml description of the state of the cluster */
+    tcp_accept_channel {
+      port = 8649
+    }
+
+    /* Each metrics module that is referenced by gmond must be specified and
+       loaded. If the module has been statically linked with gmond, it does not
+       require a load path. However all dynamically loadable modules must include
+       a load path. */
+    modules {
+    /* [snip] */

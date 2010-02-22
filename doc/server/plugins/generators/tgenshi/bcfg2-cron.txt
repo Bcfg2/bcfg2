@@ -1,0 +1,25 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-tgenshi-bcfg2-cron:
+
+bcfg2-cron
+==========
+
+As submitted by Kamil Kisiel
+
+The following is my ``/etc/cron.d/bcfg2`` file. It uses the python random
+module seeded with the client hostname to generate a random time for the
+client to check in. The hostname seed ensures the generated file is the
+same each time the client checks in. This cron file helps to distribute
+the load on the Bcfg2 server since not all machines are checking in at
+the same time.::
+
+    {% python
+    from genshi.builder import tag
+    import random
+    random.seed(metadata.hostname)
+    %}\
+    ${random.randint(0,60)} * * * *    root    /usr/sbin/bcfg2 &> /dev/null
+
+You can apply the same concept to the other time fields by adding another
+``${random.randint()}`` call.
