@@ -9,7 +9,11 @@ Fossil
 Why use the Fossil plugin
 =========================
 
-The Fossil plugin is useful if you would like to track changes to your bcfg2 repository using a `Fossil SCM <http://fossil-scm.org>`_ backend. Currently, It enables you to get revision information out of your repository for reporting purposes. Future plans are to commit changes to the repo which are made by the server.
+The Fossil plugin is useful if you would like to track changes to
+your bcfg2 repository using a `Fossil SCM <http://fossil-scm.org>`_
+backend. Currently, It enables you to get revision information out
+of your repository for reporting purposes. Future plans are to commit
+changes to the repo which are made by the server.
 
 How to enable the Fossil plugin
 ===============================

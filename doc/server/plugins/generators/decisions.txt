@@ -6,11 +6,27 @@
 Decisions
 =========
 
-This page describes the Decisions plugin. The client has support for a centralized set of per-entry installation decisions. This approach is needed when particular changes are deemed "high risk"; this gives the ability to centrally specify these changes, but only install them on clients when administrator supervision is available. Because collaborative configuration is one of the remaining hard issues in configuration management, these issues typically crop up in environments with several administrators and much configuration variety.
+This page describes the Decisions plugin. The client has support for a
+centralized set of per-entry installation decisions. This approach is
+needed when particular changes are deemed "high risk"; this gives the
+ability to centrally specify these changes, but only install them on
+clients when administrator supervision is available. Because collaborative
+configuration is one of the remaining hard issues in configuration
+management, these issues typically crop up in environments with several
+administrators and much configuration variety.
 
-In these cases, the client can be configured to run in either a whitelist or blacklist mode, wherein a list of entries is downloaded from the server. The client uses this list to determine which incorrect entries should be corrected during the current run of the installation tool. The Decision plugin is the only stock plugin that generates entries for client's whitelists or blacklists.
+In these cases, the client can be configured to run in either a whitelist
+or blacklist mode, wherein a list of entries is downloaded from the
+server. The client uses this list to determine which incorrect entries
+should be corrected during the current run of the installation tool. The
+Decision plugin is the only stock plugin that generates entries for
+client's whitelists or blacklists.
 
-The Decision plugin uses a directory in the bcfg2 repository called Decisions. Files in the Decisions subdirectory are named similarly to files managed by Cfg, probes, TCheetah, and TGenshi. File basenames are either whitelist or blacklist. These files have a simple format; the following is an example.
+The Decision plugin uses a directory in the bcfg2 repository called
+Decisions. Files in the Decisions subdirectory are named similarly to
+files managed by Cfg, probes, TCheetah, and TGenshi. File basenames
+are either whitelist or blacklist. These files have a simple format;
+the following is an example.
 
 .. code-block:: xml
 
@@ -26,6 +42,14 @@ The Decision plugin uses a directory in the bcfg2 repository called Decisions. F
     vim: ft=xml
     -->
 
-This example, included as a whitelist due to its name, enables all services, and the path entry named /etc/apt/apt.conf to be installed on systems running in whitelist mode; all other entry installation will be surpressed.
+This example, included as a whitelist due to its name, enables all
+services, and the path entry named ``/etc/apt/apt.conf`` to be installed
+on systems running in whitelist mode; all other entry installation will
+be surpressed.
 
-When a client askes for its whitelist or blacklist, all of the files pertaining to that client of the correct type are aggregated into a single list. This list is sent to the client. Note that this list is only generated when a client is run with the appropriate option (-l (whitelist|blacklist)); client behavior is not controlled unless this option is used.
+When a client askes for its whitelist or blacklist, all of the files
+pertaining to that client of the correct type are aggregated into a
+single list. This list is sent to the client. Note that this list is
+only generated when a client is run with the appropriate option (-l
+(whitelist|blacklist)); client behavior is not controlled unless this
+option is used.

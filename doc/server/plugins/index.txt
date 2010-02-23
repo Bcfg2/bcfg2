@@ -6,7 +6,8 @@
 Plugins
 =======
 
-Plugins are the source of all logic used in building a config. They can perform one of several tasks:
+Plugins are the source of all logic used in building a config. They can
+perform one of several tasks:
 
 #. Generating configuration inventory lists for clients
 #. Generating configuration entry contents for clients
@@ -17,12 +18,15 @@ Plugins are the source of all logic used in building a config. They can perform 
 Enabling Plugins
 ================
 
-In order for the bcfg2 server to use a plugin, it needs to be listed on the *plugins* line in bcfg2.conf.
+In order for the bcfg2 server to use a plugin, it needs to be listed on
+the *plugins* line in bcfg2.conf.
 
 Default Plugins
 ===============
 
-The `Bcfg2 repository`_ has the default plugin list currently distributed with Bcfg2: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
+The `Bcfg2 repository`_ has the default
+plugin list currently distributed with Bcfg2:
+http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
 
 .. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
 
@@ -35,7 +39,8 @@ Metadata (Grouping)
 
    grouping/*
 
-Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+Each of these plugins has a corresponding subdirectory with the same
+name in the Bcfg2 repository.
 
 Abstract Configuration (Structures)
 -----------------------------------
@@ -47,7 +52,8 @@ Abstract Configuration (Structures)
    structures/bundler/index
    structures/*
 
-Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+Each of these plugins has a corresponding subdirectory with the same
+name in the Bcfg2 repository.
 
 Literal Configuration (Generators)
 ----------------------------------
@@ -59,7 +65,8 @@ Literal Configuration (Generators)
    generators/tgenshi/index
    generators/*
 
-Each of these plugins has a corresponding subdirectory with the same name in the Bcfg2 repository.
+Each of these plugins has a corresponding subdirectory with the same
+name in the Bcfg2 repository.
 
 Statistics Plugins
 ------------------
@@ -70,7 +77,8 @@ Statistics Plugins
 
    statistics/*
 
-DBStats can be enabled by adding it to the plugins line in /etc/bcfg2.conf.
+DBStats can be enabled by adding it to the plugins line in
+``/etc/bcfg2.conf``.
 
 Version Plugins
 ---------------
@@ -84,7 +92,9 @@ Version Plugins
 Plugin Roles (in 1.0)
 =====================
 
-In version 1.0, plugins have been refactored into a series of roles. This are fine-grained plugin capabilities that govern how the server core interacts with plugins.
+In version 1.0, plugins have been refactored into a series of roles. This
+are fine-grained plugin capabilities that govern how the server core
+interacts with plugins.
 
 More details can be found in :ref:`server-plugins-plugin-roles`
 

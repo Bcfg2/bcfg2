@@ -66,7 +66,9 @@ you can explore the web interface.  Try adding a host and a zone.
 You'll see that a ".rev" zone already exists.  This is where
 information for reverse files will go.
 
-For production, you'll want to have this configured for Apache with mod_python.  Here is an example of how to configure Hostbase as a virtual host.
+For production, you'll want to have this configured for Apache with
+mod_python. Here is an example of how to configure Hostbase as a
+virtual host.
 
 .. code-block:: html
 

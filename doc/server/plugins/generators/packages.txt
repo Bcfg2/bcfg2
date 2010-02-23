@@ -6,12 +6,25 @@
 Packages
 ========
 
-This page documents the Packages plugin. Packages is an alternative to [wiki:Plugins/Pkgmgr Pkgmgr] for specifying package entries for clients. Where Pkgmgr explicitly specifies package entry  information, Packages delegates control of package version information to the underlying package manager, installing the latest version available through those channels.
+This page documents the Packages plugin. Packages is an alternative to
+:ref:`Pkgmgr <server-plugins-generators-pkgmgr>` for specifying package
+entries for clients. Where Pkgmgr explicitly specifies package entry
+information, Packages delegates control of package version information to
+the underlying package manager, installing the latest version available
+through those channels.
 
 "Magic Groups"
 ==============
 
-Packages is the only plugin that uses "magic groups". Most plugins operate based on client group memberships, without any concern for the particular names chosen for groups by the user. The Packages plugin is the sole exception to this rule. Packages needs to "know" two different sorts of facts about clients. The first is the basic OS/distro of the client, enabling classes of sources. The second is the architecture of the client, enabling sources for a given architecture. In addition to these magic groups, each source may also specify a non-magic group to limit the source's applicability to group member clients.
+Packages is the only plugin that uses "magic groups". Most plugins
+operate based on client group memberships, without any concern for the
+particular names chosen for groups by the user. The Packages plugin is
+the sole exception to this rule. Packages needs to "know" two different
+sorts of facts about clients. The first is the basic OS/distro of the
+client, enabling classes of sources. The second is the architecture of
+the client, enabling sources for a given architecture. In addition to
+these magic groups, each source may also specify a non-magic group to
+limit the source's applicability to group member clients.
 
 +-----------+----------+--------------+
 | Source    | OS Group | Architecture |
@@ -30,29 +43,51 @@ Packages is the only plugin that uses "magic groups". Most plugins operate based
 Limiting sources to groups
 ==========================
 
-Each source can also specify explicit group memberships. In the following example, the ubuntu-hardy group is also required. Finally, clients must be a member of the appropriate architecture group, in this case, either i386 or amd64. In total, in order for this source to be associated with a client is for the client to be in one of the sentinel groups (debian, ubuntu, or nexenta), the explicit group ubuntu-hardy, and any of the architecture groups (i386 or amd64).
+Each source can also specify explicit group memberships. In the following
+example, the ubuntu-hardy group is also required. Finally, clients must
+be a member of the appropriate architecture group, in this case, either
+i386 or amd64. In total, in order for this source to be associated with
+a client is for the client to be in one of the sentinel groups (debian,
+ubuntu, or nexenta), the explicit group ubuntu-hardy, and any of the
+architecture groups (i386 or amd64).
 
-Memberships in architecture groups is needed so that Packages can map software sources to clients. There is no other way to handle this than to impose
+Memberships in architecture groups is needed so that Packages can map
+software sources to clients. There is no other way to handle this than
+to impose
 
-When multiple sources are specified, clients are associated with each source to which they apply (based on group memberships, as described above). Packages and dependencies are resolved from all applicable sources.
+When multiple sources are specified, clients are associated with each
+source to which they apply (based on group memberships, as described
+above). Packages and dependencies are resolved from all applicable
+sources.
 
 Setup
 =====
+
 Three basic steps are required for Packages to work properly.
- 1. Create Packages/config.xml. This file should look approximately like the example below, and describes both which software repositories should be used, and which clients are eligible to use each one.
- 2. Ensure that clients are members of the proper groups. Each client should be a member of one of the sentinel groups listed above (debian/ubuntu/redhat/centos/nexenta), all of the groups listed in the source (like ubuntu-intrepid or centos-5.2 in the following examples), and one of the architecture groups listed in the source configuration (i386, amd64 or x86_64 in the following examples). '''Failure to do this will result in the source either not applying to the client, or only architecture independent packages being made available to the client.'''
- 3. Add Package entries to bundles.
- 4. Sit back and relax, as dependencies are resolved, and automatically added to client configurations.
+
+#. Create Packages/config.xml. This file should look approximately like the example below, and describes both which software repositories should be used, and which clients are eligible to use each one.
+#. Ensure that clients are members of the proper groups. Each client should be a member of one of the sentinel groups listed above (debian/ubuntu/redhat/centos/nexenta), all of the groups listed in the source (like ubuntu-intrepid or centos-5.2 in the following examples), and one of the architecture groups listed in the source configuration (i386, amd64 or x86_64 in the following examples). '''Failure to do this will result in the source either not applying to the client, or only architecture independent packages being made available to the client.'''
+#. Add Package entries to bundles.
+#. Sit back and relax, as dependencies are resolved, and automatically added to client configurations.
 
 Prerequisite Resolution
 =======================
 
-Packages provides a prerequisite resolution mechanism which has no analogue in Pkgmgr. During configuration generation, all structures are processed. After this phase, but before entry binding, a list of packages and the client metadata instance is passed into Packages' resolver. This process determines a superset of packages that will fully satisfy dependencies of all package entries included in structures, and reports any prerequisites that cannot be satisfied. This facility should largely remove the need to use the [wiki:Plugins/Base Base] plugin.
+Packages provides a prerequisite resolution mechanism which has no
+analogue in Pkgmgr. During configuration generation, all structures are
+processed. After this phase, but before entry binding, a list of packages
+and the client metadata instance is passed into Packages' resolver. This
+process determines a superset of packages that will fully satisfy
+dependencies of all package entries included in structures, and reports
+any prerequisites that cannot be satisfied. This facility should largely
+remove the need to use the :ref:`Base <server-plugins-structures-base>`
+plugin.
 
 Example usage
 =============
 
-Create a config.xml file in the Packages directory that looks something like this:
+Create a config.xml file in the Packages directory that looks something
+like this:
 
 .. code-block:: xml
 
@@ -113,12 +148,15 @@ Yum sources can be similarly specified:
 Configuration Updates
 =====================
 
-Packages will reload its configuration upon an explicit command via bcfg2-admin.::
+Packages will reload its configuration upon an explicit command via
+bcfg2-admin.::
 
     [0:3711] bcfg2-admin xcmd Packages.Refresh
     True
 
-During this command (which will take some time depending on the quantity and size of the sources listed in the configuration file), the server will report information like::
+During this command (which will take some time depending on the quantity
+and size of the sources listed in the configuration file), the server
+will report information like::
 
     Packages: Updating http://mirror.anl.gov/ubuntu//dists/jaunty/main/binary-i386/Packages.gz
     Packages: Updating http://mirror.anl.gov/ubuntu//dists/jaunty/main/binary-amd64/Packages.gz
@@ -128,27 +166,35 @@ During this command (which will take some time depending on the quantity and siz
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/filelists.xml.gz
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/primary.xml.gz
 
-Once line per file download needed. Packages/config.xml will be reloaded at this time, so any source specification changes (new or modified sources in this file) will be reflected by the server at this point.
+Once line per file download needed. Packages/config.xml will be reloaded
+at this time, so any source specification changes (new or modified
+sources in this file) will be reflected by the server at this point.
 
 Availability
 ============
 
-Packages was added in 1.0pre1, with APT support. YUM support was added for 1.0pre2. Support for other package managers (Portage, Zypper, IPS, etc) remain to be added.
+Packages was added in 1.0pre1, with APT support. YUM support was added
+for 1.0pre2. Support for other package managers (Portage, Zypper, IPS,
+etc) remain to be added.
 
 Validation
 ==========
 
-A schema for Packages/config.xml is included; config.xml can be validated using bcfg2-repo-validate. Note that the schema requires that elements be specified in the above order.
+A schema for Packages/config.xml is included; config.xml can be validated
+using bcfg2-repo-validate. Note that the schema requires that elements
+be specified in the above order.
 
 Limitations
 ===========
 
-Packages does not do traditional caching as other plugins do. Changes to the Packages config file require a server restart for the time being.
+Packages does not do traditional caching as other plugins do. Changes
+to the Packages config file require a server restart for the time being.
 
 Package Verification
 ====================
 
-In order to do disable per-package verification Pkgmgr style, you will need to use [wiki:BoundEntry BoundEntries] like below
+In order to do disable per-package verification Pkgmgr style, you will
+need to use :ref:`BoundEntries <unsorted-boundentry>` like below
 
 .. code-block:: xml
 
@@ -190,9 +236,16 @@ The dependency resolver used in Packages can be run in debug mode::
     Package libgcc1: adding new deps ['gcc-4.3-base']
     (set(['debconf', 'libgcc1', 'lsb-base', 'libtext-wrapi18n-perl', 'libtext-iconv-perl', 'sed', 'passwd', 'findutils', 'libpam0g', 'openssh-client', 'debconf-i18n', 'libselinux1', 'zlib1g', 'adduser', 'libwrap0', 'ncurses-bin', 'libssl0.9.8', 'liblocale-gettext-perl', 'libkeyutils1', 'libpam-runtime', 'libpam-modules', 'openssh-server', 'libkrb53', 'ssh', 'libncurses5', 'libc6', 'libedit2', 'libcomerr2', 'dpkg', 'perl-base', 'libdb4.7', 'libtext-charwidth-perl', 'gcc-4.3-base', 'debianutils']), set([]), 'deb')
 
-This will show why the resolver is acting as it is. Replace "ubik3" and ['ssh'] with a client name and list of packages, respectively. Also, a more polished interface to this functionality is coming as well.
+This will show why the resolver is acting as it is. Replace "ubik3" and
+['ssh'] with a client name and list of packages, respectively. Also,
+a more polished interface to this functionality is coming as well.
 
-Each line starting with Package: <name> describes a set of new prerequisites pulled in by a package. Lines starting with VPackage <vname> describe provides entries and their mappings to required names. The last line describes the overall results of the resolver, with three fields: a list of packages that should be installed, a list of unresolved requirements, and a type for these packages.
+Each line starting with Package: <name> describes a set of new
+prerequisites pulled in by a package. Lines starting with VPackage <vname>
+describe provides entries and their mappings to required names. The last
+line describes the overall results of the resolver, with three fields:
+a list of packages that should be installed, a list of unresolved
+requirements, and a type for these packages.
 
 Using bcfg2-server
 ------------------
@@ -204,23 +257,55 @@ Once the server is started, enable debugging via bcfg2-admin::
 TODO list
 =========
 
- * Zypper support
- * Portage support
- * Explicit version pinning (a la Pkgmgr)
+* Zypper support
+* Portage support
+* Explicit version pinning (a la Pkgmgr)
 
 Developing for Packages
 =======================
 
-In order to support a given client package tool driver, that driver must support use of the auto value for the version attribute in Package entries. In this case, the tool driver views the current state of available packages, and uses the underlying package manager's choice of correct package version in lieu of an explicit, centrally-specified, version. This support enables Packages to provide a list of Package entries with version='auto'. Currently, the APT and YUMng drivers support this feature. Note that package management systems without any network support cannot operate in this fashion, so RPMng and SYSV will never be able to use Packages. Emerge, Zypper, IPS, and Blastwave all have the needed features to be supported by Packages, but support has not yet been written.
+In order to support a given client package tool driver, that driver
+must support use of the auto value for the version attribute in Package
+entries. In this case, the tool driver views the current state of
+available packages, and uses the underlying package manager's choice of
+correct package version in lieu of an explicit, centrally-specified,
+version. This support enables Packages to provide a list of Package
+entries with version='auto'. Currently, the APT and YUMng drivers support
+this feature. Note that package management systems without any network
+support cannot operate in this fashion, so RPMng and SYSV will never be
+able to use Packages. Emerge, Zypper, IPS, and Blastwave all have the
+needed features to be supported by Packages, but support has not yet
+been written.
 
-Packages fills two major functions in configuration generation. The first is to provide entry level binding support for Package entries included in client configurations. This function is quite easy to implement; Packages determines (based on client group membership) if the package is available for the client system, and which type it has. Because version='auto' is used, no version determination needs to be done.
+Packages fills two major functions in configuration generation. The first
+is to provide entry level binding support for Package entries included
+in client configurations. This function is quite easy to implement;
+Packages determines (based on client group membership) if the package
+is available for the client system, and which type it has. Because
+version='auto' is used, no version determination needs to be done.
 
-The second major function is more complex. Packages ensures that client configurations include all package-level prerequisites for package entries explicitly included in the configuration. In order to support this, Packages needs to directly process network data for package management systems (the network sources for apt or yum, for examples), process these files, and build data structures describing prerequisites and the providers of those functions/paths. To simplify implementations of this, there is a generic base class (Bcfg2.Server.Plugins.Packages.Source) that provides a framework for fetching network data via HTTP, processing those sources (with subclass defined methods for processing the specific format provided by the tool), a generic dependency resolution method, and a caching mechanism that greatly speeds up server/bcfg2-info startup.
+The second major function is more complex. Packages ensures that client
+configurations include all package-level prerequisites for package entries
+explicitly included in the configuration. In order to support this,
+Packages needs to directly process network data for package management
+systems (the network sources for apt or yum, for examples), process
+these files, and build data structures describing prerequisites and the
+providers of those functions/paths. To simplify implementations of this,
+there is a generic base class (Bcfg2.Server.Plugins.Packages.Source)
+that provides a framework for fetching network data via HTTP, processing
+those sources (with subclass defined methods for processing the specific
+format provided by the tool), a generic dependency resolution method,
+and a caching mechanism that greatly speeds up server/bcfg2-info startup.
 
 Each source type must define:
- * a get_urls attribute (and associated urls property) that describes the URLS where to get data from.
- * a read_files method that reads and processes the downloaded files
 
-Sources may define a get_provides method, if provides are complex. For example, provides in rpm can be either rpm names or file paths, so multiple data sources need to be multiplexed.
+* a get_urls attribute (and associated urls property) that describes
+  the URLS where to get data from.
+* a read_files method that reads and processes the downloaded files
 
-The APT source in src/lib/Server/Plugins/Packages.py provides a relatively simple implementation of a source.
+Sources may define a get_provides method, if provides are complex. For
+example, provides in rpm can be either rpm names or file paths, so
+multiple data sources need to be multiplexed.
+
+The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
+relatively simple implementation of a source.

@@ -5,7 +5,9 @@
 The Bcfg2 Reporting System
 ==========================
 
-Bcfg2's reporting system is its killer feature. It allows administrators to gain a broad understanding of the configuration state of their entire environment. It summarizes
+Bcfg2's reporting system is its killer feature. It allows administrators
+to gain a broad understanding of the configuration state of their entire
+environment. It summarizes
 
 * Configuration changes and when they were made
 * Discrepancies between the specification and current client states
@@ -15,7 +17,9 @@ Bcfg2's reporting system is its killer feature. It allows administrators to gain
 * Configuration entries that are not specified
 * Overall client summaries according to these types
 
-There are two systems, the old system, which builds static reports based on a series of XSLT stylesheets and a new dynamic reporting system that uses django and a database backend. 
+There are two systems, the old system, which builds static reports based
+on a series of XSLT stylesheets and a new dynamic reporting system that
+uses django and a database backend.
 
 .. toctree::
    :maxdepth: 2

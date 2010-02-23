@@ -16,11 +16,20 @@ There are several ways users can contribute to the Bcfg2 project.
 Development
 ===========
 
-Send patches to the [wiki:MailingList bcfg mailing list] or create a trac [https://trac.mcs.anl.gov/projects/bcfg2/newticket ticket] with the patch included. In order to submit a ticket via the trac system, you will need to create a session by clicking on the [https://trac.mcs.anl.gov/projects/bcfg2/prefs Preferences] link and filling out/saving changes to the form. In order to be considered for mainline inclusion, patches need to be BSD licensed. The most convenient way to prepare patches is by using svn diff inside of a source tree checked out of subversion. The source tree can be checked out by running::
+Send patches to the [wiki:MailingList bcfg mailing list] or create
+a trac [https://trac.mcs.anl.gov/projects/bcfg2/newticket ticket]
+with the patch included. In order to submit a ticket via the
+trac system, you will need to create a session by clicking on the
+[https://trac.mcs.anl.gov/projects/bcfg2/prefs Preferences] link and
+filling out/saving changes to the form. In order to be considered for
+mainline inclusion, patches need to be BSD licensed. The most convenient
+way to prepare patches is by using svn diff inside of a source tree
+checked out of subversion. The source tree can be checked out by running::
 
     svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
 
-Users wishing to contribute on a regular basis can apply for direct subversion access. Mail the mailing list for details.
+Users wishing to contribute on a regular basis can apply for direct
+subversion access. Mail the mailing list for details.
 
 Several resources for developers exist in the wiki:
 
@@ -32,21 +41,33 @@ Several resources for developers exist in the wiki:
 * [wiki:LearningPython]
 * [wiki:UsingRcache]
 
-Bcfg2 is the result of a lot of work by many different people. They are listed on the [wiki:Contributors contributors page.]
+Bcfg2 is the result of a lot of work by many different people. They are
+listed on the [wiki:Contributors contributors page.]
 
-Feel free to drop in during a [wiki:CodeSprintIdeas code sprint] if you would like to help out with some easier problems.
+Feel free to drop in during a [wiki:CodeSprintIdeas code sprint] if you
+would like to help out with some easier problems.
 
 Testing Prereleases
 ===================
 
-Before each release, several prereleases will be tagged. It is helpful to have users test these releases (when feasible) because it is hard to replicate the full range of potential reconfiguration situations; between different operating systems, system management tools, and configuration specification variation, there can be large differences between sites.
+Before each release, several prereleases will be tagged. It is helpful
+to have users test these releases (when feasible) because it is hard to
+replicate the full range of potential reconfiguration situations; between
+different operating systems, system management tools, and configuration
+specification variation, there can be large differences between sites.
 
-See the [wiki:TrackingDevelopmentTrunk] page for a better view of changes in the prereleases.
+See the [wiki:TrackingDevelopmentTrunk] page for a better view of changes
+in the prereleases.
 
 Adding to the Common Repository
 ===============================
 
-The Bcfg2 common repository is a set of portable examples that new repositories can be based on. This repo has several parts. The first is a series of group definitions that describe a wide range of client systems. The second is a set of portable bundles that have been ported to use these groups. This makes these bundles transparently portable across new client architectures.
+The Bcfg2 common repository is a set of portable examples that new
+repositories can be based on. This repo has several parts. The first
+is a series of group definitions that describe a wide range of client
+systems. The second is a set of portable bundles that have been ported
+to use these groups. This makes these bundles transparently portable
+across new client architectures.
 
 This approach has several benefits to users
 

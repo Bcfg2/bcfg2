@@ -6,57 +6,100 @@
 Cfg
 ===
 
-The Cfg plugin provides a repository to describe configuration file contents for clients.  In its simplest form, the Cfg repository is just a directory tree modeled off of the directory tree on your client machines.
+The Cfg plugin provides a repository to describe configuration file
+contents for clients.  In its simplest form, the Cfg repository is just a
+directory tree modeled off of the directory tree on your client machines.
 
 The Cfg Repository
 ==================
 
-The Cfg plugin is enabled by including `Cfg` on the `plugins` line of the `[server]` section of your Bcfg2 server config file.  The repository itself lives in `/var/lib/bcfg2/Cfg`, assuming you are using the default repository location of `/var/lib/bcfg2`.  The contents of this directory are a series of directories corresponding to the real-life locations of the files on your clients, starting at the root level.  For example::
+The Cfg plugin is enabled by including `Cfg` on the `plugins` line of
+the `[server]` section of your Bcfg2 server config file. The repository
+itself lives in `/var/lib/bcfg2/Cfg`, assuming you are using the default
+repository location of `/var/lib/bcfg2`. The contents of this directory
+are a series of directories corresponding to the real-life locations of
+the files on your clients, starting at the root level. For example::
 
     lueningh@tg-prez:~/bcfg2/repository> ls Cfg
     bin/  boot/  etc/  opt/  root/  usr/  var/
 
-Specific config files go in like-named directories in this heirarchy.  For example the password file,  `/etc/passwd`, goes in `Cfg/etc/passwd/passwd`, while the ssh pam module config file, `/etc/pam.d/sshd`, goes in `Cfg/etc/pam.d/sshd/sshd`.  The reason for the like-name directory is to allow multiple versions of each file to exist, as described below.  Note that these files are exact copies of what will appear on the client machine - no templates, XML wrappers, etc.
+Specific config files go in like-named directories in this
+heirarchy. For example the password file, `/etc/passwd`, goes
+in `Cfg/etc/passwd/passwd`, while the ssh pam module config file,
+`/etc/pam.d/sshd`, goes in `Cfg/etc/pam.d/sshd/sshd`. The reason for the
+like-name directory is to allow multiple versions of each file to exist,
+as described below. Note that these files are exact copies of what will
+appear on the client machine - no templates, XML wrappers, etc.
 
 Group-Specific Files
 ====================
 
-It is often that you want one version of a config file for all of your machines except those in a particular group.  For example, `/etc/fstab` should look alike on all of your desktop machines, but should be different on your file servers.  Bcfg can handle this case through use of group-specific files.
+It is often that you want one version of a config file for all of your
+machines except those in a particular group. For example, `/etc/fstab`
+should look alike on all of your desktop machines, but should be
+different on your file servers. Bcfg2 can handle this case through use
+of group-specific files.
 
-As mentioned above, all Cfg entries live in like-named directories at the end of their directory tree.  In the case of `fstab`, the file at `Cfg/etc/fstab/fstab` will be handed out by default to any client that asks for a copy of `/etc/fstab`.  Group-specific files are located in the same directory and are named with the syntax::
+As mentioned above, all Cfg entries live in like-named directories at
+the end of their directory tree. In the case of `fstab`, the file at
+`Cfg/etc/fstab/fstab` will be handed out by default to any client that
+asks for a copy of `/etc/fstab`. Group-specific files are located in
+the same directory and are named with the syntax::
 
     /path/to/filename/filename.GNN_groupname
 
-in which ''NN'' is a priority number where '00' is lowest and '99' is highest, and ''groupname'' is the name of a group defined in `Metadata/groups.xml`.  Back to our `fstab` example, we might have a `Cfg/etc/fstab/` directory that looks like::
+in which ''NN'' is a priority number where '00' is lowest and '99'
+is highest, and ''groupname'' is the name of a group defined in
+`Metadata/groups.xml`. Back to our `fstab` example, we might have a
+`Cfg/etc/fstab/` directory that looks like::
 
     fstab
     fstab.G50_server
     fstab.G99_fileserver
 
-By default, clients will receive the plain `fstab` file when they request `/etc/fstab`.  Any machine that is in the `server` group, however, will instead receive the `fstab.G50_server` file.  Finally, any machine that is in the `fileserver` group will receive the `fstab.G99_fileserver` file, even if they are also in the `server` group.
+By default, clients will receive the plain `fstab` file when they request
+`/etc/fstab`. Any machine that is in the `server` group, however, will
+instead receive the `fstab.G50_server` file. Finally, any machine that
+is in the `fileserver` group will receive the `fstab.G99_fileserver`
+file, even if they are also in the `server` group.
 
 Host-Specific Files
 ===================
 
-Similar to the case with group-specific files, there are cases where a specific machine should have a different version of a file than all others.  This can be accomplished with host-specific files.  The format of a host-specific file name is::
+Similar to the case with group-specific files, there are cases where
+a specific machine should have a different version of a file than all
+others. This can be accomplished with host-specific files. The format
+of a host-specific file name is::
 
     /path/to/filename/filename.H_host.example.com
 
-Host-specific files have a higher priority than group specific files.  Again, the `fstab` example::
+Host-specific files have a higher priority than group specific
+files. Again, the `fstab` example::
 
     fstab
     fstab.G50_server
     fstab.G99_fileserver
     fstab.H_host.example.com
 
-In this case, `host.example.com` will always get the host-specific version, even if it is part of the `server` or `fileserver` (or both) classes.
+In this case, `host.example.com` will always get the host-specific
+version, even if it is part of the `server` or `fileserver` (or both)
+classes.
 
-.. note:: If you have the ability to choose between using a group-specific file and a host-specific file, it is almost always best to use a group-specific one.  That way if a hostname changes or an extra copy of a particular client is built, it will get the same changes as the original.
+.. note::
+
+    If you have the ability to choose between using a group-specific and
+    a host-specific file, it is almost always best to use a group-specific
+    one.  That way if a hostname changes or an extra copy of a particular
+    client is built, it will get the same changes as the original.
 
 Info files
 ==========
 
-By default, Cfg writes files to the filesystem with owner `root`, group `root`, and mode 644 (read and write for owner, read only for group and other).  These options, and a few others, can be overridden through use of `:info` files.  Each config file directory can have a `:info` file if needed.  The possible fields in a `:info` file are:
+By default, Cfg writes files to the filesystem with owner `root`, group
+`root`, and mode 644 (read and write for owner, read only for group
+and other). These options, and a few others, can be overridden through
+use of `:info` files. Each config file directory can have a `:info`
+file if needed. The possible fields in a `:info` file are:
 
 +-----------+-------------------+------------------------------------------------------+---------+
 | Field     | Possible values   | Description                                          | Default |
@@ -78,7 +121,8 @@ A sample `:info` file for CGI script on a web server might look like::
     group: www
     perms: 0755
 
-Back to the `fstab` example again, our final `Cfg/etc/fstab/` directory might look like::
+Back to the `fstab` example again, our final `Cfg/etc/fstab/` directory
+might look like::
 
     :info
     fstab
@@ -89,11 +133,13 @@ Back to the `fstab` example again, our final `Cfg/etc/fstab/` directory might lo
 info.xml files
 ==============
 
-This feature is included in version 0.9.5pre3 and newer of the bcfg2 server.
+info.xml files add the ability to specify different sets of file metadata
+on a group by group basis. These files are XML, and work similarly
+to those used by :ref:`Rules <server-plugins-generators-rules>` or
+:ref:`Pkgmgr <server-plugins-generators-pkgmgr>`.
 
-info.xml files add the ability to specify different sets of file metadata on a group by group basis. These files are XML, and work similarly to those used by [wiki:Plugins/Rules Rules] or [wiki:Plugins/Pkgmgr Pkgmgr].
-
-The following specifies a different global set of permissions (root/sys/0651) than on clients in group webserver (root/root/0652)
+The following specifies a different global set of permissions
+(root/sys/0651) than on clients in group webserver (root/root/0652)
 
 .. code-block:: xml
 

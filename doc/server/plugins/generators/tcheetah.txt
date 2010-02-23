@@ -48,7 +48,9 @@ The following variables are available for self.metadata:
 * uuid
 * password
 
-self.metadata is an instance of the class ClientMetadata of file `Bcfg2/Server/Plugins/Metadata.py <http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py>`_.
+self.metadata is an instance of the class
+ClientMetadata of file `Bcfg2/Server/Plugins/Metadata.py
+<http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py>`_.
 
 self.properties
 ===============
@@ -69,7 +71,9 @@ Example ``properties.xml``:
      </host>
     </Properties>
 
-You may use any of the ElementTree methods to access data in your template.  Several examples follow, each producing an identical result on the host 'www.example.com'::
+You may use any of the ElementTree methods to access data in your
+template.  Several examples follow, each producing an identical result
+on the host 'www.example.com'::
 
     $self.properties.find('host').find('www.example.com').find('rootdev').text
     $self.properties.find('host').find($self.metadata.hostname).find('rootdev').text
@@ -113,7 +117,10 @@ bcfg2/TCheetah/foo/info
 Output
 ------
 
-The following output can be generated with bcfg2-info. Note that probe information is not persistent, hence, it only works when clients directly query the server. For this reason, bcfg2-info output doesn't reflect current client probe state.
+The following output can be generated with bcfg2-info. Note that probe
+information is not persistent, hence, it only works when clients directly
+query the server. For this reason, bcfg2-info output doesn't reflect
+current client probe state.
 
 .. code-block:: xml
 
@@ -137,7 +144,12 @@ The following output can be generated with bcfg2-info. Note that probe informati
 Example: Replace the crontab plugin
 ===================================
 
-In many cases you can use the TCheetah plugin to avoid writing custom plugins in Python. This example replaces the [source:tags/bcfg2_0_8_4/bcfg2/src/lib/Server/Plugins/Crontab.py crontab plugin] (Bcfg2.Server.Plugins.Crontab). This plugin randomizes the time of cron.daily execution with a stable result. Cron.daily is run at a consistent, randomized time between midnight and 7am.::
+In many cases you can use the TCheetah plugin to avoid
+writing custom plugins in Python. This example replaces the
+[source:tags/bcfg2_0_8_4/bcfg2/src/lib/Server/Plugins/Crontab.py crontab
+plugin] (Bcfg2.Server.Plugins.Crontab). This plugin randomizes the time
+of cron.daily execution with a stable result. Cron.daily is run at a
+consistent, randomized time between midnight and 7am.::
 
     #import random
     #silent random.seed($self.metadata.hostname)
