@@ -4,6 +4,7 @@
 __revision__ = '$Revision$'
 
 import logging
+import os.path
 import sys
 
 import Bcfg2.Logger
@@ -45,6 +46,9 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
     try:
+    # check whether the specified bcfg2.conf exists
+        if not os.path.exists(setup['configfile']):
+            raise CoreInitError, "Could not read %s" % setup['configfile']
         Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
                                       location=setup['location'],
                                       daemon = setup['daemon'],

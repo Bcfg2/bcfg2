@@ -24,7 +24,7 @@ class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
 def run_component(component_cls, location, daemon, pidfile_name, to_file,
-                  cfile='/etc/bcfg2.conf', argv=None, register=True,
+                  cfile, argv=None, register=True,
                   state_name=False, cls_kwargs={}, extra_getopt='', time_out=10,
                   protocol='xmlrpc/ssl', certfile=None, keyfile=None, ca=None):
 
