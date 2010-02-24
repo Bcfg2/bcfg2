@@ -140,6 +140,14 @@ format can be used, as the target output format is XML.
 A Genshi template looks much like a Bundler file, except the Bundle tag
 has an additional `xmlns:py` attribute. See the examples.
 
+Altsrc
+======
+
+.. toctree::
+   :maxdepth: 1
+
+   ../altsrc
+
 Examples
 --------
 
@@ -206,6 +214,32 @@ fact be any python statement.
 
 Other examples
 ==============
+
+Some simple examples of Bundles can be found in the example repository
+at the locations in the following table:
+
++--------------+---------------------+
+| Bundle Name  | Description         |
++==============+=====================+
+| `atxml`_     | At bundle           |
++--------------+---------------------+
+| `bcfgxml`_   | Bcfg2 client bundle |
++--------------+---------------------+
+| `ntpxml`_    | NTP bundle          |
++--------------+---------------------+
+| `sshxml`_    | OpenSSH bundle      |
++--------------+---------------------+
+| `syslogxml`_ | syslog bundle       |
++--------------+---------------------+
+
+.. _atxml: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/repository/Bundler/at.xml
+.. _bcfgxml: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/repository/Bundler/bcfg.xml
+.. _ntpxml: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/repository/Bundler/ntp.xml
+.. _sshxml: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/repository/Bundler/ssh.xml
+.. _syslogxml: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/repository/Bundler/syslog.xml
+
+In addition to the example repository, the following is a list of some
+more complex example Bundles.
 
 .. toctree::
    :maxdepth: 1

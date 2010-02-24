@@ -1,0 +1,54 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-altsrc:
+
+===========================
+Fun and Profit using altsrc
+===========================
+
+Altsrc is a generic, bcfg2-server-side mechanism for performing
+configuration entry name remapping for the purpose of data binding.
+
+Use Cases
+=========
+
+* Equivalent configuration entries on different architectures with
+  different names
+* Mapping entries with the same name to different bind results in a
+  configuration (two packages with the same name but different types)
+* A single configuration entry across multiple specifications
+  (multi-plugin, or multi-repo)
+
+Examples
+========
+
+* Consider the case of /etc/hosts on linux and /etc/inet/hosts
+  on solaris. These files contain the same data in the same format,
+  and should typically be synchronized, however, exist in different
+  locations. Classically, one would need to create one entry for each in
+  Cfg or TCheetah and perform manual synchronization. Or, you could use
+  symlinks and pray. Altsrc is driven from the bundle side. For example:
+
+  .. code-block:: xml
+
+      <Bundle name='netinfo'>
+         <Group name='solaris'>
+           <Path name='/etc/inet/hosts' altsrc='/etc/hosts'/>
+         </Group>
+         <Group name='linux'>
+           <Path name='/etc/hosts'/>
+         </Group>
+      </Bundle>
+
+  In this case, when a solaris host gets the 'netinfo' bundle, it will
+  get the first Path entry, which includes an altsrc parameter. This
+  will cause the server to bind the entry as if it were a Path
+  called ``/etc/hosts``. This configuration entry is still called
+  ``/etc/inet/hosts``, and is installed as such.
+
+* On encap systems, frequently multiple packages of the same name, but
+  of different types will exist. For example, there might be an openssl
+  encap package, and an openssl rpm package. This can be dealt with
+  using a bundle like:
+
+  .. code-block:: xml
