@@ -43,7 +43,7 @@ if DATABASE_ENGINE == 'sqlite3' and DATABASE_NAME == '':
     DATABASE_NAME = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
 # Local time zone for this installation. All choices can be found here:
-# http://www.postgresql.org/docs/current/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE
+# http://docs.djangoproject.com/en/dev/ref/settings/#time-zone
 try:
     TIME_ZONE = c.get('statistics', 'time_zone')
 except:
