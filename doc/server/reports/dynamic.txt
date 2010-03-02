@@ -9,17 +9,6 @@ Bcfg2 Dynamic Reporting System
 Installation
 ============
 
-Overview
---------
-
-Installation of the new reporting system requires installation of a
-python module and configuration of the Apache webserver with a virtual
-host. Additionally, until fully integrated, periodically an "import
-script" must be executed via Cron or similar mechanism.
-
-Reports no longer needs to be installed at the root URL for a given
-host. Therefore, reports no longer require their own virtual host.
-
 Prerequisites
 -------------
 
@@ -31,30 +20,32 @@ Prerequisites
 Install
 -------
 
-'''setup bcfg2.conf or bcfg2-web.conf'''
-
 Be sure to include the specified fields included the example bcfg2.conf
 file. These can be specified in either ``/etc/bcfg2.conf``, if it is readable
 by the webserver user, or ``/etc/bcfg2-web.conf``.
 
-'''Install skeleton database'''
-
 Inside the ``bcfg2-tarball/examples/`` directory from the
 tarball you will find ``brpt.sqlite``. Copy this file to
-<path-to-bcfg2-repository>/etc/brpt.sqlite
+``<path-to-bcfg2-repository>/etc/brpt.sqlite``.
 
-If you are not using sqlite (the default choice), please see the "Notes
-on Alternative Databases" section below.
+If you are not using sqlite (the default choice), please see the
+:ref:`alternative-databases` section below.
 
-At this point we can import statistics date in to the database from your
-``clients.xml`` and ``statistics.xml`` files.
+The recommended statistics plugin is DBStats. To use it, add it to the
+``plugins`` line in your bcfg2.conf.
 
-execute the following: {{{python .../site-packages/Bcfg2/Server/Reports/importscript.py }}}
+Restart the bcfg2 server. Run a client in dryrun mode in order to get
+the client's statistics loaded into the database.
 
-At this point you shouldn't get any errors or tracebacks. Common problems
-include incorrect installation of the pysqlite2 module.
+.. _dynamic-http-install:
 
-'''Next we configure Apache:'''
+Installation of web-based Reports
+---------------------------------
+
+.. note::
+
+    Reports no longer needs to be installed at the root URL for a given
+    host. Therefore, reports no longer require their own virtual host.
 
 An example site config is included below for the vhost "reports.mcs.anl.gov"::
 
@@ -94,16 +85,14 @@ An example site config is included below for the vhost "reports.mcs.anl.gov"::
 
 The first three lines of this configuration must be customized per site.
 
-The {{{bcfg2-tarball/reports/site_media/}}} directory needs to be copied to {{{/var/www/reports/site_media/}}} It could live anywhere; as long as the contents are accessible on the virtual host at {{{/site_media/}}}. 
+The ``bcfg2-tarball/reports/site_media/`` directory needs to be copied
+to ``/var/www/reports/site_media/`` It could live anywhere; as long as
+the contents are accessible on the virtual host at ``/site_media/``. 
 
-At this point you should be able to point your web browser to the virtualhost you created '''and see the new reports'''.
+At this point you should be able to point your web browser to the
+virtualhost you created and see the new reports
 
-One final step is to configure your system to import statistics data regularly. 
-execute the following: {{{python .../site-packages/Bcfg2/Server/Reports/importscript.py }}}
-
-(''Versions 0.8.7 and prior must specify: {{{python .../site-packages/Bcfg2/Server/Reports/importscript.py-c <repo>/Metadata/clients.xml -s <repo>/etc/statistics.xml}}} '')
-
-on a regular basis, perhaps as often as every 5 or 10 minutes or as infrequent as daily, so your reports are always up to date.
+.. _alternative-databases:
 
 Notes on Alternative Databases
 ------------------------------
@@ -116,9 +105,6 @@ you will need to run "python manage.py syncdb" from the brpt module
 directory to configure it before importing any data. As of vers 0.9.5,
 these settings are moved to the more appropriate /etc/bcfg2.conf
 
-
-''If you encounter any problems or have suggestions for these instructions feedback is welcome and encouraged.''
-
 Summary and Features
 ====================
 
@@ -128,10 +114,19 @@ relational database, we are now able to view and analyze more information
 about the state of the configuration, including information about previous
 configuration. Specific features in the new system include:
 
-* The ability to look at past statistics information. [[Image(summary_cal.jpg, 30%, right)]]
-* More recent data concerning hosts. The import script may be run quite often, updating the database that contains all statistics information. In the future we anticipate development of a database based statistics module for the server that will allow statistics updates to happen immediately as configuration changes happen.
-* Additional information display in reports. Primarily, reasons for configuration item verification failure are now accessible. This additional data is provided only by the most recent client. 
-* Instead of static pages, pages are generated on the fly, allowing users to drill down to find out about a specific host, rather than have one huge page with too much information.
+* The ability to look at past statistics information.
+  [[Image(summary_cal.jpg, 30%, right)]]
+* More recent data concerning hosts. The import script may be run quite
+  often, updating the database that contains all statistics
+  information. In the future we anticipate development of a database
+  based statistics module for the server that will allow statistics
+  updates to happen immediately as configuration changes happen.
+* Additional information display in reports. Primarily, reasons for
+  configuration item verification failure are now accessible. This
+  additional data is provided only by the most recent client.
+* Instead of static pages, pages are generated on the fly, allowing
+  users to drill down to find out about a specific host, rather than
+  have one huge page with too much information.
 
 Planned improvements include
 ============================

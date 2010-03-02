@@ -42,7 +42,7 @@ Misc/Others
 Reporting
 =========
 
-* `Reports`
+* :ref:`server-reports-index`
 
 Examples
 ========

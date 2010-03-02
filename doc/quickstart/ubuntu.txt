@@ -471,74 +471,81 @@ Now we run the client and see there are no more unmanaged entries! ::
 Dynamic (web) Reports
 ---------------------
 
-First, `aptitude install python-django apache2 libapache2-mod-python`.
+First, run ``aptitude install python-django apache2
+libapache2-mod-python``.
 
- * Now we need to create the sqlite database::
+* Now we need to create the sqlite database::
 
-    root@lucid:~# python /usr/share/pyshared/Bcfg2/Server/Reports/manage.py syncdb
-    Creating table auth_permission
-    Creating table auth_group
-    Creating table auth_user
-    Creating table auth_message
-    Creating table django_content_type
-    Creating table django_session
-    Creating table django_site
-    Creating table django_admin_log
-    Creating table reports_client
-    Creating table reports_ping
-    Creating table reports_interaction
-    Creating table reports_reason
-    Creating table reports_entries
-    Creating table reports_entries_interactions
-    Creating table reports_performance
-    Creating table reports_internaldatabaseversion
+      root@lucid:~# python /usr/share/pyshared/Bcfg2/Server/Reports/manage.py syncdb
+      Creating table auth_permission
+      Creating table auth_group
+      Creating table auth_user
+      Creating table auth_message
+      Creating table django_content_type
+      Creating table django_session
+      Creating table django_site
+      Creating table django_admin_log
+      Creating table reports_client
+      Creating table reports_ping
+      Creating table reports_interaction
+      Creating table reports_reason
+      Creating table reports_entries
+      Creating table reports_entries_interactions
+      Creating table reports_performance
+      Creating table reports_internaldatabaseversion
 
-    You just installed Django's auth system, which means you don't have any superusers defined.
-    Would you like to create one now? (yes/no): no
-    Installing index for auth.Permission model
-    Installing index for auth.Message model
-    Installing index for admin.LogEntry model
-    Installing index for reports.Client model
-    Installing index for reports.Ping model
-    Installing index for reports.Interaction model
-    Installing index for reports.Entries model
-    Installing index for reports.Entries_interactions model
+      You just installed Django's auth system, which means you don't have any superusers defined.
+      Would you like to create one now? (yes/no): no
+      Installing index for auth.Permission model
+      Installing index for auth.Message model
+      Installing index for admin.LogEntry model
+      Installing index for reports.Client model
+      Installing index for reports.Ping model
+      Installing index for reports.Interaction model
+      Installing index for reports.Entries model
+      Installing index for reports.Entries_interactions model
 
- * Add DBStats to the plugins line of bcfg2.conf. The resulting [server] section should look something like this::
+* Add DBStats to the plugins line of bcfg2.conf. The resulting [server]
+  section should look something like this::
 
-    [server]
-    repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+      [server]
+      repository = /var/lib/bcfg2
+      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
 
- * Start/restart the bcfg2 server
- * Run the bcfg2 client in order to populate the statistics database (this run should take a bit longer since you are uploading the client statistics to the database).
- * Download the static reports content::
+* Start/restart the bcfg2 server
+* Run the bcfg2 client in order to populate the statistics database
+  (this run should take a bit longer since you are uploading the client
+  statistics to the database).
+* Download the static reports content::
 
-    root@lucid:~# cd /var/www/
-    root@lucid:/var/www# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
+      root@lucid:~# cd /var/www/
+      root@lucid:/var/www# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
 
- * Configure Apache using [wiki:Reports/Dynamic/Installation#ConfigureApache] as a guide
- * Copy server/statistics sections of bcfg2.conf to /etc/bcfg2-web.conf (make sure it is world-readable). You should then have something like this::
+* Configure Apache using
+* :ref:`dynamic-http-install` as a guide
+* Copy server/statistics sections of bcfg2.conf to
+  ``/etc/bcfg2-web.conf`` (make sure it is world-readable). You should
+  then have something like this::
 
-    [server]
-    repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+      [server]
+      repository = /var/lib/bcfg2
+      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
 
-    [statistics]
-    sendmailpath = /usr/lib/sendmail
-    database_engine = sqlite3
-    # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-    database_name =
-    # Or path to database file if using sqlite3.
-    #<repository>/etc/brpt.sqlite is default path if left empty
-    database_user =
-    # Not used with sqlite3.
-    database_password =
-    # Not used with sqlite3.
-    database_host =
-    # Not used with sqlite3.
-    database_port =
-    # Set to empty string for default. Not used with sqlite3.
-    web_debug = True
+      [statistics]
+      sendmailpath = /usr/lib/sendmail
+      database_engine = sqlite3
+      # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
+      database_name =
+      # Or path to database file if using sqlite3.
+      #<repository>/etc/brpt.sqlite is default path if left empty
+      database_user =
+      # Not used with sqlite3.
+      database_password =
+      # Not used with sqlite3.
+      database_host =
+      # Not used with sqlite3.
+      database_port =
+      # Set to empty string for default. Not used with sqlite3.
+      web_debug = True
 
- * Restart apache and point a browser to your bcfg2 server
+* Restart apache and point a browser to your bcfg2 server

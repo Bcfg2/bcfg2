@@ -11,7 +11,6 @@ Here are several howtos that describe different aspects of Bcfg2 deployment
 * [wiki:Authentication] - a description of the bcfg2 authentication infrastructure
 * AnnotatedExamples - a description of basic bcfg2 specification operations
 * EncapPackages, EncapReadme, EncapInstall, EncapHowto - building encap packages
-* NewDynamicReports - Howto set up new reporting system first released in 0.8.2
 * BuildingDebianPackages - How to build debian packages
 * [wiki:Gentoo] - Issues specific to running bcfg2 on Gentoo
 * [wiki:Plugins/TCheetah TCheetah] - Howto use the TCheetah template plugin
