@@ -210,10 +210,10 @@ bcfg2.conf and create the Probe.
     ARCH=`uname -m`
     case "$ARCH" in
         "x86_64")
-            echo "amd64"
+            echo "group:amd64"
         ;;
         "i686")
-            echo "i386"
+            echo "group:i386"
         ;;
     esac
 
