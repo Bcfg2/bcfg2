@@ -96,6 +96,29 @@ the contents are accessible on the virtual host at ``/site_media/``.
 At this point you should be able to point your web browser to the
 virtualhost you created and see the new reports
 
+Example WSGI configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+entry.wsgi::
+
+    import os, sys
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Reports.settings'
+    import django.core.handlers.wsgi
+    application = django.core.handlers.wsgi.WSGIHandler()
+
+Apache conf::
+
+    Alias /bcfg2reports/site_media "/path/to/site_media"
+    <Directory /path/to>
+        Order deny,allow
+        Allow from all
+        AllowOverride None
+    </Directory>
+    # If Python is installed in a non-standard prefix:
+    #WSGIPythonHome /python/prefix
+    #WSGIPythonPath /python/prefix/lib/python2.6/site-packages
+    WSGIScriptAlias /bcfg2reports "/another/path/to/entry.wsgi"
+
 .. _alternative-databases:
 
 Notes on Alternative Databases
