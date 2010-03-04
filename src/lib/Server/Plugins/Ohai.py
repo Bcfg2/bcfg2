@@ -1,10 +1,26 @@
-
-import json
 import lxml.etree
 import os
+
+import logging
+logger = logging.getLogger('Bcfg2.Plugins.Ohai')
+
 import Bcfg2.Server.Plugin
 
+try:
+    import json
+except:
+    # FIXME: can be removed when server prereq is >= python 2.6
+    # necessary for clients without the in-tree json module
+    try:
+        import simplejson as json
+    except:
+        logger.error("Unable to load any json modules. Make sure "
+                     "python-simplejson is installed.")
+        raise ImportError
+
+
 class OhaiCache(object):
+
     def __init__(self, dirname):
         self.dirname = dirname
         self.cache = dict()
@@ -26,6 +42,7 @@ class OhaiCache(object):
         data = self.cache.keys()
         data.extend([x[:-5] for x in os.listdir(self.dirname)])
         return data.__iter__()
+
 
 class Ohai(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Probing,
