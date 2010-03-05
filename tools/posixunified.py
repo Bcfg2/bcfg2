@@ -39,6 +39,15 @@ if __name__ == '__main__':
                     newd = deepcopy(d)
                     newd.set('type', 'directory')
                     rulesroot.append(newd)
+                # replace BoundDirectory elements
+                for d in xdata.findall('//BoundDirectory'):
+                    parent = d.getparent()
+                    oldd = d
+                    d.tag = 'BoundPath'
+                    parent.replace(oldd, d)
+                    # Create new-style entry
+                    newd = deepcopy(d)
+                    newd.set('type', 'directory')
                 # replace Permissions elements
                 for p in xdata.findall('//Permissions'):
                     parent = p.getparent()
@@ -49,6 +58,15 @@ if __name__ == '__main__':
                     newp = deepcopy(p)
                     newp.set('type', 'permissions')
                     rulesroot.append(newp)
+                # replace BoundPermissions elements
+                for p in xdata.findall('//BoundPermissions'):
+                    parent = p.getparent()
+                    oldp = p
+                    p.tag = 'BoundPath'
+                    parent.replace(oldp, p)
+                    # Create new-style entry
+                    newp = deepcopy(p)
+                    newp.set('type', 'permissions')
                 # replace SymLink elements
                 for s in xdata.findall('//SymLink'):
                     parent = s.getparent()
@@ -59,6 +77,15 @@ if __name__ == '__main__':
                     news = deepcopy(s)
                     news.set('type', 'symlink')
                     rulesroot.append(news)
+                # replace BoundSymLink elements
+                for s in xdata.findall('//BoundSymLink'):
+                    parent = s.getparent()
+                    olds = s
+                    s.tag = 'BoundPath'
+                    parent.replace(olds, s)
+                    # Create new-style entry
+                    news = deepcopy(s)
+                    news.set('type', 'symlink')
                 # write out the new bundle
                 try:
                     newbundle = open("%s/%s/new%s" % (repo, plug, filename), 'w')
