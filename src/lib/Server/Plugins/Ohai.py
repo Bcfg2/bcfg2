@@ -26,6 +26,9 @@ class OhaiCache(object):
         self.cache = dict()
 
     def __setitem__(self, item, value):
+        if value == None:
+            # simply return if the client returned nothing
+            return
         self.cache[item] = json.loads(value)
         file("%s/%s.json" % (self.dirname, item), 'w').write(value)
 
