@@ -18,6 +18,7 @@ Welcome to Bcfg2's documentation!
    client/index
    gettinghelp
    bcfg2.conf-options
+   architecture
    development/index
 
    unsorted/index

@@ -51,6 +51,9 @@ client configuration state information. The design and implementation
 of the reporting system is described in a separate
 :ref:`page <server-reports-index>`.
 
+A comprehensive description of the Bcfg2 Architecture (and the choices
+behind the design) can be found at :ref:`architecture`
+
 Server
 ^^^^^^
 

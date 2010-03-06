@@ -13,9 +13,6 @@ plugin that generates dhcp, dns, and yp configuration files.
 Installation
 ============
 
-Overview
---------
-
 Installation of Hostbase requires installation of a python module,
 configuration of database (mysql or postgres), and configuration of an
 Apache webserver with mod_python. Hostbase was developed using MySQL,
@@ -208,20 +205,23 @@ source to your machine.  When this command is run as root, it triggers
 the Hostbase to rebuild it's files, then runs the bcfg2 client on your
 local machine to grab the new configs.
 
-Authentication
-==============
-
-Edit Django settings
---------------------
+NIS Authentication
+==================
 
 Django allows for custom authentication backends to its login procedure.
 Hostbase has an NIS authentication backend that verifies a user to be
 in the unix group allowed to modify Hostbase.
 
 To enable this feature:
- * first edit your ``Hostbase/settings.py`` file and uncomment the line ``'Hostbase.backends.NISBackend',`` in the list of ``AUTHENTICATION_BACKENDS``
- * enter the name of the unix group you want to give access to Hostbase in the ``AUTHORIZED_GROUP`` variable
- * in your ``Hostbase/hostbase/views.py`` file at the very bottom, uncomment the block(s) of lines that give you the desired level of access
+
+* first edit your ``Hostbase/settings.py`` file and uncomment
+  the line **Hostbase.backends.NISBackend** in the list of
+  *AUTHENTICATION_BACKENDS*
+* enter the name of the unix group you want to give access to Hostbase
+  in the *AUTHORIZED_GROUP* variable
+* in your ``Hostbase/hostbase/views.py`` file at the very bottom,
+  uncomment the block(s) of lines that give you the desired level
+  of access
 
 Hostbase will now direct the user to a login page if he or she is not
 authorized to view a certain page.  Users should log in with their

@@ -13,7 +13,7 @@ Bcfg2 specifications are logically divided in to three areas:
 * Literal
 
 The metadata portion of the configuration assigns a client to its profile
-group and to its non profle groups. The profile group is assigned
+group and to its non-profile groups. The profile group is assigned
 in Metadata/clients.xml and the non profile group assignments are in
 Metadata/groups.xml.
 
@@ -22,7 +22,7 @@ an abstract configuration for the client. An abstract configuration for
 a client identifies the configuration entities (packages, configuration
 files, service, etc) that a client requires, but it does not identify
 them explicitly. For instance an abstract configuration may identify
-that a client needs the bcfg2 package with
+that a client needs the Bcfg2 package with
 
 .. code-block:: xml
 
@@ -353,11 +353,3 @@ Each of the generators is covered on their own page.
 
 || '' '''Plugin''' '' || '' '''Description''' '' ||
 || [wiki:Plugins/Actions Actions] || Action entries are commands that are executed either before bundle installation, after bundle installation or both. ||
-|| [wiki:Plugins/Cfg Cfg] || The Cfg plugin provides a repository to describe configuration file contents for clients. In its simplest form, the Cfg repository is just a directory tree modeled off of the directory tree on your client machines. ||
-|| [wiki:Plugins/Deps Deps] || The deps plugin allows inter-entry dependencies (like package prerequisites) to be mapped independent of client roles. ||
-|| [wiki:Plugins/Hostbase Hostbase] || Hostbase is an IP management system built on top of Bcfg2.  ||
-|| [wiki:Plugins/Pkgmgr Pkgmgr] || The Pkgmgr plugin define what packages are available for a host or image and where to find those packages. ||
-|| [wiki:Plugins/Rules Rules] || The Rules plugin is responsible for defining the details about the Directory, Permissions, !SymLink and Service elements.  ||
-|| [wiki:Plugins/SSHbase SSHbase] || SSHbase is a purpose build bcfg2 plugin for managing ssh host keys. It is responsible for making ssh keys persist beyond a client rebuild and building a proper ssh_known_hosts file, including a correct localhost record for the current system. ||
-|| [wiki:Plugins/TCheetah TCheetah] || The TCheetah plugin allows you to use the [http://www.cheetahtemplate.org/ cheetah templating system] to create files, instead of the various diff-based methods offered by the Cfg plugin. It also allows you to include the results of probes executed on the client in the created files. ||
-|| [wiki:Plugins/TGenshi TGenshi] || The TGenshi plugin uses the [http://genshi.edgewall.org/ genshi toolkit] for generating files and functions much like the TCheetah plugin ||

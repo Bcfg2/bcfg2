@@ -6,9 +6,14 @@
 Mailing List
 ============
 
-To subscribe to the mailing list for bcfg2 please visit: [https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev bcfg-dev mailman page]
+To subscribe to the mailing list for bcfg2 please visit the `bcfg-dev
+mailman page`_
 
-[http://dir.gmane.org/gmane.comp.sysutils.bcfg2.devel Searchable archives] are available from Gmane. You can also read the mailing list from any NNTP client via Gmane.
+`Searchable archives`_ are available from Gmane. You can also read the
+mailing list from any NNTP client via Gmane.
+
+.. _bcfg-dev mailman page: https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
+.. _Searchable archives: http://dir.gmane.org/gmane.comp.sysutils.bcfg2.devel
 
 .. raw:: html
 

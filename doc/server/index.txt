@@ -11,8 +11,4 @@ Bcfg2 Server
 
    plugins/index
    reports/index
-
-.. toctree::
-   :hidden:
-
    configurationentries
