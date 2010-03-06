@@ -99,5 +99,6 @@ if __name__ == '__main__':
         newrules = open(unifiedposixrules, 'w')
     except IOError:
         print("Failed to write %s" % filename)
+    rulesroot.set('priority', '1')
     newrules.write(lxml.etree.tostring(rulesroot, pretty_print=True))
     newrules.close()
