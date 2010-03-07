@@ -19,6 +19,7 @@
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='1' maxOccurs='1'>
       <xsd:element name='Info' type='InfoType'/>
+      <xsd:element name='Group' type='GroupType' minOccurs='0' maxOccurs='unbounded'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='negate' />
