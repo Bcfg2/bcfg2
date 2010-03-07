@@ -212,7 +212,7 @@ if __name__ == '__main__':
     statpath = False
     
     try:
-        opts, args = getopt(argv[1:], "hvudc:s:", ["help", "verbose", "updates" ,
+        opts, args = getopt(argv[1:], "hvudc:s:C", ["help", "verbose", "updates" ,
                                                    "debug", "clients=", "stats=",
                                                    "config="])
     except GetoptError, mesg:
