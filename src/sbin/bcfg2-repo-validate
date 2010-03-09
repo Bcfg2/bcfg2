@@ -112,7 +112,7 @@ if __name__ == '__main__':
                 'grouppatterns': (gp_list, "%s/grouppatterns.xsd"),
                 }
 
-    failures  = 0
+    failures = 0
     for k, (filelist, schemaname) in list(filesets.items()):
         try:
             schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
@@ -159,5 +159,15 @@ if __name__ == '__main__':
                genshibundle not in allbundles:
                 print("*** Warning: Bundle %s referenced, but does not "
                                     "exist." % bundle)
+        # verify bundle name attribute matches filename
+        for bundle in (bundle_list + genshibundle_list):
+            fname = bundle.split('Bundler/')[1].split('.')[0]
+            xdata = lxml.etree.parse(bundle)
+            bname = xdata.getroot().get('name')
+            if fname != bname:
+                print("The following names are inconsistent:")
+                print("  Filename is %s" % fname)
+                print("  Bundle name found in %s is %s" % (fname, bname))
+
 
     raise SystemExit, failures
