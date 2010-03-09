@@ -53,12 +53,17 @@ architecture groups (i386 or amd64).
 
 Memberships in architecture groups is needed so that Packages can map
 software sources to clients. There is no other way to handle this than
-to impose
+to impose membership in the appropriate architecture group.
 
 When multiple sources are specified, clients are associated with each
 source to which they apply (based on group memberships, as described
 above). Packages and dependencies are resolved from all applicable
 sources.
+
+.. note:: To recap, a client needs to be a member of the **OS Group**,
+          **Architecture** group, and any other groups defined in your
+          ``Packages/config.xml`` file in order for the client to be
+          associated to the proper sources.
 
 Setup
 =====
