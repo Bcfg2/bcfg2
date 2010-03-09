@@ -39,6 +39,8 @@ limit the source's applicability to group member clients.
 +-----------+----------+--------------+
 | YUMSource | centos   | x86_64       |
 +-----------+----------+--------------+
+| YUMSource | fedora   | x86_64       |
++-----------+----------+--------------+
 
 Limiting sources to groups
 ==========================

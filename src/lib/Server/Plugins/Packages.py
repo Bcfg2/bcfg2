@@ -213,7 +213,7 @@ class YUMSource(Source):
     rp = '{http://linux.duke.edu/metadata/rpm}'
     rpo = '{http://linux.duke.edu/metadata/repo}'
     fl = '{http://linux.duke.edu/metadata/filelists}'
-    basegroups = ['redhat', 'centos']
+    basegroups = ['redhat', 'centos', 'fedora']
     ptype = 'yum'
 
     def __init__(self, basepath, url, version, arches, components, groups, rawurl):
