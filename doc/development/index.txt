@@ -2,6 +2,7 @@
 
 .. _development-index:
 
+=================
 Bcfg2 Development
 =================
 
@@ -300,5 +301,15 @@ do so. We will call our new plugin `MyMetadata`.
 #. Add MyMetadata to ``src/lib/Server/Plugins/__init__.py``
 #. Replace Metadata with MyMetadata in the plugins line of bcfg2.conf
 
+
+Documentation
+-------------
+
+One of the areas where everyone can help is with the documentation. *Insert verbiage on how people can help.*
+
+
+
 .. toctree::
    :maxdepth: 1
+
+   docstyleguide
