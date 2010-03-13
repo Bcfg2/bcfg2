@@ -12,5 +12,9 @@ Basics
 
 :Bcfg2:
     When referring to project, Bcfg2 is the preferred use of cases.
+
 :Monospace fonts:
     When referring to commands written on the command line use monospace fonts.
+    
+:Repository:
+    When used alone this refers to a Bcfg2 :term:`repository`. When there is a chance for confusion, for instance in documents also talking about :term:`VCS`, be sure to use the longer Bcfg2 :term:`repository`.
