@@ -1,9 +1,26 @@
 '''This contains all Bcfg2 Tool modules'''
 __revision__ = '$Revision$'
 
-__all__ = ["Action", "APT", "Blast", "Chkconfig", "DebInit", "Encap", "IPS",
-           "FreeBSDInit", "FreeBSDPackage", "launchd", "MacPorts", "Portage",
-           "POSIX", "RPMng", 'rpmtools', "RcUpdate", "SMF", "SYSV", "YUMng"]
+__all__ = ["Action",
+           "APT",
+           "Blast",
+           "Chkconfig",
+           "DebInit",
+           "Encap",
+           "IPS",
+           "FreeBSDInit",
+           "FreeBSDPackage",
+           "launchd",
+           "MacPorts",
+           "Portage",
+           "POSIX",
+           "RPMng",
+           "rpmtools",
+           "RcUpdate",
+           "SMF",
+           "SYSV",
+           "Upstart",
+           "YUMng"]
 
 drivers = [item for item in __all__ if item not in ['rpmtools']]
 default = [item for item in drivers if item not in ['RPM', 'Yum']]

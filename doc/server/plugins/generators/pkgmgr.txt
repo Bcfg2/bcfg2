@@ -266,8 +266,8 @@ special Packages that are older than the ones available in the updates.
         </Client>
     </PackageList>
 
-Simplifying Multi-Architecture Environments with :ref:`Altsrc <unsorted-altsrc>`
-================================================================================
+Simplifying Multi-Architecture Environments with :ref:`Altsrc <server-plugins-structures-altsrc>`
+=================================================================================================
 
 Frequently multi-architecture environments (typically x86_64) will run
 into problems needing to specify different architectures on different
@@ -278,7 +278,7 @@ onerous, because different package targets (64bit, 32+64, etc) needed
 to be specified on a package by group basis. Two features have been
 implemented that should ease this situation considerably.
 
-* The :ref:`Altsrc <unsorted-altsrc>` feature adds the ability to add a "bind as" directive
+* The :ref:`Altsrc <server-plugins-structures-altsrc>` feature adds the ability to add a "bind as" directive
   to entries. For example, the following entry, in a bundle:
 
 .. code-block:: xml

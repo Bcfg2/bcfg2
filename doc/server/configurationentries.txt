@@ -65,6 +65,8 @@ path. The following table describes the various types available for new
 |             | entries              |                 |                          |
 +-------------+----------------------+-----------------+--------------------------+
 
+.. _boundentries:
+
 Bound Entries
 =============
 
