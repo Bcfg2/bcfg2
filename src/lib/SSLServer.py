@@ -203,6 +203,11 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             size_remaining = int(self.headers["content-length"])
             L = []
             while size_remaining:
+                try:
+                    select.select([self.rfile.fileno()], [], [], 3)
+                except select.error:
+                    print "got select timeout"
+                    raise
                 chunk_size = min(size_remaining, max_chunk_size)
                 L.append(self.rfile.read(chunk_size))
                 size_remaining -= len(L[-1])
