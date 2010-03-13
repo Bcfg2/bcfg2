@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-apt:
+
+=====================
+Bcfg2 APT Client Tool
+=====================
+
+The APT tool allows you to configure custom options in ``bcfg2.conf``
+for systems where the tools reside in non-standard locations. The
+available options (and their corresponding default values) are::
+
+    [APT]
+    install_path = '/usr'
+    var_path = '/var'
+    etc_path = '/etc'

@@ -247,6 +247,16 @@ SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                        default='/usr/lib/sendmail')
 
+# APT client tool options
+CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
+                                       cf=('APT', 'install_path'),
+                                       default='/usr')
+CLIENT_APT_TOOLS_VAR_PATH = Option('Apt tools var path',
+                                   cf=('APT', 'var_path'), default='/var')
+CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
+                         default='/etc')
+
+
 CLIENT_PROFILE = Option('assert the given profile for the host',
                         default=False, cmd='-p', odesc="<profile>")
 CLIENT_RETRIES = Option('the number of times to retry network communication',
