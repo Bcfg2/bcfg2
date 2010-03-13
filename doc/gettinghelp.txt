@@ -14,7 +14,12 @@ Having trouble? We'd like to help!
 
 * Ask a question in the `#bcfg2 IRC channel`_, or search the `IRC logs`_ to see if its been asked before.
 
-* Report bugs with Bcfg2 in our `ticket tracker`_.
+.. _report-a-bug:
+
+Report A Bug
+************
+
+Report bugs with Bcfg2 in our `ticket tracker`_.
 
 .. _Bcfg2 mailing list archives: http://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
 .. _#bcfg2 IRC channel: irc://irc.freenode.net/bcfg2
