@@ -12,3 +12,4 @@ Bcfg2 Server
    plugins/index
    reports/index
    configurationentries
+   snapshots/index
