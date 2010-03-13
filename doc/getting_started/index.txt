@@ -4,7 +4,7 @@
 
 ===========
 Using Bcfg2
-============
+===========
 
 These are many of the resources available to help new users get started. 
 
@@ -16,7 +16,7 @@ These are many of the resources available to help new users get started.
    :maxdepth: 2
 
    using-bcfg2-info
-   using_bcfg2-with-centos
+   using-bcfg2-with-centos
 
 Must Reads
 ==========
