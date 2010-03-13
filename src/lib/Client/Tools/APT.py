@@ -64,9 +64,11 @@ class APT(Bcfg2.Client.Tools.Tool):
         for item in output:
             if "checksum mismatch" in item:
                 files.append(item.split()[-1])
+            elif "changed file" in item:
+                files.append(item.split()[3])
             elif "can't open" in item:
                 files.append(item.split()[5])
-            elif "is not installed" in item:
+            elif "is not installed" in item or "missing file" in item:
                 self.logger.error("Package %s is not fully installed" \
                                   % entry.get('name'))
             else:
