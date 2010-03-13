@@ -9,21 +9,37 @@ warnings.filterwarnings("ignore", "Accessed deprecated property Package.installe
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.candidateVersion, please see the Version class for alternatives.", DeprecationWarning)
 import apt.cache
 import os
+
 import Bcfg2.Client.Tools
+import Bcfg2.Options
+
+# Options for tool locations
+opts = {'install_path': Bcfg2.Options.CLIENT_APT_TOOLS_INSTALL_PATH,
+        'var_path': Bcfg2.Options.CLIENT_APT_TOOLS_VAR_PATH,
+        'etc_path': Bcfg2.Options.CLIENT_SYSTEM_ETC_PATH}
+setup = Bcfg2.Options.OptionParser(opts)
+setup.parse([])
+install_path = setup['install_path']
+var_path = setup['var_path']
+etc_path = setup['etc_path']
+DEBSUMS = '%s/bin/debsums' % install_path
+APTGET = '%s/bin/apt-get' % install_path
+DPKG = '%s/bin/dpkg' % install_path
 
 class APT(Bcfg2.Client.Tools.Tool):
     '''The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset'''
     name = 'APT'
-    __execs__ = ['/usr/bin/debsums', '/usr/bin/apt-get', '/usr/bin/dpkg']
-    __important__ = ["/etc/apt/sources.list",
-                     "/var/cache/debconf/config.dat",
-                     "/var/cache/debconf/templates.dat",
+    __execs__ = [DEBSUMS, APTGET, DPKG]
+    __important__ = ["%s/apt/sources.list" % etc_path,
+                     "%s/cache/debconf/config.dat" % var_path,
+                     "%s/cache/debconf/templates.dat" % var_path,
                      '/etc/passwd', '/etc/group',
-                     '/etc/apt/apt.conf', '/etc/dpkg/dpkg.cfg']
+                     '%s/apt/apt.conf' % etc_path,
+                     '%s/dpkg/dpkg.cfg' % etc_path]
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
-    pkgcmd = 'apt-get ' + \
+    pkgcmd = '%s ' % APTGET + \
              '-o DPkg::Options::=--force-overwrite ' + \
              '-o DPkg::Options::=--force-confold ' + \
              '--reinstall ' + \
@@ -37,8 +53,8 @@ class APT(Bcfg2.Client.Tools.Tool):
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
-            self.cmd.run("dpkg --force-confold --configure --pending")
-            self.cmd.run("apt-get clean")
+            self.cmd.run("%s --force-confold --configure --pending" % DPKG)
+            self.cmd.run("%s clean" % APTGET)
             self.pkg_cache = apt.cache.Cache()
             self.pkg_cache.update()
         self.pkg_cache = apt.cache.Cache()
@@ -53,7 +69,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                                          for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
-        output = self.cmd.run("/usr/bin/debsums -as %s" % entry.get('name'))[1]
+        output = self.cmd.run("%s -as %s" % (DEBSUMS, entry.get('name')))[1]
         if len(output) == 1 and "no md5sums for" in output[0]:
             self.logger.info("Package %s has no md5sums. Cannot verify" % \
                              entry.get('name'))

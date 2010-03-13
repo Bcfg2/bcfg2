@@ -38,7 +38,8 @@ APT
 ---
 
 Debian Packages. This tool driver is used to handle packages on dpkg
-based systems and employs the "apt" executable.
+based systems and employs the "apt" executable. Extra information can be
+found at :ref:`client-tools-apt`.
 
 Blast
 -----
