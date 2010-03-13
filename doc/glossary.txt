@@ -28,4 +28,11 @@ Glossary
 
    structure
 
+   repository
+        A colledtion of folders and files that make up the configurations that Bcfg2 applies to server. The repository is located at ``/var/lib/bcfg2`` by default. This is not to be confused with a :term:VCS repository, which is an excellent place to pull your Bcfg2 repository from to manage changes.
+
+    VCS
+        Stands for `Version Control System <http://en.wikipedia.org/wiki/Revision_control>_.
+
+
 .. _Genshi Homepage: http://genshi.edgewall.org/
