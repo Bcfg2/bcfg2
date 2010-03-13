@@ -433,7 +433,7 @@ Pkgmgr Configuration
 --------------------
 
 Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`
-and :ref:`unsorted-altsrc` pages.
+and :ref:`server-plugins-structures-altsrc` pages.
  
 Package Tag (Old style)
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -588,7 +588,7 @@ The two utilities detailed below are provided in the tools directory of
 the source tarball.
 
 Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`
-and :ref:`unsorted-altsrc` pages.
+and :ref:`server-plugins-structures-altsrc` pages.
 
 pkgmgr_gen.py
 ^^^^^^^^^^^^^

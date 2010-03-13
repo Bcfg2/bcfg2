@@ -144,8 +144,8 @@ Replace Pkgmgr with Packages in the plugins line of bcfg2.conf::
     [components]
     bcfg2 = https://lucid:6789
 
-Create Packages layout (as per [wiki:Plugins/Packages#Exampleusage])
-in ``/var/lib/bcfg2``
+Create Packages layout (as per :ref:`packages-exampleusage`) in
+``/var/lib/bcfg2``
 
 .. code-block:: xml
 
@@ -167,8 +167,8 @@ in ``/var/lib/bcfg2``
 
 Due to the `Magic Groups`_, we need to modify our Metadata. Let's add
 an **ubuntu-lucid** group which inherits the **ubuntu** group already
-present in /var/lib/bcfg2/Metadata/groups.xml. The resulting file should
-look something like this
+present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
+should look something like this
 
 .. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
 
@@ -194,10 +194,10 @@ look something like this
 .. note::
     When editing your xml files by hand, it is useful to occasionally run `bcfg2-repo-validate` to ensure that your xml validates properly.
 
-The last thing we need is for the client to have the proper arch group
-membership. For this, we will make use of the [wiki:DynamicGroups]
-capabilities of the Probes plugin. Add Probes to your plugins line in
-bcfg2.conf and create the Probe.
+The last thing we need is for the client to have the proper
+arch group membership. For this, we will make use of the
+:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
+Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 
 .. code-block:: sh
 

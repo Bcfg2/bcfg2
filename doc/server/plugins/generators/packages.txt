@@ -90,6 +90,8 @@ any prerequisites that cannot be satisfied. This facility should largely
 remove the need to use the :ref:`Base <server-plugins-structures-base>`
 plugin.
 
+.. _packages-exampleusage:
+
 Example usage
 =============
 
@@ -201,7 +203,7 @@ Package Verification
 ====================
 
 In order to do disable per-package verification Pkgmgr style, you will
-need to use :ref:`BoundEntries <unsorted-boundentry>` like below
+need to use :ref:`BoundEntries <boundentries>` like below
 
 .. code-block:: xml
 
