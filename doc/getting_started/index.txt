@@ -18,6 +18,11 @@ Channel` and let us know)
 
 * `Bcfg2 from scratch on CentOS <QuickStart/CentOS>`
 
+.. toctree::
+   :maxdepth: 2
+
+   using-bcfg2-info
+
 Must Reads
 ==========
 

@@ -52,8 +52,8 @@ Tool to manage services (primarily on Redhat based distros).
 
 .. note:: Start and stop are standard arguments, but the one for reload
           isn't consistent across services. You can specify which argument
-          to use with the `reload` property in Service tags. Example:
-          `<Service name="ftp" reload="condrestart" status="on"
+          to use with the `restart` property in Service tags. Example:
+          `<Service name="ftp" restart="condrestart" status="on"
           type="chkconfig">`
 
 DebInit
@@ -131,6 +131,13 @@ SYSV
 ----
 
 Handles System V Packaging format that is available on Solaris.
+
+Upstart
+-------
+
+Upstart service support. Uses `Upstart`_ to configure services.
+
+.. _Upstart: http://upstart.ubuntu.com/
 
 Yum
 ---
