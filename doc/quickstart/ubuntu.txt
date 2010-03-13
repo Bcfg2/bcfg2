@@ -2,7 +2,7 @@
 
 .. _quickstart-ubuntu:
 
-This is a complete getting started guide for Ubuntu
+Quickstart for Ubuntu
 ===================================================
 
 .. note::

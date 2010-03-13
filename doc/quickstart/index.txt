@@ -14,10 +14,7 @@ or to drop in on our `IRC channel`_.
 .. _mailing list: https://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
 .. _IRC channel: https://trac.mcs.anl.gov/projects/bcfg2/wiki/IRCChannel
 
-For distribution-specific guides, choose one of the following:
-
- * :ref:`quickstart-centos`
- * :ref:`quickstart-ubuntu`
+See the `Platform-specific Quickstart Notes`_ at the end of this page in case your operating systems has been favored with its own quickstart document.
 
 Get and Install Bcfg2 Server
 ============================
@@ -257,7 +254,7 @@ Platform-specific Quickstart Notes
 ==================================
 
 .. toctree::
-   :hidden:
+   :maxdepth: 2
 
    centos
    ubuntu
