@@ -9,7 +9,8 @@ Glossary
     client
 
     generator
-        A type of plugin which provides file contents. For example Cfg or TGenshi.
+        A type of plugin which provides file contents. For example Cfg
+        or TGenshi.
 
     Genshi
         A Python-based templating engine. `Genshi Homepage`_.
@@ -21,7 +22,8 @@ Glossary
         #bcfg2 on freenode
 
     probe
-        A script that executes on a client machine and sets client metadata such as group membership.
+        A script that executes on a client machine and sets client
+        metadata such as group membership.
 
     profile
         A special type of group that a client is explicitly assigned to.
@@ -29,10 +31,16 @@ Glossary
     structure
 
     repository
-        A colledtion of folders and files that make up the configurations that Bcfg2 applies to server. The repository is located at ``/var/lib/bcfg2`` by default. This is not to be confused with a :term:VCS repository, which is an excellent place to pull your Bcfg2 repository from to manage changes. When used a lone, repository refers to a Bcfg2 repository.
+        A collection of folders and files that make up the configurations
+        that Bcfg2 applies to server. The repository is located at
+        ``/var/lib/bcfg2`` by default. This is not to be confused with
+        a :term:VCS repository, which is an excellent place to pull
+        your Bcfg2 repository from to manage changes. When used alone,
+        repository refers to a Bcfg2 repository.
 
     VCS
-        Stands for `Version Control System <http://en.wikipedia.org/wiki/Revision_control>`_.
+        Stands for `Version Control System
+        <http://en.wikipedia.org/wiki/Revision_control>`_.
 
 
 .. _Genshi Homepage: http://genshi.edgewall.org/
