@@ -8,3 +8,4 @@ Bcfg2 FAQ
    :maxdepth: 2
 
    general
+   client
