@@ -71,7 +71,7 @@ stop () {
 
 status () {
     # Inspired by redhat /etc/init.d/functions status() call
-    PID=$(pidof -x $BINARY)
+    PID=$(pidof -x $BINARY -o %PPID)
     if [ -n "$PID" ]; then
       echo "$BINARY (pid $PID) is running..."
       return 0
