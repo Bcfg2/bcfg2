@@ -32,13 +32,17 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         output = self.cmd.run('/usr/sbin/service %s status' % \
                               entry.get('name'))[1][0]
         if output.split(' ')[1].split('/')[1].startswith('running'):
-            status = True
+            entry.set('current_status', 'on')
             if entry.get('status') == 'off':
-                entry.set('current_status', 'on')
+                status = False
+            else:
+                status = True
         else:
-            status = False
+            entry.set('current_status', 'off')
             if entry.get('status') == 'on':
-                entry.set('current_status', 'off')
+                status = False
+            else:
+                status = True
 
         return status
 
