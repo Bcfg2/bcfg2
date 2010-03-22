@@ -86,7 +86,10 @@ class executor:
             cmdstat = runpipe.poll()
         output += [line[:-1] for line in runpipe.fromchild.readlines() \
                    if line]
-        return (cmdstat, output)
+        # The exit code from the program is in the upper byte of the
+        # value returned by cmdstat. Shift it down for tools looking at
+        # the value.
+        return ((cmdstat >> 8), output)
 
 class Tool:
     '''
