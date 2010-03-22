@@ -199,7 +199,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         pruneTrue = True
         ex_ents = []
         if entry.get('prune', 'false') == 'true' \
-               and entry.tag == 'Directory':
+               and (entry.tag == 'Directory' or entry.get('type') == 'directory'):
+               # FIXME: need to verify both old and new POSIX types
             try:
                 entries = ['/'.join([entry.get('name'), ent]) \
                            for ent in os.listdir(entry.get('name'))]
