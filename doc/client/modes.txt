@@ -1,20 +1,34 @@
 .. -*- mode: rst -*-
 
-.. _client-paranoid:
+.. _client-modes:
 
-=============
-Paranoid Mode
-=============
+============
+Client modes
+============
 
-What is paranoid mode?
-======================
+Dryrun mode
+===========
+
+Dryrun mode (-n) prevents the client from making changes, but gives you
+some insight into the state of the machine. This mode is also useful if
+you simply want to gather data from the client into the reporting
+system.
+
+Interactive mode
+================
+
+The client can be run interactively (-I) so that you are able to step
+through each operation in order to see what the client is doing.
+
+Paranoid mode
+=============
 
 Paranoid mode creates a backup of a local configuration file before
 Bcfg2 replaces the file. This allows for easier recovery by the local
 administrator.
 
 How do I use it?
-================
+----------------
 
 #. In the Bcfg2 repository, put `paranoid='true'` in the ``info.xml``
    file.
@@ -30,7 +44,7 @@ by _'s. For example, the old ``/etc/hosts`` will be named
 ``/var/cache/bcfg2/etc_hosts``.
 
 Extra configuration
-===================
+-------------------
 
 Here is an example of how to use the extra paranoid features available
 in 1.0. For the following section in bcfg2.conf::
@@ -41,3 +55,24 @@ in 1.0. For the following section in bcfg2.conf::
 
 You will have the file backups store in ``/my/custom/backup/path``. This
 will also keep the five most recent backups of files.
+
+Overall client service mode
+===========================
+
+`New in version 1.0.0`
+
+Overall client service mode. Specified on the client using ``-s <service
+mode``.
+
+* default
+
+  * perform all service manipulations
+
+* disabled
+
+  * perform no service manipulations
+
+* build
+
+  * attempt to stop all services started
+  * deprecates/replaces -B

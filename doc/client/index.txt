@@ -22,34 +22,13 @@ architecture, as opposed to one with a smarter client, for a few reasons:
   deployment engine that can be driven by anything that writes a
   compatible configuration description.
 
-Overall client service mode
----------------------------
-
-`New in version 1.0.0`
-
-Overall client service mode. Specified on the client using ``-s <service
-mode``.
-
-* default
-
-  * perform all service manipulations
-
-* disabled
-
-  * perform no service manipulations
-
-* build
-
-  * attempt to stop all services started
-  * deprecates/replaces -B
-
 .. toctree::
    :maxdepth: 2
 
    agent
    debugging
    metadata
-   paranoid
+   modes
 
 .. toctree::
    :maxdepth: 2
