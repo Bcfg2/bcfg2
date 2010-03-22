@@ -116,23 +116,52 @@ See [wiki:Plugins/Actions Actions]
 Service Tag
 -----------
 
-+----------+-----------------------------+-------------------------------+
-| Name     | Description                 | Values                        |
-+==========+=============================+===============================+
-| name     | Service Name                | String                        |
-+----------+-----------------------------+-------------------------------+
-| status   | Should the service be on or | (on|off)                      |
-|          | off.                        |                               |
-+----------+-----------------------------+-------------------------------+
-| restart  | Service command for restart | String                        |
-|          | (default:restart)           |                               |
-+----------+-----------------------------+-------------------------------+
-| type     | Driver to use on the client | (chkconfig|deb|rc-update|smf) |
-|          | to manage this service.     |                               |
-+----------+-----------------------------+-------------------------------+
-| sequence | Order for service startup   | integer                       |
-|          | (debian services only)      |                               |
-+----------+-----------------------------+-------------------------------+
++----------+--------------------------+---------------------------------------+
+| Name     | Description              | Values                                |
++==========+==========================+=======================================+
+| mode     | Per Service Mode (New in | (manual|default|supervised|custom)    |
+|          | 1.0)                     |                                       |
++----------+--------------------------+---------------------------------------+
+| name     | Service Name             | String                                |
++----------+--------------------------+---------------------------------------+
+| status   | Should the service be    | (on|off)                              |
+|          | on or off.               |                                       |
+|          | off.                     |                                       |
++----------+--------------------------+---------------------------------------+
+| restart  | Service command for      | String                                |
+|          | restart                  |                                       |
+|          | (default:restart)        |                                       |
++----------+--------------------------+---------------------------------------+
+| type     | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |
+|          | client to manage this    |                                       |
+|          | service.                 |                                       |
++----------+--------------------------+---------------------------------------+
+| sequence | Order for service        | integer                               |
+|          | startup (debian services |                                       |
+|          | only)                    |                                       |
++----------+--------------------------+---------------------------------------+
+
+Service mode descriptions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`New in version 1.0.0`
+
+* manual
+
+  * do not start/stop/restart this service
+
+* default
+
+  * perform appropriate service ops
+
+* supervised
+
+  * default + ensure service is running when verification is performed
+  * deprecates supervised='true'
+
+* custom
+
+  * set non-default restart target in conjunction with target attribute
 
 Client Tag
 ----------

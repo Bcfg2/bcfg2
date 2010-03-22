@@ -26,7 +26,7 @@ How do I use it?
 
 This will save a copy of the replaced file in ``/var/cache/bcfg2``,
 but it'll be named as the path to the file with /'s replaced
-by _'s. For example, the old `/etc/hosts` will be named
+by _'s. For example, the old ``/etc/hosts`` will be named
 ``/var/cache/bcfg2/etc_hosts``.
 
 Extra configuration
@@ -39,5 +39,5 @@ in 1.0. For the following section in bcfg2.conf::
     path = /my/custom/backup/path
     max_copies = 5
 
-You will have the file backups store in /my/custom/backup/path. This
+You will have the file backups store in ``/my/custom/backup/path``. This
 will also keep the five most recent backups of files.
