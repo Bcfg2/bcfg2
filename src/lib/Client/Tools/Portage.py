@@ -24,7 +24,9 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
-        cache = self.cmd.run("equery -q list")[1]
+        ret, cache = self.cmd.run("equery -q list")
+        if ret == 2:
+            cache = self.cmd.run("equery -q list '*'")[1]
         pattern = re.compile('(.*)-(\d.*)')
         self.installed = {}
         for pkg in cache:
