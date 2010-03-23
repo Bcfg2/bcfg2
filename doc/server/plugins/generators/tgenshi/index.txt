@@ -58,10 +58,11 @@ Genshi syntax.
 Examples: Old Genshi Syntax
 ---------------------------
 
-Genshi's web pages recommend against using this syntax, as it may disappear from future releases.
+Genshi's web pages recommend against using this syntax, as it may
+disappear from future releases.
 
 Group Negation
---------------
+^^^^^^^^^^^^^^
 
 Templates are also useful for cases where more sophisticated boolean
 operations than those supported by Cfg are needed. For example, the

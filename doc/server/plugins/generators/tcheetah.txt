@@ -103,8 +103,8 @@ bcfg2/TCheetah/foo/template
     #end for
 
     Probes:
-    #for $probe in $self.metadata.probes:
-     * $probe -- $self.metadata.probes[$probe]
+    #for $probe in $self.metadata.Probes:
+     * $probe -- $self.metadata.Probes[$probe]
     #end for
 
 bcfg2/TCheetah/foo/info

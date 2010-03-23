@@ -12,8 +12,12 @@ Why use the Git plugin
 The Git plugin is useful if you would like to track changes to your bcfg2
 repository using a `Git <http://git-scm.com/>`_ backend. Currently,
 It enables you to get revision information out of your repository for
-reporting purposes. Future plans are to commit changes to the repo which
-are made by the server.
+reporting purposes. Once the plugin is enabled, every time a client
+checks in, it will include the current repository revision in the
+reports/statistics.
+
+Future plans are to commit changes to the repo which are made by the
+server (adding clients, ssh keys, etc).
 
 How to enable the Git plugin
 ============================
