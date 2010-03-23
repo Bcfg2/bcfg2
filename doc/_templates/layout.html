@@ -1,5 +1,9 @@
 {% extends "!layout.html" %}
 
+{% block extrahead %}
+{{ super() }}
+<link rel="stylesheet" href="{{pathto('_static/bcfg2.css', 1)}}" type=""/>
+{% endblock %}
 
 {% block rootrellink %}
 	<li><a href="{{ pathto('index') }}">home</a> |&nbsp;</li>

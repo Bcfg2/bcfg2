@@ -1,0 +1,34 @@
+/* -- tables ---------------------------------------------------------------- */
+
+table.docutils {
+    border: 0 solid #dce;
+    border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+    padding: 2px 5px 2px 5px;
+    border-left: 0;    
+    background-color: #bebebe;    
+}
+
+table.field-list td, table.field-list th {
+    border: 0 !important;
+}
+
+table.footnote td, table.footnote th {
+    border: 0 !important;
+}
+
+table.docutils th {
+    border-top: 1px solid #2f4f4f;    
+    background-color: #708090;
+}
+
+th {
+    text-align: left;
+    padding-right: 5px;
+}
+
+th.head {
+    text-align: center;    
+}
