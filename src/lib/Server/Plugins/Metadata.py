@@ -725,6 +725,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def viz(self, hosts, bundles, key, colors):
         '''admin mode viz support'''
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
+        try:
+            groups_tree.xinclude()
+        except lxml.etree.XincludeError:
+            self.logger.error("Failed to process XInclude for file %s" % dest)
         groups = groups_tree.getroot()
         categories = {'default':'grey83'}
         instances = {}
