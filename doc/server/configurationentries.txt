@@ -1,5 +1,12 @@
 .. -*- mode: rst -*-
 
+.. _Base: server-plugins-structures-base
+.. _Bundler: server-plugins-structures-bundler-index
+.. _Cfg: server-plugins-generators-cfg
+.. _TGenshi: server-plugins-generators-tgenshi-index
+.. _TCheetah: server-plugins-generators-tcheetah
+.. _Rules: server-plugins-generators-rules
+
 .. _server-configurationentries:
 
 =====================
@@ -27,10 +34,18 @@ Non-POSIX entries
 POSIX entries
 =============
 
-Starting in 1.0.0, there are new unified POSIX Path entries which prevent
-inconsistent configuration specifications of multiple entries for a given
-path. The following table describes the various types available for new
-**Path** entries.
+`New in 1.0`
+
+The unified POSIX Path entries prevent inconsistent configuration
+specifications of multiple entries for a given path. The following table
+describes the various types available for new **Path** entries.
+
+The abstract specification of these entries (i.e. In `Bundler`_)
+will only contain a *name* attribute. The type will be added by the
+plugin that handles the entry in the case of `Cfg`_, `TGenshi`_, or
+`TCheetah`_. If the entry is handled by the `Rules`_ plugin (i.e. it is
+a device, directory, hardlink, symlink, etc), then you will specify both
+the *type* and any other necessary attributes in `Rules`_.
 
 .. note:: A tool for converting old POSIX entries is available in the
           bcfg2 source directory at tools/posixunified.py
@@ -109,12 +124,13 @@ Use Cases
 Examples
 --------
 
-* Consider the case of /etc/hosts on linux and ``/etc/inet/hosts`` on
+* Consider the case of ``/etc/hosts`` on linux and ``/etc/inet/hosts`` on
   solaris. These files contain the same data in the same format,
   and should typically be synchronized, however, exist in different
-  locations. Classically, one would need to create one entry for each in
-  Cfg or TCheetah and perform manual synchronization. Or, you could use
-  symlinks and pray. Altsrc is driven from the bundle side. For example:
+  locations. Classically, one would need to create one entry for each
+  in `Cfg`_ or `TCheetah`_ and perform manual synchronization. Or,
+  you could use symlinks and pray. Altsrc is driven from the bundle
+  side. For example:
 
   .. code-block:: xml
 
@@ -152,7 +168,7 @@ Examples
 * Finally, consider the case where there exist complicated, but
   completely independent specifications for the same configuration entry
   but different groups of clients. The following bundle will allow the use
-  of two different TCheetah templates ``/etc/firewall-rules-external``
+  of two different `TCheetah`_ templates ``/etc/firewall-rules-external``
   and ``/etc/firewall-rules-internal`` for different clients based on
   their group membership.
 
@@ -169,10 +185,10 @@ Examples
       </Bundle>
 
 * Consider the case where a variety of files can be constructed by a
-  single template (TCheetah or TGenshi). It would be possible to copy
-  this template into the proper location for each file, but that requires
-  proper synchronization upon modification and knowing up front what
-  the files will all be called. Instead, the following bundle allows
+  single template (`TCheetah`_ or `TGenshi`_). It would be possible to
+  copy this template into the proper location for each file, but that
+  requires proper synchronization upon modification and knowing up front
+  what the files will all be called. Instead, the following bundle allows
   the use of a single template for all proper config file instances.
 
   .. code-block:: xml
@@ -184,4 +200,4 @@ Examples
       </Bundle>
 
   altsrc can be used as a parameter for any entry type, and can be used
-  in any structure, including Bundler and Base.
+  in any structure, including `Bundler`_ and `Base`_.
