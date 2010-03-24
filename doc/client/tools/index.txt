@@ -14,7 +14,7 @@ management. The POSIX tool also handles file system and permissions/groups
 operations.
 
 To write your own tool driver, to handle a new packaging format, or new
-service architecture see WritingClientToolDrivers.
+service architecture see :ref:`development-index-writingtooldrivers`
 
 When the bcfg2 client is run, it attempts to instantiate each of these
 drivers. The succeeding list of drivers are printed as a debug message
@@ -54,8 +54,8 @@ Tool to manage services (primarily on Redhat based distros).
 .. note:: Start and stop are standard arguments, but the one for reload
           isn't consistent across services. You can specify which argument
           to use with the `restart` property in Service tags. Example:
-          `<Service name="ftp" restart="condrestart" status="on"
-          type="chkconfig">`
+          ``<Service name="ftp" restart="condrestart" status="on"
+          type="chkconfig">``
 
 DebInit
 -------
@@ -82,10 +82,10 @@ launchd
 -------
 
 Mac OS X Services. To use this tool, you must maintain a standard launch
-daemon .plist file in ``/Library/LaunchDaemons/`` (example ssh.plist) and
-setup a `<Service name="com.openssh.sshd" type="launchd" status="on" />`
-entry in your config to load or unload the service. Note the name is the
-''Label'' specified inside of the .plist file
+daemon .plist file in ``/Library/LaunchDaemons/`` (example ssh.plist)
+and setup a ``<Service name="com.openssh.sshd" type="launchd" status="on"
+/>`` entry in your config to load or unload the service. Note the name
+is the ''Label'' specified inside of the .plist file
 
 Portage
 -------
@@ -107,8 +107,9 @@ as Gentoo.
 RPM
 ---
 
+.. warning:: Deprecated in favor of :ref:`RPMng <client-tools-yumng>`
+
 Executes rpm to manage packages most often on redhat based systems.
-'''DEPRECATED:''' in favor of RPMng
 
 RPMng
 -----
@@ -143,8 +144,9 @@ Upstart service support. Uses `Upstart`_ to configure services.
 Yum
 ---
 
+.. warning:: Deprecated in favor of :ref:`YUMng <client-tools-yumng>`
+
 Handles RPMs using the YUM package manager.
-'''DEPRECATED: ''' in favor of YUMng
 
 YUMng
 -----

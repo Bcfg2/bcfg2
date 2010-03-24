@@ -3,8 +3,7 @@
 FAQ: Client
 ===========
 
-*No ca is specified. Cannot authenticate the server with SSL.* is repeated multiple times during a client run
--------------------------------------------------------------------------------------------------------------
+**No ca is specified. Cannot authenticate the server with SSL.**
 
 This means that the client does not have a copy of the CA for the server,
 so it can't verify that it is talking to the right server. To fix this

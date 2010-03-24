@@ -41,6 +41,8 @@ Environment setup for development
 * Add ``bcfg2/src/sbin`` to your PATH environment variable
 * Add ``bcfg2`` to your PYTHONPATH environment variable
 
+.. _development-index-writingtooldrivers:
+
 Writing A Client Tool Driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
