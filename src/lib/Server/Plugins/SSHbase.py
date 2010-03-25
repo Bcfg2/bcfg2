@@ -64,7 +64,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                          '/etc/ssh/ssh_host_key': self.build_hk,
                          '/etc/ssh/ssh_host_key.pub': self.build_hk}}
         self.ipcache = {}
-	self.namecache = {}
+        self.namecache = {}
         self.__skn = False
 
     def get_skn(self):
@@ -82,7 +82,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 names[cmeta.hostname] = set([cmeta.hostname])
                 names[cmeta.hostname].update(cmeta.aliases)
                 newnames = set()
-		newips = set()
+                newips = set()
                 for name in names[cmeta.hostname]:
                     newnames.add(name.split('.')[0])
                     try:
@@ -91,14 +91,15 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                         continue
                 names[cmeta.hostname].update(newnames)
                 names[cmeta.hostname].update(cmeta.addresses)
-		names[cmeta.hostname].update(newips)
-		# TODO: Only perform reverse lookups on IPs if an option is set.
-		if True:
-		    for ip in newips:
-			try:
-			    names[cmeta.hostname].update(self.get_namecache_entry(ip))
-			except:
-			    continue
+                names[cmeta.hostname].update(newips)
+                # TODO: Only perform reverse lookups on IPs if an option is set.
+                if True:
+                    for ip in newips:
+                        try:
+                            names[cmeta.hostname].update(self.get_namecache_entry(ip))
+                        except:
+                            continue
+                names[cmeta.hostname] = sorted(names[cmeta.hostname])
             # now we have our name cache
             pubkeys = [pubk for pubk in self.entries.keys() \
                        if pubk.find('.pub.H_') != -1]
@@ -170,27 +171,27 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 raise socket.gaierror
 
     def get_namecache_entry(self, cip):
-	'''build a cache of name lookups from client IP addresses'''
-	if cip in self.namecache:
-	    # lookup cached name from IP
-	    if self.namecache[cip]:
-		return self.namecache[cip]
-	    else:
-		raise socket.gaierror
-	else:
-	    # add an entry that has not been cached
-	    try:
-		rvlookup = socket.gethostbyaddr(cip)
-		if rvlookup[0]:
-		    self.namecache[cip] = [rvlookup[0]]
-		else:
-		    self.namecache[cip] = []
-		self.namecache[cip].extend(rvlookup[1])
-		return self.namecache[cip]
-	    except socket.gaierror:
-		self.namecache[cip] = False
-		self.logger.error("Failed to find any names associated with IP address %s" % cip)
-		raise
+        '''build a cache of name lookups from client IP addresses'''
+        if cip in self.namecache:
+            # lookup cached name from IP
+            if self.namecache[cip]:
+                return self.namecache[cip]
+            else:
+                raise socket.gaierror
+        else:
+            # add an entry that has not been cached
+            try:
+                rvlookup = socket.gethostbyaddr(cip)
+                if rvlookup[0]:
+                    self.namecache[cip] = [rvlookup[0]]
+                else:
+                    self.namecache[cip] = []
+                self.namecache[cip].extend(rvlookup[1])
+                return self.namecache[cip]
+            except socket.gaierror:
+                self.namecache[cip] = False
+                self.logger.error("Failed to find any names associated with IP address %s" % cip)
+                raise
 
     def build_skn(self, entry, metadata):
         '''This function builds builds a host specific known_hosts file'''
