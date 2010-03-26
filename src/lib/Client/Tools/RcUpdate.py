@@ -59,15 +59,15 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             # make sure it's enabled
             cmd = '/sbin/rc-update add %s default'
             rc = self.cmd.run(cmd % entry.get('name'))[0]
-            status = (rc == 0)
+            return (rc == 0)
 
         elif entry.get('status') == 'off':
             # make sure it's disabled
             cmd = '/sbin/rc-update del %s default'
             rc = self.cmd.run(cmd % entry.get('name'))[0]
-            status = (rc == 0)
+            return (rc == 0)
 
-        return status
+        return False
 
     def FindExtra(self):
         '''Locate extra rc-update Services'''
