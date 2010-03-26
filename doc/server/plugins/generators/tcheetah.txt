@@ -55,11 +55,11 @@ ClientMetadata of file `Bcfg2/Server/Plugins/Metadata.py
 self.properties
 ===============
 
-properties is a python `ElementTree <http://codespeak.net/lxml/>`_
-object, loaded from the data in ``/var/lib/bcfg2/etc/properties.xml``.
-That file should have a ``Properties`` node at its root.
+Properties is a python `ElementTree <http://codespeak.net/lxml/>`_
+object, loaded from the data in ``/var/lib/bcfg2/Properties/<properties
+file>.xml``. That file should have a ``Properties`` node at its root.
 
-Example ``properties.xml``:
+Example ``Properties/example.xml``:
 
 .. code-block:: xml
 
@@ -75,13 +75,13 @@ You may use any of the ElementTree methods to access data in your
 template.  Several examples follow, each producing an identical result
 on the host 'www.example.com'::
 
-    $self.properties.find('host').find('www.example.com').find('rootdev').text
-    $self.properties.find('host').find($self.metadata.hostname).find('rootdev').text
-    ${self.properties.xpath('host/www.example.com/rootdev')[0].text}
-    ${self.properties.xpath('host/' + self.metadata.hostname + '/rootdev')[0].text}
+    $self.Properties['example.xml'].find('host').find('www.example.com').find('rootdev').text
+    $self.Properties['example.xml'].find('host').find($self.metadata.hostname).find('rootdev').text
+    ${self.Properties['example.xml'].xpath('host/www.example.com/rootdev')[0].text}
+    ${self.Properties['example.xml'].xpath('host/' + self.metadata.hostname + '/rootdev')[0].text}
     #set $path = 'host/' + $self.metadata.hostname + '/rootdev'
-    ${self.properties.xpath($path)[0].text}
-    ${self.properties.xpath(path)[0].text}
+    ${self.Properties['example.xml'].xpath($path)[0].text}
+    ${self.Properties['example.xml'].xpath(path)[0].text}
 
 Simple Example
 ==============
@@ -169,7 +169,12 @@ consistent, randomized time between midnight and 7am.::
     52 6    1 * *   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.monthly.
 
 .. note:: Comments and Cheetah
-    As Cheetah processes your templates it will consider hash "#" style comments to be actual comments in the template and will strip them from the final config file.  If you would like to preserve the comment in the final config file you need to escape the hash character '\#' which will tell Cheetah (and Python) that you do in fact want the comment to appear in the final config file.::
+    As Cheetah processes your templates it will consider hash "#" style
+    comments to be actual comments in the template and will strip them
+    from the final config file.  If you would like to preserve the comment
+    in the final config file you need to escape the hash character '\#'
+    which will tell Cheetah (and Python) that you do in fact want the
+    comment to appear in the final config file.::
 
         # This is a comment in my template which will be stripped when it's processed through Cheetah
         \# This comment will appear in the generated config file.

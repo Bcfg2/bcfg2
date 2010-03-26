@@ -59,7 +59,7 @@ will also keep the five most recent backups of files.
 Overall client service mode
 ===========================
 
-`New in version 1.0.0`
+.. versionadded:: 1.0.0
 
 Overall client service mode. Specified on the client using ``-s <service
 mode``.

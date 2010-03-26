@@ -12,17 +12,17 @@ Here is an example of maintaining the bcfg2 server's
 
 There are two main advantages:
 
-#. Password storage is centralized in the ``etc/properties.xml`` file
-   this helps maintain consistency, makes changing passwords easier,
-   and also makes it easier to share your configurations with other
-   sites/people.
+#. Password storage is centralized in the ``Properties/passwords.xml``
+   file this helps maintain consistency, makes changing passwords
+   easier, and also makes it easier to share your configurations with
+   other sites/people.
 
 #. You can template the file using Genshi's `{% def %}` syntax,
    which makes `clients.xml` much more readable. An important
    thing to note is how the `name` variable is handled - when
    just referring to it the standard `${name}` syntax is used, but
    when it is used as a variable in the expression to get the password,
-   `password="${properties.properties.find('password').find('bcfg2-client').find(name).text}"`,
+   `password="${metadata.Properties['passwords.xml'].find('password').find('bcfg2-client').find(name).text}"`,
    it is just referred to as `name`.
 
 There is the disadvantage that sometimes 2 passes will be needed to get
@@ -38,7 +38,7 @@ Possible improvements:
 #. We really don't care what the client passwords are, just that they
    exist, so instead of listing them a master password combined with
    some kind of one-way hash based on the `name` might make more sense,
-   and make `properties.xml` easier to maintain.
+   and make ``Properties/passwords.xml`` easier to maintain.
 
  * TGenshi/var/lib/bcfg2/Metadata/clients.xml/template.newtxt:
 
@@ -53,7 +53,7 @@ Possible improvements:
                profile="${profile}"
                name="${name}"
                uuid="${name}"
-               password="${properties.properties.find('password').find('bcfg2-client').find(name).text}"
+               password="${metadata.Properties['passwords.xml'].find('password').find('bcfg2-client').find(name).text}"
                address="${address}"
                location="fixed"
                secure="true"
@@ -64,7 +64,7 @@ Possible improvements:
                profile="${profile}"
                name="${name}"
                uuid="${name}"
-               password="${properties.properties.find('password').find('bcfg2-client').find(name).text}"
+               password="${metadata.Properties['passwords.xml'].find('password').find('bcfg2-client').find(name).text}"
                location="floating"
                secure="true"
            />\
@@ -77,7 +77,7 @@ Possible improvements:
            ${dynamic('group-person-somename','somename.office.example.com')}
        </Clients>
 
- * etc/properties.xml snippit:
+ * Properties/passwords.xml snippit:
 
    .. code-block:: xml
 

@@ -144,7 +144,7 @@ Service Tag
 Service mode descriptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`New in version 1.0.0`
+.. versionadded:: 1.0.0
 
 * manual
 

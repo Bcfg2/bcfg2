@@ -34,7 +34,7 @@ Non-POSIX entries
 POSIX entries
 =============
 
-`New in 1.0`
+.. versionadded:: 1.0.0
 
 The unified POSIX Path entries prevent inconsistent configuration
 specifications of multiple entries for a given path. The following table

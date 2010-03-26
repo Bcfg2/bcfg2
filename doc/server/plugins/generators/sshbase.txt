@@ -59,6 +59,29 @@ At this point, SSHbase will generate new keys for any client without
 a recorded key in the repository, and will generate an ssh_known_hosts
 file appropriately.
 
+Adding public keys for unmanaged hosts
+======================================
+
+If you have some hosts which are not managed by Bcfg2, but you would
+still like to have their public ssh keys available in
+``ssh_known_hosts``, you can add their public keys to the ``SSHbase``
+directory with a *.static* ending.
+
+Example:
+
+``a.static``::
+
+    TEST1
+
+``b.static``::
+
+    TEST2
+
+The generated ``ssh_known_hosts`` file::
+
+    TEST1
+    TEST2
+
 Blog post
 =========
 

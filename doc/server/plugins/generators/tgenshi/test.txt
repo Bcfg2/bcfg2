@@ -5,10 +5,12 @@
 test
 ====
 
+FIXME: This example needs to be retested with new Properties plugin.
+
 As submitted by dclark
 
 This file just shows you what's available. It assumes a
-``/var/lib/bcfg2/etc/properties.xml`` file with an entry like this:
+``/var/lib/bcfg2/Properties/test.xml`` file with an entry like this:
 
 .. code-block:: xml
 
@@ -35,16 +37,16 @@ This file just shows you what's available. It assumes a
     {% end %}\
     {% end %}\
 
-    {% if metadata.probes %}\
+    {% if metadata.Probes %}\
     Probes:
-    {% for probe, value in metadata.probes.iteritems() %}\
+    {% for probe, value in metadata.Probes.iteritems() %}\
     $probe $value
     {% end %}\
     {% end %}\
 
     Two main ways to get the same property value:
-    ${properties.properties.find('password').find('bcfg2').text}
-    ${properties.properties.xpath('password/bcfg2')[0].text}
+    ${metadata.Properties['test.xml'].find('password').find('bcfg2').text}
+    ${metadata.Properties['test.xml'].xpath('password/bcfg2')[0].text}
 
     One way to get information about metadata and properties:
 
