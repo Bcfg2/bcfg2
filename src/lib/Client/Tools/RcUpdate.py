@@ -68,22 +68,12 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             cmd = '/sbin/rc-update add %s default'
             rc = self.cmd.run(cmd % entry.get('name'))[0]
             status = (rc == 0)
-            if entry.get('mode', 'default') == 'supervised':
-                # make sure it's running
-                cmd = '/etc/init.d/%s start'
-                rc = self.cmd.run(cmd % entry.get('name'))[0]
-                status &= (rc == 0)
 
         elif entry.get('status') == 'off':
             # make sure it's disabled
             cmd = '/sbin/rc-update del %s default'
             rc = self.cmd.run(cmd % entry.get('name'))[0]
             status = (rc == 0)
-            if entry.get('mode', 'default') == 'supervised':
-                # make sure it's not running
-                cmd = '/etc/init.d/%s stop'
-                rc = self.cmd.run(cmd % entry.get('name'))[0]
-                status &= (rc == 0)
 
         return status
 
