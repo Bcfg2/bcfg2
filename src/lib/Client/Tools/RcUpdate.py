@@ -54,14 +54,6 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         Install Service entry
         In supervised mode we also take care it's (not) running
         '''
-        # check if init script exists
-        try:
-            os.stat('/etc/init.d/%s' % entry.get('name'))
-        except OSError:
-            self.logger.debug('Init script for service %s does not exist' %
-                              entry.get('name'))
-            return False
-
         self.logger.info('Installing Service %s' % entry.get('name'))
         if entry.get('status') == 'on':
             # make sure it's enabled
