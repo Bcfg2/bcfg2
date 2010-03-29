@@ -75,7 +75,6 @@ Requires:         python-ssl
 %endif
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
-Requires:         python-genshi
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
 Requires(preun):  /sbin/service
