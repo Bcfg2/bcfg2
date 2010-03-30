@@ -41,7 +41,8 @@ is a tool which allows you to automate this::
     Store bcfg2 configuration in [/etc/bcfg2.conf]:
     Location of bcfg2 repository [/var/lib/bcfg2]:
     Input password used for communication verification (without echoing; leave blank for a random):
-    Input the server location [https://localhost.localdomain:6789]: https://centos:6789
+    What is the server's hostname: [centos]
+    Input the server location [https://centos:6789]:
     Input base Operating System for clients:
     1: Redhat/Fedora/RHEL/RHAS/Centos
     2: SUSE/SLES
@@ -51,25 +52,14 @@ is a tool which allows you to automate this::
     6: Gentoo
     7: FreeBSD
     : 1
-    Generating a 1024 bit RSA private key
-    ........++++++
-    .....................................++++++
+    Generating a 2048 bit RSA private key
+    .........................+++
+    ..................+++
     writing new private key to '/etc/bcfg2.key'
     -----
-    You are about to be asked to enter information that will be incorporated
-    into your certificate request.
-    What you are about to enter is what is called a Distinguished Name or a DN.
-    There are quite a few fields but you can leave some blank
-    For some fields there will be a default value,
-    If you enter '.', the field will be left blank.
-    -----
-    Country Name (2 letter code) [GB]:
-    State or Province Name (full name) [Berkshire]:
-    Locality Name (eg, city) [Newbury]:
-    Organization Name (eg, company) [My Company Ltd]:
-    Organizational Unit Name (eg, section) []:
-    Common Name (eg, your name or your server's hostname) []:
-    Email Address []:
+    Signature ok
+    subject=/C=US=ST=Illinois/L=Argonne/CN=centos
+    Getting Private key
     Repository created successfuly in /var/lib/bcfg2
 
 Change responses as necessary
@@ -85,41 +75,37 @@ To verify that everything started ok, look for the running daemon and check the 
 
     $ sudo /sbin/service bcfg2-server status
     $ sudo tail /var/log/messages
-    Mar 23 12:42:26 centos bcfg2-server[24818]: Failed to read file probed.xml
-    Mar 23 12:42:26 centos bcfg2-server[24818]: Creating new statistics file /var/lib/bcfg2/etc/statistics.xml
-    Mar 23 12:42:26 centos bcfg2-server[24818]: Processed 16 gamin events in 0.103 seconds. 0 collapsed
-    Mar 23 12:42:41 centos bcfg2-server[24818]: Bound to port 6789
-
-*This part needs to be updated for v1*
+    Mar 29 12:42:26 centos bcfg2-server[5093]: service available at https://centos:6789
+    Mar 29 12:42:26 centos bcfg2-server[5093]: serving bcfg2-server at https://centos:6789
+    Mar 29 12:42:26 centos bcfg2-server[5093]: serve_forever() [start]
+    Mar 29 12:42:41 centos bcfg2-server[5093]: Handled 16 events in 0.007s
 
 Run bcfg2 to be sure you are able to communicate with the server::
 
     [root@centos ~]# bcfg2 -vqn
     No ca is specified. Cannot authenticate the server with SSL.
+    No ca is specified. Cannot authenticate the server with SSL.
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
     Loaded tool drivers:
-     Action       Chkconfig    FreeBSDInit  POSIX        YUMng
-    Extra Package flac 1.1.2-28.el5_0.1.x86_64.
-    Extra Package iputils 20020927-43.el5.x86_64.
-    Extra Package xorg-x11-fonts-base 7.1-2.1.el5.noarch.
-
-    ....
-
-    Extra Package nash 5.1.19.6-28.x86_64.
-    Extra Package audiofile 1:0.2.6-5.i386.
-    Extra Package audiofile 1:0.2.6-5.x86_64.
+     Action       Chkconfig  POSIX        YUMng
 
     Phase: initial
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      774
+    Unmanaged entries:      208
 
 
     Phase: final
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      774
+    Unmanaged entries:      208
+
+    No ca is specified. Cannot authenticate the server with SSL.
 
 The ca message is just a warning, meaning that the client does not
 have sufficient information to verify that it is talking to the
@@ -144,278 +130,227 @@ upon connection::
 Now if you run the client, no more warning::
 
     [root@centos ~]# bcfg2 -vqn
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
     Loaded tool drivers:
-     Action       Chkconfig    FreeBSDInit  POSIX        YUMng
-    Extra Package flac 1.1.2-28.el5_0.1.x86_64.
-    Extra Package iputils 20020927-43.el5.x86_64.
-    Extra Package xorg-x11-fonts-base 7.1-2.1.el5.noarch.
-
-    ....
-
-    Extra Package nash 5.1.19.6-28.x86_64.
-    Extra Package audiofile 1:0.2.6-5.i386.
-    Extra Package audiofile 1:0.2.6-5.x86_64.
+     Action       Chkconfig  POSIX        YUMng
 
     Phase: initial
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      774
+    Unmanaged entries:      208
 
 
     Phase: final
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      774
+    Unmanaged entries:      208
 
 Bring your first machine under Bcfg2 control
 --------------------------------------------
-
-*This section needs to be updated for v1*
 
 Now it is time to get your first machine's configuration into your
 Bcfg2 repository. Let's start with the server itself.
 
 
-Quick and Easy
-++++++++++++++
+Setup the `Packages`_ plugin
+++++++++++++++++++++++++++++
 
-*This section needs to be updated for v1*
+.. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
 
-First, create a base file containing all installed packages::
+First, replace **Pkgmgr** with **Packages** in the plugins
+line of ``bcfg2.conf``.  Then create Packages layout (as per
+:ref:`packages-exampleusage`) in ``/var/lib/bcfg2``
 
-    [root@centos ~]# cat create-base.sh
-    echo "<Base><Group name=\"centos5\">" > /tmp/centos5.xml
-    rpm -qa --qf "<Package name=\'%{NAME}:%{ARCH}\'/>\n" | sort | uniq >> /tmp/centos5.xml
-    echo "</Group></Base>" >> /tmp/centos5.xml
-    [root@centos ~]# sh create-base.sh
-    [root@centos ~]# cp /tmp/centos5.xml /var/lib/bcfg2/Base/centos5.xml
+.. note:: I am using the RawURL syntax here since we are using `mrepo`_
+to manage our yum mirrors.
 
-Add a new group centos5 and centos groups to groups.xml::
+.. _mrepo: http://dag.wieers.com/home-made/mrepo/
 
-    [root@centos ~]# cat /var/lib/bcfg2/Metadata/groups.xml
+.. code-block:: xml
+
+    <Sources>
+            <!-- CentOS (5.4) sources -->
+            <YUMSource>
+                    <Group>centos5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.os</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+            <YUMSource>
+                    <Group>centos5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.updates</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+            <YUMSource>
+                    <Group>centos5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.extras</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+    </Sources>
+
+Due to the `Magic Groups`_, we need to modify our Metadata. Let's
+add a **centos5.4** group which inherits a **centos** group
+(this should replace the existing **redhat** group) present in
+``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
+something like this
+
+.. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
+
+.. code-block:: xml
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='centos5'/>
+          <Group name='centos5.4'/>
        </Group>
-       <Group name='centos5'>
+       <Group name='centos5.4'>
           <Group name='centos'/>
        </Group>
-       <Group name='centos'/>
        <Group name='ubuntu'/>
        <Group name='debian'/>
        <Group name='freebsd'/>
        <Group name='gentoo'/>
-       <Group name='redhat'/>
+       <Group name='centos'/>
        <Group name='suse'/>
        <Group name='mandrake'/>
        <Group name='solaris'/>
     </Groups>
 
-As you can see, the centos5 group inherits the centos group. Now let's
-get a Pkgmgr listing based on the installed package versions
-
-Generate Pkgmgr listing
-=======================
-
-*This section needs to be updated for v1*
-
-::
-
-    [root@centos ~]# cat create-pkgmgr.sh
-    echo "<PackageList priority=\"0\" type=\"yum\"><Group name=\"centos5\">" > /tmp/pkgmgr-centos5.xml
-    rpm -qa --qf "<Package name=\'%{NAME}\' version=\'%{VERSION}-%{RELEASE}\'/>\n" | sort | uniq >> /tmp/pkgmgr-centos5.xml
-    echo "</Group></PackageList>" >> /tmp/pkgmgr-centos5.xml
-    [root@centos ~]# sh create-pkgmgr.sh
-    [root@centos ~]# cp /tmp/pkgmgr-centos5.xml /var/lib/bcfg2/Pkgmgr/pkgmgr-centos5.xml
-
 .. note::
+    When editing your xml files by hand, it is useful to occasionally run
+    `bcfg2-repo-validate` to ensure that your xml validates properly.
 
-   This how to is being done on 64 bit CentOS.
+The last thing we need is for the client to have the proper
+arch group membership. For this, we will make use of the
+:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
+Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 
-Now when we run bcfg2, we see Correct entries::
+.. code-block:: sh
+
+    root@lucid:~# grep plugins /etc/bcfg2.conf
+    plugins = Base,Bundler,Cfg,Metadata,Packages,Probes,Rules,SSHbase
+    root@lucid:~# mkdir /var/lib/bcfg2/Probes
+    root@lucid:~# cat /var/lib/bcfg2/Probes/groups
+    #!/bin/sh
+
+    echo "group:`uname -m`"
+
+Now we restart the bcfg2-server::
+
+    /etc/init.d/bcfg2-server restart
+
+If you tail ``/var/log/syslog`` now, you will see the Packages plugin in
+action, updating the cache.
+
+Start managing packages
++++++++++++++++++++++++
+
+Add a base-packages bundle. Let's see what happens when we just populate
+it with the *yum* package.
+
+.. code-block:: xml
+
+    root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
+    <Bundle name='base-packages'>
+            <Package name='yum'/>
+    </Bundle>
+
+You need to reference the bundle from your Metadata. The resulting
+profile group might look something like this
+
+.. code-block:: xml
+
+    <Group profile='true' public='true' default='true' name='basic'>
+       <Bundle name='base-packages'/>
+       <Group name='centos5.4'/>
+    </Group>
+
+Now if we run the client, we can see what this has done for us.::
 
     [root@centos ~]# bcfg2 -vqn
+    Running probe groups
+    Probe groups has result:
+    x86_64
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
     Loaded tool drivers:
-     Action       Chkconfig    FreeBSDInit  POSIX        YUMng
+     Action       Chkconfig  POSIX        YUMng
+	    Package pam failed verification.
 
+    Phase: initial
+    Correct entries:        94
+    Incorrect entries:      1
+    Total managed entries:  95
+    Unmanaged entries:      113
+
+    In dryrun mode: suppressing entry installation for:
+      Package:pam
+
+    Phase: final
+    Correct entries:        94
+    Incorrect entries:      1
+     Package:pam
+    Total managed entries:  95
+    Unmanaged entries:      113
+
+Interesting, our **pam** package failed verification. What does this
+mean? Let's have a look::
+
+    [root@centos ~]# rpm --verify pam
+    ....L...  c /etc/pam.d/system-auth
+
+Sigh, it looks like the default RPM install for pam fails to verify
+using its own verification process (trust me, it's not the only one). At
+any rate, I was able to get rid of this particular issue by removing the
+symlink and running ``yum reinstall pam``.
+
+As you can see, the Packages plugin has generated the dependencies
+required for the yum package automatically. The ultimate goal should
+be to move all the packages from the **Unmanaged** entries section to
+the **Managed** entries section. So, what exactly *are* those Unmanaged
+entries?::
+
+    [root@centos ~]# bcfg2 -veqn
+    Running probe groups
+    Probe groups has result:
+    x86_64
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
+    Loaded tool drivers:
+     Action       Chkconfig  POSIX        YUMng
+    Extra Package openssh-clients 4.3p2-36.el5_4.4.x86_64.
+    Extra Package libuser 0.54.7-2.1el5_4.1.x86_64.
     ...
 
-            Package xml-common failed verification.
-            Package xulrunner failed verification.
-            Package xulrunner failed verification.
-
     Phase: initial
-    Correct entries:        716
-    Incorrect entries:      176
-    Total managed entries:  892
-    Unmanaged entries:      43
+    Correct entries:        95
+    Incorrect entries:      0
+    Total managed entries:  95
+    Unmanaged entries:      113
 
-    In dryrun mode: suppressing entry installation for:
-     Package:GConf2                       Package:evolution                    Package:gpg-pubkey                   Package:libgnomecups                 Package:libxml2                      Package:pam_smb
-     Package:GConf2                       Package:evolution                    Package:gpm                          Package:libgnomeprint22              Package:libxml2                      Package:pango
-     Package:ImageMagick                  Package:evolution-data-server        Package:gpm                          Package:libgnomeprint22              Package:mkinitrd                     Package:pango
-     Package:ImageMagick                  Package:evolution-data-server        Package:gtk2                         Package:libgnomeprintui22            Package:mkinitrd                     Package:parted
-     Package:alsa-lib                     Package:expat                        Package:gtk2                         Package:libgnomeprintui22            Package:nautilus-cd-burner           Package:parted
-     Package:alsa-lib                     Package:expat                        Package:gtkhtml3                     Package:libgnomeui                   Package:nautilus-cd-burner           Package:pilot-link
-     Package:aspell                       Package:fontconfig                   Package:gtkhtml3                     Package:libgnomeui                   Package:nautilus-sendto              Package:pilot-link
-     Package:aspell                       Package:fontconfig                   Package:hal                          Package:libgpg-error                 Package:ncurses                      Package:popt
-     Package:at-spi                       Package:gail                         Package:hal                          Package:libgpg-error                 Package:ncurses                      Package:popt
-     Package:at-spi                       Package:gail                         Package:initscripts                  Package:libgsf                       Package:nspluginwrapper              Package:readline
-     Package:atk                          Package:ghostscript                  Package:iptables                     Package:libgsf                       Package:nspluginwrapper              Package:readline
-     Package:atk                          Package:ghostscript                  Package:kernel                       Package:libgtop2                     Package:nss_db                       Package:sane-backends
-     Package:audit                        Package:glib2                        Package:krb5-libs                    Package:libgtop2                     Package:nss_db                       Package:sendmail
-     Package:avahi                        Package:glib2                        Package:krb5-libs                    Package:libjpeg                      Package:nss_ldap                     Package:setup
-     Package:avahi                        Package:gnome-desktop                Package:lcms                         Package:libjpeg                      Package:nss_ldap                     Package:shadow-utils
-     Package:cracklib                     Package:gnome-desktop                Package:lcms                         Package:libpng                       Package:numactl                      Package:sound-juicer
-     Package:cracklib                     Package:gnome-keyring                Package:libX11                       Package:libpng                       Package:numactl                      Package:system-config-securitylevel
-     Package:cryptsetup-luks              Package:gnome-keyring                Package:libX11                       Package:librsvg2                     Package:openldap                     Package:tcp_wrappers
-     Package:cryptsetup-luks              Package:gnome-menus                  Package:libbonobo                    Package:librsvg2                     Package:openldap                     Package:tcp_wrappers
-     Package:cups                         Package:gnome-menus                  Package:libbonobo                    Package:libselinux                   Package:openssl                      Package:totem
-     Package:dbus                         Package:gnome-panel                  Package:libbonoboui                  Package:libselinux                   Package:openssl                      Package:totem
-     Package:dbus                         Package:gnome-panel                  Package:libbonoboui                  Package:libtiff                      Package:pam                          Package:wireless-tools
-     Package:device-mapper                Package:gnome-pilot                  Package:libgcj                       Package:libtiff                      Package:pam                          Package:wireless-tools
-     Package:device-mapper                Package:gnome-pilot                  Package:libglade2                    Package:libuser                      Package:pam_krb5                     Package:xml-common
-     Package:ecryptfs-utils               Package:gnome-utils                  Package:libglade2                    Package:libwmf                       Package:pam_krb5                     Package:xulrunner
-     Package:ecryptfs-utils               Package:gnome-utils                  Package:libgnome                     Package:libwmf                       Package:pam_passwdqc                 Package:xulrunner
-     Package:eel2                         Package:gnome-vfs2                   Package:libgnome                     Package:libwnck                      Package:pam_passwdqc
-     Package:eel2                         Package:gnome-vfs2                   Package:libgnomecanvas               Package:libwnck                      Package:pam_pkcs11
-     Package:esound                       Package:gnutls                       Package:libgnomecanvas               Package:libxklavier                  Package:pam_pkcs11
-     Package:esound                       Package:gnutls                       Package:libgnomecups                 Package:libxklavier                  Package:pam_smb
 
     Phase: final
-    Correct entries:        716
-    Incorrect entries:      176
-     Package:GConf2                       Package:evolution                    Package:gpg-pubkey                   Package:libgnomecups                 Package:libxml2                      Package:pam_smb
-     Package:GConf2                       Package:evolution                    Package:gpm                          Package:libgnomeprint22              Package:libxml2                      Package:pango
-     Package:ImageMagick                  Package:evolution-data-server        Package:gpm                          Package:libgnomeprint22              Package:mkinitrd                     Package:pango
-     Package:ImageMagick                  Package:evolution-data-server        Package:gtk2                         Package:libgnomeprintui22            Package:mkinitrd                     Package:parted
-     Package:alsa-lib                     Package:expat                        Package:gtk2                         Package:libgnomeprintui22            Package:nautilus-cd-burner           Package:parted
-     Package:alsa-lib                     Package:expat                        Package:gtkhtml3                     Package:libgnomeui                   Package:nautilus-cd-burner           Package:pilot-link
-     Package:aspell                       Package:fontconfig                   Package:gtkhtml3                     Package:libgnomeui                   Package:nautilus-sendto              Package:pilot-link
-     Package:aspell                       Package:fontconfig                   Package:hal                          Package:libgpg-error                 Package:ncurses                      Package:popt
-     Package:at-spi                       Package:gail                         Package:hal                          Package:libgpg-error                 Package:ncurses                      Package:popt
-     Package:at-spi                       Package:gail                         Package:initscripts                  Package:libgsf                       Package:nspluginwrapper              Package:readline
-     Package:atk                          Package:ghostscript                  Package:iptables                     Package:libgsf                       Package:nspluginwrapper              Package:readline
-     Package:atk                          Package:ghostscript                  Package:kernel                       Package:libgtop2                     Package:nss_db                       Package:sane-backends
-     Package:audit                        Package:glib2                        Package:krb5-libs                    Package:libgtop2                     Package:nss_db                       Package:sendmail
-     Package:avahi                        Package:glib2                        Package:krb5-libs                    Package:libjpeg                      Package:nss_ldap                     Package:setup
-     Package:avahi                        Package:gnome-desktop                Package:lcms                         Package:libjpeg                      Package:nss_ldap                     Package:shadow-utils
-     Package:cracklib                     Package:gnome-desktop                Package:lcms                         Package:libpng                       Package:numactl                      Package:sound-juicer
-     Package:cracklib                     Package:gnome-keyring                Package:libX11                       Package:libpng                       Package:numactl                      Package:system-config-securitylevel
-     Package:cryptsetup-luks              Package:gnome-keyring                Package:libX11                       Package:librsvg2                     Package:openldap                     Package:tcp_wrappers
-     Package:cryptsetup-luks              Package:gnome-menus                  Package:libbonobo                    Package:librsvg2                     Package:openldap                     Package:tcp_wrappers
-     Package:cups                         Package:gnome-menus                  Package:libbonobo                    Package:libselinux                   Package:openssl                      Package:totem
-     Package:dbus                         Package:gnome-panel                  Package:libbonoboui                  Package:libselinux                   Package:openssl                      Package:totem
-     Package:dbus                         Package:gnome-panel                  Package:libbonoboui                  Package:libtiff                      Package:pam                          Package:wireless-tools
-     Package:device-mapper                Package:gnome-pilot                  Package:libgcj                       Package:libtiff                      Package:pam                          Package:wireless-tools
-     Package:device-mapper                Package:gnome-pilot                  Package:libglade2                    Package:libuser                      Package:pam_krb5                     Package:xml-common
-     Package:ecryptfs-utils               Package:gnome-utils                  Package:libglade2                    Package:libwmf                       Package:pam_krb5                     Package:xulrunner
-     Package:ecryptfs-utils               Package:gnome-utils                  Package:libgnome                     Package:libwmf                       Package:pam_passwdqc                 Package:xulrunner
-     Package:eel2                         Package:gnome-vfs2                   Package:libgnome                     Package:libwnck                      Package:pam_passwdqc
-     Package:eel2                         Package:gnome-vfs2                   Package:libgnomecanvas               Package:libwnck                      Package:pam_pkcs11
-     Package:esound                       Package:gnutls                       Package:libgnomecanvas               Package:libxklavier                  Package:pam_pkcs11
-     Package:esound                       Package:gnutls                       Package:libgnomecups                 Package:libxklavier                  Package:pam_smb
-    Total managed entries:  892
-    Unmanaged entries:      43
+    Correct entries:        95
+    Incorrect entries:      0
+    Total managed entries:  95
+    Unmanaged entries:      113
+     Package:at
+     Package:avahi
+     Package:avahi-compat-libdns_sd
+     ...
 
-However, you should also see quite a few Incorrect entries as
-well. This is due to some multiarch issues with RPM. The main problem
-is that when both the 32 bit and 64 bit versions of a particular
-package are installed, RPM is unable to verify the mtime on one or the
-other (or both) of the packages. This is a problem because the
-RPMng/YUMng drivers both attempt to verify installed packages.
+Now you can go through these and continue adding the packages you want
+to your Bundle. After a while, I ended up with a minimal bundle that
+looks like this
 
-There are a couple ways to get around this problem:
-
- #. Turn off mtime verification globally (less time-consuming)
- #. Remove 32 bit packages (may not be an option)
- #. Turn off mtime verification per package instance (time-consuming)
-
-For now, we will simply turn off mtime verification globally. In order
-to do so, you must add nomtime to the verify_flags in the YUMng
-section of bcfg2.conf::
-
-    [root@centos ~]# cat /etc/bcfg2.conf
-
-    [server]
-    repository = /var/lib/bcfg2
-    structures = Bundler,Base
-    generators = SSHbase,Cfg,Pkgmgr,Rules
-    # Uncomment to use the DBStats plugin (0.9.6pre2 and later)
-    #plugins = DBStats
-
-    [statistics]
-    sendmailpath = /usr/lib/sendmail
-    database_engine = sqlite3
-    # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-    database_name =
-    # Or path to database file if using sqlite3.
-    #<repository>/etc/brpt.sqlite is default path if left empty
-    database_user =
-    # Not used with sqlite3.
-    database_password =
-    # Not used with sqlite3.
-    database_host =
-    # Not used with sqlite3.
-    database_port =
-    # Set to empty string for default. Not used with sqlite3.
-    web_debug = True
-
-
-    [communication]
-    protocol = xmlrpc/ssl
-    password = N41lMNeW
-    key = /etc/bcfg2.key
-
-    [components]
-    bcfg2 = https://centos:6789
-
-    [YUMng]
-    verify_flags = nomtime
-
-Running the client again yields a much more manageable result::
-
-    [root@centos ~]# bcfg2 -vqn
-    Loaded tool drivers:
-     Action       Chkconfig    FreeBSDInit  POSIX        YUMng
-    WARNING: Package bcfg2 0.9.6-1.el5.noarch requires GPG Public key with ID 119cc036217521f6
-             Disabling signature check.
-    WARNING: Package bcfg2-server 0.9.6-1.el5.noarch requires GPG Public key with ID 119cc036217521f6
-             Disabling signature check.
-            Package cups failed verification.
-    WARNING: Multiple instances of package gpg-pubkey are installed.
-    Extra InstallOnlyPackage gpg-pubkey e42d547b-3960bdf1.None.
-    Extra InstallOnlyPackage gpg-pubkey 6b8d79e6-3f49313d.None.
-    Extra InstallOnlyPackage gpg-pubkey 1aa78495-3eb24301.None.
-            Package gpg-pubkey failed verification.
-            Package iptables failed verification.
-    WARNING: Multiple instances of package kernel are installed.
-    Extra InstallOnlyPackage kernel 2.6.18-92.1.22.el5.x86_64.
-            Package kernel failed verification.
-            Package nautilus-sendto failed verification.
-            Package pam failed verification.
-            Package pam failed verification.
-            Package xulrunner failed verification.
-            Package xulrunner failed verification.
-
-    Phase: initial
-    Correct entries:        883
-    Incorrect entries:      9
-    Total managed entries:  892
-    Unmanaged entries:      43
-
-    In dryrun mode: suppressing entry installation for:
-     Package:cups             Package:gpg-pubkey       Package:iptables         Package:kernel           Package:nautilus-sendto  Package:pam              Package:pam              Package:xulrunner        Package:xulrunner
-
-    Phase: final
-    Correct entries:        883
-    Incorrect entries:      9
-     Package:cups             Package:gpg-pubkey       Package:iptables         Package:kernel           Package:nautilus-sendto  Package:pam              Package:pam              Package:xulrunner        Package:xulrunner
-    Total managed entries:  892
-    Unmanaged entries:      43
+*This section needs to be updated for v1*
 
 Generate service listing
 ========================

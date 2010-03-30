@@ -106,11 +106,11 @@ Now it is time to get your first machine's configuration into your Bcfg2
 repository. Let's start with the server itself.
 
 Setup the `Packages`_ plugin
-+++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++
 
 .. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
 
-Replace Pkgmgr with Packages in the plugins line of bcfg2.conf::
+Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
 
     root@lucid:~# cat /etc/bcfg2.conf
     [server]
@@ -192,7 +192,8 @@ should look something like this
     </Groups>
 
 .. note::
-    When editing your xml files by hand, it is useful to occasionally run `bcfg2-repo-validate` to ensure that your xml validates properly.
+    When editing your xml files by hand, it is useful to occasionally run
+    `bcfg2-repo-validate` to ensure that your xml validates properly.
 
 The last thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
