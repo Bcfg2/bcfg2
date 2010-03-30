@@ -167,7 +167,7 @@ line of ``bcfg2.conf``.  Then create Packages layout (as per
 :ref:`packages-exampleusage`) in ``/var/lib/bcfg2``
 
 .. note:: I am using the RawURL syntax here since we are using `mrepo`_
-to manage our yum mirrors.
+          to manage our yum mirrors.
 
 .. _mrepo: http://dag.wieers.com/home-made/mrepo/
 
