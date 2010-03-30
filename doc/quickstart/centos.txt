@@ -226,14 +226,12 @@ something like this
 The last thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
 :ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
-Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
+Probes to your plugins line in ``bcfg2.conf`` and create the Probe.::
 
-.. code-block:: sh
-
-    root@lucid:~# grep plugins /etc/bcfg2.conf
+    [root@centos ~]# grep plugins /etc/bcfg2.conf
     plugins = Base,Bundler,Cfg,Metadata,Packages,Probes,Rules,SSHbase
-    root@lucid:~# mkdir /var/lib/bcfg2/Probes
-    root@lucid:~# cat /var/lib/bcfg2/Probes/groups
+    [root@centos ~]# mkdir /var/lib/bcfg2/Probes
+    [root@centos ~]# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh
 
     echo "group:`uname -m`"
@@ -253,7 +251,7 @@ it with the *yum* package.
 
 .. code-block:: xml
 
-    root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
+    [root@centos ~]# cat /var/lib/bcfg2/Bundler/base-packages.xml
     <Bundle name='base-packages'>
             <Package name='yum'/>
     </Bundle>
@@ -280,7 +278,7 @@ Now if we run the client, we can see what this has done for us.::
     Finished
     Loaded tool drivers:
      Action       Chkconfig  POSIX        YUMng
-	    Package pam failed verification.
+            Package pam failed verification.
 
     Phase: initial
     Correct entries:        94
@@ -350,17 +348,206 @@ Now you can go through these and continue adding the packages you want
 to your Bundle. After a while, I ended up with a minimal bundle that
 looks like this
 
-*This section needs to be updated for v1*
+.. code-block:: xml
 
-Generate service listing
-========================
+    <Bundle name='base-packages'>
+            <Package name='bcfg2-server'/>
+            <Package name='exim'/>
+            <Package name='grub'/>
+            <Package name='kernel'/>
+            <Package name='krb5-workstation'/>
+            <Package name='m2crypto'/>
+            <Package name='openssh-clients'/>
+            <Package name='openssh-server'/>
+            <Package name='prelink'/>
+            <Package name='redhat-lsb'/>
+            <Package name='rpm-build'/>
+            <Package name='rsync'/>
+            <Package name='sysklogd'/>
+            <Package name='vim-enhanced'/>
+            <Package name='yum'/>
+    </Bundle>
 
-*This section needs to be updated for v1*
+Now when I run the client, you can see I have only one unmanaged
+package::
 
-DBStats
--------
+    [root@centos ~]# bcfg2 -veqn
+    Running probe groups
+    Probe groups has result:
+    x86_64
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
+    Loaded tool drivers:
+     Action       Chkconfig  POSIX        YUMng
+    Extra Package gpg-pubkey e8562897-459f07a4.None.
+    Extra Package gpg-pubkey 217521f6-45e8a532.None.
 
-Setting up Django
-+++++++++++++++++
+    Phase: initial
+    Correct entries:        187
+    Incorrect entries:      0
+    Total managed entries:  187
+    Unmanaged entries:      16
+
+
+    Phase: final
+    Correct entries:        187
+    Incorrect entries:      0
+    Total managed entries:  187
+    Unmanaged entries:      16
+     Package:gpg-pubkey
+     Service:atd
+     Service:avahi-daemon
+     Service:bcfg2-server
+     ...
+
+The gpg-pubkey packages are special in that they are not really
+packages. Currently, the way to manage them is using :ref:`BoundEntries
+<boundentries>`. So, after adding them, our Bundle now looks like this
+
+.. note:: This does not actually control the contents of the files,
+          you will need to do this part separately (see below).
+
+.. code-block:: xml
+
+    <Bundle name='base-packages'>
+            <BoundPackage name="gpg-pubkey" type="rpm">
+                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
+                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
+            </BoundPackage>
+            <Package name='bcfg2-server'/>
+            <Package name='exim'/>
+            <Package name='grub'/>
+            <Package name='kernel'/>
+            <Package name='krb5-workstation'/>
+            <Package name='m2crypto'/>
+            <Package name='openssh-clients'/>
+            <Package name='openssh-server'/>
+            <Package name='prelink'/>
+            <Package name='redhat-lsb'/>
+            <Package name='rpm-build'/>
+            <Package name='rsync'/>
+            <Package name='sysklogd'/>
+            <Package name='vim-enhanced'/>
+            <Package name='yum'/>
+    </Bundle>
+
+To actually push the gpg keys out via Bcfg2, you will need to manage the
+files as well. This can be done by adding Path entries for each of the
+gpg keys you want to manage
+
+.. code-block:: xml
+
+    <Bundle name='base-packages'>
+            <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5'/>
+            <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL'/>
+            <BoundPackage name="gpg-pubkey" type="rpm">
+                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
+                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
+            </BoundPackage>
+            <Package name='bcfg2-server'/>
+            <Package name='exim'/>
+            <Package name='grub'/>
+            <Package name='kernel'/>
+            <Package name='krb5-workstation'/>
+            <Package name='m2crypto'/>
+            <Package name='openssh-clients'/>
+            <Package name='openssh-server'/>
+            <Package name='prelink'/>
+            <Package name='redhat-lsb'/>
+            <Package name='rpm-build'/>
+            <Package name='rsync'/>
+            <Package name='sysklogd'/>
+            <Package name='vim-enhanced'/>
+            <Package name='yum'/>
+    </Bundle>
+
+Then add the files to Cfg::
+
+    mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5
+    cp /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5 !$/RPM-GPG-KEY-CentOS-5
+    mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL
+    cp /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL !$/RPM-GPG-KEY-EPEL
+
+Now, running the client shows only unmanaged Service entries. Woohoo!
+
+Manage services
++++++++++++++++
+
+Now let's clear up the unmanaged service entries by adding the following
+entries to our bundle...
+
+.. code-block:: xml
+
+    <!-- basic services -->
+    <Service name='atd'/>
+    <Service name='avahi-daemon'/>
+    <Service name='bcfg2-server'/>
+    <Service name='crond'/>
+    <Service name='cups'/>
+    <Service name='gpm'/>
+    <Service name='lvm2-monitor'/>
+    <Service name='mcstrans'/>
+    <Service name='messagebus'/>
+    <Service name='netfs'/>
+    <Service name='network'/>
+    <Service name='postfix'/>
+    <Service name='rawdevices'/>
+    <Service name='sshd'/>
+    <Service name='syslog'/>
+
+...and bind them in Rules
+
+.. code-block:: xml
+
+    [root@centos ~]# cat /var/lib/bcfg2/Rules/services.xml
+    <Rules priority='1'>
+            <!-- basic services -->
+            <Service type='chkconfig' status='on' name='atd'/>
+            <Service type='chkconfig' status='on' name='avahi-daemon'/>
+            <Service type='chkconfig' status='on' name='bcfg2-server'/>
+            <Service type='chkconfig' status='on' name='crond'/>
+            <Service type='chkconfig' status='on' name='cups'/>
+            <Service type='chkconfig' status='on' name='gpm'/>
+            <Service type='chkconfig' status='on' name='lvm2-monitor'/>
+            <Service type='chkconfig' status='on' name='mcstrans'/>
+            <Service type='chkconfig' status='on' name='messagebus'/>
+            <Service type='chkconfig' status='on' name='netfs'/>
+            <Service type='chkconfig' status='on' name='network'/>
+            <Service type='chkconfig' status='on' name='postfix'/>
+            <Service type='chkconfig' status='on' name='rawdevices'/>
+            <Service type='chkconfig' status='on' name='sshd'/>
+            <Service type='chkconfig' status='on' name='syslog'/>
+    </Rules>
+
+Now we run the client and see there are no more unmanaged entries! ::
+
+    [root@centos ~]# bcfg2 -veqn
+    Running probe groups
+    Probe groups has result:
+    x86_64
+    Loaded plugins: fastestmirror
+    Loading mirror speeds from cached hostfile
+    Excluding Packages in global exclude list
+    Finished
+    Loaded tool drivers:
+     Action       Chkconfig  POSIX        YUMng
+
+    Phase: initial
+    Correct entries:        205
+    Incorrect entries:      0
+    Total managed entries:  205
+    Unmanaged entries:      0
+
+
+    Phase: final
+    Correct entries:        205
+    Incorrect entries:      0
+    Total managed entries:  205
+    Unmanaged entries:      0
+
+Dynamic (web) Reports
+---------------------
 
 *This section needs to be updated for v1*
