@@ -8,9 +8,6 @@ Using Bcfg2 With CentOS
 
 This section covers specific topics for using Bcfg2 with CentOS. Most likely the tips on this page also apply to other members of the RedHat family of Linux operating systems.
 
-
-This was written for v0.9.6 and used to be in the :ref:`quickstart-centos` page.
-
 From Source
 +++++++++++
 

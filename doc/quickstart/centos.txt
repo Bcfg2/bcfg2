@@ -31,7 +31,6 @@ Your system should now have the necessary software to use Bcfg2. The next step i
 
 Initialize your repository
 ==========================
-*This section needs to be updated for v1*
 
 Now that you're done with the install, you need to initialize your 
 repository and setup your ``/etc/bcfg2.conf``. ``bcfg2-admin init`` 
@@ -62,7 +61,7 @@ is a tool which allows you to automate this::
     Getting Private key
     Repository created successfuly in /var/lib/bcfg2
 
-Change responses as necessary
+Change responses as necessary.
 
 Start the server
 ================
@@ -111,12 +110,12 @@ The ca message is just a warning, meaning that the client does not
 have sufficient information to verify that it is talking to the
 correct server. This can be fixed by distributing the ca certificate
 from the server to all clients. By default, this file is available in
-/etc/bcfg2.crt on the server. Copy this file to the client (with a
-bundle) and add the ca option to bcfg2.conf pointing at the file, and
-the client will be able to verify it is talking to the correct server
+``/etc/bcfg2.crt`` on the server. Copy this file to the client (with a
+bundle) and add the ca option to ``bcfg2.conf`` pointing at the file,
+and the client will be able to verify it is talking to the correct server
 upon connection::
 
-    [root@centos-client ~]# cat /etc/bcfg2.conf
+    [root@centos ~]# cat /etc/bcfg2.conf
 
 
     [communication]
@@ -223,7 +222,7 @@ something like this
     When editing your xml files by hand, it is useful to occasionally run
     `bcfg2-repo-validate` to ensure that your xml validates properly.
 
-The last thing we need is for the client to have the proper
+The final thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
 :ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
 Probes to your plugins line in ``bcfg2.conf`` and create the Probe.::
@@ -550,4 +549,87 @@ Now we run the client and see there are no more unmanaged entries! ::
 Dynamic (web) Reports
 ---------------------
 
-*This section needs to be updated for v1*
+Download the `Django`_ rpm and install it. I was able to find an RPM at
+ftp://ftp.pbone.net/mirror/download.fedora.redhat.com/pub/fedora/epel/5/x86_64/Django-1.1.1-2.el5.noarch.rpm. You will also need to ``yum install httpd``.
+
+.. _Django: http://www.djangoproject.com/
+
+.. note:: I also had to grab the following RPMs
+
+          * ftp://ftp.pbone.net/mirror/ftp.freshrpms.net/pub/freshrpms/pub/dag/redhat/el5/en/x86_64/dag/RPMS/python-simplejson-2.0.5-1.el5.rf.x86_64.rpm
+          * ftp://ftp.pbone.net/mirror/atrpms.net/el5-x86_64/atrpms/stable/python-sqlite2-2.3.3-3_0.1.el5.x86_64.rpm
+
+* Now we need to create the sqlite database::
+
+      [root@centos ~]# python /usr/lib/python2.4/site-packages/Bcfg2/Server/Reports/manage.py syncdb
+      Creating table auth_permission
+      Creating table auth_group
+      Creating table auth_user
+      Creating table auth_message
+      Creating table django_content_type
+      Creating table django_session
+      Creating table django_site
+      Creating table django_admin_log
+      Creating table reports_client
+      Creating table reports_ping
+      Creating table reports_interaction
+      Creating table reports_reason
+      Creating table reports_entries
+      Creating table reports_entries_interactions
+      Creating table reports_performance
+      Creating table reports_internaldatabaseversion
+
+      You just installed Django's auth system, which means you don't have any superusers defined.
+      Would you like to create one now? (yes/no): no
+      Installing index for auth.Permission model
+      Installing index for auth.Message model
+      Installing index for admin.LogEntry model
+      Installing index for reports.Client model
+      Installing index for reports.Ping model
+      Installing index for reports.Interaction model
+      Installing index for reports.Entries model
+      Installing index for reports.Entries_interactions model
+
+* Add DBStats to the plugins line of bcfg2.conf. The resulting
+  **[server]** section should look something like this::
+
+      [server]
+      repository = /var/lib/bcfg2
+      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+
+* Start/restart the bcfg2 server
+* Run the bcfg2 client in order to populate the statistics database
+  (this run should take a bit longer since you are uploading the client
+  statistics to the database).
+* Download the static reports content::
+
+      root@lucid:~# cd /var/www/
+      root@lucid:/var/www# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
+
+* Configure Apache using :ref:`dynamic-http-install` as a guide
+* Copy server/statistics sections of bcfg2.conf to
+  ``/etc/bcfg2-web.conf`` (make sure it is world-readable). You should
+  then have something like this::
+
+      [server]
+      repository = /var/lib/bcfg2
+      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+
+      [statistics]
+      sendmailpath = /usr/lib/sendmail
+      database_engine = sqlite3
+      # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
+      database_name =
+      # Or path to database file if using sqlite3.
+      #<repository>/etc/brpt.sqlite is default path if left empty
+      database_user =
+      # Not used with sqlite3.
+      database_password =
+      # Not used with sqlite3.
+      database_host =
+      # Not used with sqlite3.
+      database_port =
+      # Set to empty string for default. Not used with sqlite3.
+      web_debug = True
+
+* Restart apache and point a browser to your bcfg2 server
