@@ -15,7 +15,9 @@
 
 {% block content %}
 <form name="zonedata" action="" method="post">
-  <fieldset class="module aligned ()">
+    <fieldset class="module aligned ()">
+        {{ form.as_p}}
+<!--
   <label for="id_zone">zone:</label>{{ form.zone }}<br>
   <label for="id_admin">admin:</label>{{ form.admin }}<br>
   <label for="id_primary_master">primary_master:</label>{{ form.primary_master }}<br>
@@ -33,7 +35,9 @@
   <label for="id_mx">ip address:</label>{{ aform.ip_addr }}<br>
   <label for="id_aux">aux:
 (information not generated from Hostbase)</label>{{ form.aux }}<br>
-<p><input type="submit" value="Submit">
+--!>
+        <p><input type="submit" value="Submit">
+    </fieldset>
 </form>
 {% endblock %}
 

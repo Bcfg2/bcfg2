@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-
+from django.template import RequestContext
 from Bcfg2.Server.Hostbase.hostbase.models import *
 from datetime import date
 from django.db import connection
@@ -33,11 +33,6 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
             'dns_view':'n.dns_view = \'%s\'',
             'hdwr_type':'i.hdwr_type = \'%s\'',
             'dhcp':'i.dhcp = \'%s\''}
-
-def index(request):
-    """rediredct to /hostbase/"""
-    return render_to_response('index.html',
-                              {})
 
 def search(request):
     """Search for hosts in the database
@@ -85,25 +80,15 @@ def search(request):
         
         return render_to_response('results.html',
                                   {'hosts': results,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
     else:
         return render_to_response('search.html',
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'yesno': [(1, 'yes'), (0, 'no')],
-                                   'logged_in': request.session.get('_auth_user_id', False)})
-
-
-def look(request, host_id):
-    """Displays general host information"""
-    host = Host.objects.get(id=host_id)
-    interfaces = []
-    for interface in host.interface_set.all():
-        interfaces.append([interface, interface.ip_set.all()])
-    return render_to_response('host.html',
-                              {'host': host,
-                               'interfaces': interfaces,
-                               'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
 
 def logs(request, host_id):
     """Displays general host information"""
@@ -112,14 +97,16 @@ def logs(request, host_id):
     return render_to_response('logviewer.html',
                               {'hostname': host.hostname,
                                'logs': logs,
-                               'logged_in': request.session.get('_auth_user_id', False)})
+                               'logged_in': request.session.get('_auth_user_id', False)},
+                               context_instance = RequestContext(request))
 
 def printlog(request, host_id, log_id):
     """Displays general host information"""
     log = Log.objects.get(id=log_id)
     return render_to_response('log.html',
                               {'text': log.log,
-                               'logged_in': request.session.get('_auth_user_id', False)})
+                               'logged_in': request.session.get('_auth_user_id', False)},
+                               context_instance = RequestContext(request))
 
 def dns(request, host_id):
     host = Host.objects.get(id=host_id)
@@ -139,7 +126,8 @@ def dns(request, host_id):
                                'info': info,
                                'cnames': cnames,
                                'mxs': mxs,
-                               'logged_in': request.session.get('_auth_user_id', False)})
+                               'logged_in': request.session.get('_auth_user_id', False)},
+                               context_instance = RequestContext(request))
 
 
 def gethostdata(host_id, dnsdata=False):
@@ -343,7 +331,8 @@ def edit(request, host_id):
         else:
             return render_to_response('errors.html',
                                       {'failures': errors,
-                                       'logged_in': request.session.get('_auth_user_id', False)})
+                                       'logged_in': request.session.get('_auth_user_id', False)},
+                                       context_instance = RequestContext(request))
     else:
         host = Host.objects.get(id=host_id)
         interfaces = []
@@ -353,7 +342,8 @@ def edit(request, host_id):
                                   {'host': host,
                                    'interfaces': interfaces,
                                    'TYPE_CHOICES': Interface.TYPE_CHOICES,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
 
 def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
@@ -449,7 +439,8 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                                    'nameserver': nameserver,
                                    'address': address,
                                    'zone_id': zone_id,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
 
 def dnsedit(request, host_id):
     """Edits specific DNS information
@@ -545,7 +536,8 @@ def dnsedit(request, host_id):
                                    'request': request,
                                    'interfaces': interfaces,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
     
 def new(request):
     """Function for creating a new host in hostbase
@@ -555,14 +547,16 @@ def new(request):
             Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
                                       {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
-                                       'logged_in': request.session.get('_auth_user_id', False)})
+                                       'logged_in': request.session.get('_auth_user_id', False)},
+                                       context_instance = RequestContext(request))
         except:
             pass
         if not validate(request, True):
             if not request.POST['ip_addr_new'] and not request.POST['ip_addr_new2']:
                 return render_to_response('errors.html',
                                           {'failures': ['ip_addr: You must enter an ip address'],
-                                          'logged_in': request.session.get('_auth_user_id', False)})
+                                          'logged_in': request.session.get('_auth_user_id', False)},
+                                          context_instance = RequestContext(request))
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -581,7 +575,8 @@ def new(request):
         else:
             return render_to_response('errors.html',
                                       {'failures': validate(request, True),
-                                       'logged_in': request.session.get('_auth_user_id', False)})
+                                       'logged_in': request.session.get('_auth_user_id', False)},
+                                       context_instance = RequestContext(request))
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
@@ -709,7 +704,8 @@ def new(request):
                                    'CLASS_CHOICES': Host.CLASS_CHOICES,
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
 
 def copy(request, host_id):
     """Function for creating a new host in hostbase
@@ -719,14 +715,16 @@ def copy(request, host_id):
             Host.objects.get(hostname=request.POST['hostname'].lower())
             return render_to_response('errors.html',
                                       {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
-                                       'logged_in': request.session.get('_auth_user_id', False)})
+                                       'logged_in': request.session.get('_auth_user_id', False)},
+                                       context_instance = RequestContext(request))
         except:
             pass
         if not validate(request, True):
             if not request.POST['ip_addr_new'] and not request.POST['ip_addr_new2']:
                 return render_to_response('errors.html',
                                           {'failures': ['ip_addr: You must enter an ip address'],
-                                          'logged_in': request.session.get('_auth_user_id', False)})
+                                          'logged_in': request.session.get('_auth_user_id', False)},
+                                          context_instance = RequestContext(request))
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -745,7 +743,8 @@ def copy(request, host_id):
         else:
             return render_to_response('errors.html',
                                       {'failures': validate(request, True),
-                                       'logged_in': request.session.get('_auth_user_id', False)})
+                                       'logged_in': request.session.get('_auth_user_id', False)},
+                                       context_instance = RequestContext(request))
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
@@ -875,7 +874,8 @@ def copy(request, host_id):
                                    'CLASS_CHOICES': Host.CLASS_CHOICES,
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
     
 def remove(request, host_id):
     host = Host.objects.get(id=host_id)
@@ -897,7 +897,8 @@ def remove(request, host_id):
         return render_to_response('remove.html',
                                   {'host': host,
                                    'interfaces': interfaces,
-                                   'logged_in': request.session.get('_auth_user_id', False)})
+                                   'logged_in': request.session.get('_auth_user_id', False)},
+                                   context_instance = RequestContext(request))
 
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
@@ -988,130 +989,6 @@ def validate(request, new=False, host_id=None):
         return 0
     return failures
 
-def zones(request):
-    zones = Zone.objects.all()
-    return render_to_response('zones.html',
-                              {'zones': zones,
-                               'logged_in': request.session.get('_auth_user_id', False)})
-
-def zoneview(request, zone_id):
-    zone = Zone.objects.get(id=zone_id)
-    return render_to_response('zoneview.html',
-                              {'zone': zone,
-                               'nameservers': zone.nameservers.all(),
-                               'mxs': zone.mxs.all(),
-                               'addresses': zone.addresses.all(),
-                               'logged_in': request.session.get('_auth_user_id', False)
-                               })
-
-def zonenew(request):
-    manipulator = Zone.AddManipulator()
-    nsmanipulator = Nameserver.AddManipulator()
-    mxmanipulator = MX.AddManipulator()
-    addressmanipulator = ZoneAddress.AddManipulator()
-    
-    if request.method == 'POST':
-        new_data = request.POST.copy()
-        new_data['serial'] = '1'
-        errors = manipulator.get_validation_errors(new_data)
-        errors.update(check_zone_errors(request.POST.copy()))
-        if errors:
-            return render_to_response('errors.html', {'failures': errors})
-        else:
-            do_zone_add(manipulator, new_data)
-            return HttpResponseRedirect('/hostbase/zones/')
-    else:
-        errors = new_data = {}
-
-    form = forms.FormWrapper(manipulator, {}, {})
-    nsform = forms.FormWrapper(nsmanipulator, {}, {})
-    mxform = forms.FormWrapper(mxmanipulator, {}, {})
-    aform = forms.FormWrapper(addressmanipulator, {}, {})
-    context = {'form': form,
-               'nsform': nsform,
-               'mxform': mxform,
-               'aform': aform,
-               }
-    return render_to_response('zonenew.html', context)
-
-def zoneedit(request, zone_id):
-    manipulator = Zone.ChangeManipulator(zone_id)
-    nsaddmanipulator = Nameserver.AddManipulator()
-    mxaddmanipulator = MX.AddManipulator()
-    addressaddmanipulator = ZoneAddress.AddManipulator()
-    zone = manipulator.original_object
-    nsmanipulators = [Nameserver.ChangeManipulator(ns.id)
-                      for ns in zone.nameservers.all()]
-    mxmanipulators = [MX.ChangeManipulator(mx.id) for mx in zone.mxs.all()]
-    addressmanipulators = [ZoneAddress.ChangeManipulator(address.id)
-                           for address in zone.addresses.all()]
-    if request.method == 'POST':
-        new_data = request.POST.copy()
-        new_data['serial'] = str(zone.serial)
-        errors = manipulator.get_validation_errors(new_data)
-        errors.update(check_zone_errors(request.POST.copy()))
-        if not errors:
-            do_zone_add(manipulator, new_data)
-            return HttpResponseRedirect('/hostbase/zones/%s' % zone.id)
-        else:
-            return render_to_response('errors.html', {'failures': errors})           
-    else:
-        errors = {}
-        new_data = manipulator.flatten_data()
-        
-    form = forms.FormWrapper(manipulator, new_data, errors)
-    nsforms = [forms.FormWrapper(nsm, nsm.flatten_data(), {}) for nsm in nsmanipulators]
-    mxforms = [forms.FormWrapper(mxm, mxm.flatten_data(), {}) for mxm in mxmanipulators]
-    aforms = [forms.FormWrapper(am, am.flatten_data(), {}) for am in addressmanipulators]
-    context = {'form': form,
-               'nsforms': nsforms,
-               'mxforms': mxforms,
-               'aforms': aforms,
-               'nsadd': forms.FormWrapper(nsaddmanipulator, {}, {}),
-               'mxadd': forms.FormWrapper(mxaddmanipulator, {}, {}),
-               'addadd': forms.FormWrapper(addressaddmanipulator, {}, {}),
-               'zone_id': zone_id,
-               'zone': zone.zone
-               }
-    return render_to_response('zoneedit.html', context)
-
-def do_zone_add(manipulator, new_data):
-    manipulator.do_html2python(new_data)
-    zone = manipulator.save(new_data)
-##    text = ''
-##     for field in new_data:
-##         if not (field == 'nameservers' or field == 'mxs' or
-##                 field == 'priority' or field == 'ip_addr' or field == 'mx'):
-##             text += "%-20s -> %s" % (field, new_data[field])
-##     log = ZoneLog(zone=new_data['zone'], text)
-##     log.save()
-    for name in new_data.getlist('name'):
-        if name:
-            ns, created = Nameserver.objects.get_or_create(name=name)
-            zone.nameservers.add(ns)
-    priorities = new_data.getlist('priority')
-    for mx in new_data.getlist('mx'):
-        if priorities[0] and mx:
-            mxrecord, created = MX.objects.get_or_create(priority=priorities.pop(0), mx=mx)
-            zone.mxs.add(mxrecord)
-    for address in new_data.getlist('ip_addr'):
-        if address:
-            arecord, created = ZoneAddress.objects.get_or_create(ip_addr=address)
-            zone.addresses.add(arecord)
-
-def check_zone_errors(new_data):
-    errors = {}
-    for ns in new_data.getlist('name'):
-        errors.update(Nameserver.AddManipulator().get_validation_errors({'name':ns}))
-    for addr in new_data.getlist('ip_addr'): 
-        errors.update(ZoneAddress.AddManipulator().get_validation_errors({'ip_addr':addr}))
-    priorities = new_data.getlist('priority')
-    count = 0
-    for mx in new_data.getlist('mx'):
-        errors.update(MX.AddManipulator().get_validation_errors({'mx':mx, 'priority':priorities[count]})) 
-        count += 1
-    return errors
-
 def do_log(text, attribute, previous, new):
     if previous != new:
         text += "%-20s%-20s -> %s\n" % (attribute, previous, new)
@@ -1129,8 +1006,8 @@ dnsedit = login_required(dnsedit)
 new = login_required(new)
 copy = login_required(copy)
 remove = login_required(remove)
-zoneedit = login_required(zoneedit)
-zonenew = login_required(zonenew)
+#zoneedit = login_required(zoneedit)
+#zonenew = login_required(zonenew)
 
 ## uncomment the lines below this point to restrict access to all of hostbase
 

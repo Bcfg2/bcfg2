@@ -41,20 +41,20 @@
 
    <tr><td valign="top"> <b>nameservers</b></td>
    <td>
-   {% for nameserver in nameservers %}
+   {% for nameserver in zone.nameservers.all %}
    {{ nameserver.name }}<br>
    {% endfor %}
    </td></tr>
    <tr><td valign="top"> <b>mxs</b></td>
    <td>
-   {% for mx in mxs %}
+   {% for mx in zone.mxs.all %}
    {{ mx.priority }} {{ mx.mx }}<br>
    {% endfor %}
    </td></tr>
    {% if addresses %}
    <tr><td valign="top"> <b>A records</b></td>
    <td>
-   {% for address in addresses %}
+   {% for address in sof.addresses.all %}
    {{ address.ip_addr }}<br>
    {% endfor %}
    </td></tr>

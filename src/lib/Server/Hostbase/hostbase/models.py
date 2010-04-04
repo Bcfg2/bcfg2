@@ -38,21 +38,21 @@ class Host(models.Model):
         ('winNTs', 'winNTs'), ('winNTw', 'winNTw'),
         ('win2k', 'win2k'), ('winXP', 'winXP'), ('xterm', 'xterm')
         )
-    hostname = models.CharField(maxlength=64)
-    whatami = models.CharField(maxlength=16)
-    netgroup = models.CharField(maxlength=32, choices=NETGROUP_CHOICES)
-    security_class = models.CharField('class', maxlength=16)
-    support = models.CharField(maxlength=8, choices=SUPPORT_CHOICES)
-    csi = models.CharField(maxlength=32, blank=True)
-    printq = models.CharField(maxlength=32, blank=True)
+    hostname = models.CharField(max_length=64)
+    whatami = models.CharField(max_length=16)
+    netgroup = models.CharField(max_length=32, choices=NETGROUP_CHOICES)
+    security_class = models.CharField('class', max_length=16)
+    support = models.CharField(max_length=8, choices=SUPPORT_CHOICES)
+    csi = models.CharField(max_length=32, blank=True)
+    printq = models.CharField(max_length=32, blank=True)
     outbound_smtp = models.BooleanField()
     primary_user = models.EmailField()
     administrator = models.EmailField(blank=True)
-    location = models.CharField(maxlength=16)
+    location = models.CharField(max_length=16)
     comments = models.TextField(blank=True)
     expiration_date = models.DateField(null=True, blank=True)
     last = models.DateField(auto_now=True, auto_now_add=True)
-    status = models.CharField(maxlength=7, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=7, choices=STATUS_CHOICES)
     dirty = models.BooleanField()
 
     class Admin:
@@ -65,12 +65,17 @@ class Host(models.Model):
 class Interface(models.Model):
     TYPE_CHOICES = (
         ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
-        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge'), ('virtual', 'virtual')
+        ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge'),
         )
-    host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
-    mac_addr = models.CharField(maxlength=32, core=True)
-    hdwr_type = models.CharField('type', maxlength=16, choices=TYPE_CHOICES,
-                                 radio_admin=True, blank=True)
+    # FIXME: The new admin interface has change a lot.
+    #host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
+    host = models.ForeignKey(Host)
+    # FIXME: The new admin interface has change a lot.
+    #mac_addr = models.CharField(max_length=32, core=True)
+    mac_addr = models.CharField(max_length=32)
+    hdwr_type = models.CharField('type', max_length=16, choices=TYPE_CHOICES, blank=True)
+    # FIXME: The new admin interface has change a lot.
+    #                             radio_admin=True, blank=True)
     dhcp = models.BooleanField()
     
     def __str__(self):
@@ -81,9 +86,11 @@ class Interface(models.Model):
         search_fields = ['mac_addr']
 
 class IP(models.Model):
-    interface = models.ForeignKey(Interface,
-                                  edit_inline=models.TABULAR, num_in_admin=1)
-    ip_addr = models.IPAddressField(core=True)
+    interface = models.ForeignKey(Interface)
+    # FIXME: The new admin interface has change a lot.
+    #                              edit_inline=models.TABULAR, num_in_admin=1)
+    #ip_addr = models.IPAddressField(core=True)
+    ip_addr = models.IPAddressField()
     
     def __str__(self):
         return self.ip_addr
@@ -96,7 +103,9 @@ class IP(models.Model):
 
 class MX(models.Model):
     priority = models.IntegerField(blank=True)
-    mx = models.CharField(maxlength=64, core=True, blank=True)
+    # FIXME: The new admin interface has change a lot.
+    #mx = models.CharField(max_length=64, blank=True, core=True)
+    mx = models.CharField(max_length=64, blank=True)
 
     def __str__(self):
         return (" ".join([str(self.priority), self.mx]))
@@ -109,9 +118,13 @@ class Name(models.Model):
         ('global','global'),('internal','ANL internal'),
         ('private','private')
         )
-    ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
-    name = models.CharField(maxlength=64, core=True)
-    dns_view = models.CharField(maxlength=16, choices=DNS_CHOICES)
+    # FIXME: The new admin interface has change a lot.
+    #ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
+    ip = models.ForeignKey(IP)
+    # FIXME: The new admin interface has change a lot.
+    #name = models.CharField(max_length=64, core=True)
+    name = models.CharField(max_length=64)
+    dns_view = models.CharField(max_length=16, choices=DNS_CHOICES)
     only = models.BooleanField(blank=True)
     mxs = models.ManyToManyField(MX)
 
@@ -122,8 +135,12 @@ class Name(models.Model):
         pass
 
 class CName(models.Model):
-    name = models.ForeignKey(Name, edit_inline=models.TABULAR, num_in_admin=1)
-    cname = models.CharField(maxlength=64, core=True)
+    # FIXME: The new admin interface has change a lot.
+    #name = models.ForeignKey(Name, edit_inline=models.TABULAR, num_in_admin=1)
+    name = models.ForeignKey(Name)
+    # FIXME: The new admin interface has change a lot.
+    #cname = models.CharField(max_length=64, core=True)
+    cname = models.CharField(max_length=64)
 
     def __str__(self):
         return self.cname
@@ -132,7 +149,7 @@ class CName(models.Model):
         pass
 
 class Nameserver(models.Model):
-    name = models.CharField(maxlength=64, blank=True)
+    name = models.CharField(max_length=64, blank=True)
 
     def __str__(self):
         return self.name
@@ -150,10 +167,10 @@ class ZoneAddress(models.Model):
         pass
 
 class Zone(models.Model):
-    zone = models.CharField(maxlength=64)
+    zone = models.CharField(max_length=64)
     serial = models.IntegerField()
-    admin = models.CharField(maxlength=64)
-    primary_master = models.CharField(maxlength=64)
+    admin = models.CharField(max_length=64)
+    primary_master = models.CharField(max_length=64)
     expire = models.IntegerField()
     retry = models.IntegerField()
     refresh = models.IntegerField()
@@ -170,7 +187,7 @@ class Zone(models.Model):
         pass
 
 class Log(models.Model):
-    hostname = models.CharField(maxlength=64)
+    hostname = models.CharField(max_length=64)
     date = models.DateTimeField(auto_now=True, auto_now_add=True)
     log = models.TextField()
 
@@ -178,7 +195,7 @@ class Log(models.Model):
         return self.hostname
 
 class ZoneLog(models.Model):
-    zone = models.CharField(maxlength=64)
+    zone = models.CharField(max_length=64)
     date = models.DateTimeField(auto_now=True, auto_now_add=True)
     log = models.TextField()
 

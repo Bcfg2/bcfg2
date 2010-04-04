@@ -1,14 +1,21 @@
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+import os.path
+
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+
 c = ConfigParser()
 #This needs to be configurable one day somehow
-c.read(['/etc/bcfg2.conf'])
+c.read(['./bcfg2.conf'])
 
-defaults = {'database_engine':'',
-            'database_name':'',
+defaults = {'database_engine':'sqlite3',
+            'database_name':'./dev.db',
             'database_user':'',
             'database_password':'',
             'database_host':'',
             'database_port':3306,
+            'default_mx':'localhost',
+            'priority':10,
+            'authorized_group':'admins',
             }
 
 if c.has_section('hostbase'):
@@ -60,16 +67,18 @@ import django.contrib.auth
 django.contrib.auth.LOGIN_URL = '/login'
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+# Just for development
+SERVE_MEDIA = DEBUG
         
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
 # http://blogs.law.harvard.edu/tech/stories/storyReader$15
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 SITE_ID = 1
 # URL that handles the media served from MEDIA_ROOT.
 # Example: "http://media.lawrence.com"
-MEDIA_URL = ''
+MEDIA_URL = '/site_media/'
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
@@ -83,9 +92,21 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.load_template_source',
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.core.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.request",
+    "django.core.context_processors.media",
+# Django development version.
+#    "django.core.context_processors.csrf",
+)
+
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
 )
@@ -100,16 +121,20 @@ TEMPLATE_DIRS = (
     '/usr/lib/python2.3/site-packages/Bcfg2/Server/Hostbase/templates',
     '/usr/lib/python2.4/site-packages/Bcfg2/Server/Hostbase/templates',
     '/usr/share/bcfg2/Hostbase/templates',
+    os.path.join(PROJECT_ROOT, 'templates'),
+    os.path.join(PROJECT_ROOT, 'hostbase/webtemplates'),
     
 )
 
 INSTALLED_APPS = (
     'django.contrib.admin',
+    'django.contrib.admindocs',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.humanize',
     'Bcfg2.Server.Hostbase.hostbase',
-    
 )
 
+LOGIN_URL = '/login/'

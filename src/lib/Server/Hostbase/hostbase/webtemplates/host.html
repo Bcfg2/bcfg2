@@ -52,7 +52,7 @@
    <td> {{ host.location }}</td></tr>
    <tr> <td> <b>expiration_date</b></td>
    <td> {{ host.expiration_date }}</td></tr>
-   {% for interface in interfaces %}
+   {% for interface in host.inserface_set.all %}
    <tr> <td><br><b>Interface</b></td>
    {% ifnotequal interface.0.hdwr_type 'no' %}
    <td><br>{{ interface.0.hdwr_type }}</td></tr>

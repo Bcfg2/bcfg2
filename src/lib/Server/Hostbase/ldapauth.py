@@ -2,7 +2,7 @@
 and returns a subset of the user's profile that is needed by Argonne/CIS to
 to set user level privleges in Django"""
 
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 2456 $'
 
 import os
 import ldap

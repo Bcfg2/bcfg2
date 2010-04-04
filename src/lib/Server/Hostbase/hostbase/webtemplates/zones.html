@@ -14,8 +14,7 @@
 {% endblock %}
 
 {% block content %}
-
-{% if zones %}
+{% if zone_list %}
 <table border="0" width="100%">
    <colgroup>
    <col width="200">
@@ -24,7 +23,7 @@
    <col width="*">
    <tr> <td><b>zone</b></td>
    </tr>
-   {% for zone in zones|dictsort:"zone" %}
+   {% for zone in zone_list|dictsort:"zone" %}
    <tr> <td> {{ zone.zone }}</td>
    <td> <a href="{{ zone.id }}">view</a> </td>
    <td> <a href="{{ zone.id }}/edit">edit</a> </td>
