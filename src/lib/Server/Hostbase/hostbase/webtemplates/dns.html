@@ -20,25 +20,21 @@
 
 {% block content %}
 
-   {% for ip in info %}
-   <ul><li> <b>ip_addr:</b> {{ ip.0.ip_addr }}</li>
-   {% for name in ip.1 %}
-   <ul> <li><b>name:</b> {{ name.name }}</li> <ul>
-   {% for cname in cnames %}
-   {% ifequal cname.name_id name.id %}
-   <li> <b>cname:</b> {{ cname.cname }}</li>
-   {% endifequal %}
-   {% endfor %}
-   {% for mx in mxs %}
-   {% ifequal mx.0 name.id %}
-   {% for record in mx.1 %}
-   <li> <b>mx:</b> {{ record.priority }} {{ record.mx }}</li>
-   {% endfor %}
-   {% endifequal %}
-   {% endfor %}
-   </ul></ul>
-   {% endfor %}
-   </ul>
-   {% endfor %}
+{% for interface in host.interface_set.all %}
+    {% for ip in interface.ip_set.all %}
+        <ul><li> <b>ip_addr:</b> {{ ip.ip_addr }}</li>
+        {% for name in ip.name_set.all  %}
+            <ul> <li><b>name:</b> {{ name.name }}</li> <ul>
+            {% for cname in name.cname_set.all %}
+                <li> <b>cname:</b> {{ cname.cname }}</li>
+            {% endfor %}
+            {% for mx in name.mxs.all %}
+                <li> <b>mx:</b> {{ mx.priority }} {{ mx.mx }}</li>
+            {% endfor %}
+            </ul></ul>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+{% endfor %}
 {% endblock %}
 

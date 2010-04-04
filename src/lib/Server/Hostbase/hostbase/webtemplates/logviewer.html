@@ -14,10 +14,10 @@
 
 {% block content %}
 
-{% if logs %}
+{% if host.get_logs %}
 <ul>
-{% for log in logs %}
-<li><a href="{{ log.id }}">{{ log.date }}</li>
+{% for log in host.get_logs %}
+<li><a href="{{ log.id }}/">{{ log.date }}</li>
 {% endfor %}
 </ul>
 {% else %}

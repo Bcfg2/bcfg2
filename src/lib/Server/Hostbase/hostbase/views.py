@@ -90,45 +90,6 @@ def search(request):
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
 
-def logs(request, host_id):
-    """Displays general host information"""
-    host = Host.objects.get(id=host_id)
-    logs = Log.objects.filter(hostname=host.hostname)
-    return render_to_response('logviewer.html',
-                              {'hostname': host.hostname,
-                               'logs': logs,
-                               'logged_in': request.session.get('_auth_user_id', False)},
-                               context_instance = RequestContext(request))
-
-def printlog(request, host_id, log_id):
-    """Displays general host information"""
-    log = Log.objects.get(id=log_id)
-    return render_to_response('log.html',
-                              {'text': log.log,
-                               'logged_in': request.session.get('_auth_user_id', False)},
-                               context_instance = RequestContext(request))
-
-def dns(request, host_id):
-    host = Host.objects.get(id=host_id)
-    ips = []
-    info = []
-    cnames = []
-    mxs = []
-    for interface in host.interface_set.all():
-        ips.extend(interface.ip_set.all())
-    for ip in ips:
-        info.append([ip, ip.name_set.all()])
-        for name in ip.name_set.all():
-            cnames.extend(name.cname_set.all())
-            mxs.append((name.id, name.mxs.all()))
-    return render_to_response('dns.html',
-                              {'host': host,
-                               'info': info,
-                               'cnames': cnames,
-                               'mxs': mxs,
-                               'logged_in': request.session.get('_auth_user_id', False)},
-                               context_instance = RequestContext(request))
-
 
 def gethostdata(host_id, dnsdata=False):
     """Grabs the necessary data about a host
@@ -586,6 +547,8 @@ def new(request):
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
+# Change all this things. Use a "post_save" signal handler for model Host to create all sociate models
+# and use a generi view.
             new_ip.save()
             mx, created = MX.objects.get_or_create(priority=settings.PRIORITY, mx=settings.DEFAULT_MX)
             if created:
@@ -876,29 +839,19 @@ def copy(request, host_id):
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
-    
-def remove(request, host_id):
-    host = Host.objects.get(id=host_id)
-    if 'sub' in request:
-        for interface in host.interface_set.all():
-            for ip in interface.ip_set.all():
-                for name in ip.name_set.all():
-                    name.cname_set.all().delete()
-                ip.name_set.all().delete()
-            interface.ip_set.all().delete()
-            interface.delete()
-        host.delete()
-        return HttpResponseRedirect('/hostbase/')
-    else:
-        """Displays general host information"""
-        interfaces = []
-        for interface in host.interface_set.all():
-            interfaces.append([interface, interface.ip_set.all()])
-        return render_to_response('remove.html',
-                                  {'host': host,
-                                   'interfaces': interfaces,
-                                   'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+
+# FIXME: delete all this things in a signal handler "pre_delete"
+#def remove(request, host_id):
+#    host = Host.objects.get(id=host_id)
+#    if 'sub' in request:
+#        for interface in host.interface_set.all():
+#            for ip in interface.ip_set.all():
+#                for name in ip.name_set.all():
+#                    name.cname_set.all().delete()
+#                ip.name_set.all().delete()
+#            interface.ip_set.all().delete()
+#            interface.delete()
+#        host.delete()
 
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
@@ -936,10 +889,10 @@ def validate(request, new=False, host_id=None):
             and request.POST['mac_addr_new']):
             failures.append('mac_addr (#1)')
         if ((request.POST['mac_addr_new'] or request.POST['ip_addr_new']) and
-            not 'hdwr_type_new' in request):
+            not 'hdwr_type_new' in request.REQUEST):
             failures.append('hdwr_type (#1)')
         if ((request.POST['mac_addr_new2'] or request.POST['ip_addr_new2']) and
-            not 'hdwr_type_new2' in request):
+            not 'hdwr_type_new2' in request.REQUEST):
             failures.append('hdwr_type (#2)')
 
         if (not regex.macaddr.match(request.POST['mac_addr_new2'])
@@ -1005,7 +958,7 @@ confirm = login_required(confirm)
 dnsedit = login_required(dnsedit)
 new = login_required(new)
 copy = login_required(copy)
-remove = login_required(remove)
+#remove = login_required(remove)
 #zoneedit = login_required(zoneedit)
 #zonenew = login_required(zonenew)
 

@@ -62,6 +62,12 @@ class Host(models.Model):
     def __str__(self):
         return self.hostname
 
+    def get_logs(self):
+        """
+            Get host's log.
+        """
+        return Log.objects.filter(hostname=self.hostname)
+
 class Interface(models.Model):
     TYPE_CHOICES = (
         ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
@@ -187,6 +193,7 @@ class Zone(models.Model):
         pass
 
 class Log(models.Model):
+    # FIXME: Proposal hostname = models.ForeignKey(Host)
     hostname = models.CharField(max_length=64)
     date = models.DateTimeField(auto_now=True, auto_now_add=True)
     log = models.TextField()
