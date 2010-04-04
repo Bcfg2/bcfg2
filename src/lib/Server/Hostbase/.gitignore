@@ -1,0 +1,3 @@
+*.pyc
+dev.db
+bcfg2.conf
