@@ -10,6 +10,7 @@ Bcfg2 Server
    :maxdepth: 2
 
    plugins/index
+   admin/index
    reports/index
    configurationentries
    snapshots/index

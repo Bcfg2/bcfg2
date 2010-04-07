@@ -89,7 +89,8 @@ class MetadataCore(Mode):
     '''Base class for admin-modes that handle metadata'''
     def __init__(self, configfile, usage, pwhitelist=None, pblacklist=None):
         Mode.__init__(self, configfile)
-        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS}
+        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
+                   'configfile': Bcfg2.Options.CFILE}
         setup = Bcfg2.Options.OptionParser(options)
         setup.hm = usage
         setup.parse(sys.argv[1:])

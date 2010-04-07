@@ -1,0 +1,72 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-index:
+
+=====
+Admin
+=====
+
+The ``bcfg2-admin`` command provides you an interface which allows you
+to interact with your Bcfg2 repository in an administrative fashion. To
+get started, run ``bcfg2-admin help``. You will be presented with a list
+of different *modes* which each provide various administrative
+functionality. Available modes are listed below.
+
+FIXME: Need examples for each command listed below.
+
+client
+======
+
+Create, delete, or modify client entries.
+
+compare
+=======
+
+Determine differences between files or directories of client
+specification instances.
+
+init
+====
+
+Interactively initialize a new repository.
+
+minestruct
+==========
+
+Extract extra entry lists from statistics.
+
+perf
+====
+
+Query server for performance data.
+
+pull
+====
+
+Integrate configuration information from clients into the server
+repository.
+
+query
+=====
+
+Query clients.
+
+snapshots
+=========
+
+Interact with the Snapshots system.
+
+tidy
+====
+
+Clean up useless files in the repo.
+
+viz
+===
+
+Produce graphviz diagrams of metadata structures.
+
+xcmd
+====
+
+XML-RPC Command Interface.
