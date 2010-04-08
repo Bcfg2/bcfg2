@@ -73,6 +73,9 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+        self.__important__ = [e.get('name') for struct in config for entry in struct \
+                                  if entry.tag in ['Path', 'ConfigFile'] and \
+                                  e.get('name').startswith('/etc/yum.d') or e.get('name') == '/etc/yum.conf']
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
