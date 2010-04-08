@@ -134,7 +134,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             entry.set('current_version', pkg.installedVersion)
             entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " % \
                       (entry.get('name'), entry.get('current_version'),
-                       entry.get('version')))
+                       desiredVersion))
             return False
         else:
             # version matches
