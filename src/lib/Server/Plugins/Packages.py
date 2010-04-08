@@ -24,7 +24,7 @@ logger = logging.getLogger('Packages')
 def source_from_xml(xsource):
     ret = dict([('rawurl', False), ('url', False)])
     for key, tag in [('groups', 'Group'), ('components', 'Component'),
-                     ('arches', 'Arch')]:
+                     ('arches', 'Arch'), ('blacklist', 'Blacklist')]:
         ret[key] = [item.text for item in xsource.findall(tag)]
     # version and component need to both contain data for sources to work
     try:
@@ -45,7 +45,8 @@ def source_from_xml(xsource):
 
 class Source(object):
     basegroups = []
-    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
+    def __init__(self, basepath, url, version, arches, components, groups, rawurl,
+                 blacklist):
         self.basepath = basepath
         self.version = version
         self.components = components
@@ -55,6 +56,7 @@ class Source(object):
         self.arches = arches
         self.deps = dict()
         self.provides = dict()
+        self.blacklist = set(blacklist)
         self.cachefile = None
 
     def load_state(self):
@@ -143,6 +145,11 @@ class Source(object):
 
         Returns => (packages, unresolved requirements)
         '''
+
+        if requirement in self.blacklist:
+            # requirement and all deps are suppressed
+            return (set(), set())
+
         if self.is_package(metadata, requirement):
             item_is_pkg = True
         else:
@@ -216,9 +223,10 @@ class YUMSource(Source):
     basegroups = ['redhat', 'centos', 'fedora']
     ptype = 'yum'
 
-    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
+    def __init__(self, basepath, url, version, arches, components, groups,
+                 rawurl, blacklist):
         Source.__init__(self, basepath, url, version, arches, components,
-                        groups, rawurl)
+                        groups, rawurl, blacklist)
         if not self.rawurl:
             self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
         else:
@@ -364,8 +372,10 @@ class APTSource(Source):
     basegroups = ['debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
 
-    def __init__(self, basepath, url, version, arches, components, groups, rawurl):
-        Source.__init__(self, basepath, url, version, arches, components, groups, rawurl)
+    def __init__(self, basepath, url, version, arches, components, groups,
+                 rawurl, blacklist):
+        Source.__init__(self, basepath, url, version, arches, components, groups,
+                        rawurl, blacklist)
         self.cachefile = self.escape_url(self.url + '@' + version) + '.data'
         self.pkgnames = set()
 
