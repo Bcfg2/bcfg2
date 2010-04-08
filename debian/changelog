@@ -1,3 +1,10 @@
+bcfg2 (1.0.1-1) unstable; urgency=low
+
+  * Remove unnecessary python-lxml dependency (for the client package)
+  * Remove duplicate Recommends items
+
+ -- Sol Jerome <solj@ices.utexas.edu>  Thu, 08 Apr 2010 08:31:45 -0600
+
 bcfg2 (1.0.0-6) unstable; urgency=low
 
   * final 1.0.0 release + debian directory from r5630
