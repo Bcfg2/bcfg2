@@ -173,7 +173,7 @@ div#interface{
 <textarea rows="10" cols="50" name="comments">{{ host.comments }}</textarea><br>
 <a style="font-size:75%" href="/hostbase/{{ host.id }}/dns/edit">edit detailed DNS information for this host</a>
 <br>
-this host is 
+this host is
 <select name="status">
 {% for choice in host.STATUS_CHOICES %}
 {% ifequal host.status choice.0 %}

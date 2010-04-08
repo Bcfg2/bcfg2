@@ -20,7 +20,6 @@ a:hover {
 }
 a:active {
     color: #00a;
-    
     text-decoration: underline;
 }
 /* divs*/
@@ -43,7 +42,6 @@ div.modified {
     margin-right:50px;
 }
 div.clean {
-    
     border: 1px solid #006600;
     background: #9AFF9A;
     margin: 10px 0;
@@ -102,7 +100,6 @@ div.nodebox {
     position:relative;
 }
 div.header {
-    
     background-color: #DDD;
     padding: 8px;
     text-indent:50px;
@@ -116,7 +113,7 @@ div.header {
 .nodelisttitle {
     font-size: 14px;
 }
-                                        
+
 h2{
     font-size: 16px;
     color: #000;
@@ -130,7 +127,6 @@ ul.plain {
 .notebox {
     position: absolute;
     top: 0px;
-    
     right: 0px;
     padding: 1px;
     text-indent:0px;
@@ -161,8 +157,7 @@ table.sortable a.sortheader {
     font-weight: bold;
     text-decoration: none;
     display: block;
-    
-}  
+}
 table.sortable {
     padding: 2px 4px 2px 4px;
     border: 1px solid #000000;

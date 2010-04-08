@@ -75,7 +75,7 @@
 	   {% endfor %}
    	   <tr> <td> <b>name</b></td>
 	   <td> <input name="{{ ip.0.ip_addr }}name" type="text">
-	   <select name="{{ ip.0.ip_addr }}dns_view">	   
+	   <select name="{{ ip.0.ip_addr }}dns_view">
 	   {% for choice in DNS_CHOICES %}
 	   <option value="{{ choice.0 }}">{{ choice.1 }}
 	   {% endfor %}

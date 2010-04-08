@@ -57,7 +57,7 @@ class ldapauth(object):
         #svc_pass = passwd
 
         search_pth = os.environ['LDAP_SEARCH_PTH']
-        
+
         try:
             conn = ldap.initialize(os.environ['LDAP_URI'])
             conn.bind(svc_acct,svc_pass,ldap.AUTH_SIMPLE)
@@ -69,7 +69,7 @@ class ldapauth(object):
         except ldap.LDAPError,e:
             #connection failed
             return ('error','LDAP connect failed',e,)
-    
+
     def user_bind(self,distinguishedName,passwd):
         """Binds to LDAP Server"""
         search_pth = os.environ['LDAP_SEARCH_PTH']
@@ -127,11 +127,11 @@ class ldapauth(object):
             self.name_l = display_name[0]
             self.is_staff = False
             self.is_superuser = False
-            
+
             return
         except KeyError, e:
             raise LDAPAUTHError("Portions of the LDAP User profile not present")
-        
+
     def member_of(self):
         """See if this user is in our group that is allowed to login"""
         m = [g for g in self.memberOf if g == self.check_member_of]
@@ -147,26 +147,26 @@ class ldapauth(object):
         user = os.environ['LDAP_GROUP_USER']
         m = [g for g in self.memberOf if g == user]
         if len(m) == 1:
-            if level < 1:                       
+            if level < 1:
                 level = 1
 
         cspr = os.environ['LDAP_GROUP_SECURITY_LOW']
         m = [g for g in self.memberOf if g == cspr]
         if len(m) == 1:
-            if level < 2:                       
+            if level < 2:
                 level = 2
 
         cspo = os.environ['LDAP_GROUP_SECURITY_HIGH']
         m = [g for g in self.memberOf if g == cspo]
         if len(m) == 1:
-            if level < 3:                       
+            if level < 3:
                 level = 3
 
         admin = os.environ['LDAP_GROUP_ADMIN']
         m = [g for g in self.memberOf if g == admin]
         if len(m) == 1:
-            if level < 4:                       
+            if level < 4:
                 level = 4
 
         return level
-        
+

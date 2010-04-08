@@ -10,5 +10,3 @@ def teardown():
 
 def test_mcs_settings():
     pass
-    
-    

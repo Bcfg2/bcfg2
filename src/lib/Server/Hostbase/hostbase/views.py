@@ -16,7 +16,7 @@ from django.shortcuts import render_to_response
 from django import forms
 from Bcfg2.Server.Hostbase import settings, regex
 import re, copy
-    
+
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
            'status', 'comments']
@@ -66,7 +66,7 @@ def search(request):
                     querystring += ' AND '
                 querystring += "h.%s LIKE \'%%%%%s%%%%\'" % (field, request.POST[field])
                 _and = True
-               
+
         if not _and:
             cursor = connection.cursor()
             cursor.execute("""SELECT hostname, id, status
@@ -77,7 +77,7 @@ def search(request):
             cursor = connection.cursor()
             cursor.execute(querystring)
             results = cursor.fetchall()
-        
+
         return render_to_response('results.html',
                                   {'hosts': results,
                                    'logged_in': request.session.get('_auth_user_id', False)},
@@ -135,7 +135,7 @@ def edit(request, host_id):
             changename = True
         interfaces = host.interface_set.all()
         old_interfaces = [interface.__dict__.copy() for interface in interfaces]
-            
+
         new_data = request.POST.copy()
 
         errors = manipulator.get_validation_errors(new_data)
@@ -470,7 +470,7 @@ def dnsedit(request, host_id):
                         mx.save()
                     text = do_log(text, '*new*', 'mx',
                                   ' '.join([request.POST['%spriority' % ipaddrstr], request.POST['%smx' % ipaddrstr]]))
-                    name.mxs.add(mx)                
+                    name.mxs.add(mx)
         if text:
             log = Log(hostname=hostdata['host'].hostname, log=text)
             log.save()
@@ -499,7 +499,7 @@ def dnsedit(request, host_id):
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
-    
+
 def new(request):
     """Function for creating a new host in hostbase
     Data is validated before committed to the database"""

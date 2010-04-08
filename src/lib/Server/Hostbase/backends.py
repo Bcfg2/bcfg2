@@ -8,7 +8,7 @@ __revision__ = '$Revision$'
 
 ##     def authenticate(self,username=None,password=None):
 ##         try:
-            
+
 ##             l = ldapauth(username,password)
 ##             temp_pass = User.objects.make_random_password(100)
 ##             ldap_user = dict(username=l.sAMAccountName,
@@ -25,7 +25,7 @@ __revision__ = '$Revision$'
 ##             #print user
 ##             #print "created " + str(created)
 ##             return user
-        
+
 ##         except LDAPAUTHError,e:
 ##             #print str(e)
 ##             return None
@@ -36,7 +36,7 @@ __revision__ = '$Revision$'
 ##         except User.DoesNotExist, e:
 ##             print str(e)
 ##             return None
-    
+
 
 class NISBackend(object):
 
@@ -54,7 +54,7 @@ class NISBackend(object):
                 uid = n.uid
                 )
             user, created = User.objects.get_or_create(username=username)
-            
+
             return user
 
         except NISAUTHError, e:
@@ -66,4 +66,3 @@ class NISBackend(object):
             return User.objects.get(pk=user_id)
         except User.DoesNotExist, e:
             return None
-    

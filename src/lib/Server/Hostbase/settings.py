@@ -57,7 +57,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Uncomment a backend below if you would like to use it for authentication
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
                            'Bcfg2.Server.Hostbase.backends.NISBackend',
-                           #'Bcfg2.Server.Hostbase.backends.LDAPBacken',                           
+                           #'Bcfg2.Server.Hostbase.backends.LDAPBacken',
                            )
 # enter an NIS group name you'd like to give access to edit hostbase records
 AUTHORIZED_GROUP = options['authorized_group']
@@ -70,7 +70,7 @@ django.contrib.auth.LOGIN_URL = '/login'
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 # Just for development
 SERVE_MEDIA = DEBUG
-        
+
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
 # http://blogs.law.harvard.edu/tech/stories/storyReader$15
@@ -123,7 +123,6 @@ TEMPLATE_DIRS = (
     '/usr/share/bcfg2/Hostbase/templates',
     os.path.join(PROJECT_ROOT, 'templates'),
     os.path.join(PROJECT_ROOT, 'hostbase/webtemplates'),
-    
 )
 
 INSTALLED_APPS = (

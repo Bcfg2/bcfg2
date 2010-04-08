@@ -83,7 +83,7 @@ class Interface(models.Model):
     # FIXME: The new admin interface has change a lot.
     #                             radio_admin=True, blank=True)
     dhcp = models.BooleanField()
-    
+
     def __str__(self):
         return self.mac_addr
 
@@ -97,7 +97,7 @@ class IP(models.Model):
     #                              edit_inline=models.TABULAR, num_in_admin=1)
     #ip_addr = models.IPAddressField(core=True)
     ip_addr = models.IPAddressField()
-    
+
     def __str__(self):
         return self.ip_addr
 
@@ -136,7 +136,7 @@ class Name(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Admin:
         pass
 

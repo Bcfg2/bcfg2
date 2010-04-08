@@ -13,7 +13,7 @@ def env_setup():
 
 def teardown():
     pass
-    
+
 def test_environ_settings():
 
     os.environ['bcfg_db_engine'] = 'foo'
