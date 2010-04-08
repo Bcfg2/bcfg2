@@ -595,7 +595,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         structures - a list of structure-stage entry combinations
         '''
         initial = set([pkg.get('name') for struct in structures \
-                       for pkg in struct.findall('Package')])
+                       for pkg in struct.findall('Package') +
+                       struct.findall('BoundPackage')])
         news = lxml.etree.Element('Independent')
         packages, unknown, ptype = self.complete(meta, initial,
                                                  debug=self.debug_flag)
