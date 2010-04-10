@@ -8,14 +8,14 @@
 {% endblock %}
 
 {% block sidebar %}
-{% include "navbar" %}
+{% include "navbar.tmpl" %}
 <ul class="sidebar">
    <li><a href="dns/" class="sidebar">detailed dns info</a></li>
    <li><a href="edit/" class="sidebar">edit host info</a></li>
    <li><a href="dns/edit/" class="sidebar">edit dns info</a></li>
    <li><a href="logs/" class="sidebar">change logs</a></li>
 </ul>
-{% include "logout" %}
+{% include "logout.tmpl" %}
 {% endblock %}
 
 {% block content %}

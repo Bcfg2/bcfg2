@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block sidebar %}
-{% include "navbar" %}
+{% include "navbar.tmpl" %}
 <ul class="sidebar">
 <li><a href="/hostbase/zones/{{ zone.id }}/edit/" class="sidebar">edit zone</a><br>
 </li>
 </ul>
-{% include "logout" %}
+{% include "logout.tmpl" %}
 {% endblock %}
 
 {% block content %}
