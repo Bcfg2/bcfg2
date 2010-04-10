@@ -7,23 +7,23 @@ Gentoo
 ======
 
 This document tries to lay out anything Gentoo-specific that you need
-to know in order to use bcfg2. Mostly that has to do with getting it
+to know in order to use Bcfg2. Mostly that has to do with getting it
 to cooperate with the various pieces of Portage. Services, all things
-POSIX, and just about anything else that bcfg2 does will work the same
-on Gentoo as on any other distribution.  bcfg2 is new on Gentoo; please
+POSIX, and just about anything else that Bcfg2 does will work the same
+on Gentoo as on any other distribution.  Bcfg2 is new on Gentoo; please
 let the list know if you find errors or omissions.
 
-Installing bcfg2
+Installing Bcfg2
 ================
 
-Early in July 2008, bcfg2 was added to the Gentoo portage tree.  So far
+Early in July 2008, Bcfg2 was added to the Gentoo portage tree.  So far
 it's only keyworded for ~x86, but we hope to see it soon in the amd64 and
 x64-solaris ports.  If you're using Gentoo on some other architecture, it
 should still work provided that you have a reasonably up to date Python;
 try adding `app-admin/bcfg2 ~*` to your `/etc/portage/package.keywords`
 file.
 
-If you don’t use portage to install bcfg2, you’ll want to make sure you
+If you don’t use portage to install Bcfg2, you’ll want to make sure you
 have all the prerequisites installed first. For a server, you’ll need:
 
 * ``app-admin/gamin`` or ``app-admin/fam``
@@ -106,7 +106,7 @@ conjunction with the `quickpkg` example above:
 Configuring Client Machines
 ===========================
 
-Set up ``/etc/bcfg2.conf`` the way you would for any other bcfg2 client.
+Set up ``/etc/bcfg2.conf`` the way you would for any other Bcfg2 client.
 
 In ``make.conf``, set *PORTAGE_BINHOST* to point to the URI of
 your package repository.  You may want to create versions of
@@ -127,7 +127,7 @@ As of this writing (2007/01/31), we’re aware of a number of packages
 marked stable in the Gentoo x86 tree which, for one reason or another,
 consistently fail to verify cleanly under `equery check`. In some cases
 (pam, openldap), files which don’t (ever) exist on the system are
-nonetheless recorded in the package database; in some (python, bcfg2,
+nonetheless recorded in the package database; in some (python, Bcfg2,
 ahem), whole classes of files (.pyc and .pyo files) consistently fail
 their md5sum checks; and in others, the problem appears to be a
 discrepancy in the way that symlinks are created vs. the way they’re
@@ -145,12 +145,12 @@ leading to noise like this::
      * 62 out of 66 files good
 
 We can ignore the lines for ``ssh_config`` and ``sshd_config``; those will
-be caught by bcfg2 as registered config files and handled appropriately.
+be caught by Bcfg2 as registered config files and handled appropriately.
 
-Because bcfg2 relies on the client system’s native package reporting
+Because Bcfg2 relies on the client system’s native package reporting
 tool to judge the state of installed packages, complaints like these
 about trivial or intractable verification failures can trigger unnecessary
-bundle reinstalls when the bcfg2 client runs. bcfg2 will catch on after a
+bundle reinstalls when the Bcfg2 client runs. Bcfg2 will catch on after a
 pass or two that the situation isn’t getting any better with repeated
 package installs, stop trying, and list those packages as “bad” in
 the client system’s statistics.
@@ -170,7 +170,7 @@ Gentoo as well as some other distros recommend leaving ``/boot`` unmounted
 during normal runtime. This can lead to trouble during verification and
 package installation, for example when ``/boot/grub/grub.conf`` turns
 up missing. The simplest way around this might just be to ensure that
-``/boot`` is mounted whenever you run bcfg2, possibly wrapping bcfg2
+``/boot`` is mounted whenever you run Bcfg2, possibly wrapping Bcfg2
 in a script for the purpose. I’ve also thought about adding *Action*
 clauses to bundles for grub and our kernel packages, which would mount
 ``/boot`` before the bundle installs and unmount it afterward, but this

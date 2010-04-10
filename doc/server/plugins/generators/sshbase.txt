@@ -6,7 +6,7 @@
 SSHbase
 =======
 
-SSHbase is a purpose build bcfg2 plugin for managing ssh host keys. It
+SSHbase is a purpose build Bcfg2 plugin for managing ssh host keys. It
 is responsible for making ssh keys persist beyond a client rebuild and
 building a proper ssh_known_hosts file, including a correct localhost
 record for the current system.
@@ -47,7 +47,7 @@ Getting started
 ===============
 
 #. Add SSHbase to the **plugins** line in ``/etc/bcfg2.conf`` and
-   restart the server -- This enables the SSHbase plugin in the bcfg2
+   restart the server -- This enables the SSHbase plugin on the Bcfg2
    server.
 
 #. Add Path entries for ``/etc/ssh/ssh_known_hosts``, and

@@ -120,7 +120,7 @@ add services, and commands specific to the hostgroup (Bcfg2 group) in
             hostgroup_name                  web-server
             }
 
-Create a nagios bcfg2 bundle /var/lib/bcfg2/Bundler/nagios.xml
+Create a nagios Bcfg2 bundle ``/var/lib/bcfg2/Bundler/nagios.xml``
 
 .. code-block:: xml
 
@@ -166,6 +166,6 @@ Update nagios configuration file to use nagiosgen.cfg::
     cfg_file=/etc/nagios/nagiosgen.cfg
 
 Note that some of these files are built on demand, each time a client
-in group "nagios-server" checks in with the bcfg2 server. Local nagios
-instances can be configured to use the !NagiosGen directory in the bcfg2
+in group "nagios-server" checks in with the Bcfg2 server. Local nagios
+instances can be configured to use the !NagiosGen directory in the Bcfg2
 repository directly.

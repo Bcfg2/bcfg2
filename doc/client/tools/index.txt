@@ -5,7 +5,7 @@
 Client Tool Drivers
 ===================
 
-Client tool drivers allow bcfg2 to execute configuration operations by
+Client tool drivers allow Bcfg2 to execute configuration operations by
 interfacing with platform and distribution specific tools.
 
 Tool drivers handle any reconfiguration or verification operation. So
@@ -16,21 +16,21 @@ operations.
 To write your own tool driver, to handle a new packaging format, or new
 service architecture see :ref:`development-index-writingtooldrivers`
 
-When the bcfg2 client is run, it attempts to instantiate each of these
+When the Bcfg2 client is run, it attempts to instantiate each of these
 drivers. The succeeding list of drivers are printed as a debug message
 after this process has completed. Drivers can supercede one another,
 for example, the Yum driver conflicts (and unloads) the RPM driver. This
-behavior can be overridden by running the bcfg2 client with the -D
+behavior can be overridden by running the Bcfg2 client with the -D
 flag. This flag takes a colon delimited list of drivers to use on
 the system.
 
-Currently these are the tool drivers that are distributed with bcfg2:
+Currently these are the tool drivers that are distributed with Bcfg2:
 
 Action
 ------
 
 Pre and post-install tests and actions. This driver executes commands
-and supplies status information to the bcfg2 server via the statistics
+and supplies status information to the Bcfg2 server via the statistics
 mechanism. It can also be used to prevent bundle installation when
 pre-conditions are not met. See the UsingActions page for more details.
 

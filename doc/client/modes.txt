@@ -33,7 +33,7 @@ How do I use it?
 #. In the Bcfg2 repository, put `paranoid='true'` in the ``info.xml``
    file.
 #. On the client, create ``/var/cache/bcfg2`` (or specify an alternate
-   path in the [paranoid] section of /etc/bcfg2).
+   path in the [paranoid] section of ``/etc/bcfg2``).
 #. On the client, run `bcfg2` with the `-P` option (alternatively, you
    can set *paranoid* to *true* in the **[client]** section of
    ``bcfg2.conf``).
@@ -47,7 +47,7 @@ Extra configuration
 -------------------
 
 Here is an example of how to use the extra paranoid features available
-in 1.0. For the following section in bcfg2.conf::
+in 1.0. For the following section in ``bcfg2.conf``::
 
     [paranoid]
     path = /my/custom/backup/path

@@ -21,7 +21,7 @@ based on system properties::
 
     group:groupname
 
-This output is processed by the bcfg2 server, and results in dynamic
+This output is processed by the Bcfg2 server, and results in dynamic
 group membership in groupname for the client. See the :ref:`Probes
 <server-plugins-probes-index>` page for a more thorough description
 of probes.

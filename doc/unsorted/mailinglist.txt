@@ -6,7 +6,7 @@
 Mailing List
 ============
 
-To subscribe to the mailing list for bcfg2 please visit the `bcfg-dev
+To subscribe to the mailing list for Bcfg2 please visit the `bcfg-dev
 mailman page`_
 
 `Searchable archives`_ are available from Gmane. You can also read the

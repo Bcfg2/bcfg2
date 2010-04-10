@@ -18,8 +18,8 @@ perform one of several tasks:
 Enabling Plugins
 ================
 
-In order for the bcfg2 server to use a plugin, it needs to be listed on
-the *plugins* line in bcfg2.conf.
+In order for the Bcfg2 server to use a plugin, it needs to be listed on
+the *plugins* line in ``bcfg2.conf``.
 
 Default Plugins
 ===============

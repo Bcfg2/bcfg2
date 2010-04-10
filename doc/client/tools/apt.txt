@@ -2,9 +2,9 @@
 
 .. _client-tools-apt:
 
-=====================
-Bcfg2 APT Client Tool
-=====================
+===============
+APT Client Tool
+===============
 
 The APT tool allows you to configure custom options in ``bcfg2.conf``
 for systems where the tools reside in non-standard locations. The

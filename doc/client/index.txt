@@ -5,10 +5,11 @@
 The Bcfg2 Client
 ================
 
-The Bcfg2 client is responsible for determining what reconfiguration
-operations must be undertaken on the client, but does not perform
-any processing of the target configuration description. We chose this
-architecture, as opposed to one with a smarter client, for a few reasons:
+The Bcfg2 client attempts to reconcile the current configuration state
+with the configuration passed down from the server using various client
+tools. It does not perform any processing of the target configuration
+description. We chose this architecture, as opposed to one with a smarter
+client, for a few reasons:
 
 * Client failure forces administrators to perform an O(n) reconfiguration
   operation. Simpler code is easier to debug and maintain.
@@ -22,6 +23,18 @@ architecture, as opposed to one with a smarter client, for a few reasons:
   deployment engine that can be driven by anything that writes a
   compatible configuration description.
 
+Available client tools
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   tools/*
+
+Other client-related documentation
+----------------------------------
+
 .. toctree::
    :maxdepth: 2
 
@@ -29,9 +42,3 @@ architecture, as opposed to one with a smarter client, for a few reasons:
    debugging
    metadata
    modes
-
-.. toctree::
-   :maxdepth: 2
-   :glob:
-
-   tools/*

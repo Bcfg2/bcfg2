@@ -66,7 +66,7 @@ If you would like to define your own Metadata plugin (to extend/change functiona
        import Bcfg2.Server.Plugins.Metadata
 
        class MyMetadata(Bcfg2.Server.Plugins.Metadata.Metadata):
-           '''This class contains data for bcfg2 server metadata'''
+           '''This class contains data for Bcfg2 server metadata'''
            __version__ = '$Id$'
            __author__ = 'bcfg-dev@mcs.anl.gov'
 

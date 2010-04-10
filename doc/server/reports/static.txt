@@ -43,11 +43,11 @@ record most of the data that users would like.
 Setup
 =====
 
-In order to configure your bcfg2 server for receiving reports, you
+In order to configure your Bcfg2 server for receiving reports, you
 will need to list the Statistics plugin in the plugins line of your
-bcfg2.conf (starting in 1.0). You will also need a [statistics] section
-in your bcfg2.conf. You can find out more about what goes there in the
-bcfg2.conf manpage.
+``bcfg2.conf``. You will also need a [statistics] section
+in your ``bcfg2.conf``. You can find out more about what goes there in the
+``bcfg2.conf`` manpage.
 
 Output
 ======

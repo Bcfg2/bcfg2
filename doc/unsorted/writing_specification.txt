@@ -160,7 +160,7 @@ apply to clients who are not a member of said group.
 
 When packages in a bundle are verified by the client toolset, the Paths
 included in the same bundle are taken into consideration.  That is,
-a package will not fail verification from a bcfg2 perspective if the
+a package will not fail verification from a Bcfg2 perspective if the
 package verification only failed because of configuration files that
 are defined in the same bundle.
 
@@ -314,7 +314,7 @@ other groups.
 Literal Configuration (Generators)
 ==================================
 
-A Generator is a bcfg2 piece of code that is run to generate the literal
+A Generator is a Bcfg2 piece of code that is run to generate the literal
 configuration for a host using a combination of the hosts metadata and
 abstract configuration.
 

@@ -74,7 +74,7 @@ RPMng.VerifyPackages()
 ----------------------
 
 The RPMng.VerifyPackages method generates a number of structures that
-record the state of the of the system compared to the bcfg2 literal
+record the state of the of the system compared to the Bcfg2 literal
 configuration retrieved from the server. These structures are mainly
 used by the RPMng.Install method.
 
@@ -150,7 +150,7 @@ From the command line::
 This produces quite a bit of output so you may want to redirect the
 output to a file for review.
 
-In the bcfg2.conf file::
+In the ``bcfg2.conf`` file::
 
     [client]
     #drivers = Action,Chkconfig,POSIX,YUMng
@@ -411,7 +411,7 @@ the clients abstract configuration. The gpg-pubkey package/instance is
 treated as an install only package. gpg-pubkey packages are installed
 by the RPMng driver with the rpm -import command.
 
-gpg-pubkey packages will be removed by bcfg2 -r packages if they are
+gpg-pubkey packages will be removed by ``bcfg2 -r packages`` if they are
 not in the clients configuration.
 
 .. code-block:: xml
@@ -752,7 +752,7 @@ For RPMng a minimal entry is
 verify_fail_action
 ^^^^^^^^^^^^^^^^^^
 
-The way I have bcfg2 configured for my development systems. This way
+The way I have Bcfg2 configured for my development systems. This way
 it reports bad, but doesn't do anything about it.
 
 .. code-block:: xml

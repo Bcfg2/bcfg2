@@ -22,7 +22,7 @@ should be corrected during the current run of the installation tool. The
 Decision plugin is the only stock plugin that generates entries for
 client's whitelists or blacklists.
 
-The Decision plugin uses a directory in the bcfg2 repository called
+The Decision plugin uses a directory in the Bcfg2 repository called
 Decisions. Files in the Decisions subdirectory are named similarly to
 files managed by Cfg, probes, TCheetah, and TGenshi. File basenames
 are either whitelist or blacklist. These files have a simple format;

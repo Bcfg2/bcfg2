@@ -48,7 +48,7 @@ a device, directory, hardlink, symlink, etc), then you will specify both
 the *type* and any other necessary attributes in `Rules`_.
 
 .. note:: A tool for converting old POSIX entries is available in the
-          bcfg2 source directory at tools/posixunified.py
+          Bcfg2 source directory at tools/posixunified.py
 
 +-------------+----------------------+-----------------+--------------------------+
 | Type        | Replacement/New      | Description     | Attributes               |

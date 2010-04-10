@@ -8,11 +8,11 @@ HOWTOs
 
 Here are several howtos that describe different aspects of Bcfg2 deployment
 
-* [wiki:Authentication] - a description of the bcfg2 authentication infrastructure
-* AnnotatedExamples - a description of basic bcfg2 specification operations
+* [wiki:Authentication] - a description of the Bcfg2 authentication infrastructure
+* AnnotatedExamples - a description of basic Bcfg2 specification operations
 * EncapPackages, EncapReadme, EncapInstall, EncapHowto - building encap packages
 * BuildingDebianPackages - How to build debian packages
-* [wiki:Gentoo] - Issues specific to running bcfg2 on Gentoo
+* [wiki:Gentoo] - Issues specific to running Bcfg2 on Gentoo
 * [wiki:Plugins/TCheetah TCheetah] - Howto use the TCheetah template plugin
 * [wiki:Hostbase] - How to use the Hostbase plugin and web interface
 * [wiki:Plugins/Probes Probes] - How to use Probes to gather information from a client machine.

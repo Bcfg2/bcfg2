@@ -20,7 +20,7 @@ Prerequisites
 Install
 -------
 
-Be sure to include the specified fields included the example bcfg2.conf
+Be sure to include the specified fields included the example ``bcfg2.conf``
 file. These can be specified in either ``/etc/bcfg2.conf``, if it is readable
 by the webserver user, or ``/etc/bcfg2-web.conf``.
 
@@ -32,9 +32,9 @@ If you are not using sqlite (the default choice), please see the
 :ref:`alternative-databases` section below.
 
 The recommended statistics plugin is DBStats. To use it, add it to the
-``plugins`` line in your bcfg2.conf.
+**plugins** line in your ``bcfg2.conf``.
 
-Restart the bcfg2 server. Run a client in dryrun mode in order to get
+Restart the Bcfg2 server. Run a client in dryrun mode in order to get
 the client's statistics loaded into the database.
 
 .. _dynamic-http-install:
@@ -124,13 +124,8 @@ Apache conf::
 Notes on Alternative Databases
 ------------------------------
 
-If you choose to use a different database, you'll need to edit settings.py
-from inside of the brpt module. Instructions on this process can be found
-on the Django website. The provided sqlite database file is pre-populated
-with the appropriate tables, if you choose a different database engine,
-you will need to run "python manage.py syncdb" from the brpt module
-directory to configure it before importing any data. As of vers 0.9.5,
-these settings are moved to the more appropriate /etc/bcfg2.conf
+If you choose to use a different database, you'll need to edit
+``/etc/bcfg2.conf``.
 
 Summary and Features
 ====================
