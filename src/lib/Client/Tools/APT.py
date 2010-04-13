@@ -31,12 +31,6 @@ class APT(Bcfg2.Client.Tools.Tool):
     the rest from Toolset.Toolset'''
     name = 'APT'
     __execs__ = [DEBSUMS, APTGET, DPKG]
-    __important__ = ["%s/apt/sources.list" % etc_path,
-                     "%s/cache/debconf/config.dat" % var_path,
-                     "%s/cache/debconf/templates.dat" % var_path,
-                     '/etc/passwd', '/etc/group',
-                     '%s/apt/apt.conf' % etc_path,
-                     '%s/dpkg/dpkg.cfg' % etc_path]
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
     pkgcmd = '%s ' % APTGET + \
@@ -47,9 +41,16 @@ class APT(Bcfg2.Client.Tools.Tool):
              '--force-yes ' + \
              '-y install %s'
 
-    def __init__(self, logger, cfg, setup):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, cfg, setup)
-        self.cfg = cfg
+    def __init__(self, logger, setup, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+        self.__important__ = ["%s/cache/debconf/config.dat" % var_path,
+                              "%s/cache/debconf/templates.dat" % var_path,
+                              '/etc/passwd', '/etc/group',
+                              '%s/apt/apt.conf' % etc_path,
+                              '%s/dpkg/dpkg.cfg' % etc_path] + \
+                             [entry.get('name') for struct in config for entry in struct \
+                              if entry.tag in ['Path', 'ConfigFile'] and \
+                              entry.get('name').startswith('%s/apt/sources.list' % etc_path)]
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:

@@ -108,6 +108,20 @@ class Frame:
                         except:
                             self.logger.error("Unexpected tool failure",
                                               exc_info=1)
+            for cfile in [cfl for cfl in config.findall(".//Path[@type='file']") \
+                          if cfl.get('name') in self.__important__]:
+                tl = [t for t in self.tools if t.handlesEntry(cfile) \
+                     and t.canVerify(cfile)]
+                if tl:
+                    if not tl[0].VerifyPath(cfile, []):
+                        if self.setup['interactive'] and not \
+                               promptFilter("Install %s: %s? (y/N):", [cfile]):
+                            continue
+                        try:
+                            self.states[cfile] = tl[0].InstallPath(cfile)
+                        except:
+                            self.logger.error("Unexpected tool failure",
+                                              exc_info=1)
         # find entries not handled by any tools
         problems = [entry for struct in config for \
                     entry in struct if entry not in self.handled]
