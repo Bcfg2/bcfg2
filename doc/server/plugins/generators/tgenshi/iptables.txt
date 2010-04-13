@@ -12,6 +12,10 @@ iptables
 * To be safe you should have a client side IptablesDeadmanScript if you
   intend on having bcfg2 bounce iptables upon rule updates
 
+.. note:: When updating files in the ``includes`` directory, you will
+          need to `touch` the TGenshi template to regenerate the
+          template contents.
+
 /repository/TGenshi/etc/sysconfig/iptables/template.newtxt
 ----------------------------------------------------------
 
