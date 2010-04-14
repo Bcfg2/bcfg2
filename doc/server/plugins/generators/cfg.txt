@@ -7,16 +7,16 @@ Cfg
 ===
 
 The Cfg plugin provides a repository to describe configuration file
-contents for clients.  In its simplest form, the Cfg repository is just a
+contents for clients. In its simplest form, the Cfg repository is just a
 directory tree modeled off of the directory tree on your client machines.
 
 The Cfg Repository
 ==================
 
-The Cfg plugin is enabled by including `Cfg` on the `plugins` line of
-the `[server]` section of your Bcfg2 server config file. The repository
-itself lives in `/var/lib/bcfg2/Cfg`, assuming you are using the default
-repository location of `/var/lib/bcfg2`. The contents of this directory
+The Cfg plugin is enabled by including **Cfg** on the **plugins** line of
+the **[server]** section of your Bcfg2 server config file. The repository
+itself lives in ``/var/lib/bcfg2/Cfg``, assuming you are using the default
+repository location of ``/var/lib/bcfg2``. The contents of this directory
 are a series of directories corresponding to the real-life locations of
 the files on your clients, starting at the root level. For example::
 
@@ -24,44 +24,44 @@ the files on your clients, starting at the root level. For example::
     bin/  boot/  etc/  opt/  root/  usr/  var/
 
 Specific config files go in like-named directories in this
-heirarchy. For example the password file, `/etc/passwd`, goes
-in `Cfg/etc/passwd/passwd`, while the ssh pam module config file,
-`/etc/pam.d/sshd`, goes in `Cfg/etc/pam.d/sshd/sshd`. The reason for the
-like-name directory is to allow multiple versions of each file to exist,
-as described below. Note that these files are exact copies of what will
-appear on the client machine - no templates, XML wrappers, etc.
+heirarchy. For example the password file, ``/etc/passwd``, goes in
+``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
+``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason
+for the like-name directory is to allow multiple versions of each file
+to exist, as described below. Note that these files are exact copies of
+what will appear on the client machine - no templates, XML wrappers, etc.
 
 Group-Specific Files
 ====================
 
 It is often that you want one version of a config file for all of your
-machines except those in a particular group. For example, `/etc/fstab`
+machines except those in a particular group. For example, ``/etc/fstab``
 should look alike on all of your desktop machines, but should be
 different on your file servers. Bcfg2 can handle this case through use
 of group-specific files.
 
-As mentioned above, all Cfg entries live in like-named directories at
-the end of their directory tree. In the case of `fstab`, the file at
-`Cfg/etc/fstab/fstab` will be handed out by default to any client that
-asks for a copy of `/etc/fstab`. Group-specific files are located in
+As mentioned above, all Cfg entries live in like-named directories
+at the end of their directory tree. In the case of fstab, the file at
+``Cfg/etc/fstab/fstab`` will be handed out by default to any client that
+asks for a copy of ``/etc/fstab``. Group-specific files are located in
 the same directory and are named with the syntax::
 
     /path/to/filename/filename.GNN_groupname
 
-in which ''NN'' is a priority number where '00' is lowest and '99'
-is highest, and ''groupname'' is the name of a group defined in
-`Metadata/groups.xml`. Back to our `fstab` example, we might have a
-`Cfg/etc/fstab/` directory that looks like::
+in which **NN** is a priority number where **00** is lowest and
+**99** is highest, and **groupname** is the name of a group defined in
+``Metadata/groups.xml``. Back to our fstab example, we might have a
+``Cfg/etc/fstab/`` directory that looks like::
 
     fstab
     fstab.G50_server
     fstab.G99_fileserver
 
-By default, clients will receive the plain `fstab` file when they request
-`/etc/fstab`. Any machine that is in the `server` group, however, will
-instead receive the `fstab.G50_server` file. Finally, any machine that
-is in the `fileserver` group will receive the `fstab.G99_fileserver`
-file, even if they are also in the `server` group.
+By default, clients will receive the plain fstab file when they request
+``/etc/fstab``. Any machine that is in the **server** group, however, will
+instead receive the ``fstab.G50_server`` file. Finally, any machine that
+is in the **fileserver** group will receive the ``fstab.G99_fileserver``
+file, even if they are also in the **server** group.
 
 Host-Specific Files
 ===================
@@ -74,32 +74,90 @@ of a host-specific file name is::
     /path/to/filename/filename.H_host.example.com
 
 Host-specific files have a higher priority than group specific
-files. Again, the `fstab` example::
+files. Again, the fstab example::
 
     fstab
     fstab.G50_server
     fstab.G99_fileserver
     fstab.H_host.example.com
 
-In this case, `host.example.com` will always get the host-specific
-version, even if it is part of the `server` or `fileserver` (or both)
+In this case, *host.example.com* will always get the host-specific
+version, even if it is part of the **server** or **fileserver** (or both)
 classes.
 
 .. note::
 
-    If you have the ability to choose between using a group-specific and
-    a host-specific file, it is almost always best to use a group-specific
-    one.  That way if a hostname changes or an extra copy of a particular
+    If you have the ability to choose between using a group-specific and a
+    host-specific file, it is almost always best to use a group-specific
+    one. That way if a hostname changes or an extra copy of a particular
     client is built, it will get the same changes as the original.
+
+Deltas
+======
+
+Bcfg2 has finer grained control over how to deliver configuration
+files to a host. Let's say we have a Group named file-server. Members
+of this group need the exact same ``/etc/motd`` as all other hosts except
+they need one line added. We could copy motd to ``motd.G01_file-server``,
+add the one line to the Group specific version and be done with it,
+but we're duplicating data in both files. What happens if we need to
+update the motd? We'll need to remember to update both files then. Here's
+where deltas come in. A delta is a small change to the base file. There
+are two types of deltas: cats and diffs. The cat delta simply adds or
+removes lines from the base file. The diff delta is more powerful since
+it can take a unified diff and apply it to the base configuration file
+to create the specialized file. Diff deltas should be used very sparingly.
+
+Cat Files
+---------
+
+Continuing our example for cat files, we would first create a file named
+``motd.G01_file-server.cat``. The .cat suffix designates that the file is
+a diff. We would then edit that file and add the following line::
+
+    +This is a file server
+
+The **+** at the begining of the file tells Bcfg2 that the line should be
+appended to end of the file. You can also start a line with **-** to tell
+Bcfg2 to remove that exact line wherever it might be in the file. How do
+we know what base file Bcfg2 will choose to use to apply a delta? The
+same rules apply as before: Bcfg2 will choose the highest priority,
+most specific file as the base and then apply deltas in the order of
+most specific and then increasing in priority. What does this mean in
+real life. Let's say our machine is a web server, mail server, and file
+server and we have the following configuration files::
+
+    motd
+    motd.G01_web-server
+    motd.G01_mail-server.cat
+    motd.G02_file-server.cat
+    motd.H_foo.example.cat
+
+If our machine isn't *foo.example.com* then here's what would happen:
+
+Bcfg2 would choose ``motd.G01_web-server`` as the base file. It is
+the most specific base file for this host. Bcfg2 would apply the
+``motd.G01_mail-server.cat`` delta to the ``motd.G01_web-server``
+base file. It is the least specific delta. Bcfg2 would then apply the
+``motd.G02_file-server.cat`` delta to the result of the delta before
+it. If our machine is foo.example.com then here's what would happen:
+
+Bcfg2 would choose ``motd.G01_web-server`` as the base file. It
+is the most specific base file for this host. Bcfg2 would apply the
+``motd.H_foo.example.com.cat`` delta to the ``motd.G01_web-server`` base
+file. The reason the other deltas aren't applied to *foo.example.com*
+is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
+applies all the deltas at the most specific level.
 
 Info files
 ==========
 
-By default, Cfg writes files to the filesystem with owner `root`, group
-`root`, and mode 644 (read and write for owner, read only for group
+By default, Cfg writes files to the filesystem with owner *root*, group
+*root*, and mode *644* (read and write for owner, read only for group
 and other). These options, and a few others, can be overridden through
-use of `:info` files. Each config file directory can have a `:info`
-file if needed. The possible fields in a `:info` file are:
+use of ``:info`` or ``info`` files. Each config file directory can have
+a ``:info`` or ``info`` file if needed. The possible fields in an info
+file are:
 
 +-----------+-------------------+------------------------------------------------------+---------+
 | Field     | Possible values   | Description                                          | Default |
@@ -115,13 +173,13 @@ file if needed. The possible fields in a `:info` file are:
 | paranoid: | yes | no          | Backup file before replacement?                      | no      |
 +-----------+-------------------+------------------------------------------------------+---------+
 
-A sample `:info` file for CGI script on a web server might look like::
+A sample info file for CGI script on a web server might look like::
 
     owner: www
     group: www
     perms: 0755
 
-Back to the `fstab` example again, our final `Cfg/etc/fstab/` directory
+Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
 might look like::
 
     :info
