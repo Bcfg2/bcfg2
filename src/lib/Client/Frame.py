@@ -108,8 +108,9 @@ class Frame:
                         except:
                             self.logger.error("Unexpected tool failure",
                                               exc_info=1)
-            for cfile in [cfl for cfl in config.findall(".//Path[@type='file']") \
-                          if cfl.get('name') in self.__important__]:
+            for cfile in [cfl for cfl in config.findall(".//Path") \
+                          if cfl.get('name') in self.__important__ and \
+                             cfl.get('type') == 'file']:
                 tl = [t for t in self.tools if t.handlesEntry(cfile) \
                      and t.canVerify(cfile)]
                 if tl:
