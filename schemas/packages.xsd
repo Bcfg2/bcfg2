@@ -13,6 +13,8 @@
                    maxOccurs='unbounded'/>
       <xsd:element name="URL" type="xsd:string" minOccurs='0' 
                    maxOccurs='1'/>
+      <xsd:element name="Recommended" type="xsd:string" minOccurs='0' 
+                   maxOccurs='1'/>
       <xsd:element name="RawURL" type="xsd:string" minOccurs='0' 
                    maxOccurs='1'/>
       <xsd:element name="Version" type="xsd:string" minOccurs='0'

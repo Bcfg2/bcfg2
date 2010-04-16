@@ -33,6 +33,11 @@ def source_from_xml(xsource):
         ret['version'] = 'placeholder'
     if ret['components'] == []:
         ret['components'] = ['placeholder']
+    try:
+        if xsource.find('Recommended').text is not None:
+            ret['recommended'] = True
+    except:
+        ret['recommended'] = False
     if xsource.find('RawURL') is not None:
         ret['rawurl'] = xsource.find('RawURL').text
         if not ret['rawurl'].endswith('/'):
@@ -46,7 +51,7 @@ def source_from_xml(xsource):
 class Source(object):
     basegroups = []
     def __init__(self, basepath, url, version, arches, components, groups, rawurl,
-                 blacklist):
+                 blacklist, recommended):
         self.basepath = basepath
         self.version = version
         self.components = components
@@ -58,6 +63,7 @@ class Source(object):
         self.provides = dict()
         self.blacklist = set(blacklist)
         self.cachefile = None
+        self.recommended = recommended
 
     def load_state(self):
         pass
@@ -224,9 +230,9 @@ class YUMSource(Source):
     ptype = 'yum'
 
     def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist):
+                 rawurl, blacklist, recommended):
         Source.__init__(self, basepath, url, version, arches, components,
-                        groups, rawurl, blacklist)
+                        groups, rawurl, blacklist, recommended)
         if not self.rawurl:
             self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
         else:
@@ -373,9 +379,9 @@ class APTSource(Source):
     ptype = 'deb'
 
     def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist):
+                 rawurl, blacklist, recommended):
         Source.__init__(self, basepath, url, version, arches, components, groups,
-                        rawurl, blacklist)
+                        rawurl, blacklist, recommended)
         self.cachefile = self.escape_url(self.url + '@' + version) + '.data'
         self.pkgnames = set()
 
@@ -404,6 +410,10 @@ class APTSource(Source):
     def read_files(self):
         bdeps = dict()
         bprov = dict()
+        if self.recommended:
+            depfnames = ['Depends', 'Pre-Depends', 'Recommends']
+        else:
+            depfnames = ['Depends', 'Pre-Depends']            
         for fname in self.files:
             barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
             if barch not in bdeps:
@@ -420,7 +430,7 @@ class APTSource(Source):
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
                     bdeps[barch][pkgname] = []
-                elif words[0] in ['Depends', 'Pre-Depends']:
+                elif words[0] in depfnames:
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
