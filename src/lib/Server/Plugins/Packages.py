@@ -34,7 +34,7 @@ def source_from_xml(xsource):
     if ret['components'] == []:
         ret['components'] = ['placeholder']
     try:
-        if xsource.find('Recommended').text is not None:
+        if xsource.find('Recommended').text == 'true':
             ret['recommended'] = True
     except:
         ret['recommended'] = False
