@@ -34,8 +34,10 @@ def source_from_xml(xsource):
     if ret['components'] == []:
         ret['components'] = ['placeholder']
     try:
-        if xsource.find('Recommended').text == 'true':
+        if xsource.find('Recommended').text in ['True', 'true']:
             ret['recommended'] = True
+        else:
+            ret['recommended'] = False
     except:
         ret['recommended'] = False
     if xsource.find('RawURL') is not None:
