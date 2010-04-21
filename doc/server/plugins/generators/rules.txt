@@ -111,7 +111,7 @@ The Package Tag may have the following attributes:
 Action Tag
 ----------
 
-See [wiki:Plugins/Actions Actions]
+See :ref:`client-tools-actions`
 
 Service Tag
 -----------

@@ -20,6 +20,8 @@ Interactive mode
 The client can be run interactively (-I) so that you are able to step
 through each operation in order to see what the client is doing.
 
+.. _client-modes-paranoid:
+
 Paranoid mode
 =============
 
@@ -46,8 +48,10 @@ by _'s. For example, the old ``/etc/hosts`` will be named
 Extra configuration
 -------------------
 
-Here is an example of how to use the extra paranoid features available
-in 1.0. For the following section in ``bcfg2.conf``::
+.. versionadded:: 1.0.0
+
+Here is an example of how to use some of the extra paranoid features
+available. For the following section in ``bcfg2.conf`` (client-side)::
 
     [paranoid]
     path = /my/custom/backup/path
@@ -55,6 +59,21 @@ in 1.0. For the following section in ``bcfg2.conf``::
 
 You will have the file backups store in ``/my/custom/backup/path``. This
 will also keep the five most recent backups of files.
+
+Altering the global metadata to enable paranoid mode for all files
+------------------------------------------------------------------
+
+You may also want to just globally enable the *paranoid* attribute for
+all files distributed to clients from your Bcfg2 server. You can
+accomplish this by adding a global metadata override in your
+``bcfg2.conf`` (server-side) with the following syntax::
+
+    [mdata]
+    paranoid=true
+
+This will override the default value of "paranoid=false" and change it to
+"true" which will cause every file you add or update in your Bcfg2 repo
+to backup on the client as specified in your client config.
 
 Overall client service mode
 ===========================

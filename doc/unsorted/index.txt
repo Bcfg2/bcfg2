@@ -14,7 +14,6 @@ list below.
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
 * `ManualPages`
-* `Plugins/Actions`
 * `Plugins/Ohai`
 * `Plugins/Snapshots`
 * `PrecompiledPackages`
