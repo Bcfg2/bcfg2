@@ -31,18 +31,24 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         '''
         output = self.cmd.run('/usr/sbin/service %s status' % \
                               entry.get('name'))[1][0]
-        if output.split(' ')[1].split('/')[1].startswith('running'):
-            entry.set('current_status', 'on')
-            if entry.get('status') == 'off':
-                status = False
+        try:
+            running = output.split(' ')[1].split('/')[1].startswith('running')
+            if running:
+                entry.set('current_status', 'on')
+                if entry.get('status') == 'off':
+                    status = False
+                else:
+                    status = True
             else:
-                status = True
-        else:
+                entry.set('current_status', 'off')
+                if entry.get('status') == 'on':
+                    status = False
+                else:
+                    status = True
+        except IndexError:
+            # service does not exist
             entry.set('current_status', 'off')
-            if entry.get('status') == 'on':
-                status = False
-            else:
-                status = True
+            status = False
 
         return status
 
