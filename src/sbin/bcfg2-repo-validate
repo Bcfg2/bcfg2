@@ -54,6 +54,14 @@ if __name__ == '__main__':
             included.add(ent)
         included.discard(filename)
 
+    # check for multiple default group definitions
+    default_groups = lxml.etree.parse("%s/Metadata/groups.xml" \
+                                      % repo).findall('.//Group[@default="true"]')
+    if len(default_groups) > 1:
+        print("*** Warning: Multiple default groups defined")
+        for grp in default_groups:
+            print("  %s" % grp.get('name'))
+
     # get all XIncluded bundles
     xdata.xinclude()
     for bundle in xdata.findall("//Bundle"):
