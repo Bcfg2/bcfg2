@@ -27,6 +27,9 @@ def promptFilter(prompt, entries):
         try:
             if raw_input(iprompt) in ['y', 'Y']:
                 ret.append(entry)
+        except EOFError:
+            # python 2.4.3 on CentOS doesn't like ^C for some reason
+            break
         except:
             print("Error while reading input")
             continue
