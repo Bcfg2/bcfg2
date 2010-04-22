@@ -6,6 +6,8 @@
 Packages
 ========
 
+.. versionadded:: 1.0.0
+
 This page documents the Packages plugin. Packages is an alternative to
 :ref:`Pkgmgr <server-plugins-generators-pkgmgr>` for specifying package
 entries for clients. Where Pkgmgr explicitly specifies package entry
@@ -112,6 +114,23 @@ like this:
       </APTSource>
     </Sources>
 
+.. note::
+
+          The default behavior of the Packages plugin is to not make
+          any assumptions about which packages you want to have added
+          automatically. For that reason, neither **Recommended**
+          nor **Suggested** packages are added as dependencies by
+          default. You will notice that the default behavior for apt is
+          to add Recommended packages as dependencies. You can configure
+          the Packages plugin to add recommended packages by adding
+          the following:
+
+         .. versionadded:: 1.1.0
+
+         .. code-block:: xml
+
+             <Recommended>True</Recommended>
+
 Yum sources can be similarly specified:
 
 .. code-block:: xml
@@ -182,16 +201,16 @@ sources in this file) will be reflected by the server at this point.
 Availability
 ============
 
-Packages was added in 1.0pre1, with APT support. YUM support was added
-for 1.0pre2. Support for other package managers (Portage, Zypper, IPS,
-etc) remain to be added.
+Support for clients using yum and apt is currently available.  Support for
+other package managers (Portage, Zypper, IPS, etc) remain to be added.
 
 Validation
 ==========
 
 A schema for Packages/config.xml is included; config.xml can be validated
-using bcfg2-repo-validate. Note that the schema requires that elements
-be specified in the above order.
+using ``bcfg2-repo-validate``.
+
+.. note:: The schema requires that elements be specified in the above order.
 
 Limitations
 ===========
