@@ -115,21 +115,20 @@ like this:
     </Sources>
 
 .. note::
+    The default behavior of the Packages plugin is to not make
+    any assumptions about which packages you want to have added
+    automatically. For that reason, neither **Recommended**
+    nor **Suggested** packages are added as dependencies by
+    default. You will notice that the default behavior for apt is
+    to add Recommended packages as dependencies. You can configure
+    the Packages plugin to add recommended packages by adding
+    the following:
 
-          The default behavior of the Packages plugin is to not make
-          any assumptions about which packages you want to have added
-          automatically. For that reason, neither **Recommended**
-          nor **Suggested** packages are added as dependencies by
-          default. You will notice that the default behavior for apt is
-          to add Recommended packages as dependencies. You can configure
-          the Packages plugin to add recommended packages by adding
-          the following:
+    .. versionadded:: 1.1.0
 
-         .. versionadded:: 1.1.0
+    .. code-block:: xml
 
-         .. code-block:: xml
-
-             <Recommended>True</Recommended>
+        <Recommended>True</Recommended>
 
 Yum sources can be similarly specified:
 
