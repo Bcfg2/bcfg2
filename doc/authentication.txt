@@ -106,8 +106,8 @@ using the following set of steps:
 	   Failed to download probes from bcfg2
 	   Server Failure
 
-       on the client. You will also see an error message on the server
-       that looks something like::
+       You will also see an error message on the server that looks
+       something like::
 
            cmssrv01 bcfg2-server[9785]: Got request for cmssrv115 from incorrect address 131.225.206.122
            cmssrv01 bcfg2-server[9785]: Resolved to cmssrv115.fnal.gov
