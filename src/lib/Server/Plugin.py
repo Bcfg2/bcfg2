@@ -56,6 +56,7 @@ class Plugin(object):
     __rmi__ = ['toggle_debug']
     experimental = False
     deprecated = False
+    conflicts = []
 
     def __init__(self, core, datastore):
         object.__init__(self)

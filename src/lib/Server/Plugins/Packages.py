@@ -498,6 +498,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator):
     name = 'Packages'
+    conflicts = ['Pkgmgr']
     experimental = True
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh']
 

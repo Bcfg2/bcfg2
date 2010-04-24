@@ -55,6 +55,7 @@ class Core(Component):
         self.cfile = cfile
         self.cron = {}
         self.plugins = {}
+        self.plugin_blacklist = {}
         self.revision = '-1'
         self.password = password
         self.encoding = encoding
@@ -66,6 +67,13 @@ class Core(Component):
         for plugin in plugins:
             if not plugin in self.plugins:
                 self.init_plugins(plugin)
+        # Remove blacklisted plugins
+        for p, bl in self.plugin_blacklist.items():
+            if len(bl) > 0:
+                logger.error("The following plugins conflict with %s;"
+                             "Unloading %s" % (p, bl))
+            for plug in bl:
+                del self.plugins[plug]
         expl = [plug for (name, plug) in self.plugins.iteritems()
                 if plug.experimental]
         if expl:
@@ -129,6 +137,10 @@ class Core(Component):
                 logger.error("Failed to load plugin %s" % (plugin))
                 return
         plug = getattr(mod, plugin)
+        # blacklist conflicting plugins
+        cplugs = [conflict for conflict in plug.conflicts
+                  if conflict in self.plugins]
+        self.plugin_blacklist[plug.name] = cplugs
         try:
             self.plugins[plugin] = plug(self, self.datastore)
         except PluginInitError:
