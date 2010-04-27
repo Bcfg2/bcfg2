@@ -80,6 +80,10 @@ the *type* and any other necessary attributes in `Rules`_.
 |             | entries              |                 |                          |
 +-------------+----------------------+-----------------+--------------------------+
 
+Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
+are still handled via the traditional mechanisms (info/:info/info.xml
+files in the plugin directory).
+
 .. _boundentries:
 
 Bound Entries
