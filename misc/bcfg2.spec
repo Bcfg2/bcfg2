@@ -1,4 +1,4 @@
-%define release 1
+%define release 0.1
 %define __python python
 %{!?py_ver: %define py_ver %(%{__python} -c 'import sys;print(sys.version[0:3])')}
 %define pythonversion %{py_ver}
@@ -13,7 +13,7 @@
 %define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
 
 Name:             bcfg2
-Version:          1.0.0
+Version:          1.1.0rc1
 Release: %{release}
 Summary:          Configuration management system
 

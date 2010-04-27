@@ -1,3 +1,9 @@
+bcfg2 (1.1.0-0.1rc1) unstable; urgency=low
+
+  * release candidate
+
+ -- Narayan Desai <desai@mcs.anl.gov>  Tue, 27 Apr 2010 11:17:26 -0600
+
 bcfg2 (1.0.1-1) unstable; urgency=low
 
   * Remove unnecessary python-lxml dependency (for the client package)
