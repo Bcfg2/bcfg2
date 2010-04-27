@@ -65,8 +65,9 @@ acting like it is your first client.
    you are done. Don't run this command on a production system if you
    don't know what it does and aren't prepared for the
    consequences. We don't know of anybody having problems with it
-   before, but it is better to be safe than sorry. And now for the
-   command::
+   before, but it is better to be safe than sorry.
+
+And now for the command::
 
        bcfg2 -q -v -n
 
@@ -241,9 +242,9 @@ Several other utilities can help from this point on:
 core (minus the networking code) for examination. From this, you can
 directly query:
 
- * Client Metadata
- * Which entries are provided by particular plugins
- * Client Configurations
+* Client Metadata
+* Which entries are provided by particular plugins
+* Client Configurations
 
 Run ``bcfg2-info``, and type help and the prompt when it comes up.
 

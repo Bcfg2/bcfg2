@@ -1,39 +1,47 @@
 .. -*- mode: rst -*-
 
-.. _quickstart-centos:
 .. _EPEL: http://fedoraproject.org/wiki/EPEL
+
+.. _quickstart-centos:
 
 =====================
 Quickstart for CentOS
 =====================
 
-This is a complete getting started guide for CentOS. With this document you should be able to install a Bcfg2 server, a Bcfg2 client, and change the ``/etc/motd`` file on the client.
+This is a complete getting started guide for CentOS. With this document
+you should be able to install a Bcfg2 server and a Bcfg2 client.
 
-Install Bcfg2 From RPM
-======================
+Install Bcfg2
+=============
 
-The fastest way to get Bcfg2 onto your system is to get a RPM someone else has already made. We'll be using the ones that are distributed through EPEL_, but depending on your aversion to risk you could download an RPM from other places as well. See :ref:`using_bcfg2-with-centos` for information about building Bcfg2 from source and making your own packages.
+The fastest way to get Bcfg2 onto your system is to use Yum or
+your preferred package management tool. We'll be using the ones
+that are distributed through EPEL_, but depending on your aversion
+to risk you could download an RPM from other places as well.  See
+:ref:`getting_started-using_bcfg2-with-centos` for information about
+building Bcfg2 from source and making your own packages.
 
 Using EPEL
 ----------
 
- * Make sure EPEL is a valid repository on your server. The `instructions <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_ on how to do this basically say::
+Make sure EPEL_ is a valid repository on your server. The `instructions
+<http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_ on how to do this
+basically say::
 
-    # su -c 'rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-3.noarch.rpm'
-    ...lot's of output...
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-3.noarch.rpm
 
+Install the bcfg2-server and bcfg2 RPMs::
 
- * Install the bcfg2-server and bcfg2 RPMs ::
+    [root@centos ~]# yum install bcfg2-server bcfg2
 
-    $ sudo yum install bcfg2-server bcfg2
-
-Your system should now have the necessary software to use Bcfg2. The next step is to set up your Bcfg2 :term:`repository`.
+Your system should now have the necessary software to use Bcfg2. The
+next step is to set up your Bcfg2 :term:`repository`.
 
 Initialize your repository
 ==========================
 
-Now that you're done with the install, you need to initialize your 
-repository and setup your ``/etc/bcfg2.conf``. ``bcfg2-admin init`` 
+Now that you're done with the install, you need to initialize your
+repository and setup your ``/etc/bcfg2.conf``. ``bcfg2-admin init``
 is a tool which allows you to automate this::
 
     [root@centos ~]# bcfg2-admin init
@@ -68,12 +76,12 @@ Start the server
 
 You are now ready to start your bcfg2 server for the first time::
 
-    $ sudo /sbin/service bcfg2-server start
+    [root@centos ~]# /sbin/service bcfg2-server start
 
 To verify that everything started ok, look for the running daemon and check the logs::
 
-    $ sudo /sbin/service bcfg2-server status
-    $ sudo tail /var/log/messages
+    [root@centos ~]# /etc/init.d/service bcfg2-server status
+    [root@centos ~]# tail /var/log/messages
     Mar 29 12:42:26 centos bcfg2-server[5093]: service available at https://centos:6789
     Mar 29 12:42:26 centos bcfg2-server[5093]: serving bcfg2-server at https://centos:6789
     Mar 29 12:42:26 centos bcfg2-server[5093]: serve_forever() [start]
@@ -150,14 +158,14 @@ Now if you run the client, no more warning::
     Unmanaged entries:      208
 
 Bring your first machine under Bcfg2 control
---------------------------------------------
+============================================
 
 Now it is time to get your first machine's configuration into your
-Bcfg2 repository. Let's start with the server itself.
+Bcfg2 :term:`repository`. Let's start with the server itself.
 
 
 Setup the `Packages`_ plugin
-++++++++++++++++++++++++++++
+----------------------------
 
 .. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
 
@@ -237,13 +245,13 @@ Probes to your plugins line in ``bcfg2.conf`` and create the Probe.::
 
 Now we restart the bcfg2-server::
 
-    /etc/init.d/bcfg2-server restart
+    [root@centos ~]# /etc/init.d/bcfg2-server restart
 
 If you tail ``/var/log/syslog`` now, you will see the Packages plugin in
 action, updating the cache.
 
 Start managing packages
-+++++++++++++++++++++++
+-----------------------
 
 Add a base-packages bundle. Let's see what happens when we just populate
 it with the *yum* package.
@@ -472,10 +480,10 @@ Then add the files to Cfg::
 Now, running the client shows only unmanaged Service entries. Woohoo!
 
 Manage services
-+++++++++++++++
+---------------
 
 Now let's clear up the unmanaged service entries by adding the following
-entries to our bundle...
+entries to our bundle.
 
 .. code-block:: xml
 
@@ -546,90 +554,7 @@ Now we run the client and see there are no more unmanaged entries! ::
     Total managed entries:  205
     Unmanaged entries:      0
 
-Dynamic (web) Reports
----------------------
+Dynamic (web) reports
+=====================
 
-Download the `Django`_ rpm and install it. I was able to find an RPM at
-ftp://ftp.pbone.net/mirror/download.fedora.redhat.com/pub/fedora/epel/5/x86_64/Django-1.1.1-2.el5.noarch.rpm. You will also need to ``yum install httpd``.
-
-.. _Django: http://www.djangoproject.com/
-
-.. note:: I also had to grab the following RPMs
-
-          * ftp://ftp.pbone.net/mirror/ftp.freshrpms.net/pub/freshrpms/pub/dag/redhat/el5/en/x86_64/dag/RPMS/python-simplejson-2.0.5-1.el5.rf.x86_64.rpm
-          * ftp://ftp.pbone.net/mirror/atrpms.net/el5-x86_64/atrpms/stable/python-sqlite2-2.3.3-3_0.1.el5.x86_64.rpm
-
-* Now we need to create the sqlite database::
-
-      [root@centos ~]# python /usr/lib/python2.4/site-packages/Bcfg2/Server/Reports/manage.py syncdb
-      Creating table auth_permission
-      Creating table auth_group
-      Creating table auth_user
-      Creating table auth_message
-      Creating table django_content_type
-      Creating table django_session
-      Creating table django_site
-      Creating table django_admin_log
-      Creating table reports_client
-      Creating table reports_ping
-      Creating table reports_interaction
-      Creating table reports_reason
-      Creating table reports_entries
-      Creating table reports_entries_interactions
-      Creating table reports_performance
-      Creating table reports_internaldatabaseversion
-
-      You just installed Django's auth system, which means you don't have any superusers defined.
-      Would you like to create one now? (yes/no): no
-      Installing index for auth.Permission model
-      Installing index for auth.Message model
-      Installing index for admin.LogEntry model
-      Installing index for reports.Client model
-      Installing index for reports.Ping model
-      Installing index for reports.Interaction model
-      Installing index for reports.Entries model
-      Installing index for reports.Entries_interactions model
-
-* Add DBStats to the plugins line of bcfg2.conf. The resulting
-  **[server]** section should look something like this::
-
-      [server]
-      repository = /var/lib/bcfg2
-      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
-
-* Start/restart the bcfg2 server
-* Run the bcfg2 client in order to populate the statistics database
-  (this run should take a bit longer since you are uploading the client
-  statistics to the database).
-* Download the static reports content::
-
-      root@lucid:~# cd /var/www/
-      root@lucid:/var/www# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
-
-* Configure Apache using :ref:`dynamic-http-install` as a guide
-* Copy server/statistics sections of bcfg2.conf to
-  ``/etc/bcfg2-web.conf`` (make sure it is world-readable). You should
-  then have something like this::
-
-      [server]
-      repository = /var/lib/bcfg2
-      plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
-
-      [statistics]
-      sendmailpath = /usr/lib/sendmail
-      database_engine = sqlite3
-      # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-      database_name =
-      # Or path to database file if using sqlite3.
-      #<repository>/etc/brpt.sqlite is default path if left empty
-      database_user =
-      # Not used with sqlite3.
-      database_password =
-      # Not used with sqlite3.
-      database_host =
-      # Not used with sqlite3.
-      database_port =
-      # Set to empty string for default. Not used with sqlite3.
-      web_debug = True
-
-* Restart apache and point a browser to your bcfg2 server
+See installation instructions at :ref:`server-reports-install`
