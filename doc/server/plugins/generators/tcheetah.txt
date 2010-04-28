@@ -19,7 +19,7 @@ engine from http://www.cheetahtemplate.org/.  Once it is installed,
 you can enable it by adding ``TCheetah`` to the ``plugins`` line in
 ``/etc/bcfg2.conf`` on your Bcfg server.  For example::
 
-    generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules,TCheetah
+    plugins = Cfg,Metadata,Pkgmgr,Rules,SSHbase,TCheetah
 
 The ``TCheetah`` plugin makes use of a ``Cfg``-like directory structure
 located in in a ``TCheetah`` subdirectory of your repository, usually
