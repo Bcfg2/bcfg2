@@ -86,8 +86,12 @@ on the host 'www.example.com'::
 Simple Example
 ==============
 
-bcfg2/TCheetah/foo/template
----------------------------
+TCheetah works similar to Cfg in that you define all literal information
+about a particular file in a directory rooted at TGenshi/path_to_file.
+The actual file contents are placed in a file named `template` in that
+directory. Below is a simple example a file ``/foo``.
+
+``/var/lib/bcfg2/TCheetah/foo/template``
 
 .. code-block:: none
 
@@ -107,8 +111,7 @@ bcfg2/TCheetah/foo/template
      * $probe -- $self.metadata.Probes[$probe]
     #end for
 
-bcfg2/TCheetah/foo/info
------------------------
+``/var/lib/bcfg2/TCheetah/foo/info``
 
 .. code-block:: none
 
@@ -144,12 +147,10 @@ current client probe state.
 Example: Replace the crontab plugin
 ===================================
 
-In many cases you can use the TCheetah plugin to avoid
-writing custom plugins in Python. This example replaces the
-[source:tags/bcfg2_0_8_4/bcfg2/src/lib/Server/Plugins/Crontab.py crontab
-plugin] (Bcfg2.Server.Plugins.Crontab). This plugin randomizes the time
-of cron.daily execution with a stable result. Cron.daily is run at a
-consistent, randomized time between midnight and 7am.::
+In many cases you can use the TCheetah plugin to avoid writing custom
+plugins in Python. This example randomizes the time of cron.daily
+execution with a stable result. Cron.daily is run at a consistent,
+randomized time between midnight and 7am.::
 
     #import random
     #silent random.seed($self.metadata.hostname)
