@@ -29,8 +29,13 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
            /etc/init/servicename.conf. All we need to do is make sure
            the service is running when it should be.
         '''
-        output = self.cmd.run('/usr/sbin/service %s status' % \
-                              entry.get('name'))[1][0]
+        try:
+            output = self.cmd.run('/usr/sbin/service %s status' % \
+                                  entry.get('name'))[1][0]
+        except IndexError:
+            self.logger.error("Service %s not an Upstart service" % \
+                              entry.get('name'))
+            return False
         try:
             running = output.split(' ')[1].split('/')[1].startswith('running')
             if running:
