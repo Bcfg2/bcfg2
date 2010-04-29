@@ -7,6 +7,15 @@ import sys
 
 import Bcfg2.Options
 
+"""
+NOTE: This script takes a conservative approach when it comes to
+      updating your Rules. It creates a new unified-rules.xml file
+      without the attributes you have defined in your current rules. The
+      reason for this is to keep this script simple so we don't have
+      to go through and determine the priorities associated with your
+      current rules definitions.
+"""
+
 if __name__ == '__main__':
     opts = {
                'repo': Bcfg2.Options.SERVER_REPOSITORY,
