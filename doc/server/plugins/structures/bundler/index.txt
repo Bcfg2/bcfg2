@@ -12,15 +12,16 @@ and service activations that comprise typical Unix daemons. Bundles are
 used to add groups of configuration entries to the inventory of client
 configurations, as opposed to describing particular versions of those
 entries. For example, a bundle could say that the configuration file
-"/etc/passwd" should be included in a configuration, but will not describe
-the particular version of "/etc/passwd" that a given client will receive.
+``/etc/passwd`` should be included in a configuration, but will not
+describe the particular version of ``/etc/passwd`` that a given client
+will receive.
 
 Groups can be used inside of bundles to differentiate which entries
 particular clients will recieve; this is useful for the case where
 entries are named differently across systems; for example, one linux
 distro may have a package called openssh while another uses the name
 ssh. Configuration entries nested inside of Group elements only apply
-to clients who are a member of those groups; multiply nested groups must
+to clients who are a member of those groups; multiple nested groups must
 all apply. Also, groups may be negated; entries included in such groups
 will only apply to clients who are not a member of said group.
 
@@ -56,15 +57,15 @@ The following is an annotated copy of a bundle:
       </Group>
     </Bundle>
 
-In this bundle, most of the entries are common to all systems. Clients
-in group "deb" get one extra package and service, while clients in group
-"rpm" get two extra packages and an extra service. In addition, clients in
-group "fedora" and group "rpm" get one extra package entries, unless they
-are not in the fc4 group, in which case, they get an extra package. Notice
-that this file doesn't describe which versions of these entries that
-clients should get, only that they should get them. (Admittedly, this
-example is slightly contrived, but demonstrates how group entries can
-be used in bundles)
+In this bundle, most of the entries are common to all systems. Clients in
+group **deb** get one extra package and service, while clients in group
+**rpm** get two extra packages and an extra service. In addition, clients
+in group **fedora** *and* group **rpm** get one extra package entries,
+unless they are not in the **fc4** group, in which case, they get an
+extra package. Notice that this file doesn't describe which versions
+of these entries that clients should get, only that they should get
+them. (Admittedly, this example is slightly contrived, but demonstrates
+how group entries can be used in bundles)
 
 +----------------------------+-------------------------------+
 | Group                      | Entry                         |
@@ -131,11 +132,12 @@ The `Genshi templating system`_ is used internally.
 Use
 ---
 
-Bcfg uses the Genshi API for templates, and performs a XML format stream
-rendering of the template into an lxml entry, which is included in the
-client configuration. Client metadata is avilable inside of the template
-using the 'metadata' name. Note that only the markup Genshi template
-format can be used, as the target output format is XML.
+Bcfg uses the Genshi API for templates, and performs a XML format
+stream rendering of the template into an lxml entry, which is included
+in the client configuration. :ref:`Client metadata <client-metadata>`
+is avilable inside of the template using the 'metadata' name. Note that
+only the markup Genshi template format can be used, as the target output
+format is XML.
 
 A Genshi template looks much like a Bundler file, except the Bundle tag
 has an additional `xmlns:py` attribute. See the examples.
@@ -163,8 +165,8 @@ in their name. The following template produces such a config file entry.
 Depending on the circumstance, these configuration files can either be
 handled by individual entries in :ref:`server-plugins-generators-cfg`,
 :ref:`server-plugins-generators-tcheetah`, or
-:ref:`server-plugins-generators-tgenshi-index`, or can be mapped to a single
-entry by using the [wiki:altsrc] feature.
+:ref:`server-plugins-generators-tgenshi-index`, or can be mapped to a
+single entry by using the :ref:`server-plugins-structures-altsrc` feature.
 
 In this example, configuration file names are built using probed results
 from the client. getmac is a probe that gathers client MAC addresses
