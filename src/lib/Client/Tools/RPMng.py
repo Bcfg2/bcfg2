@@ -42,6 +42,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
 
+        # create a global ignore list used when ignoring particular
+        # files during package verification
+        self.ignores = [entry.get('name') for struct in config for entry in struct \
+                        if entry.get('type') == 'ignore']
         self.instance_status = {}
         self.extra_instances = []
         self.modlists = {}
@@ -364,7 +368,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
                             # Check the rpm verify file results against the modlist
                             # and entry and per Instance Ignores.
-                            ignores = [ig.get('name') for ig in entry.findall('Ignore')] + [ig.get('name') for ig in inst.findall('Ignore')]
+                            ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
+                                      [ig.get('name') for ig in inst.findall('Ignore')] + \
+                                      self.ignores
                             for file_result in result.get('files', []):
                                 if file_result[-1] not in modlist + ignores:
                                     instance_fail = True
@@ -830,6 +836,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
                                       % (entry.tag, entry.get('name')))
                     return False
+            elif entry.tag == 'Path' and entry.get('type') == 'ignore':
+                # ignored Paths are only relevant during failed package
+                # verification
+                pass
             else:
                 if [attr for attr in self.__req__[entry.tag] if attr not in entry.attrib]:
                     self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
@@ -1008,3 +1018,10 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         init_ts.closeDB()
         del init_ts
         return keyids
+
+    def VerifyPath(self, entry, _):
+        """
+           We don't do anything here since all
+           Paths are processed in __init__
+        """
+        return True

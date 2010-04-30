@@ -68,6 +68,15 @@ the *type* and any other necessary attributes in `Rules`_.
 | hardlink    | New                  | Create          | name, to                 |
 |             |                      | hardlinks       |                          |
 +-------------+----------------------+-----------------+--------------------------+
+| ignore      | New                  | Ignore files    | name, to                 |
+|             |                      | that cause      |                          |
+|             |                      | package         |                          |
+|             |                      | verification    |                          |
+|             |                      | failures        |                          |
+|             |                      | (currently      |                          |
+|             |                      | applies to only |                          |
+|             |                      | YUMng)          |                          |
++-------------+----------------------+-----------------+--------------------------+
 | nonexistent | New                  | Specify a path  | name                     |
 |             |                      | that should not |                          |
 |             |                      | exist           |                          |

@@ -550,19 +550,16 @@ Ignore Tag
 ^^^^^^^^^^
 
 The Ignore tag is used to "mask out" individual files from the RPM
-verification.  This is done by comparing the verification failure results
-with the Ignore tag name.  If there is a match, that entry is not used
+verification. This is done by comparing the verification failure results
+with the Ignore tag name. If there is a match, that entry is not used
 by the client to determine if a package has failed verification.
 
 Ignore tag entries can be specified at both the Package level, in which
 case they apply to all Instances, and/or at the Instance level, in which
 case they only apply to that instance.
 
-Ignore tag entries only work with the RPMng driver. They do not appear
-to be supported in YUMng as of 1.0pre5.
-
-Ignore tag entries can be specified in both old and new style Pkgmgr
-files.
+Ignore tag entries are used by the RPMng driver. They can be specified
+in both old and new style Pkgmgr files.
 
 The Ignore Tag supports the following attributes:
 
@@ -580,6 +577,20 @@ Example
         <Ignore name='/etc/rpc'/>
         <Instance simplefile='glibc-2.3.4-2.25.x86_64.rpm' version='2.3.4' release='2.25' arch='x86_64'/>
     </Package>
+
+POSIX 'ignore' Path entries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The YUMng analog to the Ignore Tag used by RPMng is the use of Path
+entries of type 'ignore'. The following shows an example for the
+centos-release package which doesn't verify if you remove the default
+repos and replace them with a custom repo.
+
+.. code-block:: xml
+
+    <!-- Ignore verification failures for centos-release -->
+    <BoundPath name='/etc/yum.repos.d/CentOS-Base.repo' type='ignore'/>
+    <BoundPath name='/etc/yum.repos.d/CentOS-Media.repo' type='ignore'/>
 
 Automated Generation of Pkgmgr Configuration Files
 --------------------------------------------------
