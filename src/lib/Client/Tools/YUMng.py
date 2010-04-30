@@ -73,9 +73,11 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
-        self.__important__ = [entry.get('name') for struct in config for entry in struct \
-                                  if entry.tag in ['Path', 'ConfigFile'] and \
-                                  entry.get('name').startswith('/etc/yum.d') or entry.get('name') == '/etc/yum.conf']
+        self.__important__ = [entry.get('name') for struct in config \
+                              for entry in struct \
+                              if entry.tag in ['Path', 'ConfigFile'] and \
+                              entry.get('name').startswith('/etc/yum.d') \
+                              or entry.get('name') == '/etc/yum.conf']
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
@@ -115,14 +117,31 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     # installed but out of date
                     data.update(self.yum_avail[entry.get('name')])
                 for (arch, (epoch, vers, rel)) in list(data.items()):
-                    x= Bcfg2.Client.XML.SubElement(entry, "Instance",
-                                                   name=entry.get('name'),
-                                                   version=vers, arch=arch,
-                                                   release=rel, epoch=epoch)
+                    x = Bcfg2.Client.XML.SubElement(entry, "Instance",
+                                                    name=entry.get('name'),
+                                                    version=vers, arch=arch,
+                                                    release=rel, epoch=epoch)
                     if 'verify_flags' in entry.attrib:
                         x.set('verify_flags', entry.get('verify_flags'))
                     if 'verify' in entry.attrib:
                         x.set('verify', entry.get('verify'))
+
+        if entry.get('type', False) == 'yum':
+            # Make sure we are dealing with Packages from Yum
+            # Resolve what provides this package.  That's what
+            # we need to verify.  Otherwise we run into bad
+            # obsoletes and provides fun.
+            try:
+                pkg = self.yb.returnPackageByDep(entry.get('name'))
+                if entry.get('name') != pkg.name:
+                    self.logger.info("YUMng: remapping virtual package %s to %s" \
+                                     % (entry.get('name'), pkg.name))
+                    entry.set('name', pkg.name)
+                # Set the version?  version = '%s:%s-%s.%s' % \
+                # (pkg.epoch, pkg.version, pkg.release, pkg.arch)
+            except yum.Errors.YumBaseError, e:
+                self.logger.info('Yum Error Depsolving for %s: %s' % \
+                                 (entry.get('name'), str(e)))
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
 
