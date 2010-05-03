@@ -6,13 +6,14 @@
 Trigger
 =======
 
-Trigger is a plugin that calls external scripts when clients are
-configured.
+Trigger is a plugin that calls external scripts (on the server) when
+clients are configured.
 
 Setup
 =====
 
-::
+First, add Trigger to the **plugins** line in bcfg2.conf. Then do the
+following::
 
     mkdir /var/lib/bcfg2/Trigger
     echo "#!/bin/sh\necho $1\n" > /var/lib/bcfg2/Trigger/test.sh
