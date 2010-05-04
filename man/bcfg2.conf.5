@@ -22,7 +22,7 @@ These options are only necessary on the Bcfg2 server. They are specified in the 
 
 .TP
 .B repository
-Specifies the path to the Bcfg2 repository containing all of the configuration specifications. The repository should be created using the bcfg2-init command.
+Specifies the path to the Bcfg2 repository containing all of the configuration specifications. The repository should be created using the 'bcfg2-admin init' command.
 
 .TP
 .B filemonitor
@@ -164,23 +164,23 @@ Trigger is a plugin that calls external scripts when clients are configured.
 
 
 .SH MDATA OPTIONS
-These options affect the default metadata settings for ConfigFiles.
+These options affect the default metadata settings for Paths with type='file'.
 
 .TP
 .B owner
-Global owner for ConfigFiles (defaults to root)
+Global owner for Paths (defaults to root)
 
 .TP
 .B group
-Global group for ConfigFiles (defaults to root)
+Global group for Paths (defaults to root)
 
 .TP
 .B perms
-Global permissions for ConfigFiles (defaults to 644)
+Global permissions for Paths (defaults to 644)
 
 .TP
 .B paranoid
-Global paranoid settings for ConfigFiles (defaults to false)
+Global paranoid settings for Paths (defaults to false)
 
 
 .SH CLIENT OPTIONS
