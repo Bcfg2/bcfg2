@@ -3,7 +3,11 @@
 bcfg2-info \- Creates a local version of the bcfg2 server core for
 state observation
 .SH SYNOPSIS
-.B bcfg2-info [-C <config file>] [-h]
+.B bcfg2-info
+.I [\-C <config file>] [\-E <encoding>] [\-Q <repository path>] [\-h] [\-p] [\-x <password>]
+.I <mode>
+.I <mode args>
+.I <mode options>
 .SH DESCRIPTION
 .PP
 .B bcfg2-info
@@ -13,13 +17,106 @@ debugging purposes.
 .PP
 .B "\-C <config file>"
 .RS
-Specify an alternative location for bcfg2.conf. (Default
-/etc/bcfg2.conf)
+Specify the location of the configuration file (if it is not in /etc/bcfg2.conf).
 .RE
-.B "\-h
+.B "\-E <encoding>"
+.RS
+Specify the encoding of cfg files.
+.RE
+.B "\-Q <repository path>
+.RS
+Specify the server repository path.
+.RE
+.B "\-d"
+.RS
+Run in debug mode.
+.RE
+.B "\-h"
 .RS
 Give a bit of help about the command line arguments and
 options. After this bcfg2-info exits.
+.RE
+.B "\-p"
+.RS
+Specify a profile.
+.RE
+.B "\-x <password>"
+.RS
+Set the communication password.
+.RE
+.SH MODES
+.PP
+.B build <hostname> <filename>
+.RS
+Build config for hostname, writing to filename
+.RE
+.B builddir <hostname> <dirname>
+.RS
+Build config for hostname, writing separate files to dirname
+.RE
+.B buildall <directory>
+.RS
+Build configs for all clients in directory
+.RE
+.B buildfile <filename> <hostname>
+.RS
+Build config file for hostname (not written to disk)
+.RE
+.B bundles
+.RS
+Print out group/bundle information
+.RE
+.B clients
+.RS
+Print out client/profile information
+.RE
+.B debug
+.RS
+Shell out to native python interpreter
+.RE
+.B event_debug
+.RS
+Display filesystem events as they are processed
+.RE
+.B generators
+.RS
+List current versions of generators
+.RE
+.B groups
+.RS
+List groups
+.RE
+.B help
+.RS
+Print the list of available commands
+.RE
+.B mappings <type*> <name*>
+.RS
+Print generator mappings for optional type and name
+.RE
+.B profile <command> <args>
+.RS
+Profile a single bcfg2-info command
+.RE
+.B quit
+.RS
+Exit bcfg2-info command line
+.RE
+.B showentries <hostname> <type>
+.RS
+Show abstract configuration entries for a given host
+.RE
+.B showclient <client1> <client2>
+.RS
+Show metadata for given hosts.
+.RE
+.B update
+.RS
+Process pending file events
+.RE
+.B version
+.RS
+Print version of this tool
 .RE
 .SH "SEE ALSO"
 .BR bcfg2(1),

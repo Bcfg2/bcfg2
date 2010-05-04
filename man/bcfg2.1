@@ -3,8 +3,7 @@
 bcfg2 \- reconfigure machine based on settings in BCFG2
 .SH SYNOPSIS
 .B bcfg2
-.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-b bundle]
-[\-r removal mode]
+.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-b bundle] [\-r removal mode]
 .SH DESCRIPTION
 .TP
 .BR bcfg2
@@ -80,7 +79,7 @@ Daemonize the agent.
 .TP 
 .BR "\-k" 
 Run in bulletproof mode. This currently only affects behavior in the
-debian toolset; it calls apt-get update and clean and dpkg \-\-configure \-\-pending.
+debian toolset; it calls apt\-get update and clean and dpkg \-\-configure \-\-pending.
 .TP
 .BR "\-l <whitelist|blacklist>"
 Run the client in the server decision list mode. This approach is needed
@@ -92,7 +91,7 @@ management, these issues typically crop up in environments with several
 administrators and much configuration variety.
 .TP
 .BR "\-n"
-Run bcfg2 in dry-run mode. No changes will be made to the
+Run bcfg2 in dry\-run mode. No changes will be made to the
 system. 
 .TP
 .BR "\-o <LogFile Path>"
