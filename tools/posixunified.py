@@ -28,6 +28,8 @@ if __name__ == '__main__':
 
     for plug in ['Base', 'Bundler']:
         for root, dirs, files in os.walk('%s/%s' % (repo, plug)):
+            if '.svn' in dirs:
+                dirs.remove('.svn')
             for filename in files:
                 if filename.startswith('new'):
                     continue
@@ -106,8 +108,8 @@ if __name__ == '__main__':
 
     try:
         newrules = open(unifiedposixrules, 'w')
+        rulesroot.set('priority', '1')
+        newrules.write(lxml.etree.tostring(rulesroot, pretty_print=True))
+        newrules.close()
     except IOError:
-        print("Failed to write %s" % filename)
-    rulesroot.set('priority', '1')
-    newrules.write(lxml.etree.tostring(rulesroot, pretty_print=True))
-    newrules.close()
+        print("Failed to write %s" % unifiedposixrules)
