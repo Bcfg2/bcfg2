@@ -4,7 +4,9 @@
 '''This is chkconfig support'''
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools, Bcfg2.Client.XML
+import Bcfg2.Client.Tools
+import Bcfg2.Client.XML
+
 
 class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     '''Chkconfig support for Bcfg2'''
@@ -43,17 +45,24 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             onlevels = []
 
         if entry.get('status') == 'on':
-            status = (len(onlevels) > 0 )
+            status = (len(onlevels) > 0)
+            command = 'start'
         else:
             status = (len(onlevels) == 0)
+            command = 'stop'
 
         if entry.get('mode', 'default') == 'supervised':
-            pstatus, pout = self.cmd.run('/sbin/service %s status' % \
-                                         entry.get('name'))
-            if pstatus:
-                self.cmd.run('/sbin/service %s start' % (entry.get('name')))
-            pstatus, pout = self.cmd.run('/sbin/service %s status' % \
-                                         entry.get('name'))
+            # turn on or off the service in supervised mode
+            pstatus = self.cmd.run('/sbin/service %s status' % \
+                                   entry.get('name'))[0]
+            needs_modification = ((command == 'start' and pstatus) or \
+                                  (command == 'stop' and not pstatus))
+            if not(self.setup.get('dryrun')) and needs_modification:
+                self.cmd.run('/sbin/service %s %s' % (entry.get('name'),
+                                                      command))
+                pstatus = self.cmd.run('/sbin/service %s status' % \
+                                       entry.get('name'))[0]
+
             # chkconfig/init.d service
             if entry.get('status') == 'on':
                 status = status and not pstatus
@@ -86,4 +95,3 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
         return [Bcfg2.Client.XML.Element('Service', type='chkconfig', name=name) \
                 for name in allsrv if name not in specified]
-
