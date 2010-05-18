@@ -161,11 +161,11 @@ Assign clients to nagios groups in
       <Bundle name='nagios'/>
     </Group>
 
-Update nagios configuration file to use nagiosgen.cfg::
+Update nagios configuration file to use ``nagiosgen.cfg``::
 
     cfg_file=/etc/nagios/nagiosgen.cfg
 
 Note that some of these files are built on demand, each time a client
 in group "nagios-server" checks in with the Bcfg2 server. Local nagios
-instances can be configured to use the !NagiosGen directory in the Bcfg2
+instances can be configured to use the NagiosGen directory in the Bcfg2
 repository directly.

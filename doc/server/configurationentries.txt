@@ -68,7 +68,10 @@ the *type* and any other necessary attributes in `Rules`_.
 | hardlink    | New                  | Create          | name, to                 |
 |             |                      | hardlinks       |                          |
 +-------------+----------------------+-----------------+--------------------------+
-| ignore      | New                  | Ignore files    | name, to                 |
+| symlink     | Replaces SymLink     | SymLinks        | name, to                 |
+|             | entries              |                 |                          |
++-------------+----------------------+-----------------+--------------------------+
+| ignore      | New                  | Ignore files    | name                     |
 |             |                      | that cause      |                          |
 |             |                      | package         |                          |
 |             |                      | verification    |                          |
@@ -84,9 +87,6 @@ the *type* and any other necessary attributes in `Rules`_.
 | permissions | Replaces Permissions | Permissions of  | name, owner,             |
 |             | entries              | POSIX entities  | group, perms             |
 |             |                      |                 |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| symlink     | Replaces SymLink     | SymLinks        | name, to                 |
-|             | entries              |                 |                          |
 +-------------+----------------------+-----------------+--------------------------+
 
 Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
