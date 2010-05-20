@@ -63,20 +63,20 @@
     <input type="button"
            name="go"
            value="Go"
-           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.entry.id%}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
+           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
     | <input type="button"
              name="now"
              value="Now"
-             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.entry.id%}';"/>
+             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id %}';"/>
 {% else %}
     <input type="button"
            name="go"
            value="Go"
-           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.entry.id %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;"/>
+           onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;"/>
     | <input type="button"
              name="now"
              value="Now"
-             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.entry.id %}';"/>
+             onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id %}';"/>
 {% endifequal %}
 </span></form>
 <br/><br/><br/></div>

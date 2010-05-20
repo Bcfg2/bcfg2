@@ -40,8 +40,8 @@ def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MOD
             cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
                    "WHERE reports_entries_interactions.interaction_id IN %s "+
                    "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_entries_interactions.modified_id = %s " +
-                   "AND reports_entries_interactions.type = %s ", [interactionlist, eyedee, type])
+                   "AND reports_entries_interactions.entry_id = %s " +
+                   "AND reports_entries_interactions.type = %s ", [interactionlist, item.entry_id, type])
             associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
         else:
             associated_client_list = []
@@ -131,7 +131,7 @@ def client_detailed_list(request, **kwargs):
     if entry_max:
         for client in client_list:
             try:
-                e = interaction.objects.filter(client=client).filter(timestamp__lt=entry_max).order_by('-timestamp')[0]
+                e = Interaction.objects.filter(client=client).filter(timestamp__lt=entry_max).order_by('-timestamp')[0]
                 if 'server' in context and e.server != context['server']:
                     continue
                 if 'state' in context and e.state != context['state']:
