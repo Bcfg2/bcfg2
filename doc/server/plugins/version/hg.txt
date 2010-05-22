@@ -1,0 +1,25 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-version-hg:
+
+==============
+Mercurial (Hg)
+==============
+
+Why use the Mercurial plugin
+============================
+
+The Hg plugin is useful if you would like to track changes to
+your Bcfg2 repository using `Hg <http://mercurial.selenic.com/>`_
+backend. Currently, it enables you to get revision information out of
+your repository for reporting purposes.
+
+How to enable the Mercurial plugin
+==================================
+
+You will need to install Mercurial on the Bcfg2 server first.
+
+Simply add Hg to your plugins line in ``/etc/bcfg2.conf``::
+
+    [server]
+    plugins = Base,Bundler,Cfg,...,Hg

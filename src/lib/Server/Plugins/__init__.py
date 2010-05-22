@@ -11,6 +11,7 @@ __all__ = [
            'Fossil',
            'Git',
            'GroupPatterns',
+           'Hg',
            'Hostbase',
            'Metadata',
            'NagiosGen',
