@@ -60,6 +60,8 @@ class Core(Component):
         self.password = password
         self.encoding = encoding
         atexit.register(self.shutdown)
+        # Create an event to signal worker threads to shutdown
+        self.terminate = threading.Event()
 
         if '' in plugins:
             plugins.remove('')
@@ -111,10 +113,11 @@ class Core(Component):
 
     def _file_monitor_thread(self):
         famfd = self.fam.fileno()
-        while True:
+        terminate = self.terminate
+        while not terminate.isSet():
             try:
                 if famfd:
-                    select.select([famfd], [], [])
+                    select.select([famfd], [], [], 15)
                 else:
                     while not self.fam.pending():
                         time.sleep(15)
@@ -150,6 +153,7 @@ class Core(Component):
                 (plugin), exc_info=1)
 
     def shutdown(self):
+        self.terminate.set()
         for plugin in self.plugins.values():
             plugin.shutdown()
 
