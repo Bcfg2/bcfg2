@@ -12,7 +12,7 @@
 #user-tools { position:absolute; top:0; right:0; padding:1.2em 10px; font-size:11px; text-align:right; }
 
 /*SIDEBAR*/
-#sidebar {float: left; position: relative; width: auto; height: 100%; padding: 0 1em 3em 1em; color:ffc; min-height:500px;}
+#sidebar {float: left; position: relative; width: auto; height: 100%; padding: 0 1em 0 1em; color:ffc; min-height:500px;}
 a.sidebar:link {color: #fff;}
 a.sidebar:active {color: #fff;}
 a.sidebar:visited {color: #fff;}
@@ -34,6 +34,7 @@ ul.sidebar-level2 {
 div.header {
 	background-color: #DDD;
 	padding: 1em;
+	position: relative;
 }
 div.header h1 {
 	font-size: 18px;
