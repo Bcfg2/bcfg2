@@ -118,8 +118,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             msgs[0].exc_info = error
         else:
             msgs = [record]
-        while msgs:
-            newrec = msgs.pop()
+        for newrec in msgs:
             msg = self.log_format_string % (self.encodePriority(self.facility,
                                                                 newrec.levelname.lower()), self.format(newrec))
             try:
