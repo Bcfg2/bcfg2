@@ -26,6 +26,8 @@ from django.db import connection
 from Bcfg2.Server.Reports.updatefix import update_database
 import ConfigParser
 import difflib
+import logging
+import Bcfg2.Logger
 
 def build_reason_kwargs(r_ent):
     if r_ent.get('current_bfile', False):
@@ -53,7 +55,7 @@ def build_reason_kwargs(r_ent):
                 current_diff=rc_diff)
 
 
-def load_stats(cdata, sdata, vlevel, quick=False, location=''):
+def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
     cursor = connection.cursor()
     clients = {}
     cursor.execute("SELECT name, id from reports_client;")
@@ -67,10 +69,10 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                 [datetime.now(), name])
             clients[name] = cursor.lastrowid
             if vlevel > 0:
-                print("Client %s added to db" % name)
+                logger.info("Client %s added to db" % name)
         else:
             if vlevel > 0:
-                print("Client %s already exists in db" % name)
+                logger.info("Client %s already exists in db" % name)
 
     pingability = {}
     [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
@@ -93,7 +95,7 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
             if ilist:
                 current_interaction = ilist[0]
                 if vlevel > 0:
-                    print("Interaction for %s at %s with id %s already exists"%(clients[name],
+                    logger.info("Interaction for %s at %s with id %s already exists"%(clients[name],
                         datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction.id))
                 continue
             else:
@@ -108,7 +110,7 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                 newint.save()
                 current_interaction = newint
                 if vlevel > 0:
-                    print("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
+                    logger.info("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
                         timestamp, current_interaction.id))
 
 
@@ -127,14 +129,14 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                         if rls:
                             rr = rls[0]
                             if vlevel > 0:
-                                print "Reason exists: %s"% (rr.id)
+                                logger.info("Reason exists: %s"% (rr.id))
                         else:
                             rr = Reason(**kargs)
                             rr.save()
                             if vlevel > 0:
-                                print "Created reason: %s" % rr.id
+                                logger.info("Created reason: %s" % rr.id)
                     except Exception, ex:
-                        print "Failed to create reason for %s: %s" % (x.get('name'), ex)
+                        logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
                         rr=Reason(current_exists=x.get('current_exists',
                                   default="True").capitalize()=="True")
                         rr.save()
@@ -154,7 +156,7 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                                                         type=type[0])
                     interaction.save()
                     if vlevel > 0:
-                        print "%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id)
+                        logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
 
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():
@@ -176,13 +178,13 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                         pass
 
     if vlevel > 1:
-        print("----------------INTERACTIONS SYNCED----------------")
+        logger.info("----------------INTERACTIONS SYNCED----------------")
     cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
     for row in cursor.fetchall():
         cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
                        [row[0],row[1]])
     if vlevel > 1:
-        print("------------LATEST INTERACTION SET----------------")
+        logger.info("------------LATEST INTERACTION SET----------------")
 
     for key in pingability.keys():
         if key not in clients:
@@ -205,7 +207,7 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
             newp.save()
 
     if vlevel > 1:
-        print "---------------PINGDATA SYNCED---------------------"
+        logger.info("---------------PINGDATA SYNCED---------------------")
 
     connection._commit()
     #Clients are consistent
@@ -225,6 +227,12 @@ if __name__ == '__main__':
         # print help information and exit:
         print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg) 
         raise SystemExit, 2
+
+    logger = logging.getLogger('importscript.py')
+    logging.getLogger().setLevel(logging.INFO)
+    Bcfg2.Logger.setup_logging('importscript.py',
+                               True,
+                               False)
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -288,4 +296,4 @@ if __name__ == '__main__':
         raise SystemExit, 1
     # Be sure the database is ready for new schema
     update_database()
-    load_stats(clientsdata, statsdata, verb, quick=q, location=location)
+    load_stats(clientsdata, statsdata, verb, logger, quick=q, location=location)

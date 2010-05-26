@@ -49,6 +49,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clientdata,
                                                              container,
                                                              0,
+                                                             logger,
                                                              True,
                                                              platform.node())
                 break
