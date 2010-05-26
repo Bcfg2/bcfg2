@@ -218,21 +218,16 @@ if __name__ == '__main__':
     cpath = "/etc/bcfg2.conf"
     clientpath = False
     statpath = False
+    syslog = False
     
     try:
-        opts, args = getopt(argv[1:], "hvudc:s:C", ["help", "verbose", "updates" ,
+        opts, args = getopt(argv[1:], "hvudc:s:CS", ["help", "verbose", "updates" ,
                                                    "debug", "clients=", "stats=",
-                                                   "config="])
+                                                   "config=", "syslog"])
     except GetoptError, mesg:
         # print help information and exit:
-        print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg) 
+        print "%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-S] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg) 
         raise SystemExit, 2
-
-    logger = logging.getLogger('importscript.py')
-    logging.getLogger().setLevel(logging.INFO)
-    Bcfg2.Logger.setup_logging('importscript.py',
-                               True,
-                               False)
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -244,6 +239,7 @@ if __name__ == '__main__':
             print "C : path to bcfg2.conf config file."
             print "c : clients.xml file"
             print "s : statistics.xml file"
+            print "S : syslog; output to syslog"
             raise SystemExit
         if o in ["-C", "--config"]:
             cpath = a
@@ -259,6 +255,14 @@ if __name__ == '__main__':
 
         if o in ("-s", "--stats"):
             statpath = a
+        if o in ("-S", "--syslog"):
+            syslog = True
+
+    logger = logging.getLogger('importscript.py')
+    logging.getLogger().setLevel(logging.INFO)
+    Bcfg2.Logger.setup_logging('importscript.py',
+                               True,
+                               syslog)
 
     cf = ConfigParser.ConfigParser()
     cf.read([cpath])
