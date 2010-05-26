@@ -123,15 +123,21 @@ def load_stats(cdata, sdata, vlevel, quick=False, location=''):
                     else:
                         rls = []
 
-                    if rls:
-                        rr = rls[0]
-                        if vlevel > 0:
-                            print "Reason exists: %s"% (rr.id)
-                    else:
-                        rr = Reason(**kargs)
+                    try:
+                        if rls:
+                            rr = rls[0]
+                            if vlevel > 0:
+                                print "Reason exists: %s"% (rr.id)
+                        else:
+                            rr = Reason(**kargs)
+                            rr.save()
+                            if vlevel > 0:
+                                print "Created reason: %s" % rr.id
+                    except Exception, ex:
+                        print "Failed to create reason for %s: %s" % (x.get('name'), ex)
+                        rr=Reason(current_exists=x.get('current_exists',
+                                  default="True").capitalize()=="True")
                         rr.save()
-                        if vlevel > 0:
-                            print "Created reason: %s" % rr.id
 
                     links = Entries.objects.filter(name=x.get('name'),
                                                kind=x.tag)
