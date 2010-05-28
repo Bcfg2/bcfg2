@@ -107,8 +107,12 @@ Genshi templates
 ================
 
 Genshi templates are used by adding a Genshi xml-style template to the
-Bundler directory with a `.genshi` file extension. Version 0.4 or newer
+Bundler directory with a ``.genshi`` file extension. Version 0.4 or newer
 of genshi is required.
+
+.. important:: The ``.genshi`` file extension is required in order for the
+               server to know that the Bundle should be rendered using
+               Genshi.
 
 Motivation
 ----------
