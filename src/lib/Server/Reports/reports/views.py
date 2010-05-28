@@ -29,8 +29,8 @@ def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MOD
         cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
                    "WHERE reports_client.current_interaction_id = reports_entries_interactions.interaction_id "+
                    "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_entries_interactions.id = %s " +
-                   "AND reports_entries_interactions.type = %s", [eyedee, type])
+                   "AND reports_entries_interactions.entry_id = %s " + 
+                   "AND reports_entries_interactions.reason_id = %s", [item.entry.id, item.reason.id])
         associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
     else:
         interact_queryset = Interaction.objects.interaction_per_client(timestamp)
@@ -41,7 +41,7 @@ def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MOD
                    "WHERE reports_entries_interactions.interaction_id IN %s "+
                    "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
                    "AND reports_entries_interactions.entry_id = %s " +
-                   "AND reports_entries_interactions.type = %s ", [interactionlist, item.entry_id, type])
+                   "AND reports_entries_interactions.reason_id = %s ", [interactionlist, item.entry_id, item.reason.id])
             associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
         else:
             associated_client_list = []
