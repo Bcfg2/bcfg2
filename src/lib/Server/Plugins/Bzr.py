@@ -8,6 +8,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Bzr')
 
 class Bzr(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
+    """Bzr is a version plugin for dealing with bcfg2 repos"""
     name = 'Bzr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'

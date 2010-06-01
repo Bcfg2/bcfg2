@@ -9,6 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Svn')
 
 class Svn(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
+    """Svn is a version plugin for dealing with bcfg2 repos"""
     name = 'Svn'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'

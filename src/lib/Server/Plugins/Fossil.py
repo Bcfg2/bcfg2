@@ -8,6 +8,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Fossil')
 
 class Fossil(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
+    """Fossil is a version plugin for dealing with bcfg2 repos"""
     name = 'Fossil'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
