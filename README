@@ -1,7 +1,48 @@
-Bcfg2 is a configuration management system. It helps system
-administrators deploy complex changes across large numbers of systems
-in a coherent and transparent fashion.
+Bcfg2 - A Configuration Management System
+-----------------------------------------
 
-Much documentation is available on the Bcfg2 web site, at:
-http://bcfg2.org
+Bcfg2 (bee-config two) helps system administrators produce a 
+consistent, reproducible, and verifiable description of their
+environment, and offers visualization and reporting tools to aid
+in day-to-day administrative tasks. It is the fifth generation of
+configuration management tools developed in the Mathematics and
+Computer Science Division of Argonne National Laboratory. 
 
+* Homepage: http://trac.mcs.anl.gov/projects/bcfg2
+
+Bcfg2 is fairly portable. It has been successfully run on:
+
+* AIX, FreeBSD, OpenBSD Mac OS X, OpenSolaris, Solaris
+* Many GNU/Linux distributions, including ArchLinux, Blag, CentOS, 
+  Debian, Fedora, Gentoo, gNewSense, Mandriva, openSUSE, Red Hat/RHEL,
+  SuSE/SLES, Trisquel, and Ubuntu.
+  
+Installation
+------------
+
+For details about the installation of Bcfg2 please refer to the 
+following pages in the Bcfg2 wiki.
+
+* Prerequisites: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Prereqs
+* Download: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
+* Installation: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Install
+
+Need help
+---------
+
+* FAQ: http://trac.mcs.anl.gov/projects/bcfg2/wiki/FAQ
+* IRC: #bcfg2 on chat.freenode.net
+* Mailing list: https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
+* Bug tracker: http://trac.mcs.anl.gov/projects/bcfg2/report
+
+Documentation
+-------------
+
+A lot of documentation is available in the Bcfg2 wiki and the Bcfg2
+manual.
+
+Wiki: http://trac.mcs.anl.gov/projects/bcfg2/wiki/
+Manual: http://doc.bcfg2.fourkitchens.com/
+
+
+Bcfg2 is licensed under BSD, for more details check COPYING.
