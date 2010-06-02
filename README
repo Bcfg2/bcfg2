@@ -8,7 +8,7 @@ in day-to-day administrative tasks. It is the fifth generation of
 configuration management tools developed in the Mathematics and
 Computer Science Division of Argonne National Laboratory. 
 
-* Homepage: http://trac.mcs.anl.gov/projects/bcfg2
+* Homepage: http://bcfg2.org
 
 Bcfg2 is fairly portable. It has been successfully run on:
 
