@@ -32,7 +32,7 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Initialized svn plugin with svn directory = %s" % svn_dir)
 
     def get_revision(self):
-        '''Read svn revision information for the bcfg2 repository'''
+        """Read svn revision information for the bcfg2 repository"""
         try:
             data = Popen(("env LC_ALL=C svn info %s" %
                          (self.datastore)), shell=True,

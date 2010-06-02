@@ -35,7 +35,7 @@ class Fossil(Bcfg2.Server.Plugin.Plugin,
                     % {'ffile': fossil_file, 'frev': revision})
 
     def get_revision(self):
-        '''Read fossil revision information for the bcfg2 repository'''
+        """Read fossil revision information for the bcfg2 repository"""
         try:
             data = Popen("env LC_ALL=C fossil info",
                         shell=True,

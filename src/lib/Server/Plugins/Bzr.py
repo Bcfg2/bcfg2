@@ -24,7 +24,7 @@ class Bzr(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Initialized Bazaar plugin with directory = %(dir)s at revision = %(rev)s" % {'dir': datastore, 'rev': revision})
 
     def get_revision(self):
-        '''Read Bazaar revision information for the BCFG2 repository'''
+        """Read Bazaar revision information for the BCFG2 repository"""
         try:
             working_tree = WorkingTree.open(self.datastore)
             revision = str(working_tree.branch.revno())
