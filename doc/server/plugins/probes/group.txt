@@ -14,12 +14,14 @@ Probe used to dynamically set client groups based on OS/distro.
 
 .. code-block:: sh
 
-    #!/bin/sh
+    #!/bin/bash
 
     OUTPUT=""
-    ARGS=""
 
-    if [ -e /etc/debian_version ]; then
+    if [ -e /etc/release ]; then
+            # Solaris
+            OUTPUT=$OUTPUT'\n'`echo group:solaris`
+    elif [ -e /etc/debian_version ]; then
             # debian based
             OUTPUT=$OUTPUT'\n'`echo group:deb`
             if [ -e /etc/lsb-release ]; then
@@ -28,18 +30,17 @@ Probe used to dynamically set client groups based on OS/distro.
                     OS_GROUP=$DISTRIB_CODENAME
                     DEBIAN_VERSION=$(echo "$DISTRIB_ID" | tr '[A-Z' '[a-z]')
                     case "$OS_GROUP" in
-                            "hardy")
+                            "lucid")
                             OUTPUT=$OUTPUT'\n'`echo group:$DISTRIB_CODENAME`
                             OUTPUT=$OUTPUT'\n'`echo group:$DEBIAN_VERSION`
                             ;;
                     esac
             else
                     # debian
-                    ARGS="-e"
                     OS_GROUP=`cat /etc/debian_version`
                     OUTPUT=$OUTPUT'\n'`echo group:debian`
                     case "$OS_GROUP" in
-                            "5.0")
+                            "5.0" | "5.0.2" | "5.0.3" | "5.0.4")
                             OUTPUT=$OUTPUT'\n'`echo group:lenny`
                             ;;
                             "sid")
@@ -49,7 +50,6 @@ Probe used to dynamically set client groups based on OS/distro.
             fi
     elif [ -e /etc/redhat-release ]; then
             # redhat based
-            ARGS="-e"
             OUTPUT=$OUTPUT'\n'`echo group:rpm`
             OS_GROUP=`cat /etc/redhat-release | cut -d' ' -f1 | tr '[A-Z]' '[a-z]'`
             REDHAT_VERSION=`cat /etc/redhat-release | cut -d' ' -f3`
@@ -61,14 +61,18 @@ Probe used to dynamically set client groups based on OS/distro.
             esac
     elif [ -e /etc/gentoo-release ]; then
             # gentoo
-            ARGS="-e"
             OUTPUT=$OUTPUT'\n'`echo group:gentoo`
     elif [ -x /usr/sbin/system_profiler ]; then
             # os x
             ### NOTE: Think about using system_profiler SPSoftwareDataType here
-            OSX_VERSION=`sw_vers | grep 'ProductVersion:' | grep -o '[0-9]*\.[0-9]*\.[0-9]*'`
             OUTPUT=$OUTPUT'\n'`echo group:osx`
-            OUTPUT=$OUTPUT'\n'`echo group:$OSX_VERSION`
+            OSX_VERSION=`sw_vers | grep 'ProductVersion:' | egrep -o '[0-9]+\.[0-9]+'`
+            if [ "$OSX_VERSION" == "10.6" ]; then
+                    OUTPUT=$OUTPUT'\n'`echo group:osx-snow`
+            elif [ "$OSX_VERSION" == "10.5" ]; then
+                    OUTPUT=$OUTPUT'\n'`echo group:osx-leo`
+            fi
+            echo $OUTPUT
     else
             exit 0
     fi
@@ -76,13 +80,20 @@ Probe used to dynamically set client groups based on OS/distro.
     ARCH=`uname -m`
     case "$ARCH" in
             "x86_64")
-            OUTPUT=$OUTPUT'\n'`echo group:amd64`
+            if [ "$OS_GROUP" == 'centos' ]; then
+                    OUTPUT=$OUTPUT'\n'`echo group:$ARCH`
+            else
+                    OUTPUT=$OUTPUT'\n'`echo group:amd64`
+            fi
             ;;
             "i386" | "i686")
             OUTPUT=$OUTPUT'\n'`echo group:i386`
+            ;;
+            "sparc64")
+            OUTPUT=$OUTPUT'\n'`echo group:sparc64`
             ;;
     esac
 
     # output the result of all the group probing
     # (interpreting the backslashed newlines)
-    echo $ARGS $OUTPUT
+    echo -e $OUTPUT
