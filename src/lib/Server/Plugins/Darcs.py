@@ -12,6 +12,7 @@ class Darcs(Bcfg2.Server.Plugin.Plugin,
     name = 'Darcs'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    experimental = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
