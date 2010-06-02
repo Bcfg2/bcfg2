@@ -81,7 +81,7 @@ Overall client service mode
 .. versionadded:: 1.0.0
 
 Overall client service mode. Specified on the client using ``-s <service
-mode``.
+mode>``.
 
 * default
 
