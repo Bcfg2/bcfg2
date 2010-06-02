@@ -1,0 +1,7 @@
+This directory contains example files for various Bcfg2 generators and
+plugins. The documentation for the examples is available in the Bcfg2
+wiki or the manual.
+
+Those files may not work in your environment. Others can be obsolete.
+
+The purpose is to give you a entry point for your own configuration.
