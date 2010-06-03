@@ -1,7 +1,7 @@
 .TH bcfg2.conf 5
 
 .SH NAME
-bcfg2.conf - configuration parameters for bcfg2
+bcfg2.conf - configuration parameters for Bcfg2
 
 .SH DESCRIPTION
 .TP
@@ -49,6 +49,7 @@ Action entries are commands that are executed either before bundle installation,
 
 \(bu
 .B BB
+The BB plugin maps users to machines and metadata to machines.  (experimental)
 
 \(bu
 .B Base
@@ -117,6 +118,7 @@ NagiosGen is a Bcfg2 plugin that dynamically generates Nagios configuration file
 
 \(bu
 .B Ohai
+The Ohai plugin is used to detect information about the client operating system. The data is reported back to the server using JSON. (experimental)
 
 \(bu
 .B POSIXCompat
