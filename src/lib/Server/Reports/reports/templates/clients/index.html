@@ -31,24 +31,24 @@
 </span></form>
 <br/><br/><br/></div>
 
-{% if client_list_b %}
+{% if inter_list %}
 <table><tr><td valign="top">
     <ul style="list-style-type:none;">
-    {% for client in client_list_b %}
-        <li><div class="{{client.current_interaction.state}}-lineitem">
-		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
+    {% for client,inter in inter_list %}
+        <li><div class="{{inter.state}}-lineitem">
+		<a href="{% spaceless %}{% ifequal timestamp 'now' %}
+			{% url Bcfg2.Server.Reports.reports.views.client_detail client %}
+			{% else %}
+			{% url Bcfg2.Server.Reports.reports.views.client_detail client,inter.id %}
+			{% endifequal %}
+			{% endspaceless %}">{{ client }}</a>
 		</div></li>
-    {% endfor %}
+  {% ifequal half_list forloop.counter0 %}
     </ul>
 </td><td valign="top">
     <ul style="list-style-type:none;">
-    {% if client_list_a %}
-      {% for client in client_list_a %}
-	    <li><div class="{{client.current_interaction.state}}-lineitem">
-		<a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{ client.name }}</a>
-		</div></li>
-      {% endfor %}
-    {% endif %}
+  {% endifequal %}
+    {% endfor %}
     </ul>
 </tr></table>
 {% else %}

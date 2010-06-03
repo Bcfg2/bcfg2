@@ -90,14 +90,22 @@ def modified_item_index(request, timestamp = 'now'):
 
 def client_index(request, timestamp = 'now'):
     timestamp = timestamp.replace("@"," ")
-    client_list = Client.objects.active(timestamp).order_by('name')
-    client_list_a = client_list[len(client_list)/2:]
-    client_list_b = client_list[:len(client_list)/2]
+
+    c_dict = dict()
+    [c_dict.__setitem__(cl.id,cl.name) for cl in Client.objects.active(timestamp).order_by('name')]
+
+    list = []
+    for inter in Interaction.objects.interaction_per_client(timestamp):
+        if inter.client_id in c_dict:
+            list.append([c_dict[inter.client_id], inter])
+    list.sort(lambda a,b: cmp(a[0], b[0]))
+    half_list = len(list) / 2
+
     if timestamp == 'now':
         timestamp = datetime.now().isoformat('@')
     return render_to_response('clients/index.html',
-           {'client_list_a': client_list_a,
-            'client_list_b': client_list_b,
+            {'inter_list': list,
+             'half_list': half_list,
             'timestamp' : timestamp,
             'timestamp_date' : timestamp[:10],
             'timestamp_time' : timestamp[11:19]})
@@ -109,7 +117,7 @@ def client_detailed_list(request, **kwargs):
     '''
     context = dict(path=request.path)
     timestamp = 'now'
-    entry_max = None
+    entry_max = datetime.now()
     if request.GET:
         context['qsa']='?%s' % request.GET.urlencode()
         if request.GET.has_key('date1') and request.GET.has_key('time'):
@@ -121,31 +129,31 @@ def client_detailed_list(request, **kwargs):
     context['timestamp_date'] = timestamp[:10]
     context['timestamp_time'] = timestamp[11:19]
 
-    if 'server' in kwargs and kwargs['server']:
-        context['server'] = kwargs['server']
+    interactions = Interaction.objects.interaction_per_client(timestamp)
     if 'state' in kwargs and kwargs['state']:
         context['state'] = kwargs['state']
+        interactions=interactions.filter(state__exact=kwargs['state'])
+    if 'server' in kwargs and kwargs['server']:
+        interactions=interactions.filter(server__exact=kwargs['server'])
+        context['server'] = kwargs['server']
 
     # build the entry list from available clients
+    c_dict = dict()
+    [c_dict.__setitem__(cl.id,cl.name) for cl in client_list]
+
     entry_list = []
-    if entry_max:
-        for client in client_list:
-            try:
-                e = Interaction.objects.filter(client=client).filter(timestamp__lt=entry_max).order_by('-timestamp')[0]
-                if 'server' in context and e.server != context['server']:
-                    continue
-                if 'state' in context and e.state != context['state']:
-                    continue
-                entry_list.append(e)
-            except IndexError:
-                # Should never see this.. but skip clients with no data
-                pass
-    else:
-        if 'server' in context:
-            client_list = client_list.filter(current_interaction__server__exact=kwargs['server'])
-        if 'state' in context:
-            client_list = client_list.filter(current_interaction__state__exact=kwargs['state'])
-        [ entry_list.append(x.current_interaction) for x in client_list ]
+    for inter in interactions:
+        if inter.client_id in c_dict:
+            entry_list.append([c_dict[inter.client_id], inter, \
+		entry_max - inter.timestamp > timedelta(hours=24)])
+    entry_list.sort(lambda a,b: cmp(a[0], b[0]))
+    '''
+            if(datetime.now()-self.timestamp > timedelta(hours=25) ):
+                return True
+            else:
+                return False
+    '''
+
     context['entry_list'] = entry_list
     return render_to_response('clients/detailed-list.html', context)
 

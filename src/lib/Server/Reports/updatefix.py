@@ -2,7 +2,8 @@ import Bcfg2.Server.Reports.settings
 
 from django.db import connection
 import django.core.management
-from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion
+from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion, \
+		TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
 
 import logging, traceback
 logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
@@ -47,6 +48,35 @@ def _merge_database_table_entries():
         insert_cursor.execute("insert into reports_entries_interactions \
             (entry_id, interaction_id, reason_id, type) values (%s, %s, %s, %s)", (entry_id, row[3], row[2], row[4]))
 
+def _interactions_constraint_or_idx():
+    '''sqlite doesn't support alter tables.. or constraints'''
+    cursor = connection.cursor()
+    try:
+        cursor.execute('alter table reports_interaction add constraint reports_interaction_20100601 unique (client_id,timestamp)')
+    except:
+        cursor.execute('create unique index reports_interaction_20100601 on reports_interaction (client_id,timestamp)')
+            
+
+def _populate_interaction_entry_counts():
+    '''Populate up the type totals for the interaction table'''
+    cursor = connection.cursor()
+    count_field = { TYPE_BAD: 'bad_entries',
+                    TYPE_MODIFIED: 'modified_entries',
+                    TYPE_EXTRA: 'extra_entries' }
+
+    for type in count_field.keys():
+        cursor.execute("select count(type), interaction_id "+
+		"from reports_entries_interactions where type = %s group by interaction_id" % type)
+        updates = []
+        for row in cursor.fetchall():
+            updates.append(row)
+        try:
+            cursor.executemany("update reports_interaction set " + count_field[type] + "=%s where id = %s", updates)
+        except Exception, e:
+            print e
+    cursor.close()
+        
+
 # be sure to test your upgrade query before reflecting the change in the models
 # the list of function and sql command to do should go here
 _fixes = [_merge_database_table_entries,
@@ -62,6 +92,12 @@ _fixes = [_merge_database_table_entries,
           "alter table reports_interaction add server varchar(256) not null default 'N/A';",
           # fix revision data type to support $VCS hashes
           "alter table reports_interaction add repo_rev_code varchar(64) default '';",
+          # Performance enhancements for large sites
+          'alter table reports_interaction add column bad_entries integer not null default -1;',
+          'alter table reports_interaction add column modified_entries integer not null default -1;',
+          'alter table reports_interaction add column extra_entries integer not null default -1;',
+          _populate_interaction_entry_counts,
+          _interactions_constraint_or_idx,
 ]
 
 # this will calculate the last possible version of the database

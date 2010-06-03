@@ -114,11 +114,13 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
                         timestamp, current_interaction.id))
 
 
+            counter_fields = { TYPE_CHOICES[0]: 0, TYPE_CHOICES[1]: 0, TYPE_CHOICES[2]: 0 }
             pattern = [('Bad/*', TYPE_CHOICES[0]),
                        ('Extra/*', TYPE_CHOICES[2]),
                        ('Modified/*', TYPE_CHOICES[1]),]
             for (xpath, type) in pattern:
                 for x in statistics.findall(xpath):
+                    counter_fields[type] = counter_fields[type] + 1
                     kargs = build_reason_kwargs(x)
                     if not quick:
                         rls = Reason.objects.filter(**kargs)
@@ -157,6 +159,12 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
                     interaction.save()
                     if vlevel > 0:
                         logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
+
+            # Update interaction counters
+            current_interaction.bad_entries = counter_fields[TYPE_CHOICES[0]]
+            current_interaction.modified_entries = counter_fields[TYPE_CHOICES[1]]
+            current_interaction.extra_entries = counter_fields[TYPE_CHOICES[2]]
+            current_interaction.save()
 
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():

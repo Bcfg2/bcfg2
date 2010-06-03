@@ -85,25 +85,23 @@ class InteractiveManager(models.Manager):
     '''returns most recent interaction as of specified timestamp in format:
     '2006-01-01 00:00:00' or 'now' or None->'now'  '''
     def interaction_per_client(self, maxdate = None):
+        '''Returns the most recent interactions for clients as of a date'''
+        '''FIXME - check the dates passed in'''
         from django.db import connection
         cursor = connection.cursor()
 
-        #in order to prevent traceback when zero records are returned.
-        #this could mask some database errors
+        sql = 'select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) ' + \
+                    'as timer from reports_interaction'
+        if maxdate != 'now':
+            sql = sql + " where timestamp < '%s' " % maxdate
+        sql = sql + ' GROUP BY client_id) x, reports_interaction where ' + \
+                    'reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer'
         try:
-            if (maxdate == 'now' or maxdate == None):
-                cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) "+
-                    "as timer from reports_interaction GROUP BY client_id) x, reports_interaction where "+
-                    "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
-            else:
-                cursor.execute("select reports_interaction.id, x.client_id from (select client_id, timestamp, MAX(timestamp) "+
-                    "as timer from reports_interaction WHERE timestamp < %s GROUP BY client_id) x, reports_interaction where "+
-                    "reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer",
-                               [maxdate])
-            in_idents = [item[0] for item in cursor.fetchall()]
+            cursor.execute(sql)
         except:
-            in_idents = []
-        return self.filter(id__in = in_idents)
+            '''FIXME - really need some error hadling'''
+            return self.none()
+        return self.filter(id__in = [item[0] for item in cursor.fetchall()])
 
 
 class Interaction(models.Model):
@@ -116,6 +114,9 @@ class Interaction(models.Model):
     goodcount = models.IntegerField()#of good config-items
     totalcount = models.IntegerField()#of total config-items
     server = models.CharField(max_length=256)    # Name of the server used for the interaction
+    bad_entries = models.IntegerField(default=-1)
+    modified_entries = models.IntegerField(default=-1)
+    extra_entries = models.IntegerField(default=-1)
 
     def __str__(self):
         return "With " + self.client.name + " @ " + self.timestamp.isoformat()
@@ -133,8 +134,7 @@ class Interaction(models.Model):
             return 0
     
     def isclean(self):
-        if (self.bad().count() == 0 and self.goodcount == self.totalcount):
-        #if (self.state == "good"):
+        if (self.bad_entry_count() == 0 and self.goodcount == self.totalcount):
             return True
         else:
             return False
@@ -165,11 +165,32 @@ class Interaction(models.Model):
     def bad(self):
         return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_BAD)
 
+    def bad_entry_count(self):
+        '''Number of bad entries.  Store the count in the interation field to save db queries'''
+        if self.bad_entries < 0:
+            self.bad_entries = Entries_interactions.objects.filter(interaction=self, type=TYPE_BAD).count()
+            self.save()
+        return self.bad_entries
+
     def modified(self):
         return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_MODIFIED)
 
+    def modified_entry_count(self):
+        '''Number of modified entries.  Store the count in the interation field to save db queries'''
+        if self.modified_entries < 0:
+            self.modified_entries = Entries_interactions.objects.filter(interaction=self, type=TYPE_MODIFIED).count()
+            self.save()
+        return self.modified_entries
+
     def extra(self):
         return Entries_interactions.objects.select_related().filter(interaction=self, type=TYPE_EXTRA)
+
+    def extra_entry_count(self):
+        '''Number of extra entries.  Store the count in the interation field to save db queries'''
+        if self.extra_entries < 0:
+            self.extra_entries = Entries_interactions.objects.filter(interaction=self, type=TYPE_EXTRA).count()
+            self.save()
+        return self.extra_entries
     
     objects = InteractiveManager()
 
@@ -179,6 +200,7 @@ class Interaction(models.Model):
         pass
     class Meta:
         get_latest_by = 'timestamp'
+        unique_together = ("client", "timestamp")
 
 class Reason(models.Model):
     '''reason why modified or bad entry did not verify, or changed'''
