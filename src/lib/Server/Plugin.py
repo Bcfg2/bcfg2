@@ -7,6 +7,8 @@ import lxml.etree
 import os
 import posixpath
 import re
+import Queue
+import threading
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -139,6 +141,35 @@ class Probing(object):
 class Statistics(object):
     '''Signal statistics handling capability'''
     def process_statistics(self, client, xdata):
+        pass
+
+class ThreadedStatistics(Statistics,
+                         threading.Thread):
+    '''Threaded statistics handling capability'''
+    def __init__(self, core, datastore):
+        Statistics.__init__(self)
+        threading.Thread.__init__(self)
+        # Event from the core signaling an exit
+        self.terminate = core.terminate
+        self.work_queue = Queue.Queue()
+        self.start()
+
+    def run(self):
+        while not (self.terminate.isSet() and self.work_queue.empty()):
+            try:
+                (xdata, client) = self.work_queue.get(block=True, timeout=5)
+            except Queue.Empty:
+                continue
+            except Exception, e:
+                logger.error("ThreadedStatistics: %s" % e)
+                continue
+            self.handle_statistic(xdata, client)
+
+    def process_statistics(self, metadata, data):
+        self.work_queue.put((metadata, copy.deepcopy(data)))
+
+    def handle_statistics(self, metadata, data):
+        '''Handle stats here'''
         pass
 
 class PullSource(object):

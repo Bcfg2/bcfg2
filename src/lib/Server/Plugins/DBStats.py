@@ -13,14 +13,14 @@ from Bcfg2.Server.Reports.updatefix import update_database
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
 class DBStats(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Statistics,
+              Bcfg2.Server.Plugin.ThreadedStatistics,
               Bcfg2.Server.Plugin.PullSource):
     name = 'DBStats'
     __version__ = '$Id$'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.ThreadedStatistics.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullSource.__init__(self)
         self.cpath = "%s/Metadata/clients.xml" % datastore
         self.core = core
@@ -31,13 +31,13 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
             logger.debug(str(inst))
             logger.debug(str(type(inst)))
 
-    def process_statistics(self, mdata, xdata):
-        newstats = xdata.find("Statistics")
+    def handle_statistic(self, metadata, data):
+        newstats = data.find("Statistics")
         newstats.set('time', time.asctime(time.localtime()))
         # ick
-        xdata = lxml.etree.tostring(newstats)
-        ndx = lxml.etree.XML(xdata)
-        e = lxml.etree.Element('Node', name=mdata.hostname)
+        data = lxml.etree.tostring(newstats)
+        ndx = lxml.etree.XML(data)
+        e = lxml.etree.Element('Node', name=metadata.hostname)
         e.append(ndx)
         container = lxml.etree.Element("ConfigStatistics")
         container.append(e)
