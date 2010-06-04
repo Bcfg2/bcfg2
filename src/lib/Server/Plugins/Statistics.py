@@ -114,33 +114,20 @@ class StatisticsStore(object):
 
 
 class Statistics(Bcfg2.Server.Plugin.Plugin,
-                 Bcfg2.Server.Plugin.Statistics,
+                 Bcfg2.Server.Plugin.ThreadedStatistics,
                  Bcfg2.Server.Plugin.PullSource):
     name = 'Statistics'
     __version__ = '$Id$'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.ThreadedStatistics.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullSource.__init__(self)
-        self.fpath = "%s/etc/statistics.xml" % datastore
-        # Event from the core signaling an exit
-        self.terminate = core.terminate
-        self.work_queue = Queue.Queue()
-        self.worker = threading.Thread(target=self.process_statistics_loop)
-        self.worker.start()
+        fpath = "%s/etc/statistics.xml" % datastore
+        self.data_file = StatisticsStore(fpath)
 
-    def process_statistics_loop(self):
-        self.data_file = StatisticsStore(self.fpath)
-        while not (self.terminate.isSet() and self.work_queue.empty()):
-            try:
-                (xdata, hostname) = self.work_queue.get(block=True, timeout=5)
-            except:
-                continue
-            self.data_file.updateStats(xdata, hostname)
-
-    def process_statistics(self, client, xdata):
-        self.work_queue.put((copy.deepcopy(xdata), client.hostname))
+    def handle_statistic(self, metadata, data):
+        self.data_file.updateStats(data, metadata.hostname)
 
     def FindCurrent(self, client):
         rt = self.data_file.element.xpath('//Node[@name="%s"]' % client)[0]
