@@ -5,6 +5,7 @@ import ConfigParser
 import os
 import logging
 import pickle
+import platform
 import sys
 from Bcfg2.Server.Reports.importscript import load_stats
 from Bcfg2.Server.Reports.updatefix import update_database
@@ -181,9 +182,5 @@ class Reports(Bcfg2.Server.Admin.Mode):
         except (IOError, XMLSyntaxError):
             self.errExit("StatReports: Failed to parse %s"%(clientspath))
 
-        try:
-            location = self.cfp.get('components', 'bcfg2')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            self.errExit("Could not read bcfg2 from bcfg2.conf; exiting")
-        load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=location)
+        load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=platform.node())
 

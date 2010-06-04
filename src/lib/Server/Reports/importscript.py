@@ -28,6 +28,7 @@ import ConfigParser
 import difflib
 import logging
 import Bcfg2.Logger
+import platform
 
 def build_reason_kwargs(r_ent):
     if r_ent.get('current_bfile', False):
@@ -301,11 +302,6 @@ if __name__ == '__main__':
         raise SystemExit, 1
 
     q = '-O3' in sys.argv
-    try:
-        location = cf.get('components', 'bcfg2')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        print "Could not read bcfg2 from bcfg2.conf; exiting"
-        raise SystemExit, 1
     # Be sure the database is ready for new schema
     update_database()
-    load_stats(clientsdata, statsdata, verb, logger, quick=q, location=location)
+    load_stats(clientsdata, statsdata, verb, logger, quick=q, location=platform.node())
