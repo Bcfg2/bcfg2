@@ -9,6 +9,7 @@ import platform
 import sys
 from Bcfg2.Server.Reports.importscript import load_stats
 from Bcfg2.Server.Reports.updatefix import update_database
+from Bcfg2.Server.Reports.utils import *
 from lxml.etree import XML, XMLSyntaxError
 
 try:
@@ -117,7 +118,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         dup_reasons = []
     
         cmp_reasons = dict()
-        for reason in Reason.objects.all():
+        batch_update = []
+        for reason in BatchFetch(Reason.objects):
             ''' Loop through each reason and create a key out of the data. \
                 This lets us take advantage of a fast hash lookup for \
                 comparisons '''
@@ -129,24 +131,19 @@ class Reports(Bcfg2.Server.Admin.Mode):
             if key in cmp_reasons:
                 self.log.debug("Update interactions from %d to %d" \
                                     % (reason.id, cmp_reasons[key]))
-                try:
-                    Entries_interactions.objects.filter(reason=reason).\
-                                    update(reason=cmp_reasons[key])
-                    dup_reasons.append(reason.id)
-                except Exception, ex:
-                    self.log.error("Failed to update interactions for %d : %s" \
-                                    % (reason.id, ex))
+                dup_reasons.append(reason.id)
+                batch_update.append([cmp_reasons[key], reason.id])
             else:
                 cmp_reasons[key] = reason.id
             self.log.debug("key %d" % reason.id)
     
         self.log.debug("Done with updates, deleting dupes")
-        for dup in dup_reasons:
-            self.log.debug("Deleting %d" % dup)
-            try:
-                Reason.objects.get(id=dup).delete()
-            except Exception, ex:
-                self.log.error("Failed to delete reason %d: %s" % (dup, ex))
+        try:
+            cursor = connection.cursor()
+            cursor.executemany('update reports_entries_interactions set reason_id=%s where reason_id=%s', batch_update)
+            cursor.executemany('delete from reports_reason where id = %s', dup_reasons)
+        except Exception, ex:
+            self.log.error("Failed to delete reasons: %s" % ex)
 
         self.log.info("Found %d dupes out of %d" % (len(dup_reasons), start_count))
 
