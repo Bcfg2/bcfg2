@@ -50,6 +50,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "    -q|--quiet           Print only errors\n"
                  "\n"
                  "  Commands:\n"
+                 "    init                 Initialize the database\n"
                  "    load_stats           Load statistics data\n"
                  "      -s|--stats         Path to statistics.xml file\n"
                  "      -c|--clients-file  Path to clients.xml file\n"
@@ -85,6 +86,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.django_command_proxy(args[0])
         elif args[0] == 'scrub':
             self.scrub()
+        elif args[0] == 'init':
+            update_database()
         elif args[0] == 'update':
             update_database()
         elif args[0] == 'load_stats':
