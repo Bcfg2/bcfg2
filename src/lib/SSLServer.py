@@ -69,6 +69,7 @@ class SSLServer (SocketServer.TCPServer, object):
 
     Properties:
     url -- A url pointing to this server.
+
     """
 
     allow_reuse_address = True
@@ -88,6 +89,7 @@ class SSLServer (SocketServer.TCPServer, object):
         certfile -- certificate file (enables ssl encryption)
         reqCert -- client must present certificate
         timeout -- timeout for non-blocking request handling
+
         """
 
         all_iface_address = ('', server_address[1])
@@ -158,6 +160,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     Methods:
     authenticate -- prompt a check of a client's provided username and password
     handle_one_request -- handle a single rpc (optionally authenticating)
+
     """
     logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
 
@@ -182,7 +185,9 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     def parse_request(self):
         """Extends parse_request.
 
-        Optionally check HTTP authentication when parsing."""
+        Optionally check HTTP authentication when parsing.
+
+        """
         if not SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.parse_request(self):
             return False
         try:
@@ -251,6 +256,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     Properties:
     require_auth -- the request handler is requiring authorization
     credentials -- valid credentials being used for authentication
+
     """
 
     def __init__(self, server_address, RequestHandlerClass=None,
@@ -272,6 +278,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         register -- presence should be reported to service-location (default True)
         allow_none -- allow None values in xml-rpc
         encoding -- encoding to use for xml-rpc (default UTF-8)
+
         """
 
         XMLRPCDispatcher.__init__(self, allow_none, encoding)

@@ -1,4 +1,4 @@
-'''Option parsing library for utilities'''
+"""Option parsing library for utilities."""
 __revision__ = '$Revision$'
 
 import ConfigParser
@@ -315,10 +315,10 @@ CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
 
 
 class OptionParser(OptionSet):
-    '''
+    """
        OptionParser bootstraps option parsing,
        getting the value of the config file
-    '''
+    """
     def __init__(self, args):
         self.Bootstrap = OptionSet([('configfile', CFILE)])
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)

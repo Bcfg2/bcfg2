@@ -5,6 +5,7 @@ ComponentProxy -- an RPC client proxy to Cobalt components
 
 Functions:
 load_config -- read configuration files
+
 """
 
 __revision__ = '$Revision: $'
@@ -47,7 +48,7 @@ class CertificateError(Exception):
         self.commonName = commonName
 
 class RetryMethod(_Method):
-    """Method with error handling and retries built in"""
+    """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
     max_retries = 4
     def __call__(self, *args):
@@ -84,8 +85,7 @@ class RetryMethod(_Method):
 xmlrpclib._Method = RetryMethod
 
 class SSLHTTPConnection(httplib.HTTPConnection):
-
-    """Extension of HTTPConnection that implements SSL and related behaviors"""
+    """Extension of HTTPConnection that implements SSL and related behaviors."""
 
     logger = logging.getLogger('Bcfg2.Proxy.SSLHTTPConnection')
 
@@ -134,6 +134,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             connect() call will throw a `CertificateError`.
         protocol : {'xmlrpc/ssl', 'xmlrpc/tlsv1'}, optional
             Communication protocol to use.
+
         """
         if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
@@ -147,7 +148,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.timeout = timeout
 
     def connect(self):
-        """Initiates a connection using previously set attributes"""
+        """Initiates a connection using previously set attributes."""
         if SSL_LIB == 'py26_ssl':
             self._connect_py26ssl()
         elif SSL_LIB == 'm2crypto':
@@ -157,7 +158,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 
     def _connect_py26ssl(self):
-        """Initiates a connection using the ssl module"""
+        """Initiates a connection using the ssl module."""
         rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if self.protocol == 'xmlrpc/ssl':
             ssl_protocol_ver = ssl.PROTOCOL_SSLv23
@@ -193,7 +194,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.sock.closeSocket = True
 
     def _connect_m2crypto(self):
-        """Initiates a connection using the M2Crypto module"""
+        """Initiates a connection using the M2Crypto module."""
 
         if self.protocol == 'xmlrpc/ssl':
             ctx = SSL.Context('sslv23')
@@ -257,7 +258,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         return https
 
     def request(self, host, handler, request_body, verbose=0):
-        '''send request to server and return response'''
+        """Send request to server and return response."""
         h = self.make_connection(host)
         self.send_request(h, handler, request_body)
         self.send_host(h, host)
@@ -303,6 +304,7 @@ def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
     component_name -- name of the component to connect to
 
     Additional arguments are passed to the ServerProxy constructor.
+
     """
 
     if user and password:

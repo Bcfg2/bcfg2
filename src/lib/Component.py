@@ -90,6 +90,7 @@ def exposed(func):
         def my_method (self, param1, param2):
             do_stuff()
         my_method = expose(my_method)
+
     """
     func.exposed = True
     return func
@@ -112,7 +113,6 @@ def readonly(func):
     return func
 
 class Component (object):
-
     """Base component.
 
     Intended to be served as an instance by Cobalt.Component.XMLRPCServer
@@ -127,6 +127,7 @@ class Component (object):
     Methods:
     save -- pickle the component to a file
     do_tasks -- perform automatic tasks for the component
+
     """
 
     name = "component"
@@ -137,6 +138,7 @@ class Component (object):
 
         Keyword arguments:
         statefile -- file in which to save state automatically
+
         """
         self.statefile = kwargs.get("statefile", None)
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
@@ -148,6 +150,7 @@ class Component (object):
 
         Automatic tasks are member callables with an attribute
         automatic == True.
+
         """
         for name, func in inspect.getmembers(self, callable):
             if getattr(func, "automatic", False):
@@ -179,6 +182,7 @@ class Component (object):
 
         Arguments:
         method_name -- name of the method to resolve
+
         """
         try:
             func = getattr(self, method_name)
@@ -193,6 +197,7 @@ class Component (object):
 
         method -- XML-RPC method name
         args -- tuple of paramaters to method
+
         """
         need_to_lock = True
         if method in dispatch_dict:
@@ -247,6 +252,7 @@ class Component (object):
 
         Arguments:
         method_name -- name of method to get help on
+
         """
         try:
             func = self._resolve_exposed_method(method_name)

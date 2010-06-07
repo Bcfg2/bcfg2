@@ -1,4 +1,4 @@
-'''Bcfg2 logging support'''
+"""Bcfg2 logging support"""
 __revision__ = '$Revision$'
 
 import copy
@@ -14,16 +14,16 @@ import termios
 logging.raiseExceptions = 0
 
 def print_attributes(attrib):
-    ''' Add the attributes for an element'''
+    """Add the attributes for an element."""
     return ' '.join(['%s="%s"' % data for data in list(attrib.items())])
 
 def print_text(text):
-    ''' Add text to the output (which will need normalising '''
+    """Add text to the output (which will need normalising."""
     charmap = {'<':'&lt;', '>':'&gt;', '&':'&amp;'}
     return ''.join([charmap.get(char, char) for char in text]) + '\n'
 
 def xml_print(element, running_indent=0, indent=4):
-    ''' Add an element and its children to the return string '''
+    """Add an element and its children to the return string."""
     if (len(element.getchildren()) == 0) and (not element.text):
         ret = (' ' * running_indent)
         ret += '<%s %s/>\n' % (element.tag, print_attributes(element.attrib))
@@ -41,7 +41,7 @@ def xml_print(element, running_indent=0, indent=4):
     return ret
 
 class TermiosFormatter(logging.Formatter):
-    '''The termios formatter displays output in a terminal-sensitive fashion'''
+    """The termios formatter displays output in a terminal-sensitive fashion."""
 
     def __init__(self, fmt=None, datefmt=None):
         logging.Formatter.__init__(self, fmt, datefmt)
@@ -92,10 +92,10 @@ class TermiosFormatter(logging.Formatter):
         return '\n'.join(returns)
 
 class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
-    '''
+    """
        This handler fragments messages into
        chunks smaller than 250 characters
-    '''
+    """
 
     def __init__(self, procname, path, facility):
         self.procname = procname
@@ -103,7 +103,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         logging.handlers.SysLogHandler.__init__(self, path, facility)
 
     def emit(self, record):
-        '''chunk and deliver records'''
+        """Chunk and deliver records."""
         record.name = self.procname
         if str(record.msg) > 250:
             msgs = []
@@ -138,7 +138,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                 self.socket.send(msg)
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
-    '''setup logging for bcfg2 software'''
+    """Setup logging for Bcfg2 software."""
     if hasattr(logging, 'already_setup'):
         return
     # add the handler to the root logger
@@ -170,12 +170,13 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
     logging.already_setup = True
 
 def trace_process(**kwargs):
-
     """Literally log every line of python code as it runs.
 
     Keyword arguments:
     log -- file (name) to log to (default stderr)
-    scope -- base scope to log to (default Cobalt)"""
+    scope -- base scope to log to (default Cobalt)
+
+    """
 
     file_name = kwargs.get("log", None)
     if file_name is not None:
