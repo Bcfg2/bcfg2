@@ -84,6 +84,39 @@ if __name__ == '__main__':
     pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
     gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
 
+    # verify attributes for configuration entries
+    # (as defined in doc/server/configurationentries)
+    # TODO: See if it is possible to do this in the schema instead
+    configuration_attrs = {
+            'device':['name', 'owner', 'group', 'dev_type'],
+            'directory':['name', 'owner', 'group', 'perms'],
+            'file':['name', 'owner', 'group', 'perms', 'encoding', 'empty'],
+            'hardlink':['name', 'to'],
+            'symlink':['name', 'to'],
+            'ignore':['name'],
+            'nonexist':['name'],
+            'permissions':['name', 'owner', 'group', 'perms']}
+    for rfile in rules_list:
+        try:
+            xdata = lxml.etree.parse(rfile)
+        except lxml.etree.XMLSyntaxError, e:
+            print("Failed to parse %s: %s" % (plist, e))
+        for posixpath in xdata.findall("//Path"):
+            pathname = posixpath.get('name')
+            pathtype = posixpath.get('type')
+            pathset = set(posixpath.attrib.keys())
+            try:
+                required_attrs = set(configuration_attrs[pathtype] \
+                                     + ['type'])
+            except KeyError:
+                continue
+            if pathset.issuperset(required_attrs):
+                continue
+            else:
+                print("The following required attributes are missing for"
+                      " Path %s in %s: %s" % (pathname, rfile,
+                      [attr for attr in required_attrs.difference(pathset)]))
+
     # warn on duplicate Pkgmgr entries with the same priority
     pset = set()
     for plist in pkg_list:
