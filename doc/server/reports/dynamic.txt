@@ -22,17 +22,19 @@ Install
 
 Be sure to include the specified fields included the example ``bcfg2.conf``
 file. These can be specified in either ``/etc/bcfg2.conf``, if it is readable
-by the webserver user, or ``/etc/bcfg2-web.conf``.
+by the webserver user, or ``/etc/bcfg2-web.conf``.  Any database supported
+by Django can be used.  If you are not using sqlite (the default choice), 
+please see the :ref:`alternative-databases` section below.  Distributed 
+environments can share a single remote database for reporting.
 
-Inside the ``bcfg2-tarball/examples/`` directory from the
-tarball you will find ``brpt.sqlite``. Copy this file to
-``<path-to-bcfg2-repository>/etc/brpt.sqlite``.
-
-If you are not using sqlite (the default choice), please see the
-:ref:`alternative-databases` section below.
+Run ``/usr/sbin/bcfg2-admin reports init`` to initialize
+the database.  If you're using sqlite, make sure the webserver
+can write to the database.
 
 The recommended statistics plugin is DBStats. To use it, add it to the
-**plugins** line in your ``bcfg2.conf``.
+**plugins** line in your ``bcfg2.conf``.  Alternatively, the Statistics
+plugin can be used in conjunction with a crontab entry to run 
+``/usr/sbin/bcfg2-admin reports load_stats``.
 
 Restart the Bcfg2 server. Run a client in dryrun mode in order to get
 the client's statistics loaded into the database.
@@ -125,7 +127,19 @@ Notes on Alternative Databases
 ------------------------------
 
 If you choose to use a different database, you'll need to edit
-``/etc/bcfg2.conf``.
+``/etc/bcfg2.conf``.  These fields should be updated in the 
+``statistics`` section:
+
+* database_engine
+
+  * ex: database_engine = mysql
+  * ex: database_engine = postgresql_psycopg2
+
+* database_name
+* database_user
+* database_password
+* database_host
+* database_port (optional)
 
 Summary and Features
 ====================
@@ -175,6 +189,28 @@ relational database, building historical information. In the future,
 a new statistics module in the server will allow direct writing to the
 database whenever a configuration interaction occurs, which will make
 the reports always up to date.
+
+bcfg2-admin reports (command line script)
+-----------------------------------------
+
+The bcfg2-admin tool provides management and maintenance capabilities for
+the reporting database.  A few useful `Django <http://www.djangoproject.com>`_ 
+commands are provided as well.
+
+* init: Initialize a new database
+* load_stats:  Load statistics data from the Statistics plugin into the
+  database.  This was importscript.py.
+* scrub:  Scrub the database for duplicate reasons.
+* update:  Apply any updates to the reporting database.  Unlike the syncdb
+  command, this will modify existing tables.
+
+Django commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* syncdb:  Create the tables for any models not installed.  Django will
+  not modify any existing tables.
+* sqlall:  Print the sql statements used to create the database.  Note: 
+  This does not show the fixture data.
+* validate:  Validate the database against the current models.
 
 bcfg2-reports (command line script)
 -----------------------------------
