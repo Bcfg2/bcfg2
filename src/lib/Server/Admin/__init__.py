@@ -15,7 +15,7 @@ class ModeOperationError(Exception):
     pass
 
 class Mode(object):
-    '''Help message has not yet been added for mode'''
+    """Help message has not yet been added for mode."""
     __shorthelp__ = 'Shorthelp not defined yet'
     __longhelp__ = 'Longhelp not defined yet'
     __args__ = []
@@ -42,7 +42,7 @@ class Mode(object):
         raise SystemExit(1)
 
     def get_repo_path(self):
-        '''return repository path'''
+        """Return repository path"""
         return self.cfp.get('server', 'repository')
 
     def load_stats(self, client):
@@ -61,16 +61,18 @@ class Mode(object):
         vdelim - vertical delimiter between columns
         padding - # of spaces around the longest element in the column
         justify - may be left,center,right
+
         """
         hdelim = "="
         justify = {'left':str.ljust,
                    'center':str.center,
                    'right':str.rjust}[justify.lower()]
 
-        '''
-        calculate column widths (longest item in each column
+        """
+        Calculate column widths (longest item in each column
         plus padding on both sides)
-        '''
+
+        """
         cols = list(zip(*rows))
         colWidths = [max([len(str(item))+2*padding for \
                           item in col]) for col in cols]
@@ -86,7 +88,7 @@ class Mode(object):
                 hdr = False
 
 class MetadataCore(Mode):
-    '''Base class for admin-modes that handle metadata'''
+    """Base class for admin-modes that handle metadata."""
     def __init__(self, configfile, usage, pwhitelist=None, pblacklist=None):
         Mode.__init__(self, configfile)
         options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,

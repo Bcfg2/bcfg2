@@ -1,4 +1,3 @@
-'''Minestruct Admin Mode'''
 import getopt
 import lxml.etree
 import sys
@@ -6,7 +5,7 @@ import sys
 import Bcfg2.Server.Admin
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
-    '''Pull extra entries out of statistics'''
+    """Pull extra entries out of statistics."""
     __shorthelp__ = "Extract extra entry lists from statistics"
     __longhelp__ = (__shorthelp__ +
                     "\n\nbcfg2-admin minestruct [-f filename] "

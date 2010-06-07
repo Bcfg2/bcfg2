@@ -87,7 +87,7 @@ default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
                 'Metadata', 'Base', 'Bundler']
 
 def gen_password(length):
-    """Generates a random alphanumeric password with length characters"""
+    """Generates a random alphanumeric password with length characters."""
     chars = string.letters + string.digits
     newpasswd = ''
     for i in range(length):
@@ -95,7 +95,7 @@ def gen_password(length):
     return newpasswd
 
 def create_key(hostname, keypath, certpath):
-    """Creates a bcfg2.key at the directory specifed by keypath"""
+    """Creates a bcfg2.key at the directory specifed by keypath."""
     kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (hostname, keypath)
     subprocess.call((kcstr), shell=True)
     ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
@@ -121,7 +121,7 @@ def create_conf(confpath, confdata):
 
 
 class Init(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = ("Interactively initialize a new repository")
+    __shorthelp__ = ("Interactively initialize a new repository.")
     __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
     __usage__ = "bcfg2-admin init"
     options = {
@@ -137,7 +137,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
 
     def _set_defaults(self):
-        """Set default parameters"""
+        """Set default parameters."""
         self.configfile = self.opts['configfile']
         self.repopath = self.opts['repo']
         self.password = gen_password(8)
@@ -164,7 +164,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         self.init_repo()
 
     def _prompt_hostname(self):
-        '''Ask for the server hostname'''
+        """Ask for the server hostname."""
         data = raw_input("What is the server's hostname: [%s]" % socket.getfqdn())
         if data != '':
             self.shostname = data
@@ -172,14 +172,14 @@ class Init(Bcfg2.Server.Admin.Mode):
             self.shostname = socket.getfqdn()
 
     def _prompt_config(self):
-        """Ask for the configuration file path"""
+        """Ask for the configuration file path."""
         newconfig = raw_input("Store bcfg2 configuration in [%s]: " %
                                 self.configfile)
         if newconfig != '':
             self.configfile = newconfig
 
     def _prompt_repopath(self):
-        """Ask for the repository path"""
+        """Ask for the repository path."""
         while True:
             newrepo = raw_input("Location of bcfg2 repository [%s]: " %
                                   self.repopath)
@@ -194,7 +194,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                 break
 
     def _prompt_password(self):
-        """Ask for a password or generate one if none is provided"""
+        """Ask for a password or generate one if none is provided."""
         newpassword = getpass.getpass(
                 "Input password used for communication verification "
                 "(without echoing; leave blank for a random): ").strip()
@@ -202,13 +202,13 @@ class Init(Bcfg2.Server.Admin.Mode):
             self.password = newpassword
 
     def _prompt_server(self):
-        """Ask for the server name"""
+        """Ask for the server name."""
         newserver = raw_input("Input the server location [%s]: " % self.server_uri)
         if newserver != '':
             self.server_uri = newserver
 
     def _prompt_groups(self):
-        """Create the groups.xml file"""
+        """Create the groups.xml file."""
         prompt = '''Input base Operating System for clients:\n'''
         for entry in os_list:
             prompt += "%d: %s\n" % (os_list.index(entry) + 1, entry[0])
@@ -236,7 +236,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                     break
 
     def _init_plugins(self):
-        # Initialize each plugin-specific portion of the repository
+        """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
                 Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, groups, self.os_sel, clients)
@@ -250,8 +250,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                     print 'Plugin setup for %s failed: %s\n Check that dependencies are installed?' % (plugin, e)
 
     def init_repo(self):
-        '''Setup a new repo'''
-        # Create the contents of the configuration file
+        """Setup a new repo and create the content of the configuration file."""
         keypath = os.path.dirname(os.path.abspath(self.configfile))
         confdata = config % (
                         self.repopath,

@@ -37,7 +37,7 @@ class Tidy(Bcfg2.Server.Admin.Mode):
                 print name
 
     def buildTidyList(self):
-        '''Clean up unused or unusable files from the repository'''
+        """Clean up unused or unusable files from the repository."""
         hostmatcher = re.compile('.*\.H_(\S+)$')
         to_remove = []
         good = []

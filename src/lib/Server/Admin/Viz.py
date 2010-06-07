@@ -67,7 +67,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
 
     def Visualize(self, repopath, hosts=False,
                   bundles=False, key=False, output=False):
-        '''Build visualization of groups file'''
+        """Build visualization of groups file."""
         if output:
             format = output.split('.')[-1]
         else:

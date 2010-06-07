@@ -2,10 +2,9 @@ import getopt
 import Bcfg2.Server.Admin
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
-    '''
-    Pull mode retrieves entries from clients and
-    integrates the information into the repository
-    '''
+    """Pull mode retrieves entries from clients and
+    integrates the information into the repository.
+    """
     __shorthelp__ = ("Integrate configuration information "
                      "from clients into the server repository")
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] "
@@ -46,7 +45,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         self.PullEntry(gargs[0], gargs[1], gargs[2])
 
     def BuildNewEntry(self, client, etype, ename):
-        '''construct a new full entry for given client/entry from statistics'''
+        """Construct a new full entry for given client/entry from statistics."""
         new_entry = {'type':etype, 'name':ename}
         for plugin in self.bcore.pull_sources:
             try:
@@ -71,7 +70,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         return new_entry
 
     def Choose(self, choices):
-        '''Determine where to put pull data'''
+        """Determine where to put pull data."""
         if self.mode == 'interactive':
             for choice in choices:
                 print "Plugin returned choice:"
@@ -94,7 +93,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             return choices[0]
 
     def PullEntry(self, client, etype, ename):
-        '''Make currently recorded client state correct for entry'''
+        """Make currently recorded client state correct for entry."""
         new_entry = self.BuildNewEntry(client, etype, ename)
 
         meta = self.bcore.build_metadata(client)
