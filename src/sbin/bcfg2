@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''Bcfg2 Client'''
+"""Bcfg2 Client"""
 __revision__ = '$Revision$'
 
 import logging
@@ -31,7 +31,7 @@ DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
 
 
 class Client:
-    ''' The main bcfg2 client class '''
+    """The main bcfg2 client class"""
 
     def __init__(self):
         self.toolset = None
@@ -106,7 +106,7 @@ class Client:
             raise SystemExit(1)
 
     def run_probe(self, probe):
-        '''Execute probe'''
+        """Execute probe"""
         name = probe.get('name')
         self.logger.info("Running probe %s" % name)
         ret = Bcfg2.Client.XML.Element("probe-data",
@@ -132,12 +132,12 @@ class Client:
         return ret
 
     def fatal_error(self, message):
-        '''Signal a fatal error'''
+        """Signal a fatal error"""
         self.logger.error("Fatal error: %s" % (message))
         raise SystemExit(1)
 
     def run(self):
-        ''' Perform client execution phase '''
+        """Perform client execution phase"""
         times = {}
 
         # begin configuration

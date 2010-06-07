@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-'''Query reporting system for client status'''
+"""Query reporting system for client status"""
 __revision__ = '$Revision$'
 
 import os
@@ -21,16 +21,16 @@ import datetime
 import fileinput
 
 def timecompare(client1, client2):
-    '''compares two clients by their timestamps'''
+    """Compares two clients by their timestamps"""
     return cmp(client1.current_interaction.timestamp, \
                client2.current_interaction.timestamp)
 
 def namecompare(client1, client2):
-    '''compares two clients by their names'''
+    """Compares two clients by their names"""
     return cmp(client1.name, client2.name)
 
 def statecompare(client1, client2):
-    '''compares two clients by their states'''
+    """Compares two clients by their states"""
     clean1 = client1.current_interaction.isclean()
     clean2 = client2.current_interaction.isclean()
 
@@ -42,7 +42,7 @@ def statecompare(client1, client2):
         return 0
 
 def crit_compare(criterion, client1, client2):
-    '''compares two clients by the criteria provided in criterion'''
+    """Compares two clients by the criteria provided in criterion"""
     for crit in criterion:
         comp = 0
         if crit == 'name':
@@ -58,10 +58,10 @@ def crit_compare(criterion, client1, client2):
     return 0
 
 def print_fields(fields, cli, max_name, entrydict):
-    '''
-    prints the fields specified in fields of cli, max_name
+    """
+    Prints the fields specified in fields of cli, max_name
     specifies the column width of the name column
-    '''
+    """"
     fmt = ''
     for field in fields:
         if field == 'name':

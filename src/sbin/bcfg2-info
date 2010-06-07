@@ -1,5 +1,6 @@
 #!/usr/bin/python
-'''This tool loads the Bcfg2 core into an interactive debugger'''
+
+"""This tool loads the Bcfg2 core into an interactive debugger"""
 __revision__ = '$Revision$'
 
 from code import InteractiveConsole
@@ -31,7 +32,7 @@ class dummyError(Exception):
     pass
 
 class FileNotBuilt(Exception):
-    ''' Thrown when File entry contains no content'''
+    """Thrown when File entry contains no content."""
     def __init__(self, value):
         Exception.__init__(self)
         self.value = value
@@ -39,7 +40,7 @@ class FileNotBuilt(Exception):
         return repr(self.value)
 
 def printTabular(rows):
-    '''print data in tabular format'''
+    """print data in tabular format."""
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
                     for index in range(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
@@ -55,8 +56,9 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats.print_stats(200)
 
 def write_config_file(outputdir, cfg):
-    '''Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
-    in the appropriate directory under the output directory.'''
+    """Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+    in the appropriate directory under the output directory.
+    """
     name = cfg.get('name')
 
     # directory creation
@@ -135,8 +137,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             sh.interact()
 
     def do_quit(self, _):
-        """Exit program.
-Usage: [quit|exit]"""
+        """
+           Exit program.
+           Usage: [quit|exit]
+        """
         for plugin in self.plugins.values():
             plugin.shutdown()
         os._exit(0)
@@ -145,7 +149,7 @@ Usage: [quit|exit]"""
     do_exit = do_quit
 
     def do_help(self, _):
-        '''print out usage info'''
+        """Print out usage info"""
         print 'Commands:'
         print 'build <hostname> <filename> - build config for hostname, writing to filename'
         print 'builddir <hostname> <dirname> - build config for hostname, writing separate files to dirname'
@@ -168,15 +172,15 @@ Usage: [quit|exit]"""
 
 
     def do_update(self, _):
-        '''Process pending fs events'''
+        """Process pending fs events"""
         self.fam.handle_events_in_interval(0.1)
 
     def do_version(self, _):
-        '''print out code version'''
+        """Print out code version"""
         print(__revision__)
 
     def do_build(self, args):
-        '''build client configuration'''
+        """Build client configuration"""
         alist = args.split()
         path_force = False
         if '-f' in args:
@@ -197,7 +201,7 @@ Usage: [quit|exit]"""
             print('Usage: build [-f] <hostname> <output file>')
 
     def help_builddir(self):
-        '''Display help for builddir command'''
+        """Display help for builddir command."""
         print('Usage: builddir [-f] <hostname> <output dir>')
         print('')
         print('Generates a config for client <hostname> and writes the')
@@ -212,7 +216,7 @@ Usage: [quit|exit]"""
         print('bcfg2 client itself.')
 
     def do_builddir(self, args):
-        '''build client configuration as separate files within a dir'''
+        """Build client configuration as separate files within a dir."""
         alist = args.split()
         path_force = False
         if '-f' in args:
@@ -257,7 +261,7 @@ Usage: [quit|exit]"""
             self.do_build("%s %s/%s.xml" % (client, args, client))
 
     def do_buildfile(self, args):
-        '''build a config file for client'''
+        """Build a config file for client."""
         if len(args.split()) == 2:
             fname, client = args.split()
             entry = lxml.etree.Element('Path', type='file', name=fname)
@@ -268,7 +272,7 @@ Usage: [quit|exit]"""
             print('Usage: buildfile filename hostname')
 
     def do_bundles(self, _):
-        '''print out group/bundle info'''
+        """Print out group/bundle info."""
         data = [('Group', 'Bundles')]
         groups = list(self.metadata.groups.keys())
         groups.sort()
@@ -278,7 +282,7 @@ Usage: [quit|exit]"""
         printTabular(data)
 
     def do_clients(self, _):
-        '''print out client info'''
+        """Print out client info."""
         data = [('Client', 'Profile')]
         clist = list(self.metadata.clients.keys())
         clist.sort()
@@ -287,12 +291,12 @@ Usage: [quit|exit]"""
         printTabular(data)
 
     def do_generators(self, _):
-        '''print out generator info'''
+        """Print out generator info."""
         for generator in self.generators:
             print(generator.__version__)
 
     def do_showentries(self, args):
-        '''show abstract configuration entries for a given host'''
+        """Show abstract configuration entries for a given host."""
         arglen = len(args.split())
         if arglen not in [2, 3]:
             print("Usage: showentries <hostname> <type>")
@@ -318,7 +322,7 @@ Usage: [quit|exit]"""
         printTabular(output)
 
     def do_groups(self, _):
-        '''print out group info'''
+        """Print out group info."""
         data = [("Groups", "Profile", "Category", "Contains")]
         grouplist = list(self.metadata.groups.keys())
         grouplist.sort()
@@ -338,7 +342,7 @@ Usage: [quit|exit]"""
         printTabular(data)
 
     def do_showclient(self, args):
-        ''' print host metadata'''
+        """Print host metadata."""
         data = [('Client', 'Profile', "Groups", "Bundles")]
         if not len(args):
             print("Usage:\nshowclient <client> ... <clientN>")
@@ -367,7 +371,7 @@ Usage: [quit|exit]"""
                         print "=" * 80
 
     def do_mappings(self, args):
-        '''print out mapping info'''
+        """Print out mapping info."""
         # dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''bcfg2-admin is a script that helps to administrate a bcfg2 deployment'''
+"""bcfg2-admin is a script that helps to administrate a Bcfg2 deployment."""
 
 from optparse import OptionParser
 from StringIO import StringIO
@@ -13,14 +13,14 @@ log = logging.getLogger('bcfg2-admin')
 import Bcfg2.Server.Admin
 
 def mode_import(modename):
-    '''Load Bcfg2.Server.Admin.<mode>'''
+    """Load Bcfg2.Server.Admin.<mode>"""
     modname = modename.capitalize()
     mod = getattr(__import__("Bcfg2.Server.Admin.%s" %
                              (modname)).Server.Admin, modname)
     return getattr(mod, modname)
 
 def get_modes():
-    """Get all available modes, except for the base mode"""
+    """Get all available modes, except for the base mode."""
     return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
 
 def create_description():

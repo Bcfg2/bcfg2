@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-'''bcfg2-build-reports Generates & distributes reports of statistic information
-for bcfg2'''
+"""bcfg2-build-reports Generates & distributes reports of statistic information
+for bcfg2"""
+
 __revision__ = '$Revision$'
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
@@ -10,8 +11,10 @@ from time import asctime, strptime
 import copy, getopt, re, os, socket, sys
 
 def generatereport(rspec, nrpt):
-    '''generatereport creates and returns an ElementTree representation
-     of a report adhering to the XML spec for intermediate reports'''
+    """
+    generatereport creates and returns an ElementTree representation
+    of a report adhering to the XML spec for intermediate reports.
+    """
     reportspec = copy.deepcopy(rspec)
     nodereprt = copy.deepcopy(nrpt)
 
@@ -19,7 +22,7 @@ def generatereport(rspec, nrpt):
     reportmodified = reportspec.get("modified", default = 'Y')
     current_date = asctime()[:10]
 
-    '''build regex of all the nodes we are reporting about'''
+    """Build regex of all the nodes we are reporting about."""
     pattern = re.compile( '|'.join([item.get("name") for item in reportspec.findall('Machine')]))
 
     for node in nodereprt.findall('Node'):
@@ -51,7 +54,7 @@ def generatereport(rspec, nrpt):
     return nodereprt
 
 def mail(mailbody, confi):
-    '''mail mails a previously generated report'''
+    """mail mails a previously generated report."""
 
     try:
         mailer = confi.get('statistics', 'sendmailpath')
@@ -66,8 +69,9 @@ def mail(mailbody, confi):
         print "Exit code: %s" % exitcode
 
 def rss(reportxml, delivery, report):
-    '''rss appends a new report to the specified rss file
-     keeping the last 9 articles'''
+    """rss appends a new report to the specified rss file
+    keeping the last 9 articles.
+    """
     #check and see if rss file exists
     for destination in delivery.findall('Destination'):
         try:
@@ -105,7 +109,7 @@ def rss(reportxml, delivery, report):
         fil.close()
 
 def www(reportxml, delivery):
-    '''www outputs report to'''
+    """www outputs report to"""
 
     #this can later link to WWW report if one gets published simultaneously?    
     for destination in delivery.findall('Destination'):
@@ -115,7 +119,7 @@ def www(reportxml, delivery):
         fil.close()
 
 def fileout(reportxml, delivery):
-    '''outputs to plain text file'''
+    """outputs to plain text file"""
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
 
@@ -123,7 +127,7 @@ def fileout(reportxml, delivery):
         fil.close()
 
 def pretty_print(element, level=0):
-    '''Produce a pretty-printed text representation of element'''
+    """Produce a pretty-printed text representation of element."""
     if element.text:
         fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
         data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
@@ -188,7 +192,7 @@ if __name__ == '__main__':
     #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
-    '''Reads Data & Config files'''
+    """Reads Data & Config files"""
     try:
         statsdata = XML(open(statpath).read())
     except (IOError, XMLSyntaxError):
