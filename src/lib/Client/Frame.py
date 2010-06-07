@@ -1,6 +1,6 @@
 """
 Frame is the Client Framework that verifies and
-installs entries, and generates statistics
+installs entries, and generates statistics.
 """
 __revision__ = '$Revision$'
 
@@ -9,14 +9,14 @@ import time
 import Bcfg2.Client.Tools
 
 def cmpent(ent1, ent2):
-    '''Sort entries'''
+    """Sort entries."""
     if ent1.tag != ent2.tag:
         return cmp(ent1.tag, ent2.tag)
     else:
         return cmp(ent1.get('name'), ent2.get('name'))
 
 def promptFilter(prompt, entries):
-    '''Filter a supplied list based on user input'''
+    """Filter a supplied list based on user input."""
     ret = []
     entries.sort(cmpent)
     for entry in entries[:]:
@@ -46,7 +46,7 @@ def passes_black_list(entry, blacklist):
            ['*', entry.get('name')] not in blacklist
 
 class Frame:
-    '''Frame is the container for all Tool objects and state information'''
+    """Frame is the container for all Tool objects and state information."""
     def __init__(self, config, setup, times, drivers, dryrun):
         self.config = config
         self.times = times
@@ -164,11 +164,12 @@ class Frame:
         raise AttributeError(name)
 
     def Inventory(self):
-        '''
+        """
            Verify all entries,
            find extra entries,
            and build up workqueues
-        '''
+
+        """
         # initialize all states
         for struct in self.config.getchildren():
             for entry in struct.getchildren():
@@ -180,7 +181,7 @@ class Frame:
                 self.logger.error("%s.Inventory() call failed:" % tool.name, exc_info=1)
 
     def Decide(self):
-        '''Set self.whitelist based on user interaction'''
+        """Set self.whitelist based on user interaction."""
         prompt = "Install %s: %s? (y/N): "
         rprompt = "Remove %s: %s? (y/N): "
         if self.setup['remove']:
@@ -280,7 +281,7 @@ class Frame:
                 self.blacklist.append(entry)
 
     def DispatchInstallCalls(self, entries):
-        '''Dispatch install calls to underlying tools'''
+        """Dispatch install calls to underlying tools."""
         for tool in self.tools:
             handled = [entry for entry in entries if tool.canInstall(entry)]
             if not handled:
@@ -291,7 +292,7 @@ class Frame:
                 self.logger.error("%s.Install() call failed:" % tool.name, exc_info=1)
 
     def Install(self):
-        '''Install all entries'''
+        """Install all entries."""
         self.DispatchInstallCalls(self.whitelist)
         mods = self.modified
         mbundles = [struct for struct in self.config.findall('Bundle') if \
@@ -334,7 +335,7 @@ class Frame:
                                       (tool.name), exc_info=1)
 
     def Remove(self):
-        '''Remove extra entries'''
+        """Remove extra entries."""
         for tool in self.tools:
             extras = [entry for entry in self.removal if tool.handlesEntry(entry)]
             if extras:
@@ -344,7 +345,7 @@ class Frame:
                     self.logger.error("%s.Remove() failed" % tool.name, exc_info=1)
 
     def CondDisplayState(self, phase):
-        '''Conditionally print tracing information'''
+        """Conditionally print tracing information."""
         self.logger.info('\nPhase: %s' % phase)
         self.logger.info('Correct entries:\t%d' % list(self.states.values()).count(True))
         self.logger.info('Incorrect entries:\t%d' % list(self.states.values()).count(False))
@@ -363,13 +364,13 @@ class Frame:
             self.logger.info('All entries correct.')
 
     def ReInventory(self):
-        '''Recheck everything'''
+        """Recheck everything."""
         if not self.dryrun and self.setup['kevlar']:
             self.logger.info("Rechecking system inventory")
             self.Inventory()
 
     def Execute(self):
-        '''Run all methods'''
+        """Run all methods."""
         self.Inventory()
         self.times['inventory'] = time.time()
         self.CondDisplayState('initial')
@@ -385,7 +386,7 @@ class Frame:
         self.CondDisplayState('final')
 
     def GenerateStats(self):
-        '''Generate XML summary of execution statistics'''
+        """Generate XML summary of execution statistics."""
         feedback = Bcfg2.Client.XML.Element("upload-statistics")
         stats = Bcfg2.Client.XML.SubElement(feedback,
                                             'Statistics',
