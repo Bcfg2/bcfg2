@@ -1,4 +1,4 @@
-'''All POSIX Type client support for Bcfg2'''
+"""All POSIX Type client support for Bcfg2."""
 __revision__ = '$Revision$'
 
 from datetime import datetime
@@ -27,7 +27,7 @@ device_map = {'block': stat.S_IFBLK,
 
 
 def calcPerms(initial, perms):
-    '''This compares ondisk permissions with specified ones'''
+    """This compares ondisk permissions with specified ones."""
     pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID},
              {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
              {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP},
@@ -43,10 +43,10 @@ def calcPerms(initial, perms):
     return tempperms
 
 def normUid(entry):
-    '''
+    """
        This takes a user name or uid and
-       returns the corresponding uid or False
-    '''
+       returns the corresponding uid or False.
+    """
     try:
         try:
             return int(entry.get('owner'))
@@ -57,10 +57,10 @@ def normUid(entry):
         return False
 
 def normGid(entry):
-    '''
+    """
        This takes a group name or gid and
-       returns the corresponding gid or False
-    '''
+       returns the corresponding gid or False.
+    """
     try:
         try:
             return int(entry.get('group'))
@@ -74,7 +74,7 @@ text_chars = "".join([chr(y) for y in range(32, 127)] + list("\n\r\t\b"))
 notrans = string.maketrans("", "")
 
 def isString(strng):
-    '''Returns true if a string contains no binary chars'''
+    """Returns true if a string contains no binary chars."""
     if "\0" in strng:
         return False
 
@@ -84,7 +84,7 @@ def isString(strng):
     return len(strng.translate(notrans, text_chars)) == 0
 
 class POSIX(Bcfg2.Client.Tools.Tool):
-    '''POSIX File support code'''
+    """POSIX File support code."""
     name = 'POSIX'
     __handles__ = [('ConfigFile', None),
                    ('Directory', None),
@@ -112,7 +112,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     max_copies = setup['max_copies']
 
     def canInstall(self, entry):
-        '''Check if entry is complete for installation'''
+        """Check if entry is complete for installation."""
         if Bcfg2.Client.Tools.Tool.canInstall(self, entry):
             if (entry.tag, entry.text, entry.get('empty', 'false')) == \
                ('ConfigFile', None, 'false'):
@@ -122,7 +122,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def VerifySymLink(self, entry, _):
-        '''Verify SymLink Entry'''
+        """Verify SymLink Entry."""
         try:
             sloc = os.readlink(entry.get('name'))
             if sloc == entry.get('to'):
@@ -140,7 +140,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def InstallSymLink(self, entry):
-        '''Install SymLink Entry'''
+        """Install SymLink entry."""
         self.logger.info("Installing Symlink %s" % (entry.get('name')))
         if os.path.lexists(entry.get('name')):
             try:
@@ -167,7 +167,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def VerifyDirectory(self, entry, modlist):
-        '''Verify Directory Entry'''
+        """Verify Directory entry."""
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
         try:
@@ -258,7 +258,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         return pTrue and pruneTrue
 
     def InstallDirectory(self, entry):
-        '''Install Directory Entry'''
+        """Install Directory entry."""
         self.logger.info("Installing Directory %s" % (entry.get('name')))
         try:
             fmode = os.lstat(entry.get('name'))
@@ -326,7 +326,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         return self.InstallPermissions(entry)
 
     def VerifyhardLink(self, entry, _):
-        '''Verify HardLink Entry'''
+        """Verify HardLink entry."""
         try:
             if os.path.samefile(entry.get('name'), entry.get('to')):
                 return True
@@ -344,7 +344,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def InstallhardLink(self, entry):
-        '''Install HardLink Entry'''
+        """Install HardLink entry."""
         self.logger.info("Installing Hardlink %s" % (entry.get('name')))
         if os.path.lexists(entry.get('name')):
             try:
@@ -370,11 +370,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def VerifyPermissions(self, entry, _):
-        '''Verify Permissions entry'''
+        """Verify Permissions entry"""
         return self.VerifyDirectory(entry, _)
 
     def InstallPermissions(self, entry):
-        '''Install POSIX Permissions'''
+        """Install POSIX permissions"""
         try:
             os.chown(entry.get('name'), normUid(entry), normGid(entry))
             os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
@@ -385,7 +385,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def Verifydevice(self, entry, _):
-        '''Verify device entry'''
+        """Verify device entry."""
         try:
             # check for file existence
             filestat = os.stat(entry.get('name'))
@@ -428,7 +428,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
 
     def Installdevice(self, entry):
-        '''Install device entries'''
+        """Install device entries."""
         try:
             # check for existing paths and remove them
             filestat = os.lstat(entry.get('name'))
@@ -461,7 +461,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 return False
 
     def Verifynonexistent(self, entry, _):
-        '''Verify nonexistent entry'''
+        """Verify nonexistent entry."""
         # return true if path does _not_ exist
         return not os.path.lexists(entry.get('name'))
 
@@ -496,7 +496,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.error("Failed to read %s: %s" % (error.filename, error.strerror))
 
     def VerifyConfigFile(self, entry, _):
-        '''Install ConfigFile Entry'''
+        """Install ConfigFile entry."""
         # configfile verify is permissions check + content check
         permissionStatus = self.VerifyDirectory(entry, _)
         tbin = False
@@ -580,7 +580,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         return contentStatus and permissionStatus
 
     def InstallConfigFile(self, entry):
-        '''Install ConfigFile Entry'''
+        """Install ConfigFile entry."""
         self.logger.info("Installing ConfigFile %s" % (entry.get('name')))
 
         parent = "/".join(entry.get('name').split('/')[:-1])

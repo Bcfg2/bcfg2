@@ -1,4 +1,4 @@
-'''This is rc-update support'''
+"""This is rc-update support."""
 __revision__ = '$Revision$'
 
 import os
@@ -7,17 +7,18 @@ import Bcfg2.Client.XML
 
 
 class RcUpdate(Bcfg2.Client.Tools.SvcTool):
-    '''RcUpdate support for Bcfg2'''
+    """RcUpdate support for Bcfg2."""
     name = 'RcUpdate'
     __execs__ = ['/sbin/rc-update', '/bin/rc-status']
     __handles__ = [('Service', 'rc-update')]
     __req__ = {'Service': ['name', 'status']}
 
     def VerifyService(self, entry, _):
-        '''
+        """
         Verify Service status for entry.
         Assumes we run in the "default" runlevel.
-        '''
+
+        """
         # check if service is enabled
         cmd = '/sbin/rc-update show default | grep %s'
         rc = self.cmd.run(cmd % entry.get('name'))[0]
@@ -51,10 +52,11 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         return True
 
     def InstallService(self, entry):
-        '''
+        """
         Install Service entry
-        In supervised mode we also take care it's (not) running
-        '''
+        In supervised mode we also take care it's (not) running.
+
+        """
         self.logger.info('Installing Service %s' % entry.get('name'))
         if entry.get('status') == 'on':
             # make sure it's running if in supervised mode
@@ -79,7 +81,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         return False
 
     def FindExtra(self):
-        '''Locate extra rc-update Services'''
+        """Locate extra rc-update services."""
         cmd = '/bin/rc-status -s | grep started'
         allsrv = [line.split()[0] for line in self.cmd.run(cmd)[1]]
         self.logger.debug('Found active services:')

@@ -1,11 +1,10 @@
-# This is the bcfg2 support for macports packages
-'''This provides bcfg2 support for macports packages'''
+"""This provides Bcfg2 support for macports packages."""
 __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
 
 class MacPorts(Bcfg2.Client.Tools.PkgTool):
-    '''macports package support'''
+    """macports package support."""
     name = 'MacPorts'
     __execs__ = ["/opt/local/bin/port"]
     __handles__ = [('Package', 'macport')]
@@ -19,7 +18,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         self.RefreshPackages()
 
     def RefreshPackages(self):
-        '''Refresh memory hashes of packages'''
+        """Refresh memory hashes of packages."""
         pkgcache = self.cmd.run("/opt/local/bin/port installed")[1]
         self.installed = {}
         for pkg in pkgcache:
@@ -31,7 +30,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
             self.installed[pkgname] = version
 
     def VerifyPackage(self, entry, modlist):
-        '''Verify Package status for entry'''
+        """Verify Package status for entry."""
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                (entry.attrib['name']))
@@ -51,7 +50,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         return False
 
     def RemovePackages(self, packages):
-        '''Remove extra packages'''
+       """Remove extra packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
         self.cmd.run("/opt/local/bin/port uninstall %s" % \

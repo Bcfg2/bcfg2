@@ -1,5 +1,5 @@
 # This is the bcfg2 support for solaris sysv packages
-'''This provides bcfg2 support for Solaris SYSV packages'''
+"""This provides bcfg2 support for Solaris SYSV packages."""
 __revision__ = '$Revision$'
 
 import tempfile, Bcfg2.Client.Tools, Bcfg2.Client.XML
@@ -20,7 +20,7 @@ basedir=default
 '''
 
 class SYSV(Bcfg2.Client.Tools.PkgTool):
-    '''Solaris SYSV package support'''
+    """Solaris SYSV package support."""
     __execs__ = ["/usr/sbin/pkgadd", "/usr/bin/pkginfo"]
     __handles__ = [('Package', 'sysv')]
     __req__ = {'Package': ['name', 'version']}
@@ -44,7 +44,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.pkgtool = (self.pkgtool[0] % (""), self.pkgtool[1])
 
     def RefreshPackages(self):
-        '''Refresh memory hashes of packages'''
+        """Refresh memory hashes of packages."""
         self.installed = {}
         # Build list of packages
         lines = self.cmd.run("/usr/bin/pkginfo -x")[1]
@@ -59,7 +59,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.installed[pkg] = version
 
     def VerifyPackage(self, entry, modlist):
-        '''Verify Package status for entry'''
+        """Verify Package status for entry."""
         if not entry.get('version'):
             self.logger.info("Insufficient information of Package %s; cannot Verify" % entry.get('name'))
             return False
@@ -94,7 +94,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         return False
 
     def RemovePackages(self, packages):
-        '''Remove specified Sysv packages'''
+        """Remove specified Sysv packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % (names))
         self.cmd.run("/usr/sbin/pkgrm -a %s -n %s" % \

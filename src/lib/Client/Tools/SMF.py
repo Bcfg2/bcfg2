@@ -1,11 +1,11 @@
-'''SMF support for Bcfg2'''
+"""SMF support for Bcfg2"""
 __revision__ = '$Revision$'
 
 import glob, os
 import Bcfg2.Client.Tools
 
 class SMF(Bcfg2.Client.Tools.SvcTool):
-    '''Support for Solaris SMF Services'''
+    """Support for Solaris SMF Services."""
     __handles__ = [('Service', 'smf')]
     __execs__ = ['/usr/sbin/svcadm', '/usr/bin/svcs']
     name = 'SMF'
@@ -24,7 +24,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             return "/usr/sbin/svcadm enable %s" % (service.get('FMRI'))
 
     def GetFMRI(self, entry):
-        '''Perform FMRI resolution for service'''
+        """Perform FMRI resolution for service."""
         if not 'FMRI' in entry.attrib:
             name = self.cmd.run("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % \
                                 entry.get('name'))[1]
@@ -38,7 +38,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
         return True
 
     def VerifyService(self, entry, _):
-        '''Verify SMF Service Entry'''
+        """Verify SMF Service entry."""
         if not self.GetFMRI(entry):
             self.logger.error("smf service %s doesn't have FMRI set" % \
                               entry.get('name'))
@@ -68,7 +68,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             return srvdata[0] in ['OFF', 'UN', 'MNT', 'DIS', 'DGD']
 
     def InstallService(self, entry):
-        '''Install SMF Service Entry'''
+        """Install SMF Service entry."""
         self.logger.info("Installing Service %s" % (entry.get('name')))
         if entry.get('status') == 'off':
             if entry.get("FMRI").startswith('lrc'):
@@ -109,13 +109,13 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
         return cmdrc == 0
 
     def Remove(self, svcs):
-        '''Remove Extra SMF entries'''
+        """Remove Extra SMF entries."""
         # Extra service entry removal is nonsensical
         # Extra service entries should be reflected in config, even if disabled
         pass
 
     def FindExtra(self):
-        '''Find Extra SMF Services'''
+        """Find Extra SMF Services."""
         allsrv = [name for name, version in \
                   [srvc.split() for srvc in
                    self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1]]

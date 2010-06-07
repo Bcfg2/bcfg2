@@ -1,12 +1,12 @@
-'''This is the bcfg2 tool for the Gentoo Portage system.'''
+"""This is the Bcfg2 tool for the Gentoo Portage system."""
 __revision__ = '$Revision$'
 
 import re
 import Bcfg2.Client.Tools
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
-    '''The Gentoo toolset implements package and service operations and inherits
-    the rest from Toolset.Toolset'''
+   """The Gentoo toolset implements package and service operations and inherits
+    the rest from Toolset.Toolset."""
     name = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
     __important__ = ['/etc/make.conf']
@@ -23,7 +23,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         self.RefreshPackages()
 
     def RefreshPackages(self):
-        '''Refresh memory hashes of packages'''
+        """Refresh memory hashes of packages."""
         ret, cache = self.cmd.run("equery -q list")
         if ret == 2:
             cache = self.cmd.run("equery -q list '*'")[1]
@@ -38,7 +38,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
                 self.logger.info("Failed to parse pkg name %s" % pkg)
 
     def VerifyPackage(self, entry, modlist):
-        '''Verify package for entry'''
+        """Verify package for entry."""
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                (entry.attrib['name']))
@@ -61,7 +61,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         return False
 
     def RemovePackages(self, packages):
-        '''Deal with extra configuration detected'''
+        """Deal with extra configuration detected."""
         pkgnames = " ".join([pkg.get('name') for pkg in packages])
         if len(packages) > 0:
             self.logger.info('Removing packages:')

@@ -1,4 +1,4 @@
-'''Upstart support for Bcfg2'''
+"""Upstart support for Bcfg2."""
 __revision__ = '$Revision$'
 
 import glob
@@ -9,7 +9,7 @@ import Bcfg2.Client.XML
 
 
 class Upstart(Bcfg2.Client.Tools.SvcTool):
-    '''Upstart service support for Bcfg2'''
+    """Upstart service support for Bcfg2."""
     name = 'Upstart'
     __execs__ = ['/lib/init/upstart-job',
                  '/sbin/initctl',
@@ -22,13 +22,13 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         return "/usr/sbin/service %s %s" % (service.get('name'), action)
 
     def VerifyService(self, entry, _):
-        '''Verify Service status for entry
+        """Verify Service status for entry
 
            Verifying whether or not the service is enabled can be done
            at the file level with upstart using the contents of
            /etc/init/servicename.conf. All we need to do is make sure
            the service is running when it should be.
-        '''
+        """
         try:
             output = self.cmd.run('/usr/sbin/service %s status' % \
                                   entry.get('name'))[1][0]
@@ -58,7 +58,7 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         return status
 
     def InstallService(self, entry):
-        '''Install Service for entry'''
+        """Install Service for entry."""
         if entry.get('mode', 'default') == 'supervised':
             pstatus, pout = self.cmd.run('/usr/sbin/service %s status' % \
                                          entry.get('name'))
@@ -67,7 +67,7 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         return True
 
     def FindExtra(self):
-        '''Locate extra Upstart services'''
+        """Locate extra Upstart services."""
         specified = [entry.get('name') for entry in self.getSupportedEntries()]
         extra = []
         for name in [self.svcre.match(fname).group('name') for fname in

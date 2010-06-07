@@ -1,4 +1,4 @@
-'''Bcfg2 Support for Encap Packages'''
+"""Bcfg2 Support for Encap Packages"""
 
 __revision__ = '$Revision$'
 
@@ -7,7 +7,7 @@ import re
 import Bcfg2.Client.Tools
 
 class Encap(Bcfg2.Client.Tools.PkgTool):
-    '''Support for Encap packages'''
+    """Support for Encap packages."""
     name = 'Encap'
     __execs__ = ['/usr/local/bin/epkg']
     __handles__ = [('Package', 'encap')]
@@ -20,7 +20,7 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
 # method will do the installation stuff for you
 
     def RefreshPackages(self):
-        '''Try to find encap packages'''
+        """Try to find encap packages."""
         self.installed = {}
         for pkg in glob.glob("/usr/local/encap/*"):
             match = self.splitter.match(pkg)
@@ -32,7 +32,7 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug("%s" % list(self.installed.keys()))
 
     def VerifyPackage(self, entry, _):
-        '''Verify Package status for entry'''
+        """Verify Package status for entry."""
         if not entry.get('version'):
             self.logger.info("Insufficient information of Package %s; cannot Verify" % entry.get('name'))
             return False
@@ -47,7 +47,7 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
     # Can use the FindExtraPackages method from Bcfg2.Client.Tools.PkgTool
 
     def RemovePackages(self, packages):
-        '''Deal with extra configuration detected'''
+        """Deal with extra configuration detected."""
         names = " ".join([pkg.get('name') for pkg in packages])
         self.logger.info("Removing packages: %s" % (names))
         self.cmd.run("/usr/local/bin/epkg -l -q -r %s" % (names))

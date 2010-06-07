@@ -1,4 +1,4 @@
-'''This is the bcfg2 support for OpenSolaris pkg'''
+"""This is the Bcfg2 support for OpenSolaris packages."""
 __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
@@ -7,7 +7,7 @@ import pkg.client.image as image
 import pkg.client.progress as progress
 
 class IPS(Bcfg2.Client.Tools.PkgTool):
-    '''The IPS driver implements OpenSolaris package operations'''
+    """The IPS driver implements OpenSolaris package operations."""
     name = 'IPS'
     pkgtype = 'ips'
     conflicts = ['SYSV']
@@ -36,7 +36,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
                 self.pending_upgrades.add(pname)
 
     def VerifyPackage(self, entry, modlist):
-        '''Verify package for entry'''
+        """Verify package for entry."""
         pname = entry.get('name')
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" % (pname))

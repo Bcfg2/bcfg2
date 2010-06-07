@@ -1,4 +1,4 @@
-'''launchd support for Bcfg2'''
+"""launchd support for Bcfg2."""
 __revision__ = '$Revision$'
 
 import os
@@ -6,15 +6,15 @@ import Bcfg2.Client.Tools
 import popen2
 
 class launchd(Bcfg2.Client.Tools.Tool):
-    '''Support for Mac OS X Launchd Services'''
+    """Support for Mac OS X launchd services."""
     __handles__ = [('Service', 'launchd')]
     __execs__ = ['/bin/launchctl', '/usr/bin/defaults']
     name = 'launchd'
     __req__ = {'Service':['name', 'status']}
 
     '''
-    currently requires the path to the plist to load/unload,
-    and Name is acually a reverse-fqdn (or the label)
+    Currently requires the path to the plist to load/unload,
+    and Name is acually a reverse-fqdn (or the label).
     '''
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
@@ -55,7 +55,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
         return version
 
     def VerifyService(self, entry, _):
-        '''Verify Launchd Service Entry'''
+        """Verify launchd service entry."""
         try:
             services = self.cmd.run("/bin/launchctl list")[1]
         except IndexError:#happens when no services are running (should be never)
@@ -79,7 +79,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
 
     def InstallService(self, entry):
-        '''Enable or Disable launchd Item'''
+        """Enable or disable launchd item."""
         name = entry.get('name')
         if entry.get('status') == 'on':
             self.logger.error("Installing service %s" % name)
@@ -92,13 +92,13 @@ class launchd(Bcfg2.Client.Tools.Tool):
         return cmdrc[0] == 0
 
     def Remove(self, svcs):
-        '''Remove Extra launchd entries'''
+        """Remove Extra launchd entries."""
         pass
 
 
 
     def FindExtra(self):
-        '''Find Extra launchd Services'''
+        """Find Extra launchd services."""
         try:
             allsrv =  self.cmd.run("/bin/launchctl list")[1]
         except IndexError:
@@ -109,7 +109,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
         return [Bcfg2.Client.XML.Element("Service", type='launchd', name=name, status='on') for name in allsrv]
 
     def BundleUpdated(self, bundle, states):
-        '''Reload launchd plist'''
+        """Reload launchd plist."""
         for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
             if not self.canInstall(entry):
                 self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))

@@ -1,4 +1,4 @@
-'''This provides bcfg2 support for yum'''
+"""This provides bcfg2 support for yum."""
 __revision__ = '$Revision: $'
 
 import ConfigParser
@@ -31,7 +31,7 @@ if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
     raise ImportError
 
 def build_yname(pkgname, inst):
-    '''build yum appropriate package name'''
+    """Build yum appropriate package name."""
     ypname = pkgname
     if inst.get('version') != 'any':
         ypname += '-'
@@ -46,7 +46,7 @@ def build_yname(pkgname, inst):
     return ypname
 
 class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
-    '''Support for Yum packages'''
+    """Support for Yum packages."""
     pkgtype = 'yum'
 
     name = 'YUMng'
@@ -148,7 +148,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                                                             modlist)
 
     def Install(self, packages, states):
-        '''
+        """
            Try and fix everything that RPMng.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
            installed (for the first time), deleted, downgraded
@@ -167,7 +167,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
              of a package.
            - Each package will be added to self.modified[] if its states{}
              entry is set to True.
-        '''
+
+        """
         self.logger.info('Running YUMng.Install()')
 
         install_pkgs = []
@@ -315,12 +316,12 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             self.modified.append(entry)
 
     def RemovePackages(self, packages):
-        '''
+        """
            Remove specified entries.
 
            packages is a list of Package Entries with Instances generated
            by FindExtraPackages().
-        '''
+        """
         self.logger.debug('Running YUMng.RemovePackages()')
 
         if YAD:

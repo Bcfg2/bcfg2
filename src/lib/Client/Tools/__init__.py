@@ -1,4 +1,4 @@
-'''This contains all Bcfg2 Tool modules'''
+"""This contains all Bcfg2 Tool modules"""
 __revision__ = '$Revision$'
 
 __all__ = ["Action",
@@ -38,11 +38,11 @@ import time
 import Bcfg2.Client.XML
 
 class toolInstantiationError(Exception):
-    '''This error is called if the toolset cannot be instantiated'''
+    """This error is called if the toolset cannot be instantiated."""
     pass
 
 class readonlypipe(popen2.Popen4):
-    '''This pipe sets up stdin --> /dev/null'''
+    """This pipe sets up stdin --> /dev/null."""
     def __init__(self, cmd, bufsize=-1):
         popen2._cleanup()
         c2pread, c2pwrite = os.pipe()
@@ -60,12 +60,12 @@ class readonlypipe(popen2.Popen4):
         popen2._active.append(self)
 
 class executor:
-    '''this class runs stuff for us'''
+    """This class runs stuff for us"""
     def __init__(self, logger):
         self.logger = logger
 
     def run(self, command):
-        '''Run a command in a pipe dealing with stdout buffer overloads'''
+        """Run a command in a pipe dealing with stdout buffer overloads."""
         self.logger.debug('> %s' % command)
 
         runpipe = readonlypipe(command, bufsize=16384)
@@ -92,9 +92,9 @@ class executor:
         return ((cmdstat >> 8), output)
 
 class Tool:
-    '''
-    All tools subclass this. It defines all interfaces that need to be defined
-    '''
+    """
+    All tools subclass this. It defines all interfaces that need to be defined.
+    """
     name = 'Tool'
     __execs__ = []
     __handles__ = []
@@ -126,15 +126,15 @@ class Tool:
                 raise toolInstantiationError
 
     def BundleUpdated(self, _, states):
-        '''This callback is used when bundle updates occur'''
+        """This callback is used when bundle updates occur."""
         return
 
     def BundleNotUpdated(self, _, states):
-        '''This callback is used when a bundle is not updated'''
+        """This callback is used when a bundle is not updated."""
         return
 
     def Inventory(self, states, structures=[]):
-        '''Dispatch verify calls to underlying methods'''
+        """Dispatch verify calls to underlying methods."""
         if not structures:
             structures = self.config.getchildren()
         mods = self.buildModlist()
@@ -151,7 +151,7 @@ class Tool:
         self.extra = self.FindExtra()
 
     def Install(self, entries, states):
-        '''Install all entries in sublist'''
+        """Install all entries in sublist."""
         for entry in entries:
             try:
                 func = getattr(self, "Install%s" % (entry.tag))
@@ -162,18 +162,18 @@ class Tool:
                                   % (entry.tag), exc_info=1)
 
     def Remove(self, entries):
-        '''Remove specified extra entries'''
+        """Remove specified extra entries"""
         pass
 
     def getSupportedEntries(self):
-        '''return a list of supported entries'''
+        """Return a list of supported entries."""
         return [entry for struct in \
                 self.config.getchildren() for entry in \
                 struct.getchildren() \
                 if self.handlesEntry(entry)]
 
     def handlesEntry(self, entry):
-        '''return if entry is handled by this Tool'''
+        """Return if entry is handled by this tool."""
         return (entry.tag, entry.get('type')) in self.__handles__
 
     def buildModlist(self):
@@ -184,11 +184,11 @@ class Tool:
                                  'Permissions', 'Ignore', 'Path']]
 
     def gatherCurrentData(self, entry):
-        '''Default implementation of the information gathering routines'''
+        """Default implementation of the information gathering routines."""
         pass
 
     def canVerify(self, entry):
-        '''test if entry has enough information to be verified'''
+        """Test if entry has enough information to be verified."""
         if not self.handlesEntry(entry):
             return False
 
@@ -213,11 +213,11 @@ class Tool:
 
 
     def FindExtra(self):
-        '''Return a list of extra entries'''
+        """Return a list of extra entries."""
         return []
 
     def canInstall(self, entry):
-        '''test if entry has enough information to be installed'''
+        """Test if entry has enough information to be installed."""
         if not self.handlesEntry(entry):
             return False
 
@@ -237,10 +237,10 @@ class Tool:
         return True
 
 class PkgTool(Tool):
-    '''
+    """
        PkgTool provides a one-pass install with
        fallback for use with packaging systems
-    '''
+    """
     pkgtool = ('echo %s', ('%s', ['name']))
     pkgtype = 'echo'
     name = 'PkgTool'
@@ -253,14 +253,14 @@ class PkgTool(Tool):
         self.RefreshPackages()
 
     def VerifyPackage(self, dummy, _):
-        '''Dummy verification method'''
+        """Dummy verification method"""
         return False
 
     def Install(self, packages, states):
-        '''
+        """
            Run a one-pass install, followed by
-           single pkg installs in case of failure
-        '''
+           single pkg installs in case of failure.
+        """
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
 
@@ -306,15 +306,15 @@ class PkgTool(Tool):
             self.modified.append(entry)
 
     def RefreshPackages(self):
-        '''Dummy state refresh method'''
+        """Dummy state refresh method."""
         pass
 
     def RemovePackages(self, packages):
-        '''Dummy implementation of package removal method'''
+        """Dummy implementation of package removal method."""
         pass
 
     def FindExtraPackages(self):
-        '''Find extra packages'''
+        """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = [data for data in list(self.installed.items()) \
                   if data[0] not in packages]
@@ -323,11 +323,11 @@ class PkgTool(Tool):
                                          for (name, version) in extras]
 
 class SvcTool(Tool):
-    '''This class defines basic Service behavior'''
+    """This class defines basic Service behavior"""
     name = 'SvcTool'
 
     def get_svc_command(self, service, action):
-        '''Return the basename of the command used to start/stop services'''
+        """Return the basename of the command used to start/stop services."""
         return '/etc/init.d/%s %s' % (service.get('name'), action)
 
     def start_service(self, service):
@@ -350,7 +350,7 @@ class SvcTool(Tool):
         return 0
 
     def BundleUpdated(self, bundle, states):
-        '''The Bundle has been updated'''
+        """The Bundle has been updated."""
         if self.setup['servicemode'] == 'disabled':
             return
 

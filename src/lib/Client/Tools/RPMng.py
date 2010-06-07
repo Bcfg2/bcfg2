@@ -1,4 +1,4 @@
-'''Bcfg2 Support for RPMS'''
+"""Bcfg2 Support for RPMS"""
 
 __revision__ = '$Revision$'
 
@@ -15,7 +15,7 @@ except NameError:
     from sets import Set as set
 
 class RPMng(Bcfg2.Client.Tools.PkgTool):
-    '''Support for RPM packages'''
+    """Support for RPM packages."""
     name = 'RPMng'
 
     __execs__ = ['/bin/rpm', '/var/lib/rpm']
@@ -137,7 +137,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
 
     def RefreshPackages(self):
-        '''
+        """
             Creates self.installed{} which is a dict of installed packages.
 
             The dict items are lists of nevra dicts.  This loosely matches the
@@ -151,7 +151,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                       {'name':'foo', 'epoch':None,
                                        'version':'1', 'release':2,
                                        'arch':'x86_64'} ]
-        '''
+        """
         self.installed = {}
         refresh_ts = rpmtools.rpmtransactionset()
         # Don't bother with signature checks at this stage. The GPG keys might
@@ -169,7 +169,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         del refresh_ts
 
     def VerifyPackage(self, entry, modlist, pinned_version=None):
-        '''
+        """
             Verify Package status for entry.
             Performs the following:
                 - Checks for the presence of required Package Instances.
@@ -193,7 +193,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 extra_instances = [ <Package Element Object>, ..... ]
 
               Constructs the text prompts for interactive mode.
-        '''
+        """
         instances = [inst for inst in entry if inst.tag == 'Instance' or inst.tag == 'Package']
         if instances == []:
             # We have an old style no Instance entry. Convert it to new style.
@@ -446,12 +446,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         return True
 
     def RemovePackages(self, packages):
-        '''
+        """
            Remove specified entries.
 
            packages is a list of Package Entries with Instances generated
            by FindExtraPackages().
-        '''
+        
+        """
         self.logger.debug('Running RPMng.RemovePackages()')
 
         pkgspec_list = []
@@ -517,12 +518,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.extra = self.FindExtraPackages()
 
     def FixInstance(self, instance, inst_status):
-        '''
+        """"
            Control if a reinstall of a package happens or not based on the
            results from RPMng.VerifyPackage().
 
            Return True to reinstall, False to not reintstall.
-        '''
+
+        """
         fix = False
 
         if inst_status.get('installed', False) == False:
@@ -575,7 +577,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         return fix
 
     def Install(self, packages, states):
-        '''
+        """
            Try and fix everything that RPMng.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
            installed (for the first time), reinstalled, deleted, downgraded
@@ -591,7 +593,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
              of a package.
            - Each package will be added to self.modified[] if its states{}
              entry is set to True.
-        '''
+
+        """
         self.logger.info('Runing RPMng.Install()')
 
         install_only_pkgs = []
@@ -726,9 +729,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             self.modified.append(entry)
 
     def canInstall(self, entry):
-        '''
-            test if entry has enough information to be installed
-        '''
+        """Test if entry has enough information to be installed."""
         if not self.handlesEntry(entry):
             return False
 
@@ -800,7 +801,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         return True
 
     def canVerify(self, entry):
-        '''
+        """
             Test if entry has enough information to be verified.
 
             Three types of entries are checked.
@@ -810,7 +811,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
            Also the old style entries get modified after the first
            VerifyPackage() run, so there needs to be a second test.
-        '''
+
+        """
         if not self.handlesEntry(entry):
             return False
 
@@ -879,9 +881,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         return True
 
     def FindExtraPackages(self):
-        '''
-           Find extra packages
-        '''
+        """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = []
 
@@ -904,11 +904,12 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
 
     def FindExtraInstances(self, pkg_entry, installed_entry):
-        '''
+        """
             Check for installed instances that are not in the config.
             Return a Package Entry with Instances to remove, or None if there
             are no Instances to remove.
-        '''
+
+        """
         name = pkg_entry.get('name')
         extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
         instances = [inst for inst in pkg_entry if inst.tag == 'Instance' or inst.tag == 'Package']
@@ -957,9 +958,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         return extra_entry
 
     def str_evra(self, instance):
-        '''
-            Convert evra dict entries to a string.
-        '''
+        """Convert evra dict entries to a string."""
         if instance.get('epoch', '*') in ['*', None]:
             return '%s-%s.%s' % (instance.get('version', '*'),
                                  instance.get('release', '*'),
@@ -983,9 +982,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             return False
 
     def inst_evra_equal(self, config_entry, installed_entry):
-        '''
-            Compare new style instance to installed entry.
-        '''
+        """Compare new style instance to installed entry."""
 
         if config_entry.get('epoch', None) != None:
             epoch = int(config_entry.get('epoch'))
@@ -1004,12 +1001,13 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             return False
 
     def getinstalledgpg(self):
-        '''
+        """
            Create a list of installed GPG key IDs.
 
            The pgp-pubkey package version is the least significant 4 bytes
            (big-endian) of the key ID which is good enough for our purposes.
-        '''
+
+        """
         init_ts = rpmtools.rpmtransactionset()
         init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
         gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name':'gpg-pubkey'})

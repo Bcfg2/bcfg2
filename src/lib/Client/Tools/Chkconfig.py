@@ -1,7 +1,7 @@
 # This is the bcfg2 support for chkconfig
 # $Id$
 
-'''This is chkconfig support'''
+"""This is chkconfig support."""
 __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
@@ -9,7 +9,7 @@ import Bcfg2.Client.XML
 
 
 class Chkconfig(Bcfg2.Client.Tools.SvcTool):
-    '''Chkconfig support for Bcfg2'''
+    """Chkconfig support for Bcfg2."""
     name = 'Chkconfig'
     __execs__ = ['/sbin/chkconfig']
     __handles__ = [('Service', 'chkconfig')]
@@ -19,7 +19,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         return "/sbin/service %s %s" % (service.get('name'), action)
 
     def VerifyService(self, entry, _):
-        '''Verify Service status for entry'''
+        """Verify Service status for entry."""
         try:
             cmd = "/sbin/chkconfig --list %s " % (entry.get('name'))
             raw = self.cmd.run(cmd)[1]
@@ -75,7 +75,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         return status
 
     def InstallService(self, entry):
-        '''Install Service entry'''
+        """Install Service entry."""
         rcmd = "/sbin/chkconfig %s %s"
         self.cmd.run("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
@@ -87,7 +87,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         return pass1 and rc == 0
 
     def FindExtra(self):
-        '''Locate extra chkconfig Services'''
+        """Locate extra chkconfig Services."""
         allsrv = [line.split()[0] for line in \
                   self.cmd.run("/sbin/chkconfig --list|grep :on")[1]]
         self.logger.debug('Found active services:')

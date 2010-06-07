@@ -1,4 +1,4 @@
-'''FreeBSD Init Support for Bcfg2'''
+"""FreeBSD Init Support for Bcfg2."""
 __revision__ = '$Rev$'
 
 # TODO
@@ -9,7 +9,7 @@ import os
 import Bcfg2.Client.Tools
 
 class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
-    '''FreeBSD Service Support for Bcfg2'''
+    """FreeBSD service support for Bcfg2."""
     name = 'FreeBSDInit'
     __handles__ = [('Service', 'freebsd')]
     __req__ = {'Service': ['name', 'status']}

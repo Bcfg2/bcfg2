@@ -1,11 +1,11 @@
-'''Debian Init Support for Bcfg2'''
+"""Debian Init Support for Bcfg2"""
 __revision__ = '$Revision$'
 
 import glob, os, re
 import Bcfg2.Client.Tools
 
 class DebInit(Bcfg2.Client.Tools.SvcTool):
-    '''Debian Service Support for Bcfg2'''
+    """Debian Service Support for Bcfg2."""
     name = 'DebInit'
     __execs__ = ['/usr/sbin/update-rc.d', '/usr/sbin/invoke-rc.d']
     __handles__ = [('Service', 'deb')]
@@ -14,7 +14,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
 
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry, _):
-        '''Verify Service status for entry'''
+        """Verify Service status for entry."""
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
         if entry.get('sequence'):
@@ -52,7 +52,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 return False
 
     def InstallService(self, entry):
-        '''Install Service for entry'''
+        """Install Service for entry."""
         self.logger.info("Installing Service %s" % (entry.get('name')))
         try:
             os.stat('/etc/init.d/%s' % entry.get('name'))
@@ -76,7 +76,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         return cmdrc == 0
 
     def FindExtra(self):
-        '''Find Extra Debian Service Entries'''
+        """Find Extra Debian Service entries."""
         specified = [entry.get('name') for entry in self.getSupportedEntries()]
         extra = []
         for name in [self.svcre.match(fname).group('name') for fname in
@@ -88,7 +88,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 in extra]
 
     def Remove(self, _):
-        '''Remove extra service entries'''
+        """Remove extra service entries."""
         # Extra service removal is nonsensical
         # Extra services need to be reflected in the config
         return

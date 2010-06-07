@@ -1,4 +1,4 @@
-'''This is the bcfg2 support for apt-get'''
+"""This is the bcfg2 support for apt-get"""
 __revision__ = '$Revision$'
 
 # suppress apt API warnings
@@ -27,8 +27,10 @@ APTGET = '%s/bin/apt-get' % install_path
 DPKG = '%s/bin/dpkg' % install_path
 
 class APT(Bcfg2.Client.Tools.Tool):
-    '''The Debian toolset implements package and service operations and inherits
-    the rest from Toolset.Toolset'''
+    """The Debian toolset implements package and service operations and inherits
+    the rest from Toolset.Toolset.
+
+    """
     name = 'APT'
     __execs__ = [DEBSUMS, APTGET, DPKG]
     __handles__ = [('Package', 'deb')]
@@ -61,7 +63,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         self.pkg_cache = apt.cache.Cache()
 
     def FindExtra(self):
-        '''Find extra packages'''
+        """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = [(p.name, p.installedVersion) for p in self.pkg_cache
                   if p.isInstalled and p.name not in packages]
@@ -109,7 +111,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         return True
 
     def VerifyPackage(self, entry, modlist, checksums=True):
-        '''Verify package for entry'''
+        """Verify package for entry."""
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              (entry.attrib['name']))
@@ -146,7 +148,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             return True
 
     def Remove(self, packages):
-        '''Deal with extra configuration detected'''
+        """Deal with extra configuration detected."""
         pkgnames = " ".join([pkg.get('name') for pkg in packages])
         self.pkg_cache = apt.cache.Cache()
         if len(packages) > 0:

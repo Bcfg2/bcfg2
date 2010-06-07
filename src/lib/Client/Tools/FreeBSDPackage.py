@@ -1,4 +1,4 @@
-'''This is the bcfg2 tool for the FreeBSD package system.'''
+"""This is the Bcfg2 tool for the FreeBSD package system."""
 __revision__ = '$Rev$'
 
 # TODO
@@ -9,8 +9,8 @@ import re
 import Bcfg2.Client.Tools
 
 class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
-    '''The FreeBSD toolset implements package operations and inherits
-    the rest from Toolset.Toolset'''
+    """The FreeBSD toolset implements package operations and inherits
+    the rest from Toolset.Toolset."""
     name = 'FreeBSDPackage'
     __execs__ = ['/usr/sbin/pkg_add', '/usr/sbin/pkg_info']
     __handles__ = [('Package', 'freebsdpkg')]
