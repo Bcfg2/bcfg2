@@ -46,7 +46,7 @@ class test_entry_set(object):
     
  
     def test_info(self):        
-        '''test info and info.xml handling'''
+        """Test info and info.xml handling."""
         es = self.es
         e  = self.e
         dirname = self.dirname
@@ -76,7 +76,7 @@ class test_entry_set(object):
     
 
     def test_file_building(self):
-        '''test file building'''
+        """Test file building."""
         self.test_init()
         ent = lxml.etree.Element('foo')
         self.es.bind_entry(ent, self.metadata)
@@ -85,7 +85,7 @@ class test_entry_set(object):
     
    
     def test_host_specific_file_building(self):
-        '''add a host-specific template and build it'''
+        """Add a host-specific template and build it."""
         self.e.filename = 'template.H_%s' % self.metadata.hostname
         self.e.action = 'exists'
         self.es.handle_event(self.e)
@@ -97,7 +97,7 @@ class test_entry_set(object):
     
    
     def test_deletion(self):
-        '''test deletion of files'''
+        """Test deletion of files."""
         self.test_init()
         self.e.filename = 'template'
         self.e.action = 'deleted'
