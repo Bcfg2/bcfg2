@@ -1,4 +1,4 @@
-'''Django models for BCFG reports'''
+"""Django models for Bcfg2 reports."""
 from django.db import models
 from django.db.models import Q
 from datetime import datetime, timedelta
@@ -28,12 +28,14 @@ TYPE_CHOICES = (
     (TYPE_EXTRA, 'Extra'),
 )
 class ClientManager(models.Manager):
-    '''extended client manager functions'''
+    """Extended client manager functions."""
+
     def active(self, timestamp='now'):
-        '''returns a set of clients that have been created and have not yet been
+        """Returns a set of clients that have been created and have not yet been
         expired as of optional timestmamp argument. Timestamp should be a
-        string formatted in the fashion: 2006-01-01 00:00:00'''
-        
+        string formatted in the fashion: 2006-01-01 00:00:00
+
+        """        
         if timestamp == 'now':
             timestamp = datetime.now()
         else:
@@ -53,7 +55,7 @@ class ClientManager(models.Manager):
 
 
 class Client(models.Model):
-    '''object representing every client we have seen stats for'''
+    """Object representing every client we have seen stats for."""
     creation = models.DateTimeField()
     name = models.CharField(maxlength=128, core=True)
     current_interaction = models.ForeignKey('Interaction',
@@ -70,7 +72,7 @@ class Client(models.Model):
         pass
 
 class Ping(models.Model):
-    '''represents a ping of a client (sparsely)'''
+    """Represents a ping of a client (sparsely)."""
     client = models.ForeignKey(Client, related_name="pings")
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
@@ -80,10 +82,12 @@ class Ping(models.Model):
         get_latest_by = 'endtime'
     
 class InteractiveManager(models.Manager):
-    '''manages interactions objects'''
+    """Manages interactions objects
     
-    '''returns most recent interaction as of specified timestamp in format:
-    '2006-01-01 00:00:00' or 'now' or None->'now'  '''
+    Returns most recent interaction as of specified timestamp in format:
+    '2006-01-01 00:00:00' or 'now' or None->'now'
+    
+    """
     def interaction_per_client(self, maxdate = None):
         from django.db import connection
         cursor = connection.cursor()
@@ -107,7 +111,7 @@ class InteractiveManager(models.Manager):
 
 
 class Interaction(models.Model):
-    '''Models each reconfiguration operation interaction between client and server'''
+    """Models each reconfiguration operation interaction between client and server."""
     client = models.ForeignKey(Client, related_name="interactions", core=True)
     timestamp = models.DateTimeField()#Timestamp for this record
     state = models.CharField(maxlength=32)#good/bad/modified/etc
@@ -181,7 +185,7 @@ class Interaction(models.Model):
         get_latest_by = 'timestamp'
 
 class Reason(models.Model):
-    '''reason why modified or bad entry did not verify, or changed'''
+    """Reason why modified or bad entry did not verify, or changed."""
     owner = models.TextField(maxlength=128, blank=True)
     current_owner = models.TextField(maxlength=128, blank=True)
     group = models.TextField(maxlength=128, blank=True)
@@ -200,7 +204,7 @@ class Reason(models.Model):
         return "Reason"
 
 class Entries(models.Model):
-    """ Contains all the entries feed by the client """
+    """Contains all the entries feed by the client."""
     name = models.CharField(maxlength=128, core=True, db_index=True)
     kind = models.CharField(maxlength=16, choices=KIND_CHOICES, db_index=True)
 
@@ -208,15 +212,17 @@ class Entries(models.Model):
         return self.name
 
 class Entries_interactions(models.Model):
-    """ Define the relation between the reason, the interaction and the entry """
+    """Define the relation between the reason, the interaction and the entry."""
     entry = models.ForeignKey(Entries)
     reason = models.ForeignKey(Reason)
     interaction = models.ForeignKey(Interaction)
     type = models.IntegerField(choices=TYPE_CHOICES)
     
 class PerformanceManager(models.Manager):
-    '''Provides ability to effectively query for performance information
-    It is possible this should move to the view'''
+    """Provides ability to effectively query for performance information.
+    It is possible this should move to the view.
+
+    """
     #Date format for maxdate: '2006-01-01 00:00:00'            
     def performance_per_client(self, maxdate = None):
         from django.db import connection
@@ -248,7 +254,7 @@ class PerformanceManager(models.Manager):
     
 #performance metrics, models a performance-metric-item
 class Performance(models.Model):
-    '''Object representing performance data for any interaction'''
+    """Object representing performance data for any interaction."""
     interaction = models.ManyToManyField(Interaction, related_name="performance_items")
     metric = models.CharField(maxlength=128, core=True)
     value = models.FloatField(max_digits=32, decimal_places=16)
@@ -258,7 +264,7 @@ class Performance(models.Model):
     objects = PerformanceManager()
  
 class InternalDatabaseVersion(models.Model):
-    '''Object that tell us to witch version is the database'''
+    """Object that tell us to witch version is the database."""
     version = models.IntegerField()
     updated = models.DateTimeField(auto_now_add=True)
 

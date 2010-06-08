@@ -111,10 +111,11 @@ def client_index(request, timestamp = 'now'):
             'timestamp_time' : timestamp[11:19]})
 
 def client_detailed_list(request, **kwargs):
-    '''
+    """
     Provides a more detailed list view of the clients.  Allows for extra
     filters to be passed in.  Somewhat clunky now that dates are allowed.
-    '''
+
+    """
     context = dict(path=request.path)
     timestamp = 'now'
     entry_max = datetime.now()
