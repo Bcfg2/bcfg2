@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
-                    GOALS FOR SERVER MANGED BY BCFG2
+                    GOALS FOR SERVER MANAGED BY BCFG2
 ------------------------------------------------------------------------
 Hostname is ${metadata.hostname}
 
