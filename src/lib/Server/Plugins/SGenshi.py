@@ -37,7 +37,7 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
             return self.handle_event(event)
 
     def BuildStructures(self, metadata):
-        '''Build SGenshi structures'''
+        """Build SGenshi structures."""
         ret = []
         for entry in self.get_matching(metadata):
             try:
@@ -51,7 +51,7 @@ class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
 class SGenshi(SGenshiEntrySet,
               Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure):
-    '''The SGenshi plugin provides templated structures'''
+    """The SGenshi plugin provides templated structures."""
     name = 'SGenshi'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'

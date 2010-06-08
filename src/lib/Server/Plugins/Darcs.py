@@ -8,7 +8,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Darcs')
 
 class Darcs(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
-    """Darcs is a version plugin for dealing with bcfg2 repos"""
+    """Darcs is a version plugin for dealing with Bcfg2 repos."""
     name = 'Darcs'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -33,7 +33,7 @@ class Darcs(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Initialized Darcs plugin with darcs directory = %s" % darcs_dir)
 
     def get_revision(self):
-        """Read Darcs changeset information for the bcfg2 repository"""
+        """Read Darcs changeset information for the Bcfg2 repository."""
         try:
             data = Popen("env LC_ALL=C darcs changes",
                         shell=True,

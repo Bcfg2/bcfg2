@@ -1,4 +1,4 @@
-'''This module implements a templating generator based on Genshi'''
+"""This module implements a templating generator based on Genshi."""
 __revision__ = '$Revision$'
 
 from genshi.template import TemplateLoader, \
@@ -25,7 +25,7 @@ def removecomment(stream):
 
 
 class TemplateFile:
-    '''Template file creates Genshi template structures for the loaded file'''
+    """Template file creates Genshi template structures for the loaded file."""
 
     def __init__(self, name, specific, encoding):
         self.name = name
@@ -49,7 +49,7 @@ class TemplateFile:
         self.HandleEvent = self.handle_event
 
     def handle_event(self, event=None):
-        '''Handle all fs events for this template'''
+        """Handle all fs events for this template."""
         if event and event.code2str() == 'deleted':
             return
         try:
@@ -65,7 +65,7 @@ class TemplateFile:
             logger.error('Genshi parse error: %s' % perror)
 
     def bind_entry(self, entry, metadata):
-        '''Build literal file information'''
+        """Build literal file information."""
         fname = entry.get('realname', entry.get('name'))
         if entry.tag == 'Path':
             entry.set('type', 'file')
@@ -104,10 +104,11 @@ class TemplateFile:
 
 
 class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
-    '''
+    """
     The TGenshi generator implements a templating
-    mechanism for configuration files
-    '''
+    mechanism for configuration files.
+
+    """
     name = 'TGenshi'
     __version__ = '$Id$'
     __author__ = 'jeff@ocjtech.us'

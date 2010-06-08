@@ -34,14 +34,14 @@ class FuzzyDict(dict):
             raise
 
 class PNode(Bcfg2.Server.Plugin.INode):
-    '''PNode has a list of packages available at a particular group intersection'''
+    """PNode has a list of packages available at a particular group intersection."""
     splitters = {'rpm':re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
                  'encap':re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
 
     def Match(self, metadata, data):
-        '''Return a dictionary of package mappings'''
+        """Return a dictionary of package mappings."""
         if self.predicate(metadata):
             for key in self.contents:
                 try:
@@ -112,12 +112,12 @@ class PNode(Bcfg2.Server.Plugin.INode):
 
 
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
-    '''PkgSrc files contain a PNode hierarchy that returns matching package entries'''
+    """PkgSrc files contain a PNode hierarchy that returns matching package entries."""
     __node__ = PNode
     __cacheobj__ = FuzzyDict
 
 class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
-    '''This is a generator that handles package assignments'''
+    """This is a generator that handles package assignments."""
     name = 'Pkgmgr'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -137,7 +137,7 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
                                                           self.BindEntry)])
 
     def BindEntry(self, entry, metadata):
-        '''Bind data for entry, and remove instances that are not requested'''
+        """Bind data for entry, and remove instances that are not requested."""
         pname = entry.get('name')
         Bcfg2.Server.Plugin.PrioDir.BindEntry(self, entry, metadata)
         if entry.findall('Instance'):

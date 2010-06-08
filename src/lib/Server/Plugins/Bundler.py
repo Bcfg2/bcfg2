@@ -1,4 +1,4 @@
-'''This provides bundle clauses with translation functionality'''
+"""This provides bundle clauses with translation functionality."""
 __revision__ = '$Revision$'
 
 import copy
@@ -25,7 +25,7 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
 class Bundler(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure,
               Bcfg2.Server.Plugin.XMLDirectoryBacked):
-    '''The bundler creates dependent clauses based on the bundle/translation scheme from bcfg1'''
+    """The bundler creates dependent clauses based on the bundle/translation scheme from Bcfg1."""
     name = 'Bundler'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -53,7 +53,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                                                         self.encoding)
 
     def BuildStructures(self, metadata):
-        '''Build all structures for client (metadata)'''
+        """Build all structures for client (metadata)."""
         bundleset = []
         for bundlename in metadata.bundles:
             entries = [item for (key, item) in self.entries.iteritems() if \

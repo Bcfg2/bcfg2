@@ -15,8 +15,10 @@ def async_run(prog, args):
 
 class Trigger(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Statistics):
+    """Trigger is a plugin that calls external scripts (on the server)."""
     name = 'Trigger'
     __version__ = '$Id'
+    __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

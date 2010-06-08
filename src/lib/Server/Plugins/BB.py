@@ -11,9 +11,9 @@ import socket
 logger = Bcfg2.Server.Plugin.logger
 
 class BBfile(Bcfg2.Server.Plugin.XMLFileBacked):
-    '''Class for bb files'''
+    """Class for bb files."""
     def Index(self):
-        '''Build data into an xml object'''
+        """Build data into an xml object."""
 
         try:
             self.data = lxml.etree.XML(self.data)
@@ -60,7 +60,7 @@ class BBDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
 
 class BB(Bcfg2.Server.Plugin.Plugin,
          Bcfg2.Server.Plugin.Connector):
-    '''The BB plugin maps users to machines and metadata to machines'''
+    """The BB plugin maps users to machines and metadata to machines."""
     name = 'BB'
     version = '$Revision$'
     experimental = True

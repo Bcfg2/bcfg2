@@ -5,10 +5,10 @@ import Bcfg2.Server.Plugin
 
 
 class PropertyFile(Bcfg2.Server.Plugin.XMLFileBacked):
-    '''Class for properties files'''
+    """Class for properties files."""
 
     def Index(self):
-        '''Build data into an xml object'''
+        """Build data into an xml object."""
         try:
             self.data = lxml.etree.XML(self.data)
         except lxml.etree.XMLSyntaxError:
@@ -21,10 +21,10 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
 
 class Properties(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Connector):
-    '''
+    """
        The properties plugin maps property
-       files into client metadata instances
-    '''
+       files into client metadata instances.
+    """
     name = 'Properties'
     version = '$Revision$'
 

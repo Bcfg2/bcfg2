@@ -13,12 +13,13 @@ class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
 
 class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, path, fam, encoding):
-        """Container for decision specification files
+        """Container for decision specification files.
 
         Arguments:
         - `path`: repository path
         - `fam`: reference to the file monitor
         - `encoding`: XML character encoding
+
         """
         pattern = '(white|black)list'
         Bcfg2.Server.Plugin.EntrySet.__init__(self, pattern, path, \
@@ -55,6 +56,7 @@ class Decisions(DecisionSet,
         Arguments:
         - `core`: Bcfg2.Core instance
         - `datastore`: File repository location
+
         """
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Decision.__init__(self)

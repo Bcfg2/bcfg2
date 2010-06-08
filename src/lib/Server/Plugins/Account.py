@@ -1,18 +1,19 @@
-'''This handles authentication setup'''
+"""This handles authentication setup."""
 __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
 
 class Account(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator):
-    '''This module generates account config files,
+    """This module generates account config files,
     based on an internal data repo:
     static.(passwd|group|limits.conf) -> static entries
     dyn.(passwd|group) -> dynamic entries (usually acquired from yp or somesuch)
     useraccess -> users to be granted login access on some hosts
     superusers -> users to be granted root privs on all hosts
     rootlike -> users to be granted root privs on some hosts
-    '''
+
+    """
     name = 'Account'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -33,7 +34,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def from_yp_cb(self, entry, metadata):
-        '''Build password file from cached yp data'''
+        """Build password file from cached yp data."""
         fname = entry.attrib['name'].split('/')[-1]
         entry.text = self.repository.entries["static.%s" % (fname)].data
         entry.text += self.repository.entries["dyn.%s" % (fname)].data
@@ -42,7 +43,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
          perms.iteritems()]
 
     def gen_limits_cb(self, entry, metadata):
-        '''Build limits entries based on current ACLs'''
+        """Build limits entries based on current ACLs."""
         entry.text = self.repository.entries["static.limits.conf"].data
         superusers = self.repository.entries["superusers"].data.split()
         useraccess = [line.split(':') for line in \
@@ -57,7 +58,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
             entry.text += "* hard maxlogins 0\n"
 
     def gen_root_keys_cb(self, entry, metadata):
-        '''Build root authorized keys file based on current ACLs'''
+        """Build root authorized keys file based on current ACLs."""
         superusers = self.repository.entries['superusers'].data.split()
         try:
             rootlike = [line.split(':', 1) for line in \
@@ -75,7 +76,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
          in perms.iteritems()]
 
     def gen_sudoers(self, entry, metadata):
-        '''Build root authorized keys file based on current ACLs'''
+        """Build root authorized keys file based on current ACLs."""
         superusers = self.repository.entries['superusers'].data.split()
         try:
             rootlike = [line.split(':', 1) for line in \

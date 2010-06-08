@@ -1,4 +1,4 @@
-'''This plugin provides automatic dependency handling'''
+"""This plugin provides automatic dependency handling."""
 __revision__ = '$Revision$'
 
 import lxml.etree
@@ -6,7 +6,7 @@ import lxml.etree
 import Bcfg2.Server.Plugin
 
 class DNode(Bcfg2.Server.Plugin.INode):
-    '''DNode provides supports for single predicate types for dependencies'''
+    """DNode provides supports for single predicate types for dependencies."""
     raw = {'Group':"lambda x:'%s' in x.groups and predicate(x)"}
     containers = ['Group']
 

@@ -1,4 +1,5 @@
-'''This file stores persistent metadata for the Bcfg2 Configuration Repository'''
+"""This file stores persistent metadata for the Bcfg2 Configuration Repository."""
+
 __revision__ = '$Revision$'
 
 import copy
@@ -11,15 +12,15 @@ import time
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
-    '''This error gets raised when metadata is internally inconsistent'''
+    """This error gets raised when metadata is internally inconsistent."""
     pass
 
 class MetadataRuntimeError(Exception):
-    '''This error is raised when the metadata engine is called prior to reading enough data'''
+    """This error is raised when the metadata engine is called prior to reading enough data."""
     pass
 
 class ClientMetadata(object):
-    '''This object contains client metadata'''
+    """This object contains client metadata."""
     def __init__(self, client, profile, groups, bundles,
                  aliases, addresses, categories, uuid, password, query):
         self.hostname = client
@@ -35,7 +36,7 @@ class ClientMetadata(object):
         self.query = query
 
     def inGroup(self, group):
-        '''Test to see if client is a member of group'''
+        """Test to see if client is a member of group."""
         return group in self.groups
 
 class MetadataQuery(object):
@@ -59,7 +60,7 @@ class MetadataQuery(object):
 class Metadata(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Metadata,
                Bcfg2.Server.Plugin.Statistics):
-    '''This class contains data for bcfg2 server metadata'''
+    """This class contains data for bcfg2 server metadata."""
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     name = "Metadata"
@@ -121,7 +122,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         return root
 
     def search_group(self, group_name, tree):
-        '''find a group'''
+        """Find a group."""
         for node in tree.findall("//Group"):
             if node.get("name") == group_name:
                 return node
@@ -131,7 +132,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         return None
 
     def add_group(self, group_name, attribs):
-        '''add group to groups.xml'''
+        """Add group to groups.xml."""
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         element = lxml.etree.Element("Group", name=group_name)
@@ -156,7 +157,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def update_group(self, group_name, attribs):
-        '''Update a groups attributes'''
+        """Update a groups attributes."""
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         node = self.search_group(group_name, tree)
@@ -178,7 +179,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def remove_group(self, group_name):
-        '''Remove a group'''
+        """Remove a group."""
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         node = self.search_group(group_name, tree)
@@ -200,7 +201,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def add_bundle(self, bundle_name):
-        '''add bundle to groups.xml'''
+        """Add bundle to groups.xml."""
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         element = lxml.etree.Element("Bundle", name=bundle_name)
@@ -223,7 +224,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def remove_bundle(self, bundle_name):
-        '''Remove a bundle'''
+        """Remove a bundle."""
         tree = lxml.etree.parse(self.data + "/groups.xml")
         root = tree.getroot()
         node = self.search_group(bundle_name, tree)
@@ -245,7 +246,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         group_tree.close()
 
     def search_client(self, client_name, tree):
-        '''find a client'''
+        """Find a client."""
         for node in tree.findall("//Client"):
             if node.get("name") == client_name:
                 return node
@@ -255,7 +256,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         return None
 
     def add_client(self, client_name, attribs):
-        '''add client to clients.xml'''
+        """Add client to clients.xml."""
         tree = lxml.etree.parse(self.data + "/clients.xml")
         root = tree.getroot()
         element = lxml.etree.Element("Client", name=client_name)
@@ -280,7 +281,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         client_tree.close()
 
     def update_client(self, client_name, attribs):
-        '''Update a clients attributes'''
+        """Update a clients attributes."""
         tree = lxml.etree.parse(self.data + "/clients.xml")
         root = tree.getroot()
         node = self.search_client(client_name, tree)
@@ -302,7 +303,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         client_tree.close()
 
     def HandleEvent(self, event):
-        '''Handle update events for data files'''
+        """Handle update events for data files."""
         filename = event.filename.split('/')[-1]
         if filename in ['groups.xml', 'clients.xml']:
             dest = filename
@@ -443,7 +444,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                     del self.bad_clients[bclient]
 
     def set_profile(self, client, profile, addresspair):
-        '''Set group parameter for provided client'''
+        """Set group parameter for provided client."""
         self.logger.info("Asserting client %s profile to %s" % (client, profile))
         if False in self.states.values():
             raise MetadataRuntimeError
@@ -472,7 +473,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.write_back_clients()
 
     def write_back_clients(self):
-        '''Write changes to client.xml back to disk'''
+        """Write changes to client.xml back to disk."""
         try:
             datafile = open("%s/%s" % (self.data, 'clients.xml.new'), 'w')
         except IOError:
@@ -521,7 +522,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         return False
 
     def resolve_client(self, addresspair):
-        '''Lookup address locally or in DNS to get a hostname'''
+        """Lookup address locally or in DNS to get a hostname."""
         if addresspair in self.session_cache:
             (stamp, uuid) = self.session_cache[addresspair]
             if time.time() - stamp < 90:
@@ -543,7 +544,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             raise MetadataConsistencyError
 
     def get_initial_metadata(self, client):
-        '''Return the metadata for a given client'''
+        """Return the metadata for a given client."""
         client = client.lower()
         if client in self.aliases:
             client = self.aliases[client]
@@ -622,7 +623,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             imd.connectors.append(source)
 
     def validate_client_address(self, client, addresspair):
-        '''Check address against client'''
+        """Check address against client."""
         address = addresspair[0]
         if client in self.floating:
             self.debug_log("Client %s is floating" % client)
@@ -645,7 +646,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             return False
 
     def AuthenticateConnection(self, cert, user, password, address):
-        '''This function checks auth creds'''
+        """This function checks auth creds."""
         if cert:
             id_method = 'cert'
             certinfo = dict([x[0] for x in cert['subject']])
@@ -713,7 +714,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         return True
 
     def process_statistics(self, meta, _):
-        '''Hook into statistics interface to toggle clients in bootstrap mode'''
+        """Hook into statistics interface to toggle clients in bootstrap mode."""
         client = meta.hostname
         if client in self.auth and self.auth[client] == 'bootstrap':
             self.logger.info("Asserting client %s auth mode to cert" % client)
@@ -723,7 +724,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.write_back_clients()
 
     def viz(self, hosts, bundles, key, colors):
-        '''admin mode viz support'''
+        """Admin mode viz support."""
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
         try:
             groups_tree.xinclude()

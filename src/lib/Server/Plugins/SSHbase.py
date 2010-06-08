@@ -14,7 +14,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.DirectoryBacked,
               Bcfg2.Server.Plugin.PullTarget):
-    '''
+    """
        The sshbase generator manages ssh host keys (both v1 and v2)
        for hosts.  It also manages the ssh_known_hosts file. It can
        integrate host keys from other management domains and similarly
@@ -31,7 +31,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
          public key for (hostname)
        ssh_known_hosts -> the current known hosts file. this
          is regenerated each time a new key is generated.
-    '''
+
+    """
     name = 'SSHbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -69,7 +70,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         self.__skn = False
 
     def get_skn(self):
-        '''build memory cache of the ssh known hosts file'''
+        """Build memory cache of the ssh known hosts file."""
         if not self.__skn:
             self.__skn = "\n".join([value.data for key, value in \
                                     self.entries.iteritems() if \
@@ -118,12 +119,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         return self.__skn
 
     def set_skn(self, value):
-        '''Set backing data for skn'''
+        """Set backing data for skn."""
         self.__skn = value
     skn = property(get_skn, set_skn)
 
     def HandleEvent(self, event=None):
-        '''Local event handler that does skn regen on pubkey change'''
+        """Local event handler that does skn regen on pubkey change."""
         Bcfg2.Server.Plugin.DirectoryBacked.HandleEvent(self, event)
         if event and '_key.pub.H_' in event.filename:
             self.skn = False
@@ -134,21 +135,21 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 _ = self.skn
 
     def HandlesEntry(self, entry, _):
-        '''Handle key entries dynamically'''
+        """Handle key entries dynamically."""
         return entry.tag == 'Path' and \
                ([fpat for fpat in self.keypatterns
                  if entry.get('name').endswith(fpat)]
                 or entry.get('name').endswith('ssh_known_hosts'))
 
     def HandleEntry(self, entry, metadata):
-        '''Bind data'''
+        """Bind data."""
         if entry.get('name').endswith('ssh_known_hosts'):
             return self.build_skn(entry, metadata)
         else:
             return self.build_hk(entry, metadata)
 
     def get_ipcache_entry(self, client):
-        '''build a cache of dns results'''
+        """Build a cache of dns results."""
         if client in self.ipcache:
             if self.ipcache[client]:
                 return self.ipcache[client]
@@ -172,7 +173,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 raise socket.gaierror
 
     def get_namecache_entry(self, cip):
-        '''build a cache of name lookups from client IP addresses'''
+        """Build a cache of name lookups from client IP addresses."""
         if cip in self.namecache:
             # lookup cached name from IP
             if self.namecache[cip]:
@@ -195,7 +196,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 raise
 
     def build_skn(self, entry, metadata):
-        '''This function builds builds a host specific known_hosts file'''
+        """This function builds builds a host specific known_hosts file."""
         client = metadata.hostname
         entry.text = self.skn
         hostkeys = [keytmpl % client for keytmpl in self.pubkeys \
@@ -211,7 +212,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
     def build_hk(self, entry, metadata):
-        '''This binds host key data into entries'''
+        """This binds host key data into entries."""
         client = metadata.hostname
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in self.entries.keys():
@@ -234,7 +235,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             entry.text = keydata
 
     def GenerateHostKeys(self, client):
-        '''Generate new host keys for client'''
+        """Generate new host keys for client."""
         keylist = [keytmpl % client for keytmpl in self.hostkeys]
         for hostkey in keylist:
             if 'ssh_host_rsa_key.H_' == hostkey[:19]:
@@ -269,7 +270,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         return [Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)]
 
     def AcceptPullData(self, specific, entry, log):
-        '''per-plugin bcfg2-admin pull support'''
+        """Per-plugin bcfg2-admin pull support."""
         # specific will always be host specific
         filename = "%s/%s.H_%s" % (self.data, entry['name'].split('/')[-1],
                                    specific.hostname)

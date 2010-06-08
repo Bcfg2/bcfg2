@@ -9,7 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Svn')
 
 class Svn(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
-    """Svn is a version plugin for dealing with bcfg2 repos"""
+    """Svn is a version plugin for dealing with Bcfg2 repos."""
     name = 'Svn'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -32,7 +32,7 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Initialized svn plugin with svn directory = %s" % svn_dir)
 
     def get_revision(self):
-        """Read svn revision information for the bcfg2 repository"""
+        """Read svn revision information for the Bcfg2 repository."""
         try:
             data = Popen(("env LC_ALL=C svn info %s" %
                          (self.datastore)), shell=True,

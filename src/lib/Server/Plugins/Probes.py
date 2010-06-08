@@ -50,6 +50,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 class Probes(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.Connector):
+    """A plugin to gather information from a client machine."""
     name = 'Probes'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -70,7 +71,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.load_data()
 
     def write_data(self):
-        '''write probe data out for use with bcfg2-info'''
+        """Write probe data out for use with bcfg2-info."""
         top = lxml.etree.Element("Probed")
         for client, probed in self.probedata.iteritems():
             cx = lxml.etree.SubElement(top, 'Client', name=client)
@@ -105,7 +106,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
     def GetProbes(self, meta, force=False):
-        '''Return a set of probes for execution on client'''
+        """Return a set of probes for execution on client."""
         return self.probes.get_probe_data(meta)
 
     def ReceiveData(self, client, datalist):
@@ -116,7 +117,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.write_data()
 
     def ReceiveDataItem(self, client, data):
-        '''Receive probe results pertaining to client'''
+        """Receive probe results pertaining to client."""
         if not self.cgroups.has_key(client.hostname):
             self.cgroups[client.hostname] = []
         if data.text == None:

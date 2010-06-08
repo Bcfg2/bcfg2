@@ -1,4 +1,4 @@
-'''This module sets up a base list of configuration entries'''
+"""This module sets up a base list of configuration entries."""
 __revision__ = '$Revision$'
 
 import Bcfg2.Server.Plugin
@@ -8,14 +8,15 @@ import lxml.etree
 class Base(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Structure,
            Bcfg2.Server.Plugin.XMLDirectoryBacked):
-    '''This Structure is good for the pile of independent configs
-    needed for most actual systems'''
+    """This Structure is good for the pile of independent configs
+    needed for most actual systems.
+    """
     name = 'Base'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
 
-    '''base creates independent clauses based on client metadata'''
+    """Base creates independent clauses based on client metadata."""
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
@@ -28,7 +29,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def BuildStructures(self, metadata):
-        '''Build structures for client described by metadata'''
+        """Build structures for client described by metadata."""
         ret = lxml.etree.Element("Independent", version='2.0')
         fragments = reduce(lambda x, y: x+y,
                            [base.Match(metadata) for base

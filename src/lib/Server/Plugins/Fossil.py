@@ -8,7 +8,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Fossil')
 
 class Fossil(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
-    """Fossil is a version plugin for dealing with bcfg2 repos"""
+    """Fossil is a version plugin for dealing with Bcfg2 repos."""
     name = 'Fossil'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -35,7 +35,7 @@ class Fossil(Bcfg2.Server.Plugin.Plugin,
                     % {'ffile': fossil_file, 'frev': revision})
 
     def get_revision(self):
-        """Read fossil revision information for the bcfg2 repository"""
+        """Read fossil revision information for the Bcfg2 repository."""
         try:
             data = Popen("env LC_ALL=C fossil info",
                         shell=True,

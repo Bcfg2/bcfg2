@@ -50,6 +50,7 @@ class OhaiCache(object):
 class Ohai(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Probing,
            Bcfg2.Server.Plugin.Connector):
+    """The Ohai plugin is used to detect information about the client operating system."""
     name = 'Ohai'
     experimental = True
 

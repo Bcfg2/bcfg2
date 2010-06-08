@@ -9,7 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Mercurial')
 
 class Hg(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
-    """Mercurial is a version plugin for dealing with bcfg2 repos"""
+    """Mercurial is a version plugin for dealing with Bcfg2 repos."""
     name = 'Mercurial'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -34,7 +34,7 @@ class Hg(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Initialized hg plugin with hg directory = %s" % hg_dir)
 
     def get_revision(self):
-        """Read hg revision information for the bcfg2 repository"""
+        """Read hg revision information for the Bcfg2 repository."""
         try:
             repo_path = "%s/" % self.datastore
             repo = hg.repository(ui.ui(), repo_path)

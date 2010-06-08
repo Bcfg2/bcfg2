@@ -14,7 +14,7 @@ COMPAT_DICT = {'file': 'ConfigFile',
 
 class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
                   Bcfg2.Server.Plugin.GoalValidator):
-    """POSIXCompat is a goal validator plugin for POSIX entries"""
+    """POSIXCompat is a goal validator plugin for POSIX entries."""
     name = 'POSIXCompat'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -25,7 +25,8 @@ class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
 
     def validate_goals(self, metadata, goals):
         """Verify that we are generating correct old
-        Cfg/Directory/Symlink entries"""
+        Cfg/Directory/Symlink entries.
+        """
         for goal in goals:
             for entry in goal.getchildren():
                 if entry.tag == 'Path' and \

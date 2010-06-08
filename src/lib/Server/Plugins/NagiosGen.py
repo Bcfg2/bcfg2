@@ -20,8 +20,9 @@ define host{
 
 class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Generator):
-    '''NagiosGen is a Bcfg2 plugin that dynamically generates
-       Nagios configuration file based on Bcfg2 data.'''
+    """NagiosGen is a Bcfg2 plugin that dynamically generates
+       Nagios configuration file based on Bcfg2 data.
+    """
     name = 'NagiosGen'
     __version__ = '0.6'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -45,7 +46,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                               'perms':'0440'}
 
     def createhostconfig(self, entry, metadata):
-        '''Build host specific configuration file'''
+        """Build host specific configuration file."""
         host_address = socket.gethostbyname(metadata.hostname)
         host_groups = [grp for grp in metadata.groups if \
                        os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
@@ -81,7 +82,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
             LOGGER.error(ioerr)
 
     def createserverconfig(self, entry, _):
-        '''Build monolithic server configuration file'''
+        """Build monolithic server configuration file."""
         host_configs  = glob.glob('%s/*-host.cfg' % self.data)
         group_configs = glob.glob('%s/*-group.cfg' % self.data)
         host_data = ""

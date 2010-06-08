@@ -3,7 +3,7 @@ import re
 import lxml.etree
 
 def linesub(pattern, repl, filestring):
-    '''Substitutes instances of pattern with repl in filestring'''
+    """Substitutes instances of pattern with repl in filestring."""
     if filestring == None:
         filestring = ''
     output = list()
@@ -13,9 +13,9 @@ def linesub(pattern, repl, filestring):
     return '\n'.join(output)
 
 class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
-    '''This object handles the editing directives'''
+    """This object handles the editing directives."""
     def ProcessDirectives(self, input):
-        '''Processes a list of edit directives on input'''
+        """Processes a list of edit directives on input."""
         temp = input
         for directive in self.data.split('\n'):
             directive = directive.split(',')

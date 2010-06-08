@@ -17,7 +17,7 @@ except:
 
 
 class TemplateFile:
-    '''Template file creates Cheetah template structures for the loaded file'''
+    """Template file creates Cheetah template structures for the loaded file."""
 
     def __init__(self, name, specific, encoding):
         self.name = name
@@ -27,7 +27,7 @@ class TemplateFile:
         self.searchlist = dict()
 
     def handle_event(self, event):
-        '''Handle all fs events for this template'''
+        """Handle all fs events for this template."""
         if event.code2str() == 'deleted':
             return
         try:
@@ -40,7 +40,7 @@ class TemplateFile:
             logger.error(perror.report())
 
     def bind_entry(self, entry, metadata):
-        '''Build literal file information'''
+        """Build literal file information."""
         self.template.metadata = metadata
         self.searchlist['metadata'] = metadata
         self.template.path = entry.get('realname', entry.get('name'))
@@ -65,7 +65,7 @@ class TemplateFile:
 
 
 class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
-    '''The TCheetah generator implements a templating mechanism for configuration files'''
+    """The TCheetah generator implements a templating mechanism for configuration files."""
     name = 'TCheetah'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'

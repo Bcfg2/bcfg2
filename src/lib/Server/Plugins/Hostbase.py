@@ -16,7 +16,7 @@ import cStringIO
 class Hostbase(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Structure,
                Bcfg2.Server.Plugin.Generator):
-    '''The Hostbase plugin handles host/network info'''
+    """The Hostbase plugin handles host/network info."""
     name = 'Hostbase'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -50,7 +50,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             raise PluginInitError
                  
     def FetchFile(self, entry, metadata):
-        '''Return prebuilt file data'''
+        """Return prebuilt file data."""
         fname = entry.get('name').split('/')[-1]
         if not fname in self.filedata:
             raise PluginExecutionError
@@ -59,7 +59,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         entry.text = self.filedata[fname]
 
     def BuildStructures(self, metadata):
-        '''Build hostbase bundle'''
+        """Build hostbase bundle."""
         if metadata.hostname not in self.dnsservers or metadata.hostname not in self.dhcpservers:
             return []
         output = Element("Bundle", name='hostbase')
@@ -72,8 +72,10 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         return [output]
 
     def rebuildState(self, _):
-        '''Pre-cache all state information for hostbase config files
-        callable as an XMLRPC function'''
+        """Pre-cache all state information for hostbase config files
+        callable as an XMLRPC function.
+
+        """
         self.buildZones()
         self.buildDHCP()
         self.buildHosts()
@@ -83,7 +85,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         return True
 
     def buildZones(self):
-        '''Pre-build and stash zone files'''
+        """Pre-build and stash zone files."""
         cursor = connection.cursor()
 
         cursor.execute("SELECT id, serial FROM hostbase_zone")
@@ -314,7 +316,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
 
 
     def buildDHCP(self):
-        '''Pre-build dhcpd.conf and stash in the filedata table'''
+        """Pre-build dhcpd.conf and stash in the filedata table."""
 
         # fetches all the hosts with DHCP == True
         cursor = connection.cursor()
@@ -362,7 +364,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
 
 
     def buildHosts(self):
-        '''Pre-build and stash /etc/hosts file'''
+        """Pre-build and stash /etc/hosts file."""
 
         append_data = []
 

@@ -16,7 +16,7 @@ import Bcfg2.Server.Plugin
 
 
 class StatisticsStore(object):
-    '''Manages the memory and file copy of statistics collected about client runs'''
+    """Manages the memory and file copy of statistics collected about client runs."""
     __min_write_delay__ = 0
 
     def __init__(self, filename):
@@ -28,7 +28,7 @@ class StatisticsStore(object):
         self.ReadFromFile()
 
     def WriteBack(self, force=0):
-        '''Write statistics changes back to persistent store'''
+        """Write statistics changes back to persistent store."""
         if (self.dirty and (self.lastwrite + self.__min_write_delay__ <= time())) \
                 or force:
             try:
@@ -43,7 +43,7 @@ class StatisticsStore(object):
                 self.lastwrite = time()
 
     def ReadFromFile(self):
-        '''Reads current state regarding statistics'''
+        """Reads current state regarding statistics."""
         try:
             fin = open(self.filename, 'r')
             data = fin.read()
@@ -57,7 +57,7 @@ class StatisticsStore(object):
             self.dirty = 0
 
     def updateStats(self, xml, client):
-        '''Updates the statistics of a current node with new data'''
+        """Updates the statistics of a current node with new data."""
 
         # Current policy:
         # - Keep anything less than 24 hours old
@@ -105,7 +105,7 @@ class StatisticsStore(object):
         self.WriteBack(force=1)
 
     def isOlderThan24h(self, testTime):
-        '''Helper function to determine if <time> string is older than 24 hours'''
+        """Helper function to determine if <time> string is older than 24 hours."""
         now = time()
         utime = mktime(strptime(testTime))
         secondsPerDay = 60*60*24
