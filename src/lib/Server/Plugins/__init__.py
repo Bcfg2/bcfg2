@@ -1,4 +1,4 @@
-'''imports for Bcfg2.Server.Plugins'''
+"""Imports for Bcfg2.Server.Plugins."""
 __revision__ = '$Revision$'
 
 __all__ = [
@@ -7,6 +7,7 @@ __all__ = [
            'Bundler',
            'Bzr',
            'Cfg',
+           'Darcs', 
            'Decisions',
            'Fossil',
            'Git',
