@@ -30,7 +30,6 @@ bcfg2 (${majorver}-0.0${minorver}) unstable; urgency=low
 
 EOF
 sed -i "s/^\(Version:\)          [:digits:]*.*$/\1          ${version}/" misc/bcfg2.spec
-sed -i "s|^\(Source0:\).*$|\1          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-${version}.tar.gz|" misc/bcfg2.spec
 cat debian/changelog >> deblogtmp
 mv deblogtmp debian/changelog
 echo ${majorver} > redhat/VERSION

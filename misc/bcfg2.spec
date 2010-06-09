@@ -20,7 +20,7 @@ Summary:          Configuration management system
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-1.1.0rc2.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{version}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
