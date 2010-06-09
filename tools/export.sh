@@ -45,6 +45,6 @@ svn export . "${expath}"
 svn log -v "${repo}/tags/${pkgname}_${tagstr}" > "${expath}/ChangeLog"
 cd /tmp
 
-tar czf "${tarname}" "${name}-${version}"
+tar czf "${tarname}" "${pkgname}-${version}"
 gpg --armor --output "${tarname}".gpg --detach-sig "${tarname}"
 scp "${tarname}"* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg
