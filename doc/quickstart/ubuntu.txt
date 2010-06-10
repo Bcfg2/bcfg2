@@ -9,9 +9,10 @@ Quickstart for Ubuntu
 .. note::
 
     This particular how to was done on lucid, but should apply to any
-    other `recent-ubuntu-release`_ version of Ubuntu.
+    other `stable`__ version of Ubuntu.
 
-.. _recent-ubuntu-release: http://www.ubuntu.com/products/ubuntu/release-cycle
+__ ubuntu-releases_
+.. _ubuntu-releases: https://wiki.ubuntu.com/Releases
 
 Install Bcfg2
 =============
@@ -59,9 +60,9 @@ allows you to automate this process.::
     6: Gentoo
     7: FreeBSD
     : 5
-    Generating a 1024 bit RSA private key
-    ........................................++++++
-    ........++++++
+    Generating a 2048 bit RSA private key
+    ......................................................................................+++
+    ...+++
     writing new private key to '/etc/bcfg2.key'
     -----
     Signature ok
