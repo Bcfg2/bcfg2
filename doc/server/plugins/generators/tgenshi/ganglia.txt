@@ -37,7 +37,7 @@ Bundler/ganglia.xml
     <Bundle name='ganglia' version='2.0' revision='$Revision$' origin='$HeadURL$' >
         <Package name='ganglia-gmond' />
         <Package name='ganglia-gmond-modules-python' />
-        <ConfigFile name='/etc/ganglia/gmond.conf' />
+        <Path name='/etc/ganglia/gmond.conf' />
         <Service name='gmond' />
         <Action name='gmond-reload' />
 
@@ -45,7 +45,7 @@ Bundler/ganglia.xml
           <Package name='ganglia-gmetad'/>
           <Package name='ganglia-web'/>
           <Package name='rrdtool'/>
-          <ConfigFile name='/etc/ganglia/gmetad.conf' />
+          <Path name='/etc/ganglia/gmetad.conf' />
           <Service name='gmetad' />
         </Group>
     </Bundle>

@@ -51,7 +51,7 @@ For a "Package"
 
   * For example, {{{/etc/motd}}} to {{{/var/lib/bcfg2/Cfg/etc/motd/motd}}}. Yes, there is an extra directory level named after the file.
 
- #. Specify configuration files as {{{<ConfigFile name='PATH' />}}} in the Base or Bundler configuration.
+ #. Specify configuration files as {{{<Path name='PATH' />}}} in the Base or Bundler configuration.
  #. Add directories to {{{/var/lib/bcfg2/Rules/directories.xml}}}. For example:
 
     .. code-block:: xml
@@ -84,7 +84,7 @@ For a "Package"
 
   #. Add {{{pkg_checks="false"}}} to the {{{<Package />}}} tag.
 
-For a "ConfigFile"
+For a "Path"
 -------------------
 
  * Unclear verification problem (no details from BCFG2)

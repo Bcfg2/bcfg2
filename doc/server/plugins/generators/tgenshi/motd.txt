@@ -148,7 +148,7 @@ it-may-be-depreciated, style of Genshi (pre-0.5).::
 This template results in::
 
     > buildfile /bar.conf ubik3
-    <ConfigFile name="/bar.conf" owner="root" perms="0644" group="root">Hostname is ubik3
+    <Path name="/bar.conf" type="file" owner="root" perms="0644" group="root">Hostname is ubik3
 
     Groups:
      * desktop
@@ -166,4 +166,4 @@ This template results in::
      * noyp
      * mysql
 
-    </ConfigFile>
+    </Path>

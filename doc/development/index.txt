@@ -188,7 +188,7 @@ Example Plugin
 
        def __init__(self, core, datastore):
            Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-           self.Entries = {'ConfigFile':{'/etc/foo.conf': self.buildFoo}}
+           self.Entries = {'Path':{'/etc/foo.conf': self.buildFoo}}
 
        def myfunction(self):
            '''function for xmlrpc rmi call'''
@@ -197,7 +197,7 @@ Example Plugin
 
        def buildFoo(self, entry, metadata):
            '''Bind per-client information into entry based on metadata'''
-           entry.attrib.update({'owner':'root', 'group':'root', 'perms':'644'})
+           entry.attrib.update({'type':'file', 'owner':'root', 'group':'root', 'perms':'644'})
            entry.text = '''contents of foo.conf'''
 
 Example Connector

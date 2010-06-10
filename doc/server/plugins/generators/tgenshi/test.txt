@@ -94,7 +94,7 @@ this (below reformatted a little bit to fit in 80 columns)::
     Processed 12 gamin events in 0.105 seconds. 0 collapsed
     Processed 0 gamin events in 0.100 seconds. 0 collapsed
     <?xml version='1.0' encoding='UTF-8'?>
-    <ConfigFile name="/test" owner="root" perms="644" encoding="ascii" group="root" paranoid="false">
+    <Path type="file" name="/test" owner="root" perms="644" encoding="ascii" group="root" paranoid="false">
     Hostname is test.hostname.org
 
     Groups:
@@ -156,4 +156,4 @@ this (below reformatted a little bit to fit in 80 columns)::
      getchildren getiterator getnext getparent getprevious getroottree index insert
      items iterancestors iterchildren iterdescendants itersiblings keys makeelement
      nsmap prefix remove replace set sourceline tag tail text values xpath
-    </ConfigFile>
+    </Path>
