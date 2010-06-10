@@ -1,7 +1,8 @@
 __revision__ = '$Revision$'
 
 __all__ = ['Mode', 'Client', 'Compare', 'Init', 'Minestruct', 'Perf',
-           'Pull', 'Query', 'Reports', 'Snapshots', 'Tidy', 'Viz', 'Xcmd']
+           'Pull', 'Query', 'Reports', 'Snapshots', 'Tidy', 'Viz', 
+           'Xcmd', 'Group']
 
 import ConfigParser
 import logging
