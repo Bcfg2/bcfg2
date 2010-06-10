@@ -50,7 +50,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         return False
 
     def RemovePackages(self, packages):
-       """Remove extra packages."""
+        """Remove extra packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
         self.cmd.run("/opt/local/bin/port uninstall %s" % \

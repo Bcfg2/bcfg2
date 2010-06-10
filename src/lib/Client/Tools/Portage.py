@@ -5,7 +5,7 @@ import re
 import Bcfg2.Client.Tools
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
-   """The Gentoo toolset implements package and service operations and inherits
+    """The Gentoo toolset implements package and service operations and inherits
     the rest from Toolset.Toolset."""
     name = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
