@@ -53,6 +53,8 @@ class APT(Bcfg2.Client.Tools.Tool):
                              [entry.get('name') for struct in config for entry in struct \
                               if entry.tag in ['Path', 'ConfigFile'] and \
                               entry.get('name').startswith('%s/apt/sources.list' % etc_path)]
+        self.nonexistent = [entry.get('name') for struct in config for entry in struct \
+                              if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
@@ -87,6 +89,10 @@ class APT(Bcfg2.Client.Tools.Tool):
                 files.append(item.split()[3])
             elif "can't open" in item:
                 files.append(item.split()[5])
+            elif "missing file" in item and \
+                 item.split()[3] in self.nonexistent:
+                # these files should not exist
+                continue
             elif "is not installed" in item or "missing file" in item:
                 self.logger.error("Package %s is not fully installed" \
                                   % entry.get('name'))
