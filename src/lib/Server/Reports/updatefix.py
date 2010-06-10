@@ -3,7 +3,7 @@ import Bcfg2.Server.Reports.settings
 from django.db import connection
 import django.core.management
 from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion, \
-		TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
+                TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
 
 import logging, traceback
 logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
@@ -66,7 +66,7 @@ def _populate_interaction_entry_counts():
 
     for type in count_field.keys():
         cursor.execute("select count(type), interaction_id "+
-		"from reports_entries_interactions where type = %s group by interaction_id" % type)
+                "from reports_entries_interactions where type = %s group by interaction_id" % type)
         updates = []
         for row in cursor.fetchall():
             updates.append(row)

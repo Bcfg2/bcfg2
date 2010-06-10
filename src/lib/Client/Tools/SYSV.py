@@ -49,11 +49,11 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         # Build list of packages
         lines = self.cmd.run("/usr/bin/pkginfo -x")[1]
         while lines:
-	    # Splitting on whitespace means that packages with spaces in
-	    # their version numbers don't work right.  Found this with
-	    # IBM TSM software with package versions like
-	    #		"Version 6 Release 1 Level 0.0"
-	    # Should probably be done with a regex but this works.
+            # Splitting on whitespace means that packages with spaces in
+            # their version numbers don't work right.  Found this with
+            # IBM TSM software with package versions like
+            #           "Version 6 Release 1 Level 0.0"
+            # Should probably be done with a regex but this works.
             version = lines.pop().split(') ')[1]
             pkg = lines.pop().split()[0]
             self.installed[pkg] = version

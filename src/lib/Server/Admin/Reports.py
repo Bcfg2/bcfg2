@@ -38,8 +38,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 from django.db import connection
 
 from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
-				Entries_interactions, Performance, \
-				Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
+                                Entries_interactions, Performance, \
+                                Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
 
 class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''

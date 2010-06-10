@@ -146,7 +146,7 @@ def client_detailed_list(request, **kwargs):
     for inter in interactions:
         if inter.client_id in c_dict:
             entry_list.append([c_dict[inter.client_id], inter, \
-		entry_max - inter.timestamp > timedelta(hours=24)])
+                entry_max - inter.timestamp > timedelta(hours=24)])
     entry_list.sort(lambda a,b: cmp(a[0], b[0]))
     '''
             if(datetime.now()-self.timestamp > timedelta(hours=25) ):
