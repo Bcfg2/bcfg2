@@ -96,9 +96,7 @@ configuration, each of these entities only has a tag and the name
 attribute set.
 
 The types of Configuration Entities that maybe assigned to the abstract
-configuration are as follows:
-
-.. include:: ../server/configurationentries.txt
+configuration can be seen at :ref:`server-configurationentries`.
 
 An example of each entity type is below.
 
