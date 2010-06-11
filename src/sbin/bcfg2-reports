@@ -61,7 +61,7 @@ def print_fields(fields, cli, max_name, entrydict):
     """
     Prints the fields specified in fields of cli, max_name
     specifies the column width of the name column.
-    """"
+    """
     fmt = ''
     for field in fields:
         if field == 'name':
