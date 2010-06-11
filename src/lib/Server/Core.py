@@ -119,7 +119,7 @@ class Core(Component):
                 if famfd:
                     select.select([famfd], [], [], 15)
                 else:
-                    while not self.fam.pending():
+                    if not self.fam.pending():
                         time.sleep(15)
                 self.fam.handle_event_set(self.lock)
             except:
