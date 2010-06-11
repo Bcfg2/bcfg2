@@ -134,8 +134,15 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                         break
                     except socket.error:
                         continue
-                self.socket.send("Reconnected to syslog")
-                self.socket.send(msg)
+                try:
+                    self.socket.send("Reconnected to syslog")
+                    self.socket.send(msg)
+                except:
+                    """
+                    If we still fail then drop it.  Running bcfg2-server as non-root can
+                    trigger permission denied exceptions.
+                    """
+                    pass
 
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
     """Setup logging for Bcfg2 software."""
