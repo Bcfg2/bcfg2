@@ -153,9 +153,10 @@ class Core(Component):
                 (plugin), exc_info=1)
 
     def shutdown(self):
-        self.terminate.set()
-        for plugin in self.plugins.values():
-            plugin.shutdown()
+        if not self.terminate.isSet():
+            self.terminate.set()
+            for plugin in self.plugins.values():
+                plugin.shutdown()
 
     def validate_data(self, metadata, data, base_cls):
         for plugin in self.plugins.values():

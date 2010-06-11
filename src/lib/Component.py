@@ -76,6 +76,7 @@ def run_component(component_cls, location, daemon, pidfile_name, to_file,
         server.serve_forever()
     finally:
         server.server_close()
+    component.shutdown()
 
 def exposed(func):
     """Mark a method to be exposed publically.
