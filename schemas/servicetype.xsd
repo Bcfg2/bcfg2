@@ -25,7 +25,6 @@
     <xsd:attribute name='mode' type='xsd:string'/>
     <xsd:attribute name='custom' type='xsd:string'/>
     <xsd:attribute name='FMRI' type='xsd:string'/>
-    <xsd:attribute name='restart' type='xsd:string'/>
     <xsd:attribute name='supervised' type='xsd:string'/>
     <xsd:attribute name='sequence' type='xsd:string'/>
     <xsd:attribute name='target' type='xsd:string'/>
