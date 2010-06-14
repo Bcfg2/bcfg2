@@ -78,7 +78,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.__important__ = [entry.get('name') for struct in config \
                               for entry in struct \
                               if entry.tag in ['Path', 'ConfigFile'] and \
-                              entry.get('name').startswith('/etc/yum.d') \
+                              (entry.get('name').startswith('/etc/yum.d') \
+                              or entry.get('name').startswith('/etc/yum.repos.d')) \
                               or entry.get('name') == '/etc/yum.conf']
         self.yum_avail = dict()
         self.yum_installed = dict()
