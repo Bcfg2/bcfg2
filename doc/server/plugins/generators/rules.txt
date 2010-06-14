@@ -163,7 +163,8 @@ Service mode descriptions
 
 * custom
 
-  * set non-default restart target in conjunction with target attribute
+  * set non-default service command for restart (use in conjunction with
+    target attribute)
 
 Client Tag
 ----------
