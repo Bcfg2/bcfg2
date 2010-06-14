@@ -154,7 +154,7 @@ Service mode descriptions
 
 * default
 
-  * perform appropriate service ops
+  * perform appropriate service operations
 
 * supervised
 
