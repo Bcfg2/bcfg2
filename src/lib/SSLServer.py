@@ -100,6 +100,7 @@ class SSLServer (SocketServer.TCPServer, object):
             self.logger.error("Failed to bind to socket")
             raise
 
+        self.timeout = timeout
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
         if keyfile != None:
@@ -131,6 +132,7 @@ class SSLServer (SocketServer.TCPServer, object):
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
+        sock.settimeout(self.timeout)
         sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
                                   keyfile=self.keyfile, cert_reqs=self.mode,
                                   ca_certs=self.ca, ssl_version=self.ssl_protocol)
