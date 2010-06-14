@@ -128,8 +128,10 @@ Service Tag
 |          | on or off (default:      |                                       |
 |          | off).                    |                                       |
 +----------+--------------------------+---------------------------------------+
-| restart  | Service command for      | String                                |
-|          | restart                  |                                       |
+| target   | Service command for      | String                                |
+|          | restart, modified        |                                       |
+|          | targets require          |                                       |
+|          | mode="custom"            |                                       | 
 |          | (default: restart)       |                                       |
 +----------+--------------------------+---------------------------------------+
 | type     | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |
