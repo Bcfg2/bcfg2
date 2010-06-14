@@ -158,7 +158,7 @@ Service mode descriptions
 
 * supervised
 
-  * default + ensure service is running (or stopped) when verification is performed
+  * default and ensure service is running (or stopped) when verification is performed
   * deprecates supervised='true'
 
 * custom
