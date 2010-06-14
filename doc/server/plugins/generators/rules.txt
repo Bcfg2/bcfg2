@@ -130,7 +130,7 @@ Service Tag
 +----------+--------------------------+---------------------------------------+
 | restart  | Service command for      | String                                |
 |          | restart                  |                                       |
-|          | (default:restart)        |                                       |
+|          | (default: restart)       |                                       |
 +----------+--------------------------+---------------------------------------+
 | type     | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |
 |          | client to manage this    |                                       |
