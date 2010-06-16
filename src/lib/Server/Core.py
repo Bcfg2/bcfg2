@@ -293,6 +293,9 @@ class Core(Component):
         return result
 
     def build_metadata(self, client_name):
+        if not hasattr(self, 'metadata'):
+            # some threads start before metadata is even loaded
+            raise Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError
         imd = self.metadata.get_initial_metadata(client_name)
         for conn in self.connectors:
             grps = conn.get_additional_groups(imd)

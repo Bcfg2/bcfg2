@@ -5,6 +5,7 @@ import copy
 import logging
 import lxml.etree
 import os
+import pickle
 import posixpath
 import re
 import Queue
@@ -151,22 +152,99 @@ class ThreadedStatistics(Statistics,
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
-        self.work_queue = Queue.Queue()
+        self.work_queue = Queue.Queue(100000)
+        self.pending_file = "%s/etc/%s.pending" % (datastore, self.__class__.__name__)
+        self.daemon = True
         self.start()
 
+    def save(self):
+        ''' Save any pending data to a file'''
+        pending_data = []
+        try:
+            while not self.work_queue.empty():
+                (metadata, data) = self.work_queue.get_nowait()
+                try:
+                    pending_data.append( ( metadata.hostname, lxml.etree.tostring(data) ) )
+                except:
+                    self.logger.warning("Dropping interaction for %s" % metadata.hostname)
+        except Queue.Empty:
+            pass
+
+        try:
+            savefile = open(self.pending_file, 'w')
+            pickle.dump(pending_data, savefile)
+            savefile.close()
+            self.logger.info("Saved pending %s data" % self.__class__.__name__)
+        except:
+            self.logger.warning("Failed to save pending data")
+
+    def load(self):
+        ''' Load any pending data to a file'''
+        if not os.path.exists(self.pending_file):
+            return True
+        pending_data = []
+        try:
+            savefile = open(self.pending_file, 'r')
+            pending_data = pickle.load(savefile)
+            savefile.close()
+        except Exception, e:
+            self.logger.warning("Failed to load pending data: %s" % e)
+        for (pmetadata, pdata) in pending_data:
+            # check that shutdown wasnt called early
+            if self.terminate.isSet():
+                return False
+
+            try:
+                while True:
+                    try:
+		        metadata = self.core.build_metadata(pmetadata)
+                        break
+                    except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
+                        pass
+
+                    self.terminate.wait(5)
+                    if self.terminate.isSet():
+                        return False
+
+                self.work_queue.put_nowait( (metadata, lxml.etree.fromstring(pdata)) )
+            except Queue.Full:
+                self.logger.warning("Queue.Full: Failed to load queue data")
+                break
+            except lxml.etree.LxmlError, lxml_error:
+                self.logger.error("Unable to load save interaction: %s" % lxml_error)
+            except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+                self.logger.error("Unable to load metadata for save interaction: %s" % pmetadata)
+        try:
+            os.unlink(self.pending_file)
+        except:
+            self.logger.error("Failed to unlink save file: %s" % self.pending_file)
+        self.logger.info("Loaded pending %s data" % self.__class__.__name__)
+        return True
+
     def run(self):
-        while not (self.terminate.isSet() and self.work_queue.empty()):
+        if not self.load():
+            return
+        while not self.terminate.isSet():
             try:
                 (xdata, client) = self.work_queue.get(block=True, timeout=5)
             except Queue.Empty:
                 continue
             except Exception, e:
-                logger.error("ThreadedStatistics: %s" % e)
+                self.logger.error("ThreadedStatistics: %s" % e)
                 continue
             self.handle_statistic(xdata, client)
+        if not self.work_queue.empty():
+            self.save()
 
     def process_statistics(self, metadata, data):
-        self.work_queue.put((metadata, copy.deepcopy(data)))
+        warned = False
+        try:
+            self.work_queue.put_nowait((metadata, copy.deepcopy(data)))
+            warned = False
+        except Queue.Full:
+            if not warned:
+                self.logger.warning("Queue is full.  Dropping data")
+            warned = True
 
     def handle_statistics(self, metadata, data):
         '''Handle stats here'''

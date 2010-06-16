@@ -545,6 +545,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def get_initial_metadata(self, client):
         """Return the metadata for a given client."""
+        if False in self.states.values():
+            raise MetadataRuntimeError
         client = client.lower()
         if client in self.aliases:
             client = self.aliases[client]
