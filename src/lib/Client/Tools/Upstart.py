@@ -59,12 +59,12 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         """Install Service for entry."""
-        if entry.get('mode', 'default') == 'supervised':
-            pstatus, pout = self.cmd.run('/usr/sbin/service %s status' % \
-                                         entry.get('name'))
-            if pstatus:
-                self.cmd.run('/usr/sbin/service %s start' % (entry.get('name')))
-        return True
+        if entry.get('status') == 'on':
+            pstatus = self.cmd.run(self.get_svc_command(entry, 'start'))[0]
+        elif entry.get('status') == 'off':
+            pstatus = self.cmd.run(self.get_svc_command(entry, 'stop'))[0]
+        # pstatus is true if command failed
+        return not pstatus
 
     def FindExtra(self):
         """Locate extra Upstart services."""
