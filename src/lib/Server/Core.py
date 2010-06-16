@@ -117,10 +117,10 @@ class Core(Component):
         while not terminate.isSet():
             try:
                 if famfd:
-                    select.select([famfd], [], [], 15)
+                    select.select([famfd], [], [], 2)
                 else:
                     if not self.fam.pending():
-                        time.sleep(15)
+                        terminate.wait(15)
                 self.fam.handle_event_set(self.lock)
             except:
                 continue

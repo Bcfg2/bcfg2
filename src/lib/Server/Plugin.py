@@ -226,7 +226,7 @@ class ThreadedStatistics(Statistics,
             return
         while not self.terminate.isSet():
             try:
-                (xdata, client) = self.work_queue.get(block=True, timeout=5)
+                (xdata, client) = self.work_queue.get(block=True, timeout=2)
             except Queue.Empty:
                 continue
             except Exception, e:
