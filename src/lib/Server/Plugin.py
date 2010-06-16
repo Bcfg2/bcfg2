@@ -243,7 +243,7 @@ class ThreadedStatistics(Statistics,
             warned = False
         except Queue.Full:
             if not warned:
-                self.logger.warning("Queue is full.  Dropping data")
+                self.logger.warning("%s: Queue is full.  Dropping interactions." % self.__class__.__name__)
             warned = True
 
     def handle_statistics(self, metadata, data):
