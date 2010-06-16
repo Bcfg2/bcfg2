@@ -168,7 +168,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
     def VerifyDirectory(self, entry, modlist):
         """Verify Directory entry."""
-        if entry.get('perms') == None:
+        if entry.get('perms') == None or \
+           entry.get('owner') == None or \
+           entry.get('group') == None:
             return False
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
@@ -261,6 +263,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
     def InstallDirectory(self, entry):
         """Install Directory entry."""
+        if entry.get('perms') == None or \
+           entry.get('owner') == None or \
+           entry.get('group') == None:
+            self.logger.error('Entry %s not completely specified. '
+                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+            return False
         self.logger.info("Installing Directory %s" % (entry.get('name')))
         try:
             fmode = os.lstat(entry.get('name'))
