@@ -100,7 +100,7 @@ if __name__ == '__main__':
         try:
             xdata = lxml.etree.parse(rfile)
         except lxml.etree.XMLSyntaxError, e:
-            print("Failed to parse %s: %s" % (plist, e))
+            print("Failed to parse %s: %s" % (rfile, e))
         for posixpath in xdata.findall("//Path"):
             pathname = posixpath.get('name')
             pathtype = posixpath.get('type')
