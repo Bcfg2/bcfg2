@@ -223,7 +223,16 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         if entry.get('name') in self.installed:
             # There is at least one instance installed.
             if self.pkg_checks == 'true' and entry.get('pkg_checks', 'true') == 'true':
-                if entry.get('name') in self.installOnlyPkgs:
+                rpmTs = rpm.TransactionSet()
+                rpmHeader = None
+                for h in rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name')):
+                    if rpmHeader is None or rpm.versionCompare(h, rpmHeader) > 0:
+                        rpmHeader = h
+                rpmProvides = [ h['provides'] for h in \
+                            rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name')) ]
+                rpmIntersection = set(rpmHeader['provides']) & \
+                                  set(self.installOnlyPkgs)
+                if len(rpmIntersection) > 0:
                     # Packages that should only be installed or removed.
                     # e.g. kernels.
                     self.logger.debug("        Install only package.")

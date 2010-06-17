@@ -130,21 +130,48 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                         x.set('verify', entry.get('verify'))
 
         if entry.get('type', False) == 'yum':
-            # Make sure we are dealing with Packages from Yum
-            # Resolve what provides this package.  That's what
-            # we need to verify.  Otherwise we run into bad
-            # obsoletes and provides fun.
-            try:
-                pkg = self.yb.returnPackageByDep(entry.get('name'))
-                if entry.get('name') != pkg.name:
-                    self.logger.info("YUMng: remapping virtual package %s to %s" \
-                                     % (entry.get('name'), pkg.name))
+            # Check for virtual provides or packages.  If we don't have
+            # this package use Yum to resolve it to a real package name
+            knownPkgs = self.yum_installed.keys() + self.yum_avail.keys()
+            if entry.get('name') not in knownPkgs:
+                # If the package name matches something installed
+                # or available the that's the correct package.
+                try:
+                    pkgDict = dict( [ (i.name, i) for i in \
+                        self.yb.returnPackagesByDep(entry.get('name')) ] )
+                except yum.Errors.YumBaseError, e:
+                    self.logger.error('Yum Error Depsolving for %s: %s' % \
+                                      (entry.get('name'), str(e)))
+                    pkgDict = {}
+
+                if len(pkgDict) > 1:
+                    # What do we do with multiple packages?  
+                    s = "YUMng: returnPackagesByDep(%s) returned many packages"
+                    self.logger.info(s % entry.get('name'))
+                    s = "YUMng: matching packages: %s"
+                    self.logger.info(s % str(pkgDict.keys()))
+                    pkgs = set(pkgDict.keys()) & set(self.yum_installed.keys())
+                    if len(pkgs) > 0:
+                        # Virtual packages matches an installed real package
+                        pkg = pkgDict[pkgs.pop()]
+                        s = "YUMng: chosing: %s" % pkg.name
+                        self.logger.info(s)
+                    else:
+                        # What's the right package?  This will fail verify
+                        # and Yum should Do The Right Thing on package install
+                        pkg = None
+                elif len(pkgDict) == 1:
+                    pkg = pkgDict.values()[0]
+                else:  # len(pkgDict) == 0
+                    s = "YUMng: returnPackagesByDep(%s) returned no results"
+                    self.logger.info(s % entry.get('name'))
+                    pkg = None
+
+                if pkg is not None:
+                    s = "YUMng: remapping virtual package %s to %s"
+                    self.logger.info(s % (entry.get('name'), pkg.name))
                     entry.set('name', pkg.name)
-                # Set the version?  version = '%s:%s-%s.%s' % \
-                # (pkg.epoch, pkg.version, pkg.release, pkg.arch)
-            except yum.Errors.YumBaseError, e:
-                self.logger.info('Yum Error Depsolving for %s: %s' % \
-                                 (entry.get('name'), str(e)))
+
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
 
