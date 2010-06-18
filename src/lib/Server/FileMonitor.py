@@ -6,7 +6,7 @@ from time import sleep, time
 logger = logging.getLogger('Bcfg2.Server.FileMonitor')
 
 def ShouldIgnore(event):
-    '''Test if the event should be suppresed'''
+    """Test if the event should be suppresed."""
     # FIXME should move event suppression out of the core
     if event.filename.split('/')[-1] == '.svn':
         return True
@@ -23,12 +23,12 @@ class Event(object):
         self.action = code
 
     def code2str(self):
-        '''return static code for event'''
+        """return static code for event"""
         return self.action
 
 available = {}
 class FileMonitor(object):
-    '''File Monitor baseclass'''
+    """File Monitor baseclass."""
     def __init__(self, debug=False):
         object.__init__(self)
         self.debug = debug
@@ -89,7 +89,7 @@ class FileMonitor(object):
 
 
 class FamFam(object):
-    '''The fam object is a set of callbacks for file alteration events (FAM support)'''
+    """The fam object is a set of callbacks for file alteration events (FAM support)."""
 
     def __init__(self):
         object.__init__(self)
@@ -99,7 +99,7 @@ class FamFam(object):
         self.debug = False
 
     def fileno(self):
-        '''return fam file handle number'''
+        """return fam file handle number"""
         return self.fm.fileno()
 
     def handle_event_set(self, _):
@@ -112,7 +112,7 @@ class FamFam(object):
                 now = time()
 
     def AddMonitor(self, path, obj):
-        '''add a monitor to path, installing a callback to obj.HandleEvent'''
+        """Add a monitor to path, installing a callback to obj.HandleEvent."""
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
@@ -124,7 +124,7 @@ class FamFam(object):
         return handle.requestID()
 
     def Service(self, interval=0.50):
-        '''Handle all fam work'''
+        """Handle all fam work."""
         count = 0
         collapsed = 0
         rawevents = []
@@ -164,10 +164,10 @@ class FamFam(object):
 
 
 class Fam(FileMonitor):
-    '''
+    """
        The fam object is a set of callbacks for
-       file alteration events (FAM support)
-    '''
+       file alteration events (FAM support).
+    """
 
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug)
@@ -177,7 +177,7 @@ class Fam(FileMonitor):
         return self.fm.fileno()
 
     def AddMonitor(self, path, obj):
-        '''add a monitor to path, installing a callback to obj.HandleEvent'''
+        """Add a monitor to path, installing a callback to obj.HandleEvent."""
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
             handle = self.fm.monitorDirectory(path, None)
@@ -194,10 +194,10 @@ class Fam(FileMonitor):
         return self.fm.nextEvent()
 
 class Pseudo(FileMonitor):
-    '''
+    """
        The fam object is a set of callbacks for
-       file alteration events (static monitor support)
-    '''
+       file alteration events (static monitor support).
+    """
 
     def __init__(self, debug=False):
         FileMonitor.__init__(self, debug=False)
@@ -210,7 +210,7 @@ class Pseudo(FileMonitor):
         return self.pending_events.pop()
 
     def AddMonitor(self, path, obj):
-        '''add a monitor to path, installing a callback to obj.HandleEvent'''
+        """add a monitor to path, installing a callback to obj.HandleEvent"""
         handleID = len(self.handles.keys())
         mode = os.stat(path)[stat.ST_MODE]
         handle = Event(handleID, path, 'exists')
@@ -232,10 +232,10 @@ try:
                       GAMChanged, GAMDeleted, GAMMoved
 
     class GaminEvent(Event):
-        '''
+        """
         This class provides an event analogous to
-        python-fam events based on gamin sources
-        '''
+        python-fam events based on gamin sources.
+        """
         def __init__(self, request_id, filename, code):
             Event.__init__(self, request_id, filename, code)
             action_map = {GAMCreated: 'created', GAMExists: 'exists',
@@ -245,10 +245,10 @@ try:
                 self.action = action_map[code]
 
     class Gamin(FileMonitor):
-        '''
+        """
         The fam object is a set of callbacks for
         file alteration events (Gamin support)
-        '''
+        """
         def __init__(self, debug=False):
             FileMonitor.__init__(self, debug)
             self.mon = WatchMonitor()
@@ -259,11 +259,11 @@ try:
             return self.mon.get_fd()
 
         def queue(self, path, action, request_id):
-            '''queue up the event for later handling'''
+            """queue up the event for later handling"""
             self.events.append(GaminEvent(request_id, path, action))
 
         def AddMonitor(self, path, obj):
-            '''add a monitor to path, installing a callback to obj.HandleEvent'''
+            """Add a monitor to path, installing a callback to obj.HandleEvent."""
             handle = self.counter
             self.counter += 1
             mode = os.stat(path)[stat.ST_MODE]

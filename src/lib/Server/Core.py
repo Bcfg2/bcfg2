@@ -1,4 +1,4 @@
-'''Bcfg2.Server.Core provides the runtime support for bcfg2 modules'''
+"""Bcfg2.Server.Core provides the runtime support for Bcfg2 modules."""
 __revision__ = '$Revision$'
 
 import atexit
@@ -17,7 +17,7 @@ import Bcfg2.Server.Plugins.Metadata
 logger = logging.getLogger('Bcfg2.Server.Core')
 
 def critical_error(operation):
-    '''Log and err, traceback and return an xmlrpc fault to client'''
+    """Log and err, traceback and return an xmlrpc fault to client."""
     logger.error(operation, exc_info=1)
     raise xmlrpclib.Fault(7, "Critical unexpected failure: %s" % (operation))
 
@@ -28,11 +28,11 @@ except:
     pass
 
 class CoreInitError(Exception):
-    '''This error is raised when the core cannot be initialized'''
+    """This error is raised when the core cannot be initialized."""
     pass
 
 class Core(Component):
-    '''The Core object is the container for all Bcfg2 Server logic, and modules'''
+    """The Core object is the container for all Bcfg2 Server logic and modules."""
     name = 'bcfg2-server'
     implementation = 'bcfg2-server'
 
@@ -175,7 +175,7 @@ class Core(Component):
                                  % (plugin.name), exc_info=1)
 
     def GetStructures(self, metadata):
-        '''Get all structures for client specified by metadata'''
+        """Get all structures for client specified by metadata."""
         structures = reduce(lambda x, y:x+y,
                             [struct.BuildStructures(metadata) for struct \
                              in self.structures], [])
@@ -187,7 +187,7 @@ class Core(Component):
         return structures
 
     def BindStructure(self, structure, metadata):
-        '''Bind a complete structure'''
+        """Bind a complete structure."""
         for entry in structure.getchildren():
             if entry.tag.startswith("Bound"):
                 entry.tag = entry.tag[5:]
@@ -204,7 +204,7 @@ class Core(Component):
                              % (entry.tag, entry.get('name')), exc_info=1)
 
     def Bind(self, entry, metadata):
-        '''Bind an entry using the appropriate generator'''
+        """Bind an entry using the appropriate generator."""
         if 'altsrc' in entry.attrib:
             oldname = entry.get('name')
             entry.set('name', entry.get('altsrc'))
@@ -239,7 +239,7 @@ class Core(Component):
         raise PluginExecutionError, (entry.tag, entry.get('name'))
 
     def BuildConfiguration(self, client):
-        '''Build Configuration for client'''
+        """Build configuration for client."""
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0', \
                                     revision=self.revision)
@@ -324,7 +324,7 @@ class Core(Component):
 
     @exposed
     def GetProbes(self, address):
-        '''Fetch probes for a particular client'''
+        """Fetch probes for a particular client."""
         resp = lxml.etree.Element('probes')
         try:
             name = self.metadata.resolve_client(address)
@@ -349,7 +349,7 @@ class Core(Component):
 
     @exposed
     def RecvProbeData(self, address, probedata):
-        '''Receive probe data from clients'''
+        """Receive probe data from clients."""
         try:
             name = self.metadata.resolve_client(address)
             meta = self.build_metadata(name)
@@ -383,7 +383,7 @@ class Core(Component):
 
     @exposed
     def AssertProfile(self, address, profile):
-        '''Set profile for a client'''
+        """Set profile for a client."""
         try:
             client = self.metadata.resolve_client(address)
             self.metadata.set_profile(client, profile, address)
@@ -396,7 +396,7 @@ class Core(Component):
 
     @exposed
     def GetConfig(self, address, checksum=False):
-        '''Build config for a client'''
+        """Build config for a client."""
         try:
             client = self.metadata.resolve_client(address)
             config = self.BuildConfiguration(client)
@@ -408,7 +408,7 @@ class Core(Component):
 
     @exposed
     def RecvStats(self, address, stats):
-        '''Act on statistics upload'''
+        """Act on statistics upload"""
         sdata = lxml.etree.XML(stats)
         client = self.metadata.resolve_client(address)
         self.process_statistics(client, sdata)

@@ -1,4 +1,4 @@
-'''This module provides the baseclass for Bcfg2 Server Plugins'''
+"""This module provides the baseclass for Bcfg2 Server Plugins."""
 __revision__ = '$Revision$'
 
 import copy
@@ -34,15 +34,15 @@ info_regex = re.compile( \
     'paranoid:(\s)*(?P<paranoid>\S+)|mtime:(\s)*(?P<mtime>\w+)$')
 
 class PluginInitError(Exception):
-    '''Error raised in cases of Plugin initialization errors'''
+    """Error raised in cases of Plugin initialization errors."""
     pass
 
 class PluginExecutionError(Exception):
-    '''Error raised in case of Plugin execution errors'''
+    """Error raised in case of Plugin execution errors."""
     pass
 
 class Plugin(object):
-    '''This is the base class for all Bcfg2 Server plugins.
+    """This is the base class for all Bcfg2 Server plugins.
     Several attributes must be defined in the subclass:
     name : the name of the plugin
     __version__ : a version string
@@ -52,7 +52,7 @@ class Plugin(object):
       - Structure creation (overloading BuildStructures)
       - Configuration entry binding (overloading HandlesEntry, or loads the Entries table)
       - Data collection (overloading GetProbes/ReceiveData)
-    '''
+    """
     name = 'Plugin'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -86,31 +86,31 @@ class Plugin(object):
         self.running = False
 
 class Generator(object):
-    '''Generator plugins contribute to literal client configurations'''
+    """Generator plugins contribute to literal client configurations."""
     def HandlesEntry(self, entry, metadata):
-        '''This is the slow path method for routing configuration binding requests'''
+        """This is the slow path method for routing configuration binding requests."""
         return False
 
     def HandleEntry(self, entry, metadata):
-        '''This is the slow-path handler for configuration entry binding'''
+        """This is the slow-path handler for configuration entry binding."""
         raise PluginExecutionError
 
 class Structure(object):
-    '''Structure Plugins contribute to abstract client configurations'''
+    """Structure Plugins contribute to abstract client configurations."""
     def BuildStructures(self, metadata):
-        '''return a list of abstract goal structures for client'''
+        """Return a list of abstract goal structures for client."""
         raise PluginExecutionError
 
 class Metadata(object):
-    '''Signal metadata capabilities for this plugin'''
+    """Signal metadata capabilities for this plugin"""
     def add_client(self, client_name, attribs):
-        '''add client'''
+        """Add client."""
         pass
     def remove_client(self, client_name):
-        '''remove client'''
+        """Remove client."""
         pass
     def viz(self, hosts, bundles, key, colors):
-        '''create viz str for viz admin mode'''
+        """Create viz str for viz admin mode."""
         pass
 
     def get_initial_metadata(self, client_name):
@@ -120,33 +120,33 @@ class Metadata(object):
         raise PluginExecutionError
 
 class Connector(object):
-    '''Connector Plugins augment client metadata instances'''
+    """Connector Plugins augment client metadata instances."""
     def get_additional_groups(self, metadata):
-        '''determine additional groups for metadata'''
+        """Determine additional groups for metadata."""
         return list()
 
     def get_additional_data(self, metadata):
-        '''determine additional data for metadata inst'''
+        """Determine additional data for metadata inst."""
         return dict()
 
 class Probing(object):
-    '''Signal probe capability for this plugin'''
+    """Signal probe capability for this plugin"""
     def GetProbes(self, _):
-        '''Return a set of probes for execution on client'''
+        """Return a set of probes for execution on client."""
         return []
 
     def ReceiveData(self, _, dummy):
-        '''Receive probe results pertaining to client'''
+        """Receive probe results pertaining to client."""
         pass
 
 class Statistics(object):
-    '''Signal statistics handling capability'''
+    """Signal statistics handling capability."""
     def process_statistics(self, client, xdata):
         pass
 
 class ThreadedStatistics(Statistics,
                          threading.Thread):
-    '''Threaded statistics handling capability'''
+    """Threaded statistics handling capability."""
     def __init__(self, core, datastore):
         Statistics.__init__(self)
         threading.Thread.__init__(self)
@@ -158,7 +158,7 @@ class ThreadedStatistics(Statistics,
         self.start()
 
     def save(self):
-        ''' Save any pending data to a file'''
+        """ Save any pending data to a file."""
         pending_data = []
         try:
             while not self.work_queue.empty():
@@ -179,7 +179,7 @@ class ThreadedStatistics(Statistics,
             self.logger.warning("Failed to save pending data")
 
     def load(self):
-        ''' Load any pending data to a file'''
+        """ Load any pending data to a file."""
         if not os.path.exists(self.pending_file):
             return True
         pending_data = []
@@ -247,7 +247,7 @@ class ThreadedStatistics(Statistics,
             warned = True
 
     def handle_statistics(self, metadata, data):
-        '''Handle stats here'''
+        """Handle stats here."""
         pass
 
 class PullSource(object):
@@ -262,12 +262,12 @@ class PullTarget(object):
         raise PluginExecutionError
 
     def AcceptPullData(self, specific, new_entry, verbose):
-        '''This is the null per-plugin implementation
-        of bcfg2-admin pull'''
+        """This is the null per-plugin implementation
+        of bcfg2-admin pull"""
         raise PluginExecutionError
 
 class Decision(object):
-    '''Signal decision handling capability'''
+    """Signal decision handling capability."""
     def GetDecisions(self, metadata, mode):
         return []
 
@@ -275,17 +275,17 @@ class ValidationError(Exception):
     pass
 
 class StructureValidator(object):
-    '''Validate/modify goal structures'''
+    """Validate/modify goal structures."""
     def validate_structures(self, metadata, structures):
         raise ValidationError, "not implemented"
 
 class GoalValidator(object):
-    '''Validate/modify configuration goals'''
+    """Validate/modify configuration goals."""
     def validate_goals(self, metadata, goals):
         raise ValidationError, "not implemented"
 
 class Version(object):
-    '''Interact with various version control systems'''
+    """Interact with various version control systems."""
     def get_revision(self):
         return []
     def commit_data(self):
@@ -294,10 +294,11 @@ class Version(object):
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):
-    '''This object caches file data in memory.
+    """This object caches file data in memory.
     HandleEvent is called whenever fam registers an event.
     Index can parse the data into member data as required.
-    This object is meant to be used as a part of DirectoryBacked.'''
+    This object is meant to be used as a part of DirectoryBacked.
+    """
 
     def __init__(self, name):
         object.__init__(self)
@@ -305,7 +306,7 @@ class FileBacked(object):
         self.name = name
 
     def HandleEvent(self, event=None):
-        '''Read file upon update'''
+        """Read file upon update."""
         if event and event.code2str() not in ['exists', 'changed', 'created']:
             return
         try:
@@ -315,11 +316,11 @@ class FileBacked(object):
             logger.error("Failed to read file %s" % (self.name))
 
     def Index(self):
-        '''Update local data structures based on current file state'''
+        """Update local data structures based on current file state"""
         pass
 
 class DirectoryBacked(object):
-    '''This object is a coherent cache for a filesystem hierarchy of files.'''
+    """This object is a coherent cache for a filesystem hierarchy of files."""
     __child__ = FileBacked
     patterns = re.compile('.*')
 
@@ -338,7 +339,7 @@ class DirectoryBacked(object):
         return self.entries.iteritems()
 
     def AddEntry(self, name):
-        '''Add new entry to data structures upon file creation'''
+        """Add new entry to data structures upon file creation."""
         if name == '':
             logger.info("got add for empty name")
         elif name in self.entries:
@@ -355,7 +356,7 @@ class DirectoryBacked(object):
             self.entries[name].HandleEvent()
 
     def HandleEvent(self, event):
-        '''Propagate fam events to underlying objects'''
+        """Propagate fam events to underlying objects."""
         action = event.code2str()
         if event.filename == '':
             logger.info("Got event for blank filename")
@@ -379,7 +380,7 @@ class DirectoryBacked(object):
                                                   event.filename)
 
 class XMLFileBacked(FileBacked):
-    '''This object is a coherent cache for an XML file to be used as a part of DirectoryBacked.'''
+    """This object is a coherent cache for an XML file to be used as a part of DirectoryBacked."""
     __identifier__ = 'name'
 
     def __init__(self, filename):
@@ -388,7 +389,7 @@ class XMLFileBacked(FileBacked):
         FileBacked.__init__(self, filename)
 
     def Index(self):
-        '''Build local data structures'''
+        """Build local data structures"""
         try:
             xdata = XML(self.data)
         except XMLSyntaxError:
@@ -401,19 +402,19 @@ class XMLFileBacked(FileBacked):
         return iter(self.entries)
 
 class SingleXMLFileBacked(XMLFileBacked):
-    '''This object is a coherent cache for an independent XML File.'''
+    """This object is a coherent cache for an independent XML File."""
     def __init__(self, filename, fam):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
 
 class StructFile(XMLFileBacked):
-    '''This file contains a set of structure file formatting logic'''
+    """This file contains a set of structure file formatting logic."""
     def __init__(self, name):
         XMLFileBacked.__init__(self, name)
         self.fragments = {}
 
     def Index(self):
-        '''Build internal data structures'''
+        """Build internal data structures."""
         try:
             xdata = lxml.etree.XML(self.data)
         except lxml.etree.XMLSyntaxError:
@@ -436,7 +437,7 @@ class StructFile(XMLFileBacked):
                 work[newpred] = group.getchildren()
 
     def Match(self, metadata):
-        '''Return matching fragments of independent'''
+        """Return matching fragments of independent."""
         matching = [frag for (pred, frag) in self.fragments.iteritems() if pred(metadata)]
         if matching:
             return reduce(lambda x, y:x+y, matching)
@@ -444,7 +445,7 @@ class StructFile(XMLFileBacked):
         return []
 
 class INode:
-    '''LNodes provide lists of things available at a particular group intersection'''
+    """LNodes provide lists of things available at a particular group intersection."""
     raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
            'Group':"lambda x:'%s' in x.groups and predicate(x)"}
     nraw = {'Client':"lambda x:'%s' != x.hostname and predicate(x)",
@@ -488,7 +489,7 @@ class INode:
                     idict[item.tag] = [item.get('name')]
 
     def Match(self, metadata, data):
-        '''Return a dictionary of package mappings'''
+        """Return a dictionary of package mappings."""
         if self.predicate(metadata):
             for key in self.contents:
                 try:
@@ -500,7 +501,7 @@ class INode:
                 child.Match(metadata, data)
 
 class XMLSrc(XMLFileBacked):
-    '''XMLSrc files contain a LNode hierarchy that returns matching entries'''
+    """XMLSrc files contain a LNode hierarchy that returns matching entries."""
     __node__ = INode
     __cacheobj__ = dict
 
@@ -513,7 +514,7 @@ class XMLSrc(XMLFileBacked):
         self.noprio = noprio
 
     def HandleEvent(self, _=None):
-        '''Read file upon update'''
+        """Read file upon update."""
         try:
             data = file(self.name).read()
         except IOError:
@@ -535,7 +536,7 @@ class XMLSrc(XMLFileBacked):
         del xdata, data
 
     def Cache(self, metadata):
-        '''Build a package dict for a given host'''
+        """Build a package dict for a given host."""
         if self.cache == None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
             if self.pnode == None:
@@ -546,11 +547,11 @@ class XMLSrc(XMLFileBacked):
             self.cache = cache
 
 class XMLDirectoryBacked(DirectoryBacked):
-    '''Directorybacked for *.xml'''
+    """Directorybacked for *.xml."""
     patterns = re.compile('.*\.xml')
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
-    '''This is a generator that handles package assignments'''
+    """This is a generator that handles package assignments."""
     name = 'PrioDir'
     __child__ = XMLSrc
 
@@ -564,7 +565,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
             raise PluginInitError
 
     def HandleEvent(self, event):
-        '''Handle events and update dispatch table'''
+        """Handle events and update dispatch table."""
         XMLDirectoryBacked.HandleEvent(self, event)
         self.Entries = {}
         for src in self.entries.values():
@@ -576,7 +577,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self.Entries[itype] = {child: self.BindEntry}
 
     def BindEntry(self, entry, metadata):
-        '''Check package lists of package entries'''
+        """Check package lists of package entries."""
         [src.Cache(metadata) for src in self.entries.values()]
         name = entry.get('name')
         if not src.cache:
@@ -612,7 +613,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 # new unified EntrySet backend
 
 class SpecificityError(Exception):
-    '''Thrown in case of filename parse failure'''
+    """Thrown in case of filename parse failure."""
     pass
 
 class Specificity:
@@ -630,7 +631,7 @@ class Specificity:
                self.group in metadata.groups
 
     def __cmp__(self, other):
-        '''sort most to least specific'''
+        """Sort most to least specific."""
         if self.all:
             return 1
         if self.group:
@@ -643,7 +644,7 @@ class Specificity:
         return -1
 
     def more_specific(self, other):
-        '''test if self is more specific than other'''
+        """Test if self is more specific than other."""
         if self.all:
             True
         elif self.group:
@@ -667,7 +668,7 @@ class SpecificData(object):
             logger.error("Failed to read file %s" % self.name)
 
 class EntrySet:
-    '''Entry sets deal with the host- and group-specific entries'''
+    """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px]))$")
     def __init__(self, basename, path, entry_type, encoding):
         self.path = path
@@ -685,7 +686,7 @@ class EntrySet:
                 if item.specific.matches(metadata)]
 
     def handle_event(self, event):
-        '''Handle FAM events for the TemplateSet'''
+        """Handle FAM events for the TemplateSet."""
         action = event.code2str()
 
         if event.filename in ['info', 'info.xml', ':info']:
@@ -706,7 +707,7 @@ class EntrySet:
                 del self.entries[event.filename]
 
     def entry_init(self, event):
-        '''handle template and info file creation'''
+        """Handle template and info file creation."""
         if event.filename in self.entries:
             logger.warn("Got duplicate add for %s" % event.filename)
         else:
@@ -722,7 +723,7 @@ class EntrySet:
         self.entries[event.filename].handle_event(event)
 
     def specificity_from_filename(self, fname):
-        '''construct a specificity instance from a filename and regex'''
+        """Construct a specificity instance from a filename and regex."""
         data = self.specific.match(fname)
         if not data:
             raise SpecificityError(fname)
@@ -739,7 +740,7 @@ class EntrySet:
         return Specificity(**kwargs)
 
     def update_metadata(self, event):
-        '''process info and info.xml files for the templates'''
+        """Process info and info.xml files for the templates."""
         fpath = "%s/%s" % (self.path, event.filename)
         if event.filename == 'info.xml':
             if not self.infoxml:
@@ -761,14 +762,14 @@ class EntrySet:
                                                  (self.metadata['perms'])
 
     def reset_metadata(self, event):
-        '''reset metadata to defaults if info or info.xml removed'''
+        """Reset metadata to defaults if info or info.xml removed."""
         if event.filename == 'info.xml':
             self.infoxml = None
         elif event.filename == 'info':
             self.metadata = default_file_metadata.copy()
 
     def group_sortfunc(self, x, y):
-        '''sort groups by their priority'''
+        """sort groups by their priority"""
         return cmp(x.specific.prio, y.specific.prio)
 
     def bind_info_to_entry(self, entry, metadata):
@@ -786,7 +787,7 @@ class EntrySet:
              for (key, value) in mdata['Info'][None].iteritems()]
 
     def bind_entry(self, entry, metadata):
-        '''Return the appropriate interpreted template from the set of available templates'''
+        """Return the appropriate interpreted template from the set of available templates."""
         self.bind_info_to_entry(entry, metadata)
         matching = self.get_matching(metadata)
 
@@ -806,7 +807,7 @@ class EntrySet:
         raise PluginExecutionError
 
 class GroupSpool(Plugin, Generator):
-    '''Unified interface for handling group-specific data (e.g. .G## files)'''
+    """Unified interface for handling group-specific data (e.g. .G## files)."""
     name = 'GroupSpool'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -826,7 +827,7 @@ class GroupSpool(Plugin, Generator):
         self.encoding = core.encoding
 
     def HandleEvent(self, event):
-        '''Unified FAM event handler for DirShadow'''
+        """Unified FAM event handler for DirShadow."""
         action = event.code2str()
         if event.filename[0] == '/':
             return
@@ -862,7 +863,7 @@ class GroupSpool(Plugin, Generator):
                 self.entries[ident].handle_event(event)
 
     def AddDirectoryMonitor(self, relative):
-        '''Add new directory to FAM structures'''
+        """Add new directory to FAM structures."""
         if not relative.endswith('/'):
             relative += '/'
         name = self.data + relative
