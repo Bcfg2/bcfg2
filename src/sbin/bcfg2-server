@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""The XML-RPC Bcfg2 Server"""
+"""The XML-RPC Bcfg2 Server."""
 __revision__ = '$Revision$'
 
 import logging

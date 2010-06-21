@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-"""bcfg2-build-reports Generates & distributes reports of statistic information
-for bcfg2"""
+"""bcfg2-build-reports generates & distributes reports of statistic information
+for Bcfg2."""
 
 __revision__ = '$Revision$'
 
@@ -109,7 +109,7 @@ def rss(reportxml, delivery, report):
         fil.close()
 
 def www(reportxml, delivery):
-    """www outputs report to"""
+    """www outputs report to."""
 
     #this can later link to WWW report if one gets published simultaneously?    
     for destination in delivery.findall('Destination'):
@@ -119,7 +119,7 @@ def www(reportxml, delivery):
         fil.close()
 
 def fileout(reportxml, delivery):
-    """outputs to plain text file"""
+    """Outputs to plain text file."""
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
-    """Reads Data & Config files"""
+    """Reads data & config files."""
     try:
         statsdata = XML(open(statpath).read())
     except (IOError, XMLSyntaxError):

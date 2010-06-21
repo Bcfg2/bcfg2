@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""This tool loads the Bcfg2 core into an interactive debugger"""
+"""This tool loads the Bcfg2 core into an interactive debugger."""
 __revision__ = '$Revision$'
 
 from code import InteractiveConsole
@@ -40,7 +40,7 @@ class FileNotBuilt(Exception):
         return repr(self.value)
 
 def printTabular(rows):
-    """print data in tabular format."""
+    """Print data in tabular format."""
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
                     for index in range(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
@@ -149,7 +149,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     do_exit = do_quit
 
     def do_help(self, _):
-        """Print out usage info"""
+        """Print out usage info."""
         print 'Commands:'
         print 'build <hostname> <filename> - build config for hostname, writing to filename'
         print 'builddir <hostname> <dirname> - build config for hostname, writing separate files to dirname'
@@ -172,15 +172,15 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
 
     def do_update(self, _):
-        """Process pending fs events"""
+        """Process pending fs events."""
         self.fam.handle_events_in_interval(0.1)
 
     def do_version(self, _):
-        """Print out code version"""
+        """Print out code version."""
         print(__revision__)
 
     def do_build(self, args):
-        """Build client configuration"""
+        """Build client configuration."""
         alist = args.split()
         path_force = False
         if '-f' in args:

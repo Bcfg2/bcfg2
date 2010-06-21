@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""Query reporting system for client status"""
+"""Query reporting system for client status."""
 __revision__ = '$Revision$'
 
 import os
@@ -42,7 +42,7 @@ def statecompare(client1, client2):
         return 0
 
 def crit_compare(criterion, client1, client2):
-    """Compares two clients by the criteria provided in criterion"""
+    """Compares two clients by the criteria provided in criterion."""
     for crit in criterion:
         comp = 0
         if crit == 'name':
