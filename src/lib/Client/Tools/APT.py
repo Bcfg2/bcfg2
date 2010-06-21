@@ -7,6 +7,8 @@ warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.installedVersion, please see the Version class for alternatives.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.candidateVersion, please see the Version class for alternatives.", DeprecationWarning)
+warnings.filterwarnings("ignore", "Deprecated, please use 'is_installed' instead", DeprecationWarning)
+warnings.filterwarnings("ignore", "Attribute 'IsUpgradable' of the 'apt_pkg.DepCache' object is deprecated, use 'is_upgradable' instead.", DeprecationWarning)
 import apt.cache
 import os
 
