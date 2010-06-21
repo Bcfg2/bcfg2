@@ -13,7 +13,7 @@ log = logging.getLogger('bcfg2-admin')
 import Bcfg2.Server.Admin
 
 def mode_import(modename):
-    """Load Bcfg2.Server.Admin.<mode>"""
+    """Load Bcfg2.Server.Admin.<mode>."""
     modname = modename.capitalize()
     mod = getattr(__import__("Bcfg2.Server.Admin.%s" %
                              (modname)).Server.Admin, modname)
@@ -24,7 +24,7 @@ def get_modes():
     return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
 
 def create_description():
-    """Create the description string from the list of modes"""
+    """Create the description string from the list of modes."""
     modes = get_modes()
     description = StringIO()
     description.write("Available modes are:\n\n")

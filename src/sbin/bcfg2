@@ -22,7 +22,7 @@ import Bcfg2.Logger
 logger = logging.getLogger('bcfg2')
 
 def cb_sigint_handler(signum, frame):
-    '''Exit upon CTRL-C'''
+    """Exit upon CTRL-C."""
     os._exit(1)
 
 DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
@@ -106,7 +106,7 @@ class Client:
             raise SystemExit(1)
 
     def run_probe(self, probe):
-        """Execute probe"""
+        """Execute probe."""
         name = probe.get('name')
         self.logger.info("Running probe %s" % name)
         ret = Bcfg2.Client.XML.Element("probe-data",
@@ -132,12 +132,12 @@ class Client:
         return ret
 
     def fatal_error(self, message):
-        """Signal a fatal error"""
+        """Signal a fatal error."""
         self.logger.error("Fatal error: %s" % (message))
         raise SystemExit(1)
 
     def run(self):
-        """Perform client execution phase"""
+        """Perform client execution phase."""
         times = {}
 
         # begin configuration
