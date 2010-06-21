@@ -14,13 +14,13 @@
 
 Name:             bcfg2
 Version:          1.1.0rc3
-Release: %{release}
+Release:          %{release}
 Summary:          Configuration management system
 
 Group:            Applications/System
 License:          BSD
 URL:              http://trac.mcs.anl.gov/projects/bcfg2
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{version}.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:        noarch
@@ -161,6 +161,9 @@ deployment strategies.
 %dir %{_prefix}/lib/bcfg2
 
 %changelog
+* Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
+- Changed source0 in order that it works with spectool 
+
 * Fri Feb 2 2007 Mike Brady <mike.brady@devnull.net.nz> 0.9.1
 - Removed use of _libdir due to Red Hat x86_64 issue.
 
