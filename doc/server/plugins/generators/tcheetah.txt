@@ -34,6 +34,13 @@ The ``info`` file is formatted like ``:info`` files from Cfg.
 
 Mostly, people will want to use client metadata.
 
+File permissions
+================
+
+File permissions for entries handled by TCheetah are controlled via the
+use of :ref:`server-info` files. Note that you **cannot** use both a
+Permissions entry and a Path entry to handle the same file.
+
 self.metadata variables
 =======================
 

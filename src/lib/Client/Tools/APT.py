@@ -47,7 +47,8 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
-        self.__important__ = ["%s/cache/debconf/config.dat" % var_path,
+        self.__important__ = self.__important__ + \
+                             ["%s/cache/debconf/config.dat" % var_path,
                               "%s/cache/debconf/templates.dat" % var_path,
                               '/etc/passwd', '/etc/group',
                               '%s/apt/apt.conf' % etc_path,

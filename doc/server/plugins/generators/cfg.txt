@@ -149,61 +149,9 @@ file. The reason the other deltas aren't applied to *foo.example.com*
 is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
 applies all the deltas at the most specific level.
 
-Info files
-==========
+File permissions
+================
 
-By default, Cfg writes files to the filesystem with owner *root*, group
-*root*, and mode *644* (read and write for owner, read only for group
-and other). These options, and a few others, can be overridden through
-use of ``:info`` or ``info`` files. Each config file directory can have
-a ``:info`` or ``info`` file if needed. The possible fields in an info
-file are:
-
-+-----------+-------------------+------------------------------------------------------+---------+
-| Field     | Possible values   | Description                                          | Default |
-+===========+===================+======================================================+=========+
-| owner:    | Any valid user    | Sets owner of the file                               | root    |
-+-----------+-------------------+------------------------------------------------------+---------+
-| group:    | Any valid group   | Sets group of the file                               | root    |
-+-----------+-------------------+------------------------------------------------------+---------+
-| perms:    | Numeric file mode | Sets the permissions of the file                     | 0644    |
-+-----------+-------------------+------------------------------------------------------+---------+
-| encoding: | ascii | base64    | Encoding of the file. Use base64 for non-ASCII files | ascii   |
-+-----------+-------------------+------------------------------------------------------+---------+
-| paranoid: | yes | no          | Backup file before replacement?                      | no      |
-+-----------+-------------------+------------------------------------------------------+---------+
-
-A sample info file for CGI script on a web server might look like::
-
-    owner: www
-    group: www
-    perms: 0755
-
-Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
-might look like::
-
-    :info
-    fstab
-    fstab.G50_server
-    fstab.G99_fileserver
-    fstab.H_host.example.com
-
-info.xml files
-==============
-
-info.xml files add the ability to specify different sets of file metadata
-on a group by group basis. These files are XML, and work similarly
-to those used by :ref:`Rules <server-plugins-generators-rules>` or
-:ref:`Pkgmgr <server-plugins-generators-pkgmgr>`.
-
-The following specifies a different global set of permissions
-(root/sys/0651) than on clients in group webserver (root/root/0652)
-
-.. code-block:: xml
-
-    <FileInfo>
-      <Group name='webserver'>
-        <Info owner='root' group='root' perms='0652'/>
-      </Group>
-      <Info owner='root' group='sys' perms='0651'/>
-    </FileInfo>
+File permissions for entries handled by Cfg are controlled via the use
+of :ref:`server-info` files. Note that you **cannot** use both a
+Permissions entry and a Path entry to handle the same file.

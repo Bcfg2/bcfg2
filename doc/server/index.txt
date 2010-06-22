@@ -13,4 +13,5 @@ Bcfg2 Server
    admin/index
    reports/index
    configurationentries
+   info
    snapshots/index

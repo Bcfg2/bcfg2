@@ -1,0 +1,97 @@
+.. -*- mode: rst -*-
+
+.. NOTE: these are relative links (change when directory structure
+..       changes)
+
+.. _Cfg: plugins/generators/cfg
+.. _TGenshi: plugins/generators/tgenshi
+.. _TCheetah: plugins/generators/tcheetah
+
+.. _server-info:
+
+====
+Info
+====
+
+Various file properties for entries served by the `Cfg`_, `TGenshi`_,
+and `TCheetah`_ plugins are controlled through the use of ``:info``,
+``info``, or ``info.xml`` files.
+
+By default, these plugins are set to write files to the filesystem with
+owner **root**, group **root**, and mode **644** (read and write for
+owner, read only for group and other). These options, and a few others,
+can be overridden through use of ``:info`` or ``info`` files. Each config
+file directory can have a ``:info`` or ``info`` file if needed. The
+possible fields in an info file are:
+
++------------+-------------------+----------------------------------+---------+
+| Field      | Possible values   | Description                      | Default |
++============+===================+==================================+=========+
+| encoding:  | ascii | base64    | Encoding of the file. Use        | ascii   |
+|            |                   | base64 for non-ASCII files       |         |
++------------+-------------------+----------------------------------+---------+
+| group:     | Any valid group   | Sets group of the file           | root    |
++------------+-------------------+----------------------------------+---------+
+| important: | true | false      | Important entries are            | root    |
+|            |                   | installed first during client    |         |
+|            |                   | execution                        |         |
++------------+-------------------+----------------------------------+---------+
+| owner:     | Any valid user    | Sets owner of the file           | root    |
++------------+-------------------+----------------------------------+---------+
+| paranoid:  | yes | no          | Backup file before replacement?  | no      |
++------------+-------------------+----------------------------------+---------+
+| perms:     | Numeric file mode | Sets the permissions of the file | 0644    |
++------------+-------------------+----------------------------------+---------+
+
+A sample info file for CGI script on a web server might look like::
+
+    owner: www
+    group: www
+    perms: 0755
+
+Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
+might look like::
+
+    :info
+    fstab
+    fstab.G50_server
+    fstab.G99_fileserver
+    fstab.H_host.example.com
+
+Important attribute
+===================
+
+.. versionadded:: 1.1.0
+
+Having important entries hardcoded into the various client tools has
+worked relatively well so far. However, this method allows for a bit
+more flexibility as the entries can be controlled via the configuration
+specification.
+
++------------+-------------------+----------------------------------+---------+
+| Field      | Possible values   | Description                      | Default |
++============+===================+==================================+=========+
+| important: | true | false      | Important entries are            | root    |
+|            |                   | installed first during client    |         |
+|            |                   | execution                        |         |
++------------+-------------------+----------------------------------+---------+
+
+info.xml files
+==============
+
+``info.xml`` files add the ability to specify different sets of file
+metadata on a group by group basis. These files are XML, and work
+similarly to those used by :ref:`Rules <server-plugins-generators-rules>`
+or :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`.
+
+The following specifies a different global set of permissions
+(root/sys/0651) than on clients in group webserver (root/root/0652)
+
+.. code-block:: xml
+
+    <FileInfo>
+      <Group name='webserver'>
+        <Info owner='root' group='root' perms='0652'/>
+      </Group>
+      <Info owner='root' group='sys' perms='0651'/>
+    </FileInfo>

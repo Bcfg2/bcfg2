@@ -102,6 +102,9 @@ class Tool:
     __important__ = []
 
     def __init__(self, logger, setup, config):
+        self.__important__ = [entry.get('name') for struct in config for entry in struct \
+                              if entry.tag == 'Path' and \
+                              entry.get('important') in ['true', 'True']]
         self.setup = setup
         self.logger = logger
         if not hasattr(self, '__ireq__'):

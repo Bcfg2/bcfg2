@@ -18,6 +18,7 @@ import Bcfg2.Options
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'group': Bcfg2.Options.MDATA_GROUP,
+        'important': Bcfg2.Options.MDATA_IMPORTANT,
         'perms': Bcfg2.Options.MDATA_PERMS,
         'paranoid': Bcfg2.Options.MDATA_PARANOID}
 mdata_setup = Bcfg2.Options.OptionParser(opts)
@@ -29,9 +30,13 @@ logger = logging.getLogger('Bcfg2.Plugin')
 default_file_metadata = mdata_setup
 
 info_regex = re.compile( \
-    '^owner:(\s)*(?P<owner>\S+)|group:(\s)*(?P<group>\S+)|' +
-    'perms:(\s)*(?P<perms>\w+)|encoding:(\s)*(?P<encoding>\w+)|' +
-    'paranoid:(\s)*(?P<paranoid>\S+)|mtime:(\s)*(?P<mtime>\w+)$')
+    'encoding:(\s)*(?P<encoding>\w+)|' +
+    'group:(\s)*(?P<group>\S+)|' +
+    'important:(\s)*(?P<important>\S+)|' +
+    'mtime:(\s)*(?P<mtime>\w+)$' +
+    '^owner:(\s)*(?P<owner>\S+)|' +
+    'paranoid:(\s)*(?P<paranoid>\S+)|' +
+    'perms:(\s)*(?P<perms>\w+)|')
 
 class PluginInitError(Exception):
     """Error raised in cases of Plugin initialization errors."""

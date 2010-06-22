@@ -1,11 +1,14 @@
 .. -*- mode: rst -*-
 
-.. _Base: server-plugins-structures-base
-.. _Bundler: server-plugins-structures-bundler-index
-.. _Cfg: server-plugins-generators-cfg
-.. _TGenshi: server-plugins-generators-tgenshi-index
-.. _TCheetah: server-plugins-generators-tcheetah
-.. _Rules: server-plugins-generators-rules
+.. NOTE: these are relative links (change when directory structure
+..       changes)
+
+.. _Base: plugins/structures/base
+.. _Bundler: plugins/structures/bundler
+.. _Cfg: plugins/generators/cfg
+.. _TGenshi: plugins/generators/tgenshi
+.. _TCheetah: plugins/generators/tcheetah
+.. _Rules: plugins/generators/rules
 
 .. _server-configurationentries:
 
@@ -90,8 +93,7 @@ the *type* and any other necessary attributes in `Rules`_.
 +-------------+----------------------+-----------------+--------------------------+
 
 Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
-are still handled via the traditional mechanisms (info/:info/info.xml
-files in the plugin directory).
+are still handled via the traditional :ref:`server-info` mechanisms.
 
 .. _boundentries:
 

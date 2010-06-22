@@ -9,7 +9,6 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     the rest from Toolset.Toolset."""
     name = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
-    __important__ = ['/etc/make.conf']
     __handles__ = [('Package', 'ebuild')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
@@ -18,6 +17,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
     def __init__(self, logger, cfg, setup):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
+        self.__important__ = self.__important__ + ['/etc/make.conf']
         self.cfg = cfg
         self.installed = {}
         self.RefreshPackages()

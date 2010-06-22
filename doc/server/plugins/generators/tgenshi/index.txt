@@ -129,6 +129,13 @@ allocations map to sudo and root access.
     ${"\n".join(metadata.BB['users'][user])}
     {% end %}
 
+File permissions
+================
+
+File permissions for entries handled by TGenshi are controlled via the
+use of :ref:`server-info` files. Note that you **cannot** use both a
+Permissions entry and a Path entry to handle the same file.
+
 FAQs
 ====
 
