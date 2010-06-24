@@ -384,7 +384,10 @@ class APTSource(Source):
                  rawurl, blacklist, recommended):
         Source.__init__(self, basepath, url, version, arches, components, groups,
                         rawurl, blacklist, recommended)
-        self.cachefile = self.escape_url(self.url + '@' + version) + '.data'
+        if not self.rawurl:
+            self.cachefile = self.escape_url(self.url + '@' + self.version) + '.data'
+        else:
+            self.cachefile = self.escape_url(self.rawurl) + '.data'
         self.pkgnames = set()
 
     def save_state(self):
@@ -398,16 +401,13 @@ class APTSource(Source):
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def get_urls(self):
-        return ["%sdists/%s/%s/binary-%s/Packages.gz" % \
-                (self.url, self.version, part, arch) for part in self.components \
-                for arch in self.arches]
+        if not self.rawurl:
+            return ["%sdists/%s/%s/binary-%s/Packages.gz" % \
+                    (self.url, self.version, part, arch) for part in self.components \
+                    for arch in self.arches]
+        else:
+            return ["%sPackages.gz" % (self.rawurl)]
     urls = property(get_urls)
-
-    def get_aptsrc(self):
-        return ["deb %s %s %s" % (self.url, self.version,
-                                  " ".join(self.components)),
-                "deb-src %s %s %s" % (self.url, self.version,
-                                      " ".join(self.components))]
 
     def read_files(self):
         bdeps = dict()
@@ -417,7 +417,12 @@ class APTSource(Source):
         else:
             depfnames = ['Depends', 'Pre-Depends']            
         for fname in self.files:
-            barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
+            if not self.rawurl:
+                barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
+            else:
+                # RawURL entries assume that they only have one <Arch></Arch>
+                # element and that it is the architecture of the source.
+                barch = self.arches[0]
             if barch not in bdeps:
                 bdeps[barch] = dict()
                 bprov[barch] = dict()

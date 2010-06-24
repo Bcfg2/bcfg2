@@ -147,7 +147,7 @@ Yum sources can be similarly specified:
       </YUMSource>
     </Sources>
 
-.. note:: There is also a RawURL syntax for specifying sources that
+.. note:: There is also a RawURL syntax for specifying APT or YUM sources that
           don't follow the conventional layout:
 
           .. code-block:: xml
@@ -171,6 +171,20 @@ Yum sources can be similarly specified:
                 </YUMSource>
               </Sources>
 
+          .. code-block:: xml
+
+              <Sources>
+                <APTSource>
+                  <Group>ubuntu-lucid</Group>
+                  <RawURL>http://hudson-ci.org/debian/binary</RawURL>
+                  <Arch>amd64</Arch>
+                </APTSource>
+                <APTSource>
+                  <Group>ubuntu-lucid</Group>
+                  <RawURL>http://hudson-ci.org/debian/binary</RawURL>
+                  <Arch>i386</Arch>
+                </APTSource>
+              </Sources>
 
 Configuration Updates
 =====================
