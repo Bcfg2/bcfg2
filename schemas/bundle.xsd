@@ -9,7 +9,6 @@
 
   <xsd:include schemaLocation="atom.xsd"/>
   <xsd:include schemaLocation="pathentry.xsd"/>
-  <xsd:include schemaLocation="pkglist.xsd"/>
   <xsd:include schemaLocation="rules.xsd"/>
   <xsd:include schemaLocation="services.xsd"/>
 
