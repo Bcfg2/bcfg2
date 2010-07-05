@@ -25,15 +25,20 @@ from time import strptime
 from django.db import connection
 from Bcfg2.Server.Reports.updatefix import update_database
 import ConfigParser
-import difflib
 import logging
 import Bcfg2.Logger
 import platform
 
 def build_reason_kwargs(r_ent):
+    binary_file=False
     if r_ent.get('current_bfile', False):
-        contents = binascii.a2b_base64(r_ent.get('current_bfile'))
-        rc_diff = '\n'.join(difflib.ndiff([], contents.split('\n')))
+        binary_file=True
+        rc_diff = r_ent.get('current_bfile')
+        if len(rc_diff) > 1024*1024:
+            rc_diff = ''
+        elif len(rc_diff) == 0:
+            # No point in flagging binary if we have no data
+            binary_file=False
     elif r_ent.get('current_bdiff', False):
         rc_diff = binascii.a2b_base64(r_ent.get('current_bdiff'))
     elif r_ent.get('current_diff', False):
@@ -53,7 +58,8 @@ def build_reason_kwargs(r_ent):
                 version=r_ent.get('version', default=""),
                 current_version=r_ent.get('current_version', default=""),
                 current_exists=r_ent.get('current_exists', default="True").capitalize()=="True",
-                current_diff=rc_diff)
+                current_diff=rc_diff,
+                is_binary=binary_file)
 
 
 def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):

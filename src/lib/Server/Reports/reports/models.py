@@ -222,6 +222,7 @@ class Reason(models.Model):
     current_version = models.TextField(max_length=128, blank=True)
     current_exists = models.BooleanField()#False means its missing. Default True
     current_diff = models.TextField(max_length=1280, blank=True)
+    is_binary = models.BooleanField(default=False)
     def _str_(self):
         return "Reason"
 

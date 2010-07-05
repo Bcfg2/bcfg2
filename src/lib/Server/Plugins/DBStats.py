@@ -1,3 +1,4 @@
+import binascii
 import difflib
 import logging
 import lxml.etree
@@ -83,8 +84,14 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 ret.append(getattr(entry.reason, "current_%s" % t))
 
         if entry.reason.current_diff != '':
-            ret.append('\n'.join(difflib.restore(\
-                entry.reason.current_diff.split('\n'), 1)))
+            if entry.reason.is_binary:
+                ret.append(binascii.a2b_base64(entry.reason.current_diff))
+            else:
+                ret.append('\n'.join(difflib.restore(\
+                    entry.reason.current_diff.split('\n'), 1)))
+        elif entry.reason.is_binary:
+            # If len is zero the object was too large to store
+                raise Bcfg2.Server.Plugin.PluginExecutionError
         else:
             ret.append(None)
         return ret
