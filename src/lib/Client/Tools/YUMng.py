@@ -6,6 +6,7 @@ import copy
 import os.path
 import sys
 import yum
+import yum.misc
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
 
@@ -32,18 +33,17 @@ if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
 
 def build_yname(pkgname, inst):
     """Build yum appropriate package name."""
-    ypname = pkgname
+    d = {}
+    d['name'] = pkgname
     if inst.get('version') != 'any':
-        ypname += '-'
+        d['version'] = inst.get('version')
     if inst.get('epoch', False):
-        ypname += "%s:" % inst.get('epoch')
-    if inst.get('version', False) and inst.get('version') != 'any':
-        ypname += "%s" % (inst.get('version'))
+        d['epoch'] = inst.get('epoch')
     if inst.get('release', False) and inst.get('release') != 'any':
-        ypname += "-%s" % (inst.get('release'))
+        d['release'] = inst.get('release')
     if inst.get('arch', False) and inst.get('arch') != 'any':
-        ypname += ".%s" % (inst.get('arch'))
-    return ypname
+        d['arch'] = inst.get('arch')
+    return d
 
 class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     """Support for Yum packages."""
@@ -176,6 +176,78 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
                                                             modlist)
 
+    def _installGPGKey(self, inst, key_file):
+        """Examine the GPG keys carefully before installation.  Avoid
+           installing duplicate keys.  Returns True on successful install."""
+
+        # RPM Transaction Set
+        ts = self.yb.rpmdb.readOnlyTS()
+
+        if not os.path.exists(key_file):
+            self.logger.debug("GPG Key file %s not installed" % filename)
+            return False
+
+        rawkey = open(key_file).read()
+        gpg = yum.misc.getgpgkeyinfo(rawkey)
+
+        ver = yum.misc.keyIdToRPMVer(gpg['keyid'])
+        rel = yum.misc.keyIdToRPMVer(gpg['timestamp'])
+        if not (ver == inst.get('version') and rel == inst.get('release')):
+            self.logger.info("GPG key file %s does not match gpg-pubkey-%s-%s"\
+                             % (key_file, inst.get('version'), 
+                                inst.get('release')))
+            return False
+
+        if not yum.misc.keyInstalled(ts, gpg['keyid'], 
+                                     gpg['timestamp']) == 0:
+            result = ts.pgpImportPubkey(yum.misc.procgpgkey(rawkey))
+        else:
+            self.logger.debug("gpg-pubkey-%s-%s already installed"\
+                              % (inst.get('version'), 
+                                 inst.get('release')))
+            return True
+
+        if result != 0:
+            self.logger.debug("Unable to install %s-%s" % \
+                        (self.instance_status[inst].get('pkg').get('name'),
+                         self.str_evra(inst)))
+            return False
+        else:
+            self.logger.debug("Installed %s-%s-%s" % \
+                        (self.instance_status[inst].get('pkg').get('name'),
+                         inst.get('version'), inst.get('release')))
+            return True
+
+    def _runYumTransaction(self):
+        # Run the Yum Transaction
+        rescode, restring = self.yb.buildTransaction()
+        self.logger.debug("Initial Yum buildTransaction() run said:")
+        self.logger.debug("   resultcode: %s, msgs: %s" \
+                          % (rescode, restring))
+
+        if rescode != 1:
+            # Transaction built successfully, run it
+            self.yb.processTransaction()
+            self.logger.info("Single Pass for Install Succeeded")
+        else:
+            # The yum command failed.  No packages installed.
+            # Try installing instances individually.
+            self.logger.error("Single Pass Install of Packages Failed")
+            skipBroken = self.yb.conf.skip_broken
+            self.yb.conf.skip_broken = True
+            rescode, restring = self.yb.buildTransaction()
+            if rescode != 1:
+                self.yb.processTransaction()
+                self.logger.debug(
+                    "Second pass install did not install all packages")
+            else:
+                self.logger.error("Second pass yum install failed.")
+                self.logger.debug("   %s" % restring)
+            self.yb.conf.skip_broken = skipBroken
+
+        self.yb.closeRpmDB()
+        self.RefreshPackages()
+
     def Install(self, packages, states):
         """
            Try and fix everything that RPMng.VerifyPackages() found wrong for
@@ -242,22 +314,15 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         # repository definition in yum.conf.  YUM will install the keys
         # automatically.
         if len(gpg_keys) > 0:
+            self.logger.info("Installing GPG keys.")
             for inst in gpg_keys:
-                self.logger.info("Installing GPG keys.")
                 if inst.get('simplefile') is None:
                     self.logger.error("GPG key has no simplefile attribute")
                     continue
-                key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
+                key_file = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                      inst.get('simplefile'))
-                cmdrc, output = self.cmd.run("rpm --import %s" % key_arg)
-                if cmdrc != 0:
-                    self.logger.debug("Unable to install %s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
-                else:
-                    self.logger.debug("Installed %s-%s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               inst.get('version'), inst.get('release')))
+                self._installGPGKey(inst, key_file)
+
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
@@ -267,79 +332,24 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
-            if YAD:
-                pkgtool = "/usr/bin/yum -d0 -y install %s"
-            else:
-                pkgtool = "/usr/bin/yum -d0 install %s"
-
-            install_args = []
             for inst in install_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                install_args.append(build_yname(pkg_arg, inst))
+                self.yb.install(**build_yname(pkg_arg, inst))
 
-            cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
-            if cmdrc == 0:
-                # The yum command succeeded.  All packages installed.
-                self.logger.info("Single Pass for Install Succeeded")
-                self.RefreshPackages()
-            else:
-                # The yum command failed.  No packages installed.
-                # Try installing instances individually.
-                self.logger.error("Single Pass Install of Packages Failed")
-                installed_instances = []
-                for inst in install_pkgs:
-                    pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
-
-                    cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
-                    if cmdrc == 0:
-                        installed_instances.append(inst)
-                    else:
-                        self.logger.debug("%s %s would not install." % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
-                self.RefreshPackages()
-
-        # Fix upgradeable packages.
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
 
-            if YAD:
-                pkgtool = "/usr/bin/yum -d0 -y update %s"
-            else:
-                pkgtool = "/usr/bin/yum -d0 update %s"
-
-            upgrade_args = []
             for inst in upgrade_pkgs:
-                pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
-                upgrade_args.append(pkg_arg)
+                pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                self.yb.update(**build_yname(pkg_arg, inst))
 
-            cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
-            if cmdrc == 0:
-                # The yum command succeeded.  All packages installed.
-                self.logger.info("Single Pass for Install Succeeded")
-                self.RefreshPackages()
-            else:
-                # The yum command failed.  No packages installed.
-                # Try installing instances individually.
-                self.logger.error("Single Pass Install of Packages Failed")
-                installed_instances = []
-                for inst in upgrade_pkgs:
-                    pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
-                    cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
-                    if cmdrc == 0:
-                        installed_instances.append(inst)
-                    else:
-                        self.logger.debug("%s %s would not install." % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
-
-                self.RefreshPackages()
+        self._runYumTransaction()
 
         if not self.setup['kevlar']:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                                       self.modlists.get(pkg_entry, []))
+                                      self.modlists.get(pkg_entry, []))
 
         for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
@@ -353,65 +363,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         """
         self.logger.debug('Running YUMng.RemovePackages()')
 
-        if YAD:
-            pkgtool = "/usr/bin/yum -d0 -y erase %s"
-        else:
-            pkgtool = "/usr/bin/yum -d0 erase %s"
-
         erase_args = []
         for pkg in packages:
             for inst in pkg:
+                nevra = build_yname(pkg.get('name'), inst)
                 if pkg.get('name') != 'gpg-pubkey':
-                    pkg_arg = pkg.get('name') + '-'
-                    if inst.get('epoch', False):
-                        pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                    pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                    if inst.get('arch', False):
-                        pkg_arg = pkg_arg + '.' + inst.get('arch')
-                    erase_args.append(pkg_arg)
-                else:
-                    pkgspec = { 'name':pkg.get('name'),
-                            'version':inst.get('version'),
-                            'release':inst.get('release')}
-                    self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
-                                                 % (pkgspec.get('name'), self.str_evra(pkgspec)))
-                    self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
-
-        cmdrc, output = self.cmd.run(pkgtool % " ".join(erase_args))
-        if cmdrc == 0:
-            self.modified += packages
-            for pkg in erase_args:
-                self.logger.info("Deleted %s" % (pkg))
-        else:
-            self.logger.info("Bulk erase failed with errors:")
-            self.logger.debug("Erase results = %s" % output)
-            self.logger.info("Attempting individual erase for each package.")
-            for pkg in packages:
-                pkg_modified = False
-                for inst in pkg:
-                    if pkg.get('name') != 'gpg-pubkey':
-                        pkg_arg = pkg.get('name') + '-'
-                        if inst.attrib.has_key('epoch'):
-                            pkg_arg = pkg_arg + inst.get('epoch') + ':'
-                        pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
-                        if 'arch' in inst.attrib:
-                            pkg_arg = pkg_arg + '.' + inst.get('arch')
-                    else:
-                        self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
-                                                 % (pkg.get('name'), self.str_evra(pkg)))
-                        self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
-                        continue
-
-                    cmdrc, output = self.cmd.run(self.pkgtool % pkg_arg)
-                    if cmdrc == 0:
-                        pkg_modified = True
-                        self.logger.info("Deleted %s" % pkg_arg)
-                    else:
-                        self.logger.error("unable to delete %s" % pkg_arg)
-                        self.logger.debug("Failure = %s" % output)
-                if pkg_modified == True:
+                    self.yb.remove(**nevra)
                     self.modified.append(pkg)
+                else:
+                    self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s-%s"\
+                         % (nevra['name'], nevra['version'], nevra['release']))
+                    self.logger.info("   This package will be deleted in a future version of the YUMng driver.")
 
-
-        self.RefreshPackages()
+        self._runYumTransaction()
         self.extra = self.FindExtraPackages()
