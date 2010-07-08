@@ -6,8 +6,10 @@ import copy
 import os.path
 import sys
 import yum
+import yum.Errors
 import yum.misc
 import Bcfg2.Client.XML
+import Bcfg2.Client.Tools
 import Bcfg2.Client.Tools.RPMng
 
 # Fix for python2.3
@@ -85,9 +87,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
-        self.yb.doConfigSetup()
-        self.yb.doTsSetup()
-        self.yb.doRpmDBSetup()
+        try:
+            self.yb.doConfigSetup()
+            self.yb.doTsSetup()
+            self.yb.doRpmDBSetup()
+        except yum.Errors.RepoError, e:
+            self.logger.error("YUMng Repository error: %s" % e)
+            raise Bcfg2.Client.Tools.toolInstantiationError
+        except yum.Errors.YumBaseError, e:
+            self.logger.error("YUMng error: %s" % e)
+            raise Bcfg2.Client.Tools.toolInstantiationError
+ 
         yup = self.yb.doPackageLists(pkgnarrow='updates')
         if hasattr(self.yb.rpmdb, 'pkglist'):
             yinst = self.yb.rpmdb.pkglist
