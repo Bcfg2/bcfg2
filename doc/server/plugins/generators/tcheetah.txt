@@ -49,7 +49,6 @@ The following variables are available for self.metadata:
 * hostname
 * bundles
 * groups
-* toolset
 * categories
 * probes
 * uuid

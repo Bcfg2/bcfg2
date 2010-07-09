@@ -140,12 +140,12 @@ Our simple ``groups.xml`` file looks like:
       <Group profile='true' public='false' name='basic'>
          <Group name='suse'/>
       </Group>
-      <Group name='ubuntu' toolset='debian'/>
-      <Group name='debian' toolset='debian'/>
-      <Group name='redhat' toolset='rh'/>
-      <Group name='suse' toolset='rh'/>
-      <Group name='mandrake' toolset='rh'/>
-      <Group name='solaris' toolset='solaris'/>
+      <Group name='ubuntu' />
+      <Group name='debian' />
+      <Group name='redhat' />
+      <Group name='suse' />
+      <Group name='mandrake' />
+      <Group name='solaris' />
    </Groups>
 
 There are two types of groups in Bcfg: profile groups

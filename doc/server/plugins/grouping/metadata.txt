@@ -126,7 +126,7 @@ definitions. Here's a simple ``Metadata/groups.xml`` file:
         <Group name='nfs-client'/>
         <Group name='server'/>
       </Group>
-      <Group name='rhel-as-4-x86' toolset='rh'>
+      <Group name='rhel-as-4-x86'>
          <Group name='rhel'/>
       </Group>
       <Group name='apache-server'/>
@@ -179,10 +179,6 @@ The Group Tag has the following possible attributes:
 | public   | If a client can freely associate itself  | True|False   |
 |          | with this group. For use with the        |              |
 |          | *bcfg2 -p* option on the client.         |              |
-+----------+------------------------------------------+--------------+
-| toolset  | Describes which client-side logic should | rh|debian|   |
-|          | be used to make configuration changes    | solaris|aix| |
-|          |                                          | auto|gentoo  |
 +----------+------------------------------------------+--------------+
 | category | A group can only contain one instance of | String       |
 |          | a group in any one category. This        |              |
