@@ -131,11 +131,11 @@ class Connector(object):
         return list()
 
     def get_additional_data(self, metadata):
-        """Determine additional data for metadata inst."""
+        """Determine additional data for metadata instances."""
         return dict()
 
 class Probing(object):
-    """Signal probe capability for this plugin"""
+    """Signal probe capability for this plugin."""
     def GetProbes(self, _):
         """Return a set of probes for execution on client."""
         return []
@@ -163,7 +163,7 @@ class ThreadedStatistics(Statistics,
         self.start()
 
     def save(self):
-        """ Save any pending data to a file."""
+        """Save any pending data to a file."""
         pending_data = []
         try:
             while not self.work_queue.empty():
@@ -184,7 +184,7 @@ class ThreadedStatistics(Statistics,
             self.logger.warning("Failed to save pending data")
 
     def load(self):
-        """ Load any pending data to a file."""
+        """Load any pending data to a file."""
         if not os.path.exists(self.pending_file):
             return True
         pending_data = []
@@ -268,7 +268,7 @@ class PullTarget(object):
 
     def AcceptPullData(self, specific, new_entry, verbose):
         """This is the null per-plugin implementation
-        of bcfg2-admin pull"""
+        of bcfg2-admin pull."""
         raise PluginExecutionError
 
 class Decision(object):
@@ -385,7 +385,10 @@ class DirectoryBacked(object):
                                                   event.filename)
 
 class XMLFileBacked(FileBacked):
-    """This object is a coherent cache for an XML file to be used as a part of DirectoryBacked."""
+    """
+    This object is a coherent cache for an XML file to be used as a
+    part of DirectoryBacked.
+    """
     __identifier__ = 'name'
 
     def __init__(self, filename):
@@ -394,7 +397,7 @@ class XMLFileBacked(FileBacked):
         FileBacked.__init__(self, filename)
 
     def Index(self):
-        """Build local data structures"""
+        """Build local data structures."""
         try:
             xdata = XML(self.data)
         except XMLSyntaxError:
@@ -407,7 +410,7 @@ class XMLFileBacked(FileBacked):
         return iter(self.entries)
 
 class SingleXMLFileBacked(XMLFileBacked):
-    """This object is a coherent cache for an independent XML File."""
+    """This object is a coherent cache for an independent XML file."""
     def __init__(self, filename, fam):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
@@ -450,7 +453,10 @@ class StructFile(XMLFileBacked):
         return []
 
 class INode:
-    """LNodes provide lists of things available at a particular group intersection."""
+    """
+    LNodes provide lists of things available at a particular
+    group intersection.
+    """
     raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
            'Group':"lambda x:'%s' in x.groups and predicate(x)"}
     nraw = {'Client':"lambda x:'%s' != x.hostname and predicate(x)",

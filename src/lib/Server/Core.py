@@ -130,6 +130,7 @@ class Core(Component):
                     self.revision = plugin.get_revision()
 
     def init_plugins(self, plugin):
+        """Handling for the plugins."""
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                 (plugin)).Server.Plugins, plugin)
@@ -153,12 +154,14 @@ class Core(Component):
                 (plugin), exc_info=1)
 
     def shutdown(self):
+        """."""
         if not self.terminate.isSet():
             self.terminate.set()
             for plugin in self.plugins.values():
                 plugin.shutdown()
 
     def validate_data(self, metadata, data, base_cls):
+        """Checks the data structure."""
         for plugin in self.plugins.values():
             if isinstance(plugin, base_cls):
                 try:
@@ -171,7 +174,7 @@ class Core(Component):
                                  % (plugin.name, err.message))
                     raise
                 except:
-                    logger.error("Plugin %s: unexpected structure val failure" \
+                    logger.error("Plugin %s: unexpected structure validation failure" \
                                  % (plugin.name), exc_info=1)
 
     def GetStructures(self, metadata):
@@ -282,6 +285,7 @@ class Core(Component):
         return config
 
     def GetDecisions(self, metadata, mode):
+        """Get data for the decision list."""
         result = []
         for plugin in self.plugins.values():
             try:
@@ -293,6 +297,7 @@ class Core(Component):
         return result
 
     def build_metadata(self, client_name):
+        """Build the metadata structure."""		
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
             raise Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError
@@ -307,6 +312,7 @@ class Core(Component):
         return imd
 
     def process_statistics(self, client_name, statistics):
+        """Proceed statistics for client."""
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
@@ -408,7 +414,7 @@ class Core(Component):
 
     @exposed
     def RecvStats(self, address, stats):
-        """Act on statistics upload"""
+        """Act on statistics upload."""
         sdata = lxml.etree.XML(stats)
         client = self.metadata.resolve_client(address)
         self.process_statistics(client, sdata)
@@ -424,6 +430,7 @@ class Core(Component):
 
     @exposed
     def GetDecisionList(self, address, mode):
+        """Get the data of the decision list."""
         client = self.metadata.resolve_client(address)
         meta = self.build_metadata(client)
         return self.GetDecisions(meta, mode)
