@@ -18,7 +18,7 @@ changes to the repo which are made by the server.
 How to enable the Bazaar plugin
 ===============================
 
-Simply add "Bzr" to your plugins line in /etc/bcfg2.conf::
+Simply add "Bzr" to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
     plugins = Base,Bundler,Cfg,...,Bzr
@@ -26,7 +26,7 @@ Simply add "Bzr" to your plugins line in /etc/bcfg2.conf::
 Usage notes
 ===========
 
-Unlike other VCS plugins for BCFG2, the Bazaar plugin checks whether
+Unlike other VCS plugins for Bcfg2, the Bazaar plugin checks whether
 there are uncommitted changes to the repository. If there are, this
 plugin appends a "+" after the version number. Essentially, this means
 you're using that version, "plus" some changes.

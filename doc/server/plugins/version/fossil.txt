@@ -18,7 +18,7 @@ changes to the repo which are made by the server.
 How to enable the Fossil plugin
 ===============================
 
-Simply add "Fossil" to your plugins line in /etc/bcfg2.conf::
+Simply add "Fossil" to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
     plugins = Base,Bundler,Cfg,...,Fossil

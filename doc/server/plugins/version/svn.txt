@@ -22,7 +22,7 @@ server (adding clients, ssh keys, etc).
 How to enable the Svn plugin
 ============================
 
-Simply add Svn to your plugins line in /etc/bcfg2.conf::
+Simply add Svn to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,DBStats,Decisions,Metadata,NagiosGen,Pkgmgr,Probes,Rules,SSHbase,TGenshi,Svn
+    plugins = Base,Bundler,Cfg,..,Svn
