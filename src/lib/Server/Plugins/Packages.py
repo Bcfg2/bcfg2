@@ -50,6 +50,19 @@ def source_from_xml(xsource):
             ret['url'] += '/'
     return ret
 
+def _fetch_url(url):
+    if '@' in url:
+        mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
+        if not mobj:
+            raise ValueError
+        user = mobj.group(2)
+        passwd = mobj.group(3)
+        url = mobj.group(1) + mobj.group(4)
+        auth = urllib2.HTTPBasicAuthHandler(urllib2.HTTPPasswordMgrWithDefaultRealm())
+        auth.add_password(None, url, user, passwd)
+        urllib2.install_opener(urllib2.build_opener(auth))
+    return urllib2.urlopen(url).read()
+
 class Source(object):
     basegroups = []
     def __init__(self, basepath, url, version, arches, components, groups, rawurl,
@@ -113,7 +126,10 @@ class Source(object):
             logger.info("Packages: Updating %s" % url)
             fname = self.escape_url(url)
             try:
-                data = urllib2.urlopen(url).read()
+                data = _fetch_url(url)
+            except ValueError:
+                logger.error("Packages: Bad url string %s" % url)
+                continue
             except urllib2.HTTPError, h:
                 logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (url, h.code))
@@ -271,8 +287,15 @@ class YUMSource(Source):
                     surl += '/'
                 rmdurl = surl + 'repodata/repomd.xml'
                 try:
-                    repomd = urllib2.urlopen(rmdurl).read()
+                    repomd = _fetch_url(rmdurl)
                     xdata = lxml.etree.XML(repomd)
+                except ValueError:
+                    logger.error("Packages: Bad url string %s" % rmdurl)
+                    continue
+                except urllib2.HTTPError, h:
+                    logger.error("Packages: Failed to fetch url %s. code=%s" \
+                             % (rmdurl, h.code))
+                    continue
                 except:
                     logger.error("Failed to process url %s" % rmdurl)
                     continue
