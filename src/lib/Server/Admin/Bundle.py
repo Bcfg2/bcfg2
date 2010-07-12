@@ -23,7 +23,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         reg='((?:[a-z][a-z\\.\\d\\-]+)\\.(?:[a-z][a-z\\-]+))(?![\\w\\.])'
 
-        #Get all bundles out of the Bundle directory
+        #Get all bundles out of the Bundle/ directory
         opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
         setup = Bcfg2.Options.OptionParser(opts)
         setup.parse(sys.argv[1:])
@@ -46,6 +46,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
 #            except MetadataConsistencyError:
 #                print "Error in deleting bundle."
 #                raise SystemExit(1)
+        #Lists all available xml bundles
         elif args[0] in ['list-xml', 'ls-xml']:
             bundle_name = []
             for bundle_path in xml_list:
@@ -53,6 +54,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                print bundle.split('.')[0]
+        #Lists all available genshi bundles
         elif args[0] in ['list-genshi', 'ls-gen']:
             bundle_name = []
             for bundle_path in genshi_list:
@@ -60,6 +62,9 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                print bundle.split('.')[0]
+        #Shows a list of all available bundles and prints bundle 
+        #details after the user choose one bundle.
+        #FIXME: Add support for detailed output of genshi bundles
         elif args[0] in ['show']:
             bundle_name = []
             bundle_list = xml_list + genshi_list
@@ -84,7 +89,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                     print 'Details for the "%s" bundle:' % \
                             (bundle_name[int(lineno)].split('.')[0])
                     tree = lxml.etree.parse(bundle_list[int(lineno)])
-                    #Print bundle content
+                    #Prints bundle content
                     #print lxml.etree.tostring(tree)
                     names = ['Action', 'ConfigFile', 'Directory', 'Package', 'Permission', 'Service', 'SymLink']
                     for name in names:
