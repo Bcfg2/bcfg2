@@ -1,0 +1,24 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-version-cvs:
+
+===
+CVS
+===
+
+Why use the CVS plugin
+=========================
+
+The CVS plugin is useful if you would like to track changes to
+your Bcfg2 repository using a `CVS <http://www.nongnu.org/cvs/>`_
+backend. Currently, it enables you to get revision information out
+of your repository for reporting purposes. Future plans are to commit
+changes to the repo which are made by the server.
+
+How to enable the CVS plugin
+===============================
+
+Simply add "Cvs" to your plugins line in ``/etc/bcfg2.conf``::
+
+    [server]
+    plugins = Base,Bundler,Cfg,...,Cvs
