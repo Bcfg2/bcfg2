@@ -9,7 +9,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Mercurial')
 
 class Hg(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
-    """Mercurial is a version plugin for dealing with Bcfg2 repos."""
+    """Mercurial is a version plugin for dealing with Bcfg2 repository."""
     name = 'Mercurial'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -21,7 +21,7 @@ class Hg(Bcfg2.Server.Plugin.Plugin,
         self.core = core
         self.datastore = datastore
 
-        # path to hg directory for bcfg2 repo
+        # path to hg directory for Bcfg2 repo
         hg_dir = "%s/.hg" % datastore
 
         # Read changeset from bcfg2 repo

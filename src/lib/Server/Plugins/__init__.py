@@ -7,6 +7,7 @@ __all__ = [
            'Bundler',
            'Bzr',
            'Cfg',
+           'Cvs',
            'Darcs', 
            'Decisions',
            'Fossil',
