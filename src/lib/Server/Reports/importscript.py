@@ -17,7 +17,7 @@ sys.path.pop()
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, Entries_interactions, Performance, Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
+from Bcfg2.Server.Reports.reports.models import *
 from lxml.etree import XML, XMLSyntaxError
 from getopt import getopt, GetoptError
 from datetime import datetime
@@ -65,45 +65,34 @@ def build_reason_kwargs(r_ent):
 def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
     cursor = connection.cursor()
     clients = {}
-    cursor.execute("SELECT name, id from reports_client;")
-    [clients.__setitem__(a, b) for a, b in cursor.fetchall()]
-    
-    for node in sdata.findall('Node'):
-        name = node.get('name')
-        if not name in clients:
-            cursor.execute(\
-                "INSERT INTO reports_client VALUES (NULL, %s, %s, NULL, NULL)",
-                [datetime.now(), name])
-            clients[name] = cursor.lastrowid
-            if vlevel > 0:
-                logger.info("Client %s added to db" % name)
-        else:
-            if vlevel > 0:
-                logger.info("Client %s already exists in db" % name)
+    [clients.__setitem__(c.name, c) \
+        for c in Client.objects.all()]
+    #[clients.__setitem__(c['name'], c['id']) \
+    #    for c in Client.objects.values('name', 'id')]
 
     pingability = {}
     [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
-     for n in cdata.findall('Client')]
+        for n in cdata.findall('Client')]
 
     for node in sdata.findall('Node'):
         name = node.get('name')
-        c_inst = Client.objects.filter(id=clients[name])[0]
+        c_inst, created = Client.objects.get_or_create(name=name)
+        if vlevel > 0:
+           logger.info("Client %s added to db" % name)
+        clients[name] = c_inst
         try:
             pingability[name]
         except KeyError:
             pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
-            t = strptime(statistics.get('time'))
-            # Maybe replace with django.core.db typecasts typecast_timestamp()?
-            # import from django.backends util
-            timestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
+            timestamp = datetime(*strptime(statistics.get('time'))[0:6])
             ilist = Interaction.objects.filter(client=c_inst,
                                                timestamp=timestamp)
             if ilist:
                 current_interaction = ilist[0]
                 if vlevel > 0:
-                    logger.info("Interaction for %s at %s with id %s already exists"%(clients[name],
-                        datetime(t[0],t[1],t[2],t[3],t[4],t[5]),current_interaction.id))
+                    logger.info("Interaction for %s at %s with id %s already exists" % \
+                        (c_inst.id, timestamp, current_interaction.id))
                 continue
             else:
                 newint = Interaction(client=c_inst,
@@ -117,7 +106,7 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
                 newint.save()
                 current_interaction = newint
                 if vlevel > 0:
-                    logger.info("Interaction for %s at %s with id %s INSERTED in to db"%(clients[name],
+                    logger.info("Interaction for %s at %s with id %s INSERTED in to db"%(c_inst.id,
                         timestamp, current_interaction.id))
 
 
@@ -129,41 +118,31 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
                 for x in statistics.findall(xpath):
                     counter_fields[type] = counter_fields[type] + 1
                     kargs = build_reason_kwargs(x)
-                    if not quick:
-                        rls = Reason.objects.filter(**kargs)
-                    else:
-                        rls = []
 
                     try:
-                        if rls:
-                            rr = rls[0]
-                            if vlevel > 0:
-                                logger.info("Reason exists: %s"% (rr.id))
-                        else:
+                        rr = None
+                        if not quick:
+                            try:
+                                rr = Reason.objects.filter(**kargs)[0]
+                            except IndexError:
+                                pass
+                        if not rr:
                             rr = Reason(**kargs)
                             rr.save()
                             if vlevel > 0:
                                 logger.info("Created reason: %s" % rr.id)
                     except Exception, ex:
                         logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
-                        rr=Reason(current_exists=x.get('current_exists',
+                        rr = Reason(current_exists=x.get('current_exists',
                                   default="True").capitalize()=="True")
                         rr.save()
 
-                    links = Entries.objects.filter(name=x.get('name'),
-                                               kind=x.tag)
+                    entry, created = Entries.objects.get_or_create(\
+                        name=x.get('name'), kind=x.tag)
                         
-                    if links:
-                        entry = links[0]
-                    else:
-                        entry = Entries(name=x.get('name'),
-                                      kind=x.tag)
-                        entry.save()
-
-                    interaction = Entries_interactions(entry=entry, reason=rr,
-                                                        interaction=current_interaction,
-                                                        type=type[0])
-                    interaction.save()
+                    Entries_interactions(entry=entry, reason=rr,
+                                         interaction=current_interaction,
+                                         type=type[0]).save()
                     if vlevel > 0:
                         logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
 
@@ -173,58 +152,37 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
             current_interaction.extra_entries = counter_fields[TYPE_CHOICES[2]]
             current_interaction.save()
 
+            mperfs = []
             for times in statistics.findall('OpStamps'):
                 for metric, value in times.items():
+                    mmatch = []
                     if not quick:
                         mmatch = Performance.objects.filter(metric=metric, value=value)
-                    else:
-                        mmatch = []
-                    
+
                     if mmatch:
-                        item_id = mmatch[0].id
+                        mperf = mmatch[0]
                     else:
                         mperf = Performance(metric=metric, value=value)
                         mperf.save()
-                        item_id = mperf.id
-                    try:
-                        cursor.execute("INSERT INTO reports_performance_interaction VALUES (NULL, %s, %s);",
-                                       [item_id, current_interaction.id])
-                    except:
-                        pass
-
-    if vlevel > 1:
-        logger.info("----------------INTERACTIONS SYNCED----------------")
-    cursor.execute("select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) as timer from reports_interaction Group BY client_id) x, reports_interaction where reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer")
-    for row in cursor.fetchall():
-        cursor.execute("UPDATE reports_client SET current_interaction_id = %s where reports_client.id = %s",
-                       [row[0],row[1]])
-    if vlevel > 1:
-        logger.info("------------LATEST INTERACTION SET----------------")
+                    mperfs.append(mperf)
+            current_interaction.performance_items.add(*mperfs)
 
     for key in pingability.keys():
         if key not in clients:
             #print "Ping Save Problem with client %s" % name
             continue
-        cmatch = Client.objects.filter(id=clients[key])[0]
-        pmatch = Ping.objects.filter(client=cmatch).order_by('-endtime')
-        if pmatch:
-            if pmatch[0].status == pingability[key]:
-                pmatch[0].endtime = datetime.now()
-                pmatch[0].save()
-            else:
-                newp = Ping(client=cmatch, status=pingability[key],
-                            starttime=datetime.now(),
-                            endtime=datetime.now())
-                newp.save()
+        pmatch = Ping.objects.filter(client=clients[key]).order_by('-endtime')
+        if pmatch and pmatch[0].status == pingability[key]:
+            pmatch[0].endtime = datetime.now()
+            pmatch[0].save()
         else:
-            newp = Ping(client=cmatch, status=pingability[key],
-                        starttime=datetime.now(), endtime=datetime.now())
-            newp.save()
+            Ping(client=clients[key], status=pingability[key],
+                 starttime=datetime.now(),
+                 endtime=datetime.now()).save()
 
     if vlevel > 1:
         logger.info("---------------PINGDATA SYNCED---------------------")
 
-    connection._commit()
     #Clients are consistent
 
 if __name__ == '__main__':

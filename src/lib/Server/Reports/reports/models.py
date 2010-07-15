@@ -54,7 +54,7 @@ class ClientManager(models.Manager):
 
 class Client(models.Model):
     """Object representing every client we have seen stats for."""
-    creation = models.DateTimeField()
+    creation = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=128,)
     current_interaction = models.ForeignKey('Interaction',
                                             null=True, blank=True,

@@ -35,7 +35,7 @@ sys.path.pop()
 
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
-from django.db import connection
+from django.db import connection, transaction
 
 from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
                                 Entries_interactions, Performance, \
@@ -109,6 +109,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         else:
             print "Unknown command: %s" % args[0]
 
+    @transaction.commit_on_success
     def scrub(self):
         ''' Perform a thorough scrub and cleanup of the database '''
 
@@ -134,7 +135,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             if key in cmp_reasons:
                 self.log.debug("Update interactions from %d to %d" \
                                     % (reason.id, cmp_reasons[key]))
-                dup_reasons.append(reason.id)
+                dup_reasons.append([reason.id])
                 batch_update.append([cmp_reasons[key], reason.id])
             else:
                 cmp_reasons[key] = reason.id
@@ -145,8 +146,10 @@ class Reports(Bcfg2.Server.Admin.Mode):
             cursor = connection.cursor()
             cursor.executemany('update reports_entries_interactions set reason_id=%s where reason_id=%s', batch_update)
             cursor.executemany('delete from reports_reason where id = %s', dup_reasons)
+            transaction.set_dirty()
         except Exception, ex:
             self.log.error("Failed to delete reasons: %s" % ex)
+            raise
 
         self.log.info("Found %d dupes out of %d" % (len(dup_reasons), start_count))
 
@@ -182,5 +185,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         except (IOError, XMLSyntaxError):
             self.errExit("StatReports: Failed to parse %s"%(clientspath))
 
-        load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=platform.node())
+        try:
+            load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=platform.node())
+        except:
+            pass
 
