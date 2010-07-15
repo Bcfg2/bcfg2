@@ -69,7 +69,11 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 c_inst.current_interaction.extra()]
 
     def GetCurrentEntry(self, client, e_type, e_name):
-        c_inst = Client.objects.filter(name=client)[0]
+        try:
+            c_inst = Client.objects.filter(name=client)[0]
+        except IndexError:
+            self.logger.error("Unknown client: %s" % client)
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         result = c_inst.current_interaction.bad().filter(entry__kind=e_type,
                                                          entry__name=e_name)
         if not result:
