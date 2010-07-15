@@ -1,4 +1,5 @@
 import getopt
+import sys
 import Bcfg2.Server.Admin
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
@@ -7,10 +8,11 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
     """
     __shorthelp__ = ("Integrate configuration information "
                      "from clients into the server repository")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] "
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] [-s]"
                                     "<client> <entry type> <entry name>")
     __usage__ = ("bcfg2-admin pull [options] <client> <entry type> "
                  "<entry name>\n\n"
+                 "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
@@ -19,7 +21,9 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "-f",
                  "force",
                  "-I",
-                 "interactive"))
+                 "interactive",
+                 "-s",
+                 "stdin"))
     allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
 
     def __init__(self, configfile):
@@ -30,8 +34,9 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
+        use_stdin = False
         try:
-            opts, gargs = getopt.getopt(args, 'vfI')
+            opts, gargs = getopt.getopt(args, 'vfIs')
         except:
             print self.__shorthelp__
             raise SystemExit(1)
@@ -42,7 +47,22 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 self.mode = 'force'
             elif opt[0] == '-I':
                 self.mode == 'interactive'
-        self.PullEntry(gargs[0], gargs[1], gargs[2])
+            elif opt[0] == '-s':
+                use_stdin = True
+
+        if use_stdin:
+            for line in sys.stdin:
+                try:
+                    self.PullEntry(*line.split(None, 3))
+                except SystemExit:
+                    print "  for %s" % line
+                except:
+                    print "Bad entry: %s" % line.strip()
+        elif len(gargs) < 3:
+            print self.__longhelp__
+            raise SystemExit(1)
+        else:
+            self.PullEntry(gargs[0], gargs[1], gargs[2])
 
     def BuildNewEntry(self, client, etype, ename):
         """Construct a new full entry for given client/entry from statistics."""
