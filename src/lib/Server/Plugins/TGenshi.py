@@ -1,20 +1,25 @@
 """This module implements a templating generator based on Genshi."""
 __revision__ = '$Revision$'
 
-from genshi.template import TemplateLoader, \
-                            TextTemplate, MarkupTemplate, TemplateError
+import logging
+import Bcfg2.Server.Plugin
+
+logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
+
+# try to import genshi stuff
+try:
+    import genshi.core
+    import genshi.input
+    from genshi.template import TemplateLoader, \
+                                TextTemplate, MarkupTemplate, TemplateError
+except ImportError:
+	logger.error("TGenshi: Failed to import Genshi. Is it installed?")
+    raise Bcfg2.Server.Plugin.PluginInitError
 try:
     from genshi.template import NewTextTemplate
     have_ntt = True
 except:
     have_ntt = False
-import logging
-import Bcfg2.Server.Plugin
-import genshi.core
-import genshi.input
-
-logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
-
 
 def removecomment(stream):
     """A genshi filter that removes comments from the stream."""
