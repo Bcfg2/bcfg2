@@ -165,7 +165,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     if len(pkgs) > 0:
                         # Virtual packages matches an installed real package
                         pkg = pkgDict[pkgs.pop()]
-                        s = "YUMng: chosing: %s" % pkg.name
+                        s = "YUMng: choosing: %s" % pkg.name
                         self.logger.info(s)
                     else:
                         # What's the right package?  This will fail verify
