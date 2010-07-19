@@ -136,6 +136,33 @@ File permissions for entries handled by TGenshi are controlled via the
 use of :ref:`server-info` files. Note that you **cannot** use both a
 Permissions entry and a Path entry to handle the same file.
 
+Error handling
+================
+
+Situations may arrise where a templated file cannot be generated due to 
+missing or incomplete information.  A TemplateError can be raised to 
+force a bind failure and prevent sending an incomplete file to the client. 
+For example, this template::
+
+    {% python
+        from genshi.template import TemplateError
+        grp = None
+        for g in metadata.groups:
+            if g.startswith('ganglia-gmond-'):
+                grp = g
+                break
+        else:
+            raise TemplateError, "Missing group"
+    %}\
+
+will fail to bind if the client is not a member of a group starting with
+"ganglia-gmond-".  The syslogs on the server will contain this message::
+
+    bcfg2-server[5957]: Genshi template error: Missing group
+    bcfg2-server[5957]: Failed to bind entry: Path /etc/ganglia/gmond.conf
+
+indicating the bind failure and message raised with the TemplateError.
+
 FAQs
 ====
 
