@@ -13,7 +13,7 @@ try:
     from genshi.template import TemplateLoader, \
                                 TextTemplate, MarkupTemplate, TemplateError
 except ImportError:
-	logger.error("TGenshi: Failed to import Genshi. Is it installed?")
+    logger.error("TGenshi: Failed to import Genshi. Is it installed?")
     raise Bcfg2.Server.Plugin.PluginInitError
 try:
     from genshi.template import NewTextTemplate
