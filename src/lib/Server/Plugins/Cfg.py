@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import binascii
 import logging
+import lxml
 import os
 import re
 import tempfile
@@ -126,19 +127,27 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms'] if attr in new_entry]
         if badattr:
-            if self.infoxml:
-                print "InfoXML support not yet implemented"
-                return
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
                 metadata_updates[attr] = new_entry.get(attr)
-            infofile = open(self.path + '/:info', 'w')
-            for x in metadata_updates.iteritems():
-                infofile.write("%s: %s\n" % x)
-            infofile.close()
-            if log:
-                logger.info("Wrote file %s" % infofile.name)
+            if self.infoxml:
+                infoxml = lxml.etree.Element('FileInfo')
+                infotag = lxml.etree.SubElement(infoxml, 'Info')
+                [infotag.attrib.__setitem__(attr, metadata_updates[attr]) \
+                    for attr in metadata_updates]
+                ofile = open(self.path + "/info.xml","w")
+                ofile.write(lxml.etree.tostring(infoxml, pretty_print=True))
+                ofile.close()
+                if log:
+                    logger.info("Wrote file %s" % (self.path + "/info.xml"))
+            else:
+                infofile = open(self.path + '/:info', 'w')
+                for x in metadata_updates.iteritems():
+                    infofile.write("%s: %s\n" % x)
+                infofile.close()
+                if log:
+                    logger.info("Wrote file %s" % infofile.name)
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool,
           Bcfg2.Server.Plugin.PullTarget):
