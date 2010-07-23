@@ -35,15 +35,28 @@ def promptFilter(prompt, entries):
             continue
     return ret
 
+def matches_entry(entryspec, entry):
+    # both are (tag, name)
+    if entryspec == entry:
+        return True
+    else:
+        for i in [0, 1]:
+            if entryspec[i] == entry[i]:
+                continue
+            elif entryspec[i] == '*':
+                continue
+            elif '*' in entryspec[i]:
+                starpt = entryspec[i].index('*')
+                if entry[i].startswith(entryspec[i][:starpt]):
+                    continue
+            return False
+        return True
+
 def matches_white_list(entry, whitelist):
-    return [entry.tag, entry.get('name')] in whitelist or \
-           [entry.tag, '*'] in whitelist or \
-           ['*', entry.get('name')] in whitelist
+    return True in [matches_entry(we, (entry.tag, entry.get('name'))) for we in whitelist]
 
 def passes_black_list(entry, blacklist):
-    return [entry.tag, entry.get('name')] not in blacklist and \
-           [entry.tag, '*'] not in blacklist and \
-           ['*', entry.get('name')] not in blacklist
+    return True not in [matches_entry(be, (entry.tag, entry.get('name'))) for be in blacklist]
 
 class Frame:
     """Frame is the container for all Tool objects and state information."""
