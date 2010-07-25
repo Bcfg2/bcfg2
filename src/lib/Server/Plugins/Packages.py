@@ -24,7 +24,8 @@ logger = logging.getLogger('Packages')
 def source_from_xml(xsource):
     ret = dict([('rawurl', False), ('url', False)])
     for key, tag in [('groups', 'Group'), ('components', 'Component'),
-                     ('arches', 'Arch'), ('blacklist', 'Blacklist')]:
+                     ('arches', 'Arch'), ('blacklist', 'Blacklist'),
+                     ('whitelist', 'Whitelist')]:
         ret[key] = [item.text for item in xsource.findall(tag)]
     # version and component need to both contain data for sources to work
     try:
@@ -66,7 +67,7 @@ def _fetch_url(url):
 class Source(object):
     basegroups = []
     def __init__(self, basepath, url, version, arches, components, groups, rawurl,
-                 blacklist, recommended):
+                 blacklist, whitelist, recommended):
         self.basepath = basepath
         self.version = version
         self.components = components
@@ -77,6 +78,7 @@ class Source(object):
         self.deps = dict()
         self.provides = dict()
         self.blacklist = set(blacklist)
+        self.whitelist = set(whitelist)
         self.cachefile = None
         self.recommended = recommended
 
@@ -170,8 +172,10 @@ class Source(object):
         Returns => (packages, unresolved requirements)
         '''
 
-        if requirement in self.blacklist:
+        if requirement in self.blacklist or \
+                (len(self.whitelist) > 0 and requirement not in self.whitelist):
             # Ignore blacklisted packages in this source
+            logger.error("Skipping %s" % requirement)
             raise NoData
 
         if self.is_package(metadata, requirement):
@@ -248,9 +252,9 @@ class YUMSource(Source):
     ptype = 'yum'
 
     def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, recommended):
+                 rawurl, blacklist, whitelist, recommended):
         Source.__init__(self, basepath, url, version, arches, components,
-                        groups, rawurl, blacklist, recommended)
+                        groups, rawurl, blacklist, whitelist, recommended)
         if not self.rawurl:
             self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
         else:
@@ -404,9 +408,9 @@ class APTSource(Source):
     ptype = 'deb'
 
     def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, recommended):
+                 rawurl, blacklist, whitelist, recommended):
         Source.__init__(self, basepath, url, version, arches, components, groups,
-                        rawurl, blacklist, recommended)
+                        rawurl, blacklist, whitelist, recommended)
         if not self.rawurl:
             self.cachefile = self.escape_url(self.url + '@' + self.version) + '.data'
         else:

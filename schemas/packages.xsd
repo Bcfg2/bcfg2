@@ -20,9 +20,13 @@
       <xsd:element name="Version" type="xsd:string" minOccurs='0'
                    maxOccurs='1'/>
       <xsd:element name="Component" type="xsd:string" minOccurs='0'
-                   maxOccurs='unbounded'/>    
-      <xsd:element name="Blacklist" type="xsd:string" minOccurs='0'
-                   maxOccurs='unbounded'/>    
+                   maxOccurs='unbounded'/>
+      <xsd:choice>
+        <xsd:element name="Blacklist" type="xsd:string" minOccurs='0'
+                     maxOccurs='unbounded'/>
+        <xsd:element name="Whitelist" type="xsd:string" minOccurs='0'
+                     maxOccurs='unbounded'/>
+      </xsd:choice>
       <xsd:element name="Arch" type="xsd:string"  minOccurs='1'
                    maxOccurs='unbounded'/>
     </xsd:sequence>
