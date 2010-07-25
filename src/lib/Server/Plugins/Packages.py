@@ -175,7 +175,6 @@ class Source(object):
         if requirement in self.blacklist or \
                 (len(self.whitelist) > 0 and requirement not in self.whitelist):
             # Ignore blacklisted packages in this source
-            logger.error("Skipping %s" % requirement)
             raise NoData
 
         if self.is_package(metadata, requirement):
