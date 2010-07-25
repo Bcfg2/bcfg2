@@ -171,8 +171,8 @@ class Source(object):
         '''
 
         if requirement in self.blacklist:
-            # requirement and all deps are suppressed
-            return (set(), set())
+            # Ignore blacklisted packages in this source
+            raise NoData
 
         if self.is_package(metadata, requirement):
             item_is_pkg = True
