@@ -32,12 +32,13 @@
     </xsd:sequence>
   </xsd:complexType>
 
-  <xsd:element name='Sources'>
-    <xsd:complexType>
-      <xsd:choice minOccurs='1' maxOccurs='unbounded'>
-        <xsd:element name='APTSource' type='SourceType'/>
-        <xsd:element name='YUMSource' type='SourceType'/>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+  <xsd:complexType name='SourcesType'>
+    <xsd:choice minOccurs='1' maxOccurs='unbounded'>
+      <xsd:element name='APTSource' type='SourceType'/>
+      <xsd:element name='YUMSource' type='SourceType'/>
+      <xsd:element name='Sources' type='SourcesType'/>
+    </xsd:choice>
+  </xsd:complexType>
+
+  <xsd:element name='Sources' type='SourcesType'/>
 </xsd:schema>

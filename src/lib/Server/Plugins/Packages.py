@@ -543,16 +543,22 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create cache directory if needed
             os.makedirs(self.cachepath)
         try:
-            xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
+            xdata = lxml.etree.parse(self.data + '/config.xml')
+            xdata.xinclude()
+            xdata = xdata.getroot()
+        except (lxml.etree.XIncludeError, \
+                lxml.etree.XMLSyntaxError), xmlerr:
+            self.logger.error("Package: Error processing xml: %s" % xmlerr)
+            raise Bcfg2.Server.Plugin.PluginInitError
         except IOError:
             self.logger.error("Failed to read Packages configuration. Have"
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
         self.sentinels = set()
         self.sources = []
-        for s in xdata.findall('APTSource'):
+        for s in xdata.findall('.//APTSource'):
             self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
-        for s in xdata.findall('YUMSource'):
+        for s in xdata.findall('.//YUMSource'):
             self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
         for source in self.sources:
             source.setup_data()
@@ -682,16 +688,22 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def Refresh(self):
         '''Packages.Refresh() => True|False\nReload configuration specification and sources\n'''
         try:
-            xdata = lxml.etree.parse(self.data + '/config.xml').getroot()
+            xdata = lxml.etree.parse(self.data + '/config.xml')
+            xdata.xinclude()
+            xdata = xdata.getroot()
+        except (lxml.etree.XIncludeError, \
+                lxml.etree.XMLSyntaxError), xmlerr:
+            self.logger.error("Package: Error processing xml: %s" % xmlerr)
+            raise Bcfg2.Server.Plugin.PluginInitError
         except IOError:
             self.logger.error("Failed to read Packages configuration. Have" +
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
         self.sentinels = set()
         self.sources = []
-        for s in xdata.findall('APTSource'):
+        for s in xdata.findall('.//APTSource'):
             self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
-        for s in xdata.findall('YUMSource'):
+        for s in xdata.findall('.//YUMSource'):
             self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
         for source in self.sources:
             source.setup_data()
