@@ -5,6 +5,11 @@ import lxml.etree
 import platform
 import time
 
+try:
+    from django.core.exceptions import MultipleObjectsReturned
+except ImportError:
+    pass
+
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
 from Bcfg2.Server.Reports.reports.models import Client
@@ -53,15 +58,19 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                                                              logger,
                                                              True,
                                                              platform.node())
+                logger.info("Imported data for %s in %s seconds" \
+                            % (metadata.hostname, time.time() - start))
+                return
+            except MultipleObjectsReturned, e:
+                logger.error("DBStats: MultipleObjectsReturned while handling %s: %s" % \
+                    (metadata.hostname, e))
+                logger.error("DBStats: Data is inconsistent")
                 break
             except:
                 logger.error("DBStats: Failed to write to db (lock); retrying",
                              exc_info=1)
-            if i == 3:
-                logger.error("DBStats: Retry limit failed; aborting operation")
-                return
-        logger.info("Imported data in the reason fast path in %s second" \
-                    % (time.time() - start))
+        logger.error("DBStats: Retry limit failed for %s; aborting operation" \
+                    % metadata.hostname)
 
     def GetExtra(self, client):
         c_inst = Client.objects.filter(name=client)[0]
@@ -95,7 +104,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                     entry.reason.current_diff.split('\n'), 1)))
         elif entry.reason.is_binary:
             # If len is zero the object was too large to store
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         else:
             ret.append(None)
         return ret

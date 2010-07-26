@@ -63,12 +63,9 @@ def build_reason_kwargs(r_ent):
 
 
 def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
-    cursor = connection.cursor()
     clients = {}
     [clients.__setitem__(c.name, c) \
         for c in Client.objects.all()]
-    #[clients.__setitem__(c['name'], c['id']) \
-    #    for c in Client.objects.values('name', 'id')]
 
     pingability = {}
     [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
@@ -169,16 +166,18 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
 
     for key in pingability.keys():
         if key not in clients:
-            #print "Ping Save Problem with client %s" % name
             continue
-        pmatch = Ping.objects.filter(client=clients[key]).order_by('-endtime')
-        if pmatch and pmatch[0].status == pingability[key]:
-            pmatch[0].endtime = datetime.now()
-            pmatch[0].save()
-        else:
-            Ping(client=clients[key], status=pingability[key],
-                 starttime=datetime.now(),
-                 endtime=datetime.now()).save()
+        try:
+            pmatch = Ping.objects.filter(client=clients[key]).order_by('-endtime')[0]
+            if pmatch.status == pingability[key]:
+                pmatch.endtime = datetime.now()
+                pmatch.save()
+                continue
+        except IndexError:
+            pass
+        Ping(client=clients[key], status=pingability[key],
+             starttime=datetime.now(),
+             endtime=datetime.now()).save()
 
     if vlevel > 1:
         logger.info("---------------PINGDATA SYNCED---------------------")
