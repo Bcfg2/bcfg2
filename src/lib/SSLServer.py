@@ -221,16 +221,45 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             data = ''.join(L)
             response = self.server._marshaled_dispatch(self.client_address, data)
         except:
-            raise
-            self.send_response(500)
-            self.end_headers()
+            try:
+                self.send_response(500)
+                self.end_headers()
+            except:
+                (type, msg) = sys.exc_info()[:2]
+                self.logger.error("Error sending 500 response (%s): %s" % \
+                    (type, msg)) 
+                raise
         else:
             # got a valid XML RPC response
-            self.send_response(200)
-            self.send_header("Content-type", "text/xml")
-            self.send_header("Content-length", str(len(response)))
-            self.end_headers()
-            self.wfile.write(response)
+            try:
+                self.send_response(200)
+                self.send_header("Content-type", "text/xml")
+                self.send_header("Content-length", str(len(response)))
+                self.end_headers()
+                failcount = 0
+                while True:
+                    try:
+                        # If we hit SSL3_WRITE_PENDING here try to resend.
+                        self.wfile.write(response)
+                        break
+                    except ssl.SSLError, e:
+                        if str(e).find("SSL3_WRITE_PENDING") < 0:
+                            raise
+                        self.logger.error("SSL3_WRITE_PENDING")
+                        failcount += 1
+                        if failcount < 5:
+                            continue
+                        raise
+            except:
+                (type, msg) = sys.exc_info()[:2]
+                if str(type) == 'socket.error' and msg[0] == 32:
+                    self.logger.warning("Connection dropped from %s" % self.client_address[0])
+                elif str(type) == 'socket.error' and msg[0] == 104:
+                    self.logger.warning("Connection reset by peer: %s" % self.client_address[0])
+                else:
+                    self.logger.error("Error sending response (%s): %s" % \
+                        (type, msg)) 
+                    raise
 
     def finish(self):
         # shut down the connection
