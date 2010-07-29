@@ -344,14 +344,20 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
             for inst in install_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                self.yb.install(**build_yname(pkg_arg, inst))
+                try:
+                    self.yb.install(**build_yname(pkg_arg, inst))
+                except yum.Errors.YumBaseError, yume:
+                    self.logger.error("Error installing some packages: %s" % yume)
 
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
 
             for inst in upgrade_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
-                self.yb.update(**build_yname(pkg_arg, inst))
+                try:
+                    self.yb.update(**build_yname(pkg_arg, inst))
+                except yum.Errors.YumBaseError, yume:
+                    self.logger.error("Error upgrading some packages: %s" % yume)
 
         self._runYumTransaction()
 
