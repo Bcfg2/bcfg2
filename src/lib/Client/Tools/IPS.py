@@ -15,7 +15,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
     __req__ = {'Package': ['name', 'version']}
     pkgtool = ('pkg install --no-refresh %s', ('%s', ['name']))
 
-    def __init__(self, logger, cfg, setup):
+    def __init__(self, logger, setup, cfg):
         self.installed = {}
         self.pending_upgrades = set()
         self.image = image.Image()
