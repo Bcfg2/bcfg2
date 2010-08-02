@@ -81,6 +81,7 @@ class Source(object):
         self.whitelist = set(whitelist)
         self.cachefile = None
         self.recommended = recommended
+        self.url_map = []
 
     def load_state(self):
         pass
@@ -242,6 +243,10 @@ class Source(object):
                 deps = set()
             return (set([pkg_to_add]), deps)
 
+    def get_url_info(self):
+        return {'groups': copy.copy(self.groups), \
+            'urls': [copy.deepcopy(url) for url in self.url_map]}
+
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
     rp = '{http://linux.duke.edu/metadata/rpm}'
@@ -269,20 +274,25 @@ class YUMSource(Source):
     def save_state(self):
         cache = file(self.cachefile, 'wb')
         cPickle.dump((self.packages, self.deps, self.provides,
-                      self.filemap), cache, 2)
+                      self.filemap, self.url_map), cache, 2)
         cache.close()
 
     def load_state(self):
         data = file(self.cachefile)
         (self.packages, self.deps, self.provides, \
-         self.filemap) = cPickle.load(data)
+         self.filemap, self.url_map) = cPickle.load(data)
 
     def get_urls(self):
         surls = list()
+        self.url_map = []
         for arch in self.arches:
             usettings = [{'version': self.version, 'component':comp,
                           'arch':arch} for comp in self.components]
-            surls.append((arch, [self.baseurl % setting for setting in usettings]))
+            for setting in usettings:
+                setting['groups'] = self.groups
+                setting['url'] = self.baseurl % setting
+                self.url_map.append(copy.deepcopy(setting))
+            surls.append((arch, [setting['url'] for setting in usettings]))
         urls = []
         for (sarch, surl_list) in surls:
             for surl in surl_list:
@@ -416,6 +426,9 @@ class APTSource(Source):
             self.cachefile = self.escape_url(self.rawurl) + '.data'
         self.pkgnames = set()
 
+        self.url_map = [{'rawurl': self.rawurl, 'url': self.url, 'version': self.version, \
+            'components': self.components, 'arches': self.arches, 'groups': self.groups}]
+
     def save_state(self):
         cache = file(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
@@ -527,7 +540,8 @@ class APTSource(Source):
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
-               Bcfg2.Server.Plugin.Generator):
+               Bcfg2.Server.Plugin.Generator,
+               Bcfg2.Server.Plugin.Connector):
     name = 'Packages'
     conflicts = ['Pkgmgr']
     experimental = True
@@ -537,6 +551,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
         self.cachepath = self.data + '/cache'
 
         if not os.path.exists(self.cachepath):
@@ -716,6 +731,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 continue
             source.read_files()
         return True
+
+    def get_additional_data(self, meta):
+        sdata = []
+        [sdata.extend(copy.deepcopy(src.url_map)) for src in self.get_matching_sources(meta)]
+        return dict(sources=sdata)
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('Packages', to_console=True)
