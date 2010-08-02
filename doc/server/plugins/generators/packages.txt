@@ -211,6 +211,16 @@ Once line per file download needed. Packages/config.xml will be reloaded
 at this time, so any source specification changes (new or modified
 sources in this file) will be reflected by the server at this point.
 
+Soft reload
+-----------
+
+.. versionadded:: 1.1.0
+
+A soft reload can be performed to reread the configuration file and download only missing sources.::
+
+    [0:3711] bcfg2-admin xcmd Packages.Reload
+    True
+
 Availability
 ============
 
@@ -240,6 +250,35 @@ need to use :ref:`BoundEntries <boundentries>` like below
 .. code-block:: xml
 
     <BoundPackage name="mem-agent" priority="1" version="auto" type="yum" verify="false"/>
+
+Generating Client APT/Yum Configurations
+========================================
+
+.. versionadded:: 1.1.0
+
+Client repository information can be generated automatically from software sources using
+:doc:`./tgenshi/index` or :doc:`./tcheetah`.  A list of source urls are exposed in the client's metadata as 
+metadata.Packages.sources.
+
+An example :doc:`./tgenshi/index` APT template::
+
+    # bcfg2 maintained apt
+
+    {% for s in metadata.Packages.sources %}\
+    deb ${s.url}${s.version} ${s.groups[0]} {% for comp in s.components %}$comp {% end %}
+
+    {% end %}\
+
+An example :doc:`./tgenshi/index` YUM template::
+
+    # bcfg2 maintained yum
+
+    % for s in metadata.Packages.sources %}\
+    [${s.groups[0]}_${s.component}]
+    name=${s.groups[0]}_${s.component}
+    baseurl=${s.url}
+
+    {% end %}\
 
 Debugging unexpected behavior
 =============================

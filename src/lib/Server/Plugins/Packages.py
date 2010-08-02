@@ -1,11 +1,17 @@
 import cPickle
 import copy
 import gzip
+import glob
 import logging
 import lxml.etree
 import os
 import re
 import urllib2
+
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
@@ -79,14 +85,16 @@ class Source(object):
         self.provides = dict()
         self.blacklist = set(blacklist)
         self.whitelist = set(whitelist)
-        self.cachefile = None
+        self.cachefile = '%s/cache-%s' % (self.basepath, md5(cPickle.dumps( \
+                [self.version, self.components, self.url, \
+                self.rawurl, self.groups, self.arches])).hexdigest())
         self.recommended = recommended
         self.url_map = []
 
     def load_state(self):
         pass
 
-    def setup_data(self):
+    def setup_data(self, force_update=False):
         should_read = True
         should_download = False
         if os.path.exists(self.cachefile):
@@ -103,9 +111,12 @@ class Source(object):
                 logger.error("Packages: File read failed; falling back to file download")
                 should_download = True
 
-        if should_download:
-            self.update()
-            self.read_files()
+        if should_download or force_update:
+            try:
+                self.update()
+                self.read_files()
+            except:
+                logger.error("Failed to update source", exc_info=1)
 
     def get_urls(self):
         return []
@@ -263,7 +274,6 @@ class YUMSource(Source):
             self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
         else:
             self.baseurl = self.rawurl
-        self.cachefile = self.escape_url(self.baseurl + '@' + version) + '.data'
         self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
@@ -420,10 +430,6 @@ class APTSource(Source):
                  rawurl, blacklist, whitelist, recommended):
         Source.__init__(self, basepath, url, version, arches, components, groups,
                         rawurl, blacklist, whitelist, recommended)
-        if not self.rawurl:
-            self.cachefile = self.escape_url(self.url + '@' + self.version) + '.data'
-        else:
-            self.cachefile = self.escape_url(self.rawurl) + '.data'
         self.pkgnames = set()
 
         self.url_map = [{'rawurl': self.rawurl, 'url': self.url, 'version': self.version, \
@@ -545,7 +551,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     name = 'Packages'
     conflicts = ['Pkgmgr']
     experimental = True
-    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh']
+    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -553,31 +559,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.cachepath = self.data + '/cache'
+        self.sentinels = set()
+        self.sources = []
 
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
             os.makedirs(self.cachepath)
-        try:
-            xdata = lxml.etree.parse(self.data + '/config.xml')
-            xdata.xinclude()
-            xdata = xdata.getroot()
-        except (lxml.etree.XIncludeError, \
-                lxml.etree.XMLSyntaxError), xmlerr:
-            self.logger.error("Package: Error processing xml: %s" % xmlerr)
-            raise Bcfg2.Server.Plugin.PluginInitError
-        except IOError:
-            self.logger.error("Failed to read Packages configuration. Have"
-                              " you created your config.xml file?")
-            raise Bcfg2.Server.Plugin.PluginInitError
-        self.sentinels = set()
-        self.sources = []
-        for s in xdata.findall('.//APTSource'):
-            self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
-        for s in xdata.findall('.//YUMSource'):
-            self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
-        for source in self.sources:
-            source.setup_data()
-            self.sentinels.update(source.basegroups)
+        self._load_config()
 
     def get_matching_sources(self, meta):
         return [s for s in self.sources if s.applies(meta)]
@@ -701,7 +689,22 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         return pkgnames.difference(redundant), redundant
 
     def Refresh(self):
+        '''Packages.Refresh() => True|False\nReload configuration specification and download sources\n'''
+        self._load_config(force_update=True)
+        return True
+
+    def Reload(self):
         '''Packages.Refresh() => True|False\nReload configuration specification and sources\n'''
+        self._load_config()
+        return True
+
+    def _load_config(self, force_update=False):
+        '''
+        Load the configuration data and setup sources
+
+        Keyword args:
+            force_update    Force downloading repo data
+        '''
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml')
             xdata.xinclude()
@@ -720,17 +723,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
         for s in xdata.findall('.//YUMSource'):
             self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
+        cachefiles = []
         for source in self.sources:
-            source.setup_data()
+            cachefiles.append(source.cachefile)
+            source.setup_data(force_update)
             self.sentinels.update(source.basegroups)
-        for source in self.sources:
-            try:
-                source.update()
-            except:
-                self.logger.error("Failed to update source", exc_info=1)
-                continue
-            source.read_files()
-        return True
+        for cfile in glob.glob("%s/cache-*" % self.cachepath):
+            if cfile not in cachefiles:
+                os.unlink(cfile)
 
     def get_additional_data(self, meta):
         sdata = []
