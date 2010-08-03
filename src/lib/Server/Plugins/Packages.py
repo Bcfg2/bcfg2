@@ -6,7 +6,9 @@ import logging
 import lxml.etree
 import os
 import re
+import sys
 import urllib2
+import ConfigParser
 
 try:
     from hashlib import md5
@@ -72,6 +74,7 @@ def _fetch_url(url):
 
 class Source(object):
     basegroups = []
+
     def __init__(self, basepath, url, version, arches, components, groups, rawurl,
                  blacklist, whitelist, recommended):
         self.basepath = basepath
@@ -562,6 +565,32 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.sentinels = set()
         self.sources = []
 
+        # Grab the config file location
+        # XXX: Ugh...we need some help with Bcfg2's Option stuff
+        cfile = '/etc/bcfg2.conf'
+        if '-C' in sys.argv:
+            inx = sys.argv.index('-C')
+            if len(sys.argv) > inx + 1:
+                cfile = sys.argv[inx + 1]
+
+        CP = ConfigParser.ConfigParser()
+        CP.read(cfile)
+
+        # Did the user configure off the resolver?
+        self.disableResolver = False
+        try:
+            if CP.get('packages', 'resolver').lower() in ['0', 'false', 'no']:
+                self.disableResolver = True
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            pass
+        self.disableMetaData = False
+        try:
+            if CP.get('packages', 'metadata').lower() in ['0', 'false', 'no']:
+                self.disableMetaData = True
+                self.disableResolver = True
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            pass
+
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
             os.makedirs(self.cachepath)
@@ -647,6 +676,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         meta - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
+        if self.disableResolver: return # Config requests no resolver
+
         initial = set([pkg.get('name') for struct in structures \
                        for pkg in struct.findall('Package') +
                        struct.findall('BoundPackage')])
@@ -726,7 +757,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         cachefiles = []
         for source in self.sources:
             cachefiles.append(source.cachefile)
-            source.setup_data(force_update)
+            if not self.disableMetaData: source.setup_data(force_update)
             self.sentinels.update(source.basegroups)
         for cfile in glob.glob("%s/cache-*" % self.cachepath):
             if cfile not in cachefiles:
