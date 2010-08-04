@@ -6,9 +6,7 @@ import logging
 import lxml.etree
 import os
 import re
-import sys
 import urllib2
-import ConfigParser
 
 try:
     from hashlib import md5
@@ -564,32 +562,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.cachepath = self.data + '/cache'
         self.sentinels = set()
         self.sources = []
-
-        # Grab the config file location
-        # XXX: Ugh...we need some help with Bcfg2's Option stuff
-        cfile = '/etc/bcfg2.conf'
-        if '-C' in sys.argv:
-            inx = sys.argv.index('-C')
-            if len(sys.argv) > inx + 1:
-                cfile = sys.argv[inx + 1]
-
-        CP = ConfigParser.ConfigParser()
-        CP.read(cfile)
-
-        # Did the user configure off the resolver?
         self.disableResolver = False
-        try:
-            if CP.get('packages', 'resolver').lower() in ['0', 'false', 'no']:
-                self.disableResolver = True
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            pass
         self.disableMetaData = False
-        try:
-            if CP.get('packages', 'metadata').lower() in ['0', 'false', 'no']:
-                self.disableMetaData = True
-                self.disableResolver = True
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            pass
 
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
@@ -748,6 +722,18 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Failed to read Packages configuration. Have" +
                               " you created your config.xml file?")
             raise Bcfg2.Server.Plugin.PluginInitError
+
+        # Load Packages config
+        config = xdata.xpath('//Sources/Config')
+        if config:
+            if config[0].get("resolver", "enabled").lower() == "disabled":
+                self.logger.info("Packages: Resolver disabled")
+                self.disableResolver = True
+            if config[0].get("metadata", "enabled").lower() == "disabled":
+                self.logger.info("Packages: Metadata disabled")
+                self.disableResolver = True
+                self.disableMetaData = True
+
         self.sentinels = set()
         self.sources = []
         for s in xdata.findall('.//APTSource'):
