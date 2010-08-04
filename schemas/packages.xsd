@@ -33,11 +33,20 @@
   </xsd:complexType>
 
   <xsd:complexType name='SourcesType'>
-    <xsd:choice minOccurs='1' maxOccurs='unbounded'>
-      <xsd:element name='APTSource' type='SourceType'/>
-      <xsd:element name='YUMSource' type='SourceType'/>
-      <xsd:element name='Sources' type='SourcesType'/>
-    </xsd:choice>
+    <xsd:sequence>
+      <xsd:element name='Config' minOccurs='0' maxOccurs='1'>
+        <xsd:complexType>
+        <xsd:attribute type='xsd:string' name='resolver' />
+        <xsd:attribute type='xsd:string' name='metadata' />
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:choice minOccurs='1' maxOccurs='unbounded'>
+        <xsd:element name='APTSource' type='SourceType'/>
+        <xsd:element name='YUMSource' type='SourceType'/>
+        <xsd:element name='Sources' type='SourcesType'/>
+      </xsd:choice>
+    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:element name='Sources' type='SourcesType'/>

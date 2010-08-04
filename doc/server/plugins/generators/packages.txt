@@ -92,6 +92,29 @@ any prerequisites that cannot be satisfied. This facility should largely
 remove the need to use the :ref:`Base <server-plugins-structures-base>`
 plugin.
 
+Disabling dependency resolution
+-------------------------------
+
+.. versionadded:: 1.1.0
+
+Dependency resolution can now be disabled by adding this to Sources in config.xml:
+
+.. code-block:: xml
+
+    <Sources>
+        <Config resolver="disabled" />
+        ...
+    </Sources>
+
+All metadata processing can be disabled as well:
+
+.. code-block:: xml
+
+    <Sources>
+        <Config metadata="disabled" />
+        ...
+    </Sources>
+
 .. _packages-exampleusage:
 
 Example usage
