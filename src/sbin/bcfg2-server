@@ -46,9 +46,10 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
     try:
-    # check whether the specified bcfg2.conf exists
+        # check whether the specified bcfg2.conf exists
         if not os.path.exists(setup['configfile']):
-            raise CoreInitError, "Could not read %s" % setup['configfile']
+            print("Could not read %s" % setup['configfile'])
+            sys.exit(1)
         Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
                                       location=setup['location'],
                                       daemon = setup['daemon'],
@@ -71,6 +72,7 @@ if __name__ == '__main__':
     except CoreInitError, msg:
         logger.error(msg)
         logger.error("exiting")
+        sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
     sys.exit(0)
