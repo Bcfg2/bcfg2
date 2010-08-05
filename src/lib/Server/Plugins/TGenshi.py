@@ -1,6 +1,7 @@
 """This module implements a templating generator based on Genshi."""
 __revision__ = '$Revision$'
 
+import binascii
 import logging
 import Bcfg2.Server.Plugin
 
@@ -90,7 +91,11 @@ class TemplateFile:
                 if type(textdata) == unicode:
                     entry.text = textdata
                 else:
-                    entry.text = unicode(textdata, self.encoding)
+                    if entry.get('encoding') == 'base64':
+			# take care of case where file needs base64 encoding
+                        entry.text = binascii.b2a_base64(textdata)
+                    else:
+                        entry.text = unicode(textdata, self.encoding)
             else:
                 try:
                     xmldata = stream.render('xml', strip_whitespace=False)

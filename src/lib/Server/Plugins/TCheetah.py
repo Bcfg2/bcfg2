@@ -1,6 +1,7 @@
 '''This module implements a templating generator based on Cheetah'''
 __revision__ = '$Revision$'
 
+import binascii
 import logging
 import sys
 import traceback
@@ -54,7 +55,11 @@ class TemplateFile:
             if type(self.template) == unicode:
                 entry.text = self.template
             else:
-                entry.text = unicode(str(self.template), self.encoding)
+                if entry.get('encoding') == 'base64':
+		    # take care of case where file needs base64 encoding
+                    entry.text = binascii.b2a_base64(self.template)
+                else:
+                    entry.text = unicode(str(self.template), self.encoding)
         except:
             (a, b, c) = sys.exc_info()
             msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]
