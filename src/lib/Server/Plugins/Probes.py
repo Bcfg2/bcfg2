@@ -3,7 +3,7 @@ import re
 
 import Bcfg2.Server.Plugin
 
-specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH])_\S+)")
+specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH](\d\d)?)_\S+)")
 probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
