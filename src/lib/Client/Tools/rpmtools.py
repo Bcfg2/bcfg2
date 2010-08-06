@@ -21,19 +21,19 @@
 __revision__ = '$Revision$'
 
 import grp
-try:
-    import hashlib
-    py24compat = False
-except:
-    # FIXME: Remove when client python dep is 2.5 or greater
-    py24compat = True
-    import md5
 import optparse
 import os
 import pwd
 import rpm
 import stat
 import sys
+if sys.version_info >= (2, 5):
+    import hashlib
+    py24compat = False
+else:
+    # FIXME: Remove when client python dep is 2.5 or greater
+    py24compat = True
+    import md5
 
 # Determine what prelink tools we have available.
 # The isprelink module is a python extension that examines the ELF headers

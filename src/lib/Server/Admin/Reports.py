@@ -12,9 +12,10 @@ from Bcfg2.Server.Reports.updatefix import update_database
 from Bcfg2.Server.Reports.utils import *
 from lxml.etree import XML, XMLSyntaxError
 
-try:
+# FIXME: Remove when server python dep is 2.5 or greater
+if sys.version_info >= (2, 5)::
     from hashlib import md5
-except ImportError:
+else:
     from md5 import md5
 
 # Load django

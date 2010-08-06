@@ -6,11 +6,13 @@ import logging
 import lxml.etree
 import os
 import re
+import sys
 import urllib2
 
-try:
+# FIXME: Remove when server python dep is 2.5 or greater
+if sys.version_info >= (2, 5)::
     from hashlib import md5
-except ImportError:
+else:
     from md5 import md5
 
 import Bcfg2.Logger
