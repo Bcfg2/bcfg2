@@ -7,6 +7,7 @@ from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
 from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 import binascii
 import difflib
+import errno
 import grp
 import logging
 import os
@@ -688,7 +689,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     return False
             return True
         except (OSError, IOError), err:
-            if err.errno == 13:
+            if err.errno == errno.EACCES:
                 self.logger.info("Failed to open %s for writing" % (entry.get('name')))
             else:
                 print(err)

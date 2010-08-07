@@ -20,11 +20,7 @@
 #BCFG2_INIT=1
 
 # BCFG2_AGENT:
-# Run Bcfg2 in Agent mode at system bootup
-#
-# Set value to 1 to enable
-#   Default: 0 (disable)
-#BCFG2_AGENT=1
+# Bcfg2 no longer supports agent mode please use the Agent+SSH method
 
 # BCFG2_CRON:
 # Set the frequency of cron runs.
