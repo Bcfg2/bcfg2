@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""The XML-RPC Bcfg2 Server."""
+"""The XML-RPC Bcfg2 server."""
 __revision__ = '$Revision$'
 
 import logging
@@ -26,11 +26,12 @@ if __name__ == '__main__':
         'to_file'   : Bcfg2.Options.LOGGING_FILE_PATH,
         }
 
-    OPTINFO.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'fm': Bcfg2.Options.SERVER_FILEMONITOR,
+    OPTINFO.update({'repo'     : Bcfg2.Options.SERVER_REPOSITORY,
+                    'plugins'  : Bcfg2.Options.SERVER_PLUGINS,
+                    'password' : Bcfg2.Options.SERVER_PASSWORD,
+                    'fm'       : Bcfg2.Options.SERVER_FILEMONITOR,
                     })
+                    
     OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
                     'cert'     : Bcfg2.Options.SERVER_CERT,
                     'ca'       : Bcfg2.Options.SERVER_CA,
@@ -39,9 +40,8 @@ if __name__ == '__main__':
                     'static'   : Bcfg2.Options.SERVER_STATIC,
                     'encoding' : Bcfg2.Options.ENCODING,
                     'filelog'  : Bcfg2.Options.LOGGING_FILE_PATH,
-                    'protocol'  : Bcfg2.Options.SERVER_PROTOCOL,
+                    'protocol' : Bcfg2.Options.SERVER_PROTOCOL,
                     })
-
 
     setup = Bcfg2.Options.OptionParser(OPTINFO)
     setup.parse(sys.argv[1:])
