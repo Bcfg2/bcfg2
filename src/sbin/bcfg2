@@ -146,13 +146,13 @@ class Client:
         if self.setup['file']:
             # read config from file
             try:
-                self.logger.debug("reading cached configuration from %s" %
+                self.logger.debug("Reading cached configuration from %s" %
                                   (self.setup['file']))
                 configfile = open(self.setup['file'], 'r')
                 rawconfig = configfile.read()
                 configfile.close()
             except IOError:
-                self.fatal_error("failed to read cached configuration from: %s"
+                self.fatal_error("Failed to read cached configuration from: %s"
                                  % (self.setup['file']))
                 return(1)
         else:
@@ -185,7 +185,7 @@ class Client:
                 probes = Bcfg2.Client.XML.XML(probe_data)
             except Bcfg2.Client.XML.ParseError, syntax_error:
                 self.fatal_error(
-                    "server returned invalid probe requests: %s" %
+                    "Server returned invalid probe requests: %s" %
                     (syntax_error))
                 return(1)
 
@@ -195,7 +195,7 @@ class Client:
                 [probedata.append(self.run_probe(probe))
                  for probe in probes.findall(".//probe")]
             except:
-                self.logger.error("Failed to Execute probes")
+                self.logger.error("Failed to execute probes")
                 raise SystemExit(1)
 
             if len(probes.findall(".//probe")) > 0:
@@ -212,7 +212,7 @@ class Client:
                 try:
                     self.setup['decision_list'] = proxy.GetDecisionList( \
                         self.setup['decision'])
-                    self.logger.info("Got Decision List from server:")
+                    self.logger.info("Got decision list from server:")
                     self.logger.info(self.setup['decision_list'])
                 except xmlrpclib.Fault, f:
                     if f.faultCode == 1:
@@ -224,7 +224,7 @@ class Client:
             try:
                 rawconfig = proxy.GetConfig()
             except xmlrpclib.Fault:
-                self.logger.error("Failed to download configuration from bcfg2")
+                self.logger.error("Failed to download configuration from Bcfg2")
                 raise SystemExit(2)
 
             times['config_download'] = time.time()
@@ -234,21 +234,21 @@ class Client:
                 open(self.setup['cache'], 'w').write(rawconfig.encode(self.setup['encoding']))
                 os.chmod(self.setup['cache'], 33152)
             except IOError:
-                self.logger.warning("failed to write config cache file %s" %
+                self.logger.warning("Failed to write config cache file %s" %
                                     (self.setup['cache']))
             times['caching'] = time.time()
 
         try:
             self.config = Bcfg2.Client.XML.XML(rawconfig)
         except Bcfg2.Client.XML.ParseError, syntax_error:
-            self.fatal_error("the configuration could not be parsed: %s" %
+            self.fatal_error("The configuration could not be parsed: %s" %
                              (syntax_error))
             return(1)
 
         times['config_parse'] = time.time()
 
         if self.config.tag == 'error':
-            self.fatal_error("server error: %s" % (self.config.text))
+            self.fatal_error("Server error: %s" % (self.config.text))
             return(1)
 
         self.tools = Bcfg2.Client.Frame.Frame(self.config,
@@ -264,7 +264,7 @@ class Client:
                     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
                     #otherwise exit and give a warning to the user
-                    self.fatal_error("An other instance of bcfg2 is running. If you what to bypass the check, run with %s option" %
+                    self.fatal_error("An other instance of Bcfg2 is running. If you what to bypass the check, run with %s option" %
                                      (Bcfg2.Options.OMIT_LOCK_CHECK.cmd))
             except:
                 lockfile = None
