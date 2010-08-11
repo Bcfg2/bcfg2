@@ -165,7 +165,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = raw_input("What is the server's hostname: [%s]" % socket.getfqdn())
+        data = raw_input("What is the server's hostname: [%s]: " % socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -272,6 +272,9 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')
-        os.makedirs(path)
-        self._init_plugins()
-        print "Repository created successfuly in %s" % (self.repopath)
+        try:
+            os.makedirs(path)
+            self._init_plugins()
+            print "Repository created successfuly in %s" % (self.repopath)
+        except OSError:
+            print("Failed to create %s." % path)
