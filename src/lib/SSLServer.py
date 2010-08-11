@@ -139,8 +139,14 @@ class SSLServer (SocketServer.TCPServer, object):
         return sslsock, sockinfo
 
     def close_request(self, request):
-        request.unwrap()
-        request.close()
+        try:
+            request.unwrap()
+        except:
+            pass
+        try:
+            request.close()
+        except:
+            pass
 
     def _get_url(self):
         port = self.socket.getsockname()[1]
