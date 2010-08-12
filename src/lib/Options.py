@@ -165,11 +165,13 @@ class OptionSet(dict):
 
 list_split = lambda x:x.replace(' ','').split(',')
 flist_split = lambda x:list_split(x.replace(':', '').lower())
+
 def colon_split(c_string):
     if c_string:
         return c_string.split(':')
     return []
 
+#General options
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
 LOCKFILE = Option('Specify lockfile',
@@ -181,6 +183,26 @@ DEBUG = Option("Enable debugging output", False, cmd='-d')
 VERBOSE = Option("Enable verbose output", False, cmd='-v')
 DAEMON = Option("Daemonize process, storing pid", False,
                 cmd='-D', odesc="<pidfile>")
+INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
+                        default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
+SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
+                       default='/usr/lib/sendmail')
+INTERACTIVE = Option('prompt the user for each change', default=False,
+                     cmd='-I', )
+ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(),
+                  cmd='-E', odesc='<encoding>',
+                  cf=('components', 'encoding'))
+PARANOID_PATH = Option('Specify path for paranoid file backups',
+                       default='/var/cache/bcfg2', cf=('paranoid', 'path'),
+                       odesc='<paranoid backup path>')
+PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
+                             default=1, cf=('paranoid', 'max_copies'),
+                             odesc='<max paranoid copies>')
+OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
+CORE_PROFILE = Option('profile',
+                      default=False, cmd='-p', )
+                      
+#Metadata options
 MDATA_OWNER = Option('Default Path owner',
                      default='root', cf=('mdata', 'owner'),
                      odesc='owner permissions')
@@ -197,6 +219,7 @@ MDATA_PARANOID = Option('Default Path paranoid setting',
                      'false', cf=('mdata', 'paranoid'),
                      odesc='Path paranoid setting')
 
+#Server options
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
                            odesc='<repository path>')
@@ -222,11 +245,17 @@ SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
 SERVER_STATIC = Option('Server runs on static port', cf=('components', 'bcfg2'),
                        default=False, cook=bool_cook)
 SERVER_KEY = Option('Path to SSL key', cf=('communication', 'key'),
-                    default=False, cmd='-K', odesc='<ssl key file>')
+                    default=False, cmd='--ssl-key', odesc='<ssl key>',
+                    long_arg=True)
 SERVER_CERT = Option('Path to SSL certificate', default='/etc/bcfg2.key',
                      cf=('communication', 'certificate'), odesc='<ssl cert>')
 SERVER_CA = Option('Path to SSL CA Cert', default=None,
                    cf=('communication', 'ca'), odesc='<ca cert>')
+SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
+                         cf=('communication', 'password'), default=False)
+SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
+                         default='xmlrpc/ssl')
+#Client options
 CLIENT_KEY = Option('Path to SSL key', cf=('communication', 'key'),
                     default=None, cmd="--ssl-key", odesc='<ssl key>',
                     long_arg=True)
@@ -240,26 +269,6 @@ CLIENT_SCNS = Option('list of server commonNames', default=None, cmd="--ssl-cns"
                      cf=('communication', 'serverCommonNames'),
                      odesc='<commonName1:commonName2>', cook=list_split,
                      long_arg=True)
-
-SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
-                         cf=('communication', 'password'), default=False)
-INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
-                        default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
-SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
-                         default='xmlrpc/ssl')
-SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
-                       default='/usr/lib/sendmail')
-
-# APT client tool options
-CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
-                                       cf=('APT', 'install_path'),
-                                       default='/usr')
-CLIENT_APT_TOOLS_VAR_PATH = Option('Apt tools var path',
-                                   cf=('APT', 'var_path'), default='/var')
-CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
-                         default='/etc')
-
-
 CLIENT_PROFILE = Option('assert the given profile for the host',
                         default=False, cmd='-p', odesc="<profile>")
 CLIENT_RETRIES = Option('the number of times to retry network communication',
@@ -271,8 +280,6 @@ CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
                               default=False, cmd='-e', )
 CLIENT_PARANOID = Option('make automatic backups of config files',
                          default=False, cmd='-P', cf=('client', 'paranoid'))
-CORE_PROFILE = Option('profile',
-                      default=False, cmd='-p', )
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
                         odesc="<driver1,driver2>", cook=list_split,
@@ -295,27 +302,21 @@ CLIENT_QUICK = Option('disable some checksum verification', default=False,
                       cmd='-q', )
 CLIENT_USER = Option('the user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
-INTERACTIVE = Option('prompt the user for each change', default=False,
-                     cmd='-I', )
-
-ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(), cmd='-E', odesc='<encoding>',
-                  cf=('components', 'encoding'))
-
-PARANOID_PATH = Option('Specify path for paranoid file backups',
-                       default='/var/cache/bcfg2', cf=('paranoid', 'path'),
-                       odesc='<paranoid backup path>')
-PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
-                             default=1, cf=('paranoid', 'max_copies'),
-                             odesc='<max paranoid copies>')
-
-OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
-
-LOGGING_FILE_PATH = Option('Set path of file log', default=None,
-                           cmd='-o', odesc='<path>', cf=('logging', 'path'))
-
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>')
+                     
+# APT client tool options
+CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
+                                       cf=('APT', 'install_path'),
+                                       default='/usr')
+CLIENT_APT_TOOLS_VAR_PATH = Option('Apt tools var path',
+                                   cf=('APT', 'var_path'), default='/var')
+CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
+                         default='/etc')
 
+#Logging options
+LOGGING_FILE_PATH = Option('Set path of file log', default=None,
+                           cmd='-o', odesc='<path>', cf=('logging', 'path'))
 
 class OptionParser(OptionSet):
     """
