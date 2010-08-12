@@ -1,75 +1,89 @@
 .TH "bcfg2" 1
 .SH NAME
-bcfg2 \- reconfigure machine based on settings in BCFG2
+bcfg2 \- reconfigure machine based on settings in Bcfg2
 .SH SYNOPSIS
 .B bcfg2
 .I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-b bundle] [\-r removal mode]
 .SH DESCRIPTION
 .TP
 .BR bcfg2
-Runs the bcfg2 configuration process on the current host. This process
+Runs the Bcfg2 configuration process on the current host. This process
 consists of first fetching and executing probes, uploading probe
 results, fetching the client configuration, checking the current
 client state, attempting to install the desired configuration, and
-finally uploading statistics about the bcfg2 execution and client
+finally uploading statistics about the Bcfg2 execution and client
 state.
+
 .SH OPTIONS
 .TP
 .BR "\-C <configfile>"
-Specify alternate bcfg2.conf location
+Specify alternate bcfg2.conf location.
+
 .TP
 .BR "\-D <driver1>,<driver2>"
-Specify a set of bcfg2 tool drivers. NOTE: only drivers listed will be
+Specify a set of Bcfg2 tool drivers. NOTE: only drivers listed will be
 loaded. (IE, if you don't include POSIX, you will be unable to
-verify/install ConfigFiles, etc)
+verify/install ConfigFiles, etc).
+
 .TP
 .BR "\-E <encoding>"
 Specify the encoding of Cfg files.
+
 .TP
 .BR "\-I"
-Run bcfg2 in interactive mode.  The user will be prompted before each 
+Run bcfg2 in interactive mode. The user will be prompted before each 
 change.
+
 .TP
-.BR "\-K <SSL key file>" 
-Specify the path to the SSL key.
-.TP 
 .BR "\-O" 
 Omit lock check.
+
 .TP 
 .BR "\-P" 
 Run bcfg2 in paranoid mode. Diffs will be logged for
 configuration files marked as paranoid by the Bcfg2 server.
+
 .TP
 .BR "\-R <retry count>"
 Specify the number of times that the client will attempt to retry
 network communication.
+
 .TP
 .BR "\-S https://server:port"
 Manually specify the server location (as opposed to using the value in
 bcfg2.conf).
+
 .TP
 .BR "\-b <bundle1>:<bundle2>"
 Run bcfg2 against one or multiple bundles in the configuration.
+
 .TP
 .BR "\-c <cachefile>"
-Cache a copy of the configuration in cachefile
+Cache a copy of the configuration in cachefile.
+
 .TP
 .BR "\-d" 
 Run bcfg2 in debug mode.
+
 .TP 
 .BR "\-e" 
 When in verbose mode, display extra entry information (temporary until
-verbosity rework)
+verbosity rework).
+
 .TP
 .BR "\-f <specification path>" 
 Configure from a file rather than querying the server.
+
 .TP 
 .BR "\-h" 
 Print Usage information.
+
 .TP 
 .BR "\-k" 
 Run in bulletproof mode. This currently only affects behavior in the
-debian toolset; it calls apt\-get update and clean and dpkg \-\-configure \-\-pending.
+debian toolset; it calls apt\-get update and clean and
+dpkg \-\-configure \-\-pending.
+
 .TP
 .BR "\-l <whitelist|blacklist>"
 Run the client in the server decision list mode. This approach is needed
@@ -79,33 +93,52 @@ administrator supervision is available. Because collaborative
 configuration is one of the remaining hard issues in configuration
 management, these issues typically crop up in environments with several
 administrators and much configuration variety.
+
 .TP
 .BR "\-n"
 Run bcfg2 in dry\-run mode. No changes will be made to the
 system. 
+
 .TP
 .BR "\-o <LogFile Path>"
 Writes a log to the specified path.
+
 .TP
 .BR "\-p <profile>" 
 Assert a profile for the current client.
+
 .TP
 .BR "\-q"
 Run bcfg2 in quick mode. Package checksum verification won't be
 performed. This mode relaxes the constraints of correctness, and thus
-should only be used in safe conditions. 
+should only be used in safe conditions.
+ 
 .TP
 .BR "\-r <mode>" 
-Cause bcfg2 to remove extra configuration elements it detects. Mode is one of all, Services, or Packages. All removes all entries. Likewise, Services and Packages remove only the extra configuration elements of the respective type.
+Cause bcfg2 to remove extra configuration elements it detects. Mode is
+one of all, Services, or Packages. All removes all entries. Likewise,
+Services and Packages remove only the extra configuration elements of
+the respective type.
+
 .TP
 .BR "\-s <service mode>"
-Set bcfg2 interaction level for services. Default behavior is to modify all services affected by reconfiguration. build mode attempts to stop all services started. disabled suppresses all attempts to modify services. 
+Set bcfg2 interaction level for services. Default behavior is to
+modify all services affected by reconfiguration. build mode attempts
+to stop all services started. disabled suppresses all attempts to
+modify services.
+
+.TP
+.BR "\-\-ssl\-key=<ssl key>"
+Specifiy the path to the SSL key.
+
 .TP
 .BR "\-u <user>" 
 Attempt to authenticate as 'user'.
+
 .TP
 .BR "\-x <password>" 
 Use 'password' for client communication.
+
 .TP
 .BR "\-v"
 Run bcfg2 in verbose mode.
