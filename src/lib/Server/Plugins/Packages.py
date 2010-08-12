@@ -10,7 +10,7 @@ import sys
 import urllib2
 
 # FIXME: Remove when server python dep is 2.5 or greater
-if sys.version_info >= (2, 5)::
+if sys.version_info >= (2, 5):
     from hashlib import md5
 else:
     from md5 import md5
