@@ -76,6 +76,7 @@ class Core(Component):
                              "Unloading %s" % (p, bl))
             for plug in bl:
                 del self.plugins[plug]
+        # This section loads the experimental plugins
         expl = [plug for (name, plug) in self.plugins.iteritems()
                 if plug.experimental]
         if expl:
@@ -84,6 +85,7 @@ class Core(Component):
             logger.info("NOTE: Interfaces subject to change")
         depr = [plug for (name, plug) in self.plugins.iteritems()
                 if plug.deprecated]
+        # This section loads the deprecated plugins
         if depr:
             logger.info("Loading deprecated plugin(s): %s" % \
                         (" ".join([x.name for x in depr])))
@@ -112,6 +114,7 @@ class Core(Component):
             self.fam_thread.start()
 
     def _file_monitor_thread(self):
+        """The thread for monitor the files."""
         famfd = self.fam.fileno()
         terminate = self.terminate
         while not terminate.isSet():
@@ -141,7 +144,7 @@ class Core(Component):
                 logger.error("Failed to load plugin %s" % (plugin))
                 return
         plug = getattr(mod, plugin)
-        # blacklist conflicting plugins
+        # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
                   if conflict in self.plugins]
         self.plugin_blacklist[plug.name] = cplugs
@@ -154,7 +157,7 @@ class Core(Component):
                 (plugin), exc_info=1)
 
     def shutdown(self):
-        """."""
+        """Shuting down the plugins."""
         if not self.terminate.isSet():
             self.terminate.set()
             for plugin in self.plugins.values():
@@ -242,7 +245,7 @@ class Core(Component):
         raise PluginExecutionError, (entry.tag, entry.get('name'))
 
     def BuildConfiguration(self, client):
-        """Build configuration for client."""
+        """Build configuration for clients."""
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0', \
                                     revision=self.revision)
@@ -347,11 +350,11 @@ class Core(Component):
             self.logger.warning(warning)
             raise xmlrpclib.Fault(6, warning)
         except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
-            err_msg = 'metadata system runtime failure'
+            err_msg = 'Metadata system runtime failure'
             self.logger.error(err_msg)
             raise xmlrpclib.Fault(6, err_msg)
         except:
-            critical_error("error determining client probes")
+            critical_error("Error determining client probes")
 
     @exposed
     def RecvProbeData(self, address, probedata):
@@ -360,7 +363,7 @@ class Core(Component):
             name = self.metadata.resolve_client(address)
             meta = self.build_metadata(name)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            warning = 'metadata consistency error'
+            warning = 'Metadata consistency error'
             self.logger.warning(warning)
             raise xmlrpclib.Fault(6, warning)
         # clear dynamic groups
@@ -395,7 +398,7 @@ class Core(Component):
             self.metadata.set_profile(client, profile, address)
         except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError,
                 Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
-            warning = 'metadata consistency error'
+            warning = 'Metadata consistency error'
             self.logger.warning(warning)
             raise xmlrpclib.Fault(6, warning)
         return True
@@ -424,7 +427,7 @@ class Core(Component):
         if self.ca:
             acert = cert
         else:
-            # no ca, so no cert validation can be done
+            # No ca, so no cert validation can be done
             acert = None
         return self.metadata.AuthenticateConnection(acert, user, password, address)
 
