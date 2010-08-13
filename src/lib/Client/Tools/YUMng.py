@@ -7,6 +7,8 @@ import os.path
 import sys
 import yum
 import yum.packages
+import yum.rpmtrans
+import yum.callbacks
 import yum.Errors
 import yum.misc
 import Bcfg2.Client.XML
@@ -61,6 +63,55 @@ def nevraString(p):
                 ret = "%s%s" % (ret, j % p[i])
         return ret
 
+class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
+    """We subclass the default RPM transaction callback so that we
+       can control Yum's verbosity and pipe it through the right logger."""
+
+    def __init__(self, logger):
+        yum.rpmtrans.RPMBaseCallback.__init__(self)
+        self.logger = logger
+        self.state = None
+        self.package = None
+
+    def event(self, package, action, te_current, te_total, 
+              ts_current, ts_total):
+        """ 
+        @param package: A yum package object or simple string of a package name
+        @param action: A yum.constant transaction set state or in the obscure 
+                       rpm repackage case it could be the string 'repackaging'
+        @param te_current: Current number of bytes processed in the transaction
+                           element being processed
+        @param te_total: Total number of bytes in the transaction element being
+                         processed
+        @param ts_current: number of processes completed in whole transaction
+        @param ts_total: total number of processes in the transaction.
+        """
+
+        if self.package != package or action != self.state:
+            msg = "%s: %s" % (self.action[action], package)
+            self.logger.info(msg)
+            self.state = action
+            self.package = package
+
+    def scriptout(self, package, msgs):
+        """Handle output from package scripts."""
+
+        if msgs:
+            msg = "%s: %s" % (package, msgs)
+            self.logger.debug(msg)
+
+    def errorlog(self, msg):
+        """Deal with error reporting."""
+        self.logger.error(msg)
+
+class YumDisplay(yum.callbacks.ProcessTransBaseCallback):
+    """Class to handle display of what step we are in the Yum transaction
+       such as downloading packages, etc."""
+
+    def __init__(self, logger):
+        self.logger = logger
+
+
 class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
     """Support for Yum packages."""
     pkgtype = 'yum'
@@ -101,7 +152,6 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                               or entry.get('name') == '/etc/yum.conf']
         self.yum_avail = dict()
         self.yum_installed = dict()
-        self.yb = yum.YumBase()
         try:
             self.yb.doConfigSetup()
             self.yb.doTsSetup()
@@ -458,6 +508,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             return True
 
     def _runYumTransaction(self):
+        rDisplay = RPMDisplay(self.logger)
+        yDisplay = YumDisplay(self.logger)
         # Run the Yum Transaction
         rescode, restring = self.yb.buildTransaction()
         self.logger.debug("Initial Yum buildTransaction() run said:")
@@ -466,7 +518,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
         if rescode != 1:
             # Transaction built successfully, run it
-            self.yb.processTransaction()
+            self.yb.processTransaction(callback=yDisplay,
+                                       rpmDisplay=rDisplay)
             self.logger.info("Single Pass for Install Succeeded")
         else:
             # The yum command failed.  No packages installed.
@@ -476,7 +529,8 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
             self.yb.conf.skip_broken = True
             rescode, restring = self.yb.buildTransaction()
             if rescode != 1:
-                self.yb.processTransaction()
+                self.yb.processTransaction(callback=yDisplay,
+                                           rpmDisplay=rDisplay)
                 self.logger.debug(
                     "Second pass install did not install all packages")
             else:
