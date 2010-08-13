@@ -1,3 +1,5 @@
+"""Bcfg2.Server.FileMonitor provides the support for monitorung files."""
+
 import logging
 import os
 import stat
@@ -99,7 +101,7 @@ class FamFam(object):
         self.debug = False
 
     def fileno(self):
-        """return fam file handle number"""
+        """Return fam file handle number."""
         return self.fm.fileno()
 
     def handle_event_set(self, _):
@@ -268,7 +270,7 @@ try:
             self.counter += 1
             mode = os.stat(path)[stat.ST_MODE]
 
-            # flush queued gamin events
+            # Flush queued gamin events
             while self.mon.event_pending():
                 self.mon.handle_one_event()
 
