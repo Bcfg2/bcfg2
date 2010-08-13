@@ -23,14 +23,6 @@ if __name__ == '__main__':
     cpath = setup['configfile']
     prefix = setup['prefix']
     schemadir = "%s/share/bcfg2/schemas" % (prefix)
-    # On openSuSE the manual installation puts the schemas under
-    # /usr/local/share/... . On Fedora and maybe other systems the
-    # path is correct: /usr/share/bcfg2/schemas
-    # FIXME: This needs further investigation.
-    if os.path.isdir(schemadir):
-    	pass
-    else:
-    	schemadir = "/usr/local/share/bcfg2/schemas"
     os.chdir(schemadir)
     repo = setup['repo']
 
@@ -42,7 +34,7 @@ if __name__ == '__main__':
                 if filename == 'info.xml':
                     info_list.append(os.path.join(root, filename))
 
-    # Get metadata list (with all included files)
+    # get metadata list (with all included files)
     metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
     ref_bundles = set()
     xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
@@ -62,7 +54,7 @@ if __name__ == '__main__':
             included.add(ent)
         included.discard(filename)
 
-    # Check for multiple default group definitions
+    # check for multiple default group definitions
     default_groups=[]
     for grp in lxml.etree.parse("%s/Metadata/groups.xml" \
                                       % repo).findall('.//Group'):
@@ -73,12 +65,12 @@ if __name__ == '__main__':
         for grp in default_groups:
             print("  %s" % grp.get('name'))
 
-    # Get all XIncluded bundles
+    # get all XIncluded bundles
     xdata.xinclude()
     for bundle in xdata.findall("//Bundle"):
         ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
 
-    # Get lists of all other xml files to validate
+    # get lists of all other xml files to validate
     clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
     bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
     genshibundle_list = glob.glob("%s/Bundler/*.genshi" % repo)
@@ -92,7 +84,7 @@ if __name__ == '__main__':
     pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
     gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
 
-    # Verify attributes for configuration entries
+    # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
     # TODO: See if it is possible to do this in the schema instead
     configuration_attrs = {
@@ -125,14 +117,14 @@ if __name__ == '__main__':
                       " Path %s in %s: %s" % (pathname, rfile,
                       [attr for attr in required_attrs.difference(pathset)]))
 
-    # Warn on duplicate Pkgmgr entries with the same priority
+    # warn on duplicate Pkgmgr entries with the same priority
     pset = set()
     for plist in pkg_list:
         try:
             xdata = lxml.etree.parse(plist)
         except lxml.etree.XMLSyntaxError, e:
             print("Failed to parse %s: %s" % (plist, e))
-        # Get priority, type, group
+        # get priority, type, group
         priority = xdata.getroot().get('priority')
         ptype = xdata.getroot().get('type')
         for pkg in xdata.findall("//Package"):
@@ -141,7 +133,7 @@ if __name__ == '__main__':
             else:
                 grp = 'none'
             ptuple = (pkg.get('name'), priority, ptype, grp)
-            # Check if package is already listed with same priority,
+            # check if package is already listed with same priority,
             # type, grp
             if ptuple in pset:
                 print("Duplicate Package %s, priority:%s, type:%s"\
@@ -199,11 +191,11 @@ if __name__ == '__main__':
                 elif verbose:
                     print("%s checks out" % (filename))
 
-    # Print out missing bundle information
+    # print out missing bundle information
     if verbose:
         print("")
         for bundle in ref_bundles:
-            # Check for both regular and genshi bundles
+            # check for both regular and genshi bundles
             xmlbundle = "%s.xml" % bundle
             genshibundle = "%s.genshi" % bundle
             allbundles = bundle_list + genshibundle_list
@@ -211,7 +203,7 @@ if __name__ == '__main__':
                genshibundle not in allbundles:
                 print("*** Warning: Bundle %s referenced, but does not "
                                     "exist." % bundle)
-        # Verify bundle name attribute matches filename
+        # verify bundle name attribute matches filename
         for bundle in (bundle_list + genshibundle_list):
             fname = bundle.split('Bundler/')[1].split('.')[0]
             xdata = lxml.etree.parse(bundle)
@@ -220,5 +212,6 @@ if __name__ == '__main__':
                 print("The following names are inconsistent:")
                 print("  Filename is %s" % fname)
                 print("  Bundle name found in %s is %s" % (fname, bname))
+
 
     raise SystemExit, failures
