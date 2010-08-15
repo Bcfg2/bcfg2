@@ -69,9 +69,10 @@ class Client:
             'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
             'decision': Bcfg2.Options.CLIENT_DLIST,
             'servicemode': Bcfg2.Options.CLIENT_SERVICE_MODE,
-            'certificate'     : Bcfg2.Options.CLIENT_CERT,
-            'ca'              : Bcfg2.Options.CLIENT_CA,
-            'serverCN'        : Bcfg2.Options.CLIENT_SCNS,
+            'key': Bcfg2.Options.CLIENT_KEY,
+            'certificate': Bcfg2.Options.CLIENT_CERT,
+            'ca': Bcfg2.Options.CLIENT_CA,
+            'serverCN': Bcfg2.Options.CLIENT_SCNS,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
