@@ -87,11 +87,11 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
         @param ts_total: total number of processes in the transaction.
         """
 
-        if self.package != package or action != self.state:
+        if self.package != str(package) or action != self.state:
             msg = "%s: %s" % (self.action[action], package)
             self.logger.info(msg)
             self.state = action
-            self.package = package
+            self.package = str(package)
 
     def scriptout(self, package, msgs):
         """Handle output from package scripts."""
