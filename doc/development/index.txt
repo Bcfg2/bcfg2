@@ -16,14 +16,14 @@ Tips for Bcfg2 Development
 #. Focus on either the client or server code. This focuses the development process down to the precise pieces of code that matter for the task at hand.
 
    * If you are developing a client driver, then write up a small configuration specification that includes the needed characteristics.
-   * If you are working on the server, run bcfg2-info and use to assess the code
+   * If you are working on the server, run ``bcfg2-info`` and use to assess the code.
 
 #. Use the python interpreter. One of python's most appealing features is interactive use of the interpreter.
 
    * If you are developing for the client-side, run ``python -i /usr/sbin/bcfg2`` with the appropriate bcfg2 options. This will cause the python interpreter to continue running, leaving all variables intact. This can be used to examine data state in a convenient fashion.
-   * If you are developing for the server side, use bcfg2-info and the "debug" option. This will leave you at a python interpreter prompt, with the server core loaded in the variable "bcore".
+   * If you are developing for the server side, use ``bcfg2-info`` and the "debug" option. This will leave you at a python interpreter prompt, with the server core loaded in the variable "bcore".
 
-#. Use pylint obsessively. It raises a lot of style-related warnings which can be ignored, but most all of the errors are legitimate.
+#. Use ``pylint`` obsessively. It raises a lot of style-related warnings which can be ignored, but most all of the errors are legitimate.
 #. If you are doing anything with Regular Expressions, [http://kodos.sourceforge.net/ Kodos - The Python Regular Expression Debugger] and [http://re-try.appspot.com/ re-try] are your friends.
 
 Environment setup for development
@@ -51,8 +51,8 @@ driver for a configuration element type. The included example describes
 an existing driver, and the process that was used to create it.
 
 #. Pick a name for the driver. In this case, we picked the name RPM.
-#. Add "RPM" to the __all__ list in src/lib/Client/Tools/__init__.py
-#. Create a file in src/lib/Client/Tools with the same name (RPM.py)
+#. Add "RPM" to the __all__ list in ``src/lib/Client/Tools/__init__.py``
+#. Create a file in ``src/lib/Client/Tools`` with the same name (RPM.py)
 #. Create a class in this file with the same name (class RPM)
 
    * If it handles Package entries, subclass Bcfg2.Client.Tools.PkgTool (from here referenced as branch [P])
@@ -150,8 +150,6 @@ all important member fields.
 +-----------------+-----------------------------------+--------------------------+
 | __author__      | The plugin author.                | string                   |
 +-----------------+-----------------------------------+--------------------------+
-| __author__      | The plugin author.                | string                   |
-+-----------------+-----------------------------------+--------------------------+
 | __rmi__         | Set of functions to be exposed as | List of function names   |
 |                 | XML-RPC functions                 | (strings)                |
 +-----------------+-----------------------------------+--------------------------+
@@ -178,7 +176,7 @@ Example Plugin
 
     import Bcfg2.Server.Plugin
     class MyPlugin(Bcfg2.Server.Plugin.Plugin):
-       '''An example plugin'''
+       """An example plugin."""
        # All plugins need to subclass Bcfg2.Server.Plugin.Plugin
        __name__ = 'MyPlugin'
        __version__ = '1'
@@ -191,12 +189,12 @@ Example Plugin
            self.Entries = {'Path':{'/etc/foo.conf': self.buildFoo}}
 
        def myfunction(self):
-           '''function for xmlrpc rmi call'''
-           #do something
+           """Function for xmlrpc rmi call."""
+           # Do something
            return True
 
        def buildFoo(self, entry, metadata):
-           '''Bind per-client information into entry based on metadata'''
+           """Bind per-client information into entry based on metadata."""
            entry.attrib.update({'type':'file', 'owner':'root', 'group':'root', 'perms':'644'})
            entry.text = '''contents of foo.conf'''
 
@@ -209,7 +207,7 @@ Example Connector
 
     class Foo(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Connector):
-        '''The Foo plugin is here to illustrate a barebones connector'''
+        """The Foo plugin is here to illustrate a barebones connector."""
         name = 'Foo'
         version = '$Revision: $'
         experimental = True
