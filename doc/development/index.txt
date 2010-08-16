@@ -24,7 +24,12 @@ Tips for Bcfg2 Development
    * If you are developing for the server side, use ``bcfg2-info`` and the "debug" option. This will leave you at a python interpreter prompt, with the server core loaded in the variable "bcore".
 
 #. Use ``pylint`` obsessively. It raises a lot of style-related warnings which can be ignored, but most all of the errors are legitimate.
-#. If you are doing anything with Regular Expressions, [http://kodos.sourceforge.net/ Kodos - The Python Regular Expression Debugger] and [http://re-try.appspot.com/ re-try] are your friends.
+#. If you are doing anything with Regular Expressions, `Kodos`_ and `re-try`_ are your friends.
+
+
+.. Kodos: http://kodos.sourceforge.net 
+.. re-try: http://re-try.appspot.com
+
 
 Environment setup for development
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
