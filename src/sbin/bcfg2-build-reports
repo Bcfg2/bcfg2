@@ -1,14 +1,20 @@
 #!/usr/bin/env python
 
-"""bcfg2-build-reports generates & distributes reports of statistic information
-for Bcfg2."""
+"""
+bcfg2-build-reports generates & distributes reports of statistic
+information for Bcfg2."""
 
 __revision__ = '$Revision$'
 
+import copy
+import getopt
+import re
+import os
+import socket
+import sys
+from time import asctime, strptime
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
-from time import asctime, strptime
-import copy, getopt, re, os, socket, sys
 
 def generatereport(rspec, nrpt):
     """
@@ -27,19 +33,19 @@ def generatereport(rspec, nrpt):
 
     for node in nodereprt.findall('Node'):
         if not (node.findall("Statistics") and pattern.match(node.get('name'))):
-            # don't know enough about node
+            # Don't know enough about node.
             nodereprt.remove(node)
             continue
 
-        #reduce to most recent Statistics entry
+        # Reduce to most recent Statistics entry.
         statisticslist = node.findall('Statistics')
-        #this line actually sorts from most recent to oldest
+        # This line actually sorts from most recent to oldest.
         statisticslist.sort(lambda y, x: cmp(strptime(x.get("time")), strptime(y.get("time"))))
         stats = statisticslist[0]
         
         [node.remove(item) for item in node.findall('Statistics')]
       
-        #add a good tag if node is good and we wnat to report such
+        # Add a good tag if node is good and we wnat to report such.
         if reportgood == 'Y' and stats.get('state') == 'clean':
             SubElement(stats,"Good")
 
@@ -47,7 +53,7 @@ def generatereport(rspec, nrpt):
          item.getchildren() == []]
         [stats.remove(item) for item in stats.findall("Modified") if reportmodified == 'N']
                 
-        #test for staleness -if stale add Stale tag
+        # Test for staleness -if stale add Stale tag.
         if stats.get("time").find(current_date) == -1:
             SubElement(stats,"Stale")
         node.append(stats)
@@ -60,8 +66,8 @@ def mail(mailbody, confi):
         mailer = confi.get('statistics', 'sendmailpath')
     except (NoSectionError, NoOptionError):
         mailer = "/usr/sbin/sendmail"
-    # open a pipe to the mail program and
-    # write the data to the pipe
+    # Open a pipe to the mail program and
+    # write the data to the pipe.
     pipe = os.popen("%s -t" % mailer, 'w')
     pipe.write(mailbody)
     exitcode = pipe.close()
@@ -72,13 +78,13 @@ def rss(reportxml, delivery, report):
     """rss appends a new report to the specified rss file
     keeping the last 9 articles.
     """
-    #check and see if rss file exists
+    # Check and see if rss file exists.
     for destination in delivery.findall('Destination'):
         try:
             fil = open(destination.attrib['address'], 'r')
             olddoc = XML(fil.read())
 
-            #defines the number of recent articles to keep
+            # Defines the number of recent articles to keep.
             items = olddoc.find("channel").findall("item")[0:9]
             fil.close()
             fil = open(destination.attrib['address'], 'w')
@@ -93,7 +99,8 @@ def rss(reportxml, delivery, report):
         chantitle.text = report.attrib['name']
         chanlink = SubElement(channel, "link")
         
-        #this can later link to WWW report if one gets published simultaneously?
+        # This can later link to WWW report if one gets published
+        # simultaneously?
         chanlink.text = "http://www.mcs.anl.gov/cobalt/bcfg2"
         chandesc = SubElement(channel, "description")
         chandesc.text = "Information regarding the 10 most recent bcfg2 runs."
@@ -111,7 +118,8 @@ def rss(reportxml, delivery, report):
 def www(reportxml, delivery):
     """www outputs report to."""
 
-    #this can later link to WWW report if one gets published simultaneously?    
+    # This can later link to WWW report if one gets published
+    # simultaneously?    
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
 
@@ -165,7 +173,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=","no-ping", "stats="])
     except getopt.GetoptError, mesg:
-        # print help information and exit:
+        # Print help information and exit:
         print "%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg) 
         raise SystemExit, 2
     for o, a in opts:
@@ -182,7 +190,7 @@ if __name__ == '__main__':
             statpath = a
 
 
-    #See if hostinfo.xml exists, and is less than 23.5 hours old
+    # See if hostinfo.xml exists, and is less than 23.5 hours old
     #try:
         #hostinstat = os.stat(hostinfopath)
         #if (time() - hostinstat[9])/(60*60) > 23.5:
@@ -209,10 +217,10 @@ if __name__ == '__main__':
         print("bcfg2-build-reports: Failed to parse %s"%(clientsdatapath))
         raise SystemExit, 1
 
-    #Merge data from three sources
+    # Merge data from three sources.
     nodereport = Element("Report", attrib={"time" : asctime()})
-    #should all of the other info in Metadata be appended?
-    #What about all of the package stuff for other types of reports?
+    # Should all of the other info in Metadata be appended?
+    # What about all of the package stuff for other types of reports?
     for client in clientsdata.findall("Client"):
         nodel = Element("Node", attrib={"name" : client.get("name")})
         nodel.append(client)
@@ -242,29 +250,28 @@ if __name__ == '__main__':
         if reprt.get('refresh-time') != None:
             nodereport.set("refresh-time", reprt.get("refresh-time", default="600"))
 
-        
         procnodereport = generatereport(reprt, nodereport)
 
         for deliv in reprt.findall('Delivery'):
-            #is a deepcopy of procnodereport necessary?
+            # Is a deepcopy of procnodereport necessary?
             
             delivtype = deliv.get('type', default='nodes-digest')
             deliverymechanism = deliv.get('mechanism', default='www')
 
-            #apply XSLT, different ones based on report type, and options
-            if deliverymechanism == 'null-operator': #Special Cases
+            # Apply XSLT, different ones based on report type, and options
+            if deliverymechanism == 'null-operator': # Special Cases
                 fileout(tostring(ElementTree(procnodereport).getroot(), encoding='UTF-8', xml_declaration=True), deliv)
                 break
             transform = delivtype + '-' + deliverymechanism + '.xsl'
 
-            try: #make sure valid stylesheet is selected
+            try: # Make sure valid stylesheet is selected.
                 os.stat(transformpath + transform)
             except:
                 print("bcfg2-build-reports: Invalid report type or delivery mechanism.\n Can't find: "\
                       + transformpath + transform)
                 raise SystemExit, 1
 
-            try: #try to parse stylesheet
+            try: # Try to parse stylesheet.
                 stylesheet = XSLT(parse(transformpath + transform))
             except:
                 print("bcfg2-build-reports: invalid XSLT transform file.")
@@ -284,7 +291,7 @@ if __name__ == '__main__':
                             for desti in deliv.findall("Destination"):
                                 toastring = "%s%s " % \
                                             (toastring, desti.get('address'))
-                            #prepend To: and From:
+                            # Prepend To: and From:
                             outputstring = "To: %s\nFrom: root@%s\n%s"% \
                                            (toastring, socket.getfqdn(), outputstring)
                             mail(outputstring, c) #call function to send
@@ -300,7 +307,7 @@ if __name__ == '__main__':
                         for desti in deliv.findall("Destination"):
                             toastring = "%s%s " % \
                                         (toastring, desti.get('address'))
-                            #prepend To: and From:
+                            # Prepend To: and From:
                             outputstring = "To: %s\nFrom: root@%s\n%s"% \
                                            (toastring, socket.getfqdn(), outputstring)
                             mail(outputstring, c) #call function to send
@@ -308,5 +315,5 @@ if __name__ == '__main__':
                 outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot(), encoding='UTF-8', xml_declaration=True)
                 if deliverymechanism == 'rss':
                     rss(outputstring, deliv, reprt)
-                else: # must be deliverymechanism == 'www':
+                else: # Must be deliverymechanism == 'www':
                     www(outputstring, deliv)
