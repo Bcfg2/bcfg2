@@ -473,7 +473,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         ts = self.yb.rpmdb.readOnlyTS()
 
         if not os.path.exists(key_file):
-            self.logger.debug("GPG Key file %s not installed" % filename)
+            self.logger.debug("GPG Key file %s not installed" % key_file)
             return False
 
         rawkey = open(key_file).read()
