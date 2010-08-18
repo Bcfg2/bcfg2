@@ -563,11 +563,17 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
              entry is set to True.
 
         """
-        self.logger.info('Running YUMng.Install()')
+        self.logger.debug('Running YUMng.Install()')
 
         install_pkgs = []
         gpg_keys = []
         upgrade_pkgs = []
+
+        def queuePkg(pkg, inst, queue):
+            if pkg.get('name') == 'gpg-pubkey':
+                gpg_keys.append(inst)
+            else:
+                queue.append(inst)
 
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
@@ -592,15 +598,12 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     if self.FixInstance(inst, self.instance_status[inst]):
                         if self.instance_status[inst].get('installed', False) \
                                == False:
-                            if pkg.get('name') == 'gpg-pubkey':
-                                gpg_keys.append(inst)
-                            else:
-                                install_pkgs.append(inst)
+                            queuePkg(pkg, inst, install_pkgs)
                         elif self.instance_status[inst].get('version_fail', \
                                                             False) == True:
-                            upgrade_pkgs.append(inst)
+                            queuePkg(pkg, inst, upgrade_pkgs)
             else:
-                install_pkgs.append(pkg)
+                queuePkg(pkg, inst, install_pkgs)
 
         # Install GPG keys.
         # Alternatively specify the required keys using 'gpgkey' in the
