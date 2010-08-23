@@ -27,8 +27,8 @@ Tips for Bcfg2 Development
 #. If you are doing anything with Regular Expressions, `Kodos`_ and `re-try`_ are your friends.
 
 
-.. Kodos: http://kodos.sourceforge.net 
-.. re-try: http://re-try.appspot.com
+.. _Kodos: http://kodos.sourceforge.net
+.. _re-try: http://re-try.appspot.com
 
 
 Environment setup for development
