@@ -55,7 +55,7 @@ if __name__ == '__main__':
         included.discard(filename)
 
     # check for multiple default group definitions
-    default_groups=[]
+    default_groups = []
     for grp in lxml.etree.parse("%s/Metadata/groups.xml" \
                                       % repo).findall('.//Group'):
         if grp.get('default') == 'true':
@@ -130,9 +130,13 @@ if __name__ == '__main__':
         for pkg in xdata.findall("//Package"):
             if pkg.getparent().tag == 'Group':
                 grp = pkg.getparent().get('name')
+                if grp.getparent().tag == 'Group':
+                    pgrp = grp.getparent().get('name')
+                else:
+                    pgrp = 'none'
             else:
                 grp = 'none'
-            ptuple = (pkg.get('name'), priority, ptype, grp)
+            ptuple = (pkg.get('name'), priority, ptype, grp, pgrp)
             # check if package is already listed with same priority,
             # type, grp
             if ptuple in pset:
