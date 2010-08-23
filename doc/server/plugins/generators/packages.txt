@@ -279,8 +279,9 @@ Generating Client APT/Yum Configurations
 
 .. versionadded:: 1.1.0
 
-Client repository information can be generated automatically from software sources using
-:doc:`./tgenshi/index` or :doc:`./tcheetah`.  A list of source urls are exposed in the client's metadata as 
+Client repository information can be generated automatically from
+software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.
+A list of source urls are exposed in the client's metadata as
 metadata.Packages.sources.
 
 An example :doc:`./tgenshi/index` APT template::

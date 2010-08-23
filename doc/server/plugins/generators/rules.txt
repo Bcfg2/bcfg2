@@ -131,7 +131,7 @@ Service Tag
 | target   | Service command for      | String                                |
 |          | restart, modified        |                                       |
 |          | targets require          |                                       |
-|          | mode="custom"            |                                       | 
+|          | mode="custom"            |                                       |
 |          | (default: restart)       |                                       |
 +----------+--------------------------+---------------------------------------+
 | type     | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |

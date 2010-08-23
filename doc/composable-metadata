@@ -1,7 +1,7 @@
-This documents the redesign of the Metadata subsystem. 
+This documents the redesign of the Metadata subsystem.
 
 Goals
-* Separate core metadata (groups, etc) functionality from augmentors 
+* Separate core metadata (groups, etc) functionality from augmentors
 * Enable metadata integration with external data sources
 * Make metadata features (group inclusion, categories) usable from
   external datasources
@@ -13,7 +13,7 @@ categories, and metadata instance construction. Multiple
 MetadataConnectorPlugin instances each contribute additional group
 memberships and a set of per-instance key/value pairs. This data is
 merged into the client metadata instance by the master
-MetadataPlugin. 
+MetadataPlugin.
 
 Use Cases
 * Mapping external data into client metadata instances
@@ -31,8 +31,8 @@ API
 * Bcfg2.Server.Plugin.MetadataPlugin
 ** get_initial_metadata(client_name)
 ** merge_additional_metadata(metadata,
-                             source, 
-                             group, 
+                             source,
+                             group,
                              data_dict)
 * Bcfg2.Server.Plugin.MetadataConnectorPlugin
 ** get_additional_metadata(client_metadata)
@@ -41,14 +41,14 @@ Metadata Resolution Control Flow
 * B.S.P.MP.resolve_client() -> canonical client name
 * B.S.C.C.build_metadata()
 ** B.S.P.MP.get_initial_metadata() -> partial ClientMetadata inst
-** [B.S.P.MCP.get_additional_metadata()] -> 
+** [B.S.P.MCP.get_additional_metadata()] ->
    [([group list], {data dictionary})]
 ** [B.S.P.MP.merge_additional_metadata()]
 
 Implementation Plan (done)
-* Define new plugin classes 
-* Split Probe code out to discrete plugin 
-* Implement connector support in Core 
+* Define new plugin classes
+* Split Probe code out to discrete plugin
+* Implement connector support in Core
 * switch callers to Core.build_metadata
 * Implement group inheritance/category safety for Connector groups
 

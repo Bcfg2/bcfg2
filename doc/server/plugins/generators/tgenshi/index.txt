@@ -139,9 +139,9 @@ Permissions entry and a Path entry to handle the same file.
 Error handling
 ================
 
-Situations may arrise where a templated file cannot be generated due to 
-missing or incomplete information.  A TemplateError can be raised to 
-force a bind failure and prevent sending an incomplete file to the client. 
+Situations may arrise where a templated file cannot be generated due to
+missing or incomplete information.  A TemplateError can be raised to
+force a bind failure and prevent sending an incomplete file to the client.
 For example, this template::
 
     {% python

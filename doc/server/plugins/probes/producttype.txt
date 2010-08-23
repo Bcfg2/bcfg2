@@ -28,7 +28,7 @@ group has_hardware_emulex_lightpulse.
     if [ $os = "Linux" ] ; then
         productname=`dmidecode -s system-product-name 2>&1`
         case $productname in
-        "PowerEdge M600") 
+        "PowerEdge M600")
             productname="product-bladem600"
             ;;
         "Sun Fire X4100 M2")
@@ -44,7 +44,7 @@ group has_hardware_emulex_lightpulse.
             productname="product-unknown"
             ;;
         esac
- 
+
         # check for emulex lightpulse fiber channel HBA
         check_emulex_lightpulse=`lspci -d 10df: | grep -c LightPulse`
         if [ $check_emulex_lightpulse -gt 0 ]; then

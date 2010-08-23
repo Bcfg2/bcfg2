@@ -56,12 +56,14 @@ Features
 RPMng Driver Overview
 =====================
 
-The RPMng driver uses a mixture of rpm commands and rpm-python as detailed in the sections below.
+The RPMng driver uses a mixture of rpm commands and rpm-python as detailed
+in the sections below.
 
 rpmtools module
 ---------------
 
-The rpmtools module conatins most of the rpm-python code and is imported by RPMng.py and YUMng.py.
+The rpmtools module conatins most of the rpm-python code and is imported
+by RPMng.py and YUMng.py.
 
 RPMng.RefreshPackages()
 -----------------------
@@ -145,7 +147,7 @@ configuration file options or as the default driver for RPM packages.
 
 From the command line::
 
-    bcfg2 -n -v -d -D Action,POSIX,Chkconfig,RPMng 
+    bcfg2 -n -v -d -D Action,POSIX,Chkconfig,RPMng
 
 This produces quite a bit of output so you may want to redirect the
 output to a file for review.
@@ -221,7 +223,7 @@ old RPM driver.
 Example - an empty list::
 
     [RPMng]
-    installonlypackages = 
+    installonlypackages =
 
 Example - The default list::
 
@@ -261,8 +263,11 @@ The RPMng/YUMng drivers do the following three checks/status:
 #. Version
 #. rpm verify
 
-Setting pkg_checks = true (the default) in the client configuration file means that all three checks will be done for all packages.
-Setting pkg_checks = false in the client configuration file means that only the Installed check will be done for all packages.
+Setting pkg_checks = true (the default) in the client configuration file
+means that all three checks will be done for all packages.
+
+Setting pkg_checks = false in the client configuration file means that
+only the Installed check will be done for all packages.
 
 The true/false value can be any combination of upper and lower case.
 
@@ -279,8 +284,12 @@ The RPMng/YUMng drivers do the following three checks/status:
 #. Version
 #. rpm verify
 
-Setting pkg_verify = true (the default) in the client configuration file means that all three checks will be done for all packages as long as pkg_checks = true.
-Setting pkg_verify = false in the client configuration file means that the rpm verify wil not be done for all packages on the client. 
+Setting pkg_verify = true (the default) in the client configuration
+file means that all three checks will be done for all packages as long
+as pkg_checks = true.
+
+Setting pkg_verify = false in the client configuration file means that
+the rpm verify wil not be done for all packages on the client.
 
 The true/false value can be any combination of upper and lower case.
 
@@ -296,7 +305,9 @@ The RPMng/YUMng drivers do the following three checks/status:
 #. Version
 #. rpm verify
 
-install_action controls whether or not a package instance will be installed if the installed check fails (i.e. if the package instance isn't installed).
+install_action controls whether or not a package instance will be
+installed if the installed check fails (i.e. if the package instance
+isn't installed).
 
 If install_action = install then the package instance is installed.
 If install_action = none then the package instance is not installed.
@@ -313,10 +324,15 @@ The RPMng/YUMng drivers do the following three checks/status:
 #. Version
 #. rpm verify
 
-version_fail_action controls whether or not a package instance will be updated if the version check fails (i.e. if the installed package instance isn't the same version as specified in the configuration).
+version_fail_action controls whether or not a package instance will
+be updated if the version check fails (i.e. if the installed package
+instance isn't the same version as specified in the configuration).
 
-If version_fail_action = upgrade then the package instance is upgraded (or down graded).
-If version_fail_action = none then the package instance is not upgraded (or down graded).
+If version_fail_action = upgrade then the package instance is upgraded
+(or downgraded).
+
+If version_fail_action = none then the package instance is not upgraded
+(or downgraded).
 
 .. note::
     #. verion_fail_action must evaluate true for both the client (this option) and the package instance (see the Instance Tag version_fail_action attribute below) for the action to take place.
@@ -338,7 +354,7 @@ If verify_fail_action = reinstall then the package instance is reinstalled.
 If verify_fail_action = none then the package instance is not reinstalled.
 
 .. note::
-    #. verify_fail_action must evaluate true for both the client (this option) and the package instance (see the Instance Tag verify_fail_action attribute below) for the action to take place. 
+    #. verify_fail_action must evaluate true for both the client (this option) and the package instance (see the Instance Tag verify_fail_action attribute below) for the action to take place.
     #. yum cannot reinstall packages, so this option is really only relevant to RPMng.
     #. RPMng will not attempt to reinstall a package instance if the only failure is an RPM configuration file.
     #. RPMng will not attempt to reinstall a package instance if the only failure is an RPM dependency failure.
@@ -347,22 +363,23 @@ Interactive Mode
 ----------------
 
 Running the client in interactive mode (-I) prompts for the actions to
-be taken as before.  Prompts are per package and may apply to multiple
-instances of that package.  Each per package prompt will contain a list
+be taken as before. Prompts are per package and may apply to multiple
+instances of that package. Each per package prompt will contain a list
 of actions per instance.
 
-Actions are encoded as 
+Actions are encoded as
 
 D - Delete
 
 I - Install
 
-R - Reinstall 
+R - Reinstall
 
 U - Upgrade/Downgrade
 
 
-An example is below.  The example is from a system that is still using the old Pkgmgr format, so the epoch and arch appear as '*'.::
+An example is below. The example is from a system that is still using
+the old Pkgmgr format, so the epoch and arch appear as '*'.::
 
     Install/Upgrade/delete Package aaa_base instance(s) - R(*:10.2-38.*)  (y/N)
     Install/Upgrade/delete Package evms instance(s) - R(*:2.5.5-67.*)  (y/N)
@@ -434,7 +451,7 @@ Pkgmgr Configuration
 
 Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`
 and :ref:`server-plugins-structures-altsrc` pages.
- 
+
 Package Tag (Old style)
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -720,7 +737,11 @@ Kernel
 Per Instance Ignore
 ^^^^^^^^^^^^^^^^^^^
 
-.. note:: In this case a per instance ignore is actually a bad idea as the verify failure is because of multiarch issues where  the last package installed wins.  So this would be better as a Package level ignore.
+.. note::
+
+    In this case a per instance ignore is actually a bad idea as the
+    verify failure is because of multiarch issues where  the last package
+    installed wins.  So this would be better as a Package level ignore.
 
 Ignore tag entries only work with the RPMng driver. They do not appear
 to be supported in YUMng as of 1.0pre5.
@@ -757,7 +778,7 @@ on the yum man page) is valid.
 For RPMng a minimal entry is
 
 .. code-block:: xml
- 
+
     <Package name="bcfg2" type="rpm" pkg_checks="False" simplefile="bcfg2-0.9.4-0.0pre1.noarch.rpm"/>
 
 verify_fail_action

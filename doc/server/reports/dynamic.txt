@@ -23,8 +23,8 @@ Install
 Be sure to include the specified fields included the example ``bcfg2.conf``
 file. These can be specified in either ``/etc/bcfg2.conf``, if it is readable
 by the webserver user, or ``/etc/bcfg2-web.conf``.  Any database supported
-by Django can be used.  If you are not using sqlite (the default choice), 
-please see the :ref:`alternative-databases` section below.  Distributed 
+by Django can be used.  If you are not using sqlite (the default choice),
+please see the :ref:`alternative-databases` section below.  Distributed
 environments can share a single remote database for reporting.
 
 Run ``/usr/sbin/bcfg2-admin reports init`` to initialize
@@ -33,7 +33,7 @@ can write to the database.
 
 The recommended statistics plugin is DBStats. To use it, add it to the
 **plugins** line in your ``bcfg2.conf``.  Alternatively, the Statistics
-plugin can be used in conjunction with a crontab entry to run 
+plugin can be used in conjunction with a crontab entry to run
 ``/usr/sbin/bcfg2-admin reports load_stats``.
 
 Restart the Bcfg2 server. Run a client in dryrun mode in order to get
@@ -93,7 +93,7 @@ The first three lines of this configuration must be customized per site.
 
 The ``bcfg2-tarball/reports/site_media/`` directory needs to be copied
 to ``/var/www/reports/site_media/`` It could live anywhere; as long as
-the contents are accessible on the virtual host at ``/site_media/``. 
+the contents are accessible on the virtual host at ``/site_media/``.
 
 At this point you should be able to point your web browser to the
 virtualhost you created and see the new reports
@@ -127,7 +127,7 @@ Notes on Alternative Databases
 ------------------------------
 
 If you choose to use a different database, you'll need to edit
-``/etc/bcfg2.conf``.  These fields should be updated in the 
+``/etc/bcfg2.conf``.  These fields should be updated in the
 ``statistics`` section:
 
 * database_engine
@@ -169,7 +169,7 @@ Planned improvements include
 
 * Accounts, customized displays for each admin. And privacy of config data.
 * Config browsing capabilities; to look at your config in an interesting way.
-* Fixing all the known bugs from below. 
+* Fixing all the known bugs from below.
 
 Unfortunately with all the improvements, there are a few less exciting
 elements about the new reporting system. The new reporting system
@@ -194,7 +194,7 @@ bcfg2-admin reports (command line script)
 -----------------------------------------
 
 The bcfg2-admin tool provides management and maintenance capabilities for
-the reporting database.  A few useful `Django <http://www.djangoproject.com>`_ 
+the reporting database.  A few useful `Django <http://www.djangoproject.com>`_
 commands are provided as well.
 
 * init: Initialize a new database
@@ -208,7 +208,7 @@ Django commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * syncdb:  Create the tables for any models not installed.  Django will
   not modify any existing tables.
-* sqlall:  Print the sql statements used to create the database.  Note: 
+* sqlall:  Print the sql statements used to create the database.  Note:
   This does not show the fixture data.
 * validate:  Validate the database against the current models.
 
