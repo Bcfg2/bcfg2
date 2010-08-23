@@ -134,7 +134,12 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                     sh.push(command)
         if interactive:
             print("dropping to python interpreter; press ^D to resume")
-            sh.interact()
+            try:
+                import IPython
+                shell = IPython.Shell.IPShell(argv=[], user_ns=locals())
+                shell.mainloop()
+            except ImportError:
+                sh.interact()
 
     def do_quit(self, _):
         """

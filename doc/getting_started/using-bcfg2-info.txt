@@ -117,13 +117,16 @@ in *bcfg2-info* to aid in the process.
      performance problems in configuration generation.
 
 **debug**
-     The debug command exits the *bcfg2-info* interpreter loop and
-     drops to a python interpreter prompt. The Bcfg2 server core is
-     available in this namespace as "self". Full documentation for
-     the server core is out of scope for this document. This
-     capability is most useful to call into plugin methods, often with
-     setup calls or the enabling of diagnostics.
+     The debug command exits the *bcfg2-info* interpreter loop and drops
+     to a python interpreter prompt. The Bcfg2 server core is available
+     in this namespace as "self". Full documentation for the server core
+     is out of scope for this document. This capability is most useful
+     to call into plugin methods, often with setup calls or the enabling
+     of diagnostics.
 
      It is possible to return to the *bcfg2-info* command loop by
      exiting the python interpreter with ^D.
 
+     There is built-in support for IPython in *bcfg2-info*. If IPython
+     is installed, dropping into debug mode in *bcfg2-info* will use
+     the IPython interpreter by default.
