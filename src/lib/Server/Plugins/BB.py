@@ -63,7 +63,7 @@ class BB(Bcfg2.Server.Plugin.Plugin,
     """The BB plugin maps users to machines and metadata to machines."""
     name = 'BB'
     version = '$Revision$'
-    experimental = True
+    deprecated = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
