@@ -13,16 +13,12 @@ import yum.Errors
 import yum.misc
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-import Bcfg2.Client.Tools.RPMng
 
 # Fix for python2.3
 try:
     set
 except NameError:
     from sets import Set as set
-
-if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
-    raise ImportError
 
 def build_yname(pkgname, inst):
     """Build yum appropriate package name."""
@@ -62,6 +58,19 @@ def nevraString(p):
             if i in p:
                 ret = "%s%s" % (ret, j % p[i])
         return ret
+
+class Parser(ConfigParser.ConfigParser):
+
+    def get(self, section, option, default):
+        """
+        Override ConfigParser.get: If the request option is not in the
+        config file then return the value of default rather than raise
+        an exception.  We still raise exceptions on missing sections.
+        """
+        try:
+            return ConfigParser.ConfigParser.get(self, section, option)
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            return default
 
 class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
     """We subclass the default RPM transaction callback so that we
@@ -112,7 +121,7 @@ class YumDisplay(yum.callbacks.ProcessTransBaseCallback):
         self.logger = logger
 
 
-class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
+class YUMng(Bcfg2.Client.Tools.PkgTool):
     """Support for Yum packages."""
     pkgtype = 'yum'
 
@@ -142,7 +151,14 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
     def __init__(self, logger, setup, config):
         self.yb = yum.YumBase()
-        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+        self.ignores = [ entry.get('name') for struct in config \
+                         for entry in struct \
+                         if entry.get('type') == 'ignore' ]
+        self.instance_status = {}
+        self.extra_instances = []
+        self.modlists = {}
+        self._loadConfig()
         self.__important__ = self.__important__ + \
                              [entry.get('name') for struct in config \
                               for entry in struct \
@@ -181,6 +197,41 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                     dest[pname].update(data)
                 else:
                     dest[pname] = dict(data)
+
+    def _loadConfig(self):
+        # Process the YUMng section from the config file.
+        CP = Parser()
+        CP.read(self.setup.get('setup'))
+
+        self.installed_action = 'install'
+        self.pkg_checks = 'true'
+        self.pkg_verify = 'true'
+        self.version_fail_action = 'upgrade'
+        self.verify_fail_action = 'reinstall'
+
+        self.installed_action = CP.get(self.name, "installed_action",
+                self.installed_action)
+        self.pkg_checks = CP.get(self.name, "pkg_checks", self.pkg_checks)
+        self.pkg_verify = CP.get(self.name, "pkg_verify", self.pkg_verify)
+        self.version_fail_action = CP.get(self.name, 
+                "version_fail_action", self.version_fail_action)
+        self.verify_fail_action = CP.get(self.name, "verify_fail_action",
+                self.verify_fail_action)
+
+        self.installOnlyPkgs = self.yb.conf.installonlypkgs
+        if 'gpg-pubkey' not in self.installOnlyPkgs:
+            self.installOnlyPkgs.append('gpg-pubkey')
+
+        self.logger.debug("YUMng: installed_action = %s" \
+                % self.installed_action)
+        self.logger.debug("YUMng: pkg_checks = %s" % self.pkg_checks)
+        self.logger.debug("YUMng: pkg_verify = %s" % self.pkg_verify)
+        self.logger.debug("YUMng: version_fail_action = %s" \
+                % self.version_fail_action)
+        self.logger.debug("YUMng: verify_fail_action = %s" \
+                % self.verify_fail_action)
+        self.logger.debug("YUMng: installOnlyPkgs = %s" \
+                % str(self.installOnlyPkgs))
 
     def _fixAutoVersion(self, entry):
         # old style entry; synthesize Instances from current installed
@@ -288,6 +339,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         self.logger.debug("Verifying package instances for %s" \
                 % entry.get('name'))
 
+        self.modlists[entry] = modlist
         instances = self._buildInstances(entry)
         package_fail = False
         qtext_versions = []
@@ -464,6 +516,25 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         else:
             return extra_entry
 
+    def FindExtraPackages(self):
+        """Find extra packages."""
+        packages = [ e.get('name') for e in self.getSupportedEntries() ]
+        extras = []
+
+        for p in self.installed.keys():
+            if p not in packages:
+                entry = Bcfg2.Client.XML.Element('Package', name=p, 
+                                                 type=self.pkgtype)
+                for i in self.installed[p]:
+                    inst = Bcfg2.Client.XML.SubElement(entry, 'Instance', \
+                            epoch = i['epoch'],
+                            version = i['version'],
+                            release = i['release'],
+                            arch = i['arch'])
+
+                extras.append(entry)
+
+        return extras
 
     def _installGPGKey(self, inst, key_file):
         """Examine the GPG keys carefully before installation.  Avoid
@@ -568,6 +639,7 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
         install_pkgs = []
         gpg_keys = []
         upgrade_pkgs = []
+        reinstall_pkgs = []
 
         def queuePkg(pkg, inst, queue):
             if pkg.get('name') == 'gpg-pubkey':
@@ -595,15 +667,21 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                      if pinst.tag in ['Instance', 'Package']]
             if insts:
                 for inst in insts:
-                    if self.FixInstance(inst, self.instance_status[inst]):
-                        if self.instance_status[inst].get('installed', False) \
-                               == False:
-                            queuePkg(pkg, inst, install_pkgs)
-                        elif self.instance_status[inst].get('version_fail', \
-                                                            False) == True:
-                            queuePkg(pkg, inst, upgrade_pkgs)
+                    status = self.instance_status[inst]
+                    if status.get('installed', False) == False:
+                        queuePkg(pkg, inst, install_pkgs)
+                    elif status.get('version_fail', False) == True:
+                        queuePkg(pkg, inst, upgrade_pkgs)
+                    elif status.get('verify_fail', False) == True:
+                        queuePkg(pkg, inst, reinstall_pkgs)
+                    else:
+                        msg = "Internal error install/upgrade/reinstall-ing: "
+                        self.logger.error("YUMng: %s%s" % \
+                                (msg, pkg.get('name')))
             else:
-                queuePkg(pkg, inst, install_pkgs)
+                msg = "YUMng: Package tag found where Instance expected: %s"
+                self.logger.warning(msg % pkg.get('name'))
+                queuePkg(pkg, pkg, install_pkgs)
 
         # Install GPG keys.
         # Alternatively specify the required keys using 'gpgkey' in the
@@ -645,13 +723,24 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
                 except yum.Errors.YumBaseError, yume:
                     self.logger.error("Error upgrading some packages: %s" % yume)
 
+        if len(reinstall_pkgs) > 0:
+            self.logger.info("Attempting to reinstall packages")
+            for inst in reinstall_pkgs:
+                pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                try:
+                    self.yb.reinstall(**build_yname(pkg_arg, inst))
+                except yum.Errors.YumBaseError, yume:
+                    self.logger.error("Error upgrading some packages: %s" \
+                            % yume)
+
         self._runYumTransaction()
 
         if not self.setup['kevlar']:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
-                self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
-                states[pkg_entry] = self.VerifyPackage(pkg_entry, \
-                                      self.modlists.get(pkg_entry, []))
+                self.logger.debug("Reverifying Failed Package %s" \
+                        % (pkg_entry.get('name')))
+                states[pkg_entry] = self.VerifyPackage(pkg_entry,
+                        self.modlists.get(pkg_entry, []))
 
         for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
@@ -679,3 +768,4 @@ class YUMng(Bcfg2.Client.Tools.RPMng.RPMng):
 
         self._runYumTransaction()
         self.extra = self.FindExtraPackages()
+
