@@ -24,8 +24,10 @@ class toolInstantiationError(Exception):
     """This error is called if the toolset cannot be instantiated."""
     pass
 
+
 class readonlypipe(popen2.Popen4):
     """This pipe sets up stdin --> /dev/null."""
+
     def __init__(self, cmd, bufsize=-1):
         popen2._cleanup()
         c2pread, c2pwrite = os.pipe()
@@ -42,8 +44,10 @@ class readonlypipe(popen2.Popen4):
         self.fromchild = os.fdopen(c2pread, 'r', bufsize)
         popen2._active.append(self)
 
+
 class executor:
     """This class runs stuff for us"""
+
     def __init__(self, logger):
         self.logger = logger
 
@@ -74,6 +78,7 @@ class executor:
         # the value.
         return ((cmdstat >> 8), output)
 
+
 class Tool:
     """
     All tools subclass this. It defines all interfaces that need to be defined.
@@ -85,7 +90,8 @@ class Tool:
     __important__ = []
 
     def __init__(self, logger, setup, config):
-        self.__important__ = [entry.get('name') for struct in config for entry in struct \
+        self.__important__ = [entry.get('name') \
+                              for struct in config for entry in struct \
                               if entry.tag == 'Path' and \
                               entry.get('important') in ['true', 'True']]
         self.setup = setup
@@ -197,7 +203,6 @@ class Tool:
             return False
         return True
 
-
     def FindExtra(self):
         """Return a list of extra entries."""
         return []
@@ -221,6 +226,7 @@ class Tool:
                               (":".join(missing)))
             return False
         return True
+
 
 class PkgTool(Tool):
     """
@@ -265,7 +271,8 @@ class PkgTool(Tool):
                           if entry.tag == 'Package'
                           and entry.get('type') == self.pkgtype
                           and entry.get('name') in pkgnames]:
-                self.logger.debug('Setting state to true for pkg %s' % (entry.get('name')))
+                self.logger.debug('Setting state to true for pkg %s' % \
+                                  (entry.get('name')))
                 states[entry] = True
             self.RefreshPackages()
         else:
@@ -275,7 +282,8 @@ class PkgTool(Tool):
             for pkg in packages:
                 # handle state tracking updates
                 if self.VerifyPackage(pkg, []):
-                    self.logger.info("Forcing state to true for pkg %s" % (pkg.get('name')))
+                    self.logger.info("Forcing state to true for pkg %s" % \
+                                     (pkg.get('name')))
                     states[pkg] = True
                 else:
                     self.logger.info("Installing pkg %s version %s" %
@@ -286,7 +294,8 @@ class PkgTool(Tool):
                     if cmdrc[0] == 0:
                         states[pkg] = True
                     else:
-                        self.logger.error("Failed to install package %s" % (pkg.get('name')))
+                        self.logger.error("Failed to install package %s" % \
+                                          (pkg.get('name')))
             self.RefreshPackages()
         for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
@@ -307,6 +316,7 @@ class PkgTool(Tool):
         return [Bcfg2.Client.XML.Element('Package', name=name, \
                                          type=self.pkgtype, version=version) \
                                          for (name, version) in extras]
+
 
 class SvcTool(Tool):
     """This class defines basic Service behavior"""
