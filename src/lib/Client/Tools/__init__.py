@@ -1,30 +1,4 @@
 """This contains all Bcfg2 Tool modules"""
-__revision__ = '$Revision$'
-
-__all__ = ["Action",
-           "APT",
-           "Blast",
-           "Chkconfig",
-           "DebInit",
-           "Encap",
-           "IPS",
-           "FreeBSDInit",
-           "FreeBSDPackage",
-           "launchd",
-           "MacPorts",
-           "Portage",
-           "POSIX",
-           "RPMng",
-           "rpmtools",
-           "RcUpdate",
-           "SMF",
-           "SYSV",
-           "Upstart",
-           "YUMng"]
-
-drivers = [item for item in __all__ if item not in ['rpmtools']]
-default = [item for item in drivers if item not in ['RPM', 'Yum']]
-
 # suppress popen2 warnings for python 2.3
 import warnings
 warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
@@ -36,6 +10,15 @@ import sys
 import time
 
 import Bcfg2.Client.XML
+__revision__ = '$Revision$'
+
+__all__ = [tool.split('.')[0] \
+           for tool in os.listdir(os.path.dirname(__file__)) \
+           if tool.endswith(".py") and tool != "__init__.py"]
+
+drivers = [item for item in __all__ if item not in ['rpmtools']]
+default = [item for item in drivers if item not in ['RPM', 'Yum']]
+
 
 class toolInstantiationError(Exception):
     """This error is called if the toolset cannot be instantiated."""
