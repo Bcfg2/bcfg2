@@ -129,6 +129,17 @@ class Source(object):
         return [self.escape_url(url) for url in self.urls]
     files = property(get_files)
 
+    def get_vpkgs(self, meta):
+        agroups = ['global'] + [a for a in self.arches if a in meta.groups]
+        vdict = dict()
+        for agrp in agroups:
+            for key, value in self.provides[agrp].iteritems():
+                if key not in vdict:
+                    vdict[key] = set(value)
+                else:
+                    vdict[key].update(value)
+        return vdict
+
     def escape_url(self, url):
         return "%s/%s" % (self.basepath, url.replace('/', '@'))
 
@@ -176,87 +187,6 @@ class Source(object):
     def is_package(self, metadata, _):
         return False
 
-    def resolve_requirement(self, metadata, requirement, packages, debug=False):
-        '''Resolve requirement to packages and or additional requirements
-
-        Arguments:
-        metadata -- client metadata instance
-        requirement -- name of requirement
-        debug -- boolean debug flag
-
-        Returns => (packages, unresolved requirements)
-        '''
-
-        if requirement in self.blacklist or \
-                (len(self.whitelist) > 0 and requirement not in self.whitelist):
-            # Ignore blacklisted packages in this source
-            raise NoData
-
-        if self.is_package(metadata, requirement):
-            item_is_pkg = True
-        else:
-            item_is_pkg = False
-
-        try:
-            provset = self.get_provides(metadata, requirement)
-            item_is_virt = True
-        except:
-            item_is_virt = False
-
-        if True not in [item_is_pkg, item_is_virt]:
-            raise NoData
-
-        if debug:
-            logger.debug("Handling requirement %s" % (requirement))
-
-        if item_is_pkg and not item_is_virt:
-            deps = set()
-            if debug:
-                logger.debug("Adding Package %s" % requirement)
-            try:
-                deps = self.get_deps(metadata, requirement)
-                if debug:
-                    logger.debug("Package %s: adding new deps %s" \
-                                 % (requirement, deps))
-            except:
-                pass
-            return (set([requirement]), deps)
-        if item_is_virt:
-            if item_is_pkg:
-                # requirement can be used to satisfy virt requirement
-                provset.add(requirement)
-            if debug:
-                logger.debug("Requirement %s provided by %s" \
-                             % (requirement, provset))
-
-            satisfiers = provset.intersection(packages)
-            if len(provset) == 1:
-                # single choice for requirement
-                pkg_to_add = list(provset)[0]
-            elif satisfiers:
-                if item_is_pkg and requirement in satisfiers:
-                    # still need to add requirement prereqs
-                    pkg_to_add = requirement
-                else:
-                    pkg_to_add = list(satisfiers)[0]
-            elif item_is_pkg:
-                pkg_to_add = requirement
-            else:
-                # choice data is here, but not forced by currently resolved requirements
-                raise SomeData
-
-            if debug:
-                logger.debug("Adding Package %s for %s" % (pkg_to_add, requirement))
-
-            try:
-                deps = self.get_deps(metadata, pkg_to_add)
-                if debug:
-                    logger.debug("Package %s: adding new deps %s" \
-                                     % (pkg_to_add, deps))
-            except:
-                deps = set()
-            return (set([pkg_to_add]), deps)
-
     def get_url_info(self):
         return {'groups': copy.copy(self.groups), \
             'urls': [copy.deepcopy(url) for url in self.url_map]}
@@ -266,7 +196,7 @@ class YUMSource(Source):
     rp = '{http://linux.duke.edu/metadata/rpm}'
     rpo = '{http://linux.duke.edu/metadata/repo}'
     fl = '{http://linux.duke.edu/metadata/filelists}'
-    basegroups = ['redhat', 'centos', 'fedora']
+    basegroups = ['yum', 'redhat', 'centos', 'fedora']
     ptype = 'yum'
 
     def __init__(self, basepath, url, version, arches, components, groups,
@@ -401,32 +331,21 @@ class YUMSource(Source):
             return False
         return item in self.packages['global'] or item in self.packages[arch[0]]
 
-    def get_provides(self, metadata, required):
-        ret = set()
-        arches = [a for a in self.arches if a in metadata.groups]
-        if not arches:
-            raise NoData
-        if required in self.provides['global']:
-            ret.update(Source.get_provides(self, metadata, required))
-        elif required in self.provides[arches[0]]:
-            ret.update(Source.get_provides(self, metadata, required))
-        else:
-            for arch in ['global'] + arches:
-                if required in self.filemap[arch]:
-                    ret.update(self.filemap[arch][required])
-        if ret:
-            return ret
-        else:
-            raise NoData
+    def get_vpkgs(self, metadata):
+        rv = Source.get_vpkgs(self, metadata)
+        for arch, fmdata in self.filemap.iteritems():
+            if arch not in metadata.groups + ['global']:
+                continue
+            for filename, pkgs in fmdata.iteritems():
+                rv[filename] = pkgs
+        return rv
 
-    def resolve_requirement(self, m, r, p, d):
-        if r.startswith('rpmlib'):
-            return (set(), set())
-        else:
-            return Source.resolve_requirement(self, m, r, p, d)
+    def filter_unknown(self, unknown):
+        filtered = set([u for u in unknown if u.startswith('rpmlib')])
+        unknown.difference_update(filtered)
 
 class APTSource(Source):
-    basegroups = ['debian', 'ubuntu', 'nexenta']
+    basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
 
     def __init__(self, basepath, url, version, arches, components, groups,
@@ -447,6 +366,10 @@ class APTSource(Source):
     def load_state(self):
         data = file(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
+
+    def filter_unknown(self, unknown):
+        filtered = set([u for u in unknown if u.startswith('choice')])
+        unknown.difference_update(filtered)
 
     def get_urls(self):
         if not self.rawurl:
@@ -540,13 +463,6 @@ class APTSource(Source):
     def is_package(self, _, pkg):
         return pkg in self.pkgnames
 
-    def get_provides(self, metadata, pkgname):
-        arches = [ar for ar in self.provides if ar in metadata.groups]
-        for arch in ['global'] + arches:
-            if pkgname in self.provides[arch]:
-                return set(self.provides[arch][pkgname])
-        raise NoData
-
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
@@ -566,11 +482,31 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.sources = []
         self.disableResolver = False
         self.disableMetaData = False
+        self.virt_pkgs = dict()
 
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
             os.makedirs(self.cachepath)
         self._load_config()
+
+    def get_relevant_groups(self, meta):
+        mgrps = list(set([g for g in meta.groups for s in self.get_matching_sources(meta) \
+                          if g in s.basegroups or g in s.groups or g in s.arches]))
+        mgrps.sort()
+        return tuple(mgrps)
+
+    def build_vpkgs_entry(self, meta):
+        # build single entry for all matching sources
+        mgrps = self.get_relevant_groups(meta)
+        vpkgs = dict()
+        for source in self.get_matching_sources(meta):
+            s_vpkgs = source.get_vpkgs(meta)
+            for name, prov_set in s_vpkgs.iteritems():
+                if name not in vpkgs:
+                    vpkgs[name] = set(prov_set)
+                else:
+                    vpkgs[name].update(prov_set)
+        return vpkgs
 
     def get_matching_sources(self, meta):
         return [s for s in self.sources if s.applies(meta)]
@@ -587,13 +523,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if [x for x in metadata.groups if x in source.basegroups]:
                 entry.set('type', source.ptype)
 
-    def complete(self, meta, packages, debug=False):
+    def complete(self, meta, input_requirements, debug=False):
         '''Build the transitive closure of all package dependencies
 
         Arguments:
         meta - client metadata instance
         packages - set of package names
         debug - print out debug information for the decision making process
+        returns => (set(packages), set(unsatisfied requirements), package type)
         '''
         sources = self.get_matching_sources(meta)
         # reverse list so that priorities correspond to file order
@@ -604,46 +541,110 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         ptype = set([s.ptype for s in sources])
         if len(ptype) < 1:
             return set(), set(), 'failed'
-        pkgs = set(packages)
-        needed = set(packages)
-        unknown = set()
+
+        # setup vpkg cache
+        pgrps = self.get_relevant_groups(meta)
+        if pgrps not in self.virt_pkgs:
+            self.virt_pkgs[pgrps] = self.build_vpkgs_entry(meta)
+        vpkg_cache = self.virt_pkgs[pgrps]
+
+        blacklisted = set()
+        for source in sources:
+            blacklisted.update(source.blacklist)
+
+        # unclassified is set of unsatisfied requirements (may be pkg for vpkg)
+        unclassified = set(input_requirements)
+        vpkgs = set()
+        both = set()
+        pkgs = set(input_requirements)
+
+        packages = set()
         examined = set()
+        unknown = set()
 
-        final_pass = set()
-        in_final_pass = False
+        final_pass = False
+        really_done = False
+        # do while unclassified or vpkgs or both or pkgs
+        while unclassified or pkgs or both or final_pass:
+            #print len(unclassified), len(pkgs), len(both), len(vpkgs), final_pass
+            if really_done: 
+                break
+            if len(unclassified) + len(pkgs) + len(both) == 0:
+                # one more pass then exit
+                really_done = True
 
-        while needed:
-            # process requirements until all done or no progress
-            current = needed.pop()
-            examined.add(current)
-            found = False
-            for source in sources:
-                try:
-                    newp, newr = source.resolve_requirement(meta, current,
-                                                            packages, debug)
-                    found = True
-                    break
-                except NoData:
+            while unclassified:
+                current = unclassified.pop()
+                examined.add(current)
+                if current in blacklisted:
                     continue
-                except SomeData:
-                    if not in_final_pass:
-                        final_pass.add(current)
-                except:
-                    self.logger.error("Packages: resolve_requirement call failed unexpectedly", exc_info=1)
-            if found:
-                in_final_pass = False
-                pkgs = pkgs.union(newp)
-                needed = needed.union(newr)
-                needed.difference_update(examined)
+                is_pkg = True in [source.is_package(meta, current) for source in sources]
+                is_vpkg = current in vpkg_cache
+
+                if is_pkg and is_vpkg:
+                    both.add(current)
+                elif is_pkg and not is_vpkg:
+                    pkgs.add(current)
+                elif is_vpkg and not is_pkg:
+                    vpkgs.add(current)
+                elif not is_vpkg and not is_pkg:
+                    unknown.add(current)
+
+            while pkgs:
+                # direct packages; current can be added, and all deps should be resolved
+                current = pkgs.pop()
+                if current in blacklisted:
+                    continue
+                if debug:
+                    self.logger.debug("Packages: handling package requirement %s" % (current))
+                for source in sources:
+                    try:
+                        deps = source.get_deps(meta, current)
+                        break
+                    except:
+                        continue
+                packages.add(current)
+                newdeps = set(deps).difference(examined)
+                if debug and newdeps:
+                    self.logger.debug("Packages: Package %s added requirements %s" % (current, newdeps))
+                unclassified.update(newdeps)
+
+            satisfied_vpkgs = set()
+            for current in vpkgs:
+                # virtual dependencies, satisfied if one of N in the config, or can be forced if only one provider
+                if len(vpkg_cache[current]) == 1:
+                    if debug:
+                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, vpkg_cache[current]))
+                    unclassified.update(vpkg_cache[current].difference(examined))
+                    satisfied_vpkgs.add(current)
+                elif [item for item in vpkg_cache[current] if item in packages]:
+                    if debug:
+                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, [item for item in vpkg_cache[current] if item in packages]))
+                    satisfied_vpkgs.add(current)
+            vpkgs.difference_update(satisfied_vpkgs)
+
+            satisfied_both = set()
+            for current in both:
+                # packages that are both have virtual providers as well as a package with that name
+                # allow use of virt through explicit specification, then fall back to forcing current on last pass
+                if [item for item in vpkg_cache[current] if item in packages]:
+                    if debug:
+                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, [item for item in vpkg_cache[current] if item in packages]))
+                    satisfied_both.add(current)
+                elif current in input_requirements or final_pass:
+                    pkgs.add(current)
+                    satisfied_both.add(current)
+            both.difference_update(satisfied_both)
+
+            if len(unclassified) + len(pkgs) == 0:
+                final_pass = True
             else:
-                unknown.add(current)
+                final_pass = False
 
-            if not needed:
-                in_final_pass = True
-                needed.update(final_pass)
-                final_pass = set()
+            for source in sources:
+                source.filter_unknown(unknown)
 
-        return pkgs, unknown, ptype.pop()
+        return packages, unknown, ptype.pop()
 
     def validate_structures(self, meta, structures):
         '''Ensure client configurations include all needed prerequisites
@@ -660,10 +661,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         news = lxml.etree.Element('Independent')
         packages, unknown, ptype = self.complete(meta, initial,
                                                  debug=self.debug_flag)
-        logged_unknown = [x for x in unknown if not x.startswith('choice')]
-        if logged_unknown:
+        if unknown:
             self.logger.info("Got unknown entries")
-            self.logger.info(logged_unknown)
+            self.logger.info(list(unknown))
         newpkgs = list(packages.difference(initial))
         newpkgs.sort()
         for pkg in newpkgs:
@@ -755,7 +755,3 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         sdata = []
         [sdata.extend(copy.deepcopy(src.url_map)) for src in self.get_matching_sources(meta)]
         return dict(sources=sdata)
-
-if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('Packages', to_console=True)
-    aa = Packages(None, '/home/desai/tmp/bcfg2')
