@@ -32,7 +32,11 @@ BuildRequires: python-setuptools-devel
 BuildRequires: python-setuptools
 %endif
 
+%if "%{py_ver}" == "2.4"
+Requires:         python-elementtree
+%else if "%{py_ver}" < "2.5"
 Requires:         %{lxmldep} >= 0.9
+%endif
 Requires:         initscripts
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
@@ -73,6 +77,7 @@ Requires:         bcfg2 = %{version}-%{release}
 %if "%{py_ver}" < "2.6"
 Requires:         python-ssl
 %endif
+Requires:         %{lxmldep} >= 0.9
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
 Requires(post):   /sbin/chkconfig
