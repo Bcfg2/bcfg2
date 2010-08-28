@@ -6,9 +6,9 @@
 SSHbase
 =======
 
-SSHbase is a purpose build Bcfg2 plugin for managing ssh host keys. It
+SSHbase is a purpose-built Bcfg2 plugin for managing ssh host keys. It
 is responsible for making ssh keys persist beyond a client rebuild and
-building a proper ssh_known_hosts file, including a correct localhost
+building a proper ``ssh_known_hosts file``, including a correct localhost
 record for the current system.
 
 It has two functions:
@@ -16,11 +16,11 @@ It has two functions:
 * Generating new ssh keys -- When a client requests a dsa, rsa, or v1 key,
   and there is no existing key in the repository, one is generated.
 
-* Maintaining the ssh_known_hosts file -- all current known public
+* Maintaining the ``ssh_known_hosts`` file -- all current known public
   keys (and extra public key stores) are integrated into a single
-  ssh_known_hosts file, and a localhost record for the current client
-  is added. The ssh_known_hosts file data is updated whenever any keys
-  change, are added, or deleted.
+  ``ssh_known_hosts`` file, and a localhost record for the current client
+  is added. The ``ssh_known_hosts`` file data is updated whenever any
+  keys change, are added, or deleted.
 
 Interacting with SSHbase
 ========================
@@ -56,8 +56,8 @@ Getting started
 #. Enjoy.
 
 At this point, SSHbase will generate new keys for any client without
-a recorded key in the repository, and will generate an ssh_known_hosts
-file appropriately.
+a recorded key in the repository, and will generate an
+``ssh_known_hosts`` file appropriately.
 
 Adding public keys for unmanaged hosts
 ======================================
