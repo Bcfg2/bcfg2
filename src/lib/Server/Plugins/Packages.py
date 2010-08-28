@@ -712,6 +712,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Keyword args:
             force_update    Force downloading repo data
         '''
+        self.virt_pkgs = dict()
         try:
             xdata = lxml.etree.parse(self.data + '/config.xml')
             xdata.xinclude()
