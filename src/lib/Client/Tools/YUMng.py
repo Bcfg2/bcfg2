@@ -11,6 +11,7 @@ import yum.rpmtrans
 import yum.callbacks
 import yum.Errors
 import yum.misc
+import rpmUtils.arch
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 
@@ -202,35 +203,33 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         # Process the YUMng section from the config file.
         CP = Parser()
         CP.read(self.setup.get('setup'))
+        truth = ['true', 'yes', '1']
 
-        self.installed_action = 'install'
-        self.pkg_checks = 'true'
-        self.pkg_verify = 'true'
-        self.version_fail_action = 'upgrade'
-        self.verify_fail_action = 'reinstall'
-
-        self.installed_action = CP.get(self.name, "installed_action",
-                self.installed_action)
-        self.pkg_checks = CP.get(self.name, "pkg_checks", self.pkg_checks)
-        self.pkg_verify = CP.get(self.name, "pkg_verify", self.pkg_verify)
-        self.version_fail_action = CP.get(self.name, 
-                "version_fail_action", self.version_fail_action)
-        self.verify_fail_action = CP.get(self.name, "verify_fail_action",
-                self.verify_fail_action)
+        # These are all boolean flags, either we do stuff or we don't
+        self.pkg_checks = CP.get(self.name, "pkg_checks", "true").lower() \
+                in truth
+        self.pkg_verify = CP.get(self.name, "pkg_verify", "true").lower() \
+                in truth
+        self.doInstall = CP.get(self.name, "installed_action",
+                "install").lower() == "install"
+        self.doUpgrade = CP.get(self.name, 
+                "version_fail_action", "upgrade").lower() == "upgrade"
+        self.doReinst = CP.get(self.name, "verify_fail_action",
+                "reinstall").lower() == "reinstall"
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installOnlyPkgs:
             self.installOnlyPkgs.append('gpg-pubkey')
 
-        self.logger.debug("YUMng: installed_action = %s" \
-                % self.installed_action)
-        self.logger.debug("YUMng: pkg_checks = %s" % self.pkg_checks)
-        self.logger.debug("YUMng: pkg_verify = %s" % self.pkg_verify)
-        self.logger.debug("YUMng: version_fail_action = %s" \
-                % self.version_fail_action)
-        self.logger.debug("YUMng: verify_fail_action = %s" \
-                % self.verify_fail_action)
-        self.logger.debug("YUMng: installOnlyPkgs = %s" \
+        self.logger.debug("YUMng: Install missing: %s" \
+                % self.doInstall)
+        self.logger.debug("YUMng: pkg_checks: %s" % self.pkg_checks)
+        self.logger.debug("YUMng: pkg_verify: %s" % self.pkg_verify)
+        self.logger.debug("YUMng: Upgrade on version fail: %s" \
+                % self.doUpgrade)
+        self.logger.debug("YUMng: Reinstall on verify fail: %s" \
+                % self.doReinst)
+        self.logger.debug("YUMng: installOnlyPkgs: %s" \
                 % str(self.installOnlyPkgs))
 
     def _fixAutoVersion(self, entry):
@@ -280,6 +279,62 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             return self.yb.rpmdb.returnGPGPubkeyPackages()
         return self.yb.rpmdb.searchNevra(name='gpg-pubkey')
 
+    def _verifyHelper(self, po):
+        # This code primarly deals with a yum bug where the PO.verify()
+        # method does not properly take into count multilib sharing of files.
+        # Neither does RPM proper, really....it just ignores the problem.
+        def verify(p):
+            # disabling file checksums is a new feature yum 3.2.17-ish
+            try:
+                vResult = p.verify(fast=self.setup.get('quick', False))
+            except TypeError:
+                # Older Yum API
+                vResult = p.verify()
+            return vResult
+
+        key = (po.name, po.epoch, po.version, po.release, po.arch)
+        if key in self.verifyCache:
+            results = self.verifyCache[key]
+        else:
+            results = verify(po)
+            self.verifyCache[key] = results
+        if not rpmUtils.arch.isMultiLibArch(): return results
+
+        # Okay deal with a buggy yum multilib and verify
+        packages = self.yb.rpmdb.searchNevra(name=po.name, epoch=po.epoch,
+                ver=po.version, rel=po.release) # find all arches of pkg
+        if len(packages) == 1: 
+            return results      # No mathcing multilib packages
+
+        files = set(po.returnFileEntries())   # Will be the list of common fns
+        common = {}
+        for p in packages:
+            if p != po: files = files & set(p.returnFileEntries())
+        for p in packages:
+            k = (p.name, p.epoch, p.version, p.release, p.arch)
+            self.logger.debug("Multilib Verify: comparing %s to %s" \
+                    % (po, p))
+            if k in self.verifyCache:
+                v = self.verifyCache[k]
+            else:
+                v = verify(p)
+                self.verifyCache[k] = v
+
+            for fn, probs in v.items():
+                # file problems must exist in ALL multilib packages to be real
+                if fn in files:
+                    common[fn] = common.get(fn, 0) + 1
+
+        flag = len(packages) - 1
+        for fn, i in common.items():
+            if i == flag:
+                # this fn had verify problems in all but one of the multilib
+                # packages.  That means its correct in the package that's
+                # "on top."  Therefore, this is a fake verify problem.
+                if fn in results: del results[fn]
+
+        return results
+        
     def RefreshPackages(self):
         """
             Creates self.installed{} which is a dict of installed packages.
@@ -339,14 +394,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug("Verifying package instances for %s" \
                 % entry.get('name'))
 
+        self.verifyCache = {}            # Used for checking multilib packages
         self.modlists[entry] = modlist
         instances = self._buildInstances(entry)
+        packageCache = []
         package_fail = False
         qtext_versions = []
         virtPkg = False
-        pkg_checks = self.pkg_checks.lower() == 'true' and \
+        pkg_checks = self.pkg_checks and \
                 entry.get('pkg_checks', 'true').lower() == 'true'
-        pkg_verify = self.pkg_verify.lower() == 'true' and \
+        pkg_verify = self.pkg_verify and \
                 entry.get('pkg_verify', 'true').lower() == 'true'
 
         if entry.get('name') == 'gpg-pubkey':
@@ -366,6 +423,11 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         for inst in instances:
             nevra = build_yname(entry.get('name'), inst)
             snevra = short_yname(nevra)
+            if nevra in packageCache: 
+                continue   # Ignore duplicate instances
+            else:
+                packageCache.append(nevra)
+
             self.logger.debug("Verifying: %s" % nevraString(nevra))
 
             # Set some defaults here
@@ -421,13 +483,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 for po in _POs:
                     self.logger.debug("    %s" % str(po))
 
-            # disabling file checksums is a new feature yum 3.2.17-ish
-            try:
-                vResult = _POs[0].verify(fast=self.setup.get('quick', False))
-            except TypeError:
-                # Older Yum API
-                vResult = _POs[0].verify()
-
+            vResult = self._verifyHelper(_POs[0])
             # Now take out the Yum specific objects / modlists / unproblmes
             ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
                       [ig.get('name') for ig in inst.findall('Ignore')] + \
@@ -614,13 +670,10 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
     def Install(self, packages, states):
         """
-           Try and fix everything that RPMng.VerifyPackages() found wrong for
+           Try and fix everything that YUMng.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
            installed (for the first time), deleted, downgraded
            or upgraded.
-
-           NOTE: YUM can not reinstall a package that it thinks is already
-                 installed.
 
            packages is a list of Package Elements that has
                states[<Package Element>] == False
@@ -668,16 +721,17 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             if insts:
                 for inst in insts:
                     status = self.instance_status[inst]
-                    if status.get('installed', False) == False:
+                    if not status.get('installed', False) and self.doInstall:
                         queuePkg(pkg, inst, install_pkgs)
-                    elif status.get('version_fail', False) == True:
+                    elif status.get('version_fail', False) and self.doUpgrade:
                         queuePkg(pkg, inst, upgrade_pkgs)
-                    elif status.get('verify_fail', False) == True:
+                    elif status.get('verify_fail', False) and self.doReinst:
                         queuePkg(pkg, inst, reinstall_pkgs)
                     else:
-                        msg = "Internal error install/upgrade/reinstall-ing: "
-                        self.logger.error("YUMng: %s%s" % \
-                                (msg, pkg.get('name')))
+                        # Either there was no Install/Version/Verify
+                        # task to be done or the user disabled the actions
+                        # in the configuration.  XXX Logging for the latter?
+                        pass
             else:
                 msg = "YUMng: Package tag found where Instance expected: %s"
                 self.logger.warning(msg % pkg.get('name'))
