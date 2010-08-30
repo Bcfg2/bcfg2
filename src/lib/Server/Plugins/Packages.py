@@ -334,7 +334,7 @@ class YUMSource(Source):
     def get_vpkgs(self, metadata):
         rv = Source.get_vpkgs(self, metadata)
         for arch, fmdata in self.filemap.iteritems():
-            if arch not in metadata.groups + set(['global']):
+            if arch not in metadata.groups and arch != 'global':
                 continue
             for filename, pkgs in fmdata.iteritems():
                 rv[filename] = pkgs
