@@ -1,5 +1,5 @@
 """This provides bcfg2 support for yum."""
-__revision__ = '$Revision: $'
+__revision__ = '$Revision$'
 
 import ConfigParser
 import copy
@@ -132,7 +132,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                    ('Package', 'rpm'),
                    ('Path', 'ignore')]
 
-    __req__ = {'Package': ['name', 'version']}
+    __req__ = {'Package': ['name', 'version'],
+               'Path': ['type']}
     __ireq__ = {'Package': ['name']}
     #__ireq__ = {'Package': ['name', 'version']}
 
@@ -155,7 +156,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.ignores = [ entry.get('name') for struct in config \
                          for entry in struct \
-                         if entry.get('type') == 'ignore' ]
+                         if entry.tag == 'Path' and \
+                         entry.get('type') == 'ignore' ]
         self.instance_status = {}
         self.extra_instances = []
         self.modlists = {}
@@ -823,3 +825,6 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         self._runYumTransaction()
         self.extra = self.FindExtraPackages()
 
+    def VerifyPath(self, entry, _):
+        """Do nothing here since we only verify Path type=ignore"""
+        return True
