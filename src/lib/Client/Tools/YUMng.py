@@ -754,7 +754,6 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 self._installGPGKey(inst, key_file)
 
             self.RefreshPackages()
-            self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
             states[pkg] = self.VerifyPackage(pkg, [])
 
