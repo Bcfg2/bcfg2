@@ -499,6 +499,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                     continue
                 tmp = []
                 for p in probs:
+                    if p.type == 'missing' and os.path.islink(fn):
+                        continue
                     if p.type not in ['missingok', 'ghost']:
                         tmp.append((p.type, p.message))
                 if tmp != []:
