@@ -19,13 +19,14 @@ In these cases, the client can be configured to run in either a whitelist
 or blacklist mode, wherein a list of entries is downloaded from the
 server. The client uses this list to determine which incorrect entries
 should be corrected during the current run of the installation tool. The
-Decision plugin is the only stock plugin that generates entries for
+Decisions plugin is the only stock plugin that generates entries for
 client's whitelists or blacklists.
 
-The Decision plugin uses a directory in the Bcfg2 repository called
+The Decisions plugin uses a directory in the Bcfg2 repository called
 Decisions. Files in the Decisions subdirectory are named similarly to
-files managed by Cfg, probes, TCheetah, and TGenshi. File basenames
-are either whitelist or blacklist. These files have a simple format;
+files managed by Cfg, probes, TCheetah, and TGenshi (so you can use host-
+and group-specific files and the like after their basename). File basenames
+are either ``whitelist`` or ``blacklist``. These files have a simple format;
 the following is an example.
 
 .. code-block:: xml
@@ -42,14 +43,23 @@ the following is an example.
     vim: ft=xml
     -->
 
-This example, included as a whitelist due to its name, enables all
-services, and the path entry named ``/etc/apt/apt.conf`` to be installed
-on systems running in whitelist mode; all other entry installation will
-be surpressed.
+This example, included as a whitelist due to its name, enables all services,
+and the path entry named ``/etc/apt/apt.conf``. All these entries must
+already be present in your repository, the Decisions plugin just references
+them. In whitelist mode, only the given items are applied to the client; all
+other entry installation will be surpressed.
 
-When a client askes for its whitelist or blacklist, all of the files
-pertaining to that client of the correct type are aggregated into a
-single list. This list is sent to the client. Note that this list is
-only generated when a client is run with the appropriate option (-l
-(whitelist|blacklist)); client behavior is not controlled unless this
-option is used.
+In blacklist mode, every entry that is not blacklisted will be installed.
+
+When a client asks for its whitelist or blacklist, all of the files
+pertaining to that client of the correct type are aggregated into a single
+list. This list is sent to the client.
+
+.. note:: This list is only generated when a client is explicitly run with
+          the appropriate option (``-l (whitelist|blacklist)``); client
+          behavior is not controlled unless this option is used. If you do
+          not use Decisions, all your entries will be installed normally.
+.. note:: Also, using this plugin does not present additional prompts or
+          safety nets to the administrator running the client, you have to
+          control these via their respective options (``-I`` or ``-n``, for
+          example).
