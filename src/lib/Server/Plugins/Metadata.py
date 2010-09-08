@@ -74,6 +74,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
                 core.fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
             except:
+                print("Unable to add file monitor for groups.xml or clients.xml")
                 raise Bcfg2.Server.Plugin.PluginInitError
         self.states = {}
         if watch_clients:
