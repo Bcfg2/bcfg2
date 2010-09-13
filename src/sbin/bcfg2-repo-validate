@@ -130,12 +130,13 @@ if __name__ == '__main__':
         for pkg in xdata.findall("//Package"):
             if pkg.getparent().tag == 'Group':
                 grp = pkg.getparent().get('name')
-                if grp.getparent().tag == 'Group':
+                if type(grp) is not str and grp.getparent().tag == 'Group':
                     pgrp = grp.getparent().get('name')
                 else:
                     pgrp = 'none'
             else:
                 grp = 'none'
+                pgrp = 'none'
             ptuple = (pkg.get('name'), priority, ptype, grp, pgrp)
             # check if package is already listed with same priority,
             # type, grp
