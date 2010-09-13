@@ -485,7 +485,14 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 for po in _POs:
                     self.logger.debug("    %s" % str(po))
 
-            vResult = self._verifyHelper(_POs[0])
+            try:
+                vResult = self._verifyHelper(_POs[0])
+            except Exception, e:
+                # Unknown Yum exception
+                self.logger.warning("  Verify Exception: %s" % str(e))
+                package_fail = True
+                continue
+
             # Now take out the Yum specific objects / modlists / unproblmes
             ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
                       [ig.get('name') for ig in inst.findall('Ignore')] + \
