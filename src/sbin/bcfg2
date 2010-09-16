@@ -134,7 +134,7 @@ class Client:
     def fatal_error(self, message):
         """Signal a fatal error."""
         self.logger.error("Fatal error: %s" % (message))
-        raise SystemExit(1)
+        os._exit(1)
 
     def run(self):
         """Perform client execution phase."""
