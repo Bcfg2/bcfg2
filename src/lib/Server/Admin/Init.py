@@ -165,7 +165,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = raw_input("What is the server's hostname: [%s]: " % socket.getfqdn())
+        data = raw_input("What is the server's hostname [%s]: " % socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
