@@ -4,6 +4,13 @@ __revision__ = '$Revision$'
 import glob, os, re
 import Bcfg2.Client.Tools
 
+
+# Debian squeeze and beyond uses a dependecy based boot sequence
+DEBIAN_OLD_STYLE_BOOT_SEQUENCE = (
+    'etch', '4.0',
+    'lenny', '5.0', '5.0.1', '5.0.2', '5.0.3', '5.0.4', '5.0.4', '5.0.5',
+    )
+
 class DebInit(Bcfg2.Client.Tools.SvcTool):
     """Debian Service Support for Bcfg2."""
     name = 'DebInit'
@@ -17,9 +24,18 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         """Verify Service status for entry."""
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
+
+        try:
+            deb_version = open('/etc/debian_version', 'r').read().split('/', 1)[0]
+        except IOError:
+            deb_version = 'unknown'
+
         if entry.get('sequence'):
-            start_sequence = int(entry.get('sequence'))
-            kill_sequence = 100 - start_sequence
+            if (deb_version in DEBIAN_OLD_STYLE_BOOT_SEQUENCE):
+                start_sequence = int(entry.get('sequence'))
+                kill_sequence = 100 - start_sequence
+            else:
+                self.logger.warning("Your debian version boot sequence is dependency based \"sequence\" attribute wil be ignored.")
         else:
             start_sequence = None
 
