@@ -329,7 +329,9 @@ class YUMSource(Source):
         arch = [a for a in self.arches if a in metadata.groups]
         if not arch:
             return False
-        return item in self.packages['global'] or item in self.packages[arch[0]]
+        return (item in self.packages['global'] or item in self.packages[arch[0]]) and \
+               item not in self.blacklist and \
+               ((len(self.whitelist) == 0) or item in self.whitelist)
 
     def get_vpkgs(self, metadata):
         rv = Source.get_vpkgs(self, metadata)
@@ -461,7 +463,9 @@ class APTSource(Source):
         self.save_state()
 
     def is_package(self, _, pkg):
-        return pkg in self.pkgnames
+        return pkg in self.pkgnames and \
+               pkg not in self.blacklist and \
+               (len(self.whitelist) == 0 or pkg in self.whitelist)
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
@@ -548,10 +552,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.virt_pkgs[pgrps] = self.build_vpkgs_entry(meta)
         vpkg_cache = self.virt_pkgs[pgrps]
 
-        blacklisted = set()
-        for source in sources:
-            blacklisted.update(source.blacklist)
-
         # unclassified is set of unsatisfied requirements (may be pkg for vpkg)
         unclassified = set(input_requirements)
         vpkgs = set()
@@ -576,8 +576,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             while unclassified:
                 current = unclassified.pop()
                 examined.add(current)
-                if current in blacklisted:
-                    continue
                 is_pkg = True in [source.is_package(meta, current) for source in sources]
                 is_vpkg = current in vpkg_cache
 
@@ -593,17 +591,16 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             while pkgs:
                 # direct packages; current can be added, and all deps should be resolved
                 current = pkgs.pop()
-                if current in blacklisted:
-                    continue
                 if debug:
                     self.logger.debug("Packages: handling package requirement %s" % (current))
                 deps = ()
                 for source in sources:
-                    try:
-                        deps = source.get_deps(meta, current)
-                        break
-                    except:
-                        continue
+                    if source.is_pkg(meta, current):
+                        try:
+                            deps = source.get_deps(meta, current)
+                            break
+                        except:
+                            continue
                 packages.add(current)
                 newdeps = set(deps).difference(examined)
                 if debug and newdeps:
@@ -687,13 +684,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         sources = self.get_matching_sources(meta)
         for source in sources:
             for pkgname in pkgnames:
-                try:
-                    deps = source.get_deps(meta, pkgname)
-                except:
-                    continue
-                for rpkg in deps:
-                    if rpkg in pkgnames:
-                        redundant.add(rpkg)
+                if source.is_pkg(meta, current):
+                    try:
+                        deps = source.get_deps(meta, pkgname)
+                    except:
+                        continue
+                    for rpkg in deps:
+                        if rpkg in pkgnames:
+                            redundant.add(rpkg)
         return pkgnames.difference(redundant), redundant
 
     def Refresh(self):
