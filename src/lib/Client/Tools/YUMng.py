@@ -132,22 +132,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                    ('Package', 'rpm'),
                    ('Path', 'ignore')]
 
-    __req__ = {'Package': ['name', 'version'],
+    __req__ = {'Package': ['name'],
                'Path': ['type']}
     __ireq__ = {'Package': ['name']}
-    #__ireq__ = {'Package': ['name', 'version']}
-
-    __new_req__ = {'Package': ['name'], 'Instance': ['version', 'release', 'arch']}
-    __new_ireq__ = {'Package': ['name'], \
-                    'Instance': []}
-    #__new_ireq__ = {'Package': ['name', 'uri'], \
-    #                'Instance': ['simplefile', 'version', 'release', 'arch']}
-
-    __gpg_req__ = {'Package': ['name', 'version']}
-    __gpg_ireq__ = {'Package': ['name', 'version']}
-
-    __new_gpg_req__ = {'Package': ['name'], 'Instance': ['version', 'release']}
-    __new_gpg_ireq__ = {'Package': ['name'], 'Instance': ['version', 'release']}
 
     conflicts = ['RPMng']
 
@@ -731,6 +718,11 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                      if pinst.tag in ['Instance', 'Package']]
             if insts:
                 for inst in insts:
+                    if inst not in self.instance_status:
+                        m = "  Asked to install/update package never verified"
+                        p = nevraString(build_yname(pkg.get('name'), inst))
+                        self.logger.warning("%s: %s" % (m, p))
+                        continue
                     status = self.instance_status[inst]
                     if not status.get('installed', False) and self.doInstall:
                         queuePkg(pkg, inst, install_pkgs)
