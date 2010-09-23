@@ -28,7 +28,12 @@ Make sure EPEL_ is a valid repository on your server. The `instructions
 <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_ on how to do this
 basically say::
 
-    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-3.noarch.rpm
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+
+.. note::
+
+    You will have to adjust this command to match your architecture and
+    the current EPEL release.
 
 Install the bcfg2-server and bcfg2 RPMs::
 
