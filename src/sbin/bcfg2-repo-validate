@@ -87,10 +87,10 @@ if __name__ == '__main__':
     # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
     # TODO: See if it is possible to do this in the schema instead
-    configuration_attrs = {
+    required_configuration_attrs = {
             'device':['name', 'owner', 'group', 'dev_type'],
             'directory':['name', 'owner', 'group', 'perms'],
-            'file':['name', 'owner', 'group', 'perms', 'encoding', 'empty'],
+            'file':['name', 'owner', 'group', 'perms'],
             'hardlink':['name', 'to'],
             'symlink':['name', 'to'],
             'ignore':['name'],
@@ -106,7 +106,7 @@ if __name__ == '__main__':
             pathtype = posixpath.get('type')
             pathset = set(posixpath.attrib.keys())
             try:
-                required_attrs = set(configuration_attrs[pathtype] \
+                required_attrs = set(required_configuration_attrs[pathtype] \
                                      + ['type'])
             except KeyError:
                 continue
