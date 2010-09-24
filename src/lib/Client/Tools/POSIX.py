@@ -18,6 +18,7 @@ import string
 import time
 import Bcfg2.Client.Tools
 import Bcfg2.Options
+from Bcfg2.Client import XML
 
 log = logging.getLogger('posix')
 
@@ -219,6 +220,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     nqtext += "Directory %s contains extra entries:" % entry.get('name')
                     nqtext += ":".join(ex_ents)
                     entry.set('qtest', nqtext)
+                    [entry.append(XML.Element('Prune', path=x)) for x in ex_ents]
             except OSError:
                 ex_ents = []
                 pruneTrue = True
@@ -321,7 +323,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                   (entry.get('name')))
                 return False
         if entry.get('prune', 'false') == 'true' and entry.get("qtest"):
-            for pname in entry.get("qtest").split(":"):
+            for pent in entry.findall('Prune'):
+                pname = pent.get('path')
                 ulfailed = False
                 if os.path.isdir(pname):
                     self.logger.info("Not removing extra directory %s, please check and remove manually" % pname)
