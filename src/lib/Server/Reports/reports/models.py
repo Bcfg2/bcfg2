@@ -1,5 +1,6 @@
 """Django models for Bcfg2 reports."""
 from django.db import models
+from django.db import connection, transaction
 from django.db.models import Q
 from datetime import datetime, timedelta
 from time import strptime
@@ -163,6 +164,14 @@ class Interaction(models.Model):
         self.client.current_interaction = self.client.interactions.latest()
         self.client.save()#save again post update
 
+    def delete(self):
+        '''Override the default delete.  Allows us to remove Performance items'''
+        pitems = list(self.performance_items.all())
+        super(Interaction, self).delete()
+        for perf in pitems:
+            if perf.interaction.count() == 0:
+                perf.delete()
+
     def badcount(self):
         return self.totalcount - self.goodcount
 
@@ -226,6 +235,15 @@ class Reason(models.Model):
     def _str_(self):
         return "Reason"
 
+    @staticmethod
+    @transaction.commit_on_success
+    def prune_orphans():
+        '''Prune oprhaned rows... no good way to use the ORM'''
+        cursor = connection.cursor()
+        cursor.execute('delete from reports_reason where not exists (select rei.id from reports_entries_interactions rei where rei.reason_id = reports_reason.id)')
+        transaction.set_dirty()
+ 
+
 class Entries(models.Model):
     """Contains all the entries feed by the client."""
     name = models.CharField(max_length=128, db_index=True)
@@ -234,6 +252,14 @@ class Entries(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    @transaction.commit_on_success
+    def prune_orphans():
+        '''Prune oprhaned rows... no good way to use the ORM'''
+        cursor = connection.cursor()
+        cursor.execute('delete from reports_entries where not exists (select rei.id from reports_entries_interactions rei where rei.entry_id = reports_entries.id)')
+        transaction.set_dirty()
+ 
 class Entries_interactions(models.Model):
     """Define the relation between the reason, the interaction and the entry."""
     entry = models.ForeignKey(Entries)
@@ -284,6 +310,14 @@ class Performance(models.Model):
     value = models.DecimalField(max_digits=32, decimal_places=16)
     def __str__(self):
         return self.metric
+
+    @staticmethod
+    @transaction.commit_on_success
+    def prune_orphans():
+        '''Prune oprhaned rows... no good way to use the ORM'''
+        cursor = connection.cursor()
+        cursor.execute('delete from reports_performance where not exists (select ri.id from reports_performance_interaction ri where ri.performance_id = reports_performance.id)')
+        transaction.set_dirty()
  
     objects = PerformanceManager()
  

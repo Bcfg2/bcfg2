@@ -2,11 +2,13 @@
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
 import ConfigParser
+import datetime
 import os
 import logging
 import pickle
 import platform
 import sys
+import traceback
 from Bcfg2.Server.Reports.importscript import load_stats
 from Bcfg2.Server.Reports.updatefix import update_database
 from Bcfg2.Server.Reports.utils import *
@@ -42,6 +44,30 @@ from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
                                 Entries_interactions, Performance, \
                                 Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
 
+def printStats(fn):
+    """
+    Print db stats.
+
+    Decorator for purging.  Prints database statistics after a run.
+    """
+    def print_stats(*data):
+        start_client = Client.objects.count()
+        start_i = Interaction.objects.count()
+        start_ei = Entries_interactions.objects.count()
+        start_perf = Performance.objects.count()
+        start_ping = Ping.objects.count()
+
+        fn(*data)
+
+        print "Clients removed: %s" % (start_client - Client.objects.count())
+        print "Interactions removed: %s" % (start_i - Interaction.objects.count())
+        print "Interactions->Entries removed: %s" % \
+                (start_ei - Entries_interactions.objects.count())
+        print "Metrics removed: %s" % (start_perf - Performance.objects.count())
+        print "Ping metrics removed: %s" % (start_ping - Ping.objects.count())
+
+    return print_stats
+
 class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''
     __shorthelp__ = "Manage dynamic reports"
@@ -56,7 +82,11 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "      -s|--stats         Path to statistics.xml file\n"
                  "      -c|--clients-file  Path to clients.xml file\n"
                  "      -O3                Fast mode.  Duplicates data!\n"
-                 "    scrub                Scrub the database for duplicate reasons\n"
+                 "    purge                Purge records\n"
+                 "      --client [n]       Client to operate on\n"
+                 "      --days   [n]       Records older then n days\n"
+                 "      --expired          Expired clients only\n"
+                 "    scrub                Scrub the database for duplicate reasons and orphaned entries\n"
                  "    update               Apply any updates to the reporting database\n"
                  "\n")
 
@@ -107,6 +137,38 @@ class Reports(Bcfg2.Server.Admin.Mode):
                         self.errExit("Invalid clients file: %s" % clients_file)
                 i = i + 1
             self.load_stats(stats_file, clients_file, verb, quick)
+        elif args[0] == 'purge':
+            expired=False
+            client=None
+            maxdate=None
+            state=None
+            i=1
+            while i < len(args):
+                if args[i] == '-c' or args[i] == '--client':
+                    if client:
+                        self.errExit("Only one client per run")
+                    client = args[i+1]
+                    print client
+                    i = i + 1
+                elif args[i] == '--days':
+                    if maxdate:
+                        self.errExit("Max date specified multiple times")
+                    try:
+                        maxdate = datetime.datetime.now() - datetime.timedelta(days=int(args[i+1]))
+                    except:
+                        self.log.error("Invalid number of days: %s" % args[i+1])
+                        raise SystemExit, -1
+                    i = i + 1
+                elif args[i] == '--expired':
+                    expired=True
+                i = i + 1
+            if expired:
+                if state:
+                    self.log.error("--state is not valid with --expired")
+                    raise SystemExit, -1
+                self.purge_expired(maxdate)
+            else:
+                self.purge(client, maxdate, state)
         else:
             print "Unknown command: %s" % args[0]
 
@@ -154,6 +216,15 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
         self.log.info("Found %d dupes out of %d" % (len(dup_reasons), start_count))
 
+        # Cleanup orphans
+        start_count = Reason.objects.count()
+        Reason.prune_orphans()
+        self.log.info("Pruned %d Reason records" % (start_count - Reason.objects.count()))
+
+        start_count = Entries.objects.count()
+        Entries.prune_orphans()
+        self.log.info("Pruned %d Entries records" % (start_count - Entries.objects.count()))
+
     def django_command_proxy(self, command):
         '''Call a django command'''
         if command == 'sqlall':
@@ -190,4 +261,97 @@ class Reports(Bcfg2.Server.Admin.Mode):
             load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=platform.node())
         except:
             pass
+
+    @printStats
+    def purge(self, client=None, maxdate=None, state=None):
+        '''Purge historical data from the database'''
+
+        filtered = False # indicates whether or not a client should be deleted
+
+        if not client and not maxdate and not state:
+            self.errExit("Reports.prune: Refusing to prune all data")
+
+        ipurge = Interaction.objects
+        if client:
+            try:
+                cobj = Client.objects.get(name=client)
+                ipurge = ipurge.filter(client=cobj)
+            except Client.DoesNotExist:
+                self.log.error("Client %s not in database" % client)
+                raise SystemExit, -1
+            self.log.debug("Filtering by client: %s" % client)
+
+        if maxdate:
+            filtered = True
+            if not isinstance(maxdate, datetime.datetime):
+                raise TypeError, "maxdate is not a DateTime object"
+            self.log.debug("Filtering by maxdate: %s" % maxdate)
+            ipurge = ipurge.filter(timestamp__lt=maxdate)
+
+            # Handle ping data as well
+            ping = Ping.objects.filter(endtime__lt=maxdate)
+            if client:
+                ping = ping.filter(client=cobj)
+            ping.delete()
+
+        if state:
+            filtered = True
+            if state not in ('dirty','clean','modified'):
+                raise TypeError, "state is not one of the following values " + \
+                    "('dirty','clean','modified')"
+            self.log.debug("Filtering by state: %s" % state)
+            ipurge = ipurge.filter(state=state)
+
+        count = ipurge.count()
+        rnum = 0
+        try:
+            while rnum < count:
+                grp = list(ipurge[:1000].values("id"))
+                # just in case...
+                if not grp:
+                    break
+                Interaction.objects.filter(id__in=[x['id'] for x in grp]).delete()
+                rnum += len(grp)
+                self.log.debug("Deleted %s of %s" % (rnum, count))
+        except:
+            self.log.error("Failed to remove interactions")
+            (a, b, c) = sys.exc_info()
+            msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]
+            del a, b, c
+            self.log.error(msg)
+
+        # bulk operations bypass the Interaction.delete method
+        self.log.debug("Pruning orphan Performance objects")
+        Performance.prune_orphans()
+
+        if client and not filtered:
+            '''Delete the client, ping data is automatic'''
+            try:
+                self.log.debug("Purging client %s" % client)
+                cobj.delete()
+            except:
+                self.log.error("Failed to delete client %s" % client)
+                (a, b, c) = sys.exc_info()
+                msg = traceback.format_exception(a, b, c, limit=2)[-1][:-1]
+                del a, b, c
+                self.log.error(msg)
+
+    @printStats
+    def purge_expired(self, maxdate=None):
+        '''Purge expired clients from the database'''
+
+        if maxdate:
+            if not isinstance(maxdate, datetime.datetime):
+                raise TypeError, "maxdate is not a DateTime object"
+            self.log.debug("Filtering by maxdate: %s" % maxdate)
+            clients = Client.objects.filter(expiration__lt=maxdate)
+        else:
+            clients = Client.objects.filter(expiration__isnull=False)
+
+        for client in clients:
+            self.log.debug("Purging client %s" % client)
+            Interaction.objects.filter(client=client).delete()
+            client.delete()
+        self.log.debug("Pruning orphan Performance objects")
+        Performance.prune_orphans()
 
