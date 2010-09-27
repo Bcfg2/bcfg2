@@ -595,7 +595,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     self.logger.debug("Packages: handling package requirement %s" % (current))
                 deps = ()
                 for source in sources:
-                    if source.is_pkg(meta, current):
+                    if source.is_package(meta, current):
                         try:
                             deps = source.get_deps(meta, current)
                             break
