@@ -34,7 +34,7 @@ newchangelog = \
 
   * New upstream release
 
- -- %s <%s> %s
+ -- %s <%s>  %s
 
 """ % (majorver, minorver, name, email, formatdate(localtime=True))
 # write out the new debian changelog
