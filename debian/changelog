@@ -10,7 +10,7 @@ bcfg2 (1.1.0-0.0rc5) unstable; urgency=low
 
  -- Narayan Desai <desai@mcs.anl.gov>  Tue, 14 Sep 2010 10:53:22 -0500 
 
-bcfg2 (1.1.0-0.0rc4) unstable; urgency=low 
+bcfg2 (1.1.0-0.0rc4) unstable; urgency=low
 
   * New upstream release
 
