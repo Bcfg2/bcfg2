@@ -11,10 +11,7 @@
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='StructureEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='ConfigFile' type='StructureEntry'/>
-      <xsd:element name='Directory' type='StructureEntry'/>
-      <xsd:element name='SymLink' type='StructureEntry'/>
-      <xsd:element name='Permissions' type='StructureEntry'/>
+      <xsd:element name='Path' type='StructureEntry'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
@@ -23,10 +20,7 @@
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='StructureEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='ConfigFile' type='StructureEntry'/>
-      <xsd:element name='Directory' type='StructureEntry'/>
-      <xsd:element name='SymLink' type='StructureEntry'/>
-      <xsd:element name='Permissions' type='StructureEntry'/>
+      <xsd:element name='Path' type='StructureEntry'/>
       <xsd:element name='Group' type='GroupType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
@@ -37,10 +31,7 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Package' type='StructureEntry'/>
         <xsd:element name='Service' type='StructureEntry'/>
-        <xsd:element name='ConfigFile' type='StructureEntry'/>
-        <xsd:element name='Directory' type='StructureEntry'/>
-        <xsd:element name='SymLink' type='StructureEntry'/>
-        <xsd:element name='Permission' type='StructureEntry'/>
+        <xsd:element name='Path' type='StructureEntry'/>
         <xsd:element name='Group' type='GroupType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='priority' />
