@@ -107,4 +107,4 @@ direct support for an operating system's package and service formats
 are limited by the currently available :ref:`client-tools-index`
 (new client tools are pretty easy to add). Check the :ref:`FAQ
 <faq-general>` for a  more exact list of platforms on which Bcfg2
-works`.
+works.

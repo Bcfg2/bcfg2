@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _unsorted-mailinglist:
+.. _help-mailinglist:
 
 ============
 Mailing List

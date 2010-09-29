@@ -1,0 +1,33 @@
+.. -*- mode: rst -*-
+
+.. _help-index:
+
+=======================
+Getting Help with Bcfg2
+=======================
+
+Having trouble? We'd like to help!
+
+* Try the :ref:`FAQ <faq-index>` -- it's got answers to many common questions.
+* Looking for specific information? Try the :ref:`genindex`, :ref:`modindex` or the :ref:`detailed table of contents <contents>`.
+* Search for information in the :ref:`help-mailinglist`.
+* Visit our :ref:`help-irc` channel.
+
+.. _report-a-bug:
+
+Report A Bug
+============
+
+Report bugs with Bcfg2 on the `Trac ticket tracker`_.
+
+.. _Bcfg2 mailing list archives: http://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
+.. _Trac ticket tracker: http://trac.mcs.anl.gov/projects/bcfg2/wiki
+
+Other ways to get in touch
+==========================
+
+.. toctree::
+   :maxdepth: 2
+
+   irc
+   mailinglist

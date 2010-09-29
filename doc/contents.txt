@@ -11,6 +11,7 @@ Welcome to Bcfg2's documentation!
 
    index
    quickstart/index
+   help/index
    faq/index
    authentication
    getting_started/index
