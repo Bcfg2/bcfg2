@@ -68,6 +68,8 @@ def main():
             raise SystemExit(1)
         mode = mode_cls(options.configfile)
         mode(args[1:])
+        if hasattr(mode, 'bcore'):
+            mode.bcore.shutdown()
     else:
         log.error("Unknown mode %s" % args[0])
         parser.print_help()
