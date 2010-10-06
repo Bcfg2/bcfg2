@@ -6,6 +6,8 @@
 Bcfg2 Dynamic Reporting System
 ==============================
 
+.. version:: 0.8.2
+
 Installation
 ============
 
@@ -20,12 +22,17 @@ Prerequisites
 Install
 -------
 
-Be sure to include the specified fields included the example ``bcfg2.conf``
-file. These can be specified in either ``/etc/bcfg2.conf``, if it is readable
-by the webserver user, or ``/etc/bcfg2-web.conf``.  Any database supported
-by Django can be used.  If you are not using sqlite (the default choice),
-please see the :ref:`alternative-databases` section below.  Distributed
-environments can share a single remote database for reporting.
+Be sure to include the specified fields included in the example
+``bcfg2.conf`` file. These can be specified in either ``/etc/bcfg2.conf``,
+if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
+database supported by Django can be used. If you are not using sqlite
+(the default choice), please see the :ref:`alternative-databases`
+section below.
+
+.. note::
+
+    Distributed environments can share a single remote database for
+    reporting.
 
 Run ``/usr/sbin/bcfg2-admin reports init`` to initialize
 the database.  If you're using sqlite, make sure the webserver
@@ -127,8 +134,8 @@ Notes on Alternative Databases
 ------------------------------
 
 If you choose to use a different database, you'll need to edit
-``/etc/bcfg2.conf``.  These fields should be updated in the
-``statistics`` section:
+``/etc/bcfg2.conf``. These fields should be updated in the [statistics]
+section:
 
 * database_engine
 
@@ -150,19 +157,16 @@ relational database, we are now able to view and analyze more information
 about the state of the configuration, including information about previous
 configuration. Specific features in the new system include:
 
-* The ability to look at past statistics information.
-  [[Image(summary_cal.jpg, 30%, right)]]
-* More recent data concerning hosts. The import script may be run quite
-  often, updating the database that contains all statistics
-  information. In the future we anticipate development of a database
-  based statistics module for the server that will allow statistics
-  updates to happen immediately as configuration changes happen.
+* The ability to look at a :ref:`reports-calendar-summary` with past
+  statistics information.
+* More recent data concerning hosts.
 * Additional information display in reports. Primarily, reasons for
-  configuration item verification failure are now accessible. This
-  additional data is provided only by the most recent client.
+  :ref:`configuration item verification failure <reports-item-detail>`
+  are now accessible.
 * Instead of static pages, pages are generated on the fly, allowing
-  users to drill down to find out about a specific host, rather than
-  have one huge page with too much information.
+  users to drill down to find out about a :ref:`specific host
+  <reports-node-dropdown>`, rather than only having one huge page with
+  too much information.
 
 Planned improvements include
 ============================
@@ -174,21 +178,12 @@ Planned improvements include
 Unfortunately with all the improvements, there are a few less exciting
 elements about the new reporting system. The new reporting system
 moves away from static pages and towards a real web application, which
-causes mainly problems with dependancies and makes installation and more
-difficult. This should become less of a problem over time as Django is
-packaged and we develop a better installation process for a web app. This
-should become clear when reading the Installation section that follows.
+causes mainly problems with dependencies and makes installation more
+difficult. This should become less of a problem over time as we develop
+a better installation process for a web application.
 
 Usage
 =====
-
-You can use these new reports in tandem with the old system. Currently
-the new reporting system simply periodically runs an importer script
-via cron. This imports the XML statistics and clients files to the
-relational database, building historical information. In the future,
-a new statistics module in the server will allow direct writing to the
-database whenever a configuration interaction occurs, which will make
-the reports always up to date.
 
 bcfg2-admin reports (command line script)
 -----------------------------------------
@@ -198,10 +193,10 @@ the reporting database.  A few useful `Django <http://www.djangoproject.com>`_
 commands are provided as well.
 
 * init: Initialize a new database
-* load_stats:  Load statistics data from the Statistics plugin into the
-  database.  This was importscript.py.
-* scrub:  Scrub the database for duplicate reasons.
-* update:  Apply any updates to the reporting database.  Unlike the syncdb
+* load_stats: Load statistics data from the Statistics plugin into the
+  database. This was importscript.py.
+* scrub: Scrub the database for duplicate reasons.
+* update: Apply any updates to the reporting database. Unlike the syncdb
   command, this will modify existing tables.
 
 Django commands
@@ -255,6 +250,26 @@ displays::
 Screenshots
 ===========
 
-[[Image(summary_cal.jpg, 30%)]]
-[[Image(node_dropdown.jpg, 30%)]]
-[[Image(item_detail.jpg, 30%)]]
+.. _reports-calendar-summary:
+
+Calendar Summary
+----------------
+
+.. image:: summary_cal.jpg
+   :alt: Calendar summary
+
+.. _reports-item-detail:
+
+Item detail
+-----------
+
+.. image:: item_detail.jpg
+   :alt: Item detail
+
+Node dropdown
+-------------
+
+.. _reports-node-dropdown:
+
+.. image:: node_dropdown.jpg
+   :alt: Node dropdown
