@@ -1,0 +1,80 @@
+.TH "bcfg2-reports" 8
+.SH NAME
+bcfg2-reports \- Query reporting system for client status
+.SH SYNOPSIS
+.B bcfg2-reports
+.I [-v] 
+.SH DESCRIPTION
+.PP
+.B bcfg2-reports
+bcfg2-reports allows you to retrieve data from the database about
+clients, and the states of their current interactions. It also allows
+you to change the expired/unexpired states .
+The utility runs as a standalone application. It does, however, use
+the models from /src/lib/Server/Reports/reports/models.py.
+.SH OPTIONS
+.PP
+.B "\-a"
+.RS
+Shows all hosts, including expired hosts.
+.RE
+.B "\-b NAME"
+.RS
+Single-host mode \- shows bad entries from the current interaction of
+NAME
+.RE
+.B "-c\"
+.RS
+Shows only clean hosts.
+.RE
+.B "\-d"
+.RS
+Shows only dirty hosts.
+.RE
+.B "\-e NAME"
+.RS
+Single host mode \- shows extra entries from the current interaction
+of NAME
+.RE
+.B "\-h"
+.RS
+Shows help and usage info about bcfg2-reports.
+.RE
+.B "\-s NAME"
+.RS
+Single host mode \- shows bad and extra entries from the current
+interaction of NAME.
+.RE
+.B "\-x NAME"
+.RS
+Toggles expired/unexpired state of NAME.
+.RE
+.B "\-\-badentry=KIND,NAME"
+.RS
+Shows only hosts whose current interaction has bad entries in of KIND
+kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
+pairs will be read from a file of name ARG1.
+.RE
+.B "\-\-extraentry=KIND,NAME "
+.RS
+Shows only hosts whose current interaction has extra entries in of KIND
+kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
+pairs will be read from a file of name ARG1.
+.RE
+.B "\-\-fields=ARG1,ARG2,..."
+.RS
+Only displays the fields ARG1,ARG2,... (name, time, state)
+.RE
+.B "\-\-sort=ARG1,ARG2,..."
+.RS
+Sorts output on ARG1,ARG2,... (name, time, state)
+.RE
+.B "\-\-stale"
+.RS
+Shows hosts which haven't run in the last 24 hours
+.RE
+.SH "SEE ALSO"
+.BR bcfg2(1),
+.BR bcfg2-server(8)
+.SH "BUGS"
+None currently known
