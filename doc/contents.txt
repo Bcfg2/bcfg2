@@ -17,7 +17,8 @@ Welcome to Bcfg2's documentation!
    getting_started/index
    server/index
    client/index
-   gettinghelp
+   troubleshooting
+   help/index
    bcfg2.conf-options
    architecture
    development/index

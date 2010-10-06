@@ -21,7 +21,6 @@ list below.
 * `SchemaEvolution`
 * `SecurityDevPlan`
 * `ServerSideOverview`
-* `Troubleshooting`
 * `UpgradeTesting`
 * `VimSnippetSupport`
 
