@@ -155,7 +155,7 @@ Altsrc
    ../altsrc
 
 Examples
---------
+========
 
 In some cases, configuration files need to include the client's hostname
 in their name. The following template produces such a config file entry.

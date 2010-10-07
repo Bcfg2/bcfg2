@@ -66,3 +66,19 @@ Then a corresponding entry must be included in the Rules directory, like:
 
 This allows different clients to get different actions as a part of the
 same bundle based on group membership.
+
+Example Action (add APT keys)
+=============================
+
+This example will add the '0C5A2783' for aptitude. It is useful to run
+this during the client bootstrap process so that the proper keys are
+installed prior to the bcfg2 client trying to install a package which
+requires this key.
+
+.. code-block:: xml
+
+    <Rules priority='0'>
+      <Group name='ubuntu'>
+        <Action timing='post' name='apt-key-update' command='apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu 0C5A2783' when='modified' status='check'/>
+      </Group>
+    </Rules>

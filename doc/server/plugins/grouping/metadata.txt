@@ -108,7 +108,7 @@ Additionally, the following properties can be specified:
 For detailed information on client authentication see :ref:`authentication`
 
 Metadata/groups.xml
--------------------
+===================
 
 The ``Metadata/groups.xml`` file contains Group and Profile
 definitions. Here's a simple ``Metadata/groups.xml`` file:

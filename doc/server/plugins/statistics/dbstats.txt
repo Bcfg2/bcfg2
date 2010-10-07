@@ -6,4 +6,10 @@
 DBStats
 =======
 
+DBStats can be enabled by adding DBStats to the plugins line in
+``/etc/bcfg2.conf``:
 
+    plugins = DBStats
+
+For more information on how to use DBStats to setup reporting, see
+:ref:`server-reports-dynamic`.
