@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-version-git:
+.. _server-plugins-version-darcs:
 
 =====
 Darcs
@@ -12,7 +12,7 @@ Why use the Darcs plugin
 ========================
 
 The Darcs plugin is useful if you would like to track changes to your
-Bcfg2 repository using a `Darcs http://darcs.net/`_ backend. Currently,
+Bcfg2 repository using a `Darcs <http://darcs.net/>`_ backend. Currently,
 it enables you to get revision information out of your repository for
 reporting purposes. Once the plugin is enabled, every time a client
 checks in, it will include the current repository revision in the
