@@ -58,14 +58,13 @@ acting like it is your first client.
 
    The following command will tell the client to run in no-op mode,
    meaning it will only check the client against the repository and
-   report any changes it sees. It won't make any changes (partially
-   because you haven't populated the repository with any
-   yet). However, nobody is perfect - you can make a typo, our
-   software can have bugs, monkeys can break in and hit enter before
-   you are done. Don't run this command on a production system if you
-   don't know what it does and aren't prepared for the
-   consequences. We don't know of anybody having problems with it
-   before, but it is better to be safe than sorry.
+   report any differences it sees. It won't make any changes (partially
+   because you haven't populated the repository with any yet). However,
+   nobody is perfect - you can make a typo, our software can have bugs,
+   monkeys can break in and hit enter before you are done. Don't run
+   this command on a production system if you don't know what it does
+   and aren't prepared for the consequences. We don't know of anybody
+   having problems with it before, but it is better to be safe than sorry.
 
 And now for the command::
 
@@ -75,7 +74,7 @@ That can be translated as "bcfg2 quick verbose no-op". The output
 should be something similar to::
 
     Loaded tool drivers:
-     Chkconfig    POSIX        PostInstall  RPM
+     Chkconfig    POSIX        YUMng
 
     Phase: initial
     Correct entries:        0
@@ -93,9 +92,10 @@ should be something similar to::
 Perfect! We have started out with an empty configuration, and none of
 our configuration elements are correct. It doesn't get much cleaner
 than that. But what about those unmanaged entries? Those are the extra
-configuration elements (probably all packages at the moment) that
-still aren't managed. Your goal now is to migrate each of those plus
-any it can't see up to the "Correct entries" line.
+configuration elements (probably all packages and services at the
+moment) that still aren't managed, but have been detected by the client
+tools. Your goal now is to migrate each of those plus any it can't see
+up to the "Correct entries" line.
 
 Populate Repository
 ===================
@@ -111,7 +111,7 @@ After the above steps, you should have a toplevel repository structure
 that looks like::
 
     bcfg-server:~ # ls /var/lib/bcfg2
-    Bundler/  Cfg/  Metadata/  Pkgmgr/  Rules/  SSHbase/  etc/
+    Base/  Bundler/  Cfg/  Metadata/  Pkgmgr/  Rules/  SSHbase/  etc/
 
 The place to start is the Metadata directory, which contains two
 files: ``clients.xml`` and ``groups.xml``. Your current
@@ -148,15 +148,14 @@ Our simple ``groups.xml`` file looks like:
       <Group name='solaris' />
    </Groups>
 
-There are two types of groups in Bcfg: profile groups
-(``profile='true'``) and non-profile groups
-(``profile='false'``). Profile groups can act as top-level groups to
-which clients can bind, while non-profile groups only exist as members
-of other groups. In our simple starter case, we have a profile group
-named ``basic``, and that is the group that our first client bound
-to. Our first client is a SuSE machine, so it contains the ``suse``
-group. Of course, ``bcfg2-admin`` isn't smart enough to fill out the
-rest of your config, so the ``suse`` group further down is empty.
+There are two types of groups in Bcfg: profile groups (``profile='true'``)
+and non-profile groups (``profile='false'``). Profile groups can act as
+top-level groups to which clients can bind, while non-profile groups only
+exist as members of other groups. In our simple starter case, we have
+a profile group named ``basic``, and that is the group that our first
+client bound to. Our first client is a SuSE machine, so it contains the
+``suse`` group. Of course, ``bcfg2-admin`` isn't smart enough to fill
+out the rest of your config, so the ``suse`` group further down is empty.
 
 Let's say the first thing we want to set up on our machine is the
 message of the day. To do this, we simply need to create a Bundle and
@@ -180,7 +179,7 @@ Next, we create a motd.xml file in the Bundler directory:
 Now when we run the client, we get slightly different output::
 
     Loaded tool drivers:
-     Chkconfig    POSIX        PostInstall  RPM
+     Chkconfig    POSIX        YUMng
     Incomplete information for entry Path:/etc/motd; cannot verify
 
     Phase: initial
@@ -231,16 +230,16 @@ Done! Now we just have 242 (or more) entries to take care of!
 directory to populate. You can find many samples of Bundles in the
 `Bundle Repository`_, many of which can be used without editing.
 
-.. _Bundle Repository: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Bundler/examples
+.. _Bundle Repository: http://docs.bcfg2.org/server/plugins/structures/bundler/index.html#other-examples
 
 Next Steps
 ==========
 
 Several other utilities can help from this point on:
 
-``bcfg2-info`` is a utility that instantiates a copy of the bcfg2 server
-core (minus the networking code) for examination. From this, you can
-directly query:
+:ref:`bcfg2-info <getting_started-using_bcfg2_info>` is a utility that
+instantiates a copy of the bcfg2 server core (minus the networking code)
+for examination. From this, you can directly query:
 
 * Client Metadata
 * Which entries are provided by particular plugins
