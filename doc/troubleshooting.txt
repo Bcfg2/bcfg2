@@ -15,7 +15,7 @@ and understand what is going on.
 Figure out if error is client or server side
 ============================================
 
-* Cache a copy of the client configuration using bcfg2 -qnc ``/tmp/config.xml``
+* Cache a copy of the client configuration using ``bcfg2 -qnc /tmp/config.xml``
 * Look in the file and search for the entry of interest
 * If it looks correct, then there is a client issue
 * If not, it is time to inspect things on the server
