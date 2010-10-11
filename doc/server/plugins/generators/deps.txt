@@ -13,6 +13,12 @@ configuration entries, like Package, Path, etc can be used. Groupings
 
 Here are some examples:
 
+.. note::
+
+    These particular examples are not extremely useful when using the
+    Packages plugin as Packages will handle the dependency resolution for
+    you. However, there are certainly other use cases for the Deps plugin.
+
 Deps/bcfg2.xml
 ==============
 
