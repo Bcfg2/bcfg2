@@ -8,7 +8,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
     """
     __shorthelp__ = ("Integrate configuration information "
                      "from clients into the server repository")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] [-s]"
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] [-s] "
                                     "<client> <entry type> <entry name>")
     __usage__ = ("bcfg2-admin pull [options] <client> <entry type> "
                  "<entry name>\n\n"
