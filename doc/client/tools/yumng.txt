@@ -3,7 +3,7 @@
 .. _client-tools-yumng:
 
 ================================
-BCFG2 RPMng/YUMng Client Drivers
+Bcfg2 RPMng/YUMng Client Drivers
 ================================
 
 Introduction
