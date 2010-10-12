@@ -40,6 +40,7 @@ class APT(Bcfg2.Client.Tools.Tool):
     pkgcmd = '%s ' % APTGET + \
              '-o DPkg::Options::=--force-overwrite ' + \
              '-o DPkg::Options::=--force-confold ' + \
+             '-o DPkg::Options::=--force-confmiss ' + \
              '--reinstall ' + \
              '-q=2 ' + \
              '--force-yes ' + \
@@ -91,7 +92,8 @@ class APT(Bcfg2.Client.Tools.Tool):
             elif "changed file" in item:
                 files.append(item.split()[3])
             elif "can't open" in item:
-                files.append(item.split()[5])
+                if item.split()[5] not in self.nonexistent:
+                    files.append(item.split()[5])
             elif "missing file" in item and \
                  item.split()[3] in self.nonexistent:
                 # these files should not exist
