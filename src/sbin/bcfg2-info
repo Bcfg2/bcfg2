@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """This tool loads the Bcfg2 core into an interactive debugger."""
 __revision__ = '$Revision$'
