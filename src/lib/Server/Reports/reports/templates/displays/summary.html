@@ -1,31 +1,42 @@
-{% extends "base.html" %}
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Client Summary{% endblock %}
+{% block pagebanner %}Clients - Summary{% endblock %}
+
+{% block body_onload %}javascript:hide_table_array(hide_tables){% endblock %}
+
 {% block extra_header_info %}
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
-<script language="JavaScript" type="text/javascript">var cal = new CalendarPopup();</script>
+<script type="text/javascript">
+var hide_tables = new Array({{ summary_data|length }});
+{% for summary in summary_data %}
+hide_tables[{{ forloop.counter0 }}] = "table_{{ summary.name }}";
+{% endfor %}
+</script>
 {% endblock%}
-{% block title %}Display Index Listing{% endblock %}
-{% block pagebanner %}
-  <div class="header">
-      <h1>BCFG Clients Summary</h1>
-      <span class="notebox">Report Run @ {% now "F j, Y P"%}</span>
-  </div>
-  <br/>
-{% endblock %}
 
 {% block content %}
-<div>
-<span class="mini-date">
-<b>Enter date or use calendar popup: </b>
-</span>
-<form name="timestamp-select" action="{{path}" method="get">
-<span class="mini-date">
-<input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
-<input type="text" name="time" value="{{timestamp_time}}" size="8" />
-<a href="#" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
-   name="anchor1" ID="anchor1">Calendar</A>
-<input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_summary %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_summary %}';"/>
-</span></form>
-<br/><br/><br/></div>
-  {% include "displays/summary-block-direct-links.html" %}
+  <div class='detail_header'>
+    <h2>{{ node_count }} nodes reporting in</h2>
+  </div>
+{% if summary_data %}
+  {% for summary in summary_data  %}
+    <div class='entry_list'>
+      <div class='entry_list_head element_list_head'>
+        <div class='entry_expand_tab' onclick='javascript:toggleMe("table_{{ summary.name }}");'>[+]</div>
+        <h3>{{ summary.nodes|length }} {{ summary.label }}</h3>
+      </div>
+
+      <table id='table_{{ summary.name }}' class='entry_list'>
+        {% for node in summary.nodes|sort_interactions_by_name %}
+          <tr class='{% cycle listview,listview_alt %}'>
+              <td><a href="{% url reports_client_detail_pk hostname=node.client.name,pk=node.id %}">{{ node.client.name }}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+    <p>No data to report on</p>
+{% endif %}
 {% endblock %}

@@ -1,56 +1,33 @@
-{% extends "base.html" %}
+{% extends "base-timeview.html" %}
 
 {% block extra_header_info %}
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/sorttable.js"></script>
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
-<script language="JavaScript" type="text/javascript">var cal = new CalendarPopup();</script>
 {% endblock%}
 
-{% block title %}Client Index Listing{% endblock %}
+{% block title %}Bcfg2 - Client Grid View{% endblock %}
 
-{% block pagebanner %}
-  <div class="header">
-      <h1>Clients List</h1>
-  </div>
-  <br/>
-{% endblock %}
+{% block pagebanner %}Clients - Grid View{% endblock %}
 
 {% block content %}
-<div>
-<span class="mini-date">
-<b>Enter date or use calendar popup: </b>
-</span>
-<form name="timestamp-select" action="{{path}}" method="get">
-<span class="mini-date">
-<input type="text" name="date1" value="{{timestamp_date}}" size=10 />@
-<input type="text" name="time" value="{{timestamp_time}}" size=8 />
-<a href="#" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
-   name="anchor1" ID="anchor1">Calendar</A>
-<input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.client_index %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.client_index %}';"/>
-</span></form>
-<br/><br/><br/></div>
 
 {% if inter_list %}
-<table><tr><td valign="top">
-    <ul style="list-style-type:none;">
-    {% for client,inter in inter_list %}
-        <li><div class="{{inter.state}}-lineitem">
-		<a href="{% spaceless %}{% ifequal timestamp 'now' %}
-			{% url Bcfg2.Server.Reports.reports.views.client_detail client %}
+    <table class='grid-view' align='center'>
+  {% for inter in inter_list %}
+      {% if forloop.first %}<tr>{% endif %}
+        <td class="{{inter.state}}-lineitem">
+            <a href="{% spaceless %}{% if not timestamp %}
+                    {% url reports_client_detail inter.client.name %}
+                {% else %}
+                    {% url reports_client_detail_pk inter.client.name,inter.id %}
+                {% endif %}
+                {% endspaceless %}">{{ inter.client.name }}</a>
+        </td>
+      {% if forloop.last %}
+        </tr>
 			{% else %}
-			{% url Bcfg2.Server.Reports.reports.views.client_detail client,inter.id %}
-			{% endifequal %}
-			{% endspaceless %}">{{ client }}</a>
-		</div></li>
-  {% ifequal half_list forloop.counter0 %}
-    </ul>
-</td><td valign="top">
-    <ul style="list-style-type:none;">
-  {% endifequal %}
+        {% if forloop.counter|divisibleby:"4" %}</tr><tr>{% endif %}
+      {% endif %}
     {% endfor %}
-    </ul>
-</tr></table>
+     </table>
 {% else %}
     <p>No client records are available.</p>
 {% endif %}

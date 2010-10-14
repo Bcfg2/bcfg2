@@ -1,54 +1,38 @@
-{% extends "base.html" %}
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Performance Metrics{% endblock %}
+{% block pagebanner %}Performance Metrics{% endblock %}
+
 
 {% block extra_header_info %}
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/sorttable.js"></script>
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
-<script language="JavaScript" type="text/javascript">var cal = new CalendarPopup();</script>
 {% endblock%}
-{% block title %}Display Index Listing{% endblock %}
 
 {% block content %}
-  <div class="header">
-      <h1>BCFG Performance Timings</h1>
-      <span class="notebox">Report Run @ {% now "F j, Y P"%}</span>
-  </div>
-  <br/>
-<div>
-<span class="mini-date">
-<b>Enter date or use calendar popup: </b>
-</span>
-<form name="timestamp-select" action="{{path}}" method="get">
-<span class="mini-date">
-<input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
-<input type="text" name="time" value="{{timestamp_time}}" size="8" />
-<a href="#" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
-   name="anchor1" ID="anchor1">Calendar</A>
-<input type="button" name="go" value="Go" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_timing %}'+document.forms['timestamp-select'].date1.value+'@'+document.forms['timestamp-select'].time.value;" />
- | <input type="button" name="now" value="Now" onClick="location.href='{% url Bcfg2.Server.Reports.reports.views.display_timing %}';"/>
-</span></form>
-<br/><br/><br/></div>
-  <center>
-      <table id="t1" class="sortable">
-          <tr>
-              <th class="sortable">Hostname</th>
-              <th class="sortable">Parse</th>
-              <th class="sortable">Probe</th>
-              <th class="sortable">Inventory</th>
-              <th class="sortable">Install</th>
-              <th class="sortable">Config</th>
-              <th class="sortable">Total</th>
+<div class='client_list_box'>
+  {% if metrics %}
+      <table cellpadding="3">
+	  <tr id='table_list_header' class='listview'>
+              <td>Name</td>
+              <td>Parse</td>
+              <td>Probe</td>
+              <td>Inventory</td>
+              <td>Install</td>
+              <td>Config</td>
+              <td>Total</td>
           </tr>                     
-	  {% for dict_unit in stats_list %}
-	  <tr>
-              <td class="sortable"><a href="{% url Bcfg2.Server.Reports.reports.views.client_detail dict_unit.name%}/">{{dict_unit.name}}</a></td>
-              <td class="sortable">{{dict_unit.parse}}</td>
-              <td class="sortable">{{dict_unit.probe}}</td>
-              <td class="sortable">{{dict_unit.inventory}}</td>
-              <td class="sortable">{{dict_unit.install}}</td>
-              <td class="sortable">{{dict_unit.config}}</td>
-              <td class="sortable">{{dict_unit.total}}</td>
+	  {% for metric in metrics|dictsort:"name" %}
+          <tr class='{% cycle listview,listview_alt %}'>
+              <td><a style='font-size: 100%'
+                   href="{% url reports_client_detail hostname=metric.name %}">{{ metric.name }}</a></td>
+              {% for mitem in metric|build_metric_list %}
+              <td>{{ mitem }}</td>
+              {% endfor %}
 	  </tr>
 	  {% endfor %}
       </table>
-  </center>
+  {% else %}
+    <p>No metric data available</p>
+  {% endif %}
+</div>
 {% endblock %}

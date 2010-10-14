@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block timepiece %}
+<script type="text/javascript">
+function showCalendar() {
+    var cal = new CalendarPopup("calendar_div");
+    cal.showYearNavigation();
+    cal.select(document.forms['cal_form'].cal_date,'cal_link',
+        'yyyy/MM/dd' {% if timestamp %}, '{{ timestamp|date:'Y/m/d' }}'{% endif %} );
+    return false;
+}
+function bcfg2_check_date() {
+    var new_date = document.getElementById('cal_date').value;
+    if(new_date) {
+        document.cal_form.submit();
+    }
+}
+document.write(getCalendarStyles());
+</script>
+{% if not timestamp %}Rendered at {% now "Y-m-d H:i" %} | {% else %}View as of {{ timestamp|date:"Y-m-d H:i" }} | {% endif %}{% spaceless %}
+  <a id='cal_link' name='cal_link' href='#' onclick='showCalendar(); return false;'
+      >[change]</a>
+  <form method='post' action='{{ path }}' id='cal_form' name='cal_form'><input id='cal_date' name='cal_date' type='hidden' value=''/></form>
+{% endspaceless %}
+{% endblock %}

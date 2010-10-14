@@ -1,50 +1,32 @@
-{% extends "base.html" %}
-{% load django_templating_sigh %}
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Element Listing{% endblock %}
 
 {% block extra_header_info %}
-<link rel="stylesheet" type="text/css" href="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/tabview/assets/tabview.css" />
-<link rel="stylesheet" type="text/css" href="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/round_tabs.css" />
+{% endblock%}
 
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/yahoo/yahoo.js"></script>
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/event/event.js"></script>
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/dom/dom.js"></script>
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/yui/tabview/tabview.js"></script>
-<script type="text/javascript">
-YAHOO.example.init = function( ){
-    var tabView = new YAHOO.widget.TabView( { id: 'demo' } );
-    {% for item_list in item_list_pseudodict %}
-    tabView.addTab( new YAHOO.widget.Tab({
-        label: '{{item_list.0}}',
-        content: '<p><ul style="list-style-type:none;">{% for item in item_list.1|sortwell %}<li><strong>{{item.entry.kind}}: <'+'/strong><tt>{% ifequal mod_or_bad "modified" %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_modified eyedee=item.id%}">{{item.entry.name}}<'+'/a>{% else %}<a href="{%url Bcfg2.Server.Reports.reports.views.config_item_bad eyedee=item.id%}">{{item.entry.name}}<'+'/a>{% endifequal %}<'+'/tt><'+'/li>{% endfor %}<'+'/ul><'+'/p>',
-        active: 'True'
-    }));
-    {% endfor %}
-
-    YAHOO.util.Event.onContentReady('tabview', function() {
-        tabView.appendTo(this); /* append to #doc */
-    });
-
-};
-YAHOO.example.init();
-
-</script>
-<style type="text/css">
-#demo .yui-content { padding:1em; } /* pad content container */
-</style>
-{% endblock %}
-
-{% block title %}{{mod_or_bad|capfirst}} Item Listing{% endblock %}
-
-{% block pagebanner %}
-  <div class="header">
-      <h1>{{mod_or_bad|capfirst}} Configuration Elements</h1>
-  </div>
-  <br/>
-{% endblock %}
+{% block pagebanner %}{{mod_or_bad|capfirst}} Element Listing{% endblock %}
 
 {% block content %}
-{% if item_list_pseudodict %}
-<div id="tabview"></div>
+{% if item_list_dict %}
+  {% for kind, entries in item_list_dict.items %}
+
+    <div class='entry_list'>
+      <div class='entry_list_head element_list_head'>
+        <div class='entry_expand_tab' onclick='javascript:toggleMe("table_{{ kind }}");'>[+]</div>
+        <h3>{{ kind }} &#8212; {{ entries|length }}</h3>
+  </div>
+
+      <table id='table_{{ kind }}' class='entry_list'>
+        {% for e in entries %}
+          <tr class='{% cycle listview,listview_alt %}'>
+            <td><a href="{% url reports_item type=mod_or_bad,pk=e.id %}">{{e.entry.name}}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
 {% else %}
     <p>There are currently no inconsistent configuration entries.</p>
 {% endif %}
