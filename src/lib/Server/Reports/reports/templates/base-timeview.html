@@ -6,7 +6,7 @@ function showCalendar() {
     var cal = new CalendarPopup("calendar_div");
     cal.showYearNavigation();
     cal.select(document.forms['cal_form'].cal_date,'cal_link',
-        'yyyy/MM/dd' {% if timestamp %}, '{{ timestamp|date:'Y/m/d' }}'{% endif %} );
+        'yyyy/MM/dd' {% if timestamp %}, '{{ timestamp|date:"Y/m/d" }}'{% endif %} );
     return false;
 }
 function bcfg2_check_date() {
