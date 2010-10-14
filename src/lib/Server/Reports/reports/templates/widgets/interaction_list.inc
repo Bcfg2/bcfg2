@@ -1,34 +1,30 @@
-{% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
-
-{% block title %}Bcfg2 - Detailed Client Listing{% endblock %}
-{% block pagebanner %}Clients - Detailed View{% endblock %}
-
-{% block content %}
-<div class='client_list_box'>
-{% if entry_list %}
-  {% filter_navigator %}
+<div class='interaction_history_widget'>
   <table cellpadding="3">
   <tr id='table_list_header' class='listview'>
-    <td class='left_column'>Node</td>
+    <td class='left_column'>Timestamp</td>
+    {% if not client %}
+    <td class='right_column_wide'>Client</td>
+    {% endif %}
     <td class='right_column' style='width:75px'>State</td>
     <td class='right_column_narrow'>Good</td>
     <td class='right_column_narrow'>Bad</td>
     <td class='right_column_narrow'>Modified</td>
     <td class='right_column_narrow'>Extra</td>
-    <td class='right_column'>Last Run</td>
     <td class='right_column_wide'>Server</td>
   </tr>
   {% for entry in entry_list %}
   <tr class='{% cycle listview,listview_alt %}'>
-    <td class='left_column'><a href='{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=entry.client.name, pk=entry.id %}'>{{ entry.client.name }}</a></td>
+    <td class='left_column'><a href='{% url reports_client_detail_pk hostname=entry.client.name, pk=entry.id %}'>{{ entry.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe }}</a></td>
+    {% if not client %}
+    <td class='right_column_wide'><a href='{% add_url_filter hostname=entry.client.name %}'>{{ entry.client.name }}</a></td>
+    {% endif %}
     <td class='right_column' style='width:75px'><a href='{% add_url_filter state=entry.state %}'
-      {% ifequal entry.state 'dirty' %}class='dirty-lineitem'{% endifequal %}>{{ entry.state }}</a></td>
+        {% ifequal entry.state 'dirty' %}class='dirty-lineitem'{% endifequal %}>{{ entry.state }}</a></td>
     <td class='right_column_narrow'>{{ entry.goodcount }}</td>
     <td class='right_column_narrow'>{{ entry.bad_entry_count }}</td>
     <td class='right_column_narrow'>{{ entry.modified_entry_count }}</td>
     <td class='right_column_narrow'>{{ entry.extra_entry_count }}</td>
-    <td class='right_column'><span {% if entry.timestamp|isstale:entry_max %}class='dirty-lineitem'{% endif %}>{{ entry.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe }}</span></td>
     <td class='right_column_wide'>
        {% if entry.server %}
          <a href='{% add_url_filter server=entry.server %}'>{{ entry.server }}</a>
@@ -39,8 +35,4 @@
   </tr>
   {% endfor %}
   </table>
-{% else %}
-    <p>No client records are available.</p>
-{% endif %}
 </div>
-{% endblock %}

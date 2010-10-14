@@ -1,354 +1,379 @@
-# Create your views here.
-#from django.shortcuts import get_object_or_404, render_to_response
-from django.template import Context, loader
-from django.http import HttpResponseRedirect, HttpResponse
+"""
+Report views
+
+Functions to handle all of the reporting views.
+"""
+from django.template import Context, RequestContext, loader
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
 from django.shortcuts import render_to_response, get_object_or_404
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, Entries_interactions, Performance, Reason
-from Bcfg2.Server.Reports.reports.models import TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
-from datetime import datetime, timedelta
-from time import strptime
+from django.core.urlresolvers import resolve, reverse, Resolver404, NoReverseMatch
 from django.db import connection
 from django.db.backends import util
-from django.contrib.auth.decorators import login_required
 
-def index(request):
-    return render_to_response('index.html')
+from Bcfg2.Server.Reports.reports.models import *
+from datetime import datetime, timedelta
+from time import strptime
+import sys
 
-def config_item_modified(request, eyedee =None, timestamp = 'now', type=TYPE_MODIFIED):
-    #if eyedee = None, dump with a 404
-    timestamp = timestamp.replace("@"," ")
-    if type == TYPE_MODIFIED:
-        mod_or_bad = "modified"
-    else:
-        mod_or_bad = "bad"
+class PaginationError(Exception):
+    """This error is raised when pagination cannot be completed."""
+    pass
+
+def server_error(request):
+    """
+    500 error handler.
+
+    For now always return the debug response.  Mailing isn't appropriate here.
+
+    """
+    from django.views import debug
+    return debug.technical_500_response(request, *sys.exc_info())
+
+def timeview(fn):
+    """
+    Setup a timeview view
+
+    Handles backend posts from the calendar and converts date pieces
+    into a 'timestamp' parameter
+
+    """
+    def _handle_timeview(request, **kwargs):
+        """Send any posts back."""
+        if request.method == 'POST':
+            cal_date = request.POST['cal_date']
+            try:
+                fmt = "%Y/%m/%d"
+                if cal_date.find(' ') > -1:
+                    fmt += " %H:%M"
+                timestamp = datetime(*strptime(cal_date, fmt)[0:6])
+                view, args, kw = resolve(request.path)
+                kw['year'] = "%0.4d" % timestamp.year
+                kw['month'] = "%02.d" % timestamp.month
+                kw['day'] = "%02.d" % timestamp.day
+                if cal_date.find(' ') > -1:
+                    kw['hour'] = timestamp.hour
+                    kw['minute'] = timestamp.minute
+                return HttpResponseRedirect(reverse(view, args=args, kwargs=kw))
+            except KeyError:
+                pass
+            except:
+                pass
+                # FIXME - Handle this
     
-    item = get_object_or_404(Entries_interactions, id=eyedee)
-    #if everything is blank except current_exists, do something special
-    cursor = connection.cursor()
-    if timestamp == 'now':
-        cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
-                   "WHERE reports_client.current_interaction_id = reports_entries_interactions.interaction_id "+
-                   "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_entries_interactions.entry_id = %s " + 
-                   "AND reports_entries_interactions.reason_id = %s", [item.entry.id, item.reason.id])
-        associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
-    else:
-        interact_queryset = Interaction.objects.interaction_per_client(timestamp)
-        interactionlist = []
-        [interactionlist.append(x.id) for x in interact_queryset]
-        if not interactionlist == []:
-            cursor.execute("select client_id from reports_interaction, reports_entries_interactions, reports_client "+
-                   "WHERE reports_entries_interactions.interaction_id IN %s "+
-                   "AND reports_entries_interactions.interaction_id = reports_interaction.id "+
-                   "AND reports_entries_interactions.entry_id = %s " +
-                   "AND reports_entries_interactions.reason_id = %s ", [interactionlist, item.entry_id, item.reason.id])
-            associated_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
-        else:
-            associated_client_list = []
+        """Extract timestamp from args."""
+        timestamp = None
+        try:
+            timestamp = datetime(int(kwargs.pop('year')), int(kwargs.pop('month')), 
+                int(kwargs.pop('day')), int(kwargs.pop('hour', 0)),
+                int(kwargs.pop('minute', 0)), 0)
+            kwargs['timestamp'] = timestamp
+        except KeyError:
+            pass
+        except: 
+            raise
+        return fn(request, **kwargs)
 
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
+    return _handle_timeview
+       
+def config_item(request, pk, type="bad"):
+    """
+    Display a single entry.
 
-    return render_to_response('config_items/index.html', {'item':item,
-                                                         'mod_or_bad':mod_or_bad,
-                                                         'associated_client_list':associated_client_list,
-                                                         'timestamp' : timestamp,
-                                                         'timestamp_date' : timestamp[:10],
-                                                         'timestamp_time' : timestamp[11:19]})
+    Dispalys information about a single entry.
 
+    """
+    item = get_object_or_404(Entries_interactions, id=pk)
+    timestamp=item.interaction.timestamp
+    time_start=item.interaction.timestamp.replace(\
+        hour=0, minute=0, second=0, microsecond=0)
+    time_end=time_start + timedelta(days=1)
 
-def config_item_bad(request, eyedee = None, timestamp = 'now'):
-    return config_item_modified(request, eyedee, timestamp, TYPE_BAD)
+    todays_data = Interaction.objects.filter(\
+        timestamp__gte=time_start,\
+        timestamp__lt=time_end)
+    shared_entries = Entries_interactions.objects.filter(entry=item.entry,\
+        reason=item.reason, type=item.type,
+        interaction__in=[x['id']\
+            for x in todays_data.values('id')])
 
-def bad_item_index(request, timestamp = 'now', type=TYPE_BAD):
-    timestamp = timestamp.replace("@"," ")
-    if type == TYPE_BAD:
-        mod_or_bad = "bad"
-    else:
-        mod_or_bad = "modified"
+    associated_list = Interaction.objects.filter(id__in=[x['interaction']\
+        for x in shared_entries.values('interaction')])\
+        .order_by('client__name','timestamp').select_related().all()
+
+    return render_to_response('config_items/item.html',
+        {'item':item,
+         'isextra': item.type == TYPE_EXTRA,
+         'mod_or_bad': type,
+         'associated_list':associated_list,
+         'timestamp' : timestamp},
+        context_instance=RequestContext(request))
+
+@timeview
+def config_item_list(request, type, timestamp=None):
+    """Render a listing of affected elements"""
+    mod_or_bad = type.lower()
+    type = convert_entry_type_to_id(type)
+    if type < 0:
+        raise Http404
     
-    current_clients = [c.current_interaction
-                       for c in Client.objects.active(timestamp)]
+    current_clients = Interaction.objects.get_interaction_per_client_ids(timestamp)
     item_list_dict = {}
-    for x in Entries_interactions.objects.select_related().filter(interaction__in=current_clients, type=type).distinct():
+    seen = dict()
+    for x in Entries_interactions.objects.filter(interaction__in=current_clients, type=type).select_related():
+        if (x.entry, x.reason) in seen:
+            continue
+        seen[(x.entry, x.reason)] = 1
         if item_list_dict.get(x.entry.kind, None):
             item_list_dict[x.entry.kind].append(x)
         else:
             item_list_dict[x.entry.kind] = [x]
 
-    item_list_pseudodict = item_list_dict.items()
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
+    for kind in item_list_dict:
+        item_list_dict[kind].sort(lambda a,b: cmp(a.entry.name, b.entry.name))
 
-    return render_to_response('config_items/listing.html', {'item_list_pseudodict':item_list_pseudodict,
+    return render_to_response('config_items/listing.html', {'item_list_dict':item_list_dict,
                                                             'mod_or_bad':mod_or_bad,
-                                                            'timestamp' : timestamp,
-                                                            'timestamp_date' : timestamp[:10],
-                                                            'timestamp_time' : timestamp[11:19]})
-def modified_item_index(request, timestamp = 'now'):
-    return bad_item_index(request, timestamp, TYPE_MODIFIED)
+                                                            'timestamp' : timestamp},
+        context_instance=RequestContext(request))
 
-def client_index(request, timestamp = 'now'):
-    timestamp = timestamp.replace("@"," ")
+@timeview
+def client_index(request, timestamp=None):
+    """
+    Render a grid view of active clients.
 
-    c_dict = dict()
-    [c_dict.__setitem__(cl.id,cl.name) for cl in Client.objects.active(timestamp).order_by('name')]
+    Keyword parameters:
+      timestamp -- datetime objectto render from
 
-    list = []
-    for inter in Interaction.objects.interaction_per_client(timestamp):
-        if inter.client_id in c_dict:
-            list.append([c_dict[inter.client_id], inter])
-    list.sort(lambda a,b: cmp(a[0], b[0]))
-    half_list = len(list) / 2
+    """
+    list = Interaction.objects.interaction_per_client(timestamp).select_related()\
+           .order_by("client__name").all()
 
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
     return render_to_response('clients/index.html',
-            {'inter_list': list,
-             'half_list': half_list,
-            'timestamp' : timestamp,
-            'timestamp_date' : timestamp[:10],
-            'timestamp_time' : timestamp[11:19]})
+        {   'inter_list': list, 'timestamp' : timestamp},
+        context_instance=RequestContext(request))
 
-def client_detailed_list(request, **kwargs):
+@timeview
+def client_detailed_list(request, timestamp=None, **kwargs):
     """
     Provides a more detailed list view of the clients.  Allows for extra
-    filters to be passed in.  Somewhat clunky now that dates are allowed.
+    filters to be passed in.
 
     """
-    context = dict(path=request.path)
-    timestamp = 'now'
-    entry_max = datetime.now()
-    if request.GET:
-        context['qsa']='?%s' % request.GET.urlencode()
-        if request.GET.has_key('date1') and request.GET.has_key('time'):
-            timestamp = "%s %s" % (request.GET['date1'],request.GET['time'])
-            entry_max = datetime(*strptime(timestamp, "%Y-%m-%d %H:%M:%S")[0:6])
-    client_list = Client.objects.active(timestamp).order_by('name')
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
-    context['timestamp_date'] = timestamp[:10]
-    context['timestamp_time'] = timestamp[11:19]
 
-    interactions = Interaction.objects.interaction_per_client(timestamp)
-    if 'state' in kwargs and kwargs['state']:
-        context['state'] = kwargs['state']
-        interactions=interactions.filter(state__exact=kwargs['state'])
-    if 'server' in kwargs and kwargs['server']:
-        interactions=interactions.filter(server__exact=kwargs['server'])
-        context['server'] = kwargs['server']
-
-    # build the entry list from available clients
-    c_dict = dict()
-    [c_dict.__setitem__(cl.id,cl.name) for cl in client_list]
-
-    entry_list = []
-    for inter in interactions:
-        if inter.client_id in c_dict:
-            entry_list.append([c_dict[inter.client_id], inter, \
-                entry_max - inter.timestamp > timedelta(hours=24)])
-    entry_list.sort(lambda a,b: cmp(a[0], b[0]))
-    '''
-            if(datetime.now()-self.timestamp > timedelta(hours=25) ):
-                return True
-            else:
-                return False
-    '''
-
-    context['entry_list'] = entry_list
-    return render_to_response('clients/detailed-list.html', context)
+    kwargs['interaction_base'] = Interaction.objects.interaction_per_client(timestamp).select_related()
+    kwargs['orderby'] = "client__name"
+    kwargs['page_limit'] = 0
+    return render_history_view(request, 'clients/detailed-list.html', **kwargs)
 
 def client_detail(request, hostname = None, pk = None):
-    #SETUP error pages for when you specify a client or interaction that doesn't exist
+    context = dict()
     client = get_object_or_404(Client, name=hostname)
     if(pk == None):
-        interaction = client.current_interaction
+        context['interaction'] = client.current_interaction
+        return render_history_view(request, 'clients/detail.html', page_limit=5,
+            client=client, context=context)
     else:
-        interaction = client.interactions.get(pk=pk)#can this be a get object or 404?
-    return render_to_response('clients/detail.html', {'client': client, 'interaction': interaction})
+        context['interaction'] = client.interactions.get(pk=pk)
+        return render_history_view(request, 'clients/detail.html', page_limit=5,
+            client=client, maxdate=context['interaction'].timestamp, context=context)
 
-def client_manage(request, hostname = None):
-    #SETUP error pages for when you specify a client or interaction that doesn't exist
-    client = get_object_or_404(Client, name=hostname)
-    currenttime = datetime.now().isoformat('@')
-    if client.expiration != None:
-        message = ("This client currently has an expiration date of %s. "
-                   "Reports after %s will not include data for this host "
-                   "You may change this if you wish by selecting a new "
-                   "time, earlier or later."
-                   % (client.expiration, client.expiration))
-    else:
-        message = ("This client is currently active and displayed. You "
-                   "may choose a date after which this client will no "
-                   "longer appear in reports.")
+def client_manage(request):
+    """Manage client expiration"""
+    message = ''
     if request.method == 'POST':
-        date = request.POST['date1']
-        time = request.POST['time']
         try:
-            timestamp = datetime(*(strptime(date+"@"+time, "%Y-%m-%d@%H:%M:%S")[0:6]))
-        except ValueError:
-            timestamp = None
-        if timestamp == None:
-            message = "Invalid removal date, please try again using the format: yyyy-mm-dd hh:mm:ss."
-        else:
-            client.expiration = timestamp
+             client_name = request.POST.get('client_name', None)
+             client_action = request.POST.get('client_action', None)
+             client = Client.objects.get(name=client_name)
+             if client_action == 'expire':
+                 client.expiration = datetime.now();
+                 client.save()
+                 message = "Expiration for %s set to %s." % \
+                     (client_name, client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
+             elif client_action == 'unexpire':
+                 client.expiration = None;
             client.save()
-            message = "Expiration for client set to %s." % client.expiration
-    return render_to_response('clients/manage.html', {'client': client, 'message': message,
-                                                      'timestamp_date' : currenttime[:10],
-                                                      'timestamp_time' : currenttime[11:19]})
-
-def display_sys_view(request, timestamp = 'now'):
-    client_lists = prepare_client_lists(request, timestamp)
-    return render_to_response('displays/sys_view.html', client_lists)
-
-def display_summary(request, timestamp = 'now'):
-    
-    client_lists = prepare_client_lists(request, timestamp)
-    #this returns timestamp and the timestamp parts too
-    return render_to_response('displays/summary.html', client_lists)
-
-def display_timing(request, timestamp = 'now'):
-    #We're going to send a list of dictionaries. Each dictionary will be a row in the table
-    #+------+-------+----------------+-----------+---------+----------------+-------+
-    #| name | parse | probe download | inventory | install | cfg dl & parse | total |
-    #+------+-------+----------------+-----------+---------+----------------+-------+
-    client_list = Client.objects.active(timestamp.replace("@"," ")).order_by('name')
-    stats_list = []
-
-    if not timestamp == 'now':
-        results = Performance.objects.performance_per_client(timestamp.replace("@"," "))
+                 message = "%s is now active." % client_name
     else:
-        results = Performance.objects.performance_per_client()
-        timestamp = datetime.now().isoformat('@')
-        
-    for client in client_list:#Go explicitly to an interaction ID! (new item in dictionary)
+                 message = "Missing action"
+         except Client.DoesNotExist:
+             if not client_name:
+                 client_name = "<none>"
+             message = "Couldn't find client \"%s\"" % client_name
+
+    return render_to_response('clients/manage.html',
+        {'clients': Client.objects.order_by('name').all(), 'message': message},
+        context_instance=RequestContext(request))
+
+@timeview
+def display_summary(request, timestamp=None):
+    """
+    Display a summary of the bcfg2 world
+    """
+    query = Interaction.objects.interaction_per_client(timestamp).select_related()
+    node_count = query.count()
+    recent_data = query.all()
+    if not timestamp:
+        timestamp = datetime.now()
+
+    collected_data = dict(clean=[],bad=[],modified=[],extra=[],stale=[],pings=[])
+    for node in recent_data:
+        if timestamp - node.timestamp > timedelta(hours=24):
+            collected_data['stale'].append(node)
+            # If stale check for uptime
         try:
-            d = results[client.name]
-        except KeyError:
-            d = {}
+                if node.client.pings.latest().status == 'N':
+                    collected_data['pings'].append(node)
+            except Ping.DoesNotExist:
+                collected_data['pings'].append(node)
+            continue
+        if node.bad_entry_count() > 0:
+            collected_data['bad'].append(node)
+        else:
+            collected_data['clean'].append(node)
+        if node.modified_entry_count() > 0:
+            collected_data['modified'].append(node)
+        if node.extra_entry_count() > 0:
+            collected_data['extra'].append(node)
 
-        dict_unit = {}
+    # label, header_text, node_list
+    summary_data = []
+    get_dict = lambda name, label: { 'name': name,
+                'nodes': collected_data[name],
+                'label': label }
+    if len(collected_data['clean']) > 0:
+         summary_data.append( get_dict('clean', 'nodes are clean.') )
+    if len(collected_data['bad']) > 0:
+         summary_data.append( get_dict('bad', 'nodes are bad.') )
+    if len(collected_data['modified']) > 0:
+         summary_data.append( get_dict('modified', 'nodes were modified.') )
+    if len(collected_data['extra']) > 0:
+         summary_data.append( get_dict('extra',
+             'nodes have extra configurations.') )
+    if len(collected_data['stale']) > 0:
+         summary_data.append( get_dict('stale',
+             'nodes did not run within the last 24 hours.') )
+    if len(collected_data['pings']) > 0:
+         summary_data.append( get_dict('pings',
+             'are down.') )
+
+    return render_to_response('displays/summary.html',
+        {'summary_data': summary_data, 'node_count': node_count,
+         'timestamp': timestamp},
+        context_instance=RequestContext(request))
+
+@timeview
+def display_timing(request, timestamp=None):
+    mdict = dict()
+    inters = Interaction.objects.interaction_per_client(timestamp).select_related().all()
+    [mdict.__setitem__(inter, {'name': inter.client.name}) \
+        for inter in inters]
+    for metric in Performance.objects.filter(interaction__in=mdict.keys()).all():
+        for i in metric.interaction.all():
+            mdict[i][metric.metric] = metric.value
+    return render_to_response('displays/timing.html',
+        {'metrics': mdict.values(), 'timestamp': timestamp},
+        context_instance=RequestContext(request))
+
+
+def render_history_view(request, template='clients/history.html', **kwargs):
+    """
+    Provides a detailed history of a clients interactions.
+
+    Renders a detailed history of a clients interactions. Allows for various
+    filters and settings.  Automatically sets pagination data into the context.
+
+    Keyword arguments:
+    interaction_base -- Interaction QuerySet to build on
+                        (default Interaction.objects)
+    context -- Additional context data to render with
+    page_number -- Page to display (default 1)
+    page_limit -- Number of results per page, if 0 show all (default 25)
+    client -- Client object to render
+    hostname -- Client hostname to lookup and render.  Returns a 404 if
+                not found
+    server -- Filter interactions by server
+    state -- Filter interactions by state
+    entry_max -- Most recent interaction to display
+    orderby -- Sort results using this field
+
+    """
+
+    context = kwargs.get('context', dict())
+    max_results = int(kwargs.get('page_limit', 25))
+    page = int(kwargs.get('page_number', 1))
+
+    client=kwargs.get('client', None)
+    if not client and 'hostname' in kwargs:
+        client = get_object_or_404(Client, name=kwargs['hostname'])
+    if client:
+        context['client'] = client
+
+    entry_max = kwargs.get('maxdate', None)
+    context['entry_max'] = entry_max
+
+    # Either filter by client or limit by clients
+    iquery = kwargs.get('interaction_base', Interaction.objects)
+    if client:
+        iquery = iquery.filter(client__exact=client).select_related()
+
+    if 'orderby' in kwargs and kwargs['orderby']:
+        iquery = iquery.order_by(kwargs['orderby'])
+
+    if 'state' in kwargs and kwargs['state']:
+        iquery = iquery.filter(state__exact=kwargs['state'])
+    if 'server' in kwargs and kwargs['server']:
+        iquery = iquery.filter(server__exact=kwargs['server'])
+
+    if entry_max:
+        iquery = iquery.filter(timestamp__lte=entry_max)
+
+    if max_results < 0:
+        max_results = 1
+    entry_list = []
+    if max_results > 0:
         try:
-            dict_unit["name"] = client.name #node name
-        except:
-            dict_unit["name"] = "n/a"
-        try:
-            dict_unit["parse"] = round(d["config_parse"] - d["config_download"], 4) #parse
-        except:
-            dict_unit["parse"] = "n/a"
-        try:
-            dict_unit["probe"] = round(d["probe_upload"] - d["start"], 4) #probe
-        except:
-            dict_unit["probe"] = "n/a"
-        try:
-            dict_unit["inventory"] = round(d["inventory"] - d["initialization"], 4) #inventory
-        except:
-            dict_unit["inventory"] = "n/a"
-        try:
-            dict_unit["install"] = round(d["install"] - d["inventory"], 4) #install
-        except:
-            dict_unit["install"] = "n/a"
-        try:
-            dict_unit["config"] = round(d["config_parse"] - d["probe_upload"], 4)#config download & parse
-        except:
-            dict_unit["config"] = "n/a"
-        try:
-            dict_unit["total"] = round(d["finished"] - d["start"], 4) #total
-        except:
-            dict_unit["total"] = "n/a"
+            rec_start, rec_end = prepare_paginated_list(request, context, iquery, page, max_results)
+        except PaginationError, page_error:
+            if isinstance(page_error[0], HttpResponse):
+                return page_error[0]
+            return HttpResponseServerError(page_error)
+        context['entry_list'] = iquery.all()[rec_start:rec_end]
+    else:
+        context['entry_list'] = iquery.all()
 
-        stats_list.append(dict_unit)
+    return render_to_response(template, context,
+                context_instance=RequestContext(request))
 
-    return render_to_response('displays/timing.html', {'client_list': client_list,
-                                                      'stats_list': stats_list,
-                                                      'timestamp' : timestamp,
-                                                      'timestamp_date' : timestamp[:10],
-                                                      'timestamp_time' : timestamp[11:19]})
+def prepare_paginated_list(request, context, paged_list, page=1, max_results=25):
+    """
+    Prepare context and slice an object for pagination.
+    """
+    if max_results < 1:
+        raise PaginationError, "Max results less then 1"
+    if paged_list == None:
+        raise PaginationError, "Invalid object"
 
-def display_index(request):
-    return render_to_response('displays/index.html')
-
-def prepare_client_lists(request, timestamp = 'now'):
-    #I suggest we implement "expiration" here.
-
-    timestamp = timestamp.replace("@"," ")
-    #client_list = Client.objects.all().order_by('name')#change this to order by interaction's state
-    client_interaction_dict = {}
-    clean_client_list = []
-    bad_client_list = []
-    extra_client_list = []
-    modified_client_list = []
-    stale_up_client_list = []
-    #stale_all_client_list = []
-    down_client_list = []
-
-    cursor = connection.cursor()
-
-    interact_queryset = Interaction.objects.interaction_per_client(timestamp)
-    # or you can specify a time like this: '2007-01-01 00:00:00'
-    [client_interaction_dict.__setitem__(x.client_id, x) for x in interact_queryset]
-    client_list = Client.objects.active(timestamp).filter(id__in=client_interaction_dict.keys()).order_by('name')
-
-    [clean_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=[y.client_id for y in interact_queryset.filter(state='clean')])]
-    [bad_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=[y.client_id for y in interact_queryset.filter(state='dirty')])]
-
-    client_ping_dict = {}
-    [client_ping_dict.__setitem__(x,'Y') for x in client_interaction_dict.keys()]#unless we know otherwise...
-    
     try:
-        cursor.execute("select reports_ping.status, x.client_id from (select client_id, MAX(endtime) "+
-                       "as timer from reports_ping GROUP BY client_id) x, reports_ping where "+
-                       "reports_ping.client_id = x.client_id AND reports_ping.endtime = x.timer")
-        [client_ping_dict.__setitem__(x[1], x[0]) for x in cursor.fetchall()]
-    except:
-        pass #This is to fix problems when you have only zero records returned
-
-    client_down_ids = [y for y in client_ping_dict.keys() if client_ping_dict[y]=='N']
-    if not client_down_ids == []:
-        [down_client_list.append(x) for x in Client.objects.active(timestamp).filter(id__in=client_down_ids)]
-
-    if (timestamp == 'now' or timestamp == None): 
-        cursor.execute("select client_id, MAX(timestamp) as timestamp from reports_interaction GROUP BY client_id")
-        results = cursor.fetchall()
-        for x in results:
-            if type(x[1]) == type("") or type(x[1]) == type(u""):
-                ts = util.typecast_timestamp(x[1])
-            else:
-                ts = x[1]
-        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetime.now() - ts > timedelta(days=1)])
-    else:
-        cursor.execute("select client_id, timestamp, MAX(timestamp) as timestamp from reports_interaction "+
-                       "WHERE timestamp < %s GROUP BY client_id", [timestamp])
-        t = strptime(timestamp,"%Y-%m-%d %H:%M:%S")
-        datetimestamp = datetime(t[0], t[1], t[2], t[3], t[4], t[5])
-        results = cursor.fetchall()
-        for x in results:
-            if type(x[1]) == type(""):
-                x[1] = util.typecast_timestamp(x[1])
-        stale_all_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in results if datetimestamp - x[1] > timedelta(days=1)])
-        
-    [stale_up_client_list.append(x) for x in stale_all_client_list if not client_ping_dict[x.id]=='N']
-
+        nitems = paged_list.count()
+    except TypeError:
+        nitems = len(paged_list)
     
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id = reports_interaction.client_id AND reports_client.current_interaction_id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_MODIFIED])
-    modified_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
+    rec_start = (page - 1) * int(max_results)
+    try:
+        total_pages = (nitems / int(max_results)) + 1
+    except:
+        total_pages = 1
+    if page > total_pages:
+        # If we passed beyond the end send back
+        try:
+            view, args, kwargs = resolve(request.path)
+            kwargs['page_number'] = total_pages
+            raise PaginationError, HttpResponseRedirect( reverse(view, kwargs=kwargs) )
+        except (Resolver404, NoReverseMatch, ValueError):
+            raise "Accessing beyond last page.  Unable to resolve redirect."
 
-    cursor.execute("SELECT reports_client.id FROM reports_client, reports_interaction, reports_entries_interactions WHERE reports_client.id = reports_interaction.client_id AND reports_client.current_interaction_id = reports_entries_interactions.interaction_id and reports_entries_interactions.type=%s GROUP BY reports_client.id", [TYPE_EXTRA])
-    extra_client_list = Client.objects.active(timestamp).filter(id__in=[x[0] for x in cursor.fetchall()])
+    context['total_pages'] = total_pages
+    context['records_per_page'] = max_results
+    return (rec_start, rec_start + int(max_results))
 
-    if timestamp == 'now':
-        timestamp = datetime.now().isoformat('@')
-
-    return {'client_list': client_list,
-            'client_interaction_dict':client_interaction_dict,
-            'clean_client_list': clean_client_list,
-            'bad_client_list': bad_client_list,
-            'extra_client_list': extra_client_list,
-            'modified_client_list': modified_client_list,
-            'stale_up_client_list': stale_up_client_list,
-            'stale_all_client_list': stale_all_client_list,
-            'down_client_list': down_client_list,
-            'timestamp' : timestamp,
-            'timestamp_date' : timestamp[:10],
-            'timestamp_time' : timestamp[11:19]}

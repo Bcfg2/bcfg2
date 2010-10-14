@@ -1,3 +1,5 @@
+import django
+
 # Django settings for bcfg2 reports project.
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 c = ConfigParser()
@@ -62,7 +64,9 @@ MEDIA_ROOT = ''
 
 # URL that handles the media served from MEDIA_ROOT.
 # Example: "http://media.lawrence.com"
-MEDIA_URL = ''
+MEDIA_URL = '/site_media'
+if c.has_option('statistics', 'web_prefix'):
+    MEDIA_URL = c.get('statistics', 'web_prefix').rstrip('/') + MEDIA_URL
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -109,8 +113,25 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.
     '/usr/share/python-support/python-django/django/contrib/admin/templates/',
-    '/usr/share/bcfg2/Reports/templates'
+    'Bcfg2.Server.Reports.reports'
 )
+
+if django.VERSION[0] == 1 and django.VERSION[1] < 2:
+    TEMPLATE_CONTEXT_PROCESSORS = (
+        'django.core.context_processors.auth',
+        'django.core.context_processors.debug',
+        'django.core.context_processors.i18n',
+        'django.core.context_processors.media',
+        'django.core.context_processors.request'
+    )
+else:
+    TEMPLATE_CONTEXT_PROCESSORS = (
+        'django.contrib.auth.context_processors.auth',
+        'django.core.context_processors.debug',
+        'django.core.context_processors.i18n',
+        'django.core.context_processors.media',
+        'django.core.context_processors.request'
+    )
 
 INSTALLED_APPS = (
     'django.contrib.auth',

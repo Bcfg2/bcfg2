@@ -28,30 +28,26 @@ TYPE_CHOICES = (
     (TYPE_MODIFIED, 'Modified'),
     (TYPE_EXTRA, 'Extra'),
 )
-
-def convert_entry_type_to_id(type_name):
-    """Convert a entry type to its entry id"""
-    for e_id, e_name in TYPE_CHOICES:
-        if e_name.lower() == type_name.lower():
-            return e_id
-    return -1
-
 class ClientManager(models.Manager):
     """Extended client manager functions."""
-    def active(self, timestamp=None):
-        """returns a set of clients that have been created and have not yet been
+    def active(self, timestamp='now'):
+        '''returns a set of clients that have been created and have not yet been
         expired as of optional timestmamp argument. Timestamp should be a
-        datetime object."""
+        string formatted in the fashion: 2006-01-01 00:00:00'''
         
-        if timestamp == None:
+        if timestamp == 'now':
             timestamp = datetime.now()
-        elif not isinstance(timestamp, datetime):
-            raise ValueError, 'Expected a datetime object'
         else:
+            print timestamp
             try:
                 timestamp = datetime(*strptime(timestamp, "%Y-%m-%d %H:%M:%S")[0:6])
             except ValueError:
-                return self.none()
+                return self.filter(expiration__lt=timestamp, creation__gt=timestamp);
+                '''
+                - this is a really hacky way to return an empty QuerySet
+                - this should return Client.objects.none() in Django
+                  development version.
+                '''
         
         return self.filter(Q(expiration__gt=timestamp) | Q(expiration__isnull=True),
                            creation__lt=timestamp)
@@ -85,64 +81,33 @@ class Ping(models.Model):
         get_latest_by = 'endtime'
     
 class InteractiveManager(models.Manager):
-    """Manages interactions objects."""
-
-    def recent_interactions_dict(self, maxdate=None, active_only=True):
-        """
-        Return the most recent interactions for clients as of a date.
-
-        This method uses aggregated queries to return a ValuesQueryDict object.
-        Faster then raw sql since this is executed as a single query.
-        """
+    """Manages interactions objects.
     
-        return self.values('client').annotate(max_timestamp=Max('timestamp')).values()
+    Returns most recent interaction as of specified timestamp in format:
+    '2006-01-01 00:00:00' or 'now' or None->'now'
 
-    def interaction_per_client(self, maxdate = None, active_only=True):
-        """
-        Returns the most recent interactions for clients as of a date
-
-        Arguments:
-        maxdate -- datetime object.  Most recent date to pull. (dafault None)
-        active_only -- Include only active clients (default True)
-          
-        """
-
-        if maxdate and not isinstance(maxdate,datetime):
-            raise ValueError, 'Expected a datetime object'
-        return self.filter(id__in = self.get_interaction_per_client_ids(maxdate, active_only))
-
-    def get_interaction_per_client_ids(self, maxdate = None, active_only=True):
-        """
-        Returns the ids of most recent interactions for clients as of a date.
-
-        Arguments:
-        maxdate -- datetime object.  Most recent date to pull. (dafault None)
-        active_only -- Include only active clients (default True)
+    """
+    def interaction_per_client(self, maxdate = None):
+        """Returns the most recent interactions for clients as of a date.
+        FIXME - check the dates passed in.
         
         """
         from django.db import connection
         cursor = connection.cursor()
-        cfilter = "expiration is null"
 
         sql = 'select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) ' + \
                     'as timer from reports_interaction'
-        if maxdate:
-            if not isinstance(maxdate,datetime):
-                raise ValueError, 'Expected a datetime object'
-            sql = sql + " where timestamp <= '%s' " % maxdate
-            cfilter = "(expiration is null or expiration > '%s') and creation <= '%s'" % (maxdate,maxdate)
+        if maxdate != 'now':
+            sql = sql + " where timestamp < '%s' " % maxdate
         sql = sql + ' GROUP BY client_id) x, reports_interaction where ' + \
                     'reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer'
-        if active_only:
-            sql = sql + " and x.client_id in (select id from reports_client where %s)" % \
-                cfilter
         try:
             cursor.execute(sql)
-            return [item[0] for item in cursor.fetchall()]
         except:
             '''FIXME - really need some error hadling'''
-            pass
-        return []
+            return self.none()
+        return self.filter(id__in = [item[0] for item in cursor.fetchall()])
+
 
 class Interaction(models.Model):
     """Models each reconfiguration operation interaction between client and server."""
@@ -248,7 +213,6 @@ class Interaction(models.Model):
         pass
     class Meta:
         get_latest_by = 'timestamp'
-        ordering = ['-timestamp']
         unique_together = ("client", "timestamp")
 
 class Reason(models.Model):
@@ -303,6 +267,42 @@ class Entries_interactions(models.Model):
     interaction = models.ForeignKey(Interaction)
     type = models.IntegerField(choices=TYPE_CHOICES)
     
+class PerformanceManager(models.Manager):
+    """
+    Provides ability to effectively query for performance information
+    It is possible this should move to the view
+
+    """
+    #Date format for maxdate: '2006-01-01 00:00:00'            
+    def performance_per_client(self, maxdate = None):
+        from django.db import connection
+        cursor = connection.cursor()
+        if (maxdate == 'now' or maxdate == None):
+            cursor.execute("SELECT reports_client.name, reports_performance.metric, reports_performance.value "+
+            "FROM reports_performance, reports_performance_interaction, reports_client WHERE ( "+
+            "reports_client.current_interaction_id = reports_performance_interaction.interaction_id AND "+
+            "reports_performance.id = reports_performance_interaction.performance_id)")
+        else:
+            cursor.execute("select reports_client.name, reports_performance.metric, "+
+                           "reports_performance.value from (Select reports_interaction.client_id as client_id, "+
+                           "MAX(reports_interaction.timestamp) as timestamp from reports_interaction where "+
+                           "timestamp < %s GROUP BY reports_interaction.client_id) x, reports_client, "+
+                           "reports_interaction, reports_performance, reports_performance_interaction where "+
+                           "reports_client.id = x.client_id AND x.timestamp = reports_interaction.timestamp AND "+
+                           "x.client_id = reports_interaction.client_id AND reports_performance.id = "+
+                           "reports_performance_interaction.performance_id AND "+
+                           "reports_performance_interaction.interaction_id = reports_interaction.id", [maxdate])
+
+        results = {}
+        for row in cursor.fetchall():
+            try:
+                results[row[0]].__setitem__(row[1], row[2])
+            except KeyError:
+                results[row[0]] = {row[1]:row[2]}
+                                
+        return results
+    
+#performance metrics, models a performance-metric-item
 class Performance(models.Model):
     """Object representing performance data for any interaction."""
     interaction = models.ManyToManyField(Interaction, related_name="performance_items")
@@ -318,6 +318,8 @@ class Performance(models.Model):
         cursor = connection.cursor()
         cursor.execute('delete from reports_performance where not exists (select ri.id from reports_performance_interaction ri where ri.performance_id = reports_performance.id)')
         transaction.set_dirty()
+ 
+    objects = PerformanceManager()
  
 class InternalDatabaseVersion(models.Model):
     """Object that tell us to witch version is the database."""

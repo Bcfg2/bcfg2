@@ -1,29 +1,45 @@
 {% extends "base.html" %}
+
 {% block extra_header_info %}
-<script type="text/javascript" src="{% url Bcfg2.Server.Reports.reports.views.client_index %}../site_media/CalendarPopup.js"></script>
-<script language="JavaScript" type="text/javascript">var cal = new CalendarPopup();</script>
 {% endblock%}
-{% block title %}{{client.name}}{% endblock %}
+
+{% block title %}Bcfg2 - Manage Clients{% endblock %}
+
+{% block pagebanner %}Clients - Manage{% endblock %}
 
 {% block content %}
-<h2>Client Options Management page for {{client.name}}</h2><br/>
-<p>Client status detail page: <a href="{% url Bcfg2.Server.Reports.reports.views.client_detail client.name %}">{{client.name}}</a>.</p>
-<p>Hosts may be prevented from showing up in the reporting system if they have been retired, are no longer managed by bcfg2 :(, etc. </p>
-<b>Select deactivation date: </b>
-<div>
-<span class="mini-date">
-<b>Enter date or use calendar popup: </b>
-</span>
-<form name="timestamp-select" action="{% url Bcfg2.Server.Reports.reports.views.client_manage client.name %}" method="post">
-<span class="mini-date">
-<input type="text" name="date1" value="{{timestamp_date}}" size="10" />@
-<input type="text" name="time" value="{{timestamp_time}}" size="8" />
-<a href="#" onClick="cal.select(document.forms['timestamp-select'].date1,'anchor1','yyyy-MM-dd'); return false;"
-   name="anchor1" ID="anchor1">Calendar</a>
-<input type="submit" value="Submit">
-</span></form>
-<br/><br/><br/></div>
-<br/><br/>
-<p>{{message}}</p>
-
+<div class='client_list_box'>
+  {% if message %}
+    <div class="warningbox">{{ message }}</div>
+  {% endif %}
+{% if clients %}
+  <table cellpadding="3">
+    <tr id='table_list_header' class='listview'>
+      <td class='left_column'>Node</td>
+      <td class='right_column'>Expiration</td>
+      <td class='right_column_narrow'>Manage</td>
+    </tr>
+  {% for client in clients %}
+    <tr class='{% cycle listview,listview_alt %}'>
+      <td><span id="{{ client.name }}"> </span>
+          <span id="ttag-{{ client.name }}"> </span>
+          <span id="s-ttag-{{ client.name }}"> </span>
+          <a href="{% url reports_client_detail client.name %}">{{ client.name }}</a></td>
+      <td>{% firstof client.expiration 'Active' %}</td>
+      <td>
+          <form method="post" action="{% url reports_client_manage %}">
+            <div> {# here for no reason other then to validate #}
+              <input type="hidden" name="client_name" value="{{ client.name }}" />
+              <input type="hidden" name="client_action" value="{% if client.expiration %}unexpire{% else %}expire{% endif %}" />
+              <input type="submit" value="{% if client.expiration %}Activate{% else %}Expire Now{% endif %}" />
+            </div>
+          </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </table>
+  </div>
+{% else %}
+  <p>No client records are available.</p>
+{% endif %}
 {% endblock %}

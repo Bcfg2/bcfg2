@@ -1,0 +1,244 @@
+body {
+	margin: 0;
+	padding: 0;
+	color: #383838;
+        font-family: verdana,Arial,Helvetica;
+}
+a {
+	color: #383838;
+	text-decoration: none;
+}
+a:visited a:active {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+img {
+	border: 0;
+}
+
+#header {
+	width: 100%;
+	height: 115px;
+	position: relative;
+	color: #000000;
+        background-color: #F2F2F2;
+	border-bottom: 1px solid #98DBCC;
+}
+div.page_name {
+	color: #383838;
+	position: relative;
+	border-bottom: 1px solid #98DBCC;
+	border-left: 1px solid #98DBCC;
+}
+.page_name h1 {
+	font-size: 125%;
+	color: #20435C;
+	margin: 0;
+	padding: 6px 0 3px 10px;
+	font-weight: normal;
+}
+#footer {
+	text-align: center;
+	width: 100%;
+        color: #11303d;
+	border-top: 1px solid #98DBCC;
+	font-size: 12px;
+	padding: 5px 0 5px 0;
+}
+
+#document {
+}
+
+#sidemenucontainer {
+	float:left;
+	margin-left: -100%;
+	width: 200px;
+	color: #383838;
+}
+#sidemenu {
+        padding: 10px 5px 0 10px;
+	font-size: 90%;
+}
+#sidemenu a {
+	color: #383838;
+	text-decoration: none;
+}
+#sidemenu a:visited a:active {
+	color: #383838;
+}
+#sidemenu a:hover {
+	text-decoration: underline;
+}
+#sidemenu ul {
+	padding: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+ul.menu-level1 {
+	margin: 10px;
+	list-style-type: none;
+}
+ul.menu-level2 {
+	margin-left: 30px;
+	list-style-type: circle;
+}
+#contentwrapper {
+	margin: 0 0 0 200px;
+	background: #ffffff;
+	min-width: 750px;
+}
+#content {
+	float: left;
+	width: 100%;
+}
+#content a:hover {
+	text-decoration: underline;
+}
+#timepiece {
+	margin-right: 30px;
+	font-size: 90%;
+	position: absolute;
+	bottom: 0px;
+	right: 0px;
+}
+
+.dirty-lineitem {
+        background: #FFAAAA;
+}
+.dirty-lineitem a {
+        color: #10324b;
+        text-decoration: none;
+}
+.clean-lineitem {
+        background: #AAFFBB;
+}
+.clean-lineitem a {
+        color: #10324b;
+        text-decoration: none;
+}
+.modified-lineitem {
+	background: #FFEC8B;
+}
+.extra-lineitem {
+	background: #63B8FF;
+}
+
+table.grid-view {
+	border: solid 1px #98DBCC;
+	margin: 12px auto;
+	font-size: 90%;
+}
+.grid-view td {
+	padding: 2px 5px;
+}
+
+.listview {
+  padding-top:3px;
+  padding-bottom:3px;
+}
+.listview_alt {
+  background:#F2F2F2;
+  padding-top:3px;
+  padding-bottom:3px;
+}
+
+.detail_wrapper {
+        margin: 15px 0 15px 15px;
+}
+.detail_header {
+        border-bottom: 1px solid #98DBCC;
+        margin-bottom: 10px;
+}
+.detail_wrapper h2 {
+        font-size:125%;
+        font-weight:normal;
+        display: inline;
+}
+.detail_wrapper h3 {
+        font-size:100%;
+        font-weight:bold;
+        display: inline;
+}
+
+div.entry_list {
+        border: 1px solid #98DBCC;
+        margin-top: 5px;
+        width: 650px;
+}
+div.entry_list_head {
+        padding: 5px;
+}
+div.entry_list h3 {
+        font-size: 100%;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+        display: inline;
+}
+table.entry_list {
+        margin: 0;
+        padding: 5px 10px;
+        //border-top: solid 1px #98DBCC;
+        font-size: 90%;
+        width: 100%;
+}
+table.entry_list td {
+        padding-right: 10px;
+}
+td.entry_list_type {
+        width: 20%;
+}
+.entry_expand_tab {
+        float: right;
+        margin-top: -2px;
+}
+.entry_expand_tab:hover {
+        cursor: pointer;
+}
+
+div.note-box {
+	margin-left: 20px;
+	margin-right: 20px;
+	padding: 3px;
+        border: solid 1px #98DBCC;
+        font-size: 80%;
+	font-style: italic;
+	background: #FCF6CF;
+}
+div.client_list_box {
+	font-size: 85%;
+}
+div.recent_history_box {
+        font-size: 90%;
+	padding: 0 10px;
+}
+#table_list_header {
+  font-weight: bold;
+}
+#table_list_header td {
+  border-bottom:1px solid #98DBCC;
+}
+div.warningbox {
+	margin: 10px 0;
+	padding: 5px 10px;
+	border:1px solid #98DBCC;
+	background: #FFEC8B;
+	font-weight: bold;
+	font-size: 90%;
+}
+div.recent_history_wrapper {
+	border: none;
+}
+div.page_bar {
+	padding: 0 20px;
+}
+div.filter_bar {
+	padding: 0 20px;
+}
+span.nav_bar_current {
+	font-size: 90%;
+	border: 1px solid #98DBCC;
+	padding: 1px;
+}
