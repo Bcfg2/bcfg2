@@ -182,24 +182,24 @@ def client_manage(request):
     message = ''
     if request.method == 'POST':
         try:
-             client_name = request.POST.get('client_name', None)
-             client_action = request.POST.get('client_action', None)
-             client = Client.objects.get(name=client_name)
-             if client_action == 'expire':
-                 client.expiration = datetime.now();
-                 client.save()
-                 message = "Expiration for %s set to %s." % \
-                     (client_name, client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
-             elif client_action == 'unexpire':
-                 client.expiration = None;
-            client.save()
-                 message = "%s is now active." % client_name
-    else:
-                 message = "Missing action"
-         except Client.DoesNotExist:
-             if not client_name:
-                 client_name = "<none>"
-             message = "Couldn't find client \"%s\"" % client_name
+            client_name = request.POST.get('client_name', None)
+            client_action = request.POST.get('client_action', None)
+            client = Client.objects.get(name=client_name)
+            if client_action == 'expire':
+                client.expiration = datetime.now();
+                client.save()
+                message = "Expiration for %s set to %s." % \
+                    (client_name, client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
+            elif client_action == 'unexpire':
+                client.expiration = None;
+                client.save()
+                message = "%s is now active." % client_name
+            else:
+                message = "Missing action"
+        except Client.DoesNotExist:
+            if not client_name:
+                client_name = "<none>"
+            message = "Couldn't find client \"%s\"" % client_name
 
     return render_to_response('clients/manage.html',
         {'clients': Client.objects.order_by('name').all(), 'message': message},
@@ -222,10 +222,10 @@ def display_summary(request, timestamp=None):
             collected_data['stale'].append(node)
             # If stale check for uptime
         try:
-                if node.client.pings.latest().status == 'N':
-                    collected_data['pings'].append(node)
-            except Ping.DoesNotExist:
+            if node.client.pings.latest().status == 'N':
                 collected_data['pings'].append(node)
+        except Ping.DoesNotExist:
+            collected_data['pings'].append(node)
             continue
         if node.bad_entry_count() > 0:
             collected_data['bad'].append(node)
