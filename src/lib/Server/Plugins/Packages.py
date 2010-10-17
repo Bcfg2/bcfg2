@@ -470,7 +470,7 @@ class APTSource(Source):
 
 class PACSource(Source):
     basegroups = ['arch', 'parabola']
-    ptype = 'txz'
+    ptype = 'pacman'
 
     def __init__(self, basepath, url, version, arches, components, groups,
                  rawurl, blacklist, whitelist, recommended):
