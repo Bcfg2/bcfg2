@@ -424,7 +424,7 @@ packages. Currently, the way to manage them is using :ref:`BoundEntries
 .. code-block:: xml
 
     <Bundle name='base-packages'>
-            <BoundPackage name="gpg-pubkey" type="rpm">
+            <BoundPackage name="gpg-pubkey" type="yum" version="foo">
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
             </BoundPackage>
@@ -444,6 +444,8 @@ packages. Currently, the way to manage them is using :ref:`BoundEntries
             <Package name='vim-enhanced'/>
             <Package name='yum'/>
     </Bundle>
+
+.. note:: version="foo" is just a dummy attribute for the gpg-pubkey Package
 
 To actually push the gpg keys out via Bcfg2, you will need to manage the
 files as well. This can be done by adding Path entries for each of the
