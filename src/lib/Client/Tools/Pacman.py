@@ -8,10 +8,10 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
     '''Archlinux package support'''
     name = 'Pacman'
     __execs__ = ["/usr/bin/pacman"]
-    __handles__ = [('Package', 'txz')]
+    __handles__ = [('Package', 'pacman')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'pacman'
-    pkgtool = ("/usr/bin/pacman --needed --noconfirm --noprogressbar -S %s")
+    pkgtool = ("/usr/bin/pacman --needed --noconfirm --noprogressbar")
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
@@ -30,13 +30,18 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
 
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
+
+        print "VerifyPackage : " + entry.get('name')+ " : " + entry.get('version')
+
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                (entry.attrib['name']))
             return False
 
         if entry.attrib['name'] in self.installed:
-            if self.installed[entry.attrib['name']] == entry.attrib['version']:
+            if entry.attrib['version'] == 'auto':
+                return True
+            elif self.installed[entry.attrib['name']] == entry.attrib['version']:
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 #FIXME: We should be able to check this once
@@ -55,8 +60,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         '''Remove extra packages'''
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
-        self.cmd.run("/usr/bin/pacman --noconfirm --noprogressbar -R %s" % \
-                     " ".join(names))
+        self.cmd.run("%s --noconfirm --noprogressbar -R %s" % \
+                     (self.pkgtool, " ".join(names)))
         self.RefreshPackages()
         self.extra = self.FindExtraPackages()
 
@@ -72,9 +77,9 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
 
         try:
             self.logger.debug('Running Pacman.Install()')
-            print "AAAAA"
-            s = self.cmd.run("%s install" % self.pkgtool)
-            print "BBB: " + str(s)
+            print "running : %s -S %s" % (self.pkgtool, pkgline)
+            s = self.cmd.run("%s -S %s" % (self.pkgtool, pkgline))
+            print "pacman : " + str(s)
         except Exception as ex:
             print "error in cmd.run ", ex
 
