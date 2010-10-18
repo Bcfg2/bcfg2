@@ -18,7 +18,7 @@ def page_navigator(context):
     """
     fragment = dict()
     try:
-        path = context['request'].path
+        path = context['request'].META['PATH_INFO']
         total_pages = int(context['total_pages'])
         records_per_page = int(context['records_per_page'])
     except KeyError, e:
@@ -96,7 +96,7 @@ def page_navigator(context):
 @register.inclusion_tag('widgets/filter_bar.html', takes_context=True)
 def filter_navigator(context):
     try:
-        path = context['request'].path
+        path = context['request'].META['PATH_INFO']
         view, args, kwargs = resolve(path)
 
         # Strip any page limits and numbers
@@ -179,7 +179,7 @@ class AddUrlFilter(template.Node):
     def render(self, context):
         link = '#'
         try:
-            path = context['request'].path
+            path = context['request'].META['PATH_INFO']
             view, args, kwargs = resolve(path)
             filter_value = self.filter_value.resolve(context, True)
             if filter_value:
