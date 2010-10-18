@@ -46,7 +46,7 @@ def timeview(fn):
                 if cal_date.find(' ') > -1:
                     fmt += " %H:%M"
                 timestamp = datetime(*strptime(cal_date, fmt)[0:6])
-                view, args, kw = resolve(request.path)
+                view, args, kw = resolve(request.META['PATH_INFO'])
                 kw['year'] = "%0.4d" % timestamp.year
                 kw['month'] = "%02.d" % timestamp.month
                 kw['day'] = "%02.d" % timestamp.day
@@ -367,7 +367,7 @@ def prepare_paginated_list(request, context, paged_list, page=1, max_results=25)
     if page > total_pages:
         # If we passed beyond the end send back
         try:
-            view, args, kwargs = resolve(request.path)
+            view, args, kwargs = resolve(request.META['PATH_INFO'])
             kwargs['page_number'] = total_pages
             raise PaginationError, HttpResponseRedirect( reverse(view, kwargs=kwargs) )
         except (Resolver404, NoReverseMatch, ValueError):
