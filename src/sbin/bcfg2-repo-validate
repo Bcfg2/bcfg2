@@ -88,14 +88,14 @@ if __name__ == '__main__':
     # (as defined in doc/server/configurationentries)
     # TODO: See if it is possible to do this in the schema instead
     required_configuration_attrs = {
-            'device':['name', 'owner', 'group', 'dev_type'],
-            'directory':['name', 'owner', 'group', 'perms'],
-            'file':['name', 'owner', 'group', 'perms'],
-            'hardlink':['name', 'to'],
-            'symlink':['name', 'to'],
-            'ignore':['name'],
-            'nonexist':['name'],
-            'permissions':['name', 'owner', 'group', 'perms']}
+        'device': ['name', 'owner', 'group', 'dev_type'],
+        'directory': ['name', 'owner', 'group', 'perms'],
+        'file': ['name', 'owner', 'group', 'perms'],
+        'hardlink': ['name', 'to'],
+        'symlink': ['name', 'to'],
+        'ignore': ['name'],
+        'nonexist': ['name'],
+        'permissions': ['name', 'owner', 'group', 'perms']}
     for rfile in rules_list:
         try:
             xdata = lxml.etree.parse(rfile)
@@ -110,6 +110,11 @@ if __name__ == '__main__':
                                      + ['type'])
             except KeyError:
                 continue
+            if 'dev_type' in required_attrs:
+                dev_type = posixpath.get('dev_type')
+                if dev_type in ['block', 'char']:
+                    # check if major/minor are specified
+                    required_attrs |= set(['major', 'minor'])
             if pathset.issuperset(required_attrs):
                 continue
             else:
@@ -146,16 +151,16 @@ if __name__ == '__main__':
             else:
                 pset.add(ptuple)
 
-    filesets = {'metadata':(metadata_list, "%s/metadata.xsd"),
-                'clients':(clients_list, "%s/clients.xsd"),
-                'info':(info_list, "%s/info.xsd"),
-                'bundle':(bundle_list, "%s/bundle.xsd"),
-                'pkglist':(pkg_list, "%s/pkglist.xsd"),
-                'base':(base_list, "%s/base.xsd"),
-                'rules':(rules_list, "%s/rules.xsd"),
-                'imageinfo':(imageinfo_list, "%s/report-configuration.xsd"),
-                'services':(services_list, "%s/services.xsd"),
-                'deps':(deps_list, "%s/deps.xsd"),
+    filesets = {'metadata': (metadata_list, "%s/metadata.xsd"),
+                'clients': (clients_list, "%s/clients.xsd"),
+                'info': (info_list, "%s/info.xsd"),
+                'bundle': (bundle_list, "%s/bundle.xsd"),
+                'pkglist': (pkg_list, "%s/pkglist.xsd"),
+                'base': (base_list, "%s/base.xsd"),
+                'rules': (rules_list, "%s/rules.xsd"),
+                'imageinfo': (imageinfo_list, "%s/report-configuration.xsd"),
+                'services': (services_list, "%s/services.xsd"),
+                'deps': (deps_list, "%s/deps.xsd"),
                 'decisions': (dec_list, "%s/decisions.xsd"),
                 'packages': (pkgcfg_list, "%s/packages.xsd"),
                 'grouppatterns': (gp_list, "%s/grouppatterns.xsd"),

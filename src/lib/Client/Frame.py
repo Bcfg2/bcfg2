@@ -110,20 +110,6 @@ class Frame:
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.name for tool in self.tools])
         if not self.dryrun and not self.setup['bundle']:
-            for cfile in [cfl for cfl in config.findall(".//ConfigFile") \
-                          if cfl.get('name') in self.__important__]:
-                tl = [t for t in self.tools if t.handlesEntry(cfile) \
-                     and t.canVerify(cfile)]
-                if tl:
-                    if not tl[0].VerifyConfigFile(cfile, []):
-                        if self.setup['interactive'] and not \
-                               promptFilter("Install %s: %s? (y/N):", [cfile]):
-                            continue
-                        try:
-                            self.states[cfile] = tl[0].InstallConfigFile(cfile)
-                        except:
-                            self.logger.error("Unexpected tool failure",
-                                              exc_info=1)
             for cfile in [cfl for cfl in config.findall(".//Path") \
                           if cfl.get('name') in self.__important__ and \
                              cfl.get('type') == 'file']:

@@ -172,8 +172,7 @@ class Tool:
         '''Build a list of potentially modified POSIX paths for this entry'''
         return [entry.get('name') for struct in self.config.getchildren() \
                 for entry in struct.getchildren() \
-                if entry.tag in ['ConfigFile', 'SymLink', 'Directory',
-                                 'Permissions', 'Ignore', 'Path']]
+                if entry.tag in ['Ignore', 'Path']]
 
     def gatherCurrentData(self, entry):
         """Default implementation of the information gathering routines."""
