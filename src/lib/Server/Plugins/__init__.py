@@ -22,7 +22,6 @@ __all__ = [
            'Properties',
            'Probes',
            'Pkgmgr',
-           'POSIXCompat',
            'Rules',
            'SSHbase',
            'Snapshots',

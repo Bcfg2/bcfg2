@@ -157,7 +157,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         self.__important__ = self.__important__ + \
                              [entry.get('name') for struct in config \
                               for entry in struct \
-                              if entry.tag in ['Path', 'ConfigFile'] and \
+                              if entry.tag in == 'Path' and \
                               (entry.get('name').startswith('/etc/yum.d') \
                               or entry.get('name').startswith('/etc/yum.repos.d')) \
                               or entry.get('name') == '/etc/yum.conf']

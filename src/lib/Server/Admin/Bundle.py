@@ -91,7 +91,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                     tree = lxml.etree.parse(bundle_list[int(lineno)])
                     #Prints bundle content
                     #print lxml.etree.tostring(tree)
-                    names = ['Action', 'ConfigFile', 'Directory', 'Package', 'Permission', 'Service', 'SymLink']
+                    names = ['Action', 'Package', 'Path', 'Service']
                     for name in names:
                         for node in tree.findall("//" + name):
                     	    print "%s:\t%s" % (name, node.attrib["name"])

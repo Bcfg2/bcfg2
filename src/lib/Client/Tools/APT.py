@@ -55,7 +55,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                               '%s/apt/apt.conf' % etc_path,
                               '%s/dpkg/dpkg.cfg' % etc_path] + \
                              [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag in ['Path', 'ConfigFile'] and \
+                              if entry.tag == 'Path' and \
                               entry.get('name').startswith('%s/apt/sources.list' % etc_path)]
         self.nonexistent = [entry.get('name') for struct in config for entry in struct \
                               if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
