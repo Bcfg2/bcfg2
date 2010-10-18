@@ -81,7 +81,9 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.info("Installing Service %s" % (entry.get('name')))
         pass1 = True
         if entry.get('status') == 'off':
-            rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')) + " --level 0123456")[0]
+            rc = self.cmd.run(rcmd % (entry.get('name'),
+                                      entry.get('status')) + \
+                 " --level 0123456")[0]
             pass1 = rc == 0
         rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')))[0]
         return pass1 and rc == 0
@@ -93,5 +95,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
-        return [Bcfg2.Client.XML.Element('Service', type='chkconfig', name=name) \
+        return [Bcfg2.Client.XML.Element('Service',
+                                         type='chkconfig',
+                                         name=name) \
                 for name in allsrv if name not in specified]

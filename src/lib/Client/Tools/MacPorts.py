@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
 
+
 class MacPorts(Bcfg2.Client.Tools.PkgTool):
     """macports package support."""
     name = 'MacPorts'

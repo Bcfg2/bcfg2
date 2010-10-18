@@ -87,5 +87,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
-        return [Bcfg2.Client.XML.Element('Service', type='rc-update', name=name) \
+        return [Bcfg2.Client.XML.Element('Service',
+                                         type='rc-update',
+                                         name=name) \
                 for name in allsrv if name not in specified]

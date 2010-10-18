@@ -3,23 +3,34 @@ __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
 
-# <Action timing='pre|post|both' name='name' command='cmd text' when='always|modified'
-#         status='ignore|check'/>
-# <PostInstall name='foo'/>
-#   => <Action timing='post' when='modified' name='n' command='foo' status='ignore'/>
+"""
+<Action timing='pre|post|both'
+        name='name'
+        command='cmd text'
+        when='always|modified'
+        status='ignore|check'/>
+<PostInstall name='foo'/>
+  => <Action timing='post'
+             when='modified'
+             name='n'
+             command='foo'
+             status='ignore'/>
+"""
+
 
 class Action(Bcfg2.Client.Tools.Tool):
     """Implement Actions"""
     name = 'Action'
     __handles__ = [('PostInstall', None), ('Action', None)]
     __req__ = {'PostInstall': ['name'],
-               'Action':['name', 'timing', 'when', 'command', 'status']}
+               'Action': ['name', 'timing', 'when', 'command', 'status']}
 
     def RunAction(self, entry):
         """This method handles command execution and status return."""
         if not self.setup['dryrun']:
             if self.setup['interactive']:
-                prompt = 'Run Action %s, %s: (y/N): ' % (entry.get('name'), entry.get('command'))
+                prompt = ('Run Action %s, %s: (y/N): ' %
+                          (entry.get('name'), entry.get('command')))
                 if raw_input(prompt) not in ['y', 'Y']:
                     return False
             if self.setup['servicemode'] == 'build':

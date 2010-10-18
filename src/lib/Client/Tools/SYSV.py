@@ -2,7 +2,10 @@
 """This provides bcfg2 support for Solaris SYSV packages."""
 __revision__ = '$Revision$'
 
-import tempfile, Bcfg2.Client.Tools, Bcfg2.Client.XML
+import tempfile
+
+import Bcfg2.Client.Tools
+import Bcfg2.Client.XML
 
 
 noask = '''
@@ -18,6 +21,7 @@ conflict=nocheck
 action=nocheck
 basedir=default
 '''
+
 
 class SYSV(Bcfg2.Client.Tools.PkgTool):
     """Solaris SYSV package support."""

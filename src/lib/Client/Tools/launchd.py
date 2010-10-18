@@ -2,20 +2,23 @@
 __revision__ = '$Revision$'
 
 import os
-import Bcfg2.Client.Tools
 import popen2
+
+import Bcfg2.Client.Tools
+
 
 class launchd(Bcfg2.Client.Tools.Tool):
     """Support for Mac OS X launchd services."""
     __handles__ = [('Service', 'launchd')]
     __execs__ = ['/bin/launchctl', '/usr/bin/defaults']
     name = 'launchd'
-    __req__ = {'Service':['name', 'status']}
+    __req__ = {'Service': ['name', 'status']}
 
     '''
     Currently requires the path to the plist to load/unload,
     and Name is acually a reverse-fqdn (or the label).
     '''
+
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
 
@@ -77,7 +80,6 @@ class launchd(Bcfg2.Client.Tools.Tool):
             return 'on'
         return False
 
-
     def InstallService(self, entry):
         """Enable or disable launchd item."""
         name = entry.get('name')
@@ -95,18 +97,19 @@ class launchd(Bcfg2.Client.Tools.Tool):
         """Remove Extra launchd entries."""
         pass
 
-
-
     def FindExtra(self):
         """Find Extra launchd services."""
         try:
-            allsrv =  self.cmd.run("/bin/launchctl list")[1]
+            allsrv = self.cmd.run("/bin/launchctl list")[1]
         except IndexError:
             allsrv = []
 
         [allsrv.remove(svc) for svc in [entry.get("name") for entry
                                         in self.getSupportedEntries()] if svc in allsrv]
-        return [Bcfg2.Client.XML.Element("Service", type='launchd', name=name, status='on') for name in allsrv]
+        return [Bcfg2.Client.XML.Element("Service",
+                                         type='launchd',
+                                         name=name,
+                                         status='on') for name in allsrv]
 
     def BundleUpdated(self, bundle, states):
         """Reload launchd plist."""
@@ -126,4 +129,3 @@ class launchd(Bcfg2.Client.Tools.Tool):
                     #only if necessary....
                     self.cmd.run("/bin/launchctl stop %s" % name)
                     self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))
-
