@@ -23,17 +23,17 @@ Installation
 For details about the installation of Bcfg2 please refer to the 
 following pages in the Bcfg2 wiki.
 
-* Prerequisites: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Prereqs
-* Download: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
-* Installation: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Install
+* Prerequisites: http://bcfg2.org/wiki/Prereqs
+* Download: http://bcfg2.org/wiki/Download
+* Installation: http://bcfg2.org/wiki/Install
 
 Need help
 ---------
 
-* FAQ: http://trac.mcs.anl.gov/projects/bcfg2/wiki/FAQ
+* FAQ: http://bcfg2.org/wiki/FAQ
 * IRC: #bcfg2 on chat.freenode.net
 * Mailing list: https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
-* Bug tracker: http://trac.mcs.anl.gov/projects/bcfg2/report
+* Bug tracker: http://bcfg2.org/report
 
 Documentation
 -------------
@@ -41,8 +41,8 @@ Documentation
 A lot of documentation is available in the Bcfg2 wiki and the Bcfg2
 manual.
 
-Wiki: http://trac.mcs.anl.gov/projects/bcfg2/wiki/
-Manual: http://doc.bcfg2.fourkitchens.com/
+Wiki: http://bcfg2.org/wiki/
+Manual: http://docs.bcfg2.org/
 
 
 Bcfg2 is licensed under BSD, for more details check COPYING.
