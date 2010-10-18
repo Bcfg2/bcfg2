@@ -4,9 +4,10 @@ __revision__ = '$Revision$'
 import re
 import Bcfg2.Client.Tools
 
+
 class Portage(Bcfg2.Client.Tools.PkgTool):
-    """The Gentoo toolset implements package and service operations and inherits
-    the rest from Toolset.Toolset."""
+    """The Gentoo toolset implements package and service operations and
+    inherits the rest from Toolset.Toolset."""
     name = 'Portage'
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
     __handles__ = [('Package', 'ebuild')]
@@ -47,8 +48,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and \
                                 entry.get('verify', 'true') == 'true':
-                    output = self.cmd.run \
-                                  ("/usr/bin/equery check '=%s-%s' 2>&1 |grep '!!!' | awk '{print $2}'" \
+                    output = self.cmd.run("/usr/bin/equery check '=%s-%s' 2>&1 |grep '!!!' | awk '{print $2}'" \
                                     % (entry.get('name'), entry.get('version')))[1]
                     if [filename for filename in output \
                                     if filename not in modlist]:

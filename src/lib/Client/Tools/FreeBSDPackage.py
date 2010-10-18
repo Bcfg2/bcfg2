@@ -8,6 +8,7 @@ __revision__ = '$Rev$'
 import re
 import Bcfg2.Client.Tools
 
+
 class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
     """The FreeBSD toolset implements package operations and inherits
     the rest from Toolset.Toolset."""
@@ -24,7 +25,7 @@ class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
         pattern = re.compile('(.*)-(\d.*)')
         for pkg in packages:
             if pattern.match(pkg):
-                name =    pattern.match(pkg).group(1)
+                name = pattern.match(pkg).group(1)
                 version = pattern.match(pkg).group(2)
                 self.installed[name] = version
 

@@ -2,7 +2,9 @@
 """This provides bcfg2 support for blastwave"""
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools.SYSV, tempfile
+import tempfile
+import Bcfg2.Client.Tools.SYSV
+
 
 class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     """Support for Blastwave packages"""
@@ -27,7 +29,6 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     # Install comes from Bcfg2.Client.Tools.PkgTool
     # Extra comes from Bcfg2.Client.Tools.Tool
     # Remove comes from Bcfg2.Client.Tools.SYSV
-
     def FindExtraPackages(self):
         """Pass through to null FindExtra call."""
         return []

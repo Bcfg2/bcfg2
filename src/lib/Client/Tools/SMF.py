@@ -1,15 +1,18 @@
 """SMF support for Bcfg2"""
 __revision__ = '$Revision$'
 
-import glob, os
+import glob
+import os
+
 import Bcfg2.Client.Tools
+
 
 class SMF(Bcfg2.Client.Tools.SvcTool):
     """Support for Solaris SMF Services."""
     __handles__ = [('Service', 'smf')]
     __execs__ = ['/usr/sbin/svcadm', '/usr/bin/svcs']
     name = 'SMF'
-    __req__ = {'Service':['name', 'status']}
+    __req__ = {'Service': ['name', 'status']}
     __ireq__ = {'Service': ['name', 'status', 'FMRI']}
 
     def get_svc_command(self, service, action):
@@ -53,7 +56,8 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                                   (entry.get("FMRI"), ":".join(files)))
                 return entry.get('status') == 'on'
             else:
-                self.logger.debug("No service matching %s" % (entry.get("FMRI")))
+                self.logger.debug("No service matching %s" % \
+                                  (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
             srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % \
@@ -79,7 +83,8 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                     os.rename(loc, loc.replace('/S', '/DISABLED.S'))
                     return True
                 except OSError:
-                    self.logger.error("Failed to rename init script %s" % (loc))
+                    self.logger.error("Failed to rename init script %s" % \
+                                      (loc))
                     return False
             else:
                 cmdrc = self.cmd.run("/usr/sbin/svcadm disable %s" % \
@@ -94,8 +99,8 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                     os.rename(loc.replace('/S', '/DISABLED.S'), loc)
                     cmdrc = 0
                 except OSError:
-                    self.logger.debug("Failed to rename %s to %s" \
-                                      % (loc.replace('/S', '/DISABLED.S'), loc))
+                    self.logger.debug("Failed to rename %s to %s" % \
+                                      (loc.replace('/S', '/DISABLED.S'), loc))
                     cmdrc = 1
             else:
                 srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" %

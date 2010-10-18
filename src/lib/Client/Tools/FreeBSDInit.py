@@ -8,6 +8,7 @@ __revision__ = '$Rev$'
 import os
 import Bcfg2.Client.Tools
 
+
 class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
     """FreeBSD service support for Bcfg2."""
     name = 'FreeBSDInit'

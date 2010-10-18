@@ -4,7 +4,6 @@ __revision__ = '$Revision$'
 import ConfigParser
 import copy
 import os.path
-import sys
 import yum
 import yum.packages
 import yum.rpmtrans
@@ -20,6 +19,7 @@ try:
     set
 except NameError:
     from sets import Set as set
+
 
 def build_yname(pkgname, inst):
     """Build yum appropriate package name."""
@@ -39,6 +39,7 @@ def build_yname(pkgname, inst):
             d['arch'] = inst.get('arch')
     return d
 
+
 def short_yname(nevra):
     d = nevra.copy()
     if 'version' in d:
@@ -49,16 +50,18 @@ def short_yname(nevra):
         del d['release']
     return d
 
+
 def nevraString(p):
     if isinstance(p, yum.packages.PackageObject):
         return str(p)
     else:
         ret = ""
-        for i, j in [('epoch','%s:'), ('name','%s'), ('version','-%s'), 
-                     ('release','-%s'), ('arch','.%s')]:
+        for i, j in [('epoch', '%s:'), ('name', '%s'), ('version', '-%s'),
+                     ('release', '-%s'), ('arch', '.%s')]:
             if i in p:
                 ret = "%s%s" % (ret, j % p[i])
         return ret
+
 
 class Parser(ConfigParser.ConfigParser):
 
@@ -73,6 +76,7 @@ class Parser(ConfigParser.ConfigParser):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             return default
 
+
 class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
     """We subclass the default RPM transaction callback so that we
        can control Yum's verbosity and pipe it through the right logger."""
@@ -83,11 +87,11 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
         self.state = None
         self.package = None
 
-    def event(self, package, action, te_current, te_total, 
+    def event(self, package, action, te_current, te_total,
               ts_current, ts_total):
-        """ 
+        """
         @param package: A yum package object or simple string of a package name
-        @param action: A yum.constant transaction set state or in the obscure 
+        @param action: A yum.constant transaction set state or in the obscure
                        rpm repackage case it could be the string 'repackaging'
         @param te_current: Current number of bytes processed in the transaction
                            element being processed
@@ -113,6 +117,7 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
     def errorlog(self, msg):
         """Deal with error reporting."""
         self.logger.error(msg)
+
 
 class YumDisplay(yum.callbacks.ProcessTransBaseCallback):
     """Class to handle display of what step we are in the Yum transaction
@@ -141,10 +146,10 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
     def __init__(self, logger, setup, config):
         self.yb = yum.YumBase()
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.ignores = [ entry.get('name') for struct in config \
-                         for entry in struct \
-                         if entry.tag == 'Path' and \
-                         entry.get('type') == 'ignore' ]
+        self.ignores = [entry.get('name') for struct in config \
+                        for entry in struct \
+                        if entry.tag == 'Path' and \
+                        entry.get('type') == 'ignore']
         self.instance_status = {}
         self.extra_instances = []
         self.modlists = {}
@@ -168,7 +173,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         except yum.Errors.YumBaseError, e:
             self.logger.error("YUMng error: %s" % e)
             raise Bcfg2.Client.Tools.toolInstantiationError
- 
+
         yup = self.yb.doPackageLists(pkgnarrow='updates')
         if hasattr(self.yb.rpmdb, 'pkglist'):
             yinst = self.yb.rpmdb.pkglist
@@ -201,7 +206,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 in truth
         self.doInstall = CP.get(self.name, "installed_action",
                 "install").lower() == "install"
-        self.doUpgrade = CP.get(self.name, 
+        self.doUpgrade = CP.get(self.name,
                 "version_fail_action", "upgrade").lower() == "upgrade"
         self.doReinst = CP.get(self.name, "verify_fail_action",
                 "reinstall").lower() == "reinstall"
@@ -254,7 +259,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
             for attrib in list(entry.attrib.keys()):
                 instance.attrib[attrib] = entry.attrib[attrib]
-            instances = [ instance ]
+            instances = [instance]
 
         return instances
 
@@ -287,18 +292,20 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         else:
             results = verify(po)
             self.verifyCache[key] = results
-        if not rpmUtils.arch.isMultiLibArch(): return results
+        if not rpmUtils.arch.isMultiLibArch():
+            return results
 
         # Okay deal with a buggy yum multilib and verify
         packages = self.yb.rpmdb.searchNevra(name=po.name, epoch=po.epoch,
                 ver=po.version, rel=po.release) # find all arches of pkg
-        if len(packages) == 1: 
+        if len(packages) == 1:
             return results      # No mathcing multilib packages
 
         files = set(po.returnFileEntries())   # Will be the list of common fns
         common = {}
         for p in packages:
-            if p != po: files = files & set(p.returnFileEntries())
+            if p != po:
+                files = files & set(p.returnFileEntries())
         for p in packages:
             k = (p.name, p.epoch, p.version, p.release, p.arch)
             self.logger.debug("Multilib Verify: comparing %s to %s" \
@@ -320,10 +327,11 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 # this fn had verify problems in all but one of the multilib
                 # packages.  That means its correct in the package that's
                 # "on top."  Therefore, this is a fake verify problem.
-                if fn in results: del results[fn]
+                if fn in results:
+                    del results[fn]
 
         return results
-        
+
     def RefreshPackages(self):
         """
             Creates self.installed{} which is a dict of installed packages.
@@ -407,12 +415,13 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 virtPkg = True
                 self.logger.info("%s appears to be provided by:" \
                                  % entry.get('name'))
-                for p in POs: self.logger.info("  %s" % p)
+                for p in POs:
+                    self.logger.info("  %s" % p)
 
         for inst in instances:
             nevra = build_yname(entry.get('name'), inst)
             snevra = short_yname(nevra)
-            if nevra in packageCache: 
+            if nevra in packageCache:
                 continue   # Ignore duplicate instances
             else:
                 packageCache.append(nevra)
@@ -436,15 +445,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 qtext_versions.append("I(%s)" % nevra)
                 continue
 
-            if not pkg_checks: continue
+            if not pkg_checks:
+                continue
 
             # Check EVR
             if virtPkg:
                 self.logger.debug("  Not checking version for virtual package")
-                _POs = [ po for po in POs ]  # Make a copy
+                _POs = [po for po in POs]  # Make a copy
             elif entry.get('name') == 'gpg-pubkey':
-                _POs = [ p for p in POs if p.version == nevra['version'] \
-                         and p.release == nevra['release'] ]
+                _POs = [p for p in POs if p.version == nevra['version'] \
+                        and p.release == nevra['release']]
             else:
                 _POs = self.yb.rpmdb.searchNevra(**snevra)
             if len(_POs) == 0:
@@ -452,7 +462,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
                 self.logger.info("  Wrong version installed.  "\
-                        "Want %s, but have %s" % (nevraString(nevra), 
+                        "Want %s, but have %s" % (nevraString(nevra),
                                                   nevraString(POs[0])))
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
@@ -485,7 +495,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                       [ig.get('name') for ig in inst.findall('Ignore')] + \
                       self.ignores
             for fn, probs in vResult.items():
-                if fn in modlist: 
+                if fn in modlist:
                     self.logger.debug("  %s in modlist, skipping" % fn)
                     continue
                 if fn in ignores:
@@ -499,18 +509,19 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                         tmp.append((p.type, p.message))
                 if tmp != []:
                     stat['verify'][fn] = tmp
-            
+
             if stat['verify'] != {}:
                 stat['verify_fail'] = True
                 package_fail = True
                 self.logger.debug("  Verify Problems:")
                 for fn, probs in stat['verify'].items():
                     self.logger.debug("    %s" % fn)
-                    for p in probs: self.logger.debug("      %s: %s" % p)
+                    for p in probs:
+                        self.logger.debug("      %s: %s" % p)
 
         if len(POs) > 0:
             # Is this an install only package?  We just look at the first one
-            provides = set([ p[0] for p in POs[0].provides ] + [ POs[0].name ])
+            provides = set([p[0] for p in POs[0].provides] + [POs[0].name])
             install_only = len(set(self.installOnlyPkgs) & provides) > 0
         else:
             install_only = False
@@ -530,7 +541,6 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         return not package_fail
 
-
     def FindExtraInstances(self, entry, POs):
         """
             Check for installed instances that are not in the config.
@@ -538,12 +548,13 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             are no Instances to remove.
 
         """
-        if len(POs) == 0: return None
+        if len(POs) == 0:
+            return None
         name = entry.get('name')
-        extra_entry = Bcfg2.Client.XML.Element('Package', name=name, 
+        extra_entry = Bcfg2.Client.XML.Element('Package', name=name,
                                                type=self.pkgtype)
         instances = self._buildInstances(entry)
-        _POs = [ p for p in POs ] # Shallow copy
+        _POs = [p for p in POs] # Shallow copy
 
         # Algorythm is sensitive to duplicates, check for them
         checked = []
@@ -565,19 +576,19 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                     epoch=p.epoch, name=p.name, version=p.version,
                     release=p.release, arch=p.arch)
 
-        if _POs == []: 
+        if _POs == []:
             return None
         else:
             return extra_entry
 
     def FindExtraPackages(self):
         """Find extra packages."""
-        packages = [ e.get('name') for e in self.getSupportedEntries() ]
+        packages = [e.get('name') for e in self.getSupportedEntries()]
         extras = []
 
         for p in self.installed.keys():
             if p not in packages:
-                entry = Bcfg2.Client.XML.Element('Package', name=p, 
+                entry = Bcfg2.Client.XML.Element('Package', name=p,
                                                  type=self.pkgtype)
                 for i in self.installed[p]:
                     inst = Bcfg2.Client.XML.SubElement(entry, 'Instance', \
@@ -608,16 +619,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         rel = yum.misc.keyIdToRPMVer(gpg['timestamp'])
         if not (ver == inst.get('version') and rel == inst.get('release')):
             self.logger.info("GPG key file %s does not match gpg-pubkey-%s-%s"\
-                             % (key_file, inst.get('version'), 
+                             % (key_file, inst.get('version'),
                                 inst.get('release')))
             return False
 
-        if not yum.misc.keyInstalled(ts, gpg['keyid'], 
+        if not yum.misc.keyInstalled(ts, gpg['keyid'],
                                      gpg['timestamp']) == 0:
             result = ts.pgpImportPubkey(yum.misc.procgpgkey(rawkey))
         else:
             self.logger.debug("gpg-pubkey-%s-%s already installed"\
-                              % (inst.get('version'), 
+                              % (inst.get('version'),
                                  inst.get('release')))
             return True
 

@@ -44,6 +44,7 @@ def calcPerms(initial, perms):
                 tempperms |= perm
     return tempperms
 
+
 def normUid(entry):
     """
        This takes a user name or uid and
@@ -57,6 +58,7 @@ def normUid(entry):
     except (OSError, KeyError):
         log.error('UID normalization failed for %s' % (entry.get('name')))
         return False
+
 
 def normGid(entry):
     """
@@ -75,6 +77,7 @@ def normGid(entry):
 text_chars = "".join([chr(y) for y in range(32, 127)] + list("\n\r\t\b"))
 notrans = string.maketrans("", "")
 
+
 def isString(strng):
     """Returns true if a string contains no binary chars."""
     if "\0" in strng:
@@ -84,6 +87,7 @@ def isString(strng):
         return True
 
     return len(strng.translate(notrans, text_chars)) == 0
+
 
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""
@@ -161,7 +165,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 else:
                     os.unlink(entry.get('name'))
             except OSError:
-                self.logger.info("Symlink %s cleanup failed" % (entry.get('name')))
+                self.logger.info("Symlink %s cleanup failed" %\
+                                 (entry.get('name')))
         try:
             os.symlink(entry.get('to'), entry.get('name'))
             return True
@@ -205,7 +210,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         pruneTrue = True
         ex_ents = []
         if entry.get('prune', 'false') == 'true' \
-               and (entry.tag == 'Directory' or entry.get('type') == 'directory'):
+               and (entry.tag == 'Directory' or
+                    entry.get('type') == 'directory'):
                # FIXME: need to verify both old and new POSIX types
             try:
                 entries = ['/'.join([entry.get('name'), ent]) \
@@ -217,7 +223,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                       entry.get('name'))
                     self.logger.debug(ex_ents)
                     nqtext = entry.get('qtext', '') + '\n'
-                    nqtext += "Directory %s contains extra entries:" % entry.get('name')
+                    nqtext += "Directory %s contains extra entries:" % \
+                              entry.get('name')
                     nqtext += ":".join(ex_ents)
                     entry.set('qtest', nqtext)
                     [entry.append(XML.Element('Prune', path=x)) for x in ex_ents]

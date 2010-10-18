@@ -1,10 +1,11 @@
 """This is the Bcfg2 support for OpenSolaris packages."""
 __revision__ = '$Revision$'
 
-import Bcfg2.Client.Tools
-
 import pkg.client.image as image
 import pkg.client.progress as progress
+
+import Bcfg2.Client.Tools
+
 
 class IPS(Bcfg2.Client.Tools.PkgTool):
     """The IPS driver implements OpenSolaris package operations."""

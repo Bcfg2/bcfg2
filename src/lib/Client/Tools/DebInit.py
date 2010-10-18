@@ -1,15 +1,17 @@
 """Debian Init Support for Bcfg2"""
 __revision__ = '$Revision$'
 
-import glob, os, re
+import glob
+import os
+import re
 import Bcfg2.Client.Tools
-
 
 # Debian squeeze and beyond uses a dependecy based boot sequence
 DEBIAN_OLD_STYLE_BOOT_SEQUENCE = (
     'etch', '4.0',
     'lenny', '5.0', '5.0.1', '5.0.2', '5.0.3', '5.0.4', '5.0.4', '5.0.5',
     )
+
 
 class DebInit(Bcfg2.Client.Tools.SvcTool):
     """Debian Service Support for Bcfg2."""
@@ -35,7 +37,9 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 start_sequence = int(entry.get('sequence'))
                 kill_sequence = 100 - start_sequence
             else:
-                self.logger.warning("Your debian version boot sequence is dependency based \"sequence\" attribute wil be ignored.")
+                self.logger.warning("Your debian version boot sequence is "
+                                    "dependency based \"sequence\" attribute "
+                                    "will be ignored.")
         else:
             start_sequence = None
 
