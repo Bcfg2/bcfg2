@@ -29,3 +29,12 @@ Description: Configuration management server
  for clients bound by client profiles.
  bcfg2-server is the server for bcfg2 clients, which generates configuration
  sets and stores statistics of client system states.
+
+Package: bcfg2-web
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}, bcfg2 (= ${binary:Version}), python-django, libapache2-mod-wsgi
+XB-Python-Version: >= 2.4
+Description: Configuration management web interface
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2-web is the reporting server for bcfg2.
