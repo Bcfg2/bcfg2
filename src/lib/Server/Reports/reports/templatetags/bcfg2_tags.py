@@ -237,3 +237,38 @@ def sortwell(value):
     configItems.sort(lambda x,y: cmp(x.entry.kind, y.entry.kind))
     return configItems
 
+class MediaTag(template.Node):
+    def __init__(self, filter_value):
+        self.filter_value = filter_value
+
+    def render(self, context):
+        base = context['MEDIA_URL']
+        try:
+           request = context['request']
+           try:
+               base = request.environ['bcfg2.media_url']
+           except:
+               if request.path != request.META['PATH_INFO']:
+                   offset = request.path.find(request.META['PATH_INFO'])
+                   if offset > 0:
+                       base = "%s/%s" % (request.path[:offset], \
+                               context['MEDIA_URL'].strip('/'))
+        except:
+            pass
+        return "%s/%s" % (base, self.filter_value)
+
+@register.tag
+def to_media_url(parser, token):
+    """
+    Return a url relative to the media_url.
+
+    {% to_media_url /bcfg2.css %}
+    """
+    try:
+        tag_name, filter_value = token.split_contents()
+        filter_value = parser.compile_filter(filter_value)
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+
+    return MediaTag(filter_value)
+
