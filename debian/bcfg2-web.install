@@ -1,2 +1,3 @@
 misc/apache/bcfg2.conf etc/apache2/conf.d/
+debian/tmp/usr/share/bcfg2/reports.wsgi
 debian/tmp/usr/share/bcfg2/site_media/*

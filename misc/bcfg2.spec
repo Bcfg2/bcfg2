@@ -158,7 +158,7 @@ deployment strategies.
 %{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
-%{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/bcfg2.conf
+%{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
@@ -209,9 +209,10 @@ deployment strategies.
 %files -n bcfg2-web
 %defattr(-,root,root,-)
 
+%{_datadir}/bcfg2/reports.wsgi
 %{_datadir}/bcfg2/site_media
 
-%config(noreplace) %{apache_conf}/conf.d/bcfg2.conf
+%config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %changelog
 * Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
