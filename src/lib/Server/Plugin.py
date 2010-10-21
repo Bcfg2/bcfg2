@@ -33,8 +33,8 @@ info_regex = re.compile( \
     'encoding:(\s)*(?P<encoding>\w+)|' +
     'group:(\s)*(?P<group>\S+)|' +
     'important:(\s)*(?P<important>\S+)|' +
-    'mtime:(\s)*(?P<mtime>\w+)$' +
-    '^owner:(\s)*(?P<owner>\S+)|' +
+    'mtime:(\s)*(?P<mtime>\w+)|' +
+    'owner:(\s)*(?P<owner>\S+)|' +
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|')
 
