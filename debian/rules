@@ -18,8 +18,3 @@ override_dh_installinit:
 	# Install bcfg2-server initscript without starting it on postinst
 	dh_installinit --package=bcfg2-server --no-start
 
-override_dh_installdeb:
-	dh_installdeb
-	perl -pi -e 's/^.*LoadModule.*//' debian/bcfg2-web/etc/apache2/conf.d/bcfg2.conf
-	perl -pi -e 's|/usr.*/reports.wsgi|$(WSGI_LOC)|' debian/bcfg2-web/etc/apache2/conf.d/bcfg2.conf
-
