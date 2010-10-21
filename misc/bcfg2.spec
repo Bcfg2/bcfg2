@@ -98,7 +98,14 @@ Version: %{version}
 Summary: Bcfg2 Web Reporting Interface
 Group: System Tools
 Requires: bcfg2-server
-Requires: httpd,mod_wsgi,Django
+Requires: httpd,Django
+%if "%{_vendor}" == "redhat"
+Requires: mod_wsgi
+%define apache_conf %{_sysconfdir}/httpd
+%else
+Requires: apache2-mod_wsgi
+%define apache_conf %{_sysconfdir}/apache2
+%endif
 
 %description -n bcfg2-web
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -150,10 +157,8 @@ deployment strategies.
 %{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
 %{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
 
-%if "%{_vendor}" == "redhat"
-%{__install} -d %{buildroot}%{_sysconfdir}/httpd/conf.d
-%{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/bcfg2.conf
-%endif
+%{__install} -d %{buildroot}%{apache_conf}/conf.d
+%{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/bcfg2.conf
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
@@ -206,9 +211,7 @@ deployment strategies.
 
 %{_datadir}/bcfg2/site_media
 
-%if "%{_vendor}" == "redhat"
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/bcfg2.conf
-%endif
+%config(noreplace) %{apache_conf}/conf.d/bcfg2.conf
 
 %changelog
 * Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
