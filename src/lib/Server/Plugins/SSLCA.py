@@ -4,49 +4,6 @@ import os
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from M2Crypto import RSA, EVP, X509, m2
 
-"""
-How this should work....
-
-V1.0 - Only handles localhost.key and localhost.crt, therefor
-assuming we only care about a cert for www, or all ssl services
-will use the same cert
-
-Initialiazation:
-Grab options from bcfg2.conf
-load cakey, cacert
-cache other options
-
-Req comes in for key & cert
-If key exists:
-    load key
-    cache key
-    return key
-Else:
-    gen key
-    cache key
-    save key
-    return key
-If cert exists:
-    load cert
-    If fails to verify against key:
-        gen cert
-        save cert
-        return cert
-    If aliases fail don't match
-        gen cert
-        save cert
-        return cert
-    return cert
-Else:
-    gen cert
-    save cert
-    return cert
-
-V2.0 - Maybe create additional types, SSLCertPath, SSLKeyPath,
-to allow generation of multiple certs/keys in arbitrary locations
-"""
-
-
 class SSLbase(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.DirectoryBacked):
