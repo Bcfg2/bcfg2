@@ -1,0 +1,53 @@
+=====
+SSLCA
+=====
+
+SSLCA is a simple generator plugin designed to handle creation of
+SSL private keys and certificates on request.
+
+At present, only the following file locations are supported, and thus
+only a single key and certifcate will be generated:
+
+* /etc/pki/tls/private/localhost.key
+* /etc/pki/tls/certs/localhost.crt
+
+While this could be seen as very limiting, SSLCA does support any aliases
+specified in clients.xml. Any aliases will be added to the cert under the
+subjectAltName extension.
+
+
+Interacting with SSLCA
+======================
+
+* Pre-seeding with existing keys/certs -- Currently existing keys/certs
+  will be overwritten by new, sslca-managed ones by default. Pre-existing
+  files can be added to the repository by putting them in
+  <repo>/SSLCA/<filename>.H_<hostname>
+
+* Revoking existing keys -- deleting <repo>/SSLCA/\*.H_<hostname>
+  will remove files for an existing client.
+
+
+Getting started
+===============
+
+#. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and
+   restart the server -- This enables the SSLCA plugin on the Bcfg2
+   server.
+
+#. Add Path entries for ``/etc/pki/tls/private/localhost.key``, and
+   ``/etc/pky/tls/certs/localhost.crt``, etc to a bundle or base.
+
+#. Add a [sslca] section to ``/etc/bcfg2.conf`` contaning the following
+   information:
+
+   ca_cert - location of the CA certificate
+   ca_key - CA private key
+   ca_key_passphrase - Passphrase (if any) needed to use the CA private key
+   cert_subject - Additional subject info for the resulting certificates, CN
+                  will always be the bcfg2 clients hostname.
+   cert_days - number of days from generation that cert should be valid.
+   pkey_bits - number of bits for the private key.
+
+#. Enjoy.
+
