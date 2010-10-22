@@ -39,14 +39,21 @@ class ClientMetadata(object):
         """Test to see if client is a member of group."""
         return group in self.groups
 
+    def group_in_category(self, category):
+        for grp in self.query.all_groups_in_category(category):
+            if grp in self.groups:
+                return grp
+        return ''
+
 class MetadataQuery(object):
-    def __init__(self, by_name, get_clients, by_groups, by_profiles, all_groups):
+    def __init__(self, by_name, get_clients, by_groups, by_profiles, all_groups, all_groups_in_category):
         # resolver is set later
         self.by_name = by_name
         self.names_by_groups = by_groups
         self.names_by_profiles = by_profiles
         self.all_clients = get_clients
         self.all_groups = all_groups
+        self.all_groups_in_category = all_groups_in_category
 
     def by_groups(self, groups):
         return [self.by_name(name) for name in self.names_by_groups(groups)]
@@ -105,7 +112,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                    lambda:self.clients.keys(),
                                    self.get_client_names_by_groups,
                                    self.get_client_names_by_profiles,
-                                   self.get_all_group_names)
+                                   self.get_all_group_names,
+                                   self.get_all_groups_in_category)
 
     @classmethod
     def init_repo(cls, repo, groups, os_selection, clients):
@@ -590,6 +598,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def get_all_group_names(self):
         all_groups = set()
         [all_groups.update(g[1]) for g in self.groups.values()]
+        return all_groups
+
+    def get_all_groups_in_category(self, category):
+        all_groups = set()
+        [all_groups.add(g) for g in self.categories \
+                if self.categories[g] == category]
         return all_groups
 
     def get_client_names_by_profiles(self, profiles):
