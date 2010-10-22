@@ -4,7 +4,7 @@ import os
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from M2Crypto import RSA, EVP, X509, m2
 
-class SSLbase(Bcfg2.Server.Plugin.Plugin,
+class SSLCA(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.DirectoryBacked):
     """
