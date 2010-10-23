@@ -56,7 +56,14 @@ Getting started
 TODO
 ====
 
-V1.0 - Only handles localhost.key and localhost.crt, therefor
+V1.0 - Nearly done...
+
+...need to add cert expiry checking/regen...
+
+...otherwise the below is done, but really should be rewritten to
+use openssl binary rather than patched m2crypto
+
+Only handles localhost.key and localhost.crt, therefor
 assuming we only care about a cert for www, or all ssl services
 will use the same cert
 
@@ -90,6 +97,8 @@ Else:
     gen cert
     save cert
     return cert
+
+
 
 V2.0 - Maybe create additional types, SSLCertPath, SSLKeyPath,
 to allow generation of multiple certs/keys in arbitrary locations
