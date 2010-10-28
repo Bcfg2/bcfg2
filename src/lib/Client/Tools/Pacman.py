@@ -1,8 +1,7 @@
 """This is the bcfg2 support for pacman"""
 
 import Bcfg2.Client.Tools
-import Bcfg2.Options
-import Bcfg2.Client.Tools
+
 
 class Pacman(Bcfg2.Client.Tools.PkgTool):
     '''Archlinux package support'''
@@ -31,7 +30,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
     def VerifyPackage(self, entry, modlist):
         '''Verify Package status for entry'''
 
-        print "VerifyPackage : " + entry.get('name')+ " : " + entry.get('version')
+        self.logger.info("VerifyPackage : %s : %s" % entry.get('name'),
+                                                     entry.get('version'))
 
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
@@ -44,8 +44,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
             elif self.installed[entry.attrib['name']] == entry.attrib['version']:
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
-                #FIXME: We should be able to check this once
-                #       http://trac.macports.org/ticket/15709 is implemented
+                #FIXME: need to figure out if pacman
+                #       allows you to verify packages
                 return True
             else:
                 entry.set('current_version', self.installed[entry.get('name')])
@@ -76,11 +76,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         print "packages : " + pkgline
 
         try:
-            self.logger.debug('Running Pacman.Install()')
-            print "running : %s -S %s" % (self.pkgtool, pkgline)
-            s = self.cmd.run("%s -S %s" % (self.pkgtool, pkgline))
-            print "pacman : " + str(s)
-        except Exception as ex:
-            print "error in cmd.run ", ex
-
-        self.logger.debug('Running Pacman.Install()')
+            self.logger.debug("Running : %s -S %s" % (self.pkgtool, pkgline))
+            self.cmd.run("%s -S %s" % (self.pkgtool, pkgline))
+        except Exception as e:
+            self.logger.error("Error occurred during installation: %s" % e)
