@@ -78,5 +78,5 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         try:
             self.logger.debug("Running : %s -S %s" % (self.pkgtool, pkgline))
             self.cmd.run("%s -S %s" % (self.pkgtool, pkgline))
-        except Exception as e:
+        except Exception, e:
             self.logger.error("Error occurred during installation: %s" % e)
