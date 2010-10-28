@@ -68,6 +68,15 @@ Literal Configuration (Generators)
 Each of these plugins has a corresponding subdirectory with the same
 name in the Bcfg2 repository.
 
+Connector Plugins
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   connectors/*
+
 Statistics Plugins
 ------------------
 
@@ -103,5 +112,4 @@ More details can be found in :ref:`server-plugins-plugin-roles`
 
    plugin-roles
    probes/index
-   properties
    trigger
