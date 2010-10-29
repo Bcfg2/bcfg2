@@ -290,6 +290,8 @@ CLIENT_REMOVE = Option('force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
 CLIENT_BUNDLE = Option('only configure the given bundle(s)', default=[],
                        cmd='-b', odesc='<bundle:bundle>', cook=colon_split)
+CLIENT_BUNDLEQUICK = Option('only verify/configure the given bundle(s)', default=False,
+                       cmd='-Q')
 CLIENT_INDEP = Option('only configure the given bundle(s)', default=False,
                        cmd='-z')
 CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,

@@ -114,6 +114,13 @@ performed. This mode relaxes the constraints of correctness, and thus
 should only be used in safe conditions.
  
 .TP
+.BR "\-Q"
+Run bcfg2 in "bundle quick" mode, where only entries in a bundle are 
+or installed. This runs much faster than -q, but doesn't provide 
+statistics to the server at all. In order for this option to work, the
+-b option must also be provided. This option is incompatible with -r. 
+
+.TP
 .BR "\-r <mode>" 
 Cause bcfg2 to remove extra configuration elements it detects. Mode is
 one of all, Services, or Packages. All removes all entries. Likewise,
