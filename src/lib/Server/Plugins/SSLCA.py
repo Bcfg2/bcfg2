@@ -8,9 +8,11 @@ Notes:
 
 
 import Bcfg2.Server.Plugin
+import Bcfg2.Options
 import lxml.etree
 import posixpath
 import tempfile
+import os
 from subprocess import Popen, PIPE
 from ConfigParser import ConfigParser
 
@@ -27,8 +29,13 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     __child__ = Bcfg2.Server.Plugin.FileBacked
     key_specs = {}
     cert_specs = {}
+    ca_passphrases = {}
 
     def HandleEvent(self, event=None):
+        """
+        Updates which files this plugin handles based upon filesystem events.
+        Allows configuration items to be added/removed without server restarts.
+        """
         action = event.code2str()
         if event.filename[0] == '/' or event.filename.startswith('CAs'):
             return
@@ -39,16 +46,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         else:
             ident = self.handles[event.requestID][:-1]
         
-        self.logger.error('ACTION: %s, IDENT %s, FILENAME %s' % (action, ident, event.filename))
-
         fname = "".join([ident, '/', event.filename])
         
-
-        # TODO: check/fix handling of _all_ .xml file events vs hostfiles
-        if action in ['exists', 'created']:
-            if posixpath.isdir(epath):
-                self.AddDirectoryMonitor(epath[len(self.data):])
-            if ident not in self.entries and posixpath.isfile(epath):
+        if event.filename.endswith('.xml'):
+            if action in ['exists', 'created', 'changed']:
                 if event.filename.endswith('key.xml'):
                     key_spec = dict(lxml.etree.parse(epath).find('Key').items())
                     self.key_specs[ident] = {
@@ -58,8 +59,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                     self.Entries['Path'][ident] = self.get_key
                 elif event.filename.endswith('cert.xml'):
                     cert_spec = dict(lxml.etree.parse(epath).find('Cert').items())
+                    ca = cert_spec.get('ca', 'default')
                     self.cert_specs[ident] = {
-                        'ca': cert_spec.get('ca', 'default'),
+                        'ca': ca,
                         'format': cert_spec.get('format', 'pem'),
                         'key': cert_spec.get('key'),
                         'days': cert_spec.get('days', 365),
@@ -70,20 +72,33 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                         'O': cert_spec.get('o'),
                         'emailAddress': cert_spec.get('emailaddress')
                     }
+                    cp = ConfigParser()
+                    cp.read(self.core.cfile)
+                    self.ca_passphrases[ca] = cp.get('sslca', ca+'_passphrase')
                     self.Entries['Path'][ident] = self.get_cert
-                else:
+            if action == 'deleted':
+                if ident in self.Entries['Path']:
+                    del self.Entries['Path'][ident]
+        else:
+            if action in ['exists', 'created']:
+                if posixpath.isdir(epath):
+                    self.AddDirectoryMonitor(epath[len(self.data):])
+                if ident not in self.entries and posixpath.isfile(epath):
                     self.entries[fname] = self.__child__(epath)
                     self.entries[fname].HandleEvent(event)
-        if action == 'changed':
-            self.entries[fname].HandleEvent(event)
-        elif action == 'deleted':
-            if fname in self.entries:
-                # a directory was deleted
-                del self.entries[fname]
-            else:
+            if action == 'changed':
                 self.entries[fname].HandleEvent(event)
+            elif action == 'deleted':
+                if fname in self.entries:
+                    del self.entries[fname]
+                else:
+                    self.entries[fname].HandleEvent(event)
 
     def get_key(self, entry, metadata):
+        """
+        either grabs a prexisting key hostfile, or triggers the generation
+        of a new key if one doesn't exist.
+        """
         # set path type and permissions, otherwise bcfg2 won't bind the file
         permdata = {'owner':'root',
                     'group':'root',
@@ -103,6 +118,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             entry.text = self.entries[filename].data
 
     def build_key(self, filename, entry, metadata):
+        """
+        generates a new key according the the specification
+        """
         type = self.key_specs[entry.get('name')]['type']
         bits = self.key_specs[entry.get('name')]['bits']
         if type == 'rsa':
@@ -113,6 +131,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         return key
 
     def get_cert(self, entry, metadata):
+        """
+        either grabs a prexisting cert hostfile, or triggers the generation
+        of a new cert if one doesn't exist.
+        """
         # set path type and permissions, otherwise bcfg2 won't bind the file
         permdata = {'owner':'root',
                     'group':'root',
@@ -140,20 +162,38 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             entry.text = cert
 
     def verify_cert(self):
-        return False
+        """
+        check that a certificate validates against the ca cert,
+        and that it has not expired.
+        """
+        # TODO: verify key validates and has not expired
+        # possibly also ensure no less than x days until expiry
+        return True
 
     def build_cert(self, entry, metadata):
+        """
+        creates a new certificate according to the specification
+        """
         req_config = self.build_req_config(entry, metadata)
         req = self.build_request(req_config, entry)
-        ca_config = "".join([self.data, '/CAs/', self.cert_specs[entry.get('name')]['ca'], '/', 'openssl.cnf'])
+        ca = self.cert_specs[entry.get('name')]['ca']
+        ca_config = "".join([self.data, '/CAs/', ca, '/', 'openssl.cnf'])
         days = self.cert_specs[entry.get('name')]['days']
-        cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:TODO!!!!" % (ca_config, req, days)
-        pdb.set_trace()
+        passphrase = self.ca_passphrases[ca]
+        cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config, req, days, passphrase)
         cert = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
-        # TODO: remove tempfiles
+        try:
+            os.unlink(req_config)
+            os.unlink(req)
+        except OSError:
+            self.logger.error("Failed to unlink temporary files")
         return cert
 
     def build_req_config(self, entry, metadata):
+        """
+        generates a temporary openssl configuration file that is
+        used to generate the required certificate request
+        """
         # create temp request config file
         conffile = open(tempfile.mkstemp()[1], 'w')
         cp = ConfigParser({})
@@ -189,6 +229,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         return conffile.name
         
     def build_request(self, req_config, entry):
+        """
+        creates the certificate request
+        """
         req = tempfile.mkstemp()[1]
         key = self.cert_specs[entry.get('name')]['key']
         days = self.cert_specs[entry.get('name')]['days']
