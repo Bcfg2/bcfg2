@@ -27,7 +27,7 @@ located in in a ``TCheetah`` subdirectory of your repository, usually
 files, ``template`` and ``info``. The template is a standard Cheetah
 template with two additions:
 
-* `self.metadata` is the client's metadata
+* `self.metadata` is the client's :ref:`metadata <server-plugins-grouping-metadata-clientmetadata>`
 * `self.properties` is an xml document of unstructured data
 
 The ``info`` file is formatted like ``:info`` files from Cfg.
@@ -44,19 +44,7 @@ Permissions entry and a Path entry to handle the same file.
 self.metadata variables
 =======================
 
-The following variables are available for self.metadata:
-
-* hostname
-* bundles
-* groups
-* categories
-* probes
-* uuid
-* password
-
-self.metadata is an instance of the class
-ClientMetadata of file `Bcfg2/Server/Plugins/Metadata.py
-<http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins/Metadata.py>`_.
+self.metadata is an instance of the class ClientMetadata and documented :ref:`here <server-plugins-grouping-metadata-clientmetadata>`.
 
 self.properties
 ===============
