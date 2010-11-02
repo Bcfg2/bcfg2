@@ -48,8 +48,10 @@ supported.
 Inside of templates
 ===================
 
-* metadata is the client's metadata
-* properties.properties is an xml document of unstructured data
+* **metadata** is the client's :ref:`metadata <server-plugins-grouping-metadata-clientmetadata>`
+* **properties.properties** is an xml document of unstructured data
+* **name** is the path name specified in bcfg
+* **path** is the path to the TGenshi template
 
 See the genshi `documentation
 <http://genshi.edgewall.org/wiki/Documentation>`_ for examples of
