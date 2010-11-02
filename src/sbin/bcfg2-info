@@ -303,7 +303,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_showentries(self, args):
         """Show abstract configuration entries for a given host."""
         arglen = len(args.split())
-        if arglen not in [2, 3]:
+        if arglen not in [1, 2]:
             print("Usage: showentries <hostname> <type>")
             return
         client = args.split()[0]
