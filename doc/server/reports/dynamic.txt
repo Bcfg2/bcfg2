@@ -34,22 +34,17 @@ section below.
     Distributed environments can share a single remote database for
     reporting.
 
-Run ``/usr/sbin/bcfg2-admin reports init`` to initialize
-the database.  If you're using sqlite, make sure the webserver
-can write to the database.
-
 The recommended statistics plugin is DBStats. To use it, add it to the
 **plugins** line in your ``bcfg2.conf``.  Alternatively, the Statistics
 plugin can be used in conjunction with a crontab entry to run
 ``/usr/sbin/bcfg2-admin reports load_stats``.
 
-Restart the Bcfg2 server. Run a client in dryrun mode in order to get
-the client's statistics loaded into the database.
+Detailed installation instructions can be found :ref:`here <server-reports-install>`.
 
 .. _dynamic-http-install:
 
-Installation of web-based Reports
----------------------------------
+Apache configuration for web-based reports
+------------------------------------------
 
 .. note::
 
