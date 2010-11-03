@@ -9,7 +9,7 @@ Using Bcfg2
 These are many of the resources available to help new users get started.
 
 * For the impatient there is the :ref:`quickstart-index` page.
-* :ref:`gettinghelp` has information when you are troubleshooting or need to ask a question.
+* :ref:`help-index` has information when you are troubleshooting or need to ask a question.
 * If you find anything wrong or missing please :ref:`report-a-bug` to let us know.
 
 .. toctree::
