@@ -1,105 +1,96 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-sslca:
+
 =====
 SSLCA
 =====
 
-SSLCA is a simple generator plugin designed to handle creation of
-SSL private keys and certificates on request.
+SSLCA is a generator plugin designed to handle creation of SSL private keys
+and certificates on request.
 
-At present, only the following file locations are supported, and thus
-only a single key and certifcate will be generated:
-
-* /etc/pki/tls/private/localhost.key
-* /etc/pki/tls/certs/localhost.crt
-
-While this could be seen as very limiting, SSLCA does support any aliases
-specified in clients.xml. Any aliases will be added to the cert under the
-subjectAltName extension.
-
-
-Interacting with SSLCA
-======================
-
-* Pre-seeding with existing keys/certs -- Currently existing keys/certs
-  will be overwritten by new, sslca-managed ones by default. Pre-existing
-  files can be added to the repository by putting them in
-  <repo>/SSLCA/<filename>.H_<hostname>
-
-* Revoking existing keys -- deleting <repo>/SSLCA/\*.H_<hostname>
-  will remove files for an existing client.
-
+Borrowing ideas from the TGenshi and SSHbase plugins, SSLCA automates the
+generation of SSL certificates by allowing you to specify key and certificate
+definitions.  Then, when a client requests a Path that contains such a
+definition within the SSLCA repository, the matching key/cert is generated, and
+stored in a hostfile in the repo so that subsequent requests do not result in
+repeated key/cert recreation.  In the event that a new key or cert is needed,
+the offending hostfile can simply be removed from the repository, and the next
+time that host checks in, a new file will be created.  If that file happens to
+be the key, any dependent certificates will also be regenerated.
 
 Getting started
 ===============
 
-#. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and
-   restart the server -- This enables the SSLCA plugin on the Bcfg2
-   server.
+In order to use SSLCA, you must first have at least one CA configured on 
+your system.  For details on setting up your own OpenSSL based CA, please
+see http://www.openssl.org/docs/apps/ca.html for details of the suggested
+directory layout and configuration directives.
 
-#. Add Path entries for ``/etc/pki/tls/private/localhost.key``, and
-   ``/etc/pky/tls/certs/localhost.crt``, etc to a bundle or base.
+For SSLCA to work, the openssl.cnf (or other configuration file) for that CA
+must contain full (not relative) paths.
 
-#. Add a [sslca] section to ``/etc/bcfg2.conf`` contaning the following
-   information:
+#. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and restart the
+   server -- This enabled the SSLCA plugin on the Bcfg2 server.
 
-   ca_cert - location of the CA certificate
-   ca_key - CA private key
-   ca_key_passphrase - Passphrase (if any) needed to use the CA private key
-   cert_subject - Additional subject info for the resulting certificates, CN
-                  will always be the bcfg2 clients hostname.
-   cert_days - number of days from generation that cert should be valid.
-   pkey_bits - number of bits for the private key.
+#. Add a section to your ``/etc/bcfg2.conf`` called sslca_foo, replacing foo
+with the name you wish to give your CA so you can reference it in certificate
+definitions.
 
-#. Enjoy.
+#. Under that section, add an entry for ``config`` that gives the location of
+the openssl configuration file for your CA.
 
+#. If necessary, add an entry for ``passphrase`` containing the passphrase for
+the CA's private key.  We store this in ``/etc/bcfg2.conf`` as the permissions
+on that file should have it only readable by the bcfg2 user.  If no passphrase
+is entry exists, it is assumed that the private key is stored unencrypted.
 
-====
+#. Add an entry ``chaincert`` that points to the location of your ssl chaining
+certificate.  This is used when preexisting certifcate hostfiles are found, so
+that they can be validated and only regenerated if they no longer meet the
+specification.
+
+#. Once all this is done, you should have a section in your ``/etc/bcfg2.conf``
+that looks similar to the following:
+
+	[sslca_default]
+	config = /etc/pki/CA/openssl.cnf
+	passphrase = youReallyThinkIdShareThis?
+	chaincert = /etc/pki/CA/chaincert.crt
+
+#. You are now ready to create key and certificate definitions.  For this
+example we'll assume you've added Path entries for the key,
+``/etc/pki/tls/private/localhost.key``, and the certificate,
+``/etc/pki/tls/certs/localhost.crt`` to a bundle or base.
+
+#. Defining a key or certificate is similar to defining a TGenshi template.
+Under your Bcfg2's SSLCA directory, create the directory structure to match the
+path to your key. In this case this would be something like
+``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/localhost.key``.
+
+#. Within that directory, create a ``key.xml`` file containing the following:
+
+	<KeyInfo>
+		<Key type="rsa" bits="2048" />
+	</KeyInfo>
+
+#. This will cause the generation of an 2048 bit RSA key when a client requests
+that Path.  Alternatively you can specify ``dsa`` as the keytype, or a different
+number of bits.
+
+#. Similarly, create the matching directory structure for the certificate path,
+and a ``cert.xml`` containinng the following:
+
+	<CertInfo>
+		<Cert format="pem" key="/etc/pki/tls/private/localhost.key" ca="default" days="365" c="US" l="New York" st="New York" o="Your Company Name" />
+	</CertInfo>
+
+#. When a client requests the cert path, a certificate will be generated using
+the key hostfile at the specified key location, using the CA matching the ca
+attribute. ie. ca="default" will match [sslca_default] in your
+``/etc/bcfg2.conf``
+
 TODO
 ====
 
-V1.0 - Nearly done...
-
-...need to add cert expiry checking/regen...
-
-...otherwise the below is done, but really should be rewritten to
-use openssl binary rather than patched m2crypto
-
-Only handles localhost.key and localhost.crt, therefor
-assuming we only care about a cert for www, or all ssl services
-will use the same cert
-
-Initialiazation:
-Grab options from bcfg2.conf
-load cakey, cacert
-cache other options
-
-Req comes in for key & cert
-If key exists:
-    load key
-    cache key
-    return key
-Else:
-    gen key
-    cache key
-    save key
-    return key
-If cert exists:
-    load cert
-    If fails to verify against key:
-        gen cert
-        save cert
-        return cert
-    If aliases fail don't match
-        gen cert
-        save cert
-        return cert
-    return cert
-Else:
-    gen cert
-    save cert
-    return cert
-
-
-
-V2.0 - Maybe create additional types, SSLCertPath, SSLKeyPath,
-to allow generation of multiple certs/keys in arbitrary locations
-
+#. Add generation of pkcs12 format certs
