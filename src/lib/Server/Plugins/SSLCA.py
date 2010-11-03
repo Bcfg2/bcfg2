@@ -29,7 +29,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     __child__ = Bcfg2.Server.Plugin.FileBacked
     key_specs = {}
     cert_specs = {}
-    ca_passphrases = {}
+    CAs = {}
 
     def HandleEvent(self, event=None):
         """
@@ -37,7 +37,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         Allows configuration items to be added/removed without server restarts.
         """
         action = event.code2str()
-        if event.filename[0] == '/' or event.filename.startswith('CAs'):
+        if event.filename[0] == '/':
             return
         epath = "".join([self.data, self.handles[event.requestID],
                          event.filename])
@@ -74,7 +74,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                     }
                     cp = ConfigParser()
                     cp.read(self.core.cfile)
-                    self.ca_passphrases[ca] = cp.get('sslca', ca+'_passphrase')
+                    self.CAs[ca] = dict(cp.items('sslca_'+ca))
                     self.Entries['Path'][ident] = self.get_cert
             if action == 'deleted':
                 if ident in self.Entries['Path']:
@@ -177,10 +177,13 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         req_config = self.build_req_config(entry, metadata)
         req = self.build_request(req_config, entry)
         ca = self.cert_specs[entry.get('name')]['ca']
-        ca_config = "".join([self.data, '/CAs/', ca, '/', 'openssl.cnf'])
+        ca_config = self.CAs[ca]['config']
         days = self.cert_specs[entry.get('name')]['days']
-        passphrase = self.ca_passphrases[ca]
-        cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config, req, days, passphrase)
+        passphrase = self.CAs[ca].get('passphrase')
+        if passphrase:
+            cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config, req, days, passphrase)
+        else:
+            cmd = "openssl ca -config %s -in %s -days %s -batch" % (ca_config, req, days)
         cert = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         try:
             os.unlink(req_config)
