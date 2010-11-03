@@ -154,20 +154,25 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             self.core.Bind(e, metadata)
 
         # check if we have a valid hostfile
-        if filename in self.entries.keys() and self.verify_cert():
+        if filename in self.entries.keys() and self.verify_cert(filename, entry):
             entry.text = self.entries[filename].data
         else:
             cert = self.build_cert(entry, metadata)
             open(self.data + filename, 'w').write(cert)
             entry.text = cert
 
-    def verify_cert(self):
+    def verify_cert(self, filename, entry):
         """
         check that a certificate validates against the ca cert,
         and that it has not expired.
         """
-        # TODO: verify key validates and has not expired
-        # possibly also ensure no less than x days until expiry
+        chaincert = self.CAs[self.cert_specs[entry.get('name')]['ca']].get('chaincert')
+        cert = "".join([self.data, '/', filename])
+        cmd = "openssl verify -CAfile %s %s" % (chaincert, cert) 
+        proc = Popen(cmd, shell=True)
+        proc.communicate()
+        if proc.returncode != 0:
+            return False
         return True
 
     def build_cert(self, entry, metadata):
