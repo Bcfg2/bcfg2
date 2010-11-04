@@ -36,7 +36,7 @@ Environment setup for development
 
 * Check out a copy of the code::
 
-      svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
+      git clone git://git.mcs.anl.gov/bcfg2.git
 
 * Create link to src/lib::
 

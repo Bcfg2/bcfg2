@@ -23,10 +23,10 @@ trac system, you will need to create a session by clicking on the
 [https://trac.mcs.anl.gov/projects/bcfg2/prefs Preferences] link and
 filling out/saving changes to the form. In order to be considered for
 mainline inclusion, patches need to be BSD licensed. The most convenient
-way to prepare patches is by using svn diff inside of a source tree
+way to prepare patches is by using git diff inside of a source tree
 checked out of subversion. The source tree can be checked out by running::
 
-    svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
+    git clone git://git.mcs.anl.gov/bcfg2.git
 
 Users wishing to contribute on a regular basis can apply for direct
 subversion access. Mail the mailing list for details.

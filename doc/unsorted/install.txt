@@ -33,9 +33,9 @@ Using native OS X python
 
 First, make sure you have Xcode installed as you need `packagemaker` which comes bundled in the Developer tools.
 
-Check out the source from subversion::
+Clone the git source::
 
-    svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
+    git clone git://git.mcs.anl.gov/bcfg2.git
 
 Change to the osx directory and type make. Your new package should be located at bcfg2-'''$VERSION'''.pkg (where '''$VERSION''' is that which is specified in setup.py).
 
