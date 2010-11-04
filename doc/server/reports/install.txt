@@ -179,3 +179,5 @@ then have something like this::
     web_debug = True
 
 Restart apache and point a browser to your Bcfg2 server.
+
+If using sqlite be sure the sql database file and directory containing the database are writable to apache.
