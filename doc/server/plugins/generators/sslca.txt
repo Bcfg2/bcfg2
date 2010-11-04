@@ -70,9 +70,11 @@ path to your key. In this case this would be something like
 
 #. Within that directory, create a ``key.xml`` file containing the following:
 
-	<KeyInfo>
-		<Key type="rsa" bits="2048" />
-	</KeyInfo>
+   .. code-block:: xml
+
+       <KeyInfo>
+           <Key type="rsa" bits="2048" />
+       </KeyInfo>
 
 #. This will cause the generation of an 2048 bit RSA key when a client requests
 that Path.  Alternatively you can specify ``dsa`` as the keytype, or a different
@@ -81,9 +83,11 @@ number of bits.
 #. Similarly, create the matching directory structure for the certificate path,
 and a ``cert.xml`` containinng the following:
 
-	<CertInfo>
-		<Cert format="pem" key="/etc/pki/tls/private/localhost.key" ca="default" days="365" c="US" l="New York" st="New York" o="Your Company Name" />
-	</CertInfo>
+   .. code-block:: xml
+
+       <CertInfo>
+           <Cert format="pem" key="/etc/pki/tls/private/localhost.key" ca="default" days="365" c="US" l="New York" st="New York" o="Your Company Name" />
+       </CertInfo>
 
 #. When a client requests the cert path, a certificate will be generated using
 the key hostfile at the specified key location, using the CA matching the ca
