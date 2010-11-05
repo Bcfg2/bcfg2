@@ -159,7 +159,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         cert = self.data + filename
         cmd = "openssl verify -CAfile %s %s" % (chaincert, cert) 
         res = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
-        if res == cert + ": OK\n"
+        if res == cert + ": OK\n":
             return True
         return False
 
@@ -213,8 +213,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             for key in defaults[section]:
                 cp.set(section, key, defaults[section][key])
         x = 1
-        for alias in metadata.aliases:
-            cp.set('alt_names', 'DNS.'+str(x), alias)
+        altnames = list(metadata.aliases)
+        altnames.append(metadata.hostname)
+        for altname in altnames:
+            cp.set('alt_names', 'DNS.'+str(x), altname)
             x += 1
         for item in ['C', 'L', 'ST', 'O', 'OU', 'emailAddress']:
             if self.cert_specs[entry.get('name')][item]:
