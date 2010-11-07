@@ -1,22 +1,11 @@
-"""
-Notes:
-
-1. Put these notes in real docs!!!
-2. dir structure for CA's must be correct
-3. for subjectAltNames to work, openssl.conf must have copy_extensions on
-"""
-
-
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
 import lxml.etree
 import posixpath
 import tempfile
 import os
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from ConfigParser import ConfigParser
-
-import pdb
 
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """
@@ -157,7 +146,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         if filename in self.entries.keys() and self.verify_cert(filename, entry):
             entry.text = self.entries[filename].data
         else:
-            cert = self.build_cert(entry, metadata)
+            cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
             entry.text = cert
 
@@ -167,20 +156,19 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         and that it has not expired.
         """
         chaincert = self.CAs[self.cert_specs[entry.get('name')]['ca']].get('chaincert')
-        cert = "".join([self.data, '/', filename])
+        cert = self.data + filename
         cmd = "openssl verify -CAfile %s %s" % (chaincert, cert) 
-        proc = Popen(cmd, shell=True)
-        proc.communicate()
-        if proc.returncode != 0:
-            return False
-        return True
+        res = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
+        if res == cert + ": OK\n":
+            return True
+        return False
 
-    def build_cert(self, entry, metadata):
+    def build_cert(self, key_filename, entry, metadata):
         """
         creates a new certificate according to the specification
         """
         req_config = self.build_req_config(entry, metadata)
-        req = self.build_request(req_config, entry)
+        req = self.build_request(key_filename, req_config, entry)
         ca = self.cert_specs[entry.get('name')]['ca']
         ca_config = self.CAs[ca]['config']
         days = self.cert_specs[entry.get('name')]['days']
@@ -225,8 +213,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             for key in defaults[section]:
                 cp.set(section, key, defaults[section][key])
         x = 1
-        for alias in metadata.aliases:
-            cp.set('alt_names', 'DNS.'+str(x), alias)
+        altnames = list(metadata.aliases)
+        altnames.append(metadata.hostname)
+        for altname in altnames:
+            cp.set('alt_names', 'DNS.'+str(x), altname)
             x += 1
         for item in ['C', 'L', 'ST', 'O', 'OU', 'emailAddress']:
             if self.cert_specs[entry.get('name')][item]:
@@ -236,13 +226,13 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         conffile.close()
         return conffile.name
         
-    def build_request(self, req_config, entry):
+    def build_request(self, key_filename, req_config, entry):
         """
         creates the certificate request
         """
         req = tempfile.mkstemp()[1]
-        key = self.cert_specs[entry.get('name')]['key']
         days = self.cert_specs[entry.get('name')]['days']
+        key = self.data + key_filename
         cmd = "openssl req -new -config %s -days %s -key %s -text -out %s" % (req_config, days, key, req)
         res = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         return req
