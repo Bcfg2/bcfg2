@@ -175,7 +175,7 @@ latex_font_size = '11pt'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('contents', 'bcfg2.tex', u'Bcfg2 Documentation',
-   u'Narayan Desai and Thorsten Lockert', 'manual', True),
+   u'Narayan Desai et al.', 'manual', True),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
