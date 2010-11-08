@@ -27,9 +27,9 @@ contain parsed XML data as the "data" attribute.
 Usage
 =====
 
-Specific property files can be referred to in
-templates as metadata.Properties[<filename>]. The
-data attribute is an LXML element object. (Documented
+Specific property files can be referred to in templates as 
+metadata.Properties[<filename>]. The data attribute is an LXML element object. 
+(Documented
 `here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 
 Currently, no access methods are defined for this data, but as we
@@ -39,8 +39,6 @@ as methods. This will simplify templates.
 Accessing Properties contest from TGenshi
 =========================================
 
-Access contents of ``Properties/auth.xml``
-
-::
+Access contents of ``Properties/auth.xml`` ::
 
     ${metadata.Properties['auth.xml'].data.find('file').find('bcfg2.key').text}
