@@ -14,8 +14,8 @@ Enabling Properties
 
 First, ``mkdir /var/lib/bcfg2/Properties``. Each property XML file goes
 in this directory. Each will automatically be cached by the server,
-and reread/reparsed upon changes. Add **Properties** to your ``plugins``
-line in ``/etc/bcfg2.conf``.
+and reread/reparsed upon changes. Add **Properties** to your `plugins`
+line in `/etc/bcfg2.conf`.
 
 Data Structures
 ===============
@@ -39,6 +39,6 @@ as methods. This will simplify templates.
 Accessing Properties contest from TGenshi
 =========================================
 
-Access contents of ``Properties/auth.xml`` ::
+Access contents of `Properties/auth.xml` ::
 
     ${metadata.Properties['auth.xml'].data.find('file').find('bcfg2.key').text}
