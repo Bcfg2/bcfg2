@@ -1,0 +1,11 @@
+.. -*- mode: rst -*-
+
+.. _manpages-bcfg2-build-reports:
+
+===================
+bcfg2-build-reports
+===================
+
+The man page of ``bcfg2-build-reports``. ::
+
+   man bcfg2-build-reports

@@ -1,0 +1,46 @@
+.. -*- mode: rst -*-
+
+.. _development-plugin-types:
+
+Server Plugin Types
+-------------------
+
+Generator
+^^^^^^^^^
+
+Generator plugins contribute to literal client configurations
+
+Structure
+^^^^^^^^^
+
+Structure Plugins contribute to abstract client configurations
+
+Metadata
+^^^^^^^^
+
+Signal metadata capabilities
+
+Connector
+^^^^^^^^^
+
+Connector Plugins augment client metadata instances
+
+Probing
+^^^^^^^
+
+Signal probe capability
+
+Statistics
+^^^^^^^^^^
+
+Signal statistics handling capability
+
+Decision
+^^^^^^^^
+
+Signal decision handling capability
+
+Version
+^^^^^^^
+
+Interact with various version control systems

@@ -14,9 +14,9 @@ Scenarios
    Default settings work well; machines do not float, and a per-client
    password is not required.
 
-2. `NAT_HOWTO <http://trac.mcs.anl.gov/projects/bcfg2/wiki/NAT_HOWTO>`_
+2. :ref:`NAT Howto nat_howto`
 
- * Build client records in advance with bcfg2-admin, setting a uuid
+ * Build client records in advance with ``bcfg2-admin``, setting a uuid
    for each new client.
 
  * Set the address attribute for each to the address of the NAT.
@@ -33,7 +33,7 @@ Building bcfg2.conf automatically
 =================================
 
 This is a TCheetah template that automatically constructs per-client
-bcfg2.conf from the per-client metadata::
+`bcfg2.conf` from the per-client metadata::
 
     [communication]
     protocol = xmlrpc/ssl
@@ -43,14 +43,14 @@ bcfg2.conf from the per-client metadata::
     #if $self.metadata.password != None
     password = $self.metadata.password
     #else
-    password = my-password-foobat
+    password = my-password-foobar
     #end if
 
     [components]
     bcfg2 = https://localhost:6789
 
 In this setup, this will cause any clients that have uuids established
-to be set to use them in bcfg2.conf. It will also cause any clients
+to be set to use them in `bcfg2.conf`. It will also cause any clients
 with passwords set to use them instead of the global password.
 
 How Authentication Works
@@ -123,7 +123,7 @@ or password only. Also a bootstrap mode will be added shortly; this
 will allow a client to authenticate with a password its first time,
 requiring a certificate all subsequent times. This behavior can be
 controlled through the use of the auth attribute in
-Metadata/clients.xml::
+`Metadata/clients.xml`::
 
     <Clients>
       <Client name='testclient' auth='cert'/>

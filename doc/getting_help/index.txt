@@ -1,33 +1,40 @@
 .. -*- mode: rst -*-
 
-.. _help-index:
+.. _gettinghelp-index:
 
-=======================
-Getting Help with Bcfg2
-=======================
+.. _IRC logs: http://colabti.org/irclogger/irclogger_logs/bcfg2
+
+
+Getting Help
+============
 
 Having trouble? We'd like to help!
 
-* Try the :ref:`FAQ <faq-index>` -- it's got answers to many common questions.
-* Looking for specific information? Try the :ref:`genindex`, :ref:`modindex` or the :ref:`detailed table of contents <contents>`.
-* Search for information in the :ref:`help-mailinglist`.
-* Visit our :ref:`help-irc` channel.
+There are several ways to get in touch with the community around Bcfg2.
 
-.. _report-a-bug:
+* Try the :ref:`FAQ <faq-index>` -- it's got answers to many common
+  questions.
 
-Report A Bug
-============
+* Looking for specific information? Try the :ref:`genindex`, 
+  :ref:`modindex`, or the :ref:`detailed table of contents <contents>`.
 
-Report bugs with Bcfg2 on the `Trac ticket tracker`_.
+* Search for information in the :ref:`mailinglist`.
 
-.. _Bcfg2 mailing list archives: http://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
-.. _Trac ticket tracker: http://trac.mcs.anl.gov/projects/bcfg2/wiki
+* Ask a question in the :ref:`ircchannel`, or search the `IRC logs`_ 
+  to see if its been asked before.
 
-Other ways to get in touch
-==========================
+Note that the IRC channel tends to be much busier than the mailing
+list; use whichever seems most appropriate for your query, but don't
+let the lack of mailing list activity make you think the project isn't
+active.
+
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   irc
+   reporting
    mailinglist
+   ircchannel
+   faq/index
+   error-messages
+   manpages

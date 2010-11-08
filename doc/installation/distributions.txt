@@ -1,0 +1,17 @@
+.. -*- mode: rst -*-
+
+.. _distributions:
+
+===========================
+Distribution-specific notes 
+===========================
+
+The installation of Bcfg2 on a specific distribution depends on 
+the used package management tool and the disposability in the 
+distribution's package :term:`repository`
+. 
+
+.. toctree::
+   :glob:
+
+   distro/*

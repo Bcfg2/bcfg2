@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _manpages:
+
+============
+Manual pages
+============
+
+These are copies of the bcfg2 manual pages created with man2html.
+The most recent versions of these man pages are always in the `man/`
+directory in the source.
+
+.. toctree::
+   :glob:
+
+   manpages/*

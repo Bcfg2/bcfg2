@@ -1,0 +1,17 @@
+.. -*- mode: rst -*-
+
+.. _installation-archlinux:
+
+.. _Arch Linux: http://www.archlinux.org/
+.. _AUR: http://aur.archlinux.org/packages.php?ID=20979
+
+
+ArchLinux
+=========
+
+Packages for `Arch Linux`_ are available in the Arch User Repository (AUR_).
+Just use `pacman` to perform the installation :: 
+
+   pacman -S bcfg2 bcfg2-server 
+
+

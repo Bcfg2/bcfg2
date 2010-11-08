@@ -1,0 +1,31 @@
+.. -*- mode: rst -*-
+
+.. _CentOS: http://www.centos.org/
+.. _Red Hat/RHEL: http://www.redhat.com/rhel/
+.. _Scientific Linux: http://www.scientificlinux.org/
+.. _EPEL: http://fedoraproject.org/wiki/EPEL
+.. _RPMForge: https://rpmrepo.org/RPMforge
+
+.. _rhel-installation:
+
+RHEL / Centos / Scientific Linux 
+================================
+
+While you can go about building all these things from source, this
+section will try and meet the dependencies using packages from EPEL_
+[#f1]_. The *el5* and the soon available *el6* package should be compatible
+with `CentOS`_ 5.x/6.x and `Scientific Linux`_.
+
+EPEL_::
+
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+Install the bcfg2-server and bcfg2 RPMs::
+
+    [root@centos ~]# yum install bcfg2-server bcfg2
+
+.. note::
+
+    The latest package for *el5* is only available in the testing repository.
+
+.. [#f1] For more details check the EPEL_ `instructions <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_

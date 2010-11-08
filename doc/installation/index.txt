@@ -1,0 +1,23 @@
+.. -*- mode: rst -*-
+
+.. _installation-index:
+
+============
+Installation
+============
+
+Before installing, you will need to choose a machine to be the Bcfg2
+server. We recommend a Linux-based machine for this purpose, but the
+server will work on any supported operating system. Note that you may
+eventually want to run a web server on this machine for reporting and
+serving up package repositories. The server package only needs to be
+installed on your designated Bcfg2 server machine. The clients package
+needs to be installed on any machine you plan to manage by Bcfg2. 
+
+.. toctree::
+   :maxdepth: 2
+
+   prerequisites
+   source
+   packages
+   distributions

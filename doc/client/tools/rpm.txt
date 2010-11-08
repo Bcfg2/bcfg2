@@ -1,0 +1,11 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-rpm:
+
+===
+RPM
+===
+
+.. warning:: Deprecated in favor of :ref:`RPMng <client-tools-yumng>`
+
+Executes rpm to manage packages most often on redhat based systems.

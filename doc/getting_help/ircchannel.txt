@@ -1,0 +1,28 @@
+.. -*- mode: rst -*-
+
+.. _Freenode: http://chat.freenode.net
+.. _#bcfg2: irc://chat.freenode.net/bcfg2
+
+.. _ircchannel:
+
+===========
+IRC Channel
+===========
+
+The Bcfg2 IRC channel is `#bcfg2`_ on `Freenode`_. It is home to both support and development discussions. If you have a question, suggestion, or just want to know about Bcfg2, please drop in and say hi.
+
+Archives are available at: http://colabti.org/irclogger/irclogger_logs/bcfg2
+
+.. raw:: html
+
+    <form method="get" action="http://colabti.org/irclogger/irclogger_log_search/bcfg2">
+      <input type=text name=search value='' size=48>
+      <input type=submit value="Search #bcfg2 irc logs">
+      <input type=hidden name=action value=search> <br>
+      in the timespan
+      <input type=text name=timespan value='' size=17>
+      (yyyymmdd-yyyymmdd)
+    <p>Options:<br>
+     <label><input type=checkbox name=nick value="checked">Search in the nick field</label><br>
+     <label><input type=checkbox name=text checked value="checked">Search in the text field</label><br>
+    </form>

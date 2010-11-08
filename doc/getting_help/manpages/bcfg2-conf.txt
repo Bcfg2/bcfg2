@@ -1,0 +1,11 @@
+.. -*- mode: rst -*-
+
+.. _manpages-bcfg2.conf:
+
+==========
+bcfg2.conf
+==========
+
+The man page of ``bcfg2.conf``. ::
+
+   man bcfg2.conf

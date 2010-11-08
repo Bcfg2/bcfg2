@@ -1,0 +1,19 @@
+.. -*- mode: rst -*-
+
+.. _development-setup:
+
+
+Environment setup for development
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Check out a copy of the code::
+
+      svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
+
+* Create link to ``src/lib``::
+
+      cd bcfg2
+      ln -s src/lib Bcfg2
+
+* Add ``bcfg2/src/sbin`` to your PATH environment variable
+* Add ``bcfg2`` to your PYTHONPATH environment variable

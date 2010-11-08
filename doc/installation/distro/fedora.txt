@@ -1,0 +1,23 @@
+.. -*- mode: rst -*-
+
+.. _Packages: https://admin.fedoraproject.org/pkgdb/acls/name/bcfg2
+.. _Fedora: https://www.fedoraproject.org
+
+.. _fedora-installation:
+
+Fedora
+======
+
+The fastest way to get Bcfg2 Packages_ onto your Fedora_ system is to
+use `yum` or PackageKit. Yum will pull in all dependencies of Bcfg2
+automatically. ::
+
+    $ su -c 'yum install bcfg2-server bcfg2'
+
+Be aware that the latest release of Bcfg2 may only be available for the
+Development release of Fedora (Rawhide).  With the activation of the
+Rawhide repository of Fedora you will be able to install it. ::
+
+    $ su -c 'yum install --enablerepo=rawhide bcfg2-server bcfg2'
+
+This way is not recommanded on productive systems. Only for testing. 

@@ -1,0 +1,10 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-rcupdate:
+
+========
+RcUpdate
+========
+
+Uses the rc-update executable to manage services on distributions such
+as Gentoo.

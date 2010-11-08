@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-chkconfig:
+
+=========
+Chkconfig
+=========
+
+Tool to manage services (primarily on Red Hat based distros).
+
+.. note:: Start and stop are standard arguments, but the one for reload
+          isn't consistent across services. You can specify which argument
+          to use with the `restart` property in Service tags. Example:
+          ``<Service name="ftp" restart="condrestart" status="on"
+          type="chkconfig">``

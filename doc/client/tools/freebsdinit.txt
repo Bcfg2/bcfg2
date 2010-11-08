@@ -1,0 +1,9 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-freebsdinit:
+
+===========
+FreeBSDInit
+===========
+
+FreeBSD Service Support. Only bundle updates will work.

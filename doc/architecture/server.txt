@@ -1,0 +1,65 @@
+.. -*- mode: rst -*-
+
+.. _architecture-server:
+
+The Bcfg2 Server
+================
+
+The Bcfg2 server is responsible for taking a network description and
+turning it into a series of configuration specifications for particular
+clients. It also manages probed data and tracks statistics for clients.
+
+The Bcfg2 server takes information from two sources when generating
+client configuration specifications. The first is a pool of metadata that
+describes clients as members of an aspect-based classing system. That is,
+clients are defined in terms of aspects of their behavior. The other is
+a file system repository that contains mappings from metadata to literal
+configuration. These are combined to form the literal configuration
+specifications for clients.
+
+The Configuration Specification Construction Process
+----------------------------------------------------
+
+As we described in the previous section, the client connects to the server
+to request a configuration specification. The server uses the client's
+metadata and the file system repository to build a specification that
+is tailored for the client. This process consists of the following steps:
+
+* **Metadata Lookup**
+
+  The server uses the client's IP address to initiate the metadata
+  lookup. This initial metadata consists of a (profile, image) tuple. If
+  the client already has metadata registered, then it is used. If not,
+  then default values are used and stored for future use. This metadata
+  tuple is expanded using some profile and class definitions also included
+  in the metadata. The end result of this process is metadata consisting
+  of hostname, profile, image, a list of classes, a list of attributes
+  and a list of bundles.
+
+* **Abstract Configuration Construction**
+
+  Once the server has the client metadata, it is used to create
+  an abstract configuration. An abstract configuration contains
+  all of the configuration elements that will exist in the final
+  specification **without** any specifics. All entries will be typed
+  (i.e. the tagname will be one of Package, Path, Action, etc) and will
+  include a name. These configuration entries are grouped into bundles,
+  which document installation time interdependencies.
+
+* **Configuration Binding**
+
+  The abstract configuration determines the structure of the client
+  configuration, however, it doesn't yet contain literal configuration
+  information. After the abstract configuration is created, each
+  configuration entry must be bound to a client-specific value. The Bcfg2
+  server uses plugins to provide these client-specific bindings. The Bcfg2
+  server core contains a dispatch table that describes which plugins can
+  handle requests of a particular type. The responsible plugin is located
+  for each entry. It is called, passing in the configuration entry and
+  the client's metadata. The behavior of plugins is explicitly undefined,
+  so as to allow maximum flexibility. The behaviours of the stock plugins
+  are documented elsewhere in this manual. Once this binding process
+  is completed, the server has a literal, client-specific configuration
+  specification. This specification is complete and comprehensive; the
+  client doesn't need to process it at all in order to use it. It also
+  represents the totality of the configuration specified for the client.

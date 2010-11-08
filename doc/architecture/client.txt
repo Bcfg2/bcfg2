@@ -1,0 +1,112 @@
+.. -*- mode: rst -*-
+
+.. _architecture-client:
+
+The Bcfg2 Client
+================
+
+The Bcfg2 client performs all client configuration or reconfiguration
+operations. It renders a declarative configuration specification, provided
+by the Bcfg2 server, into a set of configuration operations which will,
+if executed, attempt to change the client's state into that described by
+the configuration specification. Conceptually, the Bcfg2 client serves to
+isolate the Bcfg2 server and specification from the imperative operations
+required to implement configuration changes.
+
+This isolation allows declarative specifications to be manipulated
+symbolically on the server, without needing to understand the properties
+of the underlying system tools. In this way, the  Bcfg2 client acts
+as a sort of expert system that *knows* how to implement declarative
+configuration changes.
+
+The operation of the Bcfg2 client is intended to be as simple as
+possible. The normal configuration process consists of four main steps:
+
+* **Probe Execution**
+
+  During the probe execution stage, the client connects to the server
+  and downloads a series of probes to execute. These probes reveal
+  local facts to the Bcfg2 server. For example, a probe could discover
+  the type of video card in a system. The Bcfg2 client returns this
+  data to the server, where it can influence the client configuration
+  generation process.
+
+* **Configuration Download and Inventory**
+
+  The Bcfg2 client now downloads a configuration specification from the
+  Bcfg2 server. The configuration describes the complete target state
+  of the machine. That is, all aspects of client configuration should
+  be represented in this specification. For example, all software
+  packages and services should be represented in the configuration
+  specification. The client now performs a local system inventory.
+  This process consists of verifying each entry present in the
+  configuration specification. After this check is completed, heuristic
+  checks are executed for configuration not included in the configuration
+  specification. We refer to this inventory process as 2-way validation,
+  as first we verify that the client contains all configuration that
+  is included in the specification, then we check if the client has
+  any extra configuration that isn't present. This provides a fairly
+  rigorous notion of client configuration congruence. Once the 2-way
+  verification process has been performed, the client has built a list of
+  all configuration entries that are out of spec. This list has two parts:
+  specified configuration that is incorrect (or missing) and unspecified
+  configuration that should be removed.
+
+* **Configuration Update**
+
+  The client now attempts to update its configuration to match the
+  specification. Depending on options, changes may not (or only partially)
+  be performed. First, if extra configuration correction is enabled,
+  extra configuration can be removed. Then the remaining changes
+  are processed. The Bcfg2 client loops while progress is made in the
+  correction of these incorrect configuration entries. This loop results
+  in the client being able to accomplish all it will be able to during
+  one execution. Once all entries are fixed, or no progress is being
+  made, the loop terminates. Once all configuration changes that can be
+  performed have been, bundle dependencies are handled. Bundle groupings
+  result in two different behaviors. Contained entries are assumed
+  to be inter-dependent. To address this, the client re-verifies each
+  entry in any bundle containing an updates configuration entry. Also,
+  services contained in modified bundles are restarted.
+
+* **Statistics Upload**
+
+  Once the reconfiguration process has concluded, the client reports
+  information back to the server about the actions it performed during the
+  reconfiguration process. Statistics function as a detailed return code
+  from the client. The server stores statistics information. Information
+  included in this statistics update includes (but is not limited to):
+
+  * Overall client status (clean/dirty)
+  * List of modified configuration entries
+  * List of uncorrectable configuration entries
+  * List of unmanaged configuration entries
+
+Architecture Abstraction
+------------------------
+
+The Bcfg2 client internally supports the administrative tools available
+on different architectures. For example, ``rpm`` and ``apt-get`` are
+both supported, allowing operation of Debian, Redhat, SUSE, and Mandriva
+systems. The client toolset is determined based on the availability of
+client tools.  The client includes a series of libraries which describe
+how to interact with the system tools on a particular platform.
+
+Three of the libraries exist. There is a base set of functions, which
+contain definitions describing how to perform POSIX operations. Support
+for configuration files, directories, symlinks, hardlinks, etc., are
+included here. Two other libraries subclass this one, providing support
+for Debian and rpm-based systems.
+
+The Debian toolset includes support for apt-get and update-rc.d. These
+tools provide the ability to install and remove packages, and to install
+and remove services.
+
+The Redhat toolset includes support for rpm and chkconfig. Any other
+platform that uses these tools can also use this toolset. Hence, all
+of the other familiar rpm-based distributions can use this toolset
+without issue.
+
+Other platforms can easily use the POSIX toolset, ignoring support for
+packages or services. Alternatively, adding support for new toolsets
+isn't difficult. Each toolset consists of about 125 lines of python code.

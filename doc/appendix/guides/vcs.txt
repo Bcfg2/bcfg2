@@ -1,0 +1,112 @@
+.. -*- mode: rst -*-
+
+.. _guide-vcs:
+
+=======================
+Version control systems
+=======================
+
+The sections in this guide do only cover the basics steps in the setup
+of the different version control system for the usage with the Bcfg2
+plugin support.  More more details about 
+
+Git
+===
+
+.. _Git tutorial: http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
+
+Adding the :ref:`server-plugins-version-git` plugins can preserve
+versioning information. The first step is to add **Git** to your 
+plugin line::
+
+    plugins = Base,Bundler,Cfg,...,Git
+
+For tracking the configuration files in the ``/var/lib/bcfg2`` 
+directory a git repository need to be established::
+
+    git init
+
+For more detail about the setup of git please refer to a `git tutorial`_.
+The first commit can be the empty or the already populated directory::
+
+    git add . && git commit -a
+
+While running ``bcfg2-info`` the following line will show up::
+
+   Initialized git plugin with git directory = /var/lib/bcfg2/.git
+
+Mercurial 
+=========
+
+For the :ref:`server-plugins-version-hg` plugin are the same changes 
+needed as for git. ::
+
+    plugins = Base,Bundler,Cfg,...,Mercurial
+
+The repository must be initialized::
+
+    hg init
+
+Mercurial will not commit the files to the repository until a user name
+is defined in ``/var/lib/bcfg2/.hg/``
+
+.. code-block:: sh
+
+    cat <<END_ENTRY >> /var/lib/bcfg2/.hg/hgrc
+    [ui]
+    username = Yor name <you@example.com>
+    END_ENTRY
+
+Now you are able to make submissions to the repository::
+
+    hg commit
+
+While running ``bcfg2-info`` the following line will show up::
+
+   Initialized hg plugin with hg directory = /var/lib/bcfg2/.hg
+
+Darcs 
+=====
+
+If you wish to use the :ref:`server-plugins-version-darcs` plugin an
+entry has to be made in the ``bcfg2.conf`` file.::
+
+    plugins = Base,Bundler,Cfg,...,Darcs
+
+The dracs repository must be initialized::
+
+    darcs initialize
+
+To commit to the darcs repository an author must be added to the 
+``_darcs/prefs/author`` file.  If the ``author`` file is missing, 
+darcs will ask you to enter your e-mail address.
+
+.. code-block:: sh
+
+    cat <<END_ENTRY >> /var/lib/bcfg2/_darcs/prefs/author
+    you@example.com
+    END_ENTRY
+
+All files in the ``/var/lib/bcfg2`` should be added to darcs now::
+
+    darcs add *
+
+After that you can submit them to the repository::
+
+    darcs record
+
+While running ``bcfg2-info`` the following line will show up::
+
+   Initialized Darcs plugin with darcs directory = /var/lib/bcfg2/_darcs
+
+Cvs
+===
+
+If you wish to use the :ref:`server-plugins-version-darcs` plugin an
+entry has to be made in the ``bcfg2.conf`` file.::
+
+    plugins = Base,Bundler,Cfg,...,Cvs
+
+The CVS repository must be initialized::
+
+    cvs -d /var/lib/bcfg2 init

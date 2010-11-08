@@ -1,0 +1,45 @@
+.. -*- mode: rst -*-
+
+.. _error-messages:
+
+==============
+Error Messages
+==============
+
+This page describes error messages produced by Bcfg2 and steps that
+can be taken to remedy them.
+
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Error                                                                     | Location | Meaning                                                                                             | Repair  |
++===========================================================================+==========+=====================================================================================================+=========+
+| Incomplete information for entry <EntryTag>:<EntryName>; cannot verify    | Client   | The described entry is not fully specified by the server, so no verification can be performed.      | [#f1]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Incomplete information for entry <EntryTag>:<EntryName>; cannot install   | Client   | The described entry is not fully specified by the server, so no verification can be performed.      | [#f2]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| The following entries are not handled by any tool: <EntryTag>:<EntryName> | Client   | The client cannot figure out how to handle this entry.                                              | [#f3]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| no server x509 fingerprint; no server verification performed!             | Client   | The client is unable to verify the server                                                           | [#f4]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Failed to bind entry: <EntryTag> <EntryName>                              | Server   | The server was unable to find a suitable version of entry for client.                               | [#f5]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Failed to bind to socket                                                  | Server   | The server was unable to bind to the tcp server socket.                                             | [#f6]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Failed to load ssl key <path>                                             | Server   | The server was unable to read and process the ssl key.                                              | [#f7]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Failed to read file <path>                                                | Server   | The server failed to read the specified file                                                        | [#f8]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Failed to parse file <path>                                               | Server   | The server failed to parse the specified XML file                                                   | [#f9]_  |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+| Client metadata resolution error for <IP>                                 | Server   | The server cannot resolve the client hostname or the client is associated with a non-profile group. | [#f10]_ |
++---------------------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------------+---------+
+
+.. [#f1] This entry is not being bound. Ensure that a version of this entry applies to this client.
+.. [#f2] This entry is not being bound. Ensure that a version of this entry applies to this client.
+.. [#f3] Add a type to the generator definition for this entry
+.. [#f4] Run bcfg2-admin fingerprint on the server and add it to the client bcfg2.conf as mentioned here
+.. [#f5] This entry is not being bound. Ensure that a version of this entry applies to this client.
+.. [#f6] Ensure that another instance of the daemon (or any other process) is not listening on the same port.
+.. [#f7] Ensure that the key is readable by the user running the daemon and that it is well-formed.
+.. [#f8] Ensure that this file still exists; a frequent cause is the deletion of a temp file.
+.. [#f9] Ensure that the file is properly formed XML.
+.. [#f10] Fix hostname resolution for the client or ensure that the profile group is properly setup.

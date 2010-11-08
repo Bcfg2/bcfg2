@@ -1,0 +1,10 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-posix:
+
+=====
+POSIX
+=====
+
+Files and Permissions are handled by the POSIX driver. Usage well
+documented other places.

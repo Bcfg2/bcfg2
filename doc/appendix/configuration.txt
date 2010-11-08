@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _appendix-configuration:
+
+=====================
+Example configuration
+=====================
+
+This section contains useful configuration of additional tools.
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   configuration/*

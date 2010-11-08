@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _appendix-files:
+
+=============
+Example files
+=============
+
+In this section are some examples for getting started with a more 
+indeep usage of Bcfg2.
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   files/*

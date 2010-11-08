@@ -6,315 +6,49 @@
 Bcfg2 Development
 =================
 
-There are many ways to get involved in Bcfg2 development. Here we will
-outline some things that can help you get familiar with the various
-areas of the Bcfg2 code.
+There are several ways users can contribute to the Bcfg2 project.
 
-Tips for Bcfg2 Development
---------------------------
+* Developing code
+* Testing prereleases
+* Reporting bugs
+* Adding to the common repository
+* Improving the wiki and writing documentation
 
-#. Focus on either the client or server code. This focuses the development process down to the precise pieces of code that matter for the task at hand.
 
-   * If you are developing a client driver, then write up a small configuration specification that includes the needed characteristics.
-   * If you are working on the server, run ``bcfg2-info`` and use to assess the code.
+This section will outline some things that can help you get familiar
+with the various areas of the Bcfg2 code.
 
-#. Use the python interpreter. One of python's most appealing features is interactive use of the interpreter.
+Send patches to the :ref:`mailinglist` or create a trac 
+`ticket <https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_
+with the patch included. In order to submit a ticket via the
+trac system, you will need to create a session by clicking on the
+`Preferences <https://trac.mcs.anl.gov/projects/bcfg2/prefs>`_ link and
+filling out/saving changes to the form. In order to be considered for
+mainline inclusion, patches need to be BSD licensed. The most convenient
+way to prepare patches is by using ``git diff`` inside of a source tree
+checked out of git.
 
-   * If you are developing for the client-side, run ``python -i /usr/sbin/bcfg2`` with the appropriate bcfg2 options. This will cause the python interpreter to continue running, leaving all variables intact. This can be used to examine data state in a convenient fashion.
-   * If you are developing for the server side, use ``bcfg2-info`` and the "debug" option. This will leave you at a python interpreter prompt, with the server core loaded in the variable "bcore".
+The source tree can be checked out by running::
 
-#. Use ``pylint`` obsessively. It raises a lot of style-related warnings which can be ignored, but most all of the errors are legitimate.
-#. If you are doing anything with Regular Expressions, `Kodos`_ and `re-try`_ are your friends.
+    git clone git://git.mcs.anl.gov/bcfg2.git
 
-
-.. _Kodos: http://kodos.sourceforge.net
-.. _re-try: http://re-try.appspot.com
-
-
-Environment setup for development
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* Check out a copy of the code::
-
-      git clone git://git.mcs.anl.gov/bcfg2.git
-
-* Create link to src/lib::
-
-      cd bcfg2
-      ln -s src/lib Bcfg2
-
-* Add ``bcfg2/src/sbin`` to your PATH environment variable
-* Add ``bcfg2`` to your PYTHONPATH environment variable
-
-.. _development-index-writingtooldrivers:
-
-Writing A Client Tool Driver
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This page describes the step-by-step process of writing a client tool
-driver for a configuration element type. The included example describes
-an existing driver, and the process that was used to create it.
-
-#. Pick a name for the driver. In this case, we picked the name RPM.
-#. Add "RPM" to the __all__ list in ``src/lib/Client/Tools/__init__.py``
-#. Create a file in ``src/lib/Client/Tools`` with the same name (RPM.py)
-#. Create a class in this file with the same name (class RPM)
-
-   * If it handles Package entries, subclass Bcfg2.Client.Tools.PkgTool (from here referenced as branch [P])
-   * If it handles Service entries, subclass Bcfg2.Client.Tools.SvcTool (from here referenced as branch [S])
-   * Otherwise, subclass Bcfg2.Client.Tools.Tool (from here referenced as branch [T])
-
-#. Set __name__ to "RPM"
-#. Add any required executable programs to __execs__
-#. Set __handles__ to a list of (entry.tag, entry.get('type')) tuples. This determines which entries the Tool module can be used on. In this case, we set __handles__ = [('Package', 'rpm')].
-#. Add verification. This method should return True/False depending on current entry installation status.
-
-   * [T] Add a Verify<entry.tag> method.
-   * [P] Add a VerifyPackage method.
-   * [S] Add a VerifyService method.
-   * In the failure path, the current state of failing entry attributes should be set in the entry, to aid in auditing. [[BR]] (For example, if a file should be mode 644, and is currently mode  600, then set attribute current_perms='600' in the input entry)
-
-#. Add installation support. This method should return True/False depending on the results of the installation process.
-
-   * [T,S] Add an Install<entry.tag> method.
-   * [P] The PkgTool baseclass has a generic mechanism for performing all-at-once installations, followed, in the case of failures, by single installations. To enable this support, set the pkgtype attribute to the package type handled by this driver. Set the pkgtool to a tuple ("command string %s", ("per-package string format", [list of package entry fields])). For RPM, we have setup pkgtool =  ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
-
-#. Implement entry removal
-
-   * [T,S] Implement a Remove method that removes all specified entries (prototype Remove(self, entries))
-   * [P] Implement a !RemovePackages that removes all specified entries (same prototype as Remove)
-
-#. Add a FindExtra method that locates entries not included in the configuration. This may or may not be required, certain drivers do not have the capability to find extra entries.
-#. [P] Package drivers require a !RefreshPackages method that updates the internal representation of the package database.
-
-Writing Tool Driver Methods
-"""""""""""""""""""""""""""
-
-#. Programs can be run using self.cmd.run. This function returns a (return code, stdout list) tuple.
-#. The configuration is available as self.config
-#. Runtime options are available in a dictionary as self.setup
-#. Informational, error, and debug messages can be produced by running self.logger.info/error/debug.
-
-Bcfg2 Plugin development
-------------------------
-
-While the Bcfg2 server provides a good interface for representing
-general system configurations, its plugin interface offers the ability
-to implement configuration interfaces and representation tailored to
-problems encountered by a particular site. This chapter describes what
-plugins are good for, what they can do, and how to implement them.
-
-Bcfg2 Plugins
-^^^^^^^^^^^^^
-
-Bcfg2 plugins are loadable python modules that the Bcfg2 server loads at
-initialization time. These plugins can contribute to the functions already
-offered by the Bcfg2 server or can extend its functionality. In general,
-plugins will provide some portion of the configuration for clients, with a
-data representation that is tuned for a set of common tasks. Much of the
-core functionality of Bcfg2 is implemented by several plugins, however,
-they are not special in any way; new plugins could easily supplant one
-or all of them.
-
-The following table describes the various functions of bcfg2 plugins.
-
-+--------------------+---------------------------------------------+
-| Name               | Description                                 |
-+====================+=============================================+
-| Probes             | Plugins can issue commands to collect       |
-|                    | client-side state (like hardware inventory) |
-|                    | to include in client configurations         |
-+--------------------+---------------------------------------------+
-| ConfigurationEntry | Plugins can construct a list of per-client  |
-| List               | configuration entry lists to include in     |
-|                    | client configurations.                      |
-+--------------------+---------------------------------------------+
-| ConfigurationEntry | Literal values for configuration entries    |
-| contents           |                                             |
-+--------------------+---------------------------------------------+
-| XML-RPC functions  | Plugins can export function calls that      |
-|                    | expose internal functions.                  |
-+--------------------+---------------------------------------------+
-
-Writing Bcfg2 Plugins
-^^^^^^^^^^^^^^^^^^^^^
-
-Bcfg2 plugins are python classes that subclass from
-Bcfg2.Server.Plugin.Plugin. Several plugin-specific values must be set
-in the new plugin. These values dictate how the new plugin will behave
-with respect to the above four functions.  The following table describes
-all important member fields.
-
-+-----------------+-----------------------------------+--------------------------+
-| Name            | Description                       | Format                   |
-+=================+===================================+==========================+
-| __name__        | The name of the plugin            | string                   |
-+-----------------+-----------------------------------+--------------------------+
-| __version__     | The plugin version (generally     | string                   |
-|                 | tied to revctl keyword expansion) |                          |
-+-----------------+-----------------------------------+--------------------------+
-| __author__      | The plugin author.                | string                   |
-+-----------------+-----------------------------------+--------------------------+
-| __rmi__         | Set of functions to be exposed as | List of function names   |
-|                 | XML-RPC functions                 | (strings)                |
-+-----------------+-----------------------------------+--------------------------+
-| Entries         | Multidimentional dictionary of    | Dictionary of            |
-|                 | keys that point to the function   | ConfigurationEntityType, |
-|                 | used to bind literal contents for | Name keys, and function  |
-|                 | a given configuration entity.     | reference values         |
-+-----------------+-----------------------------------+--------------------------+
-| BuildStructures | Function that returns a list of   | Member function          |
-|                 | the structures for a given client |                          |
-+-----------------+-----------------------------------+--------------------------+
-| GetProbes       | Function that returns a list of   | Member function          |
-|                 | probes that a given client should |                          |
-|                 | execute                           |                          |
-+-----------------+-----------------------------------+--------------------------+
-| ReceiveData     | Function that accepts the probe   | Member function          |
-|                 | results for a given client.       |                          |
-+-----------------+-----------------------------------+--------------------------+
-
-Example Plugin
-^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    import Bcfg2.Server.Plugin
-    class MyPlugin(Bcfg2.Server.Plugin.Plugin):
-       """An example plugin."""
-       # All plugins need to subclass Bcfg2.Server.Plugin.Plugin
-       __name__ = 'MyPlugin'
-       __version__ = '1'
-       __author__ = 'me@me.com'
-       __rmi__ = ['myfunction']
-       # myfunction is not available remotely as MyPlugin.myfunction
-
-       def __init__(self, core, datastore):
-           Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-           self.Entries = {'Path':{'/etc/foo.conf': self.buildFoo}}
-
-       def myfunction(self):
-           """Function for xmlrpc rmi call."""
-           # Do something
-           return True
-
-       def buildFoo(self, entry, metadata):
-           """Bind per-client information into entry based on metadata."""
-           entry.attrib.update({'type':'file', 'owner':'root', 'group':'root', 'perms':'644'})
-           entry.text = '''contents of foo.conf'''
-
-Example Connector
-^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-    import Bcfg2.Server.Plugin
-
-    class Foo(Bcfg2.Server.Plugin.Plugin,
-             Bcfg2.Server.Plugin.Connector):
-        """The Foo plugin is here to illustrate a barebones connector."""
-        name = 'Foo'
-        version = '$Revision: $'
-        experimental = True
-
-        def __init__(self, core, datastore):
-            Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-            Bcfg2.Server.Plugin.Connector.__init__(self)
-            self.store = XMLFileBacked(self.data, core.fam)
-
-        def get_additional_data(self, metadata):
-
-            mydata = {}
-            for data in self.store.entries['foo.xml'].data.get("foo", []):
-
-                mydata[data] = "bar"
-
-            return  dict([('mydata', mydata)])
-
-        def get_additional_groups(self, meta):
-            return self.cgroups.get(meta.hostname, list())
-
-Server Plugin Types
--------------------
-
-Generator
-^^^^^^^^^
-
-Generator plugins contribute to literal client configurations
-
-Structure
-^^^^^^^^^
-
-Structure Plugins contribute to abstract client configurations
-
-Metadata
-^^^^^^^^
-
-Signal metadata capabilities
-
-Connector
-^^^^^^^^^
-
-Connector Plugins augment client metadata instances
-
-Probing
-^^^^^^^
-
-Signal probe capability
-
-Statistics
-^^^^^^^^^^
-
-Signal statistics handling capability
-
-Decision
-^^^^^^^^
-
-Signal decision handling capability
-
-Version
-^^^^^^^
-
-Interact with various version control systems
-
-Writing Server Plugins
-----------------------
-
-Metadata
-^^^^^^^^
-
-If you would like to define your own Metadata plugin (to extend/change
-functionality of the existing Metadata plugin), here are the steps to
-do so. We will call our new plugin `MyMetadata`.
-
-#. Add MyMetadata.py
-
-   .. code-block:: python
-
-       __revision__ = '$Revision$'
-
-       import Bcfg2.Server.Plugins.Metadata
-
-       class MyMetadata(Bcfg2.Server.Plugins.Metadata.Metadata):
-           '''This class contains data for bcfg2 server metadata'''
-           __version__ = '$Id$'
-           __author__ = 'bcfg-dev@mcs.anl.gov'
-
-       def __init__(self, core, datastore, watch_clients=True):
-           Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, watch_clients)
-
-#. Add MyMetadata to ``src/lib/Server/Plugins/__init__.py``
-#. Replace Metadata with MyMetadata in the plugins line of bcfg2.conf
-
-
-Documentation
--------------
-
-One of the areas where everyone can help is with the documentation. *Insert verbiage on how people can help.*
-
+Users wishing to contribute on a regular basis can apply for direct
+git access. Mail the :ref:`mailinglist` for details.
 
 
 .. toctree::
    :maxdepth: 1
-
+   
+   tips
+   setup
+   client-driver
+   plugins
+   writing_plugins
+   plugin-types
+   writing_specification
+   server
+   testing
+   documentation
    docstyleguide
+   emacs_snippet
+   vim_snippet

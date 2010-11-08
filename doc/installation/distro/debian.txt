@@ -1,0 +1,24 @@
+.. -*- mode: rst -*-
+
+.. _debian:
+
+.. _Wiki: http://trac.mcs.anl.gov/projects/bcfg2/wiki/PrecompiledPackages#UnofficialDebianRepository
+
+Debian
+======
+
+Packages of Bcfg2 are available for Debian Lenny, Debian Squeeze, and
+Debian Sid. The fastest way to get Bcfg2 onto your Debian system
+is to use `apt-get` or `aptitude`. :: 
+
+   sudo aptitude install bcfg2 bcfg2-server
+
+If you want to use unofficial packages from Bcfg2. Add the following line
+to your `/etc/apt/sources.list` file :: 
+
+   deb ftp://ftp.mcs.anl.gov/pub/bcfg/debian sarge/
+
+Now just run `aptitute` in the way it is mentioned above. 
+
+For more details about running prerelease version of Bcfg2 on Debian
+systems, please refer to the Wiki_.

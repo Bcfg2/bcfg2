@@ -1,0 +1,10 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-freebsdpackage:
+
+==============
+FreeBSDPackage
+==============
+
+FreeBSD Packages. Verifies packages and their version numbers but can't
+install packages.

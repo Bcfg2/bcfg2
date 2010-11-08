@@ -1,0 +1,45 @@
+.. -*- mode: rst -*-
+
+.. _development-plugins:
+
+Bcfg2 Plugin development
+------------------------
+
+While the Bcfg2 server provides a good interface for representing
+general system configurations, its plugin interface offers the ability
+to implement configuration interfaces and representation tailored to
+problems encountered by a particular site. This chapter describes what
+plugins are good for, what they can do, and how to implement them.
+
+Bcfg2 Plugins
+^^^^^^^^^^^^^
+
+Bcfg2 plugins are loadable python modules that the Bcfg2 server loads at
+initialization time. These plugins can contribute to the functions already
+offered by the Bcfg2 server or can extend its functionality. In general,
+plugins will provide some portion of the configuration for clients, with a
+data representation that is tuned for a set of common tasks. Much of the
+core functionality of Bcfg2 is implemented by several plugins, however,
+they are not special in any way; new plugins could easily supplant one
+or all of them.
+
+The following table describes the various functions of bcfg2 plugins.
+
++--------------------+---------------------------------------------+
+| Name               | Description                                 |
++====================+=============================================+
+| Probes             | Plugins can issue commands to collect       |
+|                    | client-side state (like hardware inventory) |
+|                    | to include in client configurations         |
++--------------------+---------------------------------------------+
+| ConfigurationEntry | Plugins can construct a list of per-client  |
+| List               | configuration entry lists to include in     |
+|                    | client configurations.                      |
++--------------------+---------------------------------------------+
+| ConfigurationEntry | Literal values for configuration entries    |
+| contents           |                                             |
++--------------------+---------------------------------------------+
+| XML-RPC functions  | Plugins can export function calls that      |
+|                    | expose internal functions.                  |
++--------------------+---------------------------------------------+
+

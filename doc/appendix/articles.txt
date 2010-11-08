@@ -1,0 +1,25 @@
+.. -*- mode: rst -*-
+
+.. _appendix-articles:
+
+========
+Articles
+========
+
+* Configuration and change management with Bcfg2: "The Dean" - The powerful Bcfg2 provides a sophisticated environment for centralized configuration management.
+
+ * Marko Jung, Nils Magnus
+ * In the english 'Linux Magazine', 04/09, pages 30-35, April 2009
+ * The `Bcfg2 code listings <ftp://ftp.linux-magazin.com/pub/listings/magazine/101/bcfg2/>`_ for the article are public.
+
+* `Konfigurations- und Change-Management in Bcfg2 <http://www.linux-magazin.de/Heft-Abo/Ausgaben/2008/10/Abstrakte-Avantgarde?category=0>`_
+
+ * Marko Jung, Nils Magnus
+ * In the german 'Linux Magazin', 10/08, pages 76-80, September 2008
+ * The `code listings <http://www.linux-magazin.de/static/listings/magazin/2008/10/bcfg2/>`_ for the article are public.
+
+* `System Management Methodologies with Bcfg2 <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/login-reports.pdf>`_
+
+ * Narayan Desai, Rick Bradshaw and Joey Hagedorn
+ * In ;login: Magazine, Volume 31, #1, pages 11-18, February 2006 
+

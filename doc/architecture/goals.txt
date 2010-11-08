@@ -1,0 +1,47 @@
+.. -*- mode: rst -*-
+
+.. _architecture-goals:
+
+Goals
+=====
+
+* **Model configurations using declarative semantics.**
+
+  Declarative semantics maximize the utility of configuration management
+  tools; they provide the most flexibility for the tool to determine
+  the right course of action in any given situation. This means that
+  users can focus on the task of describing the desired configuration,
+  while leaving the task of transitioning clients states to the tool.
+
+* **Configuration descriptions should be comprehensive.**
+
+  This means that configurations served to the client should be sufficient
+  to reproduce all desired functionality. This assumption allows the
+  use of heuristics to detect extra configuration, aiding in reliable,
+  comprehensive configuration definitions.
+
+* **Provide a flexible approach to user interactions.**
+
+  Most configuration management systems take a rigid approach to user
+  interactions; that is, either the client system is always correct,
+  or the central system is. This means that users are forced into an
+  overly proscribed model where the system asserts where correct data
+  is. Configuration data modification is frequently undertaken on both
+  the configuration server and clients. Hence, the existence of a single
+  canonical data location can easily pose a problem during normal tool
+  use. Bcfg2 takes a different approach.
+
+The default assumption is that data on the server is correct, however,
+the client has the option to run in another mode where local changes are
+catalogued for server-side integration. If the Bcfg2 client is run in dry
+run mode, it can help to reconcile differences between current client
+state and the configuration described on the server. The Bcfg2 client
+also searches for extra configuration; that is, configuration that is
+not specified by the configuration description. When extra configuration
+is found, either configuration has been removed from the configuration
+description on the server, or manual configuration has occurred on the
+client. Options related to two-way verification and removal are useful
+for configuration reconciliation when interactive access is used.
+
+* Plugins and administrative applications.
+* Incremental operations.
