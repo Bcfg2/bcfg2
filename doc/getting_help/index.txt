@@ -38,3 +38,4 @@ active.
    faq/index
    error-messages
    manpages
+   troubleshooting
