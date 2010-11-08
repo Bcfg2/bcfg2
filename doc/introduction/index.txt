@@ -1,13 +1,9 @@
 .. -*- mode: rst -*-
 
-.. _index:
+.. _introduction-index:
 
-==========================================
-Welcome to Bcfg2's |version| documentation
-==========================================
-
-What is Bcfg2?
-==============
+Introduction
+============
 
 Bcfg2 helps system administrators produce a consistent, reproducible,
 and verifiable description of their environment, and offers
@@ -37,8 +33,9 @@ systems are constantly changing; if required in your environment,
 Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
+
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
-   contents
+   architecture-overview
+   os-support

@@ -2,30 +2,29 @@
 
 .. _contents:
 
-=================================
-Welcome to Bcfg2's documentation!
-=================================
+==========================================
+Welcome to Bcfg2's |version| documentation
+==========================================
 
 .. toctree::
    :maxdepth: 2
+   :numbered:
 
-   index
-   quickstart/index
-   help/index
-   faq/index
-   authentication
+   introduction/index
+   installation/index
    getting_started/index
+   architecture/index
    server/index
    client/index
-   troubleshooting
-   help/index
-   bcfg2.conf-options
-   architecture
+   reports/index
    development/index
-
-   unsorted/index
-
+   getting_help/index
    glossary
+   appendix/index
+ 
+   unsorted/index
+   obsolete/index
+
 
 Indices, glossary and tables
 ============================
@@ -34,14 +33,3 @@ Indices, glossary and tables
 * :ref:`modindex`
 * :ref:`glossary`
 * :ref:`search`
-
-Deprecated/obsolete documentation
-=================================
-
-The following documentation covers features that have been deprecated or that
-have been replaced in newer versions of Bcfg2.
-
-.. toctree::
-   :maxdepth: 2
-
-   obsolete/index

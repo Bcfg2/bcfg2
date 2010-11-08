@@ -1,0 +1,34 @@
+.. -*- mode: rst -*-
+
+.. _architecture-overview:
+
+Architecture Overview
+=====================
+
+Bcfg2 provides a declarative interface to system configuration. Its
+configuration specifications describe a literal configuration goal
+state for clients. In this architecture, the Bcfg2 client tool is
+responsible for determining what, if any, configuration operations must
+occur and then performing those operations. The client also uploads
+statistics and client configuration state information. The design
+and implementation of the reporting system is described on a separate
+:ref:`page <server-reports-index>`.
+
+A comprehensive description of the Bcfg2 Architecture (and the choices
+behind the design) can be found at :ref:`architecture-index`.
+
+Server
+------
+
+The role of the Bcfg2 server is rendering a client-specific target
+configuration description from a global specification. The specification
+consists of a directory structure containing data for a variety of server
+plugins. The Bcfg2 server has a plugin interface that can be used to
+interpret the configuration specification.
+
+Client
+------
+
+The Bcfg2 client is responsible for determining what operations are
+necessary in order to reach the desired configuration state.  Read on
+for more information about :ref:`client-index`.
