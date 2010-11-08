@@ -39,12 +39,12 @@ bcfg2.conf from the per-client metadata::
     protocol = xmlrpc/ssl
     #if $self.metadata.uuid != None
     user = $self.metadata.uuid
-    #endif
+    #end if
     #if $self.metadata.password != None
     password = $self.metadata.password
     #else
     password = my-password-foobat
-    #endif
+    #end if
 
     [components]
     bcfg2 = https://localhost:6789
