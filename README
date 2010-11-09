@@ -24,24 +24,23 @@ For details about the installation of Bcfg2 please refer to the
 following pages in the Bcfg2 wiki.
 
 * Prerequisites: http://bcfg2.org/wiki/Prereqs
-* Download: http://bcfg2.org/wiki/Download
-* Installation: http://bcfg2.org/wiki/Install
+* Download:      http://bcfg2.org/wiki/Download
+* Installation:  http://bcfg2.org/wiki/Install
 
 Need help
 ---------
 
-* FAQ: http://bcfg2.org/wiki/FAQ
-* IRC: #bcfg2 on chat.freenode.net
+* FAQ:          http://bcfg2.org/wiki/FAQ
+* IRC:          #bcfg2 on chat.freenode.net
 * Mailing list: https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
-* Bug tracker: http://bcfg2.org/report
+* Bug tracker:  http://bcfg2.org/report
 
 Documentation
 -------------
 
-A lot of documentation is available in the Bcfg2 wiki and the Bcfg2
-manual.
+A lot of documentation is available in the Bcfg2 manual and the Bcfg2 wiki.
 
-Wiki: http://bcfg2.org/wiki/
+Wiki:   http://bcfg2.org/wiki/
 Manual: http://docs.bcfg2.org/
 
 
