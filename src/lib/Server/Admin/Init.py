@@ -66,7 +66,7 @@ clients = '''<Clients version="3.0">
 
 # Mapping of operating system names to groups
 os_list = [
-           ('Redhat/Fedora/RHEL/RHAS/Centos',   'redhat'),
+           ('Red Hat/Fedora/RHEL/RHAS/Centos',  'redhat'),
            ('SUSE/SLES',                        'suse'),
            ('Mandrake',                         'mandrake'),
            ('Debian',                           'debian'),
