@@ -10,19 +10,13 @@ from subprocess import Popen, PIPE
 import sys
 
 pkgname = 'bcfg2'
-repo = 'https://svn.mcs.anl.gov/repos/bcfg'
+ftphost = 'terra.mcs.anl.gov'
+ftpdir = '/mcs/ftp/pub/bcfg'
 version = raw_input("Please enter the version you are tagging (e.g. 1.0.0): ")
-tagstr = version.replace('.', '_')
-
-expath = "/tmp/%s-%s/" % (pkgname, version)
-tarname = "/tmp/%s-%s.tar.gz" % (pkgname, version)
+tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
-
-#FIXME: someone please figure out how to do this using the python svn bindings
-cmd = "svn info | grep URL | awk '{print $2}'"
-url = run(cmd)[0].strip()
 
 # update the version
 majorver = version[:5]
@@ -65,20 +59,22 @@ for line in fileinput.input('solaris/Makefile', inplace=1):
     if line.startswith('VERS='):
         line = line.replace(line, 'VERS=%s-1\n' % version)
     sys.stdout.write(line)
+
 # tag the release
-cmd = "svn ci -m 'Version bump to %s'" % version
+#FIXME: do this using python-dulwich
+cmd = "git commit -asm 'Version bump to %s'" % version
 output = run(cmd)[0].strip()
-cmd = "svn copy %s %s/tags/%s_%s -m 'tagged %s release'" % \
-      (url, repo, pkgname, tagstr, version)
+# NOTE: This will use the default email address key. If you want to sign the tag
+#       using a different key, you will need to set 'signingkey' to the proper
+#       value in the [user] section of your git configuration.
+cmd = "git tag -s v%s -m 'tagged %s release'" % (version, version)
 output = run(cmd)[0].strip()
-cmd = "svn export %s" % expath
-output = run(cmd)[0].strip()
-cmd = "svn log -v %s/tags/%s_%s > %sChangelog" % \
-      (repo, pkgname, tagstr, expath)
-output = run(cmd)[0].strip()
-cmd = "tar czf %s %s" % (tarname, expath)
+cmd = "git archive --format=tar --prefix=%s-%s v%s | gzip > %s" % \
+       (pkgname, version, version, tarname)
 output = run(cmd)[0].strip()
 cmd = "gpg --armor --output %s.gpg --detach-sig  %s" % (tarname, tarname)
 output = run(cmd)[0].strip()
-cmd = "scp %s* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg" % tarname
+
+# upload release to ftp
+cmd = "scp %s* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg/" % tarname
 output = run(cmd)[0].strip()
