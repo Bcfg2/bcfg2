@@ -69,7 +69,7 @@ output = run(cmd)[0].strip()
 #       value in the [user] section of your git configuration.
 cmd = "git tag -s v%s -m 'tagged %s release'" % (version, version)
 output = run(cmd)[0].strip()
-cmd = "git archive --format=tar --prefix=%s-%s v%s | gzip > %s" % \
+cmd = "git archive --format=tar --prefix=%s-%s/ v%s | gzip > %s" % \
        (pkgname, version, version, tarname)
 output = run(cmd)[0].strip()
 cmd = "gpg --armor --output %s.gpg --detach-sig  %s" % (tarname, tarname)
