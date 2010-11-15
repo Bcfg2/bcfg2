@@ -168,8 +168,8 @@ deployment strategies.
 %{_sbindir}/bcfg2
 %{python_sitelib}/Bcfg2/*.py*
 %{python_sitelib}/Bcfg2/Client/*
-%{_mandir}/man1/*
-%{_mandir}/man5/*
+{_mandir}/man1/bcfg2.1*
+%{_mandir}/man5/bcfg2.conf.5*
 %{_initrddir}/bcfg2
 %config(noreplace) %{_sysconfdir}/default/bcfg2
 %{_sysconfdir}/cron.hourly/bcfg2
