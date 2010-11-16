@@ -5,10 +5,10 @@
 
 .. _Base: plugins/structures/base
 .. _Bundler: plugins/structures/bundler
-.. _Cfg: plugins/generators/cfg
+.. _Cfg: plugins/generators/cfg.html
 .. _TGenshi: plugins/generators/tgenshi
-.. _TCheetah: plugins/generators/tcheetah
-.. _Rules: plugins/generators/rules
+.. _TCheetah: plugins/generators/tcheetah.html
+.. _Rules: plugins/generators/rules.html
 
 .. _server-configurationentries:
 
