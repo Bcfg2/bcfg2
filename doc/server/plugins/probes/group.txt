@@ -20,57 +20,65 @@ Probe used to dynamically set client groups based on OS/distro.
 
     if [ -e /etc/release ]; then
             # Solaris
-            OUTPUT=$OUTPUT'\n'`echo group:solaris`
+            OUTPUT="$OUTPUT\ngroup:solaris"
     elif [ -e /etc/debian_version ]; then
             # debian based
-            OUTPUT=$OUTPUT'\n'`echo group:deb`
+            OUTPUT="$OUTPUT\ngroup:deb"
             if [ -e /etc/lsb-release ]; then
                     # variant
                     . /etc/lsb-release
                     OS_GROUP=$DISTRIB_CODENAME
-                    DEBIAN_VERSION=$(echo "$DISTRIB_ID" | tr '[A-Z' '[a-z]')
+                    DEBIAN_VERSION=$(echo "$DISTRIB_ID" | tr '[A-Z]' '[a-z]')
                     case "$OS_GROUP" in
                             "lucid")
-                            OUTPUT=$OUTPUT'\n'`echo group:$DISTRIB_CODENAME`
-                            OUTPUT=$OUTPUT'\n'`echo group:$DEBIAN_VERSION`
+                            OUTPUT="$OUTPUT\ngroup:${DISTRIB_CODENAME}"
+                            OUTPUT="$OUTPUT\ngroup:${DEBIAN_VERSION}"
                             ;;
                     esac
             else
                     # debian
                     OS_GROUP=`cat /etc/debian_version`
-                    OUTPUT=$OUTPUT'\n'`echo group:debian`
+                    OUTPUT="$OUTPUT\ngroup:debian"
                     case "$OS_GROUP" in
                             5.*)
-                            OUTPUT=$OUTPUT'\n'`echo group:lenny`
+                            OUTPUT="$OUTPUT\ngroup:lenny"
                             ;;
                             "sid")
-                            OUTPUT=$OUTPUT'\n'`echo group:sid`
+                            OUTPUT="$OUTPUT\ngroup:sid"
                             ;;
                     esac
             fi
     elif [ -e /etc/redhat-release ]; then
             # redhat based
-            OUTPUT=$OUTPUT'\n'`echo group:rpm`
-            OS_GROUP=`cat /etc/redhat-release | cut -d' ' -f1 | tr '[A-Z]' '[a-z]'`
-            REDHAT_VERSION=`cat /etc/redhat-release | cut -d' ' -f3`
-            case "$OS_GROUP" in
-                    "centos" | "fedora")
-                    OUTPUT=$OUTPUT'\n'`echo group:$OS_GROUP`
-                    OUTPUT=$OUTPUT'\n'`echo group:$OS_GROUP$REDHAT_VERSION`
-                    ;;
-            esac
+	    if [ -x /bin/rpm ]; then
+	            OUTPUT="${OUTPUT}\ngroup:rpm"
+                    OS_GROUP=`bin/rpm -q --qf "%{NAME}" --whatprovides redhat-release | sed 's/-release.*//' |  tr '[A-Z]' '[a-z]'`
+                    REDHAT_VERSION=`bin/rpm -q --qf "%{VERSION}" --whatprovides redhat-release`
+                    case "$OS_GROUP" in
+                            "centos" | "fedora")
+                            OUTPUT="${OUTPUT}\ngroup:${OS_GROUP}"
+                            OUTPUT="${OUTPUT}\ngroup:${OS_GROUP}-${REDHAT_VERSION}"
+                            ;;
+                            "redhat")
+                            REDHAT_RELEASE=`bin/rpm -q --qf "%{RELEASE}" --whatprovides redhat-release| cut -d. -f1`
+                            OUTPUT="${OUTPUT}\ngroup:${OS_GROUP}"
+                            OUTPUT="${OUTPUT}\ngroup:${OS_GROUP}-${REDHAT_VERSION}"
+                            OUTPUT="${OUTPUT}\ngroup:${OS_GROUP}-${REDHAT_RELEASE}"
+                            ;;
+                    esac
+            fi
     elif [ -e /etc/gentoo-release ]; then
             # gentoo
-            OUTPUT=$OUTPUT'\n'`echo group:gentoo`
+            OUTPUT="$OUTPUT\ngroup:gentoo"
     elif [ -x /usr/sbin/system_profiler ]; then
             # os x
             ### NOTE: Think about using system_profiler SPSoftwareDataType here
-            OUTPUT=$OUTPUT'\n'`echo group:osx`
+            OUTPUT="$OUTPUT\ngroup:osx"
             OSX_VERSION=`sw_vers | grep 'ProductVersion:' | egrep -o '[0-9]+\.[0-9]+'`
             if [ "$OSX_VERSION" == "10.6" ]; then
-                    OUTPUT=$OUTPUT'\n'`echo group:osx-snow`
+                    OUTPUT="$OUTPUT\ngroup:osx-snow"
             elif [ "$OSX_VERSION" == "10.5" ]; then
-                    OUTPUT=$OUTPUT'\n'`echo group:osx-leo`
+                    OUTPUT="$OUTPUT\ngroup:osx-leo"
             fi
             echo $OUTPUT
     else
@@ -81,16 +89,16 @@ Probe used to dynamically set client groups based on OS/distro.
     case "$ARCH" in
             "x86_64")
             if [ "$OS_GROUP" == 'centos' ]; then
-                    OUTPUT=$OUTPUT'\n'`echo group:$ARCH`
+                    OUTPUT="$OUTPUT\ngroup:${ARCH}"
             else
-                    OUTPUT=$OUTPUT'\n'`echo group:amd64`
+                    OUTPUT="$OUTPUT\ngroup:amd64"
             fi
             ;;
             "i386" | "i686")
-            OUTPUT=$OUTPUT'\n'`echo group:i386`
+            OUTPUT="$OUTPUT\ngroup:i386"
             ;;
             "sparc64")
-            OUTPUT=$OUTPUT'\n'`echo group:sparc64`
+            OUTPUT="$OUTPUT\ngroup:sparc64"
             ;;
     esac
 
