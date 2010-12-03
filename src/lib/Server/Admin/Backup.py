@@ -1,4 +1,5 @@
 import glob
+import os
 import sys
 import time
 import tarfile
@@ -21,7 +22,7 @@ class Backup(Bcfg2.Server.Admin.MetadataCore):
         opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
         setup = Bcfg2.Options.OptionParser(opts)
         setup.parse(sys.argv[1:])
-        repo = setup['repo']
+        self.datastore = setup['repo']
         
 	if len(args) == 0:
             self.errExit("No argument specified.\n"
@@ -31,12 +32,12 @@ class Backup(Bcfg2.Server.Admin.MetadataCore):
             format = 'gz'
             mode = 'w:' + format
             filename = timestamp + '.tar' + '.' + format
-            out = tarfile.open(filename, mode=mode)
-            content = os.listdir(os.getcwd())           
+            out = tarfile.open(self.datastore + '/' + filename, mode=mode)
+            content = os.listdir(self.datastore)    
             for item in content:
                 out.add(item)
             out.close()
-            print "Archive %s was stored.\nLocation: %s" % (filename, datastore)
+            print "Archive %s was stored.\nLocation: %s" % (filename, self.datastore)
 
         elif args[0] == 'restore':
             print 'Not implemented yet'
