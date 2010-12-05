@@ -11,15 +11,15 @@
 .PHONY: cvs-export git-export svn-export test-export
 .PHONY: cvs-clean git-clean svn-clean test-clean
 
-SCM_TYPE := svn
+SCM_TYPE := git
 SCM_PATH := ../
 #CVSROOT := $(shell cat 2>/dev/null src/CVS/Root)
-SVN_PATH := $(shell svn info ${SCM_PATH} 2>/dev/null | awk '/^URL:/{print $$2}')
-SVN_REV := $(shell svn info ${SVN_PATH} 2>/dev/null | awk '/^Last Changed Rev:/{print $$4}')
+#SVN_PATH := $(shell svn info ${SCM_PATH} 2>/dev/null | awk '/^URL:/{print $$2}')
+#SVN_REV := $(shell svn info ${SVN_PATH} 2>/dev/null | awk '/^Last Changed Rev:/{print $$4}')
 
 PACKAGE := $(shell cat PACKAGE)
 VERSION := $(shell cat VERSION)
-RELEASE := $(shell cat RELEASE)r${SVN_REV}
+RELEASE := $(shell cat RELEASE)
 BASE_VER := ${VERSION}-${RELEASE}
 CURRENT_PACKAGE := $(PACKAGE)-$(BASE_VER)
 TARBALL := $(CURRENT_PACKAGE).tar
@@ -80,8 +80,8 @@ buildtargz: buildtarball
 
 # This target copies files that are not in svn into the build tree
 prepbuildtarball: $(SCM_TYPE)-export
-	@cp ${PACKAGE}.spec ./build/${CURRENT_PACKAGE}/redhat && \
-		cp -R scripts ./build/${CURRENT_PACKAGE}/redhat
+	@cp ${PACKAGE}.spec ./build/${CURRENT_PACKAGE}/redhat/ && \
+		cp -R scripts ./build/${CURRENT_PACKAGE}/redhat/
 
 specfile: $(PACKAGE).spec
 
@@ -113,11 +113,8 @@ test-export: builddir
 	    --file -
 
 git-export: builddir prepclean
-	@git-tar-tree HEAD $(PACKAGE)-$(VERSION) \
-	  | tar \
-	    --extract \
-	    --directory ./build/ \
-	    --file -
+	@cd ../ && git archive --format=tar --prefix=$(CURRENT_PACKAGE)/ HEAD \
+	  | (cd redhat/build && tar xf -)
 
 git-clean:
 	@:

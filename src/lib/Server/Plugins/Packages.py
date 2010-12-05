@@ -76,8 +76,8 @@ def _fetch_url(url):
 class Source(object):
     basegroups = []
 
-    def __init__(self, basepath, url, version, arches, components, groups, rawurl,
-                 blacklist, whitelist, recommended):
+    def __init__(self, basepath, url, version, arches, components, groups,
+                 rawurl, blacklist, whitelist, recommended):
         self.basepath = basepath
         self.version = version
         self.components = components
@@ -112,7 +112,8 @@ class Source(object):
             try:
                 self.read_files()
             except:
-                logger.error("Packages: File read failed; falling back to file download")
+                logger.error("Packages: File read failed; "
+                             "falling back to file download")
                 should_download = True
 
         if should_download or force_update:
@@ -389,7 +390,7 @@ class APTSource(Source):
         if self.recommended:
             depfnames = ['Depends', 'Pre-Depends', 'Recommends']
         else:
-            depfnames = ['Depends', 'Pre-Depends']            
+            depfnames = ['Depends', 'Pre-Depends']
         for fname in self.files:
             if not self.rawurl:
                 barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
@@ -504,7 +505,6 @@ class PACSource(Source):
             raise Exception("PACSource : RAWUrl not supported (yet)")
     urls = property(get_urls)
 
-
     def read_files(self):
         bdeps = dict()
         bprov = dict()
@@ -512,7 +512,7 @@ class PACSource(Source):
         if self.recommended:
             depfnames = ['Depends', 'Pre-Depends', 'Recommends']
         else:
-            depfnames = ['Depends', 'Pre-Depends']            
+            depfnames = ['Depends', 'Pre-Depends']
 
         for fname in self.files:
             if not self.rawurl:
@@ -535,8 +535,8 @@ class PACSource(Source):
 
             for tarinfo in tar:
                 if tarinfo.isdir():
-                    self.pkgnames.add(tarinfo.name.rsplit("-",2)[0])
-                    print "added : " + tarinfo.name.rsplit("-",2)[0]
+                    self.pkgnames.add(tarinfo.name.rsplit("-", 2)[0])
+                    print "added : " + tarinfo.name.rsplit("-", 2)[0]
             tar.close()
 
         self.deps['global'] = dict()
@@ -676,7 +676,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         # do while unclassified or vpkgs or both or pkgs
         while unclassified or pkgs or both or final_pass:
             #print len(unclassified), len(pkgs), len(both), len(vpkgs), final_pass
-            if really_done: 
+            if really_done:
                 break
             if len(unclassified) + len(pkgs) + len(both) == 0:
                 # one more pass then exit
@@ -760,7 +760,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         meta - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
-        if self.disableResolver: return # Config requests no resolver
+        if self.disableResolver:
+            # Config requests no resolver
+            return
 
         initial = set([pkg.get('name') for struct in structures \
                        for pkg in struct.findall('Package') +
@@ -857,7 +859,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         cachefiles = []
         for source in self.sources:
             cachefiles.append(source.cachefile)
-            if not self.disableMetaData: source.setup_data(force_update)
+            if not self.disableMetaData:
+                source.setup_data(force_update)
             self.sentinels.update(source.basegroups)
         for cfile in glob.glob("%s/cache-*" % self.cachepath):
             if cfile not in cachefiles:

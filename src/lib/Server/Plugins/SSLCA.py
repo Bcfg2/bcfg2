@@ -7,6 +7,7 @@ import os
 from subprocess import Popen, PIPE, STDOUT
 from ConfigParser import ConfigParser
 
+
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """
     The SSLCA generator handles the creation and
@@ -34,9 +35,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             ident = self.handles[event.requestID] + event.filename
         else:
             ident = self.handles[event.requestID][:-1]
-        
+
         fname = "".join([ident, '/', event.filename])
-        
+
         if event.filename.endswith('.xml'):
             if action in ['exists', 'created', 'changed']:
                 if event.filename.endswith('key.xml'):
@@ -89,12 +90,12 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         of a new key if one doesn't exist.
         """
         # set path type and permissions, otherwise bcfg2 won't bind the file
-        permdata = {'owner':'root',
-                    'group':'root',
-                    'type':'file',
-                    'perms':'644'}
+        permdata = {'owner': 'root',
+                    'group': 'root',
+                    'type': 'file',
+                    'perms': '644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
-        
+
         # check if we already have a hostfile, or need to generate a new key
         # TODO: verify key fits the specs
         path = entry.get('name')
@@ -125,10 +126,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         of a new cert if one doesn't exist.
         """
         # set path type and permissions, otherwise bcfg2 won't bind the file
-        permdata = {'owner':'root',
-                    'group':'root',
-                    'type':'file',
-                    'perms':'644'}
+        permdata = {'owner': 'root',
+                    'group': 'root',
+                    'type': 'file',
+                    'perms': '644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
         path = entry.get('name')
@@ -157,7 +158,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         chaincert = self.CAs[self.cert_specs[entry.get('name')]['ca']].get('chaincert')
         cert = self.data + filename
-        cmd = "openssl verify -CAfile %s %s" % (chaincert, cert) 
+        cmd = "openssl verify -CAfile %s %s" % (chaincert, cert)
         res = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
         if res == cert + ": OK\n":
             return True
@@ -225,7 +226,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         cp.write(conffile)
         conffile.close()
         return conffile.name
-        
+
     def build_request(self, key_filename, req_config, entry):
         """
         creates the certificate request
@@ -236,4 +237,3 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         cmd = "openssl req -new -config %s -days %s -key %s -text -out %s" % (req_config, days, key, req)
         res = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         return req
-
