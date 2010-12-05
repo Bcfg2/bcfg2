@@ -166,8 +166,7 @@ The following is an annotated copy of a bundle:
 
 .. code-block:: xml
 
-    <Bundle revision='$Revision: 2668 $' name='ssh' version='2.0'
-            origin='https://svn.mcs.anl.gov/repos/bcfg/trunk/repository/Bundler/ssh.xml'>
+    <Bundle name='ssh' version='2.0'>
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>

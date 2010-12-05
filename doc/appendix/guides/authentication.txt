@@ -123,7 +123,7 @@ or password only. Also a bootstrap mode will be added shortly; this
 will allow a client to authenticate with a password its first time,
 requiring a certificate all subsequent times. This behavior can be
 controlled through the use of the auth attribute in
-`Metadata/clients.xml`::
+``Metadata/clients.xml``::
 
     <Clients>
       <Client name='testclient' auth='cert'/>

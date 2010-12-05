@@ -21,76 +21,81 @@ Package only
 Our example starts with the bare minimum configuration setup. We have
 a client, a profile group, a list of packages, and a base configuration.
 
-.. code-block:: sh
+``Metadata/clients.xml``:
 
-     # cat Metadata/clients.xml 
-     <Clients version='3.0'>
-     <Client profile='fedora' pingable='N' pingtime='0' name='foo.bar.com'/>
-     </Clients>
+.. code-block:: xml
 
-.. code-block:: sh
+    <Clients version='3.0'>
+    <Client profile='fedora' pingable='N' pingtime='0' name='foo.bar.com'/>
+    </Clients>
 
-     # cat Metadata/groups.xml 
-     <Groups version='3.0'>
-     <Group profile='true' name='fedora' toolset='rh'/>
-     </Groups>
+``Metadata/groups.xml``:
 
-.. code-block:: sh
+.. code-block:: xml
 
-     # cat Base/base.xml 
-     <Base>
-     <Group name='fedora'>
-     <Package name='ntp'/>
-     </Group>
-     </Base>
+    <Groups version='3.0'>
+    <Group profile='true' name='fedora' toolset='rh'/>
+    </Groups>
 
-.. code-block:: sh
+``Base/base.xml``:
 
-     # cat Pkgmgr/packages.xml
-     <PackageList type='rpm' priority='0'>
-     <Package name='ntp' version='4.2.0.a.20050816-11.FC5'/>
-     </PackageList>
+.. code-block:: xml
+
+    <Base>
+    <Group name='fedora'>
+    <Package name='ntp'/>
+    </Group>
+    </Base>
+
+``Pkgmgr/packages.xml``:
+
+.. code-block:: xml
+
+    <PackageList type='rpm' priority='0'>
+    <Package name='ntp' version='4.2.0.a.20050816-11.FC5'/>
+    </PackageList>
 
 Add service
 -----------
 
 Configure the service, and add it to the base.
 
-.. code-block:: sh
+``Svcmgr/services.xml``:
 
-     # cat Svcmgr/services.xml 
-     <Services priority='0'>
-     <Service name='ntpd' status='on'/>
-     </Services>
+.. code-block:: xml
 
-.. code-block:: sh
+    <Services priority='0'>
+    <Service name='ntpd' status='on'/>
+    </Services>
 
-     # cat Base/base.xml 
-     <Base>
-     <Group name='fedora'>
-     <Package name='ntp'/>
-     <Service name='ntpd'/>
-     </Group>
-     </Base>
+``Base/base.xml``:
+
+.. code-block:: xml
+
+    <Base>
+    <Group name='fedora'>
+    <Package name='ntp'/>
+    <Service name='ntpd'/>
+    </Group>
+    </Base>
 
 Add config file
 ---------------
 
-Setup an ``etc/`` directory structure, and add it to the base.
-
-.. code-block:: sh
+Setup an ``etc/`` directory structure, and add it to the base.::
 
      # cat Cfg/etc/ntp.conf/ntp.conf 
      server ntp1.utexas.edu
 
-.. code-block:: sh
+``Base/base.xml``:
 
-     # cat Base/base.xml 
-     <Base>
+.. code-block:: xml
+
+    <Base>
      <Group name='fedora'>
      <Package name='ntp'/>
      <Service name='ntpd'/>
-     <ConfigFile name='/etc/ntp.conf'/>
+     <Path name='/etc/ntp.conf'/>
      </Group>
     </Base>
 
@@ -105,7 +110,7 @@ related configuration entries that are used to provide a single
 service. This is done for several reasons:
 
 * Grouping related things in one place makes it easier to add those
-  entries for a multiple groups of clients
+  entries for multiple groups of clients
 * Grouping entries into bundles makes their validation occur
   collectively. This means that config files can override the
   contents of packages. Also, config files are rechecked after
@@ -119,22 +124,24 @@ The config file, package, and service are really all related
 components describing the idea of an ntp client, so they should be 
 logically grouped together. We use a bundle to accomplish this.
 
-.. code-block:: sh
+``Bundler/ntp.xml``:
 
-     # cat Bundler/ntp.xml
-     <Bundle name='ntp' version='2.0'>
-     <Package name='ntp'/>
-     <Service name='ntpd'/>
-     <ConfigFile name='/etc/ntp.conf'/>
-     </Bundle>
+.. code-block:: xml
+
+    <Bundle name='ntp' version='2.0'>
+    <Package name='ntp'/>
+    <Service name='ntpd'/>
+    <Path name='/etc/ntp.conf'/>
+    </Bundle>
 
 After this bundle is created, it must be associated with a group
 (or groups). Add a bundle child element to the group(s) which should
 install this bundle.
 
-.. code-block:: sh
+``Metadata/groups.xml``:
 
-     # cat Metadata/groups.xml
+.. code-block:: xml
+
      <Groups>
     ...
      <Group name='fedora'>
@@ -143,9 +150,8 @@ install this bundle.
     ...
      </Groups>
 
-Once this bundle is created, a client reconfigure will install these 
-entries. If any are modified, then the ``ntpd`` service will be
-restarted. If you only want ntp configurations to be updated
-(and nothing else), the bcfg2 client can be run with a 
-``-b <bundle name>`` option that will only update entries in
-the specified bundle.
+Once this bundle is created, a client reconfigure will install
+these entries. If any are modified, then the *ntpd* service will
+be restarted. If you only want ntp configurations to be updated (and
+nothing else), the bcfg2 client can be run with a ``-b <bundle name>``
+option that will only update entries in the specified bundle.

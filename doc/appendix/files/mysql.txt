@@ -1,10 +1,10 @@
 .. -*- mode: rst -*-
 
-.. _getting_started-mysql:
+.. _appendix-files-mysql:
 
 .. Author: Patrick Ruckstuhl
 
-Mysql example
+MySQL example
 =============
 
 I had some time ago to continue with putting my configuration into 
@@ -15,8 +15,8 @@ I added a new bundle:
 .. code-block:: xml
 
     <Bundle name="mysql-server" version="3.0">
-       <ConfigFile name="/root/bcfg2-install/mysql/users.sh"/>
-       <ConfigFile name="/root/bcfg2-install/mysql/users.sql"/>
+       <Path name="/root/bcfg2-install/mysql/users.sh"/>
+       <Path name="/root/bcfg2-install/mysql/users.sql"/>
        <PostInstall name="/root/bcfg2-install/mysql/users.sh"/>
        <Package name="mysql-server-4.1"/>
        <Service name="mysql"/>
@@ -34,18 +34,14 @@ The ``users.sh`` script looks like this:
 On debian there is a user account in ``/etc/mysql/debian.cnf`` 
 automatically created, but you could also (manually) create a 
 user in the database that has enough permissions and add the 
-login information in a file yourself. This file looks like this:
-
-.. code-block:: sh
+login information in a file yourself. This file looks like this::
 
     [client]
     host     = localhost
     user     = debian-sys-maint
     password = XXXXXXXXXX
 
-The ``users.sql`` looks like this:
-
-.. code-block:: sh
+The ``users.sql`` looks like this::
 
     DELETE FROM db;
     INSERT INTO db VALUES ('localhost', 'phpmyadmin', 'pma', 'Y', 'Y',
@@ -60,4 +56,3 @@ The ``users.sql`` looks like this:
     'N', 'N', 'N', '', '', '', '', 0, 0, 0);
 
     FLUSH PRIVILEGES;
-

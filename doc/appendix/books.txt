@@ -8,5 +8,4 @@ Books
 
 * `Configuration Management with Bcfg2 <http://www.sage.org/pubs/19_bcfg2/>`_
 
- * Narayan Desai and Cory Lueninghoener 
-
+ * Narayan Desai and Cory Lueninghoener
