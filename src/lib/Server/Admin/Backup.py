@@ -1,4 +1,3 @@
-import glob
 import os
 import sys
 import time
@@ -8,9 +7,9 @@ import Bcfg2.Options
 
 class Backup(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Make a backup of the Bcfg2 repository."
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin backup start"
-                                    "\n\nbcfg2-admin backup restore")
-    __usage__ = ("bcfg2-admin backup [start|restore]")
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin backup")
+                                    #"\n\nbcfg2-admin backup restore")
+    __usage__ = ("bcfg2-admin backup")
 
     def __init__(self, configfile):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
@@ -23,26 +22,11 @@ class Backup(Bcfg2.Server.Admin.MetadataCore):
         setup = Bcfg2.Options.OptionParser(opts)
         setup.parse(sys.argv[1:])
         self.datastore = setup['repo']
-        
-	if len(args) == 0:
-            self.errExit("No argument specified.\n"
-                         "Please see bcfg2-admin backup help for usage.")
-        if args[0] == 'start':
-            timestamp = time.strftime('%Y%m%d%H%M%S')
-            format = 'gz'
-            mode = 'w:' + format
-            filename = timestamp + '.tar' + '.' + format
-            out = tarfile.open(self.datastore + '/' + filename, mode=mode)
-            content = os.listdir(self.datastore)    
-            for item in content:
-                out.add(item)
-            out.close()
-            print "Archive %s was stored.\nLocation: %s" % (filename, self.datastore)
-
-        elif args[0] == 'restore':
-            print 'Not implemented yet'
-        
-        else:
-            print "No command specified"
-            raise SystemExit(1)
-
+        timestamp = time.strftime('%Y%m%d%H%M%S')
+        format = 'gz'
+        mode = 'w:' + format
+        filename = timestamp + '.tar' + '.' + format
+        out = tarfile.open(self.datastore + '/' + filename, mode=mode)
+        out.add(self.datastore, os.path.basename(self.datastore))
+        out.close()
+        print "Archive %s was stored under %s" % (filename, self.datastore)
