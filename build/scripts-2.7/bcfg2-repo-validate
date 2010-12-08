@@ -1,0 +1,227 @@
+#!/usr/bin/python
+
+"""
+bcfg2-repo-validate checks all xml files in Bcfg2
+repos against their respective XML schemas.
+"""
+__revision__ = '$Revision$'
+
+import glob
+import lxml.etree
+import os
+import sys
+import Bcfg2.Options
+
+if __name__ == '__main__':
+    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
+            'prefix': Bcfg2.Options.INSTALL_PREFIX,
+            'verbose': Bcfg2.Options.VERBOSE,
+            'configfile': Bcfg2.Options.CFILE}
+    setup = Bcfg2.Options.OptionParser(opts)
+    setup.parse(sys.argv[1:])
+    verbose = setup['verbose']
+    cpath = setup['configfile']
+    prefix = setup['prefix']
+    schemadir = "%s/share/bcfg2/schemas" % (prefix)
+    os.chdir(schemadir)
+    repo = setup['repo']
+
+    # Get a list of all info.xml files in the bcfg2 repository
+    info_list = []
+    for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
+        for root, dirs, files in os.walk('%s/%s' % (repo, infodir)):
+            for filename in files:
+                if filename == 'info.xml':
+                    info_list.append(os.path.join(root, filename))
+
+    # get metadata list (with all included files)
+    metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
+    ref_bundles = set()
+    xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
+    included = set([ent.get('href') for ent in \
+                   xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
+    while included:
+        try:
+            filename = included.pop()
+        except KeyError:
+            continue
+        metadata_list.append("%s/Metadata/%s" % (repo, filename))
+        groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
+        group_ents = [ent.get('href') for ent in \
+                      groupdata.
+                      findall('./{http://www.w3.org/2001/XInclude}include')]
+        for ent in group_ents:
+            included.add(ent)
+        included.discard(filename)
+
+    # check for multiple default group definitions
+    default_groups = []
+    for grp in lxml.etree.parse("%s/Metadata/groups.xml" \
+                                      % repo).findall('.//Group'):
+        if grp.get('default') == 'true':
+            default_groups.append(grp)
+    if len(default_groups) > 1:
+        print("*** Warning: Multiple default groups defined")
+        for grp in default_groups:
+            print("  %s" % grp.get('name'))
+
+    # get all XIncluded bundles
+    xdata.xinclude()
+    for bundle in xdata.findall("//Bundle"):
+        ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
+
+    # get lists of all other xml files to validate
+    clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
+    bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
+    genshibundle_list = glob.glob("%s/Bundler/*.genshi" % repo)
+    pkg_list = glob.glob("%s/Pkgmgr/*.xml" % repo)
+    base_list = glob.glob("%s/Base/*.xml" % repo)
+    rules_list = glob.glob("%s/Rules/*.xml" % repo)
+    imageinfo_list = glob.glob("%s/etc/report-configuration.xml" % repo)
+    services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
+    deps_list = glob.glob("%s/Deps/*.xml" % repo)
+    dec_list = glob.glob("%s/Decisions/*" % repo)
+    pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
+    gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
+
+    # verify attributes for configuration entries
+    # (as defined in doc/server/configurationentries)
+    # TODO: See if it is possible to do this in the schema instead
+    required_configuration_attrs = {
+        'device': ['name', 'owner', 'group', 'dev_type'],
+        'directory': ['name', 'owner', 'group', 'perms'],
+        'file': ['name', 'owner', 'group', 'perms'],
+        'hardlink': ['name', 'to'],
+        'symlink': ['name', 'to'],
+        'ignore': ['name'],
+        'nonexist': ['name'],
+        'permissions': ['name', 'owner', 'group', 'perms']}
+    for rfile in rules_list:
+        try:
+            xdata = lxml.etree.parse(rfile)
+        except lxml.etree.XMLSyntaxError, e:
+            print("Failed to parse %s: %s" % (rfile, e))
+        for posixpath in xdata.findall("//Path"):
+            pathname = posixpath.get('name')
+            pathtype = posixpath.get('type')
+            pathset = set(posixpath.attrib.keys())
+            try:
+                required_attrs = set(required_configuration_attrs[pathtype] \
+                                     + ['type'])
+            except KeyError:
+                continue
+            if 'dev_type' in required_attrs:
+                dev_type = posixpath.get('dev_type')
+                if dev_type in ['block', 'char']:
+                    # check if major/minor are specified
+                    required_attrs |= set(['major', 'minor'])
+            if pathset.issuperset(required_attrs):
+                continue
+            else:
+                print("The following required attributes are missing for"
+                      " Path %s in %s: %s" % (pathname, rfile,
+                      [attr for attr in required_attrs.difference(pathset)]))
+
+    # warn on duplicate Pkgmgr entries with the same priority
+    pset = set()
+    for plist in pkg_list:
+        try:
+            xdata = lxml.etree.parse(plist)
+        except lxml.etree.XMLSyntaxError, e:
+            print("Failed to parse %s: %s" % (plist, e))
+        # get priority, type, group
+        priority = xdata.getroot().get('priority')
+        ptype = xdata.getroot().get('type')
+        for pkg in xdata.findall("//Package"):
+            if pkg.getparent().tag == 'Group':
+                grp = pkg.getparent().get('name')
+                if type(grp) is not str and grp.getparent().tag == 'Group':
+                    pgrp = grp.getparent().get('name')
+                else:
+                    pgrp = 'none'
+            else:
+                grp = 'none'
+                pgrp = 'none'
+            ptuple = (pkg.get('name'), priority, ptype, grp, pgrp)
+            # check if package is already listed with same priority,
+            # type, grp
+            if ptuple in pset:
+                print("Duplicate Package %s, priority:%s, type:%s"\
+                       % (pkg.get('name'), priority, ptype))
+            else:
+                pset.add(ptuple)
+
+    filesets = {'metadata': (metadata_list, "%s/metadata.xsd"),
+                'clients': (clients_list, "%s/clients.xsd"),
+                'info': (info_list, "%s/info.xsd"),
+                'bundle': (bundle_list, "%s/bundle.xsd"),
+                'pkglist': (pkg_list, "%s/pkglist.xsd"),
+                'base': (base_list, "%s/base.xsd"),
+                'rules': (rules_list, "%s/rules.xsd"),
+                'imageinfo': (imageinfo_list, "%s/report-configuration.xsd"),
+                'services': (services_list, "%s/services.xsd"),
+                'deps': (deps_list, "%s/deps.xsd"),
+                'decisions': (dec_list, "%s/decisions.xsd"),
+                'packages': (pkgcfg_list, "%s/packages.xsd"),
+                'grouppatterns': (gp_list, "%s/grouppatterns.xsd"),
+                }
+
+    failures = 0
+    for k, (filelist, schemaname) in list(filesets.items()):
+        try:
+            schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
+        except:
+            print("Failed to process schema %s" % (schemaname%(schemadir)))
+            failures = 1
+            continue
+        for filename in filelist:
+            try:
+                datafile = lxml.etree.parse(open(filename))
+            except SyntaxError:
+                print("%s ***FAILS*** to parse \t\t<----" % (filename))
+                os.system("xmllint %s" % filename)
+                failures = 1
+                continue
+            except IOError:
+                print("Failed to open file %s \t\t<---" % (filename))
+                failures = 1
+                continue
+            if schema.validate(datafile):
+                if verbose:
+                    print("%s checks out" % (filename))
+            else:
+                rc = os.system("xmllint --noout --xinclude --schema \
+                                %s %s > /dev/null 2>/dev/null" % \
+                               (schemaname % schemadir, filename))
+                if rc:
+                    failures = 1
+                    print("%s ***FAILS*** to verify \t\t<----" % (filename))
+                    os.system("xmllint --noout --xinclude --schema %s %s" % \
+                              (schemaname % schemadir, filename))
+                elif verbose:
+                    print("%s checks out" % (filename))
+
+    # print out missing bundle information
+    if verbose:
+        print("")
+        for bundle in ref_bundles:
+            # check for both regular and genshi bundles
+            xmlbundle = "%s.xml" % bundle
+            genshibundle = "%s.genshi" % bundle
+            allbundles = bundle_list + genshibundle_list
+            if xmlbundle not in allbundles and \
+               genshibundle not in allbundles:
+                print("*** Warning: Bundle %s referenced, but does not "
+                                    "exist." % bundle)
+        # verify bundle name attribute matches filename
+        for bundle in (bundle_list + genshibundle_list):
+            fname = bundle.split('Bundler/')[1].split('.')[0]
+            xdata = lxml.etree.parse(bundle)
+            bname = xdata.getroot().get('name')
+            if fname != bname:
+                print("The following names are inconsistent:")
+                print("  Filename is %s" % fname)
+                print("  Bundle name found in %s is %s" % (fname, bname))
+
+
+    raise SystemExit, failures

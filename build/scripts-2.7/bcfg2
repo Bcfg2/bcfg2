@@ -1,0 +1,313 @@
+#!/usr/bin/python
+
+"""Bcfg2 Client"""
+__revision__ = '$Revision$'
+
+import logging
+import os
+import signal
+import sys
+import tempfile
+import time
+import xmlrpclib
+import fcntl
+import Bcfg2.Options
+import Bcfg2.Client.XML
+import Bcfg2.Client.Frame
+import Bcfg2.Client.Tools
+
+import Bcfg2.Proxy
+import Bcfg2.Logger
+
+logger = logging.getLogger('bcfg2')
+
+def cb_sigint_handler(signum, frame):
+    """Exit upon CTRL-C."""
+    os._exit(1)
+
+DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
+                                     cmd="--decision-list", odesc='<file>',
+                                     long_arg=True)
+
+
+class Client:
+    """The main bcfg2 client class"""
+
+    def __init__(self):
+        self.toolset = None
+        self.config = None
+
+        optinfo = {
+            # 'optname': (('-a', argdesc, optdesc),
+            #                  env, cfpath, default, boolean)),
+            'verbose': Bcfg2.Options.VERBOSE,
+            'extra': Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+            'quick': Bcfg2.Options.CLIENT_QUICK,
+            'debug': Bcfg2.Options.DEBUG,
+            'lockfile': Bcfg2.Options.LOCKFILE,
+            'drivers': Bcfg2.Options.CLIENT_DRIVERS,
+            'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
+            'paranoid': Bcfg2.Options.CLIENT_PARANOID,
+            'bundle': Bcfg2.Options.CLIENT_BUNDLE,
+            'bundle-quick': Bcfg2.Options.CLIENT_BUNDLEQUICK,
+            'indep': Bcfg2.Options.CLIENT_INDEP,
+            'file': Bcfg2.Options.CLIENT_FILE,
+            'interactive': Bcfg2.Options.INTERACTIVE,
+            'cache': Bcfg2.Options.CLIENT_CACHE,
+            'profile': Bcfg2.Options.CLIENT_PROFILE,
+            'remove': Bcfg2.Options.CLIENT_REMOVE,
+            'help': Bcfg2.Options.HELP,
+            'setup': Bcfg2.Options.CFILE,
+            'server': Bcfg2.Options.SERVER_LOCATION,
+            'user': Bcfg2.Options.CLIENT_USER,
+            'password': Bcfg2.Options.SERVER_PASSWORD,
+            'retries': Bcfg2.Options.CLIENT_RETRIES,
+            'kevlar': Bcfg2.Options.CLIENT_KEVLAR,
+            'decision-list': DECISION_LIST,
+            'encoding': Bcfg2.Options.ENCODING,
+            'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
+            'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
+            'decision': Bcfg2.Options.CLIENT_DLIST,
+            'servicemode': Bcfg2.Options.CLIENT_SERVICE_MODE,
+            'key': Bcfg2.Options.CLIENT_KEY,
+            'certificate': Bcfg2.Options.CLIENT_CERT,
+            'ca': Bcfg2.Options.CLIENT_CA,
+            'serverCN': Bcfg2.Options.CLIENT_SCNS,
+            }
+
+        self.setup = Bcfg2.Options.OptionParser(optinfo)
+        self.setup.parse(sys.argv[1:])
+
+        if self.setup['args']:
+            print("Bcfg2 takes no arguments, only options")
+            print(self.setup.buildHelpMessage())
+            raise SystemExit(1)
+        level = 30
+        if self.setup['verbose']:
+            level = 20
+        if self.setup['debug']:
+            level = 0
+        Bcfg2.Logger.setup_logging('bcfg2',
+                                   to_syslog=False,
+                                   level=level,
+                                   to_file=self.setup['filelog'])
+        self.logger = logging.getLogger('bcfg2')
+        self.logger.debug(self.setup)
+        if self.setup['bundle-quick']:
+            if self.setup['bundle'] == []:
+                self.logger.error("-Q option requires -b")
+                raise SystemExit(1)
+            elif self.setup['remove'] != False:
+                self.logger.error("-Q option incompatible with -r")
+                raise SystemExit(1)
+        if 'drivers' in self.setup and self.setup['drivers'] == 'help':
+            self.logger.info("The following drivers are available:")
+            self.logger.info(Bcfg2.Client.Tools.drivers)
+            raise SystemExit(0)
+        if self.setup['remove'] and 'services' in self.setup['remove']:
+            self.logger.error("Service removal is nonsensical, disable services to get former behavior")
+        if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
+            self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
+        if (self.setup["file"] != False) and (self.setup["cache"] != False):
+            print("cannot use -f and -c together")
+            raise SystemExit(1)
+
+    def run_probe(self, probe):
+        """Execute probe."""
+        name = probe.get('name')
+        self.logger.info("Running probe %s" % name)
+        ret = Bcfg2.Client.XML.Element("probe-data",
+                                       name=name,
+                                       source=probe.get('source'))
+        try:
+            scripthandle, scriptname = tempfile.mkstemp()
+            script = open(scriptname, 'w+')
+            try:
+                script.write("#!%s\n" %
+                             (probe.attrib.get('interpreter', '/bin/sh')))
+                script.write(probe.text)
+                script.close()
+                os.close(scripthandle)
+                os.chmod(script.name, 0755)
+                ret.text = os.popen(script.name).read().strip()
+                self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
+            finally:
+                os.unlink(script.name)
+        except:
+            self.logger.error("Failed to execute probe: %s" % (name), exc_info=1)
+            raise SystemExit(1)
+        return ret
+
+    def fatal_error(self, message):
+        """Signal a fatal error."""
+        self.logger.error("Fatal error: %s" % (message))
+        os._exit(1)
+
+    def run(self):
+        """Perform client execution phase."""
+        times = {}
+
+        # begin configuration
+        times['start'] = time.time()
+
+        if self.setup['file']:
+            # read config from file
+            try:
+                self.logger.debug("Reading cached configuration from %s" %
+                                  (self.setup['file']))
+                configfile = open(self.setup['file'], 'r')
+                rawconfig = configfile.read()
+                configfile.close()
+            except IOError:
+                self.fatal_error("Failed to read cached configuration from: %s"
+                                 % (self.setup['file']))
+                return(1)
+        else:
+            # retrieve config from server
+            proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
+                                               self.setup['user'],
+                                               self.setup['password'],
+                                               key = self.setup['key'],
+                                               cert = self.setup['certificate'],
+                                               ca = self.setup['ca'],
+                                               allowedServerCNs = self.setup['serverCN'])
+
+            if self.setup['profile']:
+                try:
+                    proxy.AssertProfile(self.setup['profile'])
+                except xmlrpclib.Fault:
+                    self.fatal_error("Failed to set client profile")
+                    return(1)
+
+            try:
+                probe_data = proxy.GetProbes()
+            except xmlrpclib.Fault, flt:
+                self.logger.error("Failed to download probes from bcfg2")
+                self.logger.error(flt.faultString)
+                raise SystemExit(1)
+
+            times['probe_download'] = time.time()
+
+            try:
+                probes = Bcfg2.Client.XML.XML(probe_data)
+            except Bcfg2.Client.XML.ParseError, syntax_error:
+                self.fatal_error(
+                    "Server returned invalid probe requests: %s" %
+                    (syntax_error))
+                return(1)
+
+            # execute probes
+            try:
+                probedata = Bcfg2.Client.XML.Element("ProbeData")
+                [probedata.append(self.run_probe(probe))
+                 for probe in probes.findall(".//probe")]
+            except:
+                self.logger.error("Failed to execute probes")
+                raise SystemExit(1)
+
+            if len(probes.findall(".//probe")) > 0:
+                try:
+                    # upload probe responses
+                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata, encoding='UTF-8', xml_declaration=True))
+                except:
+                    self.logger.error("Failed to upload probe data", exc_info=1)
+                    raise SystemExit(1)
+
+            times['probe_upload'] = time.time()
+
+            if self.setup['decision'] in ['whitelist', 'blacklist']:
+                try:
+                    self.setup['decision_list'] = proxy.GetDecisionList( \
+                        self.setup['decision'])
+                    self.logger.info("Got decision list from server:")
+                    self.logger.info(self.setup['decision_list'])
+                except xmlrpclib.Fault, f:
+                    if f.faultCode == 1:
+                        print("GetDecisionList method not supported by server")
+                    else:
+                        self.logger.error("Failed to de", exc_info=1)
+                    raise SystemExit(1)
+
+            try:
+                rawconfig = proxy.GetConfig()
+            except xmlrpclib.Fault:
+                self.logger.error("Failed to download configuration from Bcfg2")
+                raise SystemExit(2)
+
+            times['config_download'] = time.time()
+
+        if self.setup['cache']:
+            try:
+                open(self.setup['cache'], 'w').write(rawconfig.encode(self.setup['encoding']))
+                os.chmod(self.setup['cache'], 33152)
+            except IOError:
+                self.logger.warning("Failed to write config cache file %s" %
+                                    (self.setup['cache']))
+            times['caching'] = time.time()
+
+        try:
+            self.config = Bcfg2.Client.XML.XML(rawconfig)
+        except Bcfg2.Client.XML.ParseError, syntax_error:
+            self.fatal_error("The configuration could not be parsed: %s" %
+                             (syntax_error))
+            return(1)
+
+        times['config_parse'] = time.time()
+
+        if self.config.tag == 'error':
+            self.fatal_error("Server error: %s" % (self.config.text))
+            return(1)
+
+        if self.setup['bundle-quick']:
+            newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
+            [newconfig.append(bundle) for bundle in self.config.getchildren() if \
+             bundle.tag == 'Bundle' and bundle.get('name') in self.setup['bundle']]
+            self.config = newconfig
+
+        self.tools = Bcfg2.Client.Frame.Frame(self.config,
+                                              self.setup,
+                                              times, self.setup['drivers'],
+                                              self.setup['dryrun'])
+
+        if not self.setup['omit-lock-check']:
+            #check lock here
+            try:
+                lockfile = open(self.setup['lockfile'], 'w')
+                try:
+                    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except IOError:
+                    #otherwise exit and give a warning to the user
+                    self.fatal_error("An other instance of Bcfg2 is running. If you what to bypass the check, run with %s option" %
+                                     (Bcfg2.Options.OMIT_LOCK_CHECK.cmd))
+            except:
+                lockfile = None
+                self.logger.error("Failed to open lockfile")
+        # execute the said configuration
+        self.tools.Execute()
+
+        if not self.setup['omit-lock-check']:
+            #unlock here
+            if lockfile:
+                try:
+                    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
+                    os.remove(self.setup['lockfile'])
+                except OSError:
+                    self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
+
+        if not self.setup['file'] and not self.setup['bundle-quick']:
+            # upload statistics
+            feedback = self.tools.GenerateStats()
+
+            try:
+                proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
+                                                          encoding='UTF-8',
+                                                          xml_declaration=True))
+            except xmlrpclib.Fault:
+                self.logger.error("Failed to upload configuration statistics")
+                raise SystemExit(2)
+
+if __name__ == '__main__':
+    signal.signal(signal.SIGINT, cb_sigint_handler)
+    client = Client()
+    spid = os.getpid()
+    client.run()

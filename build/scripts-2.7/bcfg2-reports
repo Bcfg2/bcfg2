@@ -1,0 +1,282 @@
+#!/usr/bin/python
+"""Query reporting system for client status."""
+__revision__ = '$Revision$'
+
+import os
+import sys
+
+import Bcfg2.Server.Reports.settings
+
+project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
+project_name = os.path.basename(project_directory)
+sys.path.append(os.path.join(project_directory, '..'))
+project_module = __import__(project_name, '', '', [''])
+sys.path.pop()
+# Set DJANGO_SETTINGS_MODULE appropriately.
+os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
+
+from Bcfg2.Server.Reports.reports.models import Client
+from getopt import getopt
+import datetime
+import fileinput
+
+def timecompare(client1, client2):
+    """Compares two clients by their timestamps."""
+    return cmp(client1.current_interaction.timestamp, \
+               client2.current_interaction.timestamp)
+
+def namecompare(client1, client2):
+    """Compares two clients by their names."""
+    return cmp(client1.name, client2.name)
+
+def statecompare(client1, client2):
+    """Compares two clients by their states."""
+    clean1 = client1.current_interaction.isclean()
+    clean2 = client2.current_interaction.isclean()
+
+    if clean1 and not clean2:
+        return -1
+    elif clean2 and not clean1:
+        return 1
+    else:
+        return 0
+
+def crit_compare(criterion, client1, client2):
+    """Compares two clients by the criteria provided in criterion."""
+    for crit in criterion:
+        comp = 0
+        if crit == 'name':
+            comp = namecompare(client1, client2)
+        elif crit == 'state':
+            comp = statecompare(client1, client2)
+        elif crit == 'time':
+            comp = timecompare(client1, client2)
+        
+        if comp != 0:
+            return comp
+    
+    return 0
+
+def print_fields(fields, cli, max_name, entrydict):
+    """
+    Prints the fields specified in fields of cli, max_name
+    specifies the column width of the name column.
+    """
+    fmt = ''
+    for field in fields:
+        if field == 'name':
+            fmt += ("%%-%ds   " % (max_name))
+        else:
+            fmt += "%s   "
+    fdata = []
+    for field in fields:
+        if field == 'time':
+            fdata.append(str(cli.current_interaction.timestamp))
+        elif field == 'state':
+            if cli.current_interaction.isclean():
+                fdata.append("clean")
+            else:
+                fdata.append("dirty")
+        else:
+            try:
+                fdata.append(getattr(cli, field))
+            except:
+                fdata.append("N/A")
+
+    display = fmt % tuple(fdata)
+    if len(entrydict) > 0:
+        display += "   "
+        display += str(entrydict[cli])
+    print display
+
+def print_entry(item, max_name):
+    fmt = ("%%-%ds   " % (max_name))
+    fdata = item.entry.kind + ":" + item.entry.name
+    display = fmt % (fdata)
+    print display
+        
+fields = ""
+sort = ""
+badentry = ""
+extraentry = ""
+expire = ""
+singlehost = ""
+
+c_list = Client.objects.all()
+
+result = list()
+entrydict = dict()
+
+args = sys.argv[1:]
+opts, pargs = getopt(args, 'ab:cde:hs:x:',
+                     ['stale', 'sort=', 'fields=', 'badentry=', 'extraentry='])
+
+for option in opts:
+    if len(option) > 0:
+        if option[0] == '--fields':
+            fields = option[1]
+        if option[0] == '--sort':
+            sort = option[1]
+        if option[0] == '--badentry':
+            badentry = option[1]
+        if option[0] == '--extraentry':
+            extraentry = option[1]
+        if option[0] == '-x':
+            expire = option[1]
+        if option[0] == '-s' or option[0] == '-b' or option[0] == '-e':
+            singlehost = option[1]
+
+if expire != "":
+    for c_inst in c_list:
+        if expire == c_inst.name:
+            if c_inst.expiration == None:
+                c_inst.expiration = datetime.datetime.now()
+                print "Host expired."
+            else:
+                c_inst.expiration = None
+                print "Host un-expired."
+            c_inst.save()
+
+elif '-h' in args:
+    print """Usage: python bcfg2-reports [option] ...
+
+Options and arguments (and corresponding environment variables):
+-a                     : shows all hosts, including expired hosts
+-b NAME                : single-host mode - shows bad entries from the
+                         current interaction of NAME
+-c                     : shows only clean hosts
+-d                     : shows only dirty hosts
+-e NAME                : single-host mode - shows extra entries from the
+                         current interaction of NAME
+-h                     : shows help and usage info about bcfg2-reports
+-s NAME                : single-host mode - shows bad and extra entries from
+                         the current interaction of NAME
+-x NAME                : toggles expired/unexpired state of NAME
+--badentry=KIND,NAME   : shows only hosts whose current interaction has bad
+                         entries in of KIND kind and NAME name; if a single
+                         argument ARG1 is given, then KIND,NAME pairs will be
+                         read from a file of name ARG1
+--extraentry=KIND,NAME : shows only hosts whose current interaction has extra
+                         entries in of KIND kind and NAME name; if a single
+                         argument ARG1 is given, then KIND,NAME pairs will be
+                         read from a file of name ARG1
+--fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
+                         (name,time,state)
+--sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)
+--stale                : shows hosts which haven't run in the last 24 hours
+"""
+elif singlehost != "":
+    for c_inst in c_list:
+        if singlehost == c_inst.name:
+            baditems = c_inst.current_interaction.bad()
+            if len(baditems) > 0 and ('-b' in args or '-s' in args):
+                print "Bad Entries:"
+                max_name = -1
+                for item in baditems:
+                    if len(item.entry.name) > max_name:
+                        max_name = len(item.entry.name)
+                for item in baditems:
+                    print_entry(item, max_name)
+            extraitems = c_inst.current_interaction.extra()
+            if len(extraitems) > 0 and ('-e' in args or '-s' in args):
+                print "Extra Entries:"
+                max_name = -1
+                for item in extraitems:
+                    if len(item.entry.name) > max_name:
+                        max_name = len(item.entry.name)
+                for item in extraitems:
+                    print_entry(item, max_name)
+                
+
+else:
+    if fields == "":
+        fields = ['name', 'time', 'state']
+    else:
+        fields = fields.split(',')
+
+    if sort != "":
+        sort = sort.split(',')
+
+    if badentry != "":
+        badentry = badentry.split(',')
+
+    if extraentry != "":
+        extraentry = extraentry.split(',')
+    
+    # stale hosts
+    if '--stale' in args:
+        for c_inst in c_list:
+            if c_inst.current_interaction.isstale():
+                result.append(c_inst)
+    # clean hosts
+    elif '-c' in args:    
+        for c_inst in c_list:
+            if c_inst.current_interaction.isclean():
+                result.append(c_inst)
+    # dirty hosts
+    elif '-d' in args:    
+        for c_inst in c_list:
+            if not c_inst.current_interaction.isclean():
+                result.append(c_inst)
+
+    elif badentry != "":
+        if len(badentry) == 1:
+            fileread = fileinput.input(badentry[0])
+            for line in fileread:
+                badentry = line.strip().split(',')
+                for c_inst in c_list:
+                    baditems = c_inst.current_interaction.bad()
+                    for item in baditems:
+                        if item.name == badentry[1] and item.kind == badentry[0]:
+                            result.append(c_inst)
+                            if c_inst in entrydict:
+                                entrydict.get(c_inst).append(badentry[1])
+                            else:
+                                entrydict[c_inst] = [badentry[1]]
+                            break
+        else:
+            for c_inst in c_list:
+                baditems = c_inst.current_interaction.bad()
+                for item in baditems:
+                    if item.name == badentry[1] and item.kind == badentry[0]:
+                        result.append(c_inst)
+                        break
+    elif extraentry != "":
+        if len(extraentry) == 1:
+            fileread = fileinput.input(extraentry[0])
+            for line in fileread:
+                extraentry = line.strip().split(',')
+                for c_inst in c_list:
+                    extraitems = c_inst.current_interaction.extra()
+                    for item in extraitems:
+                        if item.name == extraentry[1] and item.kind == extraentry[0]:
+                            result.append(c_inst)
+                            if c_inst in entrydict:
+                                entrydict.get(c_inst).append(extraentry[1])
+                            else:
+                                entrydict[c_inst] = [extraentry[1]]
+                            break
+        else:
+            for c_inst in c_list:
+                extraitems = c_inst.current_interaction.extra()
+                for item in extraitems:
+                    if item.name == extraentry[1] and item.kind == extraentry[0]:
+                        result.append(c_inst)
+                        break
+
+    else:
+        for c_inst in c_list:
+            result.append(c_inst)
+    max_name = -1
+    if 'name' in fields:
+        for c_inst in result:
+            if len(c_inst.name) > max_name:
+                max_name = len(c_inst.name)
+
+    if sort != "":
+        result.sort(lambda x, y: crit_compare(sort, x, y))
+    
+    if fields != "":
+        for c_inst in result:
+            if '-a' in args or c_inst.expiration == None:
+                print_fields(fields, c_inst, max_name, entrydict)

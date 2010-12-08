@@ -1,0 +1,80 @@
+#!/usr/bin/python
+"""bcfg2-admin is a script that helps to administrate a Bcfg2 deployment."""
+
+from optparse import OptionParser
+from StringIO import StringIO
+import logging
+import Bcfg2.Server.Core
+import Bcfg2.Logger
+import Bcfg2.Options
+
+log = logging.getLogger('bcfg2-admin')
+
+import Bcfg2.Server.Admin
+
+def mode_import(modename):
+    """Load Bcfg2.Server.Admin.<mode>."""
+    modname = modename.capitalize()
+    mod = getattr(__import__("Bcfg2.Server.Admin.%s" %
+                             (modname)).Server.Admin, modname)
+    return getattr(mod, modname)
+
+def get_modes():
+    """Get all available modes, except for the base mode."""
+    return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
+
+def create_description():
+    """Create the description string from the list of modes."""
+    modes = get_modes()
+    description = StringIO()
+    description.write("Available modes are:\n\n")
+    for mode in modes:
+        try:
+            description.write(("   %-15s   %s\n" %
+                   (mode, mode_import(mode).__shorthelp__)))
+        except ImportError:
+            continue
+    return description.getvalue()
+
+def main():
+    Bcfg2.Logger.setup_logging('bcfg2-admin', to_console=True, level=40)
+    usage = "Usage: %prog [options] MODE [args]"
+    parser = OptionParser(usage=usage)
+    parser.set_defaults(configfile=Bcfg2.Options.CFILE.default)
+    parser.add_option("-C", "--configfile",
+                      dest="configfile",
+                      help="Path to bcfg2.conf",
+                      metavar="FILE")
+    parser.disable_interspersed_args()
+    (options, args) = parser.parse_args()
+
+    # Provide help if requested or no args were specified
+    if len(args) < 1 or args[0] == 'help':
+        if len(args) > 1:
+            # Get help for a specific mode by passing it the help argument
+            args = [args[1], args[0]]
+        else:
+            # Print short help for all modes
+            parser.print_help()
+            print create_description()
+            raise SystemExit(0)
+
+    if args[0] in get_modes():
+        modname = args[0].capitalize()
+        try:
+            mode_cls = mode_import(modname)
+        except ImportError, e:
+            log.error("Failed to load admin mode %s: %s" % (modname, e))
+            raise SystemExit(1)
+        mode = mode_cls(options.configfile)
+        mode(args[1:])
+        if hasattr(mode, 'bcore'):
+            mode.bcore.shutdown()
+    else:
+        log.error("Unknown mode %s" % args[0])
+        parser.print_help()
+        print create_description()
+        raise SystemExit(1)
+
+if __name__ == '__main__':
+    main()
