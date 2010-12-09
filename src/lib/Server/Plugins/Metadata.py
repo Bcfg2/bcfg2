@@ -611,9 +611,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 if profile in profiles]
 
     def get_client_names_by_groups(self, groups):
-        gprofiles = [profile for profile in self.profiles if \
-                     self.groups[profile][1].issuperset(groups)]
-        return self.get_client_names_by_profiles(gprofiles)
+        mdata = [self.core.build_metadata(client) for client in self.clients.keys()]
+        return [md.hostname for md in mdata if md.groups.issuperset(groups)]
 
     def merge_additional_groups(self, imd, groups):
         for group in groups:
