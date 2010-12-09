@@ -1,0 +1,70 @@
+.. -*- mode: rst -*-
+
+.. _development-documentation:
+
+Documentation
+=============
+
+There are two parts of documentation in the Bcfg2 project:
+
+* The wiki
+* The manual
+
+
+The wiki
+--------
+.. _Wiki: http://trac.mcs.anl.gov/projects/bcfg2/wiki
+.. _Trac: http://trac.edgewall.org/
+.. _OpenID: https://openid.org/
+.. _MCS: http://www.mcs.anl.gov/
+.. _Argonne National Laboratory: http://www.anl.gov/
+
+A python-based Trac_ instance is used for the Bcfg2 development
+website. The Wiki_ part of the website can be edited after you
+have successfully logged in. In order to login, a vaild OpenID
+provider is needed. Please request your access to the Wiki_ on the
+:ref:`help-mailinglist` or in the :ref:`help-irc`.
+
+
+The manual
+----------
+.. _rst: http://en.wikipedia.org/wiki/ReStructuredText
+.. _Sphinx: http://sphinx.pocoo.org
+.. _Docutils:
+
+The source for the manual is located in the ``doc/`` directory in the
+git repository or in the source tarball. All files are written in
+rst_ (ReStructuredText) format. Sphinx_ is used to build the
+documentation from the restructured text sources.
+
+Building the Manual
+^^^^^^^^^^^^^^^^^^^
+
+* Install the prerequisites.  Docutils_ and Sphinx_ are needed to build.
+
+ * For Debian (Lenny) the tools are available in the `backports <http://www.backports.org/dokuwiki/doku.php?id=instructionst>`_ repository; installation can be done with the following::
+
+    apt-get -t lenny-backports install python-sphinx
+
+ * The needed tools for Fedora based systems are in the `Fedora Package Collection <https://admin.fedoraproject.org/pkgdb>`_; installation can be done easily with Yum::
+
+    yum -y install python-sphinx python-docutils
+
+ * Additionally, to build the PDF version:
+
+  * LaTeX
+  * pdftex
+
+* Download the source. Please refer to :ref:`source` for more details.
+
+* Build the HTML version by running the following command in the
+  top level of the source directory. The output will appear in
+  ``build/sphinx/html``::
+
+    python setup.py build_sphinx
+
+* Building the PDF version ::
+
+   python setup.py build_sphinx --builder=latex
+   cd build/sphinx/latex
+   make

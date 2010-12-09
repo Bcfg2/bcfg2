@@ -1,0 +1,184 @@
+.. -*- mode: rst -*-
+
+.. _EPEL: http://fedoraproject.org/wiki/EPEL
+
+.. This is combination of the Ubuntu guide and the Centos guide for
+   installing the web reports.
+
+.. _appendix-guides-web-reports-install:
+
+==================================
+Dynamic (web) Reports installation
+==================================
+
+The first step is to install the needed software components like the
+Django framework and the database (SQlite2). All packages for Fedora
+are in the Fedora Package Collection or in EPEL_ for CentOS/RHEL::
+
+    [root@system01 ~]# yum -y install Django python-simplejson python-sqlite2
+
+Of course is a web server needed as well::
+
+    [root@system01 ~]# yum -y install httpd mod_python
+
+The same packages are needed for Ubuntu systems::
+
+    [root@system01 ~]# aptitude install python-django apache2 libapache2-mod-python
+
+Now we need to create the sqlite database. Use the following command on
+Fedora, CentOS, or RHEL.::
+
+    [root@system01 ~]# python /usr/lib/python2.4/site-packages/Bcfg2/Server/Reports/manage.py syncdb
+    Creating table auth_permission
+    Creating table auth_group
+    Creating table auth_user
+    Creating table auth_message
+    Creating table django_content_type
+    Creating table django_session
+    Creating table django_site
+    Creating table django_admin_log
+    Creating table reports_client
+    Creating table reports_ping
+    Creating table reports_interaction
+    Creating table reports_reason
+    Creating table reports_entries
+    Creating table reports_entries_interactions
+    Creating table reports_performance
+    Creating table reports_internaldatabaseversion
+
+    You just installed Django's auth system, which means you don't have any superusers defined.
+    Would you like to create one now? (yes/no): no
+    Installing index for auth.Permission model
+    Installing index for auth.Message model
+    Installing index for admin.LogEntry model
+    Installing index for reports.Client model
+    Installing index for reports.Ping model
+    Installing index for reports.Interaction model
+    Installing index for reports.Entries model
+    Installing index for reports.Entries_interactions model
+
+.. note:: There are different versions of Python available. If you are
+          unsure about your installed version use the following line instead of
+          the line above.::
+
+              [root@system01 ~]# PYVER=`python -c 'import sys;print(sys.version[0:3])'`; python /usr/lib/python$PYVER/site-packages/Bcfg2/site-packages/Bcfg2/Server/Reports/manage.py syncdb
+
+The path on Ubuntu systems is different. Please use the same path as shown
+in the following command to execute the script on an Ubuntu machine in
+the next steps::
+
+    [root@system01 ~]# python /usr/share/pyshared/Bcfg2/Server/Reports/manage.py syncdb
+    Creating table auth_permission
+    Creating table auth_group
+    Creating table auth_user
+    Creating table auth_message
+    Creating table django_content_type
+    Creating table django_session
+    Creating table django_site
+    Creating table django_admin_log
+    Creating table reports_client
+    Creating table reports_ping
+    Creating table reports_interaction
+    Creating table reports_reason
+    Creating table reports_entries
+    Creating table reports_entries_interactions
+    Creating table reports_performance
+    Creating table reports_internaldatabaseversion
+
+    You just installed Django's auth system, which means you don't have any superusers defined.
+    Would you like to create one now? (yes/no): no
+    Installing index for auth.Permission model
+    Installing index for auth.Message model
+    Installing index for admin.LogEntry model
+    Installing index for reports.Client model
+    Installing index for reports.Ping model
+    Installing index for reports.Interaction model
+    Installing index for reports.Entries model
+    Installing index for reports.Entries_interactions model
+
+The server should be tested to make sure that there are no mistakes::
+
+    [root@system01 ~]# python /usr/lib/python2.6/site-packages/Bcfg2/Server/Reports/manage.py testserver
+    Creating test database...
+    Creating table auth_permission
+    Creating table auth_group
+    Creating table auth_user
+    Creating table auth_message
+    Creating table django_content_type
+    Creating table django_session
+    Creating table django_site
+    Creating table django_admin_log
+    Creating table reports_client
+    Creating table reports_ping
+    Creating table reports_interaction
+    Creating table reports_reason
+    Creating table reports_entries
+    Creating table reports_entries_interactions
+    Creating table reports_performance
+    Creating table reports_internaldatabaseversion
+    Installing index for auth.Permission model
+    Installing index for auth.Message model
+    Installing index for admin.LogEntry model
+    Installing index for reports.Client model
+    Installing index for reports.Ping model
+    Installing index for reports.Interaction model
+    Installing index for reports.Entries model
+    Installing index for reports.Entries_interactions model
+    Validating models...
+    0 errors found
+
+    Django version 1.1.1, using settings 'Reports.settings'
+    Development server is running at http://127.0.0.1:8000/
+    Quit the server with CONTROL-C.
+
+Add DBStats to the plugins line of ``bcfg2.conf``. The resulting
+**[server]** section should look something like this::
+
+    [server]
+    repository = /var/lib/bcfg2
+    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+
+Start/restart the Bcfg2 server::
+
+    [root@system01 ~]# /etc/init.d/bcfg2-server restart
+
+Run the Bcfg2 client in order to populate the statistics database
+(this run should take a bit longer since you are uploading the client
+statistics to the database).
+
+Download the static reports content::
+
+    [root@system01 ~]# cd /var/www/
+    [root@system01 ~]# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
+
+Configure Apache using :ref:`dynamic-http-install` as a guide
+
+Copy server/statistics sections of ``bcfg2.conf`` to
+``/etc/bcfg2-web.conf`` (make sure it is world-readable). You should
+then have something like this::
+
+    [server]
+    repository = /var/lib/bcfg2
+    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+
+    [statistics]
+    sendmailpath = /usr/lib/sendmail
+    database_engine = sqlite3
+    # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
+    database_name =
+    # Or path to database file if using sqlite3.
+    #<repository>/etc/brpt.sqlite is default path if left empty
+    database_user =
+    # Not used with sqlite3.
+    database_password =
+    # Not used with sqlite3.
+    database_host =
+    # Not used with sqlite3.
+    database_port =
+    # Set to empty string for default. Not used with sqlite3.
+    web_debug = True
+
+Restart apache and point a browser to your Bcfg2 server.
+
+If using sqlite be sure the sql database file and directory containing
+the database are writable to apache.

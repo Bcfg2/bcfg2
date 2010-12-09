@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _appendix-guides:
+
+======
+Guides
+======
+
+This section contains platform-specific quickstart guides and howtos
+around Bcfg2.
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   guides/*

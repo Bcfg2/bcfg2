@@ -1,0 +1,44 @@
+.. -*- mode: rst -*-
+
+.. _appendix-papers:
+
+======
+Papers
+======
+
+
+* Configuration Life-Cycle Management on the TeraGrid.
+
+ * Ti Leggett, Cory Lueninghoener, and Narayan Desai
+ * In Proceedings of TeraGrid '07 Conference, June 2007
+
+* `A Scalable Approach To Deploying And Managing Appliances <http://workspace.globus.org/papers/Scalable_Approach_To_Deploying_And_Managing_Appliances.pdf>`_
+
+ * Rick Bradshaw, Narayan Desai, Tim Freeman, and Kate Keahey
+ * In Proceedings of the TeraGrid '07 Conference, June 2007
+
+* `Bcfg2 - Konfigurationsmanagement Für Heterogene Umgebungen <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/20070301-FFG2007-bcfg2-paper.pdf>`_
+
+ * Marko Jung, Robert Gogolok
+ * In Proceedings of German Unix User Group's Frühjahrsfachgespräch 2007, March 2007.
+
+* `Directing Change Using Bcfg2 <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/directing-change-with-bcfg2.pdf>`_
+
+ * Narayan Desai, Rick Bradshaw, Joey Hagedorn, and Cory Lueninghoener
+ * In Proceedings of the Twentieth Large Install System Administration Conference (LISA XX), December 2-9, 2006, Washington D.C., USA, 2006.
+
+* `A Case Study in Configuration Management Tool Deployment <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/bcfg2-lisa05-deployment.pdf>`_
+
+ * Narayan Desai, Rick Bradshaw, Scott Matott, Sandra Bittner, Susan Coghlan, Remy Evard, Cory Leunighhoener, Ti Leggett, J.P. Navarro, Gene Rackow, Craig Stacey, and Tisha Stacey
+ * In Proceedings of the Nineteenth Large Install System Administration Conference (LISA XIX), December 4-9, 2005, San Diego, CA, USA, 2005.
+
+* `Bcfg2: A Pay As You Go Approach to Configuration Complexity <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/pay-as-you-go.pdf>`_
+
+ * Narayan Desai
+ * In Proceedings of the 2005 Australian Unix Users Group (AUUG2005), October 16-21, 2005, Sydney, Australia, 2005.
+
+* `Bcfg: A Configuration Management Tool for Heterogenous Environments <ftp://ftp.mcs.anl.gov/pub/bcfg/papers/bcfg-cluster2003.pdf>`_
+
+ * Narayan Desai, Andrew Lusk, Rick Bradshaw, and Remy Evard
+ * In Proceedings of the 5th IEEE International Conference on Cluster Computing (CLUSTER03), pages 500-503. IEEE Computer Society, 2003. 
+

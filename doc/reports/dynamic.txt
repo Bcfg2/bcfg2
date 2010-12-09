@@ -1,0 +1,271 @@
+.. -*- mode: rst -*-
+
+.. _server-reports-dynamic:
+
+==============================
+Bcfg2 Dynamic Reporting System
+==============================
+
+.. versionadded:: 0.8.2
+
+Installation
+============
+
+Prerequisites
+-------------
+
+* sqlite3
+* pysqlite2
+* `Django <http://www.djangoproject.com>`_
+* mod-python
+
+Install
+-------
+
+Be sure to include the specified fields included in the example
+``bcfg2.conf`` file. These can be specified in either ``/etc/bcfg2.conf``,
+if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
+database supported by Django can be used. If you are not using sqlite
+(the default choice), please see the :ref:`alternative-databases`
+section below.
+
+.. note::
+
+    Distributed environments can share a single remote database for
+    reporting.
+
+The recommended statistics plugin is DBStats. To use it, add it to the
+**plugins** line in your ``bcfg2.conf``.  Alternatively, the Statistics
+plugin can be used in conjunction with a crontab entry to run
+``/usr/sbin/bcfg2-admin reports load_stats``.
+
+Detailed installation instructions can be found :ref:`here
+<appendix-guides-web-reports-install>`.
+
+.. _dynamic-http-install:
+
+Apache configuration for web-based reports
+------------------------------------------
+
+.. note::
+
+    Reports no longer needs to be installed at the root URL for a given
+    host. Therefore, reports no longer require their own virtual host.
+
+    In order to make this work, you will need to specify your web prefix
+    by adding a **web_prefix** setting in the [statistics] section of
+    your ``bcfg2.conf``.
+
+An example site config is included below for the vhost "reports.mcs.anl.gov"::
+
+    <VirtualHost reports.mcs.anl.gov>
+            ServerAdmin webmaster@mcs.anl.gov
+            ServerName reports.mcs.anl.gov
+            DocumentRoot /var/www/reports
+            <Directory /var/www/reports>
+                    Order deny,allow
+                    Deny from all
+                    Allow from localhost #you may want to change this
+                    AllowOverride None
+            </Directory>
+
+            # Possible values include: debug, info, notice, warn, error, crit,
+            # alert, emerg.
+            LogLevel warn
+
+            ServerSignature Off
+
+            # Stop TRACE/TRACK vulnerability
+            <IfModule mod_rewrite.c>
+                    RewriteEngine on
+                    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
+                    RewriteRule .* - [F]
+            </IfModule>
+    <Location "/">
+            SetHandler python-program
+            PythonHandler django.core.handlers.modpython
+            SetEnv DJANGO_SETTINGS_MODULE Bcfg2.Server.Reports.settings
+            PythonDebug On
+    </Location>
+    <Location "/site_media/">
+            SetHandler None
+    </Location>
+    </VirtualHost>
+
+The first three lines of this configuration must be customized per site.
+
+The ``bcfg2-tarball/reports/site_media/`` directory needs to be copied
+to ``/var/www/reports/site_media/`` It could live anywhere; as long as
+the contents are accessible on the virtual host at ``/site_media/``.
+
+At this point you should be able to point your web browser to the
+virtualhost you created and see the new reports
+
+Example WSGI configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+entry.wsgi::
+
+    import os, sys
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Reports.settings'
+    import django.core.handlers.wsgi
+    application = django.core.handlers.wsgi.WSGIHandler()
+
+Apache conf::
+
+    Alias /bcfg2reports/site_media "/path/to/site_media"
+    <Directory /path/to>
+        Order deny,allow
+        Allow from all
+        AllowOverride None
+    </Directory>
+    # If Python is installed in a non-standard prefix:
+    #WSGIPythonHome /python/prefix
+    #WSGIPythonPath /python/prefix/lib/python2.6/site-packages
+    WSGIScriptAlias /bcfg2reports "/another/path/to/entry.wsgi"
+
+.. _alternative-databases:
+
+Notes on Alternative Databases
+------------------------------
+
+If you choose to use a different database, you'll need to edit
+``/etc/bcfg2.conf``. These fields should be updated in the [statistics]
+section:
+
+* database_engine
+
+  * ex: database_engine = mysql
+  * ex: database_engine = postgresql_psycopg2
+
+* database_name
+* database_user
+* database_password
+* database_host
+* database_port (optional)
+
+Summary and Features
+====================
+
+The new reporting system was implemented to address a number of
+deficiencies in the previous system. By storing statistics data in a
+relational database, we are now able to view and analyze more information
+about the state of the configuration, including information about previous
+configuration. Specific features in the new system include:
+
+* The ability to look at a :ref:`reports-calendar-summary` with past
+  statistics information.
+* More recent data concerning hosts.
+* Additional information display in reports. Primarily, reasons for
+  :ref:`configuration item verification failure <reports-item-detail>`
+  are now accessible.
+* Instead of static pages, pages are generated on the fly, allowing
+  users to drill down to find out about a :ref:`specific host
+  <reports-node-dropdown>`, rather than only having one huge page with
+  too much information.
+
+Planned improvements include
+============================
+
+* Accounts, customized displays for each admin. And privacy of config data.
+* Config browsing capabilities; to look at your config in an interesting way.
+* Fixing all the known bugs from below.
+
+Unfortunately with all the improvements, there are a few less exciting
+elements about the new reporting system. The new reporting system
+moves away from static pages and towards a real web application, which
+causes mainly problems with dependencies and makes installation more
+difficult. This should become less of a problem over time as we develop
+a better installation process for a web application.
+
+Usage
+=====
+
+bcfg2-admin reports (command line script)
+-----------------------------------------
+
+The bcfg2-admin tool provides management and maintenance capabilities for
+the reporting database.  A few useful `Django <http://www.djangoproject.com>`_
+commands are provided as well.
+
+* init: Initialize a new database
+* load_stats: Load statistics data from the Statistics plugin into the
+  database. This was importscript.py.
+* scrub: Scrub the database for duplicate reasons.
+* update: Apply any updates to the reporting database. Unlike the syncdb
+  command, this will modify existing tables.
+
+Django commands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* syncdb:  Create the tables for any models not installed.  Django will
+  not modify any existing tables.
+* sqlall:  Print the sql statements used to create the database.  Note:
+  This does not show the fixture data.
+* validate:  Validate the database against the current models.
+
+bcfg2-reports (command line script)
+-----------------------------------
+
+bcfg2-reports allows you to retrieve data from the database about clients,
+and the states of their current interactions. It also allows you to
+change the expired/unexpired states.
+
+The utility runs as a standalone application. It does, however, use the
+models from ``/src/lib/Server/Reports/reports/models.py``.
+
+A number of different options can be used to change what bcfg2-reports
+displays::
+
+    Usage: python bcfg2-reports [option] ...
+
+    Options and arguments (and corresponding environment variables):
+    -a                     : shows all hosts, including expired hosts
+    -b NAME                : single-host mode - shows bad entries from the
+                             current interaction of NAME
+    -c                     : shows only clean hosts
+    -d                     : shows only dirty hosts
+    -e NAME                : single-host mode - shows extra entries from the
+                             current interaction of NAME
+    -h                     : shows help and usage info about bcfg2-reports
+    -s NAME                : single-host mode - shows bad and extra entries from
+                             the current interaction of NAME
+    -x NAME                : toggles expired/unexpired state of NAME
+    --badentry=KIND,NAME   : shows only hosts whose current interaction has bad
+                             entries in of KIND kind and NAME name; if a single
+                             argument ARG1 is given, then KIND,NAME pairs will be
+                             read from a file of name ARG1
+    --extraentry=KIND,NAME : shows only hosts whose current interaction has extra
+                             entries in of KIND kind and NAME name; if a single
+                             argument ARG1 is given, then KIND,NAME pairs will be
+                             read from a file of name ARG1
+    --fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
+                             (name,time,state)
+    --sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)
+    --stale                : shows hosts which haven't run in the last 24 hours
+
+Screenshots
+===========
+
+.. _reports-calendar-summary:
+
+Calendar Summary
+----------------
+
+.. image:: summary_cal.jpg
+   :alt: Calendar summary
+
+.. _reports-item-detail:
+
+Item detail
+-----------
+
+.. image:: item_detail.jpg
+   :alt: Item detail
+
+Node dropdown
+-------------
+
+.. _reports-node-dropdown:
+
+.. image:: node_dropdown.jpg
+   :alt: Node dropdown

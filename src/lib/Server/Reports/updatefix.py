@@ -139,8 +139,12 @@ def dosync():
         fresh = True
 
     # ensure database connection are close, so that the management can do it's job right    
-    cursor.close()
-    connection.close()
+    try:
+        cursor.close()
+        connection.close()
+    except:
+        # ignore any errors from missing/invalid dbs
+        pass
     # Do the syncdb according to the django version
     if "call_command" in dir(django.core.management):
         # this is available since django 1.0 alpha.

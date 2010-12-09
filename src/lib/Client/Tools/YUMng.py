@@ -210,6 +210,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 "version_fail_action", "upgrade").lower() == "upgrade"
         self.doReinst = CP.get(self.name, "verify_fail_action",
                 "reinstall").lower() == "reinstall"
+        self.verifyFlags = CP.get(self.name, "verify_flags",
+                                  "").lower().replace(' ', ',')
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installOnlyPkgs:
@@ -225,6 +227,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 % self.doReinst)
         self.logger.debug("YUMng: installOnlyPkgs: %s" \
                 % str(self.installOnlyPkgs))
+        self.logger.debug("YUMng: verify_flags: %s" % self.verifyFlags)
 
     def _fixAutoVersion(self, entry):
         # old style entry; synthesize Instances from current installed
@@ -436,6 +439,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             stat['verify_fail'] = False
             stat['pkg'] = entry
             stat['modlist'] = modlist
+            verify_flags = inst.get('verify_flags', self.verifyFlags)
+            verify_flags = verify_flags.lower().replace(' ', ',').split(',')
 
             if len(POs) == 0:
                 # Package not installed
@@ -504,6 +509,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 tmp = []
                 for p in probs:
                     if p.type == 'missing' and os.path.islink(fn):
+                        continue
+                    elif 'no' + p.type in verify_flags:
                         continue
                     if p.type not in ['missingok', 'ghost']:
                         tmp.append((p.type, p.message))

@@ -49,7 +49,8 @@ if DATABASE_ENGINE == 'sqlite3' and DATABASE_NAME == '':
 try:
     TIME_ZONE = c.get('statistics', 'time_zone')
 except:
-    TIME_ZONE = 'America/Chicago'
+    if django.VERSION[0] == 1 and django.VERSION[1] > 2:
+        TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes

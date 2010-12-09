@@ -1,0 +1,79 @@
+.. -*- mode: rst -*-
+
+.. _EPEL: http://fedoraproject.org/wiki/EPEL
+.. _RPMForge: https://rpmrepo.org/RPMforge
+
+.. _getting_started-using_bcfg2-with-centos:
+
+=======================
+Using Bcfg2 With CentOS
+=======================
+
+This section covers specific topics for using Bcfg2 with CentOS. Most
+likely the tips on this page also apply to other members of the Red Hat
+family of Linux operating systems.
+
+From Source
++++++++++++
+
+Install Prerequisities
+######################
+
+While you can go about building all these things from source, this
+how to will try and meet the dependencies using packages from EPEL_
+or RPMforge_. The *el5* package should be compatible with CentOS 5.x.
+
+EPEL_::
+
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-3.noarch.rpm
+
+RPMforge_::
+
+    [root@centos ~]# rpm -Uvh http://dag.wieers.com/rpm/packages/rpmforge-release/rpmforge-release-0.3.6-1.el5.rf.x86_64.rpm
+
+.. note::
+
+    Be careful with `mixing package repositories
+    <http://fedoraproject.org/wiki/EPEL/FAQ#What_about_compatibility_with_other_third_party_repositories.3F>`_.
+
+Now you can install the rest of the prerequisites::
+
+    [root@centos ~]# yum install python-genshi python-cheetah python-lxml
+
+Build Packages from source
+##########################
+
+* After installing git, clone the master branch::
+
+    [root@centos redhat]# git clone git://git.mcs.anl.gov/bcfg2.git
+
+* Install the ``fedora-packager`` package ::
+
+    [root@centos ~]# yum install fedora-packager
+
+* A directory structure for the RPM build process has to be established. ::
+
+    [you@centos ~]$ rpmdev-setuptree
+
+* Change to the *redhat* directory of the checked out Bcfg2 source::
+
+    [you@centos ~]$ cd bcfg2/redhat/
+
+* In the particular directory is a Makefile which will do the job of building the RPM packages. You can do this as root, but it's not recommanded::
+
+    [you@centos redhat]$ make
+
+* Now the new RPM package can be installed.  Please adjust the path to your RPM package::
+
+    [root@centos ~]# rpm -ihv /home/YOU/rpmbuild/RPMS/noarch/bcfg2-server-1.0.0-0.2r5835.noarch.rpm
+
+Install Packages from Package repository
+########################################
+
+To install the bcfg2-server and bcfg2 from a package repository, just
+use Yum to do it::
+
+    [root@centos ~]# yum install bcfg2-server bcfg2
+
+.. toctree::
+    :hidden:

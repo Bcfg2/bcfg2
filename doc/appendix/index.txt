@@ -1,0 +1,19 @@
+.. -*- mode: rst -*-
+
+.. _appendix-index:
+
+========
+Appendix
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   files
+   configuration
+   contributors
+   books
+   papers
+   articles
+   guides
+   tools

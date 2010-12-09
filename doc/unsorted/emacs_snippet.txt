@@ -2,11 +2,13 @@
 
 .. _unsorted-emacs_snippet:
 
-=======================================
-Using Bcfg2 with Emacs + YASnippet mode
-=======================================
+======================
+Emacs + YASnippet mode
+======================
 
-This page describes using emacs with YASnippet mode with a set of snippets that allow quick composition of bundles and base files. More snippets are under development.
+This page describes using emacs with YASnippet mode with a set of
+snippets that allow quick composition of bundles and base files.
+More snippets are under development.
 
 #. Download YASnippet from http://code.google.com/p/yasnippet/
 #. Install it into your emacs load path (typically ~/.emacs.d/site-lisp)
@@ -48,6 +50,11 @@ This page describes using emacs with YASnippet mode with a set of snippets that 
 
 #. One quick M-x eval-current-buffer, and this code is enabled
 
-Each of these snippets activates on the opening element, ie <Bundle. After this string is entered, but before entering a space, press <TAB>, and the snippet will be expanded. The template will be inserted into the text with a set of input prompts, which default to overwrite mode and can be tabbed through.
+Each of these snippets activates on the opening element, ie <Bundle.
+After this string is entered, but before entering a space, press <TAB>,
+and the snippet will be expanded. The template will be inserted into
+the text with a set of input prompts, which default to overwrite mode
+and can be tabbed through.
 
-The code above only works for bundles and base, but will be expanded to support other xml files as well.
+The code above only works for bundles and base, but will be expanded
+to support other xml files as well.

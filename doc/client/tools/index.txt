@@ -20,7 +20,7 @@ When the Bcfg2 client is run, it attempts to instantiate each of these
 drivers. The succeeding list of drivers are printed as a debug message
 after this process has completed. Drivers can supercede one another,
 for example, the Yum driver conflicts (and unloads) the RPM driver. This
-behavior can be overridden by running the Bcfg2 client with the -D
+behavior can be overridden by running the Bcfg2 client with the ``-D``
 flag. This flag takes a colon delimited list of drivers to use on
 the system.
 
@@ -114,9 +114,9 @@ Executes rpm to manage packages most often on redhat based systems.
 RPMng
 -----
 
-Next-generation RPM tool, will be default in upcoming release. Handles
-RPM sublties like epoch and prelinking and 64-bit platforms better than
-RPM client tool. :ref:`client-tools-yumng`
+Next-generation RPM tool. Handles RPM sublties like epoch and
+prelinking and 64-bit platforms better than the RPM client
+tool. :ref:`client-tools-yumng`
 
 SMF
 ---

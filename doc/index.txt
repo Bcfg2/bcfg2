@@ -2,9 +2,9 @@
 
 .. _index:
 
-======================
-Bcfg2 Manual |release|
-======================
+=============================
+Bcfg2 documentation |release|
+=============================
 
 What is Bcfg2?
 ==============
@@ -37,74 +37,7 @@ systems are constantly changing; if required in your environment,
 Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
-Architecture
-------------
+.. toctree::
+   :maxdepth: 2
 
-Bcfg2 provides a declarative interface to system configuration. Its
-configuration specifications describe a literal configuration goal
-state for clients. In this architecture, the Bcfg2 client tool is
-responsible for determining what, if any, configuration operations must
-occur and then performing those operations. The client also uploads
-statistics and client configuration state information. The design
-and implementation of the reporting system is described on a separate
-:ref:`page <server-reports-index>`.
-
-A comprehensive description of the Bcfg2 Architecture (and the choices
-behind the design) can be found at :ref:`architecture`.
-
-Server
-^^^^^^
-
-The role of the Bcfg2 server is rendering a client-specific target
-configuration description from a global specification. The specification
-consists of a directory structure containing data for a variety of server
-plugins. The Bcfg2 server has a plugin interface that can be used to
-interpret the configuration specification.
-
-Client
-^^^^^^
-
-The Bcfg2 client is responsible for determining what operations are
-necessary in order to reach the desired configuration state.  Read on
-for more information about :ref:`client-index`.
-
-What Operating Systems Does Bcfg2 Support?
-==========================================
-
-Bcfg2 is fairly portable. It has been successfully run on:
-
-* `AIX`_, `FreeBSD`_, `OpenBSD`_, `Mac OS X`_, `OpenSolaris`_,
-  `Solaris`_.
-
-.. _AIX: http://www.ibm.com/aix
-.. _FreeBSD: http://www.freebsd.org/
-.. _OpenBSD: http://www.openbsd.org/
-.. _Mac OS X: http://www.apple.com/macosx/
-.. _OpenSolaris: http://opensolaris.org/
-.. _Solaris: http://www.sun.com/software/solaris/
-
-* Many `GNU/Linux`_ distributions, including `Blag`_, `CentOS`_,
-  `Debian`_, `Fedora`_, `Gentoo`_, `gNewSense`_, `Mandriva`_,
-  `OpenSUSE`_, `Redhat/RHEL`_, `SuSE/SLES`_, `Trisquel`_ and
-  `Ubuntu`_.
-
-.. _GNU/Linux: http://www.gnu.org/gnu/Linux-and-gnu.html
-.. _Blag: http://www.blagblagblag.org/
-.. _CentOS: http://www.centos.org/
-.. _Debian: http://www.debian.org/
-.. _Fedora: http://www.fedoraproject.org/
-.. _Gentoo: http://www.gentoo.org/
-.. _gNewSense: http://www.gnewsense.org/
-.. _Mandriva: http://www.mandriva.com/
-.. _OpenSUSE: http://opensuse.org/
-.. _Redhat/RHEL: http://www.redhat.com/rhel/
-.. _SuSE/SLES: http://www.novell.com/linux/
-.. _Trisquel: http://trisquel.info/
-.. _Ubuntu: http://www.ubuntu.com/
-
-Bcfg2 should run on any POSIX compatible operating system, however
-direct support for an operating system's package and service formats
-are limited by the currently available :ref:`client-tools-index`
-(new client tools are pretty easy to add). Check the :ref:`FAQ
-<faq-general>` for a  more exact list of platforms on which Bcfg2
-works.
+   contents

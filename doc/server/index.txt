@@ -2,16 +2,15 @@
 
 .. _server-index:
 
-============
-Bcfg2 Server
-============
+================
+The Bcfg2 Server
+================
 
 .. toctree::
    :maxdepth: 2
 
    plugins/index
    admin/index
-   reports/index
    configurationentries
    info
    snapshots/index

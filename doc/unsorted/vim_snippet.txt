@@ -1,0 +1,65 @@
+.. -*- mode: rst -*-
+
+.. _unsorted-vim_snippet:
+
+===================
+Vim Snippet Support
+===================
+
+This page describes using vim with snipMate and a set of snippets
+that allow quick composition of bundles and base files.
+
+#. Download snipMate from http://www.vim.org/scripts/script.php?script_id=2540
+#. Install it using the install instructions (unzip snipMate.zip -d ~/.vim or equivalent, e.g. $HOME\vimfiles on Windows)
+#. Add the following to ``~/.vim/snippets/xml.snippets``
+
+   .. code-block:: cl
+
+        # Bundle
+        snippet <Bundle
+                <Bundle name='${1:bundlename}'>
+                        ${2}
+                </Bundle>
+        # Base
+        snippet <Base
+                <Base>
+                        ${1}
+                </Base>
+        # Group
+        snippet <Group
+                <Group name='${1:groupname}'>
+                        ${2}
+                </Group>
+        # ConfigFile
+        snippet <Config
+                <ConfigFile name='${1:filename}'/>
+        # Service
+        snippet <Service
+                <Service name='${1:svcname}'/>
+        # Package
+        snippet <Package
+                <Package name='${1:packagename}'/>
+        # Action
+        snippet <Action
+                <Action name='${1:name}'/>
+        # Directory
+        snippet <Directory
+                <Directory name='${1:name}'/>
+        # SymLink
+        snippet <SymLink
+                <SymLink name='${1:name}'/>
+        # Permissions
+        snippet <Permissions
+                <Permissions name='${1:name}'/>
+
+
+#. Save and start editing away!
+
+Each of these snippets activates on the opening element, ie <Bundle>.
+After this string is entered, but before entering a space, press <TAB>,
+and the snippet will be expanded. The template will be inserted into
+the text with a set of input prompts, which default to overwrite mode
+and can be tabbed through.
+
+The code above only works for bundles and base, but will be expanded
+to support other xml files as well.

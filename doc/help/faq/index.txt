@@ -1,0 +1,17 @@
+.. -*- mode: rst -*-
+
+.. _faq-index:
+
+===
+FAQ
+===
+
+The Frequently Asked Questions (FAQ) answers the most common questions
+about Bcfg2.  At the moment the FAQ is splitted into a general
+and a client specfic section.
+
+.. toctree::
+   :maxdepth: 2
+
+   general
+   client
