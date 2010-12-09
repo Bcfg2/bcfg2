@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _troubleshooting:
+.. _help-troubleshooting:
 
 ===============
 Troubleshooting

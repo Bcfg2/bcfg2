@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _AUTHORS: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/AUTHORS
+.. _AUTHORS: http://trac.mcs.anl.gov/projects/bcfg2/browser/AUTHORS
 .. _MCS: http://www.mcs.anl.gov/
 
 .. _appendix-contributors:

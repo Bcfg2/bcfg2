@@ -10,7 +10,7 @@ FAQ: Client
 This means that the client does not have a copy of the CA for the server,
 so it can't verify that it is talking to the right server. To fix this
 issue, copy ``/etc/bcfg2.crt`` from the server to ``/etc/bcfg2.ca``
-on the client. Then add the following on the client. ::
+on the client. Then add the following on the client.::
 
     [communication]
     ca = /etc/bcfg2.ca

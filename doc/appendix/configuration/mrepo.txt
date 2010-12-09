@@ -15,7 +15,6 @@ takes care of setting up the ISO files, downloading the RPMs,
 configuring HTTP access and providing PXE/TFTP resources for remote
 network installations.
 
-
 Sample mrepo configuration
 --------------------------
 
@@ -66,6 +65,6 @@ Sample mrepo configuration
 Update the repositories
 -----------------------
 
-To update your local repository, just lauch the following command ::
+::
 
     mrepo -ug

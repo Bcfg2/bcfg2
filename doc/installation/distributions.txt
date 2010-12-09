@@ -3,15 +3,134 @@
 .. _distributions:
 
 ===========================
-Distribution-specific notes 
+Distribution-specific notes
 ===========================
 
-The installation of Bcfg2 on a specific distribution depends on 
-the used package management tool and the disposability in the 
-distribution's package :term:`repository`
-. 
+The installation of Bcfg2 on a specific distribution depends on the
+package management tool and the availability of the package in the
+distribution's repository.
 
-.. toctree::
-   :glob:
+ArchLinux
+=========
 
-   distro/*
+Packages for `Arch Linux`_ are available in the Arch User Repository (AUR_).
+Just use `pacman` to perform the installation ::
+
+   pacman -S bcfg2 bcfg2-server
+
+.. _Arch Linux: http://www.archlinux.org/
+.. _AUR: http://aur.archlinux.org/packages.php?ID=20979
+
+Debian
+======
+
+Packages of Bcfg2 are available for Debian Lenny, Debian Squeeze, and
+Debian Sid. The fastest way to get Bcfg2 onto your Debian system
+is to use ``apt-get`` or ``aptitude``. ::
+
+   sudo aptitude install bcfg2 bcfg2-server
+
+If you want to use unofficial packages from Bcfg2 see the instructions
+at `CustomDebianRepository`_.
+
+.. _CustomDebianRepository: http://trac.mcs.anl.gov/projects/bcfg2/wiki/PrecompiledPackages#UnofficialDebianRepository
+
+Fedora
+======
+
+The fastest way to get Bcfg2 Packages_ onto your Fedora_ system is to
+use `yum` or PackageKit. Yum will pull in all dependencies of Bcfg2
+automatically. ::
+
+    su -c 'yum install bcfg2-server bcfg2'
+
+Be aware that the latest release of Bcfg2 may only be available for the
+Development release of Fedora (Rawhide).  With the activation of the
+Rawhide repository of Fedora you will be able to install it. ::
+
+    su -c 'yum install --enablerepo=rawhide bcfg2-server bcfg2'
+
+This way is not recommended on production systems. Only for testing.
+
+Gentoo
+======
+
+Early in July 2008, Bcfg2 was added to the Gentoo portage tree. So far
+it's still keyworded for all architectures, but we are actively working
+to get it marked as stable.
+
+If you don't use portage to install Bcfg2, you'll want to make sure you
+have all the prerequisites installed first. For a server, you'll need:
+
+* ``app-admin/gamin`` or ``app-admin/fam``
+* ``dev-python/lxml``
+
+Clients will need at least:
+
+* ``app-portage/gentoolkit``
+
+OS X
+====
+
+Bcfg2 can be installed either via MacPorts or by creating a native OS X
+package.
+
+MacPorts
+--------
+
+Once macports is installed::
+
+    port install bcfg2
+
+Using native OS X python
+------------------------
+
+First, make sure you have Xcode installed as you need ``packagemaker`` which
+comes bundled in the Developer tools.
+
+Clone the git source::
+
+    git clone git://git.mcs.anl.gov/bcfg2.git
+
+Change to the osx directory and type make. Your new package should be
+located at bcfg2-$VERSION.pkg (where $VERSION is that which is specified
+in setup.py).
+
+RHEL / Centos / Scientific Linux
+================================
+
+While you can go about building all these things from source, this
+section will try and meet the dependencies using packages from EPEL_
+[#f1]_. The *el5* and the soon available *el6* package should be compatible
+with `CentOS`_ 5.x/6.x and `Scientific Linux`_.
+
+EPEL_::
+
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+Install the bcfg2-server and bcfg2 RPMs::
+
+    [root@centos ~]# yum install bcfg2-server bcfg2
+
+.. note::
+
+    The latest package for *el5* is only available in the testing repository.
+
+.. [#f1] For more details check the EPEL_ `instructions <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_
+
+.. _CentOS: http://www.centos.org/
+.. _Scientific Linux: http://www.scientificlinux.org/
+.. _EPEL: http://fedoraproject.org/wiki/EPEL
+.. _RPMForge: https://rpmrepo.org/RPMforge
+
+Ubuntu
+======
+
+We highly recommend following the instructions at `ubuntu-installation`_
+in order to install a recent version of Bcfg2 on your system. However,
+if you would like to install the older package, you can use the following
+command::
+
+   sudo aptitude install bcfg2 bcfg2-server
+
+.. _ubuntu-installation: http://trac.mcs.anl.gov/projects/bcfg2/wiki/PrecompiledPackages#UbuntuLaunchpadBcfg2PPA

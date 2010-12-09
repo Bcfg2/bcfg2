@@ -2,16 +2,16 @@
 
 .. _architecture-index:
 
-======================
-Architecture in Detail
-======================
+===========================
+Detailed Bcfg2 Architecture
+===========================
 
-Bcfg2 is based on a client-server architecture. The client is
-responsible for interpreting (but not processing) the configuration
-served by the server. This configuration is literal, so no local
-process is required. After completion of the configuration process,
-the client uploads a set of statistics to the server. This section
-will describe the goals and then the architecture motivated by it.
+Bcfg2 is based on a client-server architecture. The client is responsible
+for interpreting (but not processing) the configuration served by the
+server. This configuration is literal, so no local process is required.
+After completion of the configuration process, the client uploads a set
+of statistics to the server. This section will describe the goals and
+then the architecture motivated by it.
 
 
 .. toctree::

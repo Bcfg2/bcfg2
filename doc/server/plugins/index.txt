@@ -30,18 +30,6 @@ http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugin
 
 .. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
 
-Connectors
-----------
-
-.. toctree::
-   :maxdepth: 2
-   :glob:
-
-   connectors/*
-
-Each of these plugins has a corresponding subdirectory with the same
-name in the Bcfg2 repository.
-
 Metadata (Grouping)
 -------------------
 
@@ -80,6 +68,15 @@ Literal Configuration (Generators)
 Each of these plugins has a corresponding subdirectory with the same
 name in the Bcfg2 repository.
 
+Connector Plugins
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   connectors/*
+
 Statistics Plugins
 ------------------
 
@@ -90,7 +87,7 @@ Statistics Plugins
    statistics/*
 
 DBStats can be enabled by adding it to the plugins line in
-`/etc/bcfg2.conf`.
+``/etc/bcfg2.conf``.
 
 Version Plugins
 ---------------

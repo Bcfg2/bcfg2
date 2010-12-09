@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _development-vim_snippet:
+.. _unsorted-vim_snippet:
 
 ===================
 Vim Snippet Support
@@ -53,13 +53,13 @@ that allow quick composition of bundles and base files.
                 <Permissions name='${1:name}'/>
 
 
-#. Save and start editing away! 
+#. Save and start editing away!
 
-Each of these snippets activates on the opening element, ie <Bundle>. 
-After this string is entered, but before entering a space, press <TAB>, 
-and the snippet will be expanded. The template will be inserted into 
-the text with a set of input prompts, which default to overwrite mode 
+Each of these snippets activates on the opening element, ie <Bundle>.
+After this string is entered, but before entering a space, press <TAB>,
+and the snippet will be expanded. The template will be inserted into
+the text with a set of input prompts, which default to overwrite mode
 and can be tabbed through.
 
-The code above only works for bundles and base, but will be expanded 
-to support other xml files as well. 
+The code above only works for bundles and base, but will be expanded
+to support other xml files as well.

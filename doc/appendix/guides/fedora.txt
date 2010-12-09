@@ -470,8 +470,3 @@ The first commit can be the empty or the allready populated directory::
 While running ``bcfg2-info`` the following line will show up::
 
    Initialized git plugin with git directory = /var/lib/bcfg2/.git
-
-
-
-
-

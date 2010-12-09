@@ -5,7 +5,7 @@
 .. This is combination of the Ubuntu guide and the Centos guide for
    installing the web reports.
 
-.. _web-reports:
+.. _appendix-guides-web-reports-install:
 
 ==================================
 Dynamic (web) Reports installation
@@ -180,5 +180,5 @@ then have something like this::
 
 Restart apache and point a browser to your Bcfg2 server.
 
-If using sqlite be sure the sql database file and directory containing the
-database are writable to apache.
+If using sqlite be sure the sql database file and directory containing
+the database are writable to apache.

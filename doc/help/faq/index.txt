@@ -7,7 +7,7 @@ FAQ
 ===
 
 The Frequently Asked Questions (FAQ) answers the most common questions
-about Bcfg2.  At the moment the FAQ is splitted into a general 
+about Bcfg2.  At the moment the FAQ is splitted into a general
 and a client specfic section.
 
 .. toctree::

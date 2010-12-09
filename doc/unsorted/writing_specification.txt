@@ -14,8 +14,8 @@ Bcfg2 specifications are logically divided in to three areas:
 
 The metadata portion of the configuration assigns a client to its profile
 group and to its non-profile groups. The profile group is assigned
-in Metadata/clients.xml and the non profile group assignments are in
-Metadata/groups.xml.
+in ``Metadata/clients.xml`` and the non profile group assignments are in
+``Metadata/groups.xml``.
 
 The group memberships contained in the metadata are then used to constuct
 an abstract configuration for the client. An abstract configuration for

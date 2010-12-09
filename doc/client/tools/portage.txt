@@ -1,9 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _client-tools-portage:
-
-=======
-Portage
-=======
-
-Support for Gentoo Packages.

@@ -1,64 +1,46 @@
 .. -*- mode: rst -*-
 
-.. _Download: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
-.. _GPG:     http://pgpkeys.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
-.. _GPGKey:  ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-1.1.0.tar.gz.gpg
-.. _Tarball: ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-1.1.0.tar.gz
-
-.. |md5sum| replace:: 13593938daf7e8b9a81cb4b677dc7f99
-.. |version| replace:: 1.1.0
-.. |rel_date| replace:: 9/27/10
+.. _GPG1: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
+.. _GPG2: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x80B8492FA88FFF4B
 
 .. _source:
-
-Download
-========
-
-Tarball
--------
-
-The Bcfg2 source tarball can be grabbed from the Download_ page.
-
-=========  ========  ======= ============== =====================
-Version    URL       GPG key Release Date   md5sum
-=========  ========  ======= ============== =====================
-|version|  Tarball_  GPGKey_ |rel_date|     |md5sum|   
-=========  ========  ======= ============== =====================
-
-The full command to use with ``wget`` are listed below. Please 
-replace ``<version>`` with |version|. ::
-
-   wget ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-<version>.tar.gz
-   wget ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-<version>.tar.gz.gpg
-
-All tarballs are signed with GPG key `7F7D197E <GPGKey>`_. You can verify
-your download by importing the key and running ::
-
-   $ gpg --recv-keys 0x75bf2c177f7d197e
-   $ gpg --verify bcfg2-<version>.tar.gz.gpg bcfg2-<version>.tar.gz
-
-For older or prepreleases please visit the Download_ wiki page.
-
-
-Git checkout
-------------
-
-You can also get the latest (possibly broken) code via git ::
-
-   git clone git://git.mcs.anl.gov/bcfg2.git
 
 Installation from source
 ========================
 
+Download
+--------
+
+Tarball
+^^^^^^^
+
+The Bcfg2 source tarball can be grabbed from the Download_ page.
+
+All tarballs are signed with GPG keys `7F7D197E <GPG1>`_ or `A88FFF4B
+<GPG2>`_. You can verify your download by importing the keys and running ::
+
+    gpg --recv-keys 0x75bf2c177f7d197e 0x80B8492FA88FFF4B
+    gpg --verify bcfg2-<version>.tar.gz.gpg bcfg2-<version>.tar.gz
+
+Git checkout
+^^^^^^^^^^^^
+
+You can also get the latest (possibly broken) code via git ::
+
+    git clone git://git.mcs.anl.gov/bcfg2.git
+
+Install
+-------
+
 If you are working with the release tarball of Bcfg2 you need to 
 untar it before you can go on with the installation ::
 
-   tar -xzf bcfg2-<version>.tar.gz
+    tar -xzf bcfg2-<version>.tar.gz
 
-Now you can build Bcfg2 with. If you are working with a SVN checkout
-no <version> need to be specified. ::
+Now you can build Bcfg2 with. If you are working from a git clone no
+<version> need to be specified. ::
 
-   cd bcfg2-<version>
-   python setup.py install --prefix=/install/prefix
+    cd bcfg2-<version>
+    python setup.py install --prefix=/install/prefix
 
 This will install both the client and server on that machine.
