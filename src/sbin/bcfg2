@@ -49,6 +49,7 @@ class Client:
             'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
             'paranoid': Bcfg2.Options.CLIENT_PARANOID,
             'bundle': Bcfg2.Options.CLIENT_BUNDLE,
+            'bundle-quick': Bcfg2.Options.CLIENT_BUNDLEQUICK,
             'indep': Bcfg2.Options.CLIENT_INDEP,
             'file': Bcfg2.Options.CLIENT_FILE,
             'interactive': Bcfg2.Options.INTERACTIVE,
@@ -62,7 +63,6 @@ class Client:
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'retries': Bcfg2.Options.CLIENT_RETRIES,
             'kevlar': Bcfg2.Options.CLIENT_KEVLAR,
-            'key': Bcfg2.Options.SERVER_KEY,
             'decision-list': DECISION_LIST,
             'encoding': Bcfg2.Options.ENCODING,
             'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
@@ -93,6 +93,13 @@ class Client:
                                    to_file=self.setup['filelog'])
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
+        if self.setup['bundle-quick']:
+            if self.setup['bundle'] == []:
+                self.logger.error("-Q option requires -b")
+                raise SystemExit(1)
+            elif self.setup['remove'] != False:
+                self.logger.error("-Q option incompatible with -r")
+                raise SystemExit(1)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
             self.logger.info("The following drivers are available:")
             self.logger.info(Bcfg2.Client.Tools.drivers)
@@ -251,6 +258,12 @@ class Client:
             self.fatal_error("Server error: %s" % (self.config.text))
             return(1)
 
+        if self.setup['bundle-quick']:
+            newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
+            [newconfig.append(bundle) for bundle in self.config.getchildren() if \
+             bundle.tag == 'Bundle' and bundle.get('name') in self.setup['bundle']]
+            self.config = newconfig
+
         self.tools = Bcfg2.Client.Frame.Frame(self.config,
                                               self.setup,
                                               times, self.setup['drivers'],
@@ -281,7 +294,7 @@ class Client:
                 except OSError:
                     self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
 
-        if not self.setup['file']:
+        if not self.setup['file'] and not self.setup['bundle-quick']:
             # upload statistics
             feedback = self.tools.GenerateStats()
 
