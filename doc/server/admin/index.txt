@@ -29,8 +29,8 @@ Bcfg2.
 bundle
 ======
 
-'list-xml' lists all available xml bundles, 'list-genshi' lists all
-available genshi bundles.::
+For a list of all available xml bundles use ``list-xml``. ``list-genshi``
+will list all available genshi bundles.::
 
     # bcfg2-admin bundle list-xml
     # bcfg2-admin bundle list-genshi
