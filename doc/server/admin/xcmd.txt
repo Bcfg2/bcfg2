@@ -9,6 +9,10 @@ XML-RPC Command Interface. ::
 
     xcmd <xmlrpc method> <optional arguments>
 
+For debbbuging the following command can help::
+
+    bcfg2-admin xcmd Metadata.toggle_debug
+
 Those two examples can alos be found in the 
 :ref:`Package section <server-plugins-generators-packages>`.
 
