@@ -5,7 +5,8 @@
 viz
 ===
 
-Produce graphviz diagrams of metadata structures.
+Produce graphviz diagrams of metadata structures. Make sure that the 
+graphviz package is installed.
 
 The following command will produce a graphviz image which includes hosts,
 bundles, and a key::
