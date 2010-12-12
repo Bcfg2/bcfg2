@@ -33,7 +33,7 @@ detected or a default value is provided. ::
     subject=/C=US/ST=Illinois/L=Argonne/CN=conf01.example.com
     Getting Private key
 
-A toplevel repository structure was created under the provided path.
+A toplevel repository structure was created under the provided path.::
 
     /var/lib/bcfg2
     |-- Base
