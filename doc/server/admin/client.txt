@@ -1,0 +1,18 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-client-index:
+
+client
+======
+
+Create, delete, list, or modify client entries. ::
+
+    bcfg2-admin client add 
+
+
+With ``list`` the file ``clients.xml`` will 
+
+    # bcfg2-admin client list
+    Failed to find IP address for desktop01.example.com
+    server01.example.com
+    laptop02.example.com

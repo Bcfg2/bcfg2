@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-backup-index:
+
+backup
+======
+
+.. _Samples repository: https://github.com/solj/bcfg2-repo
+
+Create an archive of the whole Bcfg2 :term:`repository`. The archive is stored
+directly in your Bcfg2 repository (e.g. /var/lib/bcfg2)::
+
+    bcfg2-admin backup
+
+A backup is recommanded before you start using the `Samples repository`_ of
+Bcfg2.

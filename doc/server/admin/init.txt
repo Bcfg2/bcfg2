@@ -1,0 +1,8 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-init-index:
+
+init
+====
+
+Interactively initialize a new repository.

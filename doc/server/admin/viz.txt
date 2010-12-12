@@ -1,0 +1,17 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-viz-index:
+
+viz
+===
+
+Produce graphviz diagrams of metadata structures.
+
+The following command will produce a graphviz image which includes hosts,
+bundles, and a key::
+
+    bcfg2-admin viz -H -b -k -o ~/bcfg2.png
+
+.. note:: The graphviz package available via DAG/RPMforge has been known
+          to have dependency issues. We recommend installing the package
+          from EPEL.

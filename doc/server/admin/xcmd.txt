@@ -1,0 +1,8 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-xcmd-index:
+
+xcmd
+====
+
+XML-RPC Command Interface.

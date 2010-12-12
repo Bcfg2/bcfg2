@@ -1,0 +1,9 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-pull-index:
+
+pull
+====
+
+Integrate configuration information from clients into the server
+repository.

@@ -1,0 +1,8 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-minestruct-index:
+
+minestruct
+==========
+
+Extract extra entry lists from statistics.

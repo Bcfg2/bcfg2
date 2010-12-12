@@ -1,0 +1,8 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-perf-index:
+
+perf
+====
+
+Query server for performance data.
