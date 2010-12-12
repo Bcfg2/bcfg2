@@ -15,18 +15,29 @@ This is a complete getting started guide for Fedora. With this
 document you should be able to install a Bcfg2 server, a Bcfg2 client, 
 and change the ``/etc/motd`` file on the client.
 
+Prerequisites
+=============
+
+To setup a configuration management system based on Bcfg2 only a few 
+prerequisites need to be fullfilled.
+
+* A server machine that can host the Bcfg2
+* Internet access for the installation process
+* A working network with DNS
+
+
 Install Bcfg2 From RPM
 ======================
 
 The fastest way to get Bcfg2 onto your system is to use ``yum`` 
-or PackageKit. ``
-um`` will pull all dependencies of Bcfg2 
+or PackageKit. ``yum`` will pull all dependencies of Bcfg2 
 automatically in. ::
 
   $ su -c 'yum install bcfg2-server bcfg2'
 
 Your system should now have the necessary software to use Bcfg2. 
 The next step is to set up your Bcfg2 :term:`repository`.
+
 
 Initialize your repository
 ==========================
@@ -45,7 +56,7 @@ is a tool which allows you to automate this:
     What is the server's hostname: [config01.local.net]
     Input the server location [https://config01.local.net:6789]: 
     Input base Operating System for clients:
-    1: Redhat/Fedora/RHEL/RHAS/Centos
+    1: Red Hat/Fedora/RHEL/RHAS/Centos
     2: SUSE/SLES
     3: Mandrake
     4: Debian
@@ -68,7 +79,7 @@ Change responses as necessary.
 Start the server
 ================
 
-You are now ready to start your bcfg2 server for the first time::
+You are now ready to start your Bcfg2 server for the first time::
 
     $ su -c '/etc/init.d/bcfg2-server start'
     Starting Configuration Management Server: bcfg2-server     [  OK  ]
