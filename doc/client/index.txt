@@ -23,22 +23,12 @@ client, for a few reasons:
   deployment engine that can be driven by anything that writes a
   compatible configuration description.
 
-Available client tools
-----------------------
-
-.. toctree::
-   :maxdepth: 2
-   :glob:
-
-   tools/*
-
-Other client-related documentation
-----------------------------------
-
 .. toctree::
    :maxdepth: 2
 
+   modes
+   tools
+   metadata
    agent
    debugging
-   metadata
-   modes
+
