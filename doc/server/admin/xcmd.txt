@@ -9,9 +9,8 @@ XML-RPC Command Interface. ::
 
     xcmd <xmlrpc method> <optional arguments>
 
-
 Those two examples can alos be found in the 
-:ref:`Package section <server-plugins-generators-packages>` 
+:ref:`Package section <server-plugins-generators-packages>`.
 
 To rebuild the packages plugin cache::
 
