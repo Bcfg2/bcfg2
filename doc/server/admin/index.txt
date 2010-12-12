@@ -7,7 +7,7 @@ Admin
 =====
 
 The ``bcfg2-admin`` command provides you an interface which allows you
-to interact with your Bcfg2 repository in an administrative fashion. To
+to interact with your Bcfg2 :term:`repository` in an administrative fashion. To
 get started, run ``bcfg2-admin help``. You will be presented with a list
 of different *modes* which each provide various administrative
 functionality. Available modes are listed below.
@@ -15,7 +15,7 @@ functionality. Available modes are listed below.
 backup
 ======
 
-Create an archive of the whole Bcfg2 repository. The archive is stored
+Create an archive of the whole Bcfg2 :term:`repository`. The archive is stored
 directly in your Bcfg2 repository (e.g. /var/lib/bcfg2)::
 
     bcfg2-admin backup
@@ -23,9 +23,17 @@ directly in your Bcfg2 repository (e.g. /var/lib/bcfg2)::
 client
 ======
 
-Create, delete, or modify client entries.::
+Create, delete, list, or modify client entries. ::
 
     bcfg2-admin client add 
+
+
+With ``list`` the file ``clients.xml`` will 
+
+    [root@conf01 ~]# bcfg2-admin client list
+    Failed to find IP address for desktop01.example.com
+    server01.example.com
+    laptop02.example.com
 
 compare
 =======
