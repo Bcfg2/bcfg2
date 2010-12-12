@@ -1,0 +1,132 @@
+.. -*- mode: rst -*-
+
+.. _guide-using_bcfg2_info:
+
+================
+Using bcfg2-info
+================
+
+``bcfg2-info`` is a tool for introspecting server functions. It is
+useful for understanding how the server is interpreting your
+repository. It consists of the same logic executed by the server to
+process the repository and produce configuration specifications, just
+without all of the network communication code. Think of ``bcfg2-info``
+as ``bcfg2-server`` on a stick. It is a useful location to do testing
+and staging of new configuration rules, prior to deployment. This is
+particularly useful when developing templates, or developing Bcfg2
+plugins.
+
+Getting Started
+===============
+
+First, fire up the bcfg2-info interpreter.
+
+.. code-block:: none
+
+     [0:464] bcfg2-info
+     Loading experimental plugin(s): Packages
+     NOTE: Interfaces subject to change
+     Handled 8 events in 0.006s
+     Handled 4 events in 0.035s
+     Welcome to bcfg2-info
+     Type "help" for more information
+     >
+
+At this point, the server core has been loaded up, all plugins have
+been loaded, and the ``bcfg2-info`` has both read the initial state of
+the Bcfg2 repository, as well as begun monitoring it for changes. Like
+*bcfg2-server*, ``bcfg2-info`` monitors the repository for changes,
+however, unlike *bcfg2-server*, it does not process change events
+automatically. File modification events can be processed by explicitly
+calling the **update** command. This will process the events,
+displaying the number of events processed and the amount of time taken
+by this processing. If no events are available, no message will be
+displayed. For example, after a change to a file in the repository:
+
+.. code-block:: none
+
+     >update
+     Handled 1 events in 0.001s
+     > update
+     >
+
+This explicit update process allows you to control the update process,
+as well as see the precise changes caused by repository
+modifications.
+
+``bcfg2-info`` has several builtin commands that display the state of
+various internal server core state. These are most useful for
+examining the state of client metadata, either for a single client, or
+for clients overall.
+
+**clients**
+     displays a list of clients, along with their profile groups
+**groups**
+     displays a list of groups, the inheritance hierarchy, profile
+     status, and category name, if there is one.
+**showclient**
+     displays full metadata information for a client, including
+     profile group, group memberships, bundle list, and any connector
+     data, like Probe values or Property info.
+
+Debugging Configuration Rules
+=============================
+
+In addition to the commands listed above for viewing client metadata,
+there are also commands which can shed light on the configuration
+generation process. Recall that configuration generation occurs in
+three major steps:
+
+1) Resolve client metadata
+2) Build list of entries for the configuration
+3) Bind host-specific version of each entry
+
+Step *1* can be viewed with the commands presented in the previous
+section. The latter two steps can be examined using the following
+commands.
+
+**showentries**
+     displays a list of entries (optionally filtered by type) that
+     appear in a client's configuration specification
+
+**buildfile**
+     Perform the entry binding process on a single entry, displaying
+     its results. This command is very useful when developing
+     configuration file templates.
+
+**build**
+     Build the full configuration specification and write it to a
+     file.
+
+**mappings**
+     displays the entries handled by the plugins loaded by the server
+     core. This command is useful when the server reports a bind
+     failure for an entry.
+
+Debugging and Developing Bcfg2
+==============================
+
+``bcfg2-info`` loads a full Bcfg2 server core, so it provides the ideal
+environment for developing and debugging Bcfg2. Because it is hard to
+automate this sort of process, we have only implemented two commands
+in ``bcfg2-info`` to aid in the process.
+
+**profile**
+     The profile command produces python profiling information for
+     other ``bcfg2-info`` commands. This can be used to track
+     performance problems in configuration generation.
+
+**debug**
+     The debug command exits the ``bcfg2-info`` interpreter loop and drops
+     to a python interpreter prompt. The Bcfg2 server core is available
+     in this namespace as "self". Full documentation for the server core
+     is out of scope for this document. This capability is most useful
+     to call into plugin methods, often with setup calls or the enabling
+     of diagnostics.
+
+     It is possible to return to the ``bcfg2-info`` command loop by
+     exiting the python interpreter with ^D.
+
+     There is built-in support for IPython in ``bcfg2-info``. If IPython
+     is installed, dropping into debug mode in ``bcfg2-info`` will use
+     the IPython interpreter by default.
