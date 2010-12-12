@@ -25,4 +25,7 @@ With ``list`` the file ``clients.xml`` is parsed and all entries are shown::
     server01.example.com
     laptop02.example.com
 
-
+This is useful for a quick check after adding an entry.  If you want more
+in-depth information about a client, ``bcfg2-client clients`` can provide
+that.  Please refer to the :ref:`bcfg2-info <guide-server-bcfg2_info>` 
+section for further details.
