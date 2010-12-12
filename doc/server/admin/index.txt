@@ -15,10 +15,44 @@ functionality. Available modes are listed below.
 backup
 ======
 
+.. _Sample repository: https://github.com/solj/bcfg2-repo
+
 Create an archive of the whole Bcfg2 :term:`repository`. The archive is stored
 directly in your Bcfg2 repository (e.g. /var/lib/bcfg2)::
 
     bcfg2-admin backup
+
+A backup is recommanded before you start using the `Samples repository`_ of
+Bcfg2.
+
+
+bundle
+======
+
+'list-xml' lists all available xml bundles, 'list-genshi' lists all
+available genshi bundles.::
+
+    # bcfg2-admin bundle list-xml
+    # bcfg2-admin bundle list-genshi
+
+``show`` provides an interactive dialog to get details about the available
+bundles.::
+
+    # bcfg2-admin bundle show
+    Available bundles (Number of bundles: 4)
+    ----------------------------------------
+    [0]	motd.xml
+    [1]	snmpd.xml
+    [2]	bcfg2.xml
+    [3]	ntp.xml
+    Enter the line number of a bundle for details: 3
+    Details for the "ntp" bundle:
+    Package:	xntp
+    Path:		/etc/sysconfig/xntp
+    Path:		/etc/sysconfig/clock
+    Path:		/etc/ntp.conf
+    Service:	xntpd
+
 
 client
 ======
@@ -30,7 +64,7 @@ Create, delete, list, or modify client entries. ::
 
 With ``list`` the file ``clients.xml`` will 
 
-    [root@conf01 ~]# bcfg2-admin client list
+    # bcfg2-admin client list
     Failed to find IP address for desktop01.example.com
     server01.example.com
     laptop02.example.com
