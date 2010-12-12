@@ -10,8 +10,8 @@ The metadata mechanism has two types of information, client metadata and
 group metadata. The client metadata describes which top level group a
 client is associated with.The group metadata describes groups in terms
 of what bundles and other groups they include. Each aspect grouping
-and clients' memberships are reflected in the Metadata/groups.xml and
-Metadata/clients.xml files, respectively.
+and clients' memberships are reflected in the ``Metadata/groups.xml`` and
+``Metadata/clients.xml`` files, respectively.
 
 Usage of Groups in Metadata
 ===========================
@@ -22,13 +22,13 @@ groups.  Client membership of all other groups is by those groups being
 associated with the profile or public groups. This file can be indirectly
 modified from clients through use of the -p flag to bcfg2.
 
-Clients are associated with profile groups in Metadata/clients.xml as
+Clients are associated with profile groups in ``Metadata/clients.xml`` as
 shown below.
 
 Metadata/clients.xml
 ====================
 
-The Metadata/clients.xml file contains the mappings of Profile Groups
+The ``Metadata/clients.xml`` file contains the mappings of Profile Groups
 to clients. The file is just a series of <Client /> tags, each of which
 describe one host. A sample file is below:
 
@@ -58,7 +58,7 @@ The Clients tag has the following possible attributes:
 Client Tag
 ----------
 
-Each entry in clients.xml **must** have the following properties:
+Each entry in ``clients.xml`` **must** have the following properties:
 
 +---------+---------------------------------------+--------+
 | Name    | Description                           | Values |
