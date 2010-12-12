@@ -8,7 +8,7 @@ init
 Interactively initialize a new repository.  Most values are automatically
 detected or a default value is provided. ::
 
-    # bcfg2-admin init
+    bcfg2-admin init
     Store bcfg2 configuration in [/etc/bcfg2.conf]: 
     Location of bcfg2 repository [/var/lib/bcfg2]: 
     Input password used for communication verification (without echoing; leave blank for a random): 
