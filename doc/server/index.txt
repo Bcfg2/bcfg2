@@ -26,3 +26,4 @@ clients.
    configurationentries
    info
    snapshots/index
+   bcfg2-info

@@ -5,4 +5,6 @@
 perf
 ====
 
-Query server for performance data.
+Query server for performance data. ::
+
+    bcfg2-admin perf
