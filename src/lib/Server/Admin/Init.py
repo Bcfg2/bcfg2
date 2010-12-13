@@ -105,8 +105,15 @@ plugin_list = [
                 ]
 
 # Default list of plugins to use
-default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
-                'Metadata', 'Base', 'Bundler']
+default_plugins = [
+                'Base',
+                'Bundler'
+                'Cfg',
+                'Metadata',
+                'Pkgmgr',
+                'Rules',
+                'SSHbase'
+                ]
 
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
@@ -125,7 +132,7 @@ def create_key(hostname, keypath, certpath):
     os.chmod(keypath, 0600)
 
 def create_conf(confpath, confdata):
-    # don't overwrite existing bcfg2.conf file
+    # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
         result = raw_input("\nWarning: %s already exists. "
                     "Overwrite? [y/N]: " % confpath)
@@ -253,7 +260,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                     plugin = plugin.strip()
                     if not plugin in plugin_list:
                         plugins_are_valid = False
-                        print "ERROR: plugin %s not recognized" % plugin
+                        print "ERROR: Plugin %s not recognized" % plugin
                 if plugins_are_valid:
                     break
 
