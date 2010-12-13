@@ -76,11 +76,33 @@ os_list = [
           ]
 
 # Complete list of plugins
-plugin_list = ['Account', 'Base', 'Bundler', 'Cfg',
-             'Decisions', 'Deps', 'Metadata', 'Packages',
-             'Pkgmgr', 'Probes', 'Properties', 'Rules',
-             'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr',
-             'TCheetah', 'TGenshi']
+plugin_list = [
+                'Account',
+                'Base',
+                'Bundler',
+                'Bzr',
+                'Cfg',
+                'Decisions',
+                'Deps',
+                'Git',
+                'Guppy',
+                'Hg',
+                'Metadata',
+                'NagiosGen',
+                'Ohai',
+                'Packages',
+                'Pkgmgr',
+                'Probes',
+                'Properties',
+                'Rules',
+                'Snapshots',
+                'SSHbase',
+                'SSLCA',
+                'Statistics',
+                'Svcmgr',
+                'TCheetah',
+                'TGenshi'
+                ]
 
 # Default list of plugins to use
 default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
