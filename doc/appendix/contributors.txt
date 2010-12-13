@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _AUTHORS: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/AUTHORS
+.. _AUTHORS: http://trac.mcs.anl.gov/projects/bcfg2/browser/AUTHORS
 .. _MCS: http://www.mcs.anl.gov/
 
 .. _appendix-contributors:
@@ -9,7 +9,7 @@
 Contributors
 ============
 
-.. 
+..
    This is list is no longer in chronological order like the
    AUTHORS file because it's easier to maintain (for me).
    Automatically sorted.
@@ -22,7 +22,7 @@ In alphabetical order of the given name:
 - Daniel Clark <dclark@pobox.com> created encap packages for bcfg2 and deps, wrote fossil-scm dvcs support, and helps with Debian packaging
 - Danny Clark enabled the Encap packaging
 - David Dahl worked on Hostbase
-- David Strauss worked on CentOS, RHEL, Yum, and Bazaar VCS support 
+- David Strauss worked on CentOS, RHEL, Yum, and Bazaar VCS support
 - Ed Smith <esmith4@inf.ed.ac.uk> has done substantial hardening of the bcfg client and server and implemented a common logging infrastructure.
 - Fabian Affolter <fabian@bernewireless.net> made some patches and worked on the manual
 - Jason Pepas <cell@ices.utexas.edu> has written a RPM package list creator has contributed patches to the Red Hat toolset
@@ -37,7 +37,8 @@ In alphabetical order of the given name:
 - Sami Haahtinen <ressu@ressukka.net> has written Debian packaging logic.
 - Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written the VHost plugin
 - Scott Matott
-- Sol Jerome <solj@ices.utexas.edu> squashes bugs, helps manage the project roadmap, and implements various interesting features.
+- Sol Jerome <sol.jerome@gmail.com> squashes bugs, helps manage the
+  project roadmap, and implements various interesting features.
 - Ti Leggett worked on ebuild packaging and bugfixes, RPM packaging
 - Zach Lowry Solaris support and general hardening
 
@@ -49,5 +50,4 @@ throughout this project. Philip Steinbachs provided detailed
 feedback as an early external user.
 
 The most updated listing is available in the AUTHORS_ file in the
-SVN :term:`repository` of Bcfg2.
-
+git :term:`repository` for Bcfg2.

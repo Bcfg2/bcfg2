@@ -3,7 +3,7 @@
 .. _development-plugins:
 
 Bcfg2 Plugin development
-------------------------
+========================
 
 While the Bcfg2 server provides a good interface for representing
 general system configurations, its plugin interface offers the ability
@@ -12,7 +12,7 @@ problems encountered by a particular site. This chapter describes what
 plugins are good for, what they can do, and how to implement them.
 
 Bcfg2 Plugins
-^^^^^^^^^^^^^
+-------------
 
 Bcfg2 plugins are loadable python modules that the Bcfg2 server loads at
 initialization time. These plugins can contribute to the functions already
@@ -43,3 +43,171 @@ The following table describes the various functions of bcfg2 plugins.
 |                    | expose internal functions.                  |
 +--------------------+---------------------------------------------+
 
+Server Plugin Types
+-------------------
+
+Generator
+^^^^^^^^^
+
+Generator plugins contribute to literal client configurations
+
+Structure
+^^^^^^^^^
+
+Structure Plugins contribute to abstract client configurations
+
+Metadata
+^^^^^^^^
+
+Signal metadata capabilities
+
+Connector
+^^^^^^^^^
+
+Connector Plugins augment client metadata instances
+
+Probing
+^^^^^^^
+
+Signal probe capability
+
+Statistics
+^^^^^^^^^^
+
+Signal statistics handling capability
+
+Decision
+^^^^^^^^
+
+Signal decision handling capability
+
+Version
+^^^^^^^
+
+Interact with various version control systems
+
+Writing Bcfg2 Server Plugins
+----------------------------
+
+Bcfg2 plugins are python classes that subclass from
+Bcfg2.Server.Plugin.Plugin. Several plugin-specific values must be set
+in the new plugin. These values dictate how the new plugin will behave
+with respect to the above four functions.  The following table describes
+all important member fields.
+
++-----------------+-----------------------------------+--------------------------+
+| Name            | Description                       | Format                   |
++=================+===================================+==========================+
+| __name__        | The name of the plugin            | string                   |
++-----------------+-----------------------------------+--------------------------+
+| __version__     | The plugin version (generally     | string                   |
+|                 | tied to revctl keyword expansion) |                          |
++-----------------+-----------------------------------+--------------------------+
+| __author__      | The plugin author.                | string                   |
++-----------------+-----------------------------------+--------------------------+
+| __author__      | The plugin author.                | string                   |
++-----------------+-----------------------------------+--------------------------+
+| __rmi__         | Set of functions to be exposed as | List of function names   |
+|                 | XML-RPC functions                 | (strings)                |
++-----------------+-----------------------------------+--------------------------+
+| Entries         | Multidimentional dictionary of    | Dictionary of            |
+|                 | keys that point to the function   | ConfigurationEntityType, |
+|                 | used to bind literal contents for | Name keys, and function  |
+|                 | a given configuration entity.     | reference values         |
++-----------------+-----------------------------------+--------------------------+
+| BuildStructures | Function that returns a list of   | Member function          |
+|                 | the structures for a given client |                          |
++-----------------+-----------------------------------+--------------------------+
+| GetProbes       | Function that returns a list of   | Member function          |
+|                 | probes that a given client should |                          |
+|                 | execute                           |                          |
++-----------------+-----------------------------------+--------------------------+
+| ReceiveData     | Function that accepts the probe   | Member function          |
+|                 | results for a given client.       |                          |
++-----------------+-----------------------------------+--------------------------+
+
+Example Plugin
+^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    import Bcfg2.Server.Plugin
+    class MyPlugin(Bcfg2.Server.Plugin.Plugin):
+       '''An example plugin'''
+       # All plugins need to subclass Bcfg2.Server.Plugin.Plugin
+       __name__ = 'MyPlugin'
+       __version__ = '1'
+       __author__ = 'me@me.com'
+       __rmi__ = ['myfunction']
+       # myfunction is not available remotely as MyPlugin.myfunction
+
+       def __init__(self, core, datastore):
+           Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+           self.Entries = {'Path':{'/etc/foo.conf': self.buildFoo}}
+
+       def myfunction(self):
+           '''function for xmlrpc rmi call'''
+           #do something
+           return True
+
+       def buildFoo(self, entry, metadata):
+           '''Bind per-client information into entry based on metadata'''
+           entry.attrib.update({'type':'file', 'owner':'root', 'group':'root', 'perms':'644'})
+           entry.text = '''contents of foo.conf'''
+
+Example Connector
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    import Bcfg2.Server.Plugin
+
+    class Foo(Bcfg2.Server.Plugin.Plugin,
+             Bcfg2.Server.Plugin.Connector):
+        '''The Foo plugin is here to illustrate a barebones connector'''
+        name = 'Foo'
+        version = '$Revision: $'
+        experimental = True
+
+        def __init__(self, core, datastore):
+            Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+            Bcfg2.Server.Plugin.Connector.__init__(self)
+            self.store = XMLFileBacked(self.data, core.fam)
+
+        def get_additional_data(self, metadata):
+
+            mydata = {}
+            for data in self.store.entries['foo.xml'].data.get("foo", []):
+
+                mydata[data] = "bar"
+
+            return  dict([('mydata', mydata)])
+
+        def get_additional_groups(self, meta):
+            return self.cgroups.get(meta.hostname, list())
+
+Example Metadata plugin
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If you would like to define your own Metadata plugin (to extend/change
+functionality of the existing Metadata plugin), here are the steps to
+do so. We will call our new plugin `MyMetadata`.
+
+#. Add MyMetadata.py
+
+   .. code-block:: python
+
+       __revision__ = '$Revision$'
+
+       import Bcfg2.Server.Plugins.Metadata
+
+       class MyMetadata(Bcfg2.Server.Plugins.Metadata.Metadata):
+           '''This class contains data for bcfg2 server metadata'''
+           __version__ = '$Id$'
+           __author__ = 'bcfg-dev@mcs.anl.gov'
+
+       def __init__(self, core, datastore, watch_clients=True):
+           Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, watch_clients)
+
+#. Add MyMetadata to ``src/lib/Server/Plugins/__init__.py``
+#. Replace Metadata with MyMetadata in the plugins line of bcfg2.conf

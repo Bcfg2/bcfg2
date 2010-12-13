@@ -10,20 +10,20 @@ driver for a configuration element type. The included example describes
 an existing driver, and the process that was used to create it.
 
 #. Pick a name for the driver. In this case, we picked the name RPM.
-#. Add "RPM" to the ``__all__ list`` in ``src/lib/Client/Tools/__init__.py``
+#. Add "RPM" to the ``__all__`` list in ``src/lib/Client/Tools/__init__.py``
 #. Create a file in ``src/lib/Client/Tools`` with the same name (RPM.py)
-#. Create a class in this file with the same name (``class RPM``)
+#. Create a class in this file with the same name (class RPM)
 
-   * If it handles ``Package`` entries, subclass ``Bcfg2.Client.Tools.PkgTool``
+   * If it handles **Package** entries, subclass ``Bcfg2.Client.Tools.PkgTool``
      (from here referenced as branch [P])
-   * If it handles ``Service`` entries, subclass ``Bcfg2.Client.Tools.SvcTool``
+   * If it handles **Service** entries, subclass ``Bcfg2.Client.Tools.SvcTool``
      (from here referenced as branch [S])
-   * Otherwise, ``subclass Bcfg2.Client.Tools.Tool`` (from here referenced
+   * Otherwise, subclass ``Bcfg2.Client.Tools.Tool`` (from here referenced
      as branch [T])
 
 #. Set ``__name__`` to "RPM"
 #. Add any required executable programs to ``__execs__``
-#. Set ``__handles__`` to a list of (``entry.tag``, ``entry.get('type')``)
+#. Set ``__handles__`` to a list of (**entry.tag**, **entry.get('type')**)
    tuples. This determines which entries the Tool module can be used
    on. In this case, we set ``__handles__ = [('Package', 'rpm')]``.
 #. Add verification. This method should return True/False depending
@@ -46,9 +46,9 @@ an existing driver, and the process that was used to create it.
      all-at-once installations, followed, in the case of failures, 
      by single installations. To enable this support, set the pkgtype 
      attribute to the package type handled by this driver. Set the
-     ``pkgtool`` to a tuple ("command string %s", ("per-package string
+     pkgtool to a tuple ("command string %s", ("per-package string
      format", [list of package entry fields])). For RPM, we have
-     ``setup pkgtool =  ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))``
+     setup ``pkgtool =  ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))``
 
 #. Implement entry removal
 

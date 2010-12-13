@@ -30,7 +30,7 @@ Retention Model
 ===============
 
 The current reporting system stores statistics in an XML data store, by
-default to {{{<repo>/etc/statistics.xml}}}. It retains either one or two
+default to ``<repo>/etc/statistics.xml``. It retains either one or two
 statistic sets per host. If the client has a clean configuration state,
 the most recent (clean) record is retained.  If the client has a dirty
 configuration state, two records are retained. One record is the last
@@ -53,7 +53,7 @@ Output
 ======
 
 Several output reports can be generated from the statistics store with
-the command line tool {{{bcfg2-build-reports}}}.
+the command line tool ``bcfg2-build-reports``.
 
 * Nodes Digest
 * Nodes Individual

@@ -1,9 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _client-tools-sysv:
-
-====
-SYSV
-====
-
-Handles System V Packaging format that is available on Solaris.

@@ -2,13 +2,12 @@
 
 .. _contents:
 
-==========================================
-Welcome to Bcfg2's |version| documentation
-==========================================
+=============================
+Bcfg2 documentation |release|
+=============================
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    introduction/index
    installation/index
@@ -18,7 +17,7 @@ Welcome to Bcfg2's |version| documentation
    client/index
    reports/index
    development/index
-   getting_help/index
+   help/index
    glossary
    appendix/index
  

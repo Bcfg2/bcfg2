@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _development-emacs_snippet:
+.. _unsorted-emacs_snippet:
 
 ======================
 Emacs + YASnippet mode

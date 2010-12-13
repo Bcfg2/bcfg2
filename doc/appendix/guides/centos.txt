@@ -2,7 +2,7 @@
 
 .. _EPEL: http://fedoraproject.org/wiki/EPEL
 
-.. _guide-centos:
+.. _appendix-guides-centos:
 
 =====================
 Quickstart for CentOS

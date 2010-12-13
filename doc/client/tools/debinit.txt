@@ -1,9 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _client-tools-debinit:
-
-=======
-DebInit
-=======
-
-Debian Service Support; exec's update-rc.d to configure services.

@@ -1,9 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _client-tools-encap:
-
-=====
-Encap
-=====
-
-`Encap <http://www.encap.org>`_ Packages.

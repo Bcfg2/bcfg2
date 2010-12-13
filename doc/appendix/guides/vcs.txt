@@ -1,28 +1,23 @@
 .. -*- mode: rst -*-
 
-.. _guide-vcs:
+.. _appendix-guides-vcs:
 
 =======================
 Version control systems
 =======================
 
-The sections in this guide do only cover the basics steps in the setup
-of the different version control system for the usage with the Bcfg2
-plugin support.  More more details about 
+The sections in this guide only cover the basics steps in the setup of
+the different version control systems for usage with the Bcfg2.
 
 Git
 ===
 
 .. _Git tutorial: http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
 
-Adding the :ref:`server-plugins-version-git` plugins can preserve
-versioning information. The first step is to add **Git** to your 
-plugin line::
-
-    plugins = Base,Bundler,Cfg,...,Git
-
-For tracking the configuration files in the ``/var/lib/bcfg2`` 
-directory a git repository need to be established::
+Adding the :ref:`server-plugins-version-git` plugin will allow you to
+store version information in the statistics database. For tracking the
+configuration files in the ``/var/lib/bcfg2`` directory a git repository
+needs to be established::
 
     git init
 
@@ -38,12 +33,11 @@ While running ``bcfg2-info`` the following line will show up::
 Mercurial 
 =========
 
-For the :ref:`server-plugins-version-hg` plugin are the same changes 
-needed as for git. ::
+The :ref:`server-plugins-version-hg` plugin also allows you to store
+version information in the statistics database.
 
-    plugins = Base,Bundler,Cfg,...,Mercurial
-
-The repository must be initialized::
+To use mercurial to track your configuration files, the repository must
+be initialized::
 
     hg init
 
@@ -68,12 +62,11 @@ While running ``bcfg2-info`` the following line will show up::
 Darcs 
 =====
 
-If you wish to use the :ref:`server-plugins-version-darcs` plugin an
-entry has to be made in the ``bcfg2.conf`` file.::
+The :ref:`server-plugins-version-darcs` plugin also allows you to store
+version information in the statistics database.
 
-    plugins = Base,Bundler,Cfg,...,Darcs
-
-The dracs repository must be initialized::
+To use darcs to track your configuration files, the repository must
+be initialized::
 
     darcs initialize
 
@@ -87,7 +80,8 @@ darcs will ask you to enter your e-mail address.
     you@example.com
     END_ENTRY
 
-All files in the ``/var/lib/bcfg2`` should be added to darcs now::
+All files in the ``/var/lib/bcfg2`` directory should be added to darcs
+now::
 
     darcs add *
 
@@ -102,8 +96,8 @@ While running ``bcfg2-info`` the following line will show up::
 Cvs
 ===
 
-If you wish to use the :ref:`server-plugins-version-darcs` plugin an
-entry has to be made in the ``bcfg2.conf`` file.::
+The :ref:`server-plugins-version-cvs` plugin also allows you to store
+version information in the statistics database.
 
     plugins = Base,Bundler,Cfg,...,Cvs
 

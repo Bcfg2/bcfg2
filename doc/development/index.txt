@@ -6,19 +6,12 @@
 Bcfg2 Development
 =================
 
-There are several ways users can contribute to the Bcfg2 project.
-
-* Developing code
-* Testing prereleases
-* Reporting bugs
-* Adding to the common repository
-* Improving the wiki and writing documentation
+There are many ways to get involved in Bcfg2 development. Here we will
+outline some things that can help you get familiar with the various
+areas of the Bcfg2 code.
 
 
-This section will outline some things that can help you get familiar
-with the various areas of the Bcfg2 code.
-
-Send patches to the :ref:`mailinglist` or create a trac 
+Send patches to the :ref:`help-mailinglist` or create a trac
 `ticket <https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_
 with the patch included. In order to submit a ticket via the
 trac system, you will need to create a session by clicking on the
@@ -33,22 +26,16 @@ The source tree can be checked out by running::
     git clone git://git.mcs.anl.gov/bcfg2.git
 
 Users wishing to contribute on a regular basis can apply for direct
-git access. Mail the :ref:`mailinglist` for details.
+git access. Mail the :ref:`help-mailinglist` for details.
 
 
 .. toctree::
    :maxdepth: 1
-   
+
    tips
    setup
    client-driver
    plugins
-   writing_plugins
-   plugin-types
-   writing_specification
-   server
    testing
    documentation
    docstyleguide
-   emacs_snippet
-   vim_snippet

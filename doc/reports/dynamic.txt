@@ -39,7 +39,8 @@ The recommended statistics plugin is DBStats. To use it, add it to the
 plugin can be used in conjunction with a crontab entry to run
 ``/usr/sbin/bcfg2-admin reports load_stats``.
 
-Detailed installation instructions can be found :ref:`here <server-reports-install>`.
+Detailed installation instructions can be found :ref:`here
+<appendix-guides-web-reports-install>`.
 
 .. _dynamic-http-install:
 

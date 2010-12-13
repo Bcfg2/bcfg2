@@ -29,7 +29,7 @@ The following is an annotated copy of a bundle:
 
 .. code-block:: xml
 
-   <Bundle name='ssh' version='2.0'>
+    <Bundle name='ssh' version='2.0'>
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>

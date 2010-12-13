@@ -43,9 +43,9 @@ Now you can install the rest of the prerequisites::
 Build Packages from source
 ##########################
 
-* After installing subversion, check out a copy of trunk ::
+* After installing git, clone the master branch::
 
-    [root@centos redhat]# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2
+    [root@centos redhat]# git clone git://git.mcs.anl.gov/bcfg2.git
 
 * Install the ``fedora-packager`` package ::
 

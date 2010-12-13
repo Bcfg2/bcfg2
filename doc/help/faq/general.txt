@@ -39,26 +39,10 @@ see why.
 
 **Why am I getting a traceback?**
 
-If you get a traceback, please let us know. You can file a 
-`ticket <https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_, send
-the traceback to the :ref:`mailinglist`, or hop on 
-:ref:`ircchannel` and let us know. 
-
-**What is the most common cause of "The following entries are not handled by any tool"?**
-
-Often it corresponds to entries that aren't bound by the server (for which you'll get error messages on the server). You should try inspecting the logs on the server to see what may be the cause.
-
-**How can I figure out if error is client or server side?**
-
-* Cache a copy of the client using ``bcfg2 -c /tmp/config.xml``
-* Search for the entry of interest
-* If it looks correct, then there is a client issue 
-
-This file contains all aspects of client configuration. It is structured as a series of bundles and base entries.
-
-.. note::
-
-    Most often the entry is not correct and the issue lies in the specification.
+If you get a traceback, please let us know. You can file a `ticket
+<https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_, send the traceback
+to the :ref:`help-mailinglist`, or hop on the :ref:`help-irc` and let
+us know.
 
 **Where are the server log messages?**
 
@@ -69,4 +53,4 @@ The bcfg2-server process logs to syslog facility LOG_DAEMON. The server produces
 Bcfg2 comes with XML schemas describing all of the XML formats used in
 the server repository. A validation command ``bcfg2-repo-validate`` is
 included with the source distribution and all packages. Run it with
-the ``-v`` flag to see each file and the results if its validation. 
+the ``-v`` flag to see each file and the results if its validation.

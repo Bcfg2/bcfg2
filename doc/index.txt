@@ -2,9 +2,9 @@
 
 .. _index:
 
-==========================================
-Welcome to Bcfg2's |version| documentation
-==========================================
+=============================
+Bcfg2 documentation |release|
+=============================
 
 What is Bcfg2?
 ==============
@@ -38,7 +38,6 @@ Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
    contents

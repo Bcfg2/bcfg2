@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _guide-gentoo:
+.. _appendix-guides-gentoo:
 
 ======
 Gentoo
@@ -23,8 +23,8 @@ should still work provided that you have a reasonably up to date Python;
 try adding `app-admin/bcfg2 ~*` to your `/etc/portage/package.keywords`
 file.
 
-If you don’t use portage to install Bcfg2, you’ll want to make sure you
-have all the prerequisites installed first. For a server, you’ll need:
+If you don't use portage to install Bcfg2, you'll want to make sure you
+have all the prerequisites installed first. For a server, you'll need:
 
 * ``app-admin/gamin`` or ``app-admin/fam``
 * ``dev-python/lxml``
@@ -37,7 +37,7 @@ Package Repository
 ==================
 
 You’ll need (to make) at least one archive of binary packages. The
-Portage driver calls ``emerge`` with the ``–getbinpkgonly`` option. See
+Portage driver calls ``emerge`` with the ``-getbinpkgonly`` option. See
 :manpage:`make.conf(5)` and :manpage:`emerge(1)` manpages, specifically
 the *PORTAGE_BINHOST* environment variable.
 
@@ -52,7 +52,7 @@ present state of the system by using the quickpkg utility. For example:
 
     for pkg in `equery -q l` ; do quickpkg "=$pkg" ; done
 
-…will leave you with a complete archive of all the packages on your
+...will leave you with a complete archive of all the packages on your
 system in ``/usr/portage/packages/All``, which you can then move to your
 ftp server.
 
@@ -60,7 +60,7 @@ Cataloging Packages In Your Repository
 --------------------------------------
 
 Once you have a set of packages, you will need to create a catalog for
-them in ``/var/lib/bcfg2/Pkgmgr``. Here’s a template:
+them in ``/var/lib/bcfg2/Pkgmgr``. Here's a template:
 
 .. code-block:: xml
 
@@ -70,7 +70,7 @@ them in ``/var/lib/bcfg2/Pkgmgr``. Here’s a template:
       </Group>
     </PackageList>
 
-…and a partially filled-out example, for our local Gentoo/VMware build:
+...and a partially filled-out example, for our local Gentoo/VMware build:
 
 .. code-block:: xml
 
@@ -82,17 +82,17 @@ them in ``/var/lib/bcfg2/Pkgmgr``. Here’s a template:
       </Group>
     </PackageList>
 
-The `<Group>` name (in our example, “gentoo-200701-vmware”) should
+The `<Group>` name (in our example, "gentoo-200701-vmware") should
 be included by any host which will draw its packages from this list. Our
 collection of packages for this class of machines is at the listed URI,
 and we only have one collection of packages for this batch of machines so
-in our case the `priority` doesn’t really matter, we’ve set it to `0`.
+in our case the `priority` doesn’t really matter, we've set it to `0`.
 
 Notice that package name fields are in `CAT/TITLE` format.
 
 Here is a hack which will generate a list of Package lines from
-a system’s database of installed packages, especially useful in
-conjunction with the `quickpkg` example above:
+a system's database of installed packages, especially useful in
+conjunction with the ``quickpkg`` example above:
 
 .. code-block:: sh
 
@@ -123,14 +123,14 @@ Pitfalls
 Package Verification Issues
 ---------------------------
 
-As of this writing (2007/01/31), we’re aware of a number of packages
+As of this writing (2007/01/31), we're aware of a number of packages
 marked stable in the Gentoo x86 tree which, for one reason or another,
-consistently fail to verify cleanly under `equery check`. In some cases
-(pam, openldap), files which don’t (ever) exist on the system are
+consistently fail to verify cleanly under ``equery check``. In some cases
+(pam, openldap), files which don't (ever) exist on the system are
 nonetheless recorded in the package database; in some (python, Bcfg2,
 ahem), whole classes of files (.pyc and .pyo files) consistently fail
 their md5sum checks; and in others, the problem appears to be a
-discrepancy in the way that symlinks are created vs. the way they’re
+discrepancy in the way that symlinks are created vs. the way they're
 recorded in the database. For example, in the OpenSSH package,
 /usr/bin/slogin is a symlink to ./ssh, but equery expects it to point to
 an unadorned ssh. An analogous situation exists with their manpages,
@@ -147,13 +147,13 @@ leading to noise like this::
 We can ignore the lines for ``ssh_config`` and ``sshd_config``; those will
 be caught by Bcfg2 as registered config files and handled appropriately.
 
-Because Bcfg2 relies on the client system’s native package reporting
+Because Bcfg2 relies on the client system's native package reporting
 tool to judge the state of installed packages, complaints like these
 about trivial or intractable verification failures can trigger unnecessary
 bundle reinstalls when the Bcfg2 client runs. Bcfg2 will catch on after a
-pass or two that the situation isn’t getting any better with repeated
-package installs, stop trying, and list those packages as “bad” in
-the client system’s statistics.
+pass or two that the situation isn't getting any better with repeated
+package installs, stop trying, and list those packages as "bad" in
+the client system's statistics.
 
 Aside from filing bugs with the Gentoo package maintainers, your narrator
 has been unable to come up with a good approach to this. Maybe write a
@@ -171,7 +171,7 @@ during normal runtime. This can lead to trouble during verification and
 package installation, for example when ``/boot/grub/grub.conf`` turns
 up missing. The simplest way around this might just be to ensure that
 ``/boot`` is mounted whenever you run Bcfg2, possibly wrapping Bcfg2
-in a script for the purpose. I’ve also thought about adding *Action*
+in a script for the purpose. I've also thought about adding *Action*
 clauses to bundles for grub and our kernel packages, which would mount
 ``/boot`` before the bundle installs and unmount it afterward, but this
-doesn’t get around the problem of those packages flunking verification.
+doesn't get around the problem of those packages flunking verification.
