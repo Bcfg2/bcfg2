@@ -12,13 +12,13 @@ This guide is work in progess.
 
 
 This is a complete getting started guide for Fedora. With this
-document you should be able to install a Bcfg2 server, a Bcfg2 client, 
+document you should be able to install a Bcfg2 server, a Bcfg2 client,
 and change the ``/etc/motd`` file on the client.
 
 Prerequisites
 =============
 
-To setup a configuration management system based on Bcfg2 only a few 
+To setup a configuration management system based on Bcfg2 only a few
 prerequisites need to be fullfilled.
 
 * A server machine that can host the Bcfg2
@@ -29,13 +29,13 @@ prerequisites need to be fullfilled.
 Install Bcfg2 From RPM
 ======================
 
-The fastest way to get Bcfg2 onto your system is to use ``yum`` 
-or PackageKit. ``yum`` will pull all dependencies of Bcfg2 
+The fastest way to get Bcfg2 onto your system is to use ``yum``
+or PackageKit. ``yum`` will pull all dependencies of Bcfg2
 automatically in. ::
 
   $ su -c 'yum install bcfg2-server bcfg2'
 
-Your system should now have the necessary software to use Bcfg2. 
+Your system should now have the necessary software to use Bcfg2.
 The next step is to set up your Bcfg2 :term:`repository`.
 
 
@@ -49,12 +49,12 @@ is a tool which allows you to automate this:
 .. code-block:: sh
 
     # bcfg2-admin init
-    Store bcfg2 configuration in [/etc/bcfg2.conf]: 
-    Location of bcfg2 repository [/var/lib/bcfg2]: 
+    Store bcfg2 configuration in [/etc/bcfg2.conf]:
+    Location of bcfg2 repository [/var/lib/bcfg2]:
     Directory /var/lib/bcfg2 exists. Overwrite? [y/N]:y
-    Input password used for communication verification (without echoing; leave blank for a random): 
+    Input password used for communication verification (without echoing; leave blank for a random):
     What is the server's hostname: [config01.local.net]
-    Input the server location [https://config01.local.net:6789]: 
+    Input the server location [https://config01.local.net:6789]:
     Input base Operating System for clients:
     1: Red Hat/Fedora/RHEL/RHAS/Centos
     2: SUSE/SLES
@@ -101,12 +101,12 @@ Run ``bcfg2`` to be sure you are able to communicate with the server:
 .. code-block:: sh
 
     $ su -c 'bcfg2 -vqne'
-     
+
     /usr/lib/python2.6/site-packages/Bcfg2/Client/Tools/rpmtools.py:23: DeprecationWarning: the md5 module is deprecated; use hashlib instead
       import md5
     Loaded plugins: presto, refresh-packagekit
     Loaded tool drivers:
-     Action     Chkconfig  POSIX      YUMng     
+     Action     Chkconfig  POSIX      YUMng
     Extra Package imsettings-libs 0.108.0-2.fc13.i686.
     Extra Package PackageKit-device-rebind 0.6.4-1.fc13.i686.
     ...
@@ -125,11 +125,11 @@ Run ``bcfg2`` to be sure you are able to communicate with the server:
     Incorrect entries:	0
     Total managed entries:	0
     Unmanaged entries:	1314
-     Package:ConsoleKit                         Package:jasper-libs                        Package:pcsc-lite-libs                    
-     Package:ConsoleKit-libs                    Package:java-1.5.0-gcj                     Package:perf                              
-    ...                        
-     Package:iw                                 Package:pcre                               Service:sshd                              
-     Package:jack-audio-connection-kit          Package:pcsc-lite                          Service:udev-post                         
+     Package:ConsoleKit                         Package:jasper-libs                        Package:pcsc-lite-libs
+     Package:ConsoleKit-libs                    Package:java-1.5.0-gcj                     Package:perf
+    ...
+     Package:iw                                 Package:pcre                               Service:sshd
+     Package:jack-audio-connection-kit          Package:pcsc-lite                          Service:udev-post
 
 The ``bcfg2.conf`` file contains only standard plugins so far.
 
@@ -172,17 +172,17 @@ The ``bcfg2.conf`` file contains only standard plugins so far.
 Add the machines to Bcfg2
 -------------------------
 
-``bcfg2-admin`` can be used to add a machine to Bcfg2 easily. You 
+``bcfg2-admin`` can be used to add a machine to Bcfg2 easily. You
 need to know the Fully Qualified Domain Name (FQDN) of ever system
-you want to control through Bcfg2. ::  
+you want to control through Bcfg2. ::
 
-   bcfg2-admin client add <FQDN machine> 
+   bcfg2-admin client add <FQDN machine>
 
 Bring your first machine under Bcfg2 control
 --------------------------------------------
 
-Now it is time to get the first machine's configuration into the 
-Bcfg2 repository. The server will be the first machine. It's 
+Now it is time to get the first machine's configuration into the
+Bcfg2 repository. The server will be the first machine. It's
 already in the ``Metadata/client.xml``.
 
 
@@ -192,13 +192,13 @@ Setup the `Packages`_ plugin
 .. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
 
 First, replace **Pkgmgr** with **Packages** in the plugins
-line of ``bcfg2.conf``. Then create `Packages/` directory in 
+line of ``bcfg2.conf``. Then create `Packages/` directory in
 ``/var/lib/bcfg2`` ::
 
     $ su -c 'mkdir /var/lib/bcfg2/Packages'
 
-Create a ``config.xml`` file for the packages in 
-``/var/lib/bcfg2/Packages`` with the following content.  Choose a 
+Create a ``config.xml`` file for the packages in
+``/var/lib/bcfg2/Packages`` with the following content.  Choose a
 mirror near your location according the `Mirror list`_ .
 
 .. _Mirror list: http://mirrors.fedoraproject.org/publiclist/
@@ -240,11 +240,11 @@ something like this
        <Group name='suse'/>
        <Group name='mandrake'/>
        <Group name='solaris'/>
-    </Groups>    
+    </Groups>
 
 .. note::
-    When editing your xml files by hand, it is useful to occasionally 
-    run ``bcfg2-repo-validate`` to ensure that your xml validates 
+    When editing your xml files by hand, it is useful to occasionally
+    run ``bcfg2-repo-validate`` to ensure that your xml validates
     properly.
 
 Add a probe
@@ -252,7 +252,7 @@ Add a probe
 
 The next step for the client will be to have the proper
 arch group membership. For this, we will make use of the
-:ref:`server-plugins-grouping-dynamic_groups` capabilities of 
+:ref:`server-plugins-grouping-dynamic_groups` capabilities of
 the Probes plugin. Add **Probes** to your plugins line in ``bcfg2.conf``
 and create the Probe:
 
@@ -282,7 +282,7 @@ Start managing packages
 +++++++++++++++++++++++
 
 Add a base-packages bundle. Let's see what happens when we just populate
-it with the *yum* package. Create the ``base-packages.xml`` in your 
+it with the *yum* package. Create the ``base-packages.xml`` in your
 ``Bundler/`` directory with a entry for ``yum``.
 
 .. code-block:: xml
@@ -306,22 +306,22 @@ Now if we run the client, we can see what this has done for us.::
 
     output
 
-As you can see, the Packages plugin has generated the dependencies 
-required for the yum package automatically. The ultimate goal should 
-be to move all the packages from the **Unmanaged** entries section 
-to the **Managed** entries section. So, what exactly *are* those 
+As you can see, the Packages plugin has generated the dependencies
+required for the yum package automatically. The ultimate goal should
+be to move all the packages from the **Unmanaged** entries section
+to the **Managed** entries section. So, what exactly *are* those
 Unmanaged entries?::
 
     output
 
-Now you can go through these and continue adding the packages you 
-want to your Bundle. After a while, I ended up with a minimal bundle 
+Now you can go through these and continue adding the packages you
+want to your Bundle. After a while, I ended up with a minimal bundle
 that looks like this
 
 .. code-block:: xml
 
     <Bundle name='base-packages'>
-            
+
     </Bundle>
 
 Now when I run the client, you can see I have only one unmanaged
@@ -330,8 +330,8 @@ package::
     outout
 
 The gpg-pubkey packages are special in that they are not really
-packages. Currently, the way to manage them is using 
-:ref:`BoundEntries <boundentries>`. So, after adding them, our 
+packages. Currently, the way to manage them is using
+:ref:`BoundEntries <boundentries>`. So, after adding them, our
 Bundle now looks like this
 
 .. note:: This does not actually control the contents of the files,
@@ -363,7 +363,7 @@ Bundle now looks like this
 
 To actually push the gpg keys out via Bcfg2, you will need to manage
 the files as well. This can be done by adding Path entries for each
-of the gpg keys you want to manage 
+of the gpg keys you want to manage
 
 .. code-block:: xml
 
@@ -463,12 +463,12 @@ Git
 .. _Git tutorial: http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
 
 Adding the :ref:`server-plugins-version-git` plugins can preserve
-versioning information. The first step is to add *Git* to your 
+versioning information. The first step is to add *Git* to your
 plugin line::
 
     plugins = Base,Bundler,Cfg,...,Git
 
-For tracking the configuration files in the ``/var/lib/bcfg2`` 
+For tracking the configuration files in the ``/var/lib/bcfg2``
 directory a git repository need to be established::
 
     git init

@@ -6,9 +6,10 @@
 The Bcfg2 Server
 ================
 
-The Bcfg2 server is responsible for taking a network description and
-turning it into a series of configuration specifications for particular
-clients. It also manages probed data and tracks statistics for clients.
+The Bcfg2 server is responsible for taking a comprehensive infrastructure
+description and turning it into a series of configuration specifications
+for particular clients. It also manages probed data and tracks statistics
+for clients.
 
 The Bcfg2 server takes information from two sources when generating client
 configuration specifications. The first is a pool of metadata that describes
@@ -16,7 +17,7 @@ clients as members of an aspect-based classing system. That is, clients are
 defined in terms of aspects of their behavior. The other is a file system
 repository that contains mappings from metadata to literal configuration.
 These are combined to form the literal configuration specifications for
-clients. 
+clients.
 
 .. toctree::
    :maxdepth: 2

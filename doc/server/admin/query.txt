@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-query-index:
+.. _server-admin-query:
 
 query
 =====

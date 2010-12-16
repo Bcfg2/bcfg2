@@ -1,10 +1,18 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-perf-index:
+.. _server-admin-perf:
 
 perf
 ====
 
-Query server for performance data. ::
+Query server for performance data.::
 
     bcfg2-admin perf
+    ================ ========== ========== ========== =======
+    Name             Min        Max        Mean       Count
+    ================ ========== ========== ========== =======
+    RecvStats        0.000378   0.001716   0.001367   5
+    GetConfig        0.018624   0.039495   0.023589   5
+    component_lock   0.000002   0.000057   0.000016   20
+    GetProbes        0.000523   0.000666   0.000591   5
+    RecvProbeData    0.002260   0.004550   0.002979

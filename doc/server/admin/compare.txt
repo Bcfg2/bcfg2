@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-compare-index:
+.. _server-admin-compare:
 
 compare
 =======
@@ -10,8 +10,7 @@ specification instances.::
 
     bcfg2-admin compare <file1> <file2>
 
-If you want to compare two directories recursivly then use ``-r`` as an
+If you want to compare two directories recursively then use ``-r`` as an
 option. ::
 
     bcfg2-admin compare -r <dir1> <dir2>
-

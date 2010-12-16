@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _client-tools-index:
+.. _client-tools:
 
 Client Tool Drivers
 ===================
@@ -25,6 +25,12 @@ flag. This flag takes a colon delimited list of drivers to use on
 the system.
 
 Currently these are the tool drivers that are distributed with Bcfg2:
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   tools/*
 
 Action
 ------

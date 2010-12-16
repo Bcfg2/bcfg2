@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-init-index:
+.. _server-admin-init:
 
 init
 ====
@@ -9,11 +9,11 @@ Interactively initialize a new repository.  Most values are automatically
 detected or a default value is provided. ::
 
     bcfg2-admin init
-    Store bcfg2 configuration in [/etc/bcfg2.conf]: 
-    Location of bcfg2 repository [/var/lib/bcfg2]: 
-    Input password used for communication verification (without echoing; leave blank for a random): 
-    What is the server's hostname [conf01.example.com]: 
-    Input the server location [https://conf01.example.com:6789]: 
+    Store bcfg2 configuration in [/etc/bcfg2.conf]:
+    Location of bcfg2 repository [/var/lib/bcfg2]:
+    Input password used for communication verification (without echoing; leave blank for a random):
+    What is the server's hostname [conf01.example.com]:
+    Input the server location [https://conf01.example.com:6789]:
     Input base Operating System for clients:
     1: Red Hat/Fedora/RHEL/RHAS/Centos
     2: SUSE/SLES

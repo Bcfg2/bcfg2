@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-bundle-index:
+.. _server-admin-bundle:
 
 bundle
 ======

@@ -6,7 +6,6 @@ __all__ = [
         'Client',
         'Compare',
         'Group',
-        #'Examples',
         'Init',
         'Minestruct',
         'Mode',

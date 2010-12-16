@@ -9,7 +9,7 @@ backup
 
 Create an archive of the whole Bcfg2 :term:`repository`. The archive is stored
 directly in your Bcfg2 repository (e.g. ``/var/lib/bcfg2/``) and named with 
-the current data and time::
+the current date and time::
 
     bcfg2-admin backup
 

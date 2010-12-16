@@ -18,7 +18,7 @@ functionality. Available modes are listed below.
    backup
    bundle
    client
-   compare 
+   compare
    init
    minestruct
    perf

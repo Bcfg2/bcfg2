@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-snapshots-index:
+.. _server-admin-snapshots:
 
 snapshots
 =========

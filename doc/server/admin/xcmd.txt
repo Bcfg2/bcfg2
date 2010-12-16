@@ -1,19 +1,19 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-xcmd-index:
+.. _server-admin-xcmd:
 
 xcmd
 ====
 
-XML-RPC Command Interface. ::
+XML-RPC Command Interface.::
 
     xcmd <xmlrpc method> <optional arguments>
 
-For debbbuging the following command can help::
+For debbuging the following command can help::
 
     bcfg2-admin xcmd Metadata.toggle_debug
 
-Those two examples can alos be found in the 
+Those two examples can alos be found in the
 :ref:`Package section <server-plugins-generators-packages>`.
 
 To rebuild the packages plugin cache::

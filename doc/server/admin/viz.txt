@@ -1,11 +1,11 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-viz-index:
+.. _server-admin-viz:
 
 viz
 ===
 
-Produce graphviz diagrams of metadata structures. Make sure that the 
+Produce graphviz diagrams of metadata structures. Make sure that the
 graphviz package is installed.
 
 The following command will produce a graphviz image which includes hosts,

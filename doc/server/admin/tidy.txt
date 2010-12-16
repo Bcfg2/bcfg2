@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-admin-tidy-index:
+.. _server-admin-tidy:
 
 tidy
 ====

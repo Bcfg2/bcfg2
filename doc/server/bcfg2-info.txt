@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _appendix-guides-using_bcfg2_info:
+.. _server-bcfg2-info:
 
 ================
 Using bcfg2-info
