@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-query-index:
+
+query
+=====
+
+Query clients.
+
+The default result format is suitable for consumption by `pdsh`_.
+This example queries the server for all clients in the *ubuntu* group::
+
+    bcfg2-admin query g=ubuntu
+
+.. _pdsh: http://sourceforge.net/projects/pdsh/

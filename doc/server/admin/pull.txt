@@ -1,0 +1,23 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-pull-index:
+
+pull
+====
+
+Integrate configuration information from clients into the server
+repository. ::
+
+     bcfg2-admin pull [-v] [-f][-I] [-s] <client> <entry type> <entry name>
+
+The following options are available:
+
+
+``-v`` verbose
+``-f`` force
+``-I`` interactive
+``-s`` stdin
+
+A full example is shown below. ::
+
+    bcfg2-admin pull 

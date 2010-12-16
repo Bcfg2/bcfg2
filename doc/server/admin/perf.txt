@@ -1,0 +1,10 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-perf-index:
+
+perf
+====
+
+Query server for performance data. ::
+
+    bcfg2-admin perf

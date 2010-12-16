@@ -14,3 +14,13 @@ on the client. Then add the following on the client.::
 
     [communication]
     ca = /etc/bcfg2.ca
+
+**Server failure**
+
+On Fedora 14 and above it can happen that no connection is possible.
+
+    # bcfg2 -vqne
+    Server failure: Protocol Error: 401 Unauthorized
+    Failed to download probes from bcfg2
+    Server Failure
+

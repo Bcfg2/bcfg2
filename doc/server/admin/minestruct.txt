@@ -1,0 +1,14 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-minestruct-index:
+
+minestruct
+==========
+
+Extract extra entry lists from statistics. ::
+
+    bcfg2-admin minestruct <client> [-f xml-file] [-g groups]
+
+Hierarchy of groups in which to place the extra entries in can be determined 
+with ``-g <groups>``.  And ``-f <xml-output-file>`` specify the xml file in
+which to write the extra entries.

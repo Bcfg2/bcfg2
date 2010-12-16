@@ -7,82 +7,24 @@ Admin
 =====
 
 The ``bcfg2-admin`` command provides you an interface which allows you
-to interact with your Bcfg2 repository in an administrative fashion. To
+to interact with your Bcfg2 :term:`repository` in an administrative fashion. To
 get started, run ``bcfg2-admin help``. You will be presented with a list
 of different *modes* which each provide various administrative
 functionality. Available modes are listed below.
 
-FIXME: Need examples for each command listed below.
+.. toctree::
+   :maxdepth: 1
 
-client
-======
-
-Create, delete, or modify client entries.
-
-compare
-=======
-
-Determine differences between files or directories of client
-specification instances.
-
-init
-====
-
-Interactively initialize a new repository.
-
-minestruct
-==========
-
-Extract extra entry lists from statistics.
-
-perf
-====
-
-Query server for performance data.
-
-pull
-====
-
-Integrate configuration information from clients into the server
-repository.
-
-query
-=====
-
-Query clients.
-
-The default result format is suitable for consumption by `pdsh`_.
-This example queries the server for all clients in the *ubuntu* group::
-
-    bcfg2-admin query g=ubuntu
-
-.. _pdsh: http://sourceforge.net/projects/pdsh/
-
-snapshots
-=========
-
-Interact with the Snapshots system.
-
-tidy
-====
-
-Clean up useless files in the repo.
-
-viz
-===
-
-Produce graphviz diagrams of metadata structures.
-
-The following command will produce a graphviz image which includes hosts,
-bundles, and a key::
-
-    bcfg2-admin viz -H -b -k -o ~/bcfg2.png
-
-.. note:: The graphviz package available via DAG/RPMforge has been known
-          to have dependency issues. We recommend installing the package
-          from EPEL.
-
-xcmd
-====
-
-XML-RPC Command Interface.
+   backup
+   bundle
+   client
+   compare 
+   init
+   minestruct
+   perf
+   pull
+   query
+   snapshots
+   tidy
+   viz
+   xcmd
