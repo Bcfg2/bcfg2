@@ -18,7 +18,7 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
 
     conflicts = ['Svn']
     experimental = True
-    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Update']
+    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Update','Commit']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -53,8 +53,18 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
             self.revision = None
         return str(-1)
 
+    def commit_changes(self):
+        """Commit changes into the repository"""
+        try:
+            self.revision = self.client.checkin([self.datastore], 'Svn2: autocommit',
+                    recurse=True)
+            self.revision = self.client.update(self.datastore, recurse=True)[0]
+            self.logger.info("Svn2: Commited changes. At %s" % self.revision.number)
+        except:
+            self.logger.error("Svn2: Failed to commit changes", exc_info=1)
+
     def Update(self):
-        '''NatvieSvn.Update() => True|False\nUpdate svn working copy\n'''
+        '''Svn2.Update() => True|False\nUpdate svn working copy\n'''
         try:
             old_revision = self.revision.number
             self.revision = self.client.update(self.datastore, recurse=True)[0]
@@ -68,4 +78,13 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
             self.logger.info("Updated %s from revision %s to %s" % \
                 (self.datastore, old_revision, self.revision.number))
         return True
+
+    def Commit(self):
+        """Svn2.Commit() => True|False\nCommit svn repository\n"""
+        try:
+            self.commit_changes()
+            return True
+        except:
+            return False
+
 
