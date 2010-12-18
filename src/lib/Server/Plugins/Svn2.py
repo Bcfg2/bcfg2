@@ -6,9 +6,6 @@ except:
     missing = True
 import Bcfg2.Server.Plugin
 
-# FIXME
-REPOS_URL = 'file:///space/svn/admin'
-
 class Svn2(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
@@ -31,7 +28,7 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
 
         self.core = core
         self.datastore = datastore
-        self.svn_root = REPOS_URL
+        self.svn_root = None
         self.revision = None
 
         # Read revision from bcfg2 repo
@@ -47,6 +44,7 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
         try:
             info = self.client.info(self.datastore)
             self.revision = info.revision
+            self.svn_root = info.url
             return str(self.revision.number)
         except:
             self.logger.error("Svn2: Failed to get revision", exc_info=1)
