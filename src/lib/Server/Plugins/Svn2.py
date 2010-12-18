@@ -55,6 +55,18 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
         """Commit changes into the repository"""
         if not comment:
             comment = 'Svn2: autocommit'
+
+        # First try to update
+        if not self.Update():
+            self.logger.error("Failed to update svn repository, refusing to commit changes")
+            return
+
+        #FIXME - look for conflicts?
+
+        for file in file_list:
+            stat = self.client.status(file)
+            self.client.add([f.path for f in stat \
+                    if f.text_status == pysvn.wc_status_kind.unversioned])
         try:
             self.revision = self.client.checkin([self.datastore], comment,
                     recurse=True)
