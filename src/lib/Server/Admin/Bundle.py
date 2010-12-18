@@ -10,9 +10,9 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create or delete bundle entries"
     __longhelp__ = (__shorthelp__ + #"\n\nbcfg2-admin bundle add <bundle> "
                                     #"\n\nbcfg2-admin bundle del <bundle>"
-                                    "\n\nbcfg2-admin bundle list-xml"
-                                    "\n\nbcfg2-admin bundle list-genshi"
-                                    "\n\nbcfg2-admin bundle show")
+                                    "\nbcfg2-admin bundle list-xml"
+                                    "\nbcfg2-admin bundle list-genshi"
+                                    "\nbcfg2-admin bundle show\n")
     __usage__ = ("bcfg2-admin bundle [options] [add|del] [group]")
 
     def __init__(self, configfile):
@@ -23,7 +23,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         reg='((?:[a-z][a-z\\.\\d\\-]+)\\.(?:[a-z][a-z\\-]+))(?![\\w\\.])'
 
-        #Get all bundles out of the Bundle/ directory
+        # Get all bundles out of the Bundle/ directory
         opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
         setup = Bcfg2.Options.OptionParser(opts)
         setup.parse(sys.argv[1:])
