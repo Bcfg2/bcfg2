@@ -53,10 +53,12 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
             self.revision = None
         return str(-1)
 
-    def commit_changes(self):
+    def commit_data(self, file_list, comment=None):
         """Commit changes into the repository"""
+        if not comment:
+            comment = 'Svn2: autocommit'
         try:
-            self.revision = self.client.checkin([self.datastore], 'Svn2: autocommit',
+            self.revision = self.client.checkin([self.datastore], comment,
                     recurse=True)
             self.revision = self.client.update(self.datastore, recurse=True)[0]
             self.logger.info("Svn2: Commited changes. At %s" % self.revision.number)
@@ -82,7 +84,7 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
     def Commit(self):
         """Svn2.Commit() => True|False\nCommit svn repository\n"""
         try:
-            self.commit_changes()
+            self.commit_changes([])
             return True
         except:
             return False
