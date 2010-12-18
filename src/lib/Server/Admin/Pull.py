@@ -136,8 +136,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             self.errExit("Configuration upload not supported by plugin %s" \
                          % (plugin.name))
         # commit if running under a VCS
-        for plugin in self.bcore.plugins.values():
-            if isinstance(plugin, Bcfg2.Server.Plugin.Version):
+        for vcsplugin in self.bcore.plugins.values():
+            if isinstance(vcsplugin, Bcfg2.Server.Plugin.Version):
                 files = "%s/%s" % (plugin.data, ename)
                 comment = 'file "%s" pulled from host %s' % (files, client)
-                plugin.commit_data([files], comment)
+                vcsplugin.commit_data([files], comment)
