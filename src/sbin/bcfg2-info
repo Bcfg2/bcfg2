@@ -133,7 +133,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 if command:
                     sh.push(command)
         if interactive:
-            print("dropping to python interpreter; press ^D to resume")
+            print("Dropping to python interpreter; press ^D to resume")
             try:
                 import IPython
                 shell = IPython.Shell.IPShell(argv=[], user_ns=locals())
@@ -156,24 +156,25 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_help(self, _):
         """Print out usage info."""
         print 'Commands:'
-        print 'build <hostname> <filename> - build config for hostname, writing to filename'
-        print 'builddir <hostname> <dirname> - build config for hostname, writing separate files to dirname'
-        print 'buildall <directory> - build configs for all clients in directory'
-        print 'buildfile <filename> <hostname> - build config file for hostname (not written to disk)'
-        print 'bundles - print out group/bundle information'
-        print 'clients - print out client/profile information'
-        print 'debug - shell out to native python interpreter'
-        print 'event_debug - display filesystem events as they are processed'
-        print 'generators - list current versions of generators'
-        print 'groups - list groups'
-        print 'help - print this list of available commands'
-        print 'mappings <type*> <name*> - print generator mappings for optional type and name'
-        print 'profile <command> <args> - profile a single bcfg2-info command'
-        print 'quit - Exit the bcfg2-info command line'
-        print 'showentries <hostname> <type> - show abstract configuration entries for a given host'
-        print 'showclient <client1> <client2> - show metadata for given hosts'
-        print 'update - process pending file events'
-        print 'version - print version of this tool'
+        print 'build <hostname> <filename> - Build config for hostname, writing to filename.'
+        print 'builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname.'
+        print 'buildall <directory> - Build configs for all clients in directory.'
+        print 'buildfile <filename> <hostname> - Build config file for hostname (not written to disk).'
+        print 'bundles - Print out group/bundle information.'
+        print 'clients - Print out client/profile information.'
+        print 'config - Print out the information from bcf2.conf.'
+        print 'debug - Shell out to native python interpreter.'
+        print 'event_debug - Display filesystem events as they are processed.'
+        print 'generators - List current versions of generators.'
+        print 'groups - List groups.'
+        print 'help - Print this list of available commands.'
+        print 'mappings <type*> <name*> - Print generator mappings for optional type and name.'
+        print 'profile <command> <args> - Profile a single bcfg2-info command.'
+        print 'quit - Exit the bcfg2-info command line.'
+        print 'showentries <hostname> <type> - Show abstract configuration entries for a given host.'
+        print 'showclient <client1> <client2> - Show metadata for given hosts.'
+        print 'update - Process pending file events.'
+        print 'version - Print version of this tool.'
 
 
     def do_update(self, _):
@@ -245,7 +246,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                     print("Warning: No file content generated for ConfigFile %s!" % ex)
                     pass
                 except Exception, ex:
-                    print("unknown error, I give up: %s" %ex)
+                    print("Unknown error, giving up: %s" %ex)
                     return
 
             print("Config for %s written to %s" % (client, odir))
@@ -294,6 +295,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         for client in clist:
             data.append((client, self.metadata.clients[client]))
         printTabular(data)
+
+    def do_config(self, _):
+        """Print out the current configuration stored in bcfg2.conf."""
+        print "Here the configuration should go..."
 
     def do_generators(self, _):
         """Print out generator info."""
