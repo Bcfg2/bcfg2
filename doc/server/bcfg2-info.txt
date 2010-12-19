@@ -19,7 +19,7 @@ plugins.
 Getting Started
 ===============
 
-First, fire up the bcfg2-info interpreter.
+First, fire up the ``bcfg2-info`` interpreter.
 
 .. code-block:: none
 
@@ -45,14 +45,13 @@ displayed. For example, after a change to a file in the repository:
 
 .. code-block:: none
 
-     >update
+     > update
      Handled 1 events in 0.001s
      > update
      >
 
 This explicit update process allows you to control the update process,
-as well as see the precise changes caused by repository
-modifications.
+as well as see the precise changes caused by repository modifications.
 
 ``bcfg2-info`` has several builtin commands that display the state of
 various internal server core state. These are most useful for
@@ -60,14 +59,18 @@ examining the state of client metadata, either for a single client, or
 for clients overall.
 
 **clients**
-     displays a list of clients, along with their profile groups
+     Displays a list of clients, along with their profile groups
 **groups**
-     displays a list of groups, the inheritance hierarchy, profile
+     Displays a list of groups, the inheritance hierarchy, profile
      status, and category name, if there is one.
 **showclient**
-     displays full metadata information for a client, including
+     Displays full metadata information for a client, including
      profile group, group memberships, bundle list, and any connector
      data, like Probe values or Property info.
+**config**
+     Displays the configuration of the Bcfg2 server. 
+
+To leave the interactive shell, just type ``quit`` or ``exit``.
 
 Debugging Configuration Rules
 =============================

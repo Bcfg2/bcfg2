@@ -156,25 +156,25 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_help(self, _):
         """Print out usage info."""
         print 'Commands:'
-        print 'build <hostname> <filename> - Build config for hostname, writing to filename.'
-        print 'builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname.'
-        print 'buildall <directory> - Build configs for all clients in directory.'
-        print 'buildfile <filename> <hostname> - Build config file for hostname (not written to disk).'
-        print 'bundles - Print out group/bundle information.'
-        print 'clients - Print out client/profile information.'
-        print 'config - Print out the information from bcf2.conf.'
-        print 'debug - Shell out to native python interpreter.'
-        print 'event_debug - Display filesystem events as they are processed.'
-        print 'generators - List current versions of generators.'
-        print 'groups - List groups.'
-        print 'help - Print this list of available commands.'
-        print 'mappings <type*> <name*> - Print generator mappings for optional type and name.'
-        print 'profile <command> <args> - Profile a single bcfg2-info command.'
-        print 'quit - Exit the bcfg2-info command line.'
-        print 'showentries <hostname> <type> - Show abstract configuration entries for a given host.'
-        print 'showclient <client1> <client2> - Show metadata for given hosts.'
-        print 'update - Process pending file events.'
-        print 'version - Print version of this tool.'
+        print 'build <hostname> <filename> - Build config for hostname, writing to filename'
+        print 'builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname'
+        print 'buildall <directory> - Build configs for all clients in directory'
+        print 'buildfile <filename> <hostname> - Build config file for hostname (not written to disk)'
+        print 'bundles - Print out group/bundle information'
+        print 'clients - Print out client/profile information'
+        print 'config - Print out the configuration of the Bcfg2 server'
+        print 'debug - Shell out to native python interpreter'
+        print 'event_debug - Display filesystem events as they are processed'
+        print 'generators - List current versions of generators'
+        print 'groups - List groups'
+        print 'help - Print this list of available commands'
+        print 'mappings <type*> <name*> - Print generator mappings for optional type and name'
+        print 'profile <command> <args> - Profile a single bcfg2-info command'
+        print 'quit - Exit the bcfg2-info command line'
+        print 'showentries <hostname> <type> - Show abstract configuration entries for a given host'
+        print 'showclient <client1> <client2> - Show metadata for given hosts'
+        print 'update - Process pending file events'
+        print 'version - Print version of this tool'
 
 
     def do_update(self, _):
@@ -297,8 +297,24 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         printTabular(data)
 
     def do_config(self, _):
-        """Print out the current configuration stored in bcfg2.conf."""
-        print "Here the configuration should go..."
+        """Print out the current configuration of Bcfg2."""
+        output=[
+                ('Description', 'Value'),
+                ('Path Bcfg2 repository', setup['repo']),
+                ('Plugins', setup['plugins']),
+                ('Password', setup['password']),
+                ('Server Metadata Connector', setup['mconnect']),
+                ('Filemonitor', setup['filemonitor']),
+                ('Server address',    setup['location']),
+                ('Static', setup['static']),
+                ('Path to key', setup['key']),
+                ('Path to SSL certificate', setup['cert']),
+                ('Path to SSL CA certificate', setup['ca']),
+                ('Protocol', setup['protocol']),
+                ('Logging', setup['logging'])
+                ]
+        printTabular(output)
+
 
     def do_generators(self, _):
         """Print out generator info."""
@@ -382,7 +398,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_mappings(self, args):
         """Print out mapping info."""
-        # dump all mappings unless type specified
+        # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
         for generator in self.generators:
@@ -450,12 +466,26 @@ if __name__ == '__main__':
             'configfile': Bcfg2.Options.CFILE,
             'help': Bcfg2.Options.HELP,
               }
-    optinfo.update({'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
+    optinfo.update({
                     'event debug': Bcfg2.Options.DEBUG,
                     'profile': Bcfg2.Options.CORE_PROFILE,
-                    'encoding': Bcfg2.Options.ENCODING})
+                    'encoding': Bcfg2.Options.ENCODING,
+                    # Server options
+                    'repo': Bcfg2.Options.SERVER_REPOSITORY,
+                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
+                    'password': Bcfg2.Options.SERVER_PASSWORD,
+                    'mconnect': Bcfg2.Options.SERVER_MCONNECT,
+                    'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+                    'location': Bcfg2.Options.SERVER_LOCATION,
+                    'static': Bcfg2.Options.SERVER_STATIC,
+                    'key': Bcfg2.Options.SERVER_KEY,
+                    'cert': Bcfg2.Options.SERVER_CERT,
+                    'ca': Bcfg2.Options.SERVER_CA,
+                    'password': Bcfg2.Options.SERVER_PASSWORD,
+                    'protocol': Bcfg2.Options.SERVER_PROTOCOL,
+                    # More options
+                    'logging': Bcfg2.Options.LOGGING_FILE_PATH
+                    })
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     if setup['profile'] and have_profile:
@@ -466,7 +496,7 @@ if __name__ == '__main__':
         displayTrace(prof)
     else:
         if setup['profile']:
-            print("Profiling functionality not available")
+            print("Profiling functionality not available.")
         loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
                         setup['encoding'], setup['event debug'])
 
