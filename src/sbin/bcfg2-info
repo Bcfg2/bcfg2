@@ -29,6 +29,7 @@ import Bcfg2.Server.Plugin
 logger = logging.getLogger('bcfg2-info')
 
 class dummyError(Exception):
+    """This is just a dummy."""
     pass
 
 class FileNotBuilt(Exception):
@@ -56,12 +57,14 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats.print_stats(200)
 
 def write_config_file(outputdir, cfg):
-    """Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+    """
+    Store file content of an
+    <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
     in the appropriate directory under the output directory.
     """
     name = cfg.get('name')
 
-    # directory creation
+    # Directory creation
     try:
         os.makedirs(os.path.dirname(outputdir + name))
     except OSError, err:
@@ -70,16 +73,17 @@ def write_config_file(outputdir, cfg):
     except:
         raise
 
-    # write config file
+    # Write config file
     config_file = open(outputdir + name, "w")
     try:
         config_file.write(cfg.text)
-    except: # plugin throw an exception and therefore there is no content => None
+    # Plugin throw an exception and therefore there is no content => None
+    except:
         raise FileNotBuilt(name)
     config_file.close()
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
-
+    """Main class for bcfg2-info."""
     def __init__(self, repo, plgs, passwd, encoding, event_debug):
         cmd.Cmd.__init__(self)
         try:
@@ -95,6 +99,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         self.fam.handle_events_in_interval(4)
 
     def do_loop(self):
+        """Looping."""
         self.cont = True
         while self.cont:
             try:
@@ -110,9 +115,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except dummyError:
                 continue
             except:
-                logger.error("command failure", exc_info=1)
+                logger.error("Command failure", exc_info=1)
 
     def do_debug(self, args):
+        """Debugging mode for more details."""
         try:
             opts, _ = getopt.getopt(args.split(), 'nf:')
         except:
@@ -178,7 +184,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
 
     def do_update(self, _):
-        """Process pending fs events."""
+        """Process pending filesystem events."""
         self.fam.handle_events_in_interval(0.1)
 
     def do_version(self, _):
@@ -219,7 +225,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         print('NOTE: Currently only handles ConfigFile entries and writes')
         print('all content with the default owner and permissions.  These')
         print('could be much more permissive than would be created by the')
-        print('bcfg2 client itself.')
+        print('Bcfg2 client itself.')
 
     def do_builddir(self, args):
         """Build client configuration as separate files within a dir."""
@@ -238,8 +244,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 print("Building client configuration failed.")
                 return
 
-            # handle <Path type='file'> entries
-            for configfile in [cfile for cfile in client_config.xpath(".//Path[@type = 'file']")]:
+            # Handle <Path type='file'> entries
+            for configfile in [cfile for cfile in
+                    client_config.xpath(".//Path[@type = 'file']")]:
                 try:
                     write_config_file(odir, configfile)
                 except FileNotBuilt, ex:
@@ -252,7 +259,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("Config for %s written to %s" % (client, odir))
 
         else:
-            print('Error: Incorrect number of parameters')
+            print('Error: Incorrect number of parameters.')
             self.help_builddir()
 
     def do_buildall(self, args):
@@ -273,7 +280,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             entry = lxml.etree.Element('Path', type='file', name=fname)
             metadata = self.build_metadata(client)
             self.Bind(entry, metadata)
-            print(lxml.etree.tostring(entry, encoding="UTF-8", xml_declaration=True))
+            print(lxml.etree.tostring(entry, encoding="UTF-8", 
+                xml_declaration=True))
         else:
             print('Usage: buildfile filename hostname')
 
@@ -298,7 +306,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_config(self, _):
         """Print out the current configuration of Bcfg2."""
-        output=[
+        output = [
                 ('Description', 'Value'),
                 ('Path Bcfg2 repository', setup['repo']),
                 ('Plugins', setup['plugins']),
@@ -407,14 +415,14 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             else:
                 etypes = [args.split()[0]]
             if arglen == 2:
-                interested = [(etype, [args.split()[1]]) \
+                interested = [(etype, [args.split()[1]])
                               for etype in etypes]
             else:
-                interested = [(etype, generator.Entries[etype]) \
-                              for etype in etypes \
+                interested = [(etype, generator.Entries[etype]) 
+                              for etype in etypes 
                               if etype in generator.Entries]
             for etype, names in interested:
-                for name in [name for name in names if name in \
+                for name in [name for name in names if name in 
                              generator.Entries.get(etype, {})]:
                     data.append((generator.name, etype, name))
         printTabular(data)
@@ -431,7 +439,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         structures = self.GetStructures(meta)
         for clist in [struct.findall('Path') for struct in structures]:
             for cfile in clist:
-                if cfile.get('name') in self.plugins['Cfg'].Entries['ConfigFile']:
+                if cfile.get('name') in \
+                        self.plugins['Cfg'].Entries['ConfigFile']:
                     cset = self.plugins['Cfg'].entries[cfile.get('name')]
                     cand = cset.get_matching(meta)
                     fields = ['all', 'group']
@@ -445,8 +454,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                     print(cand[0].name)
 
     def do_profile(self, arg):
+        """."""
         if not have_profile:
-            print("Profiling functionality not available")
+            print("Profiling functionality not available.")
             return
         tracefname = tempfile.mktemp()
         p = profile.Profile()
@@ -454,6 +464,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         displayTrace(p)
 
     def Run(self, args):
+        """."""
         if args:
             self.onecmd(" ".join(args))
             os._exit(0)
