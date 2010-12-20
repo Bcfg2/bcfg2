@@ -10,7 +10,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create or delete bundle entries"
     __longhelp__ = (__shorthelp__ + #"\n\nbcfg2-admin bundle add <bundle> "
                                     #"\n\nbcfg2-admin bundle del <bundle>"
-                                    "\nbcfg2-admin bundle list-xml"
+                                    "\n\nbcfg2-admin bundle list-xml"
                                     "\nbcfg2-admin bundle list-genshi"
                                     "\nbcfg2-admin bundle show\n")
     __usage__ = ("bcfg2-admin bundle [options] [add|del] [group]")
