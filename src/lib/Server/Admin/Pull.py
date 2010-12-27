@@ -9,7 +9,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = ("Integrate configuration information "
                      "from clients into the server repository")
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] [-s] "
-                                    "<client> <entry type> <entry name>")
+                                    "<client> <entry type> <entry name>\n")
     __usage__ = ("bcfg2-admin pull [options] <client> <entry type> "
                  "<entry name>\n\n"
                  "     %-25s%s\n"
@@ -117,7 +117,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         new_entry = self.BuildNewEntry(client, etype, ename)
 
         meta = self.bcore.build_metadata(client)
-        # find appropriate plugin in bcore
+        # Find appropriate plugin in bcore
         glist = [gen for gen in self.bcore.generators if
                  ename in gen.Entries.get(etype, {})]
         if len(glist) != 1:
@@ -135,7 +135,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         except Bcfg2.Server.Plugin.PluginExecutionError:
             self.errExit("Configuration upload not supported by plugin %s" \
                          % (plugin.name))
-        # commit if running under a VCS
+        # Commit if running under a VCS
         for vcsplugin in self.bcore.plugins.values():
             if isinstance(vcsplugin, Bcfg2.Server.Plugin.Version):
                 files = "%s/%s" % (plugin.data, ename)
