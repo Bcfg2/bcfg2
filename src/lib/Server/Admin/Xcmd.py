@@ -7,7 +7,7 @@ import xmlrpclib
 
 class Xcmd(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("XML-RPC Command Interface")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin xcmd command")
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin xcmd command\n")
     __usage__ = ("bcfg2-admin xcmd <command>")
 
     def __call__(self, args):
