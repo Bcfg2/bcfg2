@@ -9,7 +9,7 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
     __shorthelp__ = "Extract extra entry lists from statistics"
     __longhelp__ = (__shorthelp__ +
                     "\n\nbcfg2-admin minestruct [-f filename] "
-                    "[-g groups] client")
+                    "[-g groups] client\n")
     __usage__ = ("bcfg2-admin minestruct [options] <client>\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
