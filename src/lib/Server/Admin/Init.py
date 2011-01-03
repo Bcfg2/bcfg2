@@ -188,7 +188,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
-        self._prompt_key()
+        self._prompt_certificate()
 
         # Initialize the repository
         self.init_repo()
@@ -265,21 +265,21 @@ class Init(Bcfg2.Server.Admin.Mode):
                 if plugins_are_valid:
                     break
 
-    def _prompt_key(self):
+    def _prompt_certificate(self):
         """Ask for the key details (country, state, and location)."""
-        newcountry = raw_input("Country code for key: ")
+        newcountry = raw_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
             self.country = newcountry
         else:
             self.country = 'US'
 
-        newstate = raw_input("State for key: ")
+        newstate = raw_input("State or Province Name (full name) for certificate: ")
         if newstate != '':
             self.state = newstate
         else:
             self.state = 'Illinois'
 
-        newlocation = raw_input("Location for key: ")
+        newlocation = raw_input("Locality Name (eg, city) for certificate: ")
         if newlocation != '':
             self.location = newlocation
         else:
