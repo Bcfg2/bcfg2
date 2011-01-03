@@ -267,22 +267,22 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_key(self):
         """Ask for the key details (country, state, and location)."""
-        newcountry = raw_input("Country code for key: "
+        newcountry = raw_input("Country code for key: ")
         if newcountry != '':
             self.country = newcountry
-        else
+        else:
             self.country = 'US'
 
-        newstate = raw_input("State for key: "
+        newstate = raw_input("State for key: ")
         if newstate != '':
             self.state = newstate
-        else
+        else:
             self.state = 'Illinois'
 
-        newlocation = raw_input("Location for key: "
+        newlocation = raw_input("Location for key: ")
         if newlocation != '':
             self.location = newlocation
-        else
+        else:
             self.location = 'Argonne'
 
     def _init_plugins(self):
@@ -318,7 +318,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         create_conf(self.configfile, confdata)
         kpath = keypath + '/bcfg2.key'
         cpath = keypath + '/bcfg2.crt'
-        create_key(self.shostname, kpath, cpath)
+        create_key(self.shostname, kpath, cpath, self.country, self.state, self.location)
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')
