@@ -188,7 +188,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
-        self._prompt_plugins()
+        # self._prompt_plugins()
         self._prompt_certificate()
 
         # Initialize the repository
@@ -218,7 +218,7 @@ class Init(Bcfg2.Server.Admin.Mode):
             if newrepo != '':
                 self.repopath = newrepo
             if os.path.isdir(self.repopath):
-                response = raw_input("Directory %s exists. Overwrite? [y/N]:"\
+                response = raw_input("Directory %s exists. Overwrite? [y/N]:" \
                                       % self.repopath)
                 if response.lower().strip() == 'y':
                     break
@@ -272,15 +272,19 @@ class Init(Bcfg2.Server.Admin.Mode):
     def _prompt_certificate(self):
         """Ask for the key details (country, state, and location)."""
         print "The following questions affects the certificate."
-        print "If there are data provided the default values are used."
+        print "If there are no data provided the default values are used."
         newcountry = raw_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
-            if len(newcountry) > '2' or len(newcountry) < '2':
-                newcountry = raw_input("Country name (2 letter code) for certificate: ")
+            if len(newcountry) == 2:
+                country = newcountry
             else:
-                self.country = newcountry
+                while len(newcountry) != 2:
+                    newcountry = raw_input("2 letter country code (eg. US): ")
+                    if len(newcountry) == 2:
+                        country = newcountry
+                        break
         else:
-            self.country = 'US'
+            country = 'US'
 
         newstate = raw_input("State or Province Name (full name) for certificate: ")
         if newstate != '':
@@ -307,7 +311,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                     cls = getattr(module, plugin)
                     cls.init_repo(self.repopath)
                 except Exception, e:
-                    print 'Plugin setup for %s failed: %s\n Check that dependencies are installed?' % (plugin, e)
+                    print 'Plugin setup for %s failed: %s'
+                    print 'Check that dependencies are installed?' % (plugin, e)
 
     def init_repo(self):
         """Setup a new repo and create the content of the configuration file."""
