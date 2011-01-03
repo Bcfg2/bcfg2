@@ -188,6 +188,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
+        self._prompt_plugins()
         self._prompt_certificate()
 
         # Initialize the repository
@@ -195,7 +196,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = raw_input("What is the server's hostname [%s]: " % socket.getfqdn())
+        data = raw_input("What is the server's hostname [%s]: " % 
+                        socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -233,7 +235,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        newserver = raw_input("Input the server location [%s]: " % self.server_uri)
+        newserver = raw_input("Input the server location [%s]: " %
+                                self.server_uri)
         if newserver != '':
             self.server_uri = newserver
 
@@ -251,7 +254,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                 continue
 
     def _prompt_plugins(self):
-        default = raw_input("Use default plugins? (%s) [Y/n]: " % ''.join(default_plugins)).lower()
+        default = raw_input("Use default plugins? (%s) [Y/n]: " % 
+                                ''.join(default_plugins)).lower()
         if default != 'y' or default != '':
             while True:
                 plugins_are_valid = True
@@ -267,9 +271,14 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_certificate(self):
         """Ask for the key details (country, state, and location)."""
+        print "The following questions affects the certificate."
+        print "If there are data provided the default values are used."
         newcountry = raw_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
-            self.country = newcountry
+            if len(newcountry) > '2' or len(newcountry) < '2':
+                newcountry = raw_input("Country name (2 letter code) for certificate: ")
+            else:
+                self.country = newcountry
         else:
             self.country = 'US'
 
@@ -289,7 +298,8 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
-                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, groups, self.os_sel, clients)
+                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, 
+                            groups, self.os_sel, clients)
             else:
                 try:
                     module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
@@ -318,7 +328,8 @@ class Init(Bcfg2.Server.Admin.Mode):
         create_conf(self.configfile, confdata)
         kpath = keypath + '/bcfg2.key'
         cpath = keypath + '/bcfg2.crt'
-        create_key(self.shostname, kpath, cpath, self.country, self.state, self.location)
+        create_key(self.shostname, kpath, cpath, self.country, 
+                    self.state, self.location)
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')
