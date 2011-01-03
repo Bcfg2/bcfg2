@@ -123,11 +123,11 @@ def gen_password(length):
         newpasswd = newpasswd + random.choice(chars)
     return newpasswd
 
-def create_key(hostname, keypath, certpath):
+def create_key(hostname, keypath, certpath, country, state, location):
     """Creates a bcfg2.key at the directory specifed by keypath."""
-    kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (hostname, keypath)
+    kcstr = "openssl req -batch -x509 -nodes -subj '/C=%s/ST=%s/L=%s/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (country, state, location, hostname, keypath)
     subprocess.call((kcstr), shell=True)
-    ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
+    ccstr = "openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (country, state, location, hostname, keypath, keypath, certpath)
     subprocess.call((ccstr), shell=True)
     os.chmod(keypath, 0600)
 
@@ -144,7 +144,7 @@ def create_conf(confpath, confdata):
         os.chmod(confpath, 0600)
     except Exception, e:
         print("Error %s occured while trying to write configuration "
-              "file to '%s'\n" %
+              "file to '%s'.\n" %
                (e, confpath))
         raise SystemExit(1)
 
@@ -188,6 +188,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
+        self._prompt_key()
 
         # Initialize the repository
         self.init_repo()
@@ -202,7 +203,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_config(self):
         """Ask for the configuration file path."""
-        newconfig = raw_input("Store bcfg2 configuration in [%s]: " %
+        newconfig = raw_input("Store Bcfg2 configuration in [%s]: " %
                                 self.configfile)
         if newconfig != '':
             self.configfile = newconfig
@@ -210,7 +211,7 @@ class Init(Bcfg2.Server.Admin.Mode):
     def _prompt_repopath(self):
         """Ask for the repository path."""
         while True:
-            newrepo = raw_input("Location of bcfg2 repository [%s]: " %
+            newrepo = raw_input("Location of Bcfg2 repository [%s]: " %
                                   self.repopath)
             if newrepo != '':
                 self.repopath = newrepo
@@ -263,6 +264,26 @@ class Init(Bcfg2.Server.Admin.Mode):
                         print "ERROR: Plugin %s not recognized" % plugin
                 if plugins_are_valid:
                     break
+
+    def _prompt_key(self):
+        """Ask for the key details (country, state, and location)."""
+        newcountry = raw_input("Country code for key: "
+        if newcountry != '':
+            self.country = newcountry
+        else
+            self.country = 'US'
+
+        newstate = raw_input("State for key: "
+        if newstate != '':
+            self.state = newstate
+        else
+            self.state = 'Illinois'
+
+        newlocation = raw_input("Location for key: "
+        if newlocation != '':
+            self.location = newlocation
+        else
+            self.location = 'Argonne'
 
     def _init_plugins(self):
         """Initialize each plugin-specific portion of the repository."""
