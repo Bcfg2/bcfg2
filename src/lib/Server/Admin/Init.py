@@ -276,15 +276,15 @@ class Init(Bcfg2.Server.Admin.Mode):
         newcountry = raw_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
             if len(newcountry) == 2:
-                country = newcountry
+                self.country = newcountry
             else:
                 while len(newcountry) != 2:
                     newcountry = raw_input("2 letter country code (eg. US): ")
                     if len(newcountry) == 2:
-                        country = newcountry
+                        self.country = newcountry
                         break
         else:
-            country = 'US'
+            self.country = 'US'
 
         newstate = raw_input("State or Province Name (full name) for certificate: ")
         if newstate != '':
