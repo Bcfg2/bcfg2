@@ -293,7 +293,7 @@ class Version(object):
     """Interact with various version control systems."""
     def get_revision(self):
         return []
-    def commit_data(self):
+    def commit_data(self, file_list, comment=None):
         pass
 
 # the rest of the file contains classes for coherent file caching

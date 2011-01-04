@@ -38,7 +38,7 @@ at `CustomDebianRepository`_.
 Fedora
 ======
 
-The fastest way to get Bcfg2 Packages_ onto your Fedora_ system is to
+The fastest way to get Bcfg2 packages onto your Fedora_ system is to
 use `yum` or PackageKit. Yum will pull in all dependencies of Bcfg2
 automatically. ::
 

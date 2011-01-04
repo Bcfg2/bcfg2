@@ -1,8 +1,23 @@
 __revision__ = '$Revision$'
 
-__all__ = ['Mode', 'Client', 'Compare', 'Init', 'Minestruct', 'Perf',
-           'Pull', 'Query', 'Reports', 'Snapshots', 'Tidy', 'Viz', 
-           'Xcmd', 'Group', 'Backup']
+__all__ = [
+        'Backup',
+        'Bundle',
+        'Client',
+        'Compare',
+        'Group',
+        'Init',
+        'Minestruct',
+        'Mode',
+        'Perf',
+        'Pull',
+        'Query',
+        'Reports',
+        'Snapshots',
+        'Tidy',
+        'Viz',
+        'Xcmd'
+        ]
 
 import ConfigParser
 import logging

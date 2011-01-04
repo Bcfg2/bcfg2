@@ -1,0 +1,16 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-compare:
+
+compare
+=======
+
+Determine differences between files or directories of client
+specification instances.::
+
+    bcfg2-admin compare <file1> <file2>
+
+If you want to compare two directories recursively then use ``-r`` as an
+option. ::
+
+    bcfg2-admin compare -r <dir1> <dir2>

@@ -1,0 +1,31 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-client:
+
+client
+======
+
+Create, delete, list, or modify client entries. ::
+
+    bcfg2-admin client add <client> attr1=val1 attr2=val2
+
+Allowed attributes are *profile*, *uuid*, *password*, *location*, *secure*,
+and *address*.
+
+A full example is shown below::
+
+    bcfg2-admin client add laptop02.example.com profile="basic"
+
+For more details please refer to the
+:ref:`Metadata section <server-plugins-grouping-metadata>`.
+
+With ``list`` the file ``clients.xml`` is parsed and all entries are shown::
+
+    bcfg2-admin client list
+    server01.example.com
+    laptop02.example.com
+
+This is useful for a quick check after adding an entry.  If you want more
+in-depth information about a client, ``bcfg2-info clients`` can provide
+that.  Please refer to the :ref:`bcfg2-info <server-bcfg2-info>`
+section for further details.

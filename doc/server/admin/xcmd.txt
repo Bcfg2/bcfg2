@@ -1,0 +1,27 @@
+.. -*- mode: rst -*-
+
+.. _server-admin-xcmd:
+
+xcmd
+====
+
+XML-RPC Command Interface.::
+
+    xcmd <xmlrpc method> <optional arguments>
+
+For debbuging the following command can help::
+
+    bcfg2-admin xcmd Metadata.toggle_debug
+
+Those two examples can alos be found in the
+:ref:`Package section <server-plugins-generators-packages>`.
+
+To rebuild the packages plugin cache::
+
+    bcfg2-admin xcmd Packages.Refresh
+
+To perform a soft reload to reread the configuration file and
+download only missing sources.::
+
+    bcfg2-admin xcmd Packages.Reload
+

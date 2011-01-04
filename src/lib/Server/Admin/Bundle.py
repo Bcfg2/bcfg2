@@ -46,7 +46,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
 #            except MetadataConsistencyError:
 #                print "Error in deleting bundle."
 #                raise SystemExit(1)
-        #Lists all available xml bundles
+        # Lists all available xml bundles
         elif args[0] in ['list-xml', 'ls-xml']:
             bundle_name = []
             for bundle_path in xml_list:
@@ -54,7 +54,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                print bundle.split('.')[0]
-        #Lists all available genshi bundles
+        # Lists all available genshi bundles
         elif args[0] in ['list-genshi', 'ls-gen']:
             bundle_name = []
             for bundle_path in genshi_list:
@@ -62,9 +62,11 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                print bundle.split('.')[0]
-        #Shows a list of all available bundles and prints bundle 
-        #details after the user choose one bundle.
-        #FIXME: Add support for detailed output of genshi bundles
+        # Shows a list of all available bundles and prints bundle 
+        # details after the user choose one bundle.
+        # FIXME: Add support for detailed output of genshi bundles
+        # FIXME: This functionality is almost identical with
+        #        bcfg2-info bundles
         elif args[0] in ['show']:
             bundle_name = []
             bundle_list = xml_list + genshi_list
@@ -84,7 +86,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
             else:
                 if '%s/Bundler/%s' % \
                             (repo, bundle_name[int(lineno)]) in genshi_list:
-                    print "Detailed output for *.genshi bundle is not supported."
+                    print "Detailed output for *.genshi bundles is not supported."
                 else:
                     print 'Details for the "%s" bundle:' % \
                             (bundle_name[int(lineno)].split('.')[0])
