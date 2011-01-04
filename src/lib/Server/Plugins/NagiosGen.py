@@ -2,6 +2,7 @@
 
 import glob
 import logging
+import lxml.etree
 import os
 import re
 import socket
@@ -44,6 +45,18 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                               'group':'nagios',
                               'type':'file',
                               'perms':'0440'}
+
+    def getparents(self, hostname):
+        """Return parents for given hostname."""
+        depends=[]
+        if not os.path.isfile('%s/parents.xml' % (self.data)):
+            return depends
+
+        tree = lxml.etree.parse('%s/parents.xml' % (self.data))
+        for entry in tree.findall('.//Depend'):
+            if entry.attrib['name'] == hostname:
+                depends.append(entry.attrib['on'])
+        return depends
 
     def createhostconfig(self, entry, metadata):
         """Build host specific configuration file."""
@@ -94,8 +107,30 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         group_data = ""
         for host in host_configs:
             hostfile = open(host, 'r')
-            host_data += hostfile.read()
+            hostname=host.split('/')[-1].replace('-host.cfg','')
+            parents=self.getparents(hostname)
+            if parents:
+                hostlines = hostfile.readlines()
+            else:
+                hostdata = hostfile.read()
             hostfile.close()
+
+            if parents:
+                hostdata=''
+                addparents=True
+                for line in hostlines:
+                    line=line.replace('\n','')
+                    if 'parents' in line:
+                        line+=','+','.join(parents)
+                        addparents=False
+                    if '}' in line:
+                        line=''
+                    hostdata+="%s\n" % line
+                if addparents:
+                    hostdata+="        parents         %s\n" % ','.join(parents)
+                hostdata+="}\n"
+
+            host_data += hostdata
         for group in group_configs:
             group_name = re.sub("(-group.cfg|.*/(?=[^/]+))", "", group)
             if host_data.find(group_name) != -1:
