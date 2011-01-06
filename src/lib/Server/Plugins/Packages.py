@@ -278,12 +278,12 @@ class YUMSource(Source):
         sdata = self.packages.values()
         self.packages['global'] = copy.deepcopy(sdata.pop())
         while sdata:
-            self.packages['global'].intersection(sdata.pop())
+            self.packages['global'] = self.packages['global'].intersection(sdata.pop())
 
         for key in self.packages:
             if key == 'global':
                 continue
-            self.packages[key] = self.packages['global'].difference(self.packages[key])
+            self.packages[key] = self.packages[key].difference(self.packages['global'])
         self.save_state()
 
     def parse_filelist(self, data, arch):
