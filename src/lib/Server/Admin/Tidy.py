@@ -6,7 +6,7 @@ import Bcfg2.Server.Admin
 
 class Tidy(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Clean up useless files in the repo"
-    __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin tidy [-f] [-I]"
+    __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin tidy [-f] [-I]\n"
     __usage__ = ("bcfg2-admin tidy [options]\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %

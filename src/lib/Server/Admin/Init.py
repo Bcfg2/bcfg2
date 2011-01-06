@@ -76,15 +76,44 @@ os_list = [
           ]
 
 # Complete list of plugins
-plugin_list = ['Account', 'Base', 'Bundler', 'Cfg',
-             'Decisions', 'Deps', 'Metadata', 'Packages',
-             'Pkgmgr', 'Probes', 'Properties', 'Rules',
-             'Snapshots', 'SSHbase', 'Statistics', 'Svcmgr',
-             'TCheetah', 'TGenshi']
+plugin_list = [
+                'Account',
+                'Base',
+                'Bundler',
+                'Bzr',
+                'Cfg',
+                'Decisions',
+                'Deps',
+                'Git',
+                'Guppy',
+                'Hg',
+                'Metadata',
+                'NagiosGen',
+                'Ohai',
+                'Packages',
+                'Pkgmgr',
+                'Probes',
+                'Properties',
+                'Rules',
+                'Snapshots',
+                'SSHbase',
+                'SSLCA',
+                'Statistics',
+                'Svcmgr',
+                'TCheetah',
+                'TGenshi'
+                ]
 
 # Default list of plugins to use
-default_plugins = ['SSHbase', 'Cfg', 'Pkgmgr', 'Rules',
-                'Metadata', 'Base', 'Bundler']
+default_plugins = [
+                'Base',
+                'Bundler'
+                'Cfg',
+                'Metadata',
+                'Pkgmgr',
+                'Rules',
+                'SSHbase'
+                ]
 
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
@@ -94,16 +123,16 @@ def gen_password(length):
         newpasswd = newpasswd + random.choice(chars)
     return newpasswd
 
-def create_key(hostname, keypath, certpath):
+def create_key(hostname, keypath, certpath, country, state, location):
     """Creates a bcfg2.key at the directory specifed by keypath."""
-    kcstr = "openssl req -batch -x509 -nodes -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (hostname, keypath)
+    kcstr = "openssl req -batch -x509 -nodes -subj '/C=%s/ST=%s/L=%s/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (country, state, location, hostname, keypath)
     subprocess.call((kcstr), shell=True)
-    ccstr = "openssl req -batch -new  -subj '/C=US/ST=Illinois/L=Argonne/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (hostname, keypath, keypath, certpath)
+    ccstr = "openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (country, state, location, hostname, keypath, keypath, certpath)
     subprocess.call((ccstr), shell=True)
     os.chmod(keypath, 0600)
 
 def create_conf(confpath, confdata):
-    # don't overwrite existing bcfg2.conf file
+    # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
         result = raw_input("\nWarning: %s already exists. "
                     "Overwrite? [y/N]: " % confpath)
@@ -115,7 +144,7 @@ def create_conf(confpath, confdata):
         os.chmod(confpath, 0600)
     except Exception, e:
         print("Error %s occured while trying to write configuration "
-              "file to '%s'\n" %
+              "file to '%s'.\n" %
                (e, confpath))
         raise SystemExit(1)
 
@@ -159,13 +188,16 @@ class Init(Bcfg2.Server.Admin.Mode):
         self._prompt_hostname()
         self._prompt_server()
         self._prompt_groups()
+        # self._prompt_plugins()
+        self._prompt_certificate()
 
         # Initialize the repository
         self.init_repo()
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = raw_input("What is the server's hostname [%s]: " % socket.getfqdn())
+        data = raw_input("What is the server's hostname [%s]: " % 
+                        socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -173,7 +205,7 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_config(self):
         """Ask for the configuration file path."""
-        newconfig = raw_input("Store bcfg2 configuration in [%s]: " %
+        newconfig = raw_input("Store Bcfg2 configuration in [%s]: " %
                                 self.configfile)
         if newconfig != '':
             self.configfile = newconfig
@@ -181,12 +213,12 @@ class Init(Bcfg2.Server.Admin.Mode):
     def _prompt_repopath(self):
         """Ask for the repository path."""
         while True:
-            newrepo = raw_input("Location of bcfg2 repository [%s]: " %
+            newrepo = raw_input("Location of Bcfg2 repository [%s]: " %
                                   self.repopath)
             if newrepo != '':
                 self.repopath = newrepo
             if os.path.isdir(self.repopath):
-                response = raw_input("Directory %s exists. Overwrite? [y/N]:"\
+                response = raw_input("Directory %s exists. Overwrite? [y/N]:" \
                                       % self.repopath)
                 if response.lower().strip() == 'y':
                     break
@@ -203,7 +235,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        newserver = raw_input("Input the server location [%s]: " % self.server_uri)
+        newserver = raw_input("Input the server location [%s]: " %
+                                self.server_uri)
         if newserver != '':
             self.server_uri = newserver
 
@@ -221,7 +254,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                 continue
 
     def _prompt_plugins(self):
-        default = raw_input("Use default plugins? (%s) [Y/n]: " % ''.join(default_plugins)).lower()
+        default = raw_input("Use default plugins? (%s) [Y/n]: " % 
+                                ''.join(default_plugins)).lower()
         if default != 'y' or default != '':
             while True:
                 plugins_are_valid = True
@@ -231,15 +265,45 @@ class Init(Bcfg2.Server.Admin.Mode):
                     plugin = plugin.strip()
                     if not plugin in plugin_list:
                         plugins_are_valid = False
-                        print "ERROR: plugin %s not recognized" % plugin
+                        print "ERROR: Plugin %s not recognized" % plugin
                 if plugins_are_valid:
                     break
+
+    def _prompt_certificate(self):
+        """Ask for the key details (country, state, and location)."""
+        print "The following questions affects the certificate."
+        print "If there are no data provided the default values are used."
+        newcountry = raw_input("Country name (2 letter code) for certificate: ")
+        if newcountry != '':
+            if len(newcountry) == 2:
+                self.country = newcountry
+            else:
+                while len(newcountry) != 2:
+                    newcountry = raw_input("2 letter country code (eg. US): ")
+                    if len(newcountry) == 2:
+                        self.country = newcountry
+                        break
+        else:
+            self.country = 'US'
+
+        newstate = raw_input("State or Province Name (full name) for certificate: ")
+        if newstate != '':
+            self.state = newstate
+        else:
+            self.state = 'Illinois'
+
+        newlocation = raw_input("Locality Name (eg, city) for certificate: ")
+        if newlocation != '':
+            self.location = newlocation
+        else:
+            self.location = 'Argonne'
 
     def _init_plugins(self):
         """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
-                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, groups, self.os_sel, clients)
+                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, 
+                            groups, self.os_sel, clients)
             else:
                 try:
                     module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
@@ -247,7 +311,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                     cls = getattr(module, plugin)
                     cls.init_repo(self.repopath)
                 except Exception, e:
-                    print 'Plugin setup for %s failed: %s\n Check that dependencies are installed?' % (plugin, e)
+                    print 'Plugin setup for %s failed: %s'
+                    print 'Check that dependencies are installed?' % (plugin, e)
 
     def init_repo(self):
         """Setup a new repo and create the content of the configuration file."""
@@ -268,7 +333,8 @@ class Init(Bcfg2.Server.Admin.Mode):
         create_conf(self.configfile, confdata)
         kpath = keypath + '/bcfg2.key'
         cpath = keypath + '/bcfg2.crt'
-        create_key(self.shostname, kpath, cpath)
+        create_key(self.shostname, kpath, cpath, self.country, 
+                    self.state, self.location)
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')

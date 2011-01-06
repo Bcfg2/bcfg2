@@ -5,11 +5,11 @@ from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 class Group(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create, delete, or modify group entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin group add <group> "
-                                    "attr1=val1 attr2=val2\n"
-                                    "\n\nbcfg2-admin group update <group> "
-                                    "attr1=val1 attr2=val2\n"
-                                    "\n\nbcfg2-admin group list\n"
-                                    "bcfg2-admin group del <group>")
+                                    "attr1=val1 attr2=val2"
+                                    "\nbcfg2-admin group update <group> "
+                                    "attr1=val1 attr2=val2"
+                                    "\nbcfg2-admin group list"
+                                    "bcfg2-admin group del <group>\n")
     __usage__ = ("bcfg2-admin group [options] [add|del|update|list] [attr=val]")
 
     def __init__(self, configfile):

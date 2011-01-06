@@ -6,7 +6,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Produce graphviz diagrams of metadata structures"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin viz [--includehosts] "
                                     "[--includebundles] [--includekey] "
-                                    "[-o output.png] [--raw]")
+                                    "[-o output.png] [--raw]\n")
     __usage__ = ("bcfg2-admin viz [options]\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n"
@@ -24,6 +24,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
     colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
               'indianred1', 'limegreen', 'orange1', 'lightblue2',
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
+
     plugin_blacklist = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
                         'Rules', 'Account', 'Decisions', 'Deps', 'Git', 'Svn',
                         'Fossil', 'Bzr', 'Bundler', 'TGenshi', 'SGenshi', 'Base']

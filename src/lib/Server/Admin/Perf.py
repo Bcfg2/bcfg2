@@ -6,7 +6,7 @@ import sys
 
 class Perf(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Query server for performance data")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin perf")
+    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin perf\n")
     __usage__ = ("bcfg2-admin perf")
 
     def __init__(self, configfile):

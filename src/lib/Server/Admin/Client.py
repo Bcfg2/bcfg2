@@ -5,11 +5,11 @@ from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 class Client(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create, delete, or modify client entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin client add <client> "
-                                    "attr1=val1 attr2=val2\n"
-                                    "\n\nbcfg2-admin client update <client> "
-                                    "attr1=val1 attr2=val2\n"
-                                    "\n\nbcfg2-admin client list\n"
-                                    "bcfg2-admin client del <client>")
+                                    "attr1=val1 attr2=val2"
+                                    "\nbcfg2-admin client update <client> "
+                                    "attr1=val1 attr2=val2"
+                                    "\nbcfg2-admin client list"
+                                    "\nbcfg2-admin client del <client>\n")
     __usage__ = ("bcfg2-admin client [options] [add|del|update|list] [attr=val]")
 
     def __init__(self, configfile):

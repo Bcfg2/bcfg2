@@ -94,7 +94,7 @@ class Mode(object):
                           item in col]) for col in cols]
         borderline = vdelim.join([w*hdelim for w in colWidths])
 
-        # print out the table
+        # Print out the table
         print(borderline)
         for row in rows:
             print(vdelim.join([justify(str(item), width) for \

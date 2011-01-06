@@ -93,7 +93,7 @@ class Option(object):
 
     def parse(self, opts, rawopts):
         if self.cmd and opts:
-            # processing getopted data
+            # Processing getopted data
             optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
             if optinfo:
                 if optinfo[0]:
@@ -105,7 +105,7 @@ class Option(object):
             data = rawopts[rawopts.index(self.cmd) + 1]
             self.value = self.get_cooked_value(data)
             return
-        # no command line option found
+        # No command line option found
         if self.env and self.env in os.environ:
             self.value = self.get_cooked_value(os.environ[self.env])
             return
@@ -115,7 +115,7 @@ class Option(object):
                 return
             except:
                 pass
-        # default value not cooked
+        # Default value not cooked
         self.value = self.default
 
 class OptionSet(dict):
@@ -141,7 +141,7 @@ class OptionSet(dict):
         raise SystemExit(code)
 
     def parse(self, argv, do_getopt=True):
-        '''Parse options'''
+        '''Parse options from command line.'''
         if do_getopt:
             try:
                 opts, args = getopt.getopt(argv, self.buildGetopt(),
@@ -171,7 +171,7 @@ def colon_split(c_string):
         return c_string.split(':')
     return []
 
-#General options
+# General options
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
 LOCKFILE = Option('Specify lockfile',
@@ -187,7 +187,7 @@ INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
                         default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                        default='/usr/lib/sendmail')
-INTERACTIVE = Option('prompt the user for each change', default=False,
+INTERACTIVE = Option('Prompt the user for each change', default=False,
                      cmd='-I', )
 ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(),
                   cmd='-E', odesc='<encoding>',
@@ -201,8 +201,8 @@ PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 CORE_PROFILE = Option('profile',
                       default=False, cmd='-p', )
-                      
-#Metadata options
+
+# Metadata options
 MDATA_OWNER = Option('Default Path owner',
                      default='root', cf=('mdata', 'owner'),
                      odesc='owner permissions')
@@ -219,7 +219,7 @@ MDATA_PARANOID = Option('Default Path paranoid setting',
                      'false', cf=('mdata', 'paranoid'),
                      odesc='Path paranoid setting')
 
-#Server options
+# Server options
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
                            cf=('server', 'repository'), cmd='-Q',
                            odesc='<repository path>')
@@ -255,7 +255,7 @@ SERVER_PASSWORD = Option('Communication Password', cmd='-x', odesc='<password>',
                          cf=('communication', 'password'), default=False)
 SERVER_PROTOCOL = Option('Server Protocol', cf=('communication', 'procotol'),
                          default='xmlrpc/ssl')
-#Client options
+# Client options
 CLIENT_KEY = Option('Path to SSL key', cf=('communication', 'key'),
                     default=None, cmd="--ssl-key", odesc='<ssl key>',
                     long_arg=True)
@@ -265,44 +265,44 @@ CLIENT_CERT = Option('Path to SSL certificate', default=None, cmd="--ssl-cert",
 CLIENT_CA = Option('Path to SSL CA Cert', default=None, cmd="--ca-cert",
                    cf=('communication', 'ca'), odesc='<ca cert>',
                    long_arg=True)
-CLIENT_SCNS = Option('list of server commonNames', default=None, cmd="--ssl-cns",
+CLIENT_SCNS = Option('List of server commonNames', default=None, cmd="--ssl-cns",
                      cf=('communication', 'serverCommonNames'),
                      odesc='<commonName1:commonName2>', cook=list_split,
                      long_arg=True)
-CLIENT_PROFILE = Option('assert the given profile for the host',
+CLIENT_PROFILE = Option('Assert the given profile for the host',
                         default=False, cmd='-p', odesc="<profile>")
-CLIENT_RETRIES = Option('the number of times to retry network communication',
+CLIENT_RETRIES = Option('The number of times to retry network communication',
                         default='3', cmd='-R', cf=('communication', 'retries'),
                         odesc="<retry count>")
-CLIENT_DRYRUN = Option('do not actually change the system',
+CLIENT_DRYRUN = Option('Do not actually change the system',
                        default=False, cmd='-n', )
 CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
                               default=False, cmd='-e', )
-CLIENT_PARANOID = Option('make automatic backups of config files',
+CLIENT_PARANOID = Option('Make automatic backups of config files',
                          default=False, cmd='-P', cf=('client', 'paranoid'))
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
                         odesc="<driver1,driver2>", cook=list_split,
                         default=Bcfg2.Client.Tools.default)
-CLIENT_CACHE = Option('store the configuration in a file',
+CLIENT_CACHE = Option('Store the configuration in a file',
                       default=False, cmd='-c', odesc="<cache path>")
-CLIENT_REMOVE = Option('force removal of additional configuration items',
+CLIENT_REMOVE = Option('Force removal of additional configuration items',
                        default=False, cmd='-r', odesc="<entry type|all>")
-CLIENT_BUNDLE = Option('only configure the given bundle(s)', default=[],
+CLIENT_BUNDLE = Option('Only configure the given bundle(s)', default=[],
                        cmd='-b', odesc='<bundle:bundle>', cook=colon_split)
 CLIENT_BUNDLEQUICK = Option('only verify/configure the given bundle(s)', default=False,
                        cmd='-Q')
-CLIENT_INDEP = Option('only configure the given bundle(s)', default=False,
+CLIENT_INDEP = Option('Only configure the given bundle(s)', default=False,
                        cmd='-z')
-CLIENT_KEVLAR = Option('run in kevlar (bulletproof) mode', default=False,
+CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
-CLIENT_DLIST = Option('run client in server decision list mode', default=False,
+CLIENT_DLIST = Option('Run client in server decision list mode', default=False,
                       cmd='-l', odesc='<whitelist|blacklist>')
-CLIENT_FILE = Option('configure from a file rather than querying the server',
+CLIENT_FILE = Option('Configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
-CLIENT_QUICK = Option('disable some checksum verification', default=False,
+CLIENT_QUICK = Option('Disable some checksum verification', default=False,
                       cmd='-q', )
-CLIENT_USER = Option('the user to provide for authentication', default='root',
+CLIENT_USER = Option('The user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>')
@@ -316,7 +316,7 @@ CLIENT_APT_TOOLS_VAR_PATH = Option('Apt tools var path',
 CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
                          default='/etc')
 
-#Logging options
+# Logging options
 LOGGING_FILE_PATH = Option('Set path of file log', default=None,
                            cmd='-o', odesc='<path>', cf=('logging', 'path'))
 
