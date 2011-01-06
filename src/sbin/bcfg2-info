@@ -59,7 +59,7 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
 def write_config_file(outputdir, cfg):
     """
     Store file content of an
-    <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+    <Path type='file' ...>...</Path> entry
     in the appropriate directory under the output directory.
     """
     name = cfg.get('name')
@@ -222,7 +222,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         print('rooted under /tmp unless the -f argument is provided, in')
         print('which case it can be located anywhere.')
         print('')
-        print('NOTE: Currently only handles ConfigFile entries and writes')
+        print('NOTE: Currently only handles file entries and writes')
         print('all content with the default owner and permissions.  These')
         print('could be much more permissive than would be created by the')
         print('Bcfg2 client itself.')
@@ -250,7 +250,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 try:
                     write_config_file(odir, configfile)
                 except FileNotBuilt, ex:
-                    print("Warning: No file content generated for ConfigFile %s!" % ex)
+                    print("Warning: No file content generated for file %s!" % ex)
                     pass
                 except Exception, ex:
                     print("Unknown error, giving up: %s" %ex)
