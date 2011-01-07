@@ -259,8 +259,8 @@ Now we restart the bcfg2-server::
 
     [root@centos ~]# /etc/init.d/bcfg2-server restart
 
-If you tail ``/var/log/syslog`` now, you will see the Packages plugin in
-action, updating the cache.
+If you now ``tail -f /var/log/messages``, you will see the Packages
+plugin in action, updating the cache.
 
 Start managing packages
 -----------------------
@@ -569,4 +569,4 @@ Now we run the client and see there are no more unmanaged entries! ::
 Dynamic (web) reports
 =====================
 
-See installation instructions at :ref:`server-reports-install`
+See installation instructions at :ref:`reports-dynamic`

@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-reports-static:
+.. _reports-static:
 
 =============================
 Bcfg2 Static Reporting System
