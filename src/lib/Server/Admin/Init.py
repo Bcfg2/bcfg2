@@ -65,55 +65,50 @@ clients = '''<Clients version="3.0">
 '''
 
 # Mapping of operating system names to groups
-os_list = [
-           ('Red Hat/Fedora/RHEL/RHAS/Centos',  'redhat'),
-           ('SUSE/SLES',                        'suse'),
-           ('Mandrake',                         'mandrake'),
-           ('Debian',                           'debian'),
-           ('Ubuntu',                           'ubuntu'),
-           ('Gentoo',                           'gentoo'),
-           ('FreeBSD',                          'freebsd')
-          ]
+os_list = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
+           ('SUSE/SLES', 'suse'),
+           ('Mandrake', 'mandrake'),
+           ('Debian', 'debian'),
+           ('Ubuntu', 'ubuntu'),
+           ('Gentoo', 'gentoo'),
+           ('FreeBSD', 'freebsd')]
 
 # Complete list of plugins
-plugin_list = [
-                'Account',
-                'Base',
-                'Bundler',
-                'Bzr',
-                'Cfg',
-                'Decisions',
-                'Deps',
-                'Git',
-                'Guppy',
-                'Hg',
-                'Metadata',
-                'NagiosGen',
-                'Ohai',
-                'Packages',
-                'Pkgmgr',
-                'Probes',
-                'Properties',
-                'Rules',
-                'Snapshots',
-                'SSHbase',
-                'SSLCA',
-                'Statistics',
-                'Svcmgr',
-                'TCheetah',
-                'TGenshi'
-                ]
+plugin_list = ['Account',
+               'Base',
+               'Bundler',
+               'Bzr',
+               'Cfg',
+               'Decisions',
+               'Deps',
+               'Git',
+               'Guppy',
+               'Hg',
+               'Metadata',
+               'NagiosGen',
+               'Ohai',
+               'Packages',
+               'Pkgmgr',
+               'Probes',
+               'Properties',
+               'Rules',
+               'Snapshots',
+               'SSHbase',
+               'SSLCA',
+               'Statistics',
+               'Svcmgr',
+               'TCheetah',
+               'TGenshi']
 
 # Default list of plugins to use
-default_plugins = [
-                'Base',
-                'Bundler'
-                'Cfg',
-                'Metadata',
-                'Pkgmgr',
-                'Rules',
-                'SSHbase'
-                ]
+default_plugins = ['Base',
+                   'Bundler',
+                   'Cfg',
+                   'Metadata',
+                   'Pkgmgr',
+                   'Rules',
+                   'SSHbase']
+
 
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
@@ -123,13 +118,27 @@ def gen_password(length):
         newpasswd = newpasswd + random.choice(chars)
     return newpasswd
 
+
 def create_key(hostname, keypath, certpath, country, state, location):
     """Creates a bcfg2.key at the directory specifed by keypath."""
-    kcstr = "openssl req -batch -x509 -nodes -subj '/C=%s/ST=%s/L=%s/CN=%s' -days 1000 -newkey rsa:2048 -keyout %s -noout" % (country, state, location, hostname, keypath)
+    kcstr = ("openssl req -batch -x509 -nodes -subj '/C=%s/ST=%s/L=%s/CN=%s' "
+             "-days 1000 -newkey rsa:2048 -keyout %s -noout" % (country,
+                                                                state,
+                                                                location,
+                                                                hostname,
+                                                                keypath))
     subprocess.call((kcstr), shell=True)
-    ccstr = "openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s | openssl x509 -req -days 1000 -signkey %s -out %s" % (country, state, location, hostname, keypath, keypath, certpath)
+    ccstr = ("openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s "
+             "| openssl x509 -req -days 1000 -signkey %s -out %s" % (country,
+                                                                     state,
+                                                                     location,
+                                                                     hostname,
+                                                                     keypath,
+                                                                     keypath,
+                                                                     certpath))
     subprocess.call((ccstr), shell=True)
     os.chmod(keypath, 0600)
+
 
 def create_conf(confpath, confdata):
     # Don't overwrite existing bcfg2.conf file
@@ -153,15 +162,14 @@ class Init(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Interactively initialize a new repository.")
     __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
     __usage__ = "bcfg2-admin init"
-    options = {
-                'configfile': Bcfg2.Options.CFILE,
-                'plugins'   : Bcfg2.Options.SERVER_PLUGINS,
-                'proto'     : Bcfg2.Options.SERVER_PROTOCOL,
-                'repo'      : Bcfg2.Options.SERVER_REPOSITORY,
-                'sendmail'  : Bcfg2.Options.SENDMAIL_PATH,
-              }
+    options = {'configfile': Bcfg2.Options.CFILE,
+               'plugins': Bcfg2.Options.SERVER_PLUGINS,
+               'proto': Bcfg2.Options.SERVER_PROTOCOL,
+               'repo': Bcfg2.Options.SERVER_REPOSITORY,
+               'sendmail': Bcfg2.Options.SENDMAIL_PATH}
     repopath = ""
     response = ""
+
     def __init__(self, configfile):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
 
@@ -196,8 +204,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = raw_input("What is the server's hostname [%s]: " % 
-                        socket.getfqdn())
+        data = raw_input("What is the server's hostname [%s]: " %
+                         socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -254,8 +262,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                 continue
 
     def _prompt_plugins(self):
-        default = raw_input("Use default plugins? (%s) [Y/n]: " % 
-                                ''.join(default_plugins)).lower()
+        default = raw_input("Use default plugins? (%s) [Y/n]: " %
+                            ''.join(default_plugins)).lower()
         if default != 'y' or default != '':
             while True:
                 plugins_are_valid = True
@@ -271,8 +279,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_certificate(self):
         """Ask for the key details (country, state, and location)."""
-        print "The following questions affects the certificate."
-        print "If there are no data provided the default values are used."
+        print "The following questions affect SSL certificate generation."
+        print "If no data is provided, the default values are used."
         newcountry = raw_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
             if len(newcountry) == 2:
@@ -302,8 +310,10 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
-                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath, 
-                            groups, self.os_sel, clients)
+                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath,
+                                                                 groups,
+                                                                 self.os_sel,
+                                                                 clients)
             else:
                 try:
                     module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
@@ -311,30 +321,28 @@ class Init(Bcfg2.Server.Admin.Mode):
                     cls = getattr(module, plugin)
                     cls.init_repo(self.repopath)
                 except Exception, e:
-                    print 'Plugin setup for %s failed: %s'
-                    print 'Check that dependencies are installed?' % (plugin, e)
+                    print("Plugin setup for %s failed: %s\n"
+                          "Check that dependencies are installed?" % (plugin, e))
 
     def init_repo(self):
         """Setup a new repo and create the content of the configuration file."""
         keypath = os.path.dirname(os.path.abspath(self.configfile))
-        confdata = config % (
-                        self.repopath,
-                        ','.join(self.opts['plugins']),
-                        self.opts['sendmail'],
-                        self.opts['proto'],
-                        self.password,
-                        keypath, 'bcfg2.crt',
-                        keypath, 'bcfg2.key',
-                        keypath, 'bcfg2.crt',
-                        self.server_uri
-                    )
+        confdata = config % (self.repopath,
+                             ','.join(self.opts['plugins']),
+                             self.opts['sendmail'],
+                             self.opts['proto'],
+                             self.password,
+                             keypath, 'bcfg2.crt',
+                             keypath, 'bcfg2.key',
+                             keypath, 'bcfg2.crt',
+                             self.server_uri)
 
         # Create the configuration file and SSL key
         create_conf(self.configfile, confdata)
         kpath = keypath + '/bcfg2.key'
         cpath = keypath + '/bcfg2.crt'
-        create_key(self.shostname, kpath, cpath, self.country, 
-                    self.state, self.location)
+        create_key(self.shostname, kpath, cpath, self.country,
+                   self.state, self.location)
 
         # Create the repository
         path = "%s/%s" % (self.repopath, 'etc')
