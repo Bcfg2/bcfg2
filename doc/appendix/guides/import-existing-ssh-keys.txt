@@ -1,0 +1,128 @@
+.. -*- mode: rst -*-
+
+.. _appendix-guides-import-existing-ssh-keys:
+
+========================
+Import existing ssh keys
+========================
+
+.. note::
+
+    In order for the instructions in this guide to work, you will need
+    to first setup the :ref:`reporting system <reports-dynamic>` so that
+    the server has the information needed to create the existing
+    entries.
+
+This guide details the process for importing existing ssh keys into your
+server repository.
+
+Add a bundle for ssh
+====================
+
+After verifying that SSHbase is listed on the plugins line in
+``/etc/bcfg2.conf``, you need to create a bundle containing the
+appropriate entries.::
+
+    cat > /tmp/ssh.xml << EOF
+    <Bundle name='ssh'>
+      <Path name='/etc/ssh/ssh_host_dsa_key'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key'/>
+      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_key'/>
+      <Path name='/etc/ssh/ssh_host_key.pub'/>
+      <Path name='/etc/ssh/ssh_known_hosts'/>
+    </Bundle>
+
+::
+
+    mv /tmp/ssh.xml /var/lib/bcfg2/Bundle
+
+Next, you need to add the ssh bundle to the client's metadata in
+groups.xml.
+
+Validate your repository
+========================
+
+Validation can be performed using the following command::
+
+    ``bcfg2-repo-validate -v``
+
+Run the bcfg2 client
+====================
+
+::
+    bcfg2 -vqn
+
+You will see the incorrect entries for the ssh files::
+
+    Phase: initial
+    Correct entries:        0
+    Incorrect entries:      7
+    Total managed entries:  7
+    Unmanaged entries:      649
+
+    In dryrun mode: suppressing entry installation for:
+     Path:/etc/ssh/ssh_host_dsa_key      Path:/etc/ssh/ssh_host_rsa_key
+     Path:/etc/ssh/ssh_host_dsa_key.pub  Path:/etc/ssh/ssh_host_rsa_key.pub
+     Path:/etc/ssh/ssh_host_key          Path:/etc/ssh/ssh_known_hosts
+     Path:/etc/ssh/ssh_host_key.pub
+
+    Phase: final
+    Correct entries:        0
+    Incorrect entries:      7
+     Path:/etc/ssh/ssh_host_dsa_key      Path:/etc/ssh/ssh_host_rsa_key
+     Path:/etc/ssh/ssh_host_dsa_key.pub  Path:/etc/ssh/ssh_host_rsa_key.pub
+     Path:/etc/ssh/ssh_host_key          Path:/etc/ssh/ssh_known_hosts
+     Path:/etc/ssh/ssh_host_key.pub
+    Total managed entries:  7
+    Unmanaged entries:      649
+
+Install the client's ssh keys into the Bcfg2 repository
+=======================================================
+
+Now, we pull the ssh host key data for the client out of the uploaded
+stats and insert it as host-specific copies of these files in
+``/var/lib/bcfg2/SSHBase``.::
+
+    for key in ssh_host_dsa_key ssh_host_key; do 
+        sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key
+        sudo bcfg2-admin pull <clientname> Path /etc/ssh/${key}.pub
+    done
+
+This for loop pulls data that was collected by the bcfg2 client out of
+the statistics file and installs it into the repository. This means that
+the client will keep the same ssh keys and the bcfg2 server can start
+generating a correct ssh_known_hosts file for the client.
+
+Run the bcfg2 client (again)
+============================
+
+::
+    bcfg2 -vqn
+
+This time, we will only see 1 incorrect entry.::
+
+    Phase: initial
+    Correct entries:        6
+    Incorrect entries:      1
+    Total managed entries:  7
+    Unmanaged entries:      649
+
+    In dryrun mode: suppressing entry installation for:
+     Path:/etc/ssh/ssh_known_hosts
+
+    Phase: final
+    Correct entries:        6
+    Incorrect entries:      1
+     Path:/etc/ssh/ssh_known_hosts
+    Total managed entries:  7
+    Unmanaged entries:      649
+
+Now, the only wrong entry is the ssh_known_hosts file!, so go ahead
+and install it::
+
+    bcfg2 -vqI
+
+After answering 'y' to the interactive prompt, the client will install
+the known_hosts file successfully.
