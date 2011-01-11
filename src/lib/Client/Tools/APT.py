@@ -37,17 +37,18 @@ class APT(Bcfg2.Client.Tools.Tool):
     __execs__ = [DEBSUMS, APTGET, DPKG]
     __handles__ = [('Package', 'deb')]
     __req__ = {'Package': ['name', 'version']}
-    pkgcmd = '%s ' % APTGET + \
-             '-o DPkg::Options::=--force-overwrite ' + \
-             '-o DPkg::Options::=--force-confold ' + \
-             '-o DPkg::Options::=--force-confmiss ' + \
-             '--reinstall ' + \
-             '-q=2 ' + \
-             '--force-yes ' + \
-             '-y install %s'
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+        self.pkgcmd = '%s ' % APTGET + \
+                      '-o DPkg::Options::=--force-overwrite ' + \
+                      '-o DPkg::Options::=--force-confold ' + \
+                      '-o DPkg::Options::=--force-confmiss ' + \
+                      '--reinstall ' + \
+                      '--force-yes '
+        if not self.setup['debug']:
+             self.pkgcmd += '-q=2 '
+        self.pkgcmd += '-y install %s'
         self.__important__ = self.__important__ + \
                              ["%s/cache/debconf/config.dat" % var_path,
                               "%s/cache/debconf/templates.dat" % var_path,
