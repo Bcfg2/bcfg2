@@ -7,10 +7,7 @@ import re
 import Bcfg2.Client.Tools
 
 # Debian squeeze and beyond uses a dependecy based boot sequence
-DEBIAN_OLD_STYLE_BOOT_SEQUENCE = (
-    'etch', '4.0',
-    'lenny', '5.0', '5.0.1', '5.0.2', '5.0.3', '5.0.4', '5.0.4', '5.0.5',
-    )
+DEBIAN_OLD_STYLE_BOOT_SEQUENCE = ('etch', '4.0', 'lenny')
 
 
 class DebInit(Bcfg2.Client.Tools.SvcTool):
@@ -33,7 +30,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             deb_version = 'unknown'
 
         if entry.get('sequence'):
-            if (deb_version in DEBIAN_OLD_STYLE_BOOT_SEQUENCE):
+            if (deb_version in DEBIAN_OLD_STYLE_BOOT_SEQUENCE or
+                deb_version.startswith('5')):
                 start_sequence = int(entry.get('sequence'))
                 kill_sequence = 100 - start_sequence
             else:
