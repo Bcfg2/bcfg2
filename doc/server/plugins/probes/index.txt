@@ -13,8 +13,14 @@ the system disk, you would want to know this information to correctly
 generate an `/etc/auto.master` autofs config file for each type. Here
 we will look at how to do this.
 
-First you will need to set up the TCheetah plugin, as described on the
-:ref:`server-plugins-generators-tcheetah` page.
+For the purposes of this example, you will need to set up the TCheetah
+plugin, as described on the :ref:`server-plugins-generators-tcheetah`
+page.
+
+.. note::
+
+    This does **not** mean that TCheetah is required in order for Probes
+    to operate properly.
 
 Next, we need to create a ``Probes`` directory in our toplevel repository
 location::
