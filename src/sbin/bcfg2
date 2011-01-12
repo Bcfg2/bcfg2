@@ -104,6 +104,8 @@ class Client:
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print("cannot use -f and -c together")
             raise SystemExit(1)
+        if not self.setup['server'].startswith('https://'):
+            self.setup['server'] = 'https://' + self.setup['server']
 
     def run_probe(self, probe):
         """Execute probe."""
