@@ -239,15 +239,14 @@ class Component (object):
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         return result
 
-    @exposed
     def listMethods(self):
         """Custom XML-RPC introspective method list."""
         return [
             name for name, func in inspect.getmembers(self, callable)
             if getattr(func, "exposed", False)
         ]
+    listMethods = exposed(listMethods)
 
-    @exposed
     def methodHelp(self, method_name):
         """Custom XML-RPC introspective method help.
 
@@ -260,6 +259,7 @@ class Component (object):
         except NoExposedMethod:
             return ""
         return pydoc.getdoc(func)
+    methodHelp = exposed(methodHelp)
 
     def get_name(self):
         """The name of the component."""
