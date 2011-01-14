@@ -36,7 +36,13 @@ src_install() {
 
 	# Remove files only necessary for a server installation
 	if ! use server; then
-		rm -rf "${ED}"usr/sbin/bcfg2-*
+		rm -rf "${ED}"usr/sbin/bcfg2-admin*
+		rm -rf "${ED}"usr/sbin/bcfg2-build-reports*
+		rm -rf "${ED}"usr/sbin/bcfg2-info*
+		rm -rf "${ED}"usr/sbin/bcfg2-ping-sweep*
+		rm -rf "${ED}"usr/sbin/bcfg2-repo-validate*
+		rm -rf "${ED}"usr/sbin/bcfg2-reports*
+		rm -rf "${ED}"usr/sbin/bcfg2-server*
 		rm -rf "${ED}"usr/share/bcfg2
 		rm -rf "${ED}"usr/share/man/man8
 	fi
