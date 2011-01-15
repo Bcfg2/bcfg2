@@ -1,7 +1,8 @@
 Source: bcfg2
 Section: admin
 Priority: optional
-Maintainer: Sami Haahtinen <ressu@debian.org>
+Maintainer: Arto Jantunen <viiru@debian.org>
+Uploaders: Sami Haahtinen <ressu@debian.org>
 Build-Depends: debhelper (>= 7.0.50~), python (>= 2.3.5-7)
 Build-Depends-Indep: python-support (>= 0.5.3)
 Standards-Version: 3.8.0.0
