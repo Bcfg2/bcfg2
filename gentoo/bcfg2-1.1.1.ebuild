@@ -1,4 +1,4 @@
-# Copyright 1999-2010 Gentoo Foundation
+# Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
@@ -31,29 +31,28 @@ RDEPEND="${DEPEND}"
 
 PYTHON_MODNAME="Bcfg2"
 
+distutils_src_install_post_hook() {
+	if ! use server; then
+		rm -f "${T}/images/${PYTHON_ABI}${EPREFIX}/usr/sbin/bcfg2-"*
+	fi
+}
+
 src_install() {
-	distutils_src_install --record=PY_SERVER_LIBS --install-scripts "${EPREFIX}"/usr/sbin
+	distutils_src_install --record=PY_SERVER_LIBS --install-scripts "${EPREFIX}/usr/sbin"
 
 	# Remove files only necessary for a server installation
 	if ! use server; then
-		rm -rf "${ED}"usr/sbin/bcfg2-admin*
-		rm -rf "${ED}"usr/sbin/bcfg2-build-reports*
-		rm -rf "${ED}"usr/sbin/bcfg2-info*
-		rm -rf "${ED}"usr/sbin/bcfg2-ping-sweep*
-		rm -rf "${ED}"usr/sbin/bcfg2-repo-validate*
-		rm -rf "${ED}"usr/sbin/bcfg2-reports*
-		rm -rf "${ED}"usr/sbin/bcfg2-server*
-		rm -rf "${ED}"usr/share/bcfg2
-		rm -rf "${ED}"usr/share/man/man8
+		rm -rf "${ED}usr/share/bcfg2"
+		rm -rf "${ED}usr/share/man/man8"
 	fi
 
 	# Install a server init.d script
 	if use server; then
-		newinitd "${FILESDIR}"/bcfg2-server.rc bcfg2-server
+		newinitd "${FILESDIR}/bcfg2-server.rc" bcfg2-server
 	fi
 
 	insinto /etc
-	doins examples/bcfg2.conf
+	doins examples/bcfg2.conf || die "doins failed"
 }
 
 pkg_postinst () {
