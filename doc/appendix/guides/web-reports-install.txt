@@ -148,8 +148,9 @@ statistics to the database).
 
 Download the static reports content::
 
+    [root@system01 ~]# git clone git://git.mcs.anl.gov/bcfg2
     [root@system01 ~]# cd /var/www/
-    [root@system01 ~]# svn co https://svn.mcs.anl.gov/repos/bcfg/trunk/bcfg2/reports
+    [root@system01 ~]# mv /path/to/bcfg2/checkout/reports ./
 
 Configure Apache using :ref:`dynamic-http-install` as a guide
 
