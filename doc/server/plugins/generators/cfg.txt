@@ -149,6 +149,14 @@ file. The reason the other deltas aren't applied to *foo.example.com*
 is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
 applies all the deltas at the most specific level.
 
+Genshi Templates
+================
+
+Genshi templates maybe used for entries as well.  Any file ending in .genshi
+will be processed using the new template style (like .newtxt in the TGenshi
+plugin).  Templates can be host and group specific as well.  Deltas will not
+be processed for any genshi base file.
+
 File permissions
 ================
 
