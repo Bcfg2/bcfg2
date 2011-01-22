@@ -397,8 +397,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.groups = {}
             grouptmp = {}
             self.categories = {}
+            groupseen = list()
             for group in xdata.xpath('//Groups/Group') \
                     + xdata.xpath('Group'):
+                if group.get('name') not in groupseen:
+                    groupseen.append(group.get('name'))
+                else:
+                    self.logger.error("Metadata: Group %s defined multiply" % (group.get('name')))
                 grouptmp[group.get('name')] = tuple([[item.get('name') for item in group.findall(spec)]
                                                      for spec in ['./Bundle', './Group']])
                 grouptmp[group.get('name')][1].append(group.get('name'))
