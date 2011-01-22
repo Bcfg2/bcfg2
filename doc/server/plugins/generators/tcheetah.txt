@@ -28,7 +28,7 @@ files, ``template`` and ``info``. The template is a standard Cheetah
 template with two additions:
 
 * `self.metadata` is the client's :ref:`metadata <server-plugins-grouping-metadata-clientmetadata>`
-* `self.metadata.Properties` is an xml document of unstructured data
+* `self.metadata.Properties.data` is an xml document of unstructured data
 
 The ``info`` file is formatted like ``:info`` files from Cfg.
 
@@ -47,10 +47,10 @@ self.metadata variables
 self.metadata is an instance of the class ClientMetadata and documented
 :ref:`here <server-plugins-grouping-metadata-clientmetadata>`.
 
-self.metadata.Properties
+self.metadata.Properties.data
 ========================
 
-Properties is a python `ElementTree <http://codespeak.net/lxml/>`_
+Properties.data is a python `ElementTree <http://codespeak.net/lxml/>`_
 object, loaded from the data in ``/var/lib/bcfg2/Properties/<properties
 file>.xml``. That file should have a ``Properties`` node at its root.
 

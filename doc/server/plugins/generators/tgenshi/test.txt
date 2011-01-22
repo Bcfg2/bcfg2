@@ -45,8 +45,8 @@ This file just shows you what's available. It assumes a
     {% end %}\
 
     Two main ways to get the same property value:
-    ${metadata.Properties['test.xml'].find('password').find('bcfg2').text}
-    ${metadata.Properties['test.xml'].xpath('password/bcfg2')[0].text}
+    ${metadata.Properties['test.xml'].data.find('password').find('bcfg2').text}
+    ${metadata.Properties['test.xml'].data.xpath('password/bcfg2')[0].text}
 
     One way to get information about metadata and properties:
 
@@ -55,28 +55,28 @@ This file just shows you what's available. It assumes a
     ${var} \
     {% end %}
 
-    dir(properties):
-    {% for var in dir(properties) %}\
+    dir(metadata.Properties.data):
+    {% for var in dir(metadata.Properties.data) %}\
     ${var} \
     {% end %}
 
-    dir(properties.entries):
-    {% for var in dir(properties.entries) %}\
+    dir(metadata.Properties.data.entries):
+    {% for var in dir(metadata.Properties.data.entries) %}\
     ${var} \
     {% end %}
 
-    dir(properties.label):
-    {% for var in dir(properties.label) %}\
+    dir(metadata.Properties.data.label):
+    {% for var in dir(metadata.Properties.data.label) %}\
     ${var} \
     {% end %}
 
-    dir(properties.name):
-    {% for var in dir(properties.name) %}\
+    dir(metadata.Properties.data.name):
+    {% for var in dir(metadata.Properties.data.name) %}\
     ${var} \
     {% end %}
 
-    dir(properties.properties):
-    {% for var in dir(properties.properties) %}\
+    dir(metadata.Properties.data.properties):
+    {% for var in dir(metadata.Properties.data.properties) %}\
     ${var} \
     {% end %}
 
@@ -113,13 +113,13 @@ this (below reformatted a little bit to fit in 80 columns)::
      __weakref__ all bundles categories get_clients_by_group get_clients_by_profile
      groups hostname inGrouppassword probes uuid
 
-    dir(properties):
+    dir(metadata.Properties.data):
     HandleEvent Index __class__ __delattr__ __dict__ __doc__ __getattribute__
      __hash__ __identifier__ __init__ __iter__ __module__ __new__ __reduce__
      __reduce_ex__ __repr__ __setattr__ __str__ __weakref__ entries label name
      properties
 
-    dir(properties.entries):
+    dir(metadata.Properties.data.entries):
     __add__ __class__ __contains__ __delattr__ __delitem__ __delslice__ __doc__
      __eq__ __ge__ __getattribute__ __getitem__ __getslice__ __gt__ __hash__
      __iadd__ __imul__ __init__ __iter__ __le__ __len__ __lt__ __mul__ __ne__
@@ -127,7 +127,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      __setitem__ __setslice__ __str__ append count extend index insert pop remove
      reverse sort
 
-    dir(properties.label):
+    dir(metadata.Properties.data.label):
     __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
      __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
      __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
@@ -137,7 +137,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
      swapcase title translate upper zfill
 
-    dir(properties.name):
+    dir(metadata.Properties.data.name):
     __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
      __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
      __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
@@ -147,7 +147,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
      swapcase title translate upper zfill
 
-    dir(properties.properties):
+    dir(metadata.Properties.data.properties):
     __class__ __contains__ __copy__ __deepcopy__ __delattr__ __delitem__
      __delslice__ __doc__ __getattribute__ __getitem__ __getslice__ __hash__
      __init__ __iter__ __len__ __new__ __nonzero__ __reduce__ __reduce_ex__
