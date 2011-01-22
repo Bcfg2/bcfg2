@@ -73,7 +73,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
     def write_data(self):
         """Write probe data out for use with bcfg2-info."""
         top = lxml.etree.Element("Probed")
-        for client, probed in self.probedata.iteritems():
+        for client, probed in sorted(self.probedata.items()):
             cx = lxml.etree.SubElement(top, 'Client', name=client)
             for probe in probed:
                 lxml.etree.SubElement(cx, 'Probe', name=probe,
