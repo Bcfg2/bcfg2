@@ -40,7 +40,7 @@ Bcfg2 is fairly portable. It has been successfully run on:
 
 Bcfg2 should run on any POSIX compatible operating system, however
 direct support for an operating system's package and service formats
-are limited by the currently available :ref:`client-tools-index`
+are limited by the currently available :ref:`client-tools`
 (new client tools are pretty easy to add). Check the :ref:`FAQ
 <faq-general>` for a  more exact list of platforms on which Bcfg2
 works`.
