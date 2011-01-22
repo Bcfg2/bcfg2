@@ -93,8 +93,8 @@ Clone the git source::
     git clone git://git.mcs.anl.gov/bcfg2.git
 
 Change to the osx directory and type make. Your new package should be
-located at bcfg2-$VERSION.pkg (where $VERSION is that which is specified
-in setup.py).
+located at ``bcfg2-$VERSION.pkg`` (where ``$VERSION`` is that which is
+specified in ``setup.py``).
 
 RHEL / Centos / Scientific Linux
 ================================
@@ -121,7 +121,6 @@ Install the bcfg2-server and bcfg2 RPMs::
 .. _CentOS: http://www.centos.org/
 .. _Scientific Linux: http://www.scientificlinux.org/
 .. _EPEL: http://fedoraproject.org/wiki/EPEL
-.. _RPMForge: https://rpmrepo.org/RPMforge
 
 Ubuntu
 ======
