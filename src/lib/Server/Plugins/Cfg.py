@@ -10,7 +10,25 @@ import tempfile
 
 import Bcfg2.Server.Plugin
 
+try:
+    import genshi.core
+    import genshi.input
+    from genshi.template import TemplateLoader, \
+                                TextTemplate, MarkupTemplate, TemplateError
+    from genshi.template import NewTextTemplate
+    have_genshi = True
+except:
+    have_genshi = False
+
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+
+# snipped from TGenshi
+def removecomment(stream):
+    """A genshi filter that removes comments from the stream."""
+    for kind, data, pos in stream:
+        if kind is genshi.core.COMMENT:
+            continue
+        yield kind, data, pos
 
 def process_delta(data, delta):
     if not delta.specific.delta:
@@ -48,7 +66,7 @@ def process_delta(data, delta):
 class CfgMatcher:
     def __init__(self, fname):
         name = re.escape(fname)
-        self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|.G(?P<prio>\d+)_(?P<group>\S+))$' % name)
+        self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|.G(?P<prio>\d+)_(?P<group>\S+))(?P<genshi>\\.genshi)?$' % name)
         self.delta_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|\\.G(?P<prio>\d+)_(?P<group>\S+))\\.(?P<delta>(cat|diff))$' % name)
         self.cat_count = fname.count(".cat")
         self.diff_count = fname.count(".diff")
@@ -85,14 +103,34 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.bind_info_to_entry(entry, metadata)
         used = self.get_pertinent_entries(metadata)
         basefile = used.pop(0)
-        data = basefile.data
         if entry.tag == 'Path':
             entry.set('type', 'file')
-        for delta in used:
-            data = data.strip()
-            data = process_delta(data, delta)
-        if used:
-            data += '\n'
+        if basefile.name.endswith(".genshi"):
+            if not have_genshi:
+                logger.error("Cfg: Genshi is not available")
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            try:
+                template_cls = NewTextTemplate
+                loader = TemplateLoader()
+                template = loader.load(basefile.name, cls=template_cls,
+                                            encoding=self.encoding)
+                stream = template.generate( \
+                    name=entry.get('name'), metadata=metadata,
+                    path=basefile.name).filter(removecomment)
+                try:
+                    data = stream.render('text', strip_whitespace=False)
+                except TypeError:
+                    data = stream.render('text')
+            except Exception, e:
+                logger.error("Cfg: genshi exception: %s" % e)
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+        else:
+            data = basefile.data
+            for delta in used:
+                data = data.strip()
+                data = process_delta(data, delta)
+            if used:
+                data += '\n'
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
         else:
@@ -122,6 +160,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def write_update(self, specific, new_entry, log):
         if 'text' in new_entry:
             name = self.build_filename(specific)
+            if name.endswith(".genshi"):
+                logger.error("Cfg: Unable to pull data for genshi types")
+                raise PluginExecutionError
             open(name, 'w').write(new_entry['text'])
             if log:
                 logger.info("Wrote file %s" % name)
