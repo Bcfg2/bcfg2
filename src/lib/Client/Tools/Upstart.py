@@ -29,31 +29,38 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
            /etc/init/servicename.conf. All we need to do is make sure
            the service is running when it should be.
         """
+        if entry.get('parameters'):
+            params = entry.get('parameters')
+        else:
+            params = ''
+
         try:
-            output = self.cmd.run('/usr/sbin/service %s status' % \
-                                  entry.get('name'))[1][0]
+            output = self.cmd.run('/usr/sbin/service %s status %s' % \
+                            ( entry.get('name'), params ))[1][0]
         except IndexError:
             self.logger.error("Service %s not an Upstart service" % \
                               entry.get('name'))
             return False
-        try:
-            running = output.split(' ')[1].split('/')[1].startswith('running')
-            if running:
-                entry.set('current_status', 'on')
-                if entry.get('status') == 'off':
-                    status = False
-                else:
-                    status = True
-            else:
-                entry.set('current_status', 'off')
-                if entry.get('status') == 'on':
-                    status = False
-                else:
-                    status = True
-        except IndexError:
+
+        match = re.compile("%s( \(.*\))? (start|stop)/(running|waiting)" %entry.get('name') ).match( output )
+        if match == None:
             # service does not exist
             entry.set('current_status', 'off')
             status = False
+        elif match.group(3) == 'running':
+            # service is running
+            entry.set('current_status', 'on')
+            if entry.get('status') == 'off':
+                status = False
+            else:
+                status = True
+        else:
+            # service is not running
+            entry.set('current_status', 'off')
+            if entry.get('status') == 'on':
+                status = False
+            else:
+                status = True
 
         return status
 
