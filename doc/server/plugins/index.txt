@@ -98,6 +98,15 @@ Version Plugins
 
    version/*
 
+Miscellaneous Plugins
+---------------------
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   misc/*
+
 Plugin Roles (in 1.0)
 =====================
 
