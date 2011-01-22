@@ -145,7 +145,7 @@ like this:
     default. You will notice that the default behavior for apt is
     to add Recommended packages as dependencies. You can configure
     the Packages plugin to add recommended packages by adding
-    the following:
+    the following line immediately following the URL:
 
     .. versionadded:: 1.1.0
 
