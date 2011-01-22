@@ -136,7 +136,7 @@ Add DBStats to the plugins line of ``bcfg2.conf``. The resulting
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+    plugins = Base,Bundler,Cfg,...,DBStats
 
 Start/restart the Bcfg2 server::
 
@@ -160,7 +160,7 @@ then have something like this::
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,DBStats,Metadata,Packages,Probes,Rules,SSHbase
+    plugins = Base,Bundler,Cfg,...,DBStats
 
     [statistics]
     sendmailpath = /usr/lib/sendmail

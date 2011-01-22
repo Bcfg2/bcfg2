@@ -139,7 +139,7 @@ The ``bcfg2.conf`` file contains only standard plugins so far.
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,Metadata,Pkgmgr,Rules,SSHbase
+    plugins = SSHbase,Cfg,Pkgmgr,Rules,Metadata,Base,Bundler
 
     [statistics]
     sendmailpath = /usr/lib/sendmail
