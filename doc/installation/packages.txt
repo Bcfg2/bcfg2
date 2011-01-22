@@ -43,11 +43,11 @@ Building RPM packages with ``rpmbuild``
 
 While you can go about building all these things from source, this
 how to will try and meet the dependencies using packages from EPEL_.
-The *el5* package should be compatible with CentOS 5.x.
+The *el5* and the *el6* package should be compatible with CentOS 5.x.
 
 * Installation of the EPEL_ repository package ::
 
-    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-6.noarch.rpm
 
 * Now you can install the rest of the prerequisites ::
 
