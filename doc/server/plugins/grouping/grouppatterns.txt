@@ -8,8 +8,12 @@ GroupPatterns
 
 The GroupPatterns plugin is a connector that can assign clients
 group membership pased on patterns in client hostnames. Two basic
-methods are supported: regular expressions (NamePatterns) and ranges
-(NameRange). Hosts that match the specification are placed in the group
+methods are supported: 
+
+- regular expressions (NamePatterns)
+- ranges (NameRange)
+
+Hosts that match the specification are placed in the group
 or groups specified by the pattern.
 
 Setup
@@ -26,13 +30,13 @@ NamePatterns use regular expressions to match client hostnames. All
 matching clients are placed in the resulting groups. NamePatterns also
 have the ability to use regular expression matched groups to dynamically
 create group names. The first two examples below are NamePatterns. The
-first adds client hostname to both groups gp-test1 and gp-test2. The
+first adds client hostname to both groups *gp-test1* and *gp-test2*. The
 second matches the hostname as a group and places the client in a group
-called group-<hostname>.
+called *group-<hostname>*.
 
 NameRange patterns allow the use of the application of numeric ranges
-to host names. The final pattern below matches any of node1-node32 and
-places them all into the rack1 group. Dynamically generated group names
+to host names. The final pattern below matches any of *node1-node32* and
+places them all into the *rack1* group. Dynamically generated group names
 are not supported with NameRange.
 
 Examples
