@@ -40,6 +40,10 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+        path_entries = os.environ['PATH'].split(':')
+        for reqdir in ['/sbin', '/usr/sbin']:
+            if reqdir not in path_entries:
+                os.environ['PATH'] = os.environ['PATH'] + ':' + reqdir
         self.pkgcmd = '%s ' % APTGET + \
                       '-o DPkg::Options::=--force-overwrite ' + \
                       '-o DPkg::Options::=--force-confold ' + \
@@ -47,7 +51,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                       '--reinstall ' + \
                       '--force-yes '
         if not self.setup['debug']:
-             self.pkgcmd += '-q=2 '
+            self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
         self.__important__ = self.__important__ + \
                              ["%s/cache/debconf/config.dat" % var_path,
