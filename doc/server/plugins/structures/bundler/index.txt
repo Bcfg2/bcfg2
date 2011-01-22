@@ -44,7 +44,7 @@ The following is an annotated copy of a bundle:
         <Package name='openssh-askpass'/>
         <Service name='sshd'/>
         <Group name='fedora' >
-           <Group name='fc4' negate='true'>
+           <Group name='fc14' negate='true'>
              <Package name='openssh-clients'/>
            </Group>
            <Package name='openssh-server'/>
@@ -60,7 +60,7 @@ In this bundle, most of the entries are common to all systems. Clients in
 group **deb** get one extra package and service, while clients in group
 **rpm** get two extra packages and an extra service. In addition, clients
 in group **fedora** *and* group **rpm** get one extra package entries,
-unless they are not in the **fc4** group, in which case, they get an
+unless they are not in the **fc14** group, in which case, they get an
 extra package. Notice that this file doesn't describe which versions
 of these entries that clients should get, only that they should get
 them. (Admittedly, this example is slightly contrived, but demonstrates
