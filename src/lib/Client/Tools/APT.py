@@ -117,6 +117,9 @@ class APT(Bcfg2.Client.Tools.Tool):
             modlist = [os.path.realpath(filename) for filename in modlist]
             bad = [filename for filename in files if filename not in modlist]
             if bad:
+                self.logger.debug("It is suggested that you either manage these "
+                                  "files, revert the changes, or ignore false "
+                                  "failures):")
                 self.logger.info("Package %s failed validation. Bad files are:" % \
                                  entry.get('name'))
                 self.logger.info(bad)
