@@ -73,4 +73,4 @@ various linux distributions. In this case, you may want to manage the
 ``/etc/hosts`` file using Base instead of Bundler since you will not have
 to include any Bundles in your Metadata. However, you could alternatively
 have a base 'linux' group that all the clients inherit which includes a
-'linux' Bundle with the ``/etc/hosts`` configuration entry.
+*linux* Bundle with the ``/etc/hosts`` configuration entry.
