@@ -24,7 +24,7 @@ To install on CentOS or RHEL 5, run::
 Once it is installed, you can enable it by adding ``TGenshi`` to the
 generators line in ``/etc/bcfg2.conf`` on your Bcfg server. For example::
 
-    generators = SSHbase,Cfg,Pkgmgr,Svcmgr,Rules,TGenshi
+    plugins = Base,Bundler,Cfg,...,TGenshi
 
 The TGenshi plugin makes use of a Cfg-like directory structure
 located in in a TGenshi subdirectory of your repository, usually
