@@ -24,7 +24,8 @@ The role of the Bcfg2 server is rendering a client-specific target
 configuration description from a global specification. The specification
 consists of a directory structure containing data for a variety of server
 plugins. The Bcfg2 server has a plugin interface that can be used to
-interpret the configuration specification.
+interpret the configuration specification. Read on for more information
+about :ref:`server-index`.
 
 Client
 ------
