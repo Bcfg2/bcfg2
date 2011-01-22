@@ -278,10 +278,13 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         if len(args.split()) == 2:
             fname, client = args.split()
             entry = lxml.etree.Element('Path', type='file', name=fname)
-            metadata = self.build_metadata(client)
-            self.Bind(entry, metadata)
-            print(lxml.etree.tostring(entry, encoding="UTF-8", 
-                xml_declaration=True))
+            try:
+                metadata = self.build_metadata(client)
+                self.Bind(entry, metadata)
+                print(lxml.etree.tostring(entry, encoding="UTF-8", 
+                                          xml_declaration=True))
+            except:
+                print("Failed to build entry %s for host %s" % (fname, client))
         else:
             print('Usage: buildfile filename hostname')
 
