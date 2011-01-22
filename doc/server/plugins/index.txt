@@ -11,7 +11,7 @@ perform one of several tasks:
 
 #. Generating configuration inventory lists for clients
 #. Generating configuration entry contents for clients
-#. Probing client-side state (like hardware inventory, etc) -- the generic client probing mechanism is described at :ref:`server-plugins-probes-index`.
+#. Probing client-side state (like hardware inventory, etc) -- the genericclient probing mechanism is described at :ref:`server-plugins-probes-index`.
 #. Automating administrative tasks (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh key management)
 #. Generating client per-entry installation decision-lists
 
@@ -24,17 +24,17 @@ the *plugins* line in ``bcfg2.conf``.
 Default Plugins
 ===============
 
-The `Bcfg2 repository`_ has the default
-plugin list currently distributed with Bcfg2:
-http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
+The `Bcfg2 repository`_ contains the all plugin currently distributed
+with Bcfg2:
+http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins
 
-.. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/trunk/bcfg2/src/lib/Server/Plugins.
+.. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins
 
 Metadata (Grouping)
 -------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    grouping/*
@@ -46,7 +46,7 @@ Abstract Configuration (Structures)
 -----------------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    structures/bundler/index
@@ -59,7 +59,7 @@ Literal Configuration (Generators)
 ----------------------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    generators/tgenshi/index
@@ -72,7 +72,7 @@ Connector Plugins
 -----------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    connectors/*
@@ -81,7 +81,7 @@ Statistics Plugins
 ------------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    statistics/*
@@ -93,7 +93,7 @@ Version Plugins
 ---------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :glob:
 
    version/*
