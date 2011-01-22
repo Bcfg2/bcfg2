@@ -28,6 +28,7 @@
     <xsd:attribute name='supervised' type='xsd:string'/>
     <xsd:attribute name='sequence' type='xsd:string'/>
     <xsd:attribute name='target' type='xsd:string'/>
+    <xsd:attribute name='parameters' type='xsd:string'/>
   </xsd:complexType>
 
 </xsd:schema>

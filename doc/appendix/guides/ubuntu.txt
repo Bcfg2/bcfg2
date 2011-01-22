@@ -477,3 +477,19 @@ Dynamic (web) reports
 =====================
 
 See installation instructions at :ref:`server-reports-install`
+
+Upstart
+=======
+
+Upstart services are defined like this:
+
+.. code-block:: xml
+
+    <Service name="cron" status="on"  type="upstart"/>
+
+Some Upstart services require additional parameters, like network-interface and bridge-network-interface:
+
+.. code-block:: xml
+
+    <Service name="network-interface" status="on" type="upstart" parameters="INTERFACE=eth0"/>
+    <Service name="bridge-network-interface" status="on" type="upstart" parameters="INTERFACE=br0"/>
