@@ -784,10 +784,10 @@ class EntrySet:
         return cmp(x.specific.prio, y.specific.prio)
 
     def bind_info_to_entry(self, entry, metadata):
-        if not self.infoxml:
-            for key in self.metadata:
-                entry.set(key, self.metadata[key])
-        else:
+        # first set defaults from global metadata/:info
+        for key in self.metadata:
+            entry.set(key, self.metadata[key])
+        if self.infoxml:
             mdata = {}
             self.infoxml.pnode.Match(metadata, mdata)
             if 'Info' not in mdata:
