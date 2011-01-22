@@ -1,0 +1,38 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-misc-trigger:
+
+=======
+Trigger
+=======
+
+Trigger is a plugin that calls external scripts (on the server) when
+clients are configured.
+
+Setup
+=====
+
+First, add Trigger to the **plugins** line in ``bcfg2.conf``. Then do the
+following::
+
+    mkdir /var/lib/bcfg2/Trigger
+    echo "#!/bin/sh\necho $1\n" > /var/lib/bcfg2/Trigger/test.sh
+    chmod +x /var/lib/bcfg2/Trigger/test.sh
+
+Use cases
+=========
+
+#. Completing network builds (ie resetting from the build target to the
+   boot PXE target)
+#. Integration with external systems
+
+Trigger Arguments
+=================
+
+Triggers are run with a series of arguments.
+
+#. client hostname
+#. -p
+#. client profile
+#. -g
+#. group1:group2:..:groupN (all client groups)
