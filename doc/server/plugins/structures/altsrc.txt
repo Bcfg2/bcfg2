@@ -2,13 +2,13 @@
 
 .. _server-plugins-structures-altsrc:
 
-===========================
-Fun and Profit using altsrc
-===========================
+======
+altsrc
+======
 
 .. versionadded:: 0.9.5
 
-Altsrc is a generic, bcfg2-server-side mechanism for performing
+Altsrc is a generic, Bcfg2 server-side mechanism for performing
 configuration entry name remapping for the purpose of data binding.
 Altsrc can be used as a parameter for any entry type, and can be used
 in any structure, including Bundler and Base.
