@@ -28,6 +28,16 @@ import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('bcfg2-info')
 
+class mockLog(object):
+    def error(self, *args, **kwargs):
+        pass
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
 class dummyError(Exception):
     """This is just a dummy."""
     pass
@@ -55,32 +65,6 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats = pstats.Stats(trace)
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
-
-def write_config_file(outputdir, cfg):
-    """
-    Store file content of an
-    <Path type='file' ...>...</Path> entry
-    in the appropriate directory under the output directory.
-    """
-    name = cfg.get('name')
-
-    # Directory creation
-    try:
-        os.makedirs(os.path.dirname(outputdir + name))
-    except OSError, err:
-        if err.errno != errno.EEXIST:
-            raise
-    except:
-        raise
-
-    # Write config file
-    config_file = open(outputdir + name, "w")
-    try:
-        config_file.write(cfg.text)
-    # Plugin throw an exception and therefore there is no content => None
-    except:
-        raise FileNotBuilt(name)
-    config_file.close()
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
@@ -244,20 +228,17 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 print("Building client configuration failed.")
                 return
 
-            # Handle <Path type='file'> entries
-            for configfile in [cfile for cfile in
-                    client_config.xpath(".//Path[@type = 'file']")]:
-                try:
-                    write_config_file(odir, configfile)
-                except FileNotBuilt, ex:
-                    print("Warning: No file content generated for file %s!" % ex)
-                    pass
-                except Exception, ex:
-                    print("Unknown error, giving up: %s" %ex)
-                    return
+            for struct in client_config:
+                for entry in struct:
+                    if entry.tag == 'Path':
+                        entry.set('name', odir + '/' + entry.get('name'))
 
-            print("Config for %s written to %s" % (client, odir))
-
+            log = mockLog()
+            import Bcfg2.Client.Tools.POSIX
+            p = Bcfg2.Client.Tools.POSIX.POSIX(log, setup, client_config)
+            states = dict()
+            p.Inventory(states)
+            p.Install(states.keys(), states)
         else:
             print('Error: Incorrect number of parameters.')
             self.help_builddir()
