@@ -122,7 +122,7 @@ client, so if a host-specific version and generic version apply, only
 the client-specific one will be used.
 
 If you want to to detect information about the client operating system,
-the :ref:`server-plugins-misc-ohai` plugin can help.
+the :ref:`server-plugins-probes-ohai` plugin can help.
 
 
 Other examples
@@ -138,3 +138,8 @@ Other examples
    manufacturer
    producttype
    serial-console-speed
+
+.. toctree::
+   :hidden:
+
+   ohai

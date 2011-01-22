@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-misc-ohai:
+.. _server-plugins-probes-ohai:
 
 Ohai
 ====

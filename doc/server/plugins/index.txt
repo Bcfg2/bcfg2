@@ -11,8 +11,12 @@ perform one of several tasks:
 
 #. Generating configuration inventory lists for clients
 #. Generating configuration entry contents for clients
-#. Probing client-side state (like hardware inventory, etc) -- the genericclient probing mechanism is described at :ref:`server-plugins-probes-index`.
-#. Automating administrative tasks (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh key management)
+#. Probing client-side state (like hardware inventory, etc)
+   -- the generic client probing mechanism is described at
+   :ref:`server-plugins-probes-index`.
+#. Automating administrative tasks
+   (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh
+   key management)
 #. Generating client per-entry installation decision-lists
 
 Enabling Plugins
@@ -24,9 +28,8 @@ the *plugins* line in ``bcfg2.conf``.
 Default Plugins
 ===============
 
-The `Bcfg2 repository`_ contains the all plugin currently distributed
-with Bcfg2:
-http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins
+The `Bcfg2 repository`_ contains the all plugins currently distributed
+with Bcfg2.
 
 .. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins
 
@@ -121,4 +124,3 @@ More details can be found in :ref:`server-plugins-plugin-roles`
 
    plugin-roles
    probes/index
-   trigger
