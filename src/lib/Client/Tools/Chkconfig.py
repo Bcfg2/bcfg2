@@ -60,8 +60,8 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             if not(self.setup.get('dryrun')) and needs_modification:
                 self.cmd.run('/sbin/service %s %s' % (entry.get('name'),
                                                       command))
-                pstatus = self.cmd.run('/sbin/service %s status' % \
-                                       entry.get('name'))[0]
+                # service was modified, so it failed
+                pstatus = False
 
             # chkconfig/init.d service
             if entry.get('status') == 'on':
