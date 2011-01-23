@@ -9,7 +9,7 @@ bcfg2-reports \- Query reporting system for client status
 .B bcfg2-reports
 bcfg2-reports allows you to retrieve data from the database about
 clients, and the states of their current interactions. It also allows
-you to change the expired/unexpired states .
+you to change the expired/unexpired states.
 The utility runs as a standalone application. It does, however, use
 the models from /src/lib/Server/Reports/reports/models.py.
 .SH OPTIONS
@@ -21,7 +21,7 @@ Shows all hosts, including expired hosts.
 .B "\-b NAME"
 .RS
 Single-host mode \- shows bad entries from the current interaction of
-NAME
+NAME. NAME is the name of the entry.
 .RE
 .B "-c\"
 .RS
@@ -34,7 +34,7 @@ Shows only dirty hosts.
 .B "\-e NAME"
 .RS
 Single host mode \- shows extra entries from the current interaction
-of NAME
+of NAME. NAME is the name of the entry.
 .RE
 .B "\-h"
 .RS
@@ -43,23 +43,25 @@ Shows help and usage info about bcfg2-reports.
 .B "\-s NAME"
 .RS
 Single host mode \- shows bad and extra entries from the current
-interaction of NAME.
+interaction of NAME. NAME is the name of the entry.
 .RE
 .B "\-x NAME"
 .RS
-Toggles expired/unexpired state of NAME.
+Toggles expired/unexpired state of NAME. NAME is the name of the entry.
 .RE
 .B "\-\-badentry=KIND,NAME"
 .RS
 Shows only hosts whose current interaction has bad entries in of KIND
 kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
-pairs will be read from a file of name ARG1.
+pairs will be read from a file of name ARG1. KIND is the type of entry
+(Package, Path, Service, etc). NAME is the name of the entry. 
 .RE
-.B "\-\-extraentry=KIND,NAME "
+.B "\-\-extraentry=KIND,NAME"
 .RS
 Shows only hosts whose current interaction has extra entries in of KIND
 kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
-pairs will be read from a file of name ARG1.
+pairs will be read from a file of name ARG1. KIND is the type of entry
+(Package, Path, Service, etc). NAME is the name of the entry. 
 .RE
 .B "\-\-fields=ARG1,ARG2,..."
 .RS
