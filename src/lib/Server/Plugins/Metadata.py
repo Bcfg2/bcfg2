@@ -468,7 +468,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if client in self.clients:
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
-            cli[0].set('profile', profile)
+            if len(cli) > 0:
+                cli[0].set('profile', profile)
+            else:
+                """Try to find the client in included files"""
+                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
         else:
             self.logger.info("Creating new client: %s, profile %s" % \
                              (client, profile))
