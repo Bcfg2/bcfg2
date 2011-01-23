@@ -13,5 +13,5 @@ the current date and time::
 
     bcfg2-admin backup
 
-A backup is recommanded before you start using the `Samples repository`_ of
+A backup is recommended before you start using the `Samples repository`_ of
 Bcfg2.

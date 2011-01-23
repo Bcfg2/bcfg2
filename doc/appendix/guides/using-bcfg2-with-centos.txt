@@ -59,7 +59,7 @@ Build Packages from source
 
     [you@centos ~]$ cd bcfg2/redhat/
 
-* In the particular directory is a Makefile which will do the job of building the RPM packages. You can do this as root, but it's not recommanded::
+* In the particular directory is a Makefile which will do the job of building the RPM packages. You can do this as root, but it's not recommended::
 
     [you@centos redhat]$ make
 

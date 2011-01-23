@@ -71,7 +71,7 @@ The *el5* and the *el6* package should be compatible with CentOS 5.x.
 
 * In the particular directory is a ``Makefile`` which will do the job of
   building the RPM packages. You can do this as root, but it's not
-  recommanded ::
+  recommended::
 
     [you@centos redhat]$ make
 
