@@ -55,6 +55,10 @@ Build structure entries based on client statistics extra entries.
 Install configuration information into repo based on client bad
 entries.
 .RE
+.B report [init|load_stats|purge|scrub|update]
+.RS
+Interact with the dynamic reporting system.
+.RE
 .B snapshots [init|dump|query|reports]
 .RS
 Interact with the Snapshots database.
@@ -149,6 +153,28 @@ Specify the type of the entry to pull.
 .B entry-name
 .RS
 Specify the name of the entry to pull.
+.RE
+.SH REPORT OPTIONS
+.PP
+.B init
+.RS
+Initialize the database.
+.RE
+.B load_stats [-s] [-c] [-03]
+.RS
+Load statistics data.
+.RE
+.B purge
+.RS
+Purge records.
+.RE
+.B scrub [--client [n]] [--days [n]] [--expired]
+.RS
+Scrub the database for duplicate reasons and orphaned entries.
+.RE
+.B update
+.RS
+Apply any updates to the reporting database.
 .RE
 .SH SNAPSHOTS OPTIONS
 .PP
