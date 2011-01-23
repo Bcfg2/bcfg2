@@ -105,6 +105,8 @@ class TemplateFile:
                     entry.text = xmldata
                 else:
                     entry.text = unicode(xmldata, self.encoding)
+            if entry.text == '':
+                entry.set('empty', 'true')
         except TemplateError, terror:
             logger.error('Genshi template error: %s' % terror)
             raise Bcfg2.Server.Plugin.PluginExecutionError
