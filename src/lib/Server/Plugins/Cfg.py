@@ -121,6 +121,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     data = stream.render('text', strip_whitespace=False)
                 except TypeError:
                     data = stream.render('text')
+                if data == '':
+                    entry.set('empty', 'true')
             except Exception, e:
                 logger.error("Cfg: genshi exception: %s" % e)
                 raise Bcfg2.Server.Plugin.PluginExecutionError
