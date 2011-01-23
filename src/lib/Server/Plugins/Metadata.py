@@ -473,6 +473,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             else:
                 """Try to find the client in included files"""
                 self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
+                raise MetadataConsistencyError
         else:
             self.logger.info("Creating new client: %s, profile %s" % \
                              (client, profile))
