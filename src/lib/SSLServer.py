@@ -262,10 +262,12 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                     self.logger.warning("Connection dropped from %s" % self.client_address[0])
                 elif str(type) == 'socket.error' and msg[0] == 104:
                     self.logger.warning("Connection reset by peer: %s" % self.client_address[0])
+                elif str(type) == 'ssl.SSLError':
+                    self.logger.warning("SSLError handling client %s: %s" % \
+                        (self.client_address[0], msg))
                 else:
                     self.logger.error("Error sending response (%s): %s" % \
                         (type, msg)) 
-                    raise
 
     def finish(self):
         # shut down the connection
