@@ -59,6 +59,11 @@ for line in fileinput.input('solaris/Makefile', inplace=1):
     if line.startswith('VERS='):
         line = line.replace(line, 'VERS=%s-1\n' % version)
     sys.stdout.write(line)
+# update the version in reports
+for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html', inplace=1):
+    if 'Bcfg2 Version' in line:
+        line = line.replace(line, '    <span>Bcfg2 Version %s</span>\n' % version)
+    sys.stdout.write(line)
 
 # tag the release
 #FIXME: do this using python-dulwich
