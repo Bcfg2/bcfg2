@@ -15,9 +15,17 @@ Prerequisites
 -------------
 
 * sqlite3
-* pysqlite2
+* pysqlite2 (if using python 2.4)
 * `Django <http://www.djangoproject.com>`_
-* mod-python
+* mod-wsgi
+
+.. warning::
+
+    There is a known issue when using an sqlite database on an ext4
+    filesystem. You will want to remount the filesystem without barriers
+    (-o barrier=0) in order to speed up the operations of the database.
+    For more information, please see
+    http://phoronix-test-suite.com/pipermail/trondheim-pts_phoronix-test-suite.com/2009-March/000095.html.
 
 Install
 -------
@@ -28,6 +36,13 @@ if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
 database supported by Django can be used. If you are not using sqlite
 (the default choice), please see the :ref:`alternative-databases`
 section below.
+
+.. warning::
+
+    If you are using an sqlite database, the directory containing the
+    database file will need to be writable by the web server. The reason
+    for this is that sqlite will create another file for its journal
+    when it tries to update the database file.
 
 .. note::
 
@@ -56,73 +71,41 @@ Apache configuration for web-based reports
     by adding a **web_prefix** setting in the [statistics] section of
     your ``bcfg2.conf``.
 
-An example site config is included below for the vhost "reports.mcs.anl.gov"::
+An example site config is included below::
 
-    <VirtualHost reports.mcs.anl.gov>
-            ServerAdmin webmaster@mcs.anl.gov
-            ServerName reports.mcs.anl.gov
-            DocumentRoot /var/www/reports
-            <Directory /var/www/reports>
-                    Order deny,allow
-                    Deny from all
-                    Allow from localhost #you may want to change this
-                    AllowOverride None
-            </Directory>
+    <IfModule mod_wsgi.c>
+      #
+      # If the root is changed update the static content alias as well
+      #
+      WSGIScriptAlias /bcfg2 "/usr/share/bcfg2/reports.wsgi"
 
-            # Possible values include: debug, info, notice, warn, error, crit,
-            # alert, emerg.
-            LogLevel warn
+      WSGISocketPrefix run
+      WSGIDaemonProcess Bcfg2.Server.Reports processes=1 threads=10
+      WSGIProcessGroup Bcfg2.Server.Reports
 
-            ServerSignature Off
+      #
+      # Manually set this to override the static content
+      #
+      #SetEnv bcfg2.media_url /bcfg2/site_media/
 
-            # Stop TRACE/TRACK vulnerability
-            <IfModule mod_rewrite.c>
-                    RewriteEngine on
-                    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
-                    RewriteRule .* - [F]
-            </IfModule>
-    <Location "/">
-            SetHandler python-program
-            PythonHandler django.core.handlers.modpython
-            SetEnv DJANGO_SETTINGS_MODULE Bcfg2.Server.Reports.settings
-            PythonDebug On
-    </Location>
-    <Location "/site_media/">
-            SetHandler None
-    </Location>
-    </VirtualHost>
-
-The first three lines of this configuration must be customized per site.
-
-The ``bcfg2-tarball/reports/site_media/`` directory needs to be copied
-to ``/var/www/reports/site_media/`` It could live anywhere; as long as
-the contents are accessible on the virtual host at ``/site_media/``.
-
-At this point you should be able to point your web browser to the
-virtualhost you created and see the new reports
-
-Example WSGI configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-entry.wsgi::
-
-    import os, sys
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Reports.settings'
-    import django.core.handlers.wsgi
-    application = django.core.handlers.wsgi.WSGIHandler()
-
-Apache conf::
-
-    Alias /bcfg2reports/site_media "/path/to/site_media"
-    <Directory /path/to>
-        Order deny,allow
-        Allow from all
+      #
+      # This should have the same prefix as WSGIScriptAlias
+      #
+      Alias "/bcfg2/site_media/" "/usr/share/bcfg2/site_media/"
+      <Directory "/usr/share/bcfg2/site_media/">
+        Options None
         AllowOverride None
-    </Directory>
-    # If Python is installed in a non-standard prefix:
-    #WSGIPythonHome /python/prefix
-    #WSGIPythonPath /python/prefix/lib/python2.6/site-packages
-    WSGIScriptAlias /bcfg2reports "/another/path/to/entry.wsgi"
+        order deny,allow
+        deny from all
+        allow from 127.0.0.1
+      </Directory>
+    </IfModule>
+
+This configuration is suitable for use with the default installation
+from an RPM or deb package.
+
+At this point you should be able to point your web browser to
+http://localhost/bcfg2 and see the new reports.
 
 .. _alternative-databases:
 
@@ -170,13 +153,6 @@ Planned improvements include
 * Accounts, customized displays for each admin. And privacy of config data.
 * Config browsing capabilities; to look at your config in an interesting way.
 * Fixing all the known bugs from below.
-
-Unfortunately with all the improvements, there are a few less exciting
-elements about the new reporting system. The new reporting system
-moves away from static pages and towards a real web application, which
-causes mainly problems with dependencies and makes installation more
-difficult. This should become less of a problem over time as we develop
-a better installation process for a web application.
 
 Usage
 =====
