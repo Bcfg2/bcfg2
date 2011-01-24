@@ -285,7 +285,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 continue
             else:
                 break
-        tree.write(client_tree)
+        tree.write(client_tree, pretty_print=True)
         fcntl.lockf(fd, fcntl.LOCK_UN)
         client_tree.close()
 
@@ -307,7 +307,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 continue
             else:
                 break
-        tree.write(client_tree)
+        tree.write(client_tree, pretty_print=True)
         fcntl.lockf(fd, fcntl.LOCK_UN)
         client_tree.close()
 
@@ -490,14 +490,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             raise MetadataRuntimeError
         # prep data
         dataroot = self.clientdata_original.getroot()
-        if hasattr(dataroot, 'iter'):
-            items = dataroot.iter()
-        else:
-            items = dataroot.getchildren()
-        for item in items:
-            # no items have text data of any sort
-            item.tail = None
-            item.text = None
         newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
 
         fd = datafile.fileno()
