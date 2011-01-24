@@ -46,12 +46,13 @@ Validate your repository
 
 Validation can be performed using the following command::
 
-    ``bcfg2-repo-validate -v``
+    bcfg2-repo-validate -v
 
 Run the bcfg2 client
 ====================
 
 ::
+
     bcfg2 -vqn
 
 You will see the incorrect entries for the ssh files::
@@ -85,7 +86,7 @@ Now, we pull the ssh host key data for the client out of the uploaded
 stats and insert it as host-specific copies of these files in
 ``/var/lib/bcfg2/SSHBase``.::
 
-    for key in ssh_host_dsa_key ssh_host_key; do 
+    for key in ssh_host_rsa_key ssh_host_dsa_key ssh_host_key; do
         sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key
         sudo bcfg2-admin pull <clientname> Path /etc/ssh/${key}.pub
     done
@@ -99,6 +100,7 @@ Run the bcfg2 client (again)
 ============================
 
 ::
+
     bcfg2 -vqn
 
 This time, we will only see 1 incorrect entry.::
@@ -119,7 +121,7 @@ This time, we will only see 1 incorrect entry.::
     Total managed entries:  7
     Unmanaged entries:      649
 
-Now, the only wrong entry is the ssh_known_hosts file!, so go ahead
+Now, the only wrong entry is the ssh_known_hosts file, so go ahead
 and install it::
 
     bcfg2 -vqI
