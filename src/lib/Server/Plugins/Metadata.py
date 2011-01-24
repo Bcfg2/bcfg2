@@ -9,6 +9,7 @@ import os
 import os.path
 import socket
 import time
+import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 
 class MetadataConsistencyError(Exception):
@@ -83,6 +84,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             except:
                 print("Unable to add file monitor for groups.xml or clients.xml")
                 raise Bcfg2.Server.Plugin.PluginInitError
+   
+        self.pseudo_monitor = isinstance(core.fam, Bcfg2.Server.FileMonitor.Pseudo)
         self.states = {}
         if watch_clients:
             self.states = {"groups.xml":False, "clients.xml":False}
@@ -465,6 +468,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if profile not in self.public:
             self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
+        if self.pseudo_monitor:
+            # if we aren't using fam reload the clients.xml file in case its changed
+            try:
+                self.clientdata_original = lxml.etree.parse(self.data + "/clients.xml")
+            except Exception, e:
+                self.logger.error("Metadata: Failed to relad clients.xml. %s" % e)
+                raise MetadataConsistencyError
         if client in self.clients:
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
@@ -736,6 +746,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         client = meta.hostname
         if client in self.auth and self.auth[client] == 'bootstrap':
             self.logger.info("Asserting client %s auth mode to cert" % client)
+            if self.pseudo_monitor:
+                # if we aren't using fam reload the clients.xml file in case its changed
+                try:
+                    self.clientdata_original = lxml.etree.parse(self.data + "/clients.xml")
+                except Exception, e:
+                    self.logger.error("Metadata: Failed to relad clients.xml. %s" % e)
+                    raise MetadataConsistencyError
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' \
                                                  % (client))
             cli[0].set('auth', 'cert')
