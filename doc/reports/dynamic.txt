@@ -147,13 +147,6 @@ configuration. Specific features in the new system include:
   <reports-node-dropdown>`, rather than only having one huge page with
   too much information.
 
-Planned improvements include
-============================
-
-* Accounts, customized displays for each admin. And privacy of config data.
-* Config browsing capabilities; to look at your config in an interesting way.
-* Fixing all the known bugs from below.
-
 Usage
 =====
 
