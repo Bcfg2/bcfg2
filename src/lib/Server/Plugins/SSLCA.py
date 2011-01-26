@@ -104,6 +104,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             key = self.build_key(filename, entry, metadata)
             open(self.data + filename, 'w').write(key)
             entry.text = key
+            self.entries[filename] = self.__child__("%s%s" % (self.data, filename))
+            self.entries[filename].HandleEvent()
         else:
             entry.text = self.entries[filename].data
 
@@ -144,14 +146,22 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             self.core.Bind(e, metadata)
 
         # check if we have a valid hostfile
-        if filename in self.entries.keys() and self.verify_cert(filename, entry):
+        if filename in self.entries.keys() and self.verify_cert(filename, key_filename, entry):
             entry.text = self.entries[filename].data
         else:
             cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
+            self.entries[filename] = self.__child__("%s%s" % (self.data, filename))
+            self.entries[filename].HandleEvent()
             entry.text = cert
 
-    def verify_cert(self, filename, entry):
+    def verify_cert(self, filename, key_filename, entry):
+        if self.verify_cert_against_ca(filename, entry):
+            if self.verify_cert_against_key(filename, key_filename):
+                return True
+        return False
+
+    def verify_cert_against_ca(self, filename, entry):
         """
         check that a certificate validates against the ca cert,
         and that it has not expired.
@@ -163,6 +173,21 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         if res == cert + ": OK\n":
             return True
         return False
+
+    def verify_cert_against_key(self, filename, key_filename):
+        """
+        check that a certificate validates against its private key.
+        """
+        cert = self.data + filename
+        key = self.data + key_filename
+        cmd = "openssl x509 -noout -modulus -in %s | openssl md5" % cert
+        cert_md5 = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
+        cmd = "openssl rsa -noout -modulus -in %s | openssl md5" % key
+        key_md5 = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
+        if cert_md5 == key_md5:
+            return True
+        return False
+
 
     def build_cert(self, key_filename, entry, metadata):
         """
