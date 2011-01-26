@@ -36,8 +36,8 @@ Currently, no access methods are defined for this data, but as we
 formulate common use cases, we will add them to the !PropertyFile class
 as methods. This will simplify templates.
 
-Accessing Properties contest from TGenshi
-=========================================
+Accessing Properties contents from TGenshi
+==========================================
 
 Access contents of ``Properties/auth.xml``::
 
