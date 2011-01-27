@@ -473,6 +473,14 @@ Now we run the client and see there are no more unmanaged entries! ::
 
     All entries correct.
 
+.. warning::
+
+    This basic bundle is created mainly for the purposes of getting you
+    to a completely managed client. It is recommended that you create
+    bundles for appropriate services due to the way bundle updates are
+    managed. Please see :ref:`unsorted-writing_specification` for more
+    details.
+
 Dynamic (web) reports
 =====================
 

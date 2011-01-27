@@ -540,7 +540,7 @@ entries to our bundle.
             <Service type='chkconfig' status='on' name='syslog'/>
     </Rules>
 
-Now we run the client and see there are no more unmanaged entries! ::
+Now we run the client and see there are no more unmanaged entries!::
 
     [root@centos ~]# bcfg2 -veqn
     Running probe groups
@@ -565,6 +565,14 @@ Now we run the client and see there are no more unmanaged entries! ::
     Incorrect entries:      0
     Total managed entries:  205
     Unmanaged entries:      0
+
+.. warning::
+
+    This basic bundle is created mainly for the purposes of getting you
+    to a completely managed client. It is recommended that you create
+    bundles for appropriate services due to the way bundle updates are
+    managed. Please see :ref:`unsorted-writing_specification` for more
+    details.
 
 Dynamic (web) reports
 =====================
