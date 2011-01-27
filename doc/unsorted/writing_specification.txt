@@ -203,34 +203,59 @@ that clients should get, only that they should get them. (Admittedly,
 this example is slightly contrived, but demonstrates how group entries
 can be used in bundles)
 
-|| '' '''Group ''' '' || '' '''Entry ''' '' ||
-|| all  || /etc/ssh/ssh_host_dsa_key  ||
-|| all  || /etc/ssh/ssh_host_rsa_key  ||
-|| all  || /etc/ssh/ssh_host_dsa_key.pub  ||
-|| all  || /etc/ssh/ssh_host_rsa_key.pub  ||
-|| all  || /etc/ssh/ssh_host_key  ||
-|| all  || /etc/ssh/ssh_host_key.pub  ||
-|| all  || /etc/ssh/sshd_config  ||
-|| all  || /etc/ssh/ssh_config  ||
-|| all  || /etc/ssh/ssh_known_hosts  ||
-|| rpm  || Package openssh  ||
-|| rpm  || Package openssh-askpass  ||
-|| rpm  || Service sshd  ||
-|| rpm and fedora  || Package openssh-server  ||
-|| rpm and fedora and not fc4  || Package openssh-clients  ||
-|| deb  || Package ssh  ||
-|| deb  || Service ssh ||
++----------------+-------------------------------+
+| Group          | Entry                         |
++================+===============================+
+| all            | /etc/ssh/ssh_host_dsa_key     |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_host_rsa_key     |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_host_dsa_key.pub |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_host_rsa_key.pub |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_host_key         |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_host_key.pub     |
++----------------+-------------------------------+
+| all            | /etc/ssh/sshd_config          |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_config           |
++----------------+-------------------------------+
+| all            | /etc/ssh/ssh_known_hosts      |
++----------------+-------------------------------+
+| rpm            | Package openssh               |
++----------------+-------------------------------+
+| rpm            | Package openssh-askpass       |
++----------------+-------------------------------+
+| rpm            | Service sshd                  |
++----------------+-------------------------------+
+| rpm and fedora | Package openssh-server        |
++----------------+-------------------------------+
+| rpm and fedora | Package openssh-clients       |
+| and not fc4    |                               |
++----------------+-------------------------------+
+| deb            | Package ssh                   |
++----------------+-------------------------------+
+| deb            | Service ssh                   |
++----------------+-------------------------------+
 
 Bundle Tag
 ^^^^^^^^^^
 
 The Bundle Tag has the following possible attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name || The name of the bundle || String ||
-|| version || Bundle schema version || String ||
-|| origin || URL of master version (for common repo) || String ||
-|| revision || Master version control revision || String ||
++----------+-----------------------------------------+--------+
+| Name     | Description                             | Values |
++==========+=========================================+========+
+| name     | The name of the bundle                  | String |
++----------+-----------------------------------------+--------+
+| version  | Bundle schema version                   | String |
++----------+-----------------------------------------+--------+
+| origin   | URL of master version (for common repo) | String |
++----------+-----------------------------------------+--------+
+| revision | Master version control revision         | String |
++----------+-----------------------------------------+--------+
 
 As mentioned above the Configuration Entity Tags may only have the name
 attribute in Bundle definitions.
@@ -241,9 +266,14 @@ Abstract Group Tag
 In the Abstract Configuration plugins (Base and Bundle) the Group Tag
 may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name || Name of group. || String ||
-|| negate || Negate the group association (is not a member of) || (True|False*) ||
++--------+------------------------------+---------------+
+| Name   | Description                  | Values        |
++========+==============================+===============+
+| name   | Name of group.               | String        |
++--------+------------------------------+---------------+
+| negate | Negate the group association | (True|False*) |
+|        | (is not a member of)         |               |
++--------+------------------------------+---------------+
 
 An abstract group may contain any of the Configuration Entity types and other groups.
 
@@ -301,9 +331,14 @@ Abstract Group Tag
 In the Abstract Configuration plugins (Base and Bundle) the Group Tag
 may have the following attributes:
 
-|| '' '''Name''' '' || '' '''Description''' '' || '' '''Values''' '' ||
-|| name || Name of group. || String ||
-|| negate || Negate the group association (is not a member of) || (True|False*) ||
++--------+------------------------------+---------------+
+| Name   | Description                  | Values        |
++========+==============================+===============+
+| name   | Name of group.               | String        |
++--------+------------------------------+---------------+
+| negate | Negate the group association | (True|False*) |
+|        | (is not a member of)         |               |
++--------+------------------------------+---------------+
 
 An abstract group may contain any of the Configuration Entity types and
 other groups.
@@ -342,11 +377,3 @@ two common methods:
 * file name encoding (Cfg, TCheetah, SSHBase)
 
 Details are included on each plugin's page.
-
-Generators
-----------
-
-Each of the generators is covered on their own page.
-
-|| '' '''Plugin''' '' || '' '''Description''' '' ||
-|| [wiki:Plugins/Actions Actions] || Action entries are commands that are executed either before bundle installation, after bundle installation or both. ||
