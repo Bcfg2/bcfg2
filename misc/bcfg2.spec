@@ -26,6 +26,17 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
+BuildRequires:    %{lxmldep}
+
+%if 0%{?rhel} <= 5
+BuildRequires: python-sphinx10
+# the python-sphinx10 package doesn't set sys.path correctly, so we
+# have to do it for them
+%define pythonpath %(rpm -ql python-sphinx10 | grep '\.egg$')
+%else
+BuildRequires: python-sphinx >= 0.6
+%endif
+
 Requires:         %{lxmldep} >= 0.9
 
 %description
@@ -93,6 +104,13 @@ systems are constantly changing; if required in your environment,
 Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
+%package -n bcfg2-doc
+Summary:          Configuration management system documentation
+Group:            Documentation
+
+%description -n bcfg2-doc
+Configuration management system documentation
+
 %package -n bcfg2-web
 Version: %{version}
 Summary: Bcfg2 Web Reporting Interface
@@ -138,6 +156,10 @@ deployment strategies.
 
 %build
 %{__python}%{pythonversion} setup.py build
+%{__python}%{pythonversion} setup.py build_dtddoc
+
+%{?pythonpath: export PYTHONPATH="%{pythonpath}"}
+%{__python}%{pythonversion} setup.py build_sphinx
 
 %install
 %{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES --prefix=/usr
@@ -148,6 +170,8 @@ deployment strategies.
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.daily
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
 %{__install} -d %{buildroot}%{_prefix}/lib/bcfg2
+mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+
 %{__mv} %{buildroot}/usr/bin/bcfg2* %{buildroot}%{_sbindir}
 %{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
@@ -156,6 +180,9 @@ deployment strategies.
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
 %{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
 %{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
+
+mv build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
@@ -206,6 +233,10 @@ deployment strategies.
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
 
+%files doc
+%defattr(0644,root,root,-)
+%doc %{_defaultdocdir}/bcfg2-doc-%{version}
+
 %files -n bcfg2-web
 %defattr(-,root,root,-)
 
@@ -215,6 +246,10 @@ deployment strategies.
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %changelog
+%changelog
+* Thu Jan 27 2011 Chris St. Pierre <stpierreca@ornl.gov> 1.2.0pre1-0.0
+- Added -doc sub-package
+
 * Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
 - Changed source0 in order that it works with spectool 
 
