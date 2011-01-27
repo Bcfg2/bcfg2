@@ -15,14 +15,9 @@ list below.
 
 * `Plugins/Snapshots`
 * `PrecompiledPackages`
-* `Publications`
-* `QuickStart2`
-* `QuickStart3`
 * `SchemaEvolution`
 * `SecurityDevPlan`
 * `ServerSideOverview`
-* `UpgradeTesting`
-* `VimSnippetSupport`
 
 .. toctree::
    :maxdepth: 2
