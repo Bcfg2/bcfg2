@@ -14,32 +14,185 @@
 
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Package' type='StructureEntry'/>
-      <xsd:element name='Path' type='PathEntry'/>
-      <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='Action' type='StructureEntry'/>
-      <xsd:element name='BoundPackage' type='PackageType'/>
-      <xsd:element name='BoundPath' type='BoundPathEntry'/>
-      <xsd:element name='BoundService' type='ServiceType'/>
-      <xsd:element name='BoundAction' type='ActionType'/>
-      <xsd:element name='Group' type='GroupType'/>
+      <xsd:element name='Package' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Package entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Path' type='PathEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Path entry.  The entry will
+            either be handled by Cfg, TGenshi, or another
+            DirectoryBacked plugin; or handled by Rules, in which case
+            the full specification of this entry will be included in
+            Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Service' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Service entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Action' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of an Action entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPackage' type='PackageType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a software package to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPath' type='BoundPathEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a filesystem path to be handled
+            by the POSIX driver.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundService' type='ServiceType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a system service to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundAction' type='ActionType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a command to be run.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Group' type='GroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Group tags only apply to clients that are
+            members of that group (or vice-versa; see #element_negate
+            below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='negate' />
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>The group name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='negate'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of this group; i.e., entries within this
+          tag are only used on clients that are not members of the
+          group
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:element name='Bundle'>
+      <xsd:annotation>
+        <xsd:documentation>
+          A bundle describes a group of inter-dependent configuration
+          entries, such as the combination of packages, configuration
+          files, and service activations that comprise typical Unix
+          daemons. Bundles are used to add groups of configuration
+          entries to the inventory of client configurations, as
+          opposed to describing particular versions of those
+          entries. For example, a bundle could say that the
+          configuration file ``/etc/passwd`` should be included in a
+          configuration, but will not describe the particular version
+          of ``/etc/passwd`` that a given client will receive.
+        </xsd:documentation>
+      </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Package' type='StructureEntry'/>
-        <xsd:element name='Path' type='PathEntry'/>
-        <xsd:element name='Service' type='StructureEntry'/>
-        <xsd:element name='Action' type='StructureEntry'/>       
-        <xsd:element name='BoundPackage' type='PackageType'/>
-        <xsd:element name='BoundPath' type='BoundPathEntry'/>
-        <xsd:element name='BoundService' type='ServiceType'/>
-        <xsd:element name='BoundAction' type='ActionType'/>
-        <xsd:element name='Group' type='GroupType'/>
+        <xsd:element name='Package' type='StructureEntry'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Abstract implementation of a Package entry.  The full
+              specification will be included in Rules.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='Path' type='PathEntry'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Abstract implementation of a Path entry.  The entry will
+              either be handled by Cfg, TGenshi, or another
+              DirectoryBacked plugin; or handled by Rules, in which case
+              the full specification of this entry will be included in
+              Rules.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='Service' type='StructureEntry'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Abstract implementation of a Service entry.  The full
+              specification will be included in Rules.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='Action' type='StructureEntry'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Abstract implementation of an Action entry.  The full
+              specification will be included in Rules.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='BoundPackage' type='PackageType'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Fully bound description of a software package to be managed.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='BoundPath' type='BoundPathEntry'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Fully bound description of a filesystem path to be handled
+              by the POSIX driver.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='BoundService' type='ServiceType'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Fully bound description of a system service to be managed.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='BoundAction' type='ActionType'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Fully bound description of a command to be run.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='Group' type='GroupType'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Elements within Group tags only apply to clients that are
+              members of that group
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='description' />
       <xsd:attribute type='xsd:string' name='name'/>

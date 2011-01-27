@@ -26,6 +26,17 @@ BuildRequires: python-setuptools-devel
 BuildRequires: python-setuptools
 %endif
 
+%if 0%{?rhel} <= 5
+BuildRequires: python-sphinx10
+# the python-sphinx10 package doesn't set sys.path correctly, so we
+# have to do it for them
+%define pythonpath %(rpm -ql python-sphinx10 | grep '\.egg$')
+%else
+BuildRequires: python-sphinx >= 0.6
+%endif
+
+BuildRequires:    python-lxml
+
 %if "%{py_ver}" == "2.4"
 Requires:         python-elementtree
 %else if "%{py_ver}" < "2.5"
@@ -81,6 +92,13 @@ Requires(postun): /sbin/service
 %description server
 Configuration management server
 
+%package doc
+Summary:          Configuration management system documentation
+Group:            Documentation
+
+%description doc
+Configuration management system documentation
+
 %prep
 %setup -q -n %{name}-%{version}-%{release}
 
@@ -104,6 +122,10 @@ done
 
 %build
 %{__python} -c 'import setuptools; execfile("setup.py")' build
+%{__python} -c 'import setuptools; execfile("setup.py")' build_dtddoc
+
+%{?pythonpath: export PYTHONPATH="%{pythonpath}"}
+%{__python} -c 'import setuptools; execfile("setup.py")' build_sphinx
 
 %install
 rm -rf %{buildroot}
@@ -117,6 +139,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_libexecdir}
 mkdir -p %{buildroot}%{_var}/lib/bcfg2
 mkdir -p %{buildroot}%{_var}/cache/bcfg2
+mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
 
 mv %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 
@@ -127,6 +150,9 @@ install -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/b
 install -m 755 tools/bcfg2-cron %{buildroot}%{_libexecdir}/bcfg2-cron
 
 install -m 644 debian/bcfg2.default %{buildroot}%{_sysconfdir}/sysconfig/bcfg2
+
+mv build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 touch %{buildroot}%{_sysconfdir}/bcfg2.conf
 touch %{buildroot}%{_sysconfdir}/bcfg2.key
@@ -216,7 +242,14 @@ fi
 
 %dir %{_var}/lib/bcfg2
 
+%files doc
+%defattr(0644,root,root,-)
+%doc %{_defaultdocdir}/bcfg2-doc-%{version}
+
 %changelog
+* Thu Jan 27 2011 Chris St. Pierre <stpierreca@ornl.gov> 1.2.0pre1-0.0
+- Added -doc sub-package
+
 * Wed Jun 15 2009 Sol Jerome <solj@ices.utexas.edu> 1.0pre4-0.1
 - Remove python-cheetah dependency
 
