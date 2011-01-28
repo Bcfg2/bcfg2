@@ -482,8 +482,19 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 cli[0].set('profile', profile)
             else:
                 """Try to find the client in included files"""
-                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
-                raise MetadataConsistencyError
+                for included in self.extra['clients.xml']:
+                    try:
+                        xdata = lxml.etree.parse("%s/%s" % (self.data, included))
+                        cli = xdata.xpath('.//Client[@name="%s"]' % (client))
+                        if len(cli) > 0:
+                            cli[0].set('profile', profile)
+                            self.write_back_xml(included, xdata)
+                            break
+                    except lxml.etree.XMLSyntaxError:
+                        self.logger.error('Failed to parse %s' % (included))
+                else:
+                    self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
+                    raise MetadataConsistencyError
         else:
             self.logger.info("Creating new client: %s, profile %s" % \
                              (client, profile))
@@ -503,13 +514,18 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def write_back_clients(self):
         """Write changes to client.xml back to disk."""
+        self.write_back_xml('clients.xml', self.clientdata_original)
+
+    def write_back_xml(self, fname, xmltree):
+        """Write changes to xml back to disk."""
+        tmpfile = "%s.new" % fname
         try:
-            datafile = open("%s/%s" % (self.data, 'clients.xml.new'), 'w')
+            datafile = open("%s/%s" % (self.data, tmpfile), 'w')
         except IOError:
-            self.logger.error("Failed to write clients.xml.new")
+            self.logger.error("Failed to write %s" % tmpfile)
             raise MetadataRuntimeError
         # prep data
-        dataroot = self.clientdata_original.getroot()
+        dataroot = xmltree.getroot()
         newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
 
         fd = datafile.fileno()
@@ -519,20 +535,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             datafile.write(newcontents)
         except:
             fcntl.lockf(fd, fcntl.LOCK_UN)
-            self.logger.error("Metadata: Failed to write new clients data to clients.xml.new", exc_info=1)
-            os.unlink("%s/%s" % (self.data, "clients.xml.new"))
+            self.logger.error("Metadata: Failed to write new xml data to %s" % tmpfile, exc_info=1)
+            os.unlink("%s/%s" % (self.data, tmpfile))
             raise MetadataRuntimeError
         datafile.close()
 
         # check if clients.xml is a symlink
-        clientsxml = "%s/%s" % (self.data, 'clients.xml')
-        if os.path.islink(clientsxml):
-            clientsxml = os.readlink(clientsxml)
+        xmlfile = "%s/%s" % (self.data, fname)
+        if os.path.islink(xmlfile):
+            xmlfile = os.readlink(xmlfile)
 
         try:
-            os.rename("%s/%s" % (self.data, 'clients.xml.new'), clientsxml)
+            os.rename("%s/%s" % (self.data, tmpfile), xmlfile)
         except:
-            self.logger.error("Metadata: Failed to rename clients.xml.new")
+            self.logger.error("Metadata: Failed to rename %s" % tmpfile)
             raise MetadataRuntimeError
 
     def locked(self, fd):
