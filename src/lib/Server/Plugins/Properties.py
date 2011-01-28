@@ -31,7 +31,12 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.store = PropDirectoryBacked(self.data, core.fam)
+        try:
+            self.store = PropDirectoryBacked(self.data, core.fam)
+        except OSError, e:
+            Bcfg2.Server.Plugin.logger.error("Error while creating Properties "
+                                             "store: %s %s" % (e.strerror,e.filename))
+            raise Bcfg2.Server.Plugin.PluginInitError
 
     def get_additional_data(self, _):
         return copy.deepcopy(self.store.entries)
