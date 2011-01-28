@@ -767,12 +767,28 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 try:
                     self.clientdata_original = lxml.etree.parse(self.data + "/clients.xml")
                 except Exception, e:
-                    self.logger.error("Metadata: Failed to relad clients.xml. %s" % e)
+                    self.logger.error("Metadata: Failed to read clients.xml. %s" % e)
                     raise MetadataConsistencyError
             cli = self.clientdata_original.xpath('.//Client[@name="%s"]' \
                                                  % (client))
-            cli[0].set('auth', 'cert')
-            self.write_back_clients()
+            if len(cli) > 0:
+                cli[0].set('auth', 'cert')
+                self.write_back_clients()
+            else:
+                """Try to find the client in included files"""
+                for included in self.extra['clients.xml']:
+                    try:
+                        xdata = lxml.etree.parse("%s/%s" % (self.data, included))
+                        cli = xdata.xpath('.//Client[@name="%s"]' % (client))
+                        if len(cli) > 0:
+                            cli[0].set('auth', 'cert')
+                            self.write_back_xml(included, xdata)
+                            break
+                    except lxml.etree.XMLSyntaxError:
+                        self.logger.error('Failed to parse %s' % (included))
+                else:
+                    self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
+                    raise MetadataConsistencyError
 
     def viz(self, hosts, bundles, key, colors):
         """Admin mode viz support."""
