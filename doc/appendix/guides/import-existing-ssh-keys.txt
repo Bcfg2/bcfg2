@@ -88,7 +88,7 @@ stats and insert it as host-specific copies of these files in
 
     for key in ssh_host_rsa_key ssh_host_dsa_key ssh_host_key; do
         sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key
-        sudo bcfg2-admin pull <clientname> Path /etc/ssh/${key}.pub
+        sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key.pub
     done
 
 This for loop pulls data that was collected by the bcfg2 client out of
