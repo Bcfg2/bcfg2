@@ -33,8 +33,9 @@ BCFGVER = $(shell /usr/bin/grep version ../setup.py | cut -d\" -f2)
 BCFGVER1 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f1)
 BCFGVER2 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f2)
 BCFGVER3 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f3)
+BCFGVER3I = $(shell /usr/bin/python -c "import sys; print sys.argv[1][0:1]" ${BCFGVER3})
 MAJOR = ${BCFGVER1}
-MINOR = ${BCFGVER2}${BCFGVER3}
+MINOR = ${BCFGVER2}${BCFGVER3I}
 
 default: clean client
 
