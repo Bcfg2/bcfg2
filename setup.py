@@ -5,7 +5,6 @@ from distutils.core import Command
 from fnmatch import fnmatch
 from glob import glob
 import os.path
-import lxml.etree
 
 class BuildDTDDoc (Command):
     """Build DTD documentation"""
@@ -108,7 +107,11 @@ try:
 except ImportError:
     pass
 
-cmdclass['build_dtddoc'] = BuildDTDDoc
+try:
+    import lxml.etree
+    cmdclass['build_dtddoc'] = BuildDTDDoc
+except ImportError:
+    pass
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
