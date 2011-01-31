@@ -12,6 +12,14 @@ import time
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 
+def locked(fd):
+    """Aquire a lock on a file"""
+    try:
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        return True
+    return False
+
 class MetadataConsistencyError(Exception):
     """This error gets raised when metadata is internally inconsistent."""
     pass
@@ -19,6 +27,134 @@ class MetadataConsistencyError(Exception):
 class MetadataRuntimeError(Exception):
     """This error is raised when the metadata engine is called prior to reading enough data."""
     pass
+
+class XMLMetadataConfig(object):
+    """Handles xml config files and all XInclude statements"""
+    def __init__(self, metadata, watch_clients, basefile):
+        self.metadata = metadata
+        self.basefile = basefile
+        self.should_monitor = watch_clients
+        self.extras = []
+        self.data = None
+        self.basedata = None
+        self.basedir = metadata.data
+        self.logger = metadata.logger
+        self.pseudo_monitor = isinstance(metadata.core.fam, Bcfg2.Server.FileMonitor.Pseudo)
+
+    @property
+    def xdata(self):
+        if not self.data:
+            raise MetadataRuntimeError
+        return self.data
+
+    @property
+    def base_xdata(self):
+        if not self.basedata:
+            raise MetadataRuntimeError
+        return self.basedata
+
+    def add_monitor(self, fname):
+        """Add a fam monitor for an included file"""
+        if self.should_monitor:
+            self.metadata.core.fam.AddMonitor("%s/%s" % (self.basedir, fname), self.metadata)
+            self.extras.append(fname)
+
+    def load_xml(self):
+        """Load changes from XML"""
+        try:
+            xdata = lxml.etree.parse("%s/%s" % (self.basedir, self.basefile))
+        except lxml.etree.XMLSyntaxError:
+            self.logger.error('Failed to parse %s' % (self.basefile))
+            return
+        self.basedata = copy.deepcopy(xdata)
+        included = [ent.get('href') for ent in \
+                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        if included:
+            for name in included:
+                if name not in self.extras:
+                    self.add_monitor(name)
+            try:
+                xdata.xinclude()
+            except lxml.etree.XIncludeError:
+                self.logger.error("Failed to process XInclude for file %s" % self.basefile)
+        self.data = xdata
+
+    def write(self):
+        """Write changes to xml back to disk."""
+        self.write_xml("%s/%s" % (self.basedir, self.basefile), self.basedata)
+
+    def write_xml(self, fname, xmltree):
+        """Write changes to xml back to disk."""
+        tmpfile = "%s.new" % fname
+        try:
+            datafile = open("%s" % tmpfile, 'w')
+        except IOError, e:
+            self.logger.error("Failed to write %s: %s" % (tmpfile, e))
+            raise MetadataRuntimeError
+        # prep data
+        dataroot = xmltree.getroot()
+        newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
+
+        fd = datafile.fileno()
+        while locked(fd) == True:
+            pass
+        try:
+            datafile.write(newcontents)
+        except:
+            fcntl.lockf(fd, fcntl.LOCK_UN)
+            self.logger.error("Metadata: Failed to write new xml data to %s" % tmpfile, exc_info=1)
+            os.unlink("%s" % tmpfile)
+            raise MetadataRuntimeError
+        datafile.close()
+
+        # check if clients.xml is a symlink
+        xmlfile = "%s" % fname
+        if os.path.islink(xmlfile):
+            xmlfile = os.readlink(xmlfile)
+
+        try:
+            os.rename("%s" % tmpfile, xmlfile)
+        except:
+            self.logger.error("Metadata: Failed to rename %s" % tmpfile)
+            raise MetadataRuntimeError
+
+    def find_xml_for_xpath(self, xpath):
+        """Find and load xml data containing the xpath query"""
+        if self.pseudo_monitor:
+            # Reload xml if we don't have a real monitor
+            self.load_xml()
+        cli = self.basedata.xpath(xpath)
+        if len(cli) > 0:
+            return {'filename': "%s/%s" % (self.basedir, self.basefile),
+                    'xmltree': self.basedata,
+                    'xquery': cli}
+        else:
+            """Try to find the data in included files"""
+            for included in self.extras:
+                try:
+                    xdata = lxml.etree.parse("%s/%s" % (self.basedir, included))
+                    cli = xdata.xpath(xpath)
+                    if len(cli) > 0:
+                        return {'filename': "%s/%s" % (self.basedir, included),
+                                'xmltree': xdata,
+                                'xquery': cli}
+                except lxml.etree.XMLSyntaxError:
+                    self.logger.error('Failed to parse %s' % (included))
+        return {}
+
+    def HandleEvent(self, event):
+        """Handle fam events"""
+        filename = event.filename.split('/')[-1]
+        if filename in self.extras:
+            if event.code2str() == 'exists':
+                return False
+        elif filename != self.basefile:
+            return False
+        if event.code2str() == 'endExist':
+            return False
+        self.load_xml()
+        return True
+
 
 class ClientMetadata(object):
     """This object contains client metadata."""
@@ -85,7 +221,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 print("Unable to add file monitor for groups.xml or clients.xml")
                 raise Bcfg2.Server.Plugin.PluginInitError
    
-        self.pseudo_monitor = isinstance(core.fam, Bcfg2.Server.FileMonitor.Pseudo)
+        self.clients_xml = XMLMetadataConfig(self, watch_clients, 'clients.xml')
+        self.groups_xml = XMLMetadataConfig(self, watch_clients, 'groups.xml')
         self.states = {}
         if watch_clients:
             self.states = {"groups.xml":False, "clients.xml":False}
@@ -105,8 +242,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.floating = []
         self.passwords = {}
         self.session_cache = {}
-        self.clientdata = None
-        self.clientdata_original = None
         self.default = None
         self.pdirty = False
         self.extra = {'groups.xml':[], 'clients.xml':[]}
@@ -316,36 +451,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def HandleEvent(self, event):
         """Handle update events for data files."""
-        filename = event.filename.split('/')[-1]
-        if filename in ['groups.xml', 'clients.xml']:
-            dest = filename
-        elif filename in reduce(lambda x, y:x+y, self.extra.values()):
-            if event.code2str() == 'exists':
-                return
-            dest = [key for key, value in self.extra.iteritems() if filename in value][0]
-        else:
-            return
-        if event.code2str() == 'endExist':
-            return
-        try:
-            xdata = lxml.etree.parse("%s/%s" % (self.data, dest))
-        except lxml.etree.XMLSyntaxError:
-            self.logger.error('Failed to parse %s' % (dest))
-            return
-        included = [ent.get('href') for ent in \
-                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
-        xdata_original = copy.deepcopy(xdata)
-        if included:
-            for name in included:
-                if name not in self.extra[dest]:
-                    self.core.fam.AddMonitor("%s/%s" % (self.data, name), self)
-                    self.extra[dest].append(name)
-            try:
-                xdata.xinclude()
-            except lxml.etree.XIncludeError:
-                self.logger.error("Failed to process XInclude for file %s" % dest)
-
-        if dest == 'clients.xml':
+        if self.clients_xml.HandleEvent(event):
+            xdata = self.clients_xml.xdata
             self.clients = {}
             self.aliases = {}
             self.raliases = {}
@@ -354,8 +461,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.floating = []
             self.addresses = {}
             self.raddresses = {}
-            self.clientdata_original = xdata_original
-            self.clientdata = xdata
             for client in xdata.findall('.//Client'):
                 clname = client.get('name').lower()
                 if 'address' in client.attrib:
@@ -393,7 +498,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 self.raliases[clname] = set()
                 [self.raliases[clname].add(alias.get('name')) for alias \
                  in client.findall('Alias')]
-        elif dest == 'groups.xml':
+            self.states['clients.xml'] = True
+        elif self.groups_xml.HandleEvent(event):
+            xdata = self.groups_xml.xdata
             self.public = []
             self.private = []
             self.profiles = []
@@ -443,7 +550,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                                   group_cat[self.categories[ggg]],
                                                   ggg))
                         [self.groups[group][0].add(bund) for bund in bundles]
-        self.states[dest] = True
+            self.states['groups.xml'] = True
         if False not in self.states.values():
             # check that all client groups are real and complete
             real = self.groups.keys()
@@ -468,95 +575,30 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if profile not in self.public:
             self.logger.error("Failed to set client %s to private group %s" % (client, profile))
             raise MetadataConsistencyError
-        if self.pseudo_monitor:
-            # if we aren't using fam reload the clients.xml file in case its changed
-            try:
-                self.clientdata_original = lxml.etree.parse(self.data + "/clients.xml")
-            except Exception, e:
-                self.logger.error("Metadata: Failed to relad clients.xml. %s" % e)
-                raise MetadataConsistencyError
         if client in self.clients:
             self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
-            cli = self.clientdata_original.xpath('.//Client[@name="%s"]' % (client))
-            if len(cli) > 0:
-                cli[0].set('profile', profile)
-            else:
-                """Try to find the client in included files"""
-                for included in self.extra['clients.xml']:
-                    try:
-                        xdata = lxml.etree.parse("%s/%s" % (self.data, included))
-                        cli = xdata.xpath('.//Client[@name="%s"]' % (client))
-                        if len(cli) > 0:
-                            cli[0].set('profile', profile)
-                            self.write_back_xml(included, xdata)
-                            break
-                    except lxml.etree.XMLSyntaxError:
-                        self.logger.error('Failed to parse %s' % (included))
-                else:
-                    self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
-                    raise MetadataConsistencyError
+            xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (client))
+            if not xdict:
+                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
+                raise MetadataConsistencyError
+            xdict['xquery'][0].set('profile', profile)
+            self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
         else:
             self.logger.info("Creating new client: %s, profile %s" % \
                              (client, profile))
             if addresspair in self.session_cache:
                 # we are working with a uuid'd client
-                lxml.etree.SubElement(self.clientdata_original.getroot(),
+                lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
                                       'Client',
                                       name=self.session_cache[addresspair][1],
                                       uuid=client, profile=profile,
                                       address=addresspair[0])
             else:
-                lxml.etree.SubElement(self.clientdata_original.getroot(),
+                lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
                                       'Client', name=client,
                                       profile=profile)
         self.clients[client] = profile
-        self.write_back_clients()
-
-    def write_back_clients(self):
-        """Write changes to client.xml back to disk."""
-        self.write_back_xml('clients.xml', self.clientdata_original)
-
-    def write_back_xml(self, fname, xmltree):
-        """Write changes to xml back to disk."""
-        tmpfile = "%s.new" % fname
-        try:
-            datafile = open("%s/%s" % (self.data, tmpfile), 'w')
-        except IOError:
-            self.logger.error("Failed to write %s" % tmpfile)
-            raise MetadataRuntimeError
-        # prep data
-        dataroot = xmltree.getroot()
-        newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
-
-        fd = datafile.fileno()
-        while self.locked(fd) == True:
-            pass
-        try:
-            datafile.write(newcontents)
-        except:
-            fcntl.lockf(fd, fcntl.LOCK_UN)
-            self.logger.error("Metadata: Failed to write new xml data to %s" % tmpfile, exc_info=1)
-            os.unlink("%s/%s" % (self.data, tmpfile))
-            raise MetadataRuntimeError
-        datafile.close()
-
-        # check if clients.xml is a symlink
-        xmlfile = "%s/%s" % (self.data, fname)
-        if os.path.islink(xmlfile):
-            xmlfile = os.readlink(xmlfile)
-
-        try:
-            os.rename("%s/%s" % (self.data, tmpfile), xmlfile)
-        except:
-            self.logger.error("Metadata: Failed to rename %s" % tmpfile)
-            raise MetadataRuntimeError
-
-    def locked(self, fd):
-        try:
-            fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
-            return True
-        return False
+        self.clients_xml.write()
 
     def resolve_client(self, addresspair):
         """Lookup address locally or in DNS to get a hostname."""
@@ -762,33 +804,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         client = meta.hostname
         if client in self.auth and self.auth[client] == 'bootstrap':
             self.logger.info("Asserting client %s auth mode to cert" % client)
-            if self.pseudo_monitor:
-                # if we aren't using fam reload the clients.xml file in case its changed
-                try:
-                    self.clientdata_original = lxml.etree.parse(self.data + "/clients.xml")
-                except Exception, e:
-                    self.logger.error("Metadata: Failed to read clients.xml. %s" % e)
-                    raise MetadataConsistencyError
-            cli = self.clientdata_original.xpath('.//Client[@name="%s"]' \
-                                                 % (client))
-            if len(cli) > 0:
-                cli[0].set('auth', 'cert')
-                self.write_back_clients()
-            else:
-                """Try to find the client in included files"""
-                for included in self.extra['clients.xml']:
-                    try:
-                        xdata = lxml.etree.parse("%s/%s" % (self.data, included))
-                        cli = xdata.xpath('.//Client[@name="%s"]' % (client))
-                        if len(cli) > 0:
-                            cli[0].set('auth', 'cert')
-                            self.write_back_xml(included, xdata)
-                            break
-                    except lxml.etree.XMLSyntaxError:
-                        self.logger.error('Failed to parse %s' % (included))
-                else:
-                    self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
-                    raise MetadataConsistencyError
+            xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (client))
+            if not xdict:
+                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
+                raise MetadataConsistencyError
+            xdict['xquery'][0].set('auth', 'cert')
+            self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
+
 
     def viz(self, hosts, bundles, key, colors):
         """Admin mode viz support."""
