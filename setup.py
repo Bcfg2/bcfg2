@@ -5,7 +5,12 @@ from distutils.core import Command
 from fnmatch import fnmatch
 from glob import glob
 import os.path
-import lxml.etree
+
+try:
+    import lxml.etree
+except ImportError:
+    pass
+
 
 class BuildDTDDoc (Command):
     """Build DTD documentation"""
