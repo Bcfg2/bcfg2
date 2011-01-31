@@ -274,6 +274,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         # specific will always be host specific
         filename = "%s/%s.H_%s" % (self.data, entry['name'].split('/')[-1],
                                    specific.hostname)
-        open(filename, 'w').write(entry['text'])
-        if log:
-            print "Wrote file %s" % filename
+        try:
+            open(filename, 'w').write(entry['text'])
+            if log:
+                print "Wrote file %s" % filename
+        except KeyError:
+            self.logger.error("Failed to pull %s. This file does not currently "
+                              "exist on the client" % entry.get('name'))
