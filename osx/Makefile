@@ -46,7 +46,6 @@ install:
 	       --root="osx/${PKGROOT}" \
 	       --install-lib="${SITELIBDIR}" \
 	       --install-data="${DATADIR}"
-	#/usr/sbin/chown -R root:admin "${PKGROOT}"
 
 prepare: install
 	mkdir ${PKGTMP}
