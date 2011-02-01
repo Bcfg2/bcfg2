@@ -404,50 +404,32 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def add_client(self, client_name, attribs):
         """Add client to clients.xml."""
-        tree = lxml.etree.parse(self.data + "/clients.xml")
-        root = tree.getroot()
-        element = lxml.etree.Element("Client", name=client_name)
-        for key, val in attribs.iteritems():
-            element.set(key, val)
-        node = self.search_client(client_name, tree)
+        node = self.search_client(client_name, self.clients_xml.xdata)
         if node != None:
             self.logger.error("Client \"%s\" already exists" % (client_name))
             raise MetadataConsistencyError
-        root.append(element)
-        client_tree = open(self.data + "/clients.xml","w")
-        fd = client_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(client_tree, pretty_print=True)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        client_tree.close()
+
+        element = lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
+                                      "Client", name=client_name)
+        for key, val in attribs.iteritems():
+            element.set(key, val)
+        self.clients_xml.write()
 
     def update_client(self, client_name, attribs):
         """Update a clients attributes."""
-        tree = lxml.etree.parse(self.data + "/clients.xml")
-        root = tree.getroot()
-        node = self.search_client(client_name, tree)
+        node = self.search_client(client_name, self.clients_xml.xdata)
         if node == None:
-            self.logger.error("Client \"%s\" not found" % (client_name))
+            self.logger.error("Client \"%s\" does not exist" % (client_name))
             raise MetadataConsistencyError
-        node.attrib.update(attribs)
-        client_tree = open(self.data + "/clients.xml","w")
-        fd = client_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(client_tree, pretty_print=True)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        client_tree.close()
+
+        xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (node.get('name')))
+        if not xdict:
+            self.logger.error("Unexpected error finding client")
+            raise MetadataConsistencyError
+
+        node = xdict['xquery'][0]
+        [node.set(key, value) for key, value in attribs.items()]
+        self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
     def HandleEvent(self, event):
         """Handle update events for data files."""
