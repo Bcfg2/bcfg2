@@ -1,14 +1,15 @@
 #!/usr/sfw/bin/gmake
 
+PYTHON="/opt/csw/bin/python"
 VERS=1.2.0pre1-1
-PYVERSION := $(shell /opt/csw/bin/python -c "import sys; print sys.version[0:3]")
+PYVERSION := $(shell $(PYTHON) -c "import sys; print sys.version[0:3]")
 
 default: clean package
 
 package:
 	-mkdir tmp tmp/bcfg2-server tmp/bcfg2
-	-cd ../ && /opt/csw/bin/python setup.py install --prefix=$(PWD)
-	-cat bin/bcfg2 | sed -e 's!/usr/bin/python!/opt/csw/bin/python!' > bin/bcfg2.new && mv bin/bcfg2.new bin/bcfg2
+	-cd ../ && $(PYTHON) setup.py install --prefix=$(PWD)
+	-cat bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > bin/bcfg2.new && mv bin/bcfg2.new bin/bcfg2
 	# Set python version to whichever version is installed
 	-cat prototype.bcfg2 | sed -e 's!PYVERSION!python$(PYVERSION)!' > prototype.bcfg2.fixed
 	-cat prototype.bcfg2-server | sed -e 's!PYVERSION!python$(PYVERSION)!' > prototype.bcfg2-server.fixed

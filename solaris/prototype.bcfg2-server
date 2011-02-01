@@ -73,7 +73,6 @@ d none share/bcfg2 0755 bin bin
 d none share/bcfg2/schemas 0755 bin bin
 f none share/bcfg2/schemas/packages.xsd 0444 bin bin
 f none share/bcfg2/schemas/metadata.xsd 0444 bin bin
-f none share/bcfg2/schemas/translation.xsd 0444 bin bin
 f none share/bcfg2/schemas/base.xsd 0444 bin bin
 f none share/bcfg2/schemas/services.xsd 0444 bin bin
 f none share/bcfg2/schemas/decisions.xsd 0444 bin bin
