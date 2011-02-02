@@ -59,6 +59,14 @@ for line in fileinput.input('solaris/Makefile', inplace=1):
     if line.startswith('VERS='):
         line = line.replace(line, 'VERS=%s-1\n' % version)
     sys.stdout.write(line)
+for line in fileinput.input('solaris/pkginfo.bcfg2', inplace=1):
+    if line.startswith('VERSION='):
+        line = line.replace(line, 'VERSION=%s\n' % version)
+    sys.stdout.write(line)
+for line in fileinput.input('solaris/pkginfo.bcfg2-server', inplace=1):
+    if line.startswith('VERSION='):
+        line = line.replace(line, 'VERSION=%s\n' % version)
+    sys.stdout.write(line)
 
 # tag the release
 #FIXME: do this using python-dulwich
