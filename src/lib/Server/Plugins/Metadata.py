@@ -280,72 +280,45 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def add_group(self, group_name, attribs):
         """Add group to groups.xml."""
-        tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = tree.getroot()
-        element = lxml.etree.Element("Group", name=group_name)
-        for key, val in attribs.iteritems():
-            element.set(key, val)
-        node = self.search_group(group_name, tree)
+
+        node = self.search_group(group_name, self.groups_xml.xdata)
         if node != None:
             self.logger.error("Group \"%s\" already exists" % (group_name))
             raise MetadataConsistencyError
-        root.append(element)
-        group_tree = open(self.data + "/groups.xml","w")
-        fd = group_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(group_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        group_tree.close()
+
+        element = lxml.etree.SubElement(self.groups_xml.base_xdata.getroot(),
+                                      "group", name=group_name)
+        for key, val in attribs.iteritems():
+            element.set(key, val)
+        self.groups_xml.write()
 
     def update_group(self, group_name, attribs):
         """Update a groups attributes."""
-        tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = tree.getroot()
-        node = self.search_group(group_name, tree)
-        if node == None:
-            self.logger.error("Group \"%s\" not found" % (group_name))
+        node = self.search_group(group_name, self.groups_xml.xdata)
+        if node != None:
+            self.logger.error("Group \"%s\" already exists" % (group_name))
             raise MetadataConsistencyError
-        node.attrib.update(attribs)
-        group_tree = open(self.data + "/groups.xml","w")
-        fd = group_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(group_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        group_tree.close()
+        xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
+        if not xdict:
+            self.logger.error("Unexpected error finding group")
+            raise MetadataConsistencyError
+
+        for key, val in attribs.iteritems():
+            xdict['xquery'][0].set(key, val)
+        self.groups_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
     def remove_group(self, group_name):
         """Remove a group."""
-        tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = tree.getroot()
-        node = self.search_group(group_name, tree)
-        if node == None:
-            self.logger.error("Client \"%s\" not found" % (group_name))
+        node = self.search_group(group_name, self.groups_xml.xdata)
+        if node != None:
+            self.logger.error("Group \"%s\" already exists" % (group_name))
             raise MetadataConsistencyError
-        root.remove(node)
-        group_tree = open(self.data + "/groups.xml","w")
-        fd = group_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(group_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        group_tree.close()
+        xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
+        if not xdict:
+            self.logger.error("Unexpected error finding group")
+            raise MetadataConsistencyError
+        xdict['xmltree'].remove(xdict['xquery'][0])
+        self.groups_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
     def add_bundle(self, bundle_name):
         """Add bundle to groups.xml."""
