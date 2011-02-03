@@ -52,7 +52,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         start = time.time()
         for i in [1, 2, 3]:
             try:
-                Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clientdata,
+                Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clients_xml.xdata,
                                                              container,
                                                              0,
                                                              logger,
