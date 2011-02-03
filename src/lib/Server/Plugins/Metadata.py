@@ -287,7 +287,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             raise MetadataConsistencyError
 
         element = lxml.etree.SubElement(self.groups_xml.base_xdata.getroot(),
-                                      "group", name=group_name)
+                                      "Group", name=group_name)
         for key, val in attribs.iteritems():
             element.set(key, val)
         self.groups_xml.write()
@@ -295,8 +295,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def update_group(self, group_name, attribs):
         """Update a groups attributes."""
         node = self.search_group(group_name, self.groups_xml.xdata)
-        if node != None:
-            self.logger.error("Group \"%s\" already exists" % (group_name))
+        if node == None:
+            self.logger.error("Group \"%s\" does not exist" % (group_name))
             raise MetadataConsistencyError
         xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
         if not xdict:
@@ -310,14 +310,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     def remove_group(self, group_name):
         """Remove a group."""
         node = self.search_group(group_name, self.groups_xml.xdata)
-        if node != None:
-            self.logger.error("Group \"%s\" already exists" % (group_name))
+        if node == None:
+            self.logger.error("Group \"%s\" does not exist" % (group_name))
             raise MetadataConsistencyError
         xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
         if not xdict:
             self.logger.error("Unexpected error finding group")
             raise MetadataConsistencyError
-        xdict['xmltree'].remove(xdict['xquery'][0])
+        xdict['xquery'][0].getparent().remove(xdict['xquery'][0])
         self.groups_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
     def add_bundle(self, bundle_name):
