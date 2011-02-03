@@ -117,6 +117,20 @@ All metadata processing can be disabled as well:
 
 .. _packages-exampleusage:
 
+Blacklisting faulty dependencies
+--------------------------------
+
+If you encounter an issue with faulty dependency resolution due to
+Packages, please file a bug report so that we can fix the problem in
+future releases. In the meantime, you can work around this issue by
+blacklisting the offending Package in your Sources. The blacklist
+element should immediately follow the Component section of your source
+and should look like the following:
+
+.. code-block:: xml
+
+    <Blacklist>unwanted-packagename</Blacklist>
+
 Example usage
 =============
 
