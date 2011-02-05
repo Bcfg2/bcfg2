@@ -75,10 +75,10 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         top = lxml.etree.Element("Probed")
         for client, probed in sorted(self.probedata.items()):
             cx = lxml.etree.SubElement(top, 'Client', name=client)
-            for probe in probed:
+            for probe in sorted(probed):
                 lxml.etree.SubElement(cx, 'Probe', name=probe,
                                       value=self.probedata[client][probe])
-            for group in self.cgroups[client]:
+            for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(cx, "Group", name=group)
         data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True,
                                    pretty_print='true')
