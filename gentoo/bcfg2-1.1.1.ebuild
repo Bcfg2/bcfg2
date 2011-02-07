@@ -11,7 +11,7 @@ RESTRICT_PYTHON_ABIS="2.4 2.5 3.*"
 inherit distutils
 
 DESCRIPTION="Bcfg2 is a configuration management tool."
-HOMEPAGE="http://trac.mcs.anl.gov/projects/bcfg2"
+HOMEPAGE="http://bcfg2.org"
 
 # handle the "pre" case
 MY_P="${P/_/}"

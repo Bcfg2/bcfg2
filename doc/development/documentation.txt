@@ -13,7 +13,7 @@ There are two parts of documentation in the Bcfg2 project:
 
 The wiki
 --------
-.. _Wiki: http://trac.mcs.anl.gov/projects/bcfg2/wiki
+.. _Wiki: http://bcfg2.org
 .. _Trac: http://trac.edgewall.org/
 .. _OpenID: https://openid.org/
 .. _MCS: http://www.mcs.anl.gov/

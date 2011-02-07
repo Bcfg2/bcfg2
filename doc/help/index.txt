@@ -26,7 +26,7 @@ active.
 
 .. _IRC logs: http://colabti.org/irclogger/irclogger_logs/bcfg2
 .. _Bcfg2 mailing list archives: http://trac.mcs.anl.gov/projects/bcfg2/wiki/MailingList
-.. _Trac ticket tracker: http://trac.mcs.anl.gov/projects/bcfg2/wiki
+.. _Trac ticket tracker: http://bcfg2.org
 
 Report A Bug
 ============
