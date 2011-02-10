@@ -41,14 +41,14 @@ default: clean client
 
 install:
 	echo "Installing Bcfg2 to ${PKGROOT}"
-	mkdir ${PKGROOT}
+	mkdir -p ${PKGROOT}
 	cd ../ && /usr/bin/python setup.py install \
 	       --root="osx/${PKGROOT}" \
 	       --install-lib="${SITELIBDIR}" \
 	       --install-data="${DATADIR}"
 
 prepare: install
-	mkdir ${PKGTMP}
+	mkdir -p ${PKGTMP}
 	cp ${PROTO_PLIST} ${PKGTMP}
 	sed -i '' "s/{SHORTVERSION}/${BCFGVER}/g" "${PKGTMP}/${PROTO_PLIST}"
 	sed -i '' "s/{MAJORVERSION}/${MAJOR}/g" "${PKGTMP}/${PROTO_PLIST}"
