@@ -94,7 +94,7 @@ if __name__ == '__main__':
         'hardlink': ['name', 'to'],
         'symlink': ['name', 'to'],
         'ignore': ['name'],
-        'nonexist': ['name'],
+        'nonexistent': ['name'],
         'permissions': ['name', 'owner', 'group', 'perms']}
     for rfile in rules_list:
         try:

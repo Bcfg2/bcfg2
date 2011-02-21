@@ -251,14 +251,17 @@ hardlink
 nonexistent
 ^^^^^^^^^^^
 
-+------+--------------------+-------------+
-| Name | Description        | Values      |
-+======+====================+=============+
-| name | Name of the        | String      |
-|      | (nonexistent) file |             |
-+------+--------------------+-------------+
-| type | Type of file       | nonexistent |
-+------+--------------------+-------------+
++-----------+--------------------+-------------+
+| Name      | Description        | Values      |
++===========+====================+=============+
+| name      | Name of the        | String      |
+|           | (nonexistent) file |             |
++-----------+--------------------+-------------+
+| type      | Type of file       | nonexistent |
++-----------+--------------------+-------------+
+| recursive | Recursively remove | true        |
+|           | directory contents |             |
++-----------+--------------------+-------------+
 
 permissions
 ^^^^^^^^^^^
