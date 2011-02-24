@@ -358,7 +358,12 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         for po in packages:
             d = {}
             for i in ['name', 'epoch', 'version', 'release', 'arch']:
-                d[i] = getattr(po, i)
+                if i == 'arch' and getattr(po, i) is None:
+                    d[i] = 'noarch'
+                elif i == 'epoch' and getattr(po, i) is None:
+                    d[i] = '0'
+                else:
+                    d[i] = getattr(po, i)
             self.installed.setdefault(po.name, []).append(d)
 
     def VerifyPackage(self, entry, modlist, pinned_version=None):
