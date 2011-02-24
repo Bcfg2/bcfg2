@@ -119,7 +119,7 @@ Service Tag
 +------------+--------------------------+---------------------------------------+
 | Name       | Description              | Values                                |
 +============+==========================+=======================================+
-| mode       | Per Service Mode (New in | (manual|default|supervised|custom)    |
+| mode       | Per Service Mode (New in | (manual|default|supervised)           |
 |            | 1.0)                     |                                       |
 +------------+--------------------------+---------------------------------------+
 | name       | Service Name             | String                                |
@@ -129,10 +129,8 @@ Service Tag
 |            | off).                    |                                       |
 +------------+--------------------------+---------------------------------------+
 | target     | Service command for      | String                                |
-|            | restart, modified        |                                       |
-|            | targets require          |                                       |
-|            | mode="custom"            |                                       |
-|            | (default: restart)       |                                       |
+|            | restart (default:        |                                       |
+|            | restart)                 |                                       |
 +------------+--------------------------+---------------------------------------+
 | type       | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |
 |            | client to manage this    |                                       |
@@ -164,11 +162,6 @@ Service mode descriptions
 
   * default and ensure service is running (or stopped) when verification is performed
   * deprecates supervised='true'
-
-* custom
-
-  * set non-default service command for restart (use in conjunction with
-    target attribute)
 
 Client Tag
 ----------
