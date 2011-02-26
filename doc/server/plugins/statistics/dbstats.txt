@@ -12,4 +12,4 @@ DBStats can be enabled by adding DBStats to the plugins line in
     plugins = Base,Bundler,Cfg,...,DBStats
 
 For more information on how to use DBStats to setup reporting, see
-:ref:`server-reports-dynamic`.
+:ref:`reports-dynamic`.

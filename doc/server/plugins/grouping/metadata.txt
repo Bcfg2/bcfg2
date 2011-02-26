@@ -105,7 +105,8 @@ Additionally, the following properties can be specified:
 |          | resolution.                            |                |
 +----------+----------------------------------------+----------------+
 
-For detailed information on client authentication see :ref:`authentication`
+For detailed information on client authentication see
+:ref:`appendix-guides-authentication`
 
 Metadata/groups.xml
 ===================

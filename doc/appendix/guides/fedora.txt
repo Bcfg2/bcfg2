@@ -252,9 +252,8 @@ Add a probe
 
 The next step for the client will be to have the proper
 arch group membership. For this, we will make use of the
-:ref:`server-plugins-grouping-dynamic_groups` capabilities of
-the Probes plugin. Add **Probes** to your plugins line in ``bcfg2.conf``
-and create the Probe:
+:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
+**Probes** to your plugins line in ``bcfg2.conf`` and create the Probe:
 
 .. code-block:: sh
 
