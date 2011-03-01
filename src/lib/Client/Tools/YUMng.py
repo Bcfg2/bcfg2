@@ -527,7 +527,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 self.logger.debug("It is suggested that you either manage "
                                   "these files, revert the changes, or ignore "
-                                  "false failures):")
+                                  "false failures:")
                 self.logger.debug("  Verify Problems:")
                 for fn, probs in stat['verify'].items():
                     self.logger.debug("    %s" % fn)
