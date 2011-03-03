@@ -335,9 +335,7 @@ class SvcTool(Tool):
 
     def restart_service(self, service):
         self.logger.debug('Restarting service %s' % service.get('name'))
-        restart_target = 'restart'
-        if service.get('mode', 'default') == 'custom':
-            restart_target = service.get('target', 'restart')
+        restart_target = service.get('target', 'restart')
         return self.cmd.run(self.get_svc_command(service, restart_target))[0]
 
     def check_service(self, service):
@@ -353,7 +351,7 @@ class SvcTool(Tool):
             if entry.get('mode', 'default') == 'manual':
                 continue
             # need to handle servicemode = (build|default)
-            # need to handle mode = (default|supervised|custom)
+            # need to handle mode = (default|supervised)
             if entry.get('status') == 'on':
                 if self.setup['servicemode'] == 'build':
                     rc = self.stop_service(entry)

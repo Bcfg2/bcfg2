@@ -87,7 +87,7 @@ necessary for the Path type specified.
 |             |                      | applies to only |                          |
 |             |                      | YUMng)          |                          |
 +-------------+----------------------+-----------------+--------------------------+
-| nonexistent | New                  | Specify a path  | name                     |
+| nonexistent | New                  | Specify a path  | name, recursive          |
 |             |                      | that should not |                          |
 |             |                      | exist           |                          |
 +-------------+----------------------+-----------------+--------------------------+

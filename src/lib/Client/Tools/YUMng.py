@@ -358,7 +358,12 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         for po in packages:
             d = {}
             for i in ['name', 'epoch', 'version', 'release', 'arch']:
-                d[i] = getattr(po, i)
+                if i == 'arch' and getattr(po, i) is None:
+                    d[i] = 'noarch'
+                elif i == 'epoch' and getattr(po, i) is None:
+                    d[i] = '0'
+                else:
+                    d[i] = getattr(po, i)
             self.installed.setdefault(po.name, []).append(d)
 
     def VerifyPackage(self, entry, modlist, pinned_version=None):
@@ -530,7 +535,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 self.logger.debug("It is suggested that you either manage "
                                   "these files, revert the changes, or ignore "
-                                  "false failures):")
+                                  "false failures:")
                 self.logger.debug("  Verify Problems:")
                 for fn, probs in stat['verify'].items():
                     self.logger.debug("    %s" % fn)

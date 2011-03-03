@@ -201,7 +201,7 @@ should look something like this
 
 The last thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
-:ref:`server-plugins-grouping-dynamic_groups` capabilities of the Probes plugin. Add
+:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
 Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 
 .. code-block:: sh
@@ -484,7 +484,7 @@ Now we run the client and see there are no more unmanaged entries! ::
 Dynamic (web) reports
 =====================
 
-See installation instructions at :ref:`server-reports-install`
+See installation instructions at :ref:`appendix-guides-web-reports-install`
 
 Upstart
 =======

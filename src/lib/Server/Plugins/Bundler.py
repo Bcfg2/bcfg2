@@ -15,17 +15,22 @@ try:
 except:
     have_genshi = False
 
+
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
+
     def get_xml_value(self, metadata):
         bundlename = self.name.split('/')[-1][:-4]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
         [bundle.append(copy.deepcopy(item)) for item in self.Match(metadata)]
         return bundle
 
+
 class Bundler(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure,
               Bcfg2.Server.Plugin.XMLDirectoryBacked):
-    """The bundler creates dependent clauses based on the bundle/translation scheme from Bcfg1."""
+    """The bundler creates dependent clauses based on the
+       bundle/translation scheme from Bcfg1.
+    """
     name = 'Bundler'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -37,14 +42,26 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         self.encoding = core.encoding
         self.__child__ = self.template_dispatch
         try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
+                                                            self.data,
+                                                            self.core.fam)
         except OSError:
             self.logger.error("Failed to load Bundle repository")
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def template_dispatch(self, name):
+        bundle = lxml.etree.parse(name)
+        nsmap = bundle.getroot().nsmap
         if name.endswith('.xml'):
-            return BundleFile(name)
+            if have_genshi and \
+               (nsmap == {'py': 'http://genshi.edgewall.org/'}):
+                # allow for genshi bundles with .xml extensions
+                spec = Bcfg2.Server.Plugin.Specificity()
+                return Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile(name,
+                                                                        spec,
+                                                                        self.encoding)
+            else:
+                return BundleFile(name)
         elif name.endswith('.genshi'):
             if have_genshi:
                 spec = Bcfg2.Server.Plugin.Specificity()

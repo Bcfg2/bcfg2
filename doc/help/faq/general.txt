@@ -17,7 +17,7 @@ cubic feet of gas.
 
 Bcfg2 should run on any POSIX compatible operating system, however direct
 support for an operating system's package and service formats are limited
-by the currently available :ref:`client-tools-index` (although new client
+by the currently available :ref:`client-tools` (although new client
 tools are pretty easy to add). The following is an incomplete but more
 exact list of platforms on which Bcfg2 works.
 

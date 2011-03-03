@@ -14,7 +14,7 @@ management. The POSIX tool also handles file system and permissions/groups
 operations.
 
 To write your own tool driver, to handle a new packaging format, or new
-service architecture see :ref:`development-index-writingtooldrivers`
+service architecture see :ref:`development-client-driver`
 
 When the Bcfg2 client is run, it attempts to instantiate each of these
 drivers. The succeeding list of drivers are printed as a debug message

@@ -105,13 +105,16 @@ how group entries can be used in bundles)
 Genshi templates
 ================
 
-Genshi templates are used by adding a Genshi xml-style template to the
-Bundler directory with a ``.genshi`` file extension. Version 0.4 or newer
-of genshi is required.
+Genshi xml templates can be specified one of two ways:
 
-.. important:: The ``.genshi`` file extension is required in order for the
-               server to know that the Bundle should be rendered using
-               Genshi.
+1. Add an xml-style genshi template to the Bundler directory with a
+   ``.genshi`` and the associated namespace attribute.
+2. Simply add the appropriate namespace attribute to your existing xml
+   bundle.
+
+The namespace attribute in this case should look like the following::
+
+    xmlns:py="http://genshi.edgewall.org/"
 
 Motivation
 ----------

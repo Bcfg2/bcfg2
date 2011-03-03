@@ -66,6 +66,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             # Occurs when no lines are returned (service not installed)
             return False
 
+        entry.set('current_status', srvdata[0])
         if entry.get('status') == 'on':
             return srvdata[0] == 'ON'
         else:

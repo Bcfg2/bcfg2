@@ -79,10 +79,11 @@ specification.
 info.xml files
 ==============
 
-``info.xml`` files add the ability to specify different sets of file
-metadata on a group by group basis. These files are XML, and work
-similarly to those used by :ref:`Rules <server-plugins-generators-rules>`
-or :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`.
+``info.xml`` files add the ability to specify different
+sets of file metadata on a group by group or host by host
+basis. These files are XML, and work similarly to those used by
+:ref:`Rules <server-plugins-generators-rules>` or :ref:`Pkgmgr
+<server-plugins-generators-pkgmgr>`.
 
 The following specifies a different global set of permissions
 (root/sys/0651) than on clients in group webserver (root/root/0652)
@@ -90,6 +91,9 @@ The following specifies a different global set of permissions
 .. code-block:: xml
 
     <FileInfo>
+      <Client name='foo.example.com'>
+        <Info owner='root' group='root' perms='0652'/>
+      </Client>
       <Group name='webserver'>
         <Info owner='root' group='root' perms='0652'/>
       </Group>

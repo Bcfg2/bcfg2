@@ -138,7 +138,7 @@ if expire != "":
             c_inst.save()
 
 elif '-h' in args:
-    print """Usage: python bcfg2-reports [option] ...
+    print """Usage: bcfg2-reports [option] ...
 
 Options and arguments (and corresponding environment variables):
 -a                     : shows all hosts, including expired hosts

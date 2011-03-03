@@ -119,7 +119,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             if bad:
                 self.logger.debug("It is suggested that you either manage these "
                                   "files, revert the changes, or ignore false "
-                                  "failures):")
+                                  "failures:")
                 self.logger.info("Package %s failed validation. Bad files are:" % \
                                  entry.get('name'))
                 self.logger.info(bad)

@@ -9,8 +9,8 @@ Bcfg2 Snapshots
 .. versionadded:: 1.0.0
 
 This page describes the Snapshots plugin. This plugin is meant to replace
-the older :ref:`server-reports-dynamic`. It stores various
-aspects of a client's state when the client checks into the server.
+the older :ref:`reports-dynamic`. It stores various aspects of a client's
+state when the client checks into the server.
 
 Before you begin
 ================

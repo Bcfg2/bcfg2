@@ -671,12 +671,36 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
     def Installnonexistent(self, entry):
         '''Remove nonexistent entries'''
-        try:
-            os.remove(entry.get('name'))
-            return True
-        except OSError:
-            self.logger.error('Failed to remove %s' % entry.get('name'))
-            return False
+        ename = entry.get('name')
+        if entry.get('recursive') in ['True', 'true']:
+            # ensure that configuration spec is consistent first
+            if [e for e in self.buildModlist() \
+                if e.startswith(ename) and e != ename]:
+                self.logger.error('Not installing %s. One or more files '
+                                  'in this directory are specified in '
+                                  'your configuration.' % ename)
+                return False
+            try:
+                shutil.rmtree(ename)
+            except OSError, e:
+                self.logger.error('Failed to remove %s: %s' % (ename,
+                                                               e.strerror))
+        else:
+            if os.path.isdir(ename):
+                try:
+                    os.rmdir(ename)
+                    return True
+                except OSError, e:
+                    self.logger.error('Failed to remove %s: %s' % (ename,
+                                                                   e.strerror))
+                    return False
+            try:
+                os.remove(ename)
+                return True
+            except OSError, e:
+                self.logger.error('Failed to remove %s: %s' % (ename,
+                                                               e.strerror))
+                return False
 
     def Verifypermissions(self, entry, _):
         """Verify Path type='permissions' entry"""
