@@ -66,7 +66,7 @@ def process_delta(data, delta):
 class CfgMatcher:
     def __init__(self, fname):
         name = re.escape(fname)
-        self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|.G(?P<prio>\d+)_(?P<group>\S+))(?P<genshi>\\.genshi)?$' % name)
+        self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))(?P<genshi>\\.genshi)?$' % name)
         self.delta_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+)|\\.G(?P<prio>\d+)_(?P<group>\S+))\\.(?P<delta>(cat|diff))$' % name)
         self.cat_count = fname.count(".cat")
         self.diff_count = fname.count(".diff")
