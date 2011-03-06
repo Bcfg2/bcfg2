@@ -542,7 +542,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                             return False
 
         # If we get here, then the parent directory should exist
-        if (entry.get("paranoid", False) == 'true') and \
+        if (entry.get("paranoid", False) in ['true', 'True']) and \
            self.setup.get("paranoid", False) and not \
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
@@ -550,7 +550,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             bkuplist = [f for f in os.listdir(self.ppath) if
                         f.startswith(bkupnam)]
             bkuplist.sort()
-            if len(bkuplist) == int(self.max_copies):
+            while len(bkuplist) >= int(self.max_copies):
                 # remove the oldest backup available
                 oldest = bkuplist.pop(0)
                 self.logger.info("Removing %s" % oldest)
@@ -563,7 +563,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 # backup existing file
                 shutil.copy(entry.get('name'),
-                            "%s/%s_%s" % (self.ppath, bkupnam, datetime.now()))
+                            "%s/%s_%s" % (self.ppath, bkupnam,
+                                          datetime.isoformat(datetime.now())))
                 self.logger.info("Backup of %s saved to %s" %
                                  (entry.get('name'), self.ppath))
             except IOError, e:
