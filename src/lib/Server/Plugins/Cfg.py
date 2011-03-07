@@ -22,6 +22,7 @@ except:
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
+
 # snipped from TGenshi
 def removecomment(stream):
     """A genshi filter that removes comments from the stream."""
@@ -29,6 +30,7 @@ def removecomment(stream):
         if kind is genshi.core.COMMENT:
             continue
         yield kind, data, pos
+
 
 def process_delta(data, delta):
     if not delta.specific.delta:
@@ -63,7 +65,9 @@ def process_delta(data, delta):
             raise Bcfg2.Server.Plugin.PluginExecutionError, ('delta', delta)
         return output
 
+
 class CfgMatcher:
+
     def __init__(self, fname):
         name = re.escape(fname)
         self.basefile_reg = re.compile('^(?P<basename>%s)(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))(?P<genshi>\\.genshi)?$' % name)
@@ -77,7 +81,9 @@ class CfgMatcher:
             return self.delta_reg.match(fname)
         return self.basefile_reg.match(fname)
 
+
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
+
     def __init__(self, basename, path, entry_type, encoding):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
@@ -87,15 +93,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         return cmp(one.specific, other.specific)
 
     def get_pertinent_entries(self, metadata):
-        '''return a list of all entries pertinent to a client => [base, delta1, delta2]'''
+        """return a list of all entries pertinent
+        to a client => [base, delta1, delta2]
+        """
         matching = [ent for ent in self.entries.values() if \
                     ent.specific.matches(metadata)]
         matching.sort(self.sort_by_specific)
-        non_delta = [matching.index(m) for m in matching if not m.specific.delta]
+        non_delta = [matching.index(m) for m in matching
+                     if not m.specific.delta]
         if not non_delta:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         base = min(non_delta)
-        used = matching[:base+1]
+        used = matching[:base + 1]
         used.reverse()
         return used
 
@@ -136,7 +145,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
         else:
-            entry.text = unicode(data, self.encoding)
+            try:
+                entry.text = unicode(data, self.encoding)
+            except UnicodeDecodeError, e:
+                logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
+                logger.error("Please verify you are using the proper encoding.")
+                raise Bcfg2.Server.Plugin.PluginExecutionError
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 
@@ -168,7 +182,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             open(name, 'w').write(new_entry['text'])
             if log:
                 logger.info("Wrote file %s" % name)
-        badattr = [attr for attr in ['owner', 'group', 'perms'] if attr in new_entry]
+        badattr = [attr for attr in ['owner', 'group', 'perms']
+                   if attr in new_entry]
         if badattr:
             metadata_updates = {}
             metadata_updates.update(self.metadata)
@@ -178,11 +193,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             infotag = lxml.etree.SubElement(infoxml, 'Info')
             [infotag.attrib.__setitem__(attr, metadata_updates[attr]) \
                 for attr in metadata_updates]
-            ofile = open(self.path + "/info.xml","w")
+            ofile = open(self.path + "/info.xml", "w")
             ofile.write(lxml.etree.tostring(infoxml, pretty_print=True))
             ofile.close()
             if log:
                 logger.info("Wrote file %s" % (self.path + "/info.xml"))
+
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool,
           Bcfg2.Server.Plugin.PullTarget):
@@ -197,4 +213,6 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         return self.entries[entry.get('name')].list_accept_choices(metadata)
 
     def AcceptPullData(self, specific, new_entry, log):
-        return self.entries[new_entry.get('name')].write_update(specific, new_entry, log)
+        return self.entries[new_entry.get('name')].write_update(specific,
+                                                                new_entry,
+                                                                log)
