@@ -122,10 +122,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 template_cls = NewTextTemplate
                 loader = TemplateLoader()
                 template = loader.load(basefile.name, cls=template_cls,
-                                            encoding=self.encoding)
-                stream = template.generate( \
-                    name=entry.get('name'), metadata=metadata,
-                    path=basefile.name).filter(removecomment)
+                                       encoding=self.encoding)
+                fname = entry.get('realname', entry.get('name'))
+                stream = template.generate(name=fname,
+                                           metadata=metadata,
+                                           path=basefile.name).filter(removecomment)
                 try:
                     data = stream.render('text', strip_whitespace=False)
                 except TypeError:
