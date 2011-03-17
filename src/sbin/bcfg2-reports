@@ -5,7 +5,13 @@ __revision__ = '$Revision$'
 import os
 import sys
 
-import Bcfg2.Server.Reports.settings
+try:
+    import Bcfg2.Server.Reports.settings
+except ConfigParser.NoSectionError:
+    print("Your bcfg2.conf is currently missing the statistics section which "
+          "is necessary for the reporting interface. Please see bcfg2.conf(5) "
+          "for more details.")
+    sys.exit(1)
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
 project_name = os.path.basename(project_directory)
