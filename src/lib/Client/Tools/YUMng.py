@@ -448,8 +448,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 self.logger.debug("  Not checking version for virtual package")
                 _POs = [ po for po in POs ]  # Make a copy
             elif entry.get('name') == 'gpg-pubkey':
-                _POs = [ p for p in POs if p.version == nevra['version'] \
-                         and p.release == nevra['release'] ]
+                if 'version' not in nevra:
+                    m = "Skipping verify: gpg-pubkey without an RPM version."
+                    self.logger.warning(m)
+                    continue
+                if 'release' not in nevra:
+                    m = "Skipping verify: gpg-pubkey without an RPM release."
+                    self.logger.warning(m)
+                    continue
+                _POs = [p for p in POs if p.version == nevra['version'] \
+                        and p.release == nevra['release']]
             else:
                 _POs = self.yb.rpmdb.searchNevra(**snevra)
             if len(_POs) == 0:
