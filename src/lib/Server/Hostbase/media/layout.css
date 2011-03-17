@@ -5,9 +5,9 @@
 #content-main { float:left; }
 
 /*  HEADER  */
-#header { 
-background:#000; 
-color:#ffc; 
+#header {
+background:#000;
+color:#ffc;
 position:absolute;
 }
 #header a:link, #header a:visited { color:white; }
@@ -18,16 +18,16 @@ position:absolute;
 
 /*SIDEBAR*/
 #sidebar {
-   float:left; 
-   position: relative; 
-   width: auto; 
-   height: 100%; 
-   margin-top: 3em; 
-   padding-right: 1.5em; 
-   padding-left: 1.5em; 
-   padding-top: 1em; 
-   padding-bottom:3em; 
-   background: #000; 
+   float:left;
+   position: relative;
+   width: auto;
+   height: 100%;
+   margin-top: 3em;
+   padding-right: 1.5em;
+   padding-left: 1.5em;
+   padding-top: 1em;
+   padding-bottom:3em;
+   background: #000;
    color:ffc;
 }
 
@@ -57,6 +57,6 @@ form .aligned table p { margin-left:0; padding-left:0; }
 form .aligned p.help { padding-left:38px; }
 .aligned .vCheckboxLabel { float:none !important; display:inline; padding-left:4px; }
 .colM .aligned .vLargeTextField, colM .aligned .vXMLLargeTextField { width:610px; }
-.checkbox-row p.help { margin-left:0; padding-left:0 !important; } 
+.checkbox-row p.help { margin-left:0; padding-left:0 !important; }
 
 
