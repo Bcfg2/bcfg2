@@ -1,0 +1,20 @@
+.TH "bcfg2-ping-sweep" 8
+.SH NAME
+bcfg2-ping-sweep \- Update pingable and pingtime attributes in
+clients.xml
+.SH SYNOPSIS
+.B bcfg2-ping-sweep
+.SH "DESCRIPTION"
+.PP
+\fBbcfg2-ping-sweep\fR traverses the list of clients in
+Metadata/clients.xml and updates their pingable/pingtime attributes. The
+pingtime value is set to the last time the client was pinged (not the
+RTT value).
+.SH OPTIONS
+.PP
+.B None
+.SH "SEE ALSO"
+.BR bcfg(1),
+.BR bcfg2-server(8)
+.SH "BUGS"
+None currently known

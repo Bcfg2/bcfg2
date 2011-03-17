@@ -139,6 +139,12 @@ be taken to remedy them.
 |                              |          | associated with a   |              |
 |                              |          | non-profile group.  |              |
 +------------------------------+----------+---------------------+--------------+
+| Failed to decode <filename>  | Server   | The encoding being  | [10]_        |
+| Please verify you are using  |          | used is unable to   |              |
+| the proper encoding          |          | decode the          |              |
+|                              |          | character present   |              |
+|                              |          | in this file.       |              |
++------------------------------+----------+---------------------+--------------+
 
 
 .. [1] This entry is not being bound. Ensure that a version of this
@@ -158,6 +164,8 @@ be taken to remedy them.
 .. [8] Ensure that the file is properly formed XML.
 .. [9] Fix hostname resolution for the client or ensure that the profile
        group is properly setup.
+.. [10] Ensure the correct encoding is specified in the [components]
+        section of ``bcfg2.conf``.
 
 FAQs
 ====
@@ -172,9 +180,11 @@ why.
 Why am I getting a traceback?
 -----------------------------
 
-If you get a traceback, please let us know by :ref:`reporting it
-<report-a-bug>` on Trac, via the mailing list, or on IRC. Your best bet
+If you get a traceback, please let us know by reporting it
+on `Trac ticket tracker`_, via the mailing list, or on IRC. Your best bet
 to get a quick response will be to jump on IRC during the daytime (CST).
+
+.. _Trac ticket tracker: http://bcfg2.org
 
 What is the most common cause of "The following entries are not handled by any tool"?
 -------------------------------------------------------------------------------------
