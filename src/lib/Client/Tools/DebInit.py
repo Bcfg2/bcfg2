@@ -21,6 +21,10 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
+
+        if entry.get('status') == 'ignore':
+            return True
+
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
 

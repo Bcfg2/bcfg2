@@ -29,6 +29,10 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
            /etc/init/servicename.conf. All we need to do is make sure
            the service is running when it should be.
         """
+
+        if entry.get('status') == 'ignore':
+            return True
+
         if entry.get('parameters'):
             params = entry.get('parameters')
         else:
