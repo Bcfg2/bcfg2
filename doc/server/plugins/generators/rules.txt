@@ -116,34 +116,28 @@ See :ref:`client-tools-actions`
 Service Tag
 -----------
 
-+------------+--------------------------+---------------------------------------+
-| Name       | Description              | Values                                |
-+============+==========================+=======================================+
-| mode       | Per Service Mode (New in | (manual|default|supervised)           |
-|            | 1.0)                     |                                       |
-+------------+--------------------------+---------------------------------------+
-| name       | Service Name             | String                                |
-+------------+--------------------------+---------------------------------------+
-| status     | Should the service be    | (on|off)                              |
-|            | on or off (default:      |                                       |
-|            | off).                    |                                       |
-+------------+--------------------------+---------------------------------------+
-| target     | Service command for      | String                                |
-|            | restart (default:        |                                       |
-|            | restart)                 |                                       |
-+------------+--------------------------+---------------------------------------+
-| type       | Driver to use on the     | (chkconfig|deb|rc-update|smf|upstart) |
-|            | client to manage this    |                                       |
-|            | service.                 |                                       |
-+------------+--------------------------+---------------------------------------+
-| sequence   | Order for service        | integer                               |
-|            | startup (debian services |                                       |
-|            | only)                    |                                       |
-+------------+--------------------------+---------------------------------------+
-| parameters | Pass parameters to       | String                                |
-|            | service (Upstart         |                                       |
-|            | services only)           |                                       |
-+------------+--------------------------+---------------------------------------+
++------------+-------------------------------+-----------------------------------------------+
+| Name       | Description                   | Values                                        |
++============+===============================+===============================================+
+| mode       | Per Service Mode (New in 1.0) | (manual | default | supervised)               |
++------------+-------------------------------+-----------------------------------------------+
+| name       | Service Name                  | String                                        |
++------------+-------------------------------+-----------------------------------------------+
+| status     | Should the service be on or   | (on | off | ignore)                           |
+|            | off (default: off).           |                                               |
++------------+-------------------------------+-----------------------------------------------+
+| target     | Service command for restart   | String                                        |
+|            | (default: restart)            |                                               |
++------------+-------------------------------+-----------------------------------------------+
+| type       | Driver to use on the client   | (chkconfig | deb | rc-update | smf | upstart) |
+|            | to manage this service.       |                                               |
++------------+-------------------------------+-----------------------------------------------+
+| sequence   | Order for service startup     | integer                                       |
+|            | (debian services only)        |                                               |
++------------+-------------------------------+-----------------------------------------------+
+| parameters | Pass parameters to service    | String                                        |
+|            | (Upstart services only)       |                                               |
++------------+-------------------------------+-----------------------------------------------+
 
 Service mode descriptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -162,6 +156,21 @@ Service mode descriptions
 
   * default and ensure service is running (or stopped) when verification is performed
   * deprecates supervised='true'
+
+Service status descriptions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* on
+
+  * start the service at boot time
+
+* off
+
+  * don't start the service at boot time
+
+* ignore
+
+  * don't check the status, leave it as-is (valid for deb and upstart services only)
 
 Client Tag
 ----------
