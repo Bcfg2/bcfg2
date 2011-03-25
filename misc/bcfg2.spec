@@ -19,7 +19,7 @@ Summary:          Configuration management system
 
 Group:            Applications/System
 License:          BSD
-URL:              http://trac.mcs.anl.gov/projects/bcfg2
+URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
