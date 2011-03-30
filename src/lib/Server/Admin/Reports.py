@@ -50,14 +50,14 @@ def printStats(fn):
 
     Decorator for purging.  Prints database statistics after a run.
     """
-    def print_stats(*data):
+    def print_stats(self, *data):
         start_client = Client.objects.count()
         start_i = Interaction.objects.count()
         start_ei = Entries_interactions.objects.count()
         start_perf = Performance.objects.count()
         start_ping = Ping.objects.count()
 
-        fn(*data)
+        fn(self, *data)
 
         self.log.info("Clients removed: %s" %
                       (start_client - Client.objects.count()))
