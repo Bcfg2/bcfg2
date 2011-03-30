@@ -59,12 +59,16 @@ def printStats(fn):
 
         fn(*data)
 
-        print "Clients removed: %s" % (start_client - Client.objects.count())
-        print "Interactions removed: %s" % (start_i - Interaction.objects.count())
-        print "Interactions->Entries removed: %s" % \
-                (start_ei - Entries_interactions.objects.count())
-        print "Metrics removed: %s" % (start_perf - Performance.objects.count())
-        print "Ping metrics removed: %s" % (start_ping - Ping.objects.count())
+        self.log.info("Clients removed: %s" %
+                      (start_client - Client.objects.count()))
+        self.log.info("Interactions removed: %s" %
+                      (start_i - Interaction.objects.count()))
+        self.log.info("Interactions->Entries removed: %s" %
+                      (start_ei - Entries_interactions.objects.count()))
+        self.log.info("Metrics removed: %s" %
+                      (start_perf - Performance.objects.count()))
+        self.log.info("Ping metrics removed: %s" %
+                      (start_ping - Ping.objects.count()))
 
     return print_stats
 
