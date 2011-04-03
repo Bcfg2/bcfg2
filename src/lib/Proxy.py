@@ -31,7 +31,6 @@ except ImportError, e:
     SSL_LIB = 'm2crypto'
 
 
-import string
 import sys
 import time
 import urlparse
@@ -43,14 +42,17 @@ has_py26 = map(int, version) >= [2, 6]
 
 __all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
 
+
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
+
 
 class RetryMethod(_Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
     max_retries = 4
+
     def __call__(self, *args):
         for retry in range(self.max_retries):
             try:
@@ -83,6 +85,7 @@ class RetryMethod(_Method):
 
 # sorry jon
 xmlrpclib._Method = RetryMethod
+
 
 class SSLHTTPConnection(httplib.HTTPConnection):
     """Extension of HTTPConnection that implements SSL and related behaviors."""
@@ -155,7 +158,6 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self._connect_m2crypto()
         else:
             raise Exception, "No SSL module support"
-
 
     def _connect_py26ssl(self):
         """Initiates a connection using the ssl module."""
@@ -240,7 +242,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
-    def __init__(self, key=None, cert=None, ca=None, scns=None, use_datetime=0, timeout=90):
+    def __init__(self, key=None, cert=None, ca=None,
+                 scns=None, use_datetime=0, timeout=90):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
@@ -250,7 +253,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        host = self.get_host_info(host)[0]
+        host, self._extra_headers = self.get_host_info(host)[0:2]
         http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
                                  scns=self.scns, timeout=self.timeout)
         https = httplib.HTTP()
@@ -295,7 +298,9 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
         return u.close()
 
-def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
+
+def ComponentProxy(url, user=None, password=None,
+                   key=None, cert=None, ca=None,
                    allowedServerCNs=None, timeout=90):
 
     """Constructs proxies to components.
@@ -312,5 +317,6 @@ def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs, timeout=timeout)
+    ssl_trans = XMLRPCTransport(key, cert, ca,
+                                allowedServerCNs, timeout=timeout)
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
