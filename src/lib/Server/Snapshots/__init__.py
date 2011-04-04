@@ -19,7 +19,7 @@ def db_from_config(cfile):
         db = cp.get('snapshots', 'database')
         return '%s://%s:%s@%s/%s' % (driver, user, password, host, db)
     else:
-        raise Exception, "unsupported db driver %s" % driver
+        raise Exception("unsupported db driver %s" % driver)
 
 
 def setup_session(cfile, debug=False):

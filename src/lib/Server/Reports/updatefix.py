@@ -2,11 +2,12 @@ import Bcfg2.Server.Reports.settings
 
 from django.db import connection
 import django.core.management
+import logging
+import traceback
 from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion, \
                 TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
-
-import logging, traceback
 logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
+
 
 # all update function should go here
 def _merge_database_table_entries():
@@ -21,7 +22,7 @@ def _merge_database_table_entries():
     select name, kind from reports_extra
     """)
     # this fetch could be better done
-    entries_map={}
+    entries_map = {}
     for row in cursor.fetchall():
         insert_cursor.execute("insert into reports_entries (name, kind) \
             values (%s, %s)", (row[0], row[1]))
@@ -48,6 +49,7 @@ def _merge_database_table_entries():
         insert_cursor.execute("insert into reports_entries_interactions \
             (entry_id, interaction_id, reason_id, type) values (%s, %s, %s, %s)", (entry_id, row[3], row[2], row[4]))
 
+
 def _interactions_constraint_or_idx():
     '''sqlite doesn't support alter tables.. or constraints'''
     cursor = connection.cursor()
@@ -55,17 +57,17 @@ def _interactions_constraint_or_idx():
         cursor.execute('alter table reports_interaction add constraint reports_interaction_20100601 unique (client_id,timestamp)')
     except:
         cursor.execute('create unique index reports_interaction_20100601 on reports_interaction (client_id,timestamp)')
-            
+
 
 def _populate_interaction_entry_counts():
     '''Populate up the type totals for the interaction table'''
     cursor = connection.cursor()
-    count_field = { TYPE_BAD: 'bad_entries',
-                    TYPE_MODIFIED: 'modified_entries',
-                    TYPE_EXTRA: 'extra_entries' }
+    count_field = {TYPE_BAD: 'bad_entries',
+                   TYPE_MODIFIED: 'modified_entries',
+                   TYPE_EXTRA: 'extra_entries'}
 
-    for type in count_field.keys():
-        cursor.execute("select count(type), interaction_id "+
+    for type in list(count_field.keys()):
+        cursor.execute("select count(type), interaction_id " +
                 "from reports_entries_interactions where type = %s group by interaction_id" % type)
         updates = []
         for row in cursor.fetchall():
@@ -73,9 +75,9 @@ def _populate_interaction_entry_counts():
         try:
             cursor.executemany("update reports_interaction set " + count_field[type] + "=%s where id = %s", updates)
         except Exception, e:
-            print e
+            print(e)
     cursor.close()
-        
+
 
 # be sure to test your upgrade query before reflecting the change in the models
 # the list of function and sql command to do should go here
@@ -104,6 +106,7 @@ _fixes = [_merge_database_table_entries,
 # this will calculate the last possible version of the database
 lastversion = len(_fixes)
 
+
 def rollupdate(current_version):
     """ function responsible to coordinates all the updates
     need current_version as integer
@@ -119,10 +122,11 @@ def rollupdate(current_version):
             except:
                 logger.error("Failed to perform db update %s" % (_fixes[i]), exc_info=1)
             # since array start at 0 but version start at 1 we add 1 to the normal count
-            ret = InternalDatabaseVersion.objects.create(version=i+1)
+            ret = InternalDatabaseVersion.objects.create(version=i + 1)
         return ret
     else:
         return None
+
 
 def dosync():
     """Function to do the syncronisation for the models"""
@@ -164,7 +168,7 @@ def dosync():
 
 def update_database():
     ''' methode to search where we are in the revision of the database models and update them '''
-    try :
+    try:
         logger.debug("Running upgrade of models to the new one")
         dosync()
         know_version = InternalDatabaseVersion.objects.order_by('-version')

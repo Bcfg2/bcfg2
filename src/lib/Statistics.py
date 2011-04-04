@@ -29,4 +29,4 @@ class Statistics(object):
             self.data[name].add_value(value)
 
     def display(self):
-        return dict([value.get_value() for value in self.data.values()])
+        return dict([value.get_value() for value in list(self.data.values())])

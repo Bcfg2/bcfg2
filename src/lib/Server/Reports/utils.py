@@ -1,10 +1,10 @@
 """Helper functions for reports"""
-from Bcfg2.Server.Reports.reports.models import TYPE_CHOICES
 from django.conf.urls.defaults import *
 import re
 
 """List of filters provided by filteredUrls"""
 filter_list = ('server', 'state')
+
 
 class BatchFetch(object):
     """Fetch Django objects in smaller batches to save memory"""
@@ -20,7 +20,7 @@ class BatchFetch(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """Return the next object from our array and fetch from the
            database when needed"""
         if self.block_count + self.count - self.step == self.max:
@@ -34,11 +34,12 @@ class BatchFetch(object):
         self.count += 1
         return self.data[self.count - 1]
 
+
 def generateUrls(fn):
     """
     Parse url tuples and send to functions.
 
-    Decorator for url generators.  Handles url tuple parsing 
+    Decorator for url generators.  Handles url tuple parsing
     before the actual function is called.
     """
     def url_gen(*urls):
@@ -51,13 +52,14 @@ def generateUrls(fn):
         return results
     return url_gen
 
+
 @generateUrls
 def paginatedUrls(pattern, view, kwargs=None, name=None):
     """
     Takes a group of url tuples and adds paginated urls.
 
-    Extends a url tuple to include paginated urls.  Currently doesn't handle url() compiled
-    patterns.
+    Extends a url tuple to include paginated urls.
+    Currently doesn't handle url() compiled patterns.
 
     """
     results = [(pattern, view, kwargs, name)]
@@ -67,12 +69,14 @@ def paginatedUrls(pattern, view, kwargs=None, name=None):
         tail = mtail.group(1)
     pattern = pattern[:len(pattern) - len(tail)]
     results += [(pattern + "/(?P<page_number>\d+)" + tail, view, kwargs)]
-    results += [(pattern + "/(?P<page_number>\d+)\|(?P<page_limit>\d+)" + tail, view, kwargs)]
+    results += [(pattern + "/(?P<page_number>\d+)\|(?P<page_limit>\d+)" +
+                 tail, view, kwargs)]
     if not kwargs:
         kwargs = dict()
     kwargs['page_limit'] = 0
     results += [(pattern + "/?\|(?P<page_limit>all)" + tail, view, kwargs)]
     return results
+
 
 @generateUrls
 def filteredUrls(pattern, view, kwargs=None, name=None):
@@ -93,7 +97,8 @@ def filteredUrls(pattern, view, kwargs=None, name=None):
                    '/server/(?P<server>[\w\-\.]+)/(?P<state>[A-Za-z]+)'):
         results += [(pattern + filter + tail, view, kwargs)]
     return results
-    
+
+
 @generateUrls
 def timeviewUrls(pattern, view, kwargs=None, name=None):
     """
@@ -113,4 +118,3 @@ def timeviewUrls(pattern, view, kwargs=None, name=None):
                    '/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})'):
         results += [(pattern + filter + tail, view, kwargs)]
     return results
-
