@@ -13,23 +13,36 @@
 
 __version__ = '0.1'
 
-import sys
-import os
-import rpm
-import optparse
 import datetime
 import glob
-try:
-    from lxml.etree import parse, XML, tostring
-except:
-    from elementtree.ElementTree import parse, XML, tostring
-import urlparse, urllib, gzip
+import gzip
+import optparse
+import os
+import rpm
+import sys
+import urlparse
+import urllib
 
-installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
-                   'kernel-modules', 'kernel-debug', 'kernel-unsupported',
-                   'kernel-source', 'kernel-devel', 'kernel-default',
-                   'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
+try:
+    from lxml.etree import parse, tostring
+except:
+    from elementtree.ElementTree import parse, tostring
+
+installOnlyPkgs = ['kernel',
+                   'kernel-bigmem',
+                   'kernel-enterprise',
+                   'kernel-smp',
+                   'kernel-modules',
+                   'kernel-debug',
+                   'kernel-unsupported',
+                   'kernel-source',
+                   'kernel-devel',
+                   'kernel-default',
+                   'kernel-largesmp-devel',
+                   'kernel-largesmp',
+                   'kernel-xen',
                    'gpg-pubkey']
+
 
 def readRpmHeader(ts, filename):
     """
@@ -38,19 +51,21 @@ def readRpmHeader(ts, filename):
     try:
         fd = os.open(filename, os.O_RDONLY)
     except:
-        print 'Failed to open RPM file %s' % filename
+        print("Failed to open RPM file %s" % filename)
 
     h = ts.hdrFromFdno(fd)
     os.close(fd)
     return h
 
+
 def sortedDictValues(adict):
     """
         Sort a dictionary by its keys and return the items in sorted key order.
     """
-    keys = adict.keys()
+    keys = list(adict.keys())
     keys.sort()
-    return map(adict.get, keys)
+    return list(map(adict.get, keys))
+
 
 def cmpRpmHeader(a, b):
     """
@@ -66,6 +81,7 @@ def cmpRpmHeader(a, b):
     r2 = str(b.get('release'))
 
     return rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
+
 
 def loadRpms(dirs):
     """
@@ -103,18 +119,18 @@ def loadRpms(dirs):
     for dir in dirs:
 
         if options.verbose:
-            print 'Scanning directory: %s' % dir
+            print("Scanning directory: %s" % dir)
 
         for file in [files for files in os.listdir(dir)
                            if files.endswith('.rpm')]:
 
-            filename = os.path.join( dir, file )
+            filename = os.path.join(dir, file)
 
             # Get the mtime of the RPM file.
             file_mtime = datetime.date.fromtimestamp(os.stat(filename).st_mtime)
 
             # Get the RPM header
-            header = readRpmHeader( ts, filename )
+            header = readRpmHeader(ts, filename)
 
             # Get what we are interesting in out of the header.
             name = header[rpm.RPMTAG_NAME]
@@ -124,9 +140,13 @@ def loadRpms(dirs):
             subarch = header[rpm.RPMTAG_ARCH]
 
             if name not in installOnlyPkgs:
-                packages.setdefault(name, {}).setdefault(subarch, []).append({'filename':file, \
-                                          'mtime':file_mtime, 'name':name, 'arch':subarch, \
-                                          'epoch':epoch, 'version':version, 'release':release})
+                packages.setdefault(name, {}).setdefault(subarch, []).append({'filename': file,
+                                                                              'mtime': file_mtime,
+                                                                              'name': name,
+                                                                              'arch': subarch,
+                                                                              'epoch': epoch,
+                                                                              'version': version,
+                                                                              'release': release})
             if options.verbose:
                 sys.stdout.write('.')
                 sys.stdout.flush()
@@ -134,6 +154,7 @@ def loadRpms(dirs):
             sys.stdout.write('\n')
 
     return packages
+
 
 class pkgmgr_URLopener(urllib.FancyURLopener):
     """
@@ -143,7 +164,8 @@ class pkgmgr_URLopener(urllib.FancyURLopener):
         """
             Override default error handling so that we can see what the errors are.
         """
-        print "ERROR %s: Unable to retrieve %s" % (errcode, url)
+        print("ERROR %s: Unable to retrieve %s" % (errcode, url))
+
 
 def loadRepos(repolist):
     """
@@ -181,12 +203,12 @@ def loadRepos(repolist):
             opener = pkgmgr_URLopener()
             file, message = opener.retrieve(url)
         except:
-            sys.exit();
+            sys.exit()
 
         try:
             tree = parse(file)
         except IOError:
-            print "ERROR: Unable to parse retrieved repomd.xml."
+            print("ERROR: Unable to parse retrieved repomd.xml.")
             sys.exit()
 
         repomd = tree.getroot()
@@ -199,7 +221,7 @@ def loadRepos(repolist):
         url = urlparse.urljoin(repo, './' + primaryhref)
 
         if options.verbose:
-            print 'Loading : %s' % url
+            print("Loading : %s" % url)
 
         try:
             opener = pkgmgr_URLopener()
@@ -211,7 +233,7 @@ def loadRepos(repolist):
             repo_file = gzip.open(file)
             tree = parse(repo_file)
         except IOError:
-            print "ERROR: Unable to parse retrieved file."
+            print("ERROR: Unable to parse retrieved file.")
             sys.exit()
 
         root = tree.getroot()
@@ -230,9 +252,12 @@ def loadRepos(repolist):
                         file = property.get('href')
 
                 if name not in installOnlyPkgs:
-                    packages.setdefault(name, {}).setdefault(subarch, []).append({'filename':file, \
-                                              'name':name, 'arch':subarch, \
-                                              'epoch':epoch, 'version':version, 'release':release})
+                    packages.setdefault(name, {}).setdefault(subarch, []).append({'filename': file,
+                                                                                  'name': name,
+                                                                                  'arch': subarch,
+                                                                                  'epoch': epoch,
+                                                                                  'version': version,
+                                                                                  'release': release})
                 if options.verbose:
                     sys.stdout.write('.')
                     sys.stdout.flush()
@@ -240,6 +265,7 @@ def loadRepos(repolist):
             sys.stdout.write('\n')
 
     return packages
+
 
 def str_evra(instance):
     """
@@ -251,6 +277,7 @@ def str_evra(instance):
     else:
         return '%s:%s-%s.%s' % (instance.get('epoch', '*'), instance.get('version', '*'),
                                 instance.get('release', '*'), instance.get('arch', '*'))
+
 
 def updatepkg(pkg):
     """
@@ -266,8 +293,9 @@ def updatepkg(pkg):
                     latest = package_dict[name][arch][-1]
                     if cmpRpmHeader(inst, latest) == -1:
                         if options.verbose:
-                            print 'Found newer version of package %s' % name
-                            print '    Updating %s to %s' % (str_evra(inst), str_evra(latest))
+                            print("Found newer version of package %s" % name)
+                            print("    Updating %s to %s" % (str_evra(inst),
+                                                             str_evra(latest)))
                         if latest['epoch'] != None:
                             inst.attrib['epoch'] = str(latest['epoch'])
                         inst.attrib['version'] = latest['version']
@@ -279,30 +307,32 @@ def updatepkg(pkg):
                             # if we find Ignore tags, then assume they're correct;
                             # otherwise, check the altconfigfile
                             if not ignoretags:
-                                altpkgs = alttree.xpath(".//Package[@name='%s'][Ignore]"%name)
+                                altpkgs = alttree.xpath(".//Package[@name='%s'][Ignore]" % name)
                                 if (len(altpkgs) == 1):
                                     for ignoretag in altpkgs[0].xpath(".//Ignore"):
                                         if options.verbose:
                                             print("    Found Ignore tag in altconfigfile for package %s" % name)
                                         pkg.append(ignoretag)
 
+
 def main():
     global package_dict
     global alttree
     if options.verbose:
-        print 'Loading Pkgmgr config file %s.' % (options.configfile)
+        print("Loading Pkgmgr config file %s." % (options.configfile))
 
     tree = parse(options.configfile)
     config = tree.getroot()
 
     if options.altconfigfile:
         if options.verbose:
-            print 'Loading Pkgmgr alternate config file %s.' % (options.altconfigfile)
+            print("Loading Pkgmgr alternate config file %s." %
+                  (options.altconfigfile))
 
         alttree = parse(options.altconfigfile)
 
     if options.verbose:
-        print 'Loading package headers'
+        print("Loading package headers")
 
     if options.rpmdirs:
         package_dict = loadRpms(search_dirs)
@@ -310,7 +340,7 @@ def main():
         package_dict = loadRepos(repos)
 
     if options.verbose:
-        print 'Processing package headers'
+        print("Processing package headers")
 
     for pkg in config.getiterator('Package'):
         updatepkg(pkg)
@@ -348,11 +378,12 @@ if __name__ == "__main__":
     options, arguments = p.parse_args()
 
     if not options.configfile:
-        print "An existing Pkgmgr configuration file must be specified with the -c option."
+        print("An existing Pkgmgr configuration file must be specified with "
+              "the -c option.")
         sys.exit()
 
     if not options.rpmdirs and not options.yumrepos:
-        print "One of --rpmdirs and --yumrepos must be specified"
+        print("One of --rpmdirs and --yumrepos must be specified")
         sys.exit(1)
 
     # Set up list of directories to search
@@ -361,9 +392,9 @@ if __name__ == "__main__":
         for d in options.rpmdirs.split(','):
             search_dirs += glob.glob(d)
         if options.verbose:
-            print 'The following directories will be scanned:'
+            print("The following directories will be scanned:")
             for d in search_dirs:
-                print '    %s' % d
+                print("    %s" % d)
 
     # Setup list of repos
     if options.yumrepos:
@@ -371,9 +402,9 @@ if __name__ == "__main__":
         for r in options.yumrepos.split(','):
             repos.append(r)
         if options.verbose:
-            print 'The following repositories will be scanned:'
+            print("The following repositories will be scanned:")
             for d in repos:
-                print '    %s' % d
+                print("    %s" % d)
 
     if options.outfile:
         output = file(options.outfile, "w")
@@ -383,4 +414,3 @@ if __name__ == "__main__":
     package_dict = {}
 
     main()
-

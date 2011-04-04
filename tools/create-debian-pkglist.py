@@ -5,7 +5,15 @@ __revision__ = '$Id$'
 
 # Original code from Bcfg2 sources
 
-import glob, gzip, lxml.etree, os, re, urllib, cStringIO, sys, ConfigParser, apt_pkg
+import apt_pkg
+import ConfigParser
+import cStringIO
+import gzip
+import os
+import re
+import urllib
+import sys
+
 apt_pkg.init()
 
 
@@ -14,21 +22,24 @@ def debug(msg):
     if '-v' in sys.argv:
         sys.stdout.write(msg)
 
+
 def get_as_list(somestring):
     """ Input : a string like this : 'a, g, f,w'
         Output : a list like this : ['a', 'g', 'f', 'w'] """
     return somestring.replace(' ', '').split(',')
 
+
 def list_contains_all_the_same_values(l):
     if len(l) == 0:
         return True
-    # The list contains all the same values if all elements in 
+    # The list contains all the same values if all elements in
     # the list are equal to the first element.
     first = l[0]
     for elem in l:
         if first != elem:
             return False
     return True
+
 
 class SourceURL:
     def __init__(self, deb_url, arch):
@@ -38,12 +49,13 @@ class SourceURL:
         self.distribution = deb_url_tokens[2]
         self.sections = deb_url_tokens[3:]
         self.arch = arch
-    
+
     def __str__(self):
         return "deb %s %s %s" % (self.url, self.distribution, ' '.join(self.sections))
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
+
 
 class Source:
     def __init__(self, confparser, section, bcfg2_repos_prefix):
@@ -58,25 +70,32 @@ class Source:
         self.arch_specialurl = set()
 
         self.source_urls = []
-        self.source_urls.append(SourceURL(confparser.get(section, "deb_url"),"all"))
+        self.source_urls.append(SourceURL(confparser.get(section, "deb_url"),
+                                          "all"))
         # Agregate urls in the form of deb_url0, deb_url1, ... to deb_url9
-        for i in range(10): # 0 to 9
+        for i in range(10):  # 0 to 9
             option_name = "deb_url%s" % i
             if confparser.has_option(section, option_name):
-                self.source_urls.append(SourceURL(confparser.get(section, option_name),"all"))
+                self.source_urls.append(SourceURL(confparser.get(section,
+                                                                 option_name),
+                                                  "all"))
 
         # Aggregate architecture specific urls (if present)
         for arch in self.architectures:
-            if not confparser.has_option(section, "deb_"+arch+"_url"):
+            if not confparser.has_option(section, "deb_" + arch + "_url"):
                 continue
-            self.source_urls.append(SourceURL(confparser.get(section, "deb_"+arch+"_url"),arch))
+            self.source_urls.append(SourceURL(confparser.get(section,
+                                                             "deb_" + arch + "_url"),
+                                              arch))
             # Agregate urls in the form of deb_url0, deb_url1, ... to deb_url9
-            for i in range(10): # 0 to 9
-                option_name = "deb_"+arch+"_url%s" % i
+            for i in range(10):  # 0 to 9
+                option_name = "deb_" + arch + "_url%s" % i
                 if confparser.has_option(section, option_name):
-                    self.source_urls.append(SourceURL(confparser.get(section, option_name),arch))
+                    self.source_urls.append(SourceURL(confparser.get(section,
+                                                                     option_name),
+                                                      arch))
                     self.arch_specialurl.add(arch)
-   
+
         self.file = None
         self.indent_level = 0
 
@@ -86,13 +105,13 @@ Groups: %s
 Priority: %s
 Architectures: %s
 Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectures, self.source_urls)
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
 
     def _open_file(self):
         self.file = open(self.filename + '~', 'w')
-    
+
     def _close_file(self):
         self.file.close()
 
@@ -118,7 +137,10 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                     continue
                 if source_url.arch == "all" and arch in self.arch_specialurl:
                     continue
-                url = "%s/dists/%s/%s/binary-%s/Packages.gz" % (source_url.url, source_url.distribution, section, arch)
+                url = "%s/dists/%s/%s/binary-%s/Packages.gz" % (source_url.url,
+                                                                source_url.distribution,
+                                                                section,
+                                                                arch)
                 debug("Processing url %s\n" % (url))
                 try:
                     data = urllib.urlopen(url)
@@ -129,8 +151,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                             pkgname = line.split(' ')[1].strip()
                         elif line[:8] == 'Version:':
                             version = line.split(' ')[1].strip()
-                            if pkgdata.has_key(pkgname):
-                                if pkgdata[pkgname].has_key(arch):
+                            if pkgname in pkgdata:
+                                if arch in pkgdata[pkgname]:
                                     # The package is listed twice for the same architecture
                                     # We keep the most recent version
                                     old_version = pkgdata[pkgname][arch]
@@ -142,20 +164,21 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                                     pkgdata[pkgname][arch] = version
                             else:
                                 # First entry for this package
-                                pkgdata[pkgname] = {arch:version}
+                                pkgdata[pkgname] = {arch: version}
                         else:
                             continue
                 except:
-                    raise Exception("Could not process URL %s\n%s\nPlease verify the URL." % (url, sys.exc_value))
-        return dict((k,v) for (k,v) in pkgdata.items() \
+                    raise Exception("Could not process URL %s\n%s\nPlease "
+                                    "verify the URL." % (url, sys.exc_info()[1]))
+        return dict((k, v) for (k, v) in list(pkgdata.items()) \
                     if re.search(self.pattern, k))
-    
+
     def _get_sorted_pkg_keys(self, pkgdata):
-            pkgs = []
-            for k in pkgdata.keys():
-                pkgs.append(k)
-            pkgs.sort()
-            return pkgs
+        pkgs = []
+        for k in list(pkgdata.keys()):
+            pkgs.append(k)
+        pkgs.sort()
+        return pkgs
 
     def _write_common_entries(self, pkgdata):
         # Write entries for packages that have the same version
@@ -166,7 +189,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
             # (There is exactly one version per architecture)
             archdata = pkgdata[pkg]
             # List of versions for all architectures of this package
-            pkgversions = archdata.values()
+            pkgversions = list(archdata.values())
             # If the versions for all architectures are the same
             if len(self.architectures) == len(pkgversions) and list_contains_all_the_same_values(pkgversions):
                 # Write the package data
@@ -177,7 +200,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                 del pkgdata[pkg]
 
     def _write_perarch_entries(self, pkgdata):
-        # Write entries that are left, i.e. packages that have different 
+        # Write entries that are left, i.e. packages that have different
         # versions per architecture
         #perarch = 0
         if pkgdata:
@@ -185,7 +208,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                 self._write_to_file('<Group name="%s">' % (arch))
                 self.indent_level = self.indent_level + 1
                 for pkg in self._get_sorted_pkg_keys(pkgdata):
-                    if pkgdata[pkg].has_key(arch):
+                    if arch in pkgdata[pkg]:
                         self._write_to_file('<Package name="%s" version="%s"/>' % (pkg, pkgdata[pkg][arch]))
                         #perarch += 1
                 self.indent_level = self.indent_level - 1
@@ -194,29 +217,29 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
 
     def process(self):
         '''Build package indices for source'''
-        
+
         # First, build the pkgdata structure without touching the file,
         # so the file does not contain incomplete informations if the
         # network in not reachable.
         pkgdata = {}
         for source_url in self.source_urls:
             pkgdata = self._update_pkgdata(pkgdata, source_url)
-        
+
         # Construct the file.
         self._open_file()
         for source_url in self.source_urls:
             self._write_to_file('<!-- %s -->' % source_url)
-        
+
         self._write_to_file('<PackageList priority="%s" type="deb">' % self.priority)
-        
+
         self.indent_level = self.indent_level + 1
         for group in self.groups:
             self._write_to_file('<Group name="%s">' % group)
             self.indent_level = self.indent_level + 1
-        
+
         self._write_common_entries(pkgdata)
         self._write_perarch_entries(pkgdata)
-        
+
         for group in self.groups:
             self.indent_level = self.indent_level - 1
             self._write_to_file('</Group>')
@@ -229,10 +252,10 @@ if __name__ == '__main__':
     # Prefix is relative to script path
     complete_script_path = os.path.join(os.getcwd(), sys.argv[0])
     prefix = complete_script_path[:-len('etc/create-debian-pkglist.py')]
-    
+
     confparser = ConfigParser.SafeConfigParser()
     confparser.read(prefix + "etc/debian-pkglist.conf")
-    
+
     # We read the whole configuration file before processing each entries
     # to avoid doing work if there is a problem in the file.
     sources_list = []

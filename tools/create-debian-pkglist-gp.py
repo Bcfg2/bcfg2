@@ -5,28 +5,38 @@ __revision__ = '$Id: create-debian-pkglist.py 11778 2007-12-11 13:46:06Z guillau
 
 # Original code from Bcfg2 sources
 
-import gzip, os, urllib, cStringIO, sys, ConfigParser, commands
+import gzip
+import os
+import urllib
+import cStringIO
+import sys
+import ConfigParser
+import subprocess
+
 
 def debug(msg):
     '''print debug messages'''
     if '-v' in sys.argv:
         sys.stdout.write(msg)
 
+
 def get_as_list(somestring):
     """ Input : a string like this : 'a, g, f,w'
         Output : a list like this : ['a', 'g', 'f', 'w'] """
     return somestring.replace(' ', '').split(',')
 
+
 def list_contains_all_the_same_values(l):
     if len(l) == 0:
         return True
-    # The list contains all the same values if all elements in 
+    # The list contains all the same values if all elements in
     # the list are equal to the first element.
     first = l[0]
     for elem in l:
         if first != elem:
             return False
     return True
+
 
 class SourceURL:
     def __init__(self, deb_url):
@@ -35,12 +45,13 @@ class SourceURL:
         self.url = deb_url_tokens[1]
         self.distribution = deb_url_tokens[2]
         self.sections = deb_url_tokens[3:]
-    
+
     def __str__(self):
         return "deb %s %s %s" % (self.url, self.distribution, ' '.join(self.sections))
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
+
 
 class Source:
     def __init__(self, confparser, section, bcfg2_repos_prefix):
@@ -52,11 +63,11 @@ class Source:
         self.source_urls = []
         self.source_urls.append(SourceURL(confparser.get(section, "deb_url")))
         # Agregate urls in the form of deb_url0, deb_url1, ... to deb_url9
-        for i in range(10): # 0 to 9
+        for i in range(10):  # 0 to 9
             option_name = "deb_url%s" % i
             if confparser.has_option(section, option_name):
                 self.source_urls.append(SourceURL(confparser.get(section, option_name)))
-    
+
         self.file = None
         self.indent_level = 0
 
@@ -66,13 +77,13 @@ Groups: %s
 Priority: %s
 Architectures: %s
 Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectures, self.source_urls)
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
 
     def _open_file(self):
         self.file = open(self.filename + '~', 'w')
-    
+
     def _close_file(self):
         self.file.close()
 
@@ -88,7 +99,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
         # Avoid forking a new process if the two strings are equals
         if version1 == version2:
             return False
-        (status, output) = commands.getstatusoutput("/usr/bin/dpkg --compare-versions %s lt %s" % (version1, version2))
+        (status, output) = subprocess.getstatusoutput("/usr/bin/dpkg --compare-versions %s lt %s" % (version1,
+                                                                                                     version2))
         #print "%s dpkg --compare-versions %s lt %s" % (status, version1, version2)
         return status == 0
 
@@ -119,16 +131,17 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                                     pkgdata[pkgname][arch] = version
                             else:
                                 # First entry for this package
-                                pkgdata[pkgname] = {arch:version}
+                                pkgdata[pkgname] = {arch: version}
                         else:
                             continue
                 except:
-                    raise Exception("Could not process URL %s\n%s\nPlease verify the URL." % (url, sys.exc_value))
+                    raise Exception("Could not process URL %s\n%s\nPlease "
+                                    "verify the URL." % (url, sys.exc_info()[1]))
         return pkgdata
-    
+
     def _get_sorted_pkg_keys(self, pkgdata):
         pkgs = []
-        for k in pkgdata.keys():
+        for k in list(pkgdata.keys()):
             pkgs.append(k)
         pkgs.sort()
         return pkgs
@@ -142,7 +155,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
             # (There is exactly one version per architecture)
             archdata = pkgdata[pkg]
             # List of versions for all architectures of this package
-            pkgversions = archdata.values()
+            pkgversions = list(archdata.values())
             # If the versions for all architectures are the same
             if list_contains_all_the_same_values(pkgversions):
                 # Write the package data
@@ -153,7 +166,7 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                 del pkgdata[pkg]
 
     def _write_perarch_entries(self, pkgdata):
-        # Write entries that are left, i.e. packages that have different 
+        # Write entries that are left, i.e. packages that have different
         # versions per architecture
         #perarch = 0
         if pkgdata:
@@ -170,29 +183,29 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
 
     def process(self):
         '''Build package indices for source'''
-        
+
         # First, build the pkgdata structure without touching the file,
         # so the file does not contain incomplete informations if the
         # network in not reachable.
         pkgdata = {}
         for source_url in self.source_urls:
             pkgdata = self._update_pkgdata(pkgdata, source_url)
-        
+
         # Construct the file.
         self._open_file()
         for source_url in self.source_urls:
             self._write_to_file('<!-- %s -->' % source_url)
-        
+
         self._write_to_file('<PackageList priority="%s" type="deb">' % self.priority)
-        
+
         self.indent_level = self.indent_level + 1
         for group in self.groups:
             self._write_to_file('<Group name="%s">' % group)
             self.indent_level = self.indent_level + 1
-        
+
         self._write_common_entries(pkgdata)
         self._write_perarch_entries(pkgdata)
-        
+
         for group in self.groups:
             self.indent_level = self.indent_level - 1
             self._write_to_file('</Group>')
@@ -205,10 +218,10 @@ if __name__ == '__main__':
     main_conf_parser = ConfigParser.SafeConfigParser()
     main_conf_parser.read(['/etc/bcfg2.conf'])
     repo = main_conf_parser.get('server', 'repository')
-    
+
     confparser = ConfigParser.SafeConfigParser()
     confparser.read(os.path.join(repo, "etc/debian-pkglist.conf"))
-    
+
     # We read the whole configuration file before processing each entries
     # to avoid doing work if there is a problem in the file.
     sources_list = []

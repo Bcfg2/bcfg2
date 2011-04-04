@@ -12,9 +12,14 @@ host_attribs = ["hostname", "whatami", "netgroup", "security_class",
                 "support", "csi", "memory", "printq", "dhcp", "outbound_smtp",
                 "primary_user", "administrator", "location",
                 "comments", "last", "expiration_date"]
-dispatch = {'mac_addr':' i.', 'hdwr_type':' i.', 'ip_addr':' p.',
-            'name':' n.', 'dns_view':' n.',
-            'cname':' c.', 'mx':' m.', 'priority':' m.'}
+dispatch = {'mac_addr': ' i.',
+            'hdwr_type': ' i.',
+            'ip_addr': ' p.',
+            'name': ' n.',
+            'dns_view': ' n.',
+            'cname': ' c.',
+            'mx': ' m.',
+            'priority': ' m.'}
 
 
 def pinger(hosts):
@@ -24,6 +29,7 @@ def pinger(hosts):
         hostnames += each[0] + " "
     system("fping -r 1" + hostnames)
     sys.exit()
+
 
 def get_query(arguments):
     """Parses the command line options and returns the necessary
@@ -51,28 +57,36 @@ def get_query(arguments):
                 operator = "<>"
             querysplit = arguments[querypos].split("==")
             if querysplit[0] in host_attribs:
-                querystring = " h.%s%s\'%s\'" % (querysplit[0], operator, querysplit[1])
+                querystring = " h.%s%s\'%s\'" % (querysplit[0],
+                                                 operator,
+                                                 querysplit[1])
             elif querysplit[0] in dispatch:
                 querystring = dispatch[querysplit[0]]
-                querystring += "%s%s\'%s\'" % (querysplit[0], operator, querysplit[1])
+                querystring += "%s%s\'%s\'" % (querysplit[0],
+                                               operator,
+                                               querysplit[1])
         elif len(arguments[querypos].split("=")) > 1:
             notstring = ''
             if notflag:
                 notstring = 'NOT '
             querysplit = arguments[querypos].split("=")
             if querysplit[0] in host_attribs:
-                querystring = " h.%s %sLIKE \'%%%%%s%%%%\'" % (querysplit[0], notstring, querysplit[1])
+                querystring = " h.%s %sLIKE \'%%%%%s%%%%\'" % (querysplit[0],
+                                                               notstring,
+                                                               querysplit[1])
             elif querysplit[0] in dispatch:
                 querystring = dispatch[querysplit[0]]
-                querystring += "%s %sLIKE \'%%%%%s%%%%\'" % (querysplit[0], notstring, querysplit[1])
+                querystring += "%s %sLIKE \'%%%%%s%%%%\'" % (querysplit[0],
+                                                             notstring,
+                                                             querysplit[1])
         else:
-            print "ERROR: bad query format"
+            print("ERROR: bad query format")
             sys.exit()
         if not querystring:
-            print "ERROR: bad query format"
+            print("ERROR: bad query format")
             sys.exit()
         resultset.append((querystring, logic))
-        arguments = arguments[querypos+1:]
+        arguments = arguments[querypos + 1:]
         if arguments == [] or arguments[0] not in logic_ops:
             break
     return resultset
@@ -82,12 +96,12 @@ try:
                              'q:', ['showfields', 'fields', 'ping', 'summary'])
     cursor = connection.cursor()
     if ('--showfields', '') in opts:
-        print "\nhost fields:\n"
+        print("\nhost fields:\n")
         for field in host_attribs:
-            print field
+            print(field)
         for field in dispatch:
-            print field
-        print ''
+            print(field)
+        print("")
         sys.exit()
     if opts[0][0] == '-q':
         results = get_query(sys.argv[2:])
@@ -113,19 +127,19 @@ try:
         cursor.execute(query)
         results = cursor.fetchall()
         if not results:
-            print "No matches were found for your query"
+            print("No matches were found for your query")
             sys.exit()
-        print '\n%-32s %-10s %-10s %-10s' % ('Hostname', 'Type', 'Location', 'User')
-        print '================================ ========== ========== =========='
+        print("\n%-32s %-10s %-10s %-10s" % ('Hostname', 'Type', 'Location', 'User'))
+        print("================================ ========== ========== ==========")
         for host in results:
-            print '%-32s %-10s %-10s %-10s' % (host)
-        print ''
+            print("%-32s %-10s %-10s %-10s" % (host))
+        print("")
     elif ('--fields', '') in opts:
         tolook = [arg for arg in args if arg in host_attribs or arg in dispatch]
         fields = ""
         fields = ", ".join(tolook)
         if not fields:
-            print "No valid fields were entered.  exiting..."
+            print("No valid fields were entered.  exiting...")
             sys.exit()
         query = """SELECT DISTINCT %s FROM (((((hostbase_host h
         INNER JOIN hostbase_interface i ON h.id = i.host_id)
@@ -137,19 +151,18 @@ try:
         WHERE %s ORDER BY h.hostname
         """ % (fields, queryoptions)
 
-
         cursor.execute(query)
         results = cursor.fetchall()
 
         last = results[0]
         for field in results[0]:
-            print repr(field) + "\t",
+            print(repr(field) + "\t")
         for host in results:
             if not host == last:
                 for field in host:
-                    print repr(field) + "\t",
+                    print(repr(field) + "\t")
             last = host
-            print ''
+            print("")
     else:
         basequery = """SELECT DISTINCT h.hostname FROM (((((hostbase_host h
         INNER JOIN hostbase_interface i ON h.id = i.host_id)
@@ -164,21 +177,21 @@ try:
         results = cursor.fetchall()
 
         if not results:
-            print "No matches were found for your query"
+            print("No matches were found for your query")
             sys.exit()
 
         if ("--ping", '') in opts:
             pinger(results)
 
         for host in results:
-            print host[0]
+            print(host[0])
 
-        
+
 except (GetoptError, IndexError):
-    print "\nUsage: hostinfo.py -q <field>=[=]<value> [and/or <field>=<value> [--long option]]"
-    print "       hostinfo.py --showfields\tshows all data fields"
-    print "\n    long options:"
-    print "\t --fields f1 f2 ...\tspecifies the fields displayed from the queried hosts"
-    print "\t --summary\t\tprints out a predetermined set of fields"
-    print "\t --ping\t\t\tuses fping to ping all queried hosts\n"
+    print("\nUsage: hostinfo.py -q <field>=[=]<value> [and/or <field>=<value> [--long option]]")
+    print("       hostinfo.py --showfields\tshows all data fields")
+    print("\n    long options:")
+    print("\t --fields f1 f2 ...\tspecifies the fields displayed from the queried hosts")
+    print("\t --summary\t\tprints out a predetermined set of fields")
+    print("\t --ping\t\t\tuses fping to ping all queried hosts\n")
     sys.exit()
