@@ -12,7 +12,11 @@ import sys
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
 ftpdir = '/mcs/ftp/pub/bcfg'
-version = input("Please enter the version you are tagging (e.g. 1.0.0): ")
+# py3k compatibility
+try:
+    version = raw_input("Please enter the version you are tagging (e.g. 1.0.0): ")
+except NameError:
+    version = input("Please enter the version you are tagging (e.g. 1.0.0): ")
 tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
 
@@ -22,8 +26,13 @@ def run(command):
 # update the version
 majorver = version[:5]
 minorver = version[5:]
-name = input("Your name: ")
-email = input("Your email: ")
+# py3k compatibility
+try:
+    name = raw_input("Your name: ")
+    email = raw_input("Your email: ")
+except NameError:
+    name = input("Your name: ")
+    email = input("Your email: ")
 newchangelog = \
 """bcfg2 (%s-0.0%s) unstable; urgency=low
 

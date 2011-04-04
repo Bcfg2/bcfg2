@@ -150,7 +150,7 @@ def parse_rpm_filename(path, filename):
             (blob, subarch, extension) = (rblob[::-1], rsubarch[::-1], rextension[::-1])
             (rrelease, rversion, rname) = blob[::-1].split('-', 2)
             (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
-        if subarch not in subarch_mapping.keys():
+        if subarch not in list(subarch_mapping.keys()):
             raise "%s/%s has invalid subarch %s." % (path, filename, subarch)
     except:
         # for incorrectly named rpms (ie, sun's java rpms) we fall back to reading the rpm headers.

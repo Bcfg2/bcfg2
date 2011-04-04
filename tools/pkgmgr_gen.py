@@ -362,7 +362,7 @@ def printPackage(entry, group_count):
             arch_dict[subarch_mapping[instance['arch']]] = [instance['arch']]
 
     # Only keep the 'highest' subarchitecture in each architecture.
-    for arch in arch_dict.keys():
+    for arch in list(arch_dict.keys()):
         if len(arch_dict[arch]) > 1:
             arch_dict[arch].sort()
             for s in arch_dict[arch][:-1]:
