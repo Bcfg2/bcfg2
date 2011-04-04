@@ -219,9 +219,9 @@ def add_url_filter(parser, token):
         filter_name = filter_name.strip()
         filter_value = parser.compile_filter(filter_value)
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly one argument" % token.contents.split()[0])
     if not filter_name or not filter_value:
-        raise template.TemplateSyntaxError, "argument should be a filter=value pair"
+        raise template.TemplateSyntaxError("argument should be a filter=value pair")
 
     return AddUrlFilter(filter_name, filter_value)
 
@@ -268,7 +268,7 @@ def to_media_url(parser, token):
         tag_name, filter_value = token.split_contents()
         filter_value = parser.compile_filter(filter_value)
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly one argument" % token.contents.split()[0])
 
     return MediaTag(filter_value)
 

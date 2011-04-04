@@ -385,9 +385,9 @@ def prepare_paginated_list(request, context, paged_list, page=1, max_results=25)
     Prepare context and slice an object for pagination.
     """
     if max_results < 1:
-        raise PaginationError, "Max results less then 1"
+        raise PaginationError("Max results less then 1")
     if paged_list == None:
-        raise PaginationError, "Invalid object"
+        raise PaginationError("Invalid object")
 
     try:
         nitems = paged_list.count()
@@ -404,8 +404,8 @@ def prepare_paginated_list(request, context, paged_list, page=1, max_results=25)
         try:
             view, args, kwargs = resolve(request.META['PATH_INFO'])
             kwargs['page_number'] = total_pages
-            raise PaginationError, HttpResponseRedirect(reverse(view,
-                                                                kwargs=kwargs))
+            raise PaginationError(HttpResponseRedirect(reverse(view,
+                                                               kwards=kwargs)))
         except (Resolver404, NoReverseMatch, ValueError):
             raise "Accessing beyond last page.  Unable to resolve redirect."
 
