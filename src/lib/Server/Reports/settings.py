@@ -18,7 +18,7 @@ else:
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-     ('Bcfg2', 'admin@email.address'),
+     ('Root', 'root'),
 )
 
 MANAGERS = ADMINS
