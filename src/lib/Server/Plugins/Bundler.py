@@ -73,7 +73,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         """Build all structures for client (metadata)."""
         bundleset = []
         for bundlename in metadata.bundles:
-            entries = [item for (key, item) in self.entries.iteritems() if \
+            entries = [item for (key, item) in list(self.entries.items()) if \
                        self.patterns.match(key).group('name') == bundlename]
             if len(entries) == 0:
                 continue

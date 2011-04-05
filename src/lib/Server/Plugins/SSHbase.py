@@ -73,7 +73,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         """Build memory cache of the ssh known hosts file."""
         if not self.__skn:
             self.__skn = "\n".join([value.data for key, value in \
-                                    self.entries.iteritems() if \
+                                    list(self.entries.items()) if \
                                     key.endswith('.static')])
             names = dict()
             # if no metadata is registered yet, defer
@@ -103,7 +103,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                             continue
                 names[cmeta.hostname] = sorted(names[cmeta.hostname])
             # now we have our name cache
-            pubkeys = [pubk for pubk in self.entries.keys() \
+            pubkeys = [pubk for pubk in list(self.entries.keys()) \
                        if pubk.find('.pub.H_') != -1]
             pubkeys.sort()
             badnames = set()
@@ -131,7 +131,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         if event and event.filename.endswith('.static'):
             self.skn = False
         if not self.__skn:
-            if (len(self.entries.keys())) >= (len(os.listdir(self.data))-1):
+            if (len(list(self.entries.keys()))) >= (len(os.listdir(self.data)) - 1):
                 _ = self.skn
 
     def HandlesEntry(self, entry, _):
@@ -205,26 +205,26 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
                 self.entries[hostkey].data)
-        permdata = {'owner':'root',
-                    'group':'root',
-                    'type':'file',
-                    'perms':'0644'}
+        permdata = {'owner': 'root',
+                    'group': 'root',
+                    'type': 'file',
+                    'perms': '0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
     def build_hk(self, entry, metadata):
         """This binds host key data into entries."""
         client = metadata.hostname
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
-        if filename not in self.entries.keys():
+        if filename not in list(self.entries.keys()):
             self.GenerateHostKeys(client)
         if not filename in self.entries:
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
         keydata = self.entries[filename].data
-        permdata = {'owner':'root',
-                    'group':'root',
-                    'type':'file',
-                    'perms':'0600'}
+        permdata = {'owner': 'root',
+                    'group': 'root',
+                    'type': 'file',
+                    'perms': '0600'}
         if entry.get('name')[-4:] == '.pub':
             permdata['perms'] = '0644'
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
@@ -245,7 +245,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             else:
                 keytype = 'rsa1'
 
-            if hostkey not in self.entries.keys():
+            if hostkey not in list(self.entries.keys()):
                 fileloc = "%s/%s" % (self.data, hostkey)
                 publoc = self.data + '/' + ".".join([hostkey.split('.')[0],
                                                      'pub',
@@ -257,8 +257,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 shutil.copy(temploc, fileloc)
                 shutil.copy("%s.pub" % temploc, publoc)
                 self.AddEntry(hostkey)
-                self.AddEntry(".".join([hostkey.split('.')[0]]+['pub', "H_%s" \
-                                                                % client]))
+                self.AddEntry(".".join([hostkey.split('.')[0]] + ['pub', "H_%s" \
+                                                                  % client]))
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
@@ -277,7 +277,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         try:
             open(filename, 'w').write(entry['text'])
             if log:
-                print "Wrote file %s" % filename
+                print("Wrote file %s" % filename)
         except KeyError:
             self.logger.error("Failed to pull %s. This file does not currently "
                               "exist on the client" % entry.get('name'))

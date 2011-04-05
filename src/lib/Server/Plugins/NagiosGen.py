@@ -19,6 +19,7 @@ define host{
         address         %s
 '''
 
+
 class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Generator):
     """NagiosGen is a Bcfg2 plugin that dynamically generates
@@ -32,23 +33,23 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         self.Entries = {'Path':
-                {'/etc/nagiosgen.status'   : self.createhostconfig,
+                {'/etc/nagiosgen.status': self.createhostconfig,
                 '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}
 
-        self.client_attrib = {'encoding':'ascii',
-                              'owner':'root',
-                              'group':'root',
-                              'type':'file',
-                              'perms':'0400'}
-        self.server_attrib = {'encoding':'ascii',
-                              'owner':'nagios',
-                              'group':'nagios',
-                              'type':'file',
-                              'perms':'0440'}
+        self.client_attrib = {'encoding': 'ascii',
+                              'owner': 'root',
+                              'group': 'root',
+                              'type': 'file',
+                              'perms': '0400'}
+        self.server_attrib = {'encoding': 'ascii',
+                              'owner': 'nagios',
+                              'group': 'nagios',
+                              'type': 'file',
+                              'perms': '0440'}
 
     def getparents(self, hostname):
         """Return parents for given hostname."""
-        depends=[]
+        depends = []
         if not os.path.isfile('%s/parents.xml' % (self.data)):
             return depends
 
@@ -88,7 +89,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         host_config += '}\n'
         entry.text = host_config
         [entry.attrib.__setitem__(key, value) for \
-            (key, value) in self.client_attrib.iteritems()]
+            (key, value) in list(self.client_attrib.items())]
         try:
             fileh = open("%s/%s-host.cfg" % \
                         (self.data, metadata.hostname), 'w')
@@ -101,14 +102,14 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
 
     def createserverconfig(self, entry, _):
         """Build monolithic server configuration file."""
-        host_configs  = glob.glob('%s/*-host.cfg' % self.data)
+        host_configs = glob.glob('%s/*-host.cfg' % self.data)
         group_configs = glob.glob('%s/*-group.cfg' % self.data)
         host_data = ""
         group_data = ""
         for host in host_configs:
             hostfile = open(host, 'r')
-            hostname=host.split('/')[-1].replace('-host.cfg','')
-            parents=self.getparents(hostname)
+            hostname = host.split('/')[-1].replace('-host.cfg', '')
+            parents = self.getparents(hostname)
             if parents:
                 hostlines = hostfile.readlines()
             else:
@@ -116,19 +117,19 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
             hostfile.close()
 
             if parents:
-                hostdata=''
-                addparents=True
+                hostdata = ''
+                addparents = True
                 for line in hostlines:
-                    line=line.replace('\n','')
+                    line = line.replace('\n', '')
                     if 'parents' in line:
-                        line+=','+','.join(parents)
-                        addparents=False
+                        line += ',' + ','.join(parents)
+                        addparents = False
                     if '}' in line:
-                        line=''
-                    hostdata+="%s\n" % line
+                        line = ''
+                    hostdata += "%s\n" % line
                 if addparents:
-                    hostdata+="        parents         %s\n" % ','.join(parents)
-                hostdata+="}\n"
+                    hostdata += "        parents         %s\n" % ','.join(parents)
+                hostdata += "}\n"
 
             host_data += hostdata
         for group in group_configs:
@@ -139,7 +140,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                 groupfile.close()
         entry.text = group_data + host_data
         [entry.attrib.__setitem__(key, value) for \
-            (key, value) in self.server_attrib.iteritems()]
+            (key, value) in list(self.server_attrib.items())]
         try:
             fileh = open("%s/nagiosgen.cfg" % (self.data), 'w')
             fileh.write(group_data + host_data)

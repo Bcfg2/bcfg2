@@ -24,6 +24,7 @@ datafields = {
               'SymLink': ['to'],
              }
 
+
 def build_snap_ent(entry):
     basefields = []
     if entry.tag in ['Package', 'Service']:
@@ -119,12 +120,12 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics,
                 data['name'] = ename
                 extra[entry.tag][ename] = data
             else:
-                print "extra", entry.tag, entry.get('name')
+                print("extra", entry.tag, entry.get('name'))
         t2 = time.time()
         snap = Snapshot.from_data(self.session, correct, revision,
                                   metadata, entries, extra)
         self.session.add(snap)
         self.session.commit()
         t3 = time.time()
-        logger.info("Snapshot storage took %fs" % (t3-t2))
+        logger.info("Snapshot storage took %fs" % (t3 - t2))
         return True

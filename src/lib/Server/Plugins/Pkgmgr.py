@@ -7,15 +7,17 @@ import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
+
 class FuzzyDict(dict):
     fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
+
     def __getitem__(self, key):
         if isinstance(key, str):
             mdata = self.fuzzy.match(key)
             if mdata:
                 return dict.__getitem__(self, mdata.groupdict()['name'])
         else:
-            print "got non-string key %s" % str(key)
+            print("got non-string key %s" % str(key))
         return dict.__getitem__(self, key)
 
     def has_key(self, key):
@@ -33,11 +35,14 @@ class FuzzyDict(dict):
                 return default
             raise
 
+
 class PNode(Bcfg2.Server.Plugin.INode):
-    """PNode has a list of packages available at a particular group intersection."""
-    splitters = {'rpm':re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
+    """PNode has a list of packages available at a
+    particular group intersection.
+    """
+    splitters = {'rpm': re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
-                 'encap':re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
+                 'encap': re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
 
     def Match(self, metadata, data):
@@ -54,41 +59,44 @@ class PNode(Bcfg2.Server.Plugin.INode):
 
     def __init__(self, data, pdict, parent=None):
         # copy local attributes to all child nodes if no local attribute exists
-        if not pdict.has_key('Package'):
+        if 'Package' not in pdict:
             pdict['Package'] = set()
         for child in data.getchildren():
-            for attr in [key for key in data.attrib.keys() \
-                         if key != 'name' and not child.attrib.has_key(key)]:
+            for attr in [key for key in data.attrib.keys()
+                         if key != 'name' and key not in child.attrib]:
                 try:
                     child.set(attr, data.get(attr))
                 except:
                     # don't fail on things like comments and other immutable elements
                     pass
         Bcfg2.Server.Plugin.INode.__init__(self, data, pdict, parent)
-        if not self.contents.has_key('Package'):
+        if 'Package' not in self.contents:
             self.contents['Package'] = FuzzyDict()
         for pkg in data.findall('./Package'):
-            if pkg.attrib.has_key('name') and pkg.get('name') not in pdict['Package']:
+            if 'name' in pkg.attrib and pkg.get('name') not in pdict['Package']:
                 pdict['Package'].add(pkg.get('name'))
             if pkg.get('name') != None:
                 self.contents['Package'][pkg.get('name')] = {}
                 if pkg.getchildren():
                     self.contents['Package'][pkg.get('name')]['__children__'] \
                                                                           = pkg.getchildren()
-            if pkg.attrib.has_key('simplefile'):
+            if 'simplefile' in pkg.attrib:
                 pkg.set('url', "%s/%s" % (pkg.get('uri'), pkg.get('simplefile')))
                 self.contents['Package'][pkg.get('name')].update(pkg.attrib)
             else:
-                if pkg.attrib.has_key('file'):
-                    if pkg.attrib.has_key('multiarch'):
+                if 'file' in pkg.attrib:
+                    if 'multiarch' in pkg.attrib:
                         archs = pkg.get('multiarch').split()
                         srcs = pkg.get('srcs', pkg.get('multiarch')).split()
-                        url = ' '.join(["%s/%s" % (pkg.get('uri'), pkg.get('file') % {'src':srcs[idx], 'arch':archs[idx]})
+                        url = ' '.join(["%s/%s" % (pkg.get('uri'),
+                                                   pkg.get('file') % {'src':srcs[idx],
+                                                                      'arch':archs[idx]})
                                         for idx in range(len(archs))])
                         pkg.set('url', url)
                     else:
-                        pkg.set('url', '%s/%s' % (pkg.get('uri'), pkg.get('file')))
-                if self.splitters.has_key(pkg.get('type')) and pkg.get('file') != None:
+                        pkg.set('url', '%s/%s' % (pkg.get('uri'),
+                                                  pkg.get('file')))
+                if pkg.get('type') in self.splitters and pkg.get('file') != None:
                     mdata = self.splitters[pkg.get('type')].match(pkg.get('file'))
                     if not mdata:
                         logger.error("Failed to match pkg %s" % pkg.get('file'))
@@ -112,9 +120,12 @@ class PNode(Bcfg2.Server.Plugin.INode):
 
 
 class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
-    """PkgSrc files contain a PNode hierarchy that returns matching package entries."""
+    """PkgSrc files contain a PNode hierarchy that
+    returns matching package entries.
+    """
     __node__ = PNode
     __cacheobj__ = FuzzyDict
+
 
 class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles package assignments."""
@@ -127,8 +138,8 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     def HandleEvent(self, event):
         '''Handle events and update dispatch table'''
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
-        for src in self.entries.values():
-            for itype, children in src.items.iteritems():
+        for src in list(self.entries.values()):
+            for itype, children in list(src.items.items()):
                 for child in children:
                     try:
                         self.Entries[itype][child] = self.BindEntry
@@ -149,7 +160,7 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
                  if inst.get('arch') not in arches]
 
     def HandlesEntry(self, entry, metadata):
-        return entry.tag == 'Package' and entry.get('name').split(':')[0] in self.Entries['Package'].keys()
+        return entry.tag == 'Package' and entry.get('name').split(':')[0] in list(self.Entries['Package'].keys())
 
     def HandleEntry(self, entry, metadata):
         self.BindEntry(entry, metadata)

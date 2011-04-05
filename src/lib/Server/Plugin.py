@@ -38,13 +38,16 @@ info_regex = re.compile( \
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|')
 
+
 class PluginInitError(Exception):
     """Error raised in cases of Plugin initialization errors."""
     pass
 
+
 class PluginExecutionError(Exception):
     """Error raised in case of Plugin execution errors."""
     pass
+
 
 class Plugin(object):
     """This is the base class for all Bcfg2 Server plugins.
@@ -90,6 +93,7 @@ class Plugin(object):
     def shutdown(self):
         self.running = False
 
+
 class Generator(object):
     """Generator plugins contribute to literal client configurations."""
     def HandlesEntry(self, entry, metadata):
@@ -100,20 +104,24 @@ class Generator(object):
         """This is the slow-path handler for configuration entry binding."""
         raise PluginExecutionError
 
+
 class Structure(object):
     """Structure Plugins contribute to abstract client configurations."""
     def BuildStructures(self, metadata):
         """Return a list of abstract goal structures for client."""
         raise PluginExecutionError
 
+
 class Metadata(object):
     """Signal metadata capabilities for this plugin"""
     def add_client(self, client_name, attribs):
         """Add client."""
         pass
+
     def remove_client(self, client_name):
         """Remove client."""
         pass
+
     def viz(self, hosts, bundles, key, colors):
         """Create viz str for viz admin mode."""
         pass
@@ -123,6 +131,7 @@ class Metadata(object):
 
     def merge_additional_data(self, imd, source, groups, data):
         raise PluginExecutionError
+
 
 class Connector(object):
     """Connector Plugins augment client metadata instances."""
@@ -134,6 +143,7 @@ class Connector(object):
         """Determine additional data for metadata instances."""
         return dict()
 
+
 class Probing(object):
     """Signal probe capability for this plugin."""
     def GetProbes(self, _):
@@ -144,10 +154,12 @@ class Probing(object):
         """Receive probe results pertaining to client."""
         pass
 
+
 class Statistics(object):
     """Signal statistics handling capability."""
     def process_statistics(self, client, xdata):
         pass
+
 
 class ThreadedStatistics(Statistics,
                          threading.Thread):
@@ -169,7 +181,7 @@ class ThreadedStatistics(Statistics,
             while not self.work_queue.empty():
                 (metadata, data) = self.work_queue.get_nowait()
                 try:
-                    pending_data.append( ( metadata.hostname, lxml.etree.tostring(data) ) )
+                    pending_data.append((metadata.hostname, lxml.etree.tostring(data)))
                 except:
                     self.logger.warning("Dropping interaction for %s" % metadata.hostname)
         except Queue.Empty:
@@ -202,7 +214,7 @@ class ThreadedStatistics(Statistics,
             try:
                 while True:
                     try:
-		        metadata = self.core.build_metadata(pmetadata)
+                        metadata = self.core.build_metadata(pmetadata)
                         break
                     except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
                         pass
@@ -211,7 +223,7 @@ class ThreadedStatistics(Statistics,
                     if self.terminate.isSet():
                         return False
 
-                self.work_queue.put_nowait( (metadata, lxml.etree.fromstring(pdata)) )
+                self.work_queue.put_nowait((metadata, lxml.etree.fromstring(pdata)))
             except Queue.Full:
                 self.logger.warning("Queue.Full: Failed to load queue data")
                 break
@@ -255,12 +267,14 @@ class ThreadedStatistics(Statistics,
         """Handle stats here."""
         pass
 
+
 class PullSource(object):
     def GetExtra(self, client):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
         raise PluginExecutionError
+
 
 class PullTarget(object):
     def AcceptChoices(self, entry, metadata):
@@ -271,30 +285,37 @@ class PullTarget(object):
         of bcfg2-admin pull."""
         raise PluginExecutionError
 
+
 class Decision(object):
     """Signal decision handling capability."""
     def GetDecisions(self, metadata, mode):
         return []
 
+
 class ValidationError(Exception):
     pass
+
 
 class StructureValidator(object):
     """Validate/modify goal structures."""
     def validate_structures(self, metadata, structures):
-        raise ValidationError, "not implemented"
+        raise ValidationError("not implemented")
+
 
 class GoalValidator(object):
     """Validate/modify configuration goals."""
     def validate_goals(self, metadata, goals):
-        raise ValidationError, "not implemented"
+        raise ValidationError("not implemented")
+
 
 class Version(object):
     """Interact with various version control systems."""
     def get_revision(self):
         return []
+
     def commit_data(self, file_list, comment=None):
         pass
+
 
 # the rest of the file contains classes for coherent file caching
 
@@ -324,6 +345,7 @@ class FileBacked(object):
         """Update local data structures based on current file state"""
         pass
 
+
 class DirectoryBacked(object):
     """This object is a coherent cache for a filesystem hierarchy of files."""
     __child__ = FileBacked
@@ -341,7 +363,7 @@ class DirectoryBacked(object):
         return self.entries[key]
 
     def __iter__(self):
-        return self.entries.iteritems()
+        return iter(self.entries.items())
 
     def AddEntry(self, name):
         """Add new entry to data structures upon file creation."""
@@ -380,9 +402,10 @@ class DirectoryBacked(object):
         elif action in ['endExist']:
             pass
         else:
-            print "Got unknown event %s %s %s" % (event.requestID,
+            print("Got unknown event %s %s %s" % (event.requestID,
                                                   event.code2str(),
-                                                  event.filename)
+                                                  event.filename))
+
 
 class XMLFileBacked(FileBacked):
     """
@@ -401,7 +424,7 @@ class XMLFileBacked(FileBacked):
         try:
             xdata = XML(self.data)
         except XMLSyntaxError:
-            logger.error("Failed to parse %s"%(self.name))
+            logger.error("Failed to parse %s" % (self.name))
             return
         self.label = xdata.attrib[self.__identifier__]
         self.entries = xdata.getchildren()
@@ -409,11 +432,13 @@ class XMLFileBacked(FileBacked):
     def __iter__(self):
         return iter(self.entries)
 
+
 class SingleXMLFileBacked(XMLFileBacked):
     """This object is a coherent cache for an independent XML file."""
     def __init__(self, filename, fam):
         XMLFileBacked.__init__(self, filename)
         fam.AddMonitor(filename, self)
+
 
 class StructFile(XMLFileBacked):
     """This file contains a set of structure file formatting logic."""
@@ -429,7 +454,7 @@ class StructFile(XMLFileBacked):
             logger.error("Failed to parse file %s" % self.name)
             return
         self.fragments = {}
-        work = {lambda x:True: xdata.getchildren()}
+        work = {lambda x: True: xdata.getchildren()}
         while work:
             (predicate, worklist) = work.popitem()
             self.fragments[predicate] = [item for item in worklist if item.tag != 'Group'
@@ -441,26 +466,28 @@ class StructFile(XMLFileBacked):
                 else:
                     cmd = "lambda x:'%s' in x.groups and predicate(x)"
 
-                newpred = eval(cmd % (group.get('name')), {'predicate':predicate})
+                newpred = eval(cmd % (group.get('name')), {'predicate': predicate})
                 work[newpred] = group.getchildren()
 
     def Match(self, metadata):
         """Return matching fragments of independent."""
-        matching = [frag for (pred, frag) in self.fragments.iteritems() if pred(metadata)]
+        matching = [frag for (pred, frag) in list(self.fragments.items())
+                    if pred(metadata)]
         if matching:
-            return reduce(lambda x, y:x+y, matching)
+            return reduce(lambda x, y: x + y, matching)
         logger.error("File %s got null match" % (self.name))
         return []
+
 
 class INode:
     """
     LNodes provide lists of things available at a particular
     group intersection.
     """
-    raw = {'Client':"lambda x:'%s' == x.hostname and predicate(x)",
-           'Group':"lambda x:'%s' in x.groups and predicate(x)"}
-    nraw = {'Client':"lambda x:'%s' != x.hostname and predicate(x)",
-            'Group':"lambda x:'%s' not in x.groups and predicate(x)"}
+    raw = {'Client': "lambda x:'%s' == x.hostname and predicate(x)",
+           'Group': "lambda x:'%s' in x.groups and predicate(x)"}
+    nraw = {'Client': "lambda x:'%s' != x.hostname and predicate(x)",
+            'Group': "lambda x:'%s' not in x.groups and predicate(x)"}
     containers = ['Group', 'Client']
     ignore = []
 
@@ -468,16 +495,16 @@ class INode:
         self.data = data
         self.contents = {}
         if parent == None:
-            self.predicate = lambda x:True
+            self.predicate = lambda x: True
         else:
             predicate = parent.predicate
             if data.get('negate', 'false') in ['true', 'True']:
                 psrc = self.nraw
             else:
                 psrc = self.raw
-            if data.tag in psrc.keys():
+            if data.tag in list(psrc.keys()):
                 self.predicate = eval(psrc[data.tag] % (data.get('name')),
-                                      {'predicate':predicate})
+                                      {'predicate': predicate})
             else:
                 raise Exception
         mytype = self.__class__
@@ -491,7 +518,7 @@ class INode:
                 try:
                     self.contents[item.tag][item.get('name')] = item.attrib
                 except KeyError:
-                    self.contents[item.tag] = {item.get('name'):item.attrib}
+                    self.contents[item.tag] = {item.get('name'): item.attrib}
                 if item.text:
                     self.contents[item.tag]['__text__'] = item.text
                 try:
@@ -510,6 +537,7 @@ class INode:
                     data[key].update(self.contents[key])
             for child in self.children:
                 child.Match(metadata, data)
+
 
 class XMLSrc(XMLFileBacked):
     """XMLSrc files contain a LNode hierarchy that returns matching entries."""
@@ -557,9 +585,11 @@ class XMLSrc(XMLFileBacked):
             self.pnode.Match(metadata, cache[1])
             self.cache = cache
 
+
 class XMLDirectoryBacked(DirectoryBacked):
     """Directorybacked for *.xml."""
     patterns = re.compile('.*\.xml')
+
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     """This is a generator that handles package assignments."""
@@ -579,8 +609,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         """Handle events and update dispatch table."""
         XMLDirectoryBacked.HandleEvent(self, event)
         self.Entries = {}
-        for src in self.entries.values():
-            for itype, children in src.items.iteritems():
+        for src in list(self.entries.values()):
+            for itype, children in list(src.items.items()):
                 for child in children:
                     try:
                         self.Entries[itype][child] = self.BindEntry
@@ -589,14 +619,14 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
     def BindEntry(self, entry, metadata):
         """Check package lists of package entries."""
-        [src.Cache(metadata) for src in self.entries.values()]
+        [src.Cache(metadata) for src in list(self.entries.values())]
         name = entry.get('name')
         if not src.cache:
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
-        matching = [src for src in self.entries.values()
+        matching = [src for src in list(self.entries.values())
                     if src.cache and entry.tag in src.cache[1]
-                    and src.cache[1][entry.tag].has_key(name)]
+                    and name in src.cache[1][entry.tag]]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
@@ -618,14 +648,16 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
             entry.text = data['__text__']
         if '__children__' in data:
             [entry.append(copy.deepcopy(item)) for item in data['__children__']]
-        [entry.attrib.__setitem__(key, data[key]) for key in data.keys() \
+        [entry.attrib.__setitem__(key, data[key]) for key in list(data.keys()) \
          if not key.startswith('__')]
+
 
 # new unified EntrySet backend
 
 class SpecificityError(Exception):
     """Thrown in case of filename parse failure."""
     pass
+
 
 class Specificity:
 
@@ -665,6 +697,7 @@ class Specificity:
                 return True
         return False
 
+
 class SpecificData(object):
     def __init__(self, name, specific, encoding):
         self.name = name
@@ -678,9 +711,11 @@ class SpecificData(object):
         except:
             logger.error("Failed to read file %s" % self.name)
 
+
 class EntrySet:
     """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
+
     def __init__(self, basename, path, entry_type, encoding):
         self.path = path
         self.entry_type = entry_type
@@ -693,7 +728,7 @@ class EntrySet:
         self.specific = re.compile(pattern)
 
     def get_matching(self, metadata):
-        return [item for item in self.entries.values() \
+        return [item for item in list(self.entries.values()) \
                 if item.specific.matches(metadata)]
 
     def handle_event(self, event):
@@ -761,11 +796,11 @@ class EntrySet:
             for line in open(fpath).readlines():
                 match = info_regex.match(line)
                 if not match:
-                    logger.warning("Failed to match line: %s"%line)
+                    logger.warning("Failed to match line: %s" % line)
                     continue
                 else:
                     mgd = match.groupdict()
-                    for key, value in mgd.iteritems():
+                    for key, value in list(mgd.items()):
                         if value:
                             self.metadata[key] = value
                     if len(self.metadata['perms']) == 3:
@@ -795,7 +830,7 @@ class EntrySet:
                              (entry.get('name')))
                 raise PluginExecutionError
             [entry.attrib.__setitem__(key, value) \
-             for (key, value) in mdata['Info'][None].iteritems()]
+             for (key, value) in list(mdata['Info'][None].items())]
 
     def bind_entry(self, entry, metadata):
         """Return the appropriate interpreted template from the set of available templates."""
@@ -816,6 +851,7 @@ class EntrySet:
             return aspec[0].bind_entry(entry, metadata)
 
         raise PluginExecutionError
+
 
 class GroupSpool(Plugin, Generator):
     """Unified interface for handling group-specific data (e.g. .G## files)."""
@@ -878,9 +914,9 @@ class GroupSpool(Plugin, Generator):
         if not relative.endswith('/'):
             relative += '/'
         name = self.data + relative
-        if relative not in self.handles.values():
+        if relative not in list(self.handles.values()):
             if not posixpath.isdir(name):
-                print "Failed to open directory %s" % (name)
+                print("Failed to open directory %s" % (name))
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.handles[reqid] = relative

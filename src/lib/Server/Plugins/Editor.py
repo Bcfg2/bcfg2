@@ -2,6 +2,7 @@ import Bcfg2.Server.Plugin
 import re
 import lxml.etree
 
+
 def linesub(pattern, repl, filestring):
     """Substitutes instances of pattern with repl in filestring."""
     if filestring == None:
@@ -11,6 +12,7 @@ def linesub(pattern, repl, filestring):
     for line in fileread:
         output.append(re.sub(pattern, repl, filestring))
     return '\n'.join(output)
+
 
 class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
     """This object handles the editing directives."""
@@ -22,23 +24,29 @@ class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
             temp = linesub(directive[0], directive[1], temp)
         return temp
 
+
 class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, entry_type, encoding):
-        self.ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" %path.split('/')[-1])
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, entry_type, encoding)
+        self.ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" % path.split('/')[-1])
+        Bcfg2.Server.Plugin.EntrySet.__init__(self,
+                                              basename,
+                                              path,
+                                              entry_type,
+                                              encoding)
         self.inputs = dict()
 
     def bind_entry(self, entry, metadata):
         client = metadata.hostname
         filename = entry.get('name')
-        permdata = {'owner':'root', 'group':'root'}
-        permdata['perms'] = '0644'
+        permdata = {'owner': 'root',
+                    'group': 'root'
+                    'perms': '0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
         entry.text = self.entries['edits'].ProcessDirectives(self.get_client_data(client))
         if not entry.text:
             entry.set('empty', 'true')
         try:
-            f = open('%s/%s.H_%s' %(self.path, filename.split('/')[-1], client), 'w')
+            f = open('%s/%s.H_%s' % (self.path, filename.split('/')[-1], client), 'w')
             f.write(entry.text)
             f.close()
         except:
@@ -60,7 +68,7 @@ class Editor(Bcfg2.Server.Plugin.GroupSpool,
     def GetProbes(self, _):
         '''Return a set of probes for execution on client'''
         probelist = list()
-        for name in self.entries.keys():
+        for name in list(self.entries.keys()):
             probe = lxml.etree.Element('probe')
             probe.set('name', name)
             probe.set('source', "Editor")

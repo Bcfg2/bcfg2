@@ -13,9 +13,7 @@ import Bcfg2.Server.Plugin
 try:
     import genshi.core
     import genshi.input
-    from genshi.template import TemplateLoader, \
-                                TextTemplate, MarkupTemplate, TemplateError
-    from genshi.template import NewTextTemplate
+    from genshi.template import TemplateLoader, NewTextTemplate
     have_genshi = True
 except:
     have_genshi = False
@@ -62,7 +60,7 @@ def process_delta(data, delta):
         output = open(basefile.name, 'r').read()
         [os.unlink(fname) for fname in [basefile.name, dfile.name]]
         if ret >> 8 != 0:
-            raise Bcfg2.Server.Plugin.PluginExecutionError, ('delta', delta)
+            raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
         return output
 
 
@@ -96,7 +94,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         """return a list of all entries pertinent
         to a client => [base, delta1, delta2]
         """
-        matching = [ent for ent in self.entries.values() if \
+        matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
         matching.sort(self.sort_by_specific)
         non_delta = [matching.index(m) for m in matching
