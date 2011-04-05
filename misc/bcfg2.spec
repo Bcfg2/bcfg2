@@ -234,7 +234,7 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %dir %{_prefix}/lib/bcfg2
 
 %files doc
-%defattr(0644,root,root,-)
+%defattr(-,root,root,-)
 %doc %{_defaultdocdir}/bcfg2-doc-%{version}
 
 %files -n bcfg2-web

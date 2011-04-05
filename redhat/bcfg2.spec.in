@@ -243,7 +243,7 @@ fi
 %dir %{_var}/lib/bcfg2
 
 %files doc
-%defattr(0644,root,root,-)
+%defattr(-,root,root,-)
 %doc %{_defaultdocdir}/bcfg2-doc-%{version}
 
 %changelog
