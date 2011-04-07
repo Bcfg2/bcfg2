@@ -13,14 +13,19 @@ import termios
 
 logging.raiseExceptions = 0
 
+
 def print_attributes(attrib):
     """Add the attributes for an element."""
     return ' '.join(['%s="%s"' % data for data in list(attrib.items())])
 
+
 def print_text(text):
     """Add text to the output (which will need normalising."""
-    charmap = {'<':'&lt;', '>':'&gt;', '&':'&amp;'}
+    charmap = {'<': '&lt;',
+               '>': '&gt;',
+               '&': '&amp;'}
     return ''.join([charmap.get(char, char) for char in text]) + '\n'
+
 
 def xml_print(element, running_indent=0, indent=4):
     """Add an element and its children to the return string."""
@@ -32,7 +37,7 @@ def xml_print(element, running_indent=0, indent=4):
         ret = (' ' * running_indent)
         ret += '<%s%s>\n' % (element.tag, print_attributes(element))
         if element.text:
-            ret += (' '* child_indent) + print_text(element.text)
+            ret += (' ' * child_indent) + print_text(element.text)
         for child in element.getchildren():
             ret += xml_print(child, child_indent, indent)
             ret += (' ' * running_indent) + '</%s>\n' % (element.tag)
@@ -40,16 +45,21 @@ def xml_print(element, running_indent=0, indent=4):
             ret += (' ' * child_indent) + print_text(element.tail)
     return ret
 
+
 class TermiosFormatter(logging.Formatter):
-    """The termios formatter displays output in a terminal-sensitive fashion."""
+    """The termios formatter displays output
+    in a terminal-sensitive fashion.
+    """
 
     def __init__(self, fmt=None, datefmt=None):
         logging.Formatter.__init__(self, fmt, datefmt)
         if sys.stdout.isatty():
             # now get termios info
             try:
-                self.width = struct.unpack('hhhh', fcntl.ioctl(0, termios.TIOCGWINSZ,
-                                                               "\000"*8))[1]
+                self.width = struct.unpack('hhhh',
+                                           fcntl.ioctl(0,
+                                                       termios.TIOCGWINSZ,
+                                                       "\000" * 8))[1]
                 if self.width == 0:
                     self.width = 80
             except:
@@ -67,16 +77,16 @@ class TermiosFormatter(logging.Formatter):
                 if len(line) <= line_len:
                     returns.append(line)
                 else:
-                    inner_lines = int(math.floor(float(len(line)) / line_len))+1
+                    inner_lines = int(math.floor(float(len(line)) / line_len)) + 1
                     for i in range(inner_lines):
-                        returns.append("%s" % (line[i*line_len:(i+1)*line_len]))
+                        returns.append("%s" % (line[i * line_len:(i + 1) * line_len]))
         elif isinstance(record.msg, list):
             if not record.msg:
                 return ''
             record.msg.sort()
             msgwidth = self.width
             columnWidth = max([len(item) for item in record.msg])
-            columns = int(math.floor(float(msgwidth) / (columnWidth+2)))
+            columns = int(math.floor(float(msgwidth) / (columnWidth + 2)))
             lines = int(math.ceil(float(len(record.msg)) / columns))
             for lineNumber in range(lines):
                 indices = [idx for idx in [(colNum * lines) + lineNumber
@@ -90,6 +100,7 @@ class TermiosFormatter(logging.Formatter):
         if record.exc_info:
             returns.append(self.formatException(record.exc_info))
         return '\n'.join(returns)
+
 
 class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
     """
@@ -120,14 +131,16 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             msgs = [record]
         for newrec in msgs:
             msg = self.log_format_string % (self.encodePriority(self.facility,
-                                                                newrec.levelname.lower()), self.format(newrec))
+                                                                newrec.levelname.lower()),
+                                            self.format(newrec))
             try:
                 self.socket.send(msg)
             except socket.error:
-                for i in xrange(10):
+                for i in range(10):
                     try:
                         if isinstance(self.address, tuple):
-                            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            self.socket = socket.socket(socket.AF_INET,
+                                                        socket.SOCK_DGRAM)
                             self.socket.connect(self.address)
                         else:
                             self._connect_unixsocket(self.address)
@@ -144,6 +157,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     """
                     pass
 
+
 def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
     """Setup logging for Bcfg2 software."""
     if hasattr(logging, 'already_setup'):
@@ -158,9 +172,13 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
     if to_syslog:
         try:
             try:
-                syslog = FragmentingSysLogHandler(procname, '/dev/log', syslog_facility)
+                syslog = FragmentingSysLogHandler(procname,
+                                                  '/dev/log',
+                                                  syslog_facility)
             except socket.error:
-                syslog = FragmentingSysLogHandler(procname, ('localhost', 514), syslog_facility)
+                syslog = FragmentingSysLogHandler(procname,
+                                                  ('localhost', 514),
+                                                  syslog_facility)
             syslog.setLevel(logging.DEBUG)
             syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
             logging.root.addHandler(syslog)
@@ -175,6 +193,7 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
         logging.root.addHandler(filelog)
     logging.root.setLevel(level)
     logging.already_setup = True
+
 
 def trace_process(**kwargs):
     """Literally log every line of python code as it runs.
@@ -207,6 +226,7 @@ def trace_process(**kwargs):
 
     sys.settrace(traceit)
 
+
 def log_to_stderr(logger_name, level=logging.INFO):
     """Set up console logging."""
     try:
@@ -214,10 +234,11 @@ def log_to_stderr(logger_name, level=logging.INFO):
     except:
         # assume logger_name is already a logger
         logger = logger_name
-    handler = logging.StreamHandler() # sys.stderr is the default stream
+    handler = logging.StreamHandler()  # sys.stderr is the default stream
     handler.setLevel(level)
-    handler.setFormatter(TermiosFormatter()) # investigate this formatter
+    handler.setFormatter(TermiosFormatter())  # investigate this formatter
     logger.addHandler(handler)
+
 
 def log_to_syslog(logger_name, level=logging.INFO, format='%(name)s[%(process)d]: %(message)s'):
     """Set up syslog logging."""
@@ -227,7 +248,7 @@ def log_to_syslog(logger_name, level=logging.INFO, format='%(name)s[%(process)d]
         # assume logger_name is already a logger
         logger = logger_name
     # anticipate an exception somewhere below
-    handler = logging.handlers.SysLogHandler() # investigate FragmentingSysLogHandler
+    handler = logging.handlers.SysLogHandler()  # investigate FragmentingSysLogHandler
     handler.setLevel(level)
     handler.setFormatter(logging.Formatter(format))
     logger.addHandler(handler)

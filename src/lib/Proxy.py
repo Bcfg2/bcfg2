@@ -37,10 +37,13 @@ import urlparse
 import xmlrpclib
 
 version = sys.version_info[:2]
-has_py23 = map(int, version) >= [2, 3]
-has_py26 = map(int, version) >= [2, 6]
+has_py23 = version >= (2, 3)
+has_py26 = version >= (2, 6)
 
-__all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
+__all__ = ["ComponentProxy",
+           "RetryMethod",
+           "SSLHTTPConnection",
+           "XMLRPCTransport"]
 
 
 class CertificateError(Exception):
@@ -88,7 +91,9 @@ xmlrpclib._Method = RetryMethod
 
 
 class SSLHTTPConnection(httplib.HTTPConnection):
-    """Extension of HTTPConnection that implements SSL and related behaviors."""
+    """Extension of HTTPConnection that
+    implements SSL and related behaviors.
+    """
 
     logger = logging.getLogger('Bcfg2.Proxy.SSLHTTPConnection')
 
@@ -157,7 +162,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         elif SSL_LIB == 'm2crypto':
             self._connect_m2crypto()
         else:
-            raise Exception, "No SSL module support"
+            raise Exception("No SSL module support")
 
     def _connect_py26ssl(self):
         """Initiates a connection using the ssl module."""
@@ -168,7 +173,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ssl_protocol_ver = ssl.PROTOCOL_TLSv1
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
-            raise Exception, "unknown protocol %s" % self.protocol
+            raise Exception("unknown protocol %s" % self.protocol)
         if self.ca:
             other_side_required = ssl.CERT_REQUIRED
         else:
@@ -192,7 +197,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         if peer_cert and self.scns:
             scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
             if scn not in self.scns:
-                raise CertificateError, scn
+                raise CertificateError(scn)
         self.sock.closeSocket = True
 
     def _connect_m2crypto(self):
@@ -204,7 +209,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ctx = SSL.Context('tlsv1')
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
-            raise Exception, "unknown protocol %s" % self.protocol
+            raise Exception("unknown protocol %s" % self.protocol)
 
         if self.ca:
             # Use the certificate authority to validate the cert
@@ -238,7 +243,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.sock.connect((hostname, self.port))
             # automatically checks cert matches host
         except M2Crypto.SSL.Checker.WrongHost, wr:
-            raise CertificateError, wr
+            raise CertificateError(wr)
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
@@ -254,8 +259,12 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
     def make_connection(self, host):
         host, self._extra_headers = self.get_host_info(host)[0:2]
-        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
-                                 scns=self.scns, timeout=self.timeout)
+        http = SSLHTTPConnection(host,
+                                 key=self.key,
+                                 cert=self.cert,
+                                 ca=self.ca,
+                                 scns=self.scns,
+                                 timeout=self.timeout)
         https = httplib.HTTP()
         https._setup(http)
         return https
@@ -271,7 +280,10 @@ class XMLRPCTransport(xmlrpclib.Transport):
         errcode, errmsg, headers = h.getreply()
 
         if errcode != 200:
-            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+            raise xmlrpclib.ProtocolError(host + handler,
+                                          errcode,
+                                          errmsg,
+                                          headers)
 
         self.verbose = verbose
         msglen = int(headers.dict['content-length'])
@@ -290,7 +302,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
             if not response:
                 break
             if self.verbose:
-                print "body:", repr(response), len(response)
+                print("body:", repr(response), len(response))
             p.feed(response)
 
         fd.close()

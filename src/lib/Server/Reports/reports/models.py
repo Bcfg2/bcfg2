@@ -48,7 +48,7 @@ class ClientManager(models.Manager):
         if timestamp == None:
             timestamp = datetime.now()
         elif not isinstance(timestamp, datetime):
-            raise ValueError, 'Expected a datetime object'
+            raise ValueError('Expected a datetime object')
         else:
             try:
                 timestamp = datetime(*strptime(timestamp,
@@ -113,7 +113,7 @@ class InteractiveManager(models.Manager):
         """
 
         if maxdate and not isinstance(maxdate, datetime):
-            raise ValueError, 'Expected a datetime object'
+            raise ValueError('Expected a datetime object')
         return self.filter(id__in=self.get_interaction_per_client_ids(maxdate, active_only))
 
     def get_interaction_per_client_ids(self, maxdate=None, active_only=True):
@@ -133,7 +133,7 @@ class InteractiveManager(models.Manager):
                     'as timer from reports_interaction'
         if maxdate:
             if not isinstance(maxdate, datetime):
-                raise ValueError, 'Expected a datetime object'
+                raise ValueError('Expected a datetime object')
             sql = sql + " where timestamp <= '%s' " % maxdate
             cfilter = "(expiration is null or expiration > '%s') and creation <= '%s'" % (maxdate, maxdate)
         sql = sql + ' GROUP BY client_id) x, reports_interaction where ' + \

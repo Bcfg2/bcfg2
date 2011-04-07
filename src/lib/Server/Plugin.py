@@ -363,7 +363,7 @@ class DirectoryBacked(object):
         return self.entries[key]
 
     def __iter__(self):
-        return iter(self.entries.items())
+        return iter(list(self.entries.items()))
 
     def AddEntry(self, name):
         """Add new entry to data structures upon file creation."""
