@@ -8,12 +8,14 @@ import logging
 import time
 import Bcfg2.Client.Tools
 
+
 def cmpent(ent1, ent2):
     """Sort entries."""
     if ent1.tag != ent2.tag:
         return cmp(ent1.tag, ent2.tag)
     else:
         return cmp(ent1.get('name'), ent2.get('name'))
+
 
 def promptFilter(prompt, entries):
     """Filter a supplied list based on user input."""
@@ -25,7 +27,12 @@ def promptFilter(prompt, entries):
         else:
             iprompt = prompt % (entry.tag, entry.get('name'))
         try:
-            if raw_input(iprompt) in ['y', 'Y']:
+            # py3k compatibility
+            try:
+                ans = raw_input(iprompt)
+            except NameError:
+                ans = input(iprompt)
+            if ans in ['y', 'Y']:
                 ret.append(entry)
         except EOFError:
             # python 2.4.3 on CentOS doesn't like ^C for some reason
@@ -34,6 +41,7 @@ def promptFilter(prompt, entries):
             print("Error while reading input")
             continue
     return ret
+
 
 def matches_entry(entryspec, entry):
     # both are (tag, name)
@@ -52,11 +60,16 @@ def matches_entry(entryspec, entry):
             return False
         return True
 
+
 def matches_white_list(entry, whitelist):
-    return True in [matches_entry(we, (entry.tag, entry.get('name'))) for we in whitelist]
+    return True in [matches_entry(we, (entry.tag, entry.get('name')))
+                    for we in whitelist]
+
 
 def passes_black_list(entry, blacklist):
-    return True not in [matches_entry(be, (entry.tag, entry.get('name'))) for be in blacklist]
+    return True not in [matches_entry(be, (entry.tag, entry.get('name')))
+                        for be in blacklist]
+
 
 class Frame:
     """Frame is the container for all Tool objects and state information."""
@@ -134,8 +147,10 @@ class Frame:
             self.logger.error(["%s:%s:%s" % (entry.tag, entry.get('type'), \
                                              entry.get('name')) for entry in problems])
             self.logger.error("")
-        entries = [(entry.tag, entry.get('name')) for struct in config for entry in struct]
-        pkgs = [(entry.get('name'), entry.get('origin')) for struct in config for entry in struct if entry.tag == 'Package']
+        entries = [(entry.tag, entry.get('name'))
+                   for struct in config for entry in struct]
+        pkgs = [(entry.get('name'), entry.get('origin'))
+                for struct in config for entry in struct if entry.tag == 'Package']
         multi = []
         for entry in entries[:]:
             if entries.count(entry) > 1:
@@ -150,7 +165,6 @@ class Frame:
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
             self.logger.debug("The following packages are prereqs added by Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
-
 
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
@@ -268,7 +282,8 @@ class Frame:
                 if b_to_remv:
                     self.logger.info("Not installing entries from Bundle %s" % \
                                      (bundle.get('name')))
-                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_remv])
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name'))
+                                      for e in b_to_remv])
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
         if self.setup['interactive']:

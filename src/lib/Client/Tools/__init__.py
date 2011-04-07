@@ -57,7 +57,7 @@ class executor:
 
         runpipe = readonlypipe(command, bufsize=16384)
         output = []
-        try:#macosx doesn't like this
+        try:  # macosx doesn't like this
             runpipe.fromchild.flush()
         except IOError:
             pass
@@ -185,7 +185,9 @@ class Tool:
 
         if 'failure' in entry.attrib:
             self.logger.error("Entry %s:%s reports bind failure: %s" % \
-                              (entry.tag, entry.get('name'), entry.get('failure')))
+                              (entry.tag,
+                               entry.get('name'),
+                               entry.get('failure')))
             return False
 
         missing = [attr for attr in self.__req__[entry.tag] \
@@ -198,7 +200,8 @@ class Tool:
             try:
                 self.gatherCurrentData(entry)
             except:
-                self.logger.error("Unexpected error in gatherCurrentData", exc_info=1)
+                self.logger.error("Unexpected error in gatherCurrentData",
+                                  exc_info=1)
             return False
         return True
 
@@ -255,7 +258,8 @@ class PkgTool(Tool):
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
 
-        data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]]) for pkg in packages]
+        data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]])
+                for pkg in packages]
         pkgargs = " ".join([self.pkgtool[1][0] % datum for datum in data])
 
         self.logger.debug("Installing packages: :%s:" % pkgargs)
@@ -358,7 +362,12 @@ class SvcTool(Tool):
                 else:
                     if self.setup['interactive']:
                         prompt = 'Restart service %s?: (y/N): ' % entry.get('name')
-                        if raw_input(prompt) not in ['y', 'Y']:
+                        # py3k compatibility
+                        try:
+                            ans = raw_input(prompt)
+                        except NameError:
+                            ans = input(prompt)
+                        if ans not in ['y', 'Y']:
                             continue
                     rc = self.restart_service(entry)
             else:
