@@ -1,8 +1,9 @@
+import sys
+
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
 
-import sys
 
 class Perf(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Query server for performance data")
@@ -27,11 +28,11 @@ class Perf(Bcfg2.Server.Admin.Mode):
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
                                            setup['user'],
                                            setup['password'],
-                                           key = setup['key'],
-                                           cert = setup['certificate'],
-                                           ca = setup['ca'])
+                                           key=setup['key'],
+                                           cert=setup['certificate'],
+                                           ca=setup['ca'])
         data = proxy.get_statistics()
-        for key, value in data.iteritems():
+        for key, value in list(data.items()):
             data = tuple(["%.06f" % (item) for item in value[:-1]] + [value[-1]])
             output.append((key, ) + data)
         self.print_table(output)

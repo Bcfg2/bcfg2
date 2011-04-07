@@ -1,5 +1,8 @@
-import lxml.etree, os
+import lxml.etree
+import os
+
 import Bcfg2.Server.Admin
+
 
 class Compare(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Determine differences between files or "
@@ -11,30 +14,30 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, configfile):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-        self.important = {'Package':['name', 'version'],
-                          'Service':['name', 'status'],
-                          'Directory':['name', 'owner', 'group', 'perms'],
-                          'SymLink':['name', 'to'],
-                          'ConfigFile':['name', 'owner', 'group', 'perms'],
-                          'Permissions':['name', 'perms'],
-                          'PostInstall':['name']}
+        self.important = {'Package': ['name', 'version'],
+                          'Service': ['name', 'status'],
+                          'Directory': ['name', 'owner', 'group', 'perms'],
+                          'SymLink': ['name', 'to'],
+                          'ConfigFile': ['name', 'owner', 'group', 'perms'],
+                          'Permissions': ['name', 'perms'],
+                          'PostInstall': ['name']}
 
     def compareStructures(self, new, old):
         for child in new.getchildren():
             equiv = old.xpath('%s[@name="%s"]' %
                              (child.tag, child.get('name')))
             if child.tag in self.important:
-                print "tag type %s not handled" % (child.tag)
+                print("tag type %s not handled" % (child.tag))
                 continue
             if len(equiv) == 0:
-                print ("didn't find matching %s %s" %
-                      (child.tag, child.get('name')))
+                print("didn't find matching %s %s" %
+                     (child.tag, child.get('name')))
                 continue
             elif len(equiv) >= 1:
                 if child.tag == 'ConfigFile':
                     if child.text != equiv[0].text:
-                        print " %s %s contents differ" \
-                              % (child.tag, child.get('name'))
+                        print(" %s %s contents differ" \
+                              % (child.tag, child.get('name')))
                         continue
                 noattrmatch = [field for field in self.important[child.tag] if \
                                child.get(field) != equiv[0].get(field)]
@@ -42,8 +45,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
                     new.remove(child)
                     old.remove(equiv[0])
                 else:
-                    print " %s %s attributes %s do not match" % \
-                          (child.tag, child.get('name'), noattrmatch)
+                    print(" %s %s attributes %s do not match" % \
+                          (child.tag, child.get('name'), noattrmatch))
         if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
             return True
         if new.tag == 'Independent':
@@ -59,24 +62,26 @@ class Compare(Bcfg2.Server.Admin.Mode):
                 newl.remove(entry)
                 oldl.remove(entry)
         for entry in both:
-            print " %s differs (in bundle %s)" % (entry, name)
+            print(" %s differs (in bundle %s)" % (entry, name))
         for entry in oldl:
-            print " %s only in old configuration (in bundle %s)" % (entry, name)
+            print(" %s only in old configuration (in bundle %s)" % (entry,
+                                                                    name))
         for entry in newl:
-            print " %s only in new configuration (in bundle %s)" % (entry, name)
+            print(" %s only in new configuration (in bundle %s)" % (entry,
+                                                                    name))
         return False
 
     def compareSpecifications(self, path1, path2):
         try:
             new = lxml.etree.parse(path1).getroot()
         except IOError:
-            print "Failed to read %s" % (path1)
+            print("Failed to read %s" % (path1))
             raise SystemExit(1)
 
         try:
             old = lxml.etree.parse(path2).getroot()
         except IOError:
-            print "Failed to read %s" % (path2)
+            print("Failed to read %s" % (path2))
             raise SystemExit(1)
 
         for src in [new, old]:
@@ -88,7 +93,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
         for bundle in new.findall('./Bundle'):
             equiv = old.xpath('Bundle[@name="%s"]' % (bundle.get('name')))
             if len(equiv) == 0:
-                print "couldnt find matching bundle for %s" % bundle.get('name')
+                print("couldnt find matching bundle for %s" % bundle.get('name'))
                 continue
             if len(equiv) == 1:
                 if self.compareStructures(bundle, equiv[0]):
@@ -98,7 +103,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
                 else:
                     rcs.append(False)
             else:
-                print "Unmatched bundle %s" % (bundle.get('name'))
+                print("Unmatched bundle %s" % (bundle.get('name')))
                 rcs.append(False)
         i1 = new.find('./Independent')
         i2 = old.find('./Independent')
@@ -120,18 +125,18 @@ class Compare(Bcfg2.Server.Admin.Mode):
             (oldd, newd) = args
             (old, new) = [os.listdir(spot) for spot in args]
             for item in old:
-                print "Entry:", item
+                print("Entry:", item)
                 state = self.__call__([oldd + '/' + item, newd + '/' + item])
                 new.remove(item)
                 if state:
-                    print "Entry:", item, "good"
+                    print("Entry:", item, "good")
                 else:
-                    print "Entry:", item, "bad"
+                    print("Entry:", item, "bad")
             if new:
-                print "new has extra entries", new
+                print("new has extra entries", new)
             return
         try:
             (old, new) = args
         except IndexError:
-            print self.__call__.__doc__
+            print(self.__call__.__doc__)
             raise SystemExit(1)

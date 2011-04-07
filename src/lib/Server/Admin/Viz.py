@@ -1,6 +1,8 @@
 import getopt
 from subprocess import Popen, PIPE
+
 import Bcfg2.Server.Admin
+
 
 class Viz(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Produce graphviz diagrams of metadata structures"
@@ -27,7 +29,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
 
     plugin_blacklist = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
                         'Rules', 'Account', 'Decisions', 'Deps', 'Git', 'Svn',
-                        'Fossil', 'Bzr', 'Bundler', 'TGenshi', 'SGenshi', 'Base']
+                        'Fossil', 'Bzr', 'Bundler', 'TGenshi', 'SGenshi',
+                        'Base']
 
     def __init__(self, cfile):
 
@@ -43,7 +46,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
                                        ['includehosts', 'includebundles',
                                         'includekey', 'outfile='])
         except getopt.GetoptError, msg:
-            print msg
+            print(msg)
 
         #FIXME: is this for --raw?
         #rset = False
@@ -63,8 +66,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
 
         data = self.Visualize(self.get_repo_path(), hset, bset,
                               kset, outputfile)
-        print data
-        raise SystemExit, 0
+        print(data)
+        raise SystemExit(0)
 
     def Visualize(self, repopath, hosts=False,
                   bundles=False, key=False, output=False):
@@ -82,7 +85,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         try:
             dotpipe.stdin.write("digraph groups {\n")
         except:
-            print "write to dot process failed. Is graphviz installed?"
+            print("write to dot process failed. Is graphviz installed?")
             raise SystemExit(1)
         dotpipe.stdin.write('\trankdir="LR";\n')
         dotpipe.stdin.write(self.metadata.viz(hosts, bundles,

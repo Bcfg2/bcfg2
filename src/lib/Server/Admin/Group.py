@@ -2,6 +2,7 @@ import lxml.etree
 import Bcfg2.Server.Admin
 from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 
+
 class Group(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create, delete, or modify group entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin group add <group> "
@@ -28,13 +29,13 @@ class Group(Bcfg2.Server.Admin.MetadataCore):
                 if attr not in ['profile', 'public', 'default',
                                'name', 'auth', 'toolset', 'category',
                                'comment']:
-                    print "Attribute %s unknown" % attr
+                    print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
             try:
                 self.metadata.add_group(args[1], attr_d)
             except MetadataConsistencyError:
-                print "Error in adding group"
+                print("Error in adding group")
                 raise SystemExit(1)
         elif args[0] in ['update', 'up']:
             attr_d = {}
@@ -43,24 +44,24 @@ class Group(Bcfg2.Server.Admin.MetadataCore):
                 if attr not in ['profile', 'public', 'default',
                                 'name', 'auth', 'toolset', 'category',
                                 'comment']:
-                    print "Attribute %s unknown" % attr
+                    print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
             try:
                 self.metadata.update_group(args[1], attr_d)
             except MetadataConsistencyError:
-                print "Error in updating group"
+                print("Error in updating group")
                 raise SystemExit(1)
         elif args[0] in ['delete', 'remove', 'del', 'rm']:
             try:
                 self.metadata.remove_group(args[1])
             except MetadataConsistencyError:
-                print "Error in deleting group"
+                print("Error in deleting group")
                 raise SystemExit(1)
         elif args[0] in ['list', 'ls']:
             tree = lxml.etree.parse(self.metadata.data + "/groups.xml")
             for node in tree.findall("//Group"):
-                print node.attrib["name"]
+                print(node.attrib["name"])
         else:
-            print "No command specified"
+            print("No command specified")
             raise SystemExit(1)
