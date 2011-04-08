@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:py="http://genshi.edgewall.org/"
+           xml:lang="en"
+           targetNamespace="http://genshi.edgewall.org/">
+  <xs:annotation>
+    <xs:documentation>
+      Genshi schema
+      Chris St. Pierre
+      $Id$
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- genshi tags -->
+  <xs:element name="for" type="py:forType"/>
+  <xs:complexType name="forType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="each" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="if" type="py:ifType"/>
+  <xs:complexType name="ifType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="test" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="match" type="py:matchType"/>
+  <xs:complexType name="matchType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="path" type="xs:string" use="required"/>
+    <xs:attribute name="once" type="xs:boolean" default="false"/>
+    <xs:attribute name="buffer" type="xs:boolean" default="true"/>
+    <xs:attribute name="recursive" type="xs:boolean" default="true"/>
+  </xs:complexType>
+
+  <xs:element name="def" type="py:defType"/>
+  <xs:complexType name="defType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="function" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="with" type="py:withType"/>
+  <xs:complexType name="withType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="vars" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="replace" type="py:replaceType"/>
+  <xs:complexType name="replaceType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+    <xs:attribute name="value" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="choose" type="py:chooseType"/>
+  <xs:complexType name="chooseType" mixed="true">
+    <xs:sequence>
+      <xs:element name="when" type="py:ifType" maxOccurs="unbounded"/>
+      <xs:element name="otherwise" type="py:otherwiseType"
+                   minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="test" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="otherwiseType" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:any processContents="lax"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <!-- genshi attributes -->
+  <xs:attributeGroup name="genshiAttrs">
+    <xs:attribute name="ifAttr" type="xs:string"/>
+    <xs:attribute name="chooseAttr" type="xs:string"/>
+    <xs:attribute name="whenAttr" type="xs:string"/>
+    <xs:attribute name="otherwiseAttr" type="xs:string"/>
+    <xs:attribute name="forAttr" type="xs:string"/>
+    <xs:attribute name="defAttr" type="xs:string"/>
+    <xs:attribute name="matchAttr" type="xs:string"/>
+    <xs:attribute name="withAttr" type="xs:string"/>
+    <xs:attribute name="attrsAttr" type="xs:string"/>
+    <xs:attribute name="contentAttr" type="xs:string"/>
+    <xs:attribute name="replaceAttr" type="xs:string"/>
+    <xs:attribute name="stripAttr" type="xs:string"/>
+  </xs:attributeGroup>
+</xs:schema>

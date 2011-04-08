@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
 
   <xsd:annotation>
     <xsd:documentation>
@@ -9,23 +10,13 @@
   </xsd:annotation>
 
   <xsd:include schemaLocation="types.xsd"/>
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name='PackageType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Ignore'>
-        <xsd:complexType>
-          <xsd:attribute type='xsd:string' name='name'/>
-        </xsd:complexType>
-      </xsd:element>
       <xsd:element name='Instance'>
         <xsd:complexType>
-          <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-            <xsd:element name='Ignore'>
-              <xsd:complexType>
-                <xsd:attribute type='xsd:string' name='name'/>
-              </xsd:complexType>
-            </xsd:element>
-          </xsd:choice>
           <xsd:attribute name='arch' type='xsd:string'/>
           <xsd:attribute name='epoch' type='xsd:string'/>
           <xsd:attribute name='version' type='xsd:string'/>
@@ -36,10 +27,18 @@
           <xsd:attribute name='installed_action' type='xsd:string'/>
           <xsd:attribute name='version_fail_action' type='xsd:string'/>
           <xsd:attribute name='verify_fail_action' type='xsd:string'/>
+          <xsd:attributeGroup ref="py:genshiAttrs"/>
         </xsd:complexType>
       </xsd:element>
+      <xsd:element ref="py:def"/>
+      <xsd:element ref="py:match"/>
+      <xsd:element ref="py:choose"/>
+      <xsd:element ref="py:for"/>
+      <xsd:element ref="py:if"/>
+      <xsd:element ref="py:with"/>
+      <xsd:element ref="py:replace"/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name'/>
+    <xsd:attribute type='xsd:string' name='name' use="required"/>
     <xsd:attribute type='xsd:string' name='version'/>
     <xsd:attribute type='xsd:string' name='file'/>
     <xsd:attribute type='xsd:string' name='verify'/>
@@ -51,5 +50,6 @@
     <xsd:attribute type='xsd:string' name='bname'/>
     <xsd:attribute name='pkg_checks' type='xsd:string'/>
     <xsd:attribute name='verify_flags' type='xsd:string'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>

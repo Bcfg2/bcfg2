@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   
   <xsd:annotation>
     <xsd:documentation>
@@ -6,6 +7,11 @@
       Narayan Desai, Argonne National Laboratory
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:include schemaLocation="atom.xsd"/>
   <xsd:include schemaLocation="pathentry.xsd"/>
@@ -87,6 +93,13 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element ref="py:def"/>
+      <xsd:element ref="py:match"/>
+      <xsd:element ref="py:choose"/>
+      <xsd:element ref="py:for"/>
+      <xsd:element ref="py:if"/>
+      <xsd:element ref="py:with"/>
+      <xsd:element ref="py:replace"/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'>
       <xsd:annotation>
@@ -102,23 +115,24 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name='Bundle'>
-      <xsd:annotation>
-        <xsd:documentation>
-          A bundle describes a group of inter-dependent configuration
-          entries, such as the combination of packages, configuration
-          files, and service activations that comprise typical Unix
-          daemons. Bundles are used to add groups of configuration
-          entries to the inventory of client configurations, as
-          opposed to describing particular versions of those
-          entries. For example, a bundle could say that the
-          configuration file ``/etc/passwd`` should be included in a
-          configuration, but will not describe the particular version
-          of ``/etc/passwd`` that a given client will receive.
-        </xsd:documentation>
-      </xsd:annotation>
+    <xsd:annotation>
+      <xsd:documentation>
+        A bundle describes a group of inter-dependent configuration
+        entries, such as the combination of packages, configuration
+        files, and service activations that comprise typical Unix
+        daemons. Bundles are used to add groups of configuration
+        entries to the inventory of client configurations, as opposed
+        to describing particular versions of those entries. For
+        example, a bundle could say that the configuration file
+        ``/etc/passwd`` should be included in a configuration, but
+        will not describe the particular version of ``/etc/passwd``
+        that a given client will receive.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Package' type='StructureEntry'>
@@ -193,12 +207,20 @@
             </xsd:documentation>
           </xsd:annotation>
         </xsd:element>
+        <xsd:element ref="py:def"/>
+        <xsd:element ref="py:match"/>
+        <xsd:element ref="py:choose"/>
+        <xsd:element ref="py:for"/>
+        <xsd:element ref="py:if"/>
+        <xsd:element ref="py:with"/>
+        <xsd:element ref="py:replace"/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='description' />
       <xsd:attribute type='xsd:string' name='name'/>
       <xsd:attribute type='xsd:string' name='version'/>
       <xsd:attribute type='xsd:string' name='origin'/>
       <xsd:attribute type='xsd:string' name='revision'/>
+      <xsd:attributeGroup ref="py:genshiAttrs"/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>
