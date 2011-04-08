@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
 
   <xsd:annotation>
     <xsd:documentation>
@@ -8,6 +9,9 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name='ServiceType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='User'>
@@ -16,6 +20,13 @@
           <xsd:attribute name='mask' type='xsd:string' use='required'/>
         </xsd:complexType>
       </xsd:element>
+      <xsd:element ref="py:def"/>
+      <xsd:element ref="py:match"/>
+      <xsd:element ref="py:choose"/>
+      <xsd:element ref="py:for"/>
+      <xsd:element ref="py:if"/>
+      <xsd:element ref="py:with"/>
+      <xsd:element ref="py:replace"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string' use='required'/>
     <xsd:attribute name='status' type='xsd:string' use='required'/>
@@ -29,6 +40,7 @@
     <xsd:attribute name='sequence' type='xsd:string'/>
     <xsd:attribute name='target' type='xsd:string'/>
     <xsd:attribute name='parameters' type='xsd:string'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
 </xsd:schema>

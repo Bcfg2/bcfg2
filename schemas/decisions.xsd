@@ -8,7 +8,7 @@
     </xsd:documentation>
   </xsd:annotation>
 
-<xsd:element name='Decisions'>
+  <xsd:element name='Decisions'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Decision'>
