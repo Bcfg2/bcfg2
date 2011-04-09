@@ -1,9 +1,24 @@
 """Helper functions for reports"""
 from django.conf.urls.defaults import *
 import re
+import sys
 
 """List of filters provided by filteredUrls"""
 filter_list = ('server', 'state')
+
+def increment(self):
+    """Return the next object from our array and fetch from the
+       database when needed"""
+    if self.block_count + self.count - self.step == self.max:
+        raise StopIteration
+    if self.block_count == 0 or self.count == self.step:
+        # Without list() this turns into LIMIT 1 OFFSET x queries
+        self.data = list(self.obj.all()[self.block_count: \
+                               (self.block_count + self.step)])
+        self.block_count += self.step
+        self.count = 0
+    self.count += 1
+    return self.data[self.count - 1]
 
 
 class BatchFetch(object):
@@ -20,19 +35,12 @@ class BatchFetch(object):
     def __iter__(self):
         return self
 
-    def __next__(self):
-        """Return the next object from our array and fetch from the
-           database when needed"""
-        if self.block_count + self.count - self.step == self.max:
-            raise StopIteration
-        if self.block_count == 0 or self.count == self.step:
-            # Without list() this turns into LIMIT 1 OFFSET x queries
-            self.data = list(self.obj.all()[self.block_count: \
-                                   (self.block_count + self.step)])
-            self.block_count += self.step
-            self.count = 0
-        self.count += 1
-        return self.data[self.count - 1]
+    if sys.hexversion > 0x03000000:
+        def __next__(self):
+            return increment(self)
+    else:
+        def next(self):
+            return increment(self)
 
 
 def generateUrls(fn):
