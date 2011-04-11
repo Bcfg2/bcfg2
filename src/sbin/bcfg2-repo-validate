@@ -174,23 +174,22 @@ if __name__ == '__main__':
             else:
                 pset.add(ptuple)
 
-    filesets = {'metadata': (metadata_list, "%s/metadata.xsd"),
-                'clients': (clients_list, "%s/clients.xsd"),
-                'info': (info_list, "%s/info.xsd"),
-                'bundle': (bundle_list, "%s/bundle.xsd"),
-                'pkglist': (pkg_list, "%s/pkglist.xsd"),
-                'base': (base_list, "%s/base.xsd"),
-                'rules': (rules_list, "%s/rules.xsd"),
-                'imageinfo': (imageinfo_list, "%s/report-configuration.xsd"),
-                'services': (services_list, "%s/services.xsd"),
-                'deps': (deps_list, "%s/deps.xsd"),
-                'decisions': (dec_list, "%s/decisions.xsd"),
-                'packages': (pkgcfg_list, "%s/packages.xsd"),
-                'grouppatterns': (gp_list, "%s/grouppatterns.xsd"),
-                }
+    filesets = {"%s/metadata.xsd": metadata_list,
+                "%s/clients.xsd": clients_list,
+                "%s/info.xsd": info_list,
+                "%s/bundle.xsd": bundle_list + genshibundle_list,
+                "%s/pkglist.xsd": pkg_list,
+                "%s/base.xsd": base_list,
+                "%s/rules.xsd": rules_list,
+                "%s/report-configuration.xsd": imageinfo_list,
+                "%s/services.xsd": services_list,
+                "%s/deps.xsd": deps_list,
+                "%s/decisions.xsd": dec_list,
+                "%s/packages.xsd": pkgcfg_list,
+                "%s/grouppatterns.xsd": gp_list}
 
     failures = 0
-    for k, (filelist, schemaname) in list(filesets.items()):
+    for schemaname, filelist in list(filesets.items()):
         try:
             schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname %
                                                                 schemadir)))
@@ -252,5 +251,4 @@ if __name__ == '__main__':
                 print("  Filename is %s" % fname)
                 print("  Bundle name found in %s is %s" % (fname, bname))
 
-
-    raise SystemExit, failures
+    raise SystemExit(failures)
