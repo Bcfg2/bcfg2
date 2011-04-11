@@ -334,6 +334,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         # bulk operations bypass the Interaction.delete method
         self.log.debug("Pruning orphan Performance objects")
         Performance.prune_orphans()
+        self.log.debug("Pruning orphan Reason objects")
+        Reason.prune_orphans()
 
         if client and not filtered:
             '''Delete the client, ping data is automatic'''
