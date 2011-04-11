@@ -10,32 +10,69 @@ import glob
 import lxml.etree
 import os
 import sys
+import fnmatch
 import Bcfg2.Options
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
             'prefix': Bcfg2.Options.INSTALL_PREFIX,
             'verbose': Bcfg2.Options.VERBOSE,
-            'configfile': Bcfg2.Options.CFILE}
+            'configfile': Bcfg2.Options.CFILE,
+            'schema' : Bcfg2.Options.SCHEMA_PATH,
+            'stdin': Bcfg2.Options.FILES_ON_STDIN}
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
     verbose = setup['verbose']
     cpath = setup['configfile']
-    prefix = setup['prefix']
-    schemadir = "%s/share/bcfg2/schemas" % (prefix)
+    schemadir = setup['schema']
     os.chdir(schemadir)
     repo = setup['repo']
 
-    # Get a list of all info.xml files in the bcfg2 repository
-    info_list = []
-    for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
-        for root, dirs, files in os.walk('%s/%s' % (repo, infodir)):
-            for filename in files:
-                if filename == 'info.xml':
-                    info_list.append(os.path.join(root, filename))
+    if setup['stdin']:
+        file_list = map(lambda s: s.strip(), sys.stdin.readlines())
+        info_list = [f for f in file_list if os.path.basename(f) == 'info.xml']
+        metadata_list = fnmatch.filter(file_list, "*/Metadata/groups.xml")
+        clients_list = fnmatch.filter(file_list, "*/Metadata/clients.xml")
+        bundle_list = fnmatch.filter(file_list, "*/Bundler/*.xml")
+        genshibundle_list = fnmatch.filter(file_list, "*/Bundler/*.genshi")
+        pkg_list = fnmatch.filter(file_list, "*/Pkgmgr/*.xml")
+        base_list = fnmatch.filter(file_list, "*/Base/*.xml")
+        rules_list = fnmatch.filter(file_list, "*/Rules/*.xml")
+        imageinfo_list = fnmatch.filter(file_list,
+                                        "*/etc/report-configuration.xml")
+        services_list = fnmatch.filter(file_list, "*/Svcmgr/*.xml")
+        deps_list = fnmatch.filter(file_list, "*/Deps/*.xml")
+        dec_list = fnmatch.filter(file_list, "*/Decisions/*")
+        pkgcfg_list = fnmatch.filter(file_list, "*/Packages/config.xml")
+        gp_list = fnmatch.filter(file_list, "*/GroupPatterns/config.xml")
+    else:
+        # not reading files from stdin
+        
+        # Get a list of all info.xml files in the bcfg2 repository
+        info_list = []
+        for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
+            for root, dirs, files in os.walk('%s/%s' % (repo, infodir)):
+                info_list.extend([os.path.join(root, f) for f in files
+                                  if f == 'info.xml'])
 
-    # get metadata list (with all included files)
-    metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
+        # get metadata list
+        metadata_list = glob.glob("%s/Metadata/groups.xml" % repo)
+
+        # get other file lists
+        clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
+        bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
+        genshibundle_list = glob.glob("%s/Bundler/*.genshi" % repo)
+        pkg_list = glob.glob("%s/Pkgmgr/*.xml" % repo)
+        base_list = glob.glob("%s/Base/*.xml" % repo)
+        rules_list = glob.glob("%s/Rules/*.xml" % repo)
+        imageinfo_list = glob.glob("%s/etc/report-configuration.xml" % repo)
+        services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
+        deps_list = glob.glob("%s/Deps/*.xml" % repo)
+        dec_list = glob.glob("%s/Decisions/*" % repo)
+        pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
+        gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
+
+    # include files in metadata_list
     ref_bundles = set()
     xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
     included = set([ent.get('href') for ent in \
@@ -69,20 +106,6 @@ if __name__ == '__main__':
     xdata.xinclude()
     for bundle in xdata.findall("//Bundle"):
         ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
-
-    # get lists of all other xml files to validate
-    clients_list = glob.glob("%s/Metadata/clients.xml" % repo)
-    bundle_list = glob.glob("%s/Bundler/*.xml" % repo)
-    genshibundle_list = glob.glob("%s/Bundler/*.genshi" % repo)
-    pkg_list = glob.glob("%s/Pkgmgr/*.xml" % repo)
-    base_list = glob.glob("%s/Base/*.xml" % repo)
-    rules_list = glob.glob("%s/Rules/*.xml" % repo)
-    imageinfo_list = glob.glob("%s/etc/report-configuration.xml" % repo)
-    services_list = glob.glob("%s/Svcmgr/*.xml" % repo)
-    deps_list = glob.glob("%s/Deps/*.xml" % repo)
-    dec_list = glob.glob("%s/Decisions/*" % repo)
-    pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
-    gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
 
     # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
@@ -169,9 +192,10 @@ if __name__ == '__main__':
     failures = 0
     for k, (filelist, schemaname) in list(filesets.items()):
         try:
-            schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname%(schemadir))))
+            schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname %
+                                                                schemadir)))
         except:
-            print("Failed to process schema %s" % (schemaname%(schemadir)))
+            print("Failed to process schema %s" % (schemaname % schemadir))
             failures = 1
             continue
         for filename in filelist:
@@ -204,15 +228,20 @@ if __name__ == '__main__':
     # print out missing bundle information
     if verbose:
         print("")
-        for bundle in ref_bundles:
-            # check for both regular and genshi bundles
-            xmlbundle = "%s.xml" % bundle
-            genshibundle = "%s.genshi" % bundle
-            allbundles = bundle_list + genshibundle_list
-            if xmlbundle not in allbundles and \
-               genshibundle not in allbundles:
-                print("*** Warning: Bundle %s referenced, but does not "
-                                    "exist." % bundle)
+        if not setup['stdin']:
+            # if we've taken a list of files on stdin, there's an
+            # excellent chance that referenced bundles do not exist,
+            # so skip this check
+            for bundle in ref_bundles:
+                # check for both regular and genshi bundles
+                xmlbundle = "%s.xml" % bundle
+                genshibundle = "%s.genshi" % bundle
+                allbundles = bundle_list + genshibundle_list
+                if (xmlbundle not in allbundles and
+                    genshibundle not in allbundles):
+                    print("*** Warning: Bundle %s referenced, but does not "
+                          "exist." % bundle)
+                    
         # verify bundle name attribute matches filename
         for bundle in (bundle_list + genshibundle_list):
             fname = bundle.split('Bundler/')[1].split('.')[0]

@@ -201,6 +201,12 @@ PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 CORE_PROFILE = Option('profile',
                       default=False, cmd='-p', )
+FILES_ON_STDIN = Option('Operate on a list of files supplied on stdin',
+                        cmd='--stdin', default=False, long_arg=True)
+SCHEMA_PATH = Option('Path to XML Schema files', cmd='--schema',
+                     odesc='<schema path>',
+                     default="%s/share/bcfg2/schemas" % DEFAULT_INSTALL_PREFIX,
+                     long_arg=True)
 
 # Metadata options
 MDATA_OWNER = Option('Default Path owner',
