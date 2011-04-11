@@ -15,7 +15,6 @@ import Bcfg2.Options
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
-            'prefix': Bcfg2.Options.INSTALL_PREFIX,
             'verbose': Bcfg2.Options.VERBOSE,
             'configfile': Bcfg2.Options.CFILE,
             'schema' : Bcfg2.Options.SCHEMA_PATH,
