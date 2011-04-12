@@ -39,7 +39,7 @@ class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
         client = metadata.hostname
         filename = entry.get('name')
         permdata = {'owner': 'root',
-                    'group': 'root'
+                    'group': 'root',
                     'perms': '0644'}
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
         entry.text = self.entries['edits'].ProcessDirectives(self.get_client_data(client))
