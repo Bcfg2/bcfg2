@@ -82,6 +82,11 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
     def InstallService(self, entry):
         """Enable or disable launchd item."""
+        # don't take any actions for mode='manual'
+        if entry.get('mode', 'default') == 'manual':
+            self.logger.info("Service %s mode set to manual. Skipping "
+                             "installation." % (entry.get('name')))
+            return True
         name = entry.get('name')
         if entry.get('status') == 'on':
             self.logger.error("Installing service %s" % name)

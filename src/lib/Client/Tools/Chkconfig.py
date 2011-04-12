@@ -76,6 +76,11 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         """Install Service entry."""
+        # don't take any actions for mode='manual'
+        if entry.get('mode', 'default') == 'manual':
+            self.logger.info("Service %s mode set to manual. Skipping "
+                             "installation." % (entry.get('name')))
+            return True
         rcmd = "/sbin/chkconfig %s %s"
         self.cmd.run("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))

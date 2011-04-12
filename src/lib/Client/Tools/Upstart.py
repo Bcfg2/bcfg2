@@ -70,6 +70,11 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         """Install Service for entry."""
+        # don't take any actions for mode='manual'
+        if entry.get('mode', 'default') == 'manual':
+            self.logger.info("Service %s mode set to manual. Skipping "
+                             "installation." % (entry.get('name')))
+            return True
         if entry.get('status') == 'on':
             pstatus = self.cmd.run(self.get_svc_command(entry, 'start'))[0]
         elif entry.get('status') == 'off':

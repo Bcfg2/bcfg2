@@ -147,6 +147,7 @@ Service mode descriptions
 * manual
 
   * do not start/stop/restart this service
+  * service installation is not performed
 
 * default
 
