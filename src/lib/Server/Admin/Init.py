@@ -2,6 +2,7 @@ import getpass
 import os
 import random
 import socket
+import stat
 import string
 import subprocess
 import Bcfg2.Server.Admin
@@ -137,11 +138,7 @@ def create_key(hostname, keypath, certpath, country, state, location):
                                                                      keypath,
                                                                      certpath))
     subprocess.call((ccstr), shell=True)
-    # py3k compatibility
-    try:
-        os.chmod(keypath, 0600)
-    except SyntaxError:
-        os.chmod(keypath, 0o600)
+    os.chmod(keypath, stat.S_IRUSR|stat.S_IWUSR)  # 0600
 
 
 def create_conf(confpath, confdata):
@@ -159,11 +156,7 @@ def create_conf(confpath, confdata):
             return
     try:
         open(confpath, "w").write(confdata)
-        # py3k compatibility
-        try:
-            os.chmod(keypath, 0600)
-        except SyntaxError:
-            os.chmod(keypath, 0o600)
+        os.chmod(keypath, stat.S_IRUSR|stat.S_IWUSR)  # 0600
     except Exception, e:
         print("Error %s occured while trying to write configuration "
               "file to '%s'.\n" %
