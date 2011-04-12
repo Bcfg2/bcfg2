@@ -20,6 +20,10 @@ class BatchFetch(object):
     def __iter__(self):
         return self
 
+    def next(self):
+        """Provide compatibility with python < 3.0"""
+        return self.__next__()
+
     def __next__(self):
         """Return the next object from our array and fetch from the
            database when needed"""
