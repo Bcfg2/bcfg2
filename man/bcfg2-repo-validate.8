@@ -3,7 +3,7 @@
 bcfg2-repo-validate \- Check Bcfg2 repository data against data schemas
 .SH SYNOPSIS
 .B bcfg2-repo-validate
-.I [-v] 
+.I [OPTIONS]
 .SH DESCRIPTION
 .PP
 .B bcfg2-repo-validate
@@ -11,9 +11,38 @@ This script checks data against schemas, and it quite helpful in
 finding typos or malformed data. 
 .SH OPTIONS
 .PP
+.B "\-v" 
+.RS
+Be verbose about checks that have succeeded.  This also enables
+checking for missing bundles.
+.RE 
 .B "\-C" 
 .RS
 Specify path to bcfg2.conf (default /etc/bcfg2.conf)
+.RE 
+.B "\-Q" 
+.RS
+Specify path to Bcfg2 repository (default /var/lib/bcfg2)
+.RE 
+.B "\--schema" 
+.RS
+Specify path to Bcfg2 XML Schemas (default /usr/share/bcfg2/schema)
+.RE 
+.B "\--stdin" 
+.RS
+Rather than validating all XML files in the Bcfg2 specification, only
+validate a list of files supplied on stdin.  This makes a few
+assumptions:
+
+Files included using XInclude will only be validated if they are
+included on stdin; XIncludes will not be followed.
+
+Property files will only be validated if both the property file itself
+and its matching schema are included on stdin.
+.RE 
+.B "\--require-schema" 
+.RS
+Require property files to have matching schema files
 .RE 
 .SH "SEE ALSO"
 .BR bcfg2(1),

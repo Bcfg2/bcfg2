@@ -24,11 +24,20 @@ Properties adds a new dictionary to client metadata instances that maps
 property file names to PropertyFile instances. PropertyFile instances
 contain parsed XML data as the "data" attribute.
 
+The XML data in a property file is arbitrary, but a matching ``.xsd``
+file can be created to assign a schema to a property file, which will
+be checked when running ``bcfg2-repo-validate``.  For instance, given::
+
+    Properties/dns-config.xml
+    Properties/dns-config.xsd
+
+``dns-config.xml`` will be validated against ``dns-config.xsd``.
+
 Usage
 =====
 
 Specific property files can be referred to in
-templates as metadata.Properties[<filename>]. The
+templates as ``metadata.Properties[<filename>]``. The
 data attribute is an LXML element object. (Documented
 `here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 

@@ -207,6 +207,8 @@ SCHEMA_PATH = Option('Path to XML Schema files', cmd='--schema',
                      odesc='<schema path>',
                      default="%s/share/bcfg2/schemas" % DEFAULT_INSTALL_PREFIX,
                      long_arg=True)
+REQUIRE_SCHEMA = Option("Require property files to have matching schema files",
+                        cmd="--require-schema", default=False, long_arg=True)
 
 # Metadata options
 MDATA_OWNER = Option('Default Path owner',

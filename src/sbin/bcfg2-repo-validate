@@ -11,14 +11,57 @@ import lxml.etree
 import os
 import sys
 import fnmatch
+import logging
 import Bcfg2.Options
+from subprocess import Popen, PIPE, STDOUT
+
+def validate(filename, schemafile, schema=None, xinclude=True):
+    """validate a fail against the given lxml.etree.Schema.  return
+    True on success, False on failure"""
+    if schema is None:
+        # if no schema object was provided, instantiate one
+        try:
+            schema = lxml.etree.XMLSchema(lxml.etree.parse(schemafile))
+        except:
+            logging.warn("Failed to process schema %s", schemafile)
+            return False
+
+    try:
+        datafile = lxml.etree.parse(filename)
+    except SyntaxError:
+        logging.warn("%s ***FAILS*** to parse \t\t<----", filename)
+        lint = Popen(["xmllint", filename], stdout=PIPE, stderr=STDOUT)
+        logging.warn(lint.communicate()[0])
+        lint.wait()
+        return False
+    except IOError:
+        logging.warn("Failed to open file %s \t\t<---", filename)
+        return False
+    
+    if schema.validate(datafile):
+        logging.info("%s checks out", filename)
+    else:
+        cmd = ["xmllint"]
+        if xinclude:
+            cmd.append("--xinclude")
+        cmd.extend(["--noout", "--schema", schemafile, filename])
+        lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
+        output = lint.communicate()[0]
+        if lint.wait():
+            logging.warn("%s ***FAILS*** to verify \t\t<----", filename)
+            logging.warn(output)
+            return False
+        else:
+            logging.info("%s checks out", filename)
+    return True
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
             'verbose': Bcfg2.Options.VERBOSE,
             'configfile': Bcfg2.Options.CFILE,
             'schema' : Bcfg2.Options.SCHEMA_PATH,
-            'stdin': Bcfg2.Options.FILES_ON_STDIN}
+            'stdin': Bcfg2.Options.FILES_ON_STDIN,
+            'require-schema': Bcfg2.Options.REQUIRE_SCHEMA}
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
     verbose = setup['verbose']
@@ -26,6 +69,12 @@ if __name__ == '__main__':
     schemadir = setup['schema']
     os.chdir(schemadir)
     repo = setup['repo']
+
+    # set up logging
+    level = logging.WARNING
+    if verbose:
+        level = logging.INFO
+    logging.basicConfig(level=level, format="%(message)s")
 
     if setup['stdin']:
         file_list = map(lambda s: s.strip(), sys.stdin.readlines())
@@ -44,6 +93,9 @@ if __name__ == '__main__':
         dec_list = fnmatch.filter(file_list, "*/Decisions/*")
         pkgcfg_list = fnmatch.filter(file_list, "*/Packages/config.xml")
         gp_list = fnmatch.filter(file_list, "*/GroupPatterns/config.xml")
+        props_list = [f
+                      for f in fnmatch.filter(file_list, "*/Properties/*.xml")
+                      if "%s.xsd" % os.path.splitext(f)[0] in file_list]
     else:
         # not reading files from stdin
         
@@ -70,6 +122,7 @@ if __name__ == '__main__':
         dec_list = glob.glob("%s/Decisions/*" % repo)
         pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
         gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
+        props_list = glob.glob("%s/Properties/*.xml" % repo)
 
         # include files in metadata_list
         ref_bundles = set()
@@ -81,8 +134,7 @@ if __name__ == '__main__':
                 filename = included.pop()
             except KeyError:
                 continue
-            if not setup['stdin'] or filepath in file_list:
-                metadata_list.append("%s/Metadata/%s" % (repo, filename))
+            metadata_list.append("%s/Metadata/%s" % (repo, filename))
             groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
             group_ents = [ent.get('href') for ent in \
                           groupdata.
@@ -103,9 +155,9 @@ if __name__ == '__main__':
         if grp.get('default') == 'true':
             default_groups.append(grp)
     if len(default_groups) > 1:
-        print("*** Warning: Multiple default groups defined")
+        logging.warn("*** Warning: Multiple default groups defined")
         for grp in default_groups:
-            print("  %s" % grp.get('name'))
+            logging.warn("  %s", grp.get('name'))
 
     # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
@@ -123,7 +175,7 @@ if __name__ == '__main__':
         try:
             xdata = lxml.etree.parse(rfile)
         except lxml.etree.XMLSyntaxError, e:
-            print("Failed to parse %s: %s" % (rfile, e))
+            logging.warn("Failed to parse %s: %s", rfile, e)
         for posixpath in xdata.findall("//Path"):
             pathname = posixpath.get('name')
             pathtype = posixpath.get('type')
@@ -141,9 +193,11 @@ if __name__ == '__main__':
             if pathset.issuperset(required_attrs):
                 continue
             else:
-                print("The following required attributes are missing for"
-                      " Path %s in %s: %s" % (pathname, rfile,
-                      [attr for attr in required_attrs.difference(pathset)]))
+                logging.warn("The following required attributes are missing for"
+                             " Path %s in %s: %s",
+                             pathname, rfile,
+                             [attr
+                              for attr in required_attrs.difference(pathset)])
 
     # warn on duplicate Pkgmgr entries with the same priority
     pset = set()
@@ -151,7 +205,7 @@ if __name__ == '__main__':
         try:
             xdata = lxml.etree.parse(plist)
         except lxml.etree.XMLSyntaxError, e:
-            print("Failed to parse %s: %s" % (plist, e))
+            logging.warn("Failed to parse %s: %s", plist, e)
         # get priority, type, group
         priority = xdata.getroot().get('priority')
         ptype = xdata.getroot().get('type')
@@ -169,8 +223,8 @@ if __name__ == '__main__':
             # check if package is already listed with same priority,
             # type, grp
             if ptuple in pset:
-                print("Duplicate Package %s, priority:%s, type:%s"\
-                       % (pkg.get('name'), priority, ptype))
+                logging.warn("Duplicate Package %s, priority:%s, type:%s",
+                             pkg.get('name'), priority, ptype)
             else:
                 pset.add(ptuple)
 
@@ -190,65 +244,55 @@ if __name__ == '__main__':
 
     failures = 0
     for schemaname, filelist in list(filesets.items()):
-        try:
-            schema = lxml.etree.XMLSchema(lxml.etree.parse(open(schemaname %
-                                                                schemadir)))
-        except:
-            print("Failed to process schema %s" % (schemaname % schemadir))
-            failures = 1
-            continue
-        for filename in filelist:
+        if filelist:
+            # avoid loading schemas for empty file lists
             try:
-                datafile = lxml.etree.parse(open(filename))
-            except SyntaxError:
-                print("%s ***FAILS*** to parse \t\t<----" % (filename))
-                os.system("xmllint %s" % filename)
+                schema = lxml.etree.XMLSchema(lxml.etree.parse(schemaname %
+                                                               schemadir))
+            except:
+                logging.warn("Failed to process schema %s",
+                             schemaname % schemadir)
                 failures = 1
                 continue
-            except IOError:
-                print("Failed to open file %s \t\t<---" % (filename))
-                failures = 1
-                continue
-            if schema.validate(datafile):
-                if verbose:
-                    print("%s checks out" % (filename))
-            else:
-                rc = os.system("xmllint --noout --xinclude --schema \
-                                %s %s > /dev/null 2>/dev/null" % \
-                               (schemaname % schemadir, filename))
-                if rc:
+            for filename in filelist:
+                if not validate(filename, schemaname % schemadir,
+                                schema=schema, xinclude=not setup['stdin']):
                     failures = 1
-                    print("%s ***FAILS*** to verify \t\t<----" % (filename))
-                    os.system("xmllint --noout --xinclude --schema %s %s" % \
-                              (schemaname % schemadir, filename))
-                elif verbose:
-                    print("%s checks out" % (filename))
 
+    # check Properties files against their schemas
+    for filename in props_list:
+        logging.info("checking %s" % filename)
+        schemafile = "%s.xsd" % os.path.splitext(filename)[0]
+        if os.path.exists(schemafile):
+            if not validate(filename, schemafile, xinclude=not setup['stdin']):
+                failures = 1
+        elif setup['require-schema']:
+            logging.warn("No schema found for %s", filename)
+            failures = 1
+        
     # print out missing bundle information
-    if verbose:
-        print("")
-        if not setup['stdin']:
-            # if we've taken a list of files on stdin, there's an
-            # excellent chance that referenced bundles do not exist,
-            # so skip this check
-            for bundle in ref_bundles:
-                # check for both regular and genshi bundles
-                xmlbundle = "%s.xml" % bundle
-                genshibundle = "%s.genshi" % bundle
-                allbundles = bundle_list + genshibundle_list
-                if (xmlbundle not in allbundles and
-                    genshibundle not in allbundles):
-                    print("*** Warning: Bundle %s referenced, but does not "
-                          "exist." % bundle)
+    logging.info("")
+    if not setup['stdin']:
+        # if we've taken a list of files on stdin, there's an
+        # excellent chance that referenced bundles do not exist, so
+        # skip this check
+        for bundle in ref_bundles:
+            # check for both regular and genshi bundles
+            xmlbundle = "%s.xml" % bundle
+            genshibundle = "%s.genshi" % bundle
+            allbundles = bundle_list + genshibundle_list
+            if xmlbundle not in allbundles and genshibundle not in allbundles:
+                logging.info("*** Warning: Bundle %s referenced, but does not "
+                             "exist.", bundle)
                     
-        # verify bundle name attribute matches filename
-        for bundle in (bundle_list + genshibundle_list):
-            fname = bundle.split('Bundler/')[1].split('.')[0]
-            xdata = lxml.etree.parse(bundle)
-            bname = xdata.getroot().get('name')
-            if fname != bname:
-                print("The following names are inconsistent:")
-                print("  Filename is %s" % fname)
-                print("  Bundle name found in %s is %s" % (fname, bname))
+    # verify bundle name attribute matches filename
+    for bundle in (bundle_list + genshibundle_list):
+        fname = bundle.split('Bundler/')[1].split('.')[0]
+        xdata = lxml.etree.parse(bundle)
+        bname = xdata.getroot().get('name')
+        if fname != bname:
+            logging.warn("The following names are inconsistent:")
+            logging.warn("  Filename is %s", fname)
+            logging.warn("  Bundle name found in %s is %s", fname, bname)
 
     raise SystemExit(failures)
