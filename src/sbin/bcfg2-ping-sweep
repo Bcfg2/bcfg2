@@ -33,7 +33,7 @@ if __name__ == '__main__':
     osname = uname()[0]
 
     while hostlist or pids:
-        if hostlist and len(pids.keys()) < 15:
+        if hostlist and len(list(pids.keys())) < 15:
             host = hostlist.pop()
             pid = fork()
             if pid == 0:

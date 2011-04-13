@@ -3,23 +3,25 @@
 """Bcfg2 Client"""
 __revision__ = '$Revision$'
 
+import fcntl
 import logging
 import os
 import signal
+import stat
 import sys
 import tempfile
 import time
 import xmlrpclib
-import fcntl
-import Bcfg2.Options
+
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
-
-import Bcfg2.Proxy
+import Bcfg2.Options
 import Bcfg2.Logger
+import Bcfg2.Proxy
 
 logger = logging.getLogger('bcfg2')
+
 
 def cb_sigint_handler(signum, frame):
     """Exit upon CTRL-C."""
@@ -105,9 +107,11 @@ class Client:
             self.logger.info(Bcfg2.Client.Tools.drivers)
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove']:
-            self.logger.error("Service removal is nonsensical, disable services to get former behavior")
+            self.logger.error("Service removal is nonsensical, "
+                              "disable services to get former behavior")
         if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
-            self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
+            self.logger.error("Got unknown argument %s for -r" %
+                              (self.setup['remove']))
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print("cannot use -f and -c together")
             raise SystemExit(1)
@@ -130,13 +134,17 @@ class Client:
                 script.write(probe.text)
                 script.close()
                 os.close(scripthandle)
-                os.chmod(script.name, 0755)
+                os.chmod(script.name, stat.S_IRUSR | stat.S_IWUSR |
+                                      stat.S_IXUSR | stat.S_IRGRP |
+                                      stat.S_IXGRP | stat.S_IROTH |
+                                      stat.S_IXOTH)  # 0755
                 ret.text = os.popen(script.name).read().strip()
                 self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
             finally:
                 os.unlink(script.name)
         except:
-            self.logger.error("Failed to execute probe: %s" % (name), exc_info=1)
+            self.logger.error("Failed to execute probe: %s" % (name),
+                              exc_info=1)
             raise SystemExit(1)
         return ret
 
@@ -169,10 +177,10 @@ class Client:
             proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
                                                self.setup['user'],
                                                self.setup['password'],
-                                               key = self.setup['key'],
-                                               cert = self.setup['certificate'],
-                                               ca = self.setup['ca'],
-                                               allowedServerCNs = self.setup['serverCN'])
+                                               key=self.setup['key'],
+                                               cert=self.setup['certificate'],
+                                               ca=self.setup['ca'],
+                                               allowedServerCNs=self.setup['serverCN'])
 
             if self.setup['profile']:
                 try:
@@ -210,7 +218,9 @@ class Client:
             if len(probes.findall(".//probe")) > 0:
                 try:
                     # upload probe responses
-                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata, encoding='UTF-8', xml_declaration=True))
+                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata,
+                                                                  encoding='UTF-8',
+                                                                  xml_declaration=True))
                 except:
                     self.logger.error("Failed to upload probe data", exc_info=1)
                     raise SystemExit(1)

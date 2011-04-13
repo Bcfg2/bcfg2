@@ -6,18 +6,18 @@ repos against their respective XML schemas.
 """
 __revision__ = '$Revision$'
 
+import fnmatch
 import glob
 import lxml.etree
 import os
 import sys
-import fnmatch
 import Bcfg2.Options
 
 if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
             'verbose': Bcfg2.Options.VERBOSE,
             'configfile': Bcfg2.Options.CFILE,
-            'schema' : Bcfg2.Options.SCHEMA_PATH,
+            'schema': Bcfg2.Options.SCHEMA_PATH,
             'stdin': Bcfg2.Options.FILES_ON_STDIN}
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     repo = setup['repo']
 
     if setup['stdin']:
-        file_list = map(lambda s: s.strip(), sys.stdin.readlines())
+        file_list = [s.strip() for s in sys.stdin.readlines()]
         info_list = [f for f in file_list if os.path.basename(f) == 'info.xml']
         metadata_list = fnmatch.filter(file_list, "*/Metadata/groups.xml")
         clients_list = fnmatch.filter(file_list, "*/Metadata/clients.xml")
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         gp_list = fnmatch.filter(file_list, "*/GroupPatterns/config.xml")
     else:
         # not reading files from stdin
-        
+
         # Get a list of all info.xml files in the bcfg2 repository
         info_list = []
         for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
@@ -239,7 +239,7 @@ if __name__ == '__main__':
                     genshibundle not in allbundles):
                     print("*** Warning: Bundle %s referenced, but does not "
                           "exist." % bundle)
-                    
+
         # verify bundle name attribute matches filename
         for bundle in (bundle_list + genshibundle_list):
             fname = bundle.split('Bundler/')[1].split('.')[0]
