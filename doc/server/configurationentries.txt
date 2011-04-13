@@ -95,6 +95,10 @@ necessary for the Path type specified.
 |             | entries              | POSIX entities  | group, perms             |
 |             |                      |                 |                          |
 +-------------+----------------------+-----------------+--------------------------+
+| vcs         | New                  | Create version  | vcstype (git),           |
+|             |                      | control         | sourceurl, revision      |
+|             |                      | checkout        |                          |
++-------------+----------------------+-----------------+--------------------------+
 
 Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
 are still handled via the traditional :ref:`server-info` mechanisms.
