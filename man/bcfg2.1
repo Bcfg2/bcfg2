@@ -31,15 +31,15 @@ Specify the encoding of Cfg files.
 
 .TP
 .BR "\-I"
-Run bcfg2 in interactive mode. The user will be prompted before each 
+Run bcfg2 in interactive mode. The user will be prompted before each
 change.
 
 .TP
-.BR "\-O" 
+.BR "\-O"
 Omit lock check.
 
-.TP 
-.BR "\-P" 
+.TP
+.BR "\-P"
 Run bcfg2 in paranoid mode. Diffs will be logged for
 configuration files marked as paranoid by the Bcfg2 server.
 
@@ -62,24 +62,24 @@ Run bcfg2 against one or multiple bundles in the configuration.
 Cache a copy of the configuration in cachefile.
 
 .TP
-.BR "\-d" 
+.BR "\-d"
 Run bcfg2 in debug mode.
 
-.TP 
-.BR "\-e" 
+.TP
+.BR "\-e"
 When in verbose mode, display extra entry information (temporary until
 verbosity rework).
 
 .TP
-.BR "\-f <specification path>" 
+.BR "\-f <specification path>"
 Configure from a file rather than querying the server.
 
-.TP 
-.BR "\-h" 
+.TP
+.BR "\-h"
 Print Usage information.
 
-.TP 
-.BR "\-k" 
+.TP
+.BR "\-k"
 Run in bulletproof mode. This currently only affects behavior in the
 debian toolset; it calls apt\-get update and clean and
 dpkg \-\-configure \-\-pending.
@@ -97,14 +97,14 @@ administrators and much configuration variety.
 .TP
 .BR "\-n"
 Run bcfg2 in dry\-run mode. No changes will be made to the
-system. 
+system.
 
 .TP
 .BR "\-o <LogFile Path>"
 Writes a log to the specified path.
 
 .TP
-.BR "\-p <profile>" 
+.BR "\-p <profile>"
 Assert a profile for the current client.
 
 .TP
@@ -112,16 +112,16 @@ Assert a profile for the current client.
 Run bcfg2 in quick mode. Package checksum verification won't be
 performed. This mode relaxes the constraints of correctness, and thus
 should only be used in safe conditions.
- 
-.TP
-.BR "\-Q"
-Run bcfg2 in "bundle quick" mode, where only entries in a bundle are 
-or installed. This runs much faster than -q, but doesn't provide 
-statistics to the server at all. In order for this option to work, the
--b option must also be provided. This option is incompatible with -r. 
 
 .TP
-.BR "\-r <mode>" 
+.BR "\-Q"
+Run bcfg2 in "bundle quick" mode, where only entries in a bundle are
+or installed. This runs much faster than -q, but doesn't provide
+statistics to the server at all. In order for this option to work, the
+-b option must also be provided. This option is incompatible with -r.
+
+.TP
+.BR "\-r <mode>"
 Cause bcfg2 to remove extra configuration elements it detects. Mode is
 one of all, Services, or Packages. All removes all entries. Likewise,
 Services and Packages remove only the extra configuration elements of
@@ -139,11 +139,11 @@ modify services.
 Specifiy the path to the SSL key.
 
 .TP
-.BR "\-u <user>" 
+.BR "\-u <user>"
 Attempt to authenticate as 'user'.
 
 .TP
-.BR "\-x <password>" 
+.BR "\-x <password>"
 Use 'password' for client communication.
 
 .TP
