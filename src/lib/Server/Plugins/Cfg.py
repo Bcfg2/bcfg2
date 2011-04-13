@@ -134,9 +134,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                            metadata=metadata,
                                            path=basefile.name).filter(removecomment)
                 try:
-                    data = stream.render('text', strip_whitespace=False)
+                    data = stream.render('text', encoding=self.encoding,
+                                         strip_whitespace=False)
                 except TypeError:
-                    data = stream.render('text')
+                    data = stream.render('text', encoding=self.encoding)
                 if data == '':
                     entry.set('empty', 'true')
             except Exception:
