@@ -30,7 +30,7 @@ if __name__ == '__main__':
     if setup['stdin']:
         file_list = map(lambda s: s.strip(), sys.stdin.readlines())
         info_list = [f for f in file_list if os.path.basename(f) == 'info.xml']
-        metadata_list = fnmatch.filter(file_list, "*/Metadata/groups.xml")
+        metadata_list = fnmatch.filter(file_list, "*/Metadata/*.xml")
         clients_list = fnmatch.filter(file_list, "*/Metadata/clients.xml")
         bundle_list = fnmatch.filter(file_list, "*/Bundler/*.xml")
         genshibundle_list = fnmatch.filter(file_list, "*/Bundler/*.genshi")
@@ -71,24 +71,30 @@ if __name__ == '__main__':
         pkgcfg_list = glob.glob("%s/Packages/config.xml" % repo)
         gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
 
-    # include files in metadata_list
-    ref_bundles = set()
-    xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
-    included = set([ent.get('href') for ent in \
-                   xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
-    while included:
-        try:
-            filename = included.pop()
-        except KeyError:
-            continue
-        metadata_list.append("%s/Metadata/%s" % (repo, filename))
-        groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
-        group_ents = [ent.get('href') for ent in \
-                      groupdata.
-                      findall('./{http://www.w3.org/2001/XInclude}include')]
-        for ent in group_ents:
-            included.add(ent)
-        included.discard(filename)
+        # include files in metadata_list
+        ref_bundles = set()
+        xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
+        included = set([ent.get('href') for ent in
+                        xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
+        while included:
+            try:
+                filename = included.pop()
+            except KeyError:
+                continue
+            if not setup['stdin'] or filepath in file_list:
+                metadata_list.append("%s/Metadata/%s" % (repo, filename))
+            groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
+            group_ents = [ent.get('href') for ent in \
+                          groupdata.
+                          findall('./{http://www.w3.org/2001/XInclude}include')]
+            for ent in group_ents:
+                included.add(ent)
+            included.discard(filename)
+
+        # get all XIncluded bundles
+        xdata.xinclude()
+        for bundle in xdata.findall("//Bundle"):
+            ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
 
     # check for multiple default group definitions
     default_groups = []
@@ -100,11 +106,6 @@ if __name__ == '__main__':
         print("*** Warning: Multiple default groups defined")
         for grp in default_groups:
             print("  %s" % grp.get('name'))
-
-    # get all XIncluded bundles
-    xdata.xinclude()
-    for bundle in xdata.findall("//Bundle"):
-        ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
 
     # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
