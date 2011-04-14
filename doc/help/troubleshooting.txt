@@ -145,6 +145,10 @@ be taken to remedy them.
 |                              |          | character present   |              |
 |                              |          | in this file.       |              |
 +------------------------------+----------+---------------------+--------------+
+| Got unknown entries          | Server   | The Packages plugin | [11]_        |
+| [list of unknown entries]    |          | has no knowledge of |              |
+|                              |          | the listed entries  |              |
++------------------------------+----------+---------------------+--------------+
 
 
 .. [1] This entry is not being bound. Ensure that a version of this
@@ -166,6 +170,14 @@ be taken to remedy them.
        group is properly setup.
 .. [10] Ensure the correct encoding is specified in the [components]
         section of ``bcfg2.conf``.
+.. [11] For packages listed other than **gpg-pubkey**, this error means
+        that the Packages plugin is unable to find the package in any of
+        the sources listed in ``Packages/config.xml``. The issue often
+        arises when the client is not in one of the groups necessary for
+        the Source listed. In the case of gpg-pubkey, you can safely
+        ignore the message as the Packages plugin has no knowledge of
+        these packages (however, note that this package is most often
+        specified as a BoundPackage entry).
 
 FAQs
 ====
