@@ -149,15 +149,14 @@ if __name__ == '__main__':
             ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
 
     # check for multiple default group definitions
-    default_groups = []
-    for grp in lxml.etree.parse("%s/Metadata/groups.xml" \
-                                      % repo).findall('.//Group'):
-        if grp.get('default') == 'true':
-            default_groups.append(grp)
-    if len(default_groups) > 1:
-        logging.warn("*** Warning: Multiple default groups defined")
-        for grp in default_groups:
-            logging.warn("  %s", grp.get('name'))
+    if "%s/Metadata/groups.xml" % repo in metadata_list:
+        default_groups = [g for g in lxml.etree.parse("%s/Metadata/groups.xml" %
+                                                      repo).findall('.//Group')
+                          if g.get('default') == 'true']
+        if len(default_groups) > 1:
+            logging.warn("*** Warning: Multiple default groups defined")
+            for grp in default_groups:
+                logging.warn("  %s", grp.get('name'))
 
     # verify attributes for configuration entries
     # (as defined in doc/server/configurationentries)
