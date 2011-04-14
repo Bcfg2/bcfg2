@@ -41,9 +41,20 @@ templates as ``metadata.Properties[<filename>]``. The
 data attribute is an LXML element object. (Documented
 `here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 
-Currently, no access methods are defined for this data, but as we
-formulate common use cases, we will add them to the !PropertyFile class
-as methods. This will simplify templates.
+Currently, only one access method is defined for this data, ``Match``.
+``Match`` parses the Group and Client tags in the file and returns a
+list of elements that apply to the client described by a set of
+metadata.  (See :ref:`server-plugins-structures-bundler-index` for
+more details on how Group and Client tags are parsed.)  For instance::
+
+    {% python
+    ntp_servers = [el.text
+                   for el in metadata.Properties['ntp.xml'].Match(metadata):
+                   if el.tag == "Server"]
+    %}
+
+As we formulate more common use cases, we will add them to the
+!PropertyFile class as methods. This will simplify templates.
 
 Accessing Properties contents from TGenshi
 ==========================================

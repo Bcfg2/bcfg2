@@ -93,6 +93,14 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name='Client' type='GroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Client tags only apply to the named client
+             (or vice-versa; see #element_negate below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element ref="py:def"/>
       <xsd:element ref="py:match"/>
       <xsd:element ref="py:choose"/>
@@ -204,6 +212,14 @@
             <xsd:documentation>
               Elements within Group tags only apply to clients that are
               members of that group
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name='Client' type='GroupType'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Elements within Client tags only apply to the named client
+              (or vice-versa; see #element_negate below)
             </xsd:documentation>
           </xsd:annotation>
         </xsd:element>

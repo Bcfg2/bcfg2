@@ -4,15 +4,9 @@ import lxml.etree
 import Bcfg2.Server.Plugin
 
 
-class PropertyFile(Bcfg2.Server.Plugin.XMLFileBacked):
+class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
-
-    def Index(self):
-        """Build data into an xml object."""
-        try:
-            self.data = lxml.etree.XML(self.data)
-        except lxml.etree.XMLSyntaxError:
-            Bcfg2.Server.Plugin.logger.error("Failed to parse %s" % self.name)
+    pass
 
 
 class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):

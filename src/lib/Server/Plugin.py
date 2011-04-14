@@ -457,17 +457,29 @@ class StructFile(XMLFileBacked):
         work = {lambda x: True: xdata.getchildren()}
         while work:
             (predicate, worklist) = work.popitem()
-            self.fragments[predicate] = [item for item in worklist if item.tag != 'Group'
-                                         and not isinstance(item, lxml.etree._Comment)]
-            for group in [item for item in worklist if item.tag == 'Group']:
-                # if only python had forceable early-binding
-                if group.get('negate', 'false') in ['true', 'True']:
-                    cmd = "lambda x:'%s' not in x.groups and predicate(x)"
-                else:
-                    cmd = "lambda x:'%s' in x.groups and predicate(x)"
-
-                newpred = eval(cmd % (group.get('name')), {'predicate': predicate})
-                work[newpred] = group.getchildren()
+            self.fragments[predicate] = \
+                                      [item for item in worklist
+                                       if (item.tag != 'Group' and
+                                           item.tag != 'Client' and
+                                           not isinstance(item,
+                                                          lxml.etree._Comment))]
+            for item in worklist:
+                cmd = None
+                if item.tag == 'Group':
+                    if item.get('negate', 'false').lower() == 'true':
+                        cmd = "lambda x:'%s' not in x.groups and predicate(x)"
+                    else:
+                        cmd = "lambda x:'%s' in x.groups and predicate(x)"
+                elif item.tag == 'Client':
+                    if item.get('negate', 'false').lower() == 'true':
+                        cmd = "lambda x:x.hostname != '%s' and predicate(x)"
+                    else:
+                        cmd = "lambda x:x.hostname == '%s' and predicate(x)"
+                # else, ignore item
+                if cmd is not None:
+                    newpred = eval(cmd % item.get('name'),
+                                   {'predicate':predicate})
+                    work[newpred] = item.getchildren()
 
     def Match(self, metadata):
         """Return matching fragments of independent."""
