@@ -60,7 +60,7 @@ if __name__ == '__main__':
     opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
             'verbose': Bcfg2.Options.VERBOSE,
             'configfile': Bcfg2.Options.CFILE,
-            'require-schema': Bcfg2.Options.REQUIRE_SCHEMA}
+            'require-schema': Bcfg2.Options.REQUIRE_SCHEMA,
             'schema': Bcfg2.Options.SCHEMA_PATH,
             'stdin': Bcfg2.Options.FILES_ON_STDIN}
     setup = Bcfg2.Options.OptionParser(opts)
