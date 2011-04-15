@@ -16,6 +16,30 @@ import logging
 import Bcfg2.Options
 from subprocess import Popen, PIPE, STDOUT
 
+def follow_xinclude(xfile, file_list=None):
+    """ follow xincludes in the given file """
+    xdata = lxml.etree.parse(xfile)
+    included = set([ent.get('href') for ent in
+                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
+    rv = []
+        
+    while included:
+        try:
+            filename = included.pop()
+        except KeyError:
+            continue
+
+        path = os.path.join(os.path.dirname(xfile), filename)
+        if file_list is not None and path in file_list:
+            rv.append(path)
+            groupdata = lxml.etree.parse(path)
+            [included.add(el.get('href'))
+             for el in
+             groupdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        included.discard(filename)
+
+    return rv
+
 def validate(filename, schemafile, schema=None, xinclude=True):
     """validate a fail against the given lxml.etree.Schema.  return
     True on success, False on failure"""
@@ -80,7 +104,7 @@ if __name__ == '__main__':
     if setup['stdin']:
         file_list = [s.strip() for s in sys.stdin.readlines()]
         info_list = [f for f in file_list if os.path.basename(f) == 'info.xml']
-        metadata_list = fnmatch.filter(file_list, "*/Metadata/*.xml")
+        metadata_list = fnmatch.filter(file_list, "*/Metadata/groups.xml")
         clients_list = fnmatch.filter(file_list, "*/Metadata/clients.xml")
         bundle_list = fnmatch.filter(file_list, "*/Bundler/*.xml")
         genshibundle_list = fnmatch.filter(file_list, "*/Bundler/*.genshi")
@@ -97,6 +121,24 @@ if __name__ == '__main__':
         props_list = [f
                       for f in fnmatch.filter(file_list, "*/Properties/*.xml")
                       if "%s.xsd" % os.path.splitext(f)[0] in file_list]
+
+        # attempt to follow XIncludes in groups.xml and clients.xml.
+        # if those top-level files aren't listed in file_list, though,
+        # there's really nothing we can do to guess what a file in
+        # Metadata is
+        if metadata_list:
+            metadata_list.extend(follow_xinclude(metadata_list[0],
+                                                 file_list=file_list))
+        if clients_list:
+            clients_list.extend(follow_xinclude(clients_list[0],
+                                                file_list=file_list))
+
+        # if there are other files in Metadata in file_list that
+        # aren't listed in metadata_list or clients_list, we can't
+        # verify them.  warn about those.
+        for fname in fnmatch.filter(file_list, "*/Metadata/*.xml"):
+            if fname not in metadata_list and fname not in clients_list:
+                logging.warn("Broken XInclude chain: Could not determine file type of %s", fname)
     else:
         # not reading files from stdin
 
@@ -125,29 +167,17 @@ if __name__ == '__main__':
         gp_list = glob.glob('%s/GroupPatterns/config.xml' % repo)
         props_list = glob.glob("%s/Properties/*.xml" % repo)
 
-        # include files in metadata_list
+        metadata_list.extend(follow_xinclude("%s/Metadata/groups.xml" % repo))
+        clients_list.extend(follow_xinclude("%s/Metadata/clients.xml" % repo))
+
+        # get all bundles
         ref_bundles = set()
         xdata = lxml.etree.parse("%s/Metadata/groups.xml" % repo)
-        included = set([ent.get('href') for ent in
-                        xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
-        while included:
-            try:
-                filename = included.pop()
-            except KeyError:
-                continue
-            metadata_list.append("%s/Metadata/%s" % (repo, filename))
-            groupdata = lxml.etree.parse("%s/Metadata/%s" % (repo, filename))
-            group_ents = [ent.get('href') for ent in \
-                          groupdata.
-                          findall('./{http://www.w3.org/2001/XInclude}include')]
-            for ent in group_ents:
-                included.add(ent)
-            included.discard(filename)
-
-        # get all XIncluded bundles
         xdata.xinclude()
         for bundle in xdata.findall("//Bundle"):
             ref_bundles.add("%s/Bundler/%s" % (repo, bundle.get('name')))
+        included = set([ent.get('href') for ent in
+                        xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
 
     # check for multiple default group definitions
     if "%s/Metadata/groups.xml" % repo in metadata_list:
