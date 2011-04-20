@@ -5,6 +5,10 @@ class Pkgmgr(Bcfg2.Server.Lint.ServerPlugin):
 
     @Bcfg2.Server.Lint.returnErrors
     def Run(self):
+        if 'Pkgmgr' not in self.core.plugins:
+            self.LintWarning("Pkgmgr server plugin is not enabled, skipping Pkgmgr lint checks")
+            return
+        
         pset = set()
         for plist in self.core.plugins['Pkgmgr'].entries.values():
             if self.HandlesFile(plist.name):
