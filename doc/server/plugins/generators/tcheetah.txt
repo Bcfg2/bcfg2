@@ -50,6 +50,12 @@ self.metadata is an instance of the class ClientMetadata and documented
 self.metadata.Properties.data
 =============================
 
+.. note::
+
+    If you want to use Properties, you will need to enable the
+    :ref:`server-plugins-connectors-properties` plugin in
+    ``/etc/bcfg2.conf``.
+
 Properties.data is a python `ElementTree <http://codespeak.net/lxml/>`_
 object, loaded from the data in ``/var/lib/bcfg2/Properties/<properties
 file>.xml``. That file should have a ``Properties`` node at its root.

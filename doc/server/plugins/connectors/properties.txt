@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-properties:
+.. _server-plugins-connectors-properties:
 
 ==========
 Properties
