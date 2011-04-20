@@ -158,17 +158,23 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     pass
 
 
-def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='daemon', level=0, to_file=None):
+def setup_logging(procname, to_console=True, to_syslog=True,
+                  syslog_facility='daemon', level=0, to_file=None):
     """Setup logging for Bcfg2 software."""
     if hasattr(logging, 'already_setup'):
         return
+
     # add the handler to the root logger
     if to_console:
         console = logging.StreamHandler(sys.stdout)
-        console.setLevel(logging.DEBUG)
+        if to_console is True:
+            console.setLevel(logging.DEBUG)
+        else:
+            console.setLevel(to_console)
         # tell the handler to use this format
         console.setFormatter(TermiosFormatter())
         logging.root.addHandler(console)
+        
     if to_syslog:
         try:
             try:
@@ -186,11 +192,13 @@ def setup_logging(procname, to_console=True, to_syslog=True, syslog_facility='da
             logging.root.error("failed to activate syslogging")
         except:
             print("Failed to activate syslogging")
+            
     if not to_file == None:
         filelog = logging.FileHandler(to_file)
         filelog.setLevel(logging.DEBUG)
         filelog.setFormatter(logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(filelog)
+        
     logging.root.setLevel(level)
     logging.already_setup = True
 
