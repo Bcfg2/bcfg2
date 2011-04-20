@@ -478,8 +478,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             grouptmp = {}
             self.categories = {}
             groupseen = list()
-            for group in xdata.xpath('//Groups/Group') \
-                    + xdata.xpath('Group'):
+            for group in xdata.xpath('//Groups/Group'):
                 if group.get('name') not in groupseen:
                     groupseen.append(group.get('name'))
                 else:
