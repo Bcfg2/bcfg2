@@ -167,6 +167,26 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
         <Arch>amd64</Arch>
         <Arch>i386</Arch>
       </APTSource>
+       <APTSource>
+        <Group>lucid</Group>
+        <URL>http://archive.ubuntu.com/ubuntu</URL>
+        <Version>lucid-updates</Version>
+        <Component>main</Component>
+        <Component>multiverse</Component>
+        <Component>restricted</Component>
+        <Component>universe</Component>
+        <Arch>amd64</Arch>
+       </APTSource>
+       <APTSource>
+        <Group>lucid</Group>
+        <URL>http://security.ubuntu.com/ubuntu</URL>
+        <Version>lucid-security</Version>
+        <Component>main</Component>
+        <Component>multiverse</Component>
+        <Component>restricted</Component>
+        <Component>universe</Component>
+        <Arch>amd64</Arch>
+       </APTSource>
     </Sources>
 
 Due to the :ref:`server-plugins-generators-packages-magic-groups`,
