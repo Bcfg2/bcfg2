@@ -187,6 +187,8 @@ Yum sources can be similarly specified:
       </YUMSource>
     </Sources>
 
+For sources with a **URL** tag, the **Version** tag is also necessary.
+
 .. note:: There is also a RawURL syntax for specifying APT or YUM sources that
           don't follow the conventional layout:
 
