@@ -38,9 +38,8 @@ Check if all repository XML files conform to schemas
 ====================================================
 
 Bcfg2 comes with XML schemas describing all of the XML formats used in
-the server repository. A validation command ``bcfg2-repo-validate`` is
-included with the source distribution and all packages. Run it with the
--v flag to see each file and the results if its validation.
+the server repository. A validation command ``bcfg2-lint`` is
+included with the source distribution and all packages.
 
 If the bcfg2 server is not reflecting recent changes, try restarting the bcfg2-server process
 =============================================================================================

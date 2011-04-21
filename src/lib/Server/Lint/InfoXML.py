@@ -15,8 +15,8 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                     xdata = entryset.infoxml.pnode.data
                     for info in xdata.getroottree().findall("//Info"):
                         required = ["owner", "group", "perms"]
-                        if "required" in self.config:
-                            required = self.config["required"].split(",")
+                        if "required_attrs" in self.config:
+                            required = self.config["required_attrs"].split(",")
 
                         missing = [attr for attr in required
                                    if info.get(attr) is None]
@@ -27,8 +27,12 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
 
                         if ("require_paranoid" in self.config and
                             self.config["require_paranoid"].lower() == "true" and
-                            not Bcfg2.Options.MDATA_PARANOID.value and
-                            info.get("paranoid").lower() != "true"):
+                            (Bcfg2.Options.MDATA_PARANOID.value and
+                             info.get("paranoid") is not None and
+                             info.get("paranoid").lower() == "false") or
+                            (not Bcfg2.Options.MDATA_PARANOID.value and
+                             (info.get("paranoid") is None or
+                              info.get("paranoid").lower() != "true"))):
                             self.LintError("Paranoid must be true in %s:%s" %
                                            (infoxml_fname,
                                             self.RenderXML(info)))

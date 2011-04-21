@@ -58,12 +58,11 @@ def run_plugin(plugin, plugin_name, setup=None, args=None, config=None,
     else:
         args.append(setup)
         
-    return plugin(*args, files=files).Run()
-    # try:
-    #     return plugin(*args, files=files).Run()
-    # except Exception, err:
-    #     logger.error("Failed to run plugin %s: %s" % (plugin, err))
-    #     raise SystemExit(1)
+    try:
+        return plugin(*args, files=files).Run()
+    except Exception, err:
+        logger.error("Failed to run plugin %s: %s" % (plugin, err))
+        raise SystemExit(1)
 
 def load_server(setup):
     """ load server """

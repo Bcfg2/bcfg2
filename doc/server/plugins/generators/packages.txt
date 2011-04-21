@@ -273,7 +273,7 @@ Validation
 ==========
 
 A schema for Packages/config.xml is included; config.xml can be validated
-using ``bcfg2-repo-validate``.
+using ``bcfg2-lint``.
 
 .. note:: The schema requires that elements be specified in the above order.
 

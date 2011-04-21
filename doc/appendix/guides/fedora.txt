@@ -249,8 +249,7 @@ file should look something like this
 
 .. note::
     When editing your xml files by hand, it is useful to occasionally
-    run ``bcfg2-repo-validate`` to ensure that your xml validates
-    properly.
+    run ``bcfg2-lint`` to ensure that your xml validates properly.
 
 Add a probe
 +++++++++++

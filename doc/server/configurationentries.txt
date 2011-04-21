@@ -50,9 +50,9 @@ plugin that handles the entry in the case of `Cfg`_, `TGenshi`_, or
 a device, directory, hardlink, symlink, etc), then you will specify both
 the *type* and any other necessary attributes in `Rules`_. 
 
-Running ``bcfg2-repo-validate`` will check your configuration
-specification for the presence of any mandatory attributes that are
-necessary for the Path type specified.
+Running ``bcfg2-lint`` will check your configuration specification for
+the presence of any mandatory attributes that are necessary for the
+Path type specified.
 
 .. note:: A tool for converting old POSIX entries is available in the
           Bcfg2 source directory at tools/posixunified.py

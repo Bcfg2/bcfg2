@@ -26,7 +26,7 @@ contain parsed XML data as the "data" attribute.
 
 The XML data in a property file is arbitrary, but a matching ``.xsd``
 file can be created to assign a schema to a property file, which will
-be checked when running ``bcfg2-repo-validate``.  For instance, given::
+be checked when running ``bcfg2-lint``.  For instance, given::
 
     Properties/dns-config.xml
     Properties/dns-config.xsd

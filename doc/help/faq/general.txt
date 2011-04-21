@@ -51,6 +51,6 @@ The bcfg2-server process logs to syslog facility LOG_DAEMON. The server produces
 **Is there a way to check if all repository XML files conform to schemas?**
 
 Bcfg2 comes with XML schemas describing all of the XML formats used in
-the server repository. A validation command ``bcfg2-repo-validate`` is
-included with the source distribution and all packages. Run it with
-the ``-v`` flag to see each file and the results if its validation.
+the server repository. A validation command ``bcfg2-lint`` is
+included with the source distribution and all packages. ``bcfg2-lint``
+can also performs lots of other checks for common mistakes.

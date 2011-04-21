@@ -14,7 +14,7 @@ FILTERS = --filter Hostbase \
 --filter bcfg2-build-reports \
 --filter bcfg2-info \
 --filter bcfg2-ping-sweep \
---filter bcfg2-repo-validate \
+--filter bcfg2-lint \
 --filter bcfg2-reports \
 --filter bcfg2-server
 
