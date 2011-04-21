@@ -31,7 +31,7 @@ Non-POSIX entries
 +-------------+---------------------+-----------------------------+
 | PostInstall | PostInstall command | name                        |
 +-------------+---------------------+-----------------------------+
-| Service     | System Services     | name, type, status, reload  |
+| Service     | System Services     | name, type, status, target  |
 +-------------+---------------------+-----------------------------+
 
 POSIX entries
