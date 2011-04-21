@@ -57,9 +57,14 @@ def run_plugin(plugin, plugin_name, setup=None, args=None, config=None,
         args.append(dict(config.items(plugin_name), **setup))
     else:
         args.append(setup)
-        
+
+    # older versions of python do not support mixing *-magic and
+    # non-*-magic (e.g., "plugin(*args, files=files)", so we do this
+    # all with *-magic
+    kwargs = dict(files=files)
+    
     try:
-        return plugin(*args, files=files).Run()
+        return plugin(*args, **kwargs).Run()
     except Exception, err:
         logger.error("Failed to run plugin %s: %s" % (plugin, err))
         raise SystemExit(1)
@@ -158,8 +163,10 @@ if __name__ == '__main__':
         perrors = run_server_plugins(serverplugins, config=config, setup=setup)
         errors = [errors[n] + perrors[n] for n in range(0, len(errors))]
 
-    print "%d errors" % errors[0]
-    print "%d warnings" % errors[1]
+    if errors[0] or errors[1] or setup['verbose']:
+        print "%d errors" % errors[0]
+        print "%d warnings" % errors[1]
+        
     if errors[0]:
         raise SystemExit(2)
     elif errors[1]:

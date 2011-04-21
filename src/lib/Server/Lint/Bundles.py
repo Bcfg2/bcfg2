@@ -52,5 +52,5 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
                     groups = [self.RenderXML(g)
                               for g in xdata.getroottree().findall("//Group")]
                     if groups:
-                        self.LintError("<Group> tag is not allowed in SGenshi Bundle:\n%s" %
+                        self.LintWarning("<Group> tag is not allowed in SGenshi Bundle:\n%s" %
                                        "\n".join(groups))

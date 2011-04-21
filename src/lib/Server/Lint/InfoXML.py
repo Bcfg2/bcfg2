@@ -14,7 +14,7 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                     entryset.infoxml is not None):
                     xdata = entryset.infoxml.pnode.data
                     for info in xdata.getroottree().findall("//Info"):
-                        required = ["owner", "group", "perms"]
+                        required = []
                         if "required_attrs" in self.config:
                             required = self.config["required_attrs"].split(",")
 

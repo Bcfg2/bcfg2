@@ -20,14 +20,14 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
     def required_keywords(self, rtype):
         """ given a file type, fetch the list of required VCS keywords
         from the bcfg2-lint config """
-        return self.required_items(rtype, "keyword", default=["Id"])
+        return self.required_items(rtype, "keyword")
 
     def required_comments(self, rtype):
         """ given a file type, fetch the list of required comments
         from the bcfg2-lint config """
         return self.required_items(rtype, "comment")
 
-    def required_items(self, rtype, itype, default=None):
+    def required_items(self, rtype, itype):
         """ given a file type and item type (comment or keyword),
         fetch the list of required items from the bcfg2-lint config """
         if itype not in self.config_cache:
@@ -38,8 +38,6 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             global_item = "global_%ss" % itype
             if global_item in self.config:
                 rv.extend(self.config[global_item].split(","))
-            elif default is not None:
-                rv.extend(default)
             
             item = "%s_%ss" % (rtype.lower(), itype)
             if item in self.config:
