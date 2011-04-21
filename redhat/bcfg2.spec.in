@@ -26,11 +26,13 @@ BuildRequires: python-setuptools-devel
 BuildRequires: python-setuptools
 %endif
 
-%if 0%{?rhel} <= 5
+# %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
+# %systems (and potentially very old Fedora systems, too)
+%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6
 BuildRequires: python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
-%define pythonpath %(rpm -ql python-sphinx10 | grep '\.egg$')
+%define pythonpath /usr/lib/python%{py_ver}/site-packages/Sphinx-1.0.4-py%{py_ver}.egg
 %else
 BuildRequires: python-sphinx >= 0.6
 %endif
@@ -235,9 +237,11 @@ fi
 %{_sbindir}/bcfg2-info
 %{_sbindir}/bcfg2-ping-sweep
 %{_sbindir}/bcfg2-lint
+%{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-server
 
+%{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*
 
 %dir %{_var}/lib/bcfg2
