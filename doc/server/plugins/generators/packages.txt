@@ -15,6 +15,8 @@ information, Packages delegates control of package version information to
 the underlying package manager, installing the latest version available
 through those channels.
 
+.. _server-plugins-generators-packages-magic-groups:
+
 "Magic Groups"
 ==============
 

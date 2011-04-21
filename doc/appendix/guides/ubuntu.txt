@@ -169,12 +169,17 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
       </APTSource>
     </Sources>
 
-Due to the `Magic Groups`_, we need to modify our Metadata. Let's add
-an **ubuntu-lucid** group which inherits the **ubuntu** group already
-present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
-should look something like this
+Due to the :ref:`server-plugins-generators-packages-magic-groups`,
+we need to modify our Metadata. Let's add an **ubuntu-lucid**
+group which inherits the **ubuntu** group already present in
+``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
+something like this
 
-.. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
+.. note::
+
+    The reason we are creating a release-specific group in this case is
+    that the APTSource above is specific to the lucid release of ubuntu.
+    That is, it should not apply to other releases (hardy, maverick, etc).
 
 .. code-block:: xml
 

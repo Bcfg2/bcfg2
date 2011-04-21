@@ -216,13 +216,18 @@ mirror near your location according the `Mirror list`_ .
 	    </YUMSource>
 	</Sources>
 
-.. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
 
-Due to the `Magic Groups`_, we need to modify our Metadata. Let's
-add a **fedora13** group which inherits a **fedora** group
-(this should replace the existing **redhat** group) present in
-``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
-something like this
+Due to the :ref:`server-plugins-generators-packages-magic-groups`,
+we need to modify our Metadata. Let's add a **fedora13** group which
+inherits a **fedora** group (this should replace the existing **redhat**
+group) present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting
+file should look something like this
+
+.. note::
+
+    The reason we are creating a release-specific group in this case is
+    that the YUMSource above is specific to the 13th release of fedora.
+    That is, it should not apply to other releases (14, 15, etc).
 
 .. code-block:: xml
 
