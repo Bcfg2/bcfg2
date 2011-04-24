@@ -152,7 +152,9 @@ be taken to remedy them.
 
 .. [1] This entry is not being bound. Ensure that a version of this
        entry applies to this client.
-.. [2] Add a type to the generator definition for this entry
+.. [2] It is possible that the type attribute for this generator entry
+       is undefined. You may need to add the appropriate type attribute
+       in the literal entry specification.
 .. [3] Copy the Bcfg2 server's CA certificate to the client and specify it
        using the **ca** option in the [communication] section of
        ``bcfg2.conf``
