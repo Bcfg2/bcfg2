@@ -25,3 +25,9 @@ Basics
     When used alone this refers to a Bcfg2 :term:`repository`. When there
     is a chance for confusion, for instance in documents also talking
     about :term:`VCS`, be sure to use the longer Bcfg2 :term:`repository`.
+
+Sections
+--------
+
+Unless necessary, all the documentation follows the sections header
+rules available at http://docs.python.org/documenting/rest.html#sections.
