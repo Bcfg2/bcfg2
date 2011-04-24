@@ -586,3 +586,8 @@ Dynamic (web) reports
 =====================
 
 See installation instructions at :ref:`reports-dynamic`
+
+Next Steps
+==========
+
+:ref:`getting_started-index-next-steps`

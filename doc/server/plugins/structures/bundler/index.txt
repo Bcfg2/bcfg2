@@ -228,6 +228,8 @@ The latter form is preferred if the if block contains multiple
 files. While this example is simple, the test in the if block can in
 fact be any python statement.
 
+.. _server-plugins-structures-bundler-index-examples:
+
 Other examples
 ==============
 

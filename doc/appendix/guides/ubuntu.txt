@@ -506,13 +506,8 @@ Now we run the client and see there are no more unmanaged entries! ::
     managed. Please see :ref:`unsorted-writing_specification` for more
     details.
 
-Dynamic (web) reports
-=====================
-
-See installation instructions at :ref:`appendix-guides-web-reports-install`
-
 Upstart
-=======
+^^^^^^^
 
 Upstart services are defined like this:
 
@@ -526,3 +521,13 @@ Some Upstart services require additional parameters, like network-interface and 
 
     <Service name="network-interface" status="on" type="upstart" parameters="INTERFACE=eth0"/>
     <Service name="bridge-network-interface" status="on" type="upstart" parameters="INTERFACE=br0"/>
+
+Dynamic (web) reports
+=====================
+
+See installation instructions at :ref:`appendix-guides-web-reports-install`
+
+Next Steps
+==========
+
+:ref:`getting_started-index-next-steps`
