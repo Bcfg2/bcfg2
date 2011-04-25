@@ -86,7 +86,7 @@ class launchd(Bcfg2.Client.Tools.Tool):
         if entry.get('mode', 'default') == 'manual':
             self.logger.info("Service %s mode set to manual. Skipping "
                              "installation." % (entry.get('name')))
-            return True
+            return False
         name = entry.get('name')
         if entry.get('status') == 'on':
             self.logger.error("Installing service %s" % name)

@@ -61,7 +61,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         if entry.get('mode', 'default') == 'manual':
             self.logger.info("Service %s mode set to manual. Skipping "
                              "installation." % (entry.get('name')))
-            return True
+            return False
         self.logger.info('Installing Service %s' % entry.get('name'))
         if entry.get('status') == 'on':
             # make sure it's running if in supervised mode

@@ -80,7 +80,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if entry.get('mode', 'default') == 'manual':
             self.logger.info("Service %s mode set to manual. Skipping "
                              "installation." % (entry.get('name')))
-            return True
+            return False
         rcmd = "/sbin/chkconfig %s %s"
         self.cmd.run("/sbin/chkconfig --add %s"%(entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
