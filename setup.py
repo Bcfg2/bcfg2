@@ -115,7 +115,7 @@ except ImportError:
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
-      version="1.2.0pre1",
+      version="1.2.0pre2",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
