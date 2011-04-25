@@ -149,6 +149,11 @@ Service mode descriptions
   * do not start/stop/restart this service
   * service installation is not performed
 
+* interactive_only
+
+  * only attempt to start/stop/restart this service if the client is run interactively
+  * service installation is performed
+
 * default
 
   * perform appropriate service operations

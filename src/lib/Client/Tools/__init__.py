@@ -352,7 +352,9 @@ class SvcTool(Tool):
             return
 
         for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
-            if entry.get('mode', 'default') == 'manual':
+            mode = entry.get('mode', 'default')
+            if mode == 'manual' or \
+                    (mode == 'interactive_only' and not self.setup['interactive']):
                 continue
             # need to handle servicemode = (build|default)
             # need to handle mode = (default|supervised)
