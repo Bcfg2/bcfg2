@@ -63,11 +63,7 @@ def run_plugin(plugin, plugin_name, setup=None, args=None, config=None,
     # all with *-magic
     kwargs = dict(files=files)
     
-    try:
-        return plugin(*args, **kwargs).Run()
-    except Exception, err:
-        logger.error("Failed to run plugin %s: %s" % (plugin, err))
-        raise SystemExit(1)
+    return plugin(*args, **kwargs).Run()
 
 def load_server(setup):
     """ load server """
@@ -126,7 +122,7 @@ if __name__ == '__main__':
     elif "bcfg2-repo-validate" in sys.argv[0]:
         allplugins = 'Duplicates,RequiredAttrs,Validate'.split(',')
     else:
-        allplugins = config.get('main', 'plugins',
+        allplugins = config.get('lint', 'plugins',
                                 ",".join(Bcfg2.Server.Lint.__all__)).split(',')
 
     if setup['stdin']:
