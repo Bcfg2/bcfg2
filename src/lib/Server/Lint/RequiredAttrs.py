@@ -34,14 +34,15 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_bundles(self):
         """ check bundles for BoundPath entries with missing attrs """
-        for bundle in self.core.plugins['Bundler'].entries.values():
-            try:
-                xdata = lxml.etree.XML(bundle.data)
-            except AttributeError:
-                xdata = lxml.etree.parse(bundle.template.filepath).getroot()
+        if 'Bundler' in self.core.plugins:
+            for bundle in self.core.plugins['Bundler'].entries.values():
+                try:
+                    xdata = lxml.etree.XML(bundle.data)
+                except AttributeError:
+                    xdata = lxml.etree.parse(bundle.template.filepath).getroot()
 
-            for path in xdata.xpath("//BoundPath"):
-                self.check_entry(path, bundle.name)
+                for path in xdata.xpath("//BoundPath"):
+                    self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
         """ generic entry check """
