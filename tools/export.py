@@ -71,11 +71,11 @@ for line in fileinput.input('solaris/Makefile', inplace=1):
     sys.stdout.write(line)
 for line in fileinput.input('solaris/pkginfo.bcfg2', inplace=1):
     if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION=%s\n' % version)
+        line = line.replace(line, 'VERSION="%s"\n' % version)
     sys.stdout.write(line)
 for line in fileinput.input('solaris/pkginfo.bcfg2-server', inplace=1):
     if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION=%s\n' % version)
+        line = line.replace(line, 'VERSION="%s"\n' % version)
     sys.stdout.write(line)
 # update the version in reports
 for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html',
