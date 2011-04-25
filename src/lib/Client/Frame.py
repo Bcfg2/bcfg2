@@ -200,10 +200,10 @@ class Frame:
         if self.setup['remove']:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
-            elif self.setup['remove'] == 'services':
+            elif self.setup['remove'] in ['services', 'Services']:
                 self.removal = [entry for entry in self.extra \
                                 if entry.tag == 'Service']
-            elif self.setup['remove'] == 'packages':
+            elif self.setup['remove'] in ['packages', 'Packages']:
                 self.removal = [entry for entry in self.extra \
                                 if entry.tag == 'Package']
 

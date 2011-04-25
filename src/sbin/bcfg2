@@ -106,7 +106,12 @@ class Client:
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove']:
             self.logger.error("Service removal is nonsensical, disable services to get former behavior")
-        if self.setup['remove'] not in [False, 'all', 'services', 'packages']:
+        if self.setup['remove'] not in [False,
+                                        'all',
+                                        'Services',
+                                        'Packages',
+                                        'services',
+                                        'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
         if (self.setup["file"] != False) and (self.setup["cache"] != False):
             print("cannot use -f and -c together")
