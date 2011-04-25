@@ -51,17 +51,18 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_bundles(self):
         """ check bundle files for required headers """
-        for bundle in self.core.plugins['Bundler'].entries.values():
-            xdata = None
-            rtype = ""
-            try:
-                xdata = lxml.etree.XML(bundle.data)
-                rtype = "bundler"
-            except AttributeError:
-                xdata = lxml.etree.parse(bundle.template.filepath).getroot()
-                rtype = "sgenshi"
+        if 'Bundler' in self.core.plugins:
+            for bundle in self.core.plugins['Bundler'].entries.values():
+                xdata = None
+                rtype = ""
+                try:
+                    xdata = lxml.etree.XML(bundle.data)
+                    rtype = "bundler"
+                except AttributeError:
+                    xdata = lxml.etree.parse(bundle.template.filepath).getroot()
+                    rtype = "sgenshi"
 
-            self.check_xml(bundle.name, xdata, rtype)
+                self.check_xml(bundle.name, xdata, rtype)
 
     def check_properties(self):
         """ check properties files for required headers """
@@ -73,33 +74,35 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_metadata(self):
         """ check metadata files for required headers """
-        metadata = self.core.plugins['Metadata']
         if self.has_all_xincludes("groups.xml"):
-            self.check_xml(os.path.join(metadata.data, "groups.xml"),
-                           metadata.groups_xml.data,
+            self.check_xml(os.path.join(self.metadata.data, "groups.xml"),
+                           self.metadata.groups_xml.data,
                            "metadata")
         if self.has_all_xincludes("clients.xml"):
-            self.check_xml(os.path.join(metadata.data, "clients.xml"),
-                           metadata.clients_xml.data,
+            self.check_xml(os.path.join(self.metadata.data, "clients.xml"),
+                           self.metadata.clients_xml.data,
                            "metadata")
 
     def check_cfg(self):
         """ check Cfg files for required headers """
-        for entryset in self.core.plugins['Cfg'].entries.values():
-            for entry in entryset.entries.values():
-                if entry.name.endswith(".genshi"):
-                    rtype = "tgenshi"
-                else:
-                    rtype = "cfg"
-                self.check_plaintext(entry.name, entry.data, rtype)
+        if 'Cfg' in self.core.plugins:
+            for entryset in self.core.plugins['Cfg'].entries.values():
+                for entry in entryset.entries.values():
+                    if entry.name.endswith(".genshi"):
+                        rtype = "tgenshi"
+                    else:
+                        rtype = "cfg"
+                    self.check_plaintext(entry.name, entry.data, rtype)
 
     def check_infoxml(self):
         """ check info.xml files for required headers """
-        for entryset in self.core.plugins['Cfg'].entries.items():
-            if hasattr(entryset, "infoxml") and entryset.infoxml is not None:
-                self.check_xml(entryset.infoxml.name,
-                               entryset.infoxml.pnode.data,
-                               "infoxml")
+        if 'Cfg' in self.core.plugins:
+            for entryset in self.core.plugins['Cfg'].entries.items():
+                if (hasattr(entryset, "infoxml") and
+                    entryset.infoxml is not None):
+                    self.check_xml(entryset.infoxml.name,
+                                   entryset.infoxml.pnode.data,
+                                   "infoxml")
 
     def check_probes(self):
         """ check probes for required headers """
@@ -140,13 +143,13 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             unexpanded = [keyword for (keyword, status) in found.items()
                           if status is None]
             if unexpanded:
-                self.LintError("%s: Required keywords(s) found but not expanded: %s" %
-                               (filename, ", ".join(unexpanded)))
+                self.LintWarning("%s: Required keywords(s) found but not expanded: %s" %
+                                 (filename, ", ".join(unexpanded)))
             missing = [keyword for (keyword, status) in found.items()
                        if status is False]
             if missing:
-                self.LintError("%s: Required keywords(s) not found: %s" %
-                               (filename, ", ".join(missing)))
+                self.LintError("%s: Required keywords(s) not found: $%s$" %
+                               (filename, "$, $".join(missing)))
 
             # next, check for required comments.  found is just
             # boolean
