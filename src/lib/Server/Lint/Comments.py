@@ -143,8 +143,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             unexpanded = [keyword for (keyword, status) in found.items()
                           if status is None]
             if unexpanded:
-                self.LintError("%s: Required keywords(s) found but not expanded: %s" %
-                               (filename, ", ".join(unexpanded)))
+                self.LintWarning("%s: Required keywords(s) found but not expanded: %s" %
+                                 (filename, ", ".join(unexpanded)))
             missing = [keyword for (keyword, status) in found.items()
                        if status is False]
             if missing:
