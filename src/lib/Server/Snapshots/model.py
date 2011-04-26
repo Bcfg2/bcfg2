@@ -7,7 +7,7 @@ from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 
-def u_str(string)
+def u_str(string):
     if sys.hexversion >= 0x03000000:
         return string
     else:
