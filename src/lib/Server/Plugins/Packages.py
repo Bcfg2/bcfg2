@@ -851,7 +851,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             xdata = xdata.getroot()
         except (lxml.etree.XIncludeError, \
                 lxml.etree.XMLSyntaxError):
-                xmlerr = sys.exc_info()[1]
+            xmlerr = sys.exc_info()[1]
             self.logger.error("Package: Error processing xml: %s" % xmlerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         except IOError:

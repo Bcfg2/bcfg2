@@ -8,6 +8,7 @@ import os
 import pickle
 import posixpath
 import re
+import sys
 import threading
 
 from lxml.etree import XML, XMLSyntaxError
