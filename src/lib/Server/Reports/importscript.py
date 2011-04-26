@@ -133,12 +133,9 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
 
                     try:
                         rr = None
-                        if not quick:
-                            try:
-                                rr = Reason.objects.filter(**kargs)[0]
-                            except IndexError:
-                                pass
-                        if not rr:
+                        try:
+                            rr = Reason.objects.filter(**kargs)[0]
+                        except IndexError:
                             rr = Reason(**kargs)
                             rr.save()
                             if vlevel > 0:
