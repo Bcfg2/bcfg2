@@ -14,7 +14,8 @@ from sets import Set
 from django.template import Context, loader
 from django.db import connection
 import re
-import cStringIO
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import StringIO
 
 
 class Hostbase(Bcfg2.Server.Plugin.Plugin,
@@ -122,8 +123,8 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         hosts = {}
 
         for zone in zones:
-            zonefile = cStringIO.StringIO()
-            externalzonefile = cStringIO.StringIO()
+            zonefile = StringIO()
+            externalzonefile = StringIO()
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
             INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
@@ -160,20 +161,20 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
             prevhost = (None, None, None, None)
-            cnames = cStringIO.StringIO()
-            cnamesexternal = cStringIO.StringIO()
+            cnames = StringIO()
+            cnamesexternal = StringIO()
             for host in zonehosts:
                 if not host[2].split(".", 1)[1] == zone[1]:
                     zonefile.write(cnames.getvalue())
                     externalzonefile.write(cnamesexternal.getvalue())
-                    cnames = cStringIO.StringIO()
-                    cnamesexternal = cStringIO.StringIO()
+                    cnames = StringIO()
+                    cnamesexternal = StringIO()
                     continue
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
                     zonefile.write(cnames.getvalue())
                     externalzonefile.write(cnamesexternal.getvalue())
-                    cnames = cStringIO.StringIO()
-                    cnamesexternal = cStringIO.StringIO()
+                    cnames = StringIO()
+                    cnamesexternal = StringIO()
                     zonefile.write("%-32s%-10s%-32s\n" %
                                    (host[2].split(".", 1)[0], 'A', host[1]))
                     zonefile.write("%-32s%-10s%-3s%s.\n" %
@@ -259,8 +260,8 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr
             """ % filename[1])
             reversehosts = cursor.fetchall()
-            zonefile = cStringIO.StringIO()
-            externalzonefile = cStringIO.StringIO()
+            zonefile = StringIO()
+            externalzonefile = StringIO()
             if len(filename[0].split(".")) == 2:
                 originlist = []
                 [originlist.append((".".join([ip[1].split(".")[2], filename[0]]),
@@ -581,7 +582,7 @@ olivia.ctd.anl.gov\n\n"""
                 hostdata = row
 
         for netgroup in netgroups:
-            fileoutput = cStringIO.StringIO()
+            fileoutput = StringIO()
             fileoutput.write(header % (netgroup, netgroup, len(netgroups[netgroup])))
             for each in netgroups[netgroup]:
                 fileoutput.write(each + "\n")

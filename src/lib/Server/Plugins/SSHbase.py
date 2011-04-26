@@ -52,7 +52,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         try:
             Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data,
                                                          self.core.fam)
-        except OSError, ioerr:
+        except OSError:
+            ioerr = sys.exc_info()[1]
             self.logger.error("Failed to load SSHbase repository from %s" \
                               % (self.data))
             self.logger.error(ioerr)

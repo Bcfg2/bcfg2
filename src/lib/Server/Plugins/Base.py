@@ -1,9 +1,14 @@
 """This module sets up a base list of configuration entries."""
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugin
 import copy
 import lxml.etree
+import sys
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    from functools import reduce
+
+import Bcfg2.Server.Plugin
 
 
 class Base(Bcfg2.Server.Plugin.Plugin,

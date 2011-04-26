@@ -1,4 +1,3 @@
-import cPickle
 import copy
 import gzip
 import tarfile
@@ -8,7 +7,15 @@ import lxml.etree
 import os
 import re
 import sys
-import urllib2
+
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import cPickle
+from Bcfg2.Bcfg2Py3k import HTTPBasicAuthHandler
+from Bcfg2.Bcfg2Py3k import HTTPPasswordMgrWithDefaultRealm
+from Bcfg2.Bcfg2Py3k import HTTPError
+from Bcfg2.Bcfg2Py3k import install_opener
+from Bcfg2.Bcfg2Py3k import build_opener
+from Bcfg2.Bcfg2Py3k import urlopen
 
 # FIXME: Remove when server python dep is 2.5 or greater
 if sys.version_info >= (2, 5):
@@ -72,10 +79,10 @@ def _fetch_url(url):
         user = mobj.group(2)
         passwd = mobj.group(3)
         url = mobj.group(1) + mobj.group(4)
-        auth = urllib2.HTTPBasicAuthHandler(urllib2.HTTPPasswordMgrWithDefaultRealm())
+        auth = HTTPBasicAuthHandler(HTTPPasswordMgrWithDefaultRealm())
         auth.add_password(None, url, user, passwd)
-        urllib2.install_opener(urllib2.build_opener(auth))
-    return urllib2.urlopen(url).read()
+        install_opener(build_opener(auth))
+    return urlopen(url).read()
 
 
 class Source(object):
@@ -165,7 +172,8 @@ class Source(object):
             except ValueError:
                 logger.error("Packages: Bad url string %s" % url)
                 continue
-            except urllib2.HTTPError, h:
+            except HTTPError:
+                h = sys.exc_info()[1]
                 logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (url, h.code))
                 continue
@@ -256,7 +264,8 @@ class YUMSource(Source):
                 except ValueError:
                     logger.error("Packages: Bad url string %s" % rmdurl)
                     continue
-                except urllib2.HTTPError, h:
+                except HTTPError:
+                    h = sys.exc_info()[1]
                     logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (rmdurl, h.code))
                     continue
@@ -841,7 +850,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             xdata.xinclude()
             xdata = xdata.getroot()
         except (lxml.etree.XIncludeError, \
-                lxml.etree.XMLSyntaxError), xmlerr:
+                lxml.etree.XMLSyntaxError):
+                xmlerr = sys.exc_info()[1]
             self.logger.error("Package: Error processing xml: %s" % xmlerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         except IOError:

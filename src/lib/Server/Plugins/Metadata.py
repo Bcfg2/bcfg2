@@ -99,7 +99,8 @@ class XMLMetadataConfig(object):
         tmpfile = "%s.new" % fname
         try:
             datafile = open("%s" % tmpfile, 'w')
-        except IOError, e:
+        except IOError:
+            e = sys.exc_info()[1]
             self.logger.error("Failed to write %s: %s" % (tmpfile, e))
             raise MetadataRuntimeError
         # prep data

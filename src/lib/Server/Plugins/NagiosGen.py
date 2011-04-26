@@ -95,7 +95,8 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                         (self.data, metadata.hostname), 'w')
             fileh.write(host_config)
             fileh.close()
-        except OSError, ioerr:
+        except OSError:
+            ioerr = sys.exc_info()[1]
             LOGGER.error("Failed to write %s/%s-host.cfg" % \
                         (self.data, metadata.hostname))
             LOGGER.error(ioerr)
@@ -145,6 +146,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
             fileh = open("%s/nagiosgen.cfg" % (self.data), 'w')
             fileh.write(group_data + host_data)
             fileh.close()
-        except OSError, ioerr:
+        except OSError:
+            ioerr = sys.exc_info()[1]
             LOGGER.error("Failed to write %s/nagiosgen.cfg" % (self.data))
             LOGGER.error(ioerr)

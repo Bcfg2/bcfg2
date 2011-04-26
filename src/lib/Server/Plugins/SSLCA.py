@@ -5,7 +5,8 @@ import posixpath
 import tempfile
 import os
 from subprocess import Popen, PIPE, STDOUT
-from ConfigParser import ConfigParser
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):

@@ -63,16 +63,22 @@ class TemplateFile:
             try:
                 self.template = loader.load(self.name, cls=self.template_cls,
                                             encoding=self.encoding)
-            except LookupError, lerror:
+            except LookupError:
+                lerror = sys.exc_info()[1]
                 logger.error('Genshi lookup error: %s' % lerror)
-        except TemplateError, terror:
+        except TemplateError:
+            terror = sys.exc_info()[1]
             logger.error('Genshi template error: %s' % terror)
-        except genshi.input.ParseError, perror:
+        except genshi.input.ParseError:
+            perror = sys.exc_info()[1]
             logger.error('Genshi parse error: %s' % perror)
 
     def bind_entry(self, entry, metadata):
         """Build literal file information."""
         fname = entry.get('realname', entry.get('name'))
+        # py3k compatibility
+        if sys.hexversion >= 0x03000000:
+            unicode = str
         if entry.tag == 'Path':
             entry.set('type', 'file')
         try:
@@ -107,10 +113,12 @@ class TemplateFile:
                     entry.text = unicode(xmldata, self.encoding)
             if entry.text == '':
                 entry.set('empty', 'true')
-        except TemplateError, terror:
+        except TemplateError:
+            terror = sys.exc_info()[1]
             logger.error('Genshi template error: %s' % terror)
             raise Bcfg2.Server.Plugin.PluginExecutionError
-        except AttributeError, err:
+        except AttributeError:
+            err = sys.exc_info()[1]
             logger.error('Genshi template loading error: %s' % err)
             raise Bcfg2.Server.Plugin.PluginExecutionError
 

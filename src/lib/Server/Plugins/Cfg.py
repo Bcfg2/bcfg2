@@ -6,6 +6,7 @@ import logging
 import lxml
 import os
 import re
+import sys
 import tempfile
 
 import Bcfg2.Server.Plugin
@@ -19,6 +20,13 @@ except:
     have_genshi = False
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+
+
+def u_str(string, encoding):
+    if sys.hexversion >= 0x03000000:
+        return str(string, encoding)
+    else:
+        return unicode(string, encoding)
 
 
 # snipped from TGenshi
@@ -131,7 +139,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     data = stream.render('text')
                 if data == '':
                     entry.set('empty', 'true')
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 logger.error("Cfg: genshi exception: %s" % e)
                 raise Bcfg2.Server.Plugin.PluginExecutionError
         else:
@@ -145,8 +154,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.text = binascii.b2a_base64(data)
         else:
             try:
-                entry.text = unicode(data, self.encoding)
-            except UnicodeDecodeError, e:
+                entry.text = u_str(data, self.encoding)
+            except UnicodeDecodeError:
+                e = sys.exc_info()[1]
                 logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
                 logger.error("Please verify you are using the proper encoding.")
                 raise Bcfg2.Server.Plugin.PluginExecutionError

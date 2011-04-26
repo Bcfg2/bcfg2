@@ -8,12 +8,18 @@ import os
 import pickle
 import posixpath
 import re
-import Queue
 import threading
 
 from lxml.etree import XML, XMLSyntaxError
 
 import Bcfg2.Options
+
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    from functools import reduce
+from Bcfg2.Bcfg2Py3k import Queue
+from Bcfg2.Bcfg2Py3k import Empty
+from Bcfg2.Bcfg2Py3k import Full
 
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,
@@ -169,7 +175,7 @@ class ThreadedStatistics(Statistics,
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
-        self.work_queue = Queue.Queue(100000)
+        self.work_queue = Queue(100000)
         self.pending_file = "%s/etc/%s.pending" % (datastore, self.__class__.__name__)
         self.daemon = True
         self.start()
@@ -184,7 +190,7 @@ class ThreadedStatistics(Statistics,
                     pending_data.append((metadata.hostname, lxml.etree.tostring(data)))
                 except:
                     self.logger.warning("Dropping interaction for %s" % metadata.hostname)
-        except Queue.Empty:
+        except Empty:
             pass
 
         try:
@@ -204,7 +210,8 @@ class ThreadedStatistics(Statistics,
             savefile = open(self.pending_file, 'r')
             pending_data = pickle.load(savefile)
             savefile.close()
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             self.logger.warning("Failed to load pending data: %s" % e)
         for (pmetadata, pdata) in pending_data:
             # check that shutdown wasnt called early
@@ -224,10 +231,11 @@ class ThreadedStatistics(Statistics,
                         return False
 
                 self.work_queue.put_nowait((metadata, lxml.etree.fromstring(pdata)))
-            except Queue.Full:
+            except Full:
                 self.logger.warning("Queue.Full: Failed to load queue data")
                 break
-            except lxml.etree.LxmlError, lxml_error:
+            except lxml.etree.LxmlError:
+                lxml_error = sys.exc_info()[1]
                 self.logger.error("Unable to load save interaction: %s" % lxml_error)
             except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
                 self.logger.error("Unable to load metadata for save interaction: %s" % pmetadata)
@@ -244,9 +252,10 @@ class ThreadedStatistics(Statistics,
         while not self.terminate.isSet():
             try:
                 (xdata, client) = self.work_queue.get(block=True, timeout=2)
-            except Queue.Empty:
+            except Empty:
                 continue
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 self.logger.error("ThreadedStatistics: %s" % e)
                 continue
             self.handle_statistic(xdata, client)
@@ -258,7 +267,7 @@ class ThreadedStatistics(Statistics,
         try:
             self.work_queue.put_nowait((metadata, copy.deepcopy(data)))
             warned = False
-        except Queue.Full:
+        except Full:
             if not warned:
                 self.logger.warning("%s: Queue is full.  Dropping interactions." % self.__class__.__name__)
             warned = True

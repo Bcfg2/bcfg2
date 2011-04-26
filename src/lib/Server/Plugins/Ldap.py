@@ -81,7 +81,8 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
                     self.debug_log("LdapPlugin debug: query '" + query.name +
                         "' not applicable to host '" + metadata.hostname + "'")
             return data
-        except Exception, error_msg:
+        except Exception:
+            error_msg = sys.exc_info()[1]
             if self.debug_flag:
                 raise
             else:

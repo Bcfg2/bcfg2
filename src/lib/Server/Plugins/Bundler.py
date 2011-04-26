@@ -80,7 +80,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             elif len(entries) == 1:
                 try:
                     bundleset.append(entries[0].get_xml_value(metadata))
-                except genshi.template.base.TemplateError, t:
+                except genshi.template.base.TemplateError:
+                    t = sys.exc_info()[1]
                     self.logger.error("Bundler: Failed to template genshi bundle %s" \
                                       % (bundlename))
                     self.logger.error(t)

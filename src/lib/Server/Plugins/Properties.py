@@ -63,9 +63,10 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:
             self.store = PropDirectoryBacked(self.data, core.fam)
-        except OSError, e:
+        except OSError:
+            e = sys.exc_info()[1]
             Bcfg2.Server.Plugin.logger.error("Error while creating Properties "
-                                             "store: %s %s" % (e.strerror,e.filename))
+                                             "store: %s %s" % (e.strerror, e.filename))
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def get_additional_data(self, _):
