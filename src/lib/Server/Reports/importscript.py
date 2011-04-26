@@ -10,7 +10,8 @@ import os
 import sys
 try:
     import Bcfg2.Server.Reports.settings
-except Exception, e:
+except Exception:
+    e = sys.exc_info()[1]
     sys.stderr.write("Failed to load configuration settings. %s\n" % e)
     sys.exit(1)
 
@@ -29,10 +30,12 @@ from datetime import datetime
 from time import strptime
 from django.db import connection
 from Bcfg2.Server.Reports.updatefix import update_database
-import ConfigParser
 import logging
 import Bcfg2.Logger
 import platform
+
+# Compatibility imports
+from py3kcompat import ConfigParser
 
 
 def build_reason_kwargs(r_ent):
@@ -140,7 +143,8 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
                             rr.save()
                             if vlevel > 0:
                                 logger.info("Created reason: %s" % rr.id)
-                    except Exception, ex:
+                    except Exception:
+                        ex = sys.exc_info()[1]
                         logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
                         rr = Reason(current_exists=x.get('current_exists',
                                                          default="True").capitalize() == "True")
@@ -213,7 +217,8 @@ if __name__ == '__main__':
                                                      "stats=",
                                                      "config=",
                                                      "syslog"])
-    except GetoptError, mesg:
+    except GetoptError:
+        mesg = sys.exc_info()[1]
         # print help information and exit:
         print("%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-S] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg))
         raise SystemExit(2)

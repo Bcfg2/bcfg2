@@ -74,7 +74,8 @@ def _populate_interaction_entry_counts():
             updates.append(row)
         try:
             cursor.executemany("update reports_interaction set " + count_field[type] + "=%s where id = %s", updates)
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             print(e)
     cursor.close()
 

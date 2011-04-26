@@ -20,13 +20,15 @@ class NISBackend(object):
 
             return user
 
-        except NISAUTHError, e:
-            print(str(e))
+        except NISAUTHError:
+            e = sys.exc_info()[1]
+            print(e)
             return None
 
     def get_user(self, user_id):
         try:
             return User.objects.get(pk=user_id)
-        except User.DoesNotExist, e:
-            print(str(e))
+        except User.DoesNotExist:
+            e = sys.exc_info()[1]
+            print(e)
             return None

@@ -368,7 +368,8 @@ def render_history_view(request, template='clients/history.html', **kwargs):
                                                         iquery,
                                                         page,
                                                         max_results)
-        except PaginationError, page_error:
+        except PaginationError:
+            page_error = sys.exc_info()[1]
             if isinstance(page_error[0], HttpResponse):
                 return page_error[0]
             return HttpResponseServerError(page_error)
