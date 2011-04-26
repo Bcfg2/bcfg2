@@ -39,6 +39,6 @@ yummain.cli.output.YumOutput.simpleList = mySimpleList
 try:
     sys.argv = [sys.argv[0], '-d', '0', 'list']
     yummain.main(sys.argv[1:])
-except KeyboardInterrupt, e:
-    print >> sys.stderr, "\n\nExiting on user cancel."
+except KeyboardInterrupt:
+    print("\n\nExiting on user cancel.", file=sys.stderr)
     sys.exit(1)

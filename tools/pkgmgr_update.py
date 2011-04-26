@@ -20,8 +20,9 @@ import optparse
 import os
 import rpm
 import sys
-import urlparse
-import urllib
+
+# Compatibility imports
+from py3kcompat import urljoin
 
 try:
     from lxml.etree import parse, tostring
@@ -197,7 +198,7 @@ def loadRepos(repolist):
     """
     packages = {}
     for repo in repolist:
-        url = urlparse.urljoin(repo, './repodata/repomd.xml')
+        url = urljoin(repo, './repodata/repomd.xml')
 
         try:
             opener = pkgmgr_URLopener()
@@ -218,7 +219,7 @@ def loadRepos(repolist):
                     if property.tag.endswith('location'):
                         primaryhref = property.attrib['href']
 
-        url = urlparse.urljoin(repo, './' + primaryhref)
+        url = urljoin(repo, './' + primaryhref)
 
         if options.verbose:
             print("Loading : %s" % url)

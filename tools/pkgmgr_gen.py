@@ -19,11 +19,12 @@ import optparse
 import os
 import rpm
 import sys
-import urllib
-import urlparse
 from lxml.etree import parse
 import xml.sax
 from xml.sax.handler import ContentHandler
+
+# Compatibility imports
+from py3kcompat import urljoin
 
 
 def info(object, spacing=10, collapse=1):
@@ -256,7 +257,7 @@ def loadRepos(repolist):
     '''
     packages = {}
     for repo in repolist:
-        url = urlparse.urljoin(repo, './repodata/repomd.xml')
+        url = urljoin(repo, './repodata/repomd.xml')
 
         if options.verbose:
             print("Loading repo metadata : %s" % url)
@@ -280,7 +281,7 @@ def loadRepos(repolist):
                     if property.tag.endswith('location'):
                         primaryhref = property.get('href')
 
-        url = urlparse.urljoin(repo, './' + primaryhref)
+        url = urljoin(repo, './' + primaryhref)
 
         if options.verbose:
             print("Loading : %s" % url)

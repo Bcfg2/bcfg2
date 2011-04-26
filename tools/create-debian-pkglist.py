@@ -6,13 +6,15 @@ __revision__ = '$Id$'
 # Original code from Bcfg2 sources
 
 import apt_pkg
-import ConfigParser
-import cStringIO
 import gzip
 import os
 import re
-import urllib
 import sys
+
+# Compatibility imports
+from py3kcompat import StringIO
+from py3kcompat import ConfigParser
+from py3kcompat import urlopen
 
 apt_pkg.init()
 
@@ -143,8 +145,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                                                                 arch)
                 debug("Processing url %s\n" % (url))
                 try:
-                    data = urllib.urlopen(url)
-                    buf = cStringIO.StringIO(''.join(data.readlines()))
+                    data = urlopen(url)
+                    buf = StringIO(''.join(data.readlines()))
                     reader = gzip.GzipFile(fileobj=buf)
                     for line in reader.readlines():
                         if line[:8] == 'Package:':

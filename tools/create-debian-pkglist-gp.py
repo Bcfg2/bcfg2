@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 '''Build debian/ubuntu package indexes'''
-__revision__ = '$Id: create-debian-pkglist.py 11778 2007-12-11 13:46:06Z guillaume $'
 
 # Original code from Bcfg2 sources
 
 import gzip
 import os
-import urllib
-import cStringIO
 import sys
-import ConfigParser
 import subprocess
 
+# Compatibility imports
+from py3kcompat import StringIO
+from py3kcompat import ConfigParser
+from py3kcompat import urlopen
 
 def debug(msg):
     '''print debug messages'''
@@ -110,8 +110,8 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
                 url = "%s/dists/%s/%s/binary-%s/Packages.gz" % (source_url.url, source_url.distribution, section, arch)
                 debug("Processing url %s\n" % (url))
                 try:
-                    data = urllib.urlopen(url)
-                    buf = cStringIO.StringIO(''.join(data.readlines()))
+                    data = urlopen(url)
+                    buf = StringIO(''.join(data.readlines()))
                     reader = gzip.GzipFile(fileobj=buf)
                     for line in reader.readlines():
                         if line[:8] == 'Package:':

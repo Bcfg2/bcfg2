@@ -4,10 +4,12 @@
 First attempt to make our export script more portable than export.sh
 """
 
-from email.Utils import formatdate
 import fileinput
 from subprocess import Popen, PIPE
 import sys
+
+# Compatibility import
+from py3kcompat import formatdate
 
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
