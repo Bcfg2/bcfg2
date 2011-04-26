@@ -1,9 +1,17 @@
+import sys
 from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, \
                        DateTime, UnicodeText, desc
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
+
+
+def u_str(string)
+    if sys.hexversion >= 0x03000000:
+        return string
+    else:
+        return unicode(string)
 
 
 class Uniquer(object):
@@ -103,10 +111,10 @@ class Metadata(Base):
 
     @classmethod
     def from_metadata(cls, mysession, mymetadata):
-        client = Client.by_value(mysession, name=unicode(mymetadata.hostname))
+        client = Client.by_value(mysession, name=u_str(mymetadata.hostname))
         m = cls(client=client)
         for group in mymetadata.groups:
-            m.groups.append(Group.by_value(mysession, name=unicode(group)))
+            m.groups.append(Group.by_value(mysession, name=u_str(group)))
         for connector in mymetadata.connectors:
             data = getattr(mymetadata, connector)
             if not isinstance(data, dict):
@@ -115,9 +123,9 @@ class Metadata(Base):
                 if not isinstance(value, str):
                     continue
                 m.keyvals.append(ConnectorKeyVal.by_value(mysession,
-                                                          connector=unicode(connector),
-                                                          key=unicode(key),
-                                                          value=unicode(value)))
+                                                          connector=u_str(connector),
+                                                          key=u_str(key),
+                                                          value=u_str(value)))
         return m
 
 

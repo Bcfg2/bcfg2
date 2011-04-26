@@ -1,7 +1,8 @@
 import django
 
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
-from py3kcompat import ConfigParser
 c = ConfigParser()
 c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
 

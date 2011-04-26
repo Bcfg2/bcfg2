@@ -24,7 +24,7 @@ import xml.sax
 from xml.sax.handler import ContentHandler
 
 # Compatibility imports
-from py3kcompat import urljoin
+from Bcfg2.Bcfg2Py3k import urljoin
 
 
 def info(object, spacing=10, collapse=1):

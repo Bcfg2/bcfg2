@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 import sys
 
 # Compatibility import
-from py3kcompat import formatdate
+from Bcfg2.Bcfg2Py3k import formatdate
 
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
