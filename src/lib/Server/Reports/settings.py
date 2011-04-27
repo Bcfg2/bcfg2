@@ -3,7 +3,7 @@ import django
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
-c = ConfigParser()
+c = ConfigParser.ConfigParser()
 c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
 
 try:
