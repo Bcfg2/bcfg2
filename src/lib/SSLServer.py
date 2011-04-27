@@ -8,10 +8,7 @@ __all__ = [
 
 import os
 import sys
-import xmlrpclib
 import socket
-import SocketServer
-import SimpleXMLRPCServer
 import base64
 import select
 import signal
@@ -19,6 +16,8 @@ import logging
 import ssl
 import threading
 import time
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import xmlrpclib, SimpleXMLRPCServer, SocketServer
 
 
 class ForkedChild(Exception):
@@ -51,7 +50,8 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
-        except xmlrpclib.Fault, fault:
+        except xmlrpclib.Fault:
+            fault = sys.exc_info()[1]
             raw_response = xmlrpclib.dumps(fault,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
@@ -258,7 +258,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                         # If we hit SSL3_WRITE_PENDING here try to resend.
                         self.wfile.write(response)
                         break
-                    except ssl.SSLError, e:
+                    except ssl.SSLError:
+                        e = sys.exc_info()[1]
                         if str(e).find("SSL3_WRITE_PENDING") < 0:
                             raise
                         self.logger.error("SSL3_WRITE_PENDING")

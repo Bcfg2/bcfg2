@@ -1,11 +1,12 @@
 """Option parsing library for utilities."""
 __revision__ = '$Revision$'
 
-import ConfigParser
 import getopt
 import os
 import sys
 import Bcfg2.Client.Tools
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 def bool_cook(x):
     if x:
@@ -146,7 +147,8 @@ class OptionSet(dict):
             try:
                 opts, args = getopt.getopt(argv, self.buildGetopt(),
                                            self.buildLongGetopt())
-            except getopt.GetoptError, err:
+            except getopt.GetoptError:
+                err = sys.exc_info()[1]
                 self.helpExit(err)
             if '-h' in argv:
                 self.helpExit('', 0)

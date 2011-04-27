@@ -10,6 +10,8 @@ import socket
 import struct
 import sys
 import termios
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import fprint
 
 logging.raiseExceptions = 0
 
@@ -229,7 +231,7 @@ def trace_process(**kwargs):
                 filename = filename[:-1]
             name = frame.f_globals["__name__"]
             line = linecache.getline(filename, lineno)
-            print >> log_file, "%s:%s: %s" % (name, lineno, line.rstrip())
+            fprint("%s:%s: %s" % (name, lineno, line.rstrip()), log_file)
         return traceit
 
     sys.settrace(traceit)

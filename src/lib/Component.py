@@ -11,12 +11,12 @@ import pydoc
 import sys
 import time
 import threading
-import urlparse
-import xmlrpclib
 
 import Bcfg2.Logger
 from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse, fprint
 
 logger = logging.getLogger()
 
@@ -56,11 +56,11 @@ def run_component(component_cls, location, daemon, pidfile_name, to_file,
         os.chdir(os.sep)
 
         pidfile = open(pidfile_name or "/dev/null", "w")
-        print >> pidfile, os.getpid()
+        fprint(os.getpid(), pidfile)
         pidfile.close()
 
     component = component_cls(cfile=cfile, **cls_kwargs)
-    up = urlparse.urlparse(location)
+    up = urlparse(location)
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))
     try:
@@ -209,7 +209,8 @@ class Component (object):
             except NoExposedMethod:
                 self.logger.error("Unknown method %s" % (method))
                 raise xmlrpclib.Fault(7, "Unknown method %s" % method)
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 if getattr(e, "log", True):
                     self.logger.error(e, exc_info=True)
                 raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
@@ -233,7 +234,8 @@ class Component (object):
                 self.instance_statistics.add_value(method, method_done - method_start)
         except xmlrpclib.Fault:
             raise
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
