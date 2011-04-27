@@ -3,18 +3,20 @@
 """Bcfg2 Client"""
 __revision__ = '$Revision$'
 
+import fcntl
 import logging
 import os
 import signal
+import stat
 import sys
 import tempfile
 import time
-import xmlrpclib
-import fcntl
 import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import xmlrpclib
 
 import Bcfg2.Proxy
 import Bcfg2.Logger
@@ -135,7 +137,9 @@ class Client:
                 script.write(probe.text)
                 script.close()
                 os.close(scripthandle)
-                os.chmod(script.name, 0755)
+                os.chmod(script.name, stat.S_IRUSR | stat.IRGRP | stat.IROTH |
+                                      stat.S_IXUSR | stat.IXGRP | stat.IXOTH |
+                                      stat.S_IWUSR)  # 0755
                 ret.text = os.popen(script.name).read().strip()
                 self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
             finally:
@@ -188,7 +192,8 @@ class Client:
 
             try:
                 probe_data = proxy.GetProbes()
-            except xmlrpclib.Fault, flt:
+            except xmlrpclib.Fault:
+                flt = sys.exc_info()[1]
                 self.logger.error("Failed to download probes from bcfg2")
                 self.logger.error(flt.faultString)
                 raise SystemExit(1)
@@ -197,7 +202,8 @@ class Client:
 
             try:
                 probes = Bcfg2.Client.XML.XML(probe_data)
-            except Bcfg2.Client.XML.ParseError, syntax_error:
+            except Bcfg2.Client.XML.ParseError:
+                syntax_error = sys.exc_info()[1]
                 self.fatal_error(
                     "Server returned invalid probe requests: %s" %
                     (syntax_error))
@@ -228,7 +234,8 @@ class Client:
                         self.setup['decision'])
                     self.logger.info("Got decision list from server:")
                     self.logger.info(self.setup['decision_list'])
-                except xmlrpclib.Fault, f:
+                except xmlrpclib.Fault:
+                    f = sys.exc_info()[1]
                     if f.faultCode == 1:
                         print("GetDecisionList method not supported by server")
                     else:
@@ -254,7 +261,8 @@ class Client:
 
         try:
             self.config = Bcfg2.Client.XML.XML(rawconfig)
-        except Bcfg2.Client.XML.ParseError, syntax_error:
+        except Bcfg2.Client.XML.ParseError:
+            syntax_error = sys.exc_info()[1]
             self.fatal_error("The configuration could not be parsed: %s" %
                              (syntax_error))
             return(1)
