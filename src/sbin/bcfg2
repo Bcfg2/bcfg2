@@ -137,8 +137,8 @@ class Client:
                 script.write(probe.text)
                 script.close()
                 os.close(scripthandle)
-                os.chmod(script.name, stat.S_IRUSR | stat.IRGRP | stat.IROTH |
-                                      stat.S_IXUSR | stat.IXGRP | stat.IXOTH |
+                os.chmod(script.name, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+                                      stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
                                       stat.S_IWUSR)  # 0755
                 ret.text = os.popen(script.name).read().strip()
                 self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
