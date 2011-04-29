@@ -4,9 +4,9 @@ import warnings
 warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
                         DeprecationWarning)
 import os
-import popen2
 import stat
 import sys
+from subprocess import Popen, PIPE
 import time
 
 import Bcfg2.Client.XML
@@ -25,26 +25,6 @@ class toolInstantiationError(Exception):
     pass
 
 
-class readonlypipe(popen2.Popen4):
-    """This pipe sets up stdin --> /dev/null."""
-
-    def __init__(self, cmd, bufsize=-1):
-        popen2._cleanup()
-        c2pread, c2pwrite = os.pipe()
-        null = open('/dev/null', 'w+')
-        self.pid = os.fork()
-        if self.pid == 0:
-            # Child
-            os.dup2(null.fileno(), sys.__stdin__.fileno())
-            #os.dup2(p2cread, 0)
-            os.dup2(c2pwrite, 1)
-            os.dup2(c2pwrite, 2)
-            self._run_child(cmd)
-        os.close(c2pwrite)
-        self.fromchild = os.fdopen(c2pread, 'r', bufsize)
-        popen2._active.append(self)
-
-
 class executor:
     """This class runs stuff for us"""
 
@@ -53,30 +33,12 @@ class executor:
 
     def run(self, command):
         """Run a command in a pipe dealing with stdout buffer overloads."""
-        self.logger.debug('> %s' % command)
-
-        runpipe = readonlypipe(command, bufsize=16384)
-        output = []
-        try:  # macosx doesn't like this
-            runpipe.fromchild.flush()
-        except IOError:
-            pass
-        line = runpipe.fromchild.readline()
-        cmdstat = -1
-        while cmdstat == -1:
-            while line:
-                if len(line) > 0:
-                    self.logger.debug('< %s' % line[:-1])
-                    output.append(line[:-1])
-                line = runpipe.fromchild.readline()
-            time.sleep(0.1)
-            cmdstat = runpipe.poll()
-        output += [line[:-1] for line in runpipe.fromchild.readlines() \
-                   if line]
-        # The exit code from the program is in the upper byte of the
-        # value returned by cmdstat. Shift it down for tools looking at
-        # the value.
-        return ((cmdstat >> 8), output)
+        p = Popen(command, shell=True, bufsize=16384,
+                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        output = p.communicate()[0]
+        for line in output.splitlines():
+            self.logger.debug('< %s' % line)
+        return (p.returncode, output.splitlines())
 
 
 class Tool:
