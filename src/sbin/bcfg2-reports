@@ -227,7 +227,7 @@ else:
                 for c_inst in c_list:
                     baditems = c_inst.current_interaction.bad()
                     for item in baditems:
-                        if item.name == badentry[1] and item.kind == badentry[0]:
+                        if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
                             result.append(c_inst)
                             if c_inst in entrydict:
                                 entrydict.get(c_inst).append(badentry[1])
@@ -238,7 +238,7 @@ else:
             for c_inst in c_list:
                 baditems = c_inst.current_interaction.bad()
                 for item in baditems:
-                    if item.name == badentry[1] and item.kind == badentry[0]:
+                    if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
                         result.append(c_inst)
                         break
     elif extraentry != "":
@@ -249,7 +249,7 @@ else:
                 for c_inst in c_list:
                     extraitems = c_inst.current_interaction.extra()
                     for item in extraitems:
-                        if item.name == extraentry[1] and item.kind == extraentry[0]:
+                        if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
                             result.append(c_inst)
                             if c_inst in entrydict:
                                 entrydict.get(c_inst).append(extraentry[1])
@@ -260,7 +260,7 @@ else:
             for c_inst in c_list:
                 extraitems = c_inst.current_interaction.extra()
                 for item in extraitems:
-                    if item.name == extraentry[1] and item.kind == extraentry[0]:
+                    if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
                         result.append(c_inst)
                         break
 
