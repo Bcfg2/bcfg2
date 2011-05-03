@@ -118,7 +118,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
     def emit(self, record):
         """Chunk and deliver records."""
         record.name = self.procname
-        if str(record.msg) > 250:
+        if len(record.msg) > 250:
             msgs = []
             error = record.exc_info
             record.exc_info = None
@@ -136,7 +136,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                                                                 newrec.levelname.lower()),
                                             self.format(newrec))
             try:
-                self.socket.send(msg)
+                self.socket.send(msg.encode('ascii'))
             except socket.error:
                 for i in range(10):
                     try:

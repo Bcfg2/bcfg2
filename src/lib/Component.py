@@ -153,30 +153,31 @@ class Component (object):
         automatic == True.
 
         """
-        for name, func in inspect.getmembers(self, callable):
-            if getattr(func, "automatic", False):
-                need_to_lock = not getattr(func, 'locking', False)
-                if (time.time() - func.automatic_ts) > \
-                   func.automatic_period:
-                    if need_to_lock:
-                        t1 = time.time()
-                        self.lock.acquire()
-                        t2 = time.time()
-                        self.instance_statistics.add_value('component_lock', t2-t1)
-                    try:
-                        mt1 = time.time()
+        for name, func in inspect.getmembers(self):
+            if name == '__call__':
+                if getattr(func, "automatic", False):
+                    need_to_lock = not getattr(func, 'locking', False)
+                    if (time.time() - func.automatic_ts) > \
+                       func.automatic_period:
+                        if need_to_lock:
+                            t1 = time.time()
+                            self.lock.acquire()
+                            t2 = time.time()
+                            self.instance_statistics.add_value('component_lock', t2-t1)
                         try:
-                            func()
-                        except:
-                            self.logger.error("Automatic method %s failed" \
-                                              % (name), exc_info=1)
-                    finally:
-                        mt2 = time.time()
+                            mt1 = time.time()
+                            try:
+                                func()
+                            except:
+                                self.logger.error("Automatic method %s failed" \
+                                                  % (name), exc_info=1)
+                        finally:
+                            mt2 = time.time()
 
-                    if need_to_lock:
-                        self.lock.release()
-                    self.instance_statistics.add_value(name, mt2-mt1)
-                    func.__dict__['automatic_ts'] = time.time()
+                        if need_to_lock:
+                            self.lock.release()
+                        self.instance_statistics.add_value(name, mt2-mt1)
+                        func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method(self, method_name):
         """Resolve an exposed method.
