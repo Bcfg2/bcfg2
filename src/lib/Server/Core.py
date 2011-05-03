@@ -5,14 +5,18 @@ import atexit
 import logging
 import lxml.etree
 import select
+import sys
 import threading
 import time
-import xmlrpclib
 
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugins.Metadata
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import xmlrpclib
+if sys.hexversion >= 0x03000000:
+    from functools import reduce
 
 logger = logging.getLogger('Bcfg2.Server.Core')
 
@@ -142,7 +146,7 @@ class Core(Component):
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                 (plugin)).Server.Plugins, plugin)
-        except ImportError, e:
+        except ImportError:
             try:
                 mod = __import__(plugin)
             except:
@@ -177,7 +181,8 @@ class Core(Component):
                         plugin.validate_structures(metadata, data)
                     elif base_cls == Bcfg2.Server.Plugin.GoalValidator:
                         plugin.validate_goals(metadata, data)
-                except Bcfg2.Server.Plugin.ValidationError, err:
+                except Bcfg2.Server.Plugin.ValidationError:
+                    err = sys.exc_info()[1]
                     logger.error("Plugin %s structure validation failed: %s" \
                                  % (plugin.name, err.message))
                     raise

@@ -26,7 +26,8 @@ class Query(Bcfg2.Server.Admin.Mode):
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 ['Metadata', 'Probes'],
                                                 'foo', False, 'UTF-8')
-        except Bcfg2.Server.Core.CoreInitError, msg:
+        except Bcfg2.Server.Core.CoreInitError:
+            msg = sys.exc_info()[1]
             self.errExit("Core load failed because %s" % msg)
         self.bcore.fam.handle_events_in_interval(1)
         self.meta = self.bcore.metadata

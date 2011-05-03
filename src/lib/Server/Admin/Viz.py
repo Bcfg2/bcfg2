@@ -45,7 +45,8 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             opts, args = getopt.getopt(args, 'Hbko:',
                                        ['includehosts', 'includebundles',
                                         'includekey', 'outfile='])
-        except getopt.GetoptError, msg:
+        except getopt.GetoptError:
+            msg = sys.exc_info()[1]
             print(msg)
 
         #FIXME: is this for --raw?

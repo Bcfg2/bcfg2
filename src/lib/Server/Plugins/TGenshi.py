@@ -98,7 +98,7 @@ class TemplateFile:
                     entry.text = textdata
                 else:
                     if entry.get('encoding') == 'base64':
-			# take care of case where file needs base64 encoding
+                        # take care of case where file needs base64 encoding
                         entry.text = binascii.b2a_base64(textdata)
                     else:
                         entry.text = unicode(textdata, self.encoding)

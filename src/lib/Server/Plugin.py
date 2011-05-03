@@ -18,6 +18,9 @@ import Bcfg2.Options
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
     from functools import reduce
+    from io import FileIO as BUILTIN_FILE_TYPE
+else:
+    BUILTIN_FILE_TYPE = file
 from Bcfg2.Bcfg2Py3k import Queue
 from Bcfg2.Bcfg2Py3k import Empty
 from Bcfg2.Bcfg2Py3k import Full
@@ -346,7 +349,7 @@ class FileBacked(object):
         if event and event.code2str() not in ['exists', 'changed', 'created']:
             return
         try:
-            self.data = file(self.name).read()
+            self.data = BUILTIN_FILE_TYPE(self.name).read()
             self.Index()
         except IOError:
             logger.error("Failed to read file %s" % (self.name))
@@ -577,7 +580,7 @@ class XMLSrc(XMLFileBacked):
     def HandleEvent(self, _=None):
         """Read file upon update."""
         try:
-            data = file(self.name).read()
+            data = BUILTIN_FILE_TYPE(self.name).read()
         except IOError:
             logger.error("Failed to read file %s" % (self.name))
             return

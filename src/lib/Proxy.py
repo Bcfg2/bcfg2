@@ -11,9 +11,6 @@ load_config -- read configuration files
 __revision__ = '$Revision: $'
 
 
-from xmlrpclib import _Method
-
-import httplib
 import logging
 import re
 import socket
@@ -25,7 +22,7 @@ import socket
 try:
     import ssl
     SSL_LIB = 'py26_ssl'
-except ImportError, e:
+except ImportError:
     from M2Crypto import SSL
     import M2Crypto.SSL.Checker
     SSL_LIB = 'm2crypto'
@@ -33,8 +30,9 @@ except ImportError, e:
 
 import sys
 import time
-import urlparse
-import xmlrpclib
+
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import httplib, xmlrpclib, urlparse
 
 version = sys.version_info[:2]
 has_py23 = version >= (2, 3)
@@ -51,7 +49,7 @@ class CertificateError(Exception):
         self.commonName = commonName
 
 
-class RetryMethod(_Method):
+class RetryMethod(xmlrpclib._Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
     max_retries = 4
@@ -59,21 +57,24 @@ class RetryMethod(_Method):
     def __call__(self, *args):
         for retry in range(self.max_retries):
             try:
-                return _Method.__call__(self, *args)
-            except xmlrpclib.ProtocolError, err:
+                return xmlrpclib._Method.__call__(self, *args)
+            except xmlrpclib.ProtocolError:
+                err = sys.exc_info()[1]
                 self.log.error("Server failure: Protocol Error: %s %s" % \
                               (err.errcode, err.errmsg))
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault:
                 raise
-            except socket.error, err:
+            except socket.error:
+                err = sys.exc_info()[1]
                 if hasattr(err, 'errno') and err.errno == 336265218:
                     self.log.error("SSL Key error")
                     break
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)
-            except CertificateError, ce:
+            except CertificateError:
+                ce = sys.exc_info()[1]
                 self.log.error("Got unallowed commonName %s from server" \
                                % ce.commonName)
                 break
@@ -87,7 +88,7 @@ class RetryMethod(_Method):
         raise xmlrpclib.Fault(20, "Server Failure")
 
 # sorry jon
-xmlrpclib._Method = RetryMethod
+_Method = RetryMethod
 
 
 class SSLHTTPConnection(httplib.HTTPConnection):
@@ -242,7 +243,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         try:
             self.sock.connect((hostname, self.port))
             # automatically checks cert matches host
-        except M2Crypto.SSL.Checker.WrongHost, wr:
+        except M2Crypto.SSL.Checker.WrongHost:
+            wr = sys.exc_info()[1]
             raise CertificateError(wr)
 
 
@@ -325,7 +327,7 @@ def ComponentProxy(url, user=None, password=None,
     """
 
     if user and password:
-        method, path = urlparse.urlparse(url)[:2]
+        method, path = urlparse(url)[:2]
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url

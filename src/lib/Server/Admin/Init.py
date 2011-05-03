@@ -138,7 +138,7 @@ def create_key(hostname, keypath, certpath, country, state, location):
                                                                      keypath,
                                                                      certpath))
     subprocess.call((ccstr), shell=True)
-    os.chmod(keypath, stat.S_IRUSR|stat.S_IWUSR)  # 0600
+    os.chmod(keypath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
 
 def create_conf(confpath, confdata):
@@ -156,8 +156,9 @@ def create_conf(confpath, confdata):
             return
     try:
         open(confpath, "w").write(confdata)
-        os.chmod(keypath, stat.S_IRUSR|stat.S_IWUSR)  # 0600
-    except Exception, e:
+        os.chmod(keypath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+    except Exception:
+        e = sys.exc_info()[1]
         print("Error %s occured while trying to write configuration "
               "file to '%s'.\n" %
                (e, confpath))
@@ -381,7 +382,8 @@ class Init(Bcfg2.Server.Admin.Mode):
                                         '', ["Bcfg2.Server.Plugins"])
                     cls = getattr(module, plugin)
                     cls.init_repo(self.repopath)
-                except Exception, e:
+                except Exception:
+                    e = sys.exc_info()[1]
                     print("Plugin setup for %s failed: %s\n"
                           "Check that dependencies are installed?" % (plugin, e))
 

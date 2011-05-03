@@ -11,12 +11,12 @@ import pydoc
 import sys
 import time
 import threading
-import urlparse
-import xmlrpclib
 
 import Bcfg2.Logger
 from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse, fprint
 
 logger = logging.getLogger()
 
@@ -56,11 +56,11 @@ def run_component(component_cls, location, daemon, pidfile_name, to_file,
         os.chdir(os.sep)
 
         pidfile = open(pidfile_name or "/dev/null", "w")
-        print >> pidfile, os.getpid()
+        fprint(os.getpid(), pidfile)
         pidfile.close()
 
     component = component_cls(cfile=cfile, **cls_kwargs)
-    up = urlparse.urlparse(location)
+    up = urlparse(location)
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))
     try:
@@ -153,30 +153,31 @@ class Component (object):
         automatic == True.
 
         """
-        for name, func in inspect.getmembers(self, callable):
-            if getattr(func, "automatic", False):
-                need_to_lock = not getattr(func, 'locking', False)
-                if (time.time() - func.automatic_ts) > \
-                   func.automatic_period:
-                    if need_to_lock:
-                        t1 = time.time()
-                        self.lock.acquire()
-                        t2 = time.time()
-                        self.instance_statistics.add_value('component_lock', t2-t1)
-                    try:
-                        mt1 = time.time()
+        for name, func in inspect.getmembers(self):
+            if name == '__call__':
+                if getattr(func, "automatic", False):
+                    need_to_lock = not getattr(func, 'locking', False)
+                    if (time.time() - func.automatic_ts) > \
+                       func.automatic_period:
+                        if need_to_lock:
+                            t1 = time.time()
+                            self.lock.acquire()
+                            t2 = time.time()
+                            self.instance_statistics.add_value('component_lock', t2-t1)
                         try:
-                            func()
-                        except:
-                            self.logger.error("Automatic method %s failed" \
-                                              % (name), exc_info=1)
-                    finally:
-                        mt2 = time.time()
+                            mt1 = time.time()
+                            try:
+                                func()
+                            except:
+                                self.logger.error("Automatic method %s failed" \
+                                                  % (name), exc_info=1)
+                        finally:
+                            mt2 = time.time()
 
-                    if need_to_lock:
-                        self.lock.release()
-                    self.instance_statistics.add_value(name, mt2-mt1)
-                    func.__dict__['automatic_ts'] = time.time()
+                        if need_to_lock:
+                            self.lock.release()
+                        self.instance_statistics.add_value(name, mt2-mt1)
+                        func.__dict__['automatic_ts'] = time.time()
 
     def _resolve_exposed_method(self, method_name):
         """Resolve an exposed method.
@@ -209,7 +210,8 @@ class Component (object):
             except NoExposedMethod:
                 self.logger.error("Unknown method %s" % (method))
                 raise xmlrpclib.Fault(7, "Unknown method %s" % method)
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 if getattr(e, "log", True):
                     self.logger.error(e, exc_info=True)
                 raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
@@ -233,7 +235,8 @@ class Component (object):
                 self.instance_statistics.add_value(method, method_done - method_start)
         except xmlrpclib.Fault:
             raise
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             if getattr(e, "log", True):
                 self.logger.error(e, exc_info=True)
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))

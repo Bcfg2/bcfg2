@@ -1,3 +1,5 @@
+import sys
+
 try:
     from email.Utils import formatdate
 except ImportError:
@@ -5,7 +7,7 @@ except ImportError:
 
 # urllib imports
 try:
-    from urlparse import urljoin
+    from urlparse import urljoin, urlparse
     from urllib2 import HTTPBasicAuthHandler
     from urllib2 import HTTPPasswordMgrWithDefaultRealm
     from urllib2 import build_opener
@@ -13,7 +15,7 @@ try:
     from urllib import urlopen
     from urllib2 import HTTPError
 except ImportError:
-    from urllib.parse import urljoin
+    from urllib.parse import urljoin, urlparse
     from urllib.request import HTTPBasicAuthHandler
     from urllib.request import HTTPPasswordMgrWithDefaultRealm
     from urllib.request import build_opener
@@ -37,10 +39,43 @@ except ImportError:
     import pickle as cPickle
 
 try:
-    from Queue import Queue
-    from Queue import Empty
-    from Queue import Full
+    from Queue import Queue, Empty, Full
 except ImportError:
-    from queue import Queue
-    from queue import Empty
-    from queue import Full
+    from queue import Queue, Empty, Full
+
+# xmlrpc imports
+try:
+    import xmlrpclib, SimpleXMLRPCServer
+except ImportError:
+    import xmlrpc.client as xmlrpclib
+    import xmlrpc.server as SimpleXMLRPCServer
+
+# socketserver import
+try:
+    import SocketServer
+except ImportError:
+    import socketserver as SocketServer
+
+# httplib imports
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+
+# print to file compatibility
+def u_str(string):
+    if sys.hexversion >= 0x03000000:
+        return string
+    else:
+        return unicode(string)
+
+"""
+In order to use the new syntax for printing to a file, we need to do
+a conditional import because there is a syntax incompatibility between
+the two versions of python.
+"""
+if sys.hexversion >= 0x03000000:
+    from Bcfg2.Bcfg2Py3Incompat import fprint
+else:
+    def fprint(s, f):
+        print >> f, s

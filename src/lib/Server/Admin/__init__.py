@@ -19,13 +19,14 @@ __all__ = [
         'Xcmd'
         ]
 
-import ConfigParser
 import logging
 import lxml.etree
 import sys
 
 import Bcfg2.Server.Core
 import Bcfg2.Options
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
 class ModeOperationError(Exception):
@@ -126,7 +127,8 @@ class MetadataCore(Mode):
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 setup['plugins'],
                                                 'foo', 'UTF-8')
-        except Bcfg2.Server.Core.CoreInitError, msg:
+        except Bcfg2.Server.Core.CoreInitError:
+            msg = sys.exc_info()[1]
             self.errExit("Core load failed because %s" % msg)
         self.bcore.fam.handle_events_in_interval(5)
         self.metadata = self.bcore.metadata
