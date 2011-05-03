@@ -17,6 +17,12 @@ from Bcfg2.Bcfg2Py3k import install_opener
 from Bcfg2.Bcfg2Py3k import build_opener
 from Bcfg2.Bcfg2Py3k import urlopen
 
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    from io import FileIO as BUILTIN_FILE_TYPE
+else:
+    BUILTIN_FILE_TYPE = file
+
 # FIXME: Remove when server python dep is 2.5 or greater
 if sys.version_info >= (2, 5):
     from hashlib import md5
@@ -177,7 +183,7 @@ class Source(object):
                 logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (url, h.code))
                 continue
-            file(fname, 'w').write(data)
+            BUILTIN_FILE_TYPE(fname, 'w').write(data)
 
     def applies(self, metadata):
         return len([g for g in self.basegroups if g in metadata.groups]) != 0 and \
@@ -231,13 +237,13 @@ class YUMSource(Source):
         self.file_to_arch = dict()
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.packages, self.deps, self.provides,
                       self.filemap, self.url_map), cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         (self.packages, self.deps, self.provides, \
          self.filemap, self.url_map) = cPickle.load(data)
 
@@ -378,13 +384,13 @@ class APTSource(Source):
             'components': self.components, 'arches': self.arches, 'groups': self.groups}]
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
                      cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def filter_unknown(self, unknown):
@@ -423,7 +429,7 @@ class APTSource(Source):
                 print("Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
-                words = line.strip().split(':', 1)
+                words = line.strip().split(b':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
@@ -500,13 +506,13 @@ class PACSource(Source):
             'components': self.components, 'arches': self.arches, 'groups': self.groups}]
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
                      cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def filter_unknown(self, unknown):
