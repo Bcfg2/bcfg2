@@ -429,7 +429,7 @@ class APTSource(Source):
                 print("Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
-                words = line.strip().split(b':', 1)
+                words = str(line.strip()).split(':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
