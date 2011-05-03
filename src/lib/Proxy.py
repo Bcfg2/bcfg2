@@ -88,7 +88,7 @@ class RetryMethod(xmlrpclib._Method):
         raise xmlrpclib.Fault(20, "Server Failure")
 
 # sorry jon
-xmlrpclib._Method = RetryMethod
+_Method = RetryMethod
 
 
 class SSLHTTPConnection(httplib.HTTPConnection):

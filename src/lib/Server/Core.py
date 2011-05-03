@@ -5,6 +5,7 @@ import atexit
 import logging
 import lxml.etree
 import select
+import sys
 import threading
 import time
 
