@@ -3,11 +3,15 @@ __revision__ = '$Revision$'
 
 import atexit
 import logging
-import lxml.etree
 import select
 import sys
 import threading
 import time
+try:
+    import lxml.etree
+except ImportError:
+    print("Failed to import lxml dependency. Shutting down server.")
+    raise SystemExit(1)
 
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError

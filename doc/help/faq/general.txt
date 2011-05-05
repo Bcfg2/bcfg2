@@ -29,7 +29,7 @@ exact list of platforms on which Bcfg2 works.
 
 **What pre-requisites are needed to run Bcfg2?**
 
-Please visit the :ref:`prerequisites` section in the manual.
+Please visit the :ref:`installation-prerequisites` section in the manual.
 
 **Why won't bcfg2-server start?**
 

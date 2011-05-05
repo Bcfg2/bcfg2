@@ -148,6 +148,10 @@ be taken to remedy them.
 | [list of unknown entries]    |          | has no knowledge of |              |
 |                              |          | the listed entries  |              |
 +------------------------------+----------+---------------------+--------------+
+| Failed to import lxml        | Server   | The server cannot   | [12]_        |
+| dependency. Shutting         |          | import lxml         |              |
+| down server.                 |          |                     |              |
++------------------------------+----------+---------------------+--------------+
 
 
 .. [1] This entry is not being bound. Ensure that a version of this
@@ -179,6 +183,8 @@ be taken to remedy them.
         ignore the message as the Packages plugin has no knowledge of
         these packages (however, note that this package is most often
         specified as a BoundPackage entry).
+.. [12] Ensure that you have installed all the necessary
+        :ref:`installation-prerequisites`.
 
 FAQs
 ====
