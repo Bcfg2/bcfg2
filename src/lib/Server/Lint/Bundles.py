@@ -33,7 +33,8 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
                 genshibundle = "%s.genshi" % bundle
                 if (xmlbundle not in allbundles and
                     genshibundle not in allbundles):
-                    self.LintError("Bundle %s referenced, but does not exist" %
+                    self.LintError("bundle-not-found",
+                                   "Bundle %s referenced, but does not exist" %
                                    bundle)
 
     def bundle_names(self, bundle):
@@ -47,8 +48,9 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
         fname = bundle.name.split('Bundler/')[1].split('.')[0]
         bname = xdata.get('name')
         if fname != bname:
-            self.LintWarning("Inconsistent bundle name: filename is %s, bundle name is %s" %
-                             (fname, bname))
+            self.LintError("inconsistent-bundle-name",
+                           "Inconsistent bundle name: filename is %s, bundle name is %s" %
+                           (fname, bname))
 
     def sgenshi_groups(self, bundle):
         """ ensure that Genshi Bundles do not include <Group> tags,
@@ -57,5 +59,6 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
         groups = [self.RenderXML(g)
                   for g in xdata.getroottree().findall("//Group")]
         if groups:
-            self.LintWarning("<Group> tag is not allowed in SGenshi Bundle:\n%s" %
-                             "\n".join(groups))
+            self.LintError("group-tag-not-allowed",
+                           "<Group> tag is not allowed in SGenshi Bundle:\n%s" %
+                           "\n".join(groups))

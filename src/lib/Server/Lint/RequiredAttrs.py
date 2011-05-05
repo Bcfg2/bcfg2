@@ -53,7 +53,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             try:
                 required_attrs = set(self.required_attrs[pathtype] + ['type'])
             except KeyError:
-                self.LintError("Unknown path type %s: %s" %
+                self.LintError("unknown-path-type",
+                               "Unknown path type %s: %s" %
                                (pathtype, self.RenderXML(entry)))
 
             if 'dev_type' in required_attrs:
@@ -62,7 +63,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     # check if major/minor are specified
                     required_attrs |= set(['major', 'minor'])
             if not pathset.issuperset(required_attrs):
-                self.LintError("The required attributes %s are missing for %s %sin %s:\n%s" %
+                self.LintError("required-attrs-missing",
+                               "The required attributes %s are missing for %s %sin %s:\n%s" %
                                (",".join([attr
                                           for attr in
                                           required_attrs.difference(pathset)]),

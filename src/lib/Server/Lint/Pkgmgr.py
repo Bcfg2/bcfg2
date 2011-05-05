@@ -6,7 +6,7 @@ class Pkgmgr(Bcfg2.Server.Lint.ServerPlugin):
     @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         if 'Pkgmgr' not in self.core.plugins:
-            self.LintWarning("Pkgmgr server plugin is not enabled, skipping Pkgmgr lint checks")
+            self.logger.info("Pkgmgr server plugin is not enabled, skipping Pkgmgr lint checks")
             return
         
         pset = set()
@@ -31,7 +31,8 @@ class Pkgmgr(Bcfg2.Server.Lint.ServerPlugin):
                     # check if package is already listed with same
                     # priority, type, grp
                     if ptuple in pset:
-                        self.LintWarning("Duplicate Package %s, priority:%s, type:%s" %
+                        self.LintError("duplicate-package",
+                                       "Duplicate Package %s, priority:%s, type:%s" %
                                          (pkg.get('name'), priority, ptype))
                     else:
                         pset.add(ptuple)

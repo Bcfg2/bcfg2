@@ -143,12 +143,14 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             unexpanded = [keyword for (keyword, status) in found.items()
                           if status is None]
             if unexpanded:
-                self.LintWarning("%s: Required keywords(s) found but not expanded: %s" %
-                                 (filename, ", ".join(unexpanded)))
+                self.LintError("unexpanded-keywords",
+                               "%s: Required keywords(s) found but not expanded: %s" %
+                               (filename, ", ".join(unexpanded)))
             missing = [keyword for (keyword, status) in found.items()
                        if status is False]
             if missing:
-                self.LintError("%s: Required keywords(s) not found: $%s$" %
+                self.LintError("keywords-not-found",
+                               "%s: Required keywords(s) not found: $%s$" %
                                (filename, "$, $".join(missing)))
 
             # next, check for required comments.  found is just
@@ -163,7 +165,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             missing = [comment for (comment, status) in found.items()
                        if status is False]
             if missing:
-                self.LintError("%s: Required comments(s) not found: %s" %
+                self.LintError("comments-not-found",
+                               "%s: Required comments(s) not found: %s" %
                                (filename, ", ".join(missing)))
 
     def has_all_xincludes(self, mfile):
@@ -177,7 +180,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 xdata = lxml.etree.parse(path)
                 for el in xdata.findall('./{http://www.w3.org/2001/XInclude}include'):
                     if not self.has_all_xincludes(el.get('href')):
-                        self.LintWarning("Broken XInclude chain: could not include %s" % path)
+                        self.LintError("broken-xinclude-chain",
+                                       "Broken XInclude chain: could not include %s" % path)
                         return False
 
                 return True

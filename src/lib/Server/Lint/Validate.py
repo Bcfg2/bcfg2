@@ -44,8 +44,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                     schema = lxml.etree.XMLSchema(lxml.etree.parse(schemaname %
                                                                    schemadir))
                 except:
-                    self.LintWarning("Failed to process schema %s",
-                                     schemaname % schemadir)
+                    self.LintError("schema-failed-to-parse",
+                                   "Failed to process schema %s",
+                                   schemaname % schemadir)
                     continue
                 for filename in filelist:
                     self.validate(filename, schemaname % schemadir,
@@ -55,19 +56,13 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
     def check_properties(self):
         """ check Properties files against their schemas """
-        alert = self.logger.debug
-        if "properties_schema" in self.config:
-            if self.config['properties_schema'].lower().startswith('warn'):
-                alert = self.LintWarning
-            elif self.config['properties_schema'].lower().startswith('require'):
-                alert = self.LintError
-            
         for filename in self.filelists['props']:
             schemafile = "%s.xsd" % os.path.splitext(filename)[0]
             if os.path.exists(schemafile):
                 self.validate(filename, schemafile)
             else:
-                alert("No schema found for %s" % filename)
+                self.LintError("properties-schema-not-found",
+                               "No schema found for %s" % filename)
 
     def validate(self, filename, schemafile, schema=None):
         """validate a file against the given lxml.etree.Schema.
@@ -77,19 +72,22 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             try:
                 schema = lxml.etree.XMLSchema(lxml.etree.parse(schemafile))
             except:
-                self.LintWarning("Failed to process schema %s" % schemafile)
+                self.LintError("schema-failed-to-parse",
+                               "Failed to process schema %s" % schemafile)
                 return False
 
         try:
             datafile = lxml.etree.parse(filename)
         except SyntaxError:
             lint = Popen(["xmllint", filename], stdout=PIPE, stderr=STDOUT)
-            self.LintError("%s fails to parse:\n%s" % (filename,
+            self.LintError("xml-failed-to-parse",
+                           "%s fails to parse:\n%s" % (filename,
                                                        lint.communicate()[0]))
             lint.wait()
             return False
         except IOError:
-            self.LintError("Failed to open file %s" % filename)
+            self.LintError("xml-failed-to-read",
+                           "Failed to open file %s" % filename)
             return False
     
         if not schema.validate(datafile):
@@ -100,7 +98,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
             output = lint.communicate()[0]
             if lint.wait():
-                self.LintError("%s fails to verify:\n%s" % (filename, output))
+                self.LintError("xml-failed-to-verify",
+                               "%s fails to verify:\n%s" % (filename, output))
                 return False
         return True
 
@@ -141,7 +140,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         for fname in all_metadata:
             if (fname not in self.filelists['metadata:groups'] and
                 fname not in self.filelists['metadata:clients']):
-                self.LintWarning("Broken XInclude chain: Could not determine file type of %s" % fname)
+                self.LintError("broken-xinclude-chain",
+                               "Broken XInclude chain: Could not determine file type of %s" % fname)
 
     def get_metadata_list(self, mtype):
         """ get all metadata files for the specified type (clients or

@@ -49,7 +49,8 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
             if el.get('name') not in seen:
                 seen[el.get('name')] = el
             else:
-                self.LintError("Duplicate %s '%s':\n%s\n%s" %
+                self.LintError("duplicate-%s" % etype,
+                               "Duplicate %s '%s':\n%s\n%s" %
                                (etype, el.get('name'),
                                 self.RenderXML(seen[el.get('name')]),
                                 self.RenderXML(el)))
@@ -59,7 +60,8 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
         default_groups = [g for g in self.groups_xdata.findall('.//Group')
                           if g.get('default') == 'true']
         if len(default_groups) > 1:
-            self.LintError("Multiple default groups defined: %s" %
+            self.LintError("multiple-default-groups",
+                           "Multiple default groups defined: %s" %
                            ",".join(default_groups))
 
     def has_all_xincludes(self, mfile):
@@ -73,7 +75,8 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
                 xdata = lxml.etree.parse(path)
                 for el in xdata.findall('./{http://www.w3.org/2001/XInclude}include'):
                     if not self.has_all_xincludes(el.get('href')):
-                        self.LintWarning("Broken XInclude chain: could not include %s" % path)
+                        self.LintError("broken-xinclude-chain",
+                                       "Broken XInclude chain: could not include %s" % path)
                         return False
 
                 return True

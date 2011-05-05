@@ -27,32 +27,27 @@ class Parser(ConfigParser.ConfigParser):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             return default
 
-def run_serverless_plugins(plugins, config=None, setup=None):
+def run_serverless_plugins(plugins, config=None, setup=None, errorhandler=None):
     logger.debug("Running serverless plugins")
-    errors = (0, 0)
     for plugin_name, plugin in list(plugins.items()):
-        plugin_errors = run_plugin(plugin, plugin_name,
-                                   setup=setup, config=config, files=files)
-        errors = [errors[n] + plugin_errors[n]
-                  for n in range(0, len(errors))]
-    return errors
+        run_plugin(plugin, plugin_name, errorhandler=errorhandler,
+                   setup=setup, config=config, files=files)
 
-def run_server_plugins(plugins, config=None, setup=None):
+def run_server_plugins(plugins, config=None, setup=None, errorhandler=None):
     core = load_server(setup)
     logger.debug("Running server plugins")
-    errors = (0, 0)
     for plugin_name, plugin in list(plugins.items()):
-        plugin_errors = run_plugin(plugin, plugin_name, args=[core],
-                                   setup=setup, config=config, files=files)
-        errors = [errors[n] + plugin_errors[n]
-                  for n in range(0, len(errors))]
-    return errors
+        run_plugin(plugin, plugin_name, args=[core], errorhandler=errorhandler,
+                   setup=setup, config=config, files=files)
 
-def run_plugin(plugin, plugin_name, setup=None, args=None, config=None,
-               files=None):
+def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
+               args=None, config=None, files=None):
     logger.debug("  Running %s" % plugin_name)
     if args is None:
         args = []
+
+    if errorhandler is None:
+        errorhandler = get_errorhandler(config)
 
     if config is not None and config.has_section(plugin_name):
         args.append(dict(config.items(plugin_name), **setup))
@@ -62,9 +57,17 @@ def run_plugin(plugin, plugin_name, setup=None, args=None, config=None,
     # older versions of python do not support mixing *-magic and
     # non-*-magic (e.g., "plugin(*args, files=files)", so we do this
     # all with *-magic
-    kwargs = dict(files=files)
+    kwargs = dict(files=files, errorhandler=errorhandler)
     
     return plugin(*args, **kwargs).Run()
+
+def get_errorhandler(config):
+    """ get a Bcfg2.Server.Lint.ErrorHandler object """
+    if config.has_section("errors"):
+        conf = dict(config.items("errors"))
+    else:
+        conf = None
+    return Bcfg2.Server.Lint.ErrorHandler(config=conf)
 
 def load_server(setup):
     """ load server """
@@ -104,7 +107,10 @@ if __name__ == '__main__':
                                        '/etc/bcfg2-lint.conf', 
                                        cmd='--lint-config',
                                        odesc='<conffile>',
-                                       long_arg = True),
+                                       long_arg=True),
+        'showerrors': Bcfg2.Options.Option('Show error handling', False,
+                                           cmd='--list-errors',
+                                           long_arg=True),
         })
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
@@ -116,6 +122,21 @@ if __name__ == '__main__':
 
     config = Parser()
     config.read(setup['config'])
+
+    if setup['showerrors']:
+        if config.has_section("errors"):
+            econf = dict(config.items("errors"))
+        else:
+            econf = dict()
+
+        print("%-35s %-35s" % ("Error name", "Handler (Default)"))
+        for err, default in Bcfg2.Server.Lint.ErrorHandler._errors.items():
+            if err in econf and econf[err] != default:
+                handler = "%s (%s)" % (econf[err], default)
+            else:
+                handler = default
+            print("%-35s %-35s" % (err, handler))
+        raise SystemExit(0)
 
     # get list of plugins to run
     if setup['args']:
@@ -153,19 +174,21 @@ if __name__ == '__main__':
         else:
             serverlessplugins[plugin_name] = plugin
 
-    # errors is a tuple of (errors, warnings)
-    errors = run_serverless_plugins(serverlessplugins,
-                                    config=config, setup=setup)
+    errorhandler = get_errorhandler(config)
+
+    run_serverless_plugins(serverlessplugins,
+                           errorhandler=errorhandler,
+                           config=config, setup=setup)
 
     if serverplugins:
-        perrors = run_server_plugins(serverplugins, config=config, setup=setup)
-        errors = [errors[n] + perrors[n] for n in range(0, len(errors))]
+        run_server_plugins(serverplugins, errorhandler=errorhandler,
+                                     config=config, setup=setup)
 
-    if errors[0] or errors[1] or setup['verbose']:
-        print("%d errors" % errors[0])
-        print("%d warnings" % errors[1])
-        
-    if errors[0]:
+    if errorhandler.errors or errorhandler.warnings or setup['verbose']:
+        print("%d errors" % errorhandler.errors)
+        print("%d warnings" % errorhandler.warnings)
+
+    if errorhandler.errors:
         raise SystemExit(2)
-    elif errors[1]:
+    elif errorhandler.warnings:
         raise SystemExit(3)
