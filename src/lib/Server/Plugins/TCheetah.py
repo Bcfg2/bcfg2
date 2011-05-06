@@ -6,6 +6,9 @@ import logging
 import sys
 import traceback
 import Bcfg2.Server.Plugin
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
@@ -53,9 +56,6 @@ class TemplateFile:
         if entry.tag == 'Path':
             entry.set('type', 'file')
         try:
-            # py3k compatibility
-            if sys.hexversion >= 0x03000000:
-                unicode = str
             if type(self.template) == unicode:
                 entry.text = self.template
             else:
