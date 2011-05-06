@@ -55,10 +55,10 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         host_address = socket.gethostbyname(metadata.hostname)
         host_groups = [grp for grp in metadata.groups
                        if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
-        host_config = []
-        host_config.append(line_fmt % ('host_name', metadata.hostname))
-        host_config.append(line_fmt % ('alias', metadata.hostname))
-        host_config.append(line_fmt % ('address', host_address))
+        host_config = ['define host {',
+                       line_fmt % ('host_name', metadata.hostname),
+                       line_fmt % ('alias', metadata.hostname),
+                       line_fmt % ('address', host_address)]
 
         if host_groups:
             host_config.append(line_fmt % ("hostgroups",
@@ -93,30 +93,29 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                     xtra['parent'] = el.get("on")
 
         # read the new-style config and overwrite the old-style config
-        for el in self.config.Match():
+        for el in self.config.Match(metadata):
             if el.tag == 'Option':
                 xtra[el.get("name")] = el.text
 
         # if we haven't found anything in the new- or old-style
         # configs, finally read defaults from old-style config
-        if (not xtra and
-            hasattr(metadata, 'Properties') and
-            'NagiosGen.xml' in metadata.Properties):
+        if not xtra and props is not None:
             xtra = dict((el.tag, el.text) for el in props.find('default'))
 
         if xtra:
             host_config.extend([line_fmt % (opt, val)
-                                for opt, val in list(xtra.items)])
+                                for opt, val in list(xtra.items())])
         else:
             host_config.append(line_fmt % ('use', 'default'))
 
-        entry.text = "define host {\n%s\n}" % "\n".join(host_config)
+        host_config.append('}')
+        entry.text = "%s\n" % "\n".join(host_config)
         [entry.attrib.__setitem__(key, value)
          for (key, value) in list(self.client_attrib.items())]
         try:
             fileh = open("%s/%s-host.cfg" %
                          (self.data, metadata.hostname), 'w')
-            fileh.write(host_config)
+            fileh.write(entry.text)
             fileh.close()
         except OSError:
             ioerr = sys.exc_info()[1]
