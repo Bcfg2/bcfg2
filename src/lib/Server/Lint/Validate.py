@@ -23,7 +23,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                          "%s/Deps/*.xml":"%s/deps.xsd",
                          "%s/Decisions/*.xml":"%s/decisions.xsd",
                          "%s/Packages/config.xml":"%s/packages.xsd",
-                         "%s/GroupPatterns/config.xml":"%s/grouppatterns.xsd"}
+                         "%s/GroupPatterns/config.xml":"%s/grouppatterns.xsd",
+                         "%s/NagiosGen/config.xml":"%s/nagiosgen.xsd"}
 
         self.filelists = {}
         self.get_filelists()
