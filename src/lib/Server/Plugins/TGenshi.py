@@ -3,7 +3,11 @@ __revision__ = '$Revision$'
 
 import binascii
 import logging
+import sys
 import Bcfg2.Server.Plugin
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
 
 logger = logging.getLogger('Bcfg2.Plugins.TGenshi')
 
@@ -76,9 +80,6 @@ class TemplateFile:
     def bind_entry(self, entry, metadata):
         """Build literal file information."""
         fname = entry.get('realname', entry.get('name'))
-        # py3k compatibility
-        if sys.hexversion >= 0x03000000:
-            unicode = str
         if entry.tag == 'Path':
             entry.set('type', 'file')
         try:
