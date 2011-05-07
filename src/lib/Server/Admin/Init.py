@@ -4,6 +4,7 @@ import random
 import socket
 import stat
 import string
+import sys
 import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
