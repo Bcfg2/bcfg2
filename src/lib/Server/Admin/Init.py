@@ -4,6 +4,7 @@ import random
 import socket
 import stat
 import string
+import sys
 import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
@@ -141,7 +142,7 @@ def create_key(hostname, keypath, certpath, country, state, location):
     os.chmod(keypath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
 
-def create_conf(confpath, confdata):
+def create_conf(confpath, confdata, keypath):
     # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
         # py3k compatibility
@@ -401,7 +402,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                              self.server_uri)
 
         # Create the configuration file and SSL key
-        create_conf(self.configfile, confdata)
+        create_conf(self.configfile, confdata, keypath)
         kpath = keypath + '/bcfg2.key'
         cpath = keypath + '/bcfg2.crt'
         create_key(self.shostname, kpath, cpath, self.country,

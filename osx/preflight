@@ -8,4 +8,6 @@
 /bin/rm -Rvf "${3}"{SITELIBDIR}/Bcfg2*
 /bin/rm -Rvf "${3}"/usr/local/bin/bcfg2*
 /bin/rm -Rvf "${3}{DATADIR}/share/bcfg2"
+/bin/rm -Rvf "${3}{DATADIR}/share/man/man1/bcfg2*"
+/bin/rm -Rvf "${3}{DATADIR}/share/man/man5/bcfg2*"
 /bin/rm -Rvf "${3}{DATADIR}/share/man/man8/bcfg2*"

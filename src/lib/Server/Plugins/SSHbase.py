@@ -5,6 +5,7 @@ import binascii
 import os
 import socket
 import shutil
+import sys
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
