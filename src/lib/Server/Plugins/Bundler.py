@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import copy
 import lxml.etree
 import re
+import sys
 
 import Bcfg2.Server.Plugin
 
