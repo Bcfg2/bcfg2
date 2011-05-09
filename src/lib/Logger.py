@@ -12,6 +12,8 @@ import sys
 import termios
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import fprint
+if sys.hexversion >= 0x03000000:
+    str = bytes
 
 logging.raiseExceptions = 0
 
@@ -118,7 +120,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
     def emit(self, record):
         """Chunk and deliver records."""
         record.name = self.procname
-        if len(record.msg) > 250:
+        if str(record.msg) > 250:
             msgs = []
             error = record.exc_info
             record.exc_info = None
