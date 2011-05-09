@@ -12,8 +12,6 @@ import sys
 import termios
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import fprint
-if sys.hexversion >= 0x03000000:
-    str = bytes
 
 logging.raiseExceptions = 0
 
@@ -120,19 +118,16 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
     def emit(self, record):
         """Chunk and deliver records."""
         record.name = self.procname
-        if str(record.msg) > 250:
-            msgs = []
-            error = record.exc_info
-            record.exc_info = None
-            msgdata = record.msg
-            while msgdata:
-                newrec = copy.deepcopy(record)
-                newrec.msg = msgdata[:250]
-                msgs.append(newrec)
-                msgdata = msgdata[250:]
-            msgs[0].exc_info = error
-        else:
-            msgs = [record]
+        msgs = []
+        error = record.exc_info
+        record.exc_info = None
+        msgdata = record.msg
+        while msgdata:
+            newrec = copy.deepcopy(record)
+            newrec.msg = msgdata[:250]
+            msgs.append(newrec)
+            msgdata = msgdata[250:]
+        msgs[0].exc_info = error
         for newrec in msgs:
             msg = self.log_format_string % (self.encodePriority(self.facility,
                                                                 newrec.levelname.lower()),
