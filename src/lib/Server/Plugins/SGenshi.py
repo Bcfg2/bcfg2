@@ -5,6 +5,7 @@ import genshi.input
 import genshi.template
 import lxml.etree
 import logging
+import sys
 
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Plugins.TGenshi
