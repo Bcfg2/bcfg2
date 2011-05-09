@@ -1,4 +1,5 @@
 import imp
+import sys
 import time
 import ldap
 import Bcfg2.Options
