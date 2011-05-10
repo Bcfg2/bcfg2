@@ -73,7 +73,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         for pkg in packages:
             pkgline += " " + pkg.get('name')
 
-        print "packages : " + pkgline
+        self.logger.info("packages : " + pkgline)
 
         try:
             self.logger.debug("Running : %s -S %s" % (self.pkgtool, pkgline))

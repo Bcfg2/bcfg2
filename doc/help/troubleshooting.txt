@@ -38,9 +38,8 @@ Check if all repository XML files conform to schemas
 ====================================================
 
 Bcfg2 comes with XML schemas describing all of the XML formats used in
-the server repository. A validation command ``bcfg2-repo-validate`` is
-included with the source distribution and all packages. Run it with the
--v flag to see each file and the results if its validation.
+the server repository. A validation command ``bcfg2-lint`` is
+included with the source distribution and all packages.
 
 If the bcfg2 server is not reflecting recent changes, try restarting the bcfg2-server process
 =============================================================================================
@@ -139,11 +138,27 @@ be taken to remedy them.
 |                              |          | associated with a   |              |
 |                              |          | non-profile group.  |              |
 +------------------------------+----------+---------------------+--------------+
+| Failed to decode <filename>  | Server   | The encoding being  | [10]_        |
+| Please verify you are using  |          | used is unable to   |              |
+| the proper encoding          |          | decode the          |              |
+|                              |          | character present   |              |
+|                              |          | in this file.       |              |
++------------------------------+----------+---------------------+--------------+
+| Got unknown entries          | Server   | The Packages plugin | [11]_        |
+| [list of unknown entries]    |          | has no knowledge of |              |
+|                              |          | the listed entries  |              |
++------------------------------+----------+---------------------+--------------+
+| Failed to import lxml        | Server   | The server cannot   | [12]_        |
+| dependency. Shutting         |          | import lxml         |              |
+| down server.                 |          |                     |              |
++------------------------------+----------+---------------------+--------------+
 
 
 .. [1] This entry is not being bound. Ensure that a version of this
        entry applies to this client.
-.. [2] Add a type to the generator definition for this entry
+.. [2] It is possible that the type attribute for this generator entry
+       is undefined. You may need to add the appropriate type attribute
+       in the literal entry specification.
 .. [3] Copy the Bcfg2 server's CA certificate to the client and specify it
        using the **ca** option in the [communication] section of
        ``bcfg2.conf``
@@ -158,6 +173,18 @@ be taken to remedy them.
 .. [8] Ensure that the file is properly formed XML.
 .. [9] Fix hostname resolution for the client or ensure that the profile
        group is properly setup.
+.. [10] Ensure the correct encoding is specified in the [components]
+        section of ``bcfg2.conf``.
+.. [11] For packages listed other than **gpg-pubkey**, this error means
+        that the Packages plugin is unable to find the package in any of
+        the sources listed in ``Packages/config.xml``. The issue often
+        arises when the client is not in one of the groups necessary for
+        the Source listed. In the case of gpg-pubkey, you can safely
+        ignore the message as the Packages plugin has no knowledge of
+        these packages (however, note that this package is most often
+        specified as a BoundPackage entry).
+.. [12] Ensure that you have installed all the necessary
+        :ref:`installation-prerequisites`.
 
 FAQs
 ====
@@ -172,9 +199,11 @@ why.
 Why am I getting a traceback?
 -----------------------------
 
-If you get a traceback, please let us know by :ref:`reporting it
-<report-a-bug>` on Trac, via the mailing list, or on IRC. Your best bet
+If you get a traceback, please let us know by reporting it
+on `Trac ticket tracker`_, via the mailing list, or on IRC. Your best bet
 to get a quick response will be to jump on IRC during the daytime (CST).
+
+.. _Trac ticket tracker: http://bcfg2.org
 
 What is the most common cause of "The following entries are not handled by any tool"?
 -------------------------------------------------------------------------------------

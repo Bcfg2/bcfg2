@@ -8,6 +8,8 @@ import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
      File, Group, Package, Service
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import u_str
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"
@@ -71,7 +73,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             session.commit()
         elif args[0] == 'dump':
             client = args[1]
-            snap = Snapshot.get_current(self.session, unicode(client))
+            snap = Snapshot.get_current(self.session, u_str(client))
             if not snap:
                 print("Current snapshot for %s not found" % client)
                 sys.exit(1)
@@ -105,7 +107,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     print("Usage: bcfg2-admin snapshots -b <client>")
                     return
                 client = args[2]
-                snap = Snapshot.get_current(self.session, unicode(client))
+                snap = Snapshot.get_current(self.session, u_str(client))
                 if not snap:
                     print("Current snapshot for %s not found" % client)
                     sys.exit(1)
@@ -128,7 +130,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             elif '-e' in args[1:]:
                 # Query a single host for extra entries
                 client = args[2]
-                snap = Snapshot.get_current(self.session, unicode(client))
+                snap = Snapshot.get_current(self.session, u_str(client))
                 if not snap:
                     print("Current snapshot for %s not found" % client)
                     sys.exit(1)

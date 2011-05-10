@@ -13,8 +13,9 @@ import os
 import socket
 import sys
 from time import asctime, strptime
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 def generatereport(rspec, nrpt):
     """
@@ -42,9 +43,9 @@ def generatereport(rspec, nrpt):
         # This line actually sorts from most recent to oldest.
         statisticslist.sort(lambda y, x: cmp(strptime(x.get("time")), strptime(y.get("time"))))
         stats = statisticslist[0]
-        
+
         [node.remove(item) for item in node.findall('Statistics')]
-      
+
         # Add a good tag if node is good and we wnat to report such.
         if reportgood == 'Y' and stats.get('state') == 'clean':
             SubElement(stats,"Good")
@@ -52,7 +53,7 @@ def generatereport(rspec, nrpt):
         [stats.remove(item) for item in stats.findall("Bad") + stats.findall("Modified") if \
          item.getchildren() == []]
         [stats.remove(item) for item in stats.findall("Modified") if reportmodified == 'N']
-                
+
         # Test for staleness -if stale add Stale tag.
         if stats.get("time").find(current_date) == -1:
             SubElement(stats,"Stale")
@@ -64,7 +65,7 @@ def mail(mailbody, confi):
 
     try:
         mailer = confi.get('statistics', 'sendmailpath')
-    except (NoSectionError, NoOptionError):
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         mailer = "/usr/sbin/sendmail"
     # Open a pipe to the mail program and
     # write the data to the pipe.
@@ -72,7 +73,7 @@ def mail(mailbody, confi):
     pipe.write(mailbody)
     exitcode = pipe.close()
     if exitcode:
-        print "Exit code: %s" % exitcode
+        print("Exit code: %s" % exitcode)
 
 def rss(reportxml, delivery, report):
     """rss appends a new report to the specified rss file
@@ -98,7 +99,7 @@ def rss(reportxml, delivery, report):
         chantitle = SubElement(channel, "title")
         chantitle.text = report.attrib['name']
         chanlink = SubElement(channel, "link")
-        
+
         # This can later link to WWW report if one gets published
         # simultaneously?
         chanlink.text = "http://www.mcs.anl.gov/cobalt/bcfg2"
@@ -119,7 +120,7 @@ def www(reportxml, delivery):
     """www outputs report to."""
 
     # This can later link to WWW report if one gets published
-    # simultaneously?    
+    # simultaneously?
     for destination in delivery.findall('Destination'):
         fil = open(destination.attrib['address'], 'w')
 
@@ -138,15 +139,15 @@ def pretty_print(element, level=0):
     """Produce a pretty-printed text representation of element."""
     if element.text:
         fmt = "%s<%%s %%s>%%s</%%s>" % (level*" ")
-        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()])),
+        data = (element.tag, (" ".join(["%s='%s'" % keyval for keyval in list(element.attrib.items())])),
                 element.text, element.tag)
     if element._children:
         fmt = "%s<%%s %%s>\n" % (level*" ",) + (len(element._children) * "%s") + "%s</%%s>\n" % (level*" ")
-        data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]),)
+        data = (element.tag, ) + (" ".join(["%s='%s'" % keyval for keyval in list(element.attrib.items())]),)
         data += tuple([pretty_print(entry, level+2) for entry in element._children]) + (element.tag, )
     else:
         fmt = "%s<%%s %%s/>\n" % (level * " ")
-        data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in element.attrib.iteritems()]))
+        data = (element.tag, " ".join(["%s='%s'" % keyval for keyval in list(element.attrib.items())]))
     return fmt % data
 
 
@@ -157,14 +158,14 @@ if __name__ == '__main__':
         cfpath = sys.argv[sys.argv.index('-C') + 1]
     else:
         cfpath = '/etc/bcfg2.conf'
-    c = ConfigParser()
+    c = ConfigParser.ConfigParser()
     c.read([cfpath])
     configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
     statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
     clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
     try:
         prefix = c.get('server', 'prefix')
-    except (NoSectionError, NoOptionError):
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
         prefix = '/usr'
 
     transformpath = "/%s/share/bcfg2/xsl-transforms/" % (prefix)
@@ -172,13 +173,14 @@ if __name__ == '__main__':
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=","no-ping", "stats="])
-    except getopt.GetoptError, mesg:
+    except getopt.GetoptError:
+        mesg = sys.exc_info()[1]
         # Print help information and exit:
-        print "%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg) 
-        raise SystemExit, 2
+        print("%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg))
+        raise SystemExit(2)
     for o, a in opts:
         if o in ("-h", "--help"):
-            print "Usage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]"
+            print("Usage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]")
             raise SystemExit
         if o in ("-A", "--all"):
             all=True
@@ -205,17 +207,17 @@ if __name__ == '__main__':
         statsdata = XML(open(statpath).read())
     except (IOError, XMLSyntaxError):
         print("bcfg2-build-reports: Failed to parse %s"%(statpath))
-        raise SystemExit, 1
+        raise SystemExit(1)
     try:
         configdata = XML(open(configpath).read())
     except (IOError, XMLSyntaxError):
         print("bcfg2-build-reports: Failed to parse %s"%(configpath))
-        raise SystemExit, 1
+        raise SystemExit(1)
     try:
         clientsdata = XML(open(clientsdatapath).read())
     except (IOError, XMLSyntaxError):
         print("bcfg2-build-reports: Failed to parse %s"%(clientsdatapath))
-        raise SystemExit, 1
+        raise SystemExit(1)
 
     # Merge data from three sources.
     nodereport = Element("Report", attrib={"time" : asctime()})
@@ -229,7 +231,7 @@ if __name__ == '__main__':
                 for statel in nod.findall("Statistics"):
                     nodel.append(statel)
                     nodereport.append(nodel)
-                    
+
     if all:
         for nod in statsdata.findall("Node"):
             for client in clientsdata.findall("Client"):
@@ -242,8 +244,8 @@ if __name__ == '__main__':
                 for statel in nod.findall("Statistics"):
                     nodel.append(statel)
                     nodereport.append(nodel)
-                
-                
+
+
     for reprt in configdata.findall('Report'):
         nodereport.set("name", reprt.get("name", default="BCFG Report"))
 
@@ -254,7 +256,7 @@ if __name__ == '__main__':
 
         for deliv in reprt.findall('Delivery'):
             # Is a deepcopy of procnodereport necessary?
-            
+
             delivtype = deliv.get('type', default='nodes-digest')
             deliverymechanism = deliv.get('mechanism', default='www')
 
@@ -269,14 +271,14 @@ if __name__ == '__main__':
             except:
                 print("bcfg2-build-reports: Invalid report type or delivery mechanism.\n Can't find: "\
                       + transformpath + transform)
-                raise SystemExit, 1
+                raise SystemExit(1)
 
             try: # Try to parse stylesheet.
                 stylesheet = XSLT(parse(transformpath + transform))
             except:
                 print("bcfg2-build-reports: invalid XSLT transform file.")
-                raise SystemExit, 1
-                
+                raise SystemExit(1)
+
             if deliverymechanism == 'mail':
                 if delivtype == 'nodes-individual':
                     reportdata = copy.deepcopy(procnodereport)
@@ -285,7 +287,7 @@ if __name__ == '__main__':
                         reportdata.append(noden)
                         result = stylesheet.apply(ElementTree(reportdata))
                         outputstring = stylesheet.tostring(result)
-                        
+
                         if not outputstring == None:
                             toastring = ''
                             for desti in deliv.findall("Destination"):
@@ -295,13 +297,13 @@ if __name__ == '__main__':
                             outputstring = "To: %s\nFrom: root@%s\n%s"% \
                                            (toastring, socket.getfqdn(), outputstring)
                             mail(outputstring, c) #call function to send
-                        
+
                 else:
                     reportdata = copy.deepcopy(procnodereport)
 
                     result = stylesheet.apply(ElementTree(reportdata))
                     outputstring = stylesheet.tostring(result)
-                        
+
                     if not outputstring == None:
                         toastring = ''
                         for desti in deliv.findall("Destination"):

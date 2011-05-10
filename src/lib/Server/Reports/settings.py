@@ -1,8 +1,9 @@
 import django
 
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
-c = ConfigParser()
+c = ConfigParser.ConfigParser()
 c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
 
 try:
@@ -18,31 +19,40 @@ else:
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-     ('Bcfg2', 'admin@email.address'),
+     ('Root', 'root'),
 )
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = c.get('statistics', 'database_engine')
-# 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
+db_engine = c.get('statistics', 'database_engine')
+db_name = ''
 if c.has_option('statistics', 'database_name'):
-    DATABASE_NAME = c.get('statistics', 'database_name')
-else:
-    DATABASE_NAME = ''
-# Or path to database file if using sqlite3.
-#<repository>/etc/brpt.sqlite is default path
+    db_name = c.get('statistics', 'database_name')
+if db_engine == 'sqlite3' and db_name == '':
+    db_name = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
 
-if DATABASE_ENGINE != 'sqlite3':
-    DATABASE_USER = c.get('statistics', 'database_user')
-    # Not used with sqlite3.
-    DATABASE_PASSWORD = c.get('statistics', 'database_password')
-    # Not used with sqlite3.
-    DATABASE_HOST = c.get('statistics', 'database_host')
-    # Set to empty string for localhost. Not used with sqlite3.
-    DATABASE_PORT = c.get('statistics', 'database_port')
-    # Set to empty string for default. Not used with sqlite3.
-if DATABASE_ENGINE == 'sqlite3' and DATABASE_NAME == '':
-    DATABASE_NAME = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
+DATABASES = {
+    'default': {
+        'ENGINE': "django.db.backends.%s" % db_engine,
+        'NAME': db_name
+    }
+}
+
+if db_engine != 'sqlite3':
+    DATABASES['default']['USER'] =  c.get('statistics', 'database_user')
+    DATABASES['default']['PASSWORD'] = c.get('statistics', 'database_password')
+    DATABASES['default']['HOST'] = c.get('statistics', 'database_host')
+    DATABASES['default']['PORT'] = c.get('statistics', 'database_port')
+
+if django.VERSION[0] == 1 and django.VERSION[1] < 2:
+    DATABASE_ENGINE = db_engine
+    DATABASE_NAME = DATABASES['default']['NAME']
+    if DATABASE_ENGINE != 'sqlite3':
+        DATABASE_USER = DATABASES['default']['USER']
+        DATABASE_PASSWORD = DATABASES['default']['PASSWORD']
+        DATABASE_HOST = DATABASES['default']['HOST']
+        DATABASE_PORT = DATABASES['default']['PORT']
+
 
 # Local time zone for this installation. All choices can be found here:
 # http://docs.djangoproject.com/en/dev/ref/settings/#time-zone

@@ -7,6 +7,7 @@ from time import sleep, time
 
 logger = logging.getLogger('Bcfg2.Server.FileMonitor')
 
+
 def ShouldIgnore(event):
     """Test if the event should be suppresed."""
     # FIXME should move event suppression out of the core
@@ -17,6 +18,7 @@ def ShouldIgnore(event):
         #logger.error("Suppressing event for file %s" % (event.filename))
         return True
     return False
+
 
 class Event(object):
     def __init__(self, request_id, filename, code):
@@ -29,6 +31,8 @@ class Event(object):
         return self.action
 
 available = {}
+
+
 class FileMonitor(object):
     """File Monitor baseclass."""
     def __init__(self, debug=False):
@@ -78,7 +82,7 @@ class FileMonitor(object):
         if lock:
             lock.release()
         end = time()
-        logger.info("Handled %d events in %.03fs" % (count, (end-start)))
+        logger.info("Handled %d events in %.03fs" % (count, (end - start)))
 
     def handle_events_in_interval(self, interval):
         end = time() + interval
@@ -91,7 +95,9 @@ class FileMonitor(object):
 
 
 class FamFam(object):
-    """The fam object is a set of callbacks for file alteration events (FAM support)."""
+    """The fam object is a set of callbacks for
+    file alteration events (FAM support).
+    """
 
     def __init__(self):
         object.__init__(self)
@@ -164,7 +170,6 @@ class FamFam(object):
         return count
 
 
-
 class Fam(FileMonitor):
     """
        The fam object is a set of callbacks for
@@ -195,6 +200,7 @@ class Fam(FileMonitor):
     def get_event(self):
         return self.fm.nextEvent()
 
+
 class Pseudo(FileMonitor):
     """
        The fam object is a set of callbacks for
@@ -213,14 +219,16 @@ class Pseudo(FileMonitor):
 
     def AddMonitor(self, path, obj):
         """add a monitor to path, installing a callback to obj.HandleEvent"""
-        handleID = len(self.handles.keys())
+        handleID = len(list(self.handles.keys()))
         mode = os.stat(path)[stat.ST_MODE]
         handle = Event(handleID, path, 'exists')
         if stat.S_ISDIR(mode):
             dirList = os.listdir(path)
             self.pending_events.append(handle)
             for includedFile in dirList:
-                self.pending_events.append(Event(handleID, includedFile, 'exists'))
+                self.pending_events.append(Event(handleID,
+                                                 includedFile,
+                                                 'exists'))
             self.pending_events.append(Event(handleID, path, 'endExist'))
         else:
             self.pending_events.append(Event(handleID, path, 'exists'))

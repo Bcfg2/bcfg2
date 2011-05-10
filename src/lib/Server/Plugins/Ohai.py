@@ -37,12 +37,12 @@ class OhaiCache(object):
             try:
                 data = open("%s/%s.json" % (self.dirname, item)).read()
             except:
-                raise KeyError, item
+                raise KeyError(item)
             self.cache[item] = json.loads(data)
         return self.cache[item]
 
     def __iter__(self):
-        data = self.cache.keys()
+        data = list(self.cache.keys())
         data.extend([x[:-5] for x in os.listdir(self.dirname)])
         return data.__iter__()
 
@@ -50,7 +50,9 @@ class OhaiCache(object):
 class Ohai(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Probing,
            Bcfg2.Server.Plugin.Connector):
-    """The Ohai plugin is used to detect information about the client operating system."""
+    """The Ohai plugin is used to detect information
+    about the client operating system.
+    """
     name = 'Ohai'
     experimental = True
 

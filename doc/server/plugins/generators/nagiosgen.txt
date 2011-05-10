@@ -169,3 +169,37 @@ Note that some of these files are built on demand, each time a client
 in group "nagios-server" checks in with the Bcfg2 server. Local nagios
 instances can be configured to use the NagiosGen directory in the Bcfg2
 repository directly.
+
+Fine-Grained Configuration
+==========================
+
+NagiosGen can be configured in excruciating detail by editing
+``NagiosGen/config.xml``, which will let you set individual Nagios
+options for hosts or groups.  E.g.:
+
+.. code-block:: xml
+
+    <NagiosGen>
+       <Group name="datacenter-2">
+          <Option name="parents">dc-2-switch</Option>
+       <Group>
+       <Group name="non-production">
+          <Option name="notification_period">workhours</Option>
+          <Option name="notification_options">d</Option>
+       </Group>
+       <Client name="foo.example.com">
+          <Option name="max_check_attempts">10</Option>
+       </Client>
+    </NagiosGen>
+
+Obviously the sort of fine-grained control you get from this overlaps
+to some degree with Nagios' own templating, so use it wisely and in
+moderation.
+
+``NagiosGen/config.xml`` replaces the files
+``Properties/NagiosGen.xml`` and ``NagiosGen/parents.xml`` in older
+versions of Bcfg2; your old configs can be migrated using the
+``nagiosgen-convert.py`` tool.  The plugin does contain a
+backwards-compatibility layer for those older config files, but
+``NagiosGen/config.xml`` must exist (even if empty) for the plugin to
+function.

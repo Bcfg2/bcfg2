@@ -2,6 +2,7 @@ import logging
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
 
+
 class Query(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Query clients"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin query [-n] [-c] "
@@ -25,14 +26,15 @@ class Query(Bcfg2.Server.Admin.Mode):
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 ['Metadata', 'Probes'],
                                                 'foo', False, 'UTF-8')
-        except Bcfg2.Server.Core.CoreInitError, msg:
+        except Bcfg2.Server.Core.CoreInitError:
+            msg = sys.exc_info()[1]
             self.errExit("Core load failed because %s" % msg)
         self.bcore.fam.handle_events_in_interval(1)
         self.meta = self.bcore.metadata
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        clients = self.meta.clients.keys()
+        clients = list(self.meta.clients.keys())
         filename_arg = False
         filename = None
         for arg in args:
@@ -48,7 +50,7 @@ class Query(Bcfg2.Server.Admin.Mode):
             try:
                 k, v = arg.split('=')
             except:
-                print "Unknown argument %s" % arg
+                print("Unknown argument %s" % arg)
                 continue
             if k == 'p':
                 nc = self.meta.get_client_names_by_profiles(v.split(','))
@@ -57,22 +59,22 @@ class Query(Bcfg2.Server.Admin.Mode):
                 # add probed groups (if present)
                 for conn in self.bcore.connectors:
                     if isinstance(conn, Bcfg2.Server.Plugins.Probes.Probes):
-                        for c, glist in conn.cgroups.items():
+                        for c, glist in list(conn.cgroups.items()):
                             for g in glist:
                                 if g in v.split(','):
                                     nc.append(c)
             else:
-                print "One of g= or p= must be specified"
+                print("One of g= or p= must be specified")
                 raise SystemExit(1)
             clients = [c for c in clients if c in nc]
         if '-n' in args:
             for client in clients:
-                print client
+                print(client)
         else:
-            print ','.join(clients)
+            print(','.join(clients))
         if '-f' in args:
             f = open(filename, "w")
             for client in clients:
                 f.write(client + "\n")
             f.close()
-            print "Wrote results to %s" % (filename)
+            print("Wrote results to %s" % (filename))

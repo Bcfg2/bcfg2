@@ -137,14 +137,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         if entry.get('dev_type') in ['block', 'char']:
             # check if major/minor are properly specified
             if entry.get('major') == None or \
                entry.get('minor') == None:
                 self.logger.error('Entry %s not completely specified. '
-                                  'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                  'Try running bcfg2-lint.' % (entry.get('name')))
                 return False
         try:
             # check for file existence
@@ -167,7 +167,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 if entry.get('major') == None or \
                    entry.get('minor') == None:
                     self.logger.error('Entry %s not completely specified. '
-                                      'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                      'Try running bcfg2-lint.' % (entry.get('name')))
                     return False
                 major = int(entry.get('major'))
                 minor = int(entry.get('minor'))
@@ -218,7 +218,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     if entry.get('major') == None or \
                        entry.get('minor') == None:
                         self.logger.error('Entry %s not completely specified. '
-                                          'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                          'Try running bcfg2-lint.' % (entry.get('name')))
                         return False
                     major = int(entry.get('major'))
                     minor = int(entry.get('minor'))
@@ -240,7 +240,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
@@ -348,7 +348,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing directory %s" % (entry.get('name')))
@@ -542,7 +542,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                             return False
 
         # If we get here, then the parent directory should exist
-        if (entry.get("paranoid", False) == 'true') and \
+        if (entry.get("paranoid", False) in ['true', 'True']) and \
            self.setup.get("paranoid", False) and not \
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
@@ -550,7 +550,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             bkuplist = [f for f in os.listdir(self.ppath) if
                         f.startswith(bkupnam)]
             bkuplist.sort()
-            if len(bkuplist) == int(self.max_copies):
+            while len(bkuplist) >= int(self.max_copies):
                 # remove the oldest backup available
                 oldest = bkuplist.pop(0)
                 self.logger.info("Removing %s" % oldest)
@@ -563,7 +563,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 # backup existing file
                 shutil.copy(entry.get('name'),
-                            "%s/%s_%s" % (self.ppath, bkupnam, datetime.now()))
+                            "%s/%s_%s" % (self.ppath, bkupnam,
+                                          datetime.isoformat(datetime.now())))
                 self.logger.info("Backup of %s saved to %s" %
                                  (entry.get('name'), self.ppath))
             except IOError, e:
@@ -613,7 +614,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Verify HardLink entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         try:
@@ -636,7 +637,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Install HardLink entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing Hardlink %s" % (entry.get('name')))
@@ -712,7 +713,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         try:
             os.chown(entry.get('name'), normUid(entry), normGid(entry))
@@ -727,7 +728,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Verify Path type='symlink' entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         try:
@@ -750,7 +751,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Install Path type='symlink' entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing symlink %s" % (entry.get('name')))

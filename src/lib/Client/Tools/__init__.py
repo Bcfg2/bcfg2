@@ -4,9 +4,9 @@ import warnings
 warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
                         DeprecationWarning)
 import os
-import popen2
 import stat
 import sys
+from subprocess import Popen, PIPE
 import time
 
 import Bcfg2.Client.XML
@@ -25,26 +25,6 @@ class toolInstantiationError(Exception):
     pass
 
 
-class readonlypipe(popen2.Popen4):
-    """This pipe sets up stdin --> /dev/null."""
-
-    def __init__(self, cmd, bufsize=-1):
-        popen2._cleanup()
-        c2pread, c2pwrite = os.pipe()
-        null = open('/dev/null', 'w+')
-        self.pid = os.fork()
-        if self.pid == 0:
-            # Child
-            os.dup2(null.fileno(), sys.__stdin__.fileno())
-            #os.dup2(p2cread, 0)
-            os.dup2(c2pwrite, 1)
-            os.dup2(c2pwrite, 2)
-            self._run_child(cmd)
-        os.close(c2pwrite)
-        self.fromchild = os.fdopen(c2pread, 'r', bufsize)
-        popen2._active.append(self)
-
-
 class executor:
     """This class runs stuff for us"""
 
@@ -53,30 +33,12 @@ class executor:
 
     def run(self, command):
         """Run a command in a pipe dealing with stdout buffer overloads."""
-        self.logger.debug('> %s' % command)
-
-        runpipe = readonlypipe(command, bufsize=16384)
-        output = []
-        try:#macosx doesn't like this
-            runpipe.fromchild.flush()
-        except IOError:
-            pass
-        line = runpipe.fromchild.readline()
-        cmdstat = -1
-        while cmdstat == -1:
-            while line:
-                if len(line) > 0:
-                    self.logger.debug('< %s' % line[:-1])
-                    output.append(line[:-1])
-                line = runpipe.fromchild.readline()
-            time.sleep(0.1)
-            cmdstat = runpipe.poll()
-        output += [line[:-1] for line in runpipe.fromchild.readlines() \
-                   if line]
-        # The exit code from the program is in the upper byte of the
-        # value returned by cmdstat. Shift it down for tools looking at
-        # the value.
-        return ((cmdstat >> 8), output)
+        p = Popen(command, shell=True, bufsize=16384,
+                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        output = p.communicate()[0]
+        for line in output.splitlines():
+            self.logger.debug('< %s' % line)
+        return (p.returncode, output.splitlines())
 
 
 class Tool:
@@ -185,7 +147,9 @@ class Tool:
 
         if 'failure' in entry.attrib:
             self.logger.error("Entry %s:%s reports bind failure: %s" % \
-                              (entry.tag, entry.get('name'), entry.get('failure')))
+                              (entry.tag,
+                               entry.get('name'),
+                               entry.get('failure')))
             return False
 
         missing = [attr for attr in self.__req__[entry.tag] \
@@ -198,7 +162,8 @@ class Tool:
             try:
                 self.gatherCurrentData(entry)
             except:
-                self.logger.error("Unexpected error in gatherCurrentData", exc_info=1)
+                self.logger.error("Unexpected error in gatherCurrentData",
+                                  exc_info=1)
             return False
         return True
 
@@ -255,7 +220,8 @@ class PkgTool(Tool):
         self.logger.info("Trying single pass package install for pkgtype %s" % \
                          self.pkgtype)
 
-        data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]]) for pkg in packages]
+        data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]])
+                for pkg in packages]
         pkgargs = " ".join([self.pkgtool[1][0] % datum for datum in data])
 
         self.logger.debug("Installing packages: :%s:" % pkgargs)
@@ -348,7 +314,9 @@ class SvcTool(Tool):
             return
 
         for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
-            if entry.get('mode', 'default') == 'manual':
+            mode = entry.get('mode', 'default')
+            if mode == 'manual' or \
+                    (mode == 'interactive_only' and not self.setup['interactive']):
                 continue
             # need to handle servicemode = (build|default)
             # need to handle mode = (default|supervised)
@@ -358,7 +326,12 @@ class SvcTool(Tool):
                 else:
                     if self.setup['interactive']:
                         prompt = 'Restart service %s?: (y/N): ' % entry.get('name')
-                        if raw_input(prompt) not in ['y', 'Y']:
+                        # py3k compatibility
+                        try:
+                            ans = raw_input(prompt)
+                        except NameError:
+                            ans = input(prompt)
+                        if ans not in ['y', 'Y']:
                             continue
                     rc = self.restart_service(entry)
             else:

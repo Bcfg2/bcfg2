@@ -50,6 +50,12 @@ self.metadata is an instance of the class ClientMetadata and documented
 self.metadata.Properties.data
 =============================
 
+.. note::
+
+    If you want to use Properties, you will need to enable the
+    :ref:`server-plugins-connectors-properties` plugin in
+    ``/etc/bcfg2.conf``.
+
 Properties.data is a python `ElementTree <http://codespeak.net/lxml/>`_
 object, loaded from the data in ``/var/lib/bcfg2/Properties/<properties
 file>.xml``. That file should have a ``Properties`` node at its root.
@@ -78,6 +84,12 @@ on the host 'www.example.com'::
     ${self.metadata.Properties['example.xml'].data.xpath($path)[0].text}
     ${self.metadata.Properties['example.xml'].data.xpath(path)[0].text}
 
+Other Variables
+===============
+
+* **Template.searchList(self)[1]['path']** is the Path name specified in a Bundle
+* **Template.searchList(self)[1]['source_path']** is the path to the TCheetah template on the Bcfg2 server
+
 Simple Example
 ==============
 
@@ -92,6 +104,8 @@ directory. Below is a simple example a file ``/foo``.
 
     > buildfile /foo <clientname>
     Hostname is $self.metadata.hostname
+    Filename is $Template.searchList(self)[1]['path']
+    Template is $Template.searchList(self)[1]['source_path']
     Groups:
     #for $group in $self.metadata.groups:
      * $group
@@ -124,6 +138,8 @@ current client probe state.
 
     <Path type="file" name="/foo" owner="root" perms="0624" group="root">
     Hostname is topaz.mcs.anl.gov
+    Filename is /foo
+    Template is /var/lib/bcfg2/TCheetah/foo/template
     Groups:
      * desktop
      * mcs-base

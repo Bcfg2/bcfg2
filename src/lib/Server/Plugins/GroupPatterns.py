@@ -3,6 +3,7 @@ import re
 
 import Bcfg2.Server.Plugin
 
+
 class PackedDigitRange(object):
     def __init__(self, digit_range):
         self.sparse = list()
@@ -18,12 +19,14 @@ class PackedDigitRange(object):
         if iother in self.sparse:
             return True
         for (start, end) in self.ranges:
-            if iother in xrange(start, end+1):
+            if iother in range(start, end + 1):
                 return True
         return False
 
+
 class PatternMap(object):
     range_finder = '\\[\\[[\d\-,]+\\]\\]'
+
     def __init__(self, pattern, rangestr, groups):
         self.pattern = pattern
         self.rangestr = rangestr
@@ -33,8 +36,11 @@ class PatternMap(object):
             self.process = self.process_re
         elif rangestr != None:
             self.process = self.process_range
-            self.re = re.compile('^' + re.subn(self.range_finder, '(\d+)', rangestr)[0])
-            dmatcher = re.compile(re.subn(self.range_finder, '\\[\\[([\d\-,]+)\\]\\]', rangestr)[0])
+            self.re = re.compile('^' + re.subn(self.range_finder, '(\d+)',
+                                               rangestr)[0])
+            dmatcher = re.compile(re.subn(self.range_finder,
+                                          '\\[\\[([\d\-,]+)\\]\\]',
+                                          rangestr)[0])
             self.dranges = [PackedDigitRange(x) for x in dmatcher.match(rangestr).groups()]
         else:
             raise Exception
@@ -58,9 +64,10 @@ class PatternMap(object):
         for group in self.groups:
             newg = group
             for idx in range(len(sub)):
-                newg = newg.replace('$%s' % (idx+1), sub[idx])
+                newg = newg.replace('$%s' % (idx + 1), sub[idx])
             ret.append(newg)
         return ret
+
 
 class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     def __init__(self, filename, fam):
@@ -100,6 +107,7 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
                     "GroupPatterns: Failed to process pattern %s for %s" % \
                     (pattern.pattern, hostname), exc_info=1)
         return ret
+
 
 class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.Connector):

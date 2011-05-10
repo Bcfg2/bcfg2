@@ -8,10 +8,7 @@ __all__ = [
 
 import os
 import sys
-import xmlrpclib
 import socket
-import SocketServer
-import SimpleXMLRPCServer
 import base64
 import select
 import signal
@@ -19,12 +16,17 @@ import logging
 import ssl
 import threading
 import time
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import xmlrpclib, SimpleXMLRPCServer, SocketServer
+
 
 class ForkedChild(Exception):
     pass
 
+
 class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     logger = logging.getLogger("Cobalt.Server.XMLRPCDispatcher")
+
     def __init__(self, allow_none, encoding):
         try:
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
@@ -48,7 +50,8 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
-        except xmlrpclib.Fault, fault:
+        except xmlrpclib.Fault:
+            fault = sys.exc_info()[1]
             raw_response = xmlrpclib.dumps(fault,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
@@ -59,6 +62,7 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
                 allow_none=self.allow_none, encoding=self.encoding)
         return raw_response
+
 
 class SSLServer (SocketServer.TCPServer, object):
 
@@ -76,7 +80,8 @@ class SSLServer (SocketServer.TCPServer, object):
     logger = logging.getLogger("Cobalt.Server.TCPServer")
 
     def __init__(self, server_address, RequestHandlerClass, keyfile=None,
-                 certfile=None, reqCert=False, ca=None, timeout=None, protocol='xmlrpc/ssl'):
+                 certfile=None, reqCert=False, ca=None, timeout=None,
+                 protocol='xmlrpc/ssl'):
 
         """Initialize the SSL-TCP server.
 
@@ -106,17 +111,17 @@ class SSLServer (SocketServer.TCPServer, object):
         if keyfile != None:
             if keyfile == False or not os.path.exists(keyfile):
                 self.logger.error("Keyfile %s does not exist" % keyfile)
-                raise Exception, "keyfile doesn't exist"
+                raise Exception("keyfile doesn't exist")
         self.certfile = certfile
         if certfile != None:
             if certfile == False or not os.path.exists(certfile):
                 self.logger.error("Certfile %s does not exist" % certfile)
-                raise Exception, "certfile doesn't exist"
+                raise Exception("certfile doesn't exist")
         self.ca = ca
         if ca != None:
             if ca == False or not os.path.exists(ca):
                 self.logger.error("CA %s does not exist" % ca)
-                raise Exception, "ca doesn't exist"
+                raise Exception("ca doesn't exist")
         self.reqCert = reqCert
         if ca and certfile:
             self.mode = ssl.CERT_OPTIONAL
@@ -128,14 +133,18 @@ class SSLServer (SocketServer.TCPServer, object):
             self.ssl_protocol = ssl.PROTOCOL_TLSv1
         else:
             self.logger.error("Unknown protocol %s" % (protocol))
-            raise Exception, "unknown protocol %s" % protocol
+            raise Exception("unknown protocol %s" % protocol)
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
         sock.settimeout(self.timeout)
-        sslsock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile,
-                                  keyfile=self.keyfile, cert_reqs=self.mode,
-                                  ca_certs=self.ca, ssl_version=self.ssl_protocol)
+        sslsock = ssl.wrap_socket(sock,
+                                  server_side=True,
+                                  certfile=self.certfile,
+                                  keyfile=self.keyfile,
+                                  cert_reqs=self.mode,
+                                  ca_certs=self.ca,
+                                  ssl_version=self.ssl_protocol)
         return sslsock, sockinfo
 
     def close_request(self, request):
@@ -212,20 +221,21 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     ### need to override do_POST here
     def do_POST(self):
         try:
-            max_chunk_size = 10*1024*1024
+            max_chunk_size = 10 * 1024 * 1024
             size_remaining = int(self.headers["content-length"])
             L = []
             while size_remaining:
                 try:
                     select.select([self.rfile.fileno()], [], [], 3)
                 except select.error:
-                    print "got select timeout"
+                    print("got select timeout")
                     raise
                 chunk_size = min(size_remaining, max_chunk_size)
                 L.append(self.rfile.read(chunk_size))
                 size_remaining -= len(L[-1])
             data = ''.join(L)
-            response = self.server._marshaled_dispatch(self.client_address, data)
+            response = self.server._marshaled_dispatch(self.client_address,
+                                                       data)
         except:
             try:
                 self.send_response(500)
@@ -233,7 +243,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             except:
                 (type, msg) = sys.exc_info()[:2]
                 self.logger.error("Error sending 500 response (%s): %s" % \
-                    (type, msg)) 
+                    (type, msg))
                 raise
         else:
             # got a valid XML RPC response
@@ -248,7 +258,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                         # If we hit SSL3_WRITE_PENDING here try to resend.
                         self.wfile.write(response)
                         break
-                    except ssl.SSLError, e:
+                    except ssl.SSLError:
+                        e = sys.exc_info()[1]
                         if str(e).find("SSL3_WRITE_PENDING") < 0:
                             raise
                         self.logger.error("SSL3_WRITE_PENDING")
@@ -267,7 +278,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                         (self.client_address[0], msg))
                 else:
                     self.logger.error("Error sending response (%s): %s" % \
-                        (type, msg)) 
+                        (type, msg))
 
     def finish(self):
         # shut down the connection
@@ -275,6 +286,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.wfile.flush()
             self.wfile.close()
         self.rfile.close()
+
 
 class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                     XMLRPCDispatcher, object):
@@ -355,6 +367,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
 
     def _get_require_auth(self):
         return getattr(self.RequestHandlerClass, "require_auth", False)
+
     def _set_require_auth(self, value):
         self.RequestHandlerClass.require_auth = value
     require_auth = property(_get_require_auth, _set_require_auth)
@@ -364,6 +377,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
             return self.RequestHandlerClass.credentials
         except AttributeError:
             return dict()
+
     def _set_credentials(self, value):
         self.RequestHandlerClass.credentials = value
     credentials = property(_get_credentials, _set_credentials)
@@ -375,7 +389,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         except AttributeError:
             name = "unknown"
         if hasattr(instance, 'plugins'):
-            for pname, pinst in instance.plugins.iteritems():
+            for pname, pinst in list(instance.plugins.items()):
                 for mname in pinst.__rmi__:
                     xmname = "%s.%s" % (pname, mname)
                     fn = getattr(pinst, mname)

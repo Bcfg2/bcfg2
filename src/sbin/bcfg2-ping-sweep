@@ -8,7 +8,7 @@ __revision__ = '$Revision$'
 from os import dup2, execl, fork, uname, wait
 import sys
 import time
-import lxml.etree 
+import lxml.etree
 
 import Bcfg2.Options
 
@@ -20,9 +20,10 @@ if __name__ == '__main__':
 
     cfpath = setup['configfile']
     clientdatapath = "%s/Metadata/clients.xml" % setup['repo']
-    
+
     clientElement = lxml.etree.parse(clientdatapath)
-    hostlist = [client.get('name') for client in clientElement.findall("Client")]
+    hostlist = [client.get('name')
+                for client in clientElement.findall("Client")]
 
     pids = {}
     null = open('/dev/null', 'w+')
@@ -31,9 +32,8 @@ if __name__ == '__main__':
     #/bin/ping on linux /sbin/ping on os x
     osname = uname()[0]
 
-    
     while hostlist or pids:
-        if hostlist and len(pids.keys()) < 15:
+        if hostlist and len(list(pids.keys())) < 15:
             host = hostlist.pop()
             pid = fork()
             if pid == 0:
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                     execl('/sbin/ping', 'ping', '-t', '5', '-c', '1', host)
                 elif osname == 'SunOS':
                     execl('/usr/sbin/ping', 'ping', host, '56', '1')
-                else: #default
+                else:  # default
                     execl('/bin/ping', 'ping', '-w', '5', '-c', '1', host)
             else:
                 pids[pid] = host
@@ -58,14 +58,15 @@ if __name__ == '__main__':
                 continue
             chost = pids[cpid]
             del pids[cpid]
-            elm = clientElement.xpath("//Client[@name='%s']"%chost)[0]
+            elm = clientElement.xpath("//Client[@name='%s']" % chost)[0]
             if status == 0:
-                elm.set("pingable",'Y')
+                elm.set("pingable", 'Y')
                 elm.set("pingtime", str(time.time()))
             else:
-                elm.set("pingable",'N')
+                elm.set("pingable", 'N')
 
     fout = open(clientdatapath, 'w')
-    fout.write(lxml.etree.tostring(clientElement.getroot(), encoding='UTF-8', xml_declaration=True))
+    fout.write(lxml.etree.tostring(clientElement.getroot(),
+                                   encoding='UTF-8',
+                                   xml_declaration=True))
     fout.close()
-                        

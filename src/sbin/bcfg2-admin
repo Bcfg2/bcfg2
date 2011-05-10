@@ -2,11 +2,12 @@
 """bcfg2-admin is a script that helps to administrate a Bcfg2 deployment."""
 
 from optparse import OptionParser
-from StringIO import StringIO
 import logging
 import Bcfg2.Server.Core
 import Bcfg2.Logger
 import Bcfg2.Options
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import StringIO
 
 log = logging.getLogger('bcfg2-admin')
 
@@ -56,14 +57,15 @@ def main():
         else:
             # Print short help for all modes
             parser.print_help()
-            print create_description()
+            print(create_description())
             raise SystemExit(0)
 
     if args[0] in get_modes():
         modname = args[0].capitalize()
         try:
             mode_cls = mode_import(modname)
-        except ImportError, e:
+        except ImportError:
+            e = sys.exc_info()[1]
             log.error("Failed to load admin mode %s: %s" % (modname, e))
             raise SystemExit(1)
         mode = mode_cls(options.configfile)
@@ -73,7 +75,7 @@ def main():
     else:
         log.error("Unknown mode %s" % args[0])
         parser.print_help()
-        print create_description()
+        print(create_description())
         raise SystemExit(1)
 
 if __name__ == '__main__':

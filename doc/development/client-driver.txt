@@ -10,7 +10,6 @@ driver for a configuration element type. The included example describes
 an existing driver, and the process that was used to create it.
 
 #. Pick a name for the driver. In this case, we picked the name RPM.
-#. Add "RPM" to the ``__all__`` list in ``src/lib/Client/Tools/__init__.py``
 #. Create a file in ``src/lib/Client/Tools`` with the same name (RPM.py)
 #. Create a class in this file with the same name (class RPM)
 

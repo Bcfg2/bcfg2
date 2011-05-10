@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-vcs:
+
+===============
+VCS Client Tool
+===============
+
+.. warning: This tool is currently under development.
+
+.. note: Currently, the only supported VCS is git.
+
+The VCS tool allows you to checkout particular revisions from a VCS
+repository on the client to a specified path. The tool requires the
+appropriate python libraries for the VCS used to be installed.

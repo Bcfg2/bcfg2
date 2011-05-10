@@ -1,15 +1,17 @@
-"""Checks with LDAP (ActiveDirectory) to see if the current user is an LDAP(AD) user,
-and returns a subset of the user's profile that is needed by Argonne/CIS to
-to set user level privleges in Django"""
-
-__revision__ = '$Revision: 2456 $'
+"""
+Checks with LDAP (ActiveDirectory) to see if the current user is an LDAP(AD)
+user, and returns a subset of the user's profile that is needed by Argonne/CIS
+to set user level privleges in Django
+"""
 
 import os
 import ldap
 
+
 class LDAPAUTHError(Exception):
     """LDAPAUTHError is raised when somehting goes boom."""
     pass
+
 
 class ldapauth(object):
     group_test = False
@@ -20,35 +22,35 @@ class ldapauth(object):
     telephoneNumber = None
     title = None
     memberOf = None
-    department = None #this will be a list
+    department = None  # this will be a list
     mail = None
-    extensionAttribute1 = None #badgenumber
+    extensionAttribute1 = None  # badgenumber
     badge_no = None
 
-    def __init__(self,login,passwd):
+    def __init__(self, login, passwd):
         """get username (if using ldap as auth the
         apache env var REMOTE_USER should be used)
         from username get user profile from AD/LDAP
         """
         #p = self.user_profile(login,passwd)
-        d = self.user_dn(login) #success, distname
-        print d[1]
+        d = self.user_dn(login)  # success, distname
+        print(d[1])
         if d[0] == 'success':
             pass
-            p = self.user_bind(d[1],passwd)
+            p = self.user_bind(d[1], passwd)
             if p[0] == 'success':
                 #parse results
                 parsed = self.parse_results(p[2])
-                print self.department
+                print(self.department)
                 self.group_test = self.member_of()
                 securitylevel = self.security_level()
-                print "ACCESS LEVEL: " + str(securitylevel)
+                print("ACCESS LEVEL: " + str(securitylevel))
             else:
                 raise LDAPAUTHError(p[2])
         else:
             raise LDAPAUTHError(p[2])
 
-    def user_profile(self,login,passwd=None):
+    def user_profile(self, login, passwd=None):
         """NOT USED RIGHT NOW"""
         ldap_login = "CN=%s" % login
         svc_acct = os.environ['LDAP_SVC_ACCT_NAME']
@@ -60,33 +62,35 @@ class ldapauth(object):
 
         try:
             conn = ldap.initialize(os.environ['LDAP_URI'])
-            conn.bind(svc_acct,svc_pass,ldap.AUTH_SIMPLE)
+            conn.bind(svc_acct, svc_pass, ldap.AUTH_SIMPLE)
             result_id = conn.search(search_pth,
-                                      ldap.SCOPE_SUBTREE,
-                                      ldap_login,None)
-            result_type,result_data = conn.result(result_id,0)
-            return ('success','User profile found',result_data,)
-        except ldap.LDAPError,e:
+                                    ldap.SCOPE_SUBTREE,
+                                    ldap_login,
+                                    None)
+            result_type, result_data = conn.result(result_id, 0)
+            return ('success', 'User profile found', result_data,)
+        except ldap.LDAPError, e:
             #connection failed
-            return ('error','LDAP connect failed',e,)
+            return ('error', 'LDAP connect failed', e,)
 
-    def user_bind(self,distinguishedName,passwd):
+    def user_bind(self, distinguishedName, passwd):
         """Binds to LDAP Server"""
         search_pth = os.environ['LDAP_SEARCH_PTH']
         try:
             conn = ldap.initialize(os.environ['LDAP_URI'])
-            conn.bind(distinguishedName,passwd,ldap.AUTH_SIMPLE)
+            conn.bind(distinguishedName, passwd, ldap.AUTH_SIMPLE)
             cn = distinguishedName.split(",")
             result_id = conn.search(search_pth,
-                                      ldap.SCOPE_SUBTREE,
-                                      cn[0],None)
-            result_type,result_data = conn.result(result_id,0)
-            return ('success','User profile found',result_data,)
-        except ldap.LDAPError,e:
+                                    ldap.SCOPE_SUBTREE,
+                                    cn[0],
+                                    None)
+            result_type, result_data = conn.result(result_id, 0)
+            return ('success', 'User profile found', result_data,)
+        except ldap.LDAPError, e:
             #connection failed
-            return ('error','LDAP connect failed',e,)
+            return ('error', 'LDAP connect failed', e,)
 
-    def user_dn(self,cn):
+    def user_dn(self, cn):
         """Uses Service Account to get distinguishedName"""
         ldap_login = "CN=%s" % cn
         svc_acct = os.environ['LDAP_SVC_ACCT_NAME']
@@ -95,19 +99,20 @@ class ldapauth(object):
 
         try:
             conn = ldap.initialize(os.environ['LDAP_URI'])
-            conn.bind(svc_acct,svc_pass,ldap.AUTH_SIMPLE)
+            conn.bind(svc_acct, svc_pass, ldap.AUTH_SIMPLE)
             result_id = conn.search(search_pth,
-                                      ldap.SCOPE_SUBTREE,
-                                      ldap_login,None)
-            result_type,result_data = conn.result(result_id,0)
+                                    ldap.SCOPE_SUBTREE,
+                                    ldap_login,
+                                    None)
+            result_type, result_data = conn.result(result_id, 0)
             raw_obj = result_data[0][1]
             distinguishedName = raw_obj['distinguishedName']
-            return ('success',distinguishedName[0],)
-        except ldap.LDAPError,e:
+            return ('success', distinguishedName[0],)
+        except ldap.LDAPError, e:
             #connection failed
-            return ('error','LDAP connect failed',e,)
+            return ('error', 'LDAP connect failed', e,)
 
-    def parse_results(self,user_obj):
+    def parse_results(self, user_obj):
         """Clean up the huge ugly object handed to us in the LDAP query"""
         #user_obj is a list formatted like this:
         #[('LDAP_DN',{user_dict},),]
@@ -169,4 +174,3 @@ class ldapauth(object):
                 level = 4
 
         return level
-

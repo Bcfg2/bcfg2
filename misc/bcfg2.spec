@@ -13,13 +13,13 @@
 %define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
 
 Name:             bcfg2
-Version:          1.2.0pre1
+Version:          1.2.0pre2
 Release:          %{release}
 Summary:          Configuration management system
 
 Group:            Applications/System
 License:          BSD
-URL:              http://trac.mcs.anl.gov/projects/bcfg2
+URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -28,11 +28,13 @@ BuildArch:        noarch
 BuildRequires:    python-devel
 BuildRequires:    %{lxmldep}
 
-%if 0%{?rhel} <= 5
+# %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
+# %systems (and potentially very old Fedora systems, too)
+%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6
 BuildRequires: python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
-%define pythonpath %(rpm -ql python-sphinx10 | grep '\.egg$')
+%define pythonpath /usr/lib/python%{py_ver}/site-packages/Sphinx-1.0.4-py%{py_ver}.egg
 %else
 BuildRequires: python-sphinx >= 0.6
 %endif
@@ -226,15 +228,17 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %{_sbindir}/bcfg2-build-reports
 %{_sbindir}/bcfg2-info
 %{_sbindir}/bcfg2-ping-sweep
+%{_sbindir}/bcfg2-lint
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-server
 
+%{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
 
 %files doc
-%defattr(0644,root,root,-)
+%defattr(-,root,root,-)
 %doc %{_defaultdocdir}/bcfg2-doc-%{version}
 
 %files -n bcfg2-web

@@ -217,9 +217,9 @@ useful results:
     </Groups>
 
 Each of the included groups files has the same format. These files are
-properly validated by ``bcfg2-repo-validate``. This mechanism is
-useful for composing group definitions from multiple sources, or
-setting different permissions in an svn repository.
+properly validated by ``bcfg2-lint``. This mechanism is useful for
+composing group definitions from multiple sources, or setting
+different permissions in an svn repository.
 
 Probes
 ======

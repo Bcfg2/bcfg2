@@ -24,12 +24,13 @@ the files on your clients, starting at the root level. For example::
     bin/  boot/  etc/  opt/  root/  usr/  var/
 
 Specific config files go in like-named directories in this
-heirarchy. For example the password file, ``/etc/passwd``, goes in
-``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
-``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason
-for the like-name directory is to allow multiple versions of each file
-to exist, as described below. Note that these files are exact copies of
-what will appear on the client machine - no templates, XML wrappers, etc.
+heirarchy.  For example the password file, ``/etc/passwd``, goes
+in ``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
+``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason for
+the like-name directory is to allow multiple versions of each file to
+exist, as described below. Note that these files are exact copies of what
+will appear on the client machine (except when using genshi templating --
+see below).
 
 Group-Specific Files
 ====================
@@ -156,6 +157,17 @@ Genshi templates maybe used for entries as well.  Any file ending in .genshi
 will be processed using the new template style (like .newtxt in the TGenshi
 plugin).  Templates can be host and group specific as well.  Deltas will not
 be processed for any genshi base file.
+
+.. note::
+
+    If you are using genshi templating in combination with host-specific
+    or group-specific files, you will need to ensure that the ``.genshi``
+    extensions is at the **end** of the filename. Using the examples
+    from above for *host.example.com* and group *server* you would have
+    the following::
+
+        Cfg/etc/fstab/fstab.H_host.example.com.genshi
+        Cfg/etc/fstab/fstab.G50_server.genshi
 
 File permissions
 ================

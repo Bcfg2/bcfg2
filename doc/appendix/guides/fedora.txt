@@ -216,13 +216,18 @@ mirror near your location according the `Mirror list`_ .
 	    </YUMSource>
 	</Sources>
 
-.. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
 
-Due to the `Magic Groups`_, we need to modify our Metadata. Let's
-add a **fedora13** group which inherits a **fedora** group
-(this should replace the existing **redhat** group) present in
-``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
-something like this
+Due to the :ref:`server-plugins-generators-packages-magic-groups`,
+we need to modify our Metadata. Let's add a **fedora13** group which
+inherits a **fedora** group (this should replace the existing **redhat**
+group) present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting
+file should look something like this
+
+.. note::
+
+    The reason we are creating a release-specific group in this case is
+    that the YUMSource above is specific to the 13th release of fedora.
+    That is, it should not apply to other releases (14, 15, etc).
 
 .. code-block:: xml
 
@@ -244,8 +249,7 @@ something like this
 
 .. note::
     When editing your xml files by hand, it is useful to occasionally
-    run ``bcfg2-repo-validate`` to ensure that your xml validates
-    properly.
+    run ``bcfg2-lint`` to ensure that your xml validates properly.
 
 Add a probe
 +++++++++++
@@ -339,7 +343,7 @@ Bundle now looks like this
 .. code-block:: xml
 
     <Bundle name='base-packages'>
-            <BoundPackage name="gpg-pubkey" type="rpm">
+            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
             </BoundPackage>
@@ -360,6 +364,10 @@ Bundle now looks like this
             <Package name='yum'/>
     </Bundle>
 
+.. note::
+
+    version="foo" is just a dummy attribute for the gpg-pubkey Package
+
 To actually push the gpg keys out via Bcfg2, you will need to manage
 the files as well. This can be done by adding Path entries for each
 of the gpg keys you want to manage
@@ -369,7 +377,7 @@ of the gpg keys you want to manage
     <Bundle name='base-packages'>
             <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5'/>
             <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL'/>
-            <BoundPackage name="gpg-pubkey" type="rpm">
+            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
                             <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
             </BoundPackage>

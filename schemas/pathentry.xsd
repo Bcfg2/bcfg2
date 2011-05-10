@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
 
   <xsd:annotation>
     <xsd:documentation>
@@ -8,9 +9,13 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name='PathEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='altsrc' use='optional'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name='BoundPathEntry'>
@@ -21,6 +26,6 @@
     <xsd:attribute type='xsd:string' name='prune' use='optional'/>
     <xsd:attribute type='xsd:string' name='to' use='optional'/>
     <xsd:attribute type='xsd:string' name='type' use='optional'/>
-    <xsd:attribute type='xsd:string' name='altsrc' use='optional'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>

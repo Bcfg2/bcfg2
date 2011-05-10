@@ -1,5 +1,8 @@
-import os, sys
+import os
+import sys
+
 import Bcfg2.Options
+
 
 class TestOption(object):
     def test__init(self):
@@ -22,11 +25,11 @@ class TestOption(object):
         assert o.value == 'test3'
         del os.environ['TEST2']
         o.parse([], [])
-        print o.value
+        print(o.value)
         assert o.value == 'foobat'
         o.cf = ('communication', 'pwd')
         o.parse([], [])
-        print o.value
+        print(o.value)
         assert o.value == 'test4'
         o.cf = False
         o.parse([], [])
@@ -41,11 +44,13 @@ class TestOption(object):
         o2.parse([('-F', '')], [])
         assert o2.value == True
 
+
 class TestOptionSet(object):
     def test_buildGetopt(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H', odesc='1'))]
+                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+                                             odesc='1'))]
         os = Bcfg2.Options.OptionSet(opts)
         res = os.buildGetopt()
         assert 'H:' in res and 'G' in res and len(res) == 3
@@ -57,13 +62,14 @@ class TestOptionSet(object):
                                              odesc='1', long_arg=True))]
         os = Bcfg2.Options.OptionSet(opts)
         res = os.buildLongGetopt()
-        print res
+        print(res)
         assert 'H=' in res and len(res) == 1
 
     def test_parse(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H', odesc='1'))]
+                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+                                             odesc='1'))]
         os = Bcfg2.Options.OptionSet(opts)
         try:
             os.parse(['-G', '-H'])
@@ -80,11 +86,13 @@ class TestOptionSet(object):
         os3.parse(['-G'])
         assert os3['foo'] == True
 
+
 class TestOptionParser(object):
     def test__init(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-h')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H', odesc='1'))]
+                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+                                             odesc='1'))]
         os1 = Bcfg2.Options.OptionParser(opts)
         assert Bcfg2.Options.Option.cfpath == '/etc/bcfg2.conf'
         sys.argv = ['foo', '-C', '/usr/local/etc/bcfg2.conf']

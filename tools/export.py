@@ -4,16 +4,23 @@
 First attempt to make our export script more portable than export.sh
 """
 
-from email.Utils import formatdate
 import fileinput
 from subprocess import Popen, PIPE
 import sys
 
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import formatdate
+
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
 ftpdir = '/mcs/ftp/pub/bcfg'
-version = raw_input("Please enter the version you are tagging (e.g. 1.0.0): ")
+# py3k compatibility
+try:
+    version = raw_input("Please enter the version you are tagging (e.g. 1.0.0): ")
+except NameError:
+    version = input("Please enter the version you are tagging (e.g. 1.0.0): ")
 tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
+
 
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
@@ -21,8 +28,13 @@ def run(command):
 # update the version
 majorver = version[:5]
 minorver = version[5:]
-name = raw_input("Your name: ")
-email = raw_input("Your email: ")
+# py3k compatibility
+try:
+    name = raw_input("Your name: ")
+    email = raw_input("Your email: ")
+except NameError:
+    name = input("Your name: ")
+    email = input("Your email: ")
 newchangelog = \
 """bcfg2 (%s-0.0%s) unstable; urgency=low
 
@@ -61,14 +73,15 @@ for line in fileinput.input('solaris/Makefile', inplace=1):
     sys.stdout.write(line)
 for line in fileinput.input('solaris/pkginfo.bcfg2', inplace=1):
     if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION=%s\n' % version)
+        line = line.replace(line, 'VERSION="%s"\n' % version)
     sys.stdout.write(line)
 for line in fileinput.input('solaris/pkginfo.bcfg2-server', inplace=1):
     if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION=%s\n' % version)
+        line = line.replace(line, 'VERSION="%s"\n' % version)
     sys.stdout.write(line)
 # update the version in reports
-for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html', inplace=1):
+for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html',
+                            inplace=1):
     if 'Bcfg2 Version' in line:
         line = line.replace(line, '    <span>Bcfg2 Version %s</span>\n' % version)
     sys.stdout.write(line)

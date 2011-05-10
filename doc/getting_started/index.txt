@@ -223,11 +223,13 @@ you will find that we now have a correct entry::
 
 Done! Now we just have 242 (or more) entries to take care of!
 
-:ref:`server-plugins-structures-bundler-index` is a relatively easy
-directory to populate. You can find many samples of Bundles in the
-`Bundle Repository`_, many of which can be used without editing.
+:ref:`server-plugins-structures-bundler-index` is a
+relatively easy directory to populate. You can find many
+samples of Bundles in the :ref:`Bundler Example Repository
+<server-plugins-structures-bundler-index-examples>`, many of which can
+be used without editing.
 
-.. _Bundle Repository: http://docs.bcfg2.org/server/plugins/structures/bundler/index.html#other-examples
+.. _getting_started-index-next-steps:
 
 Next Steps
 ==========
@@ -246,6 +248,9 @@ Run ``bcfg2-info``, and type help and the prompt when it comes up.
 
 ``bcfg2-admin`` can perform a variety of repository maintenance
 tasks. Run ``bcfg2-admin`` help for details.
+
+Once you have the server setup, you may be interested in
+:ref:`bootstrapping <appendix-guides-bootstrap>` additional clients.
 
 Platform-specific Quickstart Notes
 ==================================

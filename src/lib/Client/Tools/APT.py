@@ -69,7 +69,11 @@ class APT(Bcfg2.Client.Tools.Tool):
         if self.setup['kevlar'] and not self.setup['dryrun']:
             self.cmd.run("%s --force-confold --configure --pending" % DPKG)
             self.cmd.run("%s clean" % APTGET)
-            self.pkg_cache = apt.cache.Cache()
+            try:
+                self.pkg_cache = apt.cache.Cache()
+            except SystemError, e:
+                self.logger.info("Failed to initialize APT cache: %s" % e)
+                raise Bcfg2.Client.Tools.toolInstantiationError
             self.pkg_cache.update()
         self.pkg_cache = apt.cache.Cache()
 

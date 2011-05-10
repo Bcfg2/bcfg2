@@ -139,7 +139,7 @@ Example Plugin
        __version__ = '1'
        __author__ = 'me@me.com'
        __rmi__ = ['myfunction']
-       # myfunction is not available remotely as MyPlugin.myfunction
+       # myfunction is now available remotely as MyPlugin.myfunction
 
        def __init__(self, core, datastore):
            Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -206,8 +206,8 @@ do so. We will call our new plugin `MyMetadata`.
            __version__ = '$Id$'
            __author__ = 'bcfg-dev@mcs.anl.gov'
 
-       def __init__(self, core, datastore, watch_clients=True):
-           Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, watch_clients)
+           def __init__(self, core, datastore, watch_clients=True):
+               Bcfg2.Server.Plugins.Metadata.Metadata.__init__(self, core, datastore, watch_clients)
 
 #. Add MyMetadata to ``src/lib/Server/Plugins/__init__.py``
 #. Replace Metadata with MyMetadata in the plugins line of bcfg2.conf

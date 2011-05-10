@@ -1,4 +1,7 @@
-'''This file provides the Hostbase plugin. It manages dns/dhcp/nis host information'''
+"""
+This file provides the Hostbase plugin.
+It manages dns/dhcp/nis host information
+"""
 __revision__ = '$Revision$'
 
 import os
@@ -11,7 +14,9 @@ from sets import Set
 from django.template import Context, loader
 from django.db import connection
 import re
-import cStringIO
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import StringIO
+
 
 class Hostbase(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Structure,
@@ -23,24 +28,29 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
     filepath = '/my/adm/hostbase/files/bind'
 
     def __init__(self, core, datastore):
-        
+
         self.ready = False
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
-        files = ['zone.tmpl', 'reversesoa.tmpl', 'named.tmpl', 'reverseappend.tmpl',
-                 'dhcpd.tmpl', 'hosts.tmpl', 'hostsappend.tmpl']
+        files = ['zone.tmpl',
+                 'reversesoa.tmpl',
+                 'named.tmpl',
+                 'reverseappend.tmpl',
+                 'dhcpd.tmpl',
+                 'hosts.tmpl',
+                 'hostsappend.tmpl']
         self.filedata = {}
         self.dnsservers = []
         self.dhcpservers = []
-        self.templates = {'zone':loader.get_template('zone.tmpl'),
-                          'reversesoa':loader.get_template('reversesoa.tmpl'),
-                          'named':loader.get_template('named.tmpl'),
-                          'namedviews':loader.get_template('namedviews.tmpl'),
-                          'reverseapp':loader.get_template('reverseappend.tmpl'),
-                          'dhcp':loader.get_template('dhcpd.tmpl'),
-                          'hosts':loader.get_template('hosts.tmpl'),
-                          'hostsapp':loader.get_template('hostsappend.tmpl'),
+        self.templates = {'zone': loader.get_template('zone.tmpl'),
+                          'reversesoa': loader.get_template('reversesoa.tmpl'),
+                          'named': loader.get_template('named.tmpl'),
+                          'namedviews': loader.get_template('namedviews.tmpl'),
+                          'reverseapp': loader.get_template('reverseappend.tmpl'),
+                          'dhcp': loader.get_template('dhcpd.tmpl'),
+                          'hosts': loader.get_template('hosts.tmpl'),
+                          'hostsapp': loader.get_template('hostsappend.tmpl'),
                           }
         self.Entries['ConfigFile'] = {}
         self.__rmi__ = ['rebuildState']
@@ -48,14 +58,17 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             self.rebuildState(None)
         except:
             raise PluginInitError
-                 
+
     def FetchFile(self, entry, metadata):
         """Return prebuilt file data."""
         fname = entry.get('name').split('/')[-1]
         if not fname in self.filedata:
             raise PluginExecutionError
-        perms = {'owner':'root', 'group':'root', 'perms':'644'}
-        [entry.attrib.__setitem__(key, value) for (key, value) in perms.iteritems()]
+        perms = {'owner': 'root',
+                 'group': 'root',
+                 'perms': '644'}
+        [entry.attrib.__setitem__(key, value)
+         for (key, value) in list(perms.items())]
         entry.text = self.filedata[fname]
 
     def BuildStructures(self, metadata):
@@ -110,8 +123,8 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         hosts = {}
 
         for zone in zones:
-            zonefile = cStringIO.StringIO()
-            externalzonefile = cStringIO.StringIO()
+            zonefile = StringIO()
+            externalzonefile = StringIO()
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
             INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % zone[0])
@@ -148,20 +161,20 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             cursor.execute(querystring)
             zonehosts = cursor.fetchall()
             prevhost = (None, None, None, None)
-            cnames = cStringIO.StringIO()
-            cnamesexternal = cStringIO.StringIO()
+            cnames = StringIO()
+            cnamesexternal = StringIO()
             for host in zonehosts:
                 if not host[2].split(".", 1)[1] == zone[1]:
                     zonefile.write(cnames.getvalue())
                     externalzonefile.write(cnamesexternal.getvalue())
-                    cnames = cStringIO.StringIO()
-                    cnamesexternal = cStringIO.StringIO()
+                    cnames = StringIO()
+                    cnamesexternal = StringIO()
                     continue
                 if not prevhost[1] == host[1] or not prevhost[2] == host[2]:
                     zonefile.write(cnames.getvalue())
                     externalzonefile.write(cnamesexternal.getvalue())
-                    cnames = cStringIO.StringIO()
-                    cnamesexternal = cStringIO.StringIO()
+                    cnames = StringIO()
+                    cnamesexternal = StringIO()
                     zonefile.write("%-32s%-10s%-32s\n" %
                                    (host[2].split(".", 1)[0], 'A', host[1]))
                     zonefile.write("%-32s%-10s%-3s%s.\n" %
@@ -173,29 +186,29 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                                                ('', 'MX', host[4], host[5]))
                 elif not prevhost[5] == host[5]:
                     zonefile.write("%-32s%-10s%-3s%s.\n" %
-                                   ('', 'MX', host[4], host[5]))                    
+                                   ('', 'MX', host[4], host[5]))
                     if host[6] == 'global':
                         externalzonefile.write("%-32s%-10s%-3s%s.\n" %
                                          ('', 'MX', host[4], host[5]))
-                        
+
                 if host[3]:
                     try:
                         if host[3].split(".", 1)[1] == zone[1]:
                             cnames.write("%-32s%-10s%-32s\n" %
                                          (host[3].split(".", 1)[0],
-                                          'CNAME',host[2].split(".", 1)[0]))
+                                          'CNAME', host[2].split(".", 1)[0]))
                             if host[6] == 'global':
                                 cnamesexternal.write("%-32s%-10s%-32s\n" %
                                                      (host[3].split(".", 1)[0],
-                                                      'CNAME',host[2].split(".", 1)[0]))
+                                                      'CNAME', host[2].split(".", 1)[0]))
                         else:
                             cnames.write("%-32s%-10s%-32s\n" %
-                                         (host[3]+".",
+                                         (host[3] + ".",
                                           'CNAME',
                                           host[2].split(".", 1)[0]))
                             if host[6] == 'global':
                                 cnamesexternal.write("%-32s%-10s%-32s\n" %
-                                                     (host[3]+".",
+                                                     (host[3] + ".",
                                                       'CNAME',
                                                       host[2].split(".", 1)[0]))
 
@@ -215,9 +228,9 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
 
         cursor.execute("SELECT * FROM hostbase_zone WHERE zone LIKE \'%%.rev\' AND zone <> \'.rev\'")
         reversezones = cursor.fetchall()
-        
+
         reversenames = []
-        for reversezone in reversezones:            
+        for reversezone in reversezones:
             cursor.execute("""SELECT n.name FROM hostbase_zone_nameservers z
             INNER JOIN hostbase_nameserver n ON z.nameserver_id = n.id
             WHERE z.zone_id = \'%s\'""" % reversezone[0])
@@ -236,7 +249,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
 
             subnet = reversezone[1].split(".")
             subnet.reverse()
-            reversenames.append((reversezone[1].rstrip('.rev'),".".join(subnet[1:]))) 
+            reversenames.append((reversezone[1].rstrip('.rev'), ".".join(subnet[1:])))
 
         for filename in reversenames:
             cursor.execute("""
@@ -247,8 +260,8 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             WHERE p.ip_addr LIKE '%s%%%%' AND h.status = 'active' ORDER BY p.ip_addr
             """ % filename[1])
             reversehosts = cursor.fetchall()
-            zonefile = cStringIO.StringIO()
-            externalzonefile = cStringIO.StringIO()
+            zonefile = StringIO()
+            externalzonefile = StringIO()
             if len(filename[0].split(".")) == 2:
                 originlist = []
                 [originlist.append((".".join([ip[1].split(".")[2], filename[0]]),
@@ -268,13 +281,13 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                         'hosts': hosts,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
-                        })        
+                        })
                     zonefile.write(self.templates['reverseapp'].render(context))
                     context = Context({
                         'hosts': hosts_external,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
-                        })        
+                        })
                     externalzonefile.write(self.templates['reverseapp'].render(context))
             else:
                 originlist = [filename[0]]
@@ -289,7 +302,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                     'hosts': hosts,
                     'inaddr': filename[0],
                     'fileorigin': None,
-                    })        
+                    })
                 zonefile.write(self.templates['reverseapp'].render(context))
                 context = Context({
                     'hosts': hosts_external,
@@ -308,12 +321,11 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         context = Context({
             'zones': zones,
             'reverses': reversenames,
-            })        
+            })
         self.filedata['named.conf'] = self.templates['named'].render(context)
         self.Entries['ConfigFile']['/my/adm/hostbase/files/named.conf'] = self.FetchFile
         self.filedata['named.conf.views'] = self.templates['namedviews'].render(context)
         self.Entries['ConfigFile']['/my/adm/hostbase/files/named.conf.views'] = self.FetchFile
-
 
     def buildDHCP(self):
         """Pre-build dhcpd.conf and stash in the filedata table."""
@@ -361,7 +373,6 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
 
         self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
         self.Entries['ConfigFile']['/my/adm/hostbase/files/dhcpd.conf'] = self.FetchFile
-
 
     def buildHosts(self):
         """Pre-build and stash /etc/hosts file."""
@@ -490,7 +501,7 @@ Name            Room        User                            Type                
 
     def buildHostsLPD(self):
         """Creates the /mcs/etc/hosts.lpd file"""
-        
+
         # this header needs to be changed to be more generic
         header = """+@machines
 +@all-machines
@@ -503,7 +514,7 @@ delphi.esh.anl.gov
 anlcv1.ctd.anl.gov
 anlvms.ctd.anl.gov
 olivia.ctd.anl.gov\n\n"""
-        
+
         cursor = connection.cursor()
         cursor.execute("""
         SELECT hostname FROM hostbase_host WHERE netgroup=\"red\" AND status = 'active'
@@ -534,7 +545,6 @@ olivia.ctd.anl.gov\n\n"""
         self.filedata['hosts.lpd'] = hostslpdfile
         self.Entries['ConfigFile']['/mcs/etc/hosts.lpd'] = self.FetchFile
 
-
     def buildNetgroups(self):
         """Makes the *-machine files"""
         header = """###################################################################
@@ -557,11 +567,11 @@ olivia.ctd.anl.gov\n\n"""
         nameslist = cursor.fetchall()
         # gets the first host and initializes the hash
         hostdata = nameslist[0]
-        netgroups = {hostdata[2]:[hostdata[0]]}
+        netgroups = {hostdata[2]: [hostdata[0]]}
         for row in nameslist:
             # if new netgroup, create it
             if row[2] not in netgroups:
-                netgroups.update({row[2]:[]})
+                netgroups.update({row[2]: []})
             # if it belongs in the netgroup and has multiple interfaces, put them in
             if hostdata[0] == row[0] and row[3]:
                 netgroups[row[2]].append(row[1])
@@ -572,7 +582,7 @@ olivia.ctd.anl.gov\n\n"""
                 hostdata = row
 
         for netgroup in netgroups:
-            fileoutput = cStringIO.StringIO()
+            fileoutput = StringIO()
             fileoutput.write(header % (netgroup, netgroup, len(netgroups[netgroup])))
             for each in netgroups[netgroup]:
                 fileoutput.write(each + "\n")

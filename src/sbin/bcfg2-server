@@ -69,7 +69,8 @@ if __name__ == '__main__':
                                       certfile=setup['cert'],
                                       ca=setup['ca'],
                                       )
-    except CoreInitError, msg:
+    except CoreInitError:
+        msg = sys.exc_info()[1]
         logger.error(msg)
         logger.error("exiting")
         sys.exit(1)

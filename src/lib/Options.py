@@ -1,11 +1,12 @@
 """Option parsing library for utilities."""
 __revision__ = '$Revision$'
 
-import ConfigParser
 import getopt
 import os
 import sys
 import Bcfg2.Client.Tools
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 def bool_cook(x):
     if x:
@@ -146,7 +147,8 @@ class OptionSet(dict):
             try:
                 opts, args = getopt.getopt(argv, self.buildGetopt(),
                                            self.buildLongGetopt())
-            except getopt.GetoptError, err:
+            except getopt.GetoptError:
+                err = sys.exc_info()[1]
                 self.helpExit(err)
             if '-h' in argv:
                 self.helpExit('', 0)
@@ -201,6 +203,14 @@ PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
 CORE_PROFILE = Option('profile',
                       default=False, cmd='-p', )
+FILES_ON_STDIN = Option('Operate on a list of files supplied on stdin',
+                        cmd='--stdin', default=False, long_arg=True)
+SCHEMA_PATH = Option('Path to XML Schema files', cmd='--schema',
+                     odesc='<schema path>',
+                     default="%s/share/bcfg2/schemas" % DEFAULT_INSTALL_PREFIX,
+                     long_arg=True)
+REQUIRE_SCHEMA = Option("Require property files to have matching schema files",
+                        cmd="--require-schema", default=False, long_arg=True)
 
 # Metadata options
 MDATA_OWNER = Option('Default Path owner',
