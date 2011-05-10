@@ -118,16 +118,19 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
     def emit(self, record):
         """Chunk and deliver records."""
         record.name = self.procname
-        msgs = []
-        error = record.exc_info
-        record.exc_info = None
-        msgdata = record.msg
-        while msgdata:
-            newrec = copy.deepcopy(record)
-            newrec.msg = msgdata[:250]
-            msgs.append(newrec)
-            msgdata = msgdata[250:]
-        msgs[0].exc_info = error
+        if isinstance(record.msg, str):
+            msgs = []
+            error = record.exc_info
+            record.exc_info = None
+            msgdata = record.msg
+            while msgdata:
+                newrec = copy.deepcopy(record)
+                newrec.msg = msgdata[:250]
+                msgs.append(newrec)
+                msgdata = msgdata[250:]
+            msgs[0].exc_info = error
+        else:
+            msgs = [record]
         for newrec in msgs:
             msg = self.log_format_string % (self.encodePriority(self.facility,
                                                                 newrec.levelname.lower()),
