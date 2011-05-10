@@ -74,7 +74,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def get_skn(self):
         """Build memory cache of the ssh known hosts file."""
         if not self.__skn:
-            self.__skn = "\n".join([value.data for key, value in \
+            self.__skn = "\n".join([str(value.data) for key, value in \
                                     list(self.entries.items()) if \
                                     key.endswith('.static')])
             names = dict()
