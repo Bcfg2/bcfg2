@@ -75,9 +75,9 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
         except Exception, err:
             # try to be smart about the error we got back
             details = None
-            if "callback_ssl_server_trust_prompt" in err.message:
+            if "callback_ssl_server_trust_prompt" in str(err):
                 details = "SVN server certificate is not trusted"
-            elif "callback_get_login" in err.message:
+            elif "callback_get_login" in str(err):
                 details = "SVN credentials not cached"
 
             if details is None:
@@ -95,9 +95,9 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
         except Exception, err:
             # try to be smart about the error we got back
             details = None
-            if "callback_ssl_server_trust_prompt" in err.message:
+            if "callback_ssl_server_trust_prompt" in str(err):
                 details = "SVN server certificate is not trusted"
-            elif "callback_get_login" in err.message:
+            elif "callback_get_login" in str(err):
                 details = "SVN credentials not cached"
 
             if details is None:
