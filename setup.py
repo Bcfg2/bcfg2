@@ -4,7 +4,9 @@ from distutils.core import setup
 from distutils.core import Command
 from fnmatch import fnmatch
 from glob import glob
+import os
 import os.path
+import sys
 
 class BuildDTDDoc (Command):
     """Build DTD documentation"""
@@ -113,6 +115,10 @@ try:
 except ImportError:
     pass
 
+py3lib = 'src/lib/Bcfg2Py3Incompat.py'
+if sys.hexversion < 0x03000000 and os.path.exists(py3lib):
+    os.remove(py3lib)
+
 setup(cmdclass=cmdclass,
       name="Bcfg2",
       version="1.2.0pre2",
@@ -133,7 +139,7 @@ setup(cmdclass=cmdclass,
                 "Bcfg2.Server.Reports.reports.templatetags",
                 "Bcfg2.Server.Snapshots",
                 ],
-      package_dir = {'Bcfg2':'src/lib'},
+      package_dir = {'Bcfg2': 'src/lib'},
       package_data = {'Bcfg2.Server.Reports.reports':['fixtures/*.xml',
                 'templates/*.html', 'templates/*/*.html',
                 'templates/*/*.inc' ] },
