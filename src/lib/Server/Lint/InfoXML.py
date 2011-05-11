@@ -13,12 +13,13 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                 if self.HandlesFile(infoxml_fname):
                     if (hasattr(entryset, "infoxml") and
                         entryset.infoxml is not None):
-                        self.check_infoxml(entryset.infoxml.pnode.data)
+                        self.check_infoxml(infoxml_fname,
+                                           entryset.infoxml.pnode.data)
                     else:
                         self.LintError("no-infoxml",
                                        "No info.xml found for %s" % filename)
 
-    def check_infoxml(self, xdata):
+    def check_infoxml(self, fname, xdata):
         for info in xdata.getroottree().findall("//Info"):
             required = []
             if "required_attrs" in self.config:
@@ -28,8 +29,7 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
             if missing:
                 self.LintError("required-infoxml-attrs-missing",
                                "Required attribute(s) %s not found in %s:%s" %
-                               (",".join(missing), infoxml_fname,
-                                self.RenderXML(info)))
+                               (",".join(missing), fname, self.RenderXML(info)))
 
             if ((Bcfg2.Options.MDATA_PARANOID.value and
                  info.get("paranoid") is not None and
@@ -39,5 +39,5 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                   info.get("paranoid").lower() != "true"))):
                 self.LintError("paranoid-false",
                                "Paranoid must be true in %s:%s" %
-                               (infoxml_fname, self.RenderXML(info)))
+                               (fname, self.RenderXML(info)))
 
