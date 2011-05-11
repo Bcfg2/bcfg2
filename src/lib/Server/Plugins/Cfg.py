@@ -188,7 +188,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             name = self.build_filename(specific)
             if name.endswith(".genshi"):
                 logger.error("Cfg: Unable to pull data for genshi types")
-                raise PluginExecutionError
+                raise Bcfg2.Server.Plugin.PluginExecutionError
             open(name, 'w').write(new_entry['text'])
             if log:
                 logger.info("Wrote file %s" % name)
