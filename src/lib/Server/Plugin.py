@@ -644,9 +644,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
     def BindEntry(self, entry, metadata):
         """Check package lists of package entries."""
-        [src.Cache(metadata) for src in list(self.entries.values())]
         name = entry.get('name')
-        if not src.cache:
+        if False in [src.Cache(metadata) for src in
+                     list(self.entries.values())]:
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in list(self.entries.values())
