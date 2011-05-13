@@ -5,6 +5,7 @@ import binascii
 import logging
 import lxml
 import os
+import os.path
 import re
 import sys
 import tempfile
@@ -186,7 +187,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def write_update(self, specific, new_entry, log):
         if 'text' in new_entry:
             name = self.build_filename(specific)
-            if name.endswith(".genshi"):
+            if os.path.exists("%s.genshi" % name):
                 logger.error("Cfg: Unable to pull data for genshi types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             open(name, 'w').write(new_entry['text'])
