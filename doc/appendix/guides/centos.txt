@@ -195,17 +195,17 @@ line of ``bcfg2.conf``.  Then create Packages layout (as per
     <Sources>
             <!-- CentOS (5.4) sources -->
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.os</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.updates</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.extras</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
@@ -227,9 +227,9 @@ file should look something like this
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='centos5.4'/>
+          <Group name='centos-5.4'/>
        </Group>
-       <Group name='centos5.4'>
+       <Group name='centos-5.4'>
           <Group name='centos'/>
        </Group>
        <Group name='ubuntu'/>
