@@ -34,6 +34,22 @@ Non-POSIX entries
 | Service     | System Services     | name, type, status, target  |
 +-------------+---------------------+-----------------------------+
 
+.. note::
+
+    PostInstall entries are deprecated in favor of Action entries. In
+    fact, a PostInstall entry is simply a specific type of Action.
+    Basically, the following are equivalent::
+
+    .. code-block:: xml
+
+        <PostInstall name='foo'/>
+
+    and
+
+    .. code-block:: xml
+
+        <Action timing='post' when='modified' name='n' command='foo' status='ignore'/>
+
 POSIX entries
 =============
 
@@ -48,7 +64,7 @@ will only contain a *name* attribute. The type will be added by the
 plugin that handles the entry in the case of `Cfg`_, `TGenshi`_, or
 `TCheetah`_. If the entry is handled by the `Rules`_ plugin (i.e. it is
 a device, directory, hardlink, symlink, etc), then you will specify both
-the *type* and any other necessary attributes in `Rules`_. 
+the *type* and any other necessary attributes in `Rules`_.
 
 Running ``bcfg2-lint`` will check your configuration specification for
 the presence of any mandatory attributes that are necessary for the
