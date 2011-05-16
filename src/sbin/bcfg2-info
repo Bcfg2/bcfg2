@@ -487,7 +487,10 @@ if __name__ == '__main__':
                     })
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    if setup['profile'] and have_profile:
+    if setup['args'][0] == 'help':
+        print(USAGE)
+        sys.exit(0)
+    elif setup['profile'] and have_profile:
         prof = profile.Profile()
         loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
                             setup['password'], setup['encoding'],
