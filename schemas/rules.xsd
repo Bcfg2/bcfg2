@@ -24,6 +24,10 @@
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
+  <xsd:complexType name='PostInstallType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
   <xsd:complexType name='PathType'>
     <xsd:attribute type='PathTypeEnum' name='type' use='required'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
@@ -68,6 +72,7 @@
         <xsd:element name='Package' type='PackageType'/>
         <xsd:element name='Path' type='PathType'/>
         <xsd:element name='Action' type='ActionType'/>
+        <xsd:element name='PostInstall' type='PostInstallType'/>
         <xsd:element name='Group' type='RContainerType'/>
         <xsd:element name='Client' type='RContainerType'/>
         <xsd:element ref="py:def"/>
