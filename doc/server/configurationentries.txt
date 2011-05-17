@@ -38,7 +38,7 @@ Non-POSIX entries
 
     PostInstall entries are deprecated in favor of Action entries. In
     fact, a PostInstall entry is simply a specific type of Action.
-    Basically, the following are equivalent::
+    Basically, the following are equivalent:
 
     .. code-block:: xml
 
