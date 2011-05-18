@@ -14,7 +14,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         self.filesets = {"metadata:groups":"%s/metadata.xsd",
                          "metadata:clients":"%s/clients.xsd",
                          "info":"%s/info.xsd",
-                         "%s/Bundler/*.{xml,genshi}":"%s/bundle.xsd",
+                         "%s/Bundler/*.xml":"%s/bundle.xsd",
+                         "%s/Bundler/*.genshi":"%s/bundle.xsd",
                          "%s/Pkgmgr/*.xml":"%s/pkglist.xsd",
                          "%s/Base/*.xml":"%s/base.xsd",
                          "%s/Rules/*.xml":"%s/rules.xsd",
@@ -33,14 +34,16 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
     @Bcfg2.Server.Lint.returnErrors
     def Run(self):
-        self.schemadir = self.config['schema']
+        schemadir = self.config['schema']
         
-        for schemaname, path in self.filesets.items():
+        for path, schemaname in self.filesets.items():
             try:
                 filelist = self.filelists[path]
             except KeyError:
                 filelist = []
-                
+
+            print "validating %s" % path
+            print "filelist = %s" % filelist
             if filelist:
                 # avoid loading schemas for empty file lists
                 try:
@@ -48,8 +51,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                                                                    schemadir))
                 except:
                     self.LintError("schema-failed-to-parse",
-                                   "Failed to process schema %s",
-                                   schemaname % schemadir)
+                                   "Failed to process schema %s" %
+                                   (schemaname % schemadir))
                     continue
                 for filename in filelist:
                     self.validate(filename, schemaname % schemadir,
@@ -132,6 +135,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                                                          for f in files
                                                          if f == 'info.xml'])
             else:
+                print "globbing for %s" % (path % self.config['repo'])
                 self.filelists[path] = listfiles(path)
 
         self.filelists['props'] = listfiles("%s/Properties/*.xml")

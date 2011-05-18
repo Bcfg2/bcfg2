@@ -50,10 +50,13 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
         errorhandler = get_errorhandler(config)
 
     if config is not None and config.has_section(plugin_name):
-        args.append(dict(config.items(plugin_name), **setup))
+        arg = setup
+        for key, val in config.items(plugin_name):
+            arg[key] = val
+        args.append(arg)
     else:
         args.append(setup)
-
+        
     # older versions of python do not support mixing *-magic and
     # non-*-magic (e.g., "plugin(*args, files=files)", so we do this
     # all with *-magic
