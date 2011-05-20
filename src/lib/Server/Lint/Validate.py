@@ -42,8 +42,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             except KeyError:
                 filelist = []
 
-            print "validating %s" % path
-            print "filelist = %s" % filelist
             if filelist:
                 # avoid loading schemas for empty file lists
                 try:
@@ -135,7 +133,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                                                          for f in files
                                                          if f == 'info.xml'])
             else:
-                print "globbing for %s" % (path % self.config['repo'])
                 self.filelists[path] = listfiles(path)
 
         self.filelists['props'] = listfiles("%s/Properties/*.xml")
