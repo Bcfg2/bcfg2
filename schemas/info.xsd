@@ -11,7 +11,7 @@
   <xsd:complexType name='InfoType'>
     <xsd:attribute name='encoding' type='xsd:string'/>
     <xsd:attribute name='group' type='xsd:string'/>
-    <xsd:attribute name='important' type='xsd:boolean'/>
+    <xsd:attribute name='important' type='xsd:string'/>
     <xsd:attribute name='owner' type='xsd:string'/>
     <xsd:attribute name='perms' type='xsd:string'/>
     <xsd:attribute name='paranoid' type='xsd:boolean'/>
