@@ -307,6 +307,7 @@ CLIENT_INDEP = Option('Only configure the given bundle(s)', default=False,
 CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
 CLIENT_DLIST = Option('Run client in server decision list mode', default=False,
+                      cf=('client', 'decision'),
                       cmd='-l', odesc='<whitelist|blacklist>')
 CLIENT_FILE = Option('Configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
