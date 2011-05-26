@@ -55,7 +55,8 @@ def normGid(entry):
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-        log.error('GID normalization failed for %s' % (entry.get('name')))
+        log.error('GID normalization failed for %s. Does group %s exist?'
+                  % (entry.get('name'), entry.get('group')))
         return False
 
 
@@ -70,7 +71,8 @@ def normUid(entry):
         except:
             return int(pwd.getpwnam(entry.get('owner'))[2])
     except (OSError, KeyError):
-        log.error('UID normalization failed for %s' % (entry.get('name')))
+        log.error('UID normalization failed for %s. Does owner %s exist?'
+                  % (entry.get('name'), entry.get('owner')))
         return False
 
 

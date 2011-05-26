@@ -109,46 +109,56 @@ be taken to remedy them.
 | authenticate the server with |          | unable to verify    |              |
 | SSL.                         |          | the server          |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to bind entry:        | Server   | The server was      | [4]_         |
+| GID normalization failed for | Client   | The client is       | [4]_         |
+| FILENAME. Does group GROUP   |          | unable to convert   |              |
+| exist?                       |          | the group GROUP to  |              |
+|                              |          | a usable GID        |              |
++------------------------------+----------+---------------------+--------------+
+| UID normalization failed for | Client   | The client is       | [5]_         |
+| FILENAME. Does owner OWNER   |          | unable to convert   |              |
+| exist?                       |          | the owner OWNER to  |              |
+|                              |          | a usable UID        |              |
++------------------------------+----------+---------------------+--------------+
+| Failed to bind entry:        | Server   | The server was      | [6]_         |
 | <EntryTag> <EntryName>       |          | unable to find a    |              |
 |                              |          | suitable version of |              |
 |                              |          | entry for client.   |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to bind to socket     | Server   | The server was      | [5]_         |
+| Failed to bind to socket     | Server   | The server was      | [7]_         |
 |                              |          | unable to bind to   |              |
 |                              |          | the tcp server      |              |
 |                              |          | socket.             |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to load               | Server   | The server was      | [6]_         |
+| Failed to load               | Server   | The server was      | [8]_         |
 | ssl key <path>               |          | unable to read and  |              |
 |                              |          | process the ssl key.|              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to read file <path>   | Server   | The server failed   | [7]_         |
+| Failed to read file <path>   | Server   | The server failed   | [9]_         |
 |                              |          | to read the         |              |
 |                              |          | specified file      |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to parse file <path>  | Server   | The server failed   | [8]_         |
+| Failed to parse file <path>  | Server   | The server failed   | [10]_        |
 |                              |          | to parse the        |              |
 |                              |          | specified XML file  |              |
 +------------------------------+----------+---------------------+--------------+
-| Client metadata resolution   | Server   | The server cannot   | [9]_         |
+| Client metadata resolution   | Server   | The server cannot   | [11]_        |
 | error for <IP>               |          | resolve the client  |              |
 |                              |          | hostname or the     |              |
 |                              |          | client is           |              |
 |                              |          | associated with a   |              |
 |                              |          | non-profile group.  |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to decode <filename>  | Server   | The encoding being  | [10]_        |
+| Failed to decode <filename>  | Server   | The encoding being  | [12]_        |
 | Please verify you are using  |          | used is unable to   |              |
 | the proper encoding          |          | decode the          |              |
 |                              |          | character present   |              |
 |                              |          | in this file.       |              |
 +------------------------------+----------+---------------------+--------------+
-| Got unknown entries          | Server   | The Packages plugin | [11]_        |
+| Got unknown entries          | Server   | The Packages plugin | [13]_        |
 | [list of unknown entries]    |          | has no knowledge of |              |
 |                              |          | the listed entries  |              |
 +------------------------------+----------+---------------------+--------------+
-| Failed to import lxml        | Server   | The server cannot   | [12]_        |
+| Failed to import lxml        | Server   | The server cannot   | [14]_        |
 | dependency. Shutting         |          | import lxml         |              |
 | down server.                 |          |                     |              |
 +------------------------------+----------+---------------------+--------------+
@@ -162,20 +172,26 @@ be taken to remedy them.
 .. [3] Copy the Bcfg2 server's CA certificate to the client and specify it
        using the **ca** option in the [communication] section of
        ``bcfg2.conf``
-.. [4] This entry is not being bound. Ensure that a version of this
+.. [4] If the group doesn't exist, you need to specify the correct one
+       in an :ref:`info.xml <server-info>` file or set the default group
+       appropriately.
+.. [5] If the owner doesn't exist, you need to specify the correct one
+       in an :ref:`info.xml <server-info>` file or set the default owner
+       appropriately.
+.. [6] This entry is not being bound. Ensure that a version of this
        entry applies to this client.
-.. [5] Ensure that another instance of the daemon (or any other process)
+.. [7] Ensure that another instance of the daemon (or any other process)
        is not listening on the same port.
-.. [6] Ensure that the key is readable by the user running the daemon
+.. [8] Ensure that the key is readable by the user running the daemon
        and that it is well-formed.
-.. [7] Ensure that this file still exists; a frequent cause is the
+.. [9] Ensure that this file still exists; a frequent cause is the
        deletion of a temp file.
-.. [8] Ensure that the file is properly formed XML.
-.. [9] Fix hostname resolution for the client or ensure that the profile
-       group is properly setup.
-.. [10] Ensure the correct encoding is specified in the [components]
+.. [10] Ensure that the file is properly formed XML.
+.. [11] Fix hostname resolution for the client or ensure that the profile
+        group is properly setup.
+.. [12] Ensure the correct encoding is specified in the [components]
         section of ``bcfg2.conf``.
-.. [11] For packages listed other than **gpg-pubkey**, this error means
+.. [13] For packages listed other than **gpg-pubkey**, this error means
         that the Packages plugin is unable to find the package in any of
         the sources listed in ``Packages/config.xml``. The issue often
         arises when the client is not in one of the groups necessary for
@@ -183,7 +199,7 @@ be taken to remedy them.
         ignore the message as the Packages plugin has no knowledge of
         these packages (however, note that this package is most often
         specified as a BoundPackage entry).
-.. [12] Ensure that you have installed all the necessary
+.. [14] Ensure that you have installed all the necessary
         :ref:`installation-prerequisites`.
 
 FAQs
