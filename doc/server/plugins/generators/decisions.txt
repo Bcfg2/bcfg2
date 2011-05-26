@@ -22,10 +22,11 @@ should be corrected during the current run of the installation tool. The
 Decisions plugin is the only stock plugin that generates entries for
 client's whitelists or blacklists.
 
-.. note:: If the client is not explicitly configured to run in
-          whitelist or blacklist mode, the list of entries is not
-          downloaded and decisions is not used.  See ``Decision
-          Mode``_ below.
+.. note::
+
+    If the client is not explicitly configured to run in whitelist or
+    blacklist mode, the list of entries is not downloaded and decisions
+    is not used.  See `Decision Mode`_ below.
 
 The Decisions plugin uses a directory in the Bcfg2 repository called
 Decisions. Files in the Decisions subdirectory are named similarly to
