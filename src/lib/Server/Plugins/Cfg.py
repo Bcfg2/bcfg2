@@ -162,6 +162,13 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
                 logger.error("Please verify you are using the proper encoding.")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
+            except ValueError:
+                e = sys.exc_info()[1]
+                logger.error("Error in specification for %s" % entry.get('name'))
+                logger.error("%s" % e)
+                logger.error("You need to specify base64 encoding for %s." %
+                             entry.get('name'))
+                raise Bcfg2.Server.Plugin.PluginExecutionError
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 

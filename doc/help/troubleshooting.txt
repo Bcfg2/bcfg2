@@ -162,6 +162,10 @@ be taken to remedy them.
 | dependency. Shutting         |          | import lxml         |              |
 | down server.                 |          |                     |              |
 +------------------------------+----------+---------------------+--------------+
+| You need to specify base64   | Server   | The server cannot   | [15]_        |
+| encoding for <path>          |          | send the file as    |              |
+|                              |          | ascii text          |              |
++------------------------------+----------+---------------------+--------------+
 
 
 .. [1] This entry is not being bound. Ensure that a version of this
@@ -201,6 +205,8 @@ be taken to remedy them.
         specified as a BoundPackage entry).
 .. [14] Ensure that you have installed all the necessary
         :ref:`installation-prerequisites`.
+.. [15] You likely need to specify a base64 encoding using an
+        :ref:`server-info` file for this entry.
 
 FAQs
 ====
