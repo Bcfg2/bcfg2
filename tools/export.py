@@ -85,6 +85,13 @@ for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html'
     if 'Bcfg2 Version' in line:
         line = line.replace(line, '    <span>Bcfg2 Version %s</span>\n' % version)
     sys.stdout.write(line)
+# update the version in the docs
+for line in fileinput.input('doc/conf.py', inplace=1):
+    if line.startswith('version ='):
+        line = line.replace(line, 'version = \'%s\'\n' % majorver[0:3])
+    if line.startswith('release ='):
+        line = line.replace(line, 'release = \'%s\'\n' % (majorver + minorver))
+    sys.stdout.write(line)
 
 # tag the release
 #FIXME: do this using python-dulwich
