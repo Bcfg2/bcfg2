@@ -75,6 +75,7 @@ class Client:
             'certificate': Bcfg2.Options.CLIENT_CERT,
             'ca': Bcfg2.Options.CLIENT_CA,
             'serverCN': Bcfg2.Options.CLIENT_SCNS,
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -178,10 +179,11 @@ class Client:
             proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
                                                self.setup['user'],
                                                self.setup['password'],
-                                               key = self.setup['key'],
-                                               cert = self.setup['certificate'],
-                                               ca = self.setup['ca'],
-                                               allowedServerCNs = self.setup['serverCN'])
+                                               key=self.setup['key'],
+                                               cert=self.setup['certificate'],
+                                               ca=self.setup['ca'],
+                                               allowedServerCNs=self.setup['serverCN'],
+                                               timeout=self.setup['timeout'])
 
             if self.setup['profile']:
                 try:

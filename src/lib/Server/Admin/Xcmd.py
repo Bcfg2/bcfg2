@@ -20,7 +20,8 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'key': Bcfg2.Options.SERVER_KEY,
             'certificate': Bcfg2.Options.CLIENT_CERT,
-            'ca': Bcfg2.Options.CLIENT_CA
+            'ca': Bcfg2.Options.CLIENT_CA,
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
         setup = Bcfg2.Options.OptionParser(optinfo)
         setup.parse(sys.argv[2:])
@@ -31,7 +32,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
                                            key=setup['key'],
                                            cert=setup['certificate'],
                                            ca=setup['ca'],
-                                           timeout=180)
+                                           timeout=setup['timeout'])
         if len(setup['args']) == 0:
             print("Usage: xcmd <xmlrpc method> <optional arguments>")
             return
