@@ -332,5 +332,5 @@ def ComponentProxy(url, user=None, password=None,
     else:
         newurl = url
     ssl_trans = XMLRPCTransport(key, cert, ca,
-                                allowedServerCNs, timeout=timeout)
+                                allowedServerCNs, timeout=float(timeout))
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
