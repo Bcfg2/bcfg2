@@ -317,6 +317,9 @@ CLIENT_USER = Option('The user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>')
+CLIENT_TIMEOUT = Option('Set the client XML-RPC timeout', default=90,
+                        cmd='-t', cf=('communication', 'timeout'),
+                        odesc='<timeout>')
                      
 # APT client tool options
 CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
