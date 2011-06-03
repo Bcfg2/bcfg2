@@ -10,26 +10,30 @@
   
   <xsd:include schemaLocation="atom.xsd"/>
   <xsd:include schemaLocation="pathentry.xsd"/>
+  <xsd:include schemaLocation="rules.xsd"/>
 
-  <xsd:complexType name='ContainerType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+  <xsd:group name='BaseEntries'>
+    <xsd:choice>
+      <xsd:element name='Group' type='ContainerType'/>
+      <xsd:element name='Client' type='ContainerType'/>
       <xsd:element name='Package' type='StructureEntry'/>
       <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='Group' type='ContainerType'/>
+      <xsd:element name='BoundPackage' type='PackageType'/>
+      <xsd:element name='BoundPath' type='BoundPathEntry'/>
+      <xsd:element name='BoundService' type='ServiceType'/>
     </xsd:choice>
+  </xsd:group>
+
+  <xsd:complexType name='ContainerType'>
+    <xsd:group ref='BaseEntries' minOccurs='0' maxOccurs='unbounded'/>
     <xsd:attribute name='name' type='xsd:string'/>
     <xsd:attribute name='negate' type='xsd:string'/>
   </xsd:complexType>
 
   <xsd:element name='Base'>
     <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Package' type='StructureEntry'/>
-        <xsd:element name='Path' type='PathEntry'/>
-        <xsd:element name='Service' type='StructureEntry'/>
-        <xsd:element name='Group' type='ContainerType'/>
-      </xsd:choice>
+      <xsd:group ref='BaseEntries' minOccurs='0' maxOccurs='unbounded'/>
     </xsd:complexType>
   </xsd:element>
 
