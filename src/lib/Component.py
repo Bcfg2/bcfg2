@@ -23,8 +23,8 @@ logger = logging.getLogger()
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
-def run_component(component_cls, location, daemon, pidfile_name, to_file,
-                  cfile, argv=None, register=True,
+def run_component(component_cls, listen_all, location, daemon, pidfile_name,
+                  to_file, cfile, argv=None, register=True,
                   state_name=False, cls_kwargs={}, extra_getopt='', time_out=10,
                   protocol='xmlrpc/ssl', certfile=None, keyfile=None, ca=None):
 
@@ -64,8 +64,13 @@ def run_component(component_cls, location, daemon, pidfile_name, to_file,
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))
     try:
-        server = XMLRPCServer(port, keyfile=keyfile, certfile=certfile,
-                              register=register, timeout=time_out, ca=ca,
+        server = XMLRPCServer(listen_all,
+                              port,
+                              keyfile=keyfile,
+                              certfile=certfile,
+                              register=register,
+                              timeout=time_out,
+                              ca=ca,
                               protocol=protocol)
     except:
         logger.error("Server startup failed")
