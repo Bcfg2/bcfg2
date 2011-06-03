@@ -79,9 +79,9 @@ class SSLServer (SocketServer.TCPServer, object):
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
 
-    def __init__(self, server_address, RequestHandlerClass, keyfile=None,
-                 certfile=None, reqCert=False, ca=None, timeout=None,
-                 protocol='xmlrpc/ssl'):
+    def __init__(self, listen_all, server_address, RequestHandlerClass,
+                 keyfile=None, certfile=None, reqCert=False, ca=None,
+                 timeout=None, protocol='xmlrpc/ssl'):
 
         """Initialize the SSL-TCP server.
 
@@ -97,9 +97,12 @@ class SSLServer (SocketServer.TCPServer, object):
 
         """
 
-        all_iface_address = ('', server_address[1])
+        if listen_all:
+            listen_address = ('', server_address[1])
+        else:
+            listen_address = (server_address[0], server_address[1])
         try:
-            SocketServer.TCPServer.__init__(self, all_iface_address,
+            SocketServer.TCPServer.__init__(self, listen_address,
                                             RequestHandlerClass)
         except socket.error:
             self.logger.error("Failed to bind to socket")
@@ -310,7 +313,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
 
     """
 
-    def __init__(self, server_address, RequestHandlerClass=None,
+    def __init__(self, listen_all, server_address, RequestHandlerClass=None,
                  keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
                  timeout=10,
                  logRequests=False,
@@ -339,8 +342,14 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 """A subclassed request handler to prevent class-attribute conflicts."""
 
         SSLServer.__init__(self,
-            server_address, RequestHandlerClass, ca=ca,
-            timeout=timeout, keyfile=keyfile, certfile=certfile, protocol=protocol)
+                           listen_all,
+                           server_address,
+                           RequestHandlerClass,
+                           ca=ca,
+                           timeout=timeout,
+                           keyfile=keyfile,
+                           certfile=certfile,
+                           protocol=protocol)
         self.logRequests = logRequests
         self.serve = False
         self.register = register

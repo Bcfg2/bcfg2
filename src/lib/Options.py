@@ -173,6 +173,18 @@ def colon_split(c_string):
         return c_string.split(':')
     return []
 
+def get_bool(s):
+    # these values copied from ConfigParser.RawConfigParser.getboolean
+    # with the addition of True and False
+    truelist = ["1", "yes", "True", "true", "on"]
+    falselist = ["0", "no", "False", "false", "off"]
+    if s in truelist:
+        return True
+    elif s in falselist:
+        return False
+    else:
+        raise ValueError
+
 # General options
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
@@ -249,6 +261,13 @@ SERVER_MCONNECT = Option('Server Metadata Connector list', cook=list_split,
                          cf=('server', 'connectors'), default=['Probes'], )
 SERVER_FILEMONITOR = Option('Server file monitor', cf=('server', 'filemonitor'),
                             default='default', odesc='File monitoring driver')
+SERVER_LISTEN_ALL = Option('Listen on all interfaces',
+                           cf=('server', 'listen_all'),
+                           cmd='--listen-all',
+                           default=False,
+                           long_arg=True,
+                           cook=get_bool,
+                           odesc='True|False')
 SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
                          default='https://localhost:6789', cmd='-S',
                          odesc='https://server:port')

@@ -38,6 +38,12 @@ The file monitor used to watch for changes in the repository.
 Values of 'gamin', 'fam', or 'pseudo' are valid.
 
 .TP
+.B listen_all
+This setting tells the server to listen on all available interfaces. The
+default is to only listen on those interfaces specified by the bcfg2
+setting in the components section of bcfg2.conf.
+
+.TP
 .B plugins
 A comma-delimited list of enabled server plugins. Currently available
 plugins are:
