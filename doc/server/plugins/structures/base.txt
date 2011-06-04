@@ -6,6 +6,13 @@
 Base
 ====
 
+.. deprecated:: 1.2.0
+
+.. warning::
+
+    The Base plugin no longer receives new features/functionality.
+    Please use :ref:`server-plugins-structures-bundler-index` instead.
+
 The Base plugin is a structure plugin that provides the ability to add
 lists of unrelated entries into client configuration entry inventories.
 

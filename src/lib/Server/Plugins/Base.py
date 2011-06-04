@@ -21,6 +21,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
+    deprecated = True
 
     """Base creates independent clauses based on client metadata."""
     def __init__(self, core, datastore):
