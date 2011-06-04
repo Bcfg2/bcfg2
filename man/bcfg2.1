@@ -85,10 +85,12 @@ debian toolset; it calls apt\-get update and clean and
 dpkg \-\-configure \-\-pending.
 
 .TP
-.BR "\-l <whitelist|blacklist>"
-Run the client in the server decision list mode. This approach is needed
-when particular changes are deemed "high risk". It gives the ability to
-centrally specify these changes, but only install them on clients when
+.BR "\-l <whitelist|blacklist|none>"
+Run the client in the server decision list mode (unless "none" is
+specified, which can be done in order to override the decision list mode
+specified in bcfg2.conf). This approach is needed when particular
+changes are deemed "high risk". It gives the ability to centrally
+specify these changes, but only install them on clients when
 administrator supervision is available. Because collaborative
 configuration is one of the remaining hard issues in configuration
 management, these issues typically crop up in environments with several

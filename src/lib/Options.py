@@ -325,9 +325,9 @@ CLIENT_INDEP = Option('Only configure the given bundle(s)', default=False,
                        cmd='-z')
 CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
-CLIENT_DLIST = Option('Run client in server decision list mode', default=False,
+CLIENT_DLIST = Option('Run client in server decision list mode', default='none',
                       cf=('client', 'decision'),
-                      cmd='-l', odesc='<whitelist|blacklist>')
+                      cmd='-l', odesc='<whitelist|blacklist|none>')
 CLIENT_FILE = Option('Configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 CLIENT_QUICK = Option('Disable some checksum verification', default=False,
