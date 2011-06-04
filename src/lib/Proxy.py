@@ -193,7 +193,13 @@ class SSLHTTPConnection(httplib.HTTPConnection):
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
-        self.sock.connect((self.host, self.port))
+        try:
+            self.sock.connect((self.host, self.port))
+        except socket.gaierror:
+            e = sys.exc_info()[1]
+            self.logger.error("Unable to connect to %s:%s\n%s" %
+                              (self.host, self.port, e.strerror))
+            sys.exit(1)
         peer_cert = self.sock.getpeercert()
         if peer_cert and self.scns:
             scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
