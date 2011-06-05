@@ -1,10 +1,12 @@
+import fnmatch
 import glob
 import lxml.etree
 import os
-import fnmatch
+from subprocess import Popen, PIPE, STDOUT
+import sys
+
 import Bcfg2.Options
 import Bcfg2.Server.Lint
-from subprocess import Popen, PIPE, STDOUT
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     """ Ensure that the repo validates """
@@ -47,6 +49,10 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                 try:
                     schema = lxml.etree.XMLSchema(lxml.etree.parse(schemaname %
                                                                    schemadir))
+                except IOError:
+                    e = sys.exc_info()[1]
+                    self.LintError("input/output error", e.message)
+                    continue
                 except:
                     self.LintError("schema-failed-to-parse",
                                    "Failed to process schema %s" %
