@@ -2,7 +2,8 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:py="http://genshi.edgewall.org/"
            xml:lang="en"
-           targetNamespace="http://genshi.edgewall.org/">
+           targetNamespace="http://genshi.edgewall.org/"
+           elementFormDefault="qualified">
   <xs:annotation>
     <xs:documentation>
       Genshi schema
