@@ -257,6 +257,11 @@ class Reports(Bcfg2.Server.Admin.Mode):
         except (IOError, XMLSyntaxError):
             self.errExit("StatReports: Failed to parse %s" % (stats_file))
 
+        try:
+            encoding = self.cfp.get('components', 'encoding')
+        except:
+            encoding = 'UTF-8'
+
         if not clientspath:
             try:
                 clientspath = "%s/Metadata/clients.xml" % \
@@ -271,6 +276,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         try:
             load_stats(clientsdata,
                        statsdata,
+                       encoding,
                        verb,
                        self.log,
                        quick=quick,

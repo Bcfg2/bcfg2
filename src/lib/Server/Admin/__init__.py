@@ -113,7 +113,8 @@ class MetadataCore(Mode):
     def __init__(self, configfile, usage, pwhitelist=None, pblacklist=None):
         Mode.__init__(self, configfile)
         options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                   'configfile': Bcfg2.Options.CFILE}
+                   'configfile': Bcfg2.Options.CFILE,
+                   'encoding': Bcfg2.Options.ENCODING}
         setup = Bcfg2.Options.OptionParser(options)
         setup.hm = usage
         setup.parse(sys.argv[1:])
@@ -126,7 +127,7 @@ class MetadataCore(Mode):
         try:
             self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
                                                 setup['plugins'],
-                                                'foo', 'UTF-8')
+                                                'foo', setup['encoding'])
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed because %s" % msg)
