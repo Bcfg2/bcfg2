@@ -203,8 +203,10 @@ SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                        default='/usr/lib/sendmail')
 INTERACTIVE = Option('Prompt the user for each change', default=False,
                      cmd='-I', )
-ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(),
-                  cmd='-E', odesc='<encoding>',
+ENCODING = Option('Encoding of cfg files',
+                  default='UTF-8',
+                  cmd='-E',
+                  odesc='<encoding>',
                   cf=('components', 'encoding'))
 PARANOID_PATH = Option('Specify path for paranoid file backups',
                        default='/var/cache/bcfg2', cf=('paranoid', 'path'),
