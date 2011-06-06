@@ -55,6 +55,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
             try:
                 Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clients_xml.xdata,
                                                              container,
+                                                             self.core.encoding,
                                                              0,
                                                              logger,
                                                              True,

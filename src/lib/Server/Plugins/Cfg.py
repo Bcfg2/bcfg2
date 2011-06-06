@@ -197,7 +197,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             if os.path.exists("%s.genshi" % name):
                 logger.error("Cfg: Unable to pull data for genshi types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
-            open(name, 'w').write(new_entry['text'])
+            try:
+                etext = new_entry['text'].encode(self.encoding)
+            except:
+                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            open(name, 'w').write(etext)
             if log:
                 logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms']
