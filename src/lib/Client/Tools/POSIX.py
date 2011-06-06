@@ -76,6 +76,21 @@ def normUid(entry):
         return False
 
 
+def isString(strng, encoding):
+    """
+       Returns true if the string contains no ASCII control characters
+       and can be decoded from the specified encoding.
+    """
+    for char in strng:
+        if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
+            return False
+    try:
+        strng.decode(encoding)
+        return True
+    except:
+        return False
+
+
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""
     name = 'POSIX'
@@ -458,12 +473,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # md5sum so it would be faster for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
-            try:
-                content.decode('ascii')
-                isstring = True
-            except:
-                isstring = False
-            if tbin or not isstring:
+            if tbin or not isString(content, self.setup['encoding']):
                 entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
@@ -493,15 +503,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                        difflib.unified_diff(content.split('\n'), \
                                                             tempdata.split('\n'))])
                     try:
-                        eudiff = udiff.encode('ascii')
+                        dudiff = udiff.decode(self.setup['encoding'])
                     except:
-                        eudiff = "Binary file: no diff printed"
+                        dudiff = "Binary file: no diff printed"
 
                     nqtext = entry.get('qtext', '')
 
                     if nqtext:
                         nqtext += '\n'
-                    nqtext += eudiff
+                    nqtext += dudiff
                 else:
                     entry.set('current_bfile', binascii.b2a_base64(content))
                     nqtext = entry.get('qtext', '')

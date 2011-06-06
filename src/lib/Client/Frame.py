@@ -5,6 +5,7 @@ installs entries, and generates statistics.
 __revision__ = '$Revision$'
 
 import logging
+import sys
 import time
 import Bcfg2.Client.Tools
 
@@ -29,7 +30,7 @@ def promptFilter(prompt, entries):
         try:
             # py3k compatibility
             try:
-                ans = raw_input(iprompt)
+                ans = raw_input(iprompt.encode(sys.stdout.encoding, 'replace'))
             except NameError:
                 ans = input(iprompt)
             if ans in ['y', 'Y']:
