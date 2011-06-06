@@ -88,7 +88,8 @@ class ErrorHandler (object):
                "xml-failed-to-read":"error",
                "xml-failed-to-verify":"error",
                "merge-cfg":"warning",
-               "merge-probes":"warning",}
+               "merge-probes":"warning",
+               "input-output-error": "error"}
 
     def __init__(self, config=None):
         self.errors = 0
