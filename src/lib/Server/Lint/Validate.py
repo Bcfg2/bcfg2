@@ -51,7 +51,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                                                                    schemadir))
                 except IOError:
                     e = sys.exc_info()[1]
-                    self.LintError("input/output error", e.message)
+                    self.LintError("input-output-error", e.message)
                     continue
                 except:
                     self.LintError("schema-failed-to-parse",
