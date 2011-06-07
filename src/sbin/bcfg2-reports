@@ -104,6 +104,7 @@ def print_entry(item, max_name):
 fields = ""
 sort = ""
 badentry = ""
+modifiedentry = ""
 extraentry = ""
 expire = ""
 singlehost = ""
@@ -114,8 +115,8 @@ result = list()
 entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'ab:cde:hs:x:',
-                     ['stale', 'sort=', 'fields=', 'badentry=', 'extraentry='])
+opts, pargs = getopt(args, 'ab:cde:hm:s:x:',
+                     ['stale', 'sort=', 'fields=', 'badentry=', 'modifiedentry=', 'extraentry='])
 
 for option in opts:
     if len(option) > 0:
@@ -125,11 +126,13 @@ for option in opts:
             sort = option[1]
         if option[0] == '--badentry':
             badentry = option[1]
+        if option[0] == '--modifiedentry':
+            modifiedentry = option[1]
         if option[0] == '--extraentry':
             extraentry = option[1]
         if option[0] == '-x':
             expire = option[1]
-        if option[0] == '-s' or option[0] == '-b' or option[0] == '-e':
+        if option[0] == '-s' or option[0] == '-b' or option[0] == '-m' or option[0] == '-e':
             singlehost = option[1]
 
 if expire != "":
@@ -147,29 +150,35 @@ elif '-h' in args:
     print("""Usage: bcfg2-reports [option] ...
 
 Options and arguments (and corresponding environment variables):
--a                     : shows all hosts, including expired hosts
--b NAME                : single-host mode - shows bad entries from the
-                         current interaction of NAME
--c                     : shows only clean hosts
--d                     : shows only dirty hosts
--e NAME                : single-host mode - shows extra entries from the
-                         current interaction of NAME
--h                     : shows help and usage info about bcfg2-reports
--s NAME                : single-host mode - shows bad and extra entries from
-                         the current interaction of NAME
--x NAME                : toggles expired/unexpired state of NAME
---badentry=KIND,NAME   : shows only hosts whose current interaction has bad
-                         entries in of KIND kind and NAME name; if a single
-                         argument ARG1 is given, then KIND,NAME pairs will be
-                         read from a file of name ARG1
---extraentry=KIND,NAME : shows only hosts whose current interaction has extra
-                         entries in of KIND kind and NAME name; if a single
-                         argument ARG1 is given, then KIND,NAME pairs will be
-                         read from a file of name ARG1
---fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
-                         (name,time,state)
---sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)
---stale                : shows hosts which haven't run in the last 24 hours
+-a                        : shows all hosts, including expired hosts
+-b NAME                   : single-host mode - shows bad entries from the
+                            current interaction of NAME
+-c                        : shows only clean hosts
+-d                        : shows only dirty hosts
+-e NAME                   : single-host mode - shows extra entries from the
+                            current interaction of NAME
+-h                        : shows help and usage info about bcfg2-reports
+-m NAME                   : single-host mode - shows modified entries from the
+                            current interaction of NAME
+-s NAME                   : single-host mode - shows bad, modified, and extra
+                            entries from the current interaction of NAME
+-x NAME                   : toggles expired/unexpired state of NAME
+--badentry=KIND,NAME      : shows only hosts whose current interaction has bad
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--modifiedentry=KIND,NAME : shows only hosts whose current interaction has
+                            modified entries in of KIND kind and NAME name; if a
+                            single argument ARG1 is given, then KIND,NAME pairs
+                            will be read from a file of name ARG1
+--extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
+                            (name,time,state)
+--sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,... (name,time,state)
+--stale                   : shows hosts which haven't run in the last 24 hours
 """)
 elif singlehost != "":
     for c_inst in c_list:
@@ -182,6 +191,15 @@ elif singlehost != "":
                     if len(item.entry.name) > max_name:
                         max_name = len(item.entry.name)
                 for item in baditems:
+                    print_entry(item, max_name)
+            modifieditems = c_inst.current_interaction.modified()
+            if len(modifieditems) > 0 and ('-m' in args or '-s' in args):
+                print "Modified Entries:"
+                max_name = -1
+                for item in modifieditems:
+                    if len(item.entry.name) > max_name:
+                        max_name = len(item.entry.name)
+                for item in modifieditems:
                     print_entry(item, max_name)
             extraitems = c_inst.current_interaction.extra()
             if len(extraitems) > 0 and ('-e' in args or '-s' in args):
@@ -205,6 +223,9 @@ else:
 
     if badentry != "":
         badentry = badentry.split(',')
+
+    if modifiedentry != "":
+        modifiedentry = modifiedentry.split(',')
 
     if extraentry != "":
         extraentry = extraentry.split(',')
@@ -245,6 +266,28 @@ else:
                 baditems = c_inst.current_interaction.bad()
                 for item in baditems:
                     if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
+                        result.append(c_inst)
+                        break
+    elif modifiedentry != "":
+        if len(modifiedentry) == 1:
+            fileread = fileinput.input(modifiedentry[0])
+            for line in fileread:
+                modifiedentry = line.strip().split(',')
+                for c_inst in c_list:
+                    modifieditems = c_inst.current_interaction.modified()
+                    for item in modifieditems:
+                        if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
+                            result.append(c_inst)
+                            if c_inst in entrydict:
+                                entrydict.get(c_inst).append(modifiedentry[1])
+                            else:
+                                entrydict[c_inst] = [modifiedentry[1]]
+                            break
+        else:
+            for c_inst in c_list:
+                modifieditems = c_inst.current_interaction.modified()
+                for item in modifieditems:
+                    if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
                         result.append(c_inst)
                         break
     elif extraentry != "":
