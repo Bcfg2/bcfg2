@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/python
 """Query reporting system for client status."""
 __revision__ = '$Revision$'
 
@@ -47,6 +47,23 @@ def statecompare(client1, client2):
     else:
         return 0
 
+def totalcompare(client1, client2):
+    """Compares two clients by their total entry counts."""
+    return cmp(client2.current_interaction.totalcount, \
+               client1.current_interaction.totalcount)
+
+def goodcompare(client1, client2):
+    """Compares two clients by their good entry counts."""
+    return cmp(client2.current_interaction.goodcount, \
+               client1.current_interaction.goodcount)
+
+def badcompare(client1, client2):
+    """Compares two clients by their bad entry counts."""
+    return cmp(client2.current_interaction.totalcount - \
+               client2.current_interaction.goodcount,   \
+               client1.current_interaction.totalcount - \
+               client1.current_interaction.goodcount)
+
 def crit_compare(criterion, client1, client2):
     """Compares two clients by the criteria provided in criterion."""
     for crit in criterion:
@@ -57,6 +74,12 @@ def crit_compare(criterion, client1, client2):
             comp = statecompare(client1, client2)
         elif crit == 'time':
             comp = timecompare(client1, client2)
+        elif crit == 'total':
+            comp = totalcompare(client1, client2)
+        elif crit == 'good':
+            comp = goodcompare(client1, client2)
+        elif crit == 'bad':
+            comp = badcompare(client1, client2)
         
         if comp != 0:
             return comp
@@ -83,6 +106,13 @@ def print_fields(fields, cli, max_name, entrydict):
                 fdata.append("clean")
             else:
                 fdata.append("dirty")
+        elif field == 'total':
+            fdata.append("%5d" % cli.current_interaction.totalcount)
+        elif field == 'good':
+            fdata.append("%5d" % cli.current_interaction.goodcount)
+        elif field == 'bad':
+            fdata.append("%5d" % cli.current_interaction.totalcount \
+                               - cli.current_interaction.goodcount)
         else:
             try:
                 fdata.append(getattr(cli, field))
@@ -115,7 +145,7 @@ result = list()
 entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'ab:cde:hm:s:x:',
+opts, pargs = getopt(args, 'ab:cde:hm:s:t:x:',
                      ['stale', 'sort=', 'fields=', 'badentry=', 'modifiedentry=', 'extraentry='])
 
 for option in opts:
@@ -132,7 +162,11 @@ for option in opts:
             extraentry = option[1]
         if option[0] == '-x':
             expire = option[1]
-        if option[0] == '-s' or option[0] == '-b' or option[0] == '-m' or option[0] == '-e':
+        if option[0] == '-s' or \
+           option[0] == '-t' or \
+           option[0] == '-b' or \
+           option[0] == '-m' or \
+           option[0] == '-e':
             singlehost = option[1]
 
 if expire != "":
@@ -162,6 +196,8 @@ Options and arguments (and corresponding environment variables):
                             current interaction of NAME
 -s NAME                   : single-host mode - shows bad, modified, and extra
                             entries from the current interaction of NAME
+-t NAME                   : single-host mode - shows total number of managed and
+                            good entries from the current interaction of NAME
 -x NAME                   : toggles expired/unexpired state of NAME
 --badentry=KIND,NAME      : shows only hosts whose current interaction has bad
                             entries in of KIND kind and NAME name; if a single
@@ -183,6 +219,10 @@ Options and arguments (and corresponding environment variables):
 elif singlehost != "":
     for c_inst in c_list:
         if singlehost == c_inst.name:
+            if '-t' in args:
+                managed = c_inst.current_interaction.totalcount
+                good = c_inst.current_interaction.goodcount
+                print("Total managed entries: %d (good: %d)" % (managed, good))
             baditems = c_inst.current_interaction.bad()
             if len(baditems) > 0 and ('-b' in args or '-s' in args):
                 print("Bad Entries:")
