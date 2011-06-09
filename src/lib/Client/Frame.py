@@ -123,22 +123,7 @@ class Frame:
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.name for tool in self.tools])
-        if not self.dryrun and not self.setup['bundle']:
-            for cfile in [cfl for cfl in config.findall(".//Path") \
-                          if cfl.get('name') in self.__important__ and \
-                             cfl.get('type') == 'file']:
-                tl = [t for t in self.tools if t.handlesEntry(cfile) \
-                     and t.canVerify(cfile)]
-                if tl:
-                    if not tl[0].VerifyPath(cfile, []):
-                        if self.setup['interactive'] and not \
-                               promptFilter("Install %s: %s? (y/N):", [cfile]):
-                            continue
-                        try:
-                            self.states[cfile] = tl[0].InstallPath(cfile)
-                        except:
-                            self.logger.error("Unexpected tool failure",
-                                              exc_info=1)
+
         # find entries not handled by any tools
         problems = [entry for struct in config for \
                     entry in struct if entry not in self.handled]
@@ -177,6 +162,54 @@ class Frame:
             return self.__dict__[name]
         raise AttributeError(name)
 
+    def InstallImportant(self):
+        """Install important entries
+
+        We also process the decision mode stuff here because we want to prevent
+        non-whitelisted/blacklisted 'important' entries from being installed
+        prior to determining the decision mode on the client.
+        """
+        # Need to process decision stuff early so that dryrun mode works with it
+        self.whitelist = [entry for entry in self.states \
+                          if not self.states[entry]]
+        if self.setup['decision'] == 'whitelist':
+            dwl = self.setup['decision_list']
+            w_to_rem = [e for e in self.whitelist \
+                        if not matches_white_list(e, dwl)]
+            if w_to_rem:
+                self.logger.info("In whitelist mode: suppressing installation of:")
+                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
+                self.whitelist = [x for x in self.whitelist \
+                                  if x not in w_to_rem]
+
+        elif self.setup['decision'] == 'blacklist':
+            b_to_rem = [e for e in self.whitelist \
+                        if not passes_black_list(e, self.setup['decision_list'])]
+            if b_to_rem:
+                self.logger.info("In blacklist mode: suppressing installation of:")
+                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
+                self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
+
+        # take care of important entries first
+        if not self.dryrun and not self.setup['bundle']:
+            for cfile in [cfl for cfl in self.config.findall(".//Path") \
+                          if cfl.get('name') in self.__important__ and \
+                             cfl.get('type') == 'file']:
+                if cfile not in self.whitelist:
+                    continue
+                tl = [t for t in self.tools if t.handlesEntry(cfile) \
+                     and t.canVerify(cfile)]
+                if tl:
+                    if not tl[0].VerifyPath(cfile, []):
+                        if self.setup['interactive'] and not \
+                               promptFilter("Install %s: %s? (y/N):", [cfile]):
+                            continue
+                        try:
+                            self.states[cfile] = tl[0].InstallPath(cfile)
+                        except:
+                            self.logger.error("Unexpected tool failure",
+                                              exc_info=1)
+
     def Inventory(self):
         """
            Verify all entries,
@@ -210,26 +243,6 @@ class Frame:
 
         candidates = [entry for entry in self.states \
                       if not self.states[entry]]
-        self.whitelist = [entry for entry in self.states \
-                          if not self.states[entry]]
-        # Need to process decision stuff early so that dryrun mode works with it
-        if self.setup['decision'] == 'whitelist':
-            dwl = self.setup['decision_list']
-            w_to_rem = [e for e in self.whitelist \
-                        if not matches_white_list(e, dwl)]
-            if w_to_rem:
-                self.logger.info("In whitelist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
-                self.whitelist = [x for x in self.whitelist \
-                                  if x not in w_to_rem]
-
-        elif self.setup['decision'] == 'blacklist':
-            b_to_rem = [e for e in self.whitelist \
-                        if not passes_black_list(e, self.setup['decision_list'])]
-            if b_to_rem:
-                self.logger.info("In blacklist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
-                self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
 
         if self.dryrun:
             if self.whitelist:
@@ -389,6 +402,7 @@ class Frame:
         self.Inventory()
         self.times['inventory'] = time.time()
         self.CondDisplayState('initial')
+        self.InstallImportant()
         self.Decide()
         self.Install()
         self.times['install'] = time.time()
