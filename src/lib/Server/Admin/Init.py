@@ -77,7 +77,6 @@ os_list = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
 
 # Complete list of plugins
 plugin_list = ['Account',
-               'Base',
                'Bundler',
                'Bzr',
                'Cfg',
