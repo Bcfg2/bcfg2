@@ -141,7 +141,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                'Path': ['type']}
     __ireq__ = {'Package': ['name']}
 
-    conflicts = ['YUMng', 'RPMng']
+    conflicts = ['YUM24', 'RPMng']
 
     def __init__(self, logger, setup, config):
         self.yb = yum.YumBase()
