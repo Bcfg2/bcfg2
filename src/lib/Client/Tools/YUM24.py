@@ -76,8 +76,6 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     __new_gpg_ireq__ = {'Package': ['name'],
                         'Instance': ['version', 'release']}
 
-    conflicts = ['YUMng', 'RPMng']
-
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
         self.__important__ = self.__important__ + \
