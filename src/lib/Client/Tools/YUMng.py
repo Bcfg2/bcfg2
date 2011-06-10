@@ -485,6 +485,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
 
+            if self.setup.get('quick', False):
+                # Passed -q on the command line
+                continue
             if not (pkg_verify and \
                     inst.get('pkg_verify', 'true').lower() == 'true'):
                 continue
