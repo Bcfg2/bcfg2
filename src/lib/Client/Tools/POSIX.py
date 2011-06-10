@@ -14,6 +14,7 @@ import os
 import pwd
 import shutil
 import stat
+import sys
 import time
 import Bcfg2.Client.Tools
 import Bcfg2.Options
@@ -559,8 +560,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             # current list of backups for this file
-            bkuplist = [f for f in os.listdir(self.ppath) if
-                        f.startswith(bkupnam)]
+            try:
+                bkuplist = [f for f in os.listdir(self.ppath) if
+                            f.startswith(bkupnam)]
+            except OSError:
+                e = sys.exc_info()[1]
+                self.logger.error("Failed to create backup list in %s: %s" %
+                                  (self.ppath, e.strerror))
+                return False
             bkuplist.sort()
             while len(bkuplist) >= int(self.max_copies):
                 # remove the oldest backup available
