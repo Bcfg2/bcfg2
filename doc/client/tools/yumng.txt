@@ -18,9 +18,15 @@ and SUSE based distributions.
 
 Examples of this are:
 
-* SLES10 and openSUSE 10.2 both install six GPG keys.  From an RPM perspective this means that there are six packages with the name gpg-pubkey.
-* YUM always installs, as opposed to upgrades, kernel packages.  This is hard coded in YUM (actually it can be overridden in yum.conf), so systems using YUM will eventually have multiple kernel packages installed.
-* Red Hat family x86_64 based systems frequently have both an x86_64 and an i386 version of the same package installed.
+* SLES10 and openSUSE 10.2 both install six GPG keys.  From an RPM
+  perspective this means that there are six packages with the name
+  gpg-pubkey.
+* YUM always installs, as opposed to upgrades, kernel packages.  This is
+  hard coded in YUM (actually it can be overridden in yum.conf),
+  so systems using YUM will eventually have multiple kernel packages
+  installed.
+* Red Hat family x86_64 based systems frequently have both an x86_64
+  and an i386 version of the same package installed.
 
 The new Pkgmgr format files with Instances are therefore the only way to
 accurately describe an RPM based system.  It is recommended that all RPM
@@ -50,7 +56,9 @@ Features
 * Support for per instance ignoring of individual files for the RPM verification with the Ignore tag.
 * Multiple package Instances with full version information listed in interactive mode.
 * Support for installation and removal of gpg-pubkey packages.
-* Support for controlling what action is taken on package verification failure with the install_action, version_fail_action and verify_fail_action attributes.
+* Support for controlling what action is taken on package
+  verification failure with the install_action, version_fail_action and
+  verify_fail_action attributes.
 
 
 RPMng Driver Overview

@@ -1,9 +1,17 @@
+import sys
 from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, \
                        DateTime, UnicodeText, desc
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
+
+
+def u_str(string):
+    if sys.hexversion >= 0x03000000:
+        return string
+    else:
+        return unicode(string)
 
 
 class Uniquer(object):
@@ -33,12 +41,20 @@ class Administrator(Uniquer, Base):
     email = Column(Unicode(64))
 
 admin_client = Table('admin_client', Base.metadata,
-                     Column('admin_id', Integer, ForeignKey('administrator.id')),
-                     Column('client_id', Integer, ForeignKey('client.id')))
+                     Column('admin_id',
+                            Integer,
+                            ForeignKey('administrator.id')),
+                     Column('client_id',
+                            Integer,
+                            ForeignKey('client.id')))
 
 admin_group = Table('admin_group', Base.metadata,
-                    Column('admin_id', Integer, ForeignKey('administrator.id')),
-                    Column('group_id', Integer, ForeignKey('group.id')))
+                    Column('admin_id',
+                           Integer,
+                           ForeignKey('administrator.id')),
+                    Column('group_id',
+                           Integer,
+                           ForeignKey('group.id')))
 
 
 class Client(Uniquer, Base):
@@ -68,12 +84,20 @@ class ConnectorKeyVal(Uniquer, Base):
     value = Column(UnicodeText)
 
 meta_group = Table('meta_group', Base.metadata,
-                   Column('metadata_id', Integer, ForeignKey('metadata.id')),
-                   Column('group_id', Integer, ForeignKey('group.id')))
+                   Column('metadata_id',
+                          Integer,
+                          ForeignKey('metadata.id')),
+                   Column('group_id',
+                          Integer,
+                          ForeignKey('group.id')))
 
 meta_conn = Table('meta_conn', Base.metadata,
-                  Column('metadata_id', Integer, ForeignKey('metadata.id')),
-                  Column('connkeyval_id', Integer, ForeignKey('connkeyval.id')))
+                  Column('metadata_id',
+                         Integer,
+                         ForeignKey('metadata.id')),
+                  Column('connkeyval_id',
+                         Integer,
+                         ForeignKey('connkeyval.id')))
 
 
 class Metadata(Base):
@@ -87,21 +111,21 @@ class Metadata(Base):
 
     @classmethod
     def from_metadata(cls, mysession, mymetadata):
-        client = Client.by_value(mysession, name=unicode(mymetadata.hostname))
+        client = Client.by_value(mysession, name=u_str(mymetadata.hostname))
         m = cls(client=client)
         for group in mymetadata.groups:
-            m.groups.append(Group.by_value(mysession, name=unicode(group)))
+            m.groups.append(Group.by_value(mysession, name=u_str(group)))
         for connector in mymetadata.connectors:
             data = getattr(mymetadata, connector)
             if not isinstance(data, dict):
                 continue
-            for key, value in data.iteritems():
+            for key, value in list(data.items()):
                 if not isinstance(value, str):
                     continue
                 m.keyvals.append(ConnectorKeyVal.by_value(mysession,
-                                                          connector=unicode(connector),
-                                                          key=unicode(key),
-                                                          value=unicode(value)))
+                                                          connector=u_str(connector),
+                                                          key=u_str(key),
+                                                          value=u_str(value)))
         return m
 
 
@@ -143,8 +167,12 @@ class PackageCorrespondence(Base, CorrespondenceType):
     correct = Column(Boolean)
 
 package_snap = Table('package_snap', Base.metadata,
-                     Column('ppair_id', Integer, ForeignKey('package_pair.id')),
-                     Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                     Column('ppair_id',
+                            Integer,
+                            ForeignKey('package_pair.id')),
+                     Column('snapshot_id',
+                            Integer,
+                            ForeignKey('snapshot.id')))
 
 
 class Service(Base, Uniquer):
@@ -167,8 +195,12 @@ class ServiceCorrespondence(Base, CorrespondenceType):
     correct = Column(Boolean)
 
 service_snap = Table('service_snap', Base.metadata,
-                     Column('spair_id', Integer, ForeignKey('service_pair.id')),
-                     Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                     Column('spair_id',
+                            Integer,
+                            ForeignKey('service_pair.id')),
+                     Column('snapshot_id',
+                            Integer,
+                            ForeignKey('snapshot.id')))
 
 
 class File(Base, Uniquer):
@@ -194,20 +226,36 @@ class FileCorrespondence(Base, CorrespondenceType):
     correct = Column(Boolean)
 
 file_snap = Table('file_snap', Base.metadata,
-                  Column('fpair_id', Integer, ForeignKey('file_pair.id')),
-                  Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                  Column('fpair_id',
+                         Integer,
+                         ForeignKey('file_pair.id')),
+                  Column('snapshot_id',
+                         Integer,
+                         ForeignKey('snapshot.id')))
 
 extra_pkg_snap = Table('extra_pkg_snap', Base.metadata,
-                       Column('package_id', Integer, ForeignKey('package.id')),
-                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                       Column('package_id',
+                              Integer,
+                              ForeignKey('package.id')),
+                       Column('snapshot_id',
+                              Integer,
+                              ForeignKey('snapshot.id')))
 
 extra_file_snap = Table('extra_file_snap', Base.metadata,
-                       Column('file_id', Integer, ForeignKey('file.id')),
-                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                       Column('file_id',
+                              Integer,
+                              ForeignKey('file.id')),
+                       Column('snapshot_id',
+                              Integer,
+                              ForeignKey('snapshot.id')))
 
 extra_service_snap = Table('extra_service_snap', Base.metadata,
-                       Column('service_id', Integer, ForeignKey('service.id')),
-                       Column('snapshot_id', Integer, ForeignKey('snapshot.id')))
+                       Column('service_id',
+                              Integer,
+                              ForeignKey('service.id')),
+                       Column('snapshot_id',
+                              Integer,
+                              ForeignKey('snapshot.id')))
 
 
 class Action(Base):
@@ -228,7 +276,7 @@ class Snapshot(Base):
     correct = Column(Boolean)
     revision = Column(Unicode(36))
     metadata_id = Column(Integer, ForeignKey('metadata.id'))
-    client_metadata = relation(Metadata, primaryjoin=metadata_id==Metadata.id)
+    client_metadata = relation(Metadata, primaryjoin=metadata_id == Metadata.id)
     timestamp = Column(DateTime, default=datetime.datetime.now)
     client_id = Column(Integer, ForeignKey('client.id'))
     client = relation(Client, backref=backref('snapshots'))
@@ -256,23 +304,25 @@ class Snapshot(Base):
                                  (cls.e_dispatch, extra)]:
             for key in dispatch:
                 dest, ecls = dispatch[key]
-                for edata in data[key].values():
+                for edata in list(data[key].values()):
                     getattr(snap, dest).append(ecls.from_record(session, edata))
         return snap
 
     @classmethod
     def by_client(cls, session, clientname):
-        return session.query(cls).join(cls.client_metadata, Metadata.client).filter(Client.name==clientname)
+        return session.query(cls).join(cls.client_metadata,
+                                       Metadata.client).filter(Client.name == clientname)
 
     @classmethod
     def get_current(cls, session, clientname):
-        return session.query(Snapshot).join(Snapshot.client_metadata, Metadata.client).filter(Client.name==clientname).order_by(desc(Snapshot.timestamp)).first()
+        return session.query(Snapshot).join(Snapshot.client_metadata,
+                                            Metadata.client).filter(Client.name == clientname).order_by(desc(Snapshot.timestamp)).first()
 
     @classmethod
     def get_by_date(cls, session, clientname, timestamp):
         return session.query(Snapshot)\
                       .join(Snapshot.client_metadata, Metadata.client)\
                       .filter(Snapshot.timestamp < timestamp)\
-                      .filter(Client.name==clientname)\
+                      .filter(Client.name == clientname)\
                       .order_by(desc(Snapshot.timestamp))\
                       .first()

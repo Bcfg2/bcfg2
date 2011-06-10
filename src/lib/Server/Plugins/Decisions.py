@@ -26,7 +26,8 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
                                               DecisionFile, encoding)
         try:
             fam.AddMonitor(path, self)
-        except OSError, e:
+        except OSError:
+            e = sys.exc_info()[1]
             logger.error('Adding filemonitor for %s failed. '
                          'Make sure directory exists' % path)
             raise Bcfg2.Server.Plugin.PluginInitError(e)

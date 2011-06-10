@@ -30,6 +30,7 @@ except:
 if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
     raise ImportError
 
+
 def build_yname(pkgname, inst):
     """Build yum appropriate package name."""
     ypname = pkgname
@@ -45,6 +46,7 @@ def build_yname(pkgname, inst):
         ypname += ".%s" % (inst.get('arch'))
     return ypname
 
+
 class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     """Support for Yum packages."""
     pkgtype = 'yum'
@@ -59,7 +61,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     __ireq__ = {'Package': ['name']}
     #__ireq__ = {'Package': ['name', 'version']}
 
-    __new_req__ = {'Package': ['name'], 'Instance': ['version', 'release', 'arch']}
+    __new_req__ = {'Package': ['name'],
+                   'Instance': ['version', 'release', 'arch']}
     __new_ireq__ = {'Package': ['name'], \
                     'Instance': []}
     #__new_ireq__ = {'Package': ['name', 'uri'], \
@@ -68,10 +71,10 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     __gpg_req__ = {'Package': ['name', 'version']}
     __gpg_ireq__ = {'Package': ['name', 'version']}
 
-    __new_gpg_req__ = {'Package': ['name'], 'Instance': ['version', 'release']}
-    __new_gpg_ireq__ = {'Package': ['name'], 'Instance': ['version', 'release']}
-
-    conflicts = ['YUMng', 'RPMng']
+    __new_gpg_req__ = {'Package': ['name'],
+                       'Instance': ['version', 'release']}
+    __new_gpg_ireq__ = {'Package': ['name'],
+                        'Instance': ['version', 'release']}
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
@@ -101,10 +104,14 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     data = {pkg.arch: (pkg.epoch, pkg.version, pkg.release)}
                 else:
                     pname = pkg[0]
-                    if pkg[1] is None: a = 'noarch'
-                    else: a = pkg[1]
-                    if pkg[2] is None: e = '0'
-                    else: e = pkg[2]
+                    if pkg[1] is None:
+                        a = 'noarch'
+                    else:
+                        a = pkg[1]
+                    if pkg[2] is None:
+                        e = '0'
+                    else:
+                        e = pkg[2]
                     data = {a: (e, pkg[3], pkg[4])}
                 if pname in dest:
                     dest[pname].update(data)
@@ -137,24 +144,24 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         if entry.get('type', False) == 'yum':
             # Check for virtual provides or packages.  If we don't have
             # this package use Yum to resolve it to a real package name
-            knownPkgs = self.yum_installed.keys() + self.yum_avail.keys()
+            knownPkgs = list(self.yum_installed.keys()) + list(self.yum_avail.keys())
             if entry.get('name') not in knownPkgs:
                 # If the package name matches something installed
                 # or available the that's the correct package.
                 try:
-                    pkgDict = dict( [ (i.name, i) for i in \
-                        self.yb.returnPackagesByDep(entry.get('name')) ] )
+                    pkgDict = dict([(i.name, i) for i in \
+                                   self.yb.returnPackagesByDep(entry.get('name'))])
                 except yum.Errors.YumBaseError, e:
                     self.logger.error('Yum Error Depsolving for %s: %s' % \
                                       (entry.get('name'), str(e)))
                     pkgDict = {}
 
                 if len(pkgDict) > 1:
-                    # What do we do with multiple packages?  
+                    # What do we do with multiple packages?
                     s = "YUMng: returnPackagesByDep(%s) returned many packages"
                     self.logger.info(s % entry.get('name'))
                     s = "YUMng: matching packages: %s"
-                    self.logger.info(s % str(pkgDict.keys()))
+                    self.logger.info(s % str(list(pkgDict.keys())))
                     pkgs = set(pkgDict.keys()) & set(self.yum_installed.keys())
                     if len(pkgs) > 0:
                         # Virtual packages matches an installed real package
@@ -166,7 +173,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                         # and Yum should Do The Right Thing on package install
                         pkg = None
                 elif len(pkgDict) == 1:
-                    pkg = pkgDict.values()[0]
+                    pkg = list(pkgDict.values())[0]
                 else:  # len(pkgDict) == 0
                     s = "YUMng: returnPackagesByDep(%s) returned no results"
                     self.logger.info(s % entry.get('name'))
@@ -252,16 +259,16 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     self.logger.error("GPG key has no simplefile attribute")
                     continue
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
-                                                     inst.get('simplefile'))
+                                       inst.get('simplefile'))
                 cmdrc, output = self.cmd.run("rpm --import %s" % key_arg)
                 if cmdrc != 0:
                     self.logger.debug("Unable to install %s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
+                                      (self.instance_status[inst].get('pkg').get('name'), \
+                                       self.str_evra(inst)))
                 else:
                     self.logger.debug("Installed %s-%s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               inst.get('version'), inst.get('release')))
+                                      (self.instance_status[inst].get('pkg').get('name'), \
+                                       inst.get('version'), inst.get('release')))
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
@@ -374,9 +381,9 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                         pkg_arg = pkg_arg + '.' + inst.get('arch')
                     erase_args.append(pkg_arg)
                 else:
-                    pkgspec = { 'name':pkg.get('name'),
-                            'version':inst.get('version'),
-                            'release':inst.get('release')}
+                    pkgspec = {'name': pkg.get('name'),
+                               'version': inst.get('version'),
+                               'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
@@ -395,7 +402,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                 for inst in pkg:
                     if pkg.get('name') != 'gpg-pubkey':
                         pkg_arg = pkg.get('name') + '-'
-                        if inst.attrib.has_key('epoch'):
+                        if 'epoch' in inst.attrib:
                             pkg_arg = pkg_arg + inst.get('epoch') + ':'
                         pkg_arg = pkg_arg + inst.get('version') + '-' + inst.get('release')
                         if 'arch' in inst.attrib:
@@ -415,7 +422,6 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                         self.logger.debug("Failure = %s" % output)
                 if pkg_modified == True:
                     self.modified.append(pkg)
-
 
         self.RefreshPackages()
         self.extra = self.FindExtraPackages()

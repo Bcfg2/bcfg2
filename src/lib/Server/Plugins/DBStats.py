@@ -33,7 +33,8 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         logger.debug("Searching for new models to add to the statistics database")
         try:
             update_database()
-        except Exception, inst:
+        except Exception:
+            inst = sys.exc_info()[1]
             logger.debug(str(inst))
             logger.debug(str(type(inst)))
 
@@ -54,6 +55,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
             try:
                 Bcfg2.Server.Reports.importscript.load_stats(self.core.metadata.clients_xml.xdata,
                                                              container,
+                                                             self.core.encoding,
                                                              0,
                                                              logger,
                                                              True,
@@ -61,7 +63,8 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 logger.info("Imported data for %s in %s seconds" \
                             % (metadata.hostname, time.time() - start))
                 return
-            except MultipleObjectsReturned, e:
+            except MultipleObjectsReturned:
+                e = sys.exc_info()[1]
                 logger.error("DBStats: MultipleObjectsReturned while handling %s: %s" % \
                     (metadata.hostname, e))
                 logger.error("DBStats: Data is inconsistent")

@@ -188,29 +188,38 @@ displays::
     Usage: python bcfg2-reports [option] ...
 
     Options and arguments (and corresponding environment variables):
-    -a                     : shows all hosts, including expired hosts
-    -b NAME                : single-host mode - shows bad entries from the
-                             current interaction of NAME
-    -c                     : shows only clean hosts
-    -d                     : shows only dirty hosts
-    -e NAME                : single-host mode - shows extra entries from the
-                             current interaction of NAME
-    -h                     : shows help and usage info about bcfg2-reports
-    -s NAME                : single-host mode - shows bad and extra entries from
-                             the current interaction of NAME
-    -x NAME                : toggles expired/unexpired state of NAME
-    --badentry=KIND,NAME   : shows only hosts whose current interaction has bad
-                             entries in of KIND kind and NAME name; if a single
-                             argument ARG1 is given, then KIND,NAME pairs will be
-                             read from a file of name ARG1
-    --extraentry=KIND,NAME : shows only hosts whose current interaction has extra
-                             entries in of KIND kind and NAME name; if a single
-                             argument ARG1 is given, then KIND,NAME pairs will be
-                             read from a file of name ARG1
-    --fields=ARG1,ARG2,... : only displays the fields ARG1,ARG2,...
-                             (name,time,state)
-    --sort=ARG1,ARG2,...   : sorts output on ARG1,ARG2,... (name,time,state)
-    --stale                : shows hosts which haven't run in the last 24 hours
+    -a                        : shows all hosts, including expired hosts
+    -b NAME                   : single-host mode - shows bad entries from the
+                                current interaction of NAME
+    -c                        : shows only clean hosts
+    -d                        : shows only dirty hosts
+    -e NAME                   : single-host mode - shows extra entries from the
+                                current interaction of NAME
+    -h                        : shows help and usage info about bcfg2-reports
+    -m NAME                   : single-host mode - shows modified entries from the
+                                current interaction of NAME
+    -s NAME                   : single-host mode - shows bad, modified, and extra
+                                entries from the current interaction of NAME
+    -t NAME                   : single-host mode - shows total number of managed and
+                                good entries from the current interaction of NAME
+    -x NAME                   : toggles expired/unexpired state of NAME
+    --badentry=KIND,NAME      : shows only hosts whose current interaction has bad
+                                entries in of KIND kind and NAME name; if a single
+                                argument ARG1 is given, then KIND,NAME pairs will be
+                                read from a file of name ARG1
+    --modifiedentry=KIND,NAME : shows only hosts whose current interaction has
+                                modified entries in of KIND kind and NAME name; if a
+                                single argument ARG1 is given, then KIND,NAME pairs
+                                will be read from a file of name ARG1
+    --extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
+                                entries in of KIND kind and NAME name; if a single
+                                argument ARG1 is given, then KIND,NAME pairs will be
+                                read from a file of name ARG1
+    --fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
+                                (name,time,state,total,good,bad)
+    --sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,...
+                                (name,time,state,total,good,bad)
+    --stale                   : shows hosts which haven't run in the last 24 hours
 
 Screenshots
 ===========

@@ -1,8 +1,17 @@
 import imp
+import logging
+import sys
 import time
-import ldap
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
+
+logger = logging.getLogger('Bcfg2.Plugins.Ldap')
+
+try:
+    import ldap
+except:
+    logger.error("Unable to load ldap module. Is python-ldap installed?")
+    raise ImportError
 
 # time in seconds between retries after failed LDAP connection
 RETRY_DELAY = 5
@@ -81,7 +90,8 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
                     self.debug_log("LdapPlugin debug: query '" + query.name +
                         "' not applicable to host '" + metadata.hostname + "'")
             return data
-        except Exception, error_msg:
+        except Exception:
+            error_msg = sys.exc_info()[1]
             if self.debug_flag:
                 raise
             else:

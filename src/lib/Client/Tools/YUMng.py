@@ -141,7 +141,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                'Path': ['type']}
     __ireq__ = {'Package': ['name']}
 
-    conflicts = ['RPMng']
+    conflicts = ['YUM24', 'RPMng']
 
     def __init__(self, logger, setup, config):
         self.yb = yum.YumBase()
@@ -300,7 +300,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         # Okay deal with a buggy yum multilib and verify
         packages = self.yb.rpmdb.searchNevra(name=po.name, epoch=po.epoch,
-                ver=po.version, rel=po.release) # find all arches of pkg
+                ver=po.version, rel=po.release)  # find all arches of pkg
         if len(packages) == 1:
             return results      # No mathcing multilib packages
 
@@ -319,13 +319,13 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 v = verify(p)
                 self.verifyCache[k] = v
 
-            for fn, probs in v.items():
+            for fn, probs in list(v.items()):
                 # file problems must exist in ALL multilib packages to be real
                 if fn in files:
                     common[fn] = common.get(fn, 0) + 1
 
         flag = len(packages) - 1
-        for fn, i in common.items():
+        for fn, i in list(common.items()):
             if i == flag:
                 # this fn had verify problems in all but one of the multilib
                 # packages.  That means its correct in the package that's
@@ -512,7 +512,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
                       [ig.get('name') for ig in inst.findall('Ignore')] + \
                       self.ignores
-            for fn, probs in vResult.items():
+            for fn, probs in list(vResult.items()):
                 if fn in modlist:
                     self.logger.debug("  %s in modlist, skipping" % fn)
                     continue
@@ -537,7 +537,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                                   "these files, revert the changes, or ignore "
                                   "false failures:")
                 self.logger.debug("  Verify Problems:")
-                for fn, probs in stat['verify'].items():
+                for fn, probs in list(stat['verify'].items()):
                     self.logger.debug("    %s" % fn)
                     for p in probs:
                         self.logger.debug("      %s: %s" % p)
@@ -577,7 +577,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         extra_entry = Bcfg2.Client.XML.Element('Package', name=name,
                                                type=self.pkgtype)
         instances = self._buildInstances(entry)
-        _POs = [p for p in POs] # Shallow copy
+        _POs = [p for p in POs]  # Shallow copy
 
         # Algorythm is sensitive to duplicates, check for them
         checked = []
@@ -588,7 +588,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             flag = True
             if len(pkgs) > 0:
                 if pkgs[0] in checked:
-                    continue # We've already taken care of this Instance
+                    continue  # We've already taken care of this Instance
                 else:
                     checked.append(pkgs[0])
                 _POs.remove(pkgs[0])
@@ -609,16 +609,17 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         packages = [e.get('name') for e in self.getSupportedEntries()]
         extras = []
 
-        for p in self.installed.keys():
+        for p in list(self.installed.keys()):
             if p not in packages:
                 entry = Bcfg2.Client.XML.Element('Package', name=p,
                                                  type=self.pkgtype)
                 for i in self.installed[p]:
-                    inst = Bcfg2.Client.XML.SubElement(entry, 'Instance', \
-                            epoch = i['epoch'],
-                            version = i['version'],
-                            release = i['release'],
-                            arch = i['arch'])
+                    inst = Bcfg2.Client.XML.SubElement(entry,
+                                                       'Instance',
+                                                       epoch=i['epoch'],
+                                                       version=i['version'],
+                                                       release=i['release'],
+                                                       arch=i['arch'])
 
                 extras.append(entry)
 

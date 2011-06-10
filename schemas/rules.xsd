@@ -1,5 +1,6 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
   <xsd:annotation>
     <xsd:documentation>
       string enumeration definitions for bcfg2
@@ -10,49 +11,9 @@
 
   <xsd:include schemaLocation="servicetype.xsd"/>
   <xsd:include schemaLocation="types.xsd"/>
-
-<xsd:complexType name='PackageType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Ignore'>
-        <xsd:complexType>
-          <xsd:attribute type='xsd:string' name='name'/>
-        </xsd:complexType>
-      </xsd:element>
-      <xsd:element name='Instance'>
-        <xsd:complexType>
-          <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-            <xsd:element name='Ignore'>
-              <xsd:complexType>
-                <xsd:attribute type='xsd:string' name='name'/>
-              </xsd:complexType>
-            </xsd:element>
-          </xsd:choice>
-          <xsd:attribute name='arch' type='xsd:string'/>
-          <xsd:attribute name='epoch' type='xsd:string'/>
-          <xsd:attribute name='version' type='xsd:string'/>
-          <xsd:attribute name='release' type='xsd:string'/>
-          <xsd:attribute name='simplefile' type='xsd:string'/>
-          <xsd:attribute name='pkg_verify' type='xsd:string'/>
-          <xsd:attribute name='verify_flags' type='xsd:string'/>
-          <xsd:attribute name='installed_action' type='xsd:string'/>
-          <xsd:attribute name='version_fail_action' type='xsd:string'/>
-          <xsd:attribute name='verify_fail_action' type='xsd:string'/>
-        </xsd:complexType>
-      </xsd:element>
-    </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='version' use='required'/>
-    <xsd:attribute type='xsd:string' name='file'/>
-    <xsd:attribute type='xsd:string' name='verify'/>
-    <xsd:attribute type='xsd:string' name='simplefile'/>
-    <xsd:attribute type='xsd:string' name='reloc'/>
-    <xsd:attribute type='xsd:string' name='multiarch'/>
-    <xsd:attribute type='xsd:string' name='srcs'/>
-    <xsd:attribute type='xsd:string' name='type' use='required'/>
-    <xsd:attribute type='xsd:string' name='bname'/>
-    <xsd:attribute name='pkg_checks' type='xsd:string'/>
-    <xsd:attribute name='verify_flags' type='xsd:string'/>
-  </xsd:complexType>
+  <xsd:include schemaLocation="pkgtype.xsd"/>
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name='ActionType'>
     <xsd:attribute type='ActionTimingEnum' name='timing' use='required'/>
@@ -60,6 +21,11 @@
     <xsd:attribute type='ActionStatusEnum' name='status' use='required'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='command' use='required'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name='PostInstallType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
   <xsd:complexType name='PathType'>
@@ -74,19 +40,28 @@
     <xsd:attribute type='xsd:string' name='group'/>
     <xsd:attribute type='xsd:string' name='prune'/>
     <xsd:attribute type='xsd:string' name='to'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name='RContainerType'>
-     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Service' type='ServiceType'/>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Path' type='PathType'/>
       <xsd:element name='Action' type='ActionType'/>
       <xsd:element name='Group' type='RContainerType'/>
       <xsd:element name='Client' type='RContainerType'/>
+      <xsd:element ref="py:def"/>
+      <xsd:element ref="py:match"/>
+      <xsd:element ref="py:choose"/>
+      <xsd:element ref="py:for"/>
+      <xsd:element ref="py:if"/>
+      <xsd:element ref="py:with"/>
+      <xsd:element ref="py:replace"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
-    <xsd:attribute name='negate' type='xsd:string'/>
+    <xsd:attribute name='negate' type='xsd:boolean'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
 
@@ -97,10 +72,19 @@
         <xsd:element name='Package' type='PackageType'/>
         <xsd:element name='Path' type='PathType'/>
         <xsd:element name='Action' type='ActionType'/>
+        <xsd:element name='PostInstall' type='PostInstallType'/>
         <xsd:element name='Group' type='RContainerType'/>
         <xsd:element name='Client' type='RContainerType'/>
+        <xsd:element ref="py:def"/>
+        <xsd:element ref="py:match"/>
+        <xsd:element ref="py:choose"/>
+        <xsd:element ref="py:for"/>
+        <xsd:element ref="py:if"/>
+        <xsd:element ref="py:with"/>
+        <xsd:element ref="py:replace"/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
+      <xsd:attributeGroup ref="py:genshiAttrs"/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

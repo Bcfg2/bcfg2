@@ -1,9 +1,15 @@
 """This module sets up a base list of configuration entries."""
 __revision__ = '$Revision$'
 
-import Bcfg2.Server.Plugin
 import copy
 import lxml.etree
+import sys
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    from functools import reduce
+
+import Bcfg2.Server.Plugin
+
 
 class Base(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Structure,
@@ -15,6 +21,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
+    deprecated = True
 
     """Base creates independent clauses based on client metadata."""
     def __init__(self, core, datastore):
@@ -31,8 +38,8 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     def BuildStructures(self, metadata):
         """Build structures for client described by metadata."""
         ret = lxml.etree.Element("Independent", version='2.0')
-        fragments = reduce(lambda x, y: x+y,
+        fragments = reduce(lambda x, y: x + y,
                            [base.Match(metadata) for base
-                            in self.entries.values()], [])
+                            in list(self.entries.values())], [])
         [ret.append(copy.deepcopy(frag)) for frag in fragments]
         return [ret]

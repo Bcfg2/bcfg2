@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   
   <xsd:annotation>
     <xsd:documentation>
@@ -7,10 +8,13 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name='StructureEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='altsrc'/>
     <xsd:attribute type='xsd:string' name='verify' use='optional'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
 </xsd:schema>

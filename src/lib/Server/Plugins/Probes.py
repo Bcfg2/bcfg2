@@ -6,8 +6,10 @@ import Bcfg2.Server.Plugin
 specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH](\d\d)?)_\S+)")
 probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
 
+
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
+
     def __init__(self, path, fam, encoding, plugin_name):
         fpattern = '[0-9A-Za-z_\-]+'
         self.plugin_name = plugin_name
@@ -34,7 +36,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             if pname not in build:
                 build[pname] = entry
 
-        for (name, entry) in build.iteritems():
+        for (name, entry) in list(build.items()):
             probe = lxml.etree.Element('probe')
             probe.set('name', name.split('/')[-1])
             probe.set('source', self.plugin_name)
@@ -46,6 +48,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
                 probe.set('interpreter', '/bin/sh')
             ret.append(probe)
         return ret
+
 
 class Probes(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Probing,
@@ -80,7 +83,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                                       value=self.probedata[client][probe])
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(cx, "Group", name=group)
-        data = lxml.etree.tostring(top, encoding='UTF-8', xml_declaration=True,
+        data = lxml.etree.tostring(top, encoding='UTF-8',
+                                   xml_declaration=True,
                                    pretty_print='true')
         try:
             datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
@@ -98,7 +102,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.cgroups = {}
         for client in data.getchildren():
             self.probedata[client.get('name')] = {}
-            self.cgroups[client.get('name')]=[]
+            self.cgroups[client.get('name')] = []
             for pdata in client:
                 if (pdata.tag == 'Probe'):
                     self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
@@ -118,7 +122,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
 
     def ReceiveDataItem(self, client, data):
         """Receive probe results pertaining to client."""
-        if not self.cgroups.has_key(client.hostname):
+        if client.hostname not in self.cgroups:
             self.cgroups[client.hostname] = []
         if data.text == None:
             self.logger.error("Got null response to probe %s from %s" % \
@@ -139,9 +143,9 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                 dlines.remove(line)
         dtext = "\n".join(dlines)
         try:
-            self.probedata[client.hostname].update({data.get('name'):dtext})
+            self.probedata[client.hostname].update({data.get('name'): dtext})
         except KeyError:
-            self.probedata[client.hostname] = {data.get('name'):dtext}
+            self.probedata[client.hostname] = {data.get('name'): dtext}
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())

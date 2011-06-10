@@ -5,7 +5,9 @@ import binascii
 import logging
 import lxml
 import os
+import os.path
 import re
+import sys
 import tempfile
 
 import Bcfg2.Server.Plugin
@@ -13,14 +15,19 @@ import Bcfg2.Server.Plugin
 try:
     import genshi.core
     import genshi.input
-    from genshi.template import TemplateLoader, \
-                                TextTemplate, MarkupTemplate, TemplateError
-    from genshi.template import NewTextTemplate
+    from genshi.template import TemplateLoader, NewTextTemplate
     have_genshi = True
 except:
     have_genshi = False
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+
+
+def u_str(string, encoding):
+    if sys.hexversion >= 0x03000000:
+        return str(string, encoding)
+    else:
+        return unicode(string, encoding)
 
 
 # snipped from TGenshi
@@ -62,7 +69,7 @@ def process_delta(data, delta):
         output = open(basefile.name, 'r').read()
         [os.unlink(fname) for fname in [basefile.name, dfile.name]]
         if ret >> 8 != 0:
-            raise Bcfg2.Server.Plugin.PluginExecutionError, ('delta', delta)
+            raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
         return output
 
 
@@ -96,7 +103,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         """return a list of all entries pertinent
         to a client => [base, delta1, delta2]
         """
-        matching = [ent for ent in self.entries.values() if \
+        matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
         matching.sort(self.sort_by_specific)
         non_delta = [matching.index(m) for m in matching
@@ -128,12 +135,14 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                            metadata=metadata,
                                            path=basefile.name).filter(removecomment)
                 try:
-                    data = stream.render('text', strip_whitespace=False)
+                    data = stream.render('text', encoding=self.encoding,
+                                         strip_whitespace=False)
                 except TypeError:
-                    data = stream.render('text')
+                    data = stream.render('text', encoding=self.encoding)
                 if data == '':
                     entry.set('empty', 'true')
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 logger.error("Cfg: genshi exception: %s" % e)
                 raise Bcfg2.Server.Plugin.PluginExecutionError
         else:
@@ -147,10 +156,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.text = binascii.b2a_base64(data)
         else:
             try:
-                entry.text = unicode(data, self.encoding)
-            except UnicodeDecodeError, e:
+                entry.text = u_str(data, self.encoding)
+            except UnicodeDecodeError:
+                e = sys.exc_info()[1]
                 logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
                 logger.error("Please verify you are using the proper encoding.")
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            except ValueError:
+                e = sys.exc_info()[1]
+                logger.error("Error in specification for %s" % entry.get('name'))
+                logger.error("%s" % e)
+                logger.error("You need to specify base64 encoding for %s." %
+                             entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError
         if entry.text in ['', None]:
             entry.set('empty', 'true')
@@ -177,10 +194,15 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def write_update(self, specific, new_entry, log):
         if 'text' in new_entry:
             name = self.build_filename(specific)
-            if name.endswith(".genshi"):
+            if os.path.exists("%s.genshi" % name):
                 logger.error("Cfg: Unable to pull data for genshi types")
-                raise PluginExecutionError
-            open(name, 'w').write(new_entry['text'])
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            try:
+                etext = new_entry['text'].encode(self.encoding)
+            except:
+                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            open(name, 'w').write(etext)
             if log:
                 logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms']

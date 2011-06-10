@@ -14,22 +14,26 @@
     <xsd:attribute name='important' type='xsd:string'/>
     <xsd:attribute name='owner' type='xsd:string'/>
     <xsd:attribute name='perms' type='xsd:string'/>
-    <xsd:attribute name='paranoid' type='xsd:string'/>
+    <xsd:attribute name='paranoid' type='xsd:boolean'/>
   </xsd:complexType>
 
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='1' maxOccurs='1'>
       <xsd:element name='Info' type='InfoType'/>
-      <xsd:element name='Group' type='GroupType' minOccurs='0' maxOccurs='unbounded'/>
+      <xsd:element name='Group' type='GroupType' minOccurs='0'
+                   maxOccurs='unbounded'/>
+      <xsd:element name='Client' type='GroupType' minOccurs='0'
+                   maxOccurs='unbounded'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='negate' />
+    <xsd:attribute type='xsd:boolean' name='negate' />
   </xsd:complexType>
 
   <xsd:element name='FileInfo'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Group' type='GroupType'/>
+        <xsd:element name='Client' type='GroupType'/>
         <xsd:element name='Info' type='InfoType'/>
       </xsd:choice>
     </xsd:complexType>

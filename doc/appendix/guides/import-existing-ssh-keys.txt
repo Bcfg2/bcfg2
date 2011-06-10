@@ -46,7 +46,7 @@ Validate your repository
 
 Validation can be performed using the following command::
 
-    bcfg2-repo-validate -v
+    bcfg2-lint
 
 Run the bcfg2 client
 ====================

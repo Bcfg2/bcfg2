@@ -1,4 +1,3 @@
-import cPickle
 import copy
 import gzip
 import tarfile
@@ -8,7 +7,21 @@ import lxml.etree
 import os
 import re
 import sys
-import urllib2
+
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import cPickle
+from Bcfg2.Bcfg2Py3k import HTTPBasicAuthHandler
+from Bcfg2.Bcfg2Py3k import HTTPPasswordMgrWithDefaultRealm
+from Bcfg2.Bcfg2Py3k import HTTPError
+from Bcfg2.Bcfg2Py3k import install_opener
+from Bcfg2.Bcfg2Py3k import build_opener
+from Bcfg2.Bcfg2Py3k import urlopen
+
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    from io import FileIO as BUILTIN_FILE_TYPE
+else:
+    BUILTIN_FILE_TYPE = file
 
 # FIXME: Remove when server python dep is 2.5 or greater
 if sys.version_info >= (2, 5):
@@ -22,13 +35,16 @@ import Bcfg2.Server.Plugin
 # build sources.list?
 # caching for yum
 
+
 class NoData(Exception):
     pass
+
 
 class SomeData(Exception):
     pass
 
 logger = logging.getLogger('Packages')
+
 
 def source_from_xml(xsource):
     ret = dict([('rawurl', False), ('url', False)])
@@ -60,6 +76,7 @@ def source_from_xml(xsource):
             ret['url'] += '/'
     return ret
 
+
 def _fetch_url(url):
     if '@' in url:
         mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
@@ -68,10 +85,11 @@ def _fetch_url(url):
         user = mobj.group(2)
         passwd = mobj.group(3)
         url = mobj.group(1) + mobj.group(4)
-        auth = urllib2.HTTPBasicAuthHandler(urllib2.HTTPPasswordMgrWithDefaultRealm())
+        auth = HTTPBasicAuthHandler(HTTPPasswordMgrWithDefaultRealm())
         auth.add_password(None, url, user, passwd)
-        urllib2.install_opener(urllib2.build_opener(auth))
-    return urllib2.urlopen(url).read()
+        install_opener(build_opener(auth))
+    return urlopen(url).read()
+
 
 class Source(object):
     basegroups = []
@@ -135,7 +153,7 @@ class Source(object):
         agroups = ['global'] + [a for a in self.arches if a in meta.groups]
         vdict = dict()
         for agrp in agroups:
-            for key, value in self.provides[agrp].iteritems():
+            for key, value in list(self.provides[agrp].items()):
                 if key not in vdict:
                     vdict[key] = set(value)
                 else:
@@ -160,11 +178,12 @@ class Source(object):
             except ValueError:
                 logger.error("Packages: Bad url string %s" % url)
                 continue
-            except urllib2.HTTPError, h:
+            except HTTPError:
+                h = sys.exc_info()[1]
                 logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (url, h.code))
                 continue
-            file(fname, 'w').write(data)
+            BUILTIN_FILE_TYPE(fname, 'w').write(data)
 
     def applies(self, metadata):
         return len([g for g in self.basegroups if g in metadata.groups]) != 0 and \
@@ -193,6 +212,7 @@ class Source(object):
         return {'groups': copy.copy(self.groups), \
             'urls': [copy.deepcopy(url) for url in self.url_map]}
 
+
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
     rp = '{http://linux.duke.edu/metadata/rpm}'
@@ -217,13 +237,13 @@ class YUMSource(Source):
         self.file_to_arch = dict()
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.packages, self.deps, self.provides,
                       self.filemap, self.url_map), cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         (self.packages, self.deps, self.provides, \
          self.filemap, self.url_map) = cPickle.load(data)
 
@@ -250,7 +270,8 @@ class YUMSource(Source):
                 except ValueError:
                     logger.error("Packages: Bad url string %s" % rmdurl)
                     continue
-                except urllib2.HTTPError, h:
+                except HTTPError:
+                    h = sys.exc_info()[1]
                     logger.error("Packages: Failed to fetch url %s. code=%s" \
                              % (rmdurl, h.code))
                     continue
@@ -277,7 +298,7 @@ class YUMSource(Source):
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_filelist(fdata, farch)
         # merge data
-        sdata = self.packages.values()
+        sdata = list(self.packages.values())
         self.packages['global'] = copy.deepcopy(sdata.pop())
         while sdata:
             self.packages['global'] = self.packages['global'].intersection(sdata.pop())
@@ -337,16 +358,17 @@ class YUMSource(Source):
 
     def get_vpkgs(self, metadata):
         rv = Source.get_vpkgs(self, metadata)
-        for arch, fmdata in self.filemap.iteritems():
+        for arch, fmdata in list(self.filemap.items()):
             if arch not in metadata.groups and arch != 'global':
                 continue
-            for filename, pkgs in fmdata.iteritems():
+            for filename, pkgs in list(fmdata.items()):
                 rv[filename] = pkgs
         return rv
 
     def filter_unknown(self, unknown):
         filtered = set([u for u in unknown if u.startswith('rpmlib')])
         unknown.difference_update(filtered)
+
 
 class APTSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
@@ -362,13 +384,13 @@ class APTSource(Source):
             'components': self.components, 'arches': self.arches, 'groups': self.groups}]
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
                      cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def filter_unknown(self, unknown):
@@ -407,7 +429,7 @@ class APTSource(Source):
                 print("Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
-                words = line.strip().split(':', 1)
+                words = str(line.strip()).split(':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
@@ -449,7 +471,7 @@ class APTSource(Source):
                 for barch in bdeps:
                     self.deps[barch][pkgname] = bdeps[barch][pkgname]
         provided = set()
-        for bprovided in bprov.values():
+        for bprovided in list(bprov.values()):
             provided.update(set(bprovided))
         for prov in provided:
             prset = set()
@@ -469,6 +491,7 @@ class APTSource(Source):
                pkg not in self.blacklist and \
                (len(self.whitelist) == 0 or pkg in self.whitelist)
 
+
 class PACSource(Source):
     basegroups = ['arch', 'parabola']
     ptype = 'pacman'
@@ -483,13 +506,13 @@ class PACSource(Source):
             'components': self.components, 'arches': self.arches, 'groups': self.groups}]
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
                      cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = BUILTIN_FILE_TYPE(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def filter_unknown(self, unknown):
@@ -526,7 +549,7 @@ class PACSource(Source):
                 bdeps[barch] = dict()
                 bprov[barch] = dict()
             try:
-                print "try to read : " + fname
+                print("try to read : " + fname)
                 tar = tarfile.open(fname, "r")
                 reader = gzip.GzipFile(fname)
             except:
@@ -536,7 +559,7 @@ class PACSource(Source):
             for tarinfo in tar:
                 if tarinfo.isdir():
                     self.pkgnames.add(tarinfo.name.rsplit("-", 2)[0])
-                    print "added : " + tarinfo.name.rsplit("-", 2)[0]
+                    print("added : " + tarinfo.name.rsplit("-", 2)[0])
             tar.close()
 
         self.deps['global'] = dict()
@@ -556,7 +579,7 @@ class PACSource(Source):
                 for barch in bdeps:
                     self.deps[barch][pkgname] = bdeps[barch][pkgname]
         provided = set()
-        for bprovided in bprov.values():
+        for bprovided in list(bprov.values()):
             provided.update(set(bprovided))
         for prov in provided:
             prset = set()
@@ -575,6 +598,7 @@ class PACSource(Source):
         return pkg in self.pkgnames and \
                pkg not in self.blacklist and \
                (len(self.whitelist) == 0 or pkg in self.whitelist)
+
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
@@ -614,7 +638,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         vpkgs = dict()
         for source in self.get_matching_sources(meta):
             s_vpkgs = source.get_vpkgs(meta)
-            for name, prov_set in s_vpkgs.iteritems():
+            for name, prov_set in list(s_vpkgs.items()):
                 if name not in vpkgs:
                     vpkgs[name] = set(prov_set)
                 else:
@@ -726,7 +750,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     satisfied_vpkgs.add(current)
                 elif [item for item in vpkg_cache[current] if item in packages]:
                     if debug:
-                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, [item for item in vpkg_cache[current] if item in packages]))
+                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current,
+                                                                                        [item for item in vpkg_cache[current]
+                                                                                         if item in packages]))
                     satisfied_vpkgs.add(current)
             vpkgs.difference_update(satisfied_vpkgs)
 
@@ -736,7 +762,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 # allow use of virt through explicit specification, then fall back to forcing current on last pass
                 if [item for item in vpkg_cache[current] if item in packages]:
                     if debug:
-                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, [item for item in vpkg_cache[current] if item in packages]))
+                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current,
+                                                                                        [item for item in vpkg_cache[current]
+                                                                                         if item in packages]))
                     satisfied_both.add(current)
                 elif current in input_requirements or final_pass:
                     pkgs.add(current)
@@ -828,7 +856,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             xdata.xinclude()
             xdata = xdata.getroot()
         except (lxml.etree.XIncludeError, \
-                lxml.etree.XMLSyntaxError), xmlerr:
+                lxml.etree.XMLSyntaxError):
+            xmlerr = sys.exc_info()[1]
             self.logger.error("Package: Error processing xml: %s" % xmlerr)
             raise Bcfg2.Server.Plugin.PluginInitError
         except IOError:

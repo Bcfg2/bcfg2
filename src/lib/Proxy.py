@@ -11,9 +11,6 @@ load_config -- read configuration files
 __revision__ = '$Revision: $'
 
 
-from xmlrpclib import _Method
-
-import httplib
 import logging
 import re
 import socket
@@ -25,50 +22,59 @@ import socket
 try:
     import ssl
     SSL_LIB = 'py26_ssl'
-except ImportError, e:
+except ImportError:
     from M2Crypto import SSL
     import M2Crypto.SSL.Checker
     SSL_LIB = 'm2crypto'
 
 
-import string
 import sys
 import time
-import urlparse
-import xmlrpclib
+
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import httplib, xmlrpclib, urlparse
 
 version = sys.version_info[:2]
-has_py23 = map(int, version) >= [2, 3]
-has_py26 = map(int, version) >= [2, 6]
+has_py23 = version >= (2, 3)
+has_py26 = version >= (2, 6)
 
-__all__ = ["ComponentProxy", "RetryMethod", "SSLHTTPConnection", "XMLRPCTransport"]
+__all__ = ["ComponentProxy",
+           "RetryMethod",
+           "SSLHTTPConnection",
+           "XMLRPCTransport"]
+
 
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
 
-class RetryMethod(_Method):
+
+class RetryMethod(xmlrpclib._Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
     max_retries = 4
+
     def __call__(self, *args):
         for retry in range(self.max_retries):
             try:
-                return _Method.__call__(self, *args)
-            except xmlrpclib.ProtocolError, err:
+                return xmlrpclib._Method.__call__(self, *args)
+            except xmlrpclib.ProtocolError:
+                err = sys.exc_info()[1]
                 self.log.error("Server failure: Protocol Error: %s %s" % \
                               (err.errcode, err.errmsg))
                 raise xmlrpclib.Fault(20, "Server Failure")
             except xmlrpclib.Fault:
                 raise
-            except socket.error, err:
+            except socket.error:
+                err = sys.exc_info()[1]
                 if hasattr(err, 'errno') and err.errno == 336265218:
                     self.log.error("SSL Key error")
                     break
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)
-            except CertificateError, ce:
+            except CertificateError:
+                ce = sys.exc_info()[1]
                 self.log.error("Got unallowed commonName %s from server" \
                                % ce.commonName)
                 break
@@ -82,10 +88,13 @@ class RetryMethod(_Method):
         raise xmlrpclib.Fault(20, "Server Failure")
 
 # sorry jon
-xmlrpclib._Method = RetryMethod
+_Method = RetryMethod
+
 
 class SSLHTTPConnection(httplib.HTTPConnection):
-    """Extension of HTTPConnection that implements SSL and related behaviors."""
+    """Extension of HTTPConnection that
+    implements SSL and related behaviors.
+    """
 
     logger = logging.getLogger('Bcfg2.Proxy.SSLHTTPConnection')
 
@@ -154,8 +163,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         elif SSL_LIB == 'm2crypto':
             self._connect_m2crypto()
         else:
-            raise Exception, "No SSL module support"
-
+            raise Exception("No SSL module support")
 
     def _connect_py26ssl(self):
         """Initiates a connection using the ssl module."""
@@ -166,14 +174,14 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ssl_protocol_ver = ssl.PROTOCOL_TLSv1
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
-            raise Exception, "unknown protocol %s" % self.protocol
+            raise Exception("unknown protocol %s" % self.protocol)
         if self.ca:
             other_side_required = ssl.CERT_REQUIRED
         else:
             other_side_required = ssl.CERT_NONE
             self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
         if self.cert and not self.key:
-            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
             self.cert = None
         if self.key and not self.cert:
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
@@ -185,12 +193,18 @@ class SSLHTTPConnection(httplib.HTTPConnection):
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
-        self.sock.connect((self.host, self.port))
+        try:
+            self.sock.connect((self.host, self.port))
+        except socket.gaierror:
+            e = sys.exc_info()[1]
+            self.logger.error("Unable to connect to %s:%s\n%s" %
+                              (self.host, self.port, e.strerror))
+            sys.exit(1)
         peer_cert = self.sock.getpeercert()
         if peer_cert and self.scns:
             scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
             if scn not in self.scns:
-                raise CertificateError, scn
+                raise CertificateError(scn)
         self.sock.closeSocket = True
 
     def _connect_m2crypto(self):
@@ -202,7 +216,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ctx = SSL.Context('tlsv1')
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
-            raise Exception, "unknown protocol %s" % self.protocol
+            raise Exception("unknown protocol %s" % self.protocol)
 
         if self.ca:
             # Use the certificate authority to validate the cert
@@ -218,7 +232,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             # authentication to the server
             ctx.load_cert(self.cert, self.key)
         elif self.cert:
-            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
         elif self.key:
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
 
@@ -235,12 +249,14 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         try:
             self.sock.connect((hostname, self.port))
             # automatically checks cert matches host
-        except M2Crypto.SSL.Checker.WrongHost, wr:
-            raise CertificateError, wr
+        except M2Crypto.SSL.Checker.WrongHost:
+            wr = sys.exc_info()[1]
+            raise CertificateError(wr)
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
-    def __init__(self, key=None, cert=None, ca=None, scns=None, use_datetime=0, timeout=90):
+    def __init__(self, key=None, cert=None, ca=None,
+                 scns=None, use_datetime=0, timeout=90):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
@@ -250,9 +266,13 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        host = self.get_host_info(host)[0]
-        http = SSLHTTPConnection(host, key=self.key, cert=self.cert, ca=self.ca,
-                                 scns=self.scns, timeout=self.timeout)
+        host, self._extra_headers = self.get_host_info(host)[0:2]
+        http = SSLHTTPConnection(host,
+                                 key=self.key,
+                                 cert=self.cert,
+                                 ca=self.ca,
+                                 scns=self.scns,
+                                 timeout=self.timeout)
         https = httplib.HTTP()
         https._setup(http)
         return https
@@ -268,7 +288,10 @@ class XMLRPCTransport(xmlrpclib.Transport):
         errcode, errmsg, headers = h.getreply()
 
         if errcode != 200:
-            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+            raise xmlrpclib.ProtocolError(host + handler,
+                                          errcode,
+                                          errmsg,
+                                          headers)
 
         self.verbose = verbose
         msglen = int(headers.dict['content-length'])
@@ -287,7 +310,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
             if not response:
                 break
             if self.verbose:
-                print "body:", repr(response), len(response)
+                print("body:", repr(response), len(response))
             p.feed(response)
 
         fd.close()
@@ -295,7 +318,9 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
         return u.close()
 
-def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
+
+def ComponentProxy(url, user=None, password=None,
+                   key=None, cert=None, ca=None,
                    allowedServerCNs=None, timeout=90):
 
     """Constructs proxies to components.
@@ -308,9 +333,10 @@ def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
     """
 
     if user and password:
-        method, path = urlparse.urlparse(url)[:2]
+        method, path = urlparse(url)[:2]
         newurl = "%s://%s:%s@%s" % (method, user, password, path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca, allowedServerCNs, timeout=timeout)
+    ssl_trans = XMLRPCTransport(key, cert, ca,
+                                allowedServerCNs, timeout=float(timeout))
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)

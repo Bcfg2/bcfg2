@@ -35,6 +35,7 @@ if __name__ == '__main__':
     OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
                     'cert'     : Bcfg2.Options.SERVER_CERT,
                     'ca'       : Bcfg2.Options.SERVER_CA,
+                    'listen_all' : Bcfg2.Options.SERVER_LISTEN_ALL,
                     'location' : Bcfg2.Options.SERVER_LOCATION,
                     'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
                     'static'   : Bcfg2.Options.SERVER_STATIC,
@@ -51,6 +52,7 @@ if __name__ == '__main__':
             print("Could not read %s" % setup['configfile'])
             sys.exit(1)
         Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
+                                      listen_all=setup['listen_all'],
                                       location=setup['location'],
                                       daemon = setup['daemon'],
                                       pidfile_name = setup['daemon'],
@@ -69,7 +71,8 @@ if __name__ == '__main__':
                                       certfile=setup['cert'],
                                       ca=setup['ca'],
                                       )
-    except CoreInitError, msg:
+    except CoreInitError:
+        msg = sys.exc_info()[1]
         logger.error(msg)
         logger.error("exiting")
         sys.exit(1)

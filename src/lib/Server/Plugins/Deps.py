@@ -5,20 +5,22 @@ import lxml.etree
 
 import Bcfg2.Server.Plugin
 
+
 class DNode(Bcfg2.Server.Plugin.INode):
     """DNode provides supports for single predicate types for dependencies."""
-    raw = {'Group':"lambda x:'%s' in x.groups and predicate(x)"}
+    raw = {'Group': "lambda x:'%s' in x.groups and predicate(x)"}
     containers = ['Group']
 
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
         if parent == None:
-            self.predicate = lambda x:True
+            self.predicate = lambda x: True
         else:
             predicate = parent.predicate
-            if data.tag in self.raw.keys():
-                self.predicate = eval(self.raw[data.tag] % (data.get('name')), {'predicate':predicate})
+            if data.tag in list(self.raw.keys()):
+                self.predicate = eval(self.raw[data.tag] % (data.get('name')),
+                                      {'predicate': predicate})
             else:
                 raise Exception
         mytype = self.__class__
@@ -27,14 +29,17 @@ class DNode(Bcfg2.Server.Plugin.INode):
             if item.tag in self.containers:
                 self.children.append(mytype(item, idict, self))
             else:
-                data = [(child.tag, child.get('name')) for child in item.getchildren()]
+                data = [(child.tag, child.get('name'))
+                        for child in item.getchildren()]
                 try:
                     self.contents[item.tag][item.get('name')] = data
                 except KeyError:
-                    self.contents[item.tag] = {item.get('name'):data}
+                    self.contents[item.tag] = {item.get('name'): data}
+
 
 class DepXMLSrc(Bcfg2.Server.Plugin.XMLSrc):
     __node__ = DNode
+
 
 class Deps(Bcfg2.Server.Plugin.PrioDir,
            Bcfg2.Server.Plugin.StructureValidator):
@@ -68,12 +73,12 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
         if (entries, gdata) in self.cache:
             prereqs = self.cache[(entries, gdata)]
         else:
-            [src.Cache(metadata) for src in self.entries.values()]
+            [src.Cache(metadata) for src in list(self.entries.values())]
 
             toexamine = list(entries[:])
             while toexamine:
                 entry = toexamine.pop()
-                matching = [src for src in self.entries.values()
+                matching = [src for src in list(self.entries.values())
                             if src.cache and entry[0] in src.cache[1]
                             and entry[1] in src.cache[1][entry[0]]]
                 if len(matching) > 1:

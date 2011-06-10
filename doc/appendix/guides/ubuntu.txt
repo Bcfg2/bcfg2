@@ -167,14 +167,39 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
         <Arch>amd64</Arch>
         <Arch>i386</Arch>
       </APTSource>
+       <APTSource>
+        <Group>lucid</Group>
+        <URL>http://archive.ubuntu.com/ubuntu</URL>
+        <Version>lucid-updates</Version>
+        <Component>main</Component>
+        <Component>multiverse</Component>
+        <Component>restricted</Component>
+        <Component>universe</Component>
+        <Arch>amd64</Arch>
+       </APTSource>
+       <APTSource>
+        <Group>lucid</Group>
+        <URL>http://security.ubuntu.com/ubuntu</URL>
+        <Version>lucid-security</Version>
+        <Component>main</Component>
+        <Component>multiverse</Component>
+        <Component>restricted</Component>
+        <Component>universe</Component>
+        <Arch>amd64</Arch>
+       </APTSource>
     </Sources>
 
-Due to the `Magic Groups`_, we need to modify our Metadata. Let's add
-an **ubuntu-lucid** group which inherits the **ubuntu** group already
-present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
-should look something like this
+Due to the :ref:`server-plugins-generators-packages-magic-groups`,
+we need to modify our Metadata. Let's add an **ubuntu-lucid**
+group which inherits the **ubuntu** group already present in
+``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
+something like this
 
-.. _Magic Groups: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages#MagicGroups
+.. note::
+
+    The reason we are creating a release-specific group in this case is
+    that the APTSource above is specific to the lucid release of ubuntu.
+    That is, it should not apply to other releases (hardy, maverick, etc).
 
 .. code-block:: xml
 
@@ -197,7 +222,7 @@ should look something like this
 
 .. note::
     When editing your xml files by hand, it is useful to occasionally run
-    `bcfg2-repo-validate` to ensure that your xml validates properly.
+    `bcfg2-lint` to ensure that your xml validates properly.
 
 The last thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
@@ -481,13 +506,8 @@ Now we run the client and see there are no more unmanaged entries! ::
     managed. Please see :ref:`unsorted-writing_specification` for more
     details.
 
-Dynamic (web) reports
-=====================
-
-See installation instructions at :ref:`appendix-guides-web-reports-install`
-
 Upstart
-=======
+^^^^^^^
 
 Upstart services are defined like this:
 
@@ -501,3 +521,13 @@ Some Upstart services require additional parameters, like network-interface and 
 
     <Service name="network-interface" status="on" type="upstart" parameters="INTERFACE=eth0"/>
     <Service name="bridge-network-interface" status="on" type="upstart" parameters="INTERFACE=br0"/>
+
+Dynamic (web) reports
+=====================
+
+See installation instructions at :ref:`appendix-guides-web-reports-install`
+
+Next Steps
+==========
+
+:ref:`getting_started-index-next-steps`

@@ -1,6 +1,8 @@
 import getopt
 import sys
+
 import Bcfg2.Server.Admin
+
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
     """Pull mode retrieves entries from clients and
@@ -38,7 +40,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')
         except:
-            print self.__shorthelp__
+            print(self.__shorthelp__)
             raise SystemExit(1)
         for opt in opts:
             if opt[0] == '-v':
@@ -55,18 +57,20 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 try:
                     self.PullEntry(*line.split(None, 3))
                 except SystemExit:
-                    print "  for %s" % line
+                    print("  for %s" % line)
                 except:
-                    print "Bad entry: %s" % line.strip()
+                    print("Bad entry: %s" % line.strip())
         elif len(gargs) < 3:
-            print self.__longhelp__
+            print(self.__longhelp__)
             raise SystemExit(1)
         else:
             self.PullEntry(gargs[0], gargs[1], gargs[2])
 
     def BuildNewEntry(self, client, etype, ename):
-        """Construct a new full entry for given client/entry from statistics."""
-        new_entry = {'type':etype, 'name':ename}
+        """Construct a new full entry for
+        given client/entry from statistics.
+        """
+        new_entry = {'type': etype, 'name': ename}
         for plugin in self.bcore.pull_sources:
             try:
                 (owner, group, perms, contents) = \
@@ -74,16 +78,19 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 break
             except Bcfg2.Server.Plugin.PluginExecutionError:
                 if plugin == self.bcore.pull_sources[-1]:
-                    print "Pull Source failure; could not fetch current state"
+                    print("Pull Source failure; could not fetch current state")
                     raise SystemExit(1)
 
         try:
-            data = {'owner':owner, 'group':group, 'perms':perms, 'text':contents}
+            data = {'owner': owner,
+                    'group': group,
+                    'perms': perms,
+                    'text': contents}
         except UnboundLocalError:
             print("Unable to build entry. "
                   "Do you have a statistics plugin enabled?")
             raise SystemExit(1)
-        for k, v in data.iteritems():
+        for k, v in list(data.items()):
             if v:
                 new_entry[k] = v
         #print new_entry
@@ -93,17 +100,22 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         """Determine where to put pull data."""
         if self.mode == 'interactive':
             for choice in choices:
-                print "Plugin returned choice:"
+                print("Plugin returned choice:")
                 if id(choice) == id(choices[0]):
-                    print "(current entry)",
+                    print("(current entry) ")
                 if choice.all:
-                    print " => global entry"
+                    print(" => global entry")
                 elif choice.group:
-                    print (" => group entry: %s (prio %d)" %
-                           (choice.group, choice.prio))
+                    print(" => group entry: %s (prio %d)" %
+                          (choice.group, choice.prio))
                 else:
-                    print " => host entry: %s" % (choice.hostname)
-                if raw_input("Use this entry? [yN]: ") in ['y', 'Y']:
+                    print(" => host entry: %s" % (choice.hostname))
+                # py3k compatibility
+                try:
+                    ans = raw_input("Use this entry? [yN]: ") in ['y', 'Y']
+                except NameError:
+                    ans = input("Use this entry? [yN]: ") in ['y', 'Y']
+                if ans:
                     return choice
             return False
         else:
@@ -136,7 +148,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             self.errExit("Configuration upload not supported by plugin %s" \
                          % (plugin.name))
         # Commit if running under a VCS
-        for vcsplugin in self.bcore.plugins.values():
+        for vcsplugin in list(self.bcore.plugins.values()):
             if isinstance(vcsplugin, Bcfg2.Server.Plugin.Version):
                 files = "%s/%s" % (plugin.data, ename)
                 comment = 'file "%s" pulled from host %s' % (files, client)

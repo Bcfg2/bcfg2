@@ -14,6 +14,7 @@ import os
 import pwd
 import shutil
 import stat
+import sys
 import time
 import Bcfg2.Client.Tools
 import Bcfg2.Options
@@ -55,7 +56,8 @@ def normGid(entry):
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-        log.error('GID normalization failed for %s' % (entry.get('name')))
+        log.error('GID normalization failed for %s. Does group %s exist?'
+                  % (entry.get('name'), entry.get('group')))
         return False
 
 
@@ -70,7 +72,23 @@ def normUid(entry):
         except:
             return int(pwd.getpwnam(entry.get('owner'))[2])
     except (OSError, KeyError):
-        log.error('UID normalization failed for %s' % (entry.get('name')))
+        log.error('UID normalization failed for %s. Does owner %s exist?'
+                  % (entry.get('name'), entry.get('owner')))
+        return False
+
+
+def isString(strng, encoding):
+    """
+       Returns true if the string contains no ASCII control characters
+       and can be decoded from the specified encoding.
+    """
+    for char in strng:
+        if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
+            return False
+    try:
+        strng.decode(encoding)
+        return True
+    except:
         return False
 
 
@@ -137,14 +155,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         if entry.get('dev_type') in ['block', 'char']:
             # check if major/minor are properly specified
             if entry.get('major') == None or \
                entry.get('minor') == None:
                 self.logger.error('Entry %s not completely specified. '
-                                  'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                  'Try running bcfg2-lint.' % (entry.get('name')))
                 return False
         try:
             # check for file existence
@@ -167,7 +185,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 if entry.get('major') == None or \
                    entry.get('minor') == None:
                     self.logger.error('Entry %s not completely specified. '
-                                      'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                      'Try running bcfg2-lint.' % (entry.get('name')))
                     return False
                 major = int(entry.get('major'))
                 minor = int(entry.get('minor'))
@@ -218,7 +236,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     if entry.get('major') == None or \
                        entry.get('minor') == None:
                         self.logger.error('Entry %s not completely specified. '
-                                          'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                                          'Try running bcfg2-lint.' % (entry.get('name')))
                         return False
                     major = int(entry.get('major'))
                     minor = int(entry.get('minor'))
@@ -240,7 +258,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
@@ -348,7 +366,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing directory %s" % (entry.get('name')))
@@ -456,12 +474,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # md5sum so it would be faster for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
-            try:
-                content.decode('ascii')
-                isstring = True
-            except:
-                isstring = False
-            if tbin or not isstring:
+            if tbin or not isString(content, self.setup['encoding']):
                 entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
@@ -491,15 +504,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                        difflib.unified_diff(content.split('\n'), \
                                                             tempdata.split('\n'))])
                     try:
-                        eudiff = udiff.encode('ascii')
+                        dudiff = udiff.decode(self.setup['encoding'])
                     except:
-                        eudiff = "Binary file: no diff printed"
+                        dudiff = "Binary file: no diff printed"
 
                     nqtext = entry.get('qtext', '')
 
                     if nqtext:
                         nqtext += '\n'
-                    nqtext += eudiff
+                    nqtext += dudiff
                 else:
                     entry.set('current_bfile', binascii.b2a_base64(content))
                     nqtext = entry.get('qtext', '')
@@ -547,8 +560,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             # current list of backups for this file
-            bkuplist = [f for f in os.listdir(self.ppath) if
-                        f.startswith(bkupnam)]
+            try:
+                bkuplist = [f for f in os.listdir(self.ppath) if
+                            f.startswith(bkupnam)]
+            except OSError:
+                e = sys.exc_info()[1]
+                self.logger.error("Failed to create backup list in %s: %s" %
+                                  (self.ppath, e.strerror))
+                return False
             bkuplist.sort()
             while len(bkuplist) >= int(self.max_copies):
                 # remove the oldest backup available
@@ -614,7 +633,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Verify HardLink entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         try:
@@ -637,7 +656,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Install HardLink entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing Hardlink %s" % (entry.get('name')))
@@ -713,7 +732,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            entry.get('owner') == None or \
            entry.get('group') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % (entry.get('name')))
+                              'Try running bcfg2-lint.' % (entry.get('name')))
             return False
         try:
             os.chown(entry.get('name'), normUid(entry), normGid(entry))
@@ -728,7 +747,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Verify Path type='symlink' entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         try:
@@ -751,7 +770,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         """Install Path type='symlink' entry."""
         if entry.get('to') == None:
             self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-repo-validate.' % \
+                              'Try running bcfg2-lint.' % \
                               (entry.get('name')))
             return False
         self.logger.info("Installing symlink %s" % (entry.get('name')))

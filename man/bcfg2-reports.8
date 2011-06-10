@@ -39,10 +39,15 @@ of NAME. NAME is the name of the entry.
 .RS
 Shows help and usage info about bcfg2-reports.
 .RE
+.B "\-m NAME"
+.RS
+Single-host mode \- shows modified entries from the current interaction
+of NAME. NAME is the name of the entry.
+.RE
 .B "\-s NAME"
 .RS
-Single host mode \- shows bad and extra entries from the current
-interaction of NAME. NAME is the name of the entry.
+Single host mode \- shows bad, modified, and extra entries from the
+current interaction of NAME. NAME is the name of the entry.
 .RE
 .B "\-x NAME"
 .RS
@@ -64,11 +69,19 @@ pairs will be read from a file of name ARG1. KIND is the type of entry
 .RE
 .B "\-\-fields=ARG1,ARG2,..."
 .RS
-Only displays the fields ARG1,ARG2,... (name, time, state)
+Only displays the fields ARG1,ARG2,... (name, time, state, total, good,
+bad)
+.RE
+.B "\-\-modifiedentry=KIND,NAME"
+.RS
+Shows only hosts whose current interaction has modified entries in of
+KIND kind and NAME name; if a single argument ARG1 is given, then
+KIND,NAME pairs will be read from a file of name ARG1. KIND is the type
+of entry (Package, Path, Service, etc). NAME is the name of the entry.
 .RE
 .B "\-\-sort=ARG1,ARG2,..."
 .RS
-Sorts output on ARG1,ARG2,... (name, time, state)
+Sorts output on ARG1,ARG2,... (name, time, state, total, good, bad)
 .RE
 .B "\-\-stale"
 .RS

@@ -3,21 +3,25 @@ Report views
 
 Functions to handle all of the reporting views.
 """
-from django.template import Context, RequestContext, loader
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
+from datetime import datetime, timedelta
+import sys
+from time import strptime
+
+from django.template import Context, RequestContext
+from django.http import \
+        HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
 from django.shortcuts import render_to_response, get_object_or_404
-from django.core.urlresolvers import resolve, reverse, Resolver404, NoReverseMatch
+from django.core.urlresolvers import \
+        resolve, reverse, Resolver404, NoReverseMatch
 from django.db import connection
-from django.db.backends import util
 
 from Bcfg2.Server.Reports.reports.models import *
-from datetime import datetime, timedelta
-from time import strptime
-import sys
+
 
 class PaginationError(Exception):
     """This error is raised when pagination cannot be completed."""
     pass
+
 
 def server_error(request):
     """
@@ -28,6 +32,7 @@ def server_error(request):
     """
     from django.views import debug
     return debug.technical_500_response(request, *sys.exc_info())
+
 
 def timeview(fn):
     """
@@ -53,28 +58,32 @@ def timeview(fn):
                 if cal_date.find(' ') > -1:
                     kw['hour'] = timestamp.hour
                     kw['minute'] = timestamp.minute
-                return HttpResponseRedirect(reverse(view, args=args, kwargs=kw))
+                return HttpResponseRedirect(reverse(view,
+                                                    args=args,
+                                                    kwargs=kw))
             except KeyError:
                 pass
             except:
                 pass
                 # FIXME - Handle this
-    
+
         """Extract timestamp from args."""
         timestamp = None
         try:
-            timestamp = datetime(int(kwargs.pop('year')), int(kwargs.pop('month')), 
+            timestamp = datetime(int(kwargs.pop('year')),
+                                 int(kwargs.pop('month')),
                 int(kwargs.pop('day')), int(kwargs.pop('hour', 0)),
                 int(kwargs.pop('minute', 0)), 0)
             kwargs['timestamp'] = timestamp
         except KeyError:
             pass
-        except: 
+        except:
             raise
         return fn(request, **kwargs)
 
     return _handle_timeview
-       
+
+
 def config_item(request, pk, type="bad"):
     """
     Display a single entry.
@@ -83,30 +92,33 @@ def config_item(request, pk, type="bad"):
 
     """
     item = get_object_or_404(Entries_interactions, id=pk)
-    timestamp=item.interaction.timestamp
-    time_start=item.interaction.timestamp.replace(\
-        hour=0, minute=0, second=0, microsecond=0)
-    time_end=time_start + timedelta(days=1)
+    timestamp = item.interaction.timestamp
+    time_start = item.interaction.timestamp.replace(hour=0,
+                                                    minute=0,
+                                                    second=0,
+                                                    microsecond=0)
+    time_end = time_start + timedelta(days=1)
 
-    todays_data = Interaction.objects.filter(\
-        timestamp__gte=time_start,\
-        timestamp__lt=time_end)
-    shared_entries = Entries_interactions.objects.filter(entry=item.entry,\
-        reason=item.reason, type=item.type,
-        interaction__in=[x['id']\
-            for x in todays_data.values('id')])
+    todays_data = Interaction.objects.filter(timestamp__gte=time_start,
+                                             timestamp__lt=time_end)
+    shared_entries = Entries_interactions.objects.filter(entry=item.entry,
+                                                         reason=item.reason,
+                                                         type=item.type,
+                                                         interaction__in=[x['id']\
+                                                                          for x in todays_data.values('id')])
 
     associated_list = Interaction.objects.filter(id__in=[x['interaction']\
         for x in shared_entries.values('interaction')])\
-        .order_by('client__name','timestamp').select_related().all()
+        .order_by('client__name', 'timestamp').select_related().all()
 
     return render_to_response('config_items/item.html',
-        {'item':item,
-         'isextra': item.type == TYPE_EXTRA,
-         'mod_or_bad': type,
-         'associated_list':associated_list,
-         'timestamp' : timestamp},
-        context_instance=RequestContext(request))
+                              {'item': item,
+                               'isextra': item.type == TYPE_EXTRA,
+                               'mod_or_bad': type,
+                               'associated_list': associated_list,
+                               'timestamp': timestamp},
+                              context_instance=RequestContext(request))
+
 
 @timeview
 def config_item_list(request, type, timestamp=None):
@@ -115,11 +127,12 @@ def config_item_list(request, type, timestamp=None):
     type = convert_entry_type_to_id(type)
     if type < 0:
         raise Http404
-    
+
     current_clients = Interaction.objects.get_interaction_per_client_ids(timestamp)
     item_list_dict = {}
     seen = dict()
-    for x in Entries_interactions.objects.filter(interaction__in=current_clients, type=type).select_related():
+    for x in Entries_interactions.objects.filter(interaction__in=current_clients,
+                                                 type=type).select_related():
         if (x.entry, x.reason) in seen:
             continue
         seen[(x.entry, x.reason)] = 1
@@ -129,12 +142,14 @@ def config_item_list(request, type, timestamp=None):
             item_list_dict[x.entry.kind] = [x]
 
     for kind in item_list_dict:
-        item_list_dict[kind].sort(lambda a,b: cmp(a.entry.name, b.entry.name))
+        item_list_dict[kind].sort(lambda a, b: cmp(a.entry.name, b.entry.name))
 
-    return render_to_response('config_items/listing.html', {'item_list_dict':item_list_dict,
-                                                            'mod_or_bad':mod_or_bad,
-                                                            'timestamp' : timestamp},
+    return render_to_response('config_items/listing.html',
+                              {'item_list_dict': item_list_dict,
+                               'mod_or_bad': mod_or_bad,
+                               'timestamp': timestamp},
         context_instance=RequestContext(request))
+
 
 @timeview
 def client_index(request, timestamp=None):
@@ -149,8 +164,10 @@ def client_index(request, timestamp=None):
            .order_by("client__name").all()
 
     return render_to_response('clients/index.html',
-        {   'inter_list': list, 'timestamp' : timestamp},
-        context_instance=RequestContext(request))
+                              {'inter_list': list,
+                               'timestamp': timestamp},
+                              context_instance=RequestContext(request))
+
 
 @timeview
 def client_detailed_list(request, timestamp=None, **kwargs):
@@ -165,7 +182,8 @@ def client_detailed_list(request, timestamp=None, **kwargs):
     kwargs['page_limit'] = 0
     return render_history_view(request, 'clients/detailed-list.html', **kwargs)
 
-def client_detail(request, hostname = None, pk = None):
+
+def client_detail(request, hostname=None, pk=None):
     context = dict()
     client = get_object_or_404(Client, name=hostname)
     if(pk == None):
@@ -177,6 +195,7 @@ def client_detail(request, hostname = None, pk = None):
         return render_history_view(request, 'clients/detail.html', page_limit=5,
             client=client, maxdate=context['interaction'].timestamp, context=context)
 
+
 def client_manage(request):
     """Manage client expiration"""
     message = ''
@@ -186,12 +205,12 @@ def client_manage(request):
             client_action = request.POST.get('client_action', None)
             client = Client.objects.get(name=client_name)
             if client_action == 'expire':
-                client.expiration = datetime.now();
+                client.expiration = datetime.now()
                 client.save()
                 message = "Expiration for %s set to %s." % \
                     (client_name, client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
             elif client_action == 'unexpire':
-                client.expiration = None;
+                client.expiration = None
                 client.save()
                 message = "%s is now active." % client_name
             else:
@@ -205,6 +224,7 @@ def client_manage(request):
         {'clients': Client.objects.order_by('name').all(), 'message': message},
         context_instance=RequestContext(request))
 
+
 @timeview
 def display_summary(request, timestamp=None):
     """
@@ -216,7 +236,12 @@ def display_summary(request, timestamp=None):
     if not timestamp:
         timestamp = datetime.now()
 
-    collected_data = dict(clean=[],bad=[],modified=[],extra=[],stale=[],pings=[])
+    collected_data = dict(clean=[],
+                          bad=[],
+                          modified=[],
+                          extra=[],
+                          stale=[],
+                          pings=[])
     for node in recent_data:
         if timestamp - node.timestamp > timedelta(hours=24):
             collected_data['stale'].append(node)
@@ -238,29 +263,33 @@ def display_summary(request, timestamp=None):
 
     # label, header_text, node_list
     summary_data = []
-    get_dict = lambda name, label: { 'name': name,
-                'nodes': collected_data[name],
-                'label': label }
+    get_dict = lambda name, label: {'name': name,
+                                    'nodes': collected_data[name],
+                                    'label': label}
     if len(collected_data['clean']) > 0:
-         summary_data.append( get_dict('clean', 'nodes are clean.') )
+        summary_data.append(get_dict('clean',
+                                     'nodes are clean.'))
     if len(collected_data['bad']) > 0:
-         summary_data.append( get_dict('bad', 'nodes are bad.') )
+        summary_data.append(get_dict('bad',
+                                     'nodes are bad.'))
     if len(collected_data['modified']) > 0:
-         summary_data.append( get_dict('modified', 'nodes were modified.') )
+        summary_data.append(get_dict('modified',
+                                     'nodes were modified.'))
     if len(collected_data['extra']) > 0:
-         summary_data.append( get_dict('extra',
-             'nodes have extra configurations.') )
+        summary_data.append(get_dict('extra',
+                                     'nodes have extra configurations.'))
     if len(collected_data['stale']) > 0:
-         summary_data.append( get_dict('stale',
-             'nodes did not run within the last 24 hours.') )
+        summary_data.append(get_dict('stale',
+                                     'nodes did not run within the last 24 hours.'))
     if len(collected_data['pings']) > 0:
-         summary_data.append( get_dict('pings',
-             'are down.') )
+        summary_data.append(get_dict('pings',
+                                     'are down.'))
 
     return render_to_response('displays/summary.html',
         {'summary_data': summary_data, 'node_count': node_count,
          'timestamp': timestamp},
         context_instance=RequestContext(request))
+
 
 @timeview
 def display_timing(request, timestamp=None):
@@ -268,12 +297,13 @@ def display_timing(request, timestamp=None):
     inters = Interaction.objects.interaction_per_client(timestamp).select_related().all()
     [mdict.__setitem__(inter, {'name': inter.client.name}) \
         for inter in inters]
-    for metric in Performance.objects.filter(interaction__in=mdict.keys()).all():
+    for metric in Performance.objects.filter(interaction__in=list(mdict.keys())).all():
         for i in metric.interaction.all():
             mdict[i][metric.metric] = metric.value
     return render_to_response('displays/timing.html',
-        {'metrics': mdict.values(), 'timestamp': timestamp},
-        context_instance=RequestContext(request))
+                              {'metrics': list(mdict.values()),
+                               'timestamp': timestamp},
+                              context_instance=RequestContext(request))
 
 
 def render_history_view(request, template='clients/history.html', **kwargs):
@@ -303,7 +333,7 @@ def render_history_view(request, template='clients/history.html', **kwargs):
     max_results = int(kwargs.get('page_limit', 25))
     page = int(kwargs.get('page_number', 1))
 
-    client=kwargs.get('client', None)
+    client = kwargs.get('client', None)
     if not client and 'hostname' in kwargs:
         client = get_object_or_404(Client, name=kwargs['hostname'])
     if client:
@@ -333,8 +363,13 @@ def render_history_view(request, template='clients/history.html', **kwargs):
     entry_list = []
     if max_results > 0:
         try:
-            rec_start, rec_end = prepare_paginated_list(request, context, iquery, page, max_results)
-        except PaginationError, page_error:
+            rec_start, rec_end = prepare_paginated_list(request,
+                                                        context,
+                                                        iquery,
+                                                        page,
+                                                        max_results)
+        except PaginationError:
+            page_error = sys.exc_info()[1]
             if isinstance(page_error[0], HttpResponse):
                 return page_error[0]
             return HttpResponseServerError(page_error)
@@ -345,20 +380,21 @@ def render_history_view(request, template='clients/history.html', **kwargs):
     return render_to_response(template, context,
                 context_instance=RequestContext(request))
 
+
 def prepare_paginated_list(request, context, paged_list, page=1, max_results=25):
     """
     Prepare context and slice an object for pagination.
     """
     if max_results < 1:
-        raise PaginationError, "Max results less then 1"
+        raise PaginationError("Max results less then 1")
     if paged_list == None:
-        raise PaginationError, "Invalid object"
+        raise PaginationError("Invalid object")
 
     try:
         nitems = paged_list.count()
     except TypeError:
         nitems = len(paged_list)
-    
+
     rec_start = (page - 1) * int(max_results)
     try:
         total_pages = (nitems / int(max_results)) + 1
@@ -369,11 +405,11 @@ def prepare_paginated_list(request, context, paged_list, page=1, max_results=25)
         try:
             view, args, kwargs = resolve(request.META['PATH_INFO'])
             kwargs['page_number'] = total_pages
-            raise PaginationError, HttpResponseRedirect( reverse(view, kwargs=kwargs) )
+            raise PaginationError(HttpResponseRedirect(reverse(view,
+                                                               kwards=kwargs)))
         except (Resolver404, NoReverseMatch, ValueError):
             raise "Accessing beyond last page.  Unable to resolve redirect."
 
     context['total_pages'] = total_pages
     context['records_per_page'] = max_results
     return (rec_start, rec_start + int(max_results))
-

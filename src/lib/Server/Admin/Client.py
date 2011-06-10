@@ -2,6 +2,7 @@ import lxml.etree
 import Bcfg2.Server.Admin
 from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 
+
 class Client(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Create, delete, or modify client entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin client add <client> "
@@ -27,13 +28,13 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
                 attr, val = i.split('=', 1)
                 if attr not in ['profile', 'uuid', 'password',
                                 'location', 'secure', 'address']:
-                    print "Attribute %s unknown" % attr
+                    print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
             try:
                 self.metadata.add_client(args[1], attr_d)
             except MetadataConsistencyError:
-                print "Error in adding client"
+                print("Error in adding client")
                 raise SystemExit(1)
         elif args[0] in ['update', 'up']:
             attr_d = {}
@@ -41,24 +42,24 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
                 attr, val = i.split('=', 1)
                 if attr not in ['profile', 'uuid', 'password',
                                 'location', 'secure', 'address']:
-                    print "Attribute %s unknown" % attr
+                    print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
             try:
                 self.metadata.update_client(args[1], attr_d)
             except MetadataConsistencyError:
-                print "Error in updating client"
+                print("Error in updating client")
                 raise SystemExit(1)
         elif args[0] in ['delete', 'remove', 'del', 'rm']:
             try:
                 self.metadata.remove_client(args[1])
             except MetadataConsistencyError:
-                print "Error in deleting client"
+                print("Error in deleting client")
                 raise SystemExit(1)
         elif args[0] in ['list', 'ls']:
             tree = lxml.etree.parse(self.metadata.data + "/clients.xml")
             for node in tree.findall("//Client"):
-                print node.attrib["name"]
+                print(node.attrib["name"])
         else:
-            print "No command specified"
+            print("No command specified")
             raise SystemExit(1)

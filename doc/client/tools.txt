@@ -57,11 +57,15 @@ Chkconfig
 
 Tool to manage services (primarily on Redhat based distros).
 
-.. note:: Start and stop are standard arguments, but the one for reload
-          isn't consistent across services. You can specify which argument
-          to use with the `restart` property in Service tags. Example:
-          ``<Service name="ftp" restart="condrestart" status="on"
-          type="chkconfig">``
+.. note::
+
+    Start and stop are standard arguments, but the one for reload
+    isn't consistent across services. You can specify which argument
+    to use with the ``target`` attribute in Service tags. Example:
+
+    .. code-block:: xml
+
+        <Service name="ftp" target="condrestart" status="on" type="chkconfig"/>
 
 DebInit
 -------
@@ -89,9 +93,13 @@ launchd
 
 Mac OS X Services. To use this tool, you must maintain a standard launch
 daemon .plist file in ``/Library/LaunchDaemons/`` (example ssh.plist)
-and setup a ``<Service name="com.openssh.sshd" type="launchd" status="on"
-/>`` entry in your config to load or unload the service. Note the name
-is the ''Label'' specified inside of the .plist file
+and setup an entry in your config to load or unload the service.
+
+.. code-block:: xml
+
+    <Service name="com.openssh.sshd" type="launchd" status="on"/>
+
+Note the name is the *Label* specified inside of the .plist file
 
 Portage
 -------
@@ -133,7 +141,18 @@ Example legacy run service (lrc):
 
 .. code-block:: xml
 
-    <BoundService name='/etc/rc2_d/S47pppd' FMRI='lrc:/etc/rc2_d/S47pppd' status='off' type='smf'/>
+    <Service name='/etc/rc2_d/S47pppd' FMRI='lrc:/etc/rc2_d/S47pppd' status='off' type='smf'/>
+
+Systemd
+-------
+
+Systemd service support.
+
+Example:
+
+.. code-block:: xml
+
+    <Service name='udev' status='on' type='systemd'/>
 
 SYSV
 ----

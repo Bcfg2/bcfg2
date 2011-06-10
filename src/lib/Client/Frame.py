@@ -5,8 +5,10 @@ installs entries, and generates statistics.
 __revision__ = '$Revision$'
 
 import logging
+import sys
 import time
 import Bcfg2.Client.Tools
+
 
 def cmpent(ent1, ent2):
     """Sort entries."""
@@ -14,6 +16,7 @@ def cmpent(ent1, ent2):
         return cmp(ent1.tag, ent2.tag)
     else:
         return cmp(ent1.get('name'), ent2.get('name'))
+
 
 def promptFilter(prompt, entries):
     """Filter a supplied list based on user input."""
@@ -25,7 +28,12 @@ def promptFilter(prompt, entries):
         else:
             iprompt = prompt % (entry.tag, entry.get('name'))
         try:
-            if raw_input(iprompt) in ['y', 'Y']:
+            # py3k compatibility
+            try:
+                ans = raw_input(iprompt.encode(sys.stdout.encoding, 'replace'))
+            except NameError:
+                ans = input(iprompt)
+            if ans in ['y', 'Y']:
                 ret.append(entry)
         except EOFError:
             # python 2.4.3 on CentOS doesn't like ^C for some reason
@@ -34,6 +42,7 @@ def promptFilter(prompt, entries):
             print("Error while reading input")
             continue
     return ret
+
 
 def matches_entry(entryspec, entry):
     # both are (tag, name)
@@ -52,11 +61,16 @@ def matches_entry(entryspec, entry):
             return False
         return True
 
+
 def matches_white_list(entry, whitelist):
-    return True in [matches_entry(we, (entry.tag, entry.get('name'))) for we in whitelist]
+    return True in [matches_entry(we, (entry.tag, entry.get('name')))
+                    for we in whitelist]
+
 
 def passes_black_list(entry, blacklist):
-    return True not in [matches_entry(be, (entry.tag, entry.get('name'))) for be in blacklist]
+    return True not in [matches_entry(be, (entry.tag, entry.get('name')))
+                        for be in blacklist]
+
 
 class Frame:
     """Frame is the container for all Tool objects and state information."""
@@ -109,22 +123,7 @@ class Frame:
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.name for tool in self.tools])
-        if not self.dryrun and not self.setup['bundle']:
-            for cfile in [cfl for cfl in config.findall(".//Path") \
-                          if cfl.get('name') in self.__important__ and \
-                             cfl.get('type') == 'file']:
-                tl = [t for t in self.tools if t.handlesEntry(cfile) \
-                     and t.canVerify(cfile)]
-                if tl:
-                    if not tl[0].VerifyPath(cfile, []):
-                        if self.setup['interactive'] and not \
-                               promptFilter("Install %s: %s? (y/N):", [cfile]):
-                            continue
-                        try:
-                            self.states[cfile] = tl[0].InstallPath(cfile)
-                        except:
-                            self.logger.error("Unexpected tool failure",
-                                              exc_info=1)
+
         # find entries not handled by any tools
         problems = [entry for struct in config for \
                     entry in struct if entry not in self.handled]
@@ -134,8 +133,10 @@ class Frame:
             self.logger.error(["%s:%s:%s" % (entry.tag, entry.get('type'), \
                                              entry.get('name')) for entry in problems])
             self.logger.error("")
-        entries = [(entry.tag, entry.get('name')) for struct in config for entry in struct]
-        pkgs = [(entry.get('name'), entry.get('origin')) for struct in config for entry in struct if entry.tag == 'Package']
+        entries = [(entry.tag, entry.get('name'))
+                   for struct in config for entry in struct]
+        pkgs = [(entry.get('name'), entry.get('origin'))
+                for struct in config for entry in struct if entry.tag == 'Package']
         multi = []
         for entry in entries[:]:
             if entries.count(entry) > 1:
@@ -151,7 +152,6 @@ class Frame:
             self.logger.debug("The following packages are prereqs added by Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
 
-
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
             ret = []
@@ -161,6 +161,54 @@ class Frame:
         elif name in self.__dict__:
             return self.__dict__[name]
         raise AttributeError(name)
+
+    def InstallImportant(self):
+        """Install important entries
+
+        We also process the decision mode stuff here because we want to prevent
+        non-whitelisted/blacklisted 'important' entries from being installed
+        prior to determining the decision mode on the client.
+        """
+        # Need to process decision stuff early so that dryrun mode works with it
+        self.whitelist = [entry for entry in self.states \
+                          if not self.states[entry]]
+        if self.setup['decision'] == 'whitelist':
+            dwl = self.setup['decision_list']
+            w_to_rem = [e for e in self.whitelist \
+                        if not matches_white_list(e, dwl)]
+            if w_to_rem:
+                self.logger.info("In whitelist mode: suppressing installation of:")
+                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
+                self.whitelist = [x for x in self.whitelist \
+                                  if x not in w_to_rem]
+
+        elif self.setup['decision'] == 'blacklist':
+            b_to_rem = [e for e in self.whitelist \
+                        if not passes_black_list(e, self.setup['decision_list'])]
+            if b_to_rem:
+                self.logger.info("In blacklist mode: suppressing installation of:")
+                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
+                self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
+
+        # take care of important entries first
+        if not self.dryrun and not self.setup['bundle']:
+            for cfile in [cfl for cfl in self.config.findall(".//Path") \
+                          if cfl.get('name') in self.__important__ and \
+                             cfl.get('type') == 'file']:
+                if cfile not in self.whitelist:
+                    continue
+                tl = [t for t in self.tools if t.handlesEntry(cfile) \
+                     and t.canVerify(cfile)]
+                if tl:
+                    if not tl[0].VerifyPath(cfile, []):
+                        if self.setup['interactive'] and not \
+                               promptFilter("Install %s: %s? (y/N):", [cfile]):
+                            continue
+                        try:
+                            self.states[cfile] = tl[0].InstallPath(cfile)
+                        except:
+                            self.logger.error("Unexpected tool failure",
+                                              exc_info=1)
 
     def Inventory(self):
         """
@@ -186,35 +234,15 @@ class Frame:
         if self.setup['remove']:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
-            elif self.setup['remove'] == 'services':
+            elif self.setup['remove'] in ['services', 'Services']:
                 self.removal = [entry for entry in self.extra \
                                 if entry.tag == 'Service']
-            elif self.setup['remove'] == 'packages':
+            elif self.setup['remove'] in ['packages', 'Packages']:
                 self.removal = [entry for entry in self.extra \
                                 if entry.tag == 'Package']
 
         candidates = [entry for entry in self.states \
                       if not self.states[entry]]
-        self.whitelist = [entry for entry in self.states \
-                          if not self.states[entry]]
-        # Need to process decision stuff early so that dryrun mode works with it
-        if self.setup['decision'] == 'whitelist':
-            dwl = self.setup['decision_list']
-            w_to_rem = [e for e in self.whitelist \
-                        if not matches_white_list(e, dwl)]
-            if w_to_rem:
-                self.logger.info("In whitelist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
-                self.whitelist = [x for x in self.whitelist \
-                                  if x not in w_to_rem]
-
-        elif self.setup['decision'] == 'blacklist':
-            b_to_rem = [e for e in self.whitelist \
-                        if not passes_black_list(e, self.setup['decision_list'])]
-            if b_to_rem:
-                self.logger.info("In blacklist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
-                self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
 
         if self.dryrun:
             if self.whitelist:
@@ -268,7 +296,8 @@ class Frame:
                 if b_to_remv:
                     self.logger.info("Not installing entries from Bundle %s" % \
                                      (bundle.get('name')))
-                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_remv])
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name'))
+                                      for e in b_to_remv])
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
         if self.setup['interactive']:
@@ -373,6 +402,7 @@ class Frame:
         self.Inventory()
         self.times['inventory'] = time.time()
         self.CondDisplayState('initial')
+        self.InstallImportant()
         self.Decide()
         self.Install()
         self.times['install'] = time.time()

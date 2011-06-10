@@ -81,7 +81,7 @@ For a "Package"
 
          <Bundle name='keys'>
            <!-- GPG keys -->
-           <BoundPackage name="gpg-pubkey" type="yum">
+           <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
              <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
              <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release" version="37017186" release="45761324"/>
            </BoundPackage>

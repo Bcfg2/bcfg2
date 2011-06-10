@@ -21,9 +21,9 @@ def page_navigator(context):
         path = context['request'].META['PATH_INFO']
         total_pages = int(context['total_pages'])
         records_per_page = int(context['records_per_page'])
-    except KeyError, e:
+    except KeyError:
         return fragment
-    except ValueError, e:
+    except ValueError:
         return fragment
 
     if total_pages < 2:
@@ -84,7 +84,8 @@ def page_navigator(context):
               
     except Resolver404:
        path = "404"
-    except NoReverseMatch, nr:
+    except NoReverseMatch:
+       nr = sys.exc_info()[1]
        path = "NoReverseMatch: %s" % nr
     except ValueError:
        path = "ValueError"
@@ -193,12 +194,13 @@ class AddUrlFilter(template.Node):
                     del kwargs['server']
                 try:
                     link = reverse(view, args=args, kwargs=kwargs)
-                except NoReverseMatch, rm: 
+                except NoReverseMatch:
                     link = reverse(self.fallback_view, args=None,
                         kwargs={ filter_name: filter_value })
-        except NoReverseMatch, rm:
+        except NoReverseMatch:
+            rm = sys.exc_info()[1]
             raise rm
-        except (Resolver404, ValueError), e:
+        except (Resolver404, ValueError):
             pass
         return link
 
@@ -219,9 +221,9 @@ def add_url_filter(parser, token):
         filter_name = filter_name.strip()
         filter_value = parser.compile_filter(filter_value)
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly one argument" % token.contents.split()[0])
     if not filter_name or not filter_value:
-        raise template.TemplateSyntaxError, "argument should be a filter=value pair"
+        raise template.TemplateSyntaxError("argument should be a filter=value pair")
 
     return AddUrlFilter(filter_name, filter_value)
 
@@ -268,7 +270,7 @@ def to_media_url(parser, token):
         tag_name, filter_value = token.split_contents()
         filter_value = parser.compile_filter(filter_value)
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly one argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly one argument" % token.contents.split()[0])
 
     return MediaTag(filter_value)
 

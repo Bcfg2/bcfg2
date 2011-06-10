@@ -2,15 +2,15 @@
 
 __revision__ = "$Revision: $"
 
-import Bcfg2.Client.Proxy, os
+import os
+import Bcfg2.Client.Proxy
 
 if not os.getuid() == 0:
-    print 'this command must be run as root'
+    print("this command must be run as root")
     raise SystemExit
 
 proxy = Bcfg2.Client.Proxy.bcfg2()
-print 'building files...'
+print("building files...")
 proxy.run_method('Hostbase.rebuildState', ())
-print 'running bcfg...'
+print("running bcfg...")
 os.system('bcfg2 -q -d -v')
-

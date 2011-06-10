@@ -34,39 +34,39 @@ must contain full (not relative) paths.
    server -- This enabled the SSLCA plugin on the Bcfg2 server.
 
 #. Add a section to your ``/etc/bcfg2.conf`` called sslca_foo, replacing foo
-with the name you wish to give your CA so you can reference it in certificate
-definitions.
+   with the name you wish to give your CA so you can reference it in certificate
+   definitions.
 
 #. Under that section, add an entry for ``config`` that gives the location of
-the openssl configuration file for your CA.
+   the openssl configuration file for your CA.
 
 #. If necessary, add an entry for ``passphrase`` containing the passphrase for
-the CA's private key.  We store this in ``/etc/bcfg2.conf`` as the permissions
-on that file should have it only readable by the bcfg2 user.  If no passphrase
-is entry exists, it is assumed that the private key is stored unencrypted.
+   the CA's private key.  We store this in ``/etc/bcfg2.conf`` as the permissions
+   on that file should have it only readable by the bcfg2 user.  If no passphrase
+   is entry exists, it is assumed that the private key is stored unencrypted.
 
 #. Add an entry ``chaincert`` that points to the location of your ssl chaining
-certificate.  This is used when preexisting certifcate hostfiles are found, so
-that they can be validated and only regenerated if they no longer meet the
-specification.
+   certificate.  This is used when preexisting certifcate hostfiles are found, so
+   that they can be validated and only regenerated if they no longer meet the
+   specification.
 
 #. Once all this is done, you should have a section in your ``/etc/bcfg2.conf``
-that looks similar to the following:
+   that looks similar to the following::
 
-	[sslca_default]
-	config = /etc/pki/CA/openssl.cnf
-	passphrase = youReallyThinkIdShareThis?
-	chaincert = /etc/pki/CA/chaincert.crt
+       [sslca_default]
+       config = /etc/pki/CA/openssl.cnf
+       passphrase = youReallyThinkIdShareThis?
+       chaincert = /etc/pki/CA/chaincert.crt
 
 #. You are now ready to create key and certificate definitions.  For this
-example we'll assume you've added Path entries for the key,
-``/etc/pki/tls/private/localhost.key``, and the certificate,
-``/etc/pki/tls/certs/localhost.crt`` to a bundle or base.
+   example we'll assume you've added Path entries for the key,
+   ``/etc/pki/tls/private/localhost.key``, and the certificate,
+   ``/etc/pki/tls/certs/localhost.crt`` to a bundle or base.
 
 #. Defining a key or certificate is similar to defining a TGenshi template.
-Under your Bcfg2's SSLCA directory, create the directory structure to match the
-path to your key. In this case this would be something like
-``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/localhost.key``.
+   Under your Bcfg2's SSLCA directory, create the directory structure to match the
+   path to your key. In this case this would be something like
+   ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/localhost.key``.
 
 #. Within that directory, create a ``key.xml`` file containing the following:
 
@@ -77,11 +77,11 @@ path to your key. In this case this would be something like
        </KeyInfo>
 
 #. This will cause the generation of an 2048 bit RSA key when a client requests
-that Path.  Alternatively you can specify ``dsa`` as the keytype, or a different
-number of bits.
+   that Path.  Alternatively you can specify ``dsa`` as the keytype, or a different
+   number of bits.
 
 #. Similarly, create the matching directory structure for the certificate path,
-and a ``cert.xml`` containinng the following:
+   and a ``cert.xml`` containinng the following:
 
    .. code-block:: xml
 
@@ -90,9 +90,9 @@ and a ``cert.xml`` containinng the following:
        </CertInfo>
 
 #. When a client requests the cert path, a certificate will be generated using
-the key hostfile at the specified key location, using the CA matching the ca
-attribute. ie. ca="default" will match [sslca_default] in your
-``/etc/bcfg2.conf``
+   the key hostfile at the specified key location, using the CA matching the ca
+   attribute. ie. ca="default" will match [sslca_default] in your
+   ``/etc/bcfg2.conf``
 
 TODO
 ====

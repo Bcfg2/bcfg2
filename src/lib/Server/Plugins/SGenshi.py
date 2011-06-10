@@ -5,6 +5,7 @@ import genshi.input
 import genshi.template
 import lxml.etree
 import logging
+import sys
 
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Plugins.TGenshi
@@ -23,11 +24,14 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
             data = stream.render('xml', strip_whitespace=False)
             return lxml.etree.XML(data)
-        except LookupError, lerror:
+        except LookupError:
+            lerror = sys.exc_info()[1]
             logger.error('Genshi lookup error: %s' % lerror)
-        except genshi.template.TemplateError, terror:
+        except genshi.template.TemplateError:
+            terror = sys.exc_info()[1]
             logger.error('Genshi template error: %s' % terror)
-        except genshi.input.ParseError, perror:
+        except genshi.input.ParseError:
+            perror = sys.exc_info()[1]
             logger.error('Genshi parse error: %s' % perror)
         raise
 

@@ -2,7 +2,7 @@
 
 import os
 import sys
-import commands
+import subprocess
 import getopt
 import re
 import datetime
@@ -11,7 +11,7 @@ from socket import gethostname
 
 def run_or_die(command):
     """run a command, returning output.  raise an exception if it fails."""
-    (status, stdio) = commands.getstatusoutput(command)
+    (status, stdio) = subprocess.getstatusoutput(command)
     if status != 0:
         raise Exception("command '%s' failed with exit status %d and output '%s'" %
                         (command, status, stdio))
@@ -62,11 +62,15 @@ def verstr_cmp(a, b):
         else:
             return len(a_parts) - len(b_parts)
     return ret
-        
 
-        
+
 def subdivide(verstr):
-    """subdivide takes a version or release string and attempts to subdivide it into components to facilitate sorting.  The string is divided into a two level hierarchy of sub-parts.  The upper level is subdivided by periods, and the lower level is subdivided by boundaries between digit, alpha, and other character groupings."""
+    """subdivide takes a version or release string and attempts to subdivide
+    it into components to facilitate sorting.  The string is divided into a
+    two level hierarchy of sub-parts.  The upper level is subdivided by
+    periods, and the lower level is subdivided by boundaries between digit,
+    alpha, and other character groupings.
+    """
     parts = []
     # parts is a list of lists representing the subsections which make up a version string.
     # example:
@@ -102,22 +106,39 @@ def subdivide(verstr):
     return parts
 
 
-subarch_mapping = {'athlon':'x86', 'i686':'x86', 'i586':'x86', 'i486':'x86', 'i386':'x86', 'x86_64':'x86_64', 'noarch':'noarch'}
-arch_mapping = {'x86':['athlon','i686','i586','i486','i386'], 'x86_64':['x86_64'], 'noarch':['noarch']}
+subarch_mapping = {'athlon': 'x86',
+                   'i686': 'x86',
+                   'i586': 'x86',
+                   'i486': 'x86',
+                   'i386': 'x86',
+                   'x86_64': 'x86_64',
+                   'noarch': 'noarch'}
+arch_mapping = {'x86': ['athlon',
+                        'i686',
+                        'i586',
+                        'i486',
+                        'i386'],
+                'x86_64': ['x86_64'],
+                'noarch': ['noarch']}
 
 
 def parse_rpm(path, filename):
-    """read the name, version, release, and subarch of an rpm.  this version reads the rpm headers."""
+    """read the name, version, release, and subarch of an rpm.
+    this version reads the rpm headers.
+    """
     cmd = 'rpm --nosignature --queryformat \'%%{NAME} %%{VERSION} %%{RELEASE} %%{ARCH}\' -q -p %s/%s' % (path, filename)
     output = run_or_die(cmd)
     (name, version, release, subarch) = output.split()
-    if subarch not in subarch_mapping.keys():
+    if subarch not in list(subarch_mapping.keys()):
         raise Exception("%s/%s has invalid subarch %s" % (path, filename, subarch))
     return (name, version, release, subarch)
-    
+
 
 def parse_rpm_filename(path, filename):
-    """read the name, version, release, and subarch of an rpm.  this version tries to parse the filename directly, and calls 'parse_rpm' as a fallback."""
+    """read the name, version, release, and subarch of an rpm.
+    this version tries to parse the filename directly, and calls
+    'parse_rpm' as a fallback.
+    """
     name, version, release, subarch = None, None, None, None
     try:
         (major, minor) = sys.version_info[:2]
@@ -129,7 +150,7 @@ def parse_rpm_filename(path, filename):
             (blob, subarch, extension) = (rblob[::-1], rsubarch[::-1], rextension[::-1])
             (rrelease, rversion, rname) = blob[::-1].split('-', 2)
             (name, version, release) = (rname[::-1], rversion[::-1], rrelease[::-1])
-        if subarch not in subarch_mapping.keys():
+        if subarch not in list(subarch_mapping.keys()):
             raise "%s/%s has invalid subarch %s." % (path, filename, subarch)
     except:
         # for incorrectly named rpms (ie, sun's java rpms) we fall back to reading the rpm headers.
@@ -139,7 +160,9 @@ def parse_rpm_filename(path, filename):
 
 
 def get_pkgs(rpmdir):
-    """scan a dir of rpms and generate a pkgs structure.  first try parsing the filename.  if that fails, try parsing the rpm headers."""
+    """scan a dir of rpms and generate a pkgs structure. first try parsing
+    the filename. if that fails, try parsing the rpm headers.
+    """
     pkgs = {}
     """
 pkgs structure:
@@ -161,7 +184,11 @@ pkgs = {
     rpms = [item for item in os.listdir(rpmdir) if item.endswith('.rpm')]
     for filename in rpms:
         (name, version, release, subarch) = parse_rpm_filename(rpmdir, filename)
-        rpmblob = {'file':filename, 'name':name, 'version':version, 'release':release, 'subarch':subarch}
+        rpmblob = {'file': filename,
+                   'name': name,
+                   'version': version,
+                   'release': release,
+                   'subarch': subarch}
         if name in pkgs:
             pkgs[name].append(rpmblob)
         else:
@@ -170,9 +197,11 @@ pkgs = {
 
 
 def prune_pkgs_latest(pkgs):
-    """prune a pkgs structure to contain only the latest version of each package (includes multiarch results)."""
+    """prune a pkgs structure to contain only the latest version
+    of each package (includes multiarch results).
+    """
     latest_pkgs = {}
-    for rpmblobs in pkgs.values():
+    for rpmblobs in list(pkgs.values()):
         (major, minor) = sys.version_info[:2]
         if major >= 2 and minor >= 4:
             rpmblobs.sort(rpmblob_cmp, reverse=True)
@@ -180,16 +209,18 @@ def prune_pkgs_latest(pkgs):
             rpmblobs.sort(rpmblob_cmp)
             rpmblobs.reverse()
         pkg_name = rpmblobs[0]['name']
-        all_archs = [blob for blob in rpmblobs if blob['version'] == rpmblobs[0]['version'] and 
+        all_archs = [blob for blob in rpmblobs if blob['version'] == rpmblobs[0]['version'] and
                                                   blob['release'] == rpmblobs[0]['release']]
         latest_pkgs[pkg_name] = all_archs
     return latest_pkgs
 
 
 def prune_pkgs_archs(pkgs):
-    """prune a pkgs structure to contain no more than one subarch per architecture for each set of packages."""
+    """prune a pkgs structure to contain no more than one subarch
+    per architecture for each set of packages.
+    """
     pruned_pkgs = {}
-    for rpmblobs in pkgs.values():
+    for rpmblobs in list(pkgs.values()):
         pkg_name = rpmblobs[0]['name']
         arch_sifter = {}
         for challenger in rpmblobs:
@@ -203,13 +234,16 @@ def prune_pkgs_archs(pkgs):
                 incumbent_index = subarchs.index(incumbent['subarch'])
                 if challenger_index < incumbent_index:
                     arch_sifter[arch] = challenger
-        pruned_pkgs[pkg_name] = arch_sifter.values()
+        pruned_pkgs[pkg_name] = list(arch_sifter.values())
     return pruned_pkgs
 
 
 def get_date_from_desc(date_desc):
-    """calls the unix 'date' command to turn a date description into a python date object.
-example: get_date_from_desc("last sunday 1 week ago")"""
+    """calls the unix 'date' command to turn a date
+    description into a python date object.
+
+    example: get_date_from_desc("last sunday 1 week ago")
+    """
     stdio = run_or_die('date -d "' + date_desc + '" "+%Y %m %d"')
     (year_str, month_str, day_str) = stdio.split()
     year = int(year_str)
@@ -225,7 +259,9 @@ def get_mtime_date(path):
 
 
 def prune_pkgs_timely(pkgs, start_date_desc=None, end_date_desc=None, rpmdir='.'):
-    """prune a pkgs structure to contain only rpms with an mtime within a certain temporal window."""
+    """prune a pkgs structure to contain only rpms with
+    an mtime within a certain temporal window.
+    """
     start_date = None
     if start_date_desc != None:
         start_date = get_date_from_desc(start_date_desc)
@@ -235,7 +271,7 @@ def prune_pkgs_timely(pkgs, start_date_desc=None, end_date_desc=None, rpmdir='.'
     if start_date == None and end_date == None:
         return pkgs
     if start_date != None:
-        for rpmblobs in pkgs.values():
+        for rpmblobs in list(pkgs.values()):
             pkg_name = rpmblobs[0]['name']
             timely_blobs = [blob for blob in rpmblobs if start_date < get_mtime_date(rpmdir + '/' + blob['file'])]
             if len(timely_blobs) == 0:
@@ -243,7 +279,7 @@ def prune_pkgs_timely(pkgs, start_date_desc=None, end_date_desc=None, rpmdir='.'
             else:
                 pkgs[pkg_name] = timely_blobs
     if end_date != None:
-        for rpmblobs in pkgs.values():
+        for rpmblobs in list(pkgs.values()):
             pkg_name = rpmblobs[0]['name']
             timely_blobs = [blob for blob in rpmblobs if get_mtime_date(rpmdir + '/' + blob['file']) <= end_date]
             if len(timely_blobs) == 0:
@@ -256,7 +292,7 @@ def prune_pkgs_timely(pkgs, start_date_desc=None, end_date_desc=None, rpmdir='.'
 # from http://aspn.activestate.com/ASPN/Python/Cookbook/Recipe/52306
 def sorted_values(adict):
     """return a list of values from a dict, sorted by key."""
-    items = adict.items()
+    items = list(adict.items())
     items.sort()
     return [value for key, value in items]
 
@@ -278,9 +314,9 @@ def scan_rpm_dir(rpmdir, uri, group, priority=0, output=sys.stdout, start_date_d
             subarchs = [blob['subarch'] for blob in rpmblobs]
             subarchs.sort()
             multiarch_string = ' '.join(subarchs)
-            pattern_string = '\.(%s)\.rpm$' % '|'.join(subarchs) # e.g., '\.(i386|x86_64)\.rpm$'
+            pattern_string = '\.(%s)\.rpm$' % '|'.join(subarchs)  # e.g., '\.(i386|x86_64)\.rpm$'
             pattern = re.compile(pattern_string)
-            multiarch_file = pattern.sub('.%(arch)s.rpm', rpmblob['file']) # e.g., 'foo-1.0-1.%(arch)s.rpm'
+            multiarch_file = pattern.sub('.%(arch)s.rpm', rpmblob['file'])  # e.g., 'foo-1.0-1.%(arch)s.rpm'
             output.write('  <Package name="%s" file="%s" version="%s-%s" multiarch="%s"/>\n' %
                          (rpmblob['name'], multiarch_file, rpmblob['version'], rpmblob['release'], multiarch_string))
     output.write(' </Group>\n')
@@ -300,7 +336,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     group = "base"
-    uri = "http://"+gethostname()+"/rpms"
+    uri = "http://" + gethostname() + "/rpms"
     rpmdir = "."
     priority = "0"
     output = None
@@ -320,6 +356,6 @@ if __name__ == "__main__":
     if output == None:
         output = sys.stdout
     else:
-        output = file(output,"w")
+        output = file(output, "w")
 
     scan_rpm_dir(rpmdir, uri, group, priority, output)

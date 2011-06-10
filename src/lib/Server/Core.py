@@ -3,18 +3,27 @@ __revision__ = '$Revision$'
 
 import atexit
 import logging
-import lxml.etree
 import select
+import sys
 import threading
 import time
-import xmlrpclib
+try:
+    import lxml.etree
+except ImportError:
+    print("Failed to import lxml dependency. Shutting down server.")
+    raise SystemExit(1)
 
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugins.Metadata
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import xmlrpclib
+if sys.hexversion >= 0x03000000:
+    from functools import reduce
 
 logger = logging.getLogger('Bcfg2.Server.Core')
+
 
 def critical_error(operation):
     """Log and err, traceback and return an xmlrpc fault to client."""
@@ -27,12 +36,16 @@ try:
 except:
     pass
 
+
 class CoreInitError(Exception):
     """This error is raised when the core cannot be initialized."""
     pass
 
+
 class Core(Component):
-    """The Core object is the container for all Bcfg2 Server logic and modules."""
+    """The Core object is the container for all
+    Bcfg2 Server logic and modules.
+    """
     name = 'bcfg2-server'
     implementation = 'bcfg2-server'
 
@@ -42,15 +55,16 @@ class Core(Component):
         Component.__init__(self)
         self.datastore = repo
         if filemonitor not in Bcfg2.Server.FileMonitor.available:
-            logger.error("File monitor driver %s not available; forcing to default" % filemonitor)
+            logger.error("File monitor driver %s not available; "
+                         "forcing to default" % filemonitor)
             filemonitor = 'default'
         try:
             self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
         except IOError:
             logger.error("Failed to instantiate fam driver %s" % filemonitor,
                          exc_info=1)
-            raise CoreInitError, "failed to instantiate fam driver (used %s)" % \
-                  filemonitor
+            raise CoreInitError("failed to instantiate fam driver (used %s)" % \
+                                filemonitor)
         self.pubspace = {}
         self.cfile = cfile
         self.cron = {}
@@ -70,44 +84,43 @@ class Core(Component):
             if not plugin in self.plugins:
                 self.init_plugins(plugin)
         # Remove blacklisted plugins
-        for p, bl in self.plugin_blacklist.items():
+        for p, bl in list(self.plugin_blacklist.items()):
             if len(bl) > 0:
                 logger.error("The following plugins conflict with %s;"
                              "Unloading %s" % (p, bl))
             for plug in bl:
                 del self.plugins[plug]
         # This section loads the experimental plugins
-        expl = [plug for (name, plug) in self.plugins.iteritems()
+        expl = [plug for (name, plug) in list(self.plugins.items())
                 if plug.experimental]
         if expl:
             logger.info("Loading experimental plugin(s): %s" % \
                         (" ".join([x.name for x in expl])))
             logger.info("NOTE: Interfaces subject to change")
-        depr = [plug for (name, plug) in self.plugins.iteritems()
+        depr = [plug for (name, plug) in list(self.plugins.items())
                 if plug.deprecated]
         # This section loads the deprecated plugins
         if depr:
             logger.info("Loading deprecated plugin(s): %s" % \
                         (" ".join([x.name for x in depr])))
 
-
-        mlist = [p for p in self.plugins.values() if \
+        mlist = [p for p in list(self.plugins.values()) if \
                  isinstance(p, Bcfg2.Server.Plugin.Metadata)]
         if len(mlist) == 1:
             self.metadata = mlist[0]
         else:
             logger.error("No Metadata Plugin loaded; failed to instantiate Core")
-            raise CoreInitError, "No Metadata Plugin"
-        self.statistics = [plugin for plugin in self.plugins.values() if \
-                             isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
-        self.pull_sources = [plugin for plugin in self.statistics if \
-                             isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
-        self.generators = [plugin for plugin in self.plugins.values() if \
-                             isinstance(plugin, Bcfg2.Server.Plugin.Generator)]
-        self.structures = [plugin for plugin in self.plugins.values() if \
-                             isinstance(plugin, Bcfg2.Server.Plugin.Structure)]
-        self.connectors = [plugin for plugin in self.plugins.values() if \
-                           isinstance(plugin, Bcfg2.Server.Plugin.Connector)]
+            raise CoreInitError("No Metadata Plugin")
+        self.statistics = [plugin for plugin in list(self.plugins.values())
+                           if isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
+        self.pull_sources = [plugin for plugin in self.statistics
+                             if isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
+        self.generators = [plugin for plugin in list(self.plugins.values())
+                           if isinstance(plugin, Bcfg2.Server.Plugin.Generator)]
+        self.structures = [plugin for plugin in list(self.plugins.values())
+                           if isinstance(plugin, Bcfg2.Server.Plugin.Structure)]
+        self.connectors = [plugin for plugin in list(self.plugins.values())
+                           if isinstance(plugin, Bcfg2.Server.Plugin.Connector)]
         self.ca = ca
         self.fam_thread = threading.Thread(target=self._file_monitor_thread)
         if start_fam_thread:
@@ -128,7 +141,7 @@ class Core(Component):
             except:
                 continue
             # VCS plugin periodic updates
-            for plugin in self.plugins.values():
+            for plugin in list(self.plugins.values()):
                 if isinstance(plugin, Bcfg2.Server.Plugin.Version):
                     self.revision = plugin.get_revision()
 
@@ -137,7 +150,7 @@ class Core(Component):
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                 (plugin)).Server.Plugins, plugin)
-        except ImportError, e:
+        except ImportError:
             try:
                 mod = __import__(plugin)
             except:
@@ -157,22 +170,23 @@ class Core(Component):
                 (plugin), exc_info=1)
 
     def shutdown(self):
-        """Shuting down the plugins."""
+        """Shutting down the plugins."""
         if not self.terminate.isSet():
             self.terminate.set()
-            for plugin in self.plugins.values():
+            for plugin in list(self.plugins.values()):
                 plugin.shutdown()
 
     def validate_data(self, metadata, data, base_cls):
         """Checks the data structure."""
-        for plugin in self.plugins.values():
+        for plugin in list(self.plugins.values()):
             if isinstance(plugin, base_cls):
                 try:
                     if base_cls == Bcfg2.Server.Plugin.StructureValidator:
                         plugin.validate_structures(metadata, data)
                     elif base_cls == Bcfg2.Server.Plugin.GoalValidator:
                         plugin.validate_goals(metadata, data)
-                except Bcfg2.Server.Plugin.ValidationError, err:
+                except Bcfg2.Server.Plugin.ValidationError:
+                    err = sys.exc_info()[1]
                     logger.error("Plugin %s structure validation failed: %s" \
                                  % (plugin.name, err.message))
                     raise
@@ -182,7 +196,7 @@ class Core(Component):
 
     def GetStructures(self, metadata):
         """Get all structures for client specified by metadata."""
-        structures = reduce(lambda x, y:x+y,
+        structures = reduce(lambda x, y: x + y,
                             [struct.BuildStructures(metadata) for struct \
                              in self.structures], [])
         sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
@@ -232,7 +246,8 @@ class Core(Component):
         glist = [gen for gen in self.generators if
                  entry.get('name') in gen.Entries.get(entry.tag, {})]
         if len(glist) == 1:
-            return glist[0].Entries[entry.tag][entry.get('name')](entry, metadata)
+            return glist[0].Entries[entry.tag][entry.get('name')](entry,
+                                                                  metadata)
         elif len(glist) > 1:
             generators = ", ".join([gen.name for gen in glist])
             logger.error("%s %s served by multiple generators: %s" % \
@@ -242,7 +257,7 @@ class Core(Component):
         if len(g2list) == 1:
             return g2list[0].HandleEntry(entry, metadata)
         entry.set('failure', 'no matching generator')
-        raise PluginExecutionError, (entry.tag, entry.get('name'))
+        raise PluginExecutionError(entry.tag, entry.get('name'))
 
     def BuildConfiguration(self, client):
         """Build configuration for clients."""
@@ -290,7 +305,7 @@ class Core(Component):
     def GetDecisions(self, metadata, mode):
         """Get data for the decision list."""
         result = []
-        for plugin in self.plugins.values():
+        for plugin in list(self.plugins.values()):
             try:
                 if isinstance(plugin, Bcfg2.Server.Plugin.Decision):
                     result += plugin.GetDecisions(metadata, mode)
@@ -300,7 +315,7 @@ class Core(Component):
         return result
 
     def build_metadata(self, client_name):
-        """Build the metadata structure."""		
+        """Build the metadata structure."""
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
             raise Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError

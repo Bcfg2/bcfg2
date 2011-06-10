@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-properties:
+.. _server-plugins-connectors-properties:
 
 ==========
 Properties
@@ -24,17 +24,37 @@ Properties adds a new dictionary to client metadata instances that maps
 property file names to PropertyFile instances. PropertyFile instances
 contain parsed XML data as the "data" attribute.
 
+The XML data in a property file is arbitrary, but a matching ``.xsd``
+file can be created to assign a schema to a property file, which will
+be checked when running ``bcfg2-lint``.  For instance, given::
+
+    Properties/dns-config.xml
+    Properties/dns-config.xsd
+
+``dns-config.xml`` will be validated against ``dns-config.xsd``.
+
 Usage
 =====
 
 Specific property files can be referred to in
-templates as metadata.Properties[<filename>]. The
+templates as ``metadata.Properties[<filename>]``. The
 data attribute is an LXML element object. (Documented
 `here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 
-Currently, no access methods are defined for this data, but as we
-formulate common use cases, we will add them to the !PropertyFile class
-as methods. This will simplify templates.
+Currently, only one access method is defined for this data, ``Match``.
+``Match`` parses the Group and Client tags in the file and returns a
+list of elements that apply to the client described by a set of
+metadata.  (See :ref:`server-plugins-structures-bundler-index` for
+more details on how Group and Client tags are parsed.)  For instance::
+
+    {% python
+    ntp_servers = [el.text
+                   for el in metadata.Properties['ntp.xml'].Match(metadata):
+                   if el.tag == "Server"]
+    %}
+
+As we formulate more common use cases, we will add them to the
+!PropertyFile class as methods. This will simplify templates.
 
 Accessing Properties contents from TGenshi
 ==========================================

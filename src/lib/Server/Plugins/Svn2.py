@@ -1,4 +1,3 @@
-import os
 try:
     import pysvn
     missing = False
@@ -7,7 +6,7 @@ except:
 import Bcfg2.Server.Plugin
 
 class Svn2(Bcfg2.Server.Plugin.Plugin,
-          Bcfg2.Server.Plugin.Version):
+           Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
     name = 'Svn2'
     __version__ = '$Id$'
@@ -36,7 +35,7 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
         if not self.revision:
             raise Bcfg2.Server.Plugin.PluginInitError
 
-        self.logger.debug("Initialized svn plugin with svn root %s at revision %s" \
+        self.logger.debug("Initialized svn plugin with svn root %s at revision %s"
             % (self.svn_root, revision))
 
     def get_revision(self):
@@ -63,25 +62,50 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
 
         #FIXME - look for conflicts?
 
-        for file in file_list:
-            stat = self.client.status(file)
+        for fname in file_list:
+            stat = self.client.status(fname)
             self.client.add([f.path for f in stat \
                     if f.text_status == pysvn.wc_status_kind.unversioned])
         try:
             self.revision = self.client.checkin([self.datastore], comment,
                     recurse=True)
             self.revision = self.client.update(self.datastore, recurse=True)[0]
-            self.logger.info("Svn2: Commited changes. At %s" % self.revision.number)
-        except:
-            self.logger.error("Svn2: Failed to commit changes", exc_info=1)
+            self.logger.info("Svn2: Commited changes. At %s" %
+                             self.revision.number)
+        except Exception, err:
+            # try to be smart about the error we got back
+            details = None
+            if "callback_ssl_server_trust_prompt" in str(err):
+                details = "SVN server certificate is not trusted"
+            elif "callback_get_login" in str(err):
+                details = "SVN credentials not cached"
+
+            if details is None:
+                self.logger.error("Svn2: Failed to commit changes",
+                                  exc_info=1)
+            else:
+                self.logger.error("Svn2: Failed to commit changes: %s" %
+                                  details)
 
     def Update(self):
         '''Svn2.Update() => True|False\nUpdate svn working copy\n'''
         try:
             old_revision = self.revision.number
             self.revision = self.client.update(self.datastore, recurse=True)[0]
-        except:
-            self.logger.error("Svn2: Failed to update server repository", exc_info=1)
+        except Exception, err:
+            # try to be smart about the error we got back
+            details = None
+            if "callback_ssl_server_trust_prompt" in str(err):
+                details = "SVN server certificate is not trusted"
+            elif "callback_get_login" in str(err):
+                details = "SVN credentials not cached"
+
+            if details is None:
+                self.logger.error("Svn2: Failed to update server repository",
+                                  exc_info=1)
+            else:
+                self.logger.error("Svn2: Failed to update server repository: %s" %
+                                  details)
             return False
 
         if old_revision == self.revision.number:

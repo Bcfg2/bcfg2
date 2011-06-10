@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2010  Fabian Affolter, Bernewireless.net. 
+# Copyright (c) 2010  Fabian Affolter, Bernewireless.net.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -27,16 +27,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Fabian Affolter <fabian at bernewireless.net>
-# 
+#
 
-import yum
-import os
-import sys
 from lxml import etree
 from optparse import OptionParser
+import os
+import yum
 
 __author__ = 'Fabian Affolter <fabian@bernewireless.net>'
 __version__ = '0.1'
+
 
 def retrievePackages():
     """Getting the installed packages with yum."""
@@ -46,9 +46,10 @@ def retrievePackages():
     pkglist = []
     for pkg in sorted(pl.installed):
         pkgdata = pkg.name, pkg.version
-        pkglist.append(pkgdata)        
-    
+        pkglist.append(pkgdata)
+
     return pkglist
+
 
 def parse_command_line_parameters():
     """Parses command line arguments."""
@@ -62,22 +63,23 @@ def parse_command_line_parameters():
     parser.add_option("-f", "--filename", dest="filename",
                       type="string",
                       metavar="FILE", default="packages.xml",
-                      help="Write the output to an XML FILE" )
+                      help="Write the output to an XML FILE")
 
     (options, args) = parser.parse_args()
     num_args = 1
 
     return options, args
 
+
 def indent(elem, level=0):
     """Helps clean up the XML."""
     # Stolen from http://effbot.org/zone/element-lib.htm
-    i = "\n" + level*"  "
+    i = "\n" + level * "  "
     if len(elem):
         if not elem.text or not elem.text.strip():
             elem.text = i + "  "
         for e in elem:
-            indent(e, level+1)
+            indent(e, level + 1)
             if not e.tail or not e.tail.strip():
                 e.tail = i + "  "
         if not e.tail or not e.tail.strip():
@@ -86,16 +88,18 @@ def indent(elem, level=0):
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
 
+
 def transformXML():
     """Transform the package list to an XML file."""
     packagelist = retrievePackages()
     root = etree.Element("PackageList")
-    for i,j in packagelist:
-        root.append( etree.Element("Package", name = i, version = j) )
+    for i, j in packagelist:
+        root.append(etree.Element("Package", name=i, version=j))
     #Print the content
     #print(etree.tostring(root, pretty_print=True))
     tree = etree.ElementTree(root)
     return tree
+
 
 def main():
     options, args = parse_command_line_parameters()
@@ -105,14 +109,14 @@ def main():
     if options.show == True:
         tree = etree.parse(filename)
         for node in tree.findall("//Package"):
-            print node.attrib["name"]
+            print(node.attrib["name"])
         indent(packagelist.getroot())
         packagelist.write(filename, encoding="utf-8")
 
     if options.pkgversion == True:
         tree = etree.parse(filename)
         for node in tree.findall("//Package"):
-            print "%s-%s" % (node.attrib["name"], node.attrib["version"])
+            print("%s-%s" % (node.attrib["name"], node.attrib["version"]))
 
 #FIXME : This should be changed to the standard way of optparser
 #FIXME : Make an option available to strip the version number of the pkg

@@ -8,7 +8,6 @@ import logging
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 import lxml.etree
 import os
-import Queue
 from time import asctime, localtime, time, strptime, mktime
 import threading
 
@@ -33,7 +32,8 @@ class StatisticsStore(object):
                 or force:
             try:
                 fout = open(self.filename + '.new', 'w')
-            except IOError, ioerr:
+            except IOError:
+                ioerr = sys.exc_info()[1]
                 self.logger.error("Failed to open %s for writing: %s" % (self.filename + '.new', ioerr))
             else:
                 fout.write(lxml.etree.tostring(self.element, encoding='UTF-8', xml_declaration=True))

@@ -6,6 +6,9 @@ import logging
 import sys
 import traceback
 import Bcfg2.Server.Plugin
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
@@ -36,7 +39,8 @@ class TemplateFile:
             self.template = Cheetah.Template.Template(open(self.name).read(),
                                                       compilerSettings=s,
                                                       searchList=self.searchlist)
-        except Cheetah.Parser.ParseError, perror:
+        except Cheetah.Parser.ParseError:
+            perror = sys.exc_info()[1]
             logger.error("Cheetah parse error for file %s" % (self.name))
             logger.error(perror.report())
 
@@ -56,7 +60,7 @@ class TemplateFile:
                 entry.text = self.template
             else:
                 if entry.get('encoding') == 'base64':
-		    # take care of case where file needs base64 encoding
+                    # take care of case where file needs base64 encoding
                     entry.text = binascii.b2a_base64(self.template)
                 else:
                     entry.text = unicode(str(self.template), self.encoding)

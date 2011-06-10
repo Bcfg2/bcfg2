@@ -1,7 +1,6 @@
 '''Admin interface for dynamic reports'''
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
-import ConfigParser
 import datetime
 import os
 import logging
@@ -13,6 +12,9 @@ from Bcfg2.Server.Reports.importscript import load_stats
 from Bcfg2.Server.Reports.updatefix import update_database
 from Bcfg2.Server.Reports.utils import *
 from lxml.etree import XML, XMLSyntaxError
+
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # FIXME: Remove when server python dep is 2.5 or greater
 if sys.version_info >= (2, 5):
@@ -26,7 +28,8 @@ import django.core.management
 # FIXME - settings file uses a hardcoded path for /etc/bcfg2.conf
 try:
     import Bcfg2.Server.Reports.settings
-except Exception, e:
+except Exception:
+    e = sys.exc_info()[1]
     sys.stderr.write("Failed to load configuration settings. %s\n" % e)
     sys.exit(1)
 
@@ -42,7 +45,8 @@ from django.db import connection, transaction
 
 from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
                                 Entries_interactions, Performance, \
-                                Reason, Ping, TYPE_CHOICES, InternalDatabaseVersion
+                                Reason, Ping
+
 
 def printStats(fn):
     """
@@ -50,23 +54,28 @@ def printStats(fn):
 
     Decorator for purging.  Prints database statistics after a run.
     """
-    def print_stats(*data):
+    def print_stats(self, *data):
         start_client = Client.objects.count()
         start_i = Interaction.objects.count()
         start_ei = Entries_interactions.objects.count()
         start_perf = Performance.objects.count()
         start_ping = Ping.objects.count()
 
-        fn(*data)
+        fn(self, *data)
 
-        print "Clients removed: %s" % (start_client - Client.objects.count())
-        print "Interactions removed: %s" % (start_i - Interaction.objects.count())
-        print "Interactions->Entries removed: %s" % \
-                (start_ei - Entries_interactions.objects.count())
-        print "Metrics removed: %s" % (start_perf - Performance.objects.count())
-        print "Ping metrics removed: %s" % (start_ping - Ping.objects.count())
+        self.log.info("Clients removed: %s" %
+                      (start_client - Client.objects.count()))
+        self.log.info("Interactions removed: %s" %
+                      (start_i - Interaction.objects.count()))
+        self.log.info("Interactions->Entries removed: %s" %
+                      (start_ei - Entries_interactions.objects.count()))
+        self.log.info("Metrics removed: %s" %
+                      (start_perf - Performance.objects.count()))
+        self.log.info("Ping metrics removed: %s" %
+                      (start_ping - Ping.objects.count()))
 
     return print_stats
+
 
 class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''
@@ -93,7 +102,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
     def __init__(self, cfile):
         Bcfg2.Server.Admin.Mode.__init__(self, cfile)
         self.log.setLevel(logging.INFO)
-        self.django_commands = [ 'syncdb', 'sqlall', 'validate' ]
+        self.django_commands = ['syncdb', 'sqlall', 'validate']
         self.__usage__ = self.__usage__ + "  Django commands:\n    " + \
              "\n    ".join(self.django_commands)
 
@@ -123,54 +132,54 @@ class Reports(Bcfg2.Server.Admin.Mode):
             update_database()
         elif args[0] == 'load_stats':
             quick = '-O3' in args
-            stats_file=None
-            clients_file=None
-            i=1
+            stats_file = None
+            clients_file = None
+            i = 1
             while i < len(args):
                 if args[i] == '-s' or args[i] == '--stats':
-                    stats_file = args[i+1]
+                    stats_file = args[i + 1]
                     if stats_file[0] == '-':
                         self.errExit("Invalid statistics file: %s" % stats_file)
                 elif args[i] == '-c' or args[i] == '--clients-file':
-                    clients_file = args[i+1]
+                    clients_file = args[i + 1]
                     if clients_file[0] == '-':
                         self.errExit("Invalid clients file: %s" % clients_file)
                 i = i + 1
             self.load_stats(stats_file, clients_file, verb, quick)
         elif args[0] == 'purge':
-            expired=False
-            client=None
-            maxdate=None
-            state=None
-            i=1
+            expired = False
+            client = None
+            maxdate = None
+            state = None
+            i = 1
             while i < len(args):
                 if args[i] == '-c' or args[i] == '--client':
                     if client:
                         self.errExit("Only one client per run")
-                    client = args[i+1]
-                    print client
+                    client = args[i + 1]
+                    print(client)
                     i = i + 1
                 elif args[i] == '--days':
                     if maxdate:
                         self.errExit("Max date specified multiple times")
                     try:
-                        maxdate = datetime.datetime.now() - datetime.timedelta(days=int(args[i+1]))
+                        maxdate = datetime.datetime.now() - datetime.timedelta(days=int(args[i + 1]))
                     except:
-                        self.log.error("Invalid number of days: %s" % args[i+1])
-                        raise SystemExit, -1
+                        self.log.error("Invalid number of days: %s" % args[i + 1])
+                        raise SystemExit(-1)
                     i = i + 1
                 elif args[i] == '--expired':
-                    expired=True
+                    expired = True
                 i = i + 1
             if expired:
                 if state:
                     self.log.error("--state is not valid with --expired")
-                    raise SystemExit, -1
+                    raise SystemExit(-1)
                 self.purge_expired(maxdate)
             else:
                 self.purge(client, maxdate, state)
         else:
-            print "Unknown command: %s" % args[0]
+            print("Unknown command: %s" % args[0])
 
     @transaction.commit_on_success
     def scrub(self):
@@ -179,11 +188,12 @@ class Reports(Bcfg2.Server.Admin.Mode):
         # Currently only reasons are a problem
         try:
             start_count = Reason.objects.count()
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             self.log.error("Failed to load reason objects: %s" % e)
             return
         dup_reasons = []
-    
+
         cmp_reasons = dict()
         batch_update = []
         for reason in BatchFetch(Reason.objects):
@@ -192,7 +202,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 comparisons '''
             id = reason.id
             reason.id = None
-            key=md5(pickle.dumps(reason)).hexdigest()
+            key = md5(pickle.dumps(reason)).hexdigest()
             reason.id = id
 
             if key in cmp_reasons:
@@ -203,14 +213,15 @@ class Reports(Bcfg2.Server.Admin.Mode):
             else:
                 cmp_reasons[key] = reason.id
             self.log.debug("key %d" % reason.id)
-    
+
         self.log.debug("Done with updates, deleting dupes")
         try:
             cursor = connection.cursor()
             cursor.executemany('update reports_entries_interactions set reason_id=%s where reason_id=%s', batch_update)
             cursor.executemany('delete from reports_reason where id = %s', dup_reasons)
             transaction.set_dirty()
-        except Exception, ex:
+        except Exception:
+            ex = sys.exc_info()[1]
             self.log.error("Failed to delete reasons: %s" % ex)
             raise
 
@@ -244,7 +255,12 @@ class Reports(Bcfg2.Server.Admin.Mode):
         try:
             statsdata = XML(open(stats_file).read())
         except (IOError, XMLSyntaxError):
-            self.errExit("StatReports: Failed to parse %s"%(stats_file))
+            self.errExit("StatReports: Failed to parse %s" % (stats_file))
+
+        try:
+            encoding = self.cfp.get('components', 'encoding')
+        except:
+            encoding = 'UTF-8'
 
         if not clientspath:
             try:
@@ -255,10 +271,16 @@ class Reports(Bcfg2.Server.Admin.Mode):
         try:
             clientsdata = XML(open(clientspath).read())
         except (IOError, XMLSyntaxError):
-            self.errExit("StatReports: Failed to parse %s"%(clientspath))
+            self.errExit("StatReports: Failed to parse %s" % (clientspath))
 
         try:
-            load_stats(clientsdata, statsdata, verb, self.log, quick=quick, location=platform.node())
+            load_stats(clientsdata,
+                       statsdata,
+                       encoding,
+                       verb,
+                       self.log,
+                       quick=quick,
+                       location=platform.node())
         except:
             pass
 
@@ -266,7 +288,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
     def purge(self, client=None, maxdate=None, state=None):
         '''Purge historical data from the database'''
 
-        filtered = False # indicates whether or not a client should be deleted
+        filtered = False  # indicates whether or not a client should be deleted
 
         if not client and not maxdate and not state:
             self.errExit("Reports.prune: Refusing to prune all data")
@@ -278,13 +300,13 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 ipurge = ipurge.filter(client=cobj)
             except Client.DoesNotExist:
                 self.log.error("Client %s not in database" % client)
-                raise SystemExit, -1
+                raise SystemExit(-1)
             self.log.debug("Filtering by client: %s" % client)
 
         if maxdate:
             filtered = True
             if not isinstance(maxdate, datetime.datetime):
-                raise TypeError, "maxdate is not a DateTime object"
+                raise TypeError("maxdate is not a DateTime object")
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
 
@@ -296,9 +318,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
         if state:
             filtered = True
-            if state not in ('dirty','clean','modified'):
-                raise TypeError, "state is not one of the following values " + \
-                    "('dirty','clean','modified')"
+            if state not in ('dirty', 'clean', 'modified'):
+                raise TypeError("state is not one of the following values " + \
+                                "('dirty','clean','modified')")
             self.log.debug("Filtering by state: %s" % state)
             ipurge = ipurge.filter(state=state)
 
@@ -323,6 +345,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         # bulk operations bypass the Interaction.delete method
         self.log.debug("Pruning orphan Performance objects")
         Performance.prune_orphans()
+        self.log.debug("Pruning orphan Reason objects")
+        Reason.prune_orphans()
 
         if client and not filtered:
             '''Delete the client, ping data is automatic'''
@@ -342,7 +366,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
         if maxdate:
             if not isinstance(maxdate, datetime.datetime):
-                raise TypeError, "maxdate is not a DateTime object"
+                raise TypeError("maxdate is not a DateTime object")
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             clients = Client.objects.filter(expiration__lt=maxdate)
         else:
@@ -354,4 +378,3 @@ class Reports(Bcfg2.Server.Admin.Mode):
             client.delete()
         self.log.debug("Pruning orphan Performance objects")
         Performance.prune_orphans()
-

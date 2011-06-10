@@ -1,0 +1,39 @@
+.. -*- mode: rst -*-
+
+.. _appendix-guides-bootstrap:
+
+=========
+Bootstrap
+=========
+
+Once you have your bcfg2 server setup and working, a common next step to
+take is automating the addition of new clients.
+
+The method for bootstrapping your clients will vary depending on your
+needs. The simplest way to go about this is to create a public default
+group in ``Metadata/groups.xml``. Example:
+
+.. code-block:: xml
+
+    <Group profile='true' name='basic' public='true' default='true'>
+
+This allows clients to freely associate themselves with this group so that
+you will not be required to manually add them to ``Metadata/clients.xml``
+prior to running the client.
+
+.. note::
+
+    Reverse DNS will need to work in order to automate the process of
+    bootstrapping clients without first adding them to
+    ``Metadata/clients.xml``.
+
+There are command line options available on the client which allow
+you to specify the options that are normally found in the client's
+``/etc/bcfg2.conf``::
+
+    bcfg2 -x password -p basic -S https://bcfg2-server:6789
+
+The above command will add the client to ``Metadata/clients.xml`` with the
+profile *basic*. Generally, the configuration given to the client by the
+bcfg2 server in this initial run will include the ``/etc/bcfg2.conf`` file
+so that the client won't need to specify these options on future runs.

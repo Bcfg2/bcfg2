@@ -5,7 +5,8 @@ import posixpath
 import tempfile
 import os
 from subprocess import Popen, PIPE, STDOUT
-from ConfigParser import ConfigParser
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
@@ -41,14 +42,14 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         if event.filename.endswith('.xml'):
             if action in ['exists', 'created', 'changed']:
                 if event.filename.endswith('key.xml'):
-                    key_spec = dict(lxml.etree.parse(epath).find('Key').items())
+                    key_spec = dict(list(lxml.etree.parse(epath).find('Key').items()))
                     self.key_specs[ident] = {
                         'bits': key_spec.get('bits', 2048),
                         'type': key_spec.get('type', 'rsa')
                     }
                     self.Entries['Path'][ident] = self.get_key
                 elif event.filename.endswith('cert.xml'):
-                    cert_spec = dict(lxml.etree.parse(epath).find('Cert').items())
+                    cert_spec = dict(list(lxml.etree.parse(epath).find('Cert').items()))
                     ca = cert_spec.get('ca', 'default')
                     self.cert_specs[ident] = {
                         'ca': ca,
@@ -64,7 +65,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                     }
                     cp = ConfigParser()
                     cp.read(self.core.cfile)
-                    self.CAs[ca] = dict(cp.items('sslca_'+ca))
+                    self.CAs[ca] = dict(cp.items('sslca_' + ca))
                     self.Entries['Path'][ident] = self.get_cert
             if action == 'deleted':
                 if ident in self.Entries['Path']:
@@ -99,12 +100,14 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         # check if we already have a hostfile, or need to generate a new key
         # TODO: verify key fits the specs
         path = entry.get('name')
-        filename = "".join([path, '/', path.rsplit('/', 1)[1], '.H_', metadata.hostname])
-        if filename not in self.entries.keys():
+        filename = "".join([path, '/', path.rsplit('/', 1)[1],
+                            '.H_', metadata.hostname])
+        if filename not in list(self.entries.keys()):
             key = self.build_key(filename, entry, metadata)
             open(self.data + filename, 'w').write(key)
             entry.text = key
-            self.entries[filename] = self.__child__("%s%s" % (self.data, filename))
+            self.entries[filename] = self.__child__("%s%s" % (self.data,
+                                                              filename))
             self.entries[filename].HandleEvent()
         else:
             entry.text = self.entries[filename].data
@@ -135,23 +138,28 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
 
         path = entry.get('name')
-        filename = "".join([path, '/', path.rsplit('/', 1)[1], '.H_', metadata.hostname])
+        filename = "".join([path, '/', path.rsplit('/', 1)[1],
+                            '.H_', metadata.hostname])
 
         # first - ensure we have a key to work with
         key = self.cert_specs[entry.get('name')].get('key')
-        key_filename = "".join([key, '/', key.rsplit('/', 1)[1], '.H_', metadata.hostname])
+        key_filename = "".join([key, '/', key.rsplit('/', 1)[1],
+                                '.H_', metadata.hostname])
         if key_filename not in self.entries:
             e = lxml.etree.Element('Path')
             e.attrib['name'] = key
             self.core.Bind(e, metadata)
 
         # check if we have a valid hostfile
-        if filename in self.entries.keys() and self.verify_cert(filename, key_filename, entry):
+        if filename in list(self.entries.keys()) and self.verify_cert(filename,
+                                                                      key_filename,
+                                                                      entry):
             entry.text = self.entries[filename].data
         else:
             cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
-            self.entries[filename] = self.__child__("%s%s" % (self.data, filename))
+            self.entries[filename] = self.__child__("%s%s" % (self.data,
+                                                              filename))
             self.entries[filename].HandleEvent()
             entry.text = cert
 
@@ -188,7 +196,6 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             return True
         return False
 
-
     def build_cert(self, key_filename, entry, metadata):
         """
         creates a new certificate according to the specification
@@ -200,9 +207,14 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         days = self.cert_specs[entry.get('name')]['days']
         passphrase = self.CAs[ca].get('passphrase')
         if passphrase:
-            cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config, req, days, passphrase)
+            cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config,
+                                                                                    req,
+                                                                                    days,
+                                                                                    passphrase)
         else:
-            cmd = "openssl ca -config %s -in %s -days %s -batch" % (ca_config, req, days)
+            cmd = "openssl ca -config %s -in %s -days %s -batch" % (ca_config,
+                                                                    req,
+                                                                    days)
         cert = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         try:
             os.unlink(req_config)
@@ -234,7 +246,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             },
             'alt_names': {}
         }
-        for section in defaults.keys():
+        for section in list(defaults.keys()):
             cp.add_section(section)
             for key in defaults[section]:
                 cp.set(section, key, defaults[section][key])
@@ -242,7 +254,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         altnames = list(metadata.aliases)
         altnames.append(metadata.hostname)
         for altname in altnames:
-            cp.set('alt_names', 'DNS.'+str(x), altname)
+            cp.set('alt_names', 'DNS.' + str(x), altname)
             x += 1
         for item in ['C', 'L', 'ST', 'O', 'OU', 'emailAddress']:
             if self.cert_specs[entry.get('name')][item]:
@@ -259,6 +271,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         req = tempfile.mkstemp()[1]
         days = self.cert_specs[entry.get('name')]['days']
         key = self.data + key_filename
-        cmd = "openssl req -new -config %s -days %s -key %s -text -out %s" % (req_config, days, key, req)
+        cmd = "openssl req -new -config %s -days %s -key %s -text -out %s" % (req_config,
+                                                                              days,
+                                                                              key,
+                                                                              req)
         res = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         return req
