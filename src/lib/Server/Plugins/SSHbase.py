@@ -39,12 +39,17 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     pubkeys = ["ssh_host_dsa_key.pub.H_%s",
-                "ssh_host_rsa_key.pub.H_%s", "ssh_host_key.pub.H_%s"]
+               "ssh_host_rsa_key.pub.H_%s",
+               "ssh_host_key.pub.H_%s"]
     hostkeys = ["ssh_host_dsa_key.H_%s",
-                "ssh_host_rsa_key.H_%s", "ssh_host_key.H_%s"]
-    keypatterns = ['ssh_host_dsa_key', 'ssh_host_rsa_key', 'ssh_host_key',
-                   'ssh_host_dsa_key.pub', 'ssh_host_rsa_key.pub',
-                   'ssh_host_key.pub']
+                "ssh_host_rsa_key.H_%s",
+                "ssh_host_key.H_%s"]
+    keypatterns = ["ssh_host_dsa_key",
+                   "ssh_host_rsa_key",
+                   "ssh_host_key",
+                   "ssh_host_dsa_key.pub",
+                   "ssh_host_rsa_key.pub",
+                   "ssh_host_key.pub"]
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -74,7 +79,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def get_skn(self):
         """Build memory cache of the ssh known hosts file."""
         if not self.__skn:
-            self.__skn = "\n".join([str(value.data) for key, value in \
+            self.__skn = "\n".join([value.data.decode() for key, value in \
                                     list(self.entries.items()) if \
                                     key.endswith('.static')])
             names = dict()
@@ -117,7 +122,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                         self.logger.error("SSHbase: Unknown host %s; ignoring public keys" % hostname)
                     continue
                 self.__skn += "%s %s" % (','.join(names[hostname]),
-                                         self.entries[pubkey].data)
+                                         self.entries[pubkey].data.decode())
         return self.__skn
 
     def set_skn(self, value):
@@ -206,7 +211,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         hostkeys.sort()
         for hostkey in hostkeys:
             entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
-                self.entries[hostkey].data)
+                self.entries[hostkey].data.decode())
         permdata = {'owner': 'root',
                     'group': 'root',
                     'type': 'file',

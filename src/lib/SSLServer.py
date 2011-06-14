@@ -46,7 +46,11 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             if '.' not in method:
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
-            response = (response, )
+            # py3k compatibility
+            if isinstance(response, bool) or isinstance(response, str):
+                response = (response, )
+            else:
+                response = (response.decode('utf-8'), )
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
@@ -191,9 +195,14 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.logger.error("No authentication data presented")
             return False
         auth_type, auth_content = header.split()
-        auth_content = base64.standard_b64decode(auth_content)
+        auth_content = base64.standard_b64decode(bytes(auth_content.encode('ascii')))
         try:
-            username, password = auth_content.split(":")
+            # py3k compatibility
+            try:
+                username, password = auth_content.split(":")
+            except TypeError:
+                username, pw = auth_content.split(b":")
+                password = pw.decode('utf-8')
         except ValueError:
             username = auth_content
             password = ""
@@ -234,11 +243,12 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                     print("got select timeout")
                     raise
                 chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size))
+                L.append(self.rfile.read(chunk_size).decode('utf-8'))
                 size_remaining -= len(L[-1])
             data = ''.join(L)
             response = self.server._marshaled_dispatch(self.client_address,
                                                        data)
+            response = response.encode('utf-8')
         except:
             try:
                 self.send_response(500)

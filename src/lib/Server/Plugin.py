@@ -693,6 +693,9 @@ class Specificity:
         self.prio = prio
         self.delta = delta
 
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+
     def matches(self, metadata):
         return self.all or \
                self.hostname == metadata.hostname or \
