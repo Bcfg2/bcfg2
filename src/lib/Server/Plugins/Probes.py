@@ -1,4 +1,5 @@
 import lxml.etree
+import operator
 import re
 
 import Bcfg2.Server.Plugin
@@ -27,7 +28,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         ret = []
         build = dict()
         candidates = self.get_matching(metadata)
-        candidates.sort(lambda x, y: cmp(x.specific, y.specific))
+        candidates.sort(key=operator.attrgetter('specific'))
         for entry in candidates:
             rem = specific_probe_matcher.match(entry.name)
             if not rem:
@@ -90,7 +91,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
         except IOError:
             self.logger.error("Failed to write probed.xml")
-        datafile.write(data)
+        datafile.write(data.decode('utf-8'))
 
     def load_data(self):
         try:

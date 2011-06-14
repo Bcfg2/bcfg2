@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import binascii
 import logging
 import lxml
+import operator
 import os
 import os.path
 import re
@@ -25,7 +26,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 def u_str(string, encoding):
     if sys.hexversion >= 0x03000000:
-        return str(string, encoding)
+        return string.encode(encoding)
     else:
         return unicode(string, encoding)
 
@@ -105,7 +106,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         """
         matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
-        matching.sort(self.sort_by_specific)
+        matching.sort(key=operator.attrgetter('specific'))
         non_delta = [matching.index(m) for m in matching
                      if not m.specific.delta]
         if not non_delta:
