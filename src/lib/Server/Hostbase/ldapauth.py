@@ -69,7 +69,8 @@ class ldapauth(object):
                                     None)
             result_type, result_data = conn.result(result_id, 0)
             return ('success', 'User profile found', result_data,)
-        except ldap.LDAPError, e:
+        except ldap.LDAPError:
+            e = sys.exc_info()[1]
             #connection failed
             return ('error', 'LDAP connect failed', e,)
 
@@ -86,7 +87,8 @@ class ldapauth(object):
                                     None)
             result_type, result_data = conn.result(result_id, 0)
             return ('success', 'User profile found', result_data,)
-        except ldap.LDAPError, e:
+        except ldap.LDAPError:
+            e = sys.exc_info()[1]
             #connection failed
             return ('error', 'LDAP connect failed', e,)
 
@@ -108,7 +110,8 @@ class ldapauth(object):
             raw_obj = result_data[0][1]
             distinguishedName = raw_obj['distinguishedName']
             return ('success', distinguishedName[0],)
-        except ldap.LDAPError, e:
+        except ldap.LDAPError:
+            e = sys.exc_info()[1]
             #connection failed
             return ('error', 'LDAP connect failed', e,)
 
@@ -134,7 +137,8 @@ class ldapauth(object):
             self.is_superuser = False
 
             return
-        except KeyError, e:
+        except KeyError:
+            e = sys.exc_info()[1]
             raise LDAPAUTHError("Portions of the LDAP User profile not present")
 
     def member_of(self):
