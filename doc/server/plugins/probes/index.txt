@@ -85,10 +85,12 @@ file looks like::
     #end if
 
 Any Probe script you run will store its output in
-``$self.metadata.Probes["scriptname"]``, so we get to our `scratchlocal`
-script's output as seen above.  Note that we had to wrap the output in an
-`int()` call; the script output is treated as a string, so it needs to
-be converted before it can be tested numerically.
+``$self.metadata.Probes["scriptname"]``, so we get to our
+`scratchlocal` script's output as seen above.  (See `Handling Probe
+Output`_, below, for more information on how this is done.)  Note that
+we had to wrap the output in an `int()` call; the script output is
+treated as a string, so it needs to be converted before it can be
+tested numerically.
 
 With all of these pieces in place, the following series of events will
 happen when the client is run:
@@ -110,8 +112,37 @@ is to add the ``/etc/auto.master`` to a Bundle:
 
     <Path name='/etc/auto.master'/>
 
-Host and Group Specific probes
-==============================
+Handling Probe Output
+=====================
+
+Bcfg2 stores output from probes in the ``Probes`` property of a
+client's metadata object.  To access this data in TGenshi, for
+instance, you could do::
+
+  ${metadata.Probes['script-name']}
+
+This is not the full output of the probe; any lines that start with
+"group:" have been stripped from the output.  The data is a
+string-like object that has some interesting and salient features:
+
+* If the data is a valid XML document, then
+  ``metadata.Probes['script-name'].xdata`` will be an
+  ``lxml.etree._Element`` object representing the XML data.
+* If the data is a valid JSON document, and the Python ``json`` module
+  is installed (included in Python 2.6 onward), then
+  ``metadata.Probes['script-name'].json`` will be a data structure
+  representing the JSON data.
+* If the data is a valid YAML document, and either the Python ``yaml``
+  module or ``syck`` module is installed, then
+  ``metadata.Probes['script-name'].yaml`` will be a data structure
+  representing the YAML data.
+
+If these conditions are not met, then the named properties will be
+``None``.  In all other fashions, the probe data objects should act
+like strings.
+
+Host- and Group-Specific probes
+===============================
 
 Bcfg2 has the ability to alter probes based on client hostname and group
 membership. These files work similarly to files in Cfg.
