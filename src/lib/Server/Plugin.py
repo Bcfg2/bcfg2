@@ -435,12 +435,13 @@ class XMLFileBacked(FileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            xdata = XML(self.data)
+            self.xdata = XML(self.data)
         except XMLSyntaxError:
             logger.error("Failed to parse %s" % (self.name))
             return
-        self.label = xdata.attrib[self.__identifier__]
-        self.entries = xdata.getchildren()
+        self.entries = self.xdata.getchildren()
+        if self.__identifier__ is not None:
+            self.label = self.xdata.attrib[self.__identifier__]
 
     def __iter__(self):
         return iter(self.entries)
@@ -455,6 +456,8 @@ class SingleXMLFileBacked(XMLFileBacked):
 
 class StructFile(XMLFileBacked):
     """This file contains a set of structure file formatting logic."""
+    __identifier__ = None
+    
     def __init__(self, name):
         XMLFileBacked.__init__(self, name)
         self.matches = {}
@@ -489,13 +492,14 @@ class StructFile(XMLFileBacked):
             
     def Match(self, metadata):
         """Return matching fragments of independent."""
-        rv = []
         if metadata.hostname not in self.matches:
-            for child in self.entries():
+            rv = []
+            for child in self.entries:
                 rv.extend(self._match(child, metadata))
-        if not rv:
-            logger.error("File %s got null match" % (self.name))
-        return rv
+            if not rv:
+                logger.error("File %s got null match" % (self.name))
+            self.matches[metadata.hostname] = rv
+        return self.matches[metadata.hostname]
 
 
 class INode:

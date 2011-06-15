@@ -6,17 +6,7 @@ import Bcfg2.Server.Plugin
 
 class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
-    def Index(self):
-        """Build local data structures."""
-        try:
-            xdata = XML(self.data)
-        except XMLSyntaxError:
-            self.label = None
-            self.entries = []
-            return
-        self.label = xdata.attrib[self.__identifier__]
-        self.entries = xdata.getchildren()
-
+    pass
 
 class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
     __child__ = PropertyFile
