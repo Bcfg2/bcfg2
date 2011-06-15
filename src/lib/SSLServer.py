@@ -201,7 +201,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             try:
                 username, password = auth_content.split(":")
             except TypeError:
-                username, pw = auth_content.split(b":")
+                username, pw = auth_content.split(bytes(":", encoding='utf-8'))
                 password = pw.decode('utf-8')
         except ValueError:
             username = auth_content
