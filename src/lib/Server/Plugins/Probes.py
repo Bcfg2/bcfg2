@@ -165,7 +165,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             cx = lxml.etree.SubElement(top, 'Client', name=client)
             for probe in sorted(probed):
                 lxml.etree.SubElement(cx, 'Probe', name=probe,
-                                      value=self.probedata[client][probe])
+                                      value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(cx, "Group", name=group)
         data = lxml.etree.tostring(top, encoding='UTF-8',
@@ -214,9 +214,11 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Got null response to probe %s from %s" % \
                               (data.get('name'), client.hostname))
             try:
-                self.probedata[client.hostname].update({data.get('name'): ''})
+                self.probedata[client.hostname].update({data.get('name'):
+                                                        ProbeData('')})
             except KeyError:
-                self.probedata[client.hostname] = {data.get('name'): ''}
+                self.probedata[client.hostname] = \
+                    {data.get('name'): ProbeData('')}
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" % (client.hostname,
