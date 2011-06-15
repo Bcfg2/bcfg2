@@ -47,7 +47,8 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             # py3k compatibility
-            if isinstance(response, bool) or isinstance(response, str):
+            if isinstance(response, bool) or isinstance(response, str) \
+                or isinstance(response, list):
                 response = (response, )
             else:
                 response = (response.decode('utf-8'), )
@@ -252,7 +253,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             data = ''.join(L)
             response = self.server._marshaled_dispatch(self.client_address,
                                                        data)
-            response = response.encode('utf-8')
+            if sys.hexversion >= 0x03000000:
+                response = response.encode('utf-8')
         except:
             try:
                 self.send_response(500)
