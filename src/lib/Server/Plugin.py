@@ -470,7 +470,8 @@ class StructFile(XMLFileBacked):
             rv = []
             if ((item.get('negate', 'false').lower() == 'true' and
                  item.get('name') not in metadata.groups) or
-                item.get('name') in metadata.groups):
+                (item.get('negate', 'false').lower() == 'false' and
+                 item.get('name') in metadata.groups)):
                 for child in item.iterchildren():
                     rv.extend(self._match(child, metadata))
             return rv
@@ -478,7 +479,8 @@ class StructFile(XMLFileBacked):
             rv = []
             if ((item.get('negate', 'false').lower() == 'true' and
                  item.get('name') != metadata.hostname) or
-                item.get('name') == metadata.hostname):
+                (item.get('negate', 'false').lower() == 'false' and
+                 item.get('name') == metadata.hostname)):
                 for child in item.iterchildren():
                     rv.extend(self._match(child, metadata))
             return rv
