@@ -1,9 +1,10 @@
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 import os.path
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-c = ConfigParser()
+c = ConfigParser.ConfigParser()
 #This needs to be configurable one day somehow
 c.read(['./bcfg2.conf'])
 

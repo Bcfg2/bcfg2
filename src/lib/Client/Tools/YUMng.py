@@ -1,9 +1,9 @@
 """This provides bcfg2 support for yum."""
 __revision__ = '$Revision$'
 
-import ConfigParser
 import copy
 import os.path
+import sys
 import yum
 import yum.packages
 import yum.rpmtrans
@@ -13,6 +13,8 @@ import yum.misc
 import rpmUtils.arch
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # Fix for python2.3
 try:
@@ -167,10 +169,12 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             self.yb.doConfigSetup()
             self.yb.doTsSetup()
             self.yb.doRpmDBSetup()
-        except yum.Errors.RepoError, e:
+        except yum.Errors.RepoError:
+            e = sys.exc_info()[1]
             self.logger.error("YUMng Repository error: %s" % e)
             raise Bcfg2.Client.Tools.toolInstantiationError
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             self.logger.error("YUMng error: %s" % e)
             raise Bcfg2.Client.Tools.toolInstantiationError
 
@@ -505,7 +509,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
             try:
                 vResult = self._verifyHelper(_POs[0])
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 # Unknown Yum exception
                 self.logger.warning("  Verify Exception: %s" % str(e))
                 package_fail = True
@@ -680,7 +685,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         # Run the Yum Transaction
         try:
             rescode, restring = self.yb.buildTransaction()
-        except yum.Errors.YumBaseError, e:
+        except yum.Errors.YumBaseError:
+            e = sys.exc_info()[1]
             self.logger.error("Yum transaction error: %s" % str(e))
             cleanup()
             return
@@ -695,7 +701,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 self.yb.processTransaction(callback=yDisplay,
                                            rpmDisplay=rDisplay)
                 self.logger.info("Single Pass for Install Succeeded")
-            except yum.Errors.YumBaseError, e:
+            except yum.Errors.YumBaseError:
+                e = sys.exc_info()[1]
                 self.logger.error("Yum transaction error: %s" % str(e))
                 cleanup()
                 return
@@ -822,7 +829,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 try:
                     self.yb.install(**build_yname(pkg_arg, inst))
-                except yum.Errors.YumBaseError, yume:
+                except yum.Errors.YumBaseError:
+                    yume = sys.exc_info()[1]
                     self.logger.error("Error installing some packages: %s" % yume)
 
         if len(upgrade_pkgs) > 0:
@@ -832,7 +840,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 try:
                     self.yb.update(**build_yname(pkg_arg, inst))
-                except yum.Errors.YumBaseError, yume:
+                except yum.Errors.YumBaseError:
+                    yume = sys.exc_info()[1]
                     self.logger.error("Error upgrading some packages: %s" % yume)
 
         if len(reinstall_pkgs) > 0:
@@ -841,7 +850,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 try:
                     self.yb.reinstall(**build_yname(pkg_arg, inst))
-                except yum.Errors.YumBaseError, yume:
+                except yum.Errors.YumBaseError:
+                    yume = sys.exc_info()[1]
                     self.logger.error("Error upgrading some packages: %s" \
                             % yume)
 

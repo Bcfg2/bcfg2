@@ -73,7 +73,8 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.cmd.run("%s clean" % APTGET)
             try:
                 self.pkg_cache = apt.cache.Cache()
-            except SystemError, e:
+            except SystemError:
+                e = sys.exc_info()[1]
                 self.logger.info("Failed to initialize APT cache: %s" % e)
                 raise Bcfg2.Client.Tools.toolInstantiationError
             self.pkg_cache.update()
