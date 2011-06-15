@@ -38,7 +38,7 @@ Usage
 
 Specific property files can be referred to in
 templates as ``metadata.Properties[<filename>]``. The
-data attribute is an LXML element object. (Documented
+``xdata`` attribute is an LXML element object. (Documented
 `here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 
 Currently, only one access method is defined for this data, ``Match``.
@@ -56,10 +56,21 @@ more details on how Group and Client tags are parsed.)  For instance::
 As we formulate more common use cases, we will add them to the
 !PropertyFile class as methods. This will simplify templates.
 
+You can also access the XML data that comprises a property file
+directly in one of several ways:
+
+* ``metadata.Properties['prop-file'].xdata`` is an lxml.etree._Element
+  object representing the top-level element in the file.
+* ``metadata.Properties['prop-file'].data`` is the raw contents of the
+  property file as a string.
+* ``metadata.Properties['prop-file'].entries`` is a list of
+  lxml.etree._Element objects representing the direct children of the
+  top-level element.  (I.e., everything directly under the
+  ``<Properties>`` tag.)
+
 Accessing Properties contents from TGenshi
 ==========================================
 
 Access contents of ``Properties/auth.xml``::
 
-
-    ${metadata.Properties['auth.xml'].data.find('file').find('bcfg2.key').text}
+    ${metadata.Properties['auth.xml'].xdata.find('file').find('bcfg2.key').text}
