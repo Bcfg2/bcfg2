@@ -16,6 +16,10 @@ import shutil
 import stat
 import sys
 import time
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
+
 import Bcfg2.Client.Tools
 import Bcfg2.Options
 from Bcfg2.Client import XML
@@ -145,7 +149,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 content = open(entry.get('name')).read()
                 entry.set('current_bfile', binascii.b2a_base64(content))
-            except IOError, error:
+            except IOError:
+                error = sys.exc_info()[1]
                 self.logger.error("Failed to read %s: %s" % (error.filename,
                                                              error.strerror))
 
@@ -457,12 +462,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if type(tempdata) == unicode:
                 try:
                     tempdata = tempdata.encode(self.setup['encoding'])
-                except UnicodeEncodeError, e:
+                except UnicodeEncodeError:
+                    e = sys.exc_info()[1]
                     self.logger.error("Error encoding file %s:\n %s" % \
                                       (entry.get('name'), e))
         try:
             content = open(entry.get('name')).read()
-        except IOError, error:
+        except IOError:
+            error = sys.exc_info()[1]
             if error.strerror == "No such file or directory":
                 # print diff for files that don't exist (yet)
                 content = ''
@@ -586,7 +593,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                           datetime.isoformat(datetime.now())))
                 self.logger.info("Backup of %s saved to %s" %
                                  (entry.get('name'), self.ppath))
-            except IOError, e:
+            except IOError:
+                e = sys.exc_info()[1]
                 self.logger.error("Failed to create backup file for %s" % \
                                   (entry.get('name')))
                 self.logger.error(e)
@@ -622,7 +630,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                       % (entry.get('name')))
                     return False
             return True
-        except (OSError, IOError), err:
+        except (OSError, IOError):
+            err = sys.exc_info()[1]
             if err.errno == errno.EACCES:
                 self.logger.info("Failed to open %s for writing" % (entry.get('name')))
             else:
@@ -702,7 +711,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 return False
             try:
                 shutil.rmtree(ename)
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 self.logger.error('Failed to remove %s: %s' % (ename,
                                                                e.strerror))
         else:
@@ -710,14 +720,16 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 try:
                     os.rmdir(ename)
                     return True
-                except OSError, e:
+                except OSError:
+                    e = sys.exc_info()[1]
                     self.logger.error('Failed to remove %s: %s' % (ename,
                                                                    e.strerror))
                     return False
             try:
                 os.remove(ename)
                 return True
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 self.logger.error('Failed to remove %s: %s' % (ename,
                                                                e.strerror))
                 return False
