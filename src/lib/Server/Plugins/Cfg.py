@@ -24,6 +24,7 @@ except:
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 
+# py3k compatibility
 def u_str(string, encoding):
     if sys.hexversion >= 0x03000000:
         return string.encode(encoding)
