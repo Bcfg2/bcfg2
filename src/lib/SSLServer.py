@@ -195,7 +195,11 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.logger.error("No authentication data presented")
             return False
         auth_type, auth_content = header.split()
-        auth_content = base64.standard_b64decode(bytes(auth_content.encode('ascii')))
+        try:
+            # py3k compatibility
+            auth_content = base64.standard_b64decode(auth_content)
+        except TypeError:
+            auth_content = base64.standard_b64decode(bytes(auth_content.encode('ascii')))
         try:
             # py3k compatibility
             try:
