@@ -498,8 +498,7 @@ class StructFile(XMLFileBacked):
             rv = []
             for child in self.entries:
                 rv.extend(self._match(child, metadata))
-            if not rv:
-                logger.error("File %s got null match" % (self.name))
+            logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
             self.matches[metadata.hostname] = rv
         return self.matches[metadata.hostname]
 
