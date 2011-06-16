@@ -70,7 +70,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             props = self.core.plugins['Properties']
             for propfile, pdata in props.store.entries.items():
                 if os.path.splitext(propfile)[1] == ".xml":
-                    self.check_xml(pdata.name, pdata.data, 'properties')
+                    self.check_xml(pdata.name, pdata.xdata, 'properties')
 
     def check_metadata(self):
         """ check metadata files for required headers """
