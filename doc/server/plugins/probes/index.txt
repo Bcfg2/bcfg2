@@ -128,12 +128,12 @@ string-like object that has some interesting and salient features:
 * If the data is a valid XML document, then
   ``metadata.Probes['script-name'].xdata`` will be an
   ``lxml.etree._Element`` object representing the XML data.
-* If the data is a valid JSON document, and the Python ``json`` module
-  is installed (included in Python 2.6 onward), then
+* If the data is a valid JSON document, and either the Python ``json``
+  or ``simplejson`` module is installed, then
   ``metadata.Probes['script-name'].json`` will be a data structure
   representing the JSON data.
 * If the data is a valid YAML document, and either the Python ``yaml``
-  module or ``syck`` module is installed, then
+  or ``syck`` module is installed, then
   ``metadata.Probes['script-name'].yaml`` will be a data structure
   representing the YAML data.
 

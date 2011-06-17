@@ -6,19 +6,22 @@ try:
     import json
     has_json = True
 except ImportError:
-    has_json = False
+    try:
+        import simplejson as json
+        has_json = True
+    except ImportError:
+        has_json = False
 
 try:
     import syck
     has_syck = True
 except ImportError:
     has_syck = False
-
-try:
-    import yaml
-    has_yaml = True
-except ImportError:
-    has_yaml = False
+    try:
+        import yaml
+        has_yaml = True
+    except ImportError:
+        has_yaml = False
 
 import Bcfg2.Server.Plugin
 
