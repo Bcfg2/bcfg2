@@ -8,8 +8,11 @@ import fileinput
 from subprocess import Popen, PIPE
 import sys
 
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import formatdate
+# py3k compatibility
+try:
+    from email.Utils import formatdate
+except ImportError:
+    from email.utils import formatdate
 
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
