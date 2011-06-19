@@ -736,6 +736,47 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
     def Verifypermissions(self, entry, _):
         """Verify Path type='permissions' entry"""
+        if entry.get('perms') == None or \
+           entry.get('owner') == None or \
+           entry.get('group') == None:
+            self.logger.error('Entry %s not completely specified. '
+                              'Try running bcfg2-lint.' % (entry.get('name')))
+            return False
+        if entry.get('recursive') in ['True', 'true']:
+            # verify ownership information recursively
+            owner = normUid(entry)
+            group = normGid(entry)
+
+            for root, dirs, files in os.walk(entry.get('name')):
+                for p in dirs + files:
+                    path = os.path.join(root, p)
+                    pstat = os.stat(path)
+                    if owner != pstat.st_uid:
+                        # owner mismatch for path
+                        entry.set('current_owner', str(pstat.st_uid))
+                        self.logger.debug("%s %s ownership wrong" % \
+                                          (entry.tag, path))
+                        nqtext = entry.get('qtext', '') + '\n'
+                        nqtext += ("Owner for path %s is incorrect. "
+                                   "Current owner is %s but should be %s\n" % \
+                                   (path, pstat.st_uid, entry.get('owner')))
+                        nqtext += ("\nInstall %s %s: (y/N): " %
+                                   (entry.tag, entry.get('name')))
+                        entry.set('qtext', nqtext)
+                        return False
+		    if group != pstat.st_gid:
+                        # group mismatch for path
+                        entry.set('current_group', str(pstat.st_gid))
+                        self.logger.debug("%s %s group wrong" % \
+                                          (entry.tag, path))
+                        nqtext = entry.get('qtext', '') + '\n'
+                        nqtext += ("Group for path %s is incorrect. "
+                                   "Current group is %s but should be %s\n" % \
+                                   (path, pstat.st_gid, entry.get('group')))
+                        nqtext += ("\nInstall %s %s: (y/N): " %
+                                   (entry.tag, entry.get('name')))
+                        entry.set('qtext', nqtext)
+                        return False
         return self.Verifydirectory(entry, _)
 
     def Installpermissions(self, entry):
@@ -746,9 +787,23 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.error('Entry %s not completely specified. '
                               'Try running bcfg2-lint.' % (entry.get('name')))
             return False
+        plist = [entry.get('name')]
+        if entry.get('recursive') in ['True', 'true']:
+            # verify ownership information recursively
+            owner = normUid(entry)
+            group = normGid(entry)
+
+            for root, dirs, files in os.walk(entry.get('name')):
+                for p in dirs + files:
+                    path = os.path.join(root, p)
+                    pstat = os.stat(path)
+                    if owner != pstat.st_uid or group != pstat.st_gid:
+                        # owner mismatch for path
+                        plist.append(path)
         try:
-            os.chown(entry.get('name'), normUid(entry), normGid(entry))
-            os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
+            for p in plist:
+                os.chown(p, normUid(entry), normGid(entry))
+                os.chmod(p, calcPerms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % \

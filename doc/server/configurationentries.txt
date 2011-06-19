@@ -107,8 +107,8 @@ Path type specified.
 |             |                      | that should not |                          |
 |             |                      | exist           |                          |
 +-------------+----------------------+-----------------+--------------------------+
-| permissions | Replaces Permissions | Permissions of  | name, owner,             |
-|             | entries              | POSIX entities  | group, perms             |
+| permissions | Replaces Permissions | Permissions of  | name, owner, group,      |
+|             | entries              | POSIX entities  | perms, recursive         |
 |             |                      |                 |                          |
 +-------------+----------------------+-----------------+--------------------------+
 | vcs         | New                  | Create version  | vcstype (git),           |
@@ -118,6 +118,19 @@ Path type specified.
 
 Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
 are still handled via the traditional :ref:`server-info` mechanisms.
+
+Additional information
+----------------------
+
+This section describes some additional behavior relating to POSIX entry
+attributes.
+
+Recursive permissions
+^^^^^^^^^^^^^^^^^^^^^
+
+As per the request in ticket 871, Path type='permissions' entries allow you to
+set a recursive attribute which allows the owner/group to be set recursively
+for a directory.
 
 .. _boundentries:
 
