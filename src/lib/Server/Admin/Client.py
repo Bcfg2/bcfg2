@@ -27,7 +27,8 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             for i in args[2:]:
                 attr, val = i.split('=', 1)
                 if attr not in ['profile', 'uuid', 'password',
-                                'location', 'secure', 'address']:
+                                'location', 'secure', 'address',
+                                'auth']:
                     print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
@@ -41,7 +42,8 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             for i in args[2:]:
                 attr, val = i.split('=', 1)
                 if attr not in ['profile', 'uuid', 'password',
-                                'location', 'secure', 'address']:
+                                'location', 'secure', 'address',
+                                'auth']:
                     print("Attribute %s unknown" % attr)
                     raise SystemExit(1)
                 attr_d[attr] = val
