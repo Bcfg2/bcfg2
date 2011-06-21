@@ -323,7 +323,7 @@ CLIENT_BUNDLE = Option('Only configure the given bundle(s)', default=[],
                        cmd='-b', odesc='<bundle:bundle>', cook=colon_split)
 CLIENT_BUNDLEQUICK = Option('only verify/configure the given bundle(s)', default=False,
                        cmd='-Q')
-CLIENT_INDEP = Option('Only configure the given bundle(s)', default=False,
+CLIENT_INDEP = Option('Only configure independent entries, ignore bundles', default=False,
                        cmd='-z')
 CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )

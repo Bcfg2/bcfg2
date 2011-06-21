@@ -3,7 +3,7 @@
 bcfg2 \- reconfigure machine based on settings in Bcfg2
 .SH SYNOPSIS
 .B bcfg2
-.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-b bundle] [\-r removal mode]
+.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-z] [\-b bundle] [\-r removal mode] [\-\-ca\-cert=file] [\-\-ssl\-cns=list] [\-\-ssl\-cert=file] [\-\-ssl\-key=file]
 .SH DESCRIPTION
 .TP
 .BR bcfg2
@@ -60,6 +60,10 @@ Run bcfg2 against one or multiple bundles in the configuration.
 .TP
 .BR "\-c <cachefile>"
 Cache a copy of the configuration in cachefile.
+
+.TP
+.BR "\-\-ca\-cert=<ca cert>"
+Specifiy the path to the SSL CA certificate.
 
 .TP
 .BR "\-d" 
@@ -137,6 +141,14 @@ to stop all services started. disabled suppresses all attempts to
 modify services.
 
 .TP
+.BR "\-\-ssl\-cert=<ssl cert>"
+Specifiy the path to the SSL certificate.
+
+.TP
+.BR "\-\-ssl\-cns=<CommonName1:CommonName2 ...>"
+List of acceptable SSL server Common Names.
+
+.TP
 .BR "\-\-ssl\-key=<ssl key>"
 Specifiy the path to the SSL key.
 
@@ -156,6 +168,10 @@ seconds.
 .TP
 .BR "\-v"
 Run bcfg2 in verbose mode.
+
+.TP
+.BR "\-z"
+Only configure independent entries, ignore bundles.
 .RE
 .SH "SEE ALSO"
 .BR bcfg2-server(8),
