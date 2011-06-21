@@ -7,6 +7,7 @@ import fcntl
 import logging
 import os
 import signal
+import socket
 import stat
 import sys
 import tempfile
@@ -198,6 +199,13 @@ class Client:
                 flt = sys.exc_info()[1]
                 self.logger.error("Failed to download probes from bcfg2")
                 self.logger.error(flt.faultString)
+                raise SystemExit(1)
+            except (Bcfg2.Proxy.CertificateError,
+                    socket.gaierror,
+                    socket.error):
+                e = sys.exc_info()[1]
+                self.logger.error("Failed to download probes from bcfg2: %s"
+                                  % e)
                 raise SystemExit(1)
 
             times['probe_download'] = time.time()

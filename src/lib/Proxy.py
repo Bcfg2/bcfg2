@@ -47,6 +47,9 @@ __all__ = ["ComponentProxy",
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
+    def __str__(self):
+        return ("Got unallowed commonName %s from server"
+                % self.commonName)
 
 
 class RetryMethod(xmlrpclib._Method):
@@ -193,13 +196,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
-        try:
-            self.sock.connect((self.host, self.port))
-        except socket.gaierror:
-            e = sys.exc_info()[1]
-            self.logger.error("Unable to connect to %s:%s\n%s" %
-                              (self.host, self.port, e.strerror))
-            sys.exit(1)
+        self.sock.connect((self.host, self.port))
         peer_cert = self.sock.getpeercert()
         if peer_cert and self.scns:
             scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
