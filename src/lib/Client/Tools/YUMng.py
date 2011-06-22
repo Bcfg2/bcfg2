@@ -451,8 +451,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             verify_flags = inst.get('verify_flags', self.verifyFlags)
             verify_flags = verify_flags.lower().replace(' ', ',').split(',')
 
-            if len(POs) == 0:
-                # Package not installed
+            if len([ p in POs if p.arch = nevra['arch'] ]) == 0:
+                # Package (name, arch) not installed
                 self.logger.debug("  %s is not installed" % nevraString(nevra))
                 stat['installed'] = False
                 package_fail = True
