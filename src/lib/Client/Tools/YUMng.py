@@ -451,7 +451,12 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             verify_flags = inst.get('verify_flags', self.verifyFlags)
             verify_flags = verify_flags.lower().replace(' ', ',').split(',')
 
-            if len([ p for p in POs if p.arch == nevra['arch'] ]) == 0:
+            if 'arch' in nevra:
+                # If arch is specified use it to select the package
+                _POs = [ p for p in POs if p.arch == nevra['arch'] ]
+            else:
+                _POs = POs
+            if len(_POs) == 0:
                 # Package (name, arch) not installed
                 self.logger.debug("  %s is not installed" % nevraString(nevra))
                 stat['installed'] = False
