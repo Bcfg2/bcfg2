@@ -151,7 +151,7 @@ Use
     Group tags are not used inside of Genshi templates. You can get the
     same logic (and more) using Genshi conditionals.
 
-    .. code-xml::
+    .. code-block:: xml:
 
         <py:if test="groupname in metadata.groups">
 	</py:if>
