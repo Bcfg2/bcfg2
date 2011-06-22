@@ -8,8 +8,11 @@ import fileinput
 from subprocess import Popen, PIPE
 import sys
 
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import formatdate
+# py3k compatibility
+try:
+    from email.Utils import formatdate
+except ImportError:
+    from email.utils import formatdate
 
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
@@ -47,7 +50,7 @@ except NameError:
     name = input("Your name: ")
     email = input("Your email: ")
 newchangelog = \
-"""bcfg2 (%s-0.0%s) unstable; urgency=low
+"""bcfg2 (%s%s-0.0) unstable; urgency=low
 
   * New upstream release
 
@@ -86,7 +89,7 @@ find_and_replace('src/lib/Server/Reports/reports/templates/base.html',
 find_and_replace('doc/conf.py', 'version =',
                  'version = \'%s\'\n' % majorver[0:3], startswith=True)
 find_and_replace('doc/conf.py', 'release =',
-                 'release = \'%s\'\n' % (majorver + minorver), startswith=True)
+                 'release = \'%s\'\n' % (majorver), startswith=True)
 
 # tag the release
 #FIXME: do this using python-dulwich

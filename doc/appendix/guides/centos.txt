@@ -497,6 +497,18 @@ Then add the files to Cfg::
     mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL
     cp /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL !$/RPM-GPG-KEY-EPEL
 
+You will also want to add an *important* attribute to these files so
+that they are installed on the client prior to any attempts to install
+the **gpg-pubkey** rpm packages. This is especially important during the
+bootstrapping phase and can be accomplished using an :ref:`server-info`
+file that looks like the following:
+
+.. code-block:: xml
+
+    <FileInfo>
+        <Info owner='root' group='root' perms='0644' important='true'/>
+    </FileInfo>
+
 Now, running the client shows only unmanaged Service entries. Woohoo!
 
 Manage services

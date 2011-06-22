@@ -65,8 +65,8 @@ Literal Configuration (Generators)
    :maxdepth: 1
    :glob:
 
-   generators/tgenshi/index
    generators/*
+   generators/tgenshi/index
 
 Each of these plugins has a corresponding subdirectory with the same
 name in the Bcfg2 repository.

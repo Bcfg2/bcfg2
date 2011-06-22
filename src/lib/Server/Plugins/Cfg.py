@@ -4,9 +4,11 @@ __revision__ = '$Revision$'
 import binascii
 import logging
 import lxml
+import operator
 import os
 import os.path
 import re
+import stat
 import sys
 import tempfile
 
@@ -23,9 +25,10 @@ except:
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 
+# py3k compatibility
 def u_str(string, encoding):
     if sys.hexversion >= 0x03000000:
-        return str(string, encoding)
+        return string.encode(encoding)
     else:
         return unicode(string, encoding)
 
@@ -95,6 +98,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
         self.specific = CfgMatcher(path.split('/')[-1])
+        path = path
 
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
@@ -105,7 +109,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         """
         matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
-        matching.sort(self.sort_by_specific)
+        matching.sort(key=operator.attrgetter('specific'))
         non_delta = [matching.index(m) for m in matching
                      if not m.specific.delta]
         if not non_delta:
@@ -119,6 +123,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.bind_info_to_entry(entry, metadata)
         used = self.get_pertinent_entries(metadata)
         basefile = used.pop(0)
+        if entry.get('perms').lower() == 'inherit':
+            # use on-disk permissions
+            fname = "%s/%s" % (self.path, entry.get('name'))
+            entry.set('perms',
+                      str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
         if entry.tag == 'Path':
             entry.set('type', 'file')
         if basefile.name.endswith(".genshi"):

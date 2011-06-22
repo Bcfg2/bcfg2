@@ -146,6 +146,16 @@ The `Genshi templating system`_ is used internally.
 Use
 ---
 
+.. warning::
+
+    Group tags are not used inside of Genshi templates. You can get the
+    same logic (and more) using Genshi conditionals.
+
+    .. code-xml::
+
+        <py:if test="groupname in metadata.groups">
+	</py:if>
+
 Bcfg uses the Genshi API for templates, and performs a XML format
 stream rendering of the template into an lxml entry, which is included
 in the client configuration. :ref:`Client metadata <client-metadata>`

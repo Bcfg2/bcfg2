@@ -77,6 +77,7 @@ os_list = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
 
 # Complete list of plugins
 plugin_list = ['Account',
+               'Base',
                'Bundler',
                'Bzr',
                'Cfg',
@@ -102,8 +103,7 @@ plugin_list = ['Account',
                'TGenshi']
 
 # Default list of plugins to use
-default_plugins = ['Base',
-                   'Bundler',
+default_plugins = ['Bundler',
                    'Cfg',
                    'Metadata',
                    'Pkgmgr',

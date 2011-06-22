@@ -200,15 +200,18 @@ class Frame:
                 tl = [t for t in self.tools if t.handlesEntry(cfile) \
                      and t.canVerify(cfile)]
                 if tl:
-                    if not tl[0].VerifyPath(cfile, []):
-                        if self.setup['interactive'] and not \
-                               promptFilter("Install %s: %s? (y/N):", [cfile]):
-                            continue
-                        try:
-                            self.states[cfile] = tl[0].InstallPath(cfile)
-                        except:
-                            self.logger.error("Unexpected tool failure",
-                                              exc_info=1)
+                    if self.setup['interactive'] and not \
+                           promptFilter("Install %s: %s? (y/N):", [cfile]):
+                        self.whitelist.remove(cfile)
+                        continue
+                    try:
+                        self.states[cfile] = tl[0].InstallPath(cfile)
+                    except:
+                        self.logger.error("Unexpected tool failure",
+                                          exc_info=1)
+                    cfile.set('qtext', '')
+                    if tl[0].VerifyPath(cfile, []):
+                        self.whitelist.remove(cfile)
 
     def Inventory(self):
         """
