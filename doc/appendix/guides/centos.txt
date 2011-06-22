@@ -195,17 +195,17 @@ line of ``bcfg2.conf``.  Then create Packages layout (as per
     <Sources>
             <!-- CentOS (5.4) sources -->
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.os</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.updates</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
             <YUMSource>
-                    <Group>centos5.4</Group>
+                    <Group>centos-5.4</Group>
                     <RawURL>http://mrepo/centos5-x86_64/RPMS.extras</RawURL>
                     <Arch>x86_64</Arch>
             </YUMSource>
@@ -227,9 +227,9 @@ file should look something like this
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='centos5.4'/>
+          <Group name='centos-5.4'/>
        </Group>
-       <Group name='centos5.4'>
+       <Group name='centos-5.4'>
           <Group name='centos'/>
        </Group>
        <Group name='ubuntu'/>
@@ -496,6 +496,18 @@ Then add the files to Cfg::
     cp /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5 !$/RPM-GPG-KEY-CentOS-5
     mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL
     cp /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL !$/RPM-GPG-KEY-EPEL
+
+You will also want to add an *important* attribute to these files so
+that they are installed on the client prior to any attempts to install
+the **gpg-pubkey** rpm packages. This is especially important during the
+bootstrapping phase and can be accomplished using an :ref:`server-info`
+file that looks like the following:
+
+.. code-block:: xml
+
+    <FileInfo>
+        <Info owner='root' group='root' perms='0644' important='true'/>
+    </FileInfo>
 
 Now, running the client shows only unmanaged Service entries. Woohoo!
 

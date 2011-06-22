@@ -8,8 +8,11 @@ import fileinput
 from subprocess import Popen, PIPE
 import sys
 
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import formatdate
+# py3k compatibility
+try:
+    from email.Utils import formatdate
+except ImportError:
+    from email.utils import formatdate
 
 pkgname = 'bcfg2'
 ftphost = 'terra.mcs.anl.gov'
@@ -25,6 +28,17 @@ tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
 
+def find_and_replace(f, iftest, rline, startswith=False):
+    for line in fileinput.input(f, inplace=1):
+        if startswith:
+            if line.startswith(iftest):
+                line = line.replace(line, rline)
+            sys.stdout.write(line)
+        else:
+            if iftest in line and line != "Version: %{version}\n":
+                line = line.replace(line, rline)
+            sys.stdout.write(line)
+
 # update the version
 majorver = version[:5]
 minorver = version[5:]
@@ -36,7 +50,7 @@ except NameError:
     name = input("Your name: ")
     email = input("Your email: ")
 newchangelog = \
-"""bcfg2 (%s-0.0%s) unstable; urgency=low
+"""bcfg2 (%s%s-0.0) unstable; urgency=low
 
   * New upstream release
 
@@ -49,16 +63,6 @@ with open('debian/changelog', 'r+') as f:
     f.seek(0)
     f.write(newchangelog + old)
 f.close()
-# set new version in setup.py
-for line in fileinput.input('setup.py', inplace=1):
-    if 'version' in line:
-        line = line.replace(line, '      version="%s",\n' % version)
-    sys.stdout.write(line)
-# replace version in misc/bcfg2.spec
-for line in fileinput.input('misc/bcfg2.spec', inplace=1):
-    if 'Version:' in line and line != "Version: %{version}\n":
-        line = line.replace(line, 'Version:          %s\n' % version)
-    sys.stdout.write(line)
 # Update redhat directory versions
 with open('redhat/VERSION', 'w') as f:
     f.write("%s\n" % majorver)
@@ -67,24 +71,25 @@ with open('redhat/RELEASE', 'w') as f:
     f.write("0.0%s\n" % minorver)
 f.close()
 # update solaris version
-for line in fileinput.input('solaris/Makefile', inplace=1):
-    if line.startswith('VERS='):
-        line = line.replace(line, 'VERS=%s-1\n' % version)
-    sys.stdout.write(line)
-for line in fileinput.input('solaris/pkginfo.bcfg2', inplace=1):
-    if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION="%s"\n' % version)
-    sys.stdout.write(line)
-for line in fileinput.input('solaris/pkginfo.bcfg2-server', inplace=1):
-    if line.startswith('VERSION='):
-        line = line.replace(line, 'VERSION="%s"\n' % version)
-    sys.stdout.write(line)
+find_and_replace('solaris/Makefile', 'VERS=',
+                 'VERS=%s-1\n' % version, startswith=True)
+find_and_replace('solaris/pkginfo.bcfg2', 'VERSION=',
+                 'VERSION="%s"\n' % version, startswith=True)
+find_and_replace('solaris/pkginfo.bcfg2-server', 'VERSION=',
+                 'VERSION="%s"\n' % version, startswith=True)
+# set new version in setup.py
+find_and_replace('setup.py', 'version=', '      version="%s",\n' % version)
+# replace version in misc/bcfg2.spec
+find_and_replace('misc/bcfg2.spec', 'Version:',
+                 'Version:          %s\n' % version)
 # update the version in reports
-for line in fileinput.input('src/lib/Server/Reports/reports/templates/base.html',
-                            inplace=1):
-    if 'Bcfg2 Version' in line:
-        line = line.replace(line, '    <span>Bcfg2 Version %s</span>\n' % version)
-    sys.stdout.write(line)
+find_and_replace('src/lib/Server/Reports/reports/templates/base.html',
+                 'Bcfg2 Version', '    <span>Bcfg2 Version %s</span>\n' % version)
+# update the version in the docs
+find_and_replace('doc/conf.py', 'version =',
+                 'version = \'%s\'\n' % majorver[0:3], startswith=True)
+find_and_replace('doc/conf.py', 'release =',
+                 'release = \'%s\'\n' % (majorver), startswith=True)
 
 # tag the release
 #FIXME: do this using python-dulwich

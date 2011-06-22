@@ -3,7 +3,7 @@
 bcfg2 \- reconfigure machine based on settings in Bcfg2
 .SH SYNOPSIS
 .B bcfg2
-.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-b bundle] [\-r removal mode]
+.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-z] [\-b bundle] [\-r removal mode] [\-\-ca\-cert=file] [\-\-ssl\-cns=list] [\-\-ssl\-cert=file] [\-\-ssl\-key=file]
 .SH DESCRIPTION
 .TP
 .BR bcfg2
@@ -62,6 +62,10 @@ Run bcfg2 against one or multiple bundles in the configuration.
 Cache a copy of the configuration in cachefile.
 
 .TP
+.BR "\-\-ca\-cert=<ca cert>"
+Specifiy the path to the SSL CA certificate.
+
+.TP
 .BR "\-d" 
 Run bcfg2 in debug mode.
 
@@ -85,10 +89,12 @@ debian toolset; it calls apt\-get update and clean and
 dpkg \-\-configure \-\-pending.
 
 .TP
-.BR "\-l <whitelist|blacklist>"
-Run the client in the server decision list mode. This approach is needed
-when particular changes are deemed "high risk". It gives the ability to
-centrally specify these changes, but only install them on clients when
+.BR "\-l <whitelist|blacklist|none>"
+Run the client in the server decision list mode (unless "none" is
+specified, which can be done in order to override the decision list mode
+specified in bcfg2.conf). This approach is needed when particular
+changes are deemed "high risk". It gives the ability to centrally
+specify these changes, but only install them on clients when
 administrator supervision is available. Because collaborative
 configuration is one of the remaining hard issues in configuration
 management, these issues typically crop up in environments with several
@@ -116,7 +122,7 @@ should only be used in safe conditions.
 .TP
 .BR "\-Q"
 Run bcfg2 in "bundle quick" mode, where only entries in a bundle are 
-or installed. This runs much faster than -q, but doesn't provide 
+verified or installed. This runs much faster than -q, but doesn't provide 
 statistics to the server at all. In order for this option to work, the
 -b option must also be provided. This option is incompatible with -r. 
 
@@ -135,6 +141,14 @@ to stop all services started. disabled suppresses all attempts to
 modify services.
 
 .TP
+.BR "\-\-ssl\-cert=<ssl cert>"
+Specifiy the path to the SSL certificate.
+
+.TP
+.BR "\-\-ssl\-cns=<CommonName1:CommonName2 ...>"
+List of acceptable SSL server Common Names.
+
+.TP
 .BR "\-\-ssl\-key=<ssl key>"
 Specifiy the path to the SSL key.
 
@@ -147,8 +161,17 @@ Attempt to authenticate as 'user'.
 Use 'password' for client communication.
 
 .TP
+.BR "\-t <timeout>" 
+Set the timeout (in seconds) for client communication.  Default is 90
+seconds.
+
+.TP
 .BR "\-v"
 Run bcfg2 in verbose mode.
+
+.TP
+.BR "\-z"
+Only configure independent entries, ignore bundles.
 .RE
 .SH "SEE ALSO"
 .BR bcfg2-server(8),

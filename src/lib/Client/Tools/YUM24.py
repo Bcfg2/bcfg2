@@ -1,13 +1,14 @@
 """This provides bcfg2 support for yum."""
 __revision__ = '$Revision: $'
 
-import ConfigParser
 import copy
 import os.path
 import sys
 import yum
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # Fix for python2.3
 try:
@@ -75,8 +76,6 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                        'Instance': ['version', 'release']}
     __new_gpg_ireq__ = {'Package': ['name'],
                         'Instance': ['version', 'release']}
-
-    conflicts = ['YUMng', 'RPMng']
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
@@ -153,7 +152,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                 try:
                     pkgDict = dict([(i.name, i) for i in \
                                    self.yb.returnPackagesByDep(entry.get('name'))])
-                except yum.Errors.YumBaseError, e:
+                except yum.Errors.YumBaseError:
+                    e = sys.exc_info()[1]
                     self.logger.error('Yum Error Depsolving for %s: %s' % \
                                       (entry.get('name'), str(e)))
                     pkgDict = {}

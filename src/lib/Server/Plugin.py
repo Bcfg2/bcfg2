@@ -435,12 +435,13 @@ class XMLFileBacked(FileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            xdata = XML(self.data)
+            self.xdata = XML(self.data)
         except XMLSyntaxError:
             logger.error("Failed to parse %s" % (self.name))
             return
-        self.label = xdata.attrib[self.__identifier__]
-        self.entries = xdata.getchildren()
+        self.entries = self.xdata.getchildren()
+        if self.__identifier__ is not None:
+            self.label = self.xdata.attrib[self.__identifier__]
 
     def __iter__(self):
         return iter(self.entries)
@@ -455,53 +456,51 @@ class SingleXMLFileBacked(XMLFileBacked):
 
 class StructFile(XMLFileBacked):
     """This file contains a set of structure file formatting logic."""
+    __identifier__ = None
+    
     def __init__(self, name):
         XMLFileBacked.__init__(self, name)
-        self.fragments = {}
+        self.matches = {}
 
-    def Index(self):
-        """Build internal data structures."""
-        try:
-            xdata = lxml.etree.XML(self.data)
-        except lxml.etree.XMLSyntaxError:
-            logger.error("Failed to parse file %s" % self.name)
-            return
-        self.fragments = {}
-        work = {lambda x: True: xdata.getchildren()}
-        while work:
-            (predicate, worklist) = work.popitem()
-            self.fragments[predicate] = \
-                                      [item for item in worklist
-                                       if (item.tag != 'Group' and
-                                           item.tag != 'Client' and
-                                           not isinstance(item,
-                                                          lxml.etree._Comment))]
-            for item in worklist:
-                cmd = None
-                if item.tag == 'Group':
-                    if item.get('negate', 'false').lower() == 'true':
-                        cmd = "lambda x:'%s' not in x.groups and predicate(x)"
-                    else:
-                        cmd = "lambda x:'%s' in x.groups and predicate(x)"
-                elif item.tag == 'Client':
-                    if item.get('negate', 'false').lower() == 'true':
-                        cmd = "lambda x:x.hostname != '%s' and predicate(x)"
-                    else:
-                        cmd = "lambda x:x.hostname == '%s' and predicate(x)"
-                # else, ignore item
-                if cmd is not None:
-                    newpred = eval(cmd % item.get('name'),
-                                   {'predicate':predicate})
-                    work[newpred] = item.getchildren()
-
+    def _match(self, item, metadata):
+        """ recursive helper for Match() """
+        if isinstance(item, lxml.etree._Comment):
+            return []
+        elif item.tag == 'Group':
+            rv = []
+            if ((item.get('negate', 'false').lower() == 'true' and
+                 item.get('name') not in metadata.groups) or
+                (item.get('negate', 'false').lower() == 'false' and
+                 item.get('name') in metadata.groups)):
+                for child in item.iterchildren():
+                    rv.extend(self._match(child, metadata))
+            return rv
+        elif item.tag == 'Client':
+            rv = []
+            if ((item.get('negate', 'false').lower() == 'true' and
+                 item.get('name') != metadata.hostname) or
+                (item.get('negate', 'false').lower() == 'false' and
+                 item.get('name') == metadata.hostname)):
+                for child in item.iterchildren():
+                    rv.extend(self._match(child, metadata))
+            return rv
+        else:
+            rv = copy.deepcopy(item)
+            for child in rv.iterchildren():
+                rv.remove(child)
+            for child in item.iterchildren():
+                rv.extend(self._match(child, metadata))
+            return [rv]
+            
     def Match(self, metadata):
         """Return matching fragments of independent."""
-        matching = [frag for (pred, frag) in list(self.fragments.items())
-                    if pred(metadata)]
-        if matching:
-            return reduce(lambda x, y: x + y, matching)
-        logger.error("File %s got null match" % (self.name))
-        return []
+        if metadata.hostname not in self.matches:
+            rv = []
+            for child in self.entries:
+                rv.extend(self._match(child, metadata))
+            logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
+            self.matches[metadata.hostname] = rv
+        return self.matches[metadata.hostname]
 
 
 class INode:
@@ -644,9 +643,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
     def BindEntry(self, entry, metadata):
         """Check package lists of package entries."""
-        [src.Cache(metadata) for src in list(self.entries.values())]
         name = entry.get('name')
-        if not src.cache:
+        if False in [src.Cache(metadata) for src in
+                     list(self.entries.values())]:
             self.logger.error("Called before data loaded")
             raise PluginExecutionError
         matching = [src for src in list(self.entries.values())
@@ -692,6 +691,9 @@ class Specificity:
         self.group = group
         self.prio = prio
         self.delta = delta
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
 
     def matches(self, metadata):
         return self.all or \

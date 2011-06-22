@@ -173,6 +173,18 @@ def colon_split(c_string):
         return c_string.split(':')
     return []
 
+def get_bool(s):
+    # these values copied from ConfigParser.RawConfigParser.getboolean
+    # with the addition of True and False
+    truelist = ["1", "yes", "True", "true", "on"]
+    falselist = ["0", "no", "False", "false", "off"]
+    if s in truelist:
+        return True
+    elif s in falselist:
+        return False
+    else:
+        raise ValueError
+
 # General options
 CFILE = Option('Specify configuration file', DEFAULT_CONFIG_LOCATION, cmd='-C',
                odesc='<conffile>')
@@ -191,8 +203,10 @@ SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                        default='/usr/lib/sendmail')
 INTERACTIVE = Option('Prompt the user for each change', default=False,
                      cmd='-I', )
-ENCODING = Option('Encoding of cfg files', default=sys.getdefaultencoding(),
-                  cmd='-E', odesc='<encoding>',
+ENCODING = Option('Encoding of cfg files',
+                  default='UTF-8',
+                  cmd='-E',
+                  odesc='<encoding>',
                   cf=('components', 'encoding'))
 PARANOID_PATH = Option('Specify path for paranoid file backups',
                        default='/var/cache/bcfg2', cf=('paranoid', 'path'),
@@ -249,6 +263,13 @@ SERVER_MCONNECT = Option('Server Metadata Connector list', cook=list_split,
                          cf=('server', 'connectors'), default=['Probes'], )
 SERVER_FILEMONITOR = Option('Server file monitor', cf=('server', 'filemonitor'),
                             default='default', odesc='File monitoring driver')
+SERVER_LISTEN_ALL = Option('Listen on all interfaces',
+                           cf=('server', 'listen_all'),
+                           cmd='--listen-all',
+                           default=False,
+                           long_arg=True,
+                           cook=get_bool,
+                           odesc='True|False')
 SERVER_LOCATION = Option('Server Location', cf=('components', 'bcfg2'),
                          default='https://localhost:6789', cmd='-S',
                          odesc='https://server:port')
@@ -302,12 +323,13 @@ CLIENT_BUNDLE = Option('Only configure the given bundle(s)', default=[],
                        cmd='-b', odesc='<bundle:bundle>', cook=colon_split)
 CLIENT_BUNDLEQUICK = Option('only verify/configure the given bundle(s)', default=False,
                        cmd='-Q')
-CLIENT_INDEP = Option('Only configure the given bundle(s)', default=False,
+CLIENT_INDEP = Option('Only configure independent entries, ignore bundles', default=False,
                        cmd='-z')
 CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
-CLIENT_DLIST = Option('Run client in server decision list mode', default=False,
-                      cmd='-l', odesc='<whitelist|blacklist>')
+CLIENT_DLIST = Option('Run client in server decision list mode', default='none',
+                      cf=('client', 'decision'),
+                      cmd='-l', odesc='<whitelist|blacklist|none>')
 CLIENT_FILE = Option('Configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 CLIENT_QUICK = Option('Disable some checksum verification', default=False,
@@ -316,6 +338,9 @@ CLIENT_USER = Option('The user to provide for authentication', default='root',
                      cmd='-u', cf=('communication', 'user'), odesc='<user>')
 CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
                              cmd='-s', odesc='<default|disabled|build>')
+CLIENT_TIMEOUT = Option('Set the client XML-RPC timeout', default=90,
+                        cmd='-t', cf=('communication', 'timeout'),
+                        odesc='<timeout>')
                      
 # APT client tool options
 CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',

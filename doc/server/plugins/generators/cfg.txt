@@ -132,16 +132,16 @@ server and we have the following configuration files::
     motd.G01_web-server
     motd.G01_mail-server.cat
     motd.G02_file-server.cat
-    motd.H_foo.example.cat
+    motd.H_foo.example.com.cat
 
-If our machine isn't *foo.example.com* then here's what would happen:
+If our machine **isn't** *foo.example.com* then here's what would happen:
 
 Bcfg2 would choose ``motd.G01_web-server`` as the base file. It is
 the most specific base file for this host. Bcfg2 would apply the
 ``motd.G01_mail-server.cat`` delta to the ``motd.G01_web-server``
 base file. It is the least specific delta. Bcfg2 would then apply the
 ``motd.G02_file-server.cat`` delta to the result of the delta before
-it. If our machine is foo.example.com then here's what would happen:
+it. If our machine **is** *foo.example.com* then here's what would happen:
 
 Bcfg2 would choose ``motd.G01_web-server`` as the base file. It
 is the most specific base file for this host. Bcfg2 would apply the

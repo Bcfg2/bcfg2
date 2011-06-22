@@ -41,6 +41,8 @@ possible fields in an info file are:
 | paranoid:  | yes | no          | Backup file before replacement?  | no      |
 +------------+-------------------+----------------------------------+---------+
 | perms:     | Numeric file mode | Sets the permissions of the file | 0644    |
+|            | | 'inherit'       | (or inherits from the files on   |         |
+|            |                   | disk if set to inherit)          |         |
 +------------+-------------------+----------------------------------+---------+
 
 A sample info file for CGI script on a web server might look like::

@@ -375,21 +375,21 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except:
                 print("Client %s not defined" % client)
                 continue
-            print("Hostname:\t", client_meta.hostname)
-            print("Profile:\t", client_meta.profile)
-            print("Groups:\t\t", list(client_meta.groups)[0])
+            print("Hostname:\t%s" % client_meta.hostname)
+            print("Profile:\t%s" % client_meta.profile)
+            print("Groups:\t\t%s" % list(client_meta.groups)[0])
             for grp in list(client_meta.groups)[1:]:
-                print('\t\t%s' % grp)
+                print("\t\t%s" % grp)
             if client_meta.bundles:
-                print("Bundles:\t", list(client_meta.bundles)[0])
+                print("Bundles:\t%s" % list(client_meta.bundles)[0])
             for bnd in list(client_meta.bundles)[1:]:
-                print('\t\t%s' % bnd)
+                print("\t\t%s" % bnd)
             if client_meta.connectors:
                 print("Connector data")
                 print("=" * 80)
                 for conn in client_meta.connectors:
                     if getattr(client_meta, conn):
-                        print("%s:\t" % (conn), getattr(client_meta, conn))
+                        print("%s:\t%s" % (conn, getattr(client_meta, conn)))
                         print("=" * 80)
 
     def do_mappings(self, args):
@@ -487,7 +487,10 @@ if __name__ == '__main__':
                     })
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    if setup['profile'] and have_profile:
+    if setup['args'] and setup['args'][0] == 'help':
+        print(USAGE)
+        sys.exit(0)
+    elif setup['profile'] and have_profile:
         prof = profile.Profile()
         loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
                             setup['password'], setup['encoding'],

@@ -38,7 +38,7 @@ import platform
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
-def build_reason_kwargs(r_ent):
+def build_reason_kwargs(r_ent, encoding, logger):
     binary_file = False
     if r_ent.get('current_bfile', False):
         binary_file = True
@@ -54,6 +54,12 @@ def build_reason_kwargs(r_ent):
         rc_diff = r_ent.get('current_diff')
     else:
         rc_diff = ''
+    if not binary_file:
+        try:
+            rc_diff = rc_diff.decode(encoding)
+        except:
+            logger.error("Reason isn't %s encoded, cannot decode it" % encoding)
+            rc_diff = ''
     return dict(owner=r_ent.get('owner', default=""),
                 current_owner=r_ent.get('current_owner', default=""),
                 group=r_ent.get('group', default=""),
@@ -71,7 +77,7 @@ def build_reason_kwargs(r_ent):
                 is_binary=binary_file)
 
 
-def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
+def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location=''):
     clients = {}
     [clients.__setitem__(c.name, c) \
         for c in Client.objects.all()]
@@ -129,7 +135,7 @@ def load_stats(cdata, sdata, vlevel, logger, quick=False, location=''):
             for (xpath, type) in pattern:
                 for x in statistics.findall(xpath):
                     counter_fields[type] = counter_fields[type] + 1
-                    kargs = build_reason_kwargs(x)
+                    kargs = build_reason_kwargs(x, encoding, logger)
 
                     try:
                         rr = None
@@ -270,6 +276,11 @@ if __name__ == '__main__':
         print("StatReports: Failed to parse %s" % (statpath))
         raise SystemExit(1)
 
+    try:
+        encoding = cf.get('components', 'encoding')
+    except:
+        encoding = 'UTF-8'
+
     if not clientpath:
         try:
             clientspath = "%s/Metadata/clients.xml" % \
@@ -288,6 +299,7 @@ if __name__ == '__main__':
     update_database()
     load_stats(clientsdata,
                statsdata,
+               encoding,
                verb,
                logger,
                quick=q,

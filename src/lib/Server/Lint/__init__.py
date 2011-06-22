@@ -4,6 +4,7 @@ __all__ = ['Bundles',
            'Comments',
            'Duplicates',
            'InfoXML',
+           'MergeFiles',
            'Pkgmgr',
            'RequiredAttrs',
            'Validate']
@@ -11,6 +12,7 @@ __all__ = ['Bundles',
 import logging
 import os.path
 from copy import copy
+import textwrap
 import lxml.etree
 import Bcfg2.Logger
 
@@ -84,13 +86,19 @@ class ErrorHandler (object):
                "properties-schema-not-found":"warning",
                "xml-failed-to-parse":"error",
                "xml-failed-to-read":"error",
-               "xml-failed-to-verify":"error",}
+               "xml-failed-to-verify":"error",
+               "merge-cfg":"warning",
+               "merge-probes":"warning",
+               "input-output-error": "error"}
 
     def __init__(self, config=None):
         self.errors = 0
         self.warnings = 0
 
         self.logger = logging.getLogger('bcfg2-lint')
+
+        self._wrapper = textwrap.TextWrapper(initial_indent = "  ",
+                                             subsequent_indent = "  ")
 
         self._handlers = {}
         if config is not None:
@@ -116,26 +124,42 @@ class ErrorHandler (object):
             self._handlers[err](msg)
             self.logger.debug("    (%s)" % err)
         else:
-            self.logger.info("Unknown error %s" % err)
+            # assume that it's an error, but complain
+            self.error(msg)
+            self.logger.warning("Unknown error %s" % err)
 
     def error(self, msg):
         """ log an error condition """
         self.errors += 1
-        lines = msg.splitlines()
-        self.logger.error("ERROR: %s" % lines.pop())
-        [self.logger.error("  %s" % l) for l in lines]
+        self._log(msg, self.logger.error, prefix="ERROR: ")
 
     def warn(self, msg):
         """ log a warning condition """
         self.warnings += 1
-        lines = msg.splitlines()
-        self.logger.warning("WARNING: %s" % lines.pop())
-        [self.logger.warning("  %s" % l) for l in lines]
+        self._log(msg, self.logger.warning, prefix="WARNING: ")
 
     def debug(self, msg):
         """ log a silent/debug condition """
-        lines = msg.splitlines()
-        [self.logger.debug("%s" % l) for l in lines]
+        self._log(msg, self.logger.debug)
+
+    def _log(self, msg, logfunc, prefix=""):
+        # a message may itself consist of multiple lines.  wrap() will
+        # elide them all into a single paragraph, which we don't want.
+        # so we split the message into its paragraphs and wrap each
+        # paragraph individually.  this means, unfortunately, that we
+        # lose textwrap's built-in initial indent functionality,
+        # because we want to only treat the very first line of the
+        # first paragraph specially.  so we do some silliness.
+        rawlines = msg.splitlines()
+        firstline = True
+        for rawline in rawlines:
+            lines = self._wrapper.wrap(rawline)
+            for line in lines:
+                if firstline:
+                    logfunc("%s%s" % (prefix, line.lstrip()))
+                    firstline = False
+                else:
+                    logfunc(line)
 
 
 class ServerlessPlugin (Plugin):

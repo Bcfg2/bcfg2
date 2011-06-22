@@ -146,6 +146,16 @@ The `Genshi templating system`_ is used internally.
 Use
 ---
 
+.. warning::
+
+    Group tags are not used inside of Genshi templates. You can get the
+    same logic (and more) using Genshi conditionals.
+
+    .. code-block:: xml
+
+        <py:if test="groupname in metadata.groups">
+	</py:if>
+
 Bcfg uses the Genshi API for templates, and performs a XML format
 stream rendering of the template into an lxml entry, which is included
 in the client configuration. :ref:`Client metadata <client-metadata>`
@@ -155,6 +165,23 @@ format is XML.
 
 A Genshi template looks much like a Bundler file, except the Bundle tag
 has an additional `xmlns:py` attribute. See the examples.
+
+Troubleshooting
+---------------
+
+There is no :ref:`bcfg2-info <server-bcfg2-info>` command like
+``buildfile`` for Bundler templates, so if you want to generate a
+Bundler template for a given client, you have to do so manually by
+first invoking ``bcfg2-info debug``, then run::
+
+    metadata = self.build_metadata("<hostname>")
+    path = "<full path to template file>"
+    from genshi.template import TemplateLoader, MarkupTemplate
+    template = TemplateLoader().load(path, cls=MarkupTemplate)
+    print template.generate(metadata=metadata).render('xml')
+
+``path`` needs to be the full path to the template file on the
+filesystem, not just within the Bcfg2 repo.
 
 Altsrc
 ======

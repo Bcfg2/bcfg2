@@ -9,6 +9,8 @@ warnings.filterwarnings("ignore", "Accessed deprecated property Package.installe
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.candidateVersion, please see the Version class for alternatives.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Deprecated, please use 'is_installed' instead", DeprecationWarning)
 warnings.filterwarnings("ignore", "Attribute 'IsUpgradable' of the 'apt_pkg.DepCache' object is deprecated, use 'is_upgradable' instead.", DeprecationWarning)
+warnings.filterwarnings("ignore", "Attribute 'VersionList' of the 'apt_pkg.Package' object is deprecated, use 'version_list' instead.", DeprecationWarning)
+warnings.filterwarnings("ignore", "Attribute 'VerStr' of the 'apt_pkg.Version' object is deprecated, use 'ver_str' instead.", DeprecationWarning)
 import apt.cache
 import os
 
@@ -71,7 +73,8 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.cmd.run("%s clean" % APTGET)
             try:
                 self.pkg_cache = apt.cache.Cache()
-            except SystemError, e:
+            except SystemError:
+                e = sys.exc_info()[1]
                 self.logger.info("Failed to initialize APT cache: %s" % e)
                 raise Bcfg2.Client.Tools.toolInstantiationError
             self.pkg_cache.update()

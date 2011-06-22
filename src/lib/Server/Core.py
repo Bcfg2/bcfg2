@@ -384,7 +384,7 @@ class Core(Component):
         # clear dynamic groups
         self.metadata.cgroups[meta.hostname] = []
         try:
-            xpdata = lxml.etree.XML(probedata)
+            xpdata = lxml.etree.XML(probedata.encode('utf-8'))
         except:
             self.logger.error("Failed to parse probe data from client %s" % \
                               (address[0]))
@@ -433,7 +433,7 @@ class Core(Component):
     @exposed
     def RecvStats(self, address, stats):
         """Act on statistics upload."""
-        sdata = lxml.etree.XML(stats)
+        sdata = lxml.etree.XML(stats.encode('utf-8'))
         client = self.metadata.resolve_client(address)
         self.process_statistics(client, sdata)
         return "<ok/>"

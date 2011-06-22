@@ -766,7 +766,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                                   (address[0]))
                 return False
         # populate the session cache
-        if user != 'root':
+        if user.decode('utf-8') != 'root':
             self.session_cache[address] = (time.time(), client)
         return True
 

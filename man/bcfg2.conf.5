@@ -38,6 +38,12 @@ The file monitor used to watch for changes in the repository.
 Values of 'gamin', 'fam', or 'pseudo' are valid.
 
 .TP
+.B listen_all
+This setting tells the server to listen on all available interfaces. The
+default is to only listen on those interfaces specified by the bcfg2
+setting in the components section of bcfg2.conf.
+
+.TP
 .B plugins
 A comma-delimited list of enabled server plugins. Currently available
 plugins are:
@@ -285,6 +291,10 @@ These options only affect client functionality, specified in the
 [client] section.
 
 .TP
+.B decision
+Specify the server decision list mode (whitelist or blacklist).
+
+.TP
 .B drivers
 Specify tool driver set to use. This option can be used to explicitly
 specify the client tool drivers you want to use when the client is run.
@@ -369,6 +379,11 @@ Communication protocol to use. Defaults to xmlrpc/ssl.
 A client-only option. Number of times to retry network communication.
 
 .TP
+.B serverCommonNames
+A client-only option. A colon-separated list of Common Names the client
+will accept in the SSL certificate presented by the server.
+
+.TP
 .B user
 A client-only option. The UUID of the client.
 
@@ -400,9 +415,7 @@ eg: bcfg2 = https://10.3.1.6:6789
 
 .TP
 .B encoding
-Text encoding of configuration files. Defaults to the system default
-encoding.
-
+Text encoding of configuration files. Defaults to UTF-8.
 
 .SH LOGGING OPTIONS
 Specified in the [logging] section. These options control the server

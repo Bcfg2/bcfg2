@@ -55,6 +55,15 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name='PostInstall' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            PostInstall entries are deprecated in favor of Action
+	    entries. Actions can do everything PostInstall entries can
+	    do and more.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element name='BoundPackage' type='PackageType'>
         <xsd:annotation>
           <xsd:documentation>

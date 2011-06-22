@@ -50,10 +50,13 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
         errorhandler = get_errorhandler(config)
 
     if config is not None and config.has_section(plugin_name):
-        args.append(dict(config.items(plugin_name), **setup))
+        arg = setup
+        for key, val in config.items(plugin_name):
+            arg[key] = val
+        args.append(arg)
     else:
         args.append(setup)
-
+        
     # older versions of python do not support mixing *-magic and
     # non-*-magic (e.g., "plugin(*args, files=files)", so we do this
     # all with *-magic
@@ -181,8 +184,20 @@ if __name__ == '__main__':
                            config=config, setup=setup)
 
     if serverplugins:
-        run_server_plugins(serverplugins, errorhandler=errorhandler,
-                                     config=config, setup=setup)
+        if errorhandler.errors:
+            # it would be swell if we could try to start the server
+            # even if there were errors with the serverless plugins,
+            # but since XML parsing errors occur in the FAM thread
+            # (not in the core server thread), there's no way we can
+            # start the server and try to catch exceptions --
+            # bcfg2-lint isn't in the same stack as the exceptions.
+            # so we're forced to assume that a serverless plugin error
+            # will prevent the server from starting
+            print("Serverless plugins encountered errors, skipping server "
+                  "plugins")
+        else:
+            run_server_plugins(serverplugins, errorhandler=errorhandler,
+                               config=config, setup=setup)
 
     if errorhandler.errors or errorhandler.warnings or setup['verbose']:
         print("%d errors" % errorhandler.errors)

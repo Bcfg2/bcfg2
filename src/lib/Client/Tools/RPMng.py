@@ -2,11 +2,12 @@
 
 __revision__ = '$Revision$'
 
-import ConfigParser
 import os.path
 import rpm
 import rpmtools
 import Bcfg2.Client.Tools
+# Compatibility import
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # Fix for python2.3
 try:

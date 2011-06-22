@@ -22,6 +22,7 @@ class Perf(Bcfg2.Server.Admin.Mode):
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'server': Bcfg2.Options.SERVER_LOCATION,
             'user': Bcfg2.Options.CLIENT_USER,
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
         setup = Bcfg2.Options.OptionParser(optinfo)
         setup.parse(sys.argv[2:])
@@ -30,7 +31,8 @@ class Perf(Bcfg2.Server.Admin.Mode):
                                            setup['password'],
                                            key=setup['key'],
                                            cert=setup['certificate'],
-                                           ca=setup['ca'])
+                                           ca=setup['ca'],
+                                           timeout=setup['timeout'])
         data = proxy.get_statistics()
         for key, value in list(data.items()):
             data = tuple(["%.06f" % (item) for item in value[:-1]] + [value[-1]])

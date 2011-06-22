@@ -22,6 +22,12 @@ should be corrected during the current run of the installation tool. The
 Decisions plugin is the only stock plugin that generates entries for
 client's whitelists or blacklists.
 
+.. note::
+
+    If the client is not explicitly configured to run in whitelist or
+    blacklist mode, the list of entries is not downloaded and decisions
+    is not used.  See `Decision Mode`_ below.
+
 The Decisions plugin uses a directory in the Bcfg2 repository called
 Decisions. Files in the Decisions subdirectory are named similarly to
 files managed by Cfg, probes, TCheetah, and TGenshi (so you can use host-
@@ -37,12 +43,6 @@ the following is an example.
       <Decision type='Path' name='/etc/apt/apt.conf'/>
     </Decisions>
 
-.. note:: To add syntax highlighting in vim, you can add a modeline such as this:
-
-    <!--
-    vim: ft=xml
-    -->
-
 This example, included as a whitelist due to its name, enables all services,
 and the path entry named ``/etc/apt/apt.conf``. All these entries must
 already be present in your repository, the Decisions plugin just references
@@ -55,11 +55,27 @@ When a client asks for its whitelist or blacklist, all of the files
 pertaining to that client of the correct type are aggregated into a single
 list. This list is sent to the client.
 
-.. note:: This list is only generated when a client is explicitly run with
-          the appropriate option (``-l (whitelist|blacklist)``); client
-          behavior is not controlled unless this option is used. If you do
-          not use Decisions, all your entries will be installed normally.
-.. note:: Also, using this plugin does not present additional prompts or
+.. note:: Using this plugin does not present additional prompts or
           safety nets to the administrator running the client, you have to
           control these via their respective options (``-I`` or ``-n``, for
           example).
+
+To add syntax highlighting to Decisions files in vim and emacs, you
+can add comments such as this::
+
+    <Decisions><!--*- mode: xml; -*-->
+      <!-- vim: set ft=xml : -->
+
+
+=============
+Decision Mode
+=============
+
+The whitelist or blacklist is only generated when a client is run in
+whitelist or blacklist mode.  This can either be set at the command
+line with the appropriate option (``-l (whitelist|blacklist)``), or in
+``bcfg2.conf`` by setting ``decision`` in the ``client`` section to
+``whitelist`` or ``blacklist``).
+
+Client behavior is not controlled unless the decision mode is set. If
+you do not use Decisions, all your entries will be installed normally.

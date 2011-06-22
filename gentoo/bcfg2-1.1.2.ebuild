@@ -33,7 +33,7 @@ PYTHON_MODNAME="Bcfg2"
 
 distutils_src_install_post_hook() {
 	if ! use server; then
-		rm -f "${T}/images/${PYTHON_ABI}${EPREFIX}/usr/sbin/bcfg2-"*
+		rm -f "$(distutils_get_intermediate_installation_image)${EPREFIX}/usr/sbin/bcfg2-"*
 	fi
 }
 

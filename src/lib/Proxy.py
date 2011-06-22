@@ -47,6 +47,9 @@ __all__ = ["ComponentProxy",
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
+    def __str__(self):
+        return ("Got unallowed commonName %s from server"
+                % self.commonName)
 
 
 class RetryMethod(xmlrpclib._Method):
@@ -181,7 +184,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             other_side_required = ssl.CERT_NONE
             self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
         if self.cert and not self.key:
-            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
             self.cert = None
         if self.key and not self.cert:
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
@@ -226,7 +229,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             # authentication to the server
             ctx.load_cert(self.cert, self.key)
         elif self.cert:
-            self.logger.warning("SSL cert specfied, but key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
         elif self.key:
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
 
@@ -332,5 +335,5 @@ def ComponentProxy(url, user=None, password=None,
     else:
         newurl = url
     ssl_trans = XMLRPCTransport(key, cert, ca,
-                                allowedServerCNs, timeout=timeout)
+                                allowedServerCNs, timeout=float(timeout))
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)

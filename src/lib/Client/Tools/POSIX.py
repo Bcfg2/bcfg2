@@ -14,7 +14,12 @@ import os
 import pwd
 import shutil
 import stat
+import sys
 import time
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
+
 import Bcfg2.Client.Tools
 import Bcfg2.Options
 from Bcfg2.Client import XML
@@ -55,7 +60,8 @@ def normGid(entry):
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-        log.error('GID normalization failed for %s' % (entry.get('name')))
+        log.error('GID normalization failed for %s. Does group %s exist?'
+                  % (entry.get('name'), entry.get('group')))
         return False
 
 
@@ -70,7 +76,23 @@ def normUid(entry):
         except:
             return int(pwd.getpwnam(entry.get('owner'))[2])
     except (OSError, KeyError):
-        log.error('UID normalization failed for %s' % (entry.get('name')))
+        log.error('UID normalization failed for %s. Does owner %s exist?'
+                  % (entry.get('name'), entry.get('owner')))
+        return False
+
+
+def isString(strng, encoding):
+    """
+       Returns true if the string contains no ASCII control characters
+       and can be decoded from the specified encoding.
+    """
+    for char in strng:
+        if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
+            return False
+    try:
+        strng.decode(encoding)
+        return True
+    except:
         return False
 
 
@@ -127,7 +149,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 content = open(entry.get('name')).read()
                 entry.set('current_bfile', binascii.b2a_base64(content))
-            except IOError, error:
+            except IOError:
+                error = sys.exc_info()[1]
                 self.logger.error("Failed to read %s: %s" % (error.filename,
                                                              error.strerror))
 
@@ -439,12 +462,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if type(tempdata) == unicode:
                 try:
                     tempdata = tempdata.encode(self.setup['encoding'])
-                except UnicodeEncodeError, e:
+                except UnicodeEncodeError:
+                    e = sys.exc_info()[1]
                     self.logger.error("Error encoding file %s:\n %s" % \
                                       (entry.get('name'), e))
         try:
             content = open(entry.get('name')).read()
-        except IOError, error:
+        except IOError:
+            error = sys.exc_info()[1]
             if error.strerror == "No such file or directory":
                 # print diff for files that don't exist (yet)
                 content = ''
@@ -456,12 +481,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # md5sum so it would be faster for big binary files
         contentStatus = content == tempdata
         if not contentStatus:
-            try:
-                content.decode('ascii')
-                isstring = True
-            except:
-                isstring = False
-            if tbin or not isstring:
+            if tbin or not isString(content, self.setup['encoding']):
                 entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
@@ -491,15 +511,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                        difflib.unified_diff(content.split('\n'), \
                                                             tempdata.split('\n'))])
                     try:
-                        eudiff = udiff.encode('ascii')
+                        dudiff = udiff.decode(self.setup['encoding'])
                     except:
-                        eudiff = "Binary file: no diff printed"
+                        dudiff = "Binary file: no diff printed"
 
                     nqtext = entry.get('qtext', '')
 
                     if nqtext:
                         nqtext += '\n'
-                    nqtext += eudiff
+                    nqtext += dudiff
                 else:
                     entry.set('current_bfile', binascii.b2a_base64(content))
                     nqtext = entry.get('qtext', '')
@@ -547,8 +567,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             # current list of backups for this file
-            bkuplist = [f for f in os.listdir(self.ppath) if
-                        f.startswith(bkupnam)]
+            try:
+                bkuplist = [f for f in os.listdir(self.ppath) if
+                            f.startswith(bkupnam)]
+            except OSError:
+                e = sys.exc_info()[1]
+                self.logger.error("Failed to create backup list in %s: %s" %
+                                  (self.ppath, e.strerror))
+                return False
             bkuplist.sort()
             while len(bkuplist) >= int(self.max_copies):
                 # remove the oldest backup available
@@ -567,7 +593,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                           datetime.isoformat(datetime.now())))
                 self.logger.info("Backup of %s saved to %s" %
                                  (entry.get('name'), self.ppath))
-            except IOError, e:
+            except IOError:
+                e = sys.exc_info()[1]
                 self.logger.error("Failed to create backup file for %s" % \
                                   (entry.get('name')))
                 self.logger.error(e)
@@ -603,7 +630,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                       % (entry.get('name')))
                     return False
             return True
-        except (OSError, IOError), err:
+        except (OSError, IOError):
+            err = sys.exc_info()[1]
             if err.errno == errno.EACCES:
                 self.logger.info("Failed to open %s for writing" % (entry.get('name')))
             else:
@@ -683,7 +711,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 return False
             try:
                 shutil.rmtree(ename)
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 self.logger.error('Failed to remove %s: %s' % (ename,
                                                                e.strerror))
         else:
@@ -691,20 +720,63 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 try:
                     os.rmdir(ename)
                     return True
-                except OSError, e:
+                except OSError:
+                    e = sys.exc_info()[1]
                     self.logger.error('Failed to remove %s: %s' % (ename,
                                                                    e.strerror))
                     return False
             try:
                 os.remove(ename)
                 return True
-            except OSError, e:
+            except OSError:
+                e = sys.exc_info()[1]
                 self.logger.error('Failed to remove %s: %s' % (ename,
                                                                e.strerror))
                 return False
 
     def Verifypermissions(self, entry, _):
         """Verify Path type='permissions' entry"""
+        if entry.get('perms') == None or \
+           entry.get('owner') == None or \
+           entry.get('group') == None:
+            self.logger.error('Entry %s not completely specified. '
+                              'Try running bcfg2-lint.' % (entry.get('name')))
+            return False
+        if entry.get('recursive') in ['True', 'true']:
+            # verify ownership information recursively
+            owner = normUid(entry)
+            group = normGid(entry)
+
+            for root, dirs, files in os.walk(entry.get('name')):
+                for p in dirs + files:
+                    path = os.path.join(root, p)
+                    pstat = os.stat(path)
+                    if owner != pstat.st_uid:
+                        # owner mismatch for path
+                        entry.set('current_owner', str(pstat.st_uid))
+                        self.logger.debug("%s %s ownership wrong" % \
+                                          (entry.tag, path))
+                        nqtext = entry.get('qtext', '') + '\n'
+                        nqtext += ("Owner for path %s is incorrect. "
+                                   "Current owner is %s but should be %s\n" % \
+                                   (path, pstat.st_uid, entry.get('owner')))
+                        nqtext += ("\nInstall %s %s: (y/N): " %
+                                   (entry.tag, entry.get('name')))
+                        entry.set('qtext', nqtext)
+                        return False
+		    if group != pstat.st_gid:
+                        # group mismatch for path
+                        entry.set('current_group', str(pstat.st_gid))
+                        self.logger.debug("%s %s group wrong" % \
+                                          (entry.tag, path))
+                        nqtext = entry.get('qtext', '') + '\n'
+                        nqtext += ("Group for path %s is incorrect. "
+                                   "Current group is %s but should be %s\n" % \
+                                   (path, pstat.st_gid, entry.get('group')))
+                        nqtext += ("\nInstall %s %s: (y/N): " %
+                                   (entry.tag, entry.get('name')))
+                        entry.set('qtext', nqtext)
+                        return False
         return self.Verifydirectory(entry, _)
 
     def Installpermissions(self, entry):
@@ -715,9 +787,23 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.error('Entry %s not completely specified. '
                               'Try running bcfg2-lint.' % (entry.get('name')))
             return False
+        plist = [entry.get('name')]
+        if entry.get('recursive') in ['True', 'true']:
+            # verify ownership information recursively
+            owner = normUid(entry)
+            group = normGid(entry)
+
+            for root, dirs, files in os.walk(entry.get('name')):
+                for p in dirs + files:
+                    path = os.path.join(root, p)
+                    pstat = os.stat(path)
+                    if owner != pstat.st_uid or group != pstat.st_gid:
+                        # owner mismatch for path
+                        plist.append(path)
         try:
-            os.chown(entry.get('name'), normUid(entry), normGid(entry))
-            os.chmod(entry.get('name'), calcPerms(S_IFDIR, entry.get('perms')))
+            for p in plist:
+                os.chown(p, normUid(entry), normGid(entry))
+                os.chmod(p, calcPerms(S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % \

@@ -46,7 +46,12 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             if '.' not in method:
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
-            response = (response, )
+            # py3k compatibility
+            if isinstance(response, bool) or isinstance(response, str) \
+                or isinstance(response, list):
+                response = (response, )
+            else:
+                response = (response.decode('utf-8'), )
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
@@ -79,9 +84,9 @@ class SSLServer (SocketServer.TCPServer, object):
     allow_reuse_address = True
     logger = logging.getLogger("Cobalt.Server.TCPServer")
 
-    def __init__(self, server_address, RequestHandlerClass, keyfile=None,
-                 certfile=None, reqCert=False, ca=None, timeout=None,
-                 protocol='xmlrpc/ssl'):
+    def __init__(self, listen_all, server_address, RequestHandlerClass,
+                 keyfile=None, certfile=None, reqCert=False, ca=None,
+                 timeout=None, protocol='xmlrpc/ssl'):
 
         """Initialize the SSL-TCP server.
 
@@ -97,9 +102,12 @@ class SSLServer (SocketServer.TCPServer, object):
 
         """
 
-        all_iface_address = ('', server_address[1])
+        if listen_all:
+            listen_address = ('', server_address[1])
+        else:
+            listen_address = (server_address[0], server_address[1])
         try:
-            SocketServer.TCPServer.__init__(self, all_iface_address,
+            SocketServer.TCPServer.__init__(self, listen_address,
                                             RequestHandlerClass)
         except socket.error:
             self.logger.error("Failed to bind to socket")
@@ -188,9 +196,18 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.logger.error("No authentication data presented")
             return False
         auth_type, auth_content = header.split()
-        auth_content = base64.standard_b64decode(auth_content)
         try:
-            username, password = auth_content.split(":")
+            # py3k compatibility
+            auth_content = base64.standard_b64decode(auth_content)
+        except TypeError:
+            auth_content = base64.standard_b64decode(bytes(auth_content.encode('ascii')))
+        try:
+            # py3k compatibility
+            try:
+                username, password = auth_content.split(":")
+            except TypeError:
+                username, pw = auth_content.split(bytes(":", encoding='utf-8'))
+                password = pw.decode('utf-8')
         except ValueError:
             username = auth_content
             password = ""
@@ -231,11 +248,13 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                     print("got select timeout")
                     raise
                 chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size))
+                L.append(self.rfile.read(chunk_size).decode('utf-8'))
                 size_remaining -= len(L[-1])
             data = ''.join(L)
             response = self.server._marshaled_dispatch(self.client_address,
                                                        data)
+            if sys.hexversion >= 0x03000000:
+                response = response.encode('utf-8')
         except:
             try:
                 self.send_response(500)
@@ -310,7 +329,7 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
 
     """
 
-    def __init__(self, server_address, RequestHandlerClass=None,
+    def __init__(self, listen_all, server_address, RequestHandlerClass=None,
                  keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
                  timeout=10,
                  logRequests=False,
@@ -339,8 +358,14 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                 """A subclassed request handler to prevent class-attribute conflicts."""
 
         SSLServer.__init__(self,
-            server_address, RequestHandlerClass, ca=ca,
-            timeout=timeout, keyfile=keyfile, certfile=certfile, protocol=protocol)
+                           listen_all,
+                           server_address,
+                           RequestHandlerClass,
+                           ca=ca,
+                           timeout=timeout,
+                           keyfile=keyfile,
+                           certfile=certfile,
+                           protocol=protocol)
         self.logRequests = logRequests
         self.serve = False
         self.register = register

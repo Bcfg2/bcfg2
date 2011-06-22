@@ -1,10 +1,98 @@
 import lxml.etree
+import operator
 import re
+
+try:
+    import json
+    has_json = True
+except ImportError:
+    try:
+        import simplejson as json
+        has_json = True
+    except ImportError:
+        has_json = False
+
+try:
+    import syck
+    has_syck = True
+except ImportError:
+    has_syck = False
+    try:
+        import yaml
+        has_yaml = True
+    except ImportError:
+        has_yaml = False
 
 import Bcfg2.Server.Plugin
 
 specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH](\d\d)?)_\S+)")
 probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
+
+
+class ProbeData (object):
+    """ a ProbeData object emulates a str object, but also has .xdata
+    and .json properties to provide convenient ways to use ProbeData
+    objects as XML or JSON data """
+    def __init__(self, data):
+        self.data = data
+        self._xdata = None
+        self._json = None
+        self._yaml = None
+
+    def __str__(self):
+        return str(self.data)
+    
+    def __repr__(self):
+        return repr(self.data)
+    
+    def __getattr__(self, name):
+        """ make ProbeData act like a str object """
+        return getattr(self.data, name)
+
+    def __complex__(self):
+        return complex(self.data)
+
+    def __int__(self):
+        return int(self.data)
+
+    def __long__(self):
+        return long(self.data)
+
+    def __float__(self):
+        return float(self.data)
+
+    @property
+    def xdata(self):
+        if self._xdata is None:
+            try:
+                self._xdata = lxml.etree.XML(self.data)
+            except lxml.etree.XMLSyntaxError:
+                pass
+        return self._xdata
+
+    @property
+    def json(self):
+        if self._json is None and has_json:
+            try:
+                self._json = json.loads(self.data)
+            except ValueError:
+                pass
+        return self._json
+
+    @property
+    def yaml(self):
+        if self._yaml is None:
+            if has_yaml:
+                try:
+                    self._yaml = yaml.load(self.data)
+                except yaml.YAMLError:
+                    pass
+            elif has_syck:
+                try:
+                    self._yaml = syck.load(self.data)
+                except syck.error:
+                    pass
+        return self._yaml
 
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
@@ -27,7 +115,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         ret = []
         build = dict()
         candidates = self.get_matching(metadata)
-        candidates.sort(lambda x, y: cmp(x.specific, y.specific))
+        candidates.sort(key=operator.attrgetter('specific'))
         for entry in candidates:
             rem = specific_probe_matcher.match(entry.name)
             if not rem:
@@ -80,7 +168,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             cx = lxml.etree.SubElement(top, 'Client', name=client)
             for probe in sorted(probed):
                 lxml.etree.SubElement(cx, 'Probe', name=probe,
-                                      value=self.probedata[client][probe])
+                                      value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(cx, "Group", name=group)
         data = lxml.etree.tostring(top, encoding='UTF-8',
@@ -90,7 +178,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
         except IOError:
             self.logger.error("Failed to write probed.xml")
-        datafile.write(data)
+        datafile.write(data.decode('utf-8'))
 
     def load_data(self):
         try:
@@ -105,7 +193,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             self.cgroups[client.get('name')] = []
             for pdata in client:
                 if (pdata.tag == 'Probe'):
-                    self.probedata[client.get('name')][pdata.get('name')] = pdata.get('value')
+                    self.probedata[client.get('name')][pdata.get('name')] = \
+                        ProbeData(pdata.get('value'))
                 elif (pdata.tag == 'Group'):
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
@@ -128,9 +217,11 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Got null response to probe %s from %s" % \
                               (data.get('name'), client.hostname))
             try:
-                self.probedata[client.hostname].update({data.get('name'): ''})
+                self.probedata[client.hostname].update({data.get('name'):
+                                                        ProbeData('')})
             except KeyError:
-                self.probedata[client.hostname] = {data.get('name'): ''}
+                self.probedata[client.hostname] = \
+                    {data.get('name'): ProbeData('')}
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" % (client.hostname,
@@ -141,11 +232,11 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                 if newgroup not in self.cgroups[client.hostname]:
                     self.cgroups[client.hostname].append(newgroup)
                 dlines.remove(line)
-        dtext = "\n".join(dlines)
+        dobj = ProbeData("\n".join(dlines))
         try:
-            self.probedata[client.hostname].update({data.get('name'): dtext})
+            self.probedata[client.hostname].update({data.get('name'): dobj})
         except KeyError:
-            self.probedata[client.hostname] = {data.get('name'): dtext}
+            self.probedata[client.hostname] = {data.get('name'): dobj}
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())

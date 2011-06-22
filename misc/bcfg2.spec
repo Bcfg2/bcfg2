@@ -13,7 +13,7 @@
 %define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
 
 Name:             bcfg2
-Version:          1.2.0pre2
+Version:          1.2.0pre3
 Release:          %{release}
 Summary:          Configuration management system
 

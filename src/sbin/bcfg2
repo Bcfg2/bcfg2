@@ -7,6 +7,7 @@ import fcntl
 import logging
 import os
 import signal
+import socket
 import stat
 import sys
 import tempfile
@@ -75,6 +76,7 @@ class Client:
             'certificate': Bcfg2.Options.CLIENT_CERT,
             'ca': Bcfg2.Options.CLIENT_CA,
             'serverCN': Bcfg2.Options.CLIENT_SCNS,
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
 
         self.setup = Bcfg2.Options.OptionParser(optinfo)
@@ -178,10 +180,11 @@ class Client:
             proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
                                                self.setup['user'],
                                                self.setup['password'],
-                                               key = self.setup['key'],
-                                               cert = self.setup['certificate'],
-                                               ca = self.setup['ca'],
-                                               allowedServerCNs = self.setup['serverCN'])
+                                               key=self.setup['key'],
+                                               cert=self.setup['certificate'],
+                                               ca=self.setup['ca'],
+                                               allowedServerCNs=self.setup['serverCN'],
+                                               timeout=self.setup['timeout'])
 
             if self.setup['profile']:
                 try:
@@ -196,6 +199,13 @@ class Client:
                 flt = sys.exc_info()[1]
                 self.logger.error("Failed to download probes from bcfg2")
                 self.logger.error(flt.faultString)
+                raise SystemExit(1)
+            except (Bcfg2.Proxy.CertificateError,
+                    socket.gaierror,
+                    socket.error):
+                e = sys.exc_info()[1]
+                self.logger.error("Failed to download probes from bcfg2: %s"
+                                  % e)
                 raise SystemExit(1)
 
             times['probe_download'] = time.time()
@@ -243,7 +253,7 @@ class Client:
                     raise SystemExit(1)
 
             try:
-                rawconfig = proxy.GetConfig()
+                rawconfig = proxy.GetConfig().encode('UTF-8')
             except xmlrpclib.Fault:
                 self.logger.error("Failed to download configuration from Bcfg2")
                 raise SystemExit(2)
@@ -252,7 +262,7 @@ class Client:
 
         if self.setup['cache']:
             try:
-                open(self.setup['cache'], 'w').write(rawconfig.encode(self.setup['encoding']))
+                open(self.setup['cache'], 'w').write(rawconfig)
                 os.chmod(self.setup['cache'], 33152)
             except IOError:
                 self.logger.warning("Failed to write config cache file %s" %

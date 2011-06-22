@@ -71,7 +71,7 @@ Require property files to have matching schema files
 .SH "PLUGINS"
 
 See
-.BR bcfg-lint.conf(5)
+.BR bcfg2-lint.conf(5)
 for more information on the configuration of the plugins listed below.
 
 .TP
@@ -118,6 +118,11 @@ are specified.  Can also require that an
 .I info.xml
 exists for all Cfg files, and that paranoid mode be enabled for all
 files.
+
+.TP
+.BR MergeFiles
+Suggest that similar probes and config files be merged into single
+probes or TGenshi templates.
 
 .TP
 .BR Pkgmgr

@@ -54,7 +54,10 @@ Inside of templates
   available when used in conjunction with the
   :ref:`server-plugins-connectors-properties` plugin)
 * **name** is the path name specified in bcfg
-* **path** is the path to the TGenshi template
+* **path** is the path to the TGenshi template.  It starts with a
+    leading slash, and is relative to the Bcfg2 specification root.
+    E.g., ``/Cfg/etc/foo.conf/foo.conf.genshi`` or
+    ``/TGenshi/etc/foo.conf/template.newtxt.H_foo.example.com``
 
 See the genshi `documentation
 <http://genshi.edgewall.org/wiki/Documentation>`_ for examples of
@@ -91,6 +94,56 @@ Produces:
 This flexibility provides the ability to build much more compact and
 succinct definitions of configuration contents than Cfg can.
 
+Troubleshooting
+===============
+
+When developing a template, you can see what the template would
+generate on a client with :ref:`bcfg2-info <server-bcfg2-info>`::
+
+    bcfg2-info buildfile <path> <hostname>
+
+E.g.::
+
+    bcfg2-info buildfile /etc/foo.conf foo.example.com
+
+Sometimes, it's useful to be able to do more in-depth troubleshooting
+by running the template manually. (This is also necessary if you want
+to generate a template that depends on an :ref:`altsrc
+<server-plugins-structures-altsrc>` tag.) To do this, run ``bcfg2-info
+debug``, and, once in the Python interpreter, run::
+
+    metadata = self.build_metadata("<hostname>")
+    path = "<relative path to template (see note below)>"
+    bcfg2root = "<path to bcfg2 specification root>"
+    
+``path`` should be set to the path to the template file with a leading
+slash, relative to the Bcfg2 specification root. See `Inside of
+Templates`_ for examples.
+
+``bcfg2root`` should be set to the absolute path to the Bcfg2
+specification.  (This is ``/var/lib/bcfg2`` by default.)
+
+Then, run::
+    
+    import os
+    name = os.path.dirname(path[path.find('/', 1):])
+    from genshi.template import TemplateLoader, NewTextTemplate
+    template = TemplateLoader().load(bcfg2root + path, cls=NewTextTemplate)
+    print template.generate(metadata=metadata, path=path, name=name).render()
+
+This gives you more fine-grained control over how your template is
+rendered.
+
+You can also use this approach to render templates that depend on
+:ref:`altsrc <server-plugins-structures-altsrc>` tags by setting
+``path`` to the path to the template, and setting ``name`` to the path
+to the file to be generated, e.g.::
+
+    metadata = self.build_metadata("foo.example.com")
+    path = "/Cfg/etc/sysconfig/network-scripts/ifcfg-template/ifcfg-template.genshi"
+    bcfg2root = "/var/lib/bcfg2"
+    name = "/etc/sysconfig/network-scripts/ifcfg-bond0"
+
 File permissions
 ================
 
@@ -101,10 +154,10 @@ Permissions entry and a Path entry to handle the same file.
 Error handling
 ================
 
-Situations may arrise where a templated file cannot be generated due to
+Situations may arise where a templated file cannot be generated due to
 missing or incomplete information.  A TemplateError can be raised to
-force a bind failure and prevent sending an incomplete file to the client.
-For example, this template::
+force a bind failure and prevent sending an incomplete file to the
+client.  For example, this template::
 
     {% python
         from genshi.template import TemplateError

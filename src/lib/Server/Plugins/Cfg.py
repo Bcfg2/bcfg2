@@ -4,8 +4,11 @@ __revision__ = '$Revision$'
 import binascii
 import logging
 import lxml
+import operator
 import os
+import os.path
 import re
+import stat
 import sys
 import tempfile
 
@@ -22,9 +25,10 @@ except:
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 
+# py3k compatibility
 def u_str(string, encoding):
     if sys.hexversion >= 0x03000000:
-        return str(string, encoding)
+        return string.encode(encoding)
     else:
         return unicode(string, encoding)
 
@@ -94,6 +98,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
         self.specific = CfgMatcher(path.split('/')[-1])
+        path = path
 
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
@@ -104,7 +109,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         """
         matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
-        matching.sort(self.sort_by_specific)
+        matching.sort(key=operator.attrgetter('specific'))
         non_delta = [matching.index(m) for m in matching
                      if not m.specific.delta]
         if not non_delta:
@@ -118,6 +123,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.bind_info_to_entry(entry, metadata)
         used = self.get_pertinent_entries(metadata)
         basefile = used.pop(0)
+        if entry.get('perms').lower() == 'inherit':
+            # use on-disk permissions
+            fname = "%s/%s" % (self.path, entry.get('name'))
+            entry.set('perms',
+                      str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
         if entry.tag == 'Path':
             entry.set('type', 'file')
         if basefile.name.endswith(".genshi"):
@@ -134,9 +144,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                            metadata=metadata,
                                            path=basefile.name).filter(removecomment)
                 try:
-                    data = stream.render('text', strip_whitespace=False)
+                    data = stream.render('text', encoding=self.encoding,
+                                         strip_whitespace=False)
                 except TypeError:
-                    data = stream.render('text')
+                    data = stream.render('text', encoding=self.encoding)
                 if data == '':
                     entry.set('empty', 'true')
             except Exception:
@@ -159,6 +170,13 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 e = sys.exc_info()[1]
                 logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
                 logger.error("Please verify you are using the proper encoding.")
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            except ValueError:
+                e = sys.exc_info()[1]
+                logger.error("Error in specification for %s" % entry.get('name'))
+                logger.error("%s" % e)
+                logger.error("You need to specify base64 encoding for %s." %
+                             entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError
         if entry.text in ['', None]:
             entry.set('empty', 'true')
@@ -185,10 +203,15 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def write_update(self, specific, new_entry, log):
         if 'text' in new_entry:
             name = self.build_filename(specific)
-            if name.endswith(".genshi"):
+            if os.path.exists("%s.genshi" % name):
                 logger.error("Cfg: Unable to pull data for genshi types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
-            open(name, 'w').write(new_entry['text'])
+            try:
+                etext = new_entry['text'].encode(self.encoding)
+            except:
+                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            open(name, 'w').write(etext)
             if log:
                 logger.info("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms']
