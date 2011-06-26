@@ -838,7 +838,7 @@ class EntrySet:
         """Reset metadata to defaults if info or info.xml removed."""
         if event.filename == 'info.xml':
             self.infoxml = None
-        elif event.filename == 'info':
+        elif event.filename in [':info', 'info']:
             self.metadata = default_file_metadata.copy()
 
     def group_sortfunc(self, x, y):
