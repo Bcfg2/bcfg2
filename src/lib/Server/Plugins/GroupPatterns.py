@@ -83,14 +83,13 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
             return
         for entry in parsed.findall('GroupPattern'):
             try:
-                pat = None
-                rng = None
-                if entry.find('NamePattern') is not None:
-                    pat = entry.find('NamePattern').text
-                if entry.find('NameRange') is not None:
-                    rng = entry.find('NameRange').text
                 groups = [g.text for g in entry.findall('Group')]
-                self.patterns.append(PatternMap(pat, rng, groups))
+                for pat_ent in entry.findall('NamePattern'):
+                    pat = pat_ent.text
+                    self.patterns.append(PatternMap(pat, None, groups))
+                for range_ent in entry.findall('NameRange'):
+                    rng = range_ent.text
+                    self.patterns.append(PatternMap(None, rng, groups))
             except:
                 Bcfg2.Server.Plugin.logger.error(\
                     "GroupPatterns: Failed to initialize pattern %s" % \
