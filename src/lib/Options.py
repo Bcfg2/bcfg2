@@ -242,6 +242,9 @@ MDATA_PERMS = Option('Default Path permissions',
 MDATA_PARANOID = Option('Default Path paranoid setting',
                      'false', cf=('mdata', 'paranoid'),
                      odesc='Path paranoid setting')
+MDATA_SENSITIVE = Option('Default Path sensitive setting',
+                     'false', cf=('mdata', 'sensitive'),
+                     odesc='Path sensitive setting')
 
 # Server options
 SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',

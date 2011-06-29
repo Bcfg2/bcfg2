@@ -44,6 +44,10 @@ possible fields in an info file are:
 |            | | 'inherit'       | (or inherits from the files on   |         |
 |            |                   | disk if set to inherit)          |         |
 +------------+-------------------+----------------------------------+---------+
+| sensitive: | true | false      | The contents of sensitive        | false   |
+|            |                   | entries aren't included in       |         |
+|            |                   | reports                          |         |
++------------+-------------------+----------------------------------+---------+
 
 A sample info file for CGI script on a web server might look like::
 

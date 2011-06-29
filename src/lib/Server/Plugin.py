@@ -30,7 +30,8 @@ opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'group': Bcfg2.Options.MDATA_GROUP,
         'important': Bcfg2.Options.MDATA_IMPORTANT,
         'perms': Bcfg2.Options.MDATA_PERMS,
-        'paranoid': Bcfg2.Options.MDATA_PARANOID}
+        'paranoid': Bcfg2.Options.MDATA_PARANOID,
+        'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
 mdata_setup = Bcfg2.Options.OptionParser(opts)
 mdata_setup.parse([])
 del mdata_setup['args']
@@ -46,7 +47,8 @@ info_regex = re.compile( \
     'mtime:(\s)*(?P<mtime>\w+)|' +
     'owner:(\s)*(?P<owner>\S+)|' +
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
-    'perms:(\s)*(?P<perms>\w+)|')
+    'perms:(\s)*(?P<perms>\w+)|' +
+    'sensitive:(\s)*(?P<sensitive>\S+)|')
 
 
 class PluginInitError(Exception):

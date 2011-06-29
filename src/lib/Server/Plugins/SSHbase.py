@@ -230,10 +230,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         keydata = self.entries[filename].data
         permdata = {'owner': 'root',
                     'group': 'root',
-                    'type': 'file',
-                    'perms': '0600'}
+                    'type': 'file'}
         if entry.get('name')[-4:] == '.pub':
             permdata['perms'] = '0644'
+        else:
+            permdata['perms'] = '0600'
+            permdata['sensitive'] = 'true'
         [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
         if "ssh_host_key.H_" == filename[:15]:
             entry.attrib['encoding'] = 'base64'
