@@ -32,13 +32,13 @@ possible fields in an info file are:
 +------------+-------------------+----------------------------------+---------+
 | group:     | Any valid group   | Sets group of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
-| important: | true | false      | Important entries are            | root    |
+| important: | true | false      | Important entries are            | false   |
 |            |                   | installed first during client    |         |
 |            |                   | execution                        |         |
 +------------+-------------------+----------------------------------+---------+
 | owner:     | Any valid user    | Sets owner of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
-| paranoid:  | yes | no          | Backup file before replacement?  | no      |
+| paranoid:  | true | false      | Backup file before replacement?  | false   |
 +------------+-------------------+----------------------------------+---------+
 | perms:     | Numeric file mode | Sets the permissions of the file | 0644    |
 |            | | 'inherit'       | (or inherits from the files on   |         |
