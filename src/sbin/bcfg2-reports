@@ -302,18 +302,22 @@ else:
     elif badentry != "":
         if len(badentry) == 1:
             fileread = fileinput.input(badentry[0])
-            for line in fileread:
-                badentry = line.strip().split(',')
-                for c_inst in c_list:
-                    baditems = c_inst.current_interaction.bad()
-                    for item in baditems:
-                        if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(badentry[1])
-                            else:
-                                entrydict[c_inst] = [badentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    badentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        baditems = c_inst.current_interaction.bad()
+                        for item in baditems:
+                            if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(badentry[1])
+                                else:
+                                    entrydict[c_inst] = [badentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 baditems = c_inst.current_interaction.bad()
@@ -324,18 +328,22 @@ else:
     elif modifiedentry != "":
         if len(modifiedentry) == 1:
             fileread = fileinput.input(modifiedentry[0])
-            for line in fileread:
-                modifiedentry = line.strip().split(',')
-                for c_inst in c_list:
-                    modifieditems = c_inst.current_interaction.modified()
-                    for item in modifieditems:
-                        if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(modifiedentry[1])
-                            else:
-                                entrydict[c_inst] = [modifiedentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    modifiedentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        modifieditems = c_inst.current_interaction.modified()
+                        for item in modifieditems:
+                            if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(modifiedentry[1])
+                                else:
+                                    entrydict[c_inst] = [modifiedentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 modifieditems = c_inst.current_interaction.modified()
@@ -346,18 +354,22 @@ else:
     elif extraentry != "":
         if len(extraentry) == 1:
             fileread = fileinput.input(extraentry[0])
-            for line in fileread:
-                extraentry = line.strip().split(',')
-                for c_inst in c_list:
-                    extraitems = c_inst.current_interaction.extra()
-                    for item in extraitems:
-                        if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(extraentry[1])
-                            else:
-                                entrydict[c_inst] = [extraentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    extraentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        extraitems = c_inst.current_interaction.extra()
+                        for item in extraitems:
+                            if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(extraentry[1])
+                                else:
+                                    entrydict[c_inst] = [extraentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 extraitems = c_inst.current_interaction.extra()
