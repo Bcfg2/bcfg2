@@ -40,7 +40,11 @@ from Bcfg2.Bcfg2Py3k import ConfigParser
 
 def build_reason_kwargs(r_ent, encoding, logger):
     binary_file = False
-    if r_ent.get('current_bfile', False):
+    sensitive_file = False
+    if r_ent.get('sensitive') in ['true', 'True']:
+        sensitive_file = True
+        rc_diff = ''
+    elif r_ent.get('current_bfile', False):
         binary_file = True
         rc_diff = r_ent.get('current_bfile')
         if len(rc_diff) > 1024 * 1024:
@@ -74,7 +78,8 @@ def build_reason_kwargs(r_ent, encoding, logger):
                 current_version=r_ent.get('current_version', default=""),
                 current_exists=r_ent.get('current_exists', default="True").capitalize() == "True",
                 current_diff=rc_diff,
-                is_binary=binary_file)
+                is_binary=binary_file,
+                is_sensitive=sensitive_file)
 
 
 def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location=''):

@@ -74,15 +74,21 @@ div.entry_list h3 {
   </table>
   {% endif %}
 
-  {% if item.reason.current_diff %}
-  <div class='entry_list'>
-    <div class='entry_list_head'>
-      <h3>Incorrect file contents</h3>
+  {% if item.reason.current_diff or item.reason.is_sensitive %}
+    <div class='entry_list'>
+      <div class='entry_list_head'>
+        {% if item.reason.is_sensitive %}
+          <h3>File contents unavailable, as they might contain sensitive data.</h3>
+        {% else %}
+          <h3>Incorrect file contents</h3>
+        {% endif %}
+      </div>
+      {% if not item.reason.is_sensitive %}
+        <div class='diff_wrapper'>
+          {{ item.reason.current_diff|syntaxhilight }}
+        </div>
+      {% endif %}
     </div>
-    <div class='diff_wrapper'>
-      {{ item.reason.current_diff|syntaxhilight }}
-    </div>
-  </div>
   {% endif %}
 
 

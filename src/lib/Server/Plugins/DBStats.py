@@ -98,8 +98,9 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 ret.append(getattr(entry.reason, t))
             else:
                 ret.append(getattr(entry.reason, "current_%s" % t))
-
-        if entry.reason.current_diff != '':
+        if entry.reason.is_sensitive:
+            raise Bcfg2.Server.Plugin.PluginExecutionError
+        elif entry.reason.current_diff != '':
             if entry.reason.is_binary:
                 ret.append(binascii.a2b_base64(entry.reason.current_diff))
             else:
