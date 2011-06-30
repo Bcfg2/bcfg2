@@ -22,9 +22,45 @@ sys.path.pop()
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
 from Bcfg2.Server.Reports.reports.models import Client
-from getopt import getopt
+import getopt
 import datetime
 import fileinput
+
+usage = """Usage: bcfg2-reports [option] ...
+
+Options and arguments (and corresponding environment variables):
+-a                        : shows all hosts, including expired hosts
+-b NAME                   : single-host mode - shows bad entries from the
+                            current interaction of NAME
+-c                        : shows only clean hosts
+-d                        : shows only dirty hosts
+-e NAME                   : single-host mode - shows extra entries from the
+                            current interaction of NAME
+-h                        : shows help and usage info about bcfg2-reports
+-m NAME                   : single-host mode - shows modified entries from the
+                            current interaction of NAME
+-s NAME                   : single-host mode - shows bad, modified, and extra
+                            entries from the current interaction of NAME
+-t NAME                   : single-host mode - shows total number of managed and
+                            good entries from the current interaction of NAME
+-x NAME                   : toggles expired/unexpired state of NAME
+--badentry=KIND,NAME      : shows only hosts whose current interaction has bad
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--modifiedentry=KIND,NAME : shows only hosts whose current interaction has
+                            modified entries in of KIND kind and NAME name; if a
+                            single argument ARG1 is given, then KIND,NAME pairs
+                            will be read from a file of name ARG1
+--extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
+                            (name,time,state)
+--sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,... (name,time,state)
+--stale                   : shows hosts which haven't run in the last 24 hours
+"""
 
 def timecompare(client1, client2):
     """Compares two clients by their timestamps."""
@@ -145,8 +181,19 @@ result = list()
 entrydict = dict()
 
 args = sys.argv[1:]
-opts, pargs = getopt(args, 'ab:cde:hm:s:t:x:',
-                     ['stale', 'sort=', 'fields=', 'badentry=', 'modifiedentry=', 'extraentry='])
+try:
+    opts, pargs = getopt.getopt(args, 'ab:cde:hm:s:t:x:',
+                                ['stale',
+                                 'sort=',
+                                 'fields=',
+                                 'badentry=',
+                                 'modifiedentry=',
+                                 'extraentry='])
+except getopt.GetoptError:
+    msg = sys.exc_info()[1]
+    print(msg)
+    print(usage)
+    sys.exit(2)
 
 for option in opts:
     if len(option) > 0:
@@ -181,41 +228,7 @@ if expire != "":
             c_inst.save()
 
 elif '-h' in args:
-    print("""Usage: bcfg2-reports [option] ...
-
-Options and arguments (and corresponding environment variables):
--a                        : shows all hosts, including expired hosts
--b NAME                   : single-host mode - shows bad entries from the
-                            current interaction of NAME
--c                        : shows only clean hosts
--d                        : shows only dirty hosts
--e NAME                   : single-host mode - shows extra entries from the
-                            current interaction of NAME
--h                        : shows help and usage info about bcfg2-reports
--m NAME                   : single-host mode - shows modified entries from the
-                            current interaction of NAME
--s NAME                   : single-host mode - shows bad, modified, and extra
-                            entries from the current interaction of NAME
--t NAME                   : single-host mode - shows total number of managed and
-                            good entries from the current interaction of NAME
--x NAME                   : toggles expired/unexpired state of NAME
---badentry=KIND,NAME      : shows only hosts whose current interaction has bad
-                            entries in of KIND kind and NAME name; if a single
-                            argument ARG1 is given, then KIND,NAME pairs will be
-                            read from a file of name ARG1
---modifiedentry=KIND,NAME : shows only hosts whose current interaction has
-                            modified entries in of KIND kind and NAME name; if a
-                            single argument ARG1 is given, then KIND,NAME pairs
-                            will be read from a file of name ARG1
---extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
-                            entries in of KIND kind and NAME name; if a single
-                            argument ARG1 is given, then KIND,NAME pairs will be
-                            read from a file of name ARG1
---fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
-                            (name,time,state)
---sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,... (name,time,state)
---stale                   : shows hosts which haven't run in the last 24 hours
-""")
+    print(usage)
 elif singlehost != "":
     for c_inst in c_list:
         if singlehost == c_inst.name:
@@ -289,18 +302,22 @@ else:
     elif badentry != "":
         if len(badentry) == 1:
             fileread = fileinput.input(badentry[0])
-            for line in fileread:
-                badentry = line.strip().split(',')
-                for c_inst in c_list:
-                    baditems = c_inst.current_interaction.bad()
-                    for item in baditems:
-                        if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(badentry[1])
-                            else:
-                                entrydict[c_inst] = [badentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    badentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        baditems = c_inst.current_interaction.bad()
+                        for item in baditems:
+                            if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(badentry[1])
+                                else:
+                                    entrydict[c_inst] = [badentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 baditems = c_inst.current_interaction.bad()
@@ -311,18 +328,22 @@ else:
     elif modifiedentry != "":
         if len(modifiedentry) == 1:
             fileread = fileinput.input(modifiedentry[0])
-            for line in fileread:
-                modifiedentry = line.strip().split(',')
-                for c_inst in c_list:
-                    modifieditems = c_inst.current_interaction.modified()
-                    for item in modifieditems:
-                        if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(modifiedentry[1])
-                            else:
-                                entrydict[c_inst] = [modifiedentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    modifiedentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        modifieditems = c_inst.current_interaction.modified()
+                        for item in modifieditems:
+                            if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(modifiedentry[1])
+                                else:
+                                    entrydict[c_inst] = [modifiedentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 modifieditems = c_inst.current_interaction.modified()
@@ -333,18 +354,22 @@ else:
     elif extraentry != "":
         if len(extraentry) == 1:
             fileread = fileinput.input(extraentry[0])
-            for line in fileread:
-                extraentry = line.strip().split(',')
-                for c_inst in c_list:
-                    extraitems = c_inst.current_interaction.extra()
-                    for item in extraitems:
-                        if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
-                            result.append(c_inst)
-                            if c_inst in entrydict:
-                                entrydict.get(c_inst).append(extraentry[1])
-                            else:
-                                entrydict[c_inst] = [extraentry[1]]
-                            break
+            try:
+                for line in fileread:
+                    extraentry = line.strip().split(',')
+                    for c_inst in c_list:
+                        extraitems = c_inst.current_interaction.extra()
+                        for item in extraitems:
+                            if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
+                                result.append(c_inst)
+                                if c_inst in entrydict:
+                                    entrydict.get(c_inst).append(extraentry[1])
+                                else:
+                                    entrydict[c_inst] = [extraentry[1]]
+                                break
+            except IOError:
+                e = sys.exc_info()[1]
+                print("Cannot read %s: %s" % (e.filename, e.strerror))
         else:
             for c_inst in c_list:
                 extraitems = c_inst.current_interaction.extra()
