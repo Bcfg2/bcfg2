@@ -150,7 +150,9 @@ class Statistics(Bcfg2.Server.Plugin.Plugin,
         owner = cfentry.get('current_owner', cfentry.get('owner'))
         group = cfentry.get('current_group', cfentry.get('group'))
         perms = cfentry.get('current_perms', cfentry.get('perms'))
-        if 'current_bfile' in cfentry.attrib:
+        if cfentry.get('sensitive') in ['true', 'True']:
+            raise Bcfg2.Server.Plugin.PluginExecutionError
+        elif 'current_bfile' in cfentry.attrib:
             contents = binascii.a2b_base64(cfentry.get('current_bfile'))
         elif 'current_bdiff' in cfentry.attrib:
             diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
