@@ -148,7 +148,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             entry.set('perms', str(oct(ondisk[ST_MODE])[-4:]))
             try:
                 content = open(entry.get('name')).read()
-                if (entry.get('sensitive') not in ['true', 'True']):
+                if entry.get('sensitive') not in ['true', 'True']:
                     entry.set('current_bfile', binascii.b2a_base64(content))
             except IOError:
                 error = sys.exc_info()[1]
@@ -483,7 +483,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         contentStatus = content == tempdata
         if not contentStatus:
             if tbin or not isString(content, self.setup['encoding']):
-                if (entry.get('sensitive') not in ['true', 'True']):
+                if entry.get('sensitive') not in ['true', 'True']:
                     entry.set('current_bfile', binascii.b2a_base64(content))
                 nqtext = entry.get('qtext', '')
                 nqtext += '\nBinary file, no printable diff'
@@ -506,7 +506,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         do_diff = False
                         break
                 if do_diff:
-                    if (entry.get('sensitive') not in ['true', 'True']):
+                    if entry.get('sensitive') not in ['true', 'True']:
                         diff = '\n'.join(rawdiff)
                         entry.set("current_bdiff", binascii.b2a_base64(diff))
 #                    entry.set("current_diff", diff)
@@ -524,7 +524,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         nqtext += '\n'
                     nqtext += dudiff
                 else:
-                    if (entry.get('sensitive') not in ['true', 'True']):
+                    if entry.get('sensitive') not in ['true', 'True']:
                         entry.set('current_bfile', binascii.b2a_base64(content))
                     nqtext = entry.get('qtext', '')
                     nqtext += '\nDiff took too long to compute, no printable diff'
