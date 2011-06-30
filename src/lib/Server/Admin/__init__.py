@@ -53,9 +53,7 @@ class Mode(object):
     cfp = property(getCFP)
 
     def __call__(self, args):
-        if len(args) > 0 and args[0] == 'help':
-            print(self.__longhelp__)
-            raise SystemExit(0)
+        pass
 
     def errExit(self, emsg):
         print(emsg)

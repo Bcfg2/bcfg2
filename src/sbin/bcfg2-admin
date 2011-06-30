@@ -62,6 +62,9 @@ def main():
 
     if args[0] in get_modes():
         modname = args[0].capitalize()
+        if len(args) == 1 or args[1] == 'help':
+            print(mode_import(modname).__longhelp__)
+            raise SystemExit(0)
         try:
             mode_cls = mode_import(modname)
         except ImportError:
