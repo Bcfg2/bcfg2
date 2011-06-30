@@ -32,4 +32,8 @@
 	  <field type='IntegerField' name='version'>17</field>
 	  <field type='DateTimeField' name='updated'>2010-07-02 00:00:00</field>
 	</object>
+	<object pk="8" model="reports.internaldatabaseversion">
+	  <field type='IntegerField' name='version'>18</field>
+	  <field type='DateTimeField' name='updated'>2011-06-30 00:00:00</field>
+	</object>
 </django-objects>
