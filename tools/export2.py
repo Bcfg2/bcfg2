@@ -45,6 +45,17 @@ if __name__ == '__main__':
         name = input("Your name: ")
         email = input("Your email: ")
     
+    # parse version into Major.Minor.Build and validate
+    try:
+        [version_major, version_minor, version_build] = version.split(".")
+        if not version_major.isdigit() or not version_minor.isdigit():
+            raise VersionError('isdigit() test failed')
+    except:
+        print "Version must be of the form Major.Minor.Build, where Major and Minor are integers and Build is a single digit optionally followed by pre##"
+        quit()
+
+    version_macbuild = version_build[0:1]
+    
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
     
     # update the version
@@ -98,14 +109,14 @@ if __name__ == '__main__':
 
     # tag the release
     #FIXME: do this using python-dulwich
-    cmd = "git commit -asm 'Version bump to %s'" % version
+    cmd = "ggit commit -asm 'Version bump to %s'" % version
     output = run(cmd)[0].strip()
     # NOTE: This will use the default email address key. If you want to sign the tag
     #       using a different key, you will need to set 'signingkey' to the proper
     #       value in the [user] section of your git configuration.
-    cmd = "git tag -s v%s -m 'tagged %s release'" % (version, version)
+    cmd = "ggit tag -s v%s -m 'tagged %s release'" % (version, version)
     output = run(cmd)[0].strip()
-    cmd = "git archive --format=tar --prefix=%s-%s/ v%s | gzip > %s" % \
+    cmd = "ggit archive --format=tar --prefix=%s-%s/ v%s | gzip > %s" % \
            (pkgname, version, version, tarname)
     output = run(cmd)[0].strip()
     cmd = "gpg --armor --output %s.gpg --detach-sig  %s" % (tarname, tarname)
