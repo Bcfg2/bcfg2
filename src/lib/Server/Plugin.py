@@ -927,7 +927,7 @@ class GroupSpool(Plugin, Generator):
             if not posixpath.isdir(epath):
                 # do not pass through directory events
                 self.entries[ident].handle_event(event)
-        if action == 'changed':
+        if action == 'changed' and ident in self.entries:
             self.entries[ident].handle_event(event)
         elif action == 'deleted':
             fbase = self.handles[event.requestID] + event.filename
