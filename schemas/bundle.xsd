@@ -110,6 +110,14 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name='Bundle' type='BundleType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Nesting Bundle tags is allowed in order to support
+            XInclude within Bundles.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element ref="py:def"/>
       <xsd:element ref="py:match"/>
       <xsd:element ref="py:choose"/>
@@ -135,7 +143,113 @@
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:element name='Bundle'>
+  <xsd:complexType name='BundleType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Package' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Package entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Path' type='PathEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Path entry.  The entry will
+            either be handled by Cfg, TGenshi, or another
+            DirectoryBacked plugin; or handled by Rules, in which case
+            the full specification of this entry will be included in
+            Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Service' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of a Service entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Action' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract implementation of an Action entry.  The full
+            specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPackage' type='PackageType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a software package to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPath' type='BoundPathEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a filesystem path to be handled
+            by the POSIX driver.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundService' type='ServiceType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a system service to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundAction' type='ActionType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a command to be run.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Group' type='GroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Group tags only apply to clients that are
+            members of that group
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Client' type='GroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Client tags only apply to the named client
+            (or vice-versa; see #element_negate below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Bundle' type='BundleType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Nesting Bundle tags is allowed in order to support
+            XInclude within Bundles.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element ref="py:def"/>
+      <xsd:element ref="py:match"/>
+      <xsd:element ref="py:choose"/>
+      <xsd:element ref="py:for"/>
+      <xsd:element ref="py:if"/>
+      <xsd:element ref="py:with"/>
+      <xsd:element ref="py:replace"/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='description' />
+    <xsd:attribute type='xsd:string' name='name'/>
+    <xsd:attribute type='xsd:string' name='version'/>
+    <xsd:attribute type='xsd:string' name='origin'/>
+    <xsd:attribute type='xsd:string' name='revision'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:element name='Bundle' type='BundleType'>
     <xsd:annotation>
       <xsd:documentation>
         A bundle describes a group of inter-dependent configuration
@@ -150,102 +264,5 @@
         that a given client will receive.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Package' type='StructureEntry'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Abstract implementation of a Package entry.  The full
-              specification will be included in Rules.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='Path' type='PathEntry'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Abstract implementation of a Path entry.  The entry will
-              either be handled by Cfg, TGenshi, or another
-              DirectoryBacked plugin; or handled by Rules, in which case
-              the full specification of this entry will be included in
-              Rules.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='Service' type='StructureEntry'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Abstract implementation of a Service entry.  The full
-              specification will be included in Rules.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='Action' type='StructureEntry'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Abstract implementation of an Action entry.  The full
-              specification will be included in Rules.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='BoundPackage' type='PackageType'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Fully bound description of a software package to be managed.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='BoundPath' type='BoundPathEntry'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Fully bound description of a filesystem path to be handled
-              by the POSIX driver.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='BoundService' type='ServiceType'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Fully bound description of a system service to be managed.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='BoundAction' type='ActionType'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Fully bound description of a command to be run.
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='Group' type='GroupType'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Elements within Group tags only apply to clients that are
-              members of that group
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element name='Client' type='GroupType'>
-          <xsd:annotation>
-            <xsd:documentation>
-              Elements within Client tags only apply to the named client
-              (or vice-versa; see #element_negate below)
-            </xsd:documentation>
-          </xsd:annotation>
-        </xsd:element>
-        <xsd:element ref="py:def"/>
-        <xsd:element ref="py:match"/>
-        <xsd:element ref="py:choose"/>
-        <xsd:element ref="py:for"/>
-        <xsd:element ref="py:if"/>
-        <xsd:element ref="py:with"/>
-        <xsd:element ref="py:replace"/>
-      </xsd:choice>
-      <xsd:attribute type='xsd:string' name='description' />
-      <xsd:attribute type='xsd:string' name='name'/>
-      <xsd:attribute type='xsd:string' name='version'/>
-      <xsd:attribute type='xsd:string' name='origin'/>
-      <xsd:attribute type='xsd:string' name='revision'/>
-      <xsd:attributeGroup ref="py:genshiAttrs"/>
-    </xsd:complexType>
   </xsd:element>
 </xsd:schema>
