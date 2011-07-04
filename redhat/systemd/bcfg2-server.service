@@ -1,0 +1,13 @@
+[Unit]
+Description=Bcfg2 configuration daemon
+After=syslog.target network.target
+
+[Service]
+Type=forking
+StandardOutput=syslog
+StandardError=syslog
+EnvironmentFile=-/etc/sysconfig/bcfg2
+ExecStart=/usr/bin/bcfg2-server $OPTIONS
+
+[Install]
+WantedBy=multi-user.target
