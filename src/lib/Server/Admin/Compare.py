@@ -32,7 +32,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
         for child in new.getchildren():
             equiv = old.xpath('%s[@name="%s"]' %
                              (child.tag, child.get('name')))
-            if child.tag in self.important:
+            if child.tag not in self.important:
                 print("tag type %s not handled" % (child.tag))
                 continue
             if len(equiv) == 0:
