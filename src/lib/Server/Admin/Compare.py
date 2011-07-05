@@ -38,12 +38,13 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
         for child in new.getchildren():
             if child.tag not in self.important:
-                print("Tag type %s not handled" % (child.tag))
+                print("  %s in (new) bundle %s:\n   tag type not handled!" %
+                      (child.tag, bundle))
                 continue
             equiv = old.xpath('%s[@name="%s"]' %
                               (child.tag, child.get('name')))
             if len(equiv) == 0:
-                print(" %s %s in bundle %s:\n  only in new configuration" %
+                print("  %s %s in bundle %s:\n   only in new configuration" %
                       (child.tag, child.get('name'), bundle))
                 identical = False
                 continue
@@ -56,16 +57,17 @@ class Compare(Bcfg2.Server.Admin.Mode):
             if attrdiff:
                 diff.append('attributes (%s)' % ', '.join(attrdiff))
             if diff:
-                print(" %s %s in bundle %s:\n  %s differ" % (child.tag, \
+                print("  %s %s in bundle %s:\n   %s differ" % (child.tag, \
                       child.get('name'), bundle, ' and '.join(diff)))
                 identical = False
 
         for child in old.getchildren():
             if child.tag not in self.important:
-                print("Tag type %s not handled" % (child.tag))
+                print("  %s in (old) bundle %s:\n   tag type not handled!" %
+                      (child.tag, bundle))
             elif len(new.xpath('%s[@name="%s"]' %
                      (child.tag, child.get('name')))) == 0:
-                print(" %s %s in bundle %s:\n  only in old configuration" %
+                print("  %s %s in bundle %s:\n   only in old configuration" %
                       (child.tag, child.get('name'), bundle))
                 identical = False
 
@@ -93,13 +95,13 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
         for bundle in old.findall('./Bundle'):
             if len(new.xpath('Bundle[@name="%s"]' % (bundle.get('name')))) == 0:
-                print("Bundle %s only in old configuration" %
+                print(" Bundle %s only in old configuration" %
                       bundle.get('name'))
                 identical = False
         for bundle in new.findall('./Bundle'):
             equiv = old.xpath('Bundle[@name="%s"]' % (bundle.get('name')))
             if len(equiv) == 0:
-                print("Bundle %s only in new configuration" %
+                print(" Bundle %s only in new configuration" %
                       bundle.get('name'))
                 identical = False
             elif not self.compareStructures(bundle, equiv[0]):
