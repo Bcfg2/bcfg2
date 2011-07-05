@@ -14,13 +14,19 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, configfile):
         Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-        self.important = {'Package': ['name', 'version'],
-                          'Service': ['name', 'status'],
-                          'Directory': ['name', 'owner', 'group', 'perms'],
-                          'SymLink': ['name', 'to'],
-                          'ConfigFile': ['name', 'owner', 'group', 'perms'],
-                          'Permissions': ['name', 'perms'],
-                          'PostInstall': ['name']}
+        self.important = {'Path': ['name', 'type', 'owner', 'group', 'perms',
+                                   'important', 'paranoid', 'sensitive',
+                                   'dev_type', 'major', 'minor', 'prune',
+                                   'encoding', 'empty', 'to', 'recursive',
+                                   'vcstype', 'sourceurl', 'revision'],
+                          'Package': ['name', 'type', 'version', 'simplefile',
+                                      'verify'],
+                          'Service': ['name', 'type', 'status', 'mode',
+                                      'target', 'sequence', 'parameters'],
+                          'Action': ['name', 'timing', 'when', 'status',
+                                     'command'],
+                          'PostInstall': ['name']
+                          }
 
     def compareStructures(self, new, old):
         for child in new.getchildren():
@@ -34,7 +40,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
                      (child.tag, child.get('name')))
                 continue
             elif len(equiv) >= 1:
-                if child.tag == 'ConfigFile':
+                if child.tag == 'Path' and child.get('type') == 'file':
                     if child.text != equiv[0].text:
                         print(" %s %s contents differ" \
                               % (child.tag, child.get('name')))
