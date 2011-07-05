@@ -3,17 +3,32 @@
 
 """
 Second attempt to make our export script more portable than export.sh
+
 """
 
 import fileinput
 from subprocess import Popen, PIPE
 import sys
+# This will need to be replaced with argsparse when we make a 2.7+/3.2+ version
+import optparse
 
 # py3k compatibility
 try:
     from email.Utils import formatdate
 except ImportError:
     from email.utils import formatdate
+
+# In lieu of a config file
+help_message = '''This script creates a tag in the Bcfg2 git repo and exports a tar file of the code
+at that tag. 
+
+This script must be run at the top of your git repository.
+'''
+
+
+pkgname = 'bcfg2'
+ftphost = 'terra.mcs.anl.gov'
+ftpdir = '/mcs/ftp/pub/bcfg'
 
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
@@ -29,19 +44,39 @@ def find_and_replace(f, iftest, rline, startswith=False):
                 line = line.replace(line, rline)
             sys.stdout.write(line)
 
-
-if __name__ == '__main__':
-    pkgname = 'bcfg2'
-    ftphost = 'terra.mcs.anl.gov'
-    ftpdir = '/mcs/ftp/pub/bcfg'
+def main(argv=None):
+    # This is where the options are set up
+    p = optparse.OptionParser(description = help_message,
+                                prog = 'export2.py',
+                                version = '0.1',
+                                usage = '%prog [-h|--help] [-v|--version] [-n|--dry-run] [-d|--debug]')
+    p.add_option('--verbose', '-v', 
+                    action = 'store_true',
+                    help = 'turns on verbose mode',
+                    default = False,
+                    dest = 'verbose')
+    p.add_option('--dry-run', '-n',
+                    action = 'store_true',
+                    help = 'run in dry-run mode; no changes will be made to the system',
+                    default = False,
+                    dest = 'dryrun')
+    p.add_option('--debug', '-d',
+                    action = 'store_true',
+                    help = 'run in debun mode',
+                    default = False,
+                    dest = 'debug')
+    options, arguments = p.parse_args()
+    
+    if options.debug:
+        print options
     
     # py3k compatibility
     try:
-        version = raw_input("Please enter the version you are tagging (e.g. 1.0.0): ")
+        version = raw_input("Please enter the Bcfg2 version you are tagging (e.g. 1.0.0): ")
         name = raw_input("Your name: ")
         email = raw_input("Your email: ")
     except NameError:
-        version = input("Please enter the version you are tagging (e.g. 1.0.0): ")
+        version = input("Please enter the Bcfg2 version you are tagging (e.g. 1.0.0): ")
         name = input("Your name: ")
         email = input("Your email: ")
     
@@ -73,12 +108,17 @@ if __name__ == '__main__':
     
     
     # write out the new debian changelog
-    with open('debian/changelog', 'r+') as f:
-        old = f.read()
-        f.seek(0)
-        f.write(newchangelog + old)
-    f.close()
-    quit()
+    try:
+        with open('debian/changelog', 'r+') as f:
+            old = f.read()
+            f.seek(0)
+            f.write(newchangelog + old)
+        f.close()
+    except:
+        print "Problem opening debian/changelog"
+        print help_message
+        quit()
+    
     # Update redhat directory versions
     with open('redhat/VERSION', 'w') as f:
         f.write("%s\n" % majorver)
@@ -109,28 +149,31 @@ if __name__ == '__main__':
 
     # tag the release
     #FIXME: do this using python-dulwich
-    cmd = "ggit commit -asm 'Version bump to %s'" % version
-    output = run(cmd)[0].strip()
+    commando = {}
+
+    commando["vcs_commit"] = "git commit -asm 'Version bump to %s'" % version
+
     # NOTE: This will use the default email address key. If you want to sign the tag
     #       using a different key, you will need to set 'signingkey' to the proper
     #       value in the [user] section of your git configuration.
-    cmd = "ggit tag -s v%s -m 'tagged %s release'" % (version, version)
-    output = run(cmd)[0].strip()
-    cmd = "ggit archive --format=tar --prefix=%s-%s/ v%s | gzip > %s" % \
+    commando["vcs_tag"] = "git tag -s v%s -m 'tagged %s release'" % (version, version)
+
+    commando["create_archive"] = "git archive --format=tar --prefix=%s-%s/ v%s | gzip > %s" % \
            (pkgname, version, version, tarname)
-    output = run(cmd)[0].strip()
-    cmd = "gpg --armor --output %s.gpg --detach-sig  %s" % (tarname, tarname)
-    output = run(cmd)[0].strip()
+
+    commando["gpg_encrypt"] = "gpg --armor --output %s.gpg --detach-sig  %s" % (tarname, tarname)
 
     # upload release to ftp
-    cmd = "scp %s* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg/" % tarname
-    output = run(cmd)[0].strip()
+    commando["scp_archive"] = "scp %s* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg/" % tarname
+    
+    # Execute the commands
+    commando_orders = ["vcs_commit","vcs_tag","create_archive","gpg_encrypt","scp_archive"]
+    if options.dryrun:
+        for cmd in commando_orders:
+            print "dry-run: %s" % commando[cmd]
+    else:
+        for cmd in commando_orders:
+            output = run(commando[cmd])[0].strip()
 
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    sys.exit(main())
