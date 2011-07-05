@@ -97,8 +97,6 @@ The Package Tag may have the following attributes:
 | verify     | verify='false' - do not do package           | String |
 |            | verification                                 |        |
 +------------+----------------------------------------------+--------+
-| reloc      | RPM relocation path.                         | String |
-+------------+----------------------------------------------+--------+
 | multiarch  | Comma separated list of the architectures of | String |
 |            | this package that should be installed.       |        |
 +------------+----------------------------------------------+--------+

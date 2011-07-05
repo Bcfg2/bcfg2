@@ -43,7 +43,6 @@
     <xsd:attribute type='xsd:string' name='file'/>
     <xsd:attribute type='xsd:string' name='verify'/>
     <xsd:attribute type='xsd:string' name='simplefile'/>
-    <xsd:attribute type='xsd:string' name='reloc'/>
     <xsd:attribute type='xsd:string' name='multiarch'/>
     <xsd:attribute type='xsd:string' name='srcs'/>
     <xsd:attribute type='xsd:string' name='type'/>
