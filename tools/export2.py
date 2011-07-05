@@ -33,8 +33,13 @@ ftpdir = '/mcs/ftp/pub/bcfg'
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
 
-def find_and_replace(f, iftest, rline, startswith=False):
-    for line in fileinput.input(f, inplace=1):
+def find_and_replace(f, iftest, rline, startswith=False, dryrun=True):
+    if dryrun:
+        inplace=0
+        print "*** dry-run: New '%s' will look like this:" % f
+    else:
+        inplace=1
+    for line in fileinput.input(f, inplace):
         if startswith:
             if line.startswith(iftest):
                 line = line.replace(line, rline)
@@ -43,6 +48,8 @@ def find_and_replace(f, iftest, rline, startswith=False):
             if iftest in line and line != "Version: %{version}\n":
                 line = line.replace(line, rline)
             sys.stdout.write(line)
+    if dryrun:
+        print "*** End '%s'" % f
 
 def main(argv=None):
     # This is where the options are set up
@@ -108,24 +115,33 @@ def main(argv=None):
     
     
     # write out the new debian changelog
-    try:
-        with open('debian/changelog', 'r+') as f:
-            old = f.read()
-            f.seek(0)
-            f.write(newchangelog + old)
-        f.close()
-    except:
-        print "Problem opening debian/changelog"
-        print help_message
-        quit()
+    if options.dryrun:
+        print "*** Add the following to the top of debian/changelog:\n%s" % newchangelog
+        print "\n"
+    else:
+        try:
+            with open('debian/changelog', 'r+') as f:
+                old = f.read()
+                f.seek(0)
+                f.write(newchangelog + old)
+            f.close()
+        except:
+            print "Problem opening debian/changelog"
+            print help_message
+            quit()
     
     # Update redhat directory versions
-    with open('redhat/VERSION', 'w') as f:
-        f.write("%s\n" % majorver)
-    f.close()
-    with open('redhat/RELEASE', 'w') as f:
-        f.write("0.0%s\n" % minorver)
-    f.close()
+    if options.dryrun:
+        print "*** Replace redhat/VERIONS content with '%s'." % majorver
+        print "*** Replace redhat/RELEASE content with '%s'." % minorver
+    else:
+        with open('redhat/VERSION', 'w') as f:
+            f.write("%s\n" % majorver)
+        f.close()
+        with open('redhat/RELEASE', 'w') as f:
+            f.write("0.0%s\n" % minorver)
+        f.close()
+    
     # update solaris version
     find_and_replace('solaris/Makefile', 'VERS=',
                      'VERS=%s-1\n' % version, startswith=True)
@@ -170,7 +186,7 @@ def main(argv=None):
     commando_orders = ["vcs_commit","vcs_tag","create_archive","gpg_encrypt","scp_archive"]
     if options.dryrun:
         for cmd in commando_orders:
-            print "dry-run: %s" % commando[cmd]
+            print "*** dry-run: %s" % commando[cmd]
     else:
         for cmd in commando_orders:
             output = run(commando[cmd])[0].strip()
