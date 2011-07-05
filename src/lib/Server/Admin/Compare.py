@@ -89,34 +89,30 @@ class Compare(Bcfg2.Server.Admin.Mode):
                 if bundle.get('name')[-4:] == '.xml':
                     bundle.set('name', bundle.get('name')[:-4])
 
-        rcs = []
+        identical = True
+
         for bundle in old.findall('./Bundle'):
             if len(new.xpath('Bundle[@name="%s"]' % (bundle.get('name')))) == 0:
                 print("Bundle %s only in old configuration" %
                       bundle.get('name'))
-                rcs.append(False)
+                identical = False
         for bundle in new.findall('./Bundle'):
             equiv = old.xpath('Bundle[@name="%s"]' % (bundle.get('name')))
             if len(equiv) == 0:
-                print("couldnt find matching bundle for %s" % bundle.get('name'))
-                continue
-            if len(equiv) == 1:
-                if self.compareStructures(bundle, equiv[0]):
-                    new.remove(bundle)
-                    old.remove(equiv[0])
-                    rcs.append(True)
-                else:
-                    rcs.append(False)
-            else:
-                print("Unmatched bundle %s" % (bundle.get('name')))
-                rcs.append(False)
+                print("Bundle %s only in new configuration" %
+                      bundle.get('name'))
+                identical = False
+            elif not self.compareStructures(bundle, equiv[0]):
+                identical = False
+
         i1 = lxml.etree.Element('Independent')
         i2 = lxml.etree.Element('Independent')
         i1.extend(new.findall('./Independent/*'))
         i2.extend(old.findall('./Independent/*'))
         if not self.compareStructures(i1, i2):
-            rcs.append(False)
-        return False not in rcs
+            identical = False
+
+        return identical
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
