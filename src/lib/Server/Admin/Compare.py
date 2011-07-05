@@ -29,55 +29,47 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           }
 
     def compareStructures(self, new, old):
-        for child in new.getchildren():
-            equiv = old.xpath('%s[@name="%s"]' %
-                             (child.tag, child.get('name')))
-            if child.tag not in self.important:
-                print("tag type %s not handled" % (child.tag))
-                continue
-            if len(equiv) == 0:
-                print("didn't find matching %s %s" %
-                     (child.tag, child.get('name')))
-                continue
-            elif len(equiv) >= 1:
-                if child.tag == 'Path' and child.get('type') == 'file':
-                    if child.text != equiv[0].text:
-                        print(" %s %s contents differ" \
-                              % (child.tag, child.get('name')))
-                        continue
-                noattrmatch = [field for field in self.important[child.tag] if \
-                               child.get(field) != equiv[0].get(field)]
-                if not noattrmatch:
-                    new.remove(child)
-                    old.remove(equiv[0])
-                else:
-                    print(" %s %s attributes %s do not match" % \
-                          (child.tag, child.get('name'), noattrmatch))
-        if len(old.getchildren()) == 0 and len(new.getchildren()) == 0:
-            return True
         if new.tag == 'Independent':
-            name = 'Base'
+            bundle = 'Base'
         else:
-            name = new.get('name')
-        both = []
-        oldl = ["%s %s" % (entry.tag, entry.get('name')) for entry in old]
-        newl = ["%s %s" % (entry.tag, entry.get('name')) for entry in new]
-        onlyold = list(oldl)
-        onlynew = list(newl)
-        for entry in newl:
-            if entry in oldl:
-                both.append(entry)
-                onlyold.remove(entry)
-                onlynew.remove(entry)
-        for entry in both:
-            print(" %s differs (in bundle %s)" % (entry, name))
-        for entry in onlyold:
-            print(" %s only in old configuration (in bundle %s)" % (entry,
-                                                                    name))
-        for entry in onlynew:
-            print(" %s only in new configuration (in bundle %s)" % (entry,
-                                                                    name))
-        return False
+            bundle = new.get('name')
+
+        identical = True
+
+        for child in new.getchildren():
+            if child.tag not in self.important:
+                print("Tag type %s not handled" % (child.tag))
+                continue
+            equiv = old.xpath('%s[@name="%s"]' %
+                              (child.tag, child.get('name')))
+            if len(equiv) == 0:
+                print(" %s %s in bundle %s:\n  only in new configuration" %
+                      (child.tag, child.get('name'), bundle))
+                identical = False
+                continue
+            diff = []
+            if child.tag == 'Path' and child.get('type') == 'file' and \
+               child.text != equiv[0].text:
+                diff.append('contents')
+            attrdiff = [field for field in self.important[child.tag] if \
+                        child.get(field) != equiv[0].get(field)]
+            if attrdiff:
+                diff.append('attributes (%s)' % ', '.join(attrdiff))
+            if diff:
+                print(" %s %s in bundle %s:\n  %s differ" % (child.tag, \
+                      child.get('name'), bundle, ' and '.join(diff)))
+                identical = False
+
+        for child in old.getchildren():
+            if child.tag not in self.important:
+                print("Tag type %s not handled" % (child.tag))
+            elif len(new.xpath('%s[@name="%s"]' %
+                     (child.tag, child.get('name')))) == 0:
+                print(" %s %s in bundle %s:\n  only in old configuration" %
+                      (child.tag, child.get('name'), bundle))
+                identical = False
+
+        return identical
 
     def compareSpecifications(self, path1, path2):
         try:
