@@ -105,12 +105,11 @@ class Compare(Bcfg2.Server.Admin.Mode):
             else:
                 print("Unmatched bundle %s" % (bundle.get('name')))
                 rcs.append(False)
-        i1 = new.find('./Independent')
-        i2 = old.find('./Independent')
-        if self.compareStructures(i1, i2):
-            new.remove(i1)
-            old.remove(i2)
-        else:
+        i1 = lxml.etree.Element('Independent')
+        i2 = lxml.etree.Element('Independent')
+        i1.extend(new.findall('./Independent/*'))
+        i2.extend(old.findall('./Independent/*'))
+        if not self.compareStructures(i1, i2):
             rcs.append(False)
         return False not in rcs
 
