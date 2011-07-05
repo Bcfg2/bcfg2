@@ -124,7 +124,11 @@ class Compare(Bcfg2.Server.Admin.Mode):
             args.remove('-r')
             (oldd, newd) = args
             (old, new) = [os.listdir(spot) for spot in args]
+            old_extra = []
             for item in old:
+                if item not in new:
+                    old_extra.append(item)
+                    continue
                 print("File: %s" % item)
                 state = self.__call__([oldd + '/' + item, newd + '/' + item])
                 new.remove(item)
@@ -134,6 +138,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
                     print("File %s is bad" % item)
             if new:
                 print("%s has extra files: %s" % (newd, ', '.join(new)))
+            if old_extra:
+                print("%s has extra files: %s" % (oldd, ', '.join(old_extra)))
             return
         try:
             (old, new) = args
