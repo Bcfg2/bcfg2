@@ -62,17 +62,19 @@ class Compare(Bcfg2.Server.Admin.Mode):
         both = []
         oldl = ["%s %s" % (entry.tag, entry.get('name')) for entry in old]
         newl = ["%s %s" % (entry.tag, entry.get('name')) for entry in new]
+        onlyold = list(oldl)
+        onlynew = list(newl)
         for entry in newl:
             if entry in oldl:
                 both.append(entry)
-                newl.remove(entry)
-                oldl.remove(entry)
+                onlyold.remove(entry)
+                onlynew.remove(entry)
         for entry in both:
             print(" %s differs (in bundle %s)" % (entry, name))
-        for entry in oldl:
+        for entry in onlyold:
             print(" %s only in old configuration (in bundle %s)" % (entry,
                                                                     name))
-        for entry in newl:
+        for entry in onlynew:
             print(" %s only in new configuration (in bundle %s)" % (entry,
                                                                     name))
         return False
