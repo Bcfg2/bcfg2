@@ -90,6 +90,11 @@ class Compare(Bcfg2.Server.Admin.Mode):
                     bundle.set('name', bundle.get('name')[:-4])
 
         rcs = []
+        for bundle in old.findall('./Bundle'):
+            if len(new.xpath('Bundle[@name="%s"]' % (bundle.get('name')))) == 0:
+                print("Bundle %s only in old configuration" %
+                      bundle.get('name'))
+                rcs.append(False)
         for bundle in new.findall('./Bundle'):
             equiv = old.xpath('Bundle[@name="%s"]' % (bundle.get('name')))
             if len(equiv) == 0:
