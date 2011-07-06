@@ -216,6 +216,8 @@ def main(argv=None):
     else:
         for cmd in commando_orders:
             output = run(commando[cmd])[0].strip()
+            if options.verbose:
+                print output
 
 if __name__ == '__main__':
     sys.exit(main())
