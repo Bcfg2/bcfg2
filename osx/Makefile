@@ -29,13 +29,9 @@ SITELIBDIR = /Library/Python/${PYVERSION}/site-packages
 # an Info.plist file for packagemaker to look at for package creation
 # and substitute the version strings. Major/Minor versions can only be
 # integers (e.g. "1" and "00" for bcfg2 version 1.0.0.
-BCFGVER = $(shell /usr/bin/grep version ../setup.py | cut -d\" -f2)
-BCFGVER1 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f1)
-BCFGVER2 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f2)
-BCFGVER3 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f3)
-BCFGVER3I = $(shell /usr/bin/python -c "import sys; print sys.argv[1][0:1]" ${BCFGVER3})
-MAJOR = ${BCFGVER1}
-MINOR = ${BCFGVER2}${BCFGVER3I}
+BCFGVER = v1.2.0pre3
+MAJOR = 1
+MINOR = 2.0
 
 default: clean client
 
