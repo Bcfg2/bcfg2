@@ -37,7 +37,6 @@ clients - Print out client/profile information
 config - Print out the configuration of the Bcfg2 server
 debug - Shell out to native python interpreter
 event_debug - Display filesystem events as they are processed
-generators - List current versions of generators
 groups - List groups
 help - Print this list of available commands
 mappings <type*> <name*> - Print generator mappings for optional type and name
@@ -310,12 +309,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 ('Logging', setup['logging'])
                 ]
         printTabular(output)
-
-
-    def do_generators(self, _):
-        """Print out generator info."""
-        for generator in self.generators:
-            print(generator.__version__)
 
     def do_showentries(self, args):
         """Show abstract configuration entries for a given host."""
