@@ -217,6 +217,7 @@ def main(argv=None):
         for cmd in commando_orders:
             output = run(commando[cmd])[0].strip()
             if options.verbose:
+                print "Ran '%s' with output:" % cmd
                 print output
 
 if __name__ == '__main__':
