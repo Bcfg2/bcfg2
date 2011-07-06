@@ -117,10 +117,6 @@ E.G. 1.2.0pre1 is a valid version.
         print "version_release is %s" % version_release
 
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
-    
-    # update the version
-    majorver = "%s.%s.%s" % (version_info['major'], version_info['minor'], version_info['micro'])
-    minorver = version_info['build']
 
     newchangelog = \
     """bcfg2 (%s%s-0.0) unstable; urgency=low
