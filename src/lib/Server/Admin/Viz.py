@@ -10,7 +10,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin viz [--includehosts] "
                                     "[--includebundles] [--includekey] "
                                     "[--only-client clientname] "
-                                    "[-o output.png] [--raw]\n")
+                                    "[-o output.<ext>]\n")
     __usage__ = ("bcfg2-admin viz [options]\n\n"
                  "     %-32s%s\n"
                  "     %-32s%s\n"
@@ -56,8 +56,6 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             print(self.__longhelp__)
             raise SystemExit(1)
 
-        #FIXME: is this for --raw?
-        #rset = False
         hset = False
         bset = False
         kset = False
