@@ -33,7 +33,7 @@ ftpdir = '/mcs/ftp/pub/bcfg'
 def run(command):
     return Popen(command, shell=True, stdout=PIPE).communicate()
 
-def find_and_replace(f, iftest, rline, startswith=False, dryrun=True):
+def find_and_replace(f, iftest, rline, startswith=False, dryrun=False):
     if dryrun:
         inplace=0
         print "*** dry-run: New '%s' will look like this:" % f
@@ -144,24 +144,37 @@ def main(argv=None):
     
     # update solaris version
     find_and_replace('solaris/Makefile', 'VERS=',
-                     'VERS=%s-1\n' % version, startswith=True)
+                     'VERS=%s-1\n' % version, 
+                     startswith=True,
+                     dryrun=options.dryrun)
     find_and_replace('solaris/pkginfo.bcfg2', 'VERSION=',
-                     'VERSION="%s"\n' % version, startswith=True)
+                     'VERSION="%s"\n' % version, 
+                     startswith=True, 
+                     dryrun=options.dryrun)
     find_and_replace('solaris/pkginfo.bcfg2-server', 'VERSION=',
-                     'VERSION="%s"\n' % version, startswith=True)
+                     'VERSION="%s"\n' % version, 
+                     startswith=True, 
+                     dryrun=options.dryrun)
     # set new version in setup.py
-    find_and_replace('setup.py', 'version=', '      version="%s",\n' % version)
+    find_and_replace('setup.py', 'version=', '      version="%s",\n' % version, 
+                     dryrun=options.dryrun)
     # replace version in misc/bcfg2.spec
     find_and_replace('misc/bcfg2.spec', 'Version:',
-                     'Version:          %s\n' % version)
+                     'Version:          %s\n' % version, 
+                     dryrun=options.dryrun)
     # update the version in reports
     find_and_replace('src/lib/Server/Reports/reports/templates/base.html',
-                     'Bcfg2 Version', '    <span>Bcfg2 Version %s</span>\n' % version)
+                     'Bcfg2 Version', '    <span>Bcfg2 Version %s</span>\n' % version,
+                     dryrun=options.dryrun)
     # update the version in the docs
     find_and_replace('doc/conf.py', 'version =',
-                     'version = \'%s\'\n' % majorver[0:3], startswith=True)
+                     'version = \'%s\'\n' % majorver[0:3], 
+                     startswith=True, 
+                     dryrun=options.dryrun)
     find_and_replace('doc/conf.py', 'release =',
-                     'release = \'%s\'\n' % (majorver), startswith=True)
+                     'release = \'%s\'\n' % (majorver), 
+                     startswith=True, 
+                     dryrun=options.dryrun)
 
     # tag the release
     #FIXME: do this using python-dulwich
