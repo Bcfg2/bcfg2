@@ -129,7 +129,7 @@ E.G. 1.2.0pre1 is a valid version.
 
      -- %s <%s>  %s
 
-    """ % (majorver, minorver, name, email, formatdate(localtime=True))
+    """ % (version_release, minorver, name, email, formatdate(localtime=True))
     
     
     # write out the new debian changelog
@@ -150,11 +150,11 @@ E.G. 1.2.0pre1 is a valid version.
     
     # Update redhat directory versions
     if options.dryrun:
-        print "*** Replace redhat/VERIONS content with '%s'." % majorver
+        print "*** Replace redhat/VERIONS content with '%s'." % version_release
         print "*** Replace redhat/RELEASE content with '%s'." % minorver
     else:
         with open('redhat/VERSION', 'w') as f:
-            f.write("%s\n" % majorver)
+            f.write("%s\n" % version_release)
         f.close()
         with open('redhat/RELEASE', 'w') as f:
             f.write("0.0%s\n" % minorver)
@@ -190,7 +190,7 @@ E.G. 1.2.0pre1 is a valid version.
                      startswith=True, 
                      dryrun=options.dryrun)
     find_and_replace('doc/conf.py', 'release =',
-                     'release = \'%s\'\n' % (majorver), 
+                     'release = \'%s\'\n' % (version_release), 
                      startswith=True, 
                      dryrun=options.dryrun)
     # update osx Makefile
