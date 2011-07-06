@@ -82,7 +82,6 @@ def main(argv=None):
     if options.debug:
         print options
         print "What should debug mode do?"
-        quit()
     
     # py3k compatibility
     try:
@@ -94,22 +93,34 @@ def main(argv=None):
         name = input("Your name: ")
         email = input("Your email: ")
     
-    # parse version into Major.Minor.Build and validate
+    # parse version into Major.Minor.MicroBuild and validate
+    vkeys = ["major", "minor", "microbuild"]
     try:
-        [version_major, version_minor, version_build] = version.split(".")
-        if not version_major.isdigit() or not version_minor.isdigit():
+        version_info = dict(zip(vkeys,version.split(".")))
+        if not version_info["major"].isdigit() or not version_info["minor"].isdigit():
             raise VersionError('isdigit() test failed')
     except:
-        print "Version must be of the form Major.Minor.Build, where Major and Minor are integers and Build is a single digit optionally followed by pre##"
+        print """Version must be of the form Major.Minor.MicroBuild, 
+where Major and Minor are integers and 
+Micro is a single digit optionally followed by Build (i.e. pre##)
+E.G. 1.2.0pre1 is a valid version.
+        """
         quit()
 
-    version_macbuild = version_build[0:1]
+    version_info["micro"] = version_info["microbuild"][0:1]
+    version_info["build"] = version_info["microbuild"][1:]
+    version_release = "%s.%s.%s" % (version_info['major'], version_info['minor'], version_info['micro'])
     
+    if options.debug:
+        print "version is %s" % version
+        print "version_info is %s" % version_info
+        print "version_version is %s" % version_release
+
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
     
     # update the version
-    majorver = version[:5]
-    minorver = version[5:]
+    majorver = "%s.%s.%s" % (version_info['major'], version_info['minor'], version_info['micro'])
+    minorver = version_info['build']
 
     newchangelog = \
     """bcfg2 (%s%s-0.0) unstable; urgency=low
@@ -180,6 +191,11 @@ def main(argv=None):
                      dryrun=options.dryrun)
     find_and_replace('doc/conf.py', 'release =',
                      'release = \'%s\'\n' % (majorver), 
+                     startswith=True, 
+                     dryrun=options.dryrun)
+    # update osx Makefile
+    find_and_replace('osx/Makefile', 'BCFGVER =',
+                     'BCFGVER = \'%s\'\n' % (version), 
                      startswith=True, 
                      dryrun=options.dryrun)
 
