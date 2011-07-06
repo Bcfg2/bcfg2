@@ -53,7 +53,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         except getopt.GetoptError:
             msg = sys.exc_info()[1]
             print(msg)
-            self.log.error(self.__shorthelp__)
+            print(self.__longhelp__)
             raise SystemExit(1)
 
         #FIXME: is this for --raw?
