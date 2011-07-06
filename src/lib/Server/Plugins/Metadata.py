@@ -782,8 +782,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             xdict['xquery'][0].set('auth', 'cert')
             self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
-    def viz(self, hosts, bundles, key, colors):
+    def viz(self, hosts, bundles, key, only_client, colors):
         """Admin mode viz support."""
+        if only_client:
+            clientmeta = self.core.build_metadata(only_client)
+
+        def include_client(client):
+            return not only_client or client != only_client
+
+        def include_bundle(bundle):
+            return not only_client or bundle in clientmeta.bundles
+
+        def include_group(group):
+            return not only_client or group in clientmeta.groups
+        
         groups_tree = lxml.etree.parse(self.data + "/groups.xml")
         try:
             groups_tree.xinclude()
@@ -791,7 +803,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Failed to process XInclude for file %s" % dest)
         groups = groups_tree.getroot()
         categories = {'default': 'grey83'}
-        instances = {}
         viz_str = ""
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
         for group in egroups:
@@ -801,8 +812,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if None in categories:
             del categories[None]
         if hosts:
+            instances = {}
             clients = self.clients
             for client, profile in list(clients.items()):
+                if include_client(client):
+                    continue
                 if profile in instances:
                     instances[profile].append(client)
                 else:
@@ -817,7 +831,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             bundles = []
             [bundles.append(bund.get('name')) \
                  for bund in groups.findall('.//Bundle') \
-                 if bund.get('name') not in bundles]
+                 if bund.get('name') not in bundles \
+                     and include_bundle(bund.get('name'))]
             bundles.sort()
             for bundle in bundles:
                 viz_str += '''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' \
@@ -829,20 +844,22 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             else:
                 style = "filled"
             gseen.append(group.get('name'))
-            viz_str += '\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' % \
-                (group.get('name'), group.get('name'), style, group.get('color'))
-            if bundles:
-                for bundle in group.findall('Bundle'):
-                    viz_str += '\t"group-%s" -> "bundle-%s";\n' % \
-                        (group.get('name'), bundle.get('name'))
+            if include_group(group.get('name')):
+                viz_str += '\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' % \
+                           (group.get('name'), group.get('name'), style, group.get('color'))
+                if bundles:
+                    for bundle in group.findall('Bundle'):
+                        viz_str += '\t"group-%s" -> "bundle-%s";\n' % \
+                                   (group.get('name'), bundle.get('name'))
         gfmt = '\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n'
         for group in egroups:
             for parent in group.findall('Group'):
-                if parent.get('name') not in gseen:
+                if parent.get('name') not in gseen and include_group(parent.get('name')):
                     viz_str += gfmt % (parent.get('name'), parent.get('name'))
                     gseen.append(parent.get("name"))
-                viz_str += '\t"group-%s" -> "group-%s" ;\n' % \
-                    (group.get('name'), parent.get('name'))
+                if include_group(group.get('name')):
+                    viz_str += '\t"group-%s" -> "group-%s" ;\n' % \
+                               (group.get('name'), parent.get('name'))
         if key:
             for category in categories:
                 viz_str += '''\t"''' + category + '''" [label="''' + category + \

@@ -1,5 +1,6 @@
 import getopt
 from subprocess import Popen, PIPE
+import sys
 
 import Bcfg2.Server.Admin
 
@@ -8,18 +9,22 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Produce graphviz diagrams of metadata structures"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin viz [--includehosts] "
                                     "[--includebundles] [--includekey] "
+                                    "[--only-client clientname] "
                                     "[-o output.png] [--raw]\n")
     __usage__ = ("bcfg2-admin viz [options]\n\n"
-                 "     %-25s%s\n"
-                 "     %-25s%s\n"
-                 "     %-25s%s\n"
-                 "     %-25s%s\n" %
+                 "     %-32s%s\n"
+                 "     %-32s%s\n"
+                 "     %-32s%s\n"
+                 "     %-32s%s\n"
+                 "     %-32s%s\n" %
                 ("-H, --includehosts",
                  "include hosts in the viz output",
                  "-b, --includebundles",
                  "include bundles in the viz output",
                  "-k, --includekey",
                  "show a key for different digraph shapes",
+                 "-c, --only-client <clientname>",
+                 "show only the groups, bundles for the named client",
                  "-o, --outfile <file>",
                  "write viz output to an output file"))
 
@@ -42,18 +47,21 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         # First get options to the 'viz' subcommand
         try:
-            opts, args = getopt.getopt(args, 'Hbko:',
+            opts, args = getopt.getopt(args, 'Hbkc:o:',
                                        ['includehosts', 'includebundles',
-                                        'includekey', 'outfile='])
+                                        'includekey', 'only-client=', 'outfile='])
         except getopt.GetoptError:
             msg = sys.exc_info()[1]
             print(msg)
+            self.log.error(self.__shorthelp__)
+            raise SystemExit(1)
 
         #FIXME: is this for --raw?
         #rset = False
         hset = False
         bset = False
         kset = False
+        only_client = None
         outputfile = False
         for opt, arg in opts:
             if opt in ("-H", "--includehosts"):
@@ -62,16 +70,18 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
                 bset = True
             elif opt in ("-k", "--includekey"):
                 kset = True
+            elif opt in ("-c", "--only-client"):
+                only_client = arg
             elif opt in ("-o", "--outfile"):
                 outputfile = arg
 
         data = self.Visualize(self.get_repo_path(), hset, bset,
-                              kset, outputfile)
+                              kset, only_client, outputfile)
         print(data)
         raise SystemExit(0)
 
     def Visualize(self, repopath, hosts=False,
-                  bundles=False, key=False, output=False):
+                  bundles=False, key=False, only_client=None, output=False):
         """Build visualization of groups file."""
         if output:
             format = output.split('.')[-1]
@@ -90,7 +100,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             raise SystemExit(1)
         dotpipe.stdin.write('\trankdir="LR";\n')
         dotpipe.stdin.write(self.metadata.viz(hosts, bundles,
-                                                key, self.colors))
+                                              key, only_client, self.colors))
         if key:
             dotpipe.stdin.write("\tsubgraph cluster_key {\n")
             dotpipe.stdin.write('''\tstyle="filled";\n''')
