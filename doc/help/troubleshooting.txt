@@ -200,8 +200,8 @@ Server Errors
 | Packages: No matching        | Server   | None of the sources | [s12]_       |
 | sources for client           |          | defined in the      |              |
 | <clientname>; improper group |          | Package plugin's    |              |
-| memberships?                 |          | ``config.xml``apply |              |
-|                              |          | to the client.      |              |
+| memberships?                 |          | ``config.xml``      |              |
+|                              |          | apply to the client |              |
 +------------------------------+----------+---------------------+--------------+
 
 
