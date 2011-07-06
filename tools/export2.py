@@ -114,7 +114,7 @@ E.G. 1.2.0pre1 is a valid version.
     if options.debug:
         print "version is %s" % version
         print "version_info is %s" % version_info
-        print "version_version is %s" % version_release
+        print "version_release is %s" % version_release
 
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
     
@@ -186,7 +186,7 @@ E.G. 1.2.0pre1 is a valid version.
                      dryrun=options.dryrun)
     # update the version in the docs
     find_and_replace('doc/conf.py', 'version =',
-                     'version = \'%s\'\n' % majorver[0:3], 
+                     'version = \'%s.%s\'\n' % (version_info['major'], version_info['minor']), 
                      startswith=True, 
                      dryrun=options.dryrun)
     find_and_replace('doc/conf.py', 'release =',
