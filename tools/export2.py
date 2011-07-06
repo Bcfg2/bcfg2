@@ -191,7 +191,15 @@ E.G. 1.2.0pre1 is a valid version.
                      dryrun=options.dryrun)
     # update osx Makefile
     find_and_replace('osx/Makefile', 'BCFGVER =',
-                     'BCFGVER = \'%s\'\n' % (version), 
+                     'BCFGVER = %s\n' % (version), 
+                     startswith=True, 
+                     dryrun=options.dryrun)
+    find_and_replace('osx/Makefile', 'MAJOR =',
+                     'MAJOR = %s\n' % (version_info['major']), 
+                     startswith=True, 
+                     dryrun=options.dryrun)
+    find_and_replace('osx/Makefile', 'MINOR =',
+                     'MINOR = %s.%s\n' % (version_info['minor'], version_info['micro']), 
                      startswith=True, 
                      dryrun=options.dryrun)
 
