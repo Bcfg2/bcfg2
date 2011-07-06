@@ -129,7 +129,7 @@ E.G. 1.2.0pre1 is a valid version.
 
      -- %s <%s>  %s
 
-    """ % (version_release, minorver, name, email, formatdate(localtime=True))
+    """ % (version_release, version_info['build'], name, email, formatdate(localtime=True))
     
     
     # write out the new debian changelog
@@ -151,13 +151,13 @@ E.G. 1.2.0pre1 is a valid version.
     # Update redhat directory versions
     if options.dryrun:
         print "*** Replace redhat/VERIONS content with '%s'." % version_release
-        print "*** Replace redhat/RELEASE content with '%s'." % minorver
+        print "*** Replace redhat/RELEASE content with '%s'." % version_info['build'] 
     else:
         with open('redhat/VERSION', 'w') as f:
             f.write("%s\n" % version_release)
         f.close()
         with open('redhat/RELEASE', 'w') as f:
-            f.write("0.0%s\n" % minorver)
+            f.write("0.0%s\n" % version_info['build'])
         f.close()
     
     # update solaris version
