@@ -72,10 +72,17 @@ def main(argv=None):
                     help = 'run in debun mode',
                     default = False,
                     dest = 'debug')
+    p.add_option('--paranoid', '-P',
+                    action = 'store_true',
+                    help = 'run in paranoid mode, make changes but do not commit to repository',
+                    default = False,
+                    dest = 'paranoid')
     options, arguments = p.parse_args()
     
     if options.debug:
         print options
+        print "What should debug mode do?"
+        quit()
     
     # py3k compatibility
     try:
@@ -180,6 +187,8 @@ def main(argv=None):
     #FIXME: do this using python-dulwich
     commando = {}
 
+    commando["vcs_diff"] = "git diff"
+
     commando["vcs_commit"] = "git commit -asm 'Version bump to %s'" % version
 
     # NOTE: This will use the default email address key. If you want to sign the tag
@@ -196,7 +205,11 @@ def main(argv=None):
     commando["scp_archive"] = "scp %s* terra.mcs.anl.gov:/mcs/ftp/pub/bcfg/" % tarname
     
     # Execute the commands
-    commando_orders = ["vcs_commit","vcs_tag","create_archive","gpg_encrypt","scp_archive"]
+    if options.paranoid:
+        commando_orders = ["vcs_diff"]
+    else:
+        commando_orders = ["vcs_commit","vcs_tag","create_archive","gpg_encrypt","scp_archive"]
+
     if options.dryrun:
         for cmd in commando_orders:
             print "*** dry-run: %s" % commando[cmd]
