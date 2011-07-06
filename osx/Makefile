@@ -1,6 +1,6 @@
-PYVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[0:3]")
-PYMAJORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[0:1]")
-PYMINORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[2:3]")
+PYVERSION := $(shell /usr/bin/python -c "import sys; print '%s.%s' % (sys.version_info[0], sys.version_info[1])"python -c "import sys; print sys.version[0:3]")
+PYMAJORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[0]")
+PYMINORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[1]")
 PREFLIGHT = preflight
 POSTFLIGHT = postflight
 PKGROOT = bcfg2pkg
