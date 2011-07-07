@@ -119,13 +119,13 @@ E.G. 1.2.0pre1 is a valid version.
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
     newchangelog = \
-    """bcfg2 (%s%s-0.0) unstable; urgency=low
+"""bcfg2 (%s%s-0.0) unstable; urgency=low
 
-      * New upstream release
+  * New upstream release
 
-     -- %s <%s>  %s
+ -- %s <%s>  %s
 
-    """ % (version_release, version_info['build'], name, email, formatdate(localtime=True))
+""" % (version_release, version_info['build'], name, email, formatdate(localtime=True))
     
     
     # write out the new debian changelog
