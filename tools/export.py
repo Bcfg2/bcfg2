@@ -108,7 +108,7 @@ def main(argv=None):
 
         if not version_info["major"].isdigit() or not version_info["minor"].isdigit() or not version_info["micro"]:
             raise VersionError('isdigit() test failed')
-        if version_info["micro"] > 1:
+        if len(version_info["micro"]) > 1:
             raise VersionError('micro must be single digit because IFMinorVersion restrictions in Mac OS X Packaging')
     except:
         print """Version must be of the form Major.Minor.MicroBuild, 
