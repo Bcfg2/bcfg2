@@ -97,24 +97,27 @@ def main(argv=None):
     vkeys = ["major", "minor", "microbuild"]
     try:
         version_info = dict(zip(vkeys,version.split(".")))
-        if not version_info["major"].isdigit() or not version_info["minor"].isdigit():
+        version_info["micro"] = version_info["microbuild"][0:1]
+        version_info["build"] = version_info["microbuild"][1:]
+        version_release = "%s.%s.%s" % (version_info['major'], version_info['minor'], version_info['micro'])
+    
+        if options.debug:
+            print "version is %s" % version
+            print "version_info is %s" % version_info
+            print "version_release is %s" % version_release
+
+        if not version_info["major"].isdigit() or not version_info["minor"].isdigit() or not version_info["micro"]:
             raise VersionError('isdigit() test failed')
+        if version_info["micro"] > 1:
+            raise VersionError('micro must be single digit because IFMinorVersion restrictions in Mac OS X Packaging')
     except:
         print """Version must be of the form Major.Minor.MicroBuild, 
 where Major and Minor are integers and 
 Micro is a single digit optionally followed by Build (i.e. pre##)
 E.G. 1.2.0pre1 is a valid version.
-        """
+"""
         quit()
 
-    version_info["micro"] = version_info["microbuild"][0:1]
-    version_info["build"] = version_info["microbuild"][1:]
-    version_release = "%s.%s.%s" % (version_info['major'], version_info['minor'], version_info['micro'])
-    
-    if options.debug:
-        print "version is %s" % version
-        print "version_info is %s" % version_info
-        print "version_release is %s" % version_release
 
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
@@ -199,7 +202,7 @@ E.G. 1.2.0pre1 is a valid version.
                      startswith=True, 
                      dryrun=options.dryrun)
     find_and_replace('osx/Makefile', 'MINOR =',
-                     'MINOR = %s.%s\n' % (version_info['minor'], version_info['micro']), 
+                     'MINOR = %s%s\n' % (version_info['minor'], version_info['micro']), 
                      startswith=True, 
                      dryrun=options.dryrun)
 

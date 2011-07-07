@@ -31,7 +31,7 @@ SITELIBDIR = /Library/Python/${PYVERSION}/site-packages
 # integers (e.g. "1" and "00" for bcfg2 version 1.0.0.
 BCFGVER = 1.2.0pre3
 MAJOR = 1
-MINOR = 2.0
+MINOR = 20
 
 default: clean client
 
