@@ -1,6 +1,6 @@
-PYVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[0:3]")
-PYMAJORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[0:1]")
-PYMINORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version[2:3]")
+PYVERSION := $(shell /usr/bin/python -c "import sys; print '%s.%s' % (sys.version_info[0], sys.version_info[1])")
+PYMAJORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[0]")
+PYMINORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[1]")
 PREFLIGHT = preflight
 POSTFLIGHT = postflight
 PKGROOT = bcfg2pkg
@@ -29,13 +29,9 @@ SITELIBDIR = /Library/Python/${PYVERSION}/site-packages
 # an Info.plist file for packagemaker to look at for package creation
 # and substitute the version strings. Major/Minor versions can only be
 # integers (e.g. "1" and "00" for bcfg2 version 1.0.0.
-BCFGVER = $(shell /usr/bin/grep version ../setup.py | cut -d\" -f2)
-BCFGVER1 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f1)
-BCFGVER2 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f2)
-BCFGVER3 = $(shell /bin/echo ${BCFGVER} | /usr/bin/cut -d"." -f3)
-BCFGVER3I = $(shell /usr/bin/python -c "import sys; print sys.argv[1][0:1]" ${BCFGVER3})
-MAJOR = ${BCFGVER1}
-MINOR = ${BCFGVER2}${BCFGVER3I}
+BCFGVER = 1.2.0pre3
+MAJOR = 1
+MINOR = 20
 
 default: clean client
 

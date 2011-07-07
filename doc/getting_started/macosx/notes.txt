@@ -1,0 +1,77 @@
+= Setting up Bcfg2 From Scratch =
+
+Ala [[http://blog.conpocococo.org/post/6079832974/managing-etc-motd-with-bcfg2-starting-from-an-empty-vm|Managing /etc/motd with Bcfg2 Starting From an Empty VM]], I'll be setting up a fresh OS X 10.6 machine to be managed by [[http://bcfg2.org|Bcfg2]].
+
+== Get OS X 10.6 Running ==
+
+Use your favorite provisioning method (e.g. open-box-then-push-power-button, DVD, [[http://www.deploystudio.com/Home.html|DeplyStudio]], etc) to get your operating system running and fully patched.
+
+For this hands on, I'm running OS X 10.6.8 (Build 10K540) with the
+supplied python 2.6.1. I've also turned on Remote Login (i.e. ssh) so I
+can use my client to write this document going through the steps; having
+ssh on is not a requirement for this howto.
+
+== Get bcfg2-server Working ==
+
+=== Get bcfg2 package ===
+
+You might be able to get a package already built for you, but it is not hard to build it from the source. You'll need git (via [[https://code.google.com/p/git-osx-installer/|git-osx-installer]] or [[https://github.com/mxcl/homebrew|homebrew]] the former is easier, the later more developer friendly) and Apple's [[http://developer.apple.com/xcode/|xcode]]. 
+
+The first step is to clone the bcfg2 repository into a working directory:
+
+{{{#!highlight bash
+cd ~/Devloper
+git clone git://git.mcs.anl.gov/bcfg2.git
+cd bcfg2
+}}} 
+
+At this point you will probably want to checkout a release tag (`git tag -l` to
+see a list of them). This test is using v1.2.0pre4. Once you've done
+that you can build the server.
+
+{{{#!highlight bash
+git checkout v1.2.0pre4
+cd osx
+make server
+}}}
+
+The server package contains both the client and the server. The package
+is located at ./osx/bcfg2-VERSION.pkg. Copy it to the machine you want
+to set up from scratch and install it.
+
+THIS NEEDS TO VERIFIED
+Some of the differences between bcfg2 on Mac OS X and Debian is that the
+libraries are stored at
+`/Library/Frameworks/Python.framework/Versions/Current/share/bcfg2/`
+`/Library/Python/site-packages/Bcfg2/`
+instead of `/usr/lib/pymodules/` and `/usr/share/pyshare/Bcfg2. Also, 
+instead of cron and init.d,
+`/Library/LaunchDaemons/gov.anl.mcs.bcfg2-daily.plist` controls peridic
+runs and starts and stops. The runtime files are stored in
+`/usr/local/bin` under Mac OS X instead of /usr/sbin/ for Debian.
+VERIFY
+
+Error: bcfg2-admin init
+"""
+10.6_client :~ user$ sudo /usr/local/bin/bcfg2-admin init
+Failed to import lxml dependency. Shutting down server.
+"""
+
+Try: sudo easy_install lxml. If you don't have gcc-4.2 installed, you'll
+need to install it on a machine that does. Then move
+`/Library/Python/2.6/sites-packages/lxml-2.3-py2.6-macosx-10.6-universal.egg`
+to the client and add the line
+"./lxml-2.3-py2.6-macosx-10.6-universal.egg" to
+`/Library/Python/2.6/site-packages/easy-install.pth`.
+
+getting a new error: 
+
+$ sudo /usr/local/bin/bcfg2-admin init
+Interactively initialize a new repository.
+
+bcfg2-admin init
+$
+
+So what is lxml easy_install fully installing? Need to make a package
+(Lettuce to the rescue!)
+
