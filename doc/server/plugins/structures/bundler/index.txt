@@ -183,6 +183,11 @@ first invoking ``bcfg2-info debug``, then run::
 ``path`` needs to be the full path to the template file on the
 filesystem, not just within the Bcfg2 repo.
 
+If you are making changes to your template and you want to tell your
+filemonitor to process any pending changes, you can do the following::
+
+    self.fam.handle_events_in_interval(0.1)
+
 Altsrc
 ======
 
