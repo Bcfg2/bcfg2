@@ -1,4 +1,4 @@
-PYVERSION := $(shell /usr/bin/python -c "import sys; print '%s.%s' % (sys.version_info[0], sys.version_info[1])"
+PYVERSION := $(shell /usr/bin/python -c "import sys; print '%s.%s' % (sys.version_info[0], sys.version_info[1])")
 PYMAJORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[0]")
 PYMINORVERSION := $(shell /usr/bin/python -c "import sys; print sys.version_info[1]")
 PREFLIGHT = preflight
