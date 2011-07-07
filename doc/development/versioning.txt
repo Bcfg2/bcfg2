@@ -10,9 +10,9 @@ Versioning Bcfg2
    * The version number will be broken down into Major.Minor.MicroBuild.
    * Major and Minor are ever increasing integers. 
    * Micro is a single digit integer. This is because of limits in some
-of the package systems (specifically Mac OS X).
+     of the package systems (specifically Mac OS X).
    * Build is either missing or refers to release candidates: e.g.
-"pre3".
+     "pre3".
 
 
 .. _versioning: https://secure.wikimedia.org/wikipedia/en/wiki/Software_versioning
