@@ -29,19 +29,13 @@
     <xsd:attribute type='xsd:string' name='address'/>
   </xsd:complexType>
 
-  <xsd:element name='Clients'>
-    <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Client' type='ClientType'/>
-        <xsd:element name='Clients'>
-          <xsd:complexType>
-            <xsd:choice>
-              <xsd:element name='Client' type='ClientType'/>
-            </xsd:choice>
-          </xsd:complexType>
-        </xsd:element>
-      </xsd:choice>
-      <xsd:attribute name='version' type='xsd:string'/>
-    </xsd:complexType>
-  </xsd:element>
+  <xsd:complexType name='ClientsType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Client' type='ClientType'/>
+      <xsd:element name='Clients' type='ClientsType'/>
+    </xsd:choice>
+    <xsd:attribute name='version' type='xsd:string'/>
+  </xsd:complexType>
+
+  <xsd:element name='Clients' type='ClientsType'/>
 </xsd:schema>
