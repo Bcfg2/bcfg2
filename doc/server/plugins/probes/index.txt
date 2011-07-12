@@ -37,9 +37,9 @@ interpreter.
 
     Bcfg2 uses python mkstemp to create the Probe scripts on the
     client. If your /tmp directory is mounted **noexec**, you will
-    likely need to modify the TMPDIR environment variable so that the
-    bcfg2 client creates the temporary files in a directory from which
-    it can execute.
+    likely need to modify the :envvar:`TMPDIR` environment variable so
+    that the bcfg2 client creates the temporary files in a directory
+    from which it can execute.
 
 Now we need to figure out what exactly we want to do.  In this case,
 we want to hand out an ``/etc/auto.master`` file that looks like::

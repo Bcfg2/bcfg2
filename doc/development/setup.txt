@@ -10,10 +10,10 @@ Environment setup for development
 
       git clone git://git.mcs.anl.gov/bcfg2.git
 
-* Create link to ``src/lib``::
+* Create link to :file:`src/lib`::
 
       cd bcfg2
       ln -s src/lib Bcfg2
 
-* Add ``bcfg2/src/sbin`` to your PATH environment variable
-* Add ``bcfg2`` to your PYTHONPATH environment variable
+* Add :file:`bcfg2/src/sbin` to your :envvar:`PATH` environment variable
+* Add :file:`bcfg2` to your :envvar:`PYTHONPATH` environment variable

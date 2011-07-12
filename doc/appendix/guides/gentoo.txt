@@ -39,7 +39,7 @@ Package Repository
 You’ll need (to make) at least one archive of binary packages. The
 Portage driver calls ``emerge`` with the ``-getbinpkgonly`` option. See
 :manpage:`make.conf(5)` and :manpage:`emerge(1)` manpages, specifically
-the *PORTAGE_BINHOST* environment variable.
+the :envvar:`PORTAGE_BINHOST` environment variable.
 
 Time Saver: quickpkg
 --------------------
