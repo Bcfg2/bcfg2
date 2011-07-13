@@ -9,7 +9,7 @@ Glossary
 .. glossary:: :sorted:
 
     client
-        A system that runs the :cmd:`bcfg2` command. Typically, this
+        A system that runs the :command:`bcfg2` command. Typically, this
         is to receive a configuration from a Bcfg2 server.
 
     generator
