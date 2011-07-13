@@ -1,3 +1,5 @@
+.. -*- mode: rst -*-
+
 .. _glossary:
 
 ========
@@ -7,10 +9,13 @@ Glossary
 .. glossary:: :sorted:
 
     client
+        A system that runs the :cmd:`bcfg2` command. Typically, this
+        is to receive a configuration from a Bcfg2 server.
 
     generator
-        A type of plugin which provides file contents. For example Cfg
-        or TGenshi.
+        A type of plugin which provides file contents. For example
+        :ref:`server-plugins-generators-cfg` or
+        :ref:`server-plugins-generators-tgenshi-index`.
 
     Genshi
         A Python-based templating engine. `Genshi Homepage`_.
@@ -31,12 +36,13 @@ Glossary
     structure
 
     repository
-        A collection of folders and files that make up the configurations
-        that Bcfg2 applies to server. The repository is located at
-        ``/var/lib/bcfg2`` by default. This is not to be confused with
-        a :term:VCS repository, which is an excellent place to pull
-        your Bcfg2 repository from to manage changes. When used alone,
-        repository refers to a Bcfg2 repository.
+        A collection of folders and files that together define the
+        configurations that Bcfg2 applies to clients. The repository
+        is located at :file:`/var/lib/bcfg2` by default. This is not
+        to be confused with a :term:`VCS` repository, which is an
+        excellent place to pull your Bcfg2 repository from to manage
+        changes. When used alone, :term:`repository` refers to a Bcfg2
+        repository.
 
     VCS
         Stands for `Version Control System
