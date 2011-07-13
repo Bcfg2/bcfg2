@@ -2,9 +2,11 @@
 
 .. _development-setup:
 
-
 Environment setup for development
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=================================
+
+Checking Out a Copy of the Code
+-------------------------------
 
 * Check out a copy of the code::
 
@@ -17,3 +19,72 @@ Environment setup for development
 
 * Add :file:`bcfg2/src/sbin` to your :envvar:`PATH` environment variable
 * Add :file:`bcfg2` to your :envvar:`PYTHONPATH` environment variable
+
+
+Using a Virtual Environment for Development
+-------------------------------------------
+
+Bcfg2 is a pure Python program, and Python makes available certain
+tools that simplify creating isolated environments. Such environments
+are useful for running code under development, running code that needs
+to be installed without actually installing it in system locations, or
+running parallel, independent installations of the same packages.
+
+One popular tool for doing this is `virtualenv
+<http://pypi.python.org/pypi/virtualenv>`_. The following commands
+will bootstrap an isolated environment where the Bcfg2 server can
+run. They assume you are starting from an empty directory, on a
+Posix-like system that has Python and the ``virtualenv`` package
+installed (e.g., on Debian it is available as ``python-virtualenv``):
+
+.. code-block:: sh
+
+      # Work in a scratch directory
+      mkdir test_env
+      cd test_env
+
+      # This creates the environment
+      virtualenv .
+
+      # "Activate" the environment. From this point forward, Python
+      # and its libraries will first be searched for in test_env and
+      # its subdirectories. When you begin a new session that should
+      # use this environment, re-execute this command.
+      . bin/activate
+
+      # The pip command is useful for installing python code from a
+      # variety of locations, including directly from git repositories
+      easy_install pip
+
+      # Install Bcfg2 from git. The -e puts the source in an editable
+      # git clone under the "src" dir.
+      pip install -e git://git.mcs.anl.gov/bcfg2.git#egg=Bcfg2
+
+      # Install a newer version of the Cheetah library, for example
+      pip install --upgrade cheetah
+
+      # If you want to run IPython from within the virtual
+      # environment, it will need to be installed locally, even if it
+      # is already available on the system, or else it won't find .
+      pip install --upgrade ipython
+
+      # Note, if you install IPython, deactivate and reactivate the
+      # virtualenv before attempting to use it.
+      deactivate
+      . bin/activate
+
+.. note::
+
+   One caveat about this environment is that it assumes you have
+   already installed Bcfg2's dependencies on the system itself. Pip is
+   capable of building packages such as ``lxml`` that include native
+   code, but you will need to be sure its build-time prerequisites are
+   available.
+
+Consider using the above commands to create an isolated Bcfg2
+environment in the same directory as your Bcfg2
+:term:`repository`. Copy your :file:`/etc/bcfg2.conf` file into a
+local :file:`etc` directory, tweak the paths as needed and you can run
+an independent Bcfg2 server as a non-root user. This is useful for
+confirming a new release of Bcfg2 and all its tools works against your
+current :term:`repository` before upgrading.
