@@ -4,7 +4,6 @@ import Bcfg2.Server.Lint
 class Bundles(Bcfg2.Server.Lint.ServerPlugin):
     """ Perform various bundle checks """
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         """ run plugin """
         if 'Bundler' in self.core.plugins:

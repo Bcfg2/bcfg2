@@ -7,7 +7,8 @@ __all__ = ['Bundles',
            'MergeFiles',
            'Pkgmgr',
            'RequiredAttrs',
-           'Validate']
+           'Validate',
+           'Genshi']
 
 import logging
 import os.path
@@ -15,10 +16,33 @@ from copy import copy
 import textwrap
 import lxml.etree
 import Bcfg2.Logger
+import fcntl
+import termios
+import struct
 
-def returnErrors(fn):
-    """ Decorator for Run method that returns error counts """
-    return fn
+def _ioctl_GWINSZ(fd):
+    try:
+        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+    except:
+        return None
+    return cr
+
+def get_termsize():
+    """ get a tuple of (width, height) giving the size of the terminal """
+    cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = _ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        try:
+            cr = (os.environ['LINES'], os.environ['COLUMNS'])
+        except KeyError:
+            cr = (25, 80)
+    return int(cr[1]), int(cr[0])
 
 class Plugin (object):
     """ base class for ServerlessPlugin and ServerPlugin """
@@ -89,7 +113,8 @@ class ErrorHandler (object):
                "xml-failed-to-verify":"error",
                "merge-cfg":"warning",
                "merge-probes":"warning",
-               "input-output-error": "error"}
+               "input-output-error": "error",
+               "genshi-syntax-error": "error"}
 
     def __init__(self, config=None):
         self.errors = 0
@@ -97,8 +122,10 @@ class ErrorHandler (object):
 
         self.logger = logging.getLogger('bcfg2-lint')
 
-        self._wrapper = textwrap.TextWrapper(initial_indent = "  ",
-                                             subsequent_indent = "  ")
+        termsize = get_termsize()
+        self._wrapper = textwrap.TextWrapper(initial_indent="  ",
+                                             subsequent_indent="  ",
+                                             width=termsize[0])
 
         self._handlers = {}
         if config is not None:

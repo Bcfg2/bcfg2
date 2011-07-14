@@ -10,7 +10,6 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
         self.clients_xdata = None
         self.load_xdata()
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         """ run plugin """
         # only run this plugin if we were not given a list of files.

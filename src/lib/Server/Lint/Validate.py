@@ -34,7 +34,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         self.filelists = {}
         self.get_filelists()
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         schemadir = self.config['schema']
         

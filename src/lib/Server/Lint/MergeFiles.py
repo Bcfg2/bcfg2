@@ -8,7 +8,6 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
     might be merged into one """
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         if 'Cfg' in self.core.plugins:
             self.check_cfg()

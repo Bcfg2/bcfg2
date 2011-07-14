@@ -5,7 +5,6 @@ import Bcfg2.Server.Lint
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all config files have an info.xml file"""
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         if 'Cfg' in self.core.plugins:
             for filename, entryset in self.core.plugins['Cfg'].entries.items():

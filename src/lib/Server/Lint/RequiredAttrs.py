@@ -18,7 +18,6 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             'nonexistent': ['name'],
             'permissions': ['name', 'owner', 'group', 'perms']}
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         self.check_rules()
         self.check_bundles()

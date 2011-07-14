@@ -8,7 +8,6 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.config_cache = {}
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         self.check_bundles()
         self.check_properties()

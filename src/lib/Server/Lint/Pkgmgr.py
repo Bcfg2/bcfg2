@@ -3,7 +3,6 @@ import Bcfg2.Server.Lint
 class Pkgmgr(Bcfg2.Server.Lint.ServerPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
 
-    @Bcfg2.Server.Lint.returnErrors
     def Run(self):
         if 'Pkgmgr' not in self.core.plugins:
             self.logger.info("Pkgmgr server plugin is not enabled, skipping Pkgmgr lint checks")
