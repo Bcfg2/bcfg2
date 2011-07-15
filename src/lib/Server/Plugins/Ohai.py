@@ -24,7 +24,6 @@ probecode = """#!/bin/sh
 if type ohai >& /dev/null; then
     ohai
 else
-    echo group:ohai-not-installed
     # an empty dict, so "'foo' in metadata.Ohai" tests succeed
     echo '{}'
 fi
