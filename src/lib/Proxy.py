@@ -285,10 +285,9 @@ class XMLRPCTransport(xmlrpclib.Transport):
         errcode, errmsg, headers = h.getreply()
 
         if errcode != 200:
-            raise xmlrpclib.ProtocolError(host + handler,
-                                          errcode,
-                                          errmsg,
-                                          headers)
+            # scrub password from the host
+            hoststr = re.sub(r':[^@]+@', ':******@', host) + handler
+            raise xmlrpclib.ProtocolError(hoststr, errcode, errmsg, headers)
 
         self.verbose = verbose
         msglen = int(headers.dict['content-length'])
