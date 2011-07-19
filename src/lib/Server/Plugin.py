@@ -510,18 +510,20 @@ class INode:
     LNodes provide lists of things available at a particular
     group intersection.
     """
-    raw = {'Client': "lambda x:'%s' == x.hostname and predicate(x)",
-           'Group': "lambda x:'%s' in x.groups and predicate(x)"}
-    nraw = {'Client': "lambda x:'%s' != x.hostname and predicate(x)",
-            'Group': "lambda x:'%s' not in x.groups and predicate(x)"}
-    containers = ['Group', 'Client']
+    raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
+           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
+           'Path': "lambda m, e:('%(name)s' == e.get('name') or '%(name)s' == e.get('realname')) and predicate(m, e)"}
+    nraw = {'Client': "lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
+            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)",
+            'Path': "lambda m, e:('%(name)s' != e.get('name') and '%(name)s' != e.get('realname')) and predicate(m, e)"}
+    containers = ['Group', 'Client', 'Path']
     ignore = []
 
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
         if parent == None:
-            self.predicate = lambda x: True
+            self.predicate = lambda m, d: True
         else:
             predicate = parent.predicate
             if data.get('negate', 'false') in ['true', 'True']:
@@ -529,7 +531,8 @@ class INode:
             else:
                 psrc = self.raw
             if data.tag in list(psrc.keys()):
-                self.predicate = eval(psrc[data.tag] % (data.get('name')),
+                self.predicate = eval(psrc[data.tag] %
+                                      {'name': data.get('name')},
                                       {'predicate': predicate})
             else:
                 raise Exception
@@ -552,9 +555,9 @@ class INode:
                 except KeyError:
                     idict[item.tag] = [item.get('name')]
 
-    def Match(self, metadata, data):
+    def Match(self, metadata, data, entry=lxml.etree.Element("None")):
         """Return a dictionary of package mappings."""
-        if self.predicate(metadata):
+        if self.predicate(metadata, entry):
             for key in self.contents:
                 try:
                     data[key].update(self.contents[key])
@@ -562,7 +565,7 @@ class INode:
                     data[key] = {}
                     data[key].update(self.contents[key])
             for child in self.children:
-                child.Match(metadata, data)
+                child.Match(metadata, data, entry=entry)
 
 
 class XMLSrc(XMLFileBacked):
@@ -853,7 +856,7 @@ class EntrySet:
             entry.set(key, self.metadata[key])
         if self.infoxml:
             mdata = {}
-            self.infoxml.pnode.Match(metadata, mdata)
+            self.infoxml.pnode.Match(metadata, mdata, entry=entry)
             if 'Info' not in mdata:
                 logger.error("Failed to set metadata for file %s" % \
                              (entry.get('name')))

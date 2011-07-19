@@ -25,6 +25,8 @@
                    maxOccurs='unbounded'/>
       <xsd:element name='Client' type='GroupType' minOccurs='0'
                    maxOccurs='unbounded'/>
+      <xsd:element name='Path' type='GroupType' minOccurs='0'
+                   maxOccurs='unbounded'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:boolean' name='negate' />
@@ -35,6 +37,7 @@
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Group' type='GroupType'/>
         <xsd:element name='Client' type='GroupType'/>
+        <xsd:element name='Path' type='GroupType'/>
         <xsd:element name='Info' type='InfoType'/>
       </xsd:choice>
     </xsd:complexType>

@@ -85,16 +85,16 @@ specification.
 info.xml files
 ==============
 
-``info.xml`` files add the ability to specify different
-sets of file metadata on a group by group or host by host
-basis. These files are XML, and work similarly to those used by
-:ref:`Rules <server-plugins-generators-rules>` or :ref:`Pkgmgr
+``info.xml`` files add the ability to specify different sets of file
+metadata on a group by group or host by host basis, or by path (for
+files using :ref:`altsrc <server-plugins-structures-altsrc>`). These
+files are XML, and work similarly to those used by :ref:`Rules
+<server-plugins-generators-rules>` or :ref:`Pkgmgr
 <server-plugins-generators-pkgmgr>`.
 
 The following specifies a different global set of permissions
-(root/sys/0651) than on clients in group webserver (root/root/0652)
-
-.. code-block:: xml
+(root/sys/0651) than on clients in group webserver or named
+"foo.example.com" (root/root/0652)::
 
     <FileInfo>
       <Client name='foo.example.com'>
@@ -104,4 +104,16 @@ The following specifies a different global set of permissions
         <Info owner='root' group='root' perms='0652'/>
       </Group>
       <Info owner='root' group='sys' perms='0651'/>
+    </FileInfo>
+
+The following specifies a different set of permissions depending on
+the path of the file::
+
+    <FileInfo>
+      <Path name="/etc/bcfg2-web.conf">
+        <Info owner="root" group="apache" perms="0640"/>
+      </Path>
+      <Path name="/etc/bcfg2-web.conf" negate="true">
+        <Info owner="root" group="root" perms="0600"/>
+      </Path>
     </FileInfo>
