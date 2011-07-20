@@ -96,7 +96,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     def FindExtra(self):
         """Locate extra chkconfig Services."""
         allsrv = [line.split()[0] for line in \
-                  self.cmd.run("/sbin/chkconfig --list|grep :on")[1]]
+                  self.cmd.run("/sbin/chkconfig --list 2>/dev/null|grep :on")[1]]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
