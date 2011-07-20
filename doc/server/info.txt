@@ -113,7 +113,7 @@ the path of the file::
       <Path name="/etc/bcfg2-web.conf">
         <Info owner="root" group="apache" perms="0640"/>
       </Path>
-      <Path name="/etc/bcfg2-web.conf" negate="true">
+      <Path name="/etc/bcfg2.conf" negate="true">
         <Info owner="root" group="root" perms="0600"/>
       </Path>
     </FileInfo>
