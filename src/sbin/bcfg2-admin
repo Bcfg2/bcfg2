@@ -69,8 +69,9 @@ def main():
             raise SystemExit(0)
         try:
             mode_cls = mode_import(modname)
-        except ImportError, err:
-            log.error("Failed to load admin mode %s: %s" % (modname, err))
+        except ImportError:
+            e = sys.exc_info()[1]
+            log.error("Failed to load admin mode %s: %s" % (modname, e))
             raise SystemExit(1)
         mode = mode_cls(setup['configfile'])
         mode(setup['args'][1:])

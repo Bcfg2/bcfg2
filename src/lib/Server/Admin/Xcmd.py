@@ -1,3 +1,5 @@
+import sys
+
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
@@ -40,7 +42,8 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             args = tuple(setup['args'][1:])
         try:
             data = getattr(proxy, cmd)(*args)
-        except xmlrpclib.Fault, flt:
+        except xmlrpclib.Fault:
+            flt = sys.exc_info()[1]
             if flt.faultCode == 7:
                 print("Unknown method %s" % cmd)
                 return
