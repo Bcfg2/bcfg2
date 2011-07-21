@@ -1,5 +1,3 @@
-import sys
-
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
@@ -24,7 +22,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
         setup = Bcfg2.Options.OptionParser(optinfo)
-        setup.parse(sys.argv[2:])
+        setup.parse(args)
         Bcfg2.Proxy.RetryMethod.max_retries = 1
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
                                            setup['user'],
@@ -42,8 +40,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             args = tuple(setup['args'][1:])
         try:
             data = getattr(proxy, cmd)(*args)
-        except xmlrpclib.Fault:
-            flt = sys.exc_info()[1]
+        except xmlrpclib.Fault, flt:
             if flt.faultCode == 7:
                 print("Unknown method %s" % cmd)
                 return

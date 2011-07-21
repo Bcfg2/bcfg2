@@ -28,10 +28,9 @@ import django.core.management
 # FIXME - settings file uses a hardcoded path for /etc/bcfg2.conf
 try:
     import Bcfg2.Server.Reports.settings
-except Exception:
-    e = sys.exc_info()[1]
-    sys.stderr.write("Failed to load configuration settings. %s\n" % e)
-    sys.exit(1)
+except Exception, err:
+    sys.stderr.write("Failed to load configuration settings. %s\n" % err)
+    raise SystemExit(1)
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
 project_name = os.path.basename(project_directory)
