@@ -8,18 +8,19 @@ import Bcfg2.Server.Plugin
 
 class DNode(Bcfg2.Server.Plugin.INode):
     """DNode provides supports for single predicate types for dependencies."""
-    raw = {'Group': "lambda x:'%s' in x.groups and predicate(x)"}
+    raw = {'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)"}
     containers = ['Group']
 
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
         if parent == None:
-            self.predicate = lambda x: True
+            self.predicate = lambda x, d: True
         else:
             predicate = parent.predicate
             if data.tag in list(self.raw.keys()):
-                self.predicate = eval(self.raw[data.tag] % (data.get('name')),
+                self.predicate = eval(self.raw[data.tag] %
+                                      {'name': data.get('name')},
                                       {'predicate': predicate})
             else:
                 raise Exception
