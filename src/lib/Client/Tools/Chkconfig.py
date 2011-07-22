@@ -4,6 +4,8 @@
 """This is chkconfig support."""
 __revision__ = '$Revision$'
 
+import os
+
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 
@@ -14,6 +16,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     __execs__ = ['/sbin/chkconfig']
     __handles__ = [('Service', 'chkconfig')]
     __req__ = {'Service': ['name', 'status']}
+    os.environ['LANG'] = 'C'
 
     def get_svc_command(self, service, action):
         return "/sbin/service %s %s" % (service.get('name'), action)
