@@ -81,6 +81,11 @@ class Plugin(object):
     deprecated = False
     conflicts = []
 
+    # Default sort_order to 500. Plugins of the same type are
+    # processed in order of ascending sort_order value. Plugins with
+    # the same sort_order are sorted alphabetically by their name.
+    sort_order = 500
+
     def __init__(self, core, datastore):
         object.__init__(self)
         self.Entries = {}
