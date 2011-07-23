@@ -49,6 +49,12 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = DepXMLSrc
 
+    # Override the default sort_order (of 500) so that this plugin
+    # gets handled after others running at the default. In particular,
+    # we want to run after Packages, so we can see the final set of
+    # packages that will be installed on the client.
+    sort_order = 750
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
@@ -59,8 +65,10 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
         Bcfg2.Server.Plugin.PrioDir.HandleEvent(self, event)
 
     def validate_structures(self, metadata, structures):
+        """Examine the passed structures and append any additional
+        prerequisite entries as defined by the files in Deps.
+        """
         entries = []
-        prereqs = []
         for structure in structures:
             for entry in structure.getchildren():
                 if (entry.tag, entry.get('name')) not in entries \
@@ -71,33 +79,12 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
         gdata = list(metadata.groups)
         gdata.sort()
         gdata = tuple(gdata)
+
+        # Check to see if we have cached the prereqs already
         if (entries, gdata) in self.cache:
             prereqs = self.cache[(entries, gdata)]
         else:
-            [src.Cache(metadata) for src in list(self.entries.values())]
-
-            toexamine = list(entries[:])
-            while toexamine:
-                entry = toexamine.pop()
-                matching = [src for src in list(self.entries.values())
-                            if src.cache and entry[0] in src.cache[1]
-                            and entry[1] in src.cache[1][entry[0]]]
-                if len(matching) > 1:
-                    prio = [int(src.priority) for src in matching]
-                    if prio.count(max(prio)) > 1:
-                        self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
-                                          (entry[0].lower(), metadata.hostname, entry[1]))
-                        raise Bcfg2.Server.Plugin.PluginExecutionError
-                    index = prio.index(max(prio))
-                    matching = [matching[index]]
-
-                if not matching:
-                    continue
-                elif len(matching) == 1:
-                    for prq in matching[0].cache[1][entry[0]][entry[1]]:
-                        if prq not in prereqs and prq not in entries:
-                            toexamine.append(prq)
-                            prereqs.append(prq)
+            prereqs = self.calculate_prereqs(metadata, entries)
             self.cache[(entries, gdata)] = prereqs
 
         newstruct = lxml.etree.Element("Independent")
@@ -107,3 +94,36 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
             except:
                 self.logger.error("Failed to add dep entry for %s:%s" % (tag, name))
         structures.append(newstruct)
+
+
+    def calculate_prereqs(self, metadata, entries):
+        """Calculate the prerequisites defined in Deps for the passed
+        set of entries.
+        """
+        prereqs = []
+        [src.Cache(metadata) for src in list(self.entries.values())]
+
+        import ipdb; ipdb.set_trace()
+        toexamine = list(entries[:])
+        while toexamine:
+            entry = toexamine.pop()
+            matching = [src for src in list(self.entries.values())
+                        if src.cache and entry[0] in src.cache[1]
+                        and entry[1] in src.cache[1][entry[0]]]
+            if len(matching) > 1:
+                prio = [int(src.priority) for src in matching]
+                if prio.count(max(prio)) > 1:
+                    self.logger.error("Found conflicting %s sources with same priority for %s, pkg %s" %
+                                      (entry[0].lower(), metadata.hostname, entry[1]))
+                    raise Bcfg2.Server.Plugin.PluginExecutionError
+                index = prio.index(max(prio))
+                matching = [matching[index]]
+            elif len(matching) == 1:
+                for prq in matching[0].cache[1][entry[0]][entry[1]]:
+                    if prq not in prereqs and prq not in entries:
+                        toexamine.append(prq)
+                        prereqs.append(prq)
+            else:
+                continue
+
+        return prereqs
