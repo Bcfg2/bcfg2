@@ -71,9 +71,12 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
         entries = []
         for structure in structures:
             for entry in structure.getchildren():
-                if (entry.tag, entry.get('name')) not in entries \
-                       and not isinstance(entry, lxml.etree._Comment):
-                    entries.append((entry.tag, entry.get('name')))
+                tag = entry.tag
+                if tag.startswith('Bound'):
+                    tag = tag[5:]
+                if (tag, entry.get('name')) not in entries \
+                        and not isinstance(entry, lxml.etree._Comment):
+                    entries.append((tag, entry.get('name')))
         entries.sort()
         entries = tuple(entries)
         gdata = list(metadata.groups)
@@ -101,9 +104,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
         set of entries.
         """
         prereqs = []
-        [src.Cache(metadata) for src in list(self.entries.values())]
+        [src.Cache(metadata) for src in self.entries.values()]
 
-        import ipdb; ipdb.set_trace()
         toexamine = list(entries[:])
         while toexamine:
             entry = toexamine.pop()
