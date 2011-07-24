@@ -87,6 +87,11 @@ class Plugin(object):
     sort_order = 500
 
     def __init__(self, core, datastore):
+        """Initialize the plugin.
+        
+        :param core: the Bcfg2.Server.Core initializing the plugin
+        :param datastore: the filesystem path of Bcfg2's repository
+        """
         object.__init__(self)
         self.Entries = {}
         self.core = core
