@@ -122,7 +122,12 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                 matching = [matching[index]]
             elif len(matching) == 1:
                 for prq in matching[0].cache[1][entry[0]][entry[1]]:
-                    if prq not in prereqs and prq not in entries:
+                    # XML comments seem to show up in the cache as a
+                    # tuple with item 0 being callable. The logic
+                    # below filters them out. Would be better to
+                    # exclude them when we load the cache in the first
+                    # place.
+                    if prq not in prereqs and prq not in entries and not callable(prq[0]):
                         toexamine.append(prq)
                         prereqs.append(prq)
             else:
