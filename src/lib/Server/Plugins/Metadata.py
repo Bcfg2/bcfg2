@@ -222,6 +222,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     name = "Metadata"
+    sort_order = 500
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

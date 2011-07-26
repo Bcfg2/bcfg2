@@ -90,41 +90,48 @@ class Core(Component):
                              "Unloading %s" % (p, bl))
             for plug in bl:
                 del self.plugins[plug]
-        # This section loads the experimental plugins
+        # This section logs the experimental plugins
         expl = [plug for (name, plug) in list(self.plugins.items())
                 if plug.experimental]
         if expl:
             logger.info("Loading experimental plugin(s): %s" % \
                         (" ".join([x.name for x in expl])))
             logger.info("NOTE: Interfaces subject to change")
+        # This section logs the deprecated plugins
         depr = [plug for (name, plug) in list(self.plugins.items())
                 if plug.deprecated]
-        # This section loads the deprecated plugins
         if depr:
             logger.info("Loading deprecated plugin(s): %s" % \
                         (" ".join([x.name for x in depr])))
 
-        mlist = [p for p in list(self.plugins.values()) if \
-                 isinstance(p, Bcfg2.Server.Plugin.Metadata)]
+        mlist = self.plugins_by_type(Bcfg2.Server.Plugin.Metadata)
         if len(mlist) == 1:
             self.metadata = mlist[0]
         else:
             logger.error("No Metadata Plugin loaded; failed to instantiate Core")
             raise CoreInitError("No Metadata Plugin")
-        self.statistics = [plugin for plugin in list(self.plugins.values())
-                           if isinstance(plugin, Bcfg2.Server.Plugin.Statistics)]
-        self.pull_sources = [plugin for plugin in self.statistics
-                             if isinstance(plugin, Bcfg2.Server.Plugin.PullSource)]
-        self.generators = [plugin for plugin in list(self.plugins.values())
-                           if isinstance(plugin, Bcfg2.Server.Plugin.Generator)]
-        self.structures = [plugin for plugin in list(self.plugins.values())
-                           if isinstance(plugin, Bcfg2.Server.Plugin.Structure)]
-        self.connectors = [plugin for plugin in list(self.plugins.values())
-                           if isinstance(plugin, Bcfg2.Server.Plugin.Connector)]
+        self.statistics = self.plugins_by_type(Bcfg2.Server.Plugin.Statistics)
+        self.pull_sources = self.plugins_by_type(Bcfg2.Server.Plugin.PullSource)
+        self.generators = self.plugins_by_type(Bcfg2.Server.Plugin.Generator)
+        self.structures = self.plugins_by_type(Bcfg2.Server.Plugin.Structure)
+        self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
         self.ca = ca
         self.fam_thread = threading.Thread(target=self._file_monitor_thread)
         if start_fam_thread:
             self.fam_thread.start()
+
+    def plugins_by_type(self, base_cls):
+        """Return a list of loaded plugins that match the passed type.
+
+        The returned list is sorted in ascending order by the Plugins'
+        sort_order value. The sort_order defaults to 500 in Plugin.py,
+        but can be overridden by individual plugins. Plugins with the
+        same numerical sort_order value are sorted in alphabetical
+        order by their name.
+        """
+        return sorted([plugin for plugin in self.plugins.values()
+                       if isinstance(plugin, base_cls)],
+                      key=lambda p: (p.sort_order, p.name))
 
     def _file_monitor_thread(self):
         """The thread for monitor the files."""
@@ -141,9 +148,8 @@ class Core(Component):
             except:
                 continue
             # VCS plugin periodic updates
-            for plugin in list(self.plugins.values()):
-                if isinstance(plugin, Bcfg2.Server.Plugin.Version):
-                    self.revision = plugin.get_revision()
+            for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
+                self.revision = plugin.get_revision()
 
     def init_plugins(self, plugin):
         """Handling for the plugins."""
@@ -176,23 +182,33 @@ class Core(Component):
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
 
-    def validate_data(self, metadata, data, base_cls):
+    def validate_structures(self, metadata, data):
         """Checks the data structure."""
-        for plugin in list(self.plugins.values()):
-            if isinstance(plugin, base_cls):
-                try:
-                    if base_cls == Bcfg2.Server.Plugin.StructureValidator:
-                        plugin.validate_structures(metadata, data)
-                    elif base_cls == Bcfg2.Server.Plugin.GoalValidator:
-                        plugin.validate_goals(metadata, data)
-                except Bcfg2.Server.Plugin.ValidationError:
-                    err = sys.exc_info()[1]
-                    logger.error("Plugin %s structure validation failed: %s" \
-                                 % (plugin.name, err.message))
-                    raise
-                except:
-                    logger.error("Plugin %s: unexpected structure validation failure" \
-                                 % (plugin.name), exc_info=1)
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
+            try:
+                plugin.validate_structures(metadata, data)
+            except Bcfg2.Server.Plugin.ValidationError:
+                err = sys.exc_info()[1]
+                logger.error("Plugin %s structure validation failed: %s" \
+                             % (plugin.name, err.message))
+                raise
+            except:
+                logger.error("Plugin %s: unexpected structure validation failure" \
+                             % (plugin.name), exc_info=1)
+
+    def validate_goals(self, metadata, data):
+        """Checks that the config matches the goals enforced by the plugins."""
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
+            try:
+                plugin.validate_goals(metadata, data)
+            except Bcfg2.Server.Plugin.ValidationError:
+                err = sys.exc_info()[1]
+                logger.error("Plugin %s goal validation failed: %s" \
+                             % (plugin.name, err.message))
+                raise
+            except:
+                logger.error("Plugin %s: unexpected goal validation failure" \
+                             % (plugin.name), exc_info=1)
 
     def GetStructures(self, metadata):
         """Get all structures for client specified by metadata."""
@@ -276,8 +292,7 @@ class Core(Component):
             logger.error("error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
 
-        self.validate_data(meta, structures,
-                           Bcfg2.Server.Plugin.StructureValidator)
+        self.validate_structures(meta, structures)
 
         # Perform altsrc consistency checking
         esrcs = {}
@@ -297,7 +312,7 @@ class Core(Component):
                 config.append(astruct)
             except:
                 logger.error("error in BindStructure", exc_info=1)
-        self.validate_data(meta, config, Bcfg2.Server.Plugin.GoalValidator)
+        self.validate_goals(meta, config)
         logger.info("Generated config for %s in %.03fs" % \
                     (client, time.time() - start))
         return config
@@ -305,10 +320,9 @@ class Core(Component):
     def GetDecisions(self, metadata, mode):
         """Get data for the decision list."""
         result = []
-        for plugin in list(self.plugins.values()):
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Decision):
             try:
-                if isinstance(plugin, Bcfg2.Server.Plugin.Decision):
-                    result += plugin.GetDecisions(metadata, mode)
+                result += plugin.GetDecisions(metadata, mode)
             except:
                 logger.error("Plugin: %s failed to generate decision list" \
                              % plugin.name, exc_info=1)
@@ -354,8 +368,7 @@ class Core(Component):
             name = self.metadata.resolve_client(address)
             meta = self.build_metadata(name)
 
-            for plugin in [p for p in list(self.plugins.values()) \
-                           if isinstance(p, Bcfg2.Server.Plugin.Probing)]:
+            for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Probing):
                 for probe in plugin.GetProbes(meta):
                     resp.append(probe)
             return lxml.etree.tostring(resp, encoding='UTF-8',

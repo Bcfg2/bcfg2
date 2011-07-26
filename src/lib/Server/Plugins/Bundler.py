@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import copy
 import lxml.etree
+import os
 import re
 import sys
 
@@ -74,8 +75,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         """Build all structures for client (metadata)."""
         bundleset = []
         for bundlename in metadata.bundles:
-            entries = [item for (key, item) in list(self.entries.items()) if \
-                       self.patterns.match(key).group('name') == bundlename]
+            entries = [item for (key, item) in self.entries.items() if \
+                       self.patterns.match(os.path.basename(key)).group('name') == bundlename]
             if len(entries) == 0:
                 continue
             elif len(entries) == 1:
