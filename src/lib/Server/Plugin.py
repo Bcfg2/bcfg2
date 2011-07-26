@@ -376,9 +376,18 @@ class DirectoryBacked(object):
     __child__ = FileBacked
     patterns = re.compile('.*')
 
-    def __init__(self, name, fam):
+    def __init__(self, data, fam):
+        """Initialize the DirectoryBacked object.
+
+        :param self: the object being initialized.
+        :param data: the path to the data directory that will be
+        monitored.
+        :param fam: The FileMonitor object used to receive
+        notifications of changes.  
+        """
         object.__init__(self)
-        self.name = name
+
+        self.data = data
         self.fam = fam
 
         # self.entries contains information about the files monitored
@@ -488,7 +497,7 @@ class DirectoryBacked(object):
                     return
                 if not self.patterns.match(event.filename):
                     return
-                self.entries[relpath] = self.__child__('%s/%s' % (self.name,
+                self.entries[relpath] = self.__child__('%s/%s' % (self.data,
                                                                   relpath))
                 self.entries[relpath].HandleEvent(event)
             elif action == 'changed':
