@@ -36,7 +36,7 @@ mdata_setup = Bcfg2.Options.OptionParser(opts)
 mdata_setup.parse([])
 del mdata_setup['args']
 
-logger = logging.getLogger('Bcfg2.Plugin')
+logger = logging.getLogger('Bcfg2.Server.Plugin')
 
 default_file_metadata = mdata_setup
 
@@ -380,9 +380,22 @@ class DirectoryBacked(object):
         object.__init__(self)
         self.name = name
         self.fam = fam
+
+        # self.entries contains information about the files monitored
+        # by this object.... The keys of the dict are the relative
+        # paths to the files. The values are the objects (of type
+        # __child__) that handle their contents.
         self.entries = {}
-        self.inventory = False
-        fam.AddMonitor(name, self)
+
+        # self.handles contains information about the directories
+        # monitored by this object. The keys of the dict are the
+        # values returned by the initial fam.AddMonitor() call (which
+        # appear to be integers). The values are the relative paths of
+        # the directories.
+        self.handles = {}
+
+        # Monitor everything in the plugin's directory
+        self.add_directory_monitor('')
 
     def __getitem__(self, key):
         return self.entries[key]
@@ -390,46 +403,103 @@ class DirectoryBacked(object):
     def __iter__(self):
         return iter(list(self.entries.items()))
 
-    def AddEntry(self, name):
-        """Add new entry to data structures upon file creation."""
-        if name == '':
-            logger.info("got add for empty name")
-        elif name in self.entries:
-            self.entries[name].HandleEvent()
-        else:
-            if ((name[-1] == '~') or
-                (name[:2] == '.#') or
-                (name[-4:] == '.swp') or
-                (name in ['SCCS', '.svn'])):
+    def add_directory_monitor(self, relative):
+        """Add a new directory to FAM structures for monitoring.
+
+        :param relative: Path name to monitor. This must be relative
+        to the plugin's directory. An empty string value ("") will
+        cause the plugin directory itself to be monitored.
+        """
+        dirpathname = os.path.join(self.data, relative)
+        if relative not in self.handles.values():
+            if not posixpath.isdir(dirpathname):
+                logger.error("Failed to open directory %s" % (dirpathname))
                 return
-            if not self.patterns.match(name):
-                return
-            self.entries[name] = self.__child__('%s/%s' % (self.name, name))
-            self.entries[name].HandleEvent()
+            reqid = self.fam.AddMonitor(dirpathname, self)
+            self.handles[reqid] = relative
 
     def HandleEvent(self, event):
-        """Propagate fam events to underlying objects."""
+        """Handle FAM/Gamin events.
+        
+        This method is invoked by FAM/Gamin when it detects a change
+        to a filesystem object we have requsted to be monitored.
+
+        This method manages the lifecycle of events related to the
+        monitored objects, adding them to our indiciess and creating
+        objects of type __child__ that actually do the domain-specific
+        processing. When appropriate, it propogates events those
+        objects by invoking their HandleEvent in turn.
+        """
         action = event.code2str()
-        if event.filename == '':
-            logger.info("Got event for blank filename")
+
+        # Exclude events for actions and filesystem paths we don't
+        # care about
+        if action == 'endExist':
             return
-        if action == 'exists':
-            if event.filename != self.name:
-                self.AddEntry(event.filename)
-        elif action == 'created':
-            self.AddEntry(event.filename)
-        elif action == 'changed':
-            if event.filename in self.entries:
-                self.entries[event.filename].HandleEvent(event)
-        elif action == 'deleted':
-            if event.filename in self.entries:
-                del self.entries[event.filename]
-        elif action in ['endExist']:
-            pass
+        elif os.path.isabs(event.filename[0]):
+            # After AddDirectoryMonitor calls, we receive an 'exists'
+            # event with the just-added directory and its absolute
+            # path name. Ignore these.
+            return
+        elif event.filename == '':
+            logger.warning("Got event for blank filename")
+            return
+
+        # Calculate the absolute and relative paths this event refers to
+        abspath = os.path.join(self.data, self.handles[event.requestID],
+                               event.filename)
+        relpath = os.path.join(self.handles[event.requestID], event.filename)
+
+        if action == 'deleted':
+            for key in self.entries.keys():
+                if key.startswith(relpath):
+                    del self.entries[key]
+            for handle in self.handles.keys():
+                if self.handles[handle].startswith(relpath):
+                    del self.handles[handle]
+        elif posixpath.isdir(abspath):
+            # Deal with events for directories
+            if action in ['exists', 'created']:
+                self.add_directory_monitor(relpath)
+            elif action == 'changed' and relpath in self.entries:
+                # Ownerships, permissions or timestamps changed on the
+                # directory. None of these should affect the contents
+                # of the files, though it could change our ability to
+                # access them.
+                #
+                # It seems like the right thing to do is to cancel
+                # monitoring the directory and then begin monitoring
+                # it again. But the current FileMonitor class doesn't
+                # support canceling, so at least let the user know
+                # that a restart might be a good idea.
+                logger.warn("Directory properties for %s changed, please " +
+                            " consider restarting the server" % (abspath))
+            else:
+                logger.warn("Got unknown dir event %s %s %s" % (event.requestID,
+                                                                event.code2str(),
+                                                                abspath))
         else:
-            print("Got unknown event %s %s %s" % (event.requestID,
-                                                  event.code2str(),
-                                                  event.filename))
+            # Deal with events for non-directories
+            if action in ['exists', 'created']:
+                if ((event.filename[-1] == '~') or
+                    (event.filename[:2] == '.#') or
+                    (event.filename[-4:] == '.swp') or
+                    (event.filename in ['SCCS', '.svn'])):
+                    return
+                if not self.patterns.match(event.filename):
+                    return
+                self.entries[relpath] = self.__child__('%s/%s' % (self.name,
+                                                                  relpath))
+                self.entries[relpath].HandleEvent(event)
+            elif action == 'changed':
+                if relpath in self.entries:
+                    self.entries[relpath].HandleEvent(event)
+                else:
+                    logger.warn("Got %s event for unexpected path %s" % (action, abspath))
+            else:
+                logger.warn("Got unknown file event %s %s %s" % (event.requestID,
+                                                                 event.code2str(),
+                                                                 abspath))
 
 
 class XMLFileBacked(FileBacked):
