@@ -46,6 +46,12 @@ is tailored for the client. This process consists of the following steps:
   include a name. These configuration entries are grouped into bundles,
   which document installation time interdependencies.
 
+  Here is an example of an abstract configuration entry:
+
+  .. code-block:: xml
+
+      <Package name='openssh-server'/>
+
 * **Configuration Binding**
 
   The abstract configuration determines the structure of the client
@@ -63,3 +69,10 @@ is tailored for the client. This process consists of the following steps:
   specification. This specification is complete and comprehensive; the
   client doesn't need to process it at all in order to use it. It also
   represents the totality of the configuration specified for the client.
+
+  Here is the entry from above once it has been bound to its literal
+  specification (In this case, using the Packages plugin).
+
+  .. code-block:: xml
+
+      <Package name="openssh-server" version="auto" type="deb"/>

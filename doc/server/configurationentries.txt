@@ -116,7 +116,7 @@ Path type specified.
 |             |                      | checkout        |                          |
 +-------------+----------------------+-----------------+--------------------------+
 
-Keep in mind that permissions for files served up by Cfg/TGenshi/TCheetah
+Keep in mind that permissions for files handled by Cfg/TGenshi/TCheetah
 are still handled via the traditional :ref:`server-info` mechanisms.
 
 Additional information
