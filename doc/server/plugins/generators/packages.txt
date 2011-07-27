@@ -283,15 +283,26 @@ Limitations
 Packages does not do traditional caching as other plugins do. Changes
 to the Packages config file require a server restart for the time being.
 
-Package Verification
-====================
+Package Checking and Verification
+=================================
 
-In order to do disable per-package verification Pkgmgr style, you will
-need to use :ref:`BoundEntries <boundentries>` like below
+In order to disable per-package checking (version and verification), or just
+verification, you can use the ``pkg_checks`` or ``pkg_verify`` attributes
+like below
+
+.. code-block:: xml
+
+    <Package name='mem-agent' pkg_checks='false'/>
+    <Package name='mem-agent' pkg_verify='false'/>
+
+Disabling per-package verification can also be done Pkgmgr style,
+using :ref:`BoundEntries <boundentries>` like below
 
 .. code-block:: xml
 
     <BoundPackage name="mem-agent" priority="1" version="auto" type="yum" verify="false"/>
+
+
 
 Generating Client APT/Yum Configurations
 ========================================
