@@ -53,8 +53,23 @@ more details on how Group and Client tags are parsed.)  For instance::
                    if el.tag == "Server"]
     %}
 
+If you need to make persistent changes to properties data, you can use
+the ``write`` method of the ``PropertyFile`` class::
+
+    {% python
+    import lxml.etree
+    from genshi.template import TemplateError
+    lxml.etree.SubElement(metadata.Properties['foo.xml'],
+                          "Client",
+                          name=metadata.hostname)
+    if not metadata.Properties['foo.xml'].write():
+        raise TemplateError("Failed to write changes back to foo.xml")
+
+The ``write`` method checks the data in the object against its schema
+before writing it; see `Data Structures`_ for details.
+
 As we formulate more common use cases, we will add them to the
-!PropertyFile class as methods. This will simplify templates.
+``PropertyFile`` class as methods. This will simplify templates.
 
 You can also access the XML data that comprises a property file
 directly in one of several ways:
