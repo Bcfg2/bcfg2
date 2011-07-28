@@ -61,6 +61,13 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 if dev_type in ['block', 'char']:
                     # check if major/minor are specified
                     required_attrs |= set(['major', 'minor'])
+
+            if pathtype == 'file' and not entry.text:
+                self.LintError("required-attrs-missing",
+                               "Text missing for %s %s in %s: %s" %
+                               (entry.tag, pathname, filename,
+                                self.RenderXML(entry)))
+
             if not pathset.issuperset(required_attrs):
                 self.LintError("required-attrs-missing",
                                "The required attributes %s are missing for %s %sin %s:\n%s" %
