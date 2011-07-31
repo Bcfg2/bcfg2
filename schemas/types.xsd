@@ -31,6 +31,7 @@
       <xsd:enumeration value='nonexistent' />
       <xsd:enumeration value='permissions' />
       <xsd:enumeration value='symlink' />
+      <xsd:enumeration value='vcs' />
     </xsd:restriction>
   </xsd:simpleType>
 

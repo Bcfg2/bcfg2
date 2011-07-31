@@ -41,6 +41,9 @@
     <xsd:attribute type='xsd:string' name='recursive'/>
     <xsd:attribute type='xsd:string' name='prune'/>
     <xsd:attribute type='xsd:string' name='to'/>
+    <xsd:attribute type='xsd:string' name='vcstype'/>
+    <xsd:attribute type='xsd:string' name='revision'/>
+    <xsd:attribute type='xsd:string' name='sourceurl'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

@@ -16,7 +16,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             'symlink': ['name', 'to'],
             'ignore': ['name'],
             'nonexistent': ['name'],
-            'permissions': ['name', 'owner', 'group', 'perms']}
+            'permissions': ['name', 'owner', 'group', 'perms'],
+            'vcs': ['vcstype', 'revision', 'sourceurl']}
 
     def Run(self):
         self.check_rules()
