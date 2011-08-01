@@ -364,7 +364,7 @@ class YUMSource(Source):
         try:
             self.packages['global'] = copy.deepcopy(sdata.pop())
         except IndexError:
-            logger.error("No packages in repo at %s" % self.files[0])
+            logger.error("No packages in repo")
         while sdata:
             self.packages['global'] = \
                 self.packages['global'].intersection(sdata.pop())
