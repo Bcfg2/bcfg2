@@ -25,7 +25,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                          "%s/Svcmgr/*.xml":"%s/services.xsd",
                          "%s/Deps/*.xml":"%s/deps.xsd",
                          "%s/Decisions/*.xml":"%s/decisions.xsd",
-                         "%s/Packages/config.xml":"%s/packages.xsd",
+                         "%s/Packages/sources.xml":"%s/packages.xsd",
                          "%s/GroupPatterns/config.xml":"%s/grouppatterns.xsd",
                          "%s/NagiosGen/config.xml":"%s/nagiosgen.xsd",
                          "%s/FileProbes/config.xml":"%s/fileprobes.xsd",
