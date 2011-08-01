@@ -600,12 +600,10 @@ class INode:
     group intersection.
     """
     raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
-           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
-           'Path': "lambda m, e:('%(name)s' == e.get('name') or '%(name)s' == e.get('realname')) and predicate(m, e)"}
+           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)"}
     nraw = {'Client': "lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
-            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)",
-            'Path': "lambda m, e:('%(name)s' != e.get('name') and '%(name)s' != e.get('realname')) and predicate(m, e)"}
-    containers = ['Group', 'Client', 'Path']
+            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)"}
+    containers = ['Group', 'Client']
     ignore = []
 
     def __init__(self, data, idict, parent=None):
@@ -657,6 +655,17 @@ class INode:
                 child.Match(metadata, data, entry=entry)
 
 
+class InfoNode (INode):
+    """ INode implementation that includes <Path> tags """
+    raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
+           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
+           'Path': "lambda m, e:('%(name)s' == e.get('name') or '%(name)s' == e.get('realname')) and predicate(m, e)"}
+    nraw = {'Client': "lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
+            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)",
+            'Path': "lambda m, e:('%(name)s' != e.get('name') and '%(name)s' != e.get('realname')) and predicate(m, e)"}
+    containers = ['Group', 'Client', 'Path']
+
+
 class XMLSrc(XMLFileBacked):
     """XMLSrc files contain a LNode hierarchy that returns matching entries."""
     __node__ = INode
@@ -702,6 +711,10 @@ class XMLSrc(XMLFileBacked):
                 return
             self.pnode.Match(metadata, cache[1])
             self.cache = cache
+
+
+class InfoXML (XMLSrc):
+    __node__ = InfoNode
 
 
 class XMLDirectoryBacked(DirectoryBacked):
