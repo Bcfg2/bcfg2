@@ -15,18 +15,6 @@ from Bcfg2.Bcfg2Py3k import ConfigParser
 
 logger = logging.getLogger('bcfg2-lint')
 
-class Parser(ConfigParser.ConfigParser):
-    def get(self, section, option, default):
-        """ Override ConfigParser.get: If the request option is not in
-        the config file then return the value of default rather than
-        raise an exception.  We still raise exceptions on missing
-        sections.
-        """
-        try:
-            return ConfigParser.ConfigParser.get(self, section, option)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return default
-
 def run_serverless_plugins(plugins, config=None, setup=None, errorhandler=None):
     logger.debug("Running serverless plugins")
     for plugin_name, plugin in list(plugins.items()):
@@ -123,7 +111,8 @@ if __name__ == '__main__':
         log_args['to_console'] = logging.DEBUG
     Bcfg2.Logger.setup_logging('bcfg2-info', **log_args)
 
-    config = Parser()
+    config = ConfigParser.SafeConfigParser()
+    config.read(setup['configfile'])
     config.read(setup['config'])
 
     if setup['showerrors']:
@@ -147,8 +136,10 @@ if __name__ == '__main__':
     elif "bcfg2-repo-validate" in sys.argv[0]:
         allplugins = 'Duplicates,RequiredAttrs,Validate'.split(',')
     else:
-        allplugins = config.get('lint', 'plugins',
-                                ",".join(Bcfg2.Server.Lint.__all__)).split(',')
+        try:
+            allplugins = config.get('lint', 'plugins').split(',')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            allplugins = Bcfg2.Server.Lint.__all__
 
     if setup['stdin']:
         files = [s.strip() for s in sys.stdin.readlines()]
