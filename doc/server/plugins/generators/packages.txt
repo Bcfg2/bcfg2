@@ -82,20 +82,20 @@ Setup
 Three basic steps are required for Packages to work properly.
 
 #. Create ``Packages/sources.xml``. This file should look
- approximately like the example below, and describes both which
- software repositories should be used, and which clients are eligible
- to use each one.
+   approximately like the example below, and describes both which
+   software repositories should be used, and which clients are eligible
+   to use each one.
 #. Ensure that clients are members of the proper groups. Each client
- should be a member of one of the magic groups listed above, all of
- the groups listed in the ``sources.xml`` (like ubuntu-intrepid or
- centos-5.2 in the following examples), and one of the architecture
- groups listed in the source configuration (i386, amd64 or x86_64 in
- the following examples). '''Failure to do this will result in the
- source either not applying to the client, or only architecture
- independent packages being made available to the client.'''
+   should be a member of one of the magic groups listed above, all of
+   the groups listed in the ``sources.xml`` (like ubuntu-intrepid or
+   centos-5.2 in the following examples), and one of the architecture
+   groups listed in the source configuration (i386, amd64 or x86_64 in
+   the following examples). '''Failure to do this will result in the
+   source either not applying to the client, or only architecture
+   independent packages being made available to the client.'''
 #. Add Package entries to bundles.
 #. Sit back and relax, as dependencies are resolved, and automatically
- added to client configurations.
+   added to client configurations.
 
 Prerequisite Resolution
 =======================
