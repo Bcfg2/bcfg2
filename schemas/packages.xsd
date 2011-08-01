@@ -7,47 +7,59 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name='SourceType'>
+  <xsd:simpleType name="sourceTypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="yum"/>
+      <xsd:enumeration value="apt"/>
+      <xsd:enumeration value="pac"/>
+      <xsd:enumeration value="pulp"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="sourceType">
     <xsd:sequence>
-      <xsd:element name="Group" type="xsd:string" minOccurs='1' 
-                   maxOccurs='unbounded'/>
-      <xsd:element name="URL" type="xsd:string" minOccurs='0' 
-                   maxOccurs='1'/>
-      <xsd:element name="Recommended" type="xsd:string" minOccurs='0' 
-                   maxOccurs='1'/>
-      <xsd:element name="RawURL" type="xsd:string" minOccurs='0' 
-                   maxOccurs='1'/>
-      <xsd:element name="Version" type="xsd:string" minOccurs='0'
-                   maxOccurs='1'/>
-      <xsd:element name="Component" type="xsd:string" minOccurs='0'
-                   maxOccurs='unbounded'/>
+      <xsd:element name="Component" type="xsd:string" minOccurs="0"
+                   maxOccurs="unbounded"/>
       <xsd:choice>
-        <xsd:element name="Blacklist" type="xsd:string" minOccurs='0'
-                     maxOccurs='unbounded'/>
-        <xsd:element name="Whitelist" type="xsd:string" minOccurs='0'
-                     maxOccurs='unbounded'/>
+        <xsd:element name="Blacklist" type="xsd:string" minOccurs="0"
+                     maxOccurs="unbounded"/>
+        <xsd:element name="Whitelist" type="xsd:string" minOccurs="0"
+                     maxOccurs="unbounded"/>
       </xsd:choice>
-      <xsd:element name="Arch" type="xsd:string"  minOccurs='1'
-                   maxOccurs='unbounded'/>
+      <xsd:element name="Arch" type="xsd:string"  minOccurs="1"
+                   maxOccurs="unbounded"/>
+      <xsd:element name="GPGKey" type="xsd:string"  minOccurs="0"
+                   maxOccurs="unbounded"/>
     </xsd:sequence>
+    <xsd:attribute type="xsd:boolean" name="recommended"/>
+    <xsd:attribute type="sourceTypeEnum" name="type"/>
+    <xsd:attribute type="xsd:string" name="id"/>
+    <xsd:attribute type="xsd:string" name="url"/>
+    <xsd:attribute type="xsd:string" name="rawurl"/>
+    <xsd:attribute type="xsd:string" name="version"/>
   </xsd:complexType>
 
-  <xsd:complexType name='SourcesType'>
+  <xsd:complexType name="groupType">
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Group" type="groupType"/>
+      <xsd:element name="Client" type="groupType"/>
+      <xsd:element name="Sources" type="sourcesType"/>
+      <xsd:element name="Source" type="sourceType"/>
+    </xsd:choice>
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:boolean" name="negate"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="sourcesType">
     <xsd:sequence>
-      <xsd:element name='Config' minOccurs='0' maxOccurs='1'>
-        <xsd:complexType>
-        <xsd:attribute type='xsd:string' name='resolver' />
-        <xsd:attribute type='xsd:string' name='metadata' />
-        </xsd:complexType>
-      </xsd:element>
-
-      <xsd:choice minOccurs='1' maxOccurs='unbounded'>
-        <xsd:element name='APTSource' type='SourceType'/>
-        <xsd:element name='YUMSource' type='SourceType'/>
-        <xsd:element name='Sources' type='SourcesType'/>
+      <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:element name="Group" type="groupType"/>
+        <xsd:element name="Client" type="groupType"/>
+        <xsd:element name="Source" type="sourceType"/>
+        <xsd:element name="Sources" type="sourcesType"/>
       </xsd:choice>
     </xsd:sequence>
   </xsd:complexType>
 
-  <xsd:element name='Sources' type='SourcesType'/>
+  <xsd:element name="Sources" type="sourcesType"/>
 </xsd:schema>

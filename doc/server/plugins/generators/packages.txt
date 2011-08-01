@@ -39,23 +39,28 @@ limit the source's applicability to group member clients.
 +-----------+----------+--------------+
 | APTSource | nexenta  |              |
 +-----------+----------+--------------+
+| APTSource | apt      |              |
++-----------+----------+--------------+
 | YUMSource | redhat   | i386         |
 +-----------+----------+--------------+
 | YUMSource | centos   | x86_64       |
 +-----------+----------+--------------+
-| YUMSource | fedora   | x86_64       |
+| YUMSource | fedora   |              |
++-----------+----------+--------------+
+| YUMSource | yum      |              |
 +-----------+----------+--------------+
 
 Limiting sources to groups
 ==========================
 
-Each source can also specify explicit group memberships. In the following
-example, the ubuntu-hardy group is also required. Finally, clients must
-be a member of the appropriate architecture group, in this case, either
-i386 or amd64. In total, in order for this source to be associated with
-a client is for the client to be in one of the sentinel groups (debian,
-ubuntu, or nexenta), the explicit group ubuntu-hardy, and any of the
-architecture groups (i386 or amd64).
+``Packages/sources.xml`` processes ``<Group>`` and ``<Client>`` tags
+just like Bundles.  In addition to any groups or clients specified
+that way, clients must
+be a member of the appropriate architecture group as specified in a
+Source stanza.  In total, in order for a source to be associated with
+a client, the client must be in one of the magic groups (debian,
+ubuntu, or nexenta), any explicit groups or clients specified in
+``sources.xml``, and any specified architecture groups.
 
 Memberships in architecture groups is needed so that Packages can map
 software sources to clients. There is no other way to handle this than
@@ -68,7 +73,7 @@ sources.
 
 .. note:: To recap, a client needs to be a member of the **OS Group**,
           **Architecture** group, and any other groups defined in your
-          ``Packages/config.xml`` file in order for the client to be
+          ``Packages/sources.xml`` file in order for the client to be
           associated to the proper sources.
 
 Setup
@@ -76,10 +81,21 @@ Setup
 
 Three basic steps are required for Packages to work properly.
 
-#. Create Packages/config.xml. This file should look approximately like the example below, and describes both which software repositories should be used, and which clients are eligible to use each one.
-#. Ensure that clients are members of the proper groups. Each client should be a member of one of the sentinel groups listed above (debian/ubuntu/redhat/centos/nexenta), all of the groups listed in the source (like ubuntu-intrepid or centos-5.2 in the following examples), and one of the architecture groups listed in the source configuration (i386, amd64 or x86_64 in the following examples). '''Failure to do this will result in the source either not applying to the client, or only architecture independent packages being made available to the client.'''
+#. Create ``Packages/sources.xml``. This file should look
+ approximately like the example below, and describes both which
+ software repositories should be used, and which clients are eligible
+ to use each one.
+#. Ensure that clients are members of the proper groups. Each client
+ should be a member of one of the magic groups listed above, all of
+ the groups listed in the ``sources.xml`` (like ubuntu-intrepid or
+ centos-5.2 in the following examples), and one of the architecture
+ groups listed in the source configuration (i386, amd64 or x86_64 in
+ the following examples). '''Failure to do this will result in the
+ source either not applying to the client, or only architecture
+ independent packages being made available to the client.'''
 #. Add Package entries to bundles.
-#. Sit back and relax, as dependencies are resolved, and automatically added to client configurations.
+#. Sit back and relax, as dependencies are resolved, and automatically
+ added to client configurations.
 
 Prerequisite Resolution
 =======================
@@ -99,23 +115,16 @@ Disabling dependency resolution
 
 .. versionadded:: 1.1.0
 
-Dependency resolution can now be disabled by adding this to Sources in config.xml:
+Dependency resolution can now be disabled by adding this to
+``Packages/packages.conf`` in the ``global`` section::
 
-.. code-block:: xml
+    [global]
+    resolver=disabled
 
-    <Sources>
-        <Config resolver="disabled" />
-        ...
-    </Sources>
+All metadata processing can be disabled as well::
 
-All metadata processing can be disabled as well:
-
-.. code-block:: xml
-
-    <Sources>
-        <Config metadata="disabled" />
-        ...
-    </Sources>
+    [global]
+    metadata=disabled
 
 .. _packages-exampleusage:
 
@@ -133,27 +142,49 @@ and should look like the following:
 
     <Blacklist>unwanted-packagename</Blacklist>
 
+Handling GPG Keys
+-----------------
+
+.. versionadded:: 1.2.0
+
+Packages can automatically handle GPG signing keys for Yum
+repositories. Simply specify the URL to the GPG key(s) for a
+repository in ``sources.xml``::
+
+    <Source type="yum"
+            rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
+      <Arch>x86_64</Arch>
+      <GPGKey>http://mirror.example.com/keys/RPM-GPG-KEY-CentOS-6</GPGKey>
+    </Source>
+
+More than one ``<GPGKey>`` tag can be specified per Source.
+
+With the keys specified thusly, Packages will include the keys in the
+generated yum config file, and will ensure that the keys are imported
+on the client.
+
 Example usage
 =============
 
 Create a config.xml file in the Packages directory that looks something
-like this:
-
-.. code-block:: xml
+like this::
 
     <Sources>
-      <APTSource>
-        <Group>ubuntu-intrepid</Group>
-        <URL>http://us.archive.ubuntu.com/ubuntu</URL>
-        <Version>intrepid</Version>
-        <Component>main</Component>
-        <Component>universe</Component>
-        <Arch>i386</Arch>
-        <Arch>amd64</Arch>
-      </APTSource>
+      <Group name="ubuntu-intrepid">
+        <Source type="apt"
+                url="http://us.archive.ubuntu.com/ubuntu"
+                version="intrepid">
+          <Component>main</Component>
+          <Component>universe</Component>
+          <Arch>i386</Arch>
+          <Arch>amd64</Arch>
+        </Source>
+      </Group>
     </Sources>
 
 .. note::
+
+    .. versionadded:: 1.1.0
 
     The default behavior of the Packages plugin is to not make
     any assumptions about which packages you want to have added
@@ -161,71 +192,63 @@ like this:
     **Suggested** packages are added as dependencies by default. You
     will notice that the default behavior for apt is to add Recommended
     packages as dependencies. You can configure the Packages plugin to
-    add recommended packages by adding the following line immediately
-    following the **URL**:
+    add recommended packages by adding the ``recommended`` attribute,
+    e.g.::
 
-    .. versionadded:: 1.1.0
+        <Source type="apt" recommended="true" ...>
 
-    .. code-block:: xml
-
-        <Recommended>True</Recommended>
-
-Yum sources can be similarly specified:
-
-.. code-block:: xml
+Yum sources can be similarly specified::
 
     <Sources>
-      <YUMSource>
-        <Group>centos-5.2</Group>
-        <URL>http://mirror.centos.org/centos/</URL>
-        <Version>5.2</Version>
-        <Component>os</Component>
-        <Component>updates</Component>
-        <Component>extras</Component>
-        <Arch>i386</Arch>
-        <Arch>x86_64</Arch>
-      </YUMSource>
+      <Group name="centos-5.2">
+        <Source type="yum"
+                url="http://mirror.centos.org/centos/"
+                version="5.2">
+          <Component>os</Component>
+          <Component>updates</Component>
+          <Component>extras</Component>
+          <Arch>i386</Arch>
+          <Arch>x86_64</Arch>
+        </Source>
+      </Group>
     </Sources>
 
-For sources with a **URL** tag, the **Version** tag is also necessary.
+For sources with a **URL** attribute, the **Version** attribute is
+also necessary.
 
-.. note:: There is also a RawURL syntax for specifying APT or YUM sources that
-          don't follow the conventional layout:
-
-          .. code-block:: xml
+.. note:: There is also a rawurl attribute for specifying sources that
+          don't follow the conventional layout::
 
               <Sources>
-                <!-- CentOS (5.4) sources -->
-                <YUMSource>
-                  <Group>centos5.4</Group>
-                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.os</RawURL>
-                  <Arch>x86_64</Arch>
-                </YUMSource>
-                <YUMSource>
-                  <Group>centos5.4</Group>
-                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.updates</RawURL>
-                  <Arch>x86_64</Arch>
-                </YUMSource>
-                <YUMSource>
-                  <Group>centos5.4</Group>
-                  <RawURL>http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.extras</RawURL>
-                  <Arch>x86_64</Arch>
-                </YUMSource>
+                <Group name="centos5.4">
+                  <Source type="yum"
+                          rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.os">
+                    <Arch>x86_64</Arch>
+                  </Source>
+                  <Source type="yum"
+                          rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.updates">
+                    <Arch>x86_64</Arch>
+                  </Source>
+                  <Source type="yum"
+                          rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.extras">
+                    <Arch>x86_64</Arch>
+                  </Source>
+                </Group>
               </Sources>
 
           .. code-block:: xml
 
               <Sources>
-                <APTSource>
-                  <Group>ubuntu-lucid</Group>
-                  <RawURL>http://hudson-ci.org/debian/binary</RawURL>
-                  <Arch>amd64</Arch>
-                </APTSource>
-                <APTSource>
-                  <Group>ubuntu-lucid</Group>
-                  <RawURL>http://hudson-ci.org/debian/binary</RawURL>
-                  <Arch>i386</Arch>
-                </APTSource>
+                <Group name="ubuntu-lucid">
+                  <Source type="apt"
+                          rawurl="http://hudson-ci.org/debian/binary">
+                    <Arch>amd64</Arch>
+                  </Source>
+                  <Source type="apt"
+                          rawurl=http://hudson-ci.org/debian/binary">
+                    <Arch>i386</Arch>
+                  </Source>
+                </Group>
               </Sources>
 
 Configuration Updates
@@ -249,7 +272,7 @@ will report information like::
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/filelists.xml.gz
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/primary.xml.gz
 
-Once line per file download needed. Packages/config.xml will be reloaded
+Once line per file download needed. ``Packages/sources.xml`` will be reloaded
 at this time, so any source specification changes (new or modified
 sources in this file) will be reflected by the server at this point.
 
@@ -258,7 +281,8 @@ Soft reload
 
 .. versionadded:: 1.1.0
 
-A soft reload can be performed to reread the configuration file and download only missing sources.::
+A soft reload can be performed to reread the configuration file and
+download only missing sources.::
 
     [0:3711] bcfg2-admin xcmd Packages.Reload
     True
@@ -272,8 +296,8 @@ other package managers (Portage, Zypper, IPS, etc) remain to be added.
 Validation
 ==========
 
-A schema for Packages/config.xml is included; config.xml can be validated
-using ``bcfg2-lint``.
+A schema for ``Packages/sources.xml`` is included; ``sources.xml`` can
+be validated using ``bcfg2-lint``.
 
 .. note:: The schema requires that elements be specified in the above order.
 
@@ -286,51 +310,39 @@ to the Packages config file require a server restart for the time being.
 Package Checking and Verification
 =================================
 
-In order to disable per-package checking (version and verification), or just
-verification, you can use the ``pkg_checks`` or ``pkg_verify`` attributes
-like below
+In order to do disable per-package verification Pkgmgr style, you will
+need to use :ref:`BoundEntries <boundentries>`, e.g.::
 
-.. code-block:: xml
-
-    <Package name='mem-agent' pkg_checks='false'/>
-    <Package name='mem-agent' pkg_verify='false'/>
-
-Disabling per-package verification can also be done Pkgmgr style,
-using :ref:`BoundEntries <boundentries>` like below
-
-.. code-block:: xml
-
-    <BoundPackage name="mem-agent" priority="1" version="auto" type="yum" verify="false"/>
+    <BoundPackage name="mem-agent" priority="1" version="auto"
+                  type="yum" verify="false"/>
 
 
 
 Generating Client APT/Yum Configurations
 ========================================
 
+.. versionadded:: 1.2.0
+
+The Packages plugin has native support for generating Yum configs.
+You must set ``yum_config`` in ``Packages/packages.conf`` to the path
+to the yum config file you want to generate::
+
+    [global]
+    yum_config=/etc/yum.repos.d/all.repo
+
+Then add the corresponding Path entry to your Yum bundle.
+
 .. versionadded:: 1.1.0
 
-Client repository information can be generated automatically from
-software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.
-A list of source urls are exposed in the client's metadata as
-metadata.Packages.sources.
-
-An example :doc:`./tgenshi/index` APT template::
+APT repository information can be generated automatically from
+software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.  A
+list of source urls are exposed in the client's metadata as
+``metadata.Packages.sources``.  E.g.::
 
     # bcfg2 maintained apt
 
     {% for s in metadata.Packages.sources %}\
     deb ${s.url}${s.version} ${s.groups[0]} {% for comp in s.components %}$comp {% end %}
-
-    {% end %}\
-
-An example :doc:`./tgenshi/index` YUM template::
-
-    # bcfg2 maintained yum
-
-    % for s in metadata.Packages.sources %}\
-    [${s.groups[0]}_${s.component}]
-    name=${s.groups[0]}_${s.component}
-    baseurl=${s.url}
 
     {% end %}\
 
@@ -370,9 +382,10 @@ The dependency resolver used in Packages can be run in debug mode::
     Package libgcc1: adding new deps ['gcc-4.3-base']
     (set(['debconf', 'libgcc1', 'lsb-base', 'libtext-wrapi18n-perl', 'libtext-iconv-perl', 'sed', 'passwd', 'findutils', 'libpam0g', 'openssh-client', 'debconf-i18n', 'libselinux1', 'zlib1g', 'adduser', 'libwrap0', 'ncurses-bin', 'libssl0.9.8', 'liblocale-gettext-perl', 'libkeyutils1', 'libpam-runtime', 'libpam-modules', 'openssh-server', 'libkrb53', 'ssh', 'libncurses5', 'libc6', 'libedit2', 'libcomerr2', 'dpkg', 'perl-base', 'libdb4.7', 'libtext-charwidth-perl', 'gcc-4.3-base', 'debianutils']), set([]), 'deb')
 
-This will show why the resolver is acting as it is. Replace "ubik3" and
-['ssh'] with a client name and list of packages, respectively. Also,
-a more polished interface to this functionality is coming as well.
+This will show why the resolver is acting as it is. Replace
+``"ubik3"`` and ``['ssh']`` with a client name and list of packages,
+respectively. Also, a more polished interface to this functionality is
+coming as well.
 
 Each line starting with Package: <name> describes a set of new
 prerequisites pulled in by a package. Lines starting with VPackage <vname>
@@ -443,3 +456,34 @@ multiple data sources need to be multiplexed.
 
 The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
 relatively simple implementation of a source.
+
+packages.conf
+=============
+
+``packages.conf`` contains miscellaneous configuration options for the
+Packages plugin.  It understands the following directives:
+
+"global" section
+----------------
+
+* ``resolver``: Disable dependency resolution.  Default is "enabled".
+* ``metadata``: Disable metadata processing.  Default is "enabled".
+* ``yum_config``: The path at which to generate Yum configs.  No
+  default.
+* ``apt_config``: The path at which to generate APT configs.  No
+  default.
+* ``gpg_keypath``: The path on the client RPM GPG keys will be copied
+  to before they are imported on the client.  Default is
+  "/etc/pki/rpm-gpg".
+* ``import_gpg_keys``: The RPM release of an RPM GPG key cannot be
+  reliably and automatically determined without importing the key into
+  the server's key chain.  If ``import_gpg_keys`` is "false" (the
+  default), the release of automatically-generated RPM GPG key entries
+  in the specification will be set to "any", which disables
+  verification of the release.  (Version will still be verified.)  In
+  practice, this is unlikely to be an issue, as the RPM version of a
+  GPG key is the key's fingerprint, and collisions are rare.  If you
+  do encounter a GPG key version collision, you will need to set this
+  to "true", whereupon Packages will import the keys into the server's
+  key chain.  Python RPM libraries must be installed for this to work.
+

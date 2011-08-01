@@ -106,6 +106,7 @@ class ErrorHandler (object):
                "required-infoxml-attrs-missing":"error",
                "unknown-path-type":"error",
                "required-attrs-missing":"error",
+               "extra-attrs":"warning",
                "schema-failed-to-parse":"warning",
                "properties-schema-not-found":"warning",
                "xml-failed-to-parse":"error",

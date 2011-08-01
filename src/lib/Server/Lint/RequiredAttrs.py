@@ -1,6 +1,7 @@
 import os.path
 import lxml.etree
 import Bcfg2.Server.Lint
+import Bcfg2.Server.Plugins.Packages
 
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ verify attributes for configuration entries (as defined in
@@ -22,6 +23,34 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     def Run(self):
         self.check_rules()
         self.check_bundles()
+        self.check_packages()
+
+    def check_packages(self):
+        """ check package sources for Source entries with missing attrs """
+        if 'Packages' in self.core.plugins:
+            for source in self.core.plugins['Packages'].sources:
+                if isinstance(source, Bcfg2.Server.Plugin.Packages.PulpSource):
+                    if not source.id:
+                        self.LintError("required-attrs-missing",
+                                       "The required attribute id is missing "
+                                       "from a Pulp source: %s" %
+                                       self.RenderXML(source.xsource))
+                else:
+                    if not source.url and not source.rawurl:
+                        self.LintError("required-attrs-missing",
+                                       "A %s source must have either a url or "
+                                       "rawurl attribute: %s" %
+                                       (source.ptype,
+                                        self.RenderXML(source.xsource)))
+
+                if (not isinstance(source,
+                                   Bcfg2.Server.Plugin.Packages.APTSource) and
+                    source.recommended):
+                    self.LintError("extra-attrs",
+                                   "The recommended attribute is not "
+                                   "supported on %s sources: %s" %
+                                   (source.ptype,
+                                    self.RenderXML(source.xsource)))
 
     def check_rules(self):
         """ check Rules for Path entries with missing attrs """

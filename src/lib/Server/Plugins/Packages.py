@@ -1,12 +1,13 @@
-import copy
-import gzip
-import tarfile
-import glob
-import logging
-import lxml.etree
 import os
 import re
 import sys
+import copy
+import gzip
+import glob
+import base64
+import logging
+import tarfile
+import lxml.etree
 
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import cPickle
@@ -16,6 +17,7 @@ from Bcfg2.Bcfg2Py3k import HTTPError
 from Bcfg2.Bcfg2Py3k import install_opener
 from Bcfg2.Bcfg2Py3k import build_opener
 from Bcfg2.Bcfg2Py3k import urlopen
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
@@ -23,10 +25,24 @@ if sys.hexversion >= 0x03000000:
 else:
     BUILTIN_FILE_TYPE = file
 
-# FIXME: Remove when server python dep is 2.5 or greater
-if sys.version_info >= (2, 5):
+try:
+    import yum.misc
+    has_yum = True
+except ImportError:
+    has_yum = False
+
+try:
+    import pulp.client.server
+    import pulp.client.config
+    import pulp.client.api.repository
+    import pulp.client.api.consumer
+    has_pulp = True
+except ImportError:
+    has_pulp = False
+
+try:
     from hashlib import md5
-else:
+except ImportError:
     from md5 import md5
 
 import Bcfg2.Logger
@@ -34,7 +50,6 @@ import Bcfg2.Server.Plugin
 
 # build sources.list?
 # caching for yum
-
 
 class NoData(Exception):
     pass
@@ -46,35 +61,21 @@ class SomeData(Exception):
 logger = logging.getLogger('Packages')
 
 
-def source_from_xml(xsource):
-    ret = dict([('rawurl', False), ('url', False)])
-    for key, tag in [('groups', 'Group'), ('components', 'Component'),
-                     ('arches', 'Arch'), ('blacklist', 'Blacklist'),
-                     ('whitelist', 'Whitelist')]:
-        ret[key] = [item.text for item in xsource.findall(tag)]
-    # version and component need to both contain data for sources to work
+def source_from_xml(xsource, cachepath):
+    """ create a *Source object from its XML representation in
+    sources.xml """
+    stype = xsource.get("type")
+    if stype is None:
+        logger.error("No type specified for source, skipping")
+        return None
+
     try:
-        ret['version'] = xsource.find('Version').text
-    except:
-        ret['version'] = 'placeholder'
-    if ret['components'] == []:
-        ret['components'] = ['placeholder']
-    try:
-        if xsource.find('Recommended').text in ['True', 'true']:
-            ret['recommended'] = True
-        else:
-            ret['recommended'] = False
-    except:
-        ret['recommended'] = False
-    if xsource.find('RawURL') is not None:
-        ret['rawurl'] = xsource.find('RawURL').text
-        if not ret['rawurl'].endswith('/'):
-            ret['rawurl'] += '/'
-    else:
-        ret['url'] = xsource.find('URL').text
-        if not ret['url'].endswith('/'):
-            ret['url'] += '/'
-    return ret
+        cls = globals()["%sSource" % stype.upper()]
+    except KeyError:
+        logger.error("Unknown source type %s")
+        return None
+    
+    return cls(cachepath, xsource)
 
 
 def _fetch_url(url):
@@ -94,23 +95,63 @@ def _fetch_url(url):
 class Source(object):
     basegroups = []
 
-    def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, whitelist, recommended):
+    def __init__(self, basepath, xsource):
         self.basepath = basepath
-        self.version = version
-        self.components = components
-        self.url = url
-        self.rawurl = rawurl
-        self.groups = groups
-        self.arches = arches
+        self.xsource = xsource
+
+        try:
+            self.version = xsource.find('Version').text
+        except AttributeError:
+            pass
+
+        for key, tag in [('components', 'Component'), ('arches', 'Arch'),
+                         ('blacklist', 'Blacklist'),
+                         ('whitelist', 'Whitelist')]:
+            self.__dict__[key] = [item.text for item in xsource.findall(tag)]
+
+        self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
+
+        self.recommended = xsource.get('recommended', 'false').lower() == 'true'
+        self.id = xsource.get('id')
+    
+        self.rawurl = xsource.get('rawurl', '')
+        if self.rawurl and not self.rawurl.endswith("/"):
+            self.rawurl += "/"
+        self.url = xsource.get('url', '')
+        if self.url and not self.url.endswith("/"):
+            self.url += "/"
+        self.version = xsource.get('version', '')
+
+        # build the set of conditions to see if this source applies to
+        # a given set of metadata
+        self.conditions = []
+        self.groups = [] # provided for some limited backwards compat
+        for el in xsource.iterancestors():
+            if el.tag == "Group":
+                if el.get("negate", "false").lower() == "true":
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") not in m.groups)
+                else:
+                    self.groups.append(el.get("name"))
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") in m.groups)
+            elif el.tag == "Client":
+                if el.get("negate", "false").lower() == "true":
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") != m.hostname)
+                else:
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") == m.hostname)
+
         self.deps = dict()
         self.provides = dict()
-        self.blacklist = set(blacklist)
-        self.whitelist = set(whitelist)
-        self.cachefile = '%s/cache-%s' % (self.basepath, md5(cPickle.dumps( \
-                [self.version, self.components, self.url, \
-                self.rawurl, self.groups, self.arches])).hexdigest())
-        self.recommended = recommended
+
+        self.cachefile = \
+            os.path.join(self.basepath,
+                         "cache-%s" %
+                         md5(cPickle.dumps([self.version, self.components,
+                                            self.url, self.rawurl,
+                                            self.arches])).hexdigest())
         self.url_map = []
 
     def load_state(self):
@@ -124,8 +165,8 @@ class Source(object):
                 self.load_state()
                 should_read = False
             except:
-                logger.error("Cachefile %s load failed; falling back to file read"\
-                             % (self.cachefile))
+                logger.error("Cachefile %s load failed; "
+                             "falling back to file read" % self.cachefile)
         if should_read:
             try:
                 self.read_files()
@@ -161,7 +202,7 @@ class Source(object):
         return vdict
 
     def escape_url(self, url):
-        return "%s/%s" % (self.basepath, url.replace('/', '@'))
+        return os.path.join(self.basepath, url.replace('/', '@'))
 
     def file_init(self):
         pass
@@ -179,16 +220,23 @@ class Source(object):
                 logger.error("Packages: Bad url string %s" % url)
                 continue
             except HTTPError:
-                h = sys.exc_info()[1]
-                logger.error("Packages: Failed to fetch url %s. code=%s" \
-                             % (url, h.code))
+                err = sys.exc_info()[1]
+                logger.error("Packages: Failed to fetch url %s. code=%s" %
+                             (url, err.code))
                 continue
             BUILTIN_FILE_TYPE(fname, 'w').write(data)
 
     def applies(self, metadata):
-        return len([g for g in self.basegroups if g in metadata.groups]) != 0 and \
-               len([g for g in metadata.groups if g in self.groups]) \
-               == len(self.groups)
+        # check base groups
+        if len([g for g in self.basegroups if g in metadata.groups]) == 0:
+            return False
+
+        # check Group/Client tags from sources.xml
+        for condition in self.conditions:
+            if not condition(metadata):
+                return False
+
+        return True
 
     def get_arches(self, metadata):
         return ['global'] + [a for a in self.arches if a in metadata.groups]
@@ -208,10 +256,6 @@ class Source(object):
     def is_package(self, metadata, _):
         return False
 
-    def get_url_info(self):
-        return {'groups': copy.copy(self.groups), \
-            'urls': [copy.deepcopy(url) for url in self.url_map]}
-
 
 class YUMSource(Source):
     xp = '{http://linux.duke.edu/metadata/common}'
@@ -221,12 +265,10 @@ class YUMSource(Source):
     basegroups = ['yum', 'redhat', 'centos', 'fedora']
     ptype = 'yum'
 
-    def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, whitelist, recommended):
-        Source.__init__(self, basepath, url, version, arches, components,
-                        groups, rawurl, blacklist, whitelist, recommended)
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
         if not self.rawurl:
-            self.baseurl = self.url + '%(version)s/%(component)s/%(arch)s/'
+            self.baseurl = self.url + "%(version)s%(component)s%(arch)s"
         else:
             self.baseurl = self.rawurl
         self.packages = dict()
@@ -244,81 +286,106 @@ class YUMSource(Source):
 
     def load_state(self):
         data = BUILTIN_FILE_TYPE(self.cachefile)
-        (self.packages, self.deps, self.provides, \
+        (self.packages, self.deps, self.provides,
          self.filemap, self.url_map) = cPickle.load(data)
 
     def get_urls(self):
         surls = list()
         self.url_map = []
         for arch in self.arches:
-            usettings = [{'version': self.version, 'component':comp,
-                          'arch':arch} for comp in self.components]
+            if self.url:
+                usettings = [{'version':self.version, 'component':comp,
+                              'arch':arch}
+                             for comp in self.components]
+            else: # rawurl given 
+                usettings = [{'version':self.version, 'component':None,
+                              'arch':arch}]
+
             for setting in usettings:
-                setting['groups'] = self.groups
                 setting['url'] = self.baseurl % setting
                 self.url_map.append(copy.deepcopy(setting))
-            surls.append((arch, [setting['url'] for setting in usettings]))
+                surls.append((arch, [setting['url'] for setting in usettings]))
         urls = []
         for (sarch, surl_list) in surls:
             for surl in surl_list:
-                if not surl.endswith('/'):
-                    surl += '/'
-                rmdurl = surl + 'repodata/repomd.xml'
-                try:
-                    repomd = _fetch_url(rmdurl)
-                    xdata = lxml.etree.XML(repomd)
-                except ValueError:
-                    logger.error("Packages: Bad url string %s" % rmdurl)
-                    continue
-                except HTTPError:
-                    h = sys.exc_info()[1]
-                    logger.error("Packages: Failed to fetch url %s. code=%s" \
-                             % (rmdurl, h.code))
-                    continue
-                except:
-                    logger.error("Failed to process url %s" % rmdurl)
-                    continue
-                for elt in xdata.findall(self.rpo + 'data'):
-                    if elt.get('type') not in ['filelists', 'primary']:
-                        continue
-                    floc = elt.find(self.rpo + 'location')
-                    fullurl = surl + floc.get('href')
-                    urls.append(fullurl)
-                    self.file_to_arch[self.escape_url(fullurl)] = sarch
+                urls.extend(self._get_urls_from_repodata(surl, sarch))
         return urls
     urls = property(get_urls)
 
+    def _get_urls_from_repodata(self, url, arch):
+        rmdurl = '%srepodata/repomd.xml' % url
+        try:
+            repomd = _fetch_url(rmdurl)
+            xdata = lxml.etree.XML(repomd)
+        except ValueError:
+            logger.error("Packages: Bad url string %s" % rmdurl)
+            return []
+        except HTTPError:
+            err = sys.exc_info()[1]
+            logger.error("Packages: Failed to fetch url %s. code=%s" %
+                         (rmdurl, err.code))
+            return []
+        except lxml.etree.XMLSyntaxError:
+            err = sys.exc_info()[1]
+            logger.error("Packages: Failed to process metadata at %s: %s" %
+                         (rmdurl, err))
+            return []
+
+        urls = []
+        for elt in xdata.findall(self.rpo + 'data'):
+            if elt.get('type') in ['filelists', 'primary']:
+                floc = elt.find(self.rpo + 'location')
+                fullurl = url + floc.get('href')
+                urls.append(fullurl)
+                self.file_to_arch[self.escape_url(fullurl)] = arch
+        return urls
+
     def read_files(self):
-        for fname in [f for f in self.files if f.endswith('primary.xml.gz')]:
+        # we have to read primary.xml first, and filelists.xml afterwards;
+        primaries = list()
+        filelists = list()
+        for fname in self.files:
+            if fname.endswith('primary.xml.gz'):
+                primaries.append(fname)
+            elif fname.endswith('filelists.xml.gz'):
+                filelists.append(fname)
+
+        for fname in primaries:
             farch = self.file_to_arch[fname]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_primary(fdata, farch)
-        for fname in [f for f in self.files if f.endswith('filelists.xml.gz')]:
+        for fname in filelists:
             farch = self.file_to_arch[fname]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_filelist(fdata, farch)
+                
         # merge data
         sdata = list(self.packages.values())
-        self.packages['global'] = copy.deepcopy(sdata.pop())
+        try:
+            self.packages['global'] = copy.deepcopy(sdata.pop())
+        except IndexError:
+            logger.error("No packages in repo at %s" % self.files[0])
         while sdata:
-            self.packages['global'] = self.packages['global'].intersection(sdata.pop())
+            self.packages['global'] = \
+                self.packages['global'].intersection(sdata.pop())
 
         for key in self.packages:
             if key == 'global':
                 continue
-            self.packages[key] = self.packages[key].difference(self.packages['global'])
+            self.packages[key] = \
+                self.packages[key].difference(self.packages['global'])
         self.save_state()
 
     def parse_filelist(self, data, arch):
         if arch not in self.filemap:
             self.filemap[arch] = dict()
         for pkg in data.findall(self.fl + 'package'):
-            for fentry in [fe for fe in pkg.findall(self.fl + 'file') \
-                           if fe.text in self.needed_paths]:
-                if fentry.text in self.filemap[arch]:
-                    self.filemap[arch][fentry.text].add(pkg.get('name'))
-                else:
-                    self.filemap[arch][fentry.text] = set([pkg.get('name')])
+            for fentry in pkg.findall(self.fl + 'file'):
+                if fentry.text in self.needed_paths:
+                    if fentry.text in self.filemap[arch]:
+                        self.filemap[arch][fentry.text].add(pkg.get('name'))
+                    else:
+                        self.filemap[arch][fentry.text] = set([pkg.get('name')])
 
     def parse_primary(self, data, arch):
         if arch not in self.packages:
@@ -352,9 +419,10 @@ class YUMSource(Source):
         arch = [a for a in self.arches if a in metadata.groups]
         if not arch:
             return False
-        return (item in self.packages['global'] or item in self.packages[arch[0]]) and \
-               item not in self.blacklist and \
-               ((len(self.whitelist) == 0) or item in self.whitelist)
+        return ((item in self.packages['global'] or
+                 item in self.packages[arch[0]]) and
+                item not in self.blacklist and
+                (len(self.whitelist) == 0 or item in self.whitelist))
 
     def get_vpkgs(self, metadata):
         rv = Source.get_vpkgs(self, metadata)
@@ -370,18 +438,67 @@ class YUMSource(Source):
         unknown.difference_update(filtered)
 
 
+class PulpSource(Source):
+    basegroups = ['yum', 'redhat', 'centos', 'fedora']
+    ptype = 'yum'
+    
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
+        if not has_pulp:
+            logger.error("Cannot create pulp source: pulp libraries not found")
+            raise Bcfg2.Server.Plugin.PluginInitError
+
+        self._config = pulp.client.config.Config()        
+
+        self._repoapi = pulp.client.api.repository.RepositoryAPI()
+        self._repo = self._repoapi.repository(self.id)
+        if self._repo is None:
+            logger.error("Repo id %s not found")
+        else:
+            self.baseurl = "%s/%s" % (self._config.cds.baseurl,
+                                      self._repo['relative_path'])
+
+        self.gpgkeys = ["%s/%s" % (self._config.cds.keyurl, key)
+                        for key in self._repoapi.listkeys(self.id)]
+
+        self.url_map = [{'version': self.version, 'component': None,
+                         'arch': self.arches[0], 'url': self.baseurl}]
+
+    def save_state(self):
+        cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
+        cPickle.dump((self.packages, self.deps, self.provides, self._config,
+                      self.filemap, self.url_map, self._repoapi, self._repo),
+                     cache, 2)
+        cache.close()
+
+    def load_state(self):
+        cache = BUILTIN_FILE_TYPE(self.cachefile)
+        (self.packages, self.deps, self.provides, self._config, self.filemap,
+         self.url_map, self._repoapi, self._repo) = cPickle.load(cache)
+        cache.close()
+
+    def read_files(self):
+        """ ignore the yum files; we can get this information directly
+        from pulp """
+        for pkg in self._repoapi.packages(self.id):
+            try:
+                self.packages[pkg['arch']].append(pkg['name'])
+            except KeyError:
+                self.packages[pkg['arch']] = [pkg['name']]
+        self.save_state()
+
+
 class APTSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
 
-    def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, whitelist, recommended):
-        Source.__init__(self, basepath, url, version, arches, components, groups,
-                        rawurl, blacklist, whitelist, recommended)
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
         self.pkgnames = set()
 
-        self.url_map = [{'rawurl': self.rawurl, 'url': self.url, 'version': self.version, \
-            'components': self.components, 'arches': self.arches, 'groups': self.groups}]
+        self.url_map = [{'rawurl': self.rawurl, 'url': self.url,
+                         'version': self.version,
+                         'components': self.components, 'arches': self.arches}]
 
     def save_state(self):
         cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
@@ -399,11 +516,14 @@ class APTSource(Source):
 
     def get_urls(self):
         if not self.rawurl:
-            return ["%sdists/%s/%s/binary-%s/Packages.gz" % \
-                    (self.url, self.version, part, arch) for part in self.components \
-                    for arch in self.arches]
+            rv = []
+            for part in self.components:
+                for arch in self.arches:
+                    rv.append("%sdists/%s/%s/binary-%s/Packages.gz" %
+                              (self.url, self.version, part, arch))
+            return rv
         else:
-            return ["%sPackages.gz" % (self.rawurl)]
+            return ["%sPackages.gz" % self.rawurl]
     urls = property(get_urls)
 
     def read_files(self):
@@ -415,7 +535,9 @@ class APTSource(Source):
             depfnames = ['Depends', 'Pre-Depends']
         for fname in self.files:
             if not self.rawurl:
-                barch = [x for x in fname.split('@') if x.startswith('binary-')][0][7:]
+                barch = [x
+                         for x in fname.split('@')
+                         if x.startswith('binary-')][0][7:]
             else:
                 # RawURL entries assume that they only have one <Arch></Arch>
                 # element and that it is the architecture of the source.
@@ -438,8 +560,12 @@ class APTSource(Source):
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
-                            cdeps = [re.sub('\s+', '', re.sub('\(.*\)', '', cdep)) for cdep in dep.split('|')]
-                            dyn_dname = "choice-%s-%s-%s" % (pkgname, barch, vindex)
+                            cdeps = [re.sub('\s+', '',
+                                            re.sub('\(.*\)', '', cdep))
+                                     for cdep in dep.split('|')]
+                            dyn_dname = "choice-%s-%s-%s" % (pkgname,
+                                                             barch,
+                                                             vindex)
                             vindex += 1
                             bdeps[barch][pkgname].append(dyn_dname)
                             bprov[barch][dyn_dname] = set(cdeps)
@@ -487,23 +613,22 @@ class APTSource(Source):
         self.save_state()
 
     def is_package(self, _, pkg):
-        return pkg in self.pkgnames and \
-               pkg not in self.blacklist and \
-               (len(self.whitelist) == 0 or pkg in self.whitelist)
+        return (pkg in self.pkgnames and
+                pkg not in self.blacklist and
+                (len(self.whitelist) == 0 or pkg in self.whitelist))
 
 
 class PACSource(Source):
     basegroups = ['arch', 'parabola']
     ptype = 'pacman'
 
-    def __init__(self, basepath, url, version, arches, components, groups,
-                 rawurl, blacklist, whitelist, recommended):
-        Source.__init__(self, basepath, url, version, arches, components, groups,
-                        rawurl, blacklist, whitelist, recommended)
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
         self.pkgnames = set()
 
-        self.url_map = [{'rawurl': self.rawurl, 'url': self.url, 'version': self.version, \
-            'components': self.components, 'arches': self.arches, 'groups': self.groups}]
+        self.url_map = [{'rawurl': self.rawurl, 'url': self.url,
+                         'version': self.version,
+                         'components': self.components, 'arches': self.arches}]
 
     def save_state(self):
         cache = BUILTIN_FILE_TYPE(self.cachefile, 'wb')
@@ -521,9 +646,12 @@ class PACSource(Source):
 
     def get_urls(self):
         if not self.rawurl:
-            return ["%s/%s/os/%s/%s.db.tar.gz" % \
-                    (self.url, part, arch, part) for part in self.components \
-                    for arch in self.arches]
+            rv = []
+            for part in self.components:
+                for arch in self.arches:
+                    rv.append("%s%s/os/%s/%s.db.tar.gz" %
+                              (self.url, part, arch, part))
+            return rv
         else:
             raise Exception("PACSource : RAWUrl not supported (yet)")
     urls = property(get_urls)
@@ -544,7 +672,7 @@ class PACSource(Source):
                 # RawURL entries assume that they only have one <Arch></Arch>
                 # element and that it is the architecture of the source.
                 barch = self.arches[0]
-
+            
             if barch not in bdeps:
                 bdeps[barch] = dict()
                 bprov[barch] = dict()
@@ -595,9 +723,74 @@ class PACSource(Source):
         self.save_state()
 
     def is_package(self, _, pkg):
-        return pkg in self.pkgnames and \
-               pkg not in self.blacklist and \
-               (len(self.whitelist) == 0 or pkg in self.whitelist)
+        return (pkg in self.pkgnames and
+                pkg not in self.blacklist and
+                (len(self.whitelist) == 0 or pkg in self.whitelist))
+
+
+class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
+                      Bcfg2.Server.Plugin.StructFile):
+    def __init__(self, filename, cachepath, fam, packages):
+        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
+        Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
+        self.cachepath = cachepath
+        if not os.path.exists(self.cachepath):
+            # create cache directory if needed
+            os.makedirs(self.cachepath)
+        self.extras = []
+        self.fam = fam
+        self.pkg_obj = packages
+
+    def Index(self):
+        try:
+            self.xdata = lxml.etree.XML(self.data, base_url=self.name)
+        except lxml.etree.XMLSyntaxError:
+            err = sys.exc_info()[1]
+            logger.error("Packages: Error processing sources: %s" % err)
+            raise Bcfg2.Server.Plugin.PluginInitError
+
+        included = [ent.get('href')
+                    for ent in self.xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        if included:
+            for name in included:
+                if name not in self.extras:
+                    self.add_monitor(name)
+            try:
+                self.xdata.getroottree().xinclude()
+            except lxml.etree.XIncludeError:
+                err = sys.exc_info()[1]
+                logger.error("Packages: Error processing sources: %s" % err)
+
+        if self.__identifier__ is not None:
+            self.label = self.xdata.attrib[self.__identifier__]
+
+        self.entries = []
+        for xsource in self.xdata.findall('.//Source'):
+            source = source_from_xml(xsource, self.cachepath)
+            if source is not None:
+                self.entries.append(source)
+        
+        self.pkg_obj.Reload()
+
+    def add_monitor(self, fname):
+        """Add a fam monitor for an included file"""
+        self.fam.AddMonitor(os.path.join(os.path.dirname(self.name), fname),
+                            self)
+        self.extras.append(fname)
+
+
+class PackagesConfig(Bcfg2.Server.Plugin.FileBacked,
+                     ConfigParser.SafeConfigParser):
+    def __init__(self, filename, fam):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, filename)
+        ConfigParser.SafeConfigParser.__init__(self)
+        fam.AddMonitor(filename, self)
+
+    def Index(self):
+        """ Build local data structures """
+        for section in self.sections():
+            self.remove_section(section)
+        self.read(self.name)
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
@@ -614,27 +807,123 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.cachepath = self.data + '/cache'
+        Bcfg2.Server.Plugin.Probing.__init__(self)
+        
         self.sentinels = set()
-        self.sources = []
-        self.disableResolver = False
-        self.disableMetaData = False
         self.virt_pkgs = dict()
+        self.ptypes = dict()
+        self.cachepath = os.path.join(self.data, 'cache')
+        self.keypath = os.path.join(self.data, 'keys')
+        if not os.path.exists(self.keypath):
+            # create key directory if needed
+            os.makedirs(self.keypath)
 
-        if not os.path.exists(self.cachepath):
-            # create cache directory if needed
-            os.makedirs(self.cachepath)
-        self._load_config()
+        # set up config files
+        self.config = PackagesConfig(os.path.join(self.data, "packages.conf"),
+                                     core.fam)
+        self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
+                                       self.cachepath, core.fam, self)
+
+    @property
+    def disableResolver(self):
+        try:
+            return self.config.get("global", "resolver").lower() == "disabled"
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return False
+
+    @property
+    def disableMetaData(self):
+        try:
+            return self.config.get("global", "metadata").lower() == "disabled"
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return False
+
+    def create_apt_conf(self, entry, metadata):
+        """ create apt config for the specified host """
+        raise NotImplementedError
+
+    def create_yum_conf(self, entry, metadata):
+        """ create yum config for the specified host """
+        yum_attrib = {'encoding': 'ascii',
+                      'owner': 'root',
+                      'group': 'root',
+                      'type': 'file',
+                      'perms': '0644'}
+
+        stanzas = []
+        reponame_re = re.compile(r'.*/(?:RPMS\.)?([^/]+)')
+        for source in self.get_matching_sources(metadata):
+            for url_map in source.url_map:
+                if url_map['arch'] in metadata.groups:
+                    # try to find a sensible name for the repo
+                    name = None
+                    if source.id:
+                        reponame = source.id
+                    else:
+                        match = reponame_re.search(url_map['url'])
+                        if url_map['component']:
+                            name = url_map['component']
+                        elif match:
+                            name = match.group(1)
+                        else:
+                            # couldn't figure out the name from the
+                            # source ID, URL or URL map (which
+                            # probably means its a screwy URL), so we
+                            # just generate a random one
+                            name = base64.b64encode(os.urandom(16))[:-2]
+                        reponame = "%s-%s" % (source.groups[0], name)
+
+                    stanza = ["[%s]" % reponame,
+                              "name=%s" % reponame,
+                              "baseurl=%s" % url_map['url'],
+                              "enabled=1"]
+                    if len(source.gpgkeys):
+                        stanza.append("gpgcheck=1")
+                        stanza.append("gpgkey=%s" %
+                                      " ".join(source.gpgkeys))
+                    else:
+                        stanza.append("gpgcheck=0")
+                    stanzas.append("\n".join(stanza))
+
+        entry.text = "%s\n" % "\n\n".join(stanzas)
+        for (key, value) in list(yum_attrib.items()):
+            entry.attrib.__setitem__(key, value)
 
     def get_relevant_groups(self, meta):
-        mgrps = list(set([g for g in meta.groups for s in self.get_matching_sources(meta) \
-                          if g in s.basegroups or g in s.groups or g in s.arches]))
+        mgrps = []
+        for source in self.get_matching_sources(meta):
+            mgrps.extend(list(set([g for g in meta.groups
+                                   if (g in source.basegroups or
+                                       g in source.groups or
+                                       g in source.arches)])))
         mgrps.sort()
         return tuple(mgrps)
 
+    def _setup_pulp(self):
+        try:
+            rouser = self.config.get("pulp", "rouser")
+            ropass = self.config.get("pulp", "ropass")
+        except ConfigParser.NoSectionError:
+            logger.error("No [pulp] section found in Packages/packages.conf")
+            raise Bcfg2.Server.Plugin.PluginInitError
+        except ConfigParser.NoOptionError:
+            err = sys.exc_info()[1]
+            logger.error("Required option not found in "
+                         "Packages/packages.conf: %s" % err)
+            raise Bcfg2.Server.Plugin.PluginInitError            
+
+        pulpconfig = pulp.client.config.Config()
+        serveropts = pulpconfig.server
+        
+        self._server = pulp.client.server.PulpServer(serveropts['host'],
+                                                     int(serveropts['port']),
+                                                     serveropts['scheme'],
+                                                     serveropts['path'])
+        self._server.set_basic_auth_credentials(rouser, ropass)
+        pulp.client.server.set_active_server(self._server)
+
     def build_vpkgs_entry(self, meta):
         # build single entry for all matching sources
-        mgrps = self.get_relevant_groups(meta)
         vpkgs = dict()
         for source in self.get_matching_sources(meta):
             s_vpkgs = source.get_vpkgs(meta)
@@ -648,17 +937,45 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def get_matching_sources(self, meta):
         return [s for s in self.sources if s.applies(meta)]
 
-    def HandlesEntry(self, entry, metadata):
-        if [x for x in metadata.groups if x in self.sentinels] \
-               and entry.tag == 'Package':
-            return True
-        return False
+    def get_ptype(self, metadata):
+        """ return the package type relevant to this client """
+        if metadata.hostname not in self.ptypes:
+            for source in self.sources:
+                for grp in metadata.groups:
+                    if grp in source.basegroups:
+                        self.ptypes[metadata.hostname] = source.ptype
+                        break
+        try:
+            return self.ptypes[metadata.hostname]
+        except KeyError:
+            return None
 
     def HandleEntry(self, entry, metadata):
-        entry.set('version', 'auto')
-        for source in self.sources:
-            if [x for x in metadata.groups if x in source.basegroups]:
-                entry.set('type', source.ptype)
+        if entry.tag == 'Package':
+            entry.set('version', 'auto')
+            entry.set('type', self.get_ptype(metadata))
+        elif entry.tag == 'Path':
+            if (self.config.has_option("global", "yum_config") and
+                entry.get("name") == self.config.get("global", "yum_config")):
+                self.create_yum_conf(entry, metadata)
+            elif (self.config.has_option("global", "apt_config") and 
+                  entry.get("name") == self.config.get("global", "apt_config")):
+                self.create_apt_conf(entry, metadata)
+
+    def HandlesEntry(self, entry, metadata):
+        if entry.tag == 'Package':
+            for grp in metadata.groups:
+                if grp in self.sentinels:
+                    return True
+        elif entry.tag == 'Path':
+            # managed entries for yum/apt configs
+            if ((self.config.has_option("global", "yum_config") and
+                 entry.get("name") == self.config.get("global",
+                                                      "yum_config")) or
+                (self.config.has_option("global", "apt_config") and 
+                 entry.get("name") == self.config.get("global", "apt_config"))):
+                return True
+        return False
 
     def complete(self, meta, input_requirements, debug=False):
         '''Build the transitive closure of all package dependencies
@@ -673,10 +990,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         # reverse list so that priorities correspond to file order
         sources.reverse()
         if len(sources) == 0:
-            self.logger.error("Packages: No matching sources for client %s; improper group memberships?" % (meta.hostname))
+            self.logger.error("Packages: No matching sources for client %s; "
+                              "improper group memberships?" % meta.hostname)
             return set(), set(), 'failed'
-        ptype = set([s.ptype for s in sources])
-        if len(ptype) < 1:
+        ptype = self.get_ptype(meta)
+        if ptype is None:
             return set(), set(), 'failed'
 
         # setup vpkg cache
@@ -699,7 +1017,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         really_done = False
         # do while unclassified or vpkgs or both or pkgs
         while unclassified or pkgs or both or final_pass:
-            #print len(unclassified), len(pkgs), len(both), len(vpkgs), final_pass
             if really_done:
                 break
             if len(unclassified) + len(pkgs) + len(both) == 0:
@@ -709,7 +1026,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             while unclassified:
                 current = unclassified.pop()
                 examined.add(current)
-                is_pkg = True in [source.is_package(meta, current) for source in sources]
+                is_pkg = False
+                for source in sources:
+                    if source.is_package(meta, current):
+                        is_pkg = True
+                        break
+                
                 is_vpkg = current in vpkg_cache
 
                 if is_pkg and is_vpkg:
@@ -722,10 +1044,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     unknown.add(current)
 
             while pkgs:
-                # direct packages; current can be added, and all deps should be resolved
+                # direct packages; current can be added, and all deps
+                # should be resolved
                 current = pkgs.pop()
                 if debug:
-                    self.logger.debug("Packages: handling package requirement %s" % (current))
+                    self.logger.debug("Packages: handling package requirement "
+                                      "%s" % current)
                 deps = ()
                 for source in sources:
                     if source.is_package(meta, current):
@@ -737,34 +1061,44 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 packages.add(current)
                 newdeps = set(deps).difference(examined)
                 if debug and newdeps:
-                    self.logger.debug("Packages: Package %s added requirements %s" % (current, newdeps))
+                    self.logger.debug("Packages: Package %s added "
+                                      "requirements %s" % (current, newdeps))
                 unclassified.update(newdeps)
 
             satisfied_vpkgs = set()
             for current in vpkgs:
-                # virtual dependencies, satisfied if one of N in the config, or can be forced if only one provider
+                # virtual dependencies, satisfied if one of N in the
+                # config, or can be forced if only one provider
                 if len(vpkg_cache[current]) == 1:
                     if debug:
-                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current, vpkg_cache[current]))
+                        self.logger.debug("Packages: requirement %s satisfied "
+                                          "by %s" % (current,
+                                                     vpkg_cache[current]))
                     unclassified.update(vpkg_cache[current].difference(examined))
                     satisfied_vpkgs.add(current)
                 elif [item for item in vpkg_cache[current] if item in packages]:
                     if debug:
-                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current,
-                                                                                        [item for item in vpkg_cache[current]
-                                                                                         if item in packages]))
+                        self.logger.debug("Packages: requirement %s satisfied "
+                                          "by %s" %
+                                          (current,
+                                           [item for item in vpkg_cache[current]
+                                            if item in packages]))
                     satisfied_vpkgs.add(current)
             vpkgs.difference_update(satisfied_vpkgs)
 
             satisfied_both = set()
             for current in both:
-                # packages that are both have virtual providers as well as a package with that name
-                # allow use of virt through explicit specification, then fall back to forcing current on last pass
+                # packages that are both have virtual providers as
+                # well as a package with that name. allow use of virt
+                # through explicit specification, then fall back to
+                # forcing current on last pass
                 if [item for item in vpkg_cache[current] if item in packages]:
                     if debug:
-                        self.logger.debug("Packages: requirement %s satisfied by %s" % (current,
-                                                                                        [item for item in vpkg_cache[current]
-                                                                                         if item in packages]))
+                        self.logger.debug("Packages: requirement %s satisfied "
+                                          "by %s" %
+                                          (current,
+                                           [item for item in vpkg_cache[current]
+                                            if item in packages]))
                     satisfied_both.add(current)
                 elif current in input_requirements or final_pass:
                     pkgs.add(current)
@@ -779,24 +1113,82 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             for source in sources:
                 source.filter_unknown(unknown)
 
-        return packages, unknown, ptype.pop()
+        return packages, unknown, ptype
 
-    def validate_structures(self, meta, structures):
+    def validate_structures(self, metadata, structures):
         '''Ensure client configurations include all needed prerequisites
 
         Arguments:
-        meta - client metadata instance
+        metadata - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
+        indep = lxml.etree.Element('Independent')
+        self._build_packages(metadata, indep, structures)
+        self._build_gpgkeys(metadata, indep)
+        self._build_pulp_entries(metadata, indep)
+        structures.append(indep)
+
+    def _build_pulp_entries(self, metadata, independent):
+        """ build list of Pulp actions that need to be included in the
+        specification by validate_structures() """
+        if not has_pulp:
+            return
+
+        # if there are no Pulp sources for this host, we don't need to
+        # worry about registering it
+        build_actions = False
+        for source in self.get_matching_sources(metadata):
+            if isinstance(source, PulpSource):
+                build_actions = True
+                break
+            
+        if not build_actions:
+            self.logger.debug("No Pulp sources apply to %s, skipping Pulp "
+                              "registration" % metadata.hostname)
+            return
+
+        consumerapi = pulp.client.api.consumer.ConsumerAPI()
+        try:
+            consumer = consumerapi.consumer(metadata.hostname)
+        except pulp.client.server.ServerRequestError:
+            try:
+                reguser = self.config.get("pulp", "reguser")
+                regpass = self.config.get("pulp", "regpass")           
+                reg_cmd = ("pulp-client -u '%s' -p '%s' consumer create "
+                           "--id='%s'" % (reguser, regpass, metadata.hostname))
+                lxml.etree.SubElement(independent, "BoundAction",
+                                      name="pulp-register", timing="pre",
+                                      when="always", status="check",
+                                      command=reg_cmd)
+            except ConfigParser.NoOptionError:
+                err = sys.exc_info()[1]
+                self.logger.error("Required option not found in "
+                                  "Packages/packages.conf: %s.  Pulp consumers "
+                                  "will not be registered" % err)
+            return
+
+        for source in self.get_matching_sources(metadata):
+            # each pulp source can only have one arch, so we don't
+            # have to check the arch in url_map
+            if source.id not in consumer['repoids']:
+                bind_cmd = "pulp-client consumer bind --repoid=%s" % source.id
+                lxml.etree.SubElement(independent, "BoundAction",
+                                      name="pulp-bind-%s" % source.id,
+                                      timing="pre", when="always",
+                                      status="check", command=bind_cmd)
+
+    def _build_packages(self, metadata, independent, structures):
+        """ build list of packages that need to be included in the
+        specification by validate_structures() """
         if self.disableResolver:
             # Config requests no resolver
             return
 
-        initial = set([pkg.get('name') for struct in structures \
-                       for pkg in struct.findall('Package') +
-                       struct.findall('BoundPackage')])
-        news = lxml.etree.Element('Independent')
-        packages, unknown, ptype = self.complete(meta, initial,
+        initial = set([pkg.get('name')
+                       for struct in structures
+                         for pkg in struct.findall('Package') + \
+                                    struct.findall('BoundPackage')])
+        packages, unknown, ptype = self.complete(metadata, initial,
                                                  debug=self.debug_flag)
         if unknown:
             self.logger.info("Got unknown entries")
@@ -804,42 +1196,63 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         newpkgs = list(packages.difference(initial))
         newpkgs.sort()
         for pkg in newpkgs:
-            lxml.etree.SubElement(news, 'BoundPackage', name=pkg,
+            lxml.etree.SubElement(independent, 'BoundPackage', name=pkg,
                                   type=ptype, version='auto', origin='Packages')
-        structures.append(news)
 
-    def make_non_redundant(self, meta, plname=None, plist=None):
-        '''build a non-redundant version of a list of packages
+    def _build_gpgkeys(self, metadata, independent):
+        """ build list of gpg keys to be added to the specification by
+        validate_structures() """
+        keypkg = lxml.etree.Element('BoundPackage', name="gpg-pubkey",
+                                    type=self.get_ptype(metadata),
+                                    origin='Packages')
 
-        Arguments:
-        meta - client metadata instance
-        plname - name of file containing a list of packages
-        '''
-        if plname is not None:
-            pkgnames = set([x.strip() for x in open(plname).readlines()])
-        elif plist is not None:
-            pkgnames = set(plist)
-        redundant = set()
-        sources = self.get_matching_sources(meta)
-        for source in sources:
-            for pkgname in pkgnames:
-                if source.is_pkg(meta, current):
-                    try:
-                        deps = source.get_deps(meta, pkgname)
-                    except:
-                        continue
-                    for rpkg in deps:
-                        if rpkg in pkgnames:
-                            redundant.add(rpkg)
-        return pkgnames.difference(redundant), redundant
+        needkeys = set()
+        for source in self.get_matching_sources(metadata):
+            for key in source.gpgkeys:
+                needkeys.add(key)
+
+        for key in needkeys:
+            # figure out the path of the key on the client
+            try:
+                keydir = self.config.get("global", "gpg_keypath")
+            except ConfigParser.NoOptionError:
+                keydir = "/etc/pki/rpm-gpg"
+            remotekey = os.path.join(keydir, os.path.basename(key))
+            localkey = os.path.join(self.keypath, os.path.basename(key))
+            kdata = open(localkey).read()
+                
+            # copy the key to the client
+            keypath = lxml.etree.Element("BoundPath", name=remotekey,
+                                         encoding='ascii',
+                                         owner='root', group='root',
+                                         type='file', perms='0644',
+                                         important='true')
+            keypath.text = kdata
+            independent.append(keypath)
+
+            if has_yum:
+                # add the key to the specification to ensure it gets
+                # installed
+                kinfo = yum.misc.getgpgkeyinfo(kdata)
+                version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
+                release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
+
+                lxml.etree.SubElement(keypkg, 'Instance', version=version,
+                                      release=release, simplefile=remotekey)
+            else:
+                self.logger.info("Yum libraries not found; GPG keys will not "
+                                 "be handled automatically")
+        independent.append(keypkg)
 
     def Refresh(self):
-        '''Packages.Refresh() => True|False\nReload configuration specification and download sources\n'''
+        '''Packages.Refresh() => True|False\nReload configuration
+        specification and download sources\n'''
         self._load_config(force_update=True)
         return True
 
     def Reload(self):
-        '''Packages.Refresh() => True|False\nReload configuration specification and sources\n'''
+        '''Packages.Refresh() => True|False\nReload configuration
+        specification and sources\n'''
         self._load_config()
         return True
 
@@ -850,40 +1263,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Keyword args:
             force_update    Force downloading repo data
         '''
+        self._load_sources(force_update)
+        self._load_gpg_keys(force_update)
+
+    def _load_sources(self, force_update):
+        """ Load sources from the config """
         self.virt_pkgs = dict()
-        try:
-            xdata = lxml.etree.parse(self.data + '/config.xml')
-            xdata.xinclude()
-            xdata = xdata.getroot()
-        except (lxml.etree.XIncludeError, \
-                lxml.etree.XMLSyntaxError):
-            xmlerr = sys.exc_info()[1]
-            self.logger.error("Package: Error processing xml: %s" % xmlerr)
-            raise Bcfg2.Server.Plugin.PluginInitError
-        except IOError:
-            self.logger.error("Failed to read Packages configuration. Have" +
-                              " you created your config.xml file?")
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-        # Load Packages config
-        config = xdata.xpath('//Sources/Config')
-        if config:
-            if config[0].get("resolver", "enabled").lower() == "disabled":
-                self.logger.info("Packages: Resolver disabled")
-                self.disableResolver = True
-            if config[0].get("metadata", "enabled").lower() == "disabled":
-                self.logger.info("Packages: Metadata disabled")
-                self.disableResolver = True
-                self.disableMetaData = True
-
         self.sentinels = set()
-        self.sources = []
-        for s in xdata.findall('.//APTSource'):
-            self.sources.append(APTSource(self.cachepath, **source_from_xml(s)))
-        for s in xdata.findall('.//YUMSource'):
-            self.sources.append(YUMSource(self.cachepath, **source_from_xml(s)))
-        for s in xdata.findall('.//PACSource'):
-            self.sources.append(PACSource(self.cachepath, **source_from_xml(s)))
 
         cachefiles = []
         for source in self.sources:
@@ -891,11 +1277,30 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if not self.disableMetaData:
                 source.setup_data(force_update)
             self.sentinels.update(source.basegroups)
-        for cfile in glob.glob("%s/cache-*" % self.cachepath):
+        
+        for cfile in glob.glob(os.path.join(self.cachepath, "cache-*")):
             if cfile not in cachefiles:
                 os.unlink(cfile)
 
+    def _load_gpg_keys(self, force_update):
+        """ Load gpg keys from the config """
+        keyfiles = []
+        for source in self.sources:
+            for key in source.gpgkeys:
+                localfile = os.path.join(self.keypath, os.path.basename(key))
+                if localfile not in keyfiles:
+                    keyfiles.append(localfile)
+                if force_update or not os.path.exists(localfile):
+                    logger.debug("Downloading and parsing %s" % key)
+                    response = urlopen(key)
+                    open(localfile, 'w').write(response.read())
+
+        for kfile in glob.glob(os.path.join(self.keypath, "*")):
+            if kfile not in keyfiles:
+                os.unlink(kfile)
+
     def get_additional_data(self, meta):
         sdata = []
-        [sdata.extend(copy.deepcopy(src.url_map)) for src in self.get_matching_sources(meta)]
+        [sdata.extend(copy.deepcopy(src.url_map))
+         for src in self.get_matching_sources(meta)]
         return dict(sources=sdata)
