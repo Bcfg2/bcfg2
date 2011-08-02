@@ -35,7 +35,7 @@ How do I use it?
 #. In the Bcfg2 repository, put `paranoid='true'` in the ``info.xml``
    file.
 #. On the client, create ``/var/cache/bcfg2`` (or specify an alternate
-   path in the [paranoid] section of ``/etc/bcfg2``).
+   path in the [paranoid] section of ``/etc/bcfg2.conf``).
 #. On the client, run `bcfg2` with the `-P` option (alternatively, you
    can set *paranoid* to *true* in the **[client]** section of
    ``bcfg2.conf``).
