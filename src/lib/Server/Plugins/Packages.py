@@ -1202,47 +1202,48 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def _build_gpgkeys(self, metadata, independent):
         """ build list of gpg keys to be added to the specification by
         validate_structures() """
-        keypkg = lxml.etree.Element('BoundPackage', name="gpg-pubkey",
-                                    type=self.get_ptype(metadata),
-                                    origin='Packages')
-
         needkeys = set()
         for source in self.get_matching_sources(metadata):
             for key in source.gpgkeys:
                 needkeys.add(key)
 
-        for key in needkeys:
-            # figure out the path of the key on the client
-            try:
-                keydir = self.config.get("global", "gpg_keypath")
-            except ConfigParser.NoOptionError:
-                keydir = "/etc/pki/rpm-gpg"
-            remotekey = os.path.join(keydir, os.path.basename(key))
-            localkey = os.path.join(self.keypath, os.path.basename(key))
-            kdata = open(localkey).read()
+        if len(needkeys):
+            keypkg = lxml.etree.Element('BoundPackage', name="gpg-pubkey",
+                                        type=self.get_ptype(metadata),
+                                        origin='Packages')
+
+            for key in needkeys:
+                # figure out the path of the key on the client
+                try:
+                    keydir = self.config.get("global", "gpg_keypath")
+                except ConfigParser.NoOptionError:
+                    keydir = "/etc/pki/rpm-gpg"
+                remotekey = os.path.join(keydir, os.path.basename(key))
+                localkey = os.path.join(self.keypath, os.path.basename(key))
+                kdata = open(localkey).read()
                 
-            # copy the key to the client
-            keypath = lxml.etree.Element("BoundPath", name=remotekey,
-                                         encoding='ascii',
-                                         owner='root', group='root',
-                                         type='file', perms='0644',
-                                         important='true')
-            keypath.text = kdata
-            independent.append(keypath)
+                # copy the key to the client
+                keypath = lxml.etree.Element("BoundPath", name=remotekey,
+                                             encoding='ascii',
+                                             owner='root', group='root',
+                                             type='file', perms='0644',
+                                             important='true')
+                keypath.text = kdata
+                independent.append(keypath)
 
-            if has_yum:
-                # add the key to the specification to ensure it gets
-                # installed
-                kinfo = yum.misc.getgpgkeyinfo(kdata)
-                version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
-                release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
+                if has_yum:
+                    # add the key to the specification to ensure it
+                    # gets installed
+                    kinfo = yum.misc.getgpgkeyinfo(kdata)
+                    version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
+                    release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
 
-                lxml.etree.SubElement(keypkg, 'Instance', version=version,
-                                      release=release, simplefile=remotekey)
-            else:
-                self.logger.info("Yum libraries not found; GPG keys will not "
-                                 "be handled automatically")
-        independent.append(keypkg)
+                    lxml.etree.SubElement(keypkg, 'Instance', version=version,
+                                          release=release, simplefile=remotekey)
+                else:
+                    self.logger.info("Yum libraries not found; GPG keys will "
+                                     "not be handled automatically")
+            independent.append(keypkg)
 
     def Refresh(self):
         '''Packages.Refresh() => True|False\nReload configuration
