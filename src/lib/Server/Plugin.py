@@ -387,7 +387,7 @@ class DirectoryBacked(object):
         """
         object.__init__(self)
 
-        self.data = data
+        self.data = os.path.normpath(data)
         self.fam = fam
 
         # self.entries contains information about the files monitored
@@ -441,17 +441,18 @@ class DirectoryBacked(object):
         """
         action = event.code2str()
 
-        # Exclude events for actions and filesystem paths we don't
-        # care about
+        # Clean up the absolute path names passed in
+        event.filename = os.path.normpath(event.filename)
+        if event.filename.startswith(self.data):
+            event.filename = event.filename[len(self.data)+1:]
+
+        # Exclude events for actions we don't care about
         if action == 'endExist':
             return
-        elif os.path.isabs(event.filename[0]):
-            # After AddDirectoryMonitor calls, we receive an 'exists'
-            # event with the just-added directory and its absolute
-            # path name. Ignore these.
-            return
-        elif event.filename == '':
-            logger.warning("Got event for blank filename")
+
+        if event.requestID not in self.handles:
+            logger.warn("Got %s event with unknown handle (%s) for %s"
+                        % (action, event.requestID, abspath))
             return
 
         # Calculate the absolute and relative paths this event refers to
@@ -463,9 +464,11 @@ class DirectoryBacked(object):
             for key in self.entries.keys():
                 if key.startswith(relpath):
                     del self.entries[key]
-            for handle in self.handles.keys():
-                if self.handles[handle].startswith(relpath):
-                    del self.handles[handle]
+            # We remove values from self.entries, but not
+            # self.handles, because the FileMonitor doesn't stop
+            # watching a directory just because it gets deleted. If it
+            # is recreated, we will start getting notifications for it
+            # again without having to add a new monitor.
         elif posixpath.isdir(abspath):
             # Deal with events for directories
             if action in ['exists', 'created']:
