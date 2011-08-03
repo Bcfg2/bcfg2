@@ -169,24 +169,14 @@ has an additional `xmlns:py` attribute. See the examples.
 Troubleshooting
 ---------------
 
-There is no :ref:`bcfg2-info <server-bcfg2-info>` command like
-``buildfile`` for Bundler templates, so if you want to generate a
-Bundler template for a given client, you have to do so manually by
-first invoking ``bcfg2-info debug``, then run::
+To render a bundle for a given client, you can run::
 
-    metadata = self.build_metadata("<hostname>")
-    path = "<full path to template file>"
-    from genshi.template import TemplateLoader, MarkupTemplate
-    template = TemplateLoader().load(path, cls=MarkupTemplate)
-    print template.generate(metadata=metadata).render('xml')
+    bcfg2-info buildbundle <bundle name> <hostname>
 
-``path`` needs to be the full path to the template file on the
-filesystem, not just within the Bcfg2 repo.
+This will render the template; it will not fully bind all of the
+entries in the bundle.
 
-If you are making changes to your template and you want to tell your
-filemonitor to process any pending changes, you can do the following::
-
-    self.fam.handle_events_in_interval(0.1)
+See :ref:`bcfg2-info <server-bcfg2-info>` for more details.
 
 Altsrc
 ======

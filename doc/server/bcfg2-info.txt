@@ -92,6 +92,12 @@ commands.
      displays a list of entries (optionally filtered by type) that
      appear in a client's configuration specification
 
+**buildbundle**
+     Render a single bundle template.  This only performs the template
+     rendering step; it does not fully bind all entries in the
+     bundle. This command is very useful when developing bundle
+     templates.
+
 **buildfile**
      Perform the entry binding process on a single entry, displaying
      its results. This command is very useful when developing

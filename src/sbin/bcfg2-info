@@ -24,6 +24,7 @@ import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins.Metadata
+import Bcfg2.Server.Plugins.SGenshi
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('bcfg2-info')
@@ -32,6 +33,7 @@ build <hostname> <filename> - Build config for hostname, writing to filename
 builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname
 buildall <directory> - Build configs for all clients in directory
 buildfile <filename> <hostname> - Build config file for hostname (not written to disk)
+buildbundle <bundle> <hostname> - Render a templated bundle for hostname (not written to disk)
 bundles - Print out group/bundle information
 clients - Print out client/profile information
 config - Print out the configuration of the Bcfg2 server
@@ -269,6 +271,30 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                                           xml_declaration=True))
             except:
                 print("Failed to build entry %s for host %s" % (fname, client))
+        else:
+            print('Usage: buildfile filename hostname')
+
+    def do_buildbundle(self, args):
+        """Render a bundle for client."""
+        if len(args.split()) == 2:
+            bname, client = args.split()
+            try:
+                metadata = self.build_metadata(client)
+                if bname in self.plugins['Bundler'].entries:
+                    bundle = self.plugins['Bundler'].entries[bname]
+                    if isinstance(bundle,
+                                  Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
+                        stream = bundle.template.generate(metadata=metadata)
+                        print(stream.render("xml"))
+                    else:
+                        print(bundle.data)
+                else:
+                    print("No such bundle %s" % bname)
+            except:
+                err = sys.exc_info()[1]
+                print("Failed to render bundle %s for host %s: %s" % (bname,
+                                                                      client,
+                                                                      err))
         else:
             print('Usage: buildfile filename hostname')
 
