@@ -268,7 +268,7 @@ class YUMSource(Source):
     def __init__(self, basepath, xsource):
         Source.__init__(self, basepath, xsource)
         if not self.rawurl:
-            self.baseurl = self.url + "%(version)s%(component)s%(arch)s"
+            self.baseurl = self.url + "%(version)s/%(component)s/%(arch)s/"
         else:
             self.baseurl = self.rawurl
         self.packages = dict()
