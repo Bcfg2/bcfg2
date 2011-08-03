@@ -85,6 +85,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("unknown-path-type",
                                "Unknown path type %s: %s" %
                                (pathtype, self.RenderXML(entry)))
+                return
 
             if 'dev_type' in required_attrs:
                 dev_type = entry.get('dev_type')
