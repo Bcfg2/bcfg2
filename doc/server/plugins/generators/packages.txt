@@ -279,7 +279,7 @@ sources in this file) will be reflected by the server at this point.
 Soft reload
 -----------
 
-.. versionadded:: 1.1.0
+.. versionadded:: 1.2.0
 
 A soft reload can be performed to reread the configuration file and
 download only missing sources.::
@@ -332,7 +332,7 @@ to the yum config file you want to generate::
 
 Then add the corresponding Path entry to your Yum bundle.
 
-.. versionadded:: 1.1.0
+.. versionadded:: 1.2.0
 
 APT repository information can be generated automatically from
 software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.  A
