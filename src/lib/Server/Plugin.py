@@ -927,7 +927,7 @@ class EntrySet:
         fpath = "%s/%s" % (self.path, event.filename)
         if event.filename == 'info.xml':
             if not self.infoxml:
-                self.infoxml = XMLSrc(fpath, True)
+                self.infoxml = InfoXML(fpath, True)
             self.infoxml.HandleEvent(event)
         elif event.filename in [':info', 'info']:
             for line in open(fpath).readlines():
