@@ -223,6 +223,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in list(self.entries.keys()):
             self.GenerateHostKeys(client)
+        # Service the FAM events queued up by the key generation so
+        # the data structure entries will be available for binding.
+        # NOTE: We're only waiting for one second. This seems ripe for
+        # a potential race condition, because if the file monitor
+        # doesn't get notified about the new key files in time, those
+        # entries won't be available for binding.
+        self.fam.handle_events_in_interval(1)
         if not filename in self.entries:
             self.logger.error("%s still not registered" % filename)
             raise Bcfg2.Server.Plugin.PluginExecutionError
@@ -264,9 +271,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 os.system(cmd % (temploc, keytype, client))
                 shutil.copy(temploc, fileloc)
                 shutil.copy("%s.pub" % temploc, publoc)
-                self.AddEntry(hostkey)
-                self.AddEntry(".".join([hostkey.split('.')[0]] + ['pub', "H_%s" \
-                                                                  % client]))
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
