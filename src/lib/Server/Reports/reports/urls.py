@@ -14,8 +14,8 @@ urlpatterns = patterns('Bcfg2.Server.Reports.reports',
     (r'^$', newRoot),
 
     url(r'^manage/?$', 'views.client_manage', name='reports_client_manage'),
-    url(r'^client/(?P<hostname>\S+)/(?P<pk>\d+)/?$', 'views.client_detail', name='reports_client_detail_pk'),
-    url(r'^client/(?P<hostname>\S+)/?$', 'views.client_detail', name='reports_client_detail'),
+    url(r'^client/(?P<hostname>[^/]+)/(?P<pk>\d+)/?$', 'views.client_detail', name='reports_client_detail_pk'),
+    url(r'^client/(?P<hostname>[^/]+)/?$', 'views.client_detail', name='reports_client_detail'),
     url(r'^elements/(?P<type>\w+)/(?P<pk>\d+)/?$', 'views.config_item', name='reports_item'),
 )
 
@@ -37,7 +37,7 @@ urlpatterns += patterns('Bcfg2.Server.Reports.reports',
     *paginatedUrls( *filteredUrls(
         (r'^history/?$',
             'views.render_history_view', None, 'reports_history'),
-        (r'^history/(?P<hostname>[\w\-\.]+)/?$',
+        (r'^history/(?P<hostname>[^/]+)/?$',
             'views.render_history_view', None, 'reports_client_history'),
 )))
 
