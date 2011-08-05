@@ -11,6 +11,7 @@ import re
 import stat
 import sys
 import tempfile
+from subprocess import Popen, PIPE
 
 import Bcfg2.Server.Plugin
 
@@ -62,16 +63,15 @@ def process_delta(data, delta):
         basefile.write(data)
         basefile.close()
         os.close(basehandle)
-        dhandle, dname = tempfile.mkstemp()
-        dfile = open(dname, 'w')
-        dfile.write(delta.data)
-        dfile.close()
-        os.close(dhandle)
-        ret = os.system("patch -uf %s < %s > /dev/null 2>&1" \
-                        % (basefile.name, dfile.name))
+        
+        cmd = ["patch", "-u", "-f", basefile.name]
+        patch = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        stderr = patch.communicate(input=delta.data)[1]
+        ret = patch.wait()
         output = open(basefile.name, 'r').read()
-        [os.unlink(fname) for fname in [basefile.name, dfile.name]]
+        os.unlink(basefile.name)
         if ret >> 8 != 0:
+            logger.error("Error applying diff %s: %s" % (delta.name, stderr))
             raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
         return output
 
