@@ -1,7 +1,7 @@
 import getopt
 from subprocess import Popen, PIPE
 import sys
-
+import pipes
 import Bcfg2.Server.Admin
 
 
@@ -86,10 +86,11 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         else:
             format = 'png'
 
-        cmd = ["dot", "-T", format]
+        cmd = ["dot", "-T", pipes.quote(format)]
         if output:
-            cmd.extend(["-o", output])
-        dotpipe = Popen(cmd, stdin=PIPE, stdout=PIPE, close_fds=True)
+            cmd.extend(["-o", pipes.quote(output)])
+        dotpipe = Popen(cmd,
+                        shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
         try:
             dotpipe.stdin.write("digraph groups {\n")
         except:
