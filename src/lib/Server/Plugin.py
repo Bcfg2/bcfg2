@@ -5,6 +5,7 @@ import copy
 import logging
 import lxml.etree
 import os
+import os.path
 import pickle
 import posixpath
 import re
@@ -427,6 +428,18 @@ class DirectoryBacked(object):
             reqid = self.fam.AddMonitor(dirpathname, self)
             self.handles[reqid] = relative
 
+    def add_entry(self, relative, event):
+        """Add a new file to our structures for monitoring.
+
+        :param relative: Path name to monitor. This must be relative
+        to the plugin's directory.
+        :param event: File Monitor event that caused this entry to be
+        added.
+        """
+        self.entries[relative] = self.__child__(os.path.join(self.data,
+                                                             relative))
+        self.entries[relative].HandleEvent(event)
+
     def HandleEvent(self, event):
         """Handle FAM/Gamin events.
         
@@ -473,19 +486,29 @@ class DirectoryBacked(object):
             # Deal with events for directories
             if action in ['exists', 'created']:
                 self.add_directory_monitor(relpath)
-            elif action == 'changed' and relpath in self.entries:
-                # Ownerships, permissions or timestamps changed on the
-                # directory. None of these should affect the contents
-                # of the files, though it could change our ability to
-                # access them.
-                #
-                # It seems like the right thing to do is to cancel
-                # monitoring the directory and then begin monitoring
-                # it again. But the current FileMonitor class doesn't
-                # support canceling, so at least let the user know
-                # that a restart might be a good idea.
-                logger.warn("Directory properties for %s changed, please " +
-                            " consider restarting the server" % (abspath))
+            elif action == 'changed':
+                if relpath in self.entries:
+                    # Ownerships, permissions or timestamps changed on
+                    # the directory. None of these should affect the
+                    # contents of the files, though it could change
+                    # our ability to access them.
+                    #
+                    # It seems like the right thing to do is to cancel
+                    # monitoring the directory and then begin
+                    # monitoring it again. But the current FileMonitor
+                    # class doesn't support canceling, so at least let
+                    # the user know that a restart might be a good
+                    # idea.
+                    logger.warn("Directory properties for %s changed, please " +
+                                " consider restarting the server" % (abspath))
+                else:
+                    # Got a "changed" event for a directory that we
+                    # didn't know about. Go ahead and treat it like a
+                    # "created" event, but log a warning, because this
+                    # is unexpected.
+                    logger.warn("Got %s event for unexpected dir %s" % (action,
+                                                                        abspath))
+                    self.add_directory_monitor(relpath)
             else:
                 logger.warn("Got unknown dir event %s %s %s" % (event.requestID,
                                                                 event.code2str(),
@@ -500,14 +523,18 @@ class DirectoryBacked(object):
                     return
                 if not self.patterns.match(event.filename):
                     return
-                self.entries[relpath] = self.__child__('%s/%s' % (self.data,
-                                                                  relpath))
-                self.entries[relpath].HandleEvent(event)
+                self.add_entry(relpath, event)
             elif action == 'changed':
                 if relpath in self.entries:
                     self.entries[relpath].HandleEvent(event)
                 else:
-                    logger.warn("Got %s event for unexpected path %s" % (action, abspath))
+                    # Got a "changed" event for a file that we didn't
+                    # know about. Go ahead and treat it like a
+                    # "created" event, but log a warning, because this
+                    # is unexpected.
+                    logger.warn("Got %s event for unexpected file %s" % (action,
+                                                                         abspath))
+                    self.add_entry(relpath, event)
             else:
                 logger.warn("Got unknown file event %s %s %s" % (event.requestID,
                                                                  event.code2str(),
