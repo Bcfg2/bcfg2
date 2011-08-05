@@ -225,14 +225,19 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.GenerateHostKeys(client)
         # Service the FAM events queued up by the key generation so
         # the data structure entries will be available for binding.
-        # NOTE: We're only waiting for one second. This seems ripe for
-        # a potential race condition, because if the file monitor
-        # doesn't get notified about the new key files in time, those
-        # entries won't be available for binding.
-        self.fam.handle_events_in_interval(1)
-        if not filename in self.entries:
-            self.logger.error("%s still not registered" % filename)
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+        #
+        # NOTE: We wait for up to ten seconds. There is some potential
+        # for race condition, because if the file monitor doesn't get
+        # notified about the new key files in time, those entries
+        # won't be available for binding. In practice, this seems
+        # "good enough".
+        tries = 0
+        while not filename in self.entries:
+            if tries >= 10:
+                self.logger.error("%s still not registered" % filename)
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            self.fam.handle_events_in_interval(1)
+            tries += 1
         keydata = self.entries[filename].data
         permdata = {'owner': 'root',
                     'group': 'root',
