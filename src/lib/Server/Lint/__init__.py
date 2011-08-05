@@ -11,7 +11,8 @@ __all__ = ['Bundles',
            'Genshi']
 
 import logging
-import os.path
+import os
+import sys
 from copy import copy
 import textwrap
 import lxml.etree
@@ -29,6 +30,8 @@ def _ioctl_GWINSZ(fd):
 
 def get_termsize():
     """ get a tuple of (width, height) giving the size of the terminal """
+    if not sys.stdout.isatty():
+        return None
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
     if not cr:
         try:
@@ -41,7 +44,7 @@ def get_termsize():
         try:
             cr = (os.environ['LINES'], os.environ['COLUMNS'])
         except KeyError:
-            cr = (25, 80)
+            return None
     return int(cr[1]), int(cr[0])
 
 class Plugin (object):
@@ -124,9 +127,12 @@ class ErrorHandler (object):
         self.logger = logging.getLogger('bcfg2-lint')
 
         termsize = get_termsize()
-        self._wrapper = textwrap.TextWrapper(initial_indent="  ",
-                                             subsequent_indent="  ",
-                                             width=termsize[0])
+        if termsize is not None:
+            self._wrapper = textwrap.TextWrapper(initial_indent="  ",
+                                                 subsequent_indent="  ",
+                                                 width=termsize[0])
+        else:
+            self._wrapper = None
 
         self._handlers = {}
         if config is not None:
@@ -181,7 +187,10 @@ class ErrorHandler (object):
         rawlines = msg.splitlines()
         firstline = True
         for rawline in rawlines:
-            lines = self._wrapper.wrap(rawline)
+            if self._wrapper:
+                lines = self._wrapper.wrap(rawline)
+            else:
+                lines = [rawline]
             for line in lines:
                 if firstline:
                     logfunc("%s%s" % (prefix, line.lstrip()))
