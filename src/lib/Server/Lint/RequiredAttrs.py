@@ -29,7 +29,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         """ check package sources for Source entries with missing attrs """
         if 'Packages' in self.core.plugins:
             for source in self.core.plugins['Packages'].sources:
-                if isinstance(source, Bcfg2.Server.Plugin.Packages.PulpSource):
+                if isinstance(source, Bcfg2.Server.Plugins.Packages.PulpSource):
                     if not source.id:
                         self.LintError("required-attrs-missing",
                                        "The required attribute id is missing "
@@ -44,7 +44,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                         self.RenderXML(source.xsource)))
 
                 if (not isinstance(source,
-                                   Bcfg2.Server.Plugin.Packages.APTSource) and
+                                   Bcfg2.Server.Plugins.Packages.APTSource) and
                     source.recommended):
                     self.LintError("extra-attrs",
                                    "The recommended attribute is not "
