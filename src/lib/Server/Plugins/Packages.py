@@ -1238,12 +1238,19 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 if has_yum:
                     # add the key to the specification to ensure it
                     # gets installed
-                    kinfo = yum.misc.getgpgkeyinfo(kdata)
-                    version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
-                    release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
+                    try:
+                        kinfo = yum.misc.getgpgkeyinfo(kdata)
+                        version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
+                        release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
 
-                    lxml.etree.SubElement(keypkg, 'Instance', version=version,
-                                          release=release, simplefile=remotekey)
+                        lxml.etree.SubElement(keypkg, 'Instance',
+                                              version=version,
+                                              release=release,
+                                              simplefile=remotekey)
+                    except ValueError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Could not read GPG key %s: %s" %
+                                          (localkey, err))
                 else:
                     self.logger.info("Yum libraries not found; GPG keys will "
                                      "not be handled automatically")
