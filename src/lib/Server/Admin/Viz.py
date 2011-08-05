@@ -86,11 +86,10 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         else:
             format = 'png'
 
-        cmd = "dot -T%s" % (format)
+        cmd = ["dot", "-T", format]
         if output:
-            cmd += " -o %s" % output
-        dotpipe = Popen(cmd, shell=True, stdin=PIPE,
-                        stdout=PIPE, close_fds=True)
+            cmd.extend(["-o", output])
+        dotpipe = Popen(cmd, stdin=PIPE, stdout=PIPE, close_fds=True)
         try:
             dotpipe.stdin.write("digraph groups {\n")
         except:

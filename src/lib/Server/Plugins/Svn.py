@@ -35,7 +35,7 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
         """Read svn revision information for the Bcfg2 repository."""
         try:
             data = Popen(("env LC_ALL=C svn info %s" %
-                         (self.datastore)), shell=True,
+                         pipes.quote(self.datastore)), shell=True,
                          stdout=PIPE).communicate()[0].split('\n')
             return [line.split(': ')[1] for line in data \
                     if line[:9] == 'Revision:'][-1]

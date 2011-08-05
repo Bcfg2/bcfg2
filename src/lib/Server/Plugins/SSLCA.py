@@ -3,6 +3,7 @@ import Bcfg2.Options
 import lxml.etree
 import posixpath
 import tempfile
+import pipes
 import os
 from subprocess import Popen, PIPE, STDOUT
 # Compatibility import
@@ -119,10 +120,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         type = self.key_specs[entry.get('name')]['type']
         bits = self.key_specs[entry.get('name')]['bits']
         if type == 'rsa':
-            cmd = "openssl genrsa %s " % bits
+            cmd = ["openssl", "genrsa", bits]
         elif type == 'dsa':
-            cmd = "openssl dsaparam -noout -genkey %s" % bits
-        key = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
+            cmd = ["openssl", "dsaparam", "-noout", "-genkey", bits]
+        key = Popen(cmd, stdout=PIPE).stdout.read()
         return key
 
     def get_cert(self, entry, metadata):
@@ -176,8 +177,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         chaincert = self.CAs[self.cert_specs[entry.get('name')]['ca']].get('chaincert')
         cert = self.data + filename
-        cmd = "openssl verify -CAfile %s %s" % (chaincert, cert)
-        res = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
+        res = Popen(["openssl", "verify", "-CAfile", chaincert, cert],
+                    stdout=PIPE, stderr=STDOUT).stdout.read()
         if res == cert + ": OK\n":
             return True
         return False
@@ -188,9 +189,11 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         cert = self.data + filename
         key = self.data + key_filename
-        cmd = "openssl x509 -noout -modulus -in %s | openssl md5" % cert
+        cmd = ("openssl x509 -noout -modulus -in %s | openssl md5" %
+               pipes.quote(cert))
         cert_md5 = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
-        cmd = "openssl rsa -noout -modulus -in %s | openssl md5" % key
+        cmd = ("openssl rsa -noout -modulus -in %s | openssl md5" %
+               pipes.quote(key))
         key_md5 = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT).stdout.read()
         if cert_md5 == key_md5:
             return True
@@ -206,16 +209,11 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         ca_config = self.CAs[ca]['config']
         days = self.cert_specs[entry.get('name')]['days']
         passphrase = self.CAs[ca].get('passphrase')
+        cmd = ["openssl", "ca", "-config", ca_config, "-in", req,
+               "-days", days, "-batch"]
         if passphrase:
-            cmd = "openssl ca -config %s -in %s -days %s -batch -passin pass:%s" % (ca_config,
-                                                                                    req,
-                                                                                    days,
-                                                                                    passphrase)
-        else:
-            cmd = "openssl ca -config %s -in %s -days %s -batch" % (ca_config,
-                                                                    req,
-                                                                    days)
-        cert = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
+            cmd.extend(["-passin", "pass:%s" % passphrase])
+        cert = Popen(cmd, stdout=PIPE).stdout.read()
         try:
             os.unlink(req_config)
             os.unlink(req)
@@ -271,9 +269,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         req = tempfile.mkstemp()[1]
         days = self.cert_specs[entry.get('name')]['days']
         key = self.data + key_filename
-        cmd = "openssl req -new -config %s -days %s -key %s -text -out %s" % (req_config,
-                                                                              days,
-                                                                              key,
-                                                                              req)
+        cmd = ["openssl", "req", "-new", "-config", req_config,
+               "-days", days, "-key", key, "-text", "-out", req]
         res = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
         return req

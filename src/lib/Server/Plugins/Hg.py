@@ -1,6 +1,5 @@
 import os
 from mercurial import ui, hg
-from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
 # for debugging output only

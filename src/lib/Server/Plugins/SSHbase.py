@@ -169,8 +169,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
-                cmd = "getent hosts %s" % client
-                ipaddr = Popen(cmd, shell=True, \
+                ipaddr = Popen(["getent", "hosts", client],
                                stdout=PIPE).stdout.read().strip().split()
                 if ipaddr:
                     self.ipcache[client] = (ipaddr, client)
