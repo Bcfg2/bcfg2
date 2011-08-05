@@ -784,7 +784,11 @@ class PackagesConfig(Bcfg2.Server.Plugin.FileBacked,
     def __init__(self, filename, fam):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, filename)
         ConfigParser.SafeConfigParser.__init__(self)
-        fam.AddMonitor(filename, self)
+        # packages.conf isn't strictly necessary, so only set a
+        # monitor if it exists. if it gets added, that will require a
+        # server restart
+        if os.path.exists(filename):
+            fam.AddMonitor(filename, self)
 
     def Index(self):
         """ Build local data structures """
