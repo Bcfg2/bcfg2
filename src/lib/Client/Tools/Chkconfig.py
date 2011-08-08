@@ -62,7 +62,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                                   (command == 'stop' and not pstatus))
             if (not self.setup.get('dryrun') and
                 self.setup['servicemode'] != 'disabled' and
-                needs_modification:
+                needs_modification):
                 self.cmd.run(self.get_svc_command(entry, command))
                 # service was modified, so it failed
                 pstatus = False
