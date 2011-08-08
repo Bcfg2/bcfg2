@@ -82,17 +82,17 @@
 
   <!-- genshi attributes -->
   <xs:attributeGroup name="genshiAttrs">
-    <xs:attribute name="ifAttr" type="xs:string"/>
-    <xs:attribute name="chooseAttr" type="xs:string"/>
-    <xs:attribute name="whenAttr" type="xs:string"/>
-    <xs:attribute name="otherwiseAttr" type="xs:string"/>
-    <xs:attribute name="forAttr" type="xs:string"/>
-    <xs:attribute name="defAttr" type="xs:string"/>
-    <xs:attribute name="matchAttr" type="xs:string"/>
-    <xs:attribute name="withAttr" type="xs:string"/>
-    <xs:attribute name="attrsAttr" type="xs:string"/>
-    <xs:attribute name="contentAttr" type="xs:string"/>
-    <xs:attribute name="replaceAttr" type="xs:string"/>
-    <xs:attribute name="stripAttr" type="xs:string"/>
+    <xs:attribute name="if" type="xs:string" form="qualified"/>
+    <xs:attribute name="choose" type="xs:string" form="qualified"/>
+    <xs:attribute name="when" type="xs:string" form="qualified"/>
+    <xs:attribute name="otherwise" type="xs:string" form="qualified"/>
+    <xs:attribute name="for" type="xs:string" form="qualified"/>
+    <xs:attribute name="def" type="xs:string" form="qualified"/>
+    <xs:attribute name="match" type="xs:string" form="qualified"/>
+    <xs:attribute name="with" type="xs:string" form="qualified"/>
+    <xs:attribute name="attrs" type="xs:string" form="qualified"/>
+    <xs:attribute name="content" type="xs:string" form="qualified"/>
+    <xs:attribute name="replace" type="xs:string" form="qualified"/>
+    <xs:attribute name="strip" type="xs:string" form="qualified"/>
   </xs:attributeGroup>
 </xs:schema>
