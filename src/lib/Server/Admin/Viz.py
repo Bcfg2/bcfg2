@@ -87,11 +87,21 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
         else:
             format = 'png'
 
-        cmd = ["dot", "-T", pipes.quote(format)]
+        cmd = ["dot", "-T", format]
         if output:
-            cmd.extend(["-o", pipes.quote(output)])
-        dotpipe = Popen(cmd,
-                        shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+            cmd.extend(["-o", output])
+        try:
+            dotpipe = Popen(cmd, stdin=PIPE, stdout=PIPE, close_fds=True)
+        except OSError:
+            # on some systems (RHEL 6), you cannot run dot with
+            # shell=True.  on others (Gentoo with Python 2.7), you
+            # must.  In yet others (RHEL 5), either way works.  I have
+            # no idea what the difference is, but it's kind of a PITA.
+            cmd = ["dot", "-T", pipes.quote(format)]
+            if output:
+                cmd.extend(["-o", pipes.quote(output)])
+            dotpipe = Popen(cmd, shell=True,
+                            stdin=PIPE, stdout=PIPE, close_fds=True)
         try:
             dotpipe.stdin.write("digraph groups {\n")
         except:
