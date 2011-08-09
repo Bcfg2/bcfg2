@@ -296,7 +296,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                                                                       client,
                                                                       err))
         else:
-            print('Usage: buildfile filename hostname')
+            print('Usage: buildbundle filename hostname')
 
     def do_bundles(self, _):
         """Print out group/bundle info."""
