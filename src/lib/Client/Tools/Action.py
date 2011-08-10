@@ -85,4 +85,8 @@ class Action(Bcfg2.Client.Tools.Tool):
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both'] and \
                action.get('when') != 'modified':
-                states[action] = self.RunAction(action)
+                if self.setup['decision'] == 'whitelist':
+                    if action in self.setup['decision_list']:
+                        states[action] = self.RunAction(action)
+                else:
+                        states[action] = self.RunAction(action)
