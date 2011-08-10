@@ -156,7 +156,7 @@ def create_conf(confpath, confdata, keypath):
             return
     try:
         open(confpath, "w").write(confdata)
-        os.chmod(keypath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+        os.chmod(confpath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
     except Exception:
         e = sys.exc_info()[1]
         print("Error %s occured while trying to write configuration "
