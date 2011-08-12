@@ -62,9 +62,9 @@ span.history_links a {
 
   {% if interaction.bad_entry_count %}
   <div class='entry_list'>
-    <div class='entry_list_head dirty-lineitem'>
-      <div class='entry_expand_tab' onclick='javascript:toggleMe("bad_table");'>[+]</div>
+    <div class='entry_list_head dirty-lineitem' onclick='javascript:toggleMe("bad_table");'>
       <h3>Bad Entries &#8212; {{ interaction.bad_entry_count }}</h3>
+      <div class='entry_expand_tab' id='plusminus_bad_table'>[+]</div>
     </div>
     <table id='bad_table' class='entry_list'>
       {% for e in interaction.bad|sortwell %}
@@ -80,9 +80,9 @@ span.history_links a {
 
   {% if interaction.modified_entry_count %}
   <div class='entry_list'>
-    <div class='entry_list_head modified-lineitem'>
-      <div class='entry_expand_tab' onclick='javascript:toggleMe("modified_table");'>[+]</div>
+    <div class='entry_list_head modified-lineitem' onclick='javascript:toggleMe("modified_table");'>
       <h3>Modified Entries &#8212; {{ interaction.modified_entry_count }}</h3>
+      <div class='entry_expand_tab' id='plusminus_modified_table'>[+]</div>
     </div>
     <table id='modified_table' class='entry_list'>
       {% for e in interaction.modified|sortwell %}
@@ -98,9 +98,9 @@ span.history_links a {
 
   {% if interaction.extra_entry_count %}
   <div class='entry_list'>
-    <div class='entry_list_head extra-lineitem'>
-      <div class='entry_expand_tab' onclick='javascript:toggleMe("extra_table");'>[+]</div>
+    <div class='entry_list_head extra-lineitem' onclick='javascript:toggleMe("extra_table");'>
       <h3>Extra Entries &#8212; {{ interaction.extra_entry_count }}</h3>
+      <div class='entry_expand_tab' id='plusminus_extra_table'>[+]</div>
     </div>
     <table id='extra_table' class='entry_list'>
       {% for e in interaction.extra|sortwell %}

@@ -9,9 +9,15 @@ function clientdetailload() {
   toggleMe('extra_table');
 }
 function toggleMe(elementId) {
-  element = document.getElementById(elementId);
+  var element = document.getElementById(elementId);
   if (element) {
     element.style.display = (element.style.display != 'none' ? 'none' : '');
+    var plusminus = document.getElementById("plusminus_" + elementId);
+    if (element.style.display == 'none') {
+      plusminus.innerHTML = "[+]"
+    } else {
+      plusminus.innerHTML = "[&ndash;]"
+    }
   }
 }
 function pageJump(elementId) {

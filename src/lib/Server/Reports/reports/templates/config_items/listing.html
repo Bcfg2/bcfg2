@@ -13,9 +13,9 @@
   {% for kind, entries in item_list_dict.items %}
 
     <div class='entry_list'>
-      <div class='entry_list_head element_list_head'>
-        <div class='entry_expand_tab' onclick='javascript:toggleMe("table_{{ kind }}");'>[+]</div>
+      <div class='entry_list_head element_list_head' onclick='javascript:toggleMe("table_{{ kind }}");'>
         <h3>{{ kind }} &#8212; {{ entries|length }}</h3>
+        <div class='entry_expand_tab' id='plusminus_table_{{ kind }}'>[&ndash;]</div>
   </div>
 
       <table id='table_{{ kind }}' class='entry_list'>
