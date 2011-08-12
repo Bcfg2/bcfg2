@@ -22,9 +22,9 @@ hide_tables[{{ forloop.counter0 }}] = "table_{{ summary.name }}";
 {% if summary_data %}
   {% for summary in summary_data  %}
     <div class='entry_list'>
-      <div class='entry_list_head element_list_head'>
-        <div class='entry_expand_tab' onclick='javascript:toggleMe("table_{{ summary.name }}");'>[+]</div>
+      <div class='entry_list_head element_list_head' onclick='javascript:toggleMe("table_{{ summary.name }}");'>
         <h3>{{ summary.nodes|length }} {{ summary.label }}</h3>
+        <div class='entry_expand_tab' id='plusminus_table_{{ summary.name }}'>[+]</div>
       </div>
 
       <table id='table_{{ summary.name }}' class='entry_list'>

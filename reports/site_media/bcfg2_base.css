@@ -170,6 +170,9 @@ div.entry_list {
 div.entry_list_head {
         padding: 5px;
 }
+div.entry_list_head:hover {
+        cursor: pointer;
+}
 div.entry_list h3 {
         font-size: 100%;
         font-weight: bold;
@@ -193,9 +196,6 @@ td.entry_list_type {
 .entry_expand_tab {
         float: right;
         margin-top: -2px;
-}
-.entry_expand_tab:hover {
-        cursor: pointer;
 }
 
 div.note-box {
