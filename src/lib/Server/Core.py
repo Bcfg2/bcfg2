@@ -365,7 +365,7 @@ class Core(Component):
         """Fetch probes for a particular client."""
         resp = lxml.etree.Element('probes')
         try:
-            name = self.metadata.resolve_client(address)
+            name = self.metadata.resolve_client(address, cleanup_cache=True)
             meta = self.build_metadata(name)
 
             for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Probing):

@@ -571,11 +571,24 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.clients[client] = profile
         self.clients_xml.write()
 
-    def resolve_client(self, addresspair):
+    def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
         if addresspair in self.session_cache:
+            # client _was_ cached, so there can be some expired entries
+            # we need to clean them up to avoid potentially infinite memory swell
+            cache_ttl = 90
+            if cleanup_cache:
+                # remove entries for this client's IP address with _any_ port numbers
+                # - perhaps a priority queue could be faster?
+                curtime = time.time()
+                for addrpair in self.session_cache.keys():
+                     if addresspair[0] == addrpair[0]:
+                         (stamp, _) = self.session_cache[addrpair]
+                         if curtime - stamp > cache_ttl:
+                             del self.session_cache[addrpair]
+            # return the cached data
             (stamp, uuid) = self.session_cache[addresspair]
-            if time.time() - stamp < 90:
+            if time.time() - stamp < cache_ttl:
                 return self.session_cache[addresspair][1]
         address = addresspair[0]
         if address in self.addresses:
@@ -741,6 +754,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             return False
 
         if id_method == 'cert' and auth_type != 'cert+password':
+            # remember the cert-derived client name for this connection
+            if client in self.floating:
+                self.session_cache[address] = (time.time(), client)
             # we are done if cert+password not required
             return True
 
