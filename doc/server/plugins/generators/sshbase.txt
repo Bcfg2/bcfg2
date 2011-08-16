@@ -86,3 +86,8 @@ Blog post
 =========
 
 http://www.ducea.com/2008/08/24/using-the-bcfg2-sshbase-plugin/
+
+.. note::
+
+    The linked post uses deprecated ConfigFile entries. Path entries
+    have since replaced these. See :ref:`server-configurationentries`.
