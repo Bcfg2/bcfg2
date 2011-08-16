@@ -27,7 +27,6 @@ client on one or more machines. Yes, your server can also be a client
 (and should be by the time your environment is fully managed).
 
 .. _Bcfg2 download page: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
-.. _Install page: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Install
 
 Set up Repository
 =================

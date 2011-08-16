@@ -186,10 +186,8 @@ Bcfg2 repository. The server will be the first machine. It's
 already in the ``Metadata/client.xml``.
 
 
-Setup the `Packages`_ plugin
-++++++++++++++++++++++++++++
-
-.. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
+Setup the :ref:`server-plugins-generators-packages` plugin
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 First, replace **Pkgmgr** with **Packages** in the plugins
 line of ``bcfg2.conf``. Then create `Packages/` directory in

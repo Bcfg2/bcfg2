@@ -176,10 +176,8 @@ Now it is time to get your first machine's configuration into your
 Bcfg2 :term:`repository`. Let's start with the server itself.
 
 
-Setup the `Packages`_ plugin
-----------------------------
-
-.. _Packages: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Plugins/Packages
+Setup the :ref:`server-plugins-generators-packages` plugin
+----------------------------------------------------------
 
 First, replace **Pkgmgr** with **Packages** in the plugins
 line of ``bcfg2.conf``.  Then create Packages layout (as per
