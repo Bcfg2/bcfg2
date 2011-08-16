@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
+from Bcfg2.Client.Frame import matches_white_list, passes_black_list
 
 """
 <Action timing='pre|post|both'
@@ -24,6 +25,19 @@ class Action(Bcfg2.Client.Tools.Tool):
     __handles__ = [('PostInstall', None), ('Action', None)]
     __req__ = {'PostInstall': ['name'],
                'Action': ['name', 'timing', 'when', 'command', 'status']}
+
+    def _action_allowed(self, action):
+        if self.setup['decision'] == 'whitelist' and \
+           not matches_white_list(action, self.setup['decision_list']):
+            self.logger.info("In whitelist mode: suppressing Action:" + \
+                             action.get('name'))
+            return False
+        if self.setup['decision'] == 'blacklist' and \
+           not passes_black_list(action, self.setup['decision_list']):
+            self.logger.info("In blacklist mode: suppressing Action:" + \
+                             action.get('name'))
+            return False
+        return True
 
     def RunAction(self, entry):
         """This method handles command execution and status return."""
@@ -75,9 +89,13 @@ class Action(Bcfg2.Client.Tools.Tool):
     def BundleUpdated(self, bundle, states):
         """Run postinstalls when bundles have been updated."""
         for postinst in bundle.findall("PostInstall"):
+            if not self._action_allowed(postinst):
+                continue
             self.cmd.run(postinst.get('name'))
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both']:
+                if not self._action_allowed(action):
+                    continue
                 states[action] = self.RunAction(action)
 
     def BundleNotUpdated(self, bundle, states):
@@ -85,8 +103,6 @@ class Action(Bcfg2.Client.Tools.Tool):
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both'] and \
                action.get('when') != 'modified':
-                if self.setup['decision'] == 'whitelist':
-                    if action in self.setup['decision_list']:
-                        states[action] = self.RunAction(action)
-                else:
-                        states[action] = self.RunAction(action)
+                if not self._action_allowed(action):
+                    continue
+                states[action] = self.RunAction(action)
