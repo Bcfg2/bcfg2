@@ -515,12 +515,12 @@ class DirectoryBacked(object):
                                                                 abspath))
         else:
             # Deal with events for non-directories
+            if ((event.filename[-1] == '~') or
+                (event.filename[:2] == '.#') or
+                (event.filename[-4:] == '.swp') or
+                (event.filename in ['SCCS', '.svn'])):
+                return
             if action in ['exists', 'created']:
-                if ((event.filename[-1] == '~') or
-                    (event.filename[:2] == '.#') or
-                    (event.filename[-4:] == '.swp') or
-                    (event.filename in ['SCCS', '.svn'])):
-                    return
                 if not self.patterns.match(event.filename):
                     return
                 self.add_entry(relpath, event)
