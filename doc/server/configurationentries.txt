@@ -101,7 +101,7 @@ Path type specified.
 |             |                      | failures        |                          |
 |             |                      | (currently      |                          |
 |             |                      | applies to only |                          |
-|             |                      | YUMng)          |                          |
+|             |                      | APT and YUMng)  |                          |
 +-------------+----------------------+-----------------+--------------------------+
 | nonexistent | New                  | Specify a path  | name, recursive          |
 |             |                      | that should not |                          |

@@ -37,8 +37,8 @@ class APT(Bcfg2.Client.Tools.Tool):
     """
     name = 'APT'
     __execs__ = [DEBSUMS, APTGET, DPKG]
-    __handles__ = [('Package', 'deb')]
-    __req__ = {'Package': ['name', 'version']}
+    __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
+    __req__ = {'Package': ['name', 'version'], 'Path': ['type']}
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
@@ -55,6 +55,10 @@ class APT(Bcfg2.Client.Tools.Tool):
         if not self.setup['debug']:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
+        self.ignores = [entry.get('name') for struct in config \
+                        for entry in struct \
+                        if entry.tag == 'Path' and \
+                        entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
                              ["%s/cache/debconf/config.dat" % var_path,
                               "%s/cache/debconf/templates.dat" % var_path,
@@ -117,6 +121,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                 self.logger.error("Got Unsupported pattern %s from debsums" \
                                   % item)
                 files.append(item)
+        files = list(set(files) - set(self.ignores))
         # We check if there is file in the checksum to do
         if files:
             # if files are found there we try to be sure our modlist is sane
@@ -231,3 +236,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             states[package] = self.VerifyPackage(package, [], checksums=False)
             if states[package]:
                 self.modified.append(package)
+
+    def VerifyPath(self, entry, _):
+        """Do nothing here since we only verify Path type=ignore"""
+        return True
