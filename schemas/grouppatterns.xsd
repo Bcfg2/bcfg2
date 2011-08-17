@@ -8,18 +8,11 @@
   </xsd:annotation>
 
   <xsd:complexType name='PatternType'>
-    <xsd:choice maxOccurs='1' minOccurs='1'>
-      <xsd:sequence>
-        <xsd:element name="NamePattern" type="xsd:string" minOccurs='1'
-                     maxOccurs='1'/>
-         <xsd:element name="Group" type="xsd:string" minOccurs='1'
-                      maxOccurs='unbounded'/>
-      </xsd:sequence>
-      <xsd:sequence>
-        <xsd:element name="NameRange" type="xsd:string"/>
-        <xsd:element name="Group" type="xsd:string" minOccurs='1'
-                     maxOccurs='unbounded'/>
-      </xsd:sequence>
+    <xsd:choice minOccurs='1' maxOccurs='unbounded'>
+      <xsd:element name="NameRange" type="xsd:string"/>
+      <xsd:element name="NamePattern" type="xsd:string"/>
+      <xsd:element name="Group" type="xsd:string" minOccurs='1'
+                   maxOccurs='unbounded'/>
     </xsd:choice>
   </xsd:complexType>
 
