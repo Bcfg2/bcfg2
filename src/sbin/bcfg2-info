@@ -267,6 +267,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         except:
             print(usage)
             return
+        altsrc = None
         for opt in opts:
             if opt[0] == '--altsrc':
                 altsrc = opt[1]
