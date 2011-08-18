@@ -106,29 +106,31 @@ E.g.::
 
     bcfg2-info buildfile /etc/foo.conf foo.example.com
 
+To generate a file with an altsrc attribute, you can run::
+
+    bcfg2-info buildfile /etc/foo/foo.conf --altsrc=/etc/foo.conf \
+        foo.example.com
+
 Sometimes, it's useful to be able to do more in-depth troubleshooting
-by running the template manually. (This is also necessary if you want
-to generate a template that depends on an :ref:`altsrc
-<server-plugins-structures-altsrc>` tag.) To do this, run ``bcfg2-info
+by running the template manually. To do this, run ``bcfg2-info
 debug``, and, once in the Python interpreter, run::
 
     metadata = self.build_metadata("<hostname>")
     path = "<relative path to template (see note below)>"
-    bcfg2root = "<path to bcfg2 specification root>"
     
 ``path`` should be set to the path to the template file with a leading
 slash, relative to the Bcfg2 specification root. See `Inside of
 Templates`_ for examples.
 
-``bcfg2root`` should be set to the absolute path to the Bcfg2
-specification.  (This is ``/var/lib/bcfg2`` by default.)
-
 Then, run::
     
-    import os
-    name = os.path.dirname(path[path.find('/', 1):])
+    import os, Bcfg2.Options
     from genshi.template import TemplateLoader, NewTextTemplate
-    template = TemplateLoader().load(bcfg2root + path, cls=NewTextTemplate)
+    name = os.path.dirname(path[path.find('/', 1):])
+    setup = Bcfg2.Options.OptionParser({'repo':
+                                        Bcfg2.Options.SERVER_REPOSITORY})
+    setup.parse('--')
+    template = TemplateLoader().load(set['repo'] + path, cls=NewTextTemplate)
     print template.generate(metadata=metadata, path=path, name=name).render()
 
 This gives you more fine-grained control over how your template is
@@ -141,7 +143,6 @@ to the file to be generated, e.g.::
 
     metadata = self.build_metadata("foo.example.com")
     path = "/Cfg/etc/sysconfig/network-scripts/ifcfg-template/ifcfg-template.genshi"
-    bcfg2root = "/var/lib/bcfg2"
     name = "/etc/sysconfig/network-scripts/ifcfg-bond0"
 
 File permissions

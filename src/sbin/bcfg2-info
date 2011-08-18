@@ -261,9 +261,20 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_buildfile(self, args):
         """Build a config file for client."""
-        if len(args.split()) == 2:
-            fname, client = args.split()
+        usage = 'Usage: buildfile [--altsrc=<altsrc>] filename hostname'
+        try:
+            opts, alist = getopt.gnu_getopt(args.split(), '', ['altsrc='])
+        except:
+            print(usage)
+            return
+        for opt in opts:
+            if opt[0] == '--altsrc':
+                altsrc = opt[1]
+        if len(alist) == 2:
+            fname, client = alist
             entry = lxml.etree.Element('Path', type='file', name=fname)
+            if altsrc:
+                entry.set("altsrc", altsrc)
             try:
                 metadata = self.build_metadata(client)
                 self.Bind(entry, metadata)
@@ -272,7 +283,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except:
                 print("Failed to build entry %s for host %s" % (fname, client))
         else:
-            print('Usage: buildfile filename hostname')
+            print(usage)
 
     def do_buildbundle(self, args):
         """Render a bundle for client."""

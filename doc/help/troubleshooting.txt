@@ -70,7 +70,8 @@ operations
 * clients - Current client metadata (profile and group) settings
 * groups - Current group metadata values
 * mappings - Configuration entries provided by plugins
-* buildfile <filename> <hostname> - Build a config file for a client
+* buildfile [--altsrc=<altsrc>] <filename> <hostname> - Build a config
+  file for a client
 * buildbundle <bundle> <hostname> - Render a templated bundle for a client
 * showentries <client> <type> - Build the abstract configuration (list
   of entries) for a client
