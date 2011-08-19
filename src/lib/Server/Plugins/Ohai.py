@@ -21,6 +21,8 @@ except:
 
 probecode = """#!/bin/sh
 
+export PATH=$PATH:/sbin:/usr/sbin
+
 if type ohai >& /dev/null; then
     ohai
 else
