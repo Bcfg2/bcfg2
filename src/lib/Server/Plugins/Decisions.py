@@ -1,5 +1,7 @@
 import logging
 import lxml.etree
+import sys
+
 import Bcfg2.Server.Plugin
 logger = logging.getLogger('Bcfg2.Plugins.Decisions')
 
