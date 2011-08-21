@@ -103,16 +103,19 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
 
-    def get_pertinent_entries(self, metadata):
+    def get_pertinent_entries(self, entry, metadata):
         """return a list of all entries pertinent
         to a client => [base, delta1, delta2]
         """
         matching = [ent for ent in list(self.entries.values()) if \
                     ent.specific.matches(metadata)]
         matching.sort(key=operator.attrgetter('specific'))
-        non_delta = [matching.index(m) for m in matching
-                     if not m.specific.delta]
-        if not non_delta:
+        # base entries which apply to a client
+        # (e.g. foo, foo.G##_groupname, foo.H_hostname)
+        base_files = [matching.index(m) for m in matching
+                      if not m.specific.delta]
+        if not base_files:
+            logger.error("No base file found for %s" % entry.get('name'))
             raise Bcfg2.Server.Plugin.PluginExecutionError
         base = min(non_delta)
         used = matching[:base + 1]
@@ -121,7 +124,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
     def bind_entry(self, entry, metadata):
         self.bind_info_to_entry(entry, metadata)
-        used = self.get_pertinent_entries(metadata)
+        used = self.get_pertinent_entries(entry, metadata)
         basefile = used.pop(0)
         if entry.get('perms').lower() == 'inherit':
             # use on-disk permissions
