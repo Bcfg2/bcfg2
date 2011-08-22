@@ -117,7 +117,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if not base_files:
             logger.error("No base file found for %s" % entry.get('name'))
             raise Bcfg2.Server.Plugin.PluginExecutionError
-        base = min(non_delta)
+        base = min(base_files)
         used = matching[:base + 1]
         used.reverse()
         return used
