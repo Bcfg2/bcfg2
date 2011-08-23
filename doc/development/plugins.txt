@@ -103,9 +103,7 @@ all important member fields.
 | __version__     | The plugin version (generally     | string                   |
 |                 | tied to revctl keyword expansion) |                          |
 +-----------------+-----------------------------------+--------------------------+
-| __author__      | The plugin author.                | string                   |
-+-----------------+-----------------------------------+--------------------------+
-| __author__      | The plugin author.                | string                   |
+| __author__      | The plugin author                 | string                   |
 +-----------------+-----------------------------------+--------------------------+
 | __rmi__         | Set of functions to be exposed as | List of function names   |
 |                 | XML-RPC functions                 | (strings)                |
@@ -113,7 +111,7 @@ all important member fields.
 | Entries         | Multidimentional dictionary of    | Dictionary of            |
 |                 | keys that point to the function   | ConfigurationEntityType, |
 |                 | used to bind literal contents for | Name keys, and function  |
-|                 | a given configuration entity.     | reference values         |
+|                 | a given configuration entity      | reference values         |
 +-----------------+-----------------------------------+--------------------------+
 | BuildStructures | Function that returns a list of   | Member function          |
 |                 | the structures for a given client |                          |
@@ -123,7 +121,7 @@ all important member fields.
 |                 | execute                           |                          |
 +-----------------+-----------------------------------+--------------------------+
 | ReceiveData     | Function that accepts the probe   | Member function          |
-|                 | results for a given client.       |                          |
+|                 | results for a given client        |                          |
 +-----------------+-----------------------------------+--------------------------+
 
 Example Plugin
