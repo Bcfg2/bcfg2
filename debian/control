@@ -23,7 +23,7 @@ Package: bcfg2-server
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), libxml2-utils (>= 2.6.23), lsb-base (>= 3.1-9), ucf, bcfg2 (= ${binary:Version}), openssl, python-ssl | python2.6 | python3.0 | python3.1 | python3.2, python-gamin
 XB-Python-Version: >= 2.4
-Recommends: graphviz
+Recommends: graphviz, patch
 Suggests: python-cheetah, python-genshi (>= 0.4.4), python-profiler, sqlalchemy (>= 0.5.0), python-django, mail-transport-agent
 Description: Configuration management server
  Bcfg2 is a configuration management system that generates configuration sets
