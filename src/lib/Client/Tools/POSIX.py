@@ -115,6 +115,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     setup.parse([])
     ppath = setup['ppath']
     max_copies = setup['max_copies']
+    """
+    Python uses the OS mknod(2) implementation which modifies the mode
+    based on the umask of the running process (at least on some Linuxes
+    that were tested). We set this to zero so that POSIX-related paths
+    will be created as specified in the Bcfg2 configuration.
+    """
+    os.umask(0)
 
     def canInstall(self, entry):
         """Check if entry is complete for installation."""
