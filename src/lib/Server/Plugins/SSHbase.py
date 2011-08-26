@@ -222,7 +222,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         client = metadata.hostname
         filename = "%s.H_%s" % (entry.get('name').split('/')[-1], client)
         if filename not in list(self.entries.keys()):
-            self.GenerateHostKeys(client)
+            self.GenerateHostKeyPair(client, filename)
         # Service the FAM events queued up by the key generation so
         # the data structure entries will be available for binding.
         #
@@ -254,45 +254,48 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         else:
             entry.text = keydata
 
-    def GenerateHostKeys(self, client):
-        """Generate new host keys for client."""
-        keylist = [keytmpl % client for keytmpl in self.hostkeys]
-        for hostkey in keylist:
-            if 'ssh_host_rsa_key.H_' == hostkey[:19]:
-                keytype = 'rsa'
-            elif 'ssh_host_dsa_key.H_' == hostkey[:19]:
-                keytype = 'dsa'
-            else:
-                keytype = 'rsa1'
+    def GenerateHostKeyPair(self, client, filename):
+        """Generate new host key pair for client."""
+        filename = filename.split('.')[0] # no trailing ".pub", please
+        if filename == 'ssh_host_rsa_key':
+            hostkey = 'ssh_host_rsa_key.H_%s' % client
+            keytype = 'rsa'
+        elif filename == 'ssh_host_dsa_key':
+            hostkey = 'ssh_host_dsa_key.H_%s' % client
+            keytype = 'dsa'
+        elif filename == 'ssh_host_key':
+            hostkey = 'ssh_host_key.H_%s' % client
+            keytype = 'rsa1'
+        else:
+            return
 
-            if hostkey not in list(self.entries.keys()):
-                fileloc = "%s/%s" % (self.data, hostkey)
-                publoc = self.data + '/' + ".".join([hostkey.split('.')[0],
-                                                     'pub',
-                                                     "H_%s" % client])
-                tempdir = tempfile.mkdtemp()
-                temploc = "%s/%s" % (tempdir, hostkey)
-                cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
-                       "-t", keytype, "-C", "root@%s" % client]
-                proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
-                proc.communicate()
-                proc.wait()
+            fileloc = "%s/%s" % (self.data, hostkey)
+            publoc = self.data + '/' + ".".join([hostkey.split('.')[0],
+                                                 'pub',
+                                                 "H_%s" % client])
+            tempdir = tempfile.mkdtemp()
+            temploc = "%s/%s" % (tempdir, hostkey)
+            cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
+                   "-t", keytype, "-C", "root@%s" % client]
+            proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
+            proc.communicate()
+            proc.wait()
 
-                try:
-                    shutil.copy(temploc, fileloc)
-                    shutil.copy("%s.pub" % temploc, publoc)
-                except IOError:
-                    err = sys.exc_info()[1]
-                    self.logger.error("Temporary SSH keys not found: %s" % err)
-                
-                try:
-                    os.unlink(temploc)
-                    os.unlink("%s.pub" % temploc)
-                    os.rmdir(tempdir)
-                except OSError:
-                    err = sys.exc_info()[1]
-                    self.logger.error("Failed to unlink temporary ssh keys: %s"
-                                      % err)
+            try:
+                shutil.copy(temploc, fileloc)
+                shutil.copy("%s.pub" % temploc, publoc)
+            except IOError:
+                err = sys.exc_info()[1]
+                self.logger.error("Temporary SSH keys not found: %s" % err)
+
+            try:
+                os.unlink(temploc)
+                os.unlink("%s.pub" % temploc)
+                os.rmdir(tempdir)
+            except OSError:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to unlink temporary ssh keys: %s"
+                                  % err)
 
     def AcceptChoices(self, _, metadata):
         return [Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)]
