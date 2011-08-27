@@ -184,9 +184,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 
-    def list_accept_choices(self, metadata):
+    def list_accept_choices(self, entry, metadata):
         '''return a list of candidate pull locations'''
-        used = self.get_pertinent_entries(metadata)
+        used = self.get_pertinent_entries(entry, metadata)
         ret = []
         if used:
             ret.append(used[0].specific)
@@ -245,7 +245,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def AcceptChoices(self, entry, metadata):
-        return self.entries[entry.get('name')].list_accept_choices(metadata)
+        return self.entries[entry.get('name')].list_accept_choices(entry, metadata)
 
     def AcceptPullData(self, specific, new_entry, log):
         return self.entries[new_entry.get('name')].write_update(specific,
