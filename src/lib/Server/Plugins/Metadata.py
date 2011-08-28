@@ -10,7 +10,9 @@ import lxml.etree
 import os
 import os.path
 import socket
+import sys
 import time
+
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 
