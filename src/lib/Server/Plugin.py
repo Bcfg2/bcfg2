@@ -975,7 +975,8 @@ class EntrySet:
             for line in open(fpath).readlines():
                 match = info_regex.match(line)
                 if not match:
-                    logger.warning("Failed to match line: %s" % line)
+                    logger.warning("Failed to match line in %s: %s" % (fpath,
+                                                                       line))
                     continue
                 else:
                     mgd = match.groupdict()
