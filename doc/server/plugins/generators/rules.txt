@@ -369,6 +369,10 @@ do::
         </Group>
     </Rules>
 
+Regular expressions are anchored at both ends, so ``<Service
+name="bcfg2".../>`` will *not* match a Service named ``bcfg2-server``;
+you'd have to explicitly specify ``<Service name="bcfg2.*".../>``.
+
 Note that only one Rule can apply to any abstract entry, so you cannot
 specify multiple regexs to match the same rule.  In the use case
 above, you would have to specify the services fully (except for type)
