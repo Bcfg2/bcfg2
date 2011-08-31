@@ -1,0 +1,21 @@
+Getting started
+===============
+
+The first thing to do is to create the repository and SSL key, these
+can be done by running "bcfg2-admin init" as root on the server. The
+script will ask questions about the SSL key, and a few things about
+the repository.
+
+After that is done, you should be able to start the server with the init
+script by running "/etc/init.d/bcfg2-server start"
+
+You can look at /var/log/daemon.log to see what the server said while
+starting up. If the server started without problems, you can run "bcfg2
+-q -v -n" to see if the client and server are communicating properly.
+
+The next step after that is to actually populate the repository (by
+default in /var/lib/bcfg2/) with configuration files, see the Bcfg2
+documentation at http://docs.bcfg2.org/ for information on how that
+is done.
+
+ -- Arto Jantunen <viiru@debian.org>, Sat, 24 Apr 2010 09:43:44 +0300
