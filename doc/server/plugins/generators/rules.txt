@@ -77,34 +77,35 @@ Package Tag
 
 The Package Tag may have the following attributes:
 
-+------------+----------------------------------------------+--------+
-| Name       | Description                                  | Values |
-+============+==============================================+========+
-| name       | Package Name                                 | String |
-+------------+----------------------------------------------+--------+
-| version    | Package Version or version='noverify' to     | String |
-|            | not do version checking in the Yum driver    |        |
-|            | only (temporary work a round).               |        |
-+------------+----------------------------------------------+--------+
-| file       | Package file name.  Several other attributes | String |
-|            | (name, version) can be automatically defined |        |
-|            | based on regular expressions defined in the  |        |
-|            | Pkgmgr plugin.                               |        |
-+------------+----------------------------------------------+--------+
-| simplefile | Package file name. No name parsing is        | String |
-|            | performed, so no extra fields get set        |        |
-+------------+----------------------------------------------+--------+
-| verify     | verify='false' - do not do package           | String |
-|            | verification                                 |        |
-+------------+----------------------------------------------+--------+
-| multiarch  | Comma separated list of the architectures of | String |
-|            | this package that should be installed.       |        |
-+------------+----------------------------------------------+--------+
-| srcs       | Filename creation rules for multiarch        | String |
-|            | packages.                                    |        |
-+------------+----------------------------------------------+--------+
-| type       | Package type. (rpm, yum, apt,sysv,blast)     | String |
-+------------+----------------------------------------------+--------+
++------------+----------------------------------------------+----------+
+| Name       | Description                                  | Values   |
++============+==============================================+==========+
+| name       | Package name or regular expression           | String   |
+|            |                                              | or regex |
++------------+----------------------------------------------+----------+
+| version    | Package Version or version='noverify' to     | String   |
+|            | not do version checking in the Yum driver    |          |
+|            | only (temporary work a round).               |          |
++------------+----------------------------------------------+----------+
+| file       | Package file name.  Several other attributes | String   |
+|            | (name, version) can be automatically defined |          |
+|            | based on regular expressions defined in the  |          |
+|            | Pkgmgr plugin.                               |          |
++------------+----------------------------------------------+----------+
+| simplefile | Package file name. No name parsing is        | String   |
+|            | performed, so no extra fields get set        |          |
++------------+----------------------------------------------+----------+
+| verify     | verify='false' - do not do package           | String   |
+|            | verification                                 |          |
++------------+----------------------------------------------+----------+
+| multiarch  | Comma separated list of the architectures of | String   |
+|            | this package that should be installed.       |          |
++------------+----------------------------------------------+----------+
+| srcs       | Filename creation rules for multiarch        | String   |
+|            | packages.                                    |          |
++------------+----------------------------------------------+----------+
+| type       | Package type. (rpm, yum, apt,sysv,blast)     | String   |
++------------+----------------------------------------------+----------+
 
 Action Tag
 ----------
@@ -119,7 +120,8 @@ Service Tag
 +============+===============================+=====================================================+
 | mode       | Per Service Mode (New in 1.0) | (manual | default | supervised | interactive_only ) |
 +------------+-------------------------------+-----------------------------------------------------+
-| name       | Service Name                  | String                                              |
+| name       | Service name or regular       | String or regex                                     |
+|            | expression                    |                                                     |
 +------------+-------------------------------+-----------------------------------------------------+
 | status     | Should the service be on or   | (on | off | ignore)                                 |
 |            | off (default: off).           |                                                     |
@@ -204,14 +206,21 @@ The Path tag has different values depending on the *type* attribute of
 the path specified in your configuration. Below is a set of tables which
 describe the attributes available for various Path types.
 
+Attributes common to all Path tags:
+
++----------+---------------------------------------------------+-----------------+
+| Name     | Description                                       | Values          |
++==========+===================================================+=================+
+| name     | Full path or regular expression matching the path | String or regex |
++----------+---------------------------------------------------+-----------------+
+
+
 device
 ^^^^^^
 
 +----------+---------------------+-------------------+
 | Name     | Description         | Values            |
 +==========+=====================+===================+
-| name     | Name of the device  | String            |
-+----------+---------------------+-------------------+
 | dev_type | Type of device      | (block|char|fifo) |
 +----------+---------------------+-------------------+
 | owner    | Device owner        | String            |
@@ -231,8 +240,6 @@ directory
 +-------+------------------------------+------------+
 | Name  | Description                  | Values     |
 +=======+==============================+============+
-| name  | Directory Name               | String     |
-+-------+------------------------------+------------+
 | perms | Permissions of the directory | String     |
 +-------+------------------------------+------------+
 | owner | Owner of the directory       | String     |
@@ -249,8 +256,6 @@ hardlink
 +------+----------------------+--------+
 | Name | Description          | Values |
 +======+======================+========+
-| name | Name of the hardlink | String |
-+------+----------------------+--------+
 | to   | File to link to      | String |
 +------+----------------------+--------+
 
@@ -260,9 +265,6 @@ nonexistent
 +-----------+--------------------+-------------+
 | Name      | Description        | Values      |
 +===========+====================+=============+
-| name      | Name of the        | String      |
-|           | (nonexistent) file |             |
-+-----------+--------------------+-------------+
 | type      | Type of file       | nonexistent |
 +-----------+--------------------+-------------+
 | recursive | Recursively remove | true        |
@@ -275,8 +277,6 @@ permissions
 +-------+--------------------------+--------+
 | Name  | Description              | Values |
 +=======+==========================+========+
-| name  | Name of the file.        | String |
-+-------+--------------------------+--------+
 | perms | Permissions of the file. | String |
 +-------+--------------------------+--------+
 | owner | Owner of the file.       | String |
@@ -290,8 +290,6 @@ symlink
 +------+----------------------+--------+
 | Name | Description          | Values |
 +======+======================+========+
-| name | Name of the symlink. | String |
-+------+----------------------+--------+
 | to   | File to link to      | String |
 +------+----------------------+--------+
 
@@ -352,3 +350,29 @@ how to assign Rules to a host's literal configuration.
         <Service name='syslog' status='on' type='chkconfig'/>
         <Service name='vmware-tools' status='on' type='chkconfig'/>
     </Rules>
+
+Using Regular Expressions in Rules
+==================================
+
+The ``name`` attribute in Rules supports the use of regular
+expressions to match multiple abstract configuration entries.  For
+instance, to make all Service entries use the ``systemd``
+tool on Fedora 15 and the ``chkconfig`` tool on Fedora 14, you could
+do::
+
+    <Rules priority="0">
+        <Group name="fedora-15">
+            <Service name=".*" type="systemd"/>
+        </Group>
+        <Group name="fedora-14">
+            <Service name=".*" type="chkconfig"/>
+        </Group>
+    </Rules>
+
+Note that only one Rule can apply to any abstract entry, so you cannot
+specify multiple regexs to match the same rule.  In the use case
+above, you would have to specify the services fully (except for type)
+in the bundles.
+
+Attributes specified in a bundle have precedence over attributes
+specified in Rules, so you can use Rules to set defaults.
