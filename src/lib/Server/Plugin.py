@@ -814,8 +814,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                 raise PluginExecutionError
             index = prio.index(max(prio))
 
-        for rname in matching[index].cache[1][entry.tag]:
-            if self._matches(entry, metadata, rname):
+        for rname in list(matching[index].cache[1][entry.tag].keys()):
+            if self._matches(entry, metadata, [rname]):
                 data = matching[index].cache[1][entry.tag][rname]
                 break
         if '__text__' in data:
