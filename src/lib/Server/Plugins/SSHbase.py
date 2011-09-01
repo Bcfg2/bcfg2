@@ -264,6 +264,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 except IOError:
                     err = sys.exc_info()[1]
                     self.logger.error("Temporary SSH keys not found: %s" % err)
+                self.AddEntry(hostkey)
+                self.AddEntry("%s.pub.H_%s" % (hostkey.split('.')[0], client))
                 try:
                     os.unlink(temploc)
                     os.unlink("%s.pub" % temploc)
