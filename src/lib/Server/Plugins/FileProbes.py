@@ -77,8 +77,9 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 # for which update is false; we can't possibly do
                 # anything with the data we get from such a probe
                 try:
-                    if (cfg.entries[path].get_pertinent_entries(metadata) and
-                        entry.get('update', 'false').lower() == "false"):
+                    if (entry.get('update', 'false').lower() == "false" and
+                        cfg.entries[path].get_pertinent_entries(entry,
+                                                                metadata)):
                         continue
                 except (KeyError, Bcfg2.Server.Plugin.PluginExecutionError):
                     pass
