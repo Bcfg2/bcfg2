@@ -142,7 +142,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         else:
             try:
                 cfgentry = \
-                    cfg.entries[filename].get_pertinent_entries(metadata)[0]
+                    cfg.entries[filename].get_pertinent_entries(entry,
+                                                                metadata)[0]
             except Bcfg2.Server.Plugin.PluginExecutionError:
                 self.logger.info("Writing new probed file %s" % fileloc)
                 open(fileloc, 'wb').write(contents)
