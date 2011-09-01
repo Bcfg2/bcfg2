@@ -56,7 +56,7 @@ def process_delta(data, delta):
             elif line[0] == '-':
                 if line[1:] in datalines:
                     datalines.remove(line[1:])
-        return "\n".join(datalines)
+        return "\n".join(datalines) + "\n"
     elif delta.specific.delta == 'diff':
         basehandle, basename = tempfile.mkstemp()
         basefile = open(basename, 'w')
@@ -161,8 +161,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             data = basefile.data
             for delta in used:
                 data = process_delta(data, delta)
-            if used:
-                data += '\n'
         if entry.get('encoding') == 'base64':
             entry.text = binascii.b2a_base64(data)
         else:
