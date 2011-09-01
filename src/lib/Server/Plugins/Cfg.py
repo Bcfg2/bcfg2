@@ -47,7 +47,7 @@ def process_delta(data, delta):
     if not delta.specific.delta:
         return data
     if delta.specific.delta == 'cat':
-        datalines = data.split('\n')
+        datalines = data.strip().split('\n')
         for line in delta.data.split('\n'):
             if not line:
                 continue
@@ -160,7 +160,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         else:
             data = basefile.data
             for delta in used:
-                data = data.strip()
                 data = process_delta(data, delta)
             if used:
                 data += '\n'
