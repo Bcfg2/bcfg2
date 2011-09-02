@@ -1222,6 +1222,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     keydir = self.config.get("global", "gpg_keypath")
                 except ConfigParser.NoOptionError:
                     keydir = "/etc/pki/rpm-gpg"
+                except ConfigParser.NoSectionError:
+                    keydir = "/etc/pki/rpm-gpg"
                 remotekey = os.path.join(keydir, os.path.basename(key))
                 localkey = os.path.join(self.keypath, os.path.basename(key))
                 kdata = open(localkey).read()
