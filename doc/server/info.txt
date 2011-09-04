@@ -28,7 +28,7 @@ possible fields in an info file are:
 | Field      | Possible values   | Description                      | Default |
 +============+===================+==================================+=========+
 | encoding:  | ascii | base64    | Encoding of the file. Use        | ascii   |
-|            |                   | base64 for non-ASCII files       |         |
+|            |                   | base64 for binary files          |         |
 +------------+-------------------+----------------------------------+---------+
 | group:     | Any valid group   | Sets group of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
