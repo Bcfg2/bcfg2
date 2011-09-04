@@ -42,7 +42,10 @@ if db_engine != 'sqlite3':
     DATABASES['default']['USER'] =  c.get('statistics', 'database_user')
     DATABASES['default']['PASSWORD'] = c.get('statistics', 'database_password')
     DATABASES['default']['HOST'] = c.get('statistics', 'database_host')
-    DATABASES['default']['PORT'] = c.get('statistics', 'database_port')
+    try:
+        DATABASES['default']['PORT'] = c.get('statistics', 'database_port')
+    except: # An empty string tells Django to use the default port.
+        DATABASES['default']['PORT'] = ''
 
 if django.VERSION[0] == 1 and django.VERSION[1] < 2:
     DATABASE_ENGINE = db_engine
