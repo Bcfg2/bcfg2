@@ -268,34 +268,32 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             keytype = 'rsa1'
         else:
             return
+        
+        fileloc = "%s/%s" % (self.data, hostkey)
+        publoc = self.data + '/' + ".".join([hostkey.split('.')[0], 'pub',
+                                             "H_%s" % client])
+        tempdir = tempfile.mkdtemp()
+        temploc = "%s/%s" % (tempdir, hostkey)
+        cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
+               "-t", keytype, "-C", "root@%s" % client]
+        proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
+        proc.communicate()
+        proc.wait()
 
-            fileloc = "%s/%s" % (self.data, hostkey)
-            publoc = self.data + '/' + ".".join([hostkey.split('.')[0],
-                                                 'pub',
-                                                 "H_%s" % client])
-            tempdir = tempfile.mkdtemp()
-            temploc = "%s/%s" % (tempdir, hostkey)
-            cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
-                   "-t", keytype, "-C", "root@%s" % client]
-            proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
-            proc.communicate()
-            proc.wait()
+        try:
+            shutil.copy(temploc, fileloc)
+            shutil.copy("%s.pub" % temploc, publoc)
+        except IOError:
+            err = sys.exc_info()[1]
+            self.logger.error("Temporary SSH keys not found: %s" % err)
 
-            try:
-                shutil.copy(temploc, fileloc)
-                shutil.copy("%s.pub" % temploc, publoc)
-            except IOError:
-                err = sys.exc_info()[1]
-                self.logger.error("Temporary SSH keys not found: %s" % err)
-
-            try:
-                os.unlink(temploc)
-                os.unlink("%s.pub" % temploc)
-                os.rmdir(tempdir)
-            except OSError:
-                err = sys.exc_info()[1]
-                self.logger.error("Failed to unlink temporary ssh keys: %s"
-                                  % err)
+        try:
+            os.unlink(temploc)
+            os.unlink("%s.pub" % temploc)
+            os.rmdir(tempdir)
+        except OSError:
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to unlink temporary ssh keys: %s" % err)
 
     def AcceptChoices(self, _, metadata):
         return [Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)]
