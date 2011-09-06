@@ -33,8 +33,8 @@ Description: Configuration management server
 
 Package: bcfg2-web
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, bcfg2 (= ${binary:Version}), python-django, libapache2-mod-wsgi
-Suggests: python-mysqldb, python-psycopg2, python-sqlite
+Depends: ${python:Depends}, ${misc:Depends}, bcfg2 (= ${binary:Version}), python-django,
+Suggests: python-mysqldb, python-psycopg2, python-sqlite, libapache2-mod-wsgi
 XB-Python-Version: >= 2.4
 Description: Configuration management web interface
  Bcfg2 is a configuration management system that generates configuration sets
