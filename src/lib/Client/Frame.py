@@ -206,7 +206,8 @@ class Frame:
                         continue
                     try:
                         self.states[cfile] = tl[0].InstallPath(cfile)
-                        tl[0].modified.append(cfile)
+                        if self.states[cfile]:
+                            tl[0].modified.append(cfile)
                     except:
                         self.logger.error("Unexpected tool failure",
                                           exc_info=1)

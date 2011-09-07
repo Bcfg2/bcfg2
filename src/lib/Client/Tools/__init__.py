@@ -110,7 +110,8 @@ class Tool:
             try:
                 func = getattr(self, "Install%s" % (entry.tag))
                 states[entry] = func(entry)
-                self.modified.append(entry)
+                if states[entry]:
+                    self.modified.append(entry)
             except:
                 self.logger.error("Unexpected failure of install method for entry type %s" \
                                   % (entry.tag), exc_info=1)
