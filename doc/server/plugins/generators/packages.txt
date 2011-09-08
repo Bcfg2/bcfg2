@@ -166,8 +166,8 @@ on the client.
 Example usage
 =============
 
-Create a config.xml file in the Packages directory that looks something
-like this::
+Create a ``sources.xml`` file in the Packages directory that looks
+something like this::
 
     <Sources>
       <Group name="ubuntu-intrepid">
