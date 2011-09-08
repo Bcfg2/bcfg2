@@ -19,7 +19,7 @@ Unmanaged entries
 * Package (top-level)
 
  #. Enable the "Packages" plugin in ``/etc/bcfg2.conf``, and configure
-    the Yum repositories in ``/var/lib/bcfg2/Packages/config.xml``.
+    the Yum repositories in ``/var/lib/bcfg2/Packages/sources.xml``.
  #. If a package is unwanted, remove it::
 
         sudo yum remove PACKAGE
@@ -29,7 +29,7 @@ Unmanaged entries
 * Package (dependency)
 
  #. Ensure the Yum repository sources configured in
-    ``/var/lib/bcfg2/Packages/config.xml`` are correct.
+    ``/var/lib/bcfg2/Packages/sources.xml`` are correct.
  #. Ensure the Yum repositories themselves are up-to-date with the main
     package and dependencies.
  #. Rebuild the Packages plugin cache::

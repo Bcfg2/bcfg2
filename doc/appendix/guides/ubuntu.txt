@@ -152,39 +152,33 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
 .. code-block:: xml
 
     root@lucid:~# mkdir /var/lib/bcfg2/Packages
-    root@lucid:~# cat /var/lib/bcfg2/Packages/config.xml
+    root@lucid:~# cat /var/lib/bcfg2/Packages/packages.conf
+    [global]
+    root@lucid:~# cat /var/lib/bcfg2/Packages/sources.xml
     <Sources>
-      <APTSource>
-        <Group>ubuntu-lucid</Group>
-        <URL>http://us.archive.ubuntu.com/ubuntu</URL>
-        <Version>lucid</Version>
-        <Component>main</Component>
-        <Component>multiverse</Component>
-        <Component>restricted</Component>
-        <Component>universe</Component>
-        <Arch>amd64</Arch>
-        <Arch>i386</Arch>
-      </APTSource>
-       <APTSource>
-        <Group>lucid</Group>
-        <URL>http://archive.ubuntu.com/ubuntu</URL>
-        <Version>lucid-updates</Version>
-        <Component>main</Component>
-        <Component>multiverse</Component>
-        <Component>restricted</Component>
-        <Component>universe</Component>
-        <Arch>amd64</Arch>
-       </APTSource>
-       <APTSource>
-        <Group>lucid</Group>
-        <URL>http://security.ubuntu.com/ubuntu</URL>
-        <Version>lucid-security</Version>
-        <Component>main</Component>
-        <Component>multiverse</Component>
-        <Component>restricted</Component>
-        <Component>universe</Component>
-        <Arch>amd64</Arch>
-       </APTSource>
+      <Group name="lucid">
+        <Source type="apt" url="http://archive.ubuntu.com/ubuntu" version="lucid">
+          <Component>main</Component>
+          <Component>multiverse</Component>
+          <Component>restricted</Component>
+          <Component>universe</Component>
+          <Arch>amd64</Arch>
+        </Source>
+        <Source type="apt" url="http://archive.ubuntu.com/ubuntu" version="lucid-updates">
+          <Component>main</Component>
+          <Component>multiverse</Component>
+          <Component>restricted</Component>
+          <Component>universe</Component>
+          <Arch>amd64</Arch>
+        </Source>
+        <Source type="apt" url="http://security.ubuntu.com/ubuntu" version="lucid-security">
+          <Component>main</Component>
+          <Component>multiverse</Component>
+          <Component>restricted</Component>
+          <Component>universe</Component>
+          <Arch>amd64</Arch>
+        </Source>
+      </Group>
     </Sources>
 
 Due to the :ref:`server-plugins-generators-packages-magic-groups`,

@@ -190,28 +190,32 @@ Setup the :ref:`server-plugins-generators-packages` plugin
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 First, replace **Pkgmgr** with **Packages** in the plugins
-line of ``bcfg2.conf``. Then create `Packages/` directory in
+line of ``bcfg2.conf``. Then create a `Packages/` directory in
 ``/var/lib/bcfg2`` ::
 
     $ su -c 'mkdir /var/lib/bcfg2/Packages'
 
-Create a ``config.xml`` file for the packages in
-``/var/lib/bcfg2/Packages`` with the following content.  Choose a
-mirror near your location according the `Mirror list`_ .
+Create a ``packages.conf`` in the ``/var/lib/bcfg2/Packages`` directory
+with the following contents::
+
+    [global]
+
+Create a ``sources.xml`` file for the packages in
+``/var/lib/bcfg2/Packages`` with the following content.  Choose a mirror
+near your location according the `Mirror list`_ .
 
 .. _Mirror list: http://mirrors.fedoraproject.org/publiclist/
 
 .. code-block:: xml
 
 	<Sources>
-	    <YUMSource>
-	    <Group>fedora-13</Group>
-	    <URL>ftp://fedora.tu-chemnitz.de/pub/linux/fedora/linux/releases/</URL>
-	    <Version>13</Version>
-	    <Component>Fedora</Component>
-	    <Arch>i386</Arch>
-	    <Arch>x86_64</Arch>
-	    </YUMSource>
+	    <Group name="fedora-13">
+	        <Source type="yum" url="ftp://fedora.tu-chemnitz.de/pub/linux/fedora/linux/releases/" version="13">
+	            <Component>Fedora</Component>
+	            <Arch>i386</Arch>
+	            <Arch>x86_64</Arch>
+	        <Source>
+	    </Group>
 	</Sources>
 
 

@@ -202,7 +202,7 @@ Server Errors
 | Packages: No matching        | Server   | None of the sources | [s12]_       |
 | sources for client           |          | defined in the      |              |
 | <clientname>; improper group |          | Package plugin's    |              |
-| memberships?                 |          | ``config.xml``      |              |
+| memberships?                 |          | ``sources.xml``     |              |
 |                              |          | apply to the client |              |
 +------------------------------+----------+---------------------+--------------+
 
@@ -222,7 +222,7 @@ Server Errors
         section of ``bcfg2.conf``.
 .. [s8] For packages listed other than **gpg-pubkey**, this error means
         that the Packages plugin is unable to find the package in any of
-        the sources listed in ``Packages/config.xml``. The issue often
+        the sources listed in ``Packages/sources.xml``. The issue often
         arises when the client is not in one of the groups necessary for
         the Source listed. In the case of gpg-pubkey, you can safely
         ignore the message as the Packages plugin has no knowledge of
