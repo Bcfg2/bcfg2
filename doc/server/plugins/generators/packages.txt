@@ -126,8 +126,6 @@ All metadata processing can be disabled as well::
     [global]
     metadata=disabled
 
-.. _packages-exampleusage:
-
 Blacklisting faulty dependencies
 --------------------------------
 
@@ -162,6 +160,8 @@ More than one ``<GPGKey>`` tag can be specified per Source.
 With the keys specified thusly, Packages will include the keys in the
 generated yum config file, and will ensure that the keys are imported
 on the client.
+
+.. _packages-exampleusage:
 
 Example usage
 =============
