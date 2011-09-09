@@ -14,7 +14,10 @@ import sys
 import tempfile
 
 try:
-    import profile
+    try:
+        import cProfile as profile
+    except:
+        import profile
     import pstats
     have_profile = True
 except:
