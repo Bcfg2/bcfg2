@@ -88,7 +88,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             record.exc_info = None
             msgdata = record.msg
             while msgdata:
-                newrec = copy.deepcopy(record)
+                newrec = copy.copy(record)
                 newrec.msg = msgdata[:250]
                 msgs.append(newrec)
                 msgdata = msgdata[250:]

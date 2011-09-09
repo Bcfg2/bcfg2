@@ -24,7 +24,7 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
     def get_xml_value(self, metadata):
         bundlename = os.path.splitext(os.path.basename(self.name))[0]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
-        [bundle.append(copy.deepcopy(item)) for item in self.Match(metadata)]
+        [bundle.append(copy.copy(item)) for item in self.Match(metadata)]
         return bundle
 
 
