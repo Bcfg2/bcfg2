@@ -24,7 +24,7 @@ is pretty easy:
        The key fingerprint is:
        aa:25:9b:a7:10:60:f3:eb:2b:ae:4b:1a:42:1b:63:5d desai@ubik
 
-#. Add this this public key to root's authorized_keys file, with several
+#. Add this public key to root's authorized_keys file, with several
    commands prepended to it::
 
        command="/usr/sbin/bcfg2 -q <other options>",no-port-forwarding,no-X11-forwarding,no-pty,no-agent-forwarding,from="<bcfg2-server ipaddr>" <pub key>
