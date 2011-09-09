@@ -98,7 +98,7 @@ class StatisticsStore(object):
         newstat.set('time', asctime(localtime()))
 
         # Add statistic
-        node.append(copy.deepcopy(newstat))
+        node.append(copy.copy(newstat))
 
         # Set dirty
         self.dirty = 1

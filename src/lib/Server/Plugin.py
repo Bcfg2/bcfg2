@@ -282,7 +282,7 @@ class ThreadedStatistics(Statistics,
     def process_statistics(self, metadata, data):
         warned = False
         try:
-            self.work_queue.put_nowait((metadata, copy.deepcopy(data)))
+            self.work_queue.put_nowait((metadata, copy.copy(data)))
             warned = False
         except Full:
             if not warned:
@@ -636,7 +636,7 @@ class StructFile(XMLFileBacked):
                     rv.extend(self._match(child, metadata))
             return rv
         else:
-            rv = copy.deepcopy(item)
+            rv = copy.copy(item)
             for child in rv.iterchildren():
                 rv.remove(child)
             for child in item.iterchildren():
@@ -835,7 +835,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         if '__text__' in data:
             entry.text = data['__text__']
         if '__children__' in data:
-            [entry.append(copy.deepcopy(item)) for item in data['__children__']]
+            [entry.append(copy.copy(item)) for item in data['__children__']]
         [entry.attrib.__setitem__(key, data[key]) for key in list(data.keys()) \
          if not key.startswith('__')]
 

@@ -1,5 +1,5 @@
 import os
-from copy import deepcopy
+import copy
 from difflib import SequenceMatcher
 import Bcfg2.Server.Lint
 
@@ -43,7 +43,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         rv = []
         elist = entries.items()
         while elist:
-            result = self._find_similar(elist.pop(0), deepcopy(elist),
+            result = self._find_similar(elist.pop(0), copy.copy(elist),
                                         threshold)
             if len(result) > 1:
                 elist = [(fname, fdata)
@@ -62,7 +62,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
             if (sm.real_quick_ratio() > threshold and
                 sm.quick_ratio() > threshold and
                 sm.ratio() > threshold):
-                rv.extend(self._find_similar((cname, cdata), deepcopy(others),
+                rv.extend(self._find_similar((cname, cdata), copy.copy(others),
                                              threshold))
         return rv
 
