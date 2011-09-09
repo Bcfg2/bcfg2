@@ -204,12 +204,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if not ofile.startswith('/tmp') and not path_force:
                 print("Refusing to write files outside of /tmp without -f option")
                 return
-            output = open(ofile, 'w')
-            data = lxml.etree.tostring(self.BuildConfiguration(client),
+            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(ofile,
                                        encoding='UTF-8', xml_declaration=True,
                                        pretty_print=True)
-            output.write(data)
-            output.close()
         else:
             print('Usage: build [-f] <hostname> <output file>')
 
