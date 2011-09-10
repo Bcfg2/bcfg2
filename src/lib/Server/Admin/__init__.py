@@ -61,7 +61,10 @@ class Mode(object):
 
     def get_repo_path(self):
         """Return repository path"""
-        return self.cfp.get('server', 'repository')
+        try:
+            return self.cfp.get('server', 'repository')
+        except ConfigParser.NoSectionError:
+            self.errExit("Unable to find server section in bcfg2.conf")
 
     def load_stats(self, client):
         stats = lxml.etree.parse("%s/etc/statistics.xml" %
