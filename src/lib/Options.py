@@ -201,7 +201,8 @@ INSTALL_PREFIX = Option('Installation location', cf=('server', 'prefix'),
                         default=DEFAULT_INSTALL_PREFIX, odesc='</path>')
 SENDMAIL_PATH = Option('Path to sendmail', cf=('reports', 'sendmailpath'),
                        default='/usr/lib/sendmail')
-INTERACTIVE = Option('Prompt the user for each change', default=False,
+INTERACTIVE = Option('Run interactively, prompting the user for each change',
+                     default=False,
                      cmd='-I', )
 ENCODING = Option('Encoding of cfg files',
                   default='UTF-8',
