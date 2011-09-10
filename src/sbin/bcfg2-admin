@@ -64,7 +64,7 @@ def main():
 
     if setup['args'][0] in get_modes():
         modname = setup['args'][0].capitalize()
-        if len(setup['args']) == 1 or setup['args'][1] == 'help':
+        if setup['args'][1] == 'help':
             print(mode_import(modname).__longhelp__)
             raise SystemExit(0)
         try:
