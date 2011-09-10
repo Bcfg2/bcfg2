@@ -103,12 +103,7 @@ plugin_list = ['Account',
                'TGenshi']
 
 # Default list of plugins to use
-default_plugins = ['Bundler',
-                   'Cfg',
-                   'Metadata',
-                   'Pkgmgr',
-                   'Rules',
-                   'SSHbase']
+default_plugins = Bcfg2.Options.SERVER_PLUGINS.default
 
 
 def gen_password(length):
@@ -391,7 +386,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Setup a new repo and create the content of the configuration file."""
         keypath = os.path.dirname(os.path.abspath(self.configfile))
         confdata = config % (self.repopath,
-                             ','.join(self.opts['plugins']),
+                             ','.join(self.plugins),
                              self.opts['sendmail'],
                              self.opts['proto'],
                              self.password,
