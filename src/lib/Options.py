@@ -254,7 +254,6 @@ SERVER_REPOSITORY = Option('Server repository path', '/var/lib/bcfg2',
 SERVER_PLUGINS = Option('Server plugin list', cf=('server', 'plugins'),
                         # default server plugins
                         default=[
-                                 'Base',
                                  'Bundler',
                                  'Cfg',
                                  'Metadata',
