@@ -172,23 +172,23 @@ class Frame:
         # Need to process decision stuff early so that dryrun mode works with it
         self.whitelist = [entry for entry in self.states \
                           if not self.states[entry]]
-        if self.setup['decision'] == 'whitelist':
-            dwl = self.setup['decision_list']
-            w_to_rem = [e for e in self.whitelist \
-                        if not matches_white_list(e, dwl)]
-            if w_to_rem:
-                self.logger.info("In whitelist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
-                self.whitelist = [x for x in self.whitelist \
-                                  if x not in w_to_rem]
-
-        elif self.setup['decision'] == 'blacklist':
-            b_to_rem = [e for e in self.whitelist \
-                        if not passes_black_list(e, self.setup['decision_list'])]
-            if b_to_rem:
-                self.logger.info("In blacklist mode: suppressing installation of:")
-                self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
-                self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
+        if not self.setup['file']:
+            if self.setup['decision'] == 'whitelist':
+                dwl = self.setup['decision_list']
+                w_to_rem = [e for e in self.whitelist \
+                            if not matches_white_list(e, dwl)]
+                if w_to_rem:
+                    self.logger.info("In whitelist mode: suppressing installation of:")
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
+                    self.whitelist = [x for x in self.whitelist \
+                                      if x not in w_to_rem]
+            elif self.setup['decision'] == 'blacklist':
+                b_to_rem = [e for e in self.whitelist \
+                            if not passes_black_list(e, self.setup['decision_list'])]
+                if b_to_rem:
+                    self.logger.info("In blacklist mode: suppressing installation of:")
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
+                    self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
 
         # take care of important entries first
         if not self.dryrun and not self.setup['bundle']:
