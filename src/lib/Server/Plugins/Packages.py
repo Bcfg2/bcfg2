@@ -735,7 +735,10 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
         except OSError:
             err = sys.exc_info()[1]
-            logger.error("Packages: Error processing sources: %s" % err)
+            usermsg = "Packages: Failed to read configuration file %s" % err
+            if not os.path.exists(err):
+                usermsg += " Have you created it?"
+            logger.error(usermsg)
             raise Bcfg2.Server.Plugin.PluginInitError
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
         self.cachepath = cachepath
