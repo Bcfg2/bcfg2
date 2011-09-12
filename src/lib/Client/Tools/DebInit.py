@@ -40,6 +40,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 start_sequence = int(entry.get('sequence'))
                 kill_sequence = 100 - start_sequence
             else:
+                start_sequence = None
                 self.logger.warning("Your debian version boot sequence is "
                                     "dependency based \"sequence\" attribute "
                                     "will be ignored.")
