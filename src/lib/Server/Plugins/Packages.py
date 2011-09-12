@@ -731,7 +731,12 @@ class PACSource(Source):
 class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                       Bcfg2.Server.Plugin.StructFile):
     def __init__(self, filename, cachepath, fam, packages):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
+        try:
+            Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
+        except OSError:
+            err = sys.exc_info()[1]
+            logger.error("Packages: Error processing sources: %s" % err)
+            raise Bcfg2.Server.Plugin.PluginInitError
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
         self.cachepath = cachepath
         if not os.path.exists(self.cachepath):
