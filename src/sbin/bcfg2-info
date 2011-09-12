@@ -12,6 +12,8 @@ import lxml.etree
 import os
 import sys
 import tempfile
+from Queue import Queue
+from threading import Thread
 
 try:
     try:
@@ -104,6 +106,12 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
 
+def write_from_queue(queue, acknowledge):
+    while True:
+        delayed_write = queue.get(True)
+        delayed_write()
+        acknowledge.put(None)
+
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
     def __init__(self, repo, plgs, passwd, encoding, event_debug):
@@ -120,6 +128,26 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
+
+        self.write_queue = Queue()
+        self.write_complete = Queue()
+        self.count = 0
+
+        write_thread = Thread(target=write_from_queue,
+            args=(self.write_queue, self.write_complete))
+        write_thread.daemon = True
+        write_thread.start()
+
+    def queue_write(self, delayed_write):
+        self.write_queue.put(delayed_write)
+        self.count += 1
+
+    def postcmd(self, stop, line):
+        while True:
+            if self.count == 0:
+                return
+            self.write_complete.get(True)
+            self.count -= 1
 
     def do_loop(self):
         """Looping."""
@@ -207,9 +235,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if not ofile.startswith('/tmp') and not path_force:
                 print("Refusing to write files outside of /tmp without -f option")
                 return
-            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(ofile,
-                                       encoding='UTF-8', xml_declaration=True,
-                                       pretty_print=True)
+            config = lxml.etree.ElementTree(self.BuildConfiguration(client))
+            self.queue_write(lambda: config.write(ofile,
+                encoding='UTF-8', xml_declaration=True,
+                pretty_print=True))
         else:
             print('Usage: build [-f] <hostname> <output file>')
 
