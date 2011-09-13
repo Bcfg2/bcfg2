@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import logging
 import re
 import Bcfg2.Server.Plugin
+import lxml
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
@@ -45,9 +46,9 @@ class PNode(Bcfg2.Server.Plugin.INode):
                  'encap': re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
 
-    def Match(self, metadata, data):
+    def Match(self, metadata, data, entry=lxml.etree.Element("None")):
         """Return a dictionary of package mappings."""
-        if self.predicate(metadata):
+        if self.predicate(metadata, entry):
             for key in self.contents:
                 try:
                     data[key].update(self.contents[key])
