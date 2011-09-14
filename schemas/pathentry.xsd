@@ -21,10 +21,13 @@
   <xsd:complexType name='BoundPathEntry'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='group' use='optional'/>
+    <xsd:attribute type='xsd:string' name='important' use='optional'/>
     <xsd:attribute type='xsd:string' name='owner' use='optional'/>
+    <xsd:attribute type='xsd:string' name='paranoid' use='optional'/>
     <xsd:attribute type='xsd:string' name='perms' use='optional'/>
     <xsd:attribute type='xsd:string' name='prune' use='optional'/>
     <xsd:attribute type='xsd:string' name='recursive' use='optional'/>
+    <xsd:attribute type='xsd:string' name='sensitive' use='optional'/>
     <xsd:attribute type='xsd:string' name='to' use='optional'/>
     <xsd:attribute type='xsd:string' name='type' use='optional'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
