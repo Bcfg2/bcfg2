@@ -313,7 +313,10 @@ CLIENT_DRYRUN = Option('Do not actually change the system',
 CLIENT_EXTRA_DISPLAY = Option('enable extra entry output',
                               default=False, cmd='-e', )
 CLIENT_PARANOID = Option('Make automatic backups of config files',
-                         default=False, cmd='-P', cf=('client', 'paranoid'))
+                         default=False,
+                         cmd='-P',
+                         cook=get_bool,
+                         cf=('client', 'paranoid'))
 CLIENT_DRIVERS = Option('Specify tool driver set', cmd='-D',
                         cf=('client', 'drivers'),
                         odesc="<driver1,driver2>", cook=list_split,
