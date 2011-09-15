@@ -47,11 +47,10 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             # py3k compatibility
-            if isinstance(response, bool) or isinstance(response, str) \
-                or isinstance(response, list):
-                response = (response, )
-            else:
+            if type(response) is bytes:
                 response = (response.decode('utf-8'), )
+            else:
+                response = (response, )
             raw_response = xmlrpclib.dumps(response, methodresponse=1,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
