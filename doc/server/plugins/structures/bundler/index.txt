@@ -148,18 +148,25 @@ Use
 
 .. warning::
 
-    Group tags are not used inside of Genshi templates. You can get the
-    same logic (and more) using Genshi conditionals.
+    ``<Group>`` and ``<Client>`` tags are allowed inside of Genshi
+    templates as of Bcfg2 1.2.  However, they do not behave the same
+    as using a Genshi conditional, e.g.::
 
-    .. code-block:: xml
-
-        <py:if test="groupname in metadata.groups">
+        <py:if test="'groupname' in metadata.groups">
 	</py:if>
+    
+    The conditional is evaluated when the template is rendered, so
+    code inside the conditional is not executed if the conditional
+    fails.  A ``<Group>`` tag is evaluated *after* the template is
+    rendered, so code inside the tag is always executed.  This is an
+    important distinction: if you have code that will fail on some
+    groups, you *must* use a Genshi conditional, not a ``<Group>``
+    tag.  The same caveats apply to ``<Client>`` tags.
 
-Bcfg uses the Genshi API for templates, and performs a XML format
+Bcfg2 uses the Genshi API for templates, and performs a XML format
 stream rendering of the template into an lxml entry, which is included
 in the client configuration. :ref:`Client metadata <client-metadata>`
-is avilable inside of the template using the 'metadata' name. Note that
+is available inside of the template using the 'metadata' name. Note that
 only the markup Genshi template format can be used, as the target output
 format is XML.
 
@@ -210,45 +217,59 @@ and returns them in a newline delimited string.
 
 .. code-block:: xml
 
-    <Bundle name='networkinterfaces' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle name="networkinterfaces" xmlns:py="http://genshi.edgewall.org/">
         <?python
-          files = $metadata.Probes["getmacs"].split("\n")
+          files = metadata.Probes["getmacs"].split("\n")
         ?>
-        <Path py:for="file in files" name="/etc/sysconfig/network/ifcfg-eth-${file}" altsrc='/etc/ifcfg-template'/>
+        <Path py:for="file in files"
+              name="/etc/sysconfig/network/ifcfg-eth-${file}"
+              altsrc="/etc/ifcfg-template"/>
     </Bundle>
 
 .. note::
-   * The use of the altsrc directive causes all ifcfg files to be handled by the same plugin and entry.
-   * The <?python ?> blocks have only been available in genshi since 0.4 (http://genshi.edgewall.org/ticket/84)
+   * The use of the altsrc directive causes all ifcfg files to be
+     handled by the same plugin and entry.
+   * The <?python ?> blocks have only been available in genshi since
+     0.4 (http://genshi.edgewall.org/ticket/84)
 
 If you want a file to be only on a per-client basis, you can use an
-if declaration:
-
-.. code-block:: xml
+if declaration::
 
     <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
-         <Path py:if="metadata.hostname == 'foo.bar.com'" name="/etc/bacula/bacula-dir.conf"/>
+         <Path py:if="metadata.hostname == 'foo.bar.com'"
+               name="/etc/bacula/bacula-dir.conf"/>
     </Bundle>
 
-or alternately:
+or alternately::
 
-.. code-block:: xml
+    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+         <Path name="/etc/bacula/bconsole.conf"/>
+         <Path name="/etc/bacula/bacula-fd.conf"/>
+         <Path name="/etc/bacula/bacula-sd.conf"/>
+         <py:if="metadata.hostname == 'foo.bar.com'">
+           <Path name="/etc/bacula/bacula-dir.conf"/>
+         </py:if>
+    </Bundle>
+
+or yet another way::
 
     <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
         <Path name="/etc/bacula/bconsole.conf"/>
         <Path name="/etc/bacula/bacula-fd.conf"/>
         <Path name="/etc/bacula/bacula-sd.conf"/>
-        <py:if test="metadata.hostname == 'foo.bar.com'">
+        <Client name="foo.bar.com">
             <Path name="/etc/bacula/bacula-dir.conf"/>
-        </py:if>
+        </Client>
     </Bundle>
 
-The latter form is preferred if the if block contains multiple
-files. While this example is simple, the test in the if block can in
-fact be any python statement.
+The final form is preferred if there is no code inside the block that
+would fail on other clients.
+
+While these examples are simple, the test in the if block can in fact
+be any python statement.
 
 .. _server-plugins-structures-bundler-index-examples:
 

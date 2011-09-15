@@ -5,6 +5,7 @@ import genshi.input
 import genshi.template
 import lxml.etree
 import logging
+import copy
 import sys
 
 import Bcfg2.Server.Plugin
@@ -13,28 +14,45 @@ import Bcfg2.Server.Plugins.TGenshi
 logger = logging.getLogger('Bcfg2.Plugins.SGenshi')
 
 
-class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile):
+class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
+                          Bcfg2.Server.Plugin.StructFile):
+    def __init__(self, name, specific, encoding):
+        Bcfg2.Server.Plugins.TGenshi.TemplateFile.__init__(self, name,
+                                                           specific, encoding)
+        Bcfg2.Server.Plugin.StructFile.__init__(self, name)
 
     def get_xml_value(self, metadata):
         if not hasattr(self, 'template'):
             logger.error("No parsed template information for %s" % (self.name))
             raise Bcfg2.Server.Plugin.PluginExecutionError
         try:
-            stream = self.template.generate(metadata=metadata,).filter( \
+            stream = self.template.generate(metadata=metadata).filter( \
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
-            data = stream.render('xml', strip_whitespace=False)
-            return lxml.etree.XML(data)
+            data = lxml.etree.XML(stream.render('xml', strip_whitespace=False))
+            bundlename = self.name.split('/')[-1][:-4]
+            bundle = lxml.etree.Element('Bundle', name=bundlename)
+            for item in self.Match(metadata, data):
+                bundle.append(copy.deepcopy(item))
+            return bundle
         except LookupError:
             lerror = sys.exc_info()[1]
             logger.error('Genshi lookup error: %s' % lerror)
         except genshi.template.TemplateError:
             terror = sys.exc_info()[1]
             logger.error('Genshi template error: %s' % terror)
+            raise
         except genshi.input.ParseError:
             perror = sys.exc_info()[1]
             logger.error('Genshi parse error: %s' % perror)
         raise
 
+    def Match(self, metadata, xdata):
+        """Return matching fragments of parsed template."""
+        rv = []
+        for child in xdata.getchildren():
+            rv.extend(self._match(child, metadata))
+        logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
+        return rv
 
 class SGenshiEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
