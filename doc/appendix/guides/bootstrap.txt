@@ -34,6 +34,6 @@ you to specify the options that are normally found in the client's
     bcfg2 -x password -p basic -S https://bcfg2-server:6789
 
 The above command will add the client to ``Metadata/clients.xml`` with the
-profile *basic*. Generally, the configuration given to the client by the
-bcfg2 server in this initial run will include the ``/etc/bcfg2.conf`` file
-so that the client won't need to specify these options on future runs.
+profile *basic*. Generally, you should include ``/etc/bcfg2.conf`` in the
+configuration given to the client by the bcfg2 server in this initial run
+to avoid specifying these options on future runs.
