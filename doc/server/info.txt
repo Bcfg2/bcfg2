@@ -94,7 +94,9 @@ files are XML, and work similarly to those used by :ref:`Rules
 
 The following specifies a different global set of permissions
 (root/sys/0651) than on clients in group webserver or named
-"foo.example.com" (root/root/0652)::
+"foo.example.com" (root/root/0652).
+
+.. code-block:: xml
 
     <FileInfo>
       <Client name='foo.example.com'>
@@ -107,7 +109,9 @@ The following specifies a different global set of permissions
     </FileInfo>
 
 The following specifies a different set of permissions depending on
-the path of the file::
+the path of the file.
+
+.. code-block:: xml
 
     <FileInfo>
       <Path name="/etc/bcfg2-web.conf">

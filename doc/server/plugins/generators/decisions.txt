@@ -67,7 +67,6 @@ can add comments such as this::
       <!-- vim: set ft=xml : -->
 
 
-=============
 Decision Mode
 =============
 

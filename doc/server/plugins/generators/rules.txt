@@ -354,11 +354,12 @@ how to assign Rules to a host's literal configuration.
 Using Regular Expressions in Rules
 ==================================
 
-The ``name`` attribute in Rules supports the use of regular
-expressions to match multiple abstract configuration entries.  For
-instance, to make all Service entries use the ``systemd``
-tool on Fedora 15 and the ``chkconfig`` tool on Fedora 14, you could
-do::
+The ``name`` attribute in Rules supports the use of regular expressions
+to match multiple abstract configuration entries.  For instance, to
+make all Service entries use the ``systemd`` tool on Fedora 15 and the
+``chkconfig`` tool on Fedora 14, you could do the following.
+
+.. code-block:: xml
 
     <Rules priority="0">
         <Group name="fedora-15">

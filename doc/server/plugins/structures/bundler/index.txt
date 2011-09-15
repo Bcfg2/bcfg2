@@ -233,7 +233,9 @@ and returns them in a newline delimited string.
      0.4 (http://genshi.edgewall.org/ticket/84)
 
 If you want a file to be only on a per-client basis, you can use an
-if declaration::
+if declaration.
+
+.. code-block:: xml
 
     <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
@@ -243,7 +245,9 @@ if declaration::
                name="/etc/bacula/bacula-dir.conf"/>
     </Bundle>
 
-or alternately::
+or alternately
+
+.. code-block:: xml
 
     <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
@@ -254,7 +258,9 @@ or alternately::
          </py:if>
     </Bundle>
 
-or yet another way::
+or yet another way
+
+.. code-block:: xml
 
     <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
         <Path name="/etc/bacula/bconsole.conf"/>
