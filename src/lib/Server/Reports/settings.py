@@ -1,10 +1,14 @@
 import django
+import sys
 
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
 c = ConfigParser.ConfigParser()
-c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])
+if len(c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])) == 0:
+    print("Please check that bcfg2.conf or bcfg2-web.conf exists "
+          "and is readable by your web server.")
+    sys.exit(1)
 
 try:
     dset = c.get('statistics', 'web_debug')
@@ -23,8 +27,12 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
-
-db_engine = c.get('statistics', 'database_engine')
+try:
+    db_engine = c.get('statistics', 'database_engine')
+except ConfigParser.NoSectionError:
+    e = sys.exc_info()[1]
+    print("Failed to determine database engine: %s" % e)
+    sys.exit(1)
 db_name = ''
 if c.has_option('statistics', 'database_name'):
     db_name = c.get('statistics', 'database_name')
