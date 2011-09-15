@@ -57,7 +57,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 try:
                     xdata = lxml.etree.XML(bundle.data)
                     rtype = "bundler"
-                except AttributeError:
+                except (lxml.etree.XMLSyntaxError, AttributeError):
                     xdata = lxml.etree.parse(bundle.template.filepath).getroot()
                     rtype = "sgenshi"
 

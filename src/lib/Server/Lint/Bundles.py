@@ -10,11 +10,9 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
             self.missing_bundles()
             for bundle in self.core.plugins['Bundler'].entries.values():
                 if self.HandlesFile(bundle.name):
-                    if (Bcfg2.Server.Plugins.Bundler.have_genshi and
-                        type(bundle) is
+                    if (not Bcfg2.Server.Plugins.Bundler.have_genshi or
+                        type(bundle) is not
                         Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
-                        self.sgenshi_groups(bundle)
-                    else:
                         self.bundle_names(bundle)
 
     def missing_bundles(self):

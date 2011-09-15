@@ -67,7 +67,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             for bundle in self.core.plugins['Bundler'].entries.values():
                 try:
                     xdata = lxml.etree.XML(bundle.data)
-                except AttributeError:
+                except (lxml.etree.XMLSyntaxError, AttributeError):
                     xdata = lxml.etree.parse(bundle.template.filepath).getroot()
 
                 for path in xdata.xpath("//BoundPath"):
