@@ -36,9 +36,9 @@ web_debug = True
 [communication]
 protocol = %s
 password = %s
-certificate = %s/%s
-key = %s/%s
-ca = %s/%s
+certificate = %s
+key = %s
+ca = %s
 
 [components]
 bcfg2 = %s
@@ -221,7 +221,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         newconfig = get_input("Store Bcfg2 configuration in [%s]: " %
                                 self.configfile)
         if newconfig != '':
-            self.configfile = newconfig
+            self.configfile = os.path.abspath(newconfig)
 
     def _prompt_repopath(self):
         """Ask for the repository path."""
@@ -229,7 +229,7 @@ class Init(Bcfg2.Server.Admin.Mode):
             newrepo = get_input("Location of Bcfg2 repository [%s]: " %
                                     self.repopath)
             if newrepo != '':
-                self.repopath = newrepo
+                self.repopath = os.path.abspath(newrepo)
             if os.path.isdir(self.repopath):
                 response = get_input("Directory %s exists. Overwrite? [y/N]:" \
                                         % self.repopath)
@@ -333,26 +333,27 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def init_repo(self):
         """Setup a new repo and create the content of the configuration file."""
-        keypath = os.path.dirname(os.path.abspath(self.configfile))
+        keypath = os.path.dirname(self.configfile)
+        kpath = os.path.join(keypath, 'bcfg2.key')
+        cpath = os.path.join(keypath, 'bcfg2.crt')
+
         confdata = config % (self.repopath,
                              ','.join(self.plugins),
                              self.opts['sendmail'],
                              self.opts['proto'],
                              self.password,
-                             keypath, 'bcfg2.crt',
-                             keypath, 'bcfg2.key',
-                             keypath, 'bcfg2.crt',
+                             cpath,
+                             kpath,
+                             cpath,
                              self.server_uri)
 
         # Create the configuration file and SSL key
         create_conf(self.configfile, confdata, keypath)
-        kpath = keypath + '/bcfg2.key'
-        cpath = keypath + '/bcfg2.crt'
         create_key(self.shostname, kpath, cpath, self.country,
                    self.state, self.location)
 
         # Create the repository
-        path = "%s/%s" % (self.repopath, 'etc')
+        path = os.path.join(self.repopath, 'etc')
         try:
             os.makedirs(path)
             self._init_plugins()
