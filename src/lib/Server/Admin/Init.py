@@ -106,6 +106,14 @@ plugin_list = ['Account',
 default_plugins = Bcfg2.Options.SERVER_PLUGINS.default
 
 
+def get_input(prompt):
+    """py3k compatible function to get input"""
+    try:
+        return raw_input(prompt)
+    except NameError:
+        return input(prompt)
+
+
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
     chars = string.letters + string.digits
@@ -139,12 +147,7 @@ def create_key(hostname, keypath, certpath, country, state, location):
 def create_conf(confpath, confdata, keypath):
     # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
-        # py3k compatibility
-        try:
-            result = raw_input("\nWarning: %s already exists. "
-                               "Overwrite? [y/N]: " % confpath)
-        except NameError:
-            result = input("\nWarning: %s already exists. "
+        result = get_input("\nWarning: %s already exists. "
                            "Overwrite? [y/N]: " % confpath)
         if result not in ['Y', 'y']:
             print("Leaving %s unchanged" % confpath)
@@ -206,13 +209,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        # py3k compatibility
-        try:
-            data = raw_input("What is the server's hostname [%s]: " %
-                             socket.getfqdn())
-        except NameError:
-            data = input("What is the server's hostname [%s]: " %
-                         socket.getfqdn())
+        data = get_input("What is the server's hostname [%s]: " %
+                            socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -220,36 +218,21 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_config(self):
         """Ask for the configuration file path."""
-        # py3k compatibility
-        try:
-            newconfig = raw_input("Store Bcfg2 configuration in [%s]: " %
-                                    self.configfile)
-        except NameError:
-            newconfig = input("Store Bcfg2 configuration in [%s]: " %
-                              self.configfile)
+        newconfig = get_input("Store Bcfg2 configuration in [%s]: " %
+                                self.configfile)
         if newconfig != '':
             self.configfile = newconfig
 
     def _prompt_repopath(self):
         """Ask for the repository path."""
         while True:
-            # py3k compatibility
-            try:
-                newrepo = raw_input("Location of Bcfg2 repository [%s]: " %
-                                      self.repopath)
-            except NameError:
-                newrepo = input("Location of Bcfg2 repository [%s]: " %
-                                self.repopath)
+            newrepo = get_input("Location of Bcfg2 repository [%s]: " %
+                                    self.repopath)
             if newrepo != '':
                 self.repopath = newrepo
             if os.path.isdir(self.repopath):
-                # py3k compatibility
-                try:
-                    response = raw_input("Directory %s exists. Overwrite? [y/N]:" \
-                                          % self.repopath)
-                except NameError:
-                    response = input("Directory %s exists. Overwrite? [y/N]:" \
-                                     % self.repopath)
+                response = get_input("Directory %s exists. Overwrite? [y/N]:" \
+                                        % self.repopath)
                 if response.lower().strip() == 'y':
                     break
             else:
@@ -265,13 +248,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        # py3k compatibility
-        try:
-            newserver = raw_input("Input the server location [%s]: " %
-                                  self.server_uri)
-        except NameError:
-            newserver = input("Input the server location [%s]: " %
-                              self.server_uri)
+        newserver = get_input("Input the server location [%s]: " %
+                                self.server_uri)
         if newserver != '':
             self.server_uri = newserver
 
@@ -283,32 +261,19 @@ class Init(Bcfg2.Server.Admin.Mode):
         prompt += ': '
         while True:
             try:
-                # py3k compatibility
-                try:
-                    osidx = int(raw_input(prompt))
-                except NameError:
-                    osidx = int(input(prompt))
+                osidx = int(get_input(prompt))
                 self.os_sel = os_list[osidx - 1][1]
                 break
             except ValueError:
                 continue
 
     def _prompt_plugins(self):
-        # py3k compatibility
-        try:
-            default = raw_input("Use default plugins? (%s) [Y/n]: " %
-                                ''.join(default_plugins)).lower()
-        except NameError:
-            default = input("Use default plugins? (%s) [Y/n]: " %
+        default = get_input("Use default plugins? (%s) [Y/n]: " %
                             ''.join(default_plugins)).lower()
         if default != 'y' or default != '':
             while True:
                 plugins_are_valid = True
-                # py3k compatibility
-                try:
-                    plug_str = raw_input("Specify plugins: ")
-                except NameError:
-                    plug_str = input("Specify plugins: ")
+                plug_str = get_input("Specify plugins: ")
                 plugins = plug_str.split(',')
                 for plugin in plugins:
                     plugin = plugin.strip()
@@ -322,42 +287,26 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Ask for the key details (country, state, and location)."""
         print("The following questions affect SSL certificate generation.")
         print("If no data is provided, the default values are used.")
-        # py3k compatibility
-        try:
-            newcountry = raw_input("Country name (2 letter code) for certificate: ")
-        except NameError:
-            newcountry = input("Country name (2 letter code) for certificate: ")
+        newcountry = get_input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
             if len(newcountry) == 2:
                 self.country = newcountry
             else:
                 while len(newcountry) != 2:
-                    # py3k compatibility
-                    try:
-                        newcountry = raw_input("2 letter country code (eg. US): ")
-                    except NameError:
-                        newcountry = input("2 letter country code (eg. US): ")
+                    newcountry = get_input("2 letter country code (eg. US): ")
                     if len(newcountry) == 2:
                         self.country = newcountry
                         break
         else:
             self.country = 'US'
 
-        # py3k compatibility
-        try:
-            newstate = raw_input("State or Province Name (full name) for certificate: ")
-        except NameError:
-            newstate = input("State or Province Name (full name) for certificate: ")
+        newstate = get_input("State or Province Name (full name) for certificate: ")
         if newstate != '':
             self.state = newstate
         else:
             self.state = 'Illinois'
 
-        # py3k compatibility
-        try:
-            newlocation = raw_input("Locality Name (eg, city) for certificate: ")
-        except NameError:
-            newlocation = input("Locality Name (eg, city) for certificate: ")
+        newlocation = get_input("Locality Name (eg, city) for certificate: ")
         if newlocation != '':
             self.location = newlocation
         else:
