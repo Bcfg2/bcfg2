@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore", "apt API not stable yet",
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.installedVersion, please see the Version class for alternatives.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Accessed deprecated property Package.candidateVersion, please see the Version class for alternatives.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Deprecated, please use 'is_installed' instead", DeprecationWarning)
+warnings.filterwarnings("ignore", "Deprecated, please use 'mark_delete()' instead", DeprecationWarning)
 warnings.filterwarnings("ignore", "Attribute 'IsUpgradable' of the 'apt_pkg.DepCache' object is deprecated, use 'is_upgradable' instead.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Attribute 'VersionList' of the 'apt_pkg.Package' object is deprecated, use 'version_list' instead.", DeprecationWarning)
 warnings.filterwarnings("ignore", "Attribute 'VerStr' of the 'apt_pkg.Version' object is deprecated, use 'ver_str' instead.", DeprecationWarning)
