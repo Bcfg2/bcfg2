@@ -551,18 +551,39 @@ class XMLFileBacked(FileBacked):
     def __init__(self, filename):
         self.label = "dummy"
         self.entries = []
+        self.extras = []
         FileBacked.__init__(self, filename)
 
     def Index(self):
         """Build local data structures."""
         try:
-            self.xdata = XML(self.data)
-        except XMLSyntaxError:
-            logger.error("Failed to parse %s" % (self.name))
-            return
+            self.xdata = lxml.etree.XML(self.data, base_url=self.name)
+        except lxml.etree.XMLSyntaxError:
+            err = sys.exc_info()[1]
+            logger.error("Failed to parse %s" % err)
+            raise Bcfg2.Server.Plugin.PluginInitError
+
+        included = [ent.get('href')
+                    for ent in self.xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+        if included:
+            for name in included:
+                if name not in self.extras:
+                    self.add_monitor(name)
+            try:
+                self.xdata.getroottree().xinclude()
+            except lxml.etree.XIncludeError:
+                err = sys.exc_info()[1]
+                logger.error("Failed to parse %s" % err)
+
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
             self.label = self.xdata.attrib[self.__identifier__]
+
+    def add_monitor(self, fname):
+        """Add a fam monitor for an included file"""
+        self.fam.AddMonitor(os.path.join(os.path.dirname(self.name), fname),
+                            self)
+        self.extras.append(fname)
 
     def __iter__(self):
         return iter(self.entries)

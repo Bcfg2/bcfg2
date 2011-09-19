@@ -79,7 +79,7 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
         try:
             parsed = lxml.etree.XML(self.data)
         except:
-            Bcfg2.Server.Plugin.logger.error("Failed to read file %s" % self.name)
+            self.logger.error("Failed to read file %s" % self.name)
             return
         for entry in parsed.findall('GroupPattern'):
             try:
@@ -91,9 +91,8 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
                     rng = range_ent.text
                     self.patterns.append(PatternMap(None, rng, groups))
             except:
-                Bcfg2.Server.Plugin.logger.error(\
-                    "GroupPatterns: Failed to initialize pattern %s" % \
-                    (entry.get('pattern')))
+                self.logger.error("GroupPatterns: Failed to initialize pattern "
+                                  "%s" % entry.get('pattern'))
 
     def process_patterns(self, hostname):
         ret = []
@@ -103,9 +102,9 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
                 if gn is not None:
                     ret.extend(gn)
             except:
-                Bcfg2.Server.Plugin.logger.error(\
-                    "GroupPatterns: Failed to process pattern %s for %s" % \
-                    (pattern.pattern, hostname), exc_info=1)
+                self.logger.error("GroupPatterns: Failed to process pattern %s "
+                                  "for %s" % (pattern.pattern, hostname),
+                                  exc_info=1)
         return ret
 
 
