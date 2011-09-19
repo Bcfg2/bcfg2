@@ -238,7 +238,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 return
 
             # handle <Path type='file'> entries
-            for configfile in [cfile for cfile in client_config.findall(".//Path[@type = 'file']")]:
+            for configfile in [cfile for cfile in client_config.findall(".//Path[@type='file']")]:
                 try:
                     write_config_file(odir, configfile)
                 except FileNotBuilt, ex:
