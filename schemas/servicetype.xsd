@@ -9,15 +9,16 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:include schemaLocation="types.xsd"/>
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
-  <xsd:complexType name='ServiceType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='User'>
+  <xsd:complexType name="ServiceType">
+    <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="User">
         <xsd:complexType>
-          <xsd:attribute name='address' type='xsd:string' use='required'/>
-          <xsd:attribute name='mask' type='xsd:string' use='required'/>
+          <xsd:attribute name="address" type="xsd:string" use="required"/>
+          <xsd:attribute name="mask" type="xsd:string" use="required"/>
         </xsd:complexType>
       </xsd:element>
       <xsd:element ref="py:def"/>
@@ -28,18 +29,18 @@
       <xsd:element ref="py:with"/>
       <xsd:element ref="py:replace"/>
     </xsd:choice>
-    <xsd:attribute name='name' type='xsd:string' use='required'/>
-    <xsd:attribute name='status' type='xsd:string' use='required'/>
-    <xsd:attribute name='type' type='xsd:string' use='required'/>
-    <xsd:attribute name='port' type='xsd:string'/>
-    <xsd:attribute name='protocol' type='xsd:string'/>
-    <xsd:attribute name='mode' type='xsd:string'/>
-    <xsd:attribute name='custom' type='xsd:string'/>
-    <xsd:attribute name='FMRI' type='xsd:string'/>
-    <xsd:attribute name='supervised' type='xsd:string'/>
-    <xsd:attribute name='sequence' type='xsd:string'/>
-    <xsd:attribute name='target' type='xsd:string'/>
-    <xsd:attribute name='parameters' type='xsd:string'/>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="status" type="StatusEnum"/>
+    <xsd:attribute name="type" type="ServiceTypeEnum"/>
+    <xsd:attribute name="port" type="xsd:string"/>
+    <xsd:attribute name="protocol" type="xsd:string"/>
+    <xsd:attribute name="mode" type="xsd:string"/>
+    <xsd:attribute name="custom" type="xsd:string"/>
+    <xsd:attribute name="FMRI" type="xsd:string"/>
+    <xsd:attribute name="supervised" type="xsd:string"/>
+    <xsd:attribute name="sequence" type="xsd:string"/>
+    <xsd:attribute name="target" type="xsd:string"/>
+    <xsd:attribute name="parameters" type="xsd:string"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

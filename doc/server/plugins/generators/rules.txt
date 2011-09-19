@@ -115,29 +115,29 @@ See :ref:`client-tools-actions`
 Service Tag
 -----------
 
-+------------+-------------------------------+-----------------------------------------------------+
-| Name       | Description                   | Values                                              |
-+============+===============================+=====================================================+
-| mode       | Per Service Mode (New in 1.0) | (manual | default | supervised | interactive_only ) |
-+------------+-------------------------------+-----------------------------------------------------+
-| name       | Service name or regular       | String or regex                                     |
-|            | expression                    |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
-| status     | Should the service be on or   | (on | off | ignore)                                 |
-|            | off (default: off).           |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
-| target     | Service command for restart   | String                                              |
-|            | (default: restart)            |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
-| type       | Driver to use on the client   | (chkconfig | deb | rc-update | smf | upstart)       |
-|            | to manage this service.       |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
-| sequence   | Order for service startup     | integer                                             |
-|            | (debian services only)        |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
-| parameters | Pass parameters to service    | String                                              |
-|            | (Upstart services only)       |                                                     |
-+------------+-------------------------------+-----------------------------------------------------+
++------------+-------------------------------+---------------------------------------------------------+
+| Name       | Description                   | Values                                                  |
++============+===============================+=========================================================+
+| mode       | Per Service Mode (New in 1.0) | (manual | default | supervised | interactive_only )     |
++------------+-------------------------------+---------------------------------------------------------+
+| name       | Service name or regular       | String or regex                                         |
+|            | expression                    |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
+| status     | Should the service be on or   | (on | off | ignore)                                     |
+|            | off (default: off).           |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
+| target     | Service command for restart   | String                                                  |
+|            | (default: restart)            |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
+| type       | Driver to use on the client   | (chkconfig | deb | rc-update | smf | upstart |          |
+|            | to manage this service.       |  systemd | freebsd | launchd )                          |
++------------+-------------------------------+---------------------------------------------------------+
+| sequence   | Order for service startup     | integer                                                 |
+|            | (debian services only)        |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
+| parameters | Pass parameters to service    | String                                                  |
+|            | (Upstart services only)       |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
 
 Service mode descriptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -354,30 +354,12 @@ how to assign Rules to a host's literal configuration.
 Using Regular Expressions in Rules
 ==================================
 
-The ``name`` attribute in Rules supports the use of regular expressions
-to match multiple abstract configuration entries.  For instance, to
-make all Service entries use the ``systemd`` tool on Fedora 15 and the
-``chkconfig`` tool on Fedora 14, you could do the following.
-
-.. code-block:: xml
-
-    <Rules priority="0">
-        <Group name="fedora-15">
-            <Service name=".*" type="systemd"/>
-        </Group>
-        <Group name="fedora-14">
-            <Service name=".*" type="chkconfig"/>
-        </Group>
-    </Rules>
+The ``name`` attribute in Rules supports the use of regular
+expressions to match multiple abstract configuration entries.
 
 Regular expressions are anchored at both ends, so ``<Service
 name="bcfg2".../>`` will *not* match a Service named ``bcfg2-server``;
 you'd have to explicitly specify ``<Service name="bcfg2.*".../>``.
 
 Note that only one Rule can apply to any abstract entry, so you cannot
-specify multiple regexs to match the same rule.  In the use case
-above, you would have to specify the services fully (except for type)
-in the bundles.
-
-Attributes specified in a bundle have precedence over attributes
-specified in Rules, so you can use Rules to set defaults.
+specify multiple regexs to match the same rule.

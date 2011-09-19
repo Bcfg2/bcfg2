@@ -1,7 +1,6 @@
 import os
 from copy import deepcopy
 from difflib import SequenceMatcher
-import Bcfg2.Options
 import Bcfg2.Server.Lint
 
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
@@ -27,10 +26,10 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     def check_probes(self):
         probes = self.core.plugins['Probes'].probes.entries
         for mset in self.get_similar(probes):
-                self.LintError("merge-cfg",
-                               "The following probes are similar: %s. "
-                               "Consider merging them into a single probe." %
-                               ", ".join([p for p in mset]))
+            self.LintError("merge-cfg",
+                           "The following probes are similar: %s. "
+                           "Consider merging them into a single probe." %
+                           ", ".join([p for p in mset]))
 
     def get_similar(self, entries):
         if "threshold" in self.config:

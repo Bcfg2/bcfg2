@@ -107,7 +107,7 @@ class ErrorHandler (object):
                "duplicate-package":"error",
                "multiple-default-groups":"error",
                "required-infoxml-attrs-missing":"error",
-               "unknown-path-type":"error",
+               "unknown-entry-type":"error",
                "required-attrs-missing":"error",
                "extra-attrs":"warning",
                "schema-failed-to-parse":"warning",

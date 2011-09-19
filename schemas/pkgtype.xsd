@@ -13,20 +13,20 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
-  <xsd:complexType name='PackageType'>
-    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Instance'>
+  <xsd:complexType name="PackageType">
+    <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="Instance">
         <xsd:complexType>
-          <xsd:attribute name='arch' type='xsd:string'/>
-          <xsd:attribute name='epoch' type='xsd:string'/>
-          <xsd:attribute name='version' type='xsd:string'/>
-          <xsd:attribute name='release' type='xsd:string'/>
-          <xsd:attribute name='simplefile' type='xsd:string'/>
-          <xsd:attribute name='pkg_verify' type='xsd:string'/>
-          <xsd:attribute name='verify_flags' type='xsd:string'/>
-          <xsd:attribute name='installed_action' type='xsd:string'/>
-          <xsd:attribute name='version_fail_action' type='xsd:string'/>
-          <xsd:attribute name='verify_fail_action' type='xsd:string'/>
+          <xsd:attribute name="arch" type="xsd:string"/>
+          <xsd:attribute name="epoch" type="xsd:string"/>
+          <xsd:attribute name="version" type="xsd:string"/>
+          <xsd:attribute name="release" type="xsd:string"/>
+          <xsd:attribute name="simplefile" type="xsd:string"/>
+          <xsd:attribute name="pkg_verify" type="xsd:boolean"/>
+          <xsd:attribute name="verify_flags" type="xsd:string"/>
+          <xsd:attribute name="installed_action" type="xsd:string"/>
+          <xsd:attribute name="version_fail_action" type="xsd:string"/>
+          <xsd:attribute name="verify_fail_action" type="xsd:string"/>
           <xsd:attributeGroup ref="py:genshiAttrs"/>
         </xsd:complexType>
       </xsd:element>
@@ -38,17 +38,17 @@
       <xsd:element ref="py:with"/>
       <xsd:element ref="py:replace"/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use="required"/>
-    <xsd:attribute type='xsd:string' name='version'/>
-    <xsd:attribute type='xsd:string' name='file'/>
-    <xsd:attribute type='xsd:string' name='verify'/>
-    <xsd:attribute type='xsd:string' name='simplefile'/>
-    <xsd:attribute type='xsd:string' name='multiarch'/>
-    <xsd:attribute type='xsd:string' name='srcs'/>
-    <xsd:attribute type='xsd:string' name='type'/>
-    <xsd:attribute type='xsd:string' name='bname'/>
-    <xsd:attribute name='pkg_checks' type='xsd:string'/>
-    <xsd:attribute name='verify_flags' type='xsd:string'/>
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:string" name="version"/>
+    <xsd:attribute type="xsd:string" name="file"/>
+    <xsd:attribute type="xsd:boolean" name="verify"/>
+    <xsd:attribute type="xsd:string" name="simplefile"/>
+    <xsd:attribute type="xsd:string" name="multiarch"/>
+    <xsd:attribute type="xsd:string" name="srcs"/>
+    <xsd:attribute type="PackageTypeEnum" name="type"/>
+    <xsd:attribute type="xsd:string" name="bname"/>
+    <xsd:attribute name="pkg_checks" type="xsd:string"/>
+    <xsd:attribute name="verify_flags" type="xsd:string"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>

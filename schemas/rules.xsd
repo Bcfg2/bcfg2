@@ -16,11 +16,11 @@
               schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name='ActionType'>
-    <xsd:attribute type='ActionTimingEnum' name='timing' use='required'/>
-    <xsd:attribute type='ActionWhenEnum' name='when' use='required'/>
-    <xsd:attribute type='ActionStatusEnum' name='status' use='required'/>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='command' use='required'/>
+    <xsd:attribute type='ActionTimingEnum' name='timing'/>
+    <xsd:attribute type='ActionWhenEnum' name='when'/>
+    <xsd:attribute type='ActionStatusEnum' name='status'/>
+    <xsd:attribute type='xsd:string' name='name'/>
+    <xsd:attribute type='xsd:string' name='command'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

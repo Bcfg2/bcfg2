@@ -39,6 +39,7 @@
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='on'/>
       <xsd:enumeration value='off'/>
+      <xsd:enumeration value="ignore"/>
     </xsd:restriction>
   </xsd:simpleType>
 
@@ -61,6 +62,19 @@
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='ignore'/>
       <xsd:enumeration value='check'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ServiceTypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="chkconfig"/>
+      <xsd:enumeration value="deb"/>
+      <xsd:enumeration value="rc-update"/>
+      <xsd:enumeration value="smf"/>
+      <xsd:enumeration value="upstart"/>
+      <xsd:enumeration value="systemd"/>
+      <xsd:enumeration value="launchd"/>
+      <xsd:enumeration value="freebsd"/>
     </xsd:restriction>
   </xsd:simpleType>
 

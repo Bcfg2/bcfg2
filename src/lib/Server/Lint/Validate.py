@@ -5,7 +5,6 @@ import os
 from subprocess import Popen, PIPE, STDOUT
 import sys
 
-import Bcfg2.Options
 import Bcfg2.Server.Lint
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
@@ -21,6 +20,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                          "%s/Pkgmgr/*.xml":"%s/pkglist.xsd",
                          "%s/Base/*.xml":"%s/base.xsd",
                          "%s/Rules/*.xml":"%s/rules.xsd",
+                         "%s/Defaults/*.xml":"%s/defaults.xsd",
                          "%s/etc/report-configuration.xml":"%s/report-configuration.xsd",
                          "%s/Svcmgr/*.xml":"%s/services.xsd",
                          "%s/Deps/*.xml":"%s/deps.xsd",
@@ -45,21 +45,21 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
             if filelist:
                 # avoid loading schemas for empty file lists
+                schemafile = schemaname % schemadir
                 try:
-                    schema = lxml.etree.XMLSchema(lxml.etree.parse(schemaname %
-                                                                   schemadir))
+                    schema = lxml.etree.XMLSchema(lxml.etree.parse(schemafile))
                 except IOError:
                     e = sys.exc_info()[1]
-                    self.LintError("input-output-error", e.message)
+                    self.LintError("input-output-error", str(e))
                     continue
-                except:
+                except lxml.etree.XMLSchemaParseError:
+                    e = sys.exc_info()[1]
                     self.LintError("schema-failed-to-parse",
-                                   "Failed to process schema %s" %
-                                   (schemaname % schemadir))
+                                   "Failed to process schema %s: %s" %
+                                   (schemafile, e))
                     continue
                 for filename in filelist:
-                    self.validate(filename, schemaname % schemadir,
-                                  schema=schema)
+                    self.validate(filename, schemafile, schema=schema)
 
         self.check_properties()
 

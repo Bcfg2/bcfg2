@@ -1,0 +1,31 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-defaults:
+
+==========
+ Defaults
+==========
+
+The Defaults plugin can be used to populate default attributes for
+entries.  Defaults is *not* a Generator plugin, so it does not
+actually bind an entry; Defaults are applied after an entry has been
+bound, and only populate attributes that are not yet set.
+
+Like :ref:`server-plugins-generators-rules`, Defaults supports regular
+expressions in the name attribute.
+
+For instance, to make all Service entries use the ``systemd`` tool
+on Fedora 15 and the ``chkconfig`` tool on Fedora 14, you could do::
+
+    <Defaults priority="0">
+      <Group name="fedora-15">
+        <Service name=".*" type="systemd"/>
+      </Group>
+      <Group name="fedora-14">
+        <Service name=".*" type="chkconfig"/>
+      </Group>
+    </Defaults>
+
+If you were to specify a ``type`` attribute for a Service entry in
+Rules (or a ``type`` attribute for a BoundService entry in Bundler),
+that would take precendence over the default.
