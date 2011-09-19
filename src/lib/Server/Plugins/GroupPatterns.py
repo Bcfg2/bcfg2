@@ -70,18 +70,16 @@ class PatternMap(object):
 
 
 class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
+    __identifier__ = None
+
     def __init__(self, filename, fam):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
         self.patterns = []
 
     def Index(self):
+        Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
         self.patterns = []
-        try:
-            parsed = lxml.etree.XML(self.data)
-        except:
-            self.logger.error("Failed to read file %s" % self.name)
-            return
-        for entry in parsed.findall('GroupPattern'):
+        for entry in self.xdata.xpath('//GroupPattern'):
             try:
                 groups = [g.text for g in entry.findall('Group')]
                 for pat_ent in entry.findall('NamePattern'):

@@ -551,8 +551,30 @@ class XMLFileBacked(FileBacked):
     def __init__(self, filename):
         self.label = "dummy"
         self.entries = []
-        self.extras = []
         FileBacked.__init__(self, filename)
+
+    def Index(self):
+        """Build local data structures."""
+        try:
+            self.xdata = XML(self.data)
+        except XMLSyntaxError:
+            logger.error("Failed to parse %s" % (self.name))
+            return
+        self.entries = self.xdata.getchildren()
+        if self.__identifier__ is not None:
+            self.label = self.xdata.attrib[self.__identifier__]
+
+    def __iter__(self):
+        return iter(self.entries)
+
+
+class SingleXMLFileBacked(XMLFileBacked):
+    """This object is a coherent cache for an independent XML file."""
+    def __init__(self, filename, fam):
+        XMLFileBacked.__init__(self, filename)
+        self.extras = []
+        self.fam = fam
+        self.fam.AddMonitor(filename, self)
 
     def Index(self):
         """Build local data structures."""
@@ -568,7 +590,10 @@ class XMLFileBacked(FileBacked):
         if included:
             for name in included:
                 if name not in self.extras:
-                    self.add_monitor(name)
+                    self.fam.AddMonitor(os.path.join(os.path.dirname(self.name),
+                                                     name),
+                                        self)
+                    self.extras.append(name)
             try:
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
@@ -578,22 +603,6 @@ class XMLFileBacked(FileBacked):
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
             self.label = self.xdata.attrib[self.__identifier__]
-
-    def add_monitor(self, fname):
-        """Add a fam monitor for an included file"""
-        self.fam.AddMonitor(os.path.join(os.path.dirname(self.name), fname),
-                            self)
-        self.extras.append(fname)
-
-    def __iter__(self):
-        return iter(self.entries)
-
-
-class SingleXMLFileBacked(XMLFileBacked):
-    """This object is a coherent cache for an independent XML file."""
-    def __init__(self, filename, fam):
-        XMLFileBacked.__init__(self, filename)
-        fam.AddMonitor(filename, self)
 
 
 class StructFile(XMLFileBacked):
