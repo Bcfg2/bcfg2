@@ -58,7 +58,6 @@
         <xsd:element name="Package" type="PackageType"/>
         <xsd:element name="Path" type="PathType"/>
         <xsd:element name="Action" type="ActionType"/>
-        <xsd:element name="PostInstall" type="PostInstallType"/>
         <xsd:element name="Group" type="DContainerType"/>
         <xsd:element name="Client" type="DContainerType"/>
       </xsd:choice>
