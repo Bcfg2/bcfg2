@@ -119,7 +119,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     required_attrs |= set(['major', 'minor'])
 
             if '__text__' in required_attrs:
-                required_attrs.pop('__text__')
+                required_attrs.remove('__text__')
                 if not entry.text:
                     self.LintError("required-attrs-missing",
                                    "Text missing for %s %s in %s: %s" %
