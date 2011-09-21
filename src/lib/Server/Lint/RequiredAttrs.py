@@ -120,7 +120,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
             if '__text__' in required_attrs:
                 required_attrs.remove('__text__')
-                if not entry.text:
+                if (not entry.text and
+                    not entry.get('empty', 'false').lower() == 'true'):
                     self.LintError("required-attrs-missing",
                                    "Text missing for %s %s in %s: %s" %
                                    (entry.tag, name, filename,
