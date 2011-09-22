@@ -313,7 +313,7 @@ class Core(Component):
             except:
                 logger.error("error in BindStructure", exc_info=1)
         self.validate_goals(meta, config)
-        logger.info("Generated config for %s in %.03fs" % \
+        logger.info("Generated config for %s in %.03f seconds" % \
                     (client, time.time() - start))
         return config
 
