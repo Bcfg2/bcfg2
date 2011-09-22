@@ -20,7 +20,8 @@ so they can be centrally observed. Actions look like:
             name='name'
             command='cmd text'
             when='always|modified'
-            status='ignore|check'/>
+            status='ignore|check'
+            build='true|false'/>
 
 +-----------+------------------+-------------------------------------------+
 | Attribute | Values           | Meaning                                   |
@@ -36,6 +37,9 @@ so they can be centrally observed. Actions look like:
 +-----------+------------------+-------------------------------------------+
 | status    | ignore, check    | If the return code of the action          |
 |           |                  | should be reported or not                 |
++-----------+------------------+-------------------------------------------+
+| build     | true, false      | Also execute the action in build mode     |
+|           |                  | (default: true)                           |
 +-----------+------------------+-------------------------------------------+
 
 Note that the status attribute tells the bcfg2 client to ignore

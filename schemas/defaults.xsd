@@ -16,6 +16,7 @@
     <xsd:attribute type="ActionTimingEnum" name="timing"/>
     <xsd:attribute type="ActionWhenEnum" name="when"/>
     <xsd:attribute type="ActionStatusEnum" name="status"/>
+    <xsd:attribute type="xsd:boolean" name="build"/>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="command"/>
   </xsd:complexType>
