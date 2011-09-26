@@ -29,8 +29,8 @@ in ``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
 ``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason for
 the like-name directory is to allow multiple versions of each file to
 exist, as described below. Note that these files are exact copies of what
-will appear on the client machine (except when using genshi templating --
-see below).
+will appear on the client machine (except when using genshi or cheetah
+templating -- see below).
 
 Group-Specific Files
 ====================
@@ -150,24 +150,51 @@ file. The reason the other deltas aren't applied to *foo.example.com*
 is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
 applies all the deltas at the most specific level.
 
+Templates
+=========
+
 Genshi Templates
-================
+----------------
 
 Genshi templates maybe used for entries as well.  Any file ending in .genshi
 will be processed using the new template style (like .newtxt in the TGenshi
-plugin).  Templates can be host and group specific as well.  Deltas will not
-be processed for any genshi base file.
+plugin).
+
+Cheetah Templates
+-----------------
+
+Cheetah templates maybe used for entries as well.  Simply name your file
+with a .cheetah extenstion and it will be processed like the TCheetah
+plugin.
+
+Notes on Using Templates
+------------------------
+
+Templates can be host and group specific as well.  Deltas will not be
+processed for any genshi or cheetah base file.
 
 .. note::
 
-    If you are using genshi templating in combination with host-specific
+    If you are using templating in combination with host-specific
     or group-specific files, you will need to ensure that the ``.genshi``
-    extensions is at the **end** of the filename. Using the examples
-    from above for *host.example.com* and group *server* you would have
-    the following::
+    or ``.cheetah`` extension is at the **end** of the filename. Using the
+    examples from above for *host.example.com* and group *server* you would
+    have the following (using genshi only)::
 
         Cfg/etc/fstab/fstab.H_host.example.com.genshi
         Cfg/etc/fstab/fstab.G50_server.genshi
+
+Genshi templates take precence over cheetah templates.  For example, if
+two files exist named
+
+    Cfg/etc/fstab/fstab.genshi
+    Cfg/etc/fstab/fstab.cheetah
+
+the cheetah template is ignored.  But you can mix genshi and cheetah when
+using different host-specific or group-specific files.  For example:
+
+    Cfg/etc/fstab/fstab.H_host.example.com.genshi
+    Cfg/etc/fstab/fstab.G50_server.cheetah
 
 File permissions
 ================
