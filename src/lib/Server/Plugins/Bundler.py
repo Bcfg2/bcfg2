@@ -52,8 +52,13 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def template_dispatch(self, name):
-        bundle = lxml.etree.parse(name)
-        nsmap = bundle.getroot().nsmap
+        if name.endswith('.xml') or name.endswith('.genshi'):
+            bundle = lxml.etree.parse(name)
+            nsmap = bundle.getroot().nsmap
+        else:
+            self.logger.warning("Skipping unknown file %s" % name)
+            return
+        
         if name.endswith('.xml'):
             if have_genshi and \
                (nsmap == {'py': 'http://genshi.edgewall.org/'}):
