@@ -518,11 +518,10 @@ class DirectoryBacked(object):
             if ((event.filename[-1] == '~') or
                 (event.filename[:2] == '.#') or
                 (event.filename[-4:] == '.swp') or
-                (event.filename in ['SCCS', '.svn', '4913'])):
+                (event.filename in ['SCCS', '.svn', '4913']) or
+                (not self.patterns.match(event.filename))):
                 return
             if action in ['exists', 'created']:
-                if not self.patterns.match(event.filename):
-                    return
                 self.add_entry(relpath, event)
             elif action == 'changed':
                 if relpath in self.entries:
