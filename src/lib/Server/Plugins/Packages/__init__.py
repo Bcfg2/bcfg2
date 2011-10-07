@@ -31,7 +31,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Probing.__init__(self)
 
-        self.collections = dict()
         self.sentinels = set()
         self.cachepath = os.path.join(self.data, 'cache')
         self.keypath = os.path.join(self.data, 'keys')
@@ -68,14 +67,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                   'type': 'file',
                   'perms': '0644'}
 
-        collection = self._get_collection(metadata)
+        collection = Collection.factory(metadata, self.sources, self.data)
         entry.text = collection.get_config()
         for (key, value) in list(attrib.items()):
             entry.attrib.__setitem__(key, value)
 
     def HandleEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            collection = self._get_collection(metadata)
+            collection = Collection.factory(metadata, self.sources, self.data)
             entry.set('version', 'auto')
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
@@ -90,7 +89,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            collection = self._get_collection(metadata)
+            collection = Collection.factory(metadata, self.sources, self.data)
             if collection.magic_groups_match():
                 return True
         elif entry.tag == 'Path':
@@ -110,7 +109,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         metadata - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
-        collection = self._get_collection(metadata)
+        collection = Collection.factory(metadata, self.sources, self.data)
         indep = lxml.etree.Element('Independent')
         self._build_packages(metadata, indep, structures,
                              collection=collection)
@@ -126,7 +125,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return
 
         if collection is None:
-            collection = self._get_collection(metadata)
+            collection = Collection.factory(metadata, self.sources, self.data)
         initial = set()
         to_remove = []
         for struct in structures:
@@ -174,7 +173,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Keyword args:
             force_update    Force downloading repo data
         '''
-        Collection.clear_cache()
         self._load_sources(force_update)
         self._load_gpg_keys(force_update)
 
@@ -183,13 +181,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.sentinels = set()
         cachefiles = []
 
-        for hostname, collection in list(self.collections.items()):
+        for collection in list(Collection.collections.values()):
             cachefiles.extend(collection.cachefiles)
             if not self.disableMetaData:
                 collection.setup_data(force_update)
             self.sentinels.update(collection.basegroups)
 
-        self.collections = dict()
+        Collection.clear_cache()
 
         for cfile in glob.glob(os.path.join(self.cachepath, "cache-*")):
             if cfile not in cachefiles:
@@ -223,17 +221,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
-    def _get_collection(self, metadata):
-        if not self.sources.loaded:
-            # do not cache a collection object instantiated before
-            # sources have been loaded
-            return Collection.factory(metadata, self.sources, self.data)
-        
-        if metadata.hostname not in self.collections:
-            self.collections[metadata.hostname] = \
-                Collection.factory(metadata, self.sources, self.data)
-        return self.collections[metadata.hostname]
-
     def get_additional_data(self, metadata):
-        collection = self._get_collection(metadata)
+        collection = Collection.factory(metadata, self.sources, self.data)
         return dict(sources=collection.get_additional_data())

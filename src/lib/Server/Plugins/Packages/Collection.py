@@ -8,7 +8,7 @@ except ImportError:
 
 logger = logging.getLogger("Packages")
 
-_collections = dict()
+collections = dict()
 
 class Collection(object):
     def __init__(self, metadata, sources, basepath):
@@ -278,16 +278,16 @@ class Collection(object):
         self.sources.sort(cmp, key, reverse)
 
 def clear_cache():
-    global _collections
-    _collections = dict()
+    global collections
+    collections = dict()
 
 def factory(metadata, sources, basepath):
-    global _collections
+    global collections
 
     if not sources.loaded:
         # if sources.xml has not received a FAM event yet, defer;
         # instantiate a dummy Collection object, but do not cache it
-        # in _collections
+        # in collections
         return Collection(metadata, [], basepath)
         
     sclasses = set()
@@ -298,13 +298,13 @@ def factory(metadata, sources, basepath):
             relevant.append(source)
             sclasses.update([source.__class__])
 
-    # _collections is a cache dict of Collection objects that is keyed
+    # collections is a cache dict of Collection objects that is keyed
     # off of the set of source urls that apply to each Collection
     ckeydata = set()
     for source in relevant:
         ckeydata.update(source.urls)
     ckey = tuple(sorted(list(ckeydata)))
-    if ckey not in _collections:
+    if ckey not in collections:
         if len(sclasses) > 1:
             logger.warning("Multiple source types found for %s: %s" %
                            ",".join([s.__name__ for s in sclasses]))
@@ -332,5 +332,5 @@ def factory(metadata, sources, basepath):
         collection = cclass(metadata, relevant, basepath)
         # reverse so that file order determines precedence
         collection.reverse()
-        _collections[ckey] = collection
-    return _collections[ckey]
+        collections[ckey] = collection
+    return collections[ckey]
