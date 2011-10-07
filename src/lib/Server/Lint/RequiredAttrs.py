@@ -1,7 +1,7 @@
 import os.path
 import lxml.etree
 import Bcfg2.Server.Lint
-import Bcfg2.Server.Plugins.Packages
+from Bcfg2.Server.Plugins.Packages import Apt, Yum
 
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ verify attributes for configuration entries (as defined in
@@ -42,22 +42,22 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         """ check package sources for Source entries with missing attrs """
         if 'Packages' in self.core.plugins:
             for source in self.core.plugins['Packages'].sources:
-                if isinstance(source, Bcfg2.Server.Plugins.Packages.PulpSource):
-                    if not source.id:
+                if isinstance(source, Yum.YumSource):
+                    if (not source.pulp_id and not source.url and
+                        not source.rawurl):
                         self.LintError("required-attrs-missing",
-                                       "The required attribute id is missing "
-                                       "from a Pulp source: %s" %
-                                       self.RenderXML(source.xsource))
-                else:
-                    if not source.url and not source.rawurl:
-                        self.LintError("required-attrs-missing",
-                                       "A %s source must have either a url or "
-                                       "rawurl attribute: %s" %
+                                       "A %s source must have either a url, "
+                                       "rawurl, or pulp_id attribute: %s" %
                                        (source.ptype,
                                         self.RenderXML(source.xsource)))
+                elif not source.url and not source.rawurl:
+                    self.LintError("required-attrs-missing",
+                                   "A %s source must have either a url or "
+                                   "rawurl attribute: %s" %
+                                   (source.ptype,
+                                    self.RenderXML(source.xsource)))
 
-                if (not isinstance(source,
-                                   Bcfg2.Server.Plugins.Packages.APTSource) and
+                if (not isinstance(source, Apt.AptSource) and
                     source.recommended):
                     self.LintError("extra-attrs",
                                    "The recommended attribute is not "

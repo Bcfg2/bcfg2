@@ -13,6 +13,13 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
+  <xsd:complexType name="PackageStructure">
+    <xsd:attribute type="xsd:string" name="name"/>
+    <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:attribute type="xsd:string" name="verify" use="optional"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
   <xsd:complexType name="PackageType">
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="Instance">
@@ -38,7 +45,8 @@
       <xsd:element ref="py:with"/>
       <xsd:element ref="py:replace"/>
     </xsd:choice>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:string" name="name"/>
+    <xsd:attribute type="xsd:string" name="group"/>
     <xsd:attribute type="xsd:string" name="version"/>
     <xsd:attribute type="xsd:string" name="file"/>
     <xsd:attribute type="xsd:boolean" name="verify"/>

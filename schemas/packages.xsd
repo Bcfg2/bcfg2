@@ -17,7 +17,7 @@
   </xsd:simpleType>
 
   <xsd:complexType name="sourceType">
-    <xsd:sequence>
+    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="Component" type="xsd:string" minOccurs="0"
                    maxOccurs="unbounded"/>
       <xsd:choice>
@@ -26,14 +26,14 @@
         <xsd:element name="Whitelist" type="xsd:string" minOccurs="0"
                      maxOccurs="unbounded"/>
       </xsd:choice>
-      <xsd:element name="Arch" type="xsd:string"  minOccurs="1"
+      <xsd:element name="Arch" type="xsd:string" minOccurs="1"
                    maxOccurs="unbounded"/>
-      <xsd:element name="GPGKey" type="xsd:string"  minOccurs="0"
+      <xsd:element name="GPGKey" type="xsd:string" minOccurs="0"
                    maxOccurs="unbounded"/>
     </xsd:sequence>
     <xsd:attribute type="xsd:boolean" name="recommended"/>
     <xsd:attribute type="sourceTypeEnum" name="type"/>
-    <xsd:attribute type="xsd:string" name="id"/>
+    <xsd:attribute type="xsd:string" name="pulp_id"/>
     <xsd:attribute type="xsd:string" name="url"/>
     <xsd:attribute type="xsd:string" name="rawurl"/>
     <xsd:attribute type="xsd:string" name="version"/>

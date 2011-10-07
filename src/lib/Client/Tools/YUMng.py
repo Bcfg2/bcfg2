@@ -147,6 +147,14 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
     def __init__(self, logger, setup, config):
         self.yb = yum.YumBase()
+
+        if setup['debug']:
+            self.yb.preconf.debuglevel = 3
+        elif setup['verbose']:
+            self.yb.preconf.debuglevel = 2
+        else:
+            self.yb.preconf.debuglevel = 1
+        
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.ignores = [entry.get('name') for struct in config \
                         for entry in struct \
@@ -488,9 +496,10 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
-                self.logger.info("  Wrong version installed.  "\
-                        "Want %s, but have %s" % (nevraString(nevra),
-                                                  nevraString(POs[0])))
+                self.logger.info("  %s: Wrong version installed.  "
+                                 "Want %s, but have %s" % (entry.get("name"),
+                                                           nevraString(nevra),
+                                                           nevraString(POs[0])))
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
 

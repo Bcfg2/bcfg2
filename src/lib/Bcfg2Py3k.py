@@ -79,3 +79,8 @@ if sys.hexversion >= 0x03000000:
 else:
     def fprint(s, f):
         print >> f, s
+
+if sys.hexversion >= 0x03000000:
+    from io import FileIO as file
+else:
+    file = file

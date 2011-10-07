@@ -365,7 +365,8 @@ class FileBacked(object):
             self.data = BUILTIN_FILE_TYPE(self.name).read()
             self.Index()
         except IOError:
-            logger.error("Failed to read file %s" % (self.name))
+            err = sys.exc_info()[1]
+            logger.error("Failed to read file %s: %s" % (self.name, err))
 
     def Index(self):
         """Update local data structures based on current file state"""
@@ -581,7 +582,7 @@ class SingleXMLFileBacked(XMLFileBacked):
             self.xdata = lxml.etree.XML(self.data, base_url=self.name)
         except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
-            logger.error("Failed to parse %s" % err)
+            logger.error("Failed to parse %s: %s" % (self.name, err))
             raise Bcfg2.Server.Plugin.PluginInitError
 
         included = [ent.get('href')
@@ -597,7 +598,8 @@ class SingleXMLFileBacked(XMLFileBacked):
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
-                logger.error("Failed to parse %s" % err)
+                logger.error("XInclude failed on %s: %s" % (self.name, err))
+
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:

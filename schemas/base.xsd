@@ -16,7 +16,7 @@
     <xsd:choice>
       <xsd:element name='Group' type='ContainerType'/>
       <xsd:element name='Client' type='ContainerType'/>
-      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Package' type='PackageStructure'/>
       <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='BoundPackage' type='PackageType'/>

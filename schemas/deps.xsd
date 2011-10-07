@@ -9,7 +9,7 @@
 
  <xsd:complexType name='StructureEntry'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Package' type='PackageStructure'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='Path' type='StructureEntry'/>
     </xsd:choice>
@@ -18,7 +18,7 @@
 
   <xsd:complexType name='GroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Package' type='StructureEntry'/>
+      <xsd:element name='Package' type='PackageStructure'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='Path' type='StructureEntry'/>
       <xsd:element name='Group' type='GroupType'/>
@@ -29,7 +29,7 @@
   <xsd:element name='Dependencies'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Package' type='StructureEntry'/>
+        <xsd:element name='Package' type='PackageStructure'/>
         <xsd:element name='Service' type='StructureEntry'/>
         <xsd:element name='Path' type='StructureEntry'/>
         <xsd:element name='Group' type='GroupType'/>

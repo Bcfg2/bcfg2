@@ -23,32 +23,43 @@ through those channels.
 Packages is the only plugin that uses "magic groups". Most plugins
 operate based on client group memberships, without any concern for the
 particular names chosen for groups by the user. The Packages plugin is
-the sole exception to this rule. Packages needs to "know" two different
-sorts of facts about clients. The first is the basic OS/distro of the
-client, enabling classes of sources. The second is the architecture of
-the client, enabling sources for a given architecture. In addition to
-these magic groups, each source may also specify a non-magic group to
-limit the source's applicability to group member clients.
+the sole exception to this rule. Packages needs to "know" two
+different sorts of facts about clients. The first is the basic
+OS/distro of the client, enabling classes of sources. The second is
+the architecture of the client, enabling sources for a given
+architecture. In addition to these magic groups, each source may also
+specify non-magic groups to limit the source's applicability to group
+member clients.
 
-+-----------+----------+--------------+
-| Source    | OS Group | Architecture |
-+===========+==========+==============+
-| APTSource | debian   | i386         |
-+-----------+----------+--------------+
-| APTSource | ubuntu   | amd64        |
-+-----------+----------+--------------+
-| APTSource | nexenta  |              |
-+-----------+----------+--------------+
-| APTSource | apt      |              |
-+-----------+----------+--------------+
-| YUMSource | redhat   | i386         |
-+-----------+----------+--------------+
-| YUMSource | centos   | x86_64       |
-+-----------+----------+--------------+
-| YUMSource | fedora   |              |
-+-----------+----------+--------------+
-| YUMSource | yum      |              |
-+-----------+----------+--------------+
++--------+----------+--------------+
+| Source | OS Group | Architecture |
++========+==========+==============+
+| Apt    | debian   | i386         |
++--------+----------+--------------+
+| Apt    | ubuntu   | amd64        |
++--------+----------+--------------+
+| Apt    | nexenta  |              |
++--------+----------+--------------+
+| Apt    | apt      |              |
++--------+----------+--------------+
+| Yum    | redhat   | i386         |
++--------+----------+--------------+
+| Yum    | centos   | x86_64       |
++--------+----------+--------------+
+| Yum    | fedora   |              |
++--------+----------+--------------+
+| Yum    | yum      |              |
++--------+----------+--------------+
+
+.. note:: 
+
+   .. versionadded:: 1.2.0
+
+   Magic OS groups can be disabled in Bcfg2 1.2 and greater by setting
+   ``magic_groups`` to ``0`` in ``Packages/packages.conf``.  This may
+   give you greater flexibility in determining which source types to
+   use for which OSes.  Magic architecture groups cannot be disabled.
+
 
 Limiting sources to groups
 ==========================
@@ -113,9 +124,9 @@ plugin.
 Disabling dependency resolution
 -------------------------------
 
-.. versionadded:: 1.2.0
+.. versionadded:: 1.1.0
 
-Dependency resolution can now be disabled by adding this to
+Dependency resolution can be disabled by adding this to
 ``Packages/packages.conf`` in the ``global`` section::
 
     [global]
@@ -134,22 +145,22 @@ Packages, please file a bug report so that we can fix the problem in
 future releases. In the meantime, you can work around this issue by
 blacklisting the offending Package in your Sources. The blacklist
 element should immediately follow the Component section of your source
-and should look like the following:
-
-.. code-block:: xml
+and should look like the following::
 
     <Blacklist>unwanted-packagename</Blacklist>
+
+If you use the built-in :ref:`Yum config generator
+<generating-client-configs>`, blacklisted packages will be added to
+the ``exclude`` list for the source.
 
 Handling GPG Keys
 -----------------
 
 .. versionadded:: 1.2.0
 
-Packages can automatically handle GPG signing keys for Yum
+Packages can automatically handle GPG signing keys for Yum and Pulp
 repositories. Simply specify the URL to the GPG key(s) for a
-repository in ``sources.xml``.
-
-.. code-block:: xml
+repository in ``sources.xml``::
 
     <Source type="yum"
             rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
@@ -163,15 +174,17 @@ With the keys specified thusly, Packages will include the keys in the
 generated yum config file, and will ensure that the keys are imported
 on the client.
 
+There is no need to specify ``<GPGKey>`` tags for :ref:``Pulp sources
+<pulp-source-support>``; that data is pulled directly from the Pulp
+REST API.
+
 .. _packages-exampleusage:
 
 Example usage
 =============
 
 Create a ``sources.xml`` file in the Packages directory that looks
-something like this:
-
-.. code-block:: xml
+something like this::
 
     <Sources>
       <Group name="ubuntu-intrepid">
@@ -203,9 +216,7 @@ something like this:
 
         <Source type="apt" recommended="true" ...>
 
-Yum sources can be similarly specified.
-
-.. code-block:: xml
+Yum sources can be similarly specified::
 
     <Sources>
       <Group name="centos-5.2">
@@ -217,12 +228,24 @@ Yum sources can be similarly specified.
           <Component>extras</Component>
           <Arch>i386</Arch>
           <Arch>x86_64</Arch>
+          <GPGKey>http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-5</GPGKey>
         </Source>
       </Group>
     </Sources>
 
 For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
+
+:ref:``Pulp sources <pulp-source-support>`` are very simple to specify
+due to the amount of data that can be queried from Pulp itself::
+
+    <Sources>
+      <Group name="centos-6-x86_64">
+        <Source type="yum" pulp_id="centos-6-x86_64-os"/>
+        <Source type="yum" pulp_id="centos-6-x86_64-updates"/>
+        <Source type="yum" pulp_id="centos-6-x86_64-extras"/>
+      </Group>
+    </Sources>
 
 .. note:: There is also a rawurl attribute for specifying sources that
           don't follow the conventional layout.
@@ -265,7 +288,7 @@ Configuration Updates
 =====================
 
 Packages will reload its configuration upon an explicit command via
-bcfg2-admin.::
+bcfg2-admin::
 
     [0:3711] bcfg2-admin xcmd Packages.Refresh
     True
@@ -287,6 +310,9 @@ be reloaded at this time, so any source specification changes (new
 or modified sources in this file) will be reflected by the server at
 this point.
 
+This process is much, much faster if you use the :ref:`native yum
+library support <native-yum-libraries>`.
+
 Soft reload
 -----------
 
@@ -297,6 +323,9 @@ download only missing sources.::
 
     [0:3711] bcfg2-admin xcmd Packages.Reload
     True
+
+This is done automatically any time ``Packages/sources.xml`` is
+updated.
 
 Availability
 ============
@@ -328,6 +357,7 @@ need to use :ref:`BoundEntries <boundentries>`, e.g.::
                   type="yum" verify="false"/>
 
 
+.. _generating-client-configs:
 
 Generating Client APT/Yum Configurations
 ========================================
@@ -343,7 +373,7 @@ to the yum config file you want to generate::
 
 Then add the corresponding Path entry to your Yum bundle.
 
-.. versionadded:: 1.2.0
+.. versionadded:: 1.1.0
 
 APT repository information can be generated automatically from
 software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.  A
@@ -356,6 +386,99 @@ list of source urls are exposed in the client's metadata as
     deb ${s.url}${s.version} ${s.groups[0]} {% for comp in s.components %}$comp {% end %}
 
     {% end %}\
+
+.. _native-yum-libraries:
+
+Using Native Yum Libraries
+==========================
+
+.. versionadded:: 1.2.0
+
+By default, Bcfg2 uses an internal implementation of Yum's dependency
+resolution and other routines so that the Bcfg2 server can be run on a
+host that does not support Yum itself.  If you run the Bcfg2 server on
+a machine that does have Yum libraries, however, you can enable use of
+those native libraries in Bcfg2 by setting ``use_yum_libraries`` to
+``1`` in the ``[yum]`` section of ``Packages/packages.conf``.
+
+Benefits to this include:
+
+* Much lower memory usage by the ``bcfg2-server`` process.
+* Much faster ``Packages.Refresh`` behavior.
+* More accurate dependency resolution.
+* Support for package groups.
+
+Drawbacks include:
+
+* More disk I/O.  In some cases, you may have to raise the open file
+  limit for the user who runs your Bcfg2 server process, particularly
+  if you have a lot of repositories.
+* Resolution of package dependencies is slower in some cases,
+  particularly after running ``Packages.Refresh``.
+
+Setting Yum Options
+-------------------
+
+In ``Packages/packages.conf``, any options you set in the ``[yum]``
+section other than ``use_yum_libraries`` will be passed along verbatim
+to the configuration of the Yum objects used in the Bcfg2 server.  The
+following options are set by default, and should not generally be
+overridden:
+
+* ``cachedir`` is set to a hashed value unique to each distinct Yum
+  configuration.  Don't set this unless you know what you're doing.
+* ``keepcache`` is set to ``0``; there is no benefit to changing this.
+* ``sslverify`` is set to ``0``; change this if you know what you're
+  doing.
+* ``reposdir`` is set to ``/dev/null`` to prevent the server's Yum
+  configuration from being read; do not change this.
+
+Package Groups
+--------------
+
+Yum package groups are supported by the native Yum libraries.  To
+include a package group, use the ``group`` attribute of the
+``Package`` tag.  You can use either the short group ID or the long
+group name::
+
+    <Package group="SNMP Support"/>
+    <Package group="system-management-snmp"/>
+
+.. _pulp-source-support:
+
+Pulp Support
+============
+
+.. versionadded:: 1.2.0
+
+Bcfg2 contains explicit support for repositories managed by Pulp
+(http://pulpproject.org/).  Due to the amount of data about a
+repository that can be retrieved directly from Pulp, the only thing
+necessary to configure a Pulp repo is the repo ID::
+
+    <Sources>
+      <Group name="centos-6-x86_64">
+        <Source type="yum" pulp_id="centos-6-x86_64-os"/>
+        <Source type="yum" pulp_id="centos-6-x86_64-updates"/>
+        <Source type="yum" pulp_id="centos-6-x86_64-extras"/>
+      </Group>
+    </Sources>
+
+Pulp sources require some additional configuration.  First, the Bcfg2
+server must have a valid ``/etc/pulp/consumer/consumer.conf`` that is
+readable by the user your Bcfg2 server runs as; the Pulp server ,
+URLs, and so on, are determined from this.
+
+Secondly, in ``Packages/packages.conf`` you must set the following
+options in the ``[pulp]`` section:
+
+* ``username`` and ``password``: The username and password of a Pulp
+  user that will be used to register new clients and bind them to
+  repositories.  Membership in the default ``consumer-users`` role is
+  sufficient.
+
+Bcfg2 clients using Pulp sources will be registered to the Pulp server
+as consumers, and will be bound to the appropriate repositories.
 
 Debugging unexpected behavior
 =============================
@@ -474,7 +597,7 @@ packages.conf
 ``packages.conf`` contains miscellaneous configuration options for the
 Packages plugin.  It understands the following directives:
 
-"global" section
+[global] section
 ----------------
 
 * ``resolver``: Disable dependency resolution.  Default is "enabled".
@@ -498,3 +621,20 @@ Packages plugin.  It understands the following directives:
   to "true", whereupon Packages will import the keys into the server's
   key chain.  Python RPM libraries must be installed for this to work.
 
+[yum] section
+-------------
+
+* ``use_yum_libraries``: Whether or not to use the :ref:`native yum
+  library support <native-yum-libraries>`.  Default is ``0`` (false).
+
+All other options in the ``[yum]`` section will be passed along
+verbatim to the Yum configuration if you are using the native Yum
+library support.
+
+[pulp] section
+--------------
+
+* ``username`` and ``password``: The username and password of a Pulp
+  user that will be used to register new clients and bind them to
+  repositories.  Membership in the default ``consumer-users`` role is
+  sufficient.
