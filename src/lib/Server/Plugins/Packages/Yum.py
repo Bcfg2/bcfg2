@@ -505,7 +505,7 @@ class YumCollection(Collection):
             group = group[1:]
 
         try:
-            return self.groups_cache[group]
+            return self.group_cache[group]
         except KeyError:
             pass
         
@@ -521,8 +521,8 @@ class YumCollection(Collection):
             self.logger.warning("Packages: %s" % err)
             pkgs = []
 
-        self.groups_cache[group] = pkgs
-        return self.groups_cache[group]
+        self.group_cache[group] = pkgs
+        return self.group_cache[group]
 
     def _filter_provides(self, package, providers):
         providers = [pkg for pkg in self._filter_arch(providers)]
