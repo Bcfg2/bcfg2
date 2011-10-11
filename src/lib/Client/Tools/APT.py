@@ -1,4 +1,4 @@
-"""This is the bcfg2 support for apt-get"""
+"""This is the Bcfg2 support for apt-get."""
 __revision__ = '$Revision$'
 
 # suppress apt API warnings
@@ -238,5 +238,5 @@ class APT(Bcfg2.Client.Tools.Tool):
                 self.modified.append(package)
 
     def VerifyPath(self, entry, _):
-        """Do nothing here since we only verify Path type=ignore"""
+        """Do nothing here since we only verify Path type=ignore."""
         return True
