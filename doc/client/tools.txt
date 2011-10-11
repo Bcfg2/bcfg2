@@ -40,6 +40,15 @@ and supplies status information to the Bcfg2 server via the statistics
 mechanism. It can also be used to prevent bundle installation when
 pre-conditions are not met. See the UsingActions page for more details.
 
+APK
+---
+
+This tool driver is used to handle packages on apk based systems like Alpine
+Linux and employs the "apk" executable. Extra information can be
+found at `apk-tools`_.
+
+.. _apk-tools: http://apk-tools.sourceforge.net/
+
 APT
 ---
 
