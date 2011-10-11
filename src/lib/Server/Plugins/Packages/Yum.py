@@ -574,11 +574,11 @@ class YumCollection(Collection):
 
         cachekey = cPickle.dumps(sorted(packagelist))
         try:
-            return self.pkgset_cache[cachekey]
-        except KeyError: pass
+            packages = self.pkgset_cache[cachekey]
+        except KeyError:
+            packages = set()
 
-        packages = set()
-        pkgs = set(packagelist)
+        pkgs = set(packagelist).difference(packages)    
         requires = set()
         satisfied = set()
         unknown = set()
@@ -667,7 +667,9 @@ class YumCollection(Collection):
         self.filter_unknown(unknown)
         unknown = [self.get_package_name(p) for p in unknown]
 
-        self.pkgset_cache[cachekey] = (packages, unknown)
+        # we do not cache unknown packages, since those are likely to
+        # be fixed
+        self.pkgset_cache[cachekey] = packages
 
         return packages, unknown
 
