@@ -22,7 +22,7 @@ There are two main advantages:
    thing to note is how the `name` variable is handled - when
    just referring to it the standard `${name}` syntax is used, but
    when it is used as a variable in the expression to get the password,
-   `password="${metadata.Properties['passwords.xml'].data.find('password').find('bcfg2-client').find(name).text}"`,
+   `password="${metadata.Properties['passwords.xml'].xdata.find('password').find('bcfg2-client').find(name).text}"`,
    it is just referred to as `name`.
 
 There is the disadvantage that sometimes 2 passes will be needed to get
@@ -53,7 +53,7 @@ Possible improvements:
                profile="${profile}"
                name="${name}"
                uuid="${name}"
-               password="${metadata.Properties['passwords.xml'].data.find('password').find('bcfg2-client').find(name).text}"
+               password="${metadata.Properties['passwords.xml'].xdata.find('password').find('bcfg2-client').find(name).text}"
                address="${address}"
                location="fixed"
                secure="true"
@@ -64,7 +64,7 @@ Possible improvements:
                profile="${profile}"
                name="${name}"
                uuid="${name}"
-               password="${metadata.Properties['passwords.xml'].data.find('password').find('bcfg2-client').find(name).text}"
+               password="${metadata.Properties['passwords.xml'].xdata.find('password').find('bcfg2-client').find(name).text}"
                location="floating"
                secure="true"
            />\

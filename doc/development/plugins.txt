@@ -175,7 +175,7 @@ Example Connector
         def get_additional_data(self, metadata):
 
             mydata = {}
-            for data in self.store.entries['foo.xml'].data.get("foo", []):
+            for data in self.store.entries['foo.xml'].xdata.get("foo", []):
 
                 mydata[data] = "bar"
 

@@ -45,8 +45,8 @@ This file just shows you what's available. It assumes a
     {% end %}\
 
     Two main ways to get the same property value:
-    ${metadata.Properties['test.xml'].data.find('password').find('bcfg2').text}
-    ${metadata.Properties['test.xml'].data.xpath('password/bcfg2')[0].text}
+    ${metadata.Properties['test.xml'].xdata.find('password').find('bcfg2').text}
+    ${metadata.Properties['test.xml'].xdata.xpath('password/bcfg2')[0].text}
 
     One way to get information about metadata and properties:
 
@@ -55,28 +55,28 @@ This file just shows you what's available. It assumes a
     ${var} \
     {% end %}
 
-    dir(metadata.Properties.data):
-    {% for var in dir(metadata.Properties.data) %}\
+    dir(metadata.Properties.xdata):
+    {% for var in dir(metadata.Properties.xdata) %}\
     ${var} \
     {% end %}
 
-    dir(metadata.Properties.data.entries):
-    {% for var in dir(metadata.Properties.data.entries) %}\
+    dir(metadata.Properties.xdata.entries):
+    {% for var in dir(metadata.Properties.xdata.entries) %}\
     ${var} \
     {% end %}
 
-    dir(metadata.Properties.data.label):
-    {% for var in dir(metadata.Properties.data.label) %}\
+    dir(metadata.Properties.xdata.label):
+    {% for var in dir(metadata.Properties.xdata.label) %}\
     ${var} \
     {% end %}
 
-    dir(metadata.Properties.data.name):
-    {% for var in dir(metadata.Properties.data.name) %}\
+    dir(metadata.Properties.xdata.name):
+    {% for var in dir(metadata.Properties.xdata.name) %}\
     ${var} \
     {% end %}
 
-    dir(metadata.Properties.data.properties):
-    {% for var in dir(metadata.Properties.data.properties) %}\
+    dir(metadata.Properties.xdata.properties):
+    {% for var in dir(metadata.Properties.xdata.properties) %}\
     ${var} \
     {% end %}
 
@@ -113,13 +113,13 @@ this (below reformatted a little bit to fit in 80 columns)::
      __weakref__ all bundles categories get_clients_by_group get_clients_by_profile
      groups hostname inGrouppassword probes uuid
 
-    dir(metadata.Properties.data):
+    dir(metadata.Properties.xdata):
     HandleEvent Index __class__ __delattr__ __dict__ __doc__ __getattribute__
      __hash__ __identifier__ __init__ __iter__ __module__ __new__ __reduce__
      __reduce_ex__ __repr__ __setattr__ __str__ __weakref__ entries label name
      properties
 
-    dir(metadata.Properties.data.entries):
+    dir(metadata.Properties.xdata.entries):
     __add__ __class__ __contains__ __delattr__ __delitem__ __delslice__ __doc__
      __eq__ __ge__ __getattribute__ __getitem__ __getslice__ __gt__ __hash__
      __iadd__ __imul__ __init__ __iter__ __le__ __len__ __lt__ __mul__ __ne__
@@ -127,7 +127,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      __setitem__ __setslice__ __str__ append count extend index insert pop remove
      reverse sort
 
-    dir(metadata.Properties.data.label):
+    dir(metadata.Properties.xdata.label):
     __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
      __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
      __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
@@ -137,7 +137,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
      swapcase title translate upper zfill
 
-    dir(metadata.Properties.data.name):
+    dir(metadata.Properties.xdata.name):
     __add__ __class__ __contains__ __delattr__ __doc__ __eq__ __ge__
      __getattribute__ __getitem__ __getnewargs__ __getslice__ __gt__ __hash__
      __init__ __le__ __len__ __lt__ __mod__ __mul__ __ne__ __new__ __reduce__
@@ -147,7 +147,7 @@ this (below reformatted a little bit to fit in 80 columns)::
      rfind rindex rjust rpartition rsplit rstrip split splitlinesstartswith strip
      swapcase title translate upper zfill
 
-    dir(metadata.Properties.data.properties):
+    dir(metadata.Properties.xdata.properties):
     __class__ __contains__ __copy__ __deepcopy__ __delattr__ __delitem__
      __delslice__ __doc__ __getattribute__ __getitem__ __getslice__ __hash__
      __init__ __iter__ __len__ __new__ __nonzero__ __reduce__ __reduce_ex__

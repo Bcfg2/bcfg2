@@ -28,7 +28,7 @@ files, ``template`` and ``info``. The template is a standard Cheetah
 template with two additions:
 
 * `self.metadata` is the client's :ref:`metadata <server-plugins-grouping-metadata-clientmetadata>`
-* `self.metadata.Properties.data` is an xml document of unstructured data
+* `self.metadata.Properties.xdata` is an xml document of unstructured data
 
 The ``info`` file is formatted like ``:info`` files from Cfg.
 
@@ -47,7 +47,7 @@ self.metadata variables
 self.metadata is an instance of the class ClientMetadata and documented
 :ref:`here <server-plugins-grouping-metadata-clientmetadata>`.
 
-self.metadata.Properties.data
+self.metadata.Properties.xdata
 =============================
 
 .. note::
@@ -56,7 +56,7 @@ self.metadata.Properties.data
     :ref:`server-plugins-connectors-properties` plugin in
     ``/etc/bcfg2.conf``.
 
-Properties.data is a python `ElementTree <http://codespeak.net/lxml/>`_
+Properties.xdata is a python `ElementTree <http://codespeak.net/lxml/>`_
 object, loaded from the data in ``/var/lib/bcfg2/Properties/<properties
 file>.xml``. That file should have a ``Properties`` node at its root.
 
@@ -76,13 +76,13 @@ You may use any of the ElementTree methods to access data in your
 template.  Several examples follow, each producing an identical result
 on the host 'www.example.com'::
 
-    $self.metadata.Properties['example.xml'].data.find('host').find('www.example.com').find('rootdev').text
-    $self.metadata.Properties['example.xml'].data.find('host').find($self.metadata.hostname).find('rootdev').text
-    ${self.metadata.Properties['example.xml'].data.xpath('host/www.example.com/rootdev')[0].text}
-    ${self.metadata.Properties['example.xml'].data.xpath('host/' + self.metadata.hostname + '/rootdev')[0].text}
+    $self.metadata.Properties['example.xml'].xdata.find('host').find('www.example.com').find('rootdev').text
+    $self.metadata.Properties['example.xml'].xdata.find('host').find($self.metadata.hostname).find('rootdev').text
+    ${self.metadata.Properties['example.xml'].xdata.xpath('host/www.example.com/rootdev')[0].text}
+    ${self.metadata.Properties['example.xml'].xdata.xpath('host/' + self.metadata.hostname + '/rootdev')[0].text}
     #set $path = 'host/' + $self.metadata.hostname + '/rootdev'
-    ${self.metadata.Properties['example.xml'].data.xpath($path)[0].text}
-    ${self.metadata.Properties['example.xml'].data.xpath(path)[0].text}
+    ${self.metadata.Properties['example.xml'].xdata.xpath($path)[0].text}
+    ${self.metadata.Properties['example.xml'].xdata.xpath(path)[0].text}
 
 Other Variables
 ===============
