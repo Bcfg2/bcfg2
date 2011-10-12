@@ -126,22 +126,27 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         if collection is None:
             collection = Collection.factory(metadata, self.sources, self.data)
+        # initial is the set of packages that are explicitly specified
+        # in the configuration
         initial = set()
+        # base is the set of initial packages with groups expanded
+        base = set()
         to_remove = []
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
                     initial.add(pkg.get("name"))
                 elif pkg.get("group"):
-                    initial.update(collection.get_group(pkg.get("group")))
+                    base.update(collection.get_group(pkg.get("group")))
                     to_remove.append(pkg)
                 else:
                     self.logger.error("Malformed Package: %s" %
                                       lxml.etree.tostring(pkg))
+        base.update(initial)
         for el in to_remove:
             el.getparent().remove(el)
 
-        packages, unknown = collection.complete(initial)
+        packages, unknown = collection.complete(base)
         if unknown:
             self.logger.info("Got %d unknown entries" % len(unknown))
             self.logger.info(list(unknown))
@@ -188,6 +193,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.sentinels.update(collection.basegroups)
 
         Collection.clear_cache()
+
+        for source in self.sources:
+            if not self.disableMetaData:
+                source.setup_data(force_update)
 
         for cfile in glob.glob(os.path.join(self.cachepath, "cache-*")):
             if cfile not in cachefiles:

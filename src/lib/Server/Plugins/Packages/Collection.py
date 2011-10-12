@@ -124,8 +124,7 @@ class Collection(object):
 
     def setup_data(self, force_update=False):
         """ do any collection-level data setup tasks """
-        for source in self.sources:
-            source.setup_data(force_update)
+        pass
 
     def complete(self, packagelist):
         '''Build the transitive closure of all package dependencies
