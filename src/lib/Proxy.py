@@ -73,6 +73,9 @@ class RetryMethod(xmlrpclib._Method):
                 if hasattr(err, 'errno') and err.errno == 336265218:
                     self.log.error("SSL Key error")
                     break
+                if hasattr(err, 'errno') and err.errno == 185090050:
+                    self.log.error("SSL CA error")
+                    break
                 if retry == 3:
                     self.log.error("Server failure: %s" % err)
                     raise xmlrpclib.Fault(20, err)

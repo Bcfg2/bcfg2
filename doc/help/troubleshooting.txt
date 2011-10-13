@@ -89,41 +89,39 @@ be taken to remedy them.
 Client Errors
 -------------
 
-+------------------------------+----------+---------------------+--------------+
-| Error                        | Location | Meaning             | Repair       |
-+==============================+==========+=====================+==============+
-| Incomplete information for   | Client   | The described entry | [c1]_        |
-| entry <EntryTag>:<EntryName> |          | is not fully        |              |
-| cannot verify                |          | specified by the    |              |
-|                              |          | server, so no       |              |
-|                              |          | verification can be |              |
-|                              |          | performed.          |              |
-+------------------------------+----------+---------------------+--------------+
-| Incomplete information for   | Client   | The described entry | [c1]_        |
-| entry <EntryTag>:<EntryName> |          | is not fully        |              |
-| cannot install               |          | specified by the    |              |
-|                              |          | server, so no       |              |
-|                              |          | verification can be |              |
-|                              |          | performed.          |              |
-+------------------------------+----------+---------------------+--------------+
-| The following entries are    | Client   | The client cannot   | [c2]_        |
-| not handled by any tool:     |          | figure out how to   |              |
-| <EntryTag>:<EntryName>       |          | handle this entry.  |              |
-+------------------------------+----------+---------------------+--------------+
-| No ca is specified. Cannot   | Client   | The client is       | [c3]_        |
-| authenticate the server with |          | unable to verify    |              |
-| SSL.                         |          | the server          |              |
-+------------------------------+----------+---------------------+--------------+
-| GID normalization failed for | Client   | The client is       | [c4]_        |
-| FILENAME. Does group GROUP   |          | unable to convert   |              |
-| exist?                       |          | the group GROUP to  |              |
-|                              |          | a usable GID        |              |
-+------------------------------+----------+---------------------+--------------+
-| UID normalization failed for | Client   | The client is       | [c5]_        |
-| FILENAME. Does owner OWNER   |          | unable to convert   |              |
-| exist?                       |          | the owner OWNER to  |              |
-|                              |          | a usable UID        |              |
-+------------------------------+----------+---------------------+--------------+
++------------------------------+----------------------------+--------------+
+| Error                        | Meaning                    | Repair       |
++==============================+============================+==============+
+| Incomplete information for   | The described entry is not | [c1]_        |
+| entry <EntryTag>:<EntryName> | fully specified by the     |              |
+| cannot verify                | server, so no verification |              |
+|                              | can be performed.          |              |
++------------------------------+----------------------------+--------------+
+| Incomplete information for   | The described entry is not | [c1]_        |
+| entry <EntryTag>:<EntryName> | fully specified by the     |              |
+| cannot install               | server, so no verification |              |
+|                              | can be performed.          |              |
++------------------------------+----------------------------+--------------+
+| The following entries are    | The client cannot figure   | [c2]_        |
+| not handled by any tool:     | out how to handle this     |              |
+| <EntryTag>:<EntryName>       | entry.                     |              |
++------------------------------+----------------------------+--------------+
+| No ca is specified. Cannot   | The client is unable to    | [c3]_        |
+| authenticate the server with | verify the server.         |              |
+| SSL.                         |                            |              |
++------------------------------+----------------------------+--------------+
+| GID normalization failed for | The client is unable to    | [c4]_        |
+| FILENAME. Does group GROUP   | convert the group GROUP to |              |
+| exist?                       | a usable GID.              |              |
++------------------------------+----------------------------+--------------+
+| UID normalization failed for | The client is unable to    | [c5]_        |
+| FILENAME. Does owner OWNER   | convert the owner OWNER to |              |
+| exist?                       | a usable UID.              |              |
++------------------------------+----------------------------+--------------+
+| SSL CA error                 | The CA certificate         | [c6]_        |
+|                              | specified in bcfg2.conf is |              |
+|                              | incorrect                  |              |
++------------------------------+----------------------------+--------------+
 
 
 .. [c1] This entry is not being bound. Ensure that a version of this
@@ -140,71 +138,73 @@ Client Errors
 .. [c5] If the owner doesn't exist, you need to specify the correct one
         in an :ref:`info.xml <server-info>` file or set the default owner
         appropriately.
+.. [c6] Check that the CA specified in bcfg2.conf is appropriate for the
+        server you are attempting to access.
 
 Server Errors
 -------------
 
-+------------------------------+----------+---------------------+--------------+
-| Error                        | Location | Meaning             | Repair       |
-+==============================+==========+=====================+==============+
-| Failed to bind entry:        | Server   | The server was      | [s1]_        |
-| <EntryTag> <EntryName>       |          | unable to find a    |              |
-|                              |          | suitable version of |              |
-|                              |          | entry for client.   |              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to bind to socket     | Server   | The server was      | [s2]_        |
-|                              |          | unable to bind to   |              |
-|                              |          | the tcp server      |              |
-|                              |          | socket.             |              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to load               | Server   | The server was      | [s3]_        |
-| ssl key <path>               |          | unable to read and  |              |
-|                              |          | process the ssl key.|              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to read file <path>   | Server   | The server failed   | [s4]_        |
-|                              |          | to read the         |              |
-|                              |          | specified file      |              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to parse file <path>  | Server   | The server failed   | [s5]_        |
-|                              |          | to parse the        |              |
-|                              |          | specified XML file  |              |
-+------------------------------+----------+---------------------+--------------+
-| Client metadata resolution   | Server   | The server cannot   | [s6]_        |
-| error for <IP>               |          | resolve the client  |              |
-|                              |          | hostname or the     |              |
-|                              |          | client is           |              |
-|                              |          | associated with a   |              |
-|                              |          | non-profile group.  |              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to decode <filename>  | Server   | The encoding being  | [s7]_        |
-| Please verify you are using  |          | used is unable to   |              |
-| the proper encoding          |          | decode the          |              |
-|                              |          | character present   |              |
-|                              |          | in this file.       |              |
-+------------------------------+----------+---------------------+--------------+
-| Got unknown entries          | Server   | The Packages plugin | [s8]_        |
-| [list of unknown entries]    |          | has no knowledge of |              |
-|                              |          | the listed entries  |              |
-+------------------------------+----------+---------------------+--------------+
-| Failed to import lxml        | Server   | The server cannot   | [s9]_        |
-| dependency. Shutting         |          | import lxml         |              |
-| down server.                 |          |                     |              |
-+------------------------------+----------+---------------------+--------------+
-| You need to specify base64   | Server   | The server cannot   | [s10]_       |
-| encoding for <path>          |          | send the file as    |              |
-|                              |          | ascii text          |              |
-+------------------------------+----------+---------------------+--------------+
-| ERROR: Error reading file    | Server   | The server cannot   | [s11]_       |
-| '/path/to/schema': failed to |          | find the schema     |              |
-| load external entity         |          | file                |              |
-| "/path/to/schema"            |          |                     |              |
-+------------------------------+----------+---------------------+--------------+
-| Packages: No matching        | Server   | None of the sources | [s12]_       |
-| sources for client           |          | defined in the      |              |
-| <clientname>; improper group |          | Package plugin's    |              |
-| memberships?                 |          | ``sources.xml``     |              |
-|                              |          | apply to the client |              |
-+------------------------------+----------+---------------------+--------------+
++------------------------------+---------------------+--------------+
+| Error                        | Meaning             | Repair       |
++==============================+=====================+==============+
+| Failed to bind entry:        | The server was      | [s1]_        |
+| <EntryTag> <EntryName>       | unable to find a    |              |
+|                              | suitable version of |              |
+|                              | entry for client.   |              |
++------------------------------+---------------------+--------------+
+| Failed to bind to socket     | The server was      | [s2]_        |
+|                              | unable to bind to   |              |
+|                              | the tcp server      |              |
+|                              | socket.             |              |
++------------------------------+---------------------+--------------+
+| Failed to load               | The server was      | [s3]_        |
+| ssl key <path>               | unable to read and  |              |
+|                              | process the ssl key.|              |
++------------------------------+---------------------+--------------+
+| Failed to read file <path>   | The server failed   | [s4]_        |
+|                              | to read the         |              |
+|                              | specified file      |              |
++------------------------------+---------------------+--------------+
+| Failed to parse file <path>  | The server failed   | [s5]_        |
+|                              | to parse the        |              |
+|                              | specified XML file  |              |
++------------------------------+---------------------+--------------+
+| Client metadata resolution   | The server cannot   | [s6]_        |
+| error for <IP>               | resolve the client  |              |
+|                              | hostname or the     |              |
+|                              | client is           |              |
+|                              | associated with a   |              |
+|                              | non-profile group.  |              |
++------------------------------+---------------------+--------------+
+| Failed to decode <filename>  | The encoding being  | [s7]_        |
+| Please verify you are using  | used is unable to   |              |
+| the proper encoding          | decode the          |              |
+|                              | character present   |              |
+|                              | in this file.       |              |
++------------------------------+---------------------+--------------+
+| Got unknown entries          | The Packages plugin | [s8]_        |
+| [list of unknown entries]    | has no knowledge of |              |
+|                              | the listed entries  |              |
++------------------------------+---------------------+--------------+
+| Failed to import lxml        | The server cannot   | [s9]_        |
+| dependency. Shutting         | import lxml         |              |
+| down server.                 |                     |              |
++------------------------------+---------------------+--------------+
+| You need to specify base64   | The server cannot   | [s10]_       |
+| encoding for <path>          | send the file as    |              |
+|                              | ascii text          |              |
++------------------------------+---------------------+--------------+
+| ERROR: Error reading file    | The server cannot   | [s11]_       |
+| '/path/to/schema': failed to | find the schema     |              |
+| load external entity         | file                |              |
+| "/path/to/schema"            |                     |              |
++------------------------------+---------------------+--------------+
+| Packages: No matching        | None of the sources | [s12]_       |
+| sources for client           | defined in the      |              |
+| <clientname>; improper group | Package plugin's    |              |
+| memberships?                 | ``sources.xml``     |              |
+|                              | apply to the client |              |
++------------------------------+---------------------+--------------+
 
 
 .. [s1] This entry is not being bound. Ensure that a version of this
