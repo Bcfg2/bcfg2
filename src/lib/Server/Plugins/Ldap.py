@@ -2,6 +2,7 @@ import imp
 import logging
 import sys
 import time
+import traceback
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 
@@ -64,7 +65,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
     name = "Ldap"
     version = "$Revision: $"
     experimental = True
-    debug_flag = True
+    debug_flag = False
     
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -76,6 +77,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
             self.logger.error(message)
     
     def get_additional_data(self, metadata):
+        query = None
         try:
             data = {}
             self.debug_log("LdapPlugin debug: found queries " + 
@@ -91,13 +93,18 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
                         "' not applicable to host '" + metadata.hostname + "'")
             return data
         except Exception:
-            error_msg = sys.exc_info()[1]
-            if self.debug_flag:
-                raise
-            else:
+            if hasattr(query, "name"):
+                Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+                       "Exception during processing of query named '" + 
+                                                      str(query.name) +
+                                     "', query results will be empty" + 
+                                       " and may cause bind failures")
+            for line in traceback.format_exception(sys.exc_info()[0],
+                                                   sys.exc_info()[1],
+                                                   sys.exc_info()[2]):
                 Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " + 
-                                                         str(error_msg))
-                return {}
+                                                 line.replace("\n", ""))
+            return {}
 
 class LdapConnection(object):
     """
