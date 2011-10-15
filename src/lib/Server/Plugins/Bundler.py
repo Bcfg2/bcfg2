@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import copy
 import lxml.etree
 import os
+import os.path
 import re
 import sys
 
@@ -21,7 +22,7 @@ except:
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
 
     def get_xml_value(self, metadata):
-        bundlename = self.name.split('/')[-1][:-4]
+        bundlename = os.path.splitext(os.path.basename(self.name))[0]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
         [bundle.append(copy.deepcopy(item)) for item in self.Match(metadata)]
         return bundle
