@@ -71,17 +71,17 @@ class PacSource(Source):
                 bdeps[barch] = dict()
                 bprov[barch] = dict()
             try:
-                print("try to read : " + fname)
+                logger.debug("try to read : " + fname)
                 tar = tarfile.open(fname, "r")
                 reader = gzip.GzipFile(fname)
             except:
-                print("Failed to read file %s" % fname)
+                logger.error("Failed to read file %s" % fname)
                 raise
 
             for tarinfo in tar:
                 if tarinfo.isdir():
                     self.pkgnames.add(tarinfo.name.rsplit("-", 2)[0])
-                    print("added : " + tarinfo.name.rsplit("-", 2)[0])
+                    logger.debug("added : " + tarinfo.name.rsplit("-", 2)[0])
             tar.close()
 
         self.deps['global'] = dict()

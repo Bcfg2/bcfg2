@@ -72,7 +72,7 @@ class AptSource(Source):
             try:
                 reader = gzip.GzipFile(fname)
             except:
-                print("Failed to read file %s" % fname)
+                logger.error("Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
                 words = str(line.strip()).split(':', 1)
