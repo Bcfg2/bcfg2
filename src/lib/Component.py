@@ -33,9 +33,10 @@ def run_component(component_cls, listen_all, location, daemon, pidfile_name,
 
     logging.getLogger().setLevel(level)
     Bcfg2.Logger.setup_logging(component_cls.implementation,
-                               True,
-                               True,
-                               to_file=to_file)
+                               to_console=True,
+                               to_syslog=True,
+                               to_file=to_file,
+                               level=level)
 
     if daemon:
         child_pid = os.fork()
