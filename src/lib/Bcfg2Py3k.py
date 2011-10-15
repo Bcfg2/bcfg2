@@ -12,7 +12,7 @@ try:
     from urllib2 import HTTPPasswordMgrWithDefaultRealm
     from urllib2 import build_opener
     from urllib2 import install_opener
-    from urllib import urlopen
+    from urllib2 import urlopen
     from urllib2 import HTTPError
 except ImportError:
     from urllib.parse import urljoin, urlparse
