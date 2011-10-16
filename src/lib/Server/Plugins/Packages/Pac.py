@@ -9,7 +9,7 @@ logger = logging.getLogger("Packages")
 
 class PacCollection(Collection):
     def get_group(self, group):
-        self.logger.warning("Package groups are not supported by APT")
+        self.logger.warning("Packages: Package groups are not supported by APT")
         return []
 
 class PacSource(Source):
@@ -71,17 +71,17 @@ class PacSource(Source):
                 bdeps[barch] = dict()
                 bprov[barch] = dict()
             try:
-                logger.debug("try to read : " + fname)
+                logger.debug("Packages: try to read : " + fname)
                 tar = tarfile.open(fname, "r")
                 reader = gzip.GzipFile(fname)
             except:
-                logger.error("Failed to read file %s" % fname)
+                logger.error("Packages: Failed to read file %s" % fname)
                 raise
 
             for tarinfo in tar:
                 if tarinfo.isdir():
                     self.pkgnames.add(tarinfo.name.rsplit("-", 2)[0])
-                    logger.debug("added : " + tarinfo.name.rsplit("-", 2)[0])
+                    logger.debug("Packages: added : " + tarinfo.name.rsplit("-", 2)[0])
             tar.close()
 
         self.deps['global'] = dict()

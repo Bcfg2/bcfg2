@@ -9,7 +9,7 @@ logger = logging.getLogger("Packages")
 
 class AptCollection(Collection):
     def get_group(self, group):
-        self.logger.warning("Package groups are not supported by APT")
+        self.logger.warning("Packages: Package groups are not supported by APT")
         return []
 
 class AptSource(Source):
@@ -72,7 +72,7 @@ class AptSource(Source):
             try:
                 reader = gzip.GzipFile(fname)
             except:
-                logger.error("Failed to read file %s" % fname)
+                logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
                 words = str(line.strip()).split(':', 1)

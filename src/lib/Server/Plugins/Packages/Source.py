@@ -109,7 +109,7 @@ class Source(object):
                 self.load_state()
                 should_read = False 
             except:
-                logger.error("Cachefile %s load failed; "
+                logger.error("Packages: Cachefile %s load failed; "
                              "falling back to file read" % self.cachefile)
         if should_read:
             try:
@@ -124,7 +124,9 @@ class Source(object):
                 self.update()
                 self.read_files()
             except:
-                logger.error("Failed to update source", exc_info=1)
+                logger.error("Packages: Failed to load data for Source of %s. "
+                             "Some Packages will be missing."
+                             % self.urls)
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
@@ -192,15 +194,15 @@ class Source(object):
             fname = self.escape_url(url)
             try:
                 data = fetch_url(url)
+                file(fname, 'w').write(data)
             except ValueError:
                 logger.error("Packages: Bad url string %s" % url)
-                continue
+                raise
             except HTTPError:
                 err = sys.exc_info()[1]
-                logger.error("Packages: Failed to fetch url %s. code=%s" %
+                logger.error("Packages: Failed to fetch url %s. HTTP response code=%s" %
                              (url, err.code))
-                continue
-            file(fname, 'w').write(data)
+                raise
 
     def applies(self, metadata):
         # check base groups

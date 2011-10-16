@@ -30,7 +30,7 @@ try:
     has_yum = True
 except ImportError:
     has_yum = False
-    logger.info("No yum libraries found; forcing use of internal dependency "
+    logger.info("Packages: No yum libraries found; forcing use of internal dependency "
                 "resolver")
 
 XP = '{http://linux.duke.edu/metadata/common}'
@@ -44,7 +44,7 @@ PULPCONFIG = None
 def _setup_pulp(config):
     global PULPSERVER, PULPCONFIG
     if not has_pulp:
-        logger.error("Cannot create Pulp collection: Pulp libraries not "
+        logger.error("Packages: Cannot create Pulp collection: Pulp libraries not "
                      "found")
         raise Bcfg2.Server.Plugin.PluginInitError
 
@@ -53,11 +53,11 @@ def _setup_pulp(config):
             username = config.get("pulp", "username")
             password = config.get("pulp", "password")
         except ConfigParser.NoSectionError:
-            logger.error("No [pulp] section found in Packages/packages.conf")
+            logger.error("Packages: No [pulp] section found in Packages/packages.conf")
             raise Bcfg2.Server.Plugin.PluginInitError
         except ConfigParser.NoOptionError:
             err = sys.exc_info()[1]
-            logger.error("Required option not found in "
+            logger.error("Packages: Required option not found in "
                          "Packages/packages.conf: %s" % err)
             raise Bcfg2.Server.Plugin.PluginInitError
         
@@ -366,10 +366,10 @@ class YumCollection(Collection):
             pass
         except socket.error:
             err = sys.exc_info()[1]
-            logger.error("Could not contact Pulp server: %s" % err)
+            logger.error("Packages: Could not contact Pulp server: %s" % err)
         except:
             err = sys.exc_info()[1]
-            logger.error("Unknown error querying Pulp server: %s" % err)
+            logger.error("Packages: Unknown error querying Pulp server: %s" % err)
         return consumer
 
     def _add_gpg_instances(self, keyentry, keydata, localkey, remotekey):
@@ -387,7 +387,7 @@ class YumCollection(Collection):
                                       simplefile=remotekey)
             except ValueError:
                 err = sys.exc_info()[1]
-                self.logger.error("Could not read GPG key %s: %s" %
+                self.logger.error("Packages: Could not read GPG key %s: %s" %
                                   (localkey, err))
 
     def is_package(self, package):
@@ -497,7 +497,7 @@ class YumCollection(Collection):
 
     def get_group(self, group):
         if not self.use_yum:
-            self.logger.warning("Package groups are not supported by Bcfg2's "
+            self.logger.warning("Packages: Package groups are not supported by Bcfg2's "
                                 "internal Yum dependency generator")
             return []
 
@@ -719,23 +719,23 @@ class YumSource(Source):
             except server.ServerRequestError:
                 err = sys.exc_info()[1]
                 if err[0] == 401:
-                    msg = "Error authenticating to Pulp: %s" % err[1]
+                    msg = "Packages: Error authenticating to Pulp: %s" % err[1]
                 elif err[0] == 404:
-                    msg = "Pulp repo id %s not found: %s" % (self.pulp_id,
+                    msg = "Packages: Pulp repo id %s not found: %s" % (self.pulp_id,
                                                              err[1])
                 else:
-                    msg = "Error %d fetching pulp repo %s: %s" % (err[0],
+                    msg = "Packages: Error %d fetching pulp repo %s: %s" % (err[0],
                                                                   self.pulp_id,
                                                                   err[1])
                 logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginInitError
             except socket.error:
                 err = sys.exc_info()[1]
-                logger.error("Could not contact Pulp server: %s" % err)
+                logger.error("Packages: Could not contact Pulp server: %s" % err)
                 raise Bcfg2.Server.Plugin.PluginInitError
             except:
                 err = sys.exc_info()[1]
-                logger.error("Unknown error querying Pulp server: %s" % err)
+                logger.error("Packages: Unknown error querying Pulp server: %s" % err)
                 raise Bcfg2.Server.Plugin.PluginInitError
             self.rawurl = "%s/%s" % (PULPCONFIG.cds['baseurl'],
                                      self.repo['relative_path'])
@@ -851,7 +851,7 @@ class YumSource(Source):
         try:
             self.packages['global'] = copy.deepcopy(sdata.pop())
         except IndexError:
-            logger.error("No packages in repo")
+            logger.error("Packages: No packages in repo")
         while sdata:
             self.packages['global'] = \
                 self.packages['global'].intersection(sdata.pop())

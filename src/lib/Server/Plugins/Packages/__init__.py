@@ -140,7 +140,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     base.update(collection.get_group(pkg.get("group")))
                     to_remove.append(pkg)
                 else:
-                    self.logger.error("Malformed Package: %s" %
+                    self.logger.error("Packages: Malformed Package: %s" %
                                       lxml.etree.tostring(pkg))
         base.update(initial)
         for el in to_remove:
@@ -148,10 +148,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         packages, unknown = collection.complete(base)
         if unknown:
-            self.logger.info("Got %d unknown entries" % len(unknown))
-            self.logger.info(list(unknown))
+            self.logger.info("Packages: Got %d unknown entries" % len(unknown))
+            self.logger.info("Packages: %s" % list(unknown))
         newpkgs = list(packages.difference(initial))
-        self.logger.debug("%d initial, %d complete, %d new" %
+        self.logger.debug("Packages: %d initial, %d complete, %d new" %
                           (len(initial), len(packages), len(newpkgs)))
         newpkgs.sort()
         for pkg in newpkgs:
@@ -221,7 +221,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
                     not os.path.exists(localfile)):
-                    self.logger.info("Downloading and parsing %s" % key)
+                    self.logger.info("Packages: Downloading and parsing %s" % key)
                     response = urlopen(key)
                     open(localfile, 'w').write(response.read())
                     keys.append(key)

@@ -48,7 +48,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         sources.xml """
         stype = xsource.get("type")
         if stype is None:
-            logger.error("No type specified for source, skipping")
+            logger.error("Packages: No type specified for source, skipping")
             return None
 
         try:
@@ -57,7 +57,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                              stype.title())
             cls = getattr(module, "%sSource" % stype.title())
         except (ImportError, AttributeError):
-            logger.error("Unknown source type %s" % stype)
+            logger.error("Packages: Unknown source type %s" % stype)
             return None
 
         return cls(self.cachepath, xsource, self.config)

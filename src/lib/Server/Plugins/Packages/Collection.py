@@ -35,7 +35,7 @@ class Collection(object):
         return md5(self.get_config()).hexdigest()
 
     def get_config(self):
-        self.logger.error("Cannot generate config for host with multiple "
+        self.logger.error("Packages: Cannot generate config for host with multiple "
                           "source types (%s)" % self.metadata.hostname)
         return ""
 
@@ -64,7 +64,7 @@ class Collection(object):
             pkgs = source.get_group(self.metadata, group)
             if pkgs:
                 return pkgs
-        self.logger.warning("'%s' is not a valid group" % group)
+        self.logger.warning("Packages: '%s' is not a valid group" % group)
         return []
 
     def is_package(self, package):
@@ -305,11 +305,11 @@ def factory(metadata, sources, basepath):
     ckey = tuple(sorted(list(ckeydata)))
     if ckey not in collections:
         if len(sclasses) > 1:
-            logger.warning("Multiple source types found for %s: %s" %
+            logger.warning("Packages: Multiple source types found for %s: %s" %
                            ",".join([s.__name__ for s in sclasses]))
             cclass = Collection
         elif len(sclasses) == 0:
-            logger.warning("No sources found for %s" % metadata.hostname)
+            logger.warning("Packages: No sources found for %s" % metadata.hostname)
             cclass = Collection
         else:
             stype = sclasses.pop().__name__.replace("Source", "")
@@ -320,12 +320,12 @@ def factory(metadata, sources, basepath):
                             stype.title())
                 cclass = getattr(module, "%sCollection" % stype.title())
             except ImportError:
-                logger.error("Unknown source type %s" % stype)
+                logger.error("Packages: Unknown source type %s" % stype)
             except AttributeError:
-                logger.warning("No collection class found for %s sources" %
+                logger.warning("Packages: No collection class found for %s sources" %
                                stype)
         
-        logger.debug("Using %s for Collection of sources for %s" %
+        logger.debug("Packages: Using %s for Collection of sources for %s" %
                      (cclass.__name__, metadata.hostname))
 
         collection = cclass(metadata, relevant, basepath)
