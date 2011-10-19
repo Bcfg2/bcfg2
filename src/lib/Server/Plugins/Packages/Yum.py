@@ -9,10 +9,12 @@ import logging
 import threading
 import lxml.etree
 from UserDict import DictMixin
+from subprocess import Popen, PIPE, STDOUT
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, ConfigParser, file
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
-from Bcfg2.Server.Plugins.Packages.Source import Source, fetch_url
+from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
+     fetch_url
 
 logger = logging.getLogger("Packages")
 
@@ -33,6 +35,11 @@ except ImportError:
     logger.info("Packages: No yum libraries found; forcing use of internal dependency "
                 "resolver")
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 XP = '{http://linux.duke.edu/metadata/common}'
 RP = '{http://linux.duke.edu/metadata/rpm}'
 RPO = '{http://linux.duke.edu/metadata/repo}'
@@ -40,6 +47,11 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 
 PULPSERVER = None
 PULPCONFIG = None
+
+# dict of Cache objects that is keyed off of the set of source urls
+# that apply to each Collection
+CACHES = dict()
+
 
 def _setup_pulp(config):
     global PULPSERVER, PULPCONFIG
@@ -85,6 +97,9 @@ class CacheItem(object):
         else:
             return False
 
+    def __str__(self):
+        return str(self.value)
+
 
 class Cache(DictMixin):
     def __init__(self, expiration=None, tidy=None):
@@ -119,7 +134,7 @@ class Cache(DictMixin):
         del self.cache[key]
     
     def __contains__(self, key):
-        self.expire(key)
+        self._expire(key)
         return key in self.cache
     
     def keys(self):
@@ -162,7 +177,12 @@ class Cache(DictMixin):
 
 
 class YumCollection(Collection):
+    # options that are included in the [yum] section but that should
+    # not be included in the temporary yum.conf we write out
+    option_blacklist = ["use_yum_libraries", "helper"]
+    
     def __init__(self, metadata, sources, basepath):
+        global CACHES
         Collection.__init__(self, metadata, sources, basepath)
         self.keypath = os.path.join(self.basepath, "keys")
 
@@ -177,7 +197,6 @@ class YumCollection(Collection):
             self.use_yum = False
 
         if self.use_yum:
-            self._yb = None
             self.cachefile = os.path.join(self.cachepath,
                                          "cache-%s" % self.cachekey)
             if not os.path.exists(self.cachefile):
@@ -188,69 +207,52 @@ class YumCollection(Collection):
                 os.mkdir(self.configdir)
             self.cfgfile = os.path.join(self.configdir,
                                         "%s-yum.conf" % self.cachekey)
-            if self.config.has_option("yum", "metadata_expire"):
+            self.write_config()
+
+            # in order for use_yum to be true, there must be a [yum]
+            # section in the config file, so we don't have to check
+            # for NoSectionError here
+            try:
                 cache_expire = self.config.getint("yum", "metadata_expire")
-            else:
+            except ConfigParser.NoOptionError:
                 cache_expire = 21600
+
+            try:
+                self.helper = self.config.get("yum", "helper")
+            except ConfigParser.NoOptionError:
+                self.helper = "/usr/sbin/bcfg2-yum-helper"
             
-            self.pkgs_cache = Cache(expiration=cache_expire)
-            self.deps_cache = Cache(expiration=cache_expire)
-            self.vpkgs_cache = Cache(expiration=cache_expire)
-            self.group_cache = Cache(expiration=cache_expire)
-            self.pkgset_cache = Cache(expiration=cache_expire)
+            ckeydata = set()
+            for source in sources:
+                ckeydata.update(source.urls)
+            cachekey = tuple(sorted(list(ckeydata)))
+            if cachekey not in CACHES:
+                CACHES[cachekey] = Cache(expiration=cache_expire)
+            self.cache = CACHES[cachekey]
 
         if has_pulp:
             _setup_pulp(self.config)
 
-    @property
-    def yumbase(self):
-        """ if we try to access a Yum SQLitePackageSack object in a
-        different thread from the one it was created in, we get a
-        nasty error.  but I can't find a way to detect when a new
-        thread is started (which happens for every new client
-        connection, I think), so this property creates a new YumBase
-        object if the old YumBase object was created in a different
-        thread than the current one.  (I definitely don't want to
-        create a new YumBase object every time it's used, because that
-        involves writing a temp file, at least for now.) """
-        if not self.use_yum:
-            self._yb = None
-            self._yb_thread = None
-        elif (self._yb is None or
-              self._yb_thread != threading.current_thread().ident):
-            self._yb = yum.YumBase()
-            self._yb_thread = threading.current_thread().ident
-
-            if not os.path.exists(self.cfgfile):
-                # todo: detect yum version.  Supposedly very new
-                # versions of yum have better support for
-                # reconfiguring on the fly using the RepoStorage API
-                yumconf = self.get_config(raw=True)
-                yumconf.add_section("main")
+    def write_config(self):
+        if not os.path.exists(self.cfgfile):
+            yumconf = self.get_config(raw=True)
+            yumconf.add_section("main")
             
-                mainopts = dict(cachedir=self.cachefile,
-                                keepcache="0",
-                                sslverify="0",
-                                reposdir="/dev/null")
-                try:
-                    for opt in self.config.options("yum"):
-                        if opt != "use_yum_libraries":
-                            mainopts[opt] = self.config.get("yum", opt)
-                except ConfigParser.NoSectionError:
-                    pass
+            mainopts = dict(cachedir=self.cachefile,
+                            keepcache="0",
+                            sslverify="0",
+                            reposdir="/dev/null")
+            try:
+                for opt in self.config.options("yum"):
+                    if opt not in self.option_blacklist:
+                        mainopts[opt] = self.config.get("yum", opt)
+            except ConfigParser.NoSectionError:
+                pass
 
-                for opt, val in list(mainopts.items()):
-                    yumconf.set("main", opt, val)
+            for opt, val in list(mainopts.items()):
+                yumconf.set("main", opt, val)
 
-                yumconf.write(open(self.cfgfile, 'w'))
-
-            # it'd be nice if we could change this to be more verbose
-            # if -v was given, but Collection objects don't get setup.
-            # It'd also be nice if we could tell yum to log to syslog,
-            # but so would a unicorn.
-            self._yb.preconf.debuglevel = 1
-            self._yb.preconf.fn = self.cfgfile
-        return self._yb
+            yumconf.write(open(self.cfgfile, 'w'))
 
     def get_config(self, raw=False):
         config = ConfigParser.SafeConfigParser()
@@ -393,107 +395,39 @@ class YumCollection(Collection):
     def is_package(self, package):
         if not self.use_yum:
             return Collection.is_package(self, package)
-
-        if isinstance(package, tuple):
+        elif isinstance(package, tuple):
             if package[1] is None and package[2] == (None, None, None):
                 package = package[0]
             else:
                 return None
-
-        try:
-            return self.pkgs_cache[package]
-        except KeyError:
-            pass
-
-        self.pkgs_cache[package] = bool(self.get_package_object(package,
-                                                                silent=True))
-        return self.pkgs_cache[package]
+        else:
+            # this should really never get called; it's just provided
+            # for API completeness
+            return self.call_helper("is_package", package)
 
     def is_virtual_package(self, package):
-        if self.use_yum:
-            try:
-                return bool(self.vpkgs_cache[package])
-            except KeyError:
-                return bool(self.get_provides(package, silent=True))
-        else:
+        if not self.use_yum:
             return Collection.is_virtual_package(self, package)
-
-    def get_package_object(self, package, silent=False):
-        """ package objects cannot be cached since they are sqlite
-        objects, so they can't be reused between threads. """
-        try:
-            matches = self.yumbase.pkgSack.returnNewestByName(name=package)
-        except yum.Errors.PackageSackError:
-            if not silent:
-                self.logger.warning("Packages: Package '%s' not found" %
-                                    self.get_package_name(package))
-            matches = []
-        except yum.Errors.RepoError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Temporary failure loading metadata "
-                              "for '%s': %s" %
-                              (self.get_package_name(package), err))
-            matches = []
-
-        pkgs = self._filter_arch(matches)
-        if pkgs:
-            return pkgs[0]
         else:
-            return None
+            # this should really never get called; it's just provided
+            # for API completeness
+            return self.call_helper("is_virtual_package", package)
 
     def get_deps(self, package):
         if not self.use_yum:
             return Collection.get_deps(self, package)
-
-        try:
-            return self.deps_cache[package]
-        except KeyError:
-            pass
-
-        pkg = self.get_package_object(package)
-        deps = []
-        if pkg:
-            deps = set(pkg.requires)
-            # filter out things the package itself provides
-            deps.difference_update([dep for dep in deps
-                                        if pkg.checkPrco('provides', dep)])
         else:
-            self.logger.error("Packages: No package available: %s" %
-                              self.get_package_name(package))
-        self.deps_cache[package] = deps
-        return self.deps_cache[package]
+            # this should really never get called; it's just provided
+            # for API completeness
+            return self.call_helper("get_deps", package)
 
     def get_provides(self, required, all=False, silent=False):
         if not self.use_yum:
             return Collection.get_provides(self, package)
-
-        if not isinstance(required, tuple):
-            required = (required, None, (None, None, None))
-
-        try:
-            return self.vpkgs_cache[required]
-        except KeyError:
-            pass
-        
-        try:
-            prov = \
-                self.yumbase.whatProvides(*required).returnNewestByNameArch()
-        except yum.Errors.NoMoreMirrorsRepoError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Temporary failure loading metadata "
-                              "for '%s': %s" %
-                              (self.get_package_name(required),
-                               err))
-            self.vpkgs_cache[required] = None
-            return []
-
-        if prov and not all:
-            prov = self._filter_provides(required, prov)
-        elif not prov and not silent:
-            self.logger.error("Packages: No package provides %s" %
-                              self.get_package_name(required))
-        self.vpkgs_cache[required] = prov
-        return self.vpkgs_cache[required]
+        else:
+            # this should really never get called; it's just provided
+            # for API completeness
+            return self.call_helper("get_provides", package)
 
     def get_group(self, group):
         if not self.use_yum:
@@ -504,69 +438,16 @@ class YumCollection(Collection):
         if group.startswith("@"):
             group = group[1:]
 
+        cachekey = "group:%s" % group
         try:
-            return self.group_cache[group]
+            return self.cache[cachekey]
         except KeyError:
             pass
         
-        try:
-            if self.yumbase.comps.has_group(group):
-                pkgs = self.yumbase.comps.return_group(group).packages
-            else:
-                self.logger.warning("Packages: '%s' is not a valid group" %
-                                    group)
-                pkgs = []
-        except yum.Errors.GroupsError:
-            err = sys.exc_info()[1]
-            self.logger.warning("Packages: %s" % err)
-            pkgs = []
-
-        self.group_cache[group] = pkgs
-        return self.group_cache[group]
-
-    def _filter_provides(self, package, providers):
-        providers = [pkg for pkg in self._filter_arch(providers)]
-        if len(providers) > 1:
-            # go through each provider and make sure it's the newest
-            # package of its name available.  If we have multiple
-            # providers, avoid installing old packages.
-            #
-            # For instance: on Fedora 14,
-            # perl-Sub-WrapPackages-2.0-2.fc14 erroneously provided
-            # perl(lib), which should not have been provided;
-            # perl(lib) is provided by the "perl" package.  The bogus
-            # provide was removed in perl-Sub-WrapPackages-2.0-4.fc14,
-            # but if we just queried to resolve the "perl(lib)"
-            # dependency, we'd get both packages.  By performing this
-            # check, we learn that there's a newer
-            # perl-Sub-WrapPackages available, so it can't be the best
-            # provider of perl(lib).
-            rv = []
-            for pkg in providers:
-                if self.get_package_object(pkg.name) == pkg:
-                    rv.append(pkg)
-        else:
-            rv = providers
-        return [p.name for p in rv]
-
-    def _filter_arch(self, packages):
-        groups = set(list(self.get_relevant_groups()) + ["noarch"])
-        matching = [pkg for pkg in packages if pkg.arch in groups]
-        if matching:
-            return matching
-        else:
-            # no packages match architecture; we'll assume that the
-            # user knows what s/he is doing and this is a multiarch
-            # box.
-            return packages
-
-    def get_package_name(self, package):
-        """ get the name of a package or virtual package from the
-        internal representation used by this Collection class """
-        if self.use_yum and isinstance(package, tuple):
-            return yum.misc.prco_tuple_to_string(package)
-        else:
-            return str(package)
+        pkgs = self.call_helper("get_group", group)
+        if pkgs:
+            self.cache[cachekey] = pkgs
+        return pkgs
 
     def complete(self, packagelist):
         if not self.use_yum:
@@ -574,130 +455,76 @@ class YumCollection(Collection):
 
         cachekey = cPickle.dumps(sorted(packagelist))
         try:
-            packages = self.pkgset_cache[cachekey]
+            packages, unknown = self.cache[cachekey]
         except KeyError:
             packages = set()
+            unknown = set(packagelist)
 
-        pkgs = set(packagelist).difference(packages)    
-        requires = set()
-        satisfied = set()
-        unknown = set()
-        final_pass = False
+        if unknown:
+            result = \
+                self.call_helper("complete",
+                                 dict(packages=list(unknown),
+                                      groups=list(self.get_relevant_groups())))
+            if result and "packages" in result and "unknown" in result:
+                # we stringify every package because it gets returned
+                # in unicode; set.update() doesn't work if some
+                # elements are unicode and other are strings.  (I.e.,
+                # u'foo' and 'foo' get treated as unique elements.)
+                packages.update([str(p) for p in result['packages']])
+                unknown = set([str(p) for p in result['unknown']])
 
-        while requires or pkgs:
-            # infinite loop protection
-            start_reqs = len(requires)
-            
-            while pkgs:
-                package = pkgs.pop()
-                if package in packages:
-                    continue
-                
-                if not self.is_package(package):
-                    # try this package out as a requirement
-                    requires.add((package, None, (None, None, None)))
-                    continue
-
-                packages.add(package)
-                reqs = set(self.get_deps(package)).difference(satisfied)
-                if reqs:
-                    requires.update(reqs)
-
-            reqs_satisfied = set()
-            for req in requires:
-                if req in satisfied:
-                    reqs_satisfied.add(req)
-                    continue
-
-                if req[1] is None and self.is_package(req[0]):
-                    if req[0] not in packages:
-                        pkgs.add(req[0])
-                    reqs_satisfied.add(req)
-                    continue
-                    
-                self.logger.debug("Packages: Handling requirement '%s'" %
-                                  self.get_package_name(req))
-                providers = list(set(self.get_provides(req)))
-                if len(providers) > 1:
-                    # hopefully one of the providing packages is already
-                    # included
-                    best = [p for p in providers if p in packages]
-                    if best:
-                        providers = best
-                    else:
-                        # pick a provider whose name matches the requirement
-                        best = [p for p in providers if p == req[0]]
-                        if len(best) == 1:
-                            providers = best
-                        elif not final_pass:
-                            # found no "best" package, so defer
-                            providers = None
-                        # else: found no "best" package, but it's the
-                        # final pass, so include them all
-                
-                if providers:
-                    self.logger.debug("Packages: Requirement '%s' satisfied "
-                                      "by %s" %
-                                     (self.get_package_name(req),
-                                      ",".join([self.get_package_name(p)
-                                                for p in providers])))
-                    newpkgs = set(providers).difference(packages)
-                    if newpkgs:
-                        for package in newpkgs:
-                            if self.is_package(package):
-                                pkgs.add(package)
-                            else:
-                                unknown.add(package)
-                    reqs_satisfied.add(req)
-                elif providers is not None:
-                    # nothing provided this requirement at all
-                    unknown.add(req)
-                    reqs_satisfied.add(req)
-                # else, defer
-            requires.difference_update(reqs_satisfied)
-
-            # infinite loop protection
-            if len(requires) == start_reqs and len(pkgs) == 0:
-                final_pass = True
-
-            if final_pass and requires:
-                unknown.update(requires)
-                requires = set()
-
-        self.filter_unknown(unknown)
-        unknown = [self.get_package_name(p) for p in unknown]
-
-        # we do not cache unknown packages, since those are likely to
-        # be fixed
-        self.pkgset_cache[cachekey] = packages
-
+            self.filter_unknown(unknown)
+            self.cache[cachekey] = (packages, unknown)
+        
         return packages, unknown
+
+    def call_helper(self, command, input=None):
+        """ Make a call to bcfg2-yum-helper.  The yum libs have
+        horrific memory leaks, so apparently the right way to get
+        around that in long-running processes it to have a short-lived
+        helper.  No, seriously -- check out the yum-updatesd code.
+        It's pure madness. """
+        # it'd be nice if we could change this to be more verbose if
+        # -v was given to bcfg2-server, but Collection objects don't
+        # get the 'setup' variable, so we don't know how verbose
+        # bcfg2-server is.  It'd also be nice if we could tell yum to
+        # log to syslog.  So would a unicorn.
+        cmd = [self.helper, "-c", self.cfgfile, command]
+        self.logger.debug("Packages: running %s" % " ".join(cmd))
+        helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        if input:
+            idata = json.dumps(input)
+            (stdout, stderr) = helper.communicate(idata)
+        else:
+            (stdout, stderr) = helper.communicate()
+        rv = helper.wait()
+        if rv:
+            self.logger.error("Packages: error running bcfg2-yum-helper "
+                              "(returned %d): %s" % (rv, stderr))
+        try:
+            return json.loads(stdout)
+        except ValueError:
+            err = sys.exc_info()[1]
+            self.logger.error("Packages: error reading bcfg2-yum-helper "
+                              "output: %s" % err)
+            return None
 
     def setup_data(self, force_update=False):
         if not self.use_yum:
             return Collection.setup_data(self, force_update)
 
-        for cfile in glob.glob(os.path.join(self.configdir, "*-yum.conf")):
-            os.unlink(cfile)
-            self._yb = None
-        
-        self.pkgs_cache.clear()
-        self.deps_cache.clear()
-        self.vpkgs_cache.clear()
-        self.group_cache.clear()
-        self.pkgset_cache.clear()
-        
         if force_update:
-            for mdtype in ["Headers", "Packages", "Sqlite", "Metadata",
-                           "ExpireCache"]:
-                # for reasons that are entirely obvious, all of the
-                # yum API clean* methods return a tuple of 0 (zero,
-                # always zero) and a list containing a single message
-                # about how many files were deleted.  so useful.
-                # thanks, yum.
-                self.logger.info("Packages: %s" %
-                                 getattr(self.yumbase,
-                                         "clean%s" % mdtype)()[1][0])
+            # we call this twice: one to clean up data from the old
+            # config, and once to clean up data from the new config
+            self.call_helper("clean")
+
+        os.unlink(self.cfgfile)
+        self.write_config()
+        
+        self.cache.clear()
+
+        if force_update:
+            self.call_helper("clean")
 
 
 class YumSource(Source):
@@ -727,16 +554,14 @@ class YumSource(Source):
                     msg = "Packages: Error %d fetching pulp repo %s: %s" % (err[0],
                                                                   self.pulp_id,
                                                                   err[1])
-                logger.error(msg)
-                raise Bcfg2.Server.Plugin.PluginInitError
+                raise SourceInitError(msg)
             except socket.error:
                 err = sys.exc_info()[1]
-                logger.error("Packages: Could not contact Pulp server: %s" % err)
-                raise Bcfg2.Server.Plugin.PluginInitError
+                raise SourceInitError("Could not contact Pulp server: %s" % err)
             except:
                 err = sys.exc_info()[1]
-                logger.error("Packages: Unknown error querying Pulp server: %s" % err)
-                raise Bcfg2.Server.Plugin.PluginInitError
+                raise SourceInitError("Unknown error querying Pulp server: %s" %
+                                      err)
             self.rawurl = "%s/%s" % (PULPCONFIG.cds['baseurl'],
                                      self.repo['relative_path'])
             self.arches = [self.repo['arch']]

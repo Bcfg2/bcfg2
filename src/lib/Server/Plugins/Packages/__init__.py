@@ -13,7 +13,7 @@ from Bcfg2.Server.Plugins.Packages import Collection
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 from Bcfg2.Server.Plugins.Packages.PackagesConfig import PackagesConfig
 
-logger = logging.getLogger('Packages')            
+logger = logging.getLogger('Packages')
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,

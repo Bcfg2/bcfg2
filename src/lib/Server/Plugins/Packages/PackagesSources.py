@@ -3,9 +3,9 @@ import sys
 import lxml.etree
 import logging
 import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 logger = logging.getLogger("Packages")
-
 
 class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                       Bcfg2.Server.Plugin.StructFile):
@@ -30,7 +30,18 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             # create cache directory if needed
             os.makedirs(self.cachepath)
         self.pkg_obj = packages
+        self.parsed = set()
         self.loaded = False
+
+    def HandleEvent(self, event=None):
+        Bcfg2.Server.Plugin.SingleXMLFileBacked.HandleEvent(self, event=event)
+        if event.filename != self.name:
+            self.parsed.add(os.path.basename(event.filename))
+
+        if sorted(list(self.parsed)) == sorted(self.extras):
+            logger.info("Reloading Packages plugin")
+            self.pkg_obj.Reload()
+            self.loaded = True
 
     def Index(self):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
@@ -39,9 +50,6 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             source = self.source_from_xml(xsource)
             if source is not None:
                 self.entries.append(source)
-
-        self.pkg_obj.Reload()
-        self.loaded = True
 
     def source_from_xml(self, xsource):
         """ create a *Source object from its XML representation in
@@ -60,7 +68,20 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             logger.error("Packages: Unknown source type %s" % stype)
             return None
 
-        return cls(self.cachepath, xsource, self.config)
+        try:
+            source = cls(self.cachepath, xsource, self.config)
+        except SourceInitError:
+            err = sys.exc_info()[1]
+            logger.error("Packages: %s" % err)
+            source = None
+
+        return source
 
     def __getitem__(self, key):
         return self.entries[key]
+
+    def __repr__(self):
+        return "PackagesSources: %s" % repr(self.entries)
+
+    def __str__(self):
+        return "PackagesSources: %s" % str(self.entries)

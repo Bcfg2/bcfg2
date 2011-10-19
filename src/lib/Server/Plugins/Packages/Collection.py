@@ -8,6 +8,16 @@ except ImportError:
 
 logger = logging.getLogger("Packages")
 
+# we have to cache Collection objects so that calling Packages.Refresh
+# or .Reload can tell the collection objects to clean up their cache,
+# but we don't actually use the cache to return a Collection object
+# when one is requested, because that prevents new machines from
+# working, since a Collection object gets created by
+# get_additional_data(), which is called for all clients at server
+# startup.  (It would also prevent machines that change groups from
+# working properly; e.g., if you reinstall a machine with a new OS,
+# then returning a cached Collection object would give the wrong
+# sources to that client.)
 collections = dict()
 
 class Collection(object):
@@ -35,8 +45,8 @@ class Collection(object):
         return md5(self.get_config()).hexdigest()
 
     def get_config(self):
-        self.logger.error("Packages: Cannot generate config for host with multiple "
-                          "source types (%s)" % self.metadata.hostname)
+        self.logger.error("Packages: Cannot generate config for host with "
+                          "multiple source types (%s)" % self.metadata.hostname)
         return ""
 
     def get_relevant_groups(self):
@@ -285,51 +295,50 @@ def factory(metadata, sources, basepath):
 
     if not sources.loaded:
         # if sources.xml has not received a FAM event yet, defer;
-        # instantiate a dummy Collection object, but do not cache it
-        # in collections
+        # instantiate a dummy Collection object
         return Collection(metadata, [], basepath)
         
     sclasses = set()
     relevant = list()
-        
+
     for source in sources:
         if source.applies(metadata):
             relevant.append(source)
             sclasses.update([source.__class__])
 
-    # collections is a cache dict of Collection objects that is keyed
-    # off of the set of source urls that apply to each Collection
-    ckeydata = set()
-    for source in relevant:
-        ckeydata.update(source.urls)
-    ckey = tuple(sorted(list(ckeydata)))
-    if ckey not in collections:
-        if len(sclasses) > 1:
-            logger.warning("Packages: Multiple source types found for %s: %s" %
-                           ",".join([s.__name__ for s in sclasses]))
-            cclass = Collection
-        elif len(sclasses) == 0:
-            logger.warning("Packages: No sources found for %s" % metadata.hostname)
-            cclass = Collection
-        else:
-            stype = sclasses.pop().__name__.replace("Source", "")
-            try:
-                module = \
-                    getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
-                                       stype.title()).Server.Plugins.Packages,
-                            stype.title())
-                cclass = getattr(module, "%sCollection" % stype.title())
-            except ImportError:
-                logger.error("Packages: Unknown source type %s" % stype)
-            except AttributeError:
-                logger.warning("Packages: No collection class found for %s sources" %
-                               stype)
-        
-        logger.debug("Packages: Using %s for Collection of sources for %s" %
-                     (cclass.__name__, metadata.hostname))
+    if len(sclasses) > 1:
+        logger.warning("Packages: Multiple source types found for %s: %s" %
+                       ",".join([s.__name__ for s in sclasses]))
+        cclass = Collection
+    elif len(sclasses) == 0:
+        # you'd think this should be a warning, but it happens all the
+        # freaking time if you have a) machines in your clients.xml
+        # that do not have the proper groups set up yet (e.g., if you
+        # have multiple Bcfg2 servers and Packages-relevant groups set
+        # by probes); and b) templates that query all or multiple
+        # machines (e.g., with metadata.query.all_clients())
+        logger.debug("Packages: No sources found for %s" % metadata.hostname)
+        cclass = Collection
+    else:
+        stype = sclasses.pop().__name__.replace("Source", "")
+        try:
+            module = \
+                getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
+                                   stype.title()).Server.Plugins.Packages,
+                        stype.title())
+            cclass = getattr(module, "%sCollection" % stype.title())
+        except ImportError:
+            logger.error("Packages: Unknown source type %s" % stype)
+        except AttributeError:
+            logger.warning("Packages: No collection class found for %s sources"
+                           % stype)
 
-        collection = cclass(metadata, relevant, basepath)
-        # reverse so that file order determines precedence
-        collection.reverse()
-        collections[ckey] = collection
-    return collections[ckey]
+    logger.debug("Packages: Using %s for Collection of sources for %s" %
+                 (cclass.__name__, metadata.hostname))
+
+    collection = cclass(metadata, relevant, basepath)
+    # reverse so that file order determines precedence
+    collection.reverse()
+    collections[metadata.hostname] = collection
+    return collection
+

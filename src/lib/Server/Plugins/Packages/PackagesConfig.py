@@ -25,4 +25,9 @@ class PackagesConfig(Bcfg2.Server.Plugin.FileBacked,
         for section in self.sections():
             self.remove_section(section)
         self.read(self.name)
-        self.pkg_obj.Reload()
+        if self.pkg_obj.sources.loaded:
+            # only reload Packages plugin if sources have been loaded.
+            # otherwise, this is getting called on server startup, and
+            # we have to wait until all sources have been indexed
+            # before we can call Packages.Reload()
+            self.pkg_obj.Reload()

@@ -28,6 +28,10 @@ def fetch_url(url):
     return urlopen(url).read()
 
 
+class SourceInitError(Exception):
+    pass
+
+
 class Source(object):
     reponame_re = re.compile(r'.*/(?:RPMS\.)?([^/]+)')
     basegroups = []

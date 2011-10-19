@@ -240,6 +240,7 @@ fi
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-server
+%{_sbindir}/bcfg2-yum-helper
 
 %{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*

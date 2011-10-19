@@ -344,8 +344,11 @@ be validated using ``bcfg2-lint``.
 Limitations
 ===========
 
-Packages does not do traditional caching as other plugins do. Changes
-to the Packages config file require a server restart for the time being.
+Packages does not do traditional caching as other plugins
+do. Modifying sources in the Packages ``sources.xml`` file requires a
+server restart for the time being.  You do not have to restart the
+server after changing ``packages.conf`` or after adding new sources to
+``sources.xml``.
 
 Package Checking and Verification
 =================================
@@ -415,15 +418,33 @@ Drawbacks include:
   if you have a lot of repositories.
 * Resolution of package dependencies is slower in some cases,
   particularly after running ``Packages.Refresh``.
+* If you have a very large number of clients using a very small number
+  of repositories, using native yum libraries may actually increase
+  memory usage.
+
+Configuring the Yum Helper
+--------------------------
+
+Due to poor memory management by the Yum API, the long-lived
+bcfg2-server process uses an external short-lived helper,
+``bcfg2-yum-helper``, to do the actual Yum API calls for native yum
+library support.  By default, Bcfg2 looks for this helper at
+``/usr/sbin/bcfg2-yum-helper``.  If you have installed the helper
+elsewhere, you will need to configure that location with the
+``helper`` option in the ``[yum]`` section, e.g.::
+
+    [yum]
+    use_yum_libraries = 1
+    helper = /usr/local/sbin/bcfg2-yum-helper
 
 Setting Yum Options
 -------------------
 
 In ``Packages/packages.conf``, any options you set in the ``[yum]``
-section other than ``use_yum_libraries`` will be passed along verbatim
-to the configuration of the Yum objects used in the Bcfg2 server.  The
-following options are set by default, and should not generally be
-overridden:
+section other than ``use_yum_libraries`` and ``helper`` will be passed
+along verbatim to the configuration of the Yum objects used in the
+Bcfg2 server.  The following options are set by default, and should
+not generally be overridden:
 
 * ``cachedir`` is set to a hashed value unique to each distinct Yum
   configuration.  Don't set this unless you know what you're doing.
@@ -466,7 +487,7 @@ necessary to configure a Pulp repo is the repo ID::
 
 Pulp sources require some additional configuration.  First, the Bcfg2
 server must have a valid ``/etc/pulp/consumer/consumer.conf`` that is
-readable by the user your Bcfg2 server runs as; the Pulp server ,
+readable by the user your Bcfg2 server runs as; the Pulp server,
 URLs, and so on, are determined from this.
 
 Secondly, in ``Packages/packages.conf`` you must set the following
