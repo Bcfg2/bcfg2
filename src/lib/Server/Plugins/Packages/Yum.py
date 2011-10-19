@@ -491,7 +491,14 @@ class YumCollection(Collection):
         # log to syslog.  So would a unicorn.
         cmd = [self.helper, "-c", self.cfgfile, command]
         self.logger.debug("Packages: running %s" % " ".join(cmd))
-        helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        try:
+            helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        except OSError:
+            err = sys.exc_info()[1]
+            self.logger.error("Packages: Failed to execute %s: %s" %
+                              (" ".join(cmd), err))
+            return None
+        
         if input:
             idata = json.dumps(input)
             (stdout, stderr) = helper.communicate(idata)
