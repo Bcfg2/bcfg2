@@ -612,7 +612,6 @@ class StructFile(XMLFileBacked):
     
     def __init__(self, name):
         XMLFileBacked.__init__(self, name)
-        self.matches = {}
 
     def _match(self, item, metadata):
         """ recursive helper for Match() """
@@ -646,13 +645,10 @@ class StructFile(XMLFileBacked):
             
     def Match(self, metadata):
         """Return matching fragments of independent."""
-        if metadata.hostname not in self.matches:
-            rv = []
-            for child in self.entries:
-                rv.extend(self._match(child, metadata))
-            logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
-            self.matches[metadata.hostname] = rv
-        return self.matches[metadata.hostname]
+        rv = []
+        for child in self.entries:
+            rv.extend(self._match(child, metadata))
+        return rv
 
 
 class INode:
