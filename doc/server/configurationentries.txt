@@ -87,6 +87,8 @@ Path type specified.
 +-------------+----------------------+-----------------+--------------------------+
 | file        | Replaces ConfigFile  | Configuration   | name, owner, group,      |
 |             | entries              | File            | perms, encoding, empty   |
+|             |                      |                 |                          |
+|             |                      |                 | **Note:** see below      |
 +-------------+----------------------+-----------------+--------------------------+
 | hardlink    | New                  | Create          | name, to                 |
 |             |                      | hardlinks       |                          |
