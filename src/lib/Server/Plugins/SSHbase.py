@@ -26,9 +26,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
          (hostname)
        ssh_host_key.pub.H_(hostname) -> the v1 host public key
          for (hostname)
-       ssh_host_(dr)sa_key.H_(hostname) -> the v2 ssh host
+       ssh_host_(ec)(dr)sa_key.H_(hostname) -> the v2 ssh host
          private key for (hostname)
-       ssh_host_(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
+       ssh_host_(ec)(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
          public key for (hostname)
        ssh_known_hosts -> the current known hosts file. this
          is regenerated each time a new key is generated.
@@ -39,15 +39,18 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     pubkeys = ["ssh_host_dsa_key.pub.H_%s",
+               "ssh_host_ecdsa_key.pub.H_%s",
                "ssh_host_rsa_key.pub.H_%s",
                "ssh_host_key.pub.H_%s"]
     hostkeys = ["ssh_host_dsa_key.H_%s",
                 "ssh_host_rsa_key.H_%s",
                 "ssh_host_key.H_%s"]
     keypatterns = ["ssh_host_dsa_key",
+                   "ssh_host_ecdsa_key",
                    "ssh_host_rsa_key",
                    "ssh_host_key",
                    "ssh_host_dsa_key.pub",
+                   "ssh_host_ecdsa_key.pub",
                    "ssh_host_rsa_key.pub",
                    "ssh_host_key.pub"]
 
@@ -67,8 +70,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         self.Entries = {'Path':
                         {'/etc/ssh/ssh_known_hosts': self.build_skn,
                          '/etc/ssh/ssh_host_dsa_key': self.build_hk,
+                         '/etc/ssh/ssh_host_ecdsa_key': self.build_hk,
                          '/etc/ssh/ssh_host_rsa_key': self.build_hk,
                          '/etc/ssh/ssh_host_dsa_key.pub': self.build_hk,
+                         '/etc/ssh/ssh_host_ecdsa_key.pub': self.build_hk,
                          '/etc/ssh/ssh_host_rsa_key.pub': self.build_hk,
                          '/etc/ssh/ssh_host_key': self.build_hk,
                          '/etc/ssh/ssh_host_key.pub': self.build_hk}}
@@ -263,6 +268,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         elif filename == 'ssh_host_dsa_key':
             hostkey = 'ssh_host_dsa_key.H_%s' % client
             keytype = 'dsa'
+        elif filename == 'ssh_host_ecdsa_key':
+            hostkey = 'ssh_host_ecdsa_key.H_%s' % client
+            keytype = 'ecdsa'
         elif filename == 'ssh_host_key':
             hostkey = 'ssh_host_key.H_%s' % client
             keytype = 'rsa1'
