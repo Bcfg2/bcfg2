@@ -48,7 +48,7 @@ self.metadata is an instance of the class ClientMetadata and documented
 :ref:`here <server-plugins-grouping-metadata-clientmetadata>`.
 
 self.metadata.Properties.xdata
-=============================
+==============================
 
 .. note::
 
