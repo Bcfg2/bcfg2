@@ -1,3 +1,4 @@
+import time
 import lxml.etree
 import operator
 import re
@@ -28,8 +29,17 @@ import Bcfg2.Server.Plugin
 specific_probe_matcher = re.compile("(.*/)?(?P<basename>\S+)(.(?P<mode>[GH](\d\d)?)_\S+)")
 probe_matcher = re.compile("(.*/)?(?P<basename>\S+)")
 
+class ClientProbeDataSet(dict):
+    """ dict of probe => [probe data] that records a for each host """
+    def __init__(self, *args, **kwargs):
+        if "timestamp" in kwargs and kwargs['timestamp'] is not None:
+            self.timestamp = kwargs.pop("timestamp")
+        else:
+            self.timestamp = time.time()
+        dict.__init__(self, *args, **kwargs)
 
-class ProbeData (object):
+
+class ProbeData(object):
     """ a ProbeData object emulates a str object, but also has .xdata
     and .json properties to provide convenient ways to use ProbeData
     objects as XML or JSON data """
@@ -183,7 +193,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         """Write probe data out for use with bcfg2-info."""
         top = lxml.etree.Element("Probed")
         for client, probed in sorted(self.probedata.items()):
-            cx = lxml.etree.SubElement(top, 'Client', name=client)
+            cx = lxml.etree.SubElement(top, 'Client', name=client,
+                                       timestamp=str(int(probed.timestamp)))
             for probe in sorted(probed):
                 lxml.etree.SubElement(cx, 'Probe', name=probe,
                                       value=str(self.probedata[client][probe]))
@@ -207,7 +218,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.probedata = {}
         self.cgroups = {}
         for client in data.getchildren():
-            self.probedata[client.get('name')] = {}
+            self.probedata[client.get('name')] = \
+                ClientProbeDataSet(timestamp=client.get("timestamp"))
             self.cgroups[client.get('name')] = []
             for pdata in client:
                 if (pdata.tag == 'Probe'):
@@ -222,7 +234,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
 
     def ReceiveData(self, client, datalist):
         self.cgroups[client.hostname] = []
-        self.probedata[client.hostname] = {}
+        self.probedata[client.hostname] = ClientProbeDataSet()
         for data in datalist:
             self.ReceiveDataItem(client, data)
         self.write_data()
@@ -239,7 +251,7 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                                                         ProbeData('')})
             except KeyError:
                 self.probedata[client.hostname] = \
-                    {data.get('name'): ProbeData('')}
+                    ClientProbeDataSet([(data.get('name'), ProbeData(''))])
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" % (client.hostname,
@@ -254,10 +266,11 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         try:
             self.probedata[client.hostname].update({data.get('name'): dobj})
         except KeyError:
-            self.probedata[client.hostname] = {data.get('name'): dobj}
+            self.probedata[client.hostname] = \
+                ClientProbeDataSet([(data.get('name'), dobj)])
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())
 
     def get_additional_data(self, meta):
-        return self.probedata.get(meta.hostname, dict())
+        return self.probedata.get(meta.hostname, ClientProbeDataSet())
