@@ -184,10 +184,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def _load_sources(self, force_update):
         """ Load sources from the config """
         self.sentinels = set()
-        cachefiles = []
+        cachefiles = set()
 
         for collection in list(Collection.collections.values()):
-            cachefiles.extend(collection.cachefiles)
+            cachefiles.update(collection.cachefiles)
             if not self.disableMetaData:
                 collection.setup_data(force_update)
             self.sentinels.update(collection.basegroups)
@@ -195,6 +195,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Collection.clear_cache()
 
         for source in self.sources:
+            cachefiles.add(source.cachefile)
             if not self.disableMetaData:
                 source.setup_data(force_update)
 
