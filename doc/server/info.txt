@@ -3,19 +3,18 @@
 .. NOTE: these are relative links (change when directory structure
 ..       changes)
 
-.. _Cfg: plugins/generators/cfg
-.. _TGenshi: plugins/generators/tgenshi
-.. _TCheetah: plugins/generators/tcheetah
-
 .. _server-info:
 
 ====
 Info
 ====
 
-Various file properties for entries served by the `Cfg`_, `TGenshi`_,
-and `TCheetah`_ plugins are controlled through the use of ``:info``,
-``info``, or ``info.xml`` files.
+Various file properties for entries served by the :ref:`Cfg
+<server-plugins-generators-cfg>`, :ref:`TGenshi
+<server-plugins-generators-tgenshi-index>`, :ref:`TCheetah
+<server-plugins-generators-tcheetah>`, and :ref:`SSHbase
+<server-plugins-generators-sshbase>` plugins are controlled through
+the use of ``:info``, ``info``, or ``info.xml`` files.
 
 By default, these plugins are set to write files to the filesystem with
 owner **root**, group **root**, and mode **644** (read and write for
@@ -82,6 +81,8 @@ specification.
 |            |                   | execution                        |         |
 +------------+-------------------+----------------------------------+---------+
 
+.. _server-info-info-xml:
+
 info.xml files
 ==============
 
@@ -94,9 +95,7 @@ files are XML, and work similarly to those used by :ref:`Rules
 
 The following specifies a different global set of permissions
 (root/sys/0651) than on clients in group webserver or named
-"foo.example.com" (root/root/0652).
-
-.. code-block:: xml
+"foo.example.com" (root/root/0652)::
 
     <FileInfo>
       <Client name='foo.example.com'>
@@ -108,10 +107,10 @@ The following specifies a different global set of permissions
       <Info owner='root' group='sys' perms='0651'/>
     </FileInfo>
 
-The following specifies a different set of permissions depending on
-the path of the file.
+.. versionadded:: 1.2.0
 
-.. code-block:: xml
+You can also use the ``<Path>`` directive to specify a different set
+of permissions depending on the path of the file::
 
     <FileInfo>
       <Path name="/etc/bcfg2-web.conf">

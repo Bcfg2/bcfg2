@@ -12,6 +12,7 @@ import stat
 import sys
 import tempfile
 from subprocess import Popen, PIPE
+from Bcfg2.Bcfg2Py3k import u_str
 
 import Bcfg2.Server.Plugin
 
@@ -31,14 +32,6 @@ except:
     have_cheetah = False
 
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
-
-
-# py3k compatibility
-def u_str(string, encoding):
-    if sys.hexversion >= 0x03000000:
-        return string.encode(encoding)
-    else:
-        return unicode(string, encoding)
 
 
 # snipped from TGenshi

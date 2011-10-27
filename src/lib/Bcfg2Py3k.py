@@ -63,11 +63,17 @@ except ImportError:
     import http.client as httplib
 
 # print to file compatibility
-def u_str(string):
+def u_str(string, encoding=None):
     if sys.hexversion >= 0x03000000:
-        return string
+        if encoding is not None:
+            return string.encode(encoding)
+        else:
+            return string
     else:
-        return unicode(string)
+        if encoding is not None:
+            return unicode(string, encoding)
+        else:
+            return unicode(string)
 
 """
 In order to use the new syntax for printing to a file, we need to do

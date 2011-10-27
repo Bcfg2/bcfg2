@@ -934,8 +934,28 @@ class EntrySet:
         self.specific = re.compile(pattern)
 
     def get_matching(self, metadata):
-        return [item for item in list(self.entries.values()) \
+        return [item for item in list(self.entries.values())
                 if item.specific.matches(metadata)]
+
+    def best_matching(self, metadata):
+        """ Return the appropriate interpreted template from the set of
+        available templates. """
+        matching = self.get_matching(metadata)
+
+        hspec = [ent for ent in matching if ent.specific.hostname]
+        if hspec:
+            return hspec[0]
+
+        gspec = [ent for ent in matching if ent.specific.group]
+        if gspec:
+            gspec.sort(self.group_sortfunc)
+            return gspec[-1]
+
+        aspec = [ent for ent in matching if ent.specific.all]
+        if aspec:
+            return aspec[0]
+
+        raise PluginExecutionError
 
     def handle_event(self, event):
         """Handle FAM events for the TemplateSet."""
@@ -1042,22 +1062,7 @@ class EntrySet:
     def bind_entry(self, entry, metadata):
         """Return the appropriate interpreted template from the set of available templates."""
         self.bind_info_to_entry(entry, metadata)
-        matching = self.get_matching(metadata)
-
-        hspec = [ent for ent in matching if ent.specific.hostname]
-        if hspec:
-            return hspec[0].bind_entry(entry, metadata)
-
-        gspec = [ent for ent in matching if ent.specific.group]
-        if gspec:
-            gspec.sort(self.group_sortfunc)
-            return gspec[-1].bind_entry(entry, metadata)
-
-        aspec = [ent for ent in matching if ent.specific.all]
-        if aspec:
-            return aspec[0].bind_entry(entry, metadata)
-
-        raise PluginExecutionError
+        return self.best_matching(metadata).bind_entry(entry, metadata)
 
 
 class GroupSpool(Plugin, Generator):

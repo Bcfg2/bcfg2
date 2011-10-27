@@ -8,7 +8,7 @@ SSHbase
 
 SSHbase is a purpose-built Bcfg2 plugin for managing ssh host keys. It
 is responsible for making ssh keys persist beyond a client rebuild and
-building a proper ``ssh_known_hosts file``, including a correct localhost
+building a proper ``ssh_known_hosts`` file, including a correct localhost
 record for the current system.
 
 It has two functions:
@@ -26,38 +26,65 @@ Interacting with SSHbase
 ========================
 
 * Pre-seeding with existing keys -- Currently existing keys will be
-  overwritten by new, sshbase-managed ones by default. Pre-existing keys
-  can be added to the repository by putting them in <repo>/SSHbase/<key
-  filename>.H_<hostname>
+  overwritten by new, sshbase-managed ones by default. Pre-existing
+  keys can be added to the repository by putting them in
+  ``<repo>/SSHbase/<key filename>.H_<hostname>``
 
-* Pre-seeding can also be performed using bcfg2-admin pull ConfigFile
-  /name/of/ssh/key
+* Pre-seeding can also be performed using ``bcfg2-admin pull
+  ConfigFile /name/of/ssh/key``
 
-* Revoking existing keys -- deleting <repo>/SSHbase/\*.H_<hostname>
-  will remove keys for an existing client.
+* Revoking existing keys -- deleting
+  ``<repo>/SSHbase/\*.H_<hostname>`` will remove keys for an existing
+  client.
 
 Aliases
 =======
 
-SSHbase has support for Aliases listed in clients.xml. The address for
-the entries are specified either through DNS (e.g. a CNAME), or via the
+SSHbase has support for Aliases listed in :ref:`clients.xml
+<server-plugins-grouping-metadata-clients-xml>`. The address for the
+entries are specified either through DNS (e.g. a CNAME), or via the
 address attribute to the Alias.
 
 Getting started
 ===============
 
 #. Add SSHbase to the **plugins** line in ``/etc/bcfg2.conf`` and
-   restart the server -- This enables the SSHbase plugin on the Bcfg2
+   restart the server. This enables the SSHbase plugin on the Bcfg2
    server.
 
-#. Add Path entries for ``/etc/ssh/ssh_known_hosts``, and
-   ``/etc/ssh/ssh_host_dsa_key``, etc to a bundle or base.
+#. Add Path entries for ``/etc/ssh/ssh_known_hosts``,
+   ``/etc/ssh/ssh_host_dsa_key``, ``/etc/ssh/ssh_host_dsa_key.pub``,
+   etc., to a bundle.
 
 #. Enjoy.
 
 At this point, SSHbase will generate new keys for any client without
 a recorded key in the repository, and will generate an
 ``ssh_known_hosts`` file appropriately.
+
+Supported key formats
+=====================
+
+SSHbase currently supports the following key formats:
+
+* RSA1 (``ssh_host_key``, ``ssh_host_key.pub``)
+* RSA2 (``ssh_host_rsa_key``, ``ssh_host_rsa_key.pub``)
+* DSA (``ssh_host_dsa_key``, ``ssh_host_dsa_key.pub``)
+* ECDSA (``ssh_host_ecdsa_key``, ``ssh_host_ecdsa_key.pub``)
+
+Group-specific keys
+===================
+
+.. versionadded:: 1.2.0
+
+In addition to host-specific keys, SSHbase also supports
+group-specific keys, e.g., for a high-availability cluster or similar
+application.  Group-specific keys must be pre-seeded; SSHbase cannot
+create group-specific keys itself.
+
+To use group-specific keys, simply create ``SSHbase/<key
+filename>.Gxx_<group name>``.  For instance,
+``ssh_host_dsa_key.pub.G65_foo-cluster``.
 
 Adding public keys for unmanaged hosts
 ======================================
@@ -81,6 +108,52 @@ The generated ``ssh_known_hosts`` file::
 
     TEST1
     TEST2
+
+Static ssh_known_hosts file
+===========================
+
+.. versionadded:: 1.2.0
+
+You can also distribute a fully static ``ssh_known_hosts`` file on a
+per-host or per-group basis by creating
+``SSHbase/ssh_known_hosts.H_<hostname>`` or
+``SSHbase/ssh_known_hosts.Gxx_<group name>``.  Those files will be
+entirely static; Bcfg2 will not add any host keys to them itself.
+
+Permissions and Metadata
+========================
+
+.. versionadded:: 1.2.0
+
+SSHbase supports use of an :ref:`info.xml <server-info-info-xml>` file
+to control the permissions and other metadata for the keys and
+``ssh_known_hosts`` file.  You can use the ``<Path>`` directive in
+``info.xml`` to change the metadata for different keys, e.g.::
+
+    <FileInfo>
+      <Path name="/etc/ssh/ssh_host_dsa_key">
+        <Info owner="root" group="wheel" perms="0660"/>
+      </Path>
+      <Path name="/etc/ssh/ssh_host_dsa_key.pub">
+        <Info owner="root" group="wheel" perms="0664"/>
+      </Path>
+    </FileInfo>
+
+Default permissions are as follows:
+
++----------------------------------+-------+-------+-------+-----------+----------+----------+
+| File                             | owner | group | perms | sensitive | paranoid | encoding |
++==================================+=======+=======+=======+===========+==========+==========+
+| ssh_known_hosts                  | root  | root  | 0644  | false     | false    | None     |
++----------------------------------+-------+-------+-------+-----------+----------+----------+
+| ssh_host_key                     | root  | root  | 0600  | true      | false    | base64   |
++----------------------------------+-------+-------+-------+-----------+----------+----------+
+| ssh_host_key.pub                 | root  | root  | 0644  | false     | false    | base64   |
++----------------------------------+-------+-------+-------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600  | true      | false    | None     |
++----------------------------------+-------+-------+-------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa]_key.pub | root  | root  | 0644  | false     | false    | None     |
++----------------------------------+-------+-------+-------+-----------+----------+----------+
 
 Blog post
 =========

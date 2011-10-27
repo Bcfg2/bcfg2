@@ -25,6 +25,8 @@ modified from clients through use of the ``-p`` flag to ``bcfg2``.
 Clients are associated with profile groups in ``Metadata/clients.xml`` as
 shown below.
 
+.. _server-plugins-grouping-metadata-clients-xml:
+
 Metadata/clients.xml
 ====================
 
