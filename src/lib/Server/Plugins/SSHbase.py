@@ -178,6 +178,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             for pubkey in pubkeys:
                 for entry in self.entries[pubkey].entries.values():
                     specific = entry.specific
+                    hostnames = []
                     if specific.hostname and specific.hostname in names:
                         hostnames = names[specific.hostname]
                     elif specific.group:
@@ -193,6 +194,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     if not hostnames:
                         self.logger.info("Unknown key %s, skipping" %
                                          entry.name)
+                        continue
                     
                     skn.append("%s %s" % (','.join(hostnames),
                                           entry.data.decode().rstrip()))
