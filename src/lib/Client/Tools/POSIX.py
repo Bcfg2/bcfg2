@@ -818,7 +818,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def _diff(self, content1, content2, difffunc, filename=None):
         rv = []
         start = time.time()
-        longtime = True
+        longtime = False
         for diffline in difffunc(content1.split('\n'),
                                  content2.split('\n')):
             now = time.time()
