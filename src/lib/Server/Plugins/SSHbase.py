@@ -305,7 +305,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             hostkeys.sort()
             for hostkey in hostkeys:
                 entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
-                    hostkey.data.decode().rstrip())
+                    hostkey.data.decode())
             self.entries[entry.get('name')].bind_info_to_entry(entry, metadata)
 
     def build_hk(self, entry, metadata):
