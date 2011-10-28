@@ -1,9 +1,6 @@
 """All POSIX Type client support for Bcfg2."""
 __revision__ = '$Revision$'
 
-from stat import S_ISVTX, S_ISGID, S_ISUID, S_IXUSR, S_IWUSR, S_IRUSR, S_IXGRP
-from stat import S_IWGRP, S_IRGRP, S_IXOTH, S_IWOTH, S_IROTH, ST_MODE, S_ISDIR
-from stat import S_IFREG, ST_UID, ST_GID, S_ISREG, S_IFDIR, S_ISLNK, ST_MTIME
 import binascii
 from datetime import datetime
 import difflib
@@ -34,10 +31,10 @@ device_map = {'block': stat.S_IFBLK,
 
 def calcPerms(initial, perms):
     """This compares ondisk permissions with specified ones."""
-    pdisp = [{1:S_ISVTX, 2:S_ISGID, 4:S_ISUID},
-             {1:S_IXUSR, 2:S_IWUSR, 4:S_IRUSR},
-             {1:S_IXGRP, 2:S_IWGRP, 4:S_IRGRP},
-             {1:S_IXOTH, 2:S_IWOTH, 4:S_IROTH}]
+    pdisp = [{1:stat.S_ISVTX, 2:stat.S_ISGID, 4:stat.S_ISUID},
+             {1:stat.S_IXUSR, 2:stat.S_IWUSR, 4:stat.S_IRUSR},
+             {1:stat.S_IXGRP, 2:stat.S_IWGRP, 4:stat.S_IRGRP},
+             {1:stat.S_IXOTH, 2:stat.S_IWOTH, 4:stat.S_IROTH}]
     tempperms = initial
     if len(perms) == 3:
         perms = '0%s' % (perms)
@@ -141,19 +138,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                   (entry.tag, entry.get('name')))
                 return False
             try:
-                entry.set('current_owner', str(ondisk[ST_UID]))
-                entry.set('current_group', str(ondisk[ST_GID]))
+                entry.set('current_owner', str(ondisk[stat.ST_UID]))
+                entry.set('current_group', str(ondisk[stat.ST_GID]))
             except (OSError, KeyError):
                 pass
-            entry.set('perms', str(oct(ondisk[ST_MODE])[-4:]))
-            try:
-                content = open(entry.get('name')).read()
-                if entry.get('sensitive') not in ['true', 'True']:
-                    entry.set('current_bfile', binascii.b2a_base64(content))
-            except IOError:
-                error = sys.exc_info()[1]
-                self.logger.error("Failed to read %s: %s" % (error.filename,
-                                                             error.strerror))
+            entry.set('perms', str(oct(ondisk[stat.ST_MODE])[-4:]))
 
     def Verifydevice(self, entry, _):
         """Verify device entry."""
@@ -283,17 +272,17 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                               (entry.tag, entry.get('name')))
             return False
         try:
-            owner = str(ondisk[ST_UID])
-            group = str(ondisk[ST_GID])
+            owner = str(ondisk[stat.ST_UID])
+            group = str(ondisk[stat.ST_GID])
         except (OSError, KeyError):
             self.logger.error('User/Group resolution failed for path %s' % \
                               entry.get('name'))
             owner = 'root'
             group = '0'
         finfo = os.stat(entry.get('name'))
-        perms = oct(finfo[ST_MODE])[-4:]
+        perms = oct(finfo[stat.ST_MODE])[-4:]
         if entry.get('mtime', '-1') != '-1':
-            mtime = str(finfo[ST_MTIME])
+            mtime = str(finfo[stat.ST_MTIME])
         else:
             mtime = '-1'
         pTrue = ((owner == str(normUid(entry))) and
@@ -385,7 +374,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         self.logger.info("Installing directory %s" % (entry.get('name')))
         try:
             fmode = os.lstat(entry.get('name'))
-            if not S_ISDIR(fmode[ST_MODE]):
+            if not stat.S_ISDIR(fmode[stat.ST_MODE]):
                 self.logger.debug("Found a non-directory entry at %s" % \
                                   (entry.get('name')))
                 try:
@@ -420,7 +409,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                 continue
                             except OSError:
                                 return False
-                        if not S_ISDIR(sloc[ST_MODE]):
+                        if not stat.S_ISDIR(sloc[stat.ST_MODE]):
                             try:
                                 os.unlink(current)
                                 os.mkdir(current)
@@ -456,16 +445,16 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # permissions check + content check
         permissionStatus = self.Verifydirectory(entry, _)
         tbin = False
+        if entry.text == None and entry.get('empty', 'false') == 'false':
+            self.logger.error("Cannot verify incomplete Path type='%s' %s" %
+                              (entry.get('type'), entry.get('name')))
+            return False
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = binascii.a2b_base64(entry.text)
             tbin = True
         elif entry.get('empty', 'false') == 'true':
             tempdata = ''
         else:
-            if entry.text == None:
-                self.logger.error("Cannot verify incomplete Path  type='%s' %s" % \
-                                  (entry.get('type'), entry.get('name')))
-                return False
             tempdata = entry.text
             if type(tempdata) == unicode:
                 try:
@@ -474,72 +463,104 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     e = sys.exc_info()[1]
                     self.logger.error("Error encoding file %s:\n %s" % \
                                       (entry.get('name'), e))
-        try:
-            content = open(entry.get('name')).read()
-        except IOError:
-            error = sys.exc_info()[1]
-            if error.strerror == "No such file or directory":
-                # print diff for files that don't exist (yet)
-                content = ''
-            else:
-                self.logger.error("Failed to read %s: %s" % \
-                                  (error.filename, error.strerror))
+
+        different = False
+        content = None
+        if not os.path.exists(entry.get("name")):
+            # first, see if the target file exists at all; if not,
+            # they're clearly different
+            different = True
+        else:
+            # next, see if the size of the target file is different
+            # from the size of the desired content
+            try:
+                estat = os.stat(entry.get('name'))
+            except OSError:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to stat %s: %s" %
+                                  (err.filename, err))
                 return False
-        # comparison should be done with fingerprints or
-        # md5sum so it would be faster for big binary files
-        contentStatus = content == tempdata
-        if not contentStatus:
-            if tbin or not isString(content, self.setup['encoding']):
-                if entry.get('sensitive') not in ['true', 'True']:
-                    entry.set('current_bfile', binascii.b2a_base64(content))
-                nqtext = entry.get('qtext', '')
-                nqtext += '\nBinary file, no printable diff'
+            if len(tempdata) != estat[stat.ST_SIZE]:
+                different = True
             else:
-                do_diff = True
-                rawdiff = []
-                start = time.time()
-                longtime = False
-                for x in difflib.ndiff(content.split('\n'),
-                                       tempdata.split('\n')):
-                    now = time.time()
-                    rawdiff.append(x)
-                    if now - start > 5 and not longtime:
-                        self.logger.info("Diff of %s taking a long time" % \
-                                         (entry.get('name')))
-                        longtime = True
-                    elif now - start > 30:
-                        self.logger.error("Diff of %s took too long; giving up" % \
-                                          (entry.get('name')))
-                        do_diff = False
-                        break
-                if do_diff:
-                    if entry.get('sensitive') not in ['true', 'True']:
-                        diff = '\n'.join(rawdiff)
-                        entry.set("current_bdiff", binascii.b2a_base64(diff))
-#                    entry.set("current_diff", diff)
-                    udiff = '\n'.join([x for x in \
-                                       difflib.unified_diff(content.split('\n'), \
-                                                            tempdata.split('\n'))])
+                # finally, read in the target file and compare them
+                # directly. comparison could be done with a checksum,
+                # which might be faster for big binary files, but
+                # slower for everything else
+                try:
+                    content = open(entry.get('name')).read()
+                except IOError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to read %s: %s" %
+                                      (err.filename, err))
+                    return False
+                different = content != tempdata
+        
+        if different:
+            if self.setup['interactive']:
+                prompt = [entry.get('qtext', '')]
+                if not tbin and content is None:
+                    # it's possible that we figured out the files are
+                    # different without reading in the local file.  if
+                    # the supplied version of the file is not binary,
+                    # we now have to read in the local file to figure
+                    # out if _it_ is binary, and either include that
+                    # fact or the diff in our prompts for -I
                     try:
-                        dudiff = udiff.decode(self.setup['encoding'])
-                    except:
-                        dudiff = "Binary file: no diff printed"
-
-                    nqtext = entry.get('qtext', '')
-
-                    if nqtext:
-                        nqtext += '\n'
-                    nqtext += dudiff
+                        content = open(entry.get('name')).read()
+                    except IOError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Failed to read %s: %s" %
+                                          (err.filename, err))
+                        return False
+                if tbin or not isString(content, self.setup['encoding']):
+                    # don't compute diffs if the file is binary
+                    prompt.append('Binary file, no printable diff')
                 else:
-                    if entry.get('sensitive') not in ['true', 'True']:
+                    diff = self._diff(content, tempdata,
+                                      difflib.unified_diff,
+                                      filename=entry.get("name"))
+                    if diff:
+                        udiff = '\n'.join(diff)
+                        try:
+                            prompt.append(udiff.decode(self.setup['encoding']))
+                        except UnicodeDecodeError:
+                            prompt.append("Binary file, no printable diff")
+                    else:
+                        prompt.append("Diff took too long to compute, no "
+                                      "printable diff")
+                prompt.append("Install %s %s: (y/N): " % (entry.tag,
+                                                          entry.get('name')))
+                entry.set("qtext", "\n".join(prompt))
+
+            if entry.get('sensitive', 'false').lower() != 'true':
+                if content is None:
+                    # it's possible that we figured out the files are
+                    # different without reading in the local file.  we
+                    # now have to read in the local file to figure out
+                    # if _it_ is binary, and either include the whole
+                    # file or the diff for reports
+                    try:
+                        content = open(entry.get('name')).read()
+                    except IOError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Failed to read %s: %s" %
+                                          (err.filename, err))
+                        return False
+
+                if tbin or not isString(content, self.setup['encoding']):
+                    # don't compute diffs if the file is binary
+                    entry.set('current_bfile', binascii.b2a_base64(content))
+                else:
+                    diff = self._diff(content, tempdata, difflib.ndiff,
+                                      filename=entry.get("name"))
+                    if diff:
+                        entry.set("current_bdiff",
+                                  binascii.b2a_base64("\n".join(diff)))
+                    elif not tbin and isString(content, self.setup['encoding']):
                         entry.set('current_bfile', binascii.b2a_base64(content))
-                    nqtext = entry.get('qtext', '')
-                    nqtext += '\nDiff took too long to compute, no printable diff'
-            entry.set('qtext', nqtext)
-        qtxt = entry.get('qtext', '')
-        qtxt += "\nInstall %s %s: (y/N): " % (entry.tag, entry.get('name'))
-        entry.set('qtext', qtxt)
-        return contentStatus and permissionStatus
+
+        return permissionStatus and not different
 
     def Installfile(self, entry):
         """Install Path type='file' entry."""
@@ -558,7 +579,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     try:
                         sloc = os.stat(current)
                         try:
-                            if not S_ISDIR(sloc[ST_MODE]):
+                            if not stat.S_ISDIR(sloc[stat.ST_MODE]):
                                 self.logger.debug('%s is not a directory; recreating' \
                                                   % (current))
                                 os.unlink(current)
@@ -626,11 +647,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             try:
                 os.chown(newfile.name, normUid(entry), normGid(entry))
             except KeyError:
-                self.logger.error("Failed to chown %s to %s:%s" % \
-                                  (entry.get('name'), entry.get('owner'),
+                self.logger.error("Failed to chown %s to %s:%s" %
+                                  (newfile.name, entry.get('owner'),
                                    entry.get('group')))
                 os.chown(newfile.name, 0, 0)
-            os.chmod(newfile.name, calcPerms(S_IFREG, entry.get('perms')))
+            except OSError:
+                err = sys.exc_info()[1]
+                self.logger.error("Could not chown %s: %s" % (newfile.name,
+                                                              err))
+            os.chmod(newfile.name, calcPerms(stat.S_IFREG, entry.get('perms')))
             os.rename(newfile.name, entry.get('name'))
             if entry.get('mtime', '-1') != '-1':
                 try:
@@ -682,12 +707,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         self.logger.info("Installing Hardlink %s" % (entry.get('name')))
         if os.path.lexists(entry.get('name')):
             try:
-                fmode = os.lstat(entry.get('name'))[ST_MODE]
-                if S_ISREG(fmode) or S_ISLNK(fmode):
+                fmode = os.lstat(entry.get('name'))[stat.ST_MODE]
+                if stat.S_ISREG(fmode) or stat.S_ISLNK(fmode):
                     self.logger.debug("Non-directory entry already exists at "
                                       "%s. Unlinking entry." % (entry.get('name')))
                     os.unlink(entry.get('name'))
-                elif S_ISDIR(fmode):
+                elif stat.S_ISDIR(fmode):
                     self.logger.debug("Directory already exists at %s" % \
                                       (entry.get('name')))
                     self.cmd.run("mv %s/ %s.bak" % \
@@ -790,6 +815,30 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         return False
         return self.Verifydirectory(entry, _)
 
+    def _diff(self, content1, content2, difffunc, filename=None):
+        rv = []
+        start = time.time()
+        longtime = True
+        for diffline in difffunc(content1.split('\n'),
+                                 content2.split('\n')):
+            now = time.time()
+            rv.append(diffline)
+            if now - start > 5 and not longtime:
+                if filename:
+                    self.logger.info("Diff of %s taking a long time" %
+                                     filename)
+                else:
+                    self.logger.info("Diff taking a long time")
+                longtime = True
+            elif now - start > 30:
+                if filename:
+                    self.logger.error("Diff of %s took too long; giving up" %
+                                      filename)
+                else:
+                    self.logger.error("Diff took too long; giving up")
+                return False
+        return rv
+
     def Installpermissions(self, entry):
         """Install POSIX permissions"""
         if entry.get('perms') == None or \
@@ -814,7 +863,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         try:
             for p in plist:
                 os.chown(p, normUid(entry), normGid(entry))
-                os.chmod(p, calcPerms(S_IFDIR, entry.get('perms')))
+                os.chmod(p, calcPerms(stat.S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
             self.logger.error('Permission fixup failed for %s' % \
@@ -854,13 +903,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         self.logger.info("Installing symlink %s" % (entry.get('name')))
         if os.path.lexists(entry.get('name')):
             try:
-                fmode = os.lstat(entry.get('name'))[ST_MODE]
-                if S_ISREG(fmode) or S_ISLNK(fmode):
+                fmode = os.lstat(entry.get('name'))[stat.ST_MODE]
+                if stat.S_ISREG(fmode) or stat.S_ISLNK(fmode):
                     self.logger.debug("Non-directory entry already exists at "
                                       "%s. Unlinking entry." % \
                                       (entry.get('name')))
                     os.unlink(entry.get('name'))
-                elif S_ISDIR(fmode):
+                elif stat.S_ISDIR(fmode):
                     self.logger.debug("Directory already exists at %s" %\
                                       (entry.get('name')))
                     self.cmd.run("mv %s/ %s.bak" % \
