@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 import binascii
+import re
 import os
 import socket
 import shutil
@@ -16,8 +17,6 @@ if sys.hexversion >= 0x03000000:
 
 import logging
 logger = logging.getLogger(__name__)
-
-DEBUG = logger.error
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
     def __init__(self, name, specific, encoding):
@@ -121,6 +120,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         self.namecache = {}
         self.__skn = False
 
+        # keep track of which bogus keys we've warned about, and only
+        # do so once
+        self.badnames = dict()
+
         core.fam.AddMonitor(self.data, self)
 
         self.static = dict()
@@ -192,8 +195,22 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                         hostnames = reduce(lambda x, y: x + y,
                                            list(names.values()), [])
                     if not hostnames:
-                        self.logger.info("Unknown key %s, skipping" %
-                                         entry.name)
+                        if specific.hostname:
+                            key = specific.hostname
+                            ktype = "host"
+                        elif specific.group:
+                            key = specific.group
+                            ktype = "group"
+                        else:
+                            # user has added a global SSH key, but
+                            # have no clients yet.  don't warn about
+                            # this.
+                            continue
+                            
+                        if key not in self.badnames:
+                            self.badnames[key] = True
+                            self.logger.info("Ignoring key for unknown %s %s" %
+                                             (ktype, key))
                         continue
                     
                     skn.append("%s %s" % (','.join(hostnames),
@@ -310,12 +327,11 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def build_hk(self, entry, metadata):
         """This binds host key data into entries."""
-        rv = None
         try:
-            rv = self.entries[entry.get('name')].bind_entry(entry, metadata)
+            self.entries[entry.get('name')].bind_entry(entry, metadata)
         except Bcfg2.Server.Plugin.PluginExecutionError:
             filename = entry.get('name').split('/')[-1]
-            self.GenerateHostKeyPair(client, filename)
+            self.GenerateHostKeyPair(metadata.hostname, filename)
             # Service the FAM events queued up by the key generation
             # so the data structure entries will be available for
             # binding.
@@ -326,21 +342,22 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             # time, those entries won't be available for binding. In
             # practice, this seems "good enough".
             tries = 0
-            while rv is None:
+            is_bound = False
+            while not is_bound:
                 if tries >= 10:
                     self.logger.error("%s still not registered" % filename)
                     raise Bcfg2.Server.Plugin.PluginExecutionError
-                self.fam.handle_events_in_interval(1)
+                self.core.fam.handle_events_in_interval(1)
                 tries += 1
                 try:
-                    rv = self.entries[entry.get('name')].bind_entry()
+                    self.entries[entry.get('name')].bind_entry(entry, metadata)
+                    is_bound = True
                 except Bcfg2.Server.Plugin.PluginExecutionError:
                     pass
-        return rv
 
     def GenerateHostKeyPair(self, client, filename):
         """Generate new host key pair for client."""
-        match = re.search(r'(ssh_host_(?:((?:ec)?d|rsa)_)?key)', filename)
+        match = re.search(r'(ssh_host_(?:((?:ecd|d|r)sa)_)?key)', filename)
         if match:
             hostkey = "%s.H_%s" % (match.group(1), client)
             if match.group(2):
@@ -348,6 +365,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             else:
                 keytype = 'rsa1'
         else:
+            self.logger.error("Unknown key filename: %s" % filename)
             return
         
         fileloc = "%s/%s" % (self.data, hostkey)
