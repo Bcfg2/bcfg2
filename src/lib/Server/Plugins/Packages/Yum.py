@@ -32,8 +32,8 @@ try:
     has_yum = True
 except ImportError:
     has_yum = False
-    logger.info("Packages: No yum libraries found; forcing use of internal dependency "
-                "resolver")
+    logger.info("Packages: No yum libraries found; forcing use of internal "
+                "dependency resolver")
 
 try:
     import json
@@ -47,10 +47,6 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 
 PULPSERVER = None
 PULPCONFIG = None
-
-# dict of Cache objects that is keyed off of the set of source urls
-# that apply to each Collection
-CACHES = dict()
 
 
 def _setup_pulp(config):
@@ -85,104 +81,12 @@ def _setup_pulp(config):
     return PULPSERVER
 
 
-class CacheItem(object):
-    def __init__(self, value, expiration=None):
-        self.value = value
-        if expiration:
-            self.expiration = time.time() + expiration
-    
-    def expired(self):
-        if self.expiration:
-            return time.time() > self.expiration
-        else:
-            return False
-
-    def __str__(self):
-        return str(self.value)
-
-
-class Cache(DictMixin):
-    def __init__(self, expiration=None, tidy=None):
-        """ params:
-        - expiration: How many seconds a cache entry stays alive for.
-          Specify None for no expiration.
-        - tidy: How frequently to tidy the cache (remove all expired
-          entries).  Without this, entries are only expired as they
-          are accessed.  Cache will be tidied once per every <tidy>
-          accesses to cache data; a sensible value might be, e.g.,
-          10000.  Specify 0 to fully tidy the cache every access; this
-          makes the cache much slower, but also smaller in memory.
-          Specify None to never tidy the cache; this makes the cache
-          faster, but potentially much larger in memory, especially if
-          cache items are accessed infrequently."""
-        self.cache = dict()
-        self.expiration = expiration
-        self.tidy = tidy
-        self.access_count = 0
-    
-    def __getitem__(self, key):
-        self._expire(key)
-        if key in self.cache:
-            return self.cache[key].value
-        else:
-            raise KeyError(key)
-    
-    def __setitem__(self, key, value):
-        self.cache[key] = CacheItem(value, self.expiration)
-    
-    def __delitem__(self, key):
-        del self.cache[key]
-    
-    def __contains__(self, key):
-        self._expire(key)
-        return key in self.cache
-    
-    def keys(self):
-        return self.cache.keys()
-    
-    def __iter__(self):
-        for k in self.cache.keys():
-            try:
-                yield k
-            except KeyError:
-                pass
-
-    def iteritems(self):
-        for k in self:
-            try:
-                yield (k, self[k])
-            except KeyError:
-                pass
-
-    def _expire(self, *args):
-        if args:
-            self.access_count += 1
-            if self.access_count >= self.tidy:
-                self.access_count = 0
-                candidates = self.cache.items()
-            else:
-                candidates = [(k, self.cache[k]) for k in args]
-        else:
-            candidates = self.cache.items()
-
-        expire = []
-        for key, item in candidates:
-            if item.expired():
-                expire.append(key)
-        for key in expire:
-            del self.cache[key]
-    
-    def clear(self):
-        self.cache = dict()
-
-
 class YumCollection(Collection):
     # options that are included in the [yum] section but that should
     # not be included in the temporary yum.conf we write out
     option_blacklist = ["use_yum_libraries", "helper"]
     
     def __init__(self, metadata, sources, basepath):
-        global CACHES
         Collection.__init__(self, metadata, sources, basepath)
         self.keypath = os.path.join(self.basepath, "keys")
 
@@ -209,27 +113,11 @@ class YumCollection(Collection):
                                         "%s-yum.conf" % self.cachekey)
             self.write_config()
 
-            # in order for use_yum to be true, there must be a [yum]
-            # section in the config file, so we don't have to check
-            # for NoSectionError here
-            try:
-                cache_expire = self.config.getint("yum", "metadata_expire")
-            except ConfigParser.NoOptionError:
-                cache_expire = 21600
-
             try:
                 self.helper = self.config.get("yum", "helper")
             except ConfigParser.NoOptionError:
                 self.helper = "/usr/sbin/bcfg2-yum-helper"
             
-            ckeydata = set()
-            for source in sources:
-                ckeydata.update(source.urls)
-            cachekey = tuple(sorted(list(ckeydata)))
-            if cachekey not in CACHES:
-                CACHES[cachekey] = Cache(expiration=cache_expire)
-            self.cache = CACHES[cachekey]
-
         if has_pulp:
             _setup_pulp(self.config)
 
@@ -438,27 +326,15 @@ class YumCollection(Collection):
         if group.startswith("@"):
             group = group[1:]
 
-        cachekey = "group:%s" % group
-        try:
-            return self.cache[cachekey]
-        except KeyError:
-            pass
-        
         pkgs = self.call_helper("get_group", group)
-        if pkgs:
-            self.cache[cachekey] = pkgs
         return pkgs
 
     def complete(self, packagelist):
         if not self.use_yum:
             return Collection.complete(self, packagelist)
 
-        cachekey = cPickle.dumps(sorted(packagelist))
-        try:
-            packages, unknown = self.cache[cachekey]
-        except KeyError:
-            packages = set()
-            unknown = set(packagelist)
+        packages = set()
+        unknown = set(packagelist)
 
         if unknown:
             result = \
@@ -474,7 +350,6 @@ class YumCollection(Collection):
                 unknown = set([str(p) for p in result['unknown']])
 
             self.filter_unknown(unknown)
-            self.cache[cachekey] = (packages, unknown)
         
         return packages, unknown
 
@@ -528,8 +403,6 @@ class YumCollection(Collection):
         os.unlink(self.cfgfile)
         self.write_config()
         
-        self.cache.clear()
-
         if force_update:
             self.call_helper("clean")
 
