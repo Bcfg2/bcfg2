@@ -470,6 +470,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             # first, see if the target file exists at all; if not,
             # they're clearly different
             different = True
+            content = ""
         else:
             # next, see if the size of the target file is different
             # from the size of the desired content
