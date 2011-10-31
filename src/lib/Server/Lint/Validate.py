@@ -164,7 +164,13 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         # listed in self.files, though, there's really nothing we can
         # do to guess what a file in Metadata is
         if rv:
-            rv.extend(self.follow_xinclude(rv[0]))
+            try:
+                rv.extend(self.follow_xinclude(rv[0]))
+            except lxml.etree.XMLSyntaxError:
+                e = sys.exc_info()[1]
+                self.LintError("xml-failed-to-parse",
+                               "%s fails to parse:\n%s" % (rv[0], e))
+
 
         return rv
 
