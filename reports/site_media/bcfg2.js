@@ -16,7 +16,7 @@ function toggleMe(elementId) {
     if (element.style.display == 'none') {
       plusminus.innerHTML = "[+]"
     } else {
-      plusminus.innerHTML = "[&ndash;]"
+      plusminus.innerHTML = "[&minus;]"
     }
   }
 }
