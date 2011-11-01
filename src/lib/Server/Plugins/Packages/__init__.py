@@ -137,7 +137,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 if pkg.get("name"):
                     initial.add(pkg.get("name"))
                 elif pkg.get("group"):
-                    base.update(collection.get_group(pkg.get("group")))
+                    try:
+                        base.update(collection.get_group(pkg.get("group")))
+                    except TypeError:
+                        self.logger.error("Could not resolve group %s" %
+                                          pkg.get("group"))
                     to_remove.append(pkg)
                 else:
                     self.logger.error("Packages: Malformed Package: %s" %
