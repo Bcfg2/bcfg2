@@ -179,7 +179,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                        if pubk.endswith('.pub')]
             pubkeys.sort()
             for pubkey in pubkeys:
-                for entry in self.entries[pubkey].entries.values():
+                for entry in sorted(self.entries[pubkey].entries.values(),
+                                    key=lambda e: e.specific.hostname or e.specific.group):
                     specific = entry.specific
                     hostnames = []
                     if specific.hostname and specific.hostname in names:
