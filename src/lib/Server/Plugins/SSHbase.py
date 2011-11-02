@@ -216,7 +216,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     skn.append("%s %s" % (','.join(hostnames),
                                           entry.data.decode().rstrip()))
 
-            self.__skn = "\n".join(skn)
+            self.__skn = "\n".join(skn) + "\n"
         return self.__skn
 
     def set_skn(self, value):
