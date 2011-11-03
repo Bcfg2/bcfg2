@@ -69,9 +69,9 @@ class Collection(object):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
-    def get_group(self, group):
+    def get_group(self, group, ptype=None):
         for source in self.sources:
-            pkgs = source.get_group(self.metadata, group)
+            pkgs = source.get_group(self.metadata, group, ptype=ptype)
             if pkgs:
                 return pkgs
         self.logger.warning("Packages: '%s' is not a valid group" % group)

@@ -138,8 +138,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     initial.add(pkg.get("name"))
                 elif pkg.get("group"):
                     try:
-                        base.update(collection.get_group(pkg.get("group")))
+                        if pkg.get("type"):
+                            gpkgs = collection.get_group(pkg.get("group"),
+                                                         ptype=pkg.get("type"))
+                        else:
+                            gpkgs = collection.get_group(pkg.get("group"))
+                        base.update(gpkgs)
                     except TypeError:
+                        raise
                         self.logger.error("Could not resolve group %s" %
                                           pkg.get("group"))
                     to_remove.append(pkg)

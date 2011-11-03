@@ -17,6 +17,8 @@
     <xsd:attribute type="xsd:string" name="name"/>
     <xsd:attribute type="xsd:string" name="group"/>
     <xsd:attribute type="xsd:string" name="verify" use="optional"/>
+    <xsd:attribute type="PackageGroupTypeEnum" name="type"
+                   use="optional"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

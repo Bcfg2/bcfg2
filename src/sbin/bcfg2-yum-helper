@@ -105,22 +105,34 @@ class DepSolver(object):
                          self.get_package_name(required))
         return prov
 
-    def get_group(self, group):
+    def get_group(self, group, ptype="default"):
         if group.startswith("@"):
             group = group[1:]
 
         try:
             if self.yumbase.comps.has_group(group):
-                pkgs = self.yumbase.comps.return_group(group).packages
+                group = self.yumbase.comps.return_group(group)
             else:
                 logger.warning("Packages: '%s' is not a valid group" % group)
-                pkgs = []
+                return []
         except yum.Errors.GroupsError:
             err = sys.exc_info()[1]
             logger.warning("Packages: %s" % err)
-            pkgs = []
-
-        return pkgs
+            return []
+        
+        if ptype == "default":
+            return [p
+                    for p, d in list(group.default_packages.items())
+                    if d]
+        elif ptype == "mandatory":
+            return [p
+                    for p, m in list(group.mandatory_packages.items())
+                    if m]
+        elif ptype == "optional" or ptype == "all":
+            return group.packages
+        else:
+            logger.warning("Unknown group package type '%s'" % ptype)
+            return []
 
     def _filter_provides(self, package, providers):
         providers = [pkg for pkg in self._filter_arch(providers)]
@@ -300,9 +312,16 @@ def main():
     elif cmd == "is_virtual_package":
         package = json.loads(sys.stdin.read())
         print json.dumps(bool(depsolver.get_provides(package, silent=True)))
-    elif (cmd == "get_deps" or cmd == "get_provides" or cmd == "get_group"):
+    elif cmd == "get_deps" or cmd == "get_provides":
         package = json.loads(sys.stdin.read())
         print json.dumps(list(getattr(depsolver, cmd)(package)))
+    elif cmd == "get_group":
+        data = json.loads(sys.stdin.read())
+        if "type" in data:
+            packages = depsolver.get_group(data['group'], ptype=data['type'])
+        else:
+            packages = depsolver.get_group(data['group'])
+        print json.dumps(list(packages))
     elif cmd == "is_package":
         package = json.loads(sys.stdin.read())
         print json.dumps(getattr(depsolver, cmd)(package))

@@ -21,6 +21,15 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="PackageGroupTypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="optional"/>
+      <xsd:enumeration value="default"/>
+      <xsd:enumeration value="mandatory"/>
+      <xsd:enumeration value="all"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:simpleType name='PathTypeEnum'>
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='device' />

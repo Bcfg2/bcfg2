@@ -241,7 +241,7 @@ class Source(object):
     def get_package(self, metadata, package):
         return package
 
-    def get_group(self, metadata, package):
+    def get_group(self, metadata, group, ptype=None):
         return []
 
     def magic_groups_match(self, metadata):

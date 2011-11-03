@@ -465,6 +465,25 @@ group name::
     <Package group="SNMP Support"/>
     <Package group="system-management-snmp"/>
 
+By default, only those packages considered the "default" packages in a
+group will be installed.  You can change this behavior using the
+"type" attribute::
+
+    <Package group="development" type="optional"/>
+    <Package group="Administration Tools" type="mandatory"/>
+
+Valid values of "type" are:
+
+* ``mandatory``: Only install mandatory packages in the group.
+* ``default``: Install default packages from the group (the default).
+* ``optional`` or ``all``: Install all packages in the group,
+  including mandatory, default, and optional packages.
+
+You can view the packages in a group by category with the ``yum
+groupinfo`` command.  More information about the different levels can
+be found at
+http://fedoraproject.org/wiki/How_to_use_and_edit_comps.xml_for_package_groups#Installation
+
 .. _pulp-source-support:
 
 Pulp Support

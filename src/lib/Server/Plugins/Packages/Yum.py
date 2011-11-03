@@ -317,16 +317,16 @@ class YumCollection(Collection):
             # for API completeness
             return self.call_helper("get_provides", package)
 
-    def get_group(self, group):
+    def get_group(self, group, ptype="default"):
         if not self.use_yum:
-            self.logger.warning("Packages: Package groups are not supported by Bcfg2's "
-                                "internal Yum dependency generator")
+            self.logger.warning("Packages: Package groups are not supported by "
+                                "Bcfg2's internal Yum dependency generator")
             return []
 
         if group.startswith("@"):
             group = group[1:]
 
-        pkgs = self.call_helper("get_group", group)
+        pkgs = self.call_helper("get_group", dict(group=group, type=ptype))
         return pkgs
 
     def complete(self, packagelist):
