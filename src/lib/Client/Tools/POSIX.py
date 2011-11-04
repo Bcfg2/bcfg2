@@ -560,6 +560,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                   binascii.b2a_base64("\n".join(diff)))
                     elif not tbin and isString(content, self.setup['encoding']):
                         entry.set('current_bfile', binascii.b2a_base64(content))
+        elif permissionStatus == False and self.setup['interactive']:
+            prompt = [entry.get('qtext', '')]
+            prompt.append("Install %s %s: (y/N): " % (entry.tag,
+                                                      entry.get('name')))
+            entry.set("qtext", "\n".join(prompt))
+
 
         return permissionStatus and not different
 
