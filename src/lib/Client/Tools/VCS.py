@@ -7,6 +7,7 @@
 missing = []
 
 import os
+import shutil
 import sys
 # python-dulwich git imports
 try:
@@ -62,6 +63,18 @@ class VCS(Bcfg2.Client.Tools.Tool):
     def Installgit(self, entry):
         """Checkout contents from a git repository"""
         destname = entry.get('name')
+        if os.path.lexists(destname):
+            # remove incorrect contents
+            try:
+                if os.path.isdir(destname):
+                    shutil.rmtree(destname)
+                else:
+                    os.remove(destname)
+            except OSError:
+                self.logger.info('Failed to remove %s' % \
+                                 destname)
+                return False
+
         destr = dulwich.repo.Repo.init(destname, mkdir=True)
         cl, host_path = dulwich.client.get_transport_and_path(entry.get('sourceurl'))
         remote_refs = cl.fetch(host_path,
