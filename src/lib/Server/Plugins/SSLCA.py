@@ -64,7 +64,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                         'O': cert_spec.get('o'),
                         'emailAddress': cert_spec.get('emailaddress')
                     }
-                    cp = ConfigParser()
+                    cp = ConfigParser.ConfigParser()
                     cp.read(self.core.cfile)
                     self.CAs[ca] = dict(cp.items('sslca_' + ca))
                     self.Entries['Path'][ident] = self.get_cert
@@ -228,7 +228,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         # create temp request config file
         conffile = open(tempfile.mkstemp()[1], 'w')
-        cp = ConfigParser({})
+        cp = ConfigParser.ConfigParser({})
         cp.optionxform = str
         defaults = {
             'req': {
