@@ -48,8 +48,9 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
                 if not self.setup['quick'] and \
                                 entry.get('verify', 'true') == 'true':
-                    output = self.cmd.run("/usr/bin/equery check '=%s-%s' 2>&1 |grep '!!!' | awk '{print $2}'" \
-                                    % (entry.get('name'), entry.get('version')))[1]
+                    output = self.cmd.run("/usr/bin/equery -N check '=%s-%s' 2>&1 "
+                                          "| grep '!!!' | awk '{print $2}'" \
+                                          % (entry.get('name'), entry.get('version')))[1]
                     if [filename for filename in output \
                                     if filename not in modlist]:
                         return False
