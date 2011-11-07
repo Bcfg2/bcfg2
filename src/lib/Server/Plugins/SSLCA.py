@@ -271,5 +271,5 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         key = self.data + key_filename
         cmd = ["openssl", "req", "-new", "-config", req_config,
                "-days", days, "-key", key, "-text", "-out", req]
-        res = Popen(cmd, shell=True, stdout=PIPE).stdout.read()
+        res = Popen(cmd, stdout=PIPE).stdout.read()
         return req
