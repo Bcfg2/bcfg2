@@ -86,7 +86,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                              "installation." % (entry.get('name')))
             return False
         rcmd = "/sbin/chkconfig %s %s"
-        self.cmd.run("/sbin/chkconfig --add %s"%(entry.attrib['name']))
+        self.cmd.run("/sbin/chkconfig --add %s" % (entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
         pass1 = True
         if entry.get('status') == 'off':
