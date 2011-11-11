@@ -4,7 +4,7 @@ import logging
 try:
     from hashlib import md5
 except ImportError:
-    import md5
+    from md5 import md5
 
 logger = logging.getLogger("Packages")
 

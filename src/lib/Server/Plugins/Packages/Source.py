@@ -10,7 +10,7 @@ from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
 try:
     from hashlib import md5
 except ImportError:
-    import md5
+    from md5 import md5
 
 logger = logging.getLogger('Packages')
 
