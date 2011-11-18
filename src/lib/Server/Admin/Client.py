@@ -60,6 +60,7 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
                 raise SystemExit(1)
         elif args[0] in ['list', 'ls']:
             tree = lxml.etree.parse(self.metadata.data + "/clients.xml")
+            tree.xinclude()
             for node in tree.findall("//Client"):
                 print(node.attrib["name"])
         else:
