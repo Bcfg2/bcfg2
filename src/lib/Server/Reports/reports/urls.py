@@ -37,7 +37,7 @@ urlpatterns += patterns('Bcfg2.Server.Reports.reports',
     *paginatedUrls( *filteredUrls(
         (r'^history/?$',
             'views.render_history_view', None, 'reports_history'),
-        (r'^history/(?P<hostname>[^/]+)/?$',
+        (r'^history/(?P<hostname>[^/|]+)/?$',
             'views.render_history_view', None, 'reports_client_history'),
 )))
 
