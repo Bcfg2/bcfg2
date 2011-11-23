@@ -189,23 +189,21 @@ class Client:
             if self.setup['profile']:
                 try:
                     proxy.AssertProfile(self.setup['profile'])
-                except xmlrpclib.Fault:
+                except Bcfg2.Proxy.ProxyError:
+                    err = sys.exc_info()[1]
                     self.fatal_error("Failed to set client profile")
-                    return(1)
+                    self.logger.error(str(err))
+                    raise SystemExit(1)
 
             try:
                 probe_data = proxy.GetProbes()
-            except xmlrpclib.Fault:
-                flt = sys.exc_info()[1]
-                self.logger.error("Failed to download probes from bcfg2")
-                self.logger.error(flt.faultString)
-                raise SystemExit(1)
-            except (Bcfg2.Proxy.CertificateError,
+            except (Bcfg2.Proxy.ProxyError,
+                    Bcfg2.Proxy.CertificateError,
                     socket.gaierror,
                     socket.error):
-                e = sys.exc_info()[1]
-                self.logger.error("Failed to download probes from bcfg2: %s"
-                                  % e)
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to download probes from bcfg2: %s" %
+                                  err)
                 raise SystemExit(1)
 
             times['probe_download'] = time.time()
@@ -231,31 +229,33 @@ class Client:
             if len(probes.findall(".//probe")) > 0:
                 try:
                     # upload probe responses
-                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata, encoding='UTF-8', xml_declaration=True))
-                except:
-                    self.logger.error("Failed to upload probe data", exc_info=1)
+                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata,
+                                                                  encoding='UTF-8',
+                                                                  xml_declaration=True))
+                except Bcfg2.Proxy.ProxyError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to upload probe data: %s" % err)
                     raise SystemExit(1)
 
             times['probe_upload'] = time.time()
 
             if self.setup['decision'] in ['whitelist', 'blacklist']:
                 try:
-                    self.setup['decision_list'] = proxy.GetDecisionList( \
-                        self.setup['decision'])
+                    self.setup['decision_list'] = \
+                        proxy.GetDecisionList(self.setup['decision'])
                     self.logger.info("Got decision list from server:")
                     self.logger.info(self.setup['decision_list'])
-                except xmlrpclib.Fault:
-                    f = sys.exc_info()[1]
-                    if f.faultCode == 1:
-                        print("GetDecisionList method not supported by server")
-                    else:
-                        self.logger.error("Failed to de", exc_info=1)
+                except Bcfg2.Proxy.ProxyError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to get decision list: %s" % err)
                     raise SystemExit(1)
 
             try:
                 rawconfig = proxy.GetConfig().encode('UTF-8')
-            except xmlrpclib.Fault:
-                self.logger.error("Failed to download configuration from Bcfg2")
+            except Bcfg2.Proxy.ProxyError:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to download configuration from "
+                                  "Bcfg2: %s" % err)
                 raise SystemExit(2)
 
             times['config_download'] = time.time()
@@ -327,8 +327,10 @@ class Client:
                 proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
                                                           encoding='UTF-8',
                                                           xml_declaration=True))
-            except xmlrpclib.Fault:
-                self.logger.error("Failed to upload configuration statistics")
+            except Bcfg2.Proxy.ProxyError:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to upload configuration statistics: "
+                                  "%s" % err)
                 raise SystemExit(2)
 
 if __name__ == '__main__':

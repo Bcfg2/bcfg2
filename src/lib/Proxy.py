@@ -44,6 +44,24 @@ __all__ = ["ComponentProxy",
            "XMLRPCTransport"]
 
 
+class ProxyError(Exception):
+    """ ProxyError provides a consistent reporting interface to
+    the various xmlrpclib errors that might arise (mainly
+    ProtocolError and Fault) """
+    def __init__(self, err):
+        if isinstance(err, xmlrpclib.ProtocolError):
+            # cut out the password in the URL
+            url = re.sub(r'([^:]+):(.*?)@([^@]+:\d+/)', r'\1:******@\3',
+                         err.url)
+            self.message = "XML-RPC Protocol Error for %s: %s (%s)" % \
+                           (url, err.errmsg, err.errcode)
+        elif isinstance(err, xmlrpclib.Fault):
+            self.message = "XML-RPC Fault: %s (%s)" % (err.faultString,
+                                                       err.faultCode)
+        else:
+            self.message = str(err)
+        self.args = (self.message, )
+
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
@@ -285,12 +303,25 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.send_user_agent(h)
         self.send_content(h, request_body)
 
-        errcode, errmsg, headers = h.getreply()
+        if SSL_LIB == 'py26_ssl':
+            catch = ssl.SSLError
+        elif SSL_LIB == 'm2crypto':
+            catch = SSL.SSLError
 
+        try:
+            errcode, errmsg, headers = h.getreply()
+        except catch:
+            err = sys.exc_info()[1]
+            raise ProxyError(xmlrpclib.ProtocolError(host + handler,
+                                                     408,
+                                                     str(err),
+                                                     self._extra_headers))
+        
         if errcode != 200:
-            # scrub password from the host
-            hoststr = re.sub(r':[^@]+@', ':******@', host) + handler
-            raise xmlrpclib.ProtocolError(hoststr, errcode, errmsg, headers)
+            raise ProxyError(xmlrpclib.ProtocolError(host + handler,
+                                                     errcode,
+                                                     errmsg,
+                                                     headers))
 
         self.verbose = verbose
         msglen = int(headers.dict['content-length'])
