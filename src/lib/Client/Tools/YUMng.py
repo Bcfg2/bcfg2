@@ -841,33 +841,38 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
             for inst in install_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                self.logger.debug("Installing %s" % pkg_arg)
                 try:
                     self.yb.install(**build_yname(pkg_arg, inst))
                 except yum.Errors.YumBaseError:
                     yume = sys.exc_info()[1]
-                    self.logger.error("Error installing some packages: %s" % yume)
+                    self.logger.error("Error installing package %s: %s" %
+                                      (pkg_arg, yume))
 
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
 
             for inst in upgrade_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                self.logger.debug("Upgrading %s" % pkg_arg)
                 try:
                     self.yb.update(**build_yname(pkg_arg, inst))
                 except yum.Errors.YumBaseError:
                     yume = sys.exc_info()[1]
-                    self.logger.error("Error upgrading some packages: %s" % yume)
+                    self.logger.error("Error upgrading package %s: %s" %
+                                      (pkg_arg, yume))
 
         if len(reinstall_pkgs) > 0:
             self.logger.info("Attempting to reinstall packages")
             for inst in reinstall_pkgs:
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                self.logger.debug("Reinstalling %s" % pkg_arg)
                 try:
                     self.yb.reinstall(**build_yname(pkg_arg, inst))
                 except yum.Errors.YumBaseError:
                     yume = sys.exc_info()[1]
-                    self.logger.error("Error upgrading some packages: %s" \
-                            % yume)
+                    self.logger.error("Error reinstalling package %s: %s" %
+                                      (pkg_arg, yume))
 
         self._runYumTransaction()
 
