@@ -64,7 +64,6 @@ class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
             self.metadata['perms'] = '0644'
         else:
             self.metadata['perms'] = '0600'
-            self.metadata['sensitive'] = 'true'
 
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
