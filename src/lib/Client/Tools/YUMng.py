@@ -149,12 +149,18 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         self.yb = yum.YumBase()
 
         if setup['debug']:
-            self.yb.preconf.debuglevel = 3
+            debuglevel = 3
         elif setup['verbose']:
-            self.yb.preconf.debuglevel = 2
+            debuglevel = 2
         else:
-            self.yb.preconf.debuglevel = 1
-        
+            debuglevel = 1
+
+        try:
+            self.yb.preconf.debuglevel = debuglevel
+        except AttributeError:
+            self.yb._getConfig(self.yb.config_file_path,
+                               debuglevel=debuglevel)
+
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.ignores = [entry.get('name') for struct in config \
                         for entry in struct \
