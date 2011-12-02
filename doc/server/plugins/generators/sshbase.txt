@@ -146,14 +146,19 @@ Default permissions are as follows:
 +==================================+=======+=======+=======+===========+==========+==========+
 | ssh_known_hosts                  | root  | root  | 0644  | false     | false    | None     |
 +----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_key                     | root  | root  | 0600  | true      | false    | base64   |
+| ssh_host_key                     | root  | root  | 0600  | false     | false    | base64   |
 +----------------------------------+-------+-------+-------+-----------+----------+----------+
 | ssh_host_key.pub                 | root  | root  | 0644  | false     | false    | base64   |
 +----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600  | true      | false    | None     |
+| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600  | false     | false    | None     |
 +----------------------------------+-------+-------+-------+-----------+----------+----------+
 | ssh_host_[rsa|dsa|ecdsa]_key.pub | root  | root  | 0644  | false     | false    | None     |
 +----------------------------------+-------+-------+-------+-----------+----------+----------+
+
+Note that the ``sensitive`` attribute is false, even for private keys,
+in order to permit :ref:`pulling with bcfg2-admin
+<server-admin-pull>`.  You should almost certainly set ``sensitive``
+to "true" in ``info.xml``.
 
 Blog post
 =========
