@@ -280,9 +280,6 @@ class Collection(object):
     def remove(self, item):
         self.sources.remove(item)
 
-    def reverse(self):
-        self.sources.reverse()
-
     def sort(self, cmp=None, key=None, reverse=False):
         self.sources.sort(cmp, key, reverse)
 
@@ -337,8 +334,6 @@ def factory(metadata, sources, basepath):
                  (cclass.__name__, metadata.hostname))
 
     collection = cclass(metadata, relevant, basepath)
-    # reverse so that file order determines precedence
-    collection.reverse()
     collections[metadata.hostname] = collection
     return collection
 
