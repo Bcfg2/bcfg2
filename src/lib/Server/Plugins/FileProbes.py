@@ -55,7 +55,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     name = 'FileProbes'
     experimental = True
     __version__ = '$Id$'
-    __author__ = 'stpierreca@ornl.gov'
+    __author__ = 'chris.a.st.pierre@gmail.com'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -125,7 +125,15 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         # we can't use os.path.join() for this because specific
         # already has a leading /, which confuses os.path.join()
         fileloc = "%s%s" % (cfg.data, os.path.join(filename, specific))
-        if filename not in cfg.entries.keys():
+
+        create = False
+        try:
+            cfg.entries[filenames].bind_entry(entry, metadata)
+            create = True
+        except Bcfg2.Server.Plugin.PluginExecutionError:
+            pass
+
+        if create:        
             self.logger.info("Writing new probed file %s" % fileloc)    
             try:
                 os.makedirs(os.path.dirname(fileloc))
@@ -139,25 +147,54 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             infoxml = os.path.join("%s%s" % (cfg.data, filename),
                                    "info.xml")
             self.write_infoxml(infoxml, entry, data)
+
+            # Service the FAM events queued up by the key generation
+            # so the data structure entries will be available for
+            # binding.
+            #
+            # NOTE: We wait for up to ten seconds. There is some
+            # potential for race condition, because if the file
+            # monitor doesn't get notified about the new key files in
+            # time, those entries won't be available for binding. In
+            # practice, this seems "good enough".
+            tries = 0
+            is_bound = False
+            while not is_bound:
+                if tries >= 10:
+                    self.logger.error("%s still not registered" % filename)
+                    raise Bcfg2.Server.Plugin.PluginExecutionError
+                self.core.fam.handle_events_in_interval(1)
+                try:
+                    cfg.entries[filenames].bind_entry(entry, metadata)
+                    is_bound = True
+                except Bcfg2.Server.Plugin.PluginExecutionError:
+                    pass
+                tries += 1
+        elif cfgentry.data == contents:
+            self.logger.debug("Existing %s contents match probed contents" %
+                              filename)
+            return
+        elif (entry.get('update', 'false').lower() == "true"):
+            self.logger.info("Writing updated probed file %s" % fileloc)
+            open(fileloc, 'wb').write(contents)
+
+            # service FAM events
+            tries = 0
+            updated = False
+            while not updated:
+                if tries >= 10:
+                    self.logger.error("%s still not registered" % filename)
+                    raise Bcfg2.Server.Plugin.PluginExecutionError
+                self.core.fam.handle_events_in_interval(1)
+                cfg.entries[filenames].bind_entry(entry, metadata)
+                if entry.text == contents:
+                    updated = True
+                tries += 1
         else:
-            try:
-                cfgentry = \
-                    cfg.entries[filename].get_pertinent_entries(entry,
-                                                                metadata)[0]
-            except Bcfg2.Server.Plugin.PluginExecutionError:
-                self.logger.info("Writing new probed file %s" % fileloc)
-                open(fileloc, 'wb').write(contents)
-                return
-            
-            if cfgentry.data == contents:
-                self.logger.debug("Existing %s contents match probed contents" %
-                                  filename)
-            elif (entry.get('update', 'false').lower() == "true"):
-                self.logger.info("Writing updated probed file %s" % fileloc)
-                open(fileloc, 'wb').write(contents)
-            else:
-                self.logger.info("Skipping updated probed file %s" % fileloc)
-                        
+            self.logger.info("Skipping updated probed file %s" % fileloc)
+            return
+
+
     def write_infoxml(self, infoxml, entry, data):
         """ write an info.xml for the file """
         self.logger.info("Writing info.xml at %s for %s" %
