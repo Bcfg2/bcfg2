@@ -195,9 +195,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         """Build client configuration."""
         alist = args.split()
         path_force = False
-        if '-f' in args:
-            alist.remove('-f')
-            path_force = True
+        for arg in alist:
+            if arg == '-f':
+                alist.remove('-f')
+                path_force = True
         if len(alist) == 2:
             client, ofile = alist
             if not ofile.startswith('/tmp') and not path_force:
