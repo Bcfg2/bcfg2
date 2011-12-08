@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+"""This tool verifies that all clients known to the server build without failures"""
+
+import sys
+import Bcfg2.Server.Core
+from nose.core import TestProgram
+from unittest import TestCase
+
+class ClientTest(TestCase):
+    """
+    A test case representing the build of all of the configuration for a single host.
+    Checks that none of the build config entities has had a failure when it is building.
+    Optionally ignores some config files that we know will cause errors (because they
+    are private files we don't have access to, for instance)
+    """
+    __test__ = False # Do not collect
+
+    def __init__(self, bcfg2_core, client):
+        TestCase.__init__(self)
+        self.bcfg2_core = bcfg2_core
+        self.client = client
+
+    def runTest(self):
+        config = self.bcfg2_core.BuildConfiguration(self.client)
+        failures = config.xpath('//*[@failure]')
+
+        def format_failure(failure):
+            return "%s(%s): %s" % (
+                failure.tag,
+                failure.attrib.get('name'),
+                failure.attrib.get('failure')
+            )
+
+        assert len(failures) == 0, "Failures:\n%s" % "\n".join(
+            [format_failure(failure) for failure in failures]
+        )
+    
+    def __str__(self):
+        return "ClientTest(%s)" % self.client
+
+    id = __str__
+
+def main():
+    optinfo = {
+            'configfile': Bcfg2.Options.CFILE,
+            'help': Bcfg2.Options.HELP,
+            'encoding': Bcfg2.Options.ENCODING,
+            'repo': Bcfg2.Options.SERVER_REPOSITORY,
+            'plugins': Bcfg2.Options.SERVER_PLUGINS,
+            'password': Bcfg2.Options.SERVER_PASSWORD,
+            }
+    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup.parse(sys.argv[1:])
+    core = Bcfg2.Server.Core.Core(
+        setup['repo'],
+        setup['plugins'],
+        setup['password'],
+        setup['encoding']
+    )
+    core.fam.handle_events_in_interval(4)
+    suite = [ClientTest(core, client) for client in core.metadata.clients]
+
+    TestProgram(argv=sys.argv[0:1], suite = suite)
+
+if __name__ == "__main__":
+    sys.exit(main())
