@@ -56,9 +56,10 @@ def main():
         setup['repo'],
         setup['plugins'],
         setup['password'],
-        setup['encoding']
+        setup['encoding'],
+        filemonitor='pseudo'
     )
-    core.fam.handle_events_in_interval(4)
+    core.fam.handle_events_in_interval(0.1)
     suite = [ClientTest(core, client) for client in core.metadata.clients]
 
     TestProgram(argv=sys.argv[0:1], suite = suite)
