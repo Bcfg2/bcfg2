@@ -121,7 +121,7 @@ if sys.hexversion < 0x03000000 and os.path.exists(py3lib):
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
-      version="1.2.0rc2",
+      version="1.2.0",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
