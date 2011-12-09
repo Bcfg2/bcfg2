@@ -816,10 +816,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         
     def get_attrs(self, entry, metadata):
         """ get a list of attributes to add to the entry during the bind """
-        for src in list(self.entries.values()):
-            if src.Cache(metadata) == False:
-                self.logger.error("Called before data loaded")
-                raise PluginExecutionError
+        for src in self.entries.values():
+            src.Cache(metadata)
+
         matching = [src for src in list(self.entries.values())
                     if (src.cache and
                         entry.tag in src.cache[1] and
