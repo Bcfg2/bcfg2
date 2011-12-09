@@ -12,8 +12,12 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag in self.Entries:
-            return self._matches(entry, metadata,
-                                 self.Entries[entry.tag].keys())
+            if entry.get("name") in self.Entries[entry.tag]:
+                return True
+            else:
+                for rule in self.Entries[entry.tag].keys():
+                    if re.search(rule, entry.get('name')):
+                        return True
         return False
 
     def HandleEntry(self, entry, metadata):
@@ -31,7 +35,7 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
         else:
             # attempt regular expression matching
             for rule in rules:
-                if re.match("%s$" % rule, entry.get('name')):
+                if re.search(rule, entry.get('name')):
                     return True
         return False
             
