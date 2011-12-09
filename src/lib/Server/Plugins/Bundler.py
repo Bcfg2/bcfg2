@@ -24,7 +24,7 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
     def get_xml_value(self, metadata):
         bundlename = os.path.splitext(os.path.basename(self.name))[0]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
-        [bundle.append(copy.deepcopy(item)) for item in self.Match(metadata)]
+        [bundle.append(copy.copy(item)) for item in self.Match(metadata)]
         return bundle
 
 
@@ -75,9 +75,13 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""
         bundleset = []
+
+        bundle_entries = {}
+        for key, item in self.entries.items():
+            bundle_entries.setdefault(self.patterns.match(os.path.basename(key)).group('name'), []).append(item)
+
         for bundlename in metadata.bundles:
-            entries = [item for (key, item) in self.entries.items() if \
-                       self.patterns.match(os.path.basename(key)).group('name') == bundlename]
+            entries = bundle_entries[bundlename]
             if len(entries) == 0:
                 continue
             elif len(entries) == 1:

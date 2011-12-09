@@ -5,6 +5,7 @@ import logging
 import re
 import Bcfg2.Server.Plugin
 import lxml
+from sets import Set
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
@@ -63,8 +64,8 @@ class PNode(Bcfg2.Server.Plugin.INode):
         if 'Package' not in pdict:
             pdict['Package'] = set()
         for child in data.getchildren():
-            for attr in [key for key in list(data.attrib.keys())
-                         if key != 'name' and key not in child.attrib]:
+            attrs = Set(data.attrib.keys()).difference(child.attrib + ['name'])
+            for attr in attrs:
                 try:
                     child.set(attr, data.get(attr))
                 except:

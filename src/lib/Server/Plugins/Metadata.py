@@ -78,7 +78,7 @@ class XMLMetadataConfig(object):
         except lxml.etree.XMLSyntaxError:
             self.logger.error('Failed to parse %s' % (self.basefile))
             return
-        self.basedata = copy.deepcopy(xdata)
+        self.basedata = copy.copy(xdata)
         included = [ent.get('href') for ent in \
                     xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
         if included:
