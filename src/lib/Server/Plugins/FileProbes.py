@@ -137,7 +137,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             self.logger.info("Writing new probed file %s" % fileloc)    
             try:
                 os.makedirs(os.path.dirname(fileloc))
-            except OSError, err:
+            except OSError as err:
                 if err.errno == errno.EEXIST:
                     pass
                 else:
