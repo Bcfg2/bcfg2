@@ -755,8 +755,7 @@ class XMLSrc(XMLFileBacked):
             self.priority = int(xdata.get('priority'))
         except (ValueError, TypeError):
             if not self.noprio:
-                logger.error("Got bogus priority %s for file %s" %
-                             (xdata.get('priority'), self.name))
+                logger.error("Got bogus priority %s for file %s" % (xdata.get('priority'), self.name))
         del xdata, data
 
     def Cache(self, metadata):
@@ -806,25 +805,16 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                     except KeyError:
                         self.Entries[itype] = {child: self.BindEntry}
 
-    def _matches(self, entry, metadata, rules):
-        return entry.get('name') in rules
-
     def BindEntry(self, entry, metadata):
-        attrs = self.get_attrs(entry, metadata)
-        for key, val in list(attrs.items()):
-            entry.attrib[key] = val
-        
-    def get_attrs(self, entry, metadata):
-        """ get a list of attributes to add to the entry during the bind """
-        for src in list(self.entries.values()):
-            if src.Cache(metadata) == False:
-                self.logger.error("Called before data loaded")
-                raise PluginExecutionError
+        """Check package lists of package entries."""
+        name = entry.get('name')
+        if False in [src.Cache(metadata) for src in
+                     list(self.entries.values())]:
+            self.logger.error("Called before data loaded")
+            raise PluginExecutionError
         matching = [src for src in list(self.entries.values())
-                    if (src.cache and
-                        entry.tag in src.cache[1] and
-                        self._matches(entry, metadata,
-                                      src.cache[1][entry.tag]))]
+                    if src.cache and entry.tag in src.cache[1]
+                    and name in src.cache[1][entry.tag]]
         if len(matching) == 0:
             raise PluginExecutionError
         elif len(matching) == 1:
@@ -841,18 +831,13 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                 raise PluginExecutionError
             index = prio.index(max(prio))
 
-        for rname in matching[index].cache[1][entry.tag]:
-            if self._matches(entry, metadata, rname):
-                data = matching[index].cache[1][entry.tag][rname]
-                break
+        data = matching[index].cache[1][entry.tag][name]
         if '__text__' in data:
             entry.text = data['__text__']
         if '__children__' in data:
             [entry.append(copy.deepcopy(item)) for item in data['__children__']]
-
-        return dict([(key, data[key])
-                     for key in list(data.keys())
-                     if not key.startswith('__')])
+        [entry.attrib.__setitem__(key, data[key]) for key in list(data.keys()) \
+         if not key.startswith('__')]
 
 
 # new unified EntrySet backend
