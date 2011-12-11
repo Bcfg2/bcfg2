@@ -1,4 +1,5 @@
 import os
+import pipes
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
