@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
-from distutils.core import Command
+from setuptools import setup
+from setuptools import Command
 from fnmatch import fnmatch
 from glob import glob
 import os
@@ -140,6 +140,7 @@ setup(cmdclass=cmdclass,
                 "Bcfg2.Server.Reports.reports.templatetags",
                 "Bcfg2.Server.Snapshots",
                 ],
+      install_requires = ["lxml"],
       package_dir = {'Bcfg2': 'src/lib'},
       package_data = {'Bcfg2.Server.Reports.reports':['fixtures/*.xml',
                 'templates/*.html', 'templates/*/*.html',

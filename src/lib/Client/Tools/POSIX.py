@@ -807,7 +807,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                    (entry.tag, entry.get('name')))
                         entry.set('qtext', nqtext)
                         return False
-		    if group != pstat.st_gid:
+                    if group != pstat.st_gid:
                         # group mismatch for path
                         entry.set('current_group', str(pstat.st_gid))
                         self.logger.debug("%s %s group wrong" % \
