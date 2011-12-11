@@ -742,7 +742,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 else:
                     self.logger.error("Second pass yum install failed.")
                     self.logger.debug("   %s" % restring)
-            except yum.Errors.YumBaseError as e:
+            except yum.Errors.YumBaseError, e:
                 self.logger.error("Yum transaction error: %s" % str(e))
 
             self.yb.conf.skip_broken = skipBroken

@@ -22,6 +22,6 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                     try:
                         loader.load(sdata.name,
                                     cls=genshi.template.NewTextTemplate)
-                    except genshi.template.TemplateSyntaxError as err:
+                    except genshi.template.TemplateSyntaxError, err:
                         self.LintError("genshi-syntax-error",
                                        "Genshi syntax error: %s" % err)
