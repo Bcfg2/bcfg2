@@ -64,7 +64,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
         if 'Package' not in pdict:
             pdict['Package'] = set()
         for child in data.getchildren():
-            attrs = Set(data.attrib.keys()).difference(child.attrib + ['name'])
+            attrs = Set(data.attrib.keys()).difference(child.attrib.keys() + ['name'])
             for attr in attrs:
                 try:
                     child.set(attr, data.get(attr))
