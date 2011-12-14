@@ -128,7 +128,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
         create = False
         try:
-            cfg.entries[filenames].bind_entry(entry, metadata)
+            cfg.entries[filename].bind_entry(entry, metadata)
             create = True
         except Bcfg2.Server.Plugin.PluginExecutionError:
             pass
@@ -165,7 +165,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                     raise Bcfg2.Server.Plugin.PluginExecutionError
                 self.core.fam.handle_events_in_interval(1)
                 try:
-                    cfg.entries[filenames].bind_entry(entry, metadata)
+                    cfg.entries[filename].bind_entry(entry, metadata)
                     is_bound = True
                 except Bcfg2.Server.Plugin.PluginExecutionError:
                     pass
@@ -186,7 +186,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                     self.logger.error("%s still not registered" % filename)
                     raise Bcfg2.Server.Plugin.PluginExecutionError
                 self.core.fam.handle_events_in_interval(1)
-                cfg.entries[filenames].bind_entry(entry, metadata)
+                cfg.entries[filename].bind_entry(entry, metadata)
                 if entry.text == contents:
                     updated = True
                 tries += 1
