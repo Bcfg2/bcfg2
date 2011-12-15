@@ -2,3 +2,93 @@ This directory contains repository maintenance tools.
 
 basebuilder.py <image directory>
     - builds v2 base.xml from bcfg1 repo
+
+batchadd.py <filename>
+    - ???
+
+bcfg2-completion.bash
+    - Bash tab completion for bcfg2-admin
+
+bcfg2-cron
+    - Script to run bcfg2 with cron
+
+bcfg2-export-config <client> <outputdir>
+    - Export the configuration for a specified client.
+
+bcfg2-import-config
+    - Create tarball of changed files on a client for import into the
+      specification
+
+bcfg2-profile-templates.py [<template>]
+    - Benchmark template rendering times
+
+bcfg2_svnlog.py
+    - Send intelligent log messages about changes made to your Bcfg2
+      repository from SVN postcommit
+
+create-debian-pkglist-gp.py
+    - Generate Pkgmgr XML files from etc/debian-pkglist.conf.  See
+      http://trac.mcs.anl.gov/projects/bcfg2/wiki/Tools/DebianPkgmgrCreationScript
+
+create-debian-pkglist.pl
+    - ???
+
+create-debian-pkglist.py
+    - Generate Pkgmgr XML files for Debian packages
+
+create-rpm-pkglist.py
+    - ???
+
+encap-util-count.sh
+    - Produce a count of encap packages per directory
+
+encap-util-expand.sh
+    - Gets encaps out of a makeself .run file
+
+encap-util-place.sh
+    - Put encaps in the right directories
+
+encap-util-xml.sh
+    - Generate Pkgmgr XML files for encap packages
+
+export.py
+    - Export a tagged version of the Bcfg2 source
+
+export.sh
+    - Export a tagged version of the Bcfg2 source
+
+hostbasepush.py
+    - ???
+
+hostbase.py {-l|-c} <hostname>
+    - ???
+
+hostinfo.py {-q <query>|--showfields}
+    - Query the hostbase databse
+
+nagios-convert.py
+    - Convert 1.1.x-style NagiosGen config to 1.2.x-style
+
+packages-convert.py
+    - Convert 1.1.x-style Packages config to 1.2.x-style
+
+pkgmgr_gen.py
+    - Generate Pkgmgr XML files from a list of directories that
+      contain RPMS
+
+pkgmgr_update.py
+    - Update Pkgmgr XML files from a list of directories that contain
+      RPMS
+
+posixunified.py
+    - Convert 1.0.x-style Rules, Bundler, and Base configs to 1.1.x
+      POSIX unified-style configs (i.e., ConfigFile, Directory,
+      Permissions, and SymLink all become Path entries)
+
+rpmlisting.py
+    - ???
+
+yum-listpkgs.xml.py
+    - Produces a list of all packages installed and available in a
+      format suitable for use by Packages or Pkgmgr
+

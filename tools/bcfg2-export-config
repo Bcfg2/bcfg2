@@ -9,7 +9,7 @@
 
 First the specified output directory is created.
 
-Then for every <ConfigFile> entry of the specified host
+Then for every <Path> entry of the specified host
 the appropriate directory under the output directory is created.
 The metadata information get stored in an index file in the output directory. 
 
@@ -33,28 +33,28 @@ def buildConfiguration(core, client):
   return core.BuildConfiguration(client)
 
 def write_entry(indexfile, user, group, permission, path):
-  '''Write an entry to the file listing ConfigFile entries in outputdir.'''
+  '''Write an entry to the file listing Path entries in outputdir.'''
   f = open(outputdir + '/%s' % indexfile, 'a')
   f.write("%s,%s,%s,%s\n" % (user, group, permission, path))
   f.close()
   logger.info("Wrote entry." )
 
-class ConfigFileNotBuild(Exception):
+class PathNotBuild(Exception):
   def __init__(self, value):
     self.value = value
   def __str__(self):
     return repr(self.value)
 
 
-def handleConfigFileEntry(indexfile, cfg):
-  '''Store file content of an <ConfigFile name='/path/to/file' ...>...</ConfigFile> entry
+def handlePathEntry(indexfile, cfg):
+  '''Store file content of an <Path name='/path/to/file' ...>...</Path> entry
   in the appropriate directory under the output directory.'''
   name       = cfg.get('name')
   permission = cfg.get('perms').rjust(4,'0')
   user       = cfg.get('owner')
   group      = cfg.get('group')
 
-  logger.info("\nHandling ConfigFile entry %s >>>" % name)
+  logger.info("\nHandling Path entry %s >>>" % name)
 
   # directory creation
   logger.info("Creating directory %s" % ( os.path.dirname(outputdir + name)) )
@@ -72,7 +72,7 @@ def handleConfigFileEntry(indexfile, cfg):
   try:
     f.write(cfg.text)
   except: # plugin throw an exception and therefore there is no content => None
-    raise ConfigFileNotBuild(name)
+    raise PathNotBuild(name)
   f.close()
 
   # write entry
@@ -97,7 +97,7 @@ if __name__ == '__main__':
       type = "int", help="How many times to handle fam/gamin events, by default %s" % DEFAULT_FAM_STEPS)
 
   parser.add_option("-i", "--index-filename", action="store", dest="indexfile",
-      help="Filename for index of exported ConfigFile entries, by default %s" % DEFAULT_INDEX_FILE)
+      help="Filename for index of exported Path entries, by default %s" % DEFAULT_INDEX_FILE)
 
   parser.set_defaults(configfile=DEFAULT_BCFG2_CONFIGFILE, famsteps = DEFAULT_FAM_STEPS, indexfile = DEFAULT_INDEX_FILE)
 
@@ -145,12 +145,12 @@ if __name__ == '__main__':
     logger.error("Building client configuration failed. Exiting...")
     raise SystemExit, 1
 
-  # handle <ConfigFile> entries
-  for configfile in [cfile for cfile in client_config.findall(".//ConfigFile")]:
+  # handle <Path> entries
+  for configfile in client_config.findall(".//ConfigFile") + client_config.findall(".//Path"):
     try:
-      handleConfigFileEntry(options.indexfile, configfile)
-    except ConfigFileNotBuild, e:
-      logger.error("Error: Plugin failed to generate file content for ConfigFile %s !" % e)
+      handlePathEntry(options.indexfile, configfile)
+    except PathNotBuild, e:
+      logger.error("Error: Plugin failed to generate file content for Path %s !" % e)
       raise SystemExit, 1
     except:
       logger.error("unknown error, I give up")
