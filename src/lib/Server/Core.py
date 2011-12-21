@@ -230,12 +230,14 @@ class Core(Component):
                 continue
             try:
                 self.Bind(entry, metadata)
-            except PluginExecutionError:
+            except PluginExecutionError, exc:
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error')
+                    entry.set('failure', 'bind error: %s' % exc)
                 logger.error("Failed to bind entry: %s %s" % \
                              (entry.tag, entry.get('name')))
-            except:
+            except Exception, exc:
+                if 'failure' not in entry.attrib:
+                    entry.set('failure', 'bind error: %s' % exc)
                 logger.error("Unexpected failure in BindStructure: %s %s" \
                              % (entry.tag, entry.get('name')), exc_info=1)
 
