@@ -60,6 +60,8 @@ def main():
 
     if setup['args']:
         templates = setup['args']
+    else:
+        templates = []
 
     times = dict()
     for plugin in ['Cfg', 'TGenshi', 'TCheetah']:
