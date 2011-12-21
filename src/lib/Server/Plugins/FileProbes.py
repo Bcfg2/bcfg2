@@ -129,9 +129,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         create = False
         try:
             cfg.entries[filename].bind_entry(entry, metadata)
-            create = True
         except Bcfg2.Server.Plugin.PluginExecutionError:
-            pass
+            create = True
 
         if create:        
             self.logger.info("Writing new probed file %s" % fileloc)    
@@ -146,7 +145,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
             infoxml = os.path.join("%s%s" % (cfg.data, filename),
                                    "info.xml")
-            self.write_infoxml(infoxml, entry, data)
+            if not os.path.exists(infoxml):
+                self.write_infoxml(infoxml, entry, data)
 
             # Service the FAM events queued up by the key generation
             # so the data structure entries will be available for
