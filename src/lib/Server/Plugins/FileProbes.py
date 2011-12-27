@@ -170,7 +170,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 except Bcfg2.Server.Plugin.PluginExecutionError:
                     pass
                 tries += 1
-        elif cfgentry.data == contents:
+        elif entry.data == contents:
             self.logger.debug("Existing %s contents match probed contents" %
                               filename)
             return
