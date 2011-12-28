@@ -35,14 +35,21 @@ def get_logger(setup=None):
     return LOGGER
 
 def main():
-    optinfo = dict(configfile=Bcfg2.Options.CFILE,
-                   help=Bcfg2.Options.HELP,
-                   encoding=Bcfg2.Options.ENCODING,
-                   repo=Bcfg2.Options.SERVER_REPOSITORY,
-                   plugins=Bcfg2.Options.SERVER_PLUGINS,
-                   password=Bcfg2.Options.SERVER_PASSWORD,
-                   debug=Bcfg2.Options.DEBUG,
-                   verbose=Bcfg2.Options.VERBOSE)
+    optinfo = \
+        dict(configfile=Bcfg2.Options.CFILE,
+             help=Bcfg2.Options.HELP,
+             encoding=Bcfg2.Options.ENCODING,
+             repo=Bcfg2.Options.SERVER_REPOSITORY,
+             plugins=Bcfg2.Options.SERVER_PLUGINS,
+             password=Bcfg2.Options.SERVER_PASSWORD,
+             debug=Bcfg2.Options.DEBUG,
+             verbose=Bcfg2.Options.VERBOSE,
+             client=Bcfg2.Options.Option("Benchmark templates for one client",
+                                         cmd="--client",
+                                         odesc="<client>",
+                                         long_arg=True,
+                                         default=None),
+             )
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     logger = get_logger(setup)
@@ -62,6 +69,11 @@ def main():
         templates = setup['args']
     else:
         templates = []
+
+    if setup['client'] is None:
+        clients = [core.build_metadata(c) for c in core.metadata.clients]
+    else:
+        clients = [core.build_metadata(setup['client'])]
 
     times = dict()
     for plugin in ['Cfg', 'TGenshi', 'TCheetah']:
@@ -85,9 +97,8 @@ def main():
             path = eset.path.replace(setup['repo'], '')
             logger.info("Rendering %s..." % path)
             times[path] = dict()
-            for client in core.metadata.clients:
+            for metadata in clients:
                 avg = 0.0
-                metadata = core.build_metadata(client)
                 for i in range(runs):
                     entry = lxml.etree.Element("Path")
                     start = time.time()
@@ -97,8 +108,8 @@ def main():
                     except:
                         break
                 if avg:
-                    logger.debug("   %s: %.02f sec" % (client, avg))
-                    times[path][client] = avg
+                    logger.debug("   %s: %.02f sec" % (metadata.hostname, avg))
+                    times[path][metadata.hostname] = avg
 
     # print out per-template results
     tmpltimes = []
