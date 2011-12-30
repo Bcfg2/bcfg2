@@ -257,9 +257,8 @@ class Source(object):
         if not found_arch:
             return False
 
-        if (self.config.has_section("global") and
-            self.config.has_option("global", "magic_groups") and
-            self.config.getboolean("global", "magic_groups") == False):
+        if self.config.getboolean("global", "magic_groups",
+                                  default=True) == False:
             return True
         else:
             for group in self.basegroups:

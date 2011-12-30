@@ -39,25 +39,20 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             os.makedirs(self.keypath)
 
         # set up config files
-        self.config = PackagesConfig(os.path.join(self.data, "packages.conf"),
-                                     core.fam, self)
+        self.config = PackagesConfig(self)
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
                                        self.cachepath, core.fam, self,
                                        self.config)
 
     @property
     def disableResolver(self):
-        try:
-            return self.config.get("global", "resolver").lower() == "disabled"
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
+        return self.config.get("global", "resolver",
+                               default="enabled").lower() == "disabled"
 
     @property
     def disableMetaData(self):
-        try:
-            return self.config.get("global", "metadata").lower() == "disabled"
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
+        return self.config.get("global", "metadata",
+                               default="enabled").lower() == "disabled"
 
     def create_config(self, entry, metadata):
         """ create yum/apt config for the specified host """
@@ -78,13 +73,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             entry.set('version', 'auto')
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
-            if (self.config.has_section("global") and
-                ((self.config.has_option("global", "yum_config") and
-                  entry.get("name") == self.config.get("global",
-                                                       "yum_config")) or
-                 (self.config.has_option("global", "apt_config") and 
-                  entry.get("name") == self.config.get("global",
-                                                       "apt_config")))):
+            if (entry.get("name") == self.config.get("global", "yum_config") or
+                entry.get("name") == self.config.get("global", "apt_config")):
                 self.create_config(entry, metadata)
 
     def HandlesEntry(self, entry, metadata):
@@ -94,11 +84,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if ((self.config.has_option("global", "yum_config") and
-                 entry.get("name") == self.config.get("global",
-                                                      "yum_config")) or
-                (self.config.has_option("global", "apt_config") and 
-                 entry.get("name") == self.config.get("global", "apt_config"))):
+            if (entry.get("name") == self.config.get("global", "yum_config") or
+                entry.get("name") == self.config.get("global", "apt_config")):
                 return True
         return False
 
