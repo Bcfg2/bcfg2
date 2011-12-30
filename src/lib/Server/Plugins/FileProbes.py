@@ -133,7 +133,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             create = True
 
         # get current entry data
-        if entry.get("encoding") == "base64":
+        if entry.text and entry.get("encoding") == "base64":
             entrydata = binascii.a2b_base64(entry.text)
         else:
             entrydata = entry.text
