@@ -227,7 +227,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         keys = []
         for source in self.sources:
             for key in source.gpgkeys:
-                localfile = os.path.join(self.keypath, os.path.basename(key))
+                localfile = os.path.join(self.keypath,
+                                         os.path.basename(key.rstrip("/")))
                 if localfile not in keyfiles:
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
