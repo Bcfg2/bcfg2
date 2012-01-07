@@ -10,6 +10,17 @@ The installation of Bcfg2 on a specific distribution depends on the
 package management tool and the availability of the package in the
 distribution's repository.
 
+Alpine Linux
+============
+
+Packages for `Alpine Linux`_ are available in the `testing`_ repository.
+Just use `apk` to perform the installation ::
+
+   apk add bcfg2 bcfg2-server -U -X http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted
+
+.. _Alpine Linux: http://www.alpinelinux.org/
+.. _testing: http://git.alpinelinux.org/cgit/aports/tree/testing/bcfg2
+
 ArchLinux
 =========
 
@@ -101,12 +112,15 @@ RHEL / Centos / Scientific Linux
 
 While you can go about building all these things from source, this
 section will try and meet the dependencies using packages from EPEL_
-[#f1]_. The *el5* and the soon available *el6* package should be compatible
+[#f1]_. The *el5* and the *el6* package should be compatible
 with `CentOS`_ 5.x/6.x and `Scientific Linux`_.
 
-EPEL_::
+EPEL_ for 5.x ::
 
     [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+EPEL_ for 6.x ::
+    [root@centos ~]# rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
 Install the bcfg2-server and bcfg2 RPMs::
 
