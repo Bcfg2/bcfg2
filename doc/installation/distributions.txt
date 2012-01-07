@@ -116,7 +116,6 @@ section will try and meet the dependencies using packages from EPEL_
 with `CentOS`_ 5.x/6.x and `Scientific Linux`_.
 
 EPEL_ for 5.x ::
-
     [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
 EPEL_ for 6.x ::
