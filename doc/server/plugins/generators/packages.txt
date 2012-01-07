@@ -8,12 +8,11 @@ Packages
 
 .. versionadded:: 1.0.0
 
-This page documents the Packages plugin. Packages is an alternative to
-:ref:`Pkgmgr <server-plugins-generators-pkgmgr>` for specifying package
-entries for clients. Where Pkgmgr explicitly specifies package entry
-information, Packages delegates control of package version information to
-the underlying package manager, installing the latest version available
-through those channels.
+Packages is an alternative to :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`
+ for specifying package entries for clients. Where Pkgmgr explicitly
+specifies package entry information, Packages delegates control of package
+version information to the underlying package manager, installing the latest
+version available through those channels.
 
 .. _server-plugins-generators-packages-magic-groups:
 
@@ -58,7 +57,7 @@ member clients.
    Magic OS groups can be disabled in Bcfg2 1.2 and greater by setting
    ``magic_groups`` to ``0`` in ``Packages/packages.conf``.  This may
    give you greater flexibility in determining which source types to
-   use for which OSes.  Magic architecture groups cannot be disabled.
+   use for which OSes. Magic architecture groups cannot be disabled.
 
 
 Limiting sources to groups
@@ -146,7 +145,7 @@ future releases. In the meantime, you can work around this issue by
 blacklisting the offending Package in your Sources. The blacklist
 element should immediately follow the Component section of your source
 and should look like the following::
-
+    .. code-block:: xml
     <Blacklist>unwanted-packagename</Blacklist>
 
 If you use the built-in :ref:`Yum config generator
@@ -161,7 +160,7 @@ Handling GPG Keys
 Packages can automatically handle GPG signing keys for Yum and Pulp
 repositories. Simply specify the URL to the GPG key(s) for a
 repository in ``sources.xml``::
-
+    .. code-block:: xml
     <Source type="yum"
             rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
       <Arch>x86_64</Arch>
@@ -183,9 +182,11 @@ REST API.
 Example usage
 =============
 
+APT
+---
 Create a ``sources.xml`` file in the Packages directory that looks
 something like this::
-
+    .. code-block:: xml
     <Sources>
       <Group name="ubuntu-intrepid">
         <Source type="apt"
@@ -216,8 +217,11 @@ something like this::
 
         <Source type="apt" recommended="true" ...>
 
-Yum sources can be similarly specified::
+YUM
+---
 
+Yum sources can be similarly specified::
+    .. code-block:: xml
     <Sources>
       <Group name="centos-5.2">
         <Source type="yum"
@@ -236,9 +240,13 @@ Yum sources can be similarly specified::
 For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
 
+Pulp
+----
+
 :ref:``Pulp sources <pulp-source-support>`` are very simple to specify
 due to the amount of data that can be queried from Pulp itself::
 
+    .. code-block:: xml
     <Sources>
       <Group name="centos-6-x86_64">
         <Source type="yum" pulp_id="centos-6-x86_64-os"/>
@@ -247,18 +255,19 @@ due to the amount of data that can be queried from Pulp itself::
       </Group>
     </Sources>
 
-.. note:: There is also a rawurl attribute for specifying sources that
-          don't follow the conventional layout.
+Raw URLs
+--------
+For specifying sources that don't follow the conventional layout, the rawurl
+attribute is useful::
 
-          .. code-block:: xml
-
-              <Sources>
-                <Group name="centos5.4">
-                  <Source type="yum"
-                          rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.os">
-                    <Arch>x86_64</Arch>
-                  </Source>
-                  <Source type="yum"
+    .. code-block:: xml
+        <Sources>
+            <Group name="centos5.4">
+                <Source type="yum"
+                    rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.os">
+                <Arch>x86_64</Arch>
+            </Source>
+            <Source type="yum"
                           rawurl="http://mrepo.ices.utexas.edu/centos5-x86_64/RPMS.updates">
                     <Arch>x86_64</Arch>
                   </Source>
@@ -269,20 +278,19 @@ due to the amount of data that can be queried from Pulp itself::
                 </Group>
               </Sources>
 
-          .. code-block:: xml
-
-              <Sources>
-                <Group name="ubuntu-lucid">
-                  <Source type="apt"
-                          rawurl="http://hudson-ci.org/debian/binary">
-                    <Arch>amd64</Arch>
-                  </Source>
-                  <Source type="apt"
-                          rawurl=http://hudson-ci.org/debian/binary">
-                    <Arch>i386</Arch>
-                  </Source>
-                </Group>
-              </Sources>
+    .. code-block:: xml
+    <Sources>
+        <Group name="ubuntu-lucid">
+            <Source type="apt"
+                rawurl="http://hudson-ci.org/debian/binary">
+                <Arch>amd64</Arch>
+            </Source>
+                <Source type="apt"
+                        rawurl=http://hudson-ci.org/debian/binary">
+                <Arch>i386</Arch>
+            </Source>
+        </Group>
+    </Sources>
 
 Configuration Updates
 =====================
@@ -356,6 +364,7 @@ Package Checking and Verification
 In order to do disable per-package verification Pkgmgr style, you will
 need to use :ref:`BoundEntries <boundentries>`, e.g.::
 
+    .. code-block:: xml
     <BoundPackage name="mem-agent" priority="1" version="auto"
                   type="yum" verify="false"/>
 
@@ -461,14 +470,14 @@ Yum package groups are supported by the native Yum libraries.  To
 include a package group, use the ``group`` attribute of the
 ``Package`` tag.  You can use either the short group ID or the long
 group name::
-
+    .. code-block:: xml
     <Package group="SNMP Support"/>
     <Package group="system-management-snmp"/>
 
 By default, only those packages considered the "default" packages in a
 group will be installed.  You can change this behavior using the
 "type" attribute::
-
+    .. code-block:: xml
     <Package group="development" type="optional"/>
     <Package group="Administration Tools" type="mandatory"/>
 
@@ -495,7 +504,7 @@ Bcfg2 contains explicit support for repositories managed by Pulp
 (http://pulpproject.org/).  Due to the amount of data about a
 repository that can be retrieved directly from Pulp, the only thing
 necessary to configure a Pulp repo is the repo ID::
-
+    .. code-block:: xml
     <Sources>
       <Group name="centos-6-x86_64">
         <Source type="yum" pulp_id="centos-6-x86_64-os"/>
@@ -574,13 +583,6 @@ Using bcfg2-server
 Once the server is started, enable debugging via bcfg2-admin::
 
     $ bcfg2-admin xcmd Packages.toggle_debug
-
-TODO list
-=========
-
-* Zypper support
-* Portage support
-* Explicit version pinning (a la Pkgmgr)
 
 Developing for Packages
 =======================
