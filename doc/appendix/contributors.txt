@@ -11,7 +11,7 @@ Contributors
 
 ..
    This is list is no longer in chronological order like the
-   AUTHORS file because it's easier to maintain (for me).
+   AUTHORS file because it's easier to maintain.
    Automatically sorted.
 
 In alphabetical order of the given name:
@@ -22,6 +22,8 @@ In alphabetical order of the given name:
   which was used in the Bcfg2 client.
 - Chris Vuletich <vuletich@mcs.anl.gov> wrote some SSL code and the
   verification debugging code.
+- Chris St. Pierre <stpierreca@ornl.gov> (re)wrote bcfg2-lint and has
+  made other miscellaneous contributions.
 - Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function
   in ``bcfg2-info``.
 - Daniel Clark <dclark@pobox.com> created encap packages for bcfg2 and 
@@ -45,7 +47,7 @@ In alphabetical order of the given name:
 - Ken Raffenetti <raffenet@mcs.anl.gov> and Rick Bradshaw have written the
   Hostbase plugin.
 - Michael Jinks <mjinks@uchicago.edu> wrote the Gentoo tool drivers.
-- Narayan Desai <desai@mcs.anl.gov> has written most of bcfg2, including all
+- Narayan Desai <desai@mcs.anl.gov> has written most of Bcfg2, including all
   parts not explicitly mentioned in this file.
 - Patrick Ruckstuhl fixed bugs in the templating.
 - Pedro Flores made the Reporting system design help.
