@@ -31,7 +31,7 @@ In alphabetical order of the given name:
 - David Strauss worked on CentOS, RHEL, Yum, and Bazaar VCS support.
 - Ed Smith <esmith4@inf.ed.ac.uk> has done substantial hardening of the
   Bcfg client and server and implemented a common logging infrastructure.
-- Fabian Affolter <fabian@bernewireless.net> made some patches, added  
+- Fabian Affolter <mail@fabian-affolter.ch> made some patches, added  
   some new features and plugins, and restructured the manual for Bcfg2.
 - Jack Neely <jjneely@ncsu.edu> worked on YUMng.
 - James Yang <jjyang@mcs.anl.gov> worked on ``bcfg2-admin`` and 
