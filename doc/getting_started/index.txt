@@ -236,7 +236,7 @@ Next Steps
 Several other utilities can help from this point on:
 
 :ref:`bcfg2-info <server-bcfg2-info>` is a utility that
-instantiates a copy of the bcfg2 server core (minus the networking code)
+instantiates a copy of the Bcfg2 server core (minus the networking code)
 for examination. From this, you can directly query:
 
 * Client Metadata
