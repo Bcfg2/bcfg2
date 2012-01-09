@@ -10,7 +10,7 @@ RESTRICT_PYTHON_ABIS="2.4 2.5 3.*"
 
 inherit distutils
 
-DESCRIPTION="Bcfg2 is a configuration management tool."
+DESCRIPTION="configuration management tool"
 HOMEPAGE="http://bcfg2.org"
 
 # handle the "pre" case
@@ -23,11 +23,11 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
 IUSE="server"
 
-DEPEND="app-portage/gentoolkit
+DEPEND=""
+RDEPEND="app-portage/gentoolkit
 	server? (
 		dev-python/lxml
-		app-admin/gam-server )"
-RDEPEND="${DEPEND}"
+		dev-libs/libgamin[python] )"
 
 PYTHON_MODNAME="Bcfg2"
 
@@ -40,14 +40,11 @@ distutils_src_install_post_hook() {
 src_install() {
 	distutils_src_install --record=PY_SERVER_LIBS --install-scripts "${EPREFIX}/usr/sbin"
 
-	# Remove files only necessary for a server installation
 	if ! use server; then
+	    # Remove files only necessary for a server installation
 		rm -rf "${ED}usr/share/bcfg2"
 		rm -rf "${ED}usr/share/man/man8"
-	fi
-
-	# Install a server init.d script
-	if use server; then
+	else
 		newinitd "${FILESDIR}/bcfg2-server.rc" bcfg2-server
 	fi
 
