@@ -117,8 +117,9 @@ class ErrorHandler (object):
                "xml-failed-to-verify":"error",
                "merge-cfg":"warning",
                "merge-probes":"warning",
-               "input-output-error": "error",
-               "genshi-syntax-error": "error"}
+               "input-output-error":"error",
+               "genshi-syntax-error":"error",
+               "pattern-fails-to-initialize":"error"}
 
     def __init__(self, config=None):
         self.errors = 0
