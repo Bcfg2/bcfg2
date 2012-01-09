@@ -10,7 +10,7 @@ from glob import glob
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
-      version="1.1.2",
+      version="1.1.3",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
