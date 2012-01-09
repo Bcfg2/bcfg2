@@ -356,8 +356,6 @@ class FileBacked(object):
         object.__init__(self)
         self.data = ''
         self.name = name
-        self.logger = logging.getLogger('Bcfg2.Plugins.%s' %
-                                        self.__class__.__name__)
         
     def HandleEvent(self, event=None):
         """Read file upon update."""

@@ -1,8 +1,7 @@
-import lxml.etree
 import re
-
+import logging
+import lxml.etree
 import Bcfg2.Server.Plugin
-
 
 class PackedDigitRange(object):
     def __init__(self, digit_range):
@@ -78,6 +77,7 @@ class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     def __init__(self, filename, fam):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
         self.patterns = []
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def Index(self):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
