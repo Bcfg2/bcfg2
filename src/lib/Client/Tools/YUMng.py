@@ -158,7 +158,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         try:
             self.yb.preconf.debuglevel = debuglevel
         except AttributeError:
-            self.yb._getConfig(self.yb.config_file_path,
+            self.yb._getConfig(self.yb.conf.config_file_path,
                                debuglevel=debuglevel)
 
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
