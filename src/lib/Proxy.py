@@ -49,18 +49,20 @@ class ProxyError(Exception):
     the various xmlrpclib errors that might arise (mainly
     ProtocolError and Fault) """
     def __init__(self, err):
+        msg = None
         if isinstance(err, xmlrpclib.ProtocolError):
             # cut out the password in the URL
             url = re.sub(r'([^:]+):(.*?)@([^@]+:\d+/)', r'\1:******@\3',
                          err.url)
-            self.message = "XML-RPC Protocol Error for %s: %s (%s)" % \
-                           (url, err.errmsg, err.errcode)
+            msg = "XML-RPC Protocol Error for %s: %s (%s)" % (url,
+                                                              err.errmsg,
+                                                              err.errcode)
         elif isinstance(err, xmlrpclib.Fault):
-            self.message = "XML-RPC Fault: %s (%s)" % (err.faultString,
-                                                       err.faultCode)
+            msg = "XML-RPC Fault: %s (%s)" % (err.faultString,
+                                              err.faultCode)
         else:
-            self.message = str(err)
-        self.args = (self.message, )
+            msg = str(err)
+        Exception(self, msg)
 
 class CertificateError(Exception):
     def __init__(self, commonName):
