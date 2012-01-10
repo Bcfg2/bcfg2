@@ -211,7 +211,7 @@ class File(Base, Uniquer):
     type = Column(Unicode(12))
     owner = Column(Unicode(12))
     group = Column(Unicode(16))
-    perms = Column(Integer(5))
+    perms = Column(Integer)
     contents = Column(UnicodeText)
 
 
