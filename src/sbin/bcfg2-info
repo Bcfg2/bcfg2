@@ -518,9 +518,12 @@ if __name__ == '__main__':
                     'logging': Bcfg2.Options.LOGGING_FILE_PATH
                     })
     setup = Bcfg2.Options.OptionParser(optinfo)
+    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
+                                        USAGE)
+
     setup.parse(sys.argv[1:])
     if setup['args'] and setup['args'][0] == 'help':
-        print(USAGE)
+        print(setup.hm)
         sys.exit(0)
     elif setup['profile'] and have_profile:
         prof = profile.Profile()

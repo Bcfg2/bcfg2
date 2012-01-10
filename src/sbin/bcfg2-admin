@@ -44,6 +44,9 @@ def main():
         'verbose': Bcfg2.Options.VERBOSE,
         }
     setup = Bcfg2.Options.OptionParser(optinfo)
+    # override default help message to include description of all modes
+    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
+                                        create_description())
     setup.parse(sys.argv[1:])
 
     log_args = dict(to_syslog=False, to_console=logging.WARNING)
@@ -58,8 +61,7 @@ def main():
             setup['args'] = [setup['args'][1], setup['args'][0]]
         else:
             # Print short help for all modes
-            print("Usage:\n     %s" % setup.buildHelpMessage())
-            print(create_description())
+            print(setup.hm)
             raise SystemExit(0)
 
     if setup['args'][0] in get_modes():
