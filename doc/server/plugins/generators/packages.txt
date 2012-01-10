@@ -216,6 +216,9 @@ something like this::
 
         <Source type="apt" recommended="true" ...>
 
+    .. warning:: You must regenerate the Packages cache when adding or
+                 removing the recommended attribute.
+
 Yum sources can be similarly specified::
 
     <Sources>
