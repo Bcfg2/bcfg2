@@ -28,6 +28,14 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
     def _matches(self, entry, metadata, rules):
         if Bcfg2.Server.Plugin.PrioDir._matches(self, entry, metadata, rules):
             return True
+        elif (entry.tag == "Path" and
+              ((entry.get('name').endswith("/") and
+                entry.get('name').rstrip("/") in rules) or
+               (not entry.get('name').endswith("/") and
+                entry.get('name') + '/' in rules))):
+            # special case for Path tags:
+            # http://trac.mcs.anl.gov/projects/bcfg2/ticket/967
+            return True
         else:
             # attempt regular expression matching
             for rule in rules:
