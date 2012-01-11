@@ -165,7 +165,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         except yum.Errors.RepoError, e:
             self.logger.error("YUMng Repository error: %s" % e)
             raise Bcfg2.Client.Tools.toolInstantiationError
-        except yum.Errors.YumBaseError, e:
+        except Exception, e:
             self.logger.error("YUMng error: %s" % e)
             raise Bcfg2.Client.Tools.toolInstantiationError
  
@@ -475,6 +475,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
 
+            if self.setup.get('quick', False):
+                # Passed -q on the command line
+                continue
             if not (pkg_verify and \
                     inst.get('pkg_verify', 'true').lower() == 'true'):
                 continue
@@ -653,38 +656,56 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             return True
 
     def _runYumTransaction(self):
+        def cleanup():
+            self.yb.closeRpmDB()
+            self.RefreshPackages()
+
         rDisplay = RPMDisplay(self.logger)
         yDisplay = YumDisplay(self.logger)
         # Run the Yum Transaction
-        rescode, restring = self.yb.buildTransaction()
+        try:
+            rescode, restring = self.yb.buildTransaction()
+        except yum.Errors.YumBaseError, e:
+            self.logger.error("Yum transaction error: %s" % str(e))
+            cleanup()
+            return
+
         self.logger.debug("Initial Yum buildTransaction() run said:")
         self.logger.debug("   resultcode: %s, msgs: %s" \
                           % (rescode, restring))
 
         if rescode != 1:
             # Transaction built successfully, run it
-            self.yb.processTransaction(callback=yDisplay,
-                                       rpmDisplay=rDisplay)
-            self.logger.info("Single Pass for Install Succeeded")
+            try:
+                self.yb.processTransaction(callback=yDisplay,
+                                           rpmDisplay=rDisplay)
+                self.logger.info("Single Pass for Install Succeeded")
+            except yum.Errors.YumBaseError, e:
+                self.logger.error("Yum transaction error: %s" % str(e))
+                cleanup()
+                return
         else:
             # The yum command failed.  No packages installed.
             # Try installing instances individually.
             self.logger.error("Single Pass Install of Packages Failed")
             skipBroken = self.yb.conf.skip_broken
             self.yb.conf.skip_broken = True
-            rescode, restring = self.yb.buildTransaction()
-            if rescode != 1:
-                self.yb.processTransaction(callback=yDisplay,
-                                           rpmDisplay=rDisplay)
-                self.logger.debug(
-                    "Second pass install did not install all packages")
-            else:
-                self.logger.error("Second pass yum install failed.")
-                self.logger.debug("   %s" % restring)
+            try:
+                rescode, restring = self.yb.buildTransaction()
+                if rescode != 1:
+                    self.yb.processTransaction(callback=yDisplay,
+                                               rpmDisplay=rDisplay)
+                    self.logger.debug(
+                        "Second pass install did not install all packages")
+                else:
+                    self.logger.error("Second pass yum install failed.")
+                    self.logger.debug("   %s" % restring)
+            except yum.Errors.YumBaseError, e:
+                self.logger.error("Yum transaction error: %s" % str(e))
+
             self.yb.conf.skip_broken = skipBroken
 
-        self.yb.closeRpmDB()
-        self.RefreshPackages()
+        cleanup()
 
     def Install(self, packages, states):
         """
@@ -779,6 +800,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             states[pkg] = self.VerifyPackage(pkg, [])
 
         # Install packages.
+        try:
+            # We want to reload all Yum configuration in case we've
+            # deployed new .repo files we should consider
+            self.yb = yum.YumBase()
+            self.yb.doTsSetup()
+            self.yb.doRpmDBSetup()
+            self.yb.doConfigSetup()
+        except Exception, e:
+            self.logger.warning("YUMng: Error Refreshing Yum Repos: %s" % e)
+
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
