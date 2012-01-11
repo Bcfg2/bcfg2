@@ -800,6 +800,16 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             states[pkg] = self.VerifyPackage(pkg, [])
 
         # Install packages.
+        try:
+            # We want to reload all Yum configuration in case we've
+            # deployed new .repo files we should consider
+            self.yb = yum.YumBase()
+            self.yb.doTsSetup()
+            self.yb.doRpmDBSetup()
+            self.yb.doConfigSetup()
+        except Exception, e:
+            self.logger.warning("YUMng: Error Refreshing Yum Repos: %s" % e)
+
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
