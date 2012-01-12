@@ -372,6 +372,12 @@ class FileBacked(object):
         """Update local data structures based on current file state"""
         pass
 
+    def __repr__(self):
+        return "%s: %s" % (self.__class__.__name__, str(self))
+
+    def __str__(self):
+        return "%s: %s" % (self.name, self.data)
+
 
 class DirectoryBacked(object):
     """This object is a coherent cache for a filesystem hierarchy of files."""
@@ -566,6 +572,9 @@ class XMLFileBacked(FileBacked):
 
     def __iter__(self):
         return iter(self.entries)
+
+    def __str__(self):
+        return "%s: %s" % (self.name, lxml.etree.tostring(self.xdata))
 
 
 class SingleXMLFileBacked(XMLFileBacked):
