@@ -107,7 +107,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         cmd.Cmd.__init__(self)
         try:
             Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd,
-                                            encoding, filemonitor)
+                                            encoding, filemonitor=filemonitor)
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
