@@ -146,21 +146,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
     conflicts = ['YUM24', 'RPMng']
 
     def __init__(self, logger, setup, config):
-        self.yb = yum.YumBase()
-
-        if setup['debug']:
-            debuglevel = 3
-        elif setup['verbose']:
-            debuglevel = 2
-        else:
-            debuglevel = 1
-
-        try:
-            self.yb.preconf.debuglevel = debuglevel
-        except AttributeError:
-            self.yb._getConfig(self.yb.conf.config_file_path,
-                               debuglevel=debuglevel)
-
+        self._loadYumBase(setup=setup, logger=logger)
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
         self.ignores = [entry.get('name') for struct in config \
                         for entry in struct \
@@ -179,18 +165,6 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                               or entry.get('name') == '/etc/yum.conf']
         self.yum_avail = dict()
         self.yum_installed = dict()
-        try:
-            self.yb.doConfigSetup()
-            self.yb.doTsSetup()
-            self.yb.doRpmDBSetup()
-        except yum.Errors.RepoError:
-            e = sys.exc_info()[1]
-            self.logger.error("YUMng Repository error: %s" % e)
-            raise Bcfg2.Client.Tools.toolInstantiationError
-        except Exception:
-            e = sys.exc_info()[1]
-            self.logger.error("YUMng error: %s" % e)
-            raise Bcfg2.Client.Tools.toolInstantiationError
 
         yup = self.yb.doPackageLists(pkgnarrow='updates')
         if hasattr(self.yb.rpmdb, 'pkglist'):
@@ -210,6 +184,49 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                     dest[pname].update(data)
                 else:
                     dest[pname] = dict(data)
+
+    def _loadYumBase(self, setup=None, logger=None):
+        ''' this may be called before PkgTool.__init__() is called on
+        this object (when the YUMng object is first instantiated;
+        PkgTool.__init__() calls RefreshPackages(), which requires a
+        YumBase object already exist), or after __init__() has
+        completed, when we reload the yum config before installing
+        packages. Consequently, we support both methods by allowing
+        setup and logger, the only object properties we use in this
+        function, to be passed as keyword arguments or to be omitted
+        and drawn from the object itself.'''
+        self.yb = yum.YumBase()
+
+        if setup is None:
+            setup = self.setup
+        if logger is None:
+            logger = self.logger
+
+        if setup['debug']:
+            debuglevel = 3
+        elif setup['verbose']:
+            debuglevel = 2
+        else:
+            debuglevel = 1
+
+        try:
+            self.yb.preconf.debuglevel = debuglevel
+        except AttributeError:
+            self.yb._getConfig(self.yb.conf.config_file_path,
+                               debuglevel=debuglevel)
+
+        try:
+            self.yb.doConfigSetup()
+            self.yb.doTsSetup()
+            self.yb.doRpmDBSetup()
+        except yum.Errors.RepoError:
+            err = sys.exc_info()[1]
+            logger.error("YUMng Repository error: %s" % err)
+            raise Bcfg2.Client.Tools.toolInstantiationError
+        except Exception:
+            err = sys.exc_info()[1]
+            logger.error("YUMng error: %s" % err)
+            raise Bcfg2.Client.Tools.toolInstantiationError
 
     def _loadConfig(self):
         # Process the YUMng section from the config file.
@@ -841,17 +858,11 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
             states[pkg] = self.VerifyPackage(pkg, [])
 
-        # Install packages.
-        try:
-            # We want to reload all Yum configuration in case we've
-            # deployed new .repo files we should consider
-            self.yb = yum.YumBase()
-            self.yb.doTsSetup()
-            self.yb.doRpmDBSetup()
-            self.yb.doConfigSetup()
-        except Exception, e:
-            self.logger.warning("YUMng: Error Refreshing Yum Repos: %s" % e)
+        # We want to reload all Yum configuration in case we've
+        # deployed new .repo files we should consider
+        self._loadYumBase()
 
+        # Install packages.
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
