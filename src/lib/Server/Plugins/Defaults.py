@@ -49,3 +49,7 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
                 finally:
                     if is_bound:
                         entry.tag = "Bound" + entry.tag
+
+    def _regex_enabled(self):
+        """ Defaults depends on regex matching, so force it enabled """
+        return True

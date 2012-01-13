@@ -354,8 +354,18 @@ how to assign Rules to a host's literal configuration.
 Using Regular Expressions in Rules
 ==================================
 
-The ``name`` attribute in Rules supports the use of regular
-expressions to match multiple abstract configuration entries.
+If you wish, you can configure the Rules plugin to support regular
+expressions.  This entails a small performance and memory usage
+penalty.  To do so, create a file, "Rules/rules.conf", and add the
+following text::
+
+  [rules]
+  regex = yes
+
+You will have to restart the Bcfg2 server after making that change.
+
+With regular expressions enabled, you can use a regex in the ``name``
+attribute to match multiple abstract configuration entries.
 
 Regular expressions are anchored at both ends, so ``<Service
 name="bcfg2".../>`` will *not* match a Service named ``bcfg2-server``;

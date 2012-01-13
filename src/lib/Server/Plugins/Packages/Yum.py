@@ -113,11 +113,8 @@ class YumCollection(Collection):
                                         "%s-yum.conf" % self.cachekey)
             self.write_config()
 
-            try:
-                self.helper = self.config.get("yum", "helper")
-            except ConfigParser.NoOptionError:
-                self.helper = "/usr/sbin/bcfg2-yum-helper"
-            
+            self.helper = self.config.get("yum", "helper",
+                                          default="/usr/sbin/bcfg2-yum-helper")
         if has_pulp:
             _setup_pulp(self.config)
 
@@ -192,11 +189,8 @@ class YumCollection(Collection):
 
             for key in needkeys:
                 # figure out the path of the key on the client
-                try:
-                    keydir = self.config.get("global", "gpg_keypath")
-                except (ConfigParser.NoOptionError,
-                        ConfigParser.NoSectionError):
-                    keydir = "/etc/pki/rpm-gpg"
+                keydir = self.config.get("global", "gpg_keypath",
+                                         default="/etc/pki/rpm-gpg")
                 remotekey = os.path.join(keydir, os.path.basename(key))
                 localkey = os.path.join(self.keypath, os.path.basename(key))
                 kdata = open(localkey).read()

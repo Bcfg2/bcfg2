@@ -11,6 +11,7 @@ import posixpath
 import re
 import sys
 import threading
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 from lxml.etree import XML, XMLSyntaxError
 
@@ -1142,3 +1143,51 @@ class GroupSpool(Plugin, Generator):
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.handles[reqid] = relative
+
+class SimpleConfig(FileBacked,
+                   ConfigParser.SafeConfigParser):
+    ''' a simple plugin config using ConfigParser '''
+    _required = True
+    
+    def __init__(self, plugin):
+        filename = os.path.join(plugin.data, plugin.name.lower() + ".conf")
+        self.plugin = plugin
+        self.fam = self.plugin.core.fam
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, filename)
+        ConfigParser.SafeConfigParser.__init__(self)
+
+        if (self._required or
+            (not self._required and os.path.exists(self.name))):
+            self.fam.AddMonitor(self.name, self)
+
+    def Index(self):
+        """ Build local data structures """
+        for section in self.sections():
+            self.remove_section(section)
+        self.read(self.name)
+
+    def get(self, section, option, default=None):
+        """ convenience method for getting config items """
+        try:
+            return ConfigParser.SafeConfigParser.get(self, section, option)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            if default is not None:
+                return default
+            else:
+                raise
+
+    def getboolean(self, section, option, default=None):
+        """ convenience method for getting boolean config items """
+        try:
+            return ConfigParser.SafeConfigParser.getboolean(self,
+                                                            section, option)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            if default is not None:
+                return default
+            else:
+                raise
+        except ValueError:
+            if default is not None:
+                return default
+            else:
+                raise
