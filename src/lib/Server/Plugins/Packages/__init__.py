@@ -73,8 +73,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             entry.set('version', 'auto')
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
-            if (entry.get("name") == self.config.get("global", "yum_config") or
-                entry.get("name") == self.config.get("global", "apt_config")):
+            if (entry.get("name") == self.config.get("global", "yum_config",
+                                                     default="") or
+                entry.get("name") == self.config.get("global", "apt_config",
+                                                     default="")):
                 self.create_config(entry, metadata)
 
     def HandlesEntry(self, entry, metadata):
@@ -84,8 +86,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") == self.config.get("global", "yum_config") or
-                entry.get("name") == self.config.get("global", "apt_config")):
+            if (entry.get("name") == self.config.get("global", "yum_config",
+                                                     default="") or
+                entry.get("name") == self.config.get("global", "apt_config",
+                                                     default="")):
                 return True
         return False
 

@@ -92,11 +92,9 @@ class YumCollection(Collection):
 
         if len(sources):
             config = sources[0].config
-            self.use_yum = has_yum
-            try:
-                self.use_yum &= config.getboolean("yum", "use_yum_libraries")
-            except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-                self.use_yum = False
+            self.use_yum = has_yum and config.getboolean("yum",
+                                                         "use_yum_libraries",
+                                                         default=False)
         else:
             self.use_yum = False
 
@@ -452,11 +450,8 @@ class YumSource(Source):
         self.needed_paths = set()
         self.file_to_arch = dict()
 
-        self.use_yum = has_yum
-        try:
-            self.use_yum &= config.getboolean("yum", "use_yum_libraries")
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            self.use_yum = False
+        self.use_yum = has_yum and config.getboolean("yum", "use_yum_libraries",
+                                                     default=False)
 
     def save_state(self):
         if not self.use_yum:
