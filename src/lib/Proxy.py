@@ -22,10 +22,12 @@ import socket
 try:
     import ssl
     SSL_LIB = 'py26_ssl'
+    SSL_ERROR = ssl.SSLError
 except ImportError:
     from M2Crypto import SSL
     import M2Crypto.SSL.Checker
     SSL_LIB = 'm2crypto'
+    SSL_ERROR = SSL.SSLError
 
 
 import sys
@@ -305,14 +307,9 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.send_user_agent(h)
         self.send_content(h, request_body)
 
-        if SSL_LIB == 'py26_ssl':
-            catch = ssl.SSLError
-        elif SSL_LIB == 'm2crypto':
-            catch = SSL.SSLError
-
         try:
             errcode, errmsg, headers = h.getreply()
-        except catch:
+        except (socket.error, SSL_ERROR):
             err = sys.exc_info()[1]
             raise ProxyError(xmlrpclib.ProtocolError(host + handler,
                                                      408,
