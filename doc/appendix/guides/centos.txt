@@ -24,13 +24,6 @@ building Bcfg2 from source and making your own packages.
 Using EPEL
 ----------
 
-.. warning::
-
-    EPEL has outdated versions of the server package for centos5 and
-    earlier. This guide is intended to be used with versions 1.0.0 and
-    higher. Please consider building a newer RPM if you are following
-    this guide.
-
 Make sure EPEL_ is a valid repository on your server. The `instructions
 <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_ on how to do this
 basically say::

@@ -142,7 +142,8 @@ To compile and install prelink, execute::
 in the rpmtools directory. The elfutils-libelf-devel package is required
 for the compilation.
 
-There are Centos x86_64 RPMs here ftp://ftp.mcs.anl.gov/pub/bcfg/redhat/
+There are Centos x86_64 RPMs here
+ftp://ftp.mcs.anl.gov/pub/bcfg/archive/redhat/
 
 Configuration and Usage
 =======================
