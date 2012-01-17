@@ -7,12 +7,14 @@ import select
 import sys
 import threading
 import time
+
 try:
     import lxml.etree
 except ImportError:
     print("Failed to import lxml dependency. Shutting down server.")
     raise SystemExit(1)
 
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 import Bcfg2.Server.FileMonitor
@@ -162,15 +164,11 @@ class Core(Component):
     def init_plugins(self, plugin):
         """Handling for the plugins."""
         try:
-            mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                (plugin)).Server.Plugins, plugin)
-        except ImportError:
-            try:
-                mod = __import__(plugin)
-            except:
-                logger.error("Failed to load plugin %s" % (plugin))
-                return
-        plug = getattr(mod, plugin)
+            plug = load_exactly_one('bcfg2.plugin', plugin)
+        except (MultipleEntriesError, NoEntriesError):
+            logger.exception("Unable to load plugin")
+            return
+
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
                   if conflict in self.plugins]
