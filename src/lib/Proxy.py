@@ -302,12 +302,12 @@ class XMLRPCTransport(xmlrpclib.Transport):
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
         h = self.make_connection(host)
-        self.send_request(h, handler, request_body)
-        self.send_host(h, host)
-        self.send_user_agent(h)
-        self.send_content(h, request_body)
 
         try:
+            self.send_request(h, handler, request_body)
+            self.send_host(h, host)
+            self.send_user_agent(h)
+            self.send_content(h, request_body)
             errcode, errmsg, headers = h.getreply()
         except (socket.error, SSL_ERROR):
             err = sys.exc_info()[1]
