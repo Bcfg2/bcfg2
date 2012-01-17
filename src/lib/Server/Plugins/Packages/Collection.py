@@ -9,6 +9,8 @@ try:
 except ImportError:
     from md5 import md5
 
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
+
 # we have to cache Collection objects so that calling Packages.Refresh
 # or .Reload can tell the collection objects to clean up their cache,
 # but we don't actually use the cache to return a Collection object
@@ -321,17 +323,12 @@ def factory(metadata, sources, basepath, debug=False):
         cclass = Collection
     else:
         stype = sclasses.pop().__name__.replace("Source", "")
+        
         try:
-            module = \
-                getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
-                                   stype.title()).Server.Plugins.Packages,
-                        stype.title())
-            cclass = getattr(module, "%sCollection" % stype.title())
-        except ImportError:
-            logger.error("Packages: Unknown source type %s" % stype)
-        except AttributeError:
-            logger.warning("Packages: No collection class found for %s sources"
-                           % stype)
+            cclass = load_exactly_one('bcfg2.packages.collections', stype.title())
+        except (MultipleEntriesError, NoEntriesError):
+            logger.exception("Unable to load a source specific collection")
+            cclass = Collection
 
     if debug:
         logger.error("Packages: Using %s for Collection of sources for %s" %

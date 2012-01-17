@@ -8,17 +8,15 @@ import Bcfg2.Logger
 import Bcfg2.Options
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import StringIO
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 
 log = logging.getLogger('bcfg2-admin')
 
 import Bcfg2.Server.Admin
 
 def mode_import(modename):
-    """Load Bcfg2.Server.Admin.<mode>."""
-    modname = modename.capitalize()
-    mod = getattr(__import__("Bcfg2.Server.Admin.%s" %
-                             (modname)).Server.Admin, modname)
-    return getattr(mod, modname)
+    """Load the bcfg2.admin entry_point named modename"""
+    return load_exactly_one('bcfg2.admin', modename.capitalize())
 
 def get_modes():
     """Get all available modes, except for the base mode."""
@@ -33,7 +31,7 @@ def create_description():
         try:
             description.write(("   %-15s   %s\n" %
                    (mode, mode_import(mode).__shorthelp__)))
-        except (ImportError, SystemExit):
+        except (MultipleEntriesError, NoEntriesError):
             pass
     return description.getvalue()
 
@@ -66,14 +64,13 @@ def main():
 
     if setup['args'][0] in get_modes():
         modname = setup['args'][0].capitalize()
-	if len(setup['args']) > 1 and setup['args'][1] == 'help':
+        if len(setup['args']) > 1 and setup['args'][1] == 'help':
             print(mode_import(modname).__longhelp__)
             raise SystemExit(0)
         try:
             mode_cls = mode_import(modname)
-        except ImportError:
-            e = sys.exc_info()[1]
-            log.error("Failed to load admin mode %s: %s" % (modname, e))
+        except (MultipleEntriesError, NoEntriesError):
+            log.exception("Failed to load admin mode %s" % modname)
             raise SystemExit(1)
         mode = mode_cls(setup['configfile'])
         mode(setup['args'][1:])
