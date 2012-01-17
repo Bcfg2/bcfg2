@@ -207,7 +207,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         elif setup['verbose']:
             debuglevel = 2
         else:
-            debuglevel = 1
+            debuglevel = 0
 
         try:
             self.yb.preconf.debuglevel = debuglevel
