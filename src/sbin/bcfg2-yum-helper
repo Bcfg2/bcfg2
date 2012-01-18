@@ -179,7 +179,8 @@ class DepSolver(object):
             # provider of perl(lib).
             rv = []
             for pkg in providers:
-                if self.get_package_object(pkg.name) == pkg:
+                found = self.get_package_object(pkg.name)
+                if found == pkg or found.pkgtup == pkg.pkgtup:
                     rv.append(pkg)
         else:
             rv = providers
