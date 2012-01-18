@@ -104,6 +104,13 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
 
+def sort_xml(node, key=None):
+    for child in node:
+        sort_xml(child, key)
+
+    sorted_children = sorted(node, key=key)
+    node[:] = sorted_children
+
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
     def __init__(self, repo, plgs, passwd, encoding, event_debug, filemonitor='default'):
@@ -207,7 +214,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if not ofile.startswith('/tmp') and not path_force:
                 print("Refusing to write files outside of /tmp without -f option")
                 return
-            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(ofile,
+            client_config = self.BuildConfiguration(client)
+            sort_xml(client_config, key=lambda e: e.get('name'))
+            lxml.etree.ElementTree(client_config).write(ofile,
                                        encoding='UTF-8', xml_declaration=True,
                                        pretty_print=True)
         else:
