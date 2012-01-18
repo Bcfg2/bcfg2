@@ -28,6 +28,7 @@ class DepSolver(object):
         try:
             self.yumbase.preconf.debuglevel = verbose
             self.yumbase.preconf.fn = cfgfile
+            self.yb._getConfig()
         except AttributeError:
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
 
