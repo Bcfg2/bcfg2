@@ -37,6 +37,14 @@ except:
     pass
 
 
+def sort_xml(node, key=None):
+    for child in node:
+        sort_xml(child, key)
+
+    sorted_children = sorted(node, key=key)
+    node[:] = sorted_children
+
+
 class CoreInitError(Exception):
     """This error is raised when the core cannot be initialized."""
     pass
@@ -315,6 +323,9 @@ class Core(Component):
             except:
                 logger.error("error in BindStructure", exc_info=1)
         self.validate_goals(meta, config)
+        
+        sort_xml(config, key=lambda e: e.get('name'))
+
         logger.info("Generated config for %s in %.03f seconds" % \
                     (client, time.time() - start))
         return config
