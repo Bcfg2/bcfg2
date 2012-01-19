@@ -30,18 +30,20 @@ following pages in the Bcfg2 wiki.
 Need help
 ---------
 
-* FAQ:          http://bcfg2.org/wiki/FAQ
-* IRC:          #bcfg2 on chat.freenode.net
-* Mailing list: https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
-* Bug tracker:  http://bcfg2.org/report
-
-Documentation
--------------
-
 A lot of documentation is available in the Bcfg2 manual and the Bcfg2 wiki.
 
-Wiki:   http://bcfg2.org/wiki/
-Manual: http://docs.bcfg2.org/
+* Documentation:   http://docs.bcfg2.org/
+* Wiki:            http://bcfg2.org/wiki/
+* FAQ:             http://bcfg2.org/wiki/FAQ
+* IRC:             #bcfg2 on chat.freenode.net
+* Mailing list:    https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
+
+Want to help
+-------------
+
+* Bug tracker:     http://bcfg2.org/report
+* Development:     http://docs.bcfg2.org/development/
+* Wiki:            http://bcfg2.org/wiki/Contribute
 
 
 Bcfg2 is licensed under BSD, for more details check COPYING.
