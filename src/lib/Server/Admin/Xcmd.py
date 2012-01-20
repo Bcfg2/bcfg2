@@ -51,5 +51,10 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
                 return
             else:
                 raise
+        except Bcfg2.Proxy.ProxyError:
+            err = sys.exc_info()[1]
+            print("Proxy Error: %s" % err)
+            return
+
         if data != None:
             print(data)
