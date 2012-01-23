@@ -12,25 +12,19 @@
       <xsd:enumeration value="yum"/>
       <xsd:enumeration value="apt"/>
       <xsd:enumeration value="pac"/>
-      <xsd:enumeration value="pulp"/>
     </xsd:restriction>
   </xsd:simpleType>
 
   <xsd:complexType name="sourceType">
-    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
-      <xsd:element name="Component" type="xsd:string" minOccurs="0"
-                   maxOccurs="unbounded"/>
+    <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="Component" type="xsd:string"/>
+      <xsd:element name="Arch" type="xsd:string"/>
+      <xsd:element name="GPGKey" type="xsd:string"/>
       <xsd:choice>
-        <xsd:element name="Blacklist" type="xsd:string" minOccurs="0"
-                     maxOccurs="unbounded"/>
-        <xsd:element name="Whitelist" type="xsd:string" minOccurs="0"
-                     maxOccurs="unbounded"/>
+        <xsd:element name="Blacklist" type="xsd:string"/>
+        <xsd:element name="Whitelist" type="xsd:string"/>
       </xsd:choice>
-      <xsd:element name="Arch" type="xsd:string" minOccurs="1"
-                   maxOccurs="unbounded"/>
-      <xsd:element name="GPGKey" type="xsd:string" minOccurs="0"
-                   maxOccurs="unbounded"/>
-    </xsd:sequence>
+    </xsd:choice>
     <xsd:attribute type="xsd:boolean" name="recommended"/>
     <xsd:attribute type="sourceTypeEnum" name="type"/>
     <xsd:attribute type="xsd:string" name="pulp_id"/>
@@ -51,14 +45,12 @@
   </xsd:complexType>
 
   <xsd:complexType name="sourcesType">
-    <xsd:sequence>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="Group" type="groupType"/>
         <xsd:element name="Client" type="groupType"/>
         <xsd:element name="Source" type="sourceType"/>
         <xsd:element name="Sources" type="sourcesType"/>
       </xsd:choice>
-    </xsd:sequence>
   </xsd:complexType>
 
   <xsd:element name="Sources" type="sourcesType"/>
