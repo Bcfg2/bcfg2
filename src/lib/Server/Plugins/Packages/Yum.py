@@ -16,7 +16,7 @@ from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
 
-logger = logging.getLogger("Packages")
+logger = logging.getLogger(__name__)
 
 try:
     from pulp.client.consumer.config import ConsumerConfig
@@ -86,8 +86,8 @@ class YumCollection(Collection):
     # not be included in the temporary yum.conf we write out
     option_blacklist = ["use_yum_libraries", "helper"]
     
-    def __init__(self, metadata, sources, basepath):
-        Collection.__init__(self, metadata, sources, basepath)
+    def __init__(self, metadata, sources, basepath, debug=False):
+        Collection.__init__(self, metadata, sources, basepath, debug=debug)
         self.keypath = os.path.join(self.basepath, "keys")
 
         if len(sources):
@@ -248,10 +248,12 @@ class YumCollection(Collection):
             pass
         except socket.error:
             err = sys.exc_info()[1]
-            logger.error("Packages: Could not contact Pulp server: %s" % err)
+            self.logger.error("Packages: Could not contact Pulp server: %s" %
+                              err)
         except:
             err = sys.exc_info()[1]
-            logger.error("Packages: Unknown error querying Pulp server: %s" % err)
+            self.logger.error("Packages: Unknown error querying Pulp server: %s"
+                              % err)
         return consumer
 
     def _add_gpg_instances(self, keyentry, keydata, localkey, remotekey):
@@ -356,8 +358,11 @@ class YumCollection(Collection):
         # get the 'setup' variable, so we don't know how verbose
         # bcfg2-server is.  It'd also be nice if we could tell yum to
         # log to syslog.  So would a unicorn.
-        cmd = [self.helper, "-c", self.cfgfile, command]
-        self.logger.debug("Packages: running %s" % " ".join(cmd))
+        cmd = [self.helper, "-c", self.cfgfile]
+        if self.debug_flag:
+            cmd.append("-v")
+        cmd.append(command)
+        self.debug_log("Packages: running %s" % " ".join(cmd))
         try:
             helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except OSError:
@@ -499,17 +504,17 @@ class YumSource(Source):
             repomd = fetch_url(rmdurl)
             xdata = lxml.etree.XML(repomd)
         except ValueError:
-            logger.error("Packages: Bad url string %s" % rmdurl)
+            self.logger.error("Packages: Bad url string %s" % rmdurl)
             return []
         except HTTPError:
             err = sys.exc_info()[1]
-            logger.error("Packages: Failed to fetch url %s. code=%s" %
-                         (rmdurl, err.code))
+            self.logger.error("Packages: Failed to fetch url %s. code=%s" %
+                              (rmdurl, err.code))
             return []
         except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
-            logger.error("Packages: Failed to process metadata at %s: %s" %
-                         (rmdurl, err))
+            self.logger.error("Packages: Failed to process metadata at %s: %s" %
+                              (rmdurl, err))
             return []
 
         urls = []
@@ -583,8 +588,8 @@ class YumSource(Source):
             self.packages[arch].add(pkgname)
 
             pdata = pkg.find(XP + 'format')
-            pre = pdata.find(RP + 'requires')
             self.deps[arch][pkgname] = set()
+            pre = pdata.find(RP + 'requires')
             for entry in pre.getchildren():
                 self.deps[arch][pkgname].add(entry.get('name'))
                 if entry.get('name').startswith('/'):

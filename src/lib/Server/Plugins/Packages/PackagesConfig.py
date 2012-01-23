@@ -1,7 +1,4 @@
-import logging
 import Bcfg2.Server.Plugin
-
-logger = logging.getLogger('Packages')
 
 class PackagesConfig(Bcfg2.Server.Plugin.SimpleConfig):
     _required = False

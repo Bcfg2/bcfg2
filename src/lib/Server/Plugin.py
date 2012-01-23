@@ -63,7 +63,25 @@ class PluginExecutionError(Exception):
     pass
 
 
-class Plugin(object):
+class Debuggable(object):
+    __rmi__ = ['toggle_debug']
+
+    def __init__(self, name=None):
+        if name is None:
+            name = "%s.%s" % (self.__class__.__module__,
+                              self.__class__.__name__)
+        self.debug_flag = False
+        self.logger = logging.getLogger(name)
+        
+    def toggle_debug(self):
+        self.debug_flag = not self.debug_flag
+
+    def debug_log(self, message, flag=None):
+        if (flag is None and self.debug_flag) or flag:
+            self.logger.error(message)
+
+
+class Plugin(Debuggable):
     """This is the base class for all Bcfg2 Server plugins.
     Several attributes must be defined in the subclass:
     name : the name of the plugin
@@ -78,7 +96,6 @@ class Plugin(object):
     name = 'Plugin'
     __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    __rmi__ = ['toggle_debug']
     experimental = False
     deprecated = False
     conflicts = []
@@ -98,16 +115,8 @@ class Plugin(object):
         self.Entries = {}
         self.core = core
         self.data = "%s/%s" % (datastore, self.name)
-        self.logger = logging.getLogger('Bcfg2.Plugins.%s' % (self.name))
         self.running = True
-        self.debug_flag = False
-
-    def toggle_debug(self):
-        self.debug_flag = not self.debug_flag
-
-    def debug_log(self, message, flag=None):
-        if (flag is None) and self.debug_flag or flag:
-            self.logger.error(message)
+        Debuggable.__init__(self, name=self.name)
 
     @classmethod
     def init_repo(cls, repo):

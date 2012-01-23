@@ -1,12 +1,13 @@
 import copy
 import logging
+import Bcfg2.Server.Plugin
+
+logger = logging.getLogger(__name__)
 
 try:
     from hashlib import md5
 except ImportError:
     from md5 import md5
-
-logger = logging.getLogger("Packages")
 
 # we have to cache Collection objects so that calling Packages.Refresh
 # or .Reload can tell the collection objects to clean up their cache,
@@ -20,12 +21,13 @@ logger = logging.getLogger("Packages")
 # sources to that client.)
 collections = dict()
 
-class Collection(object):
-    def __init__(self, metadata, sources, basepath):
-        """ don't call this directly; use the Factory method """
+class Collection(Bcfg2.Server.Plugin.Debuggable):
+    def __init__(self, metadata, sources, basepath, debug=False):
+        """ don't call this directly; use the factory function """
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        self.debug_flag = debug
         self.metadata = metadata
         self.sources = sources
-        self.logger = logging.getLogger("Packages")
         self.basepath = basepath
         self.virt_pkgs = dict()
 
@@ -193,14 +195,14 @@ class Collection(object):
                 # direct packages; current can be added, and all deps
                 # should be resolved
                 current = pkgs.pop()
-                self.logger.debug("Packages: handling package requirement %s" %
-                                  current)
+                self.debug_log("Packages: handling package requirement %s" %
+                               current)
                 packages.add(current)
                 deps = self.get_deps(current)
                 newdeps = set(deps).difference(examined)
                 if newdeps:
-                    self.logger.debug("Packages: Package %s added "
-                                      "requirements %s" % (current, newdeps))
+                    self.debug_log("Packages: Package %s added requirements %s"
+                                   % (current, newdeps))
                 unclassified.update(newdeps)
 
             satisfied_vpkgs = set()
@@ -208,16 +210,15 @@ class Collection(object):
                 # virtual dependencies, satisfied if one of N in the
                 # config, or can be forced if only one provider
                 if len(vpkg_cache[current]) == 1:
-                    self.logger.debug("Packages: requirement %s satisfied by "
-                                      "%s" % (current,
-                                              vpkg_cache[current]))
+                    self.debug_log("Packages: requirement %s satisfied by %s" %
+                                   (current, vpkg_cache[current]))
                     unclassified.update(vpkg_cache[current].difference(examined))
                     satisfied_vpkgs.add(current)
                 else:
                     satisfiers = [item for item in vpkg_cache[current]
                                   if item in packages]
-                    self.logger.debug("Packages: requirement %s satisfied by "
-                                      "%s" % (current, satisfiers))
+                    self.debug_log("Packages: requirement %s satisfied by %s" %
+                                   (current, satisfiers))
                     satisfied_vpkgs.add(current)
             vpkgs.difference_update(satisfied_vpkgs)
 
@@ -230,8 +231,8 @@ class Collection(object):
                 satisfiers = [item for item in vpkg_cache[current]
                               if item in packages]
                 if satisfiers:
-                    self.logger.debug("Packages: requirement %s satisfied by "
-                                      "%s" % (current, satisfiers))
+                    self.debug_log("Packages: requirement %s satisfied by %s" %
+                                   (current, satisfiers))
                     satisfied_both.add(current)
                 elif current in packagelist or final_pass:
                     pkgs.add(current)
@@ -287,7 +288,7 @@ def clear_cache():
     global collections
     collections = dict()
 
-def factory(metadata, sources, basepath):
+def factory(metadata, sources, basepath, debug=False):
     global collections
 
     if not sources.loaded:
@@ -314,7 +315,9 @@ def factory(metadata, sources, basepath):
         # have multiple Bcfg2 servers and Packages-relevant groups set
         # by probes); and b) templates that query all or multiple
         # machines (e.g., with metadata.query.all_clients())
-        logger.debug("Packages: No sources found for %s" % metadata.hostname)
+        if debug:
+            logger.error("Packages: No sources found for %s" %
+                         metadata.hostname)
         cclass = Collection
     else:
         stype = sclasses.pop().__name__.replace("Source", "")
@@ -330,10 +333,11 @@ def factory(metadata, sources, basepath):
             logger.warning("Packages: No collection class found for %s sources"
                            % stype)
 
-    logger.debug("Packages: Using %s for Collection of sources for %s" %
-                 (cclass.__name__, metadata.hostname))
+    if debug:
+        logger.error("Packages: Using %s for Collection of sources for %s" %
+                     (cclass.__name__, metadata.hostname))
 
-    collection = cclass(metadata, relevant, basepath)
+    collection = cclass(metadata, relevant, basepath, debug=debug)
     collections[metadata.hostname] = collection
     return collection
 

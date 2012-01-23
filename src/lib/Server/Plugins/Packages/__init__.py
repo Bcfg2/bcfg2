@@ -4,7 +4,6 @@ import time
 import copy
 import glob
 import shutil
-import logging
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
@@ -12,8 +11,6 @@ from Bcfg2.Bcfg2Py3k import ConfigParser, urlopen
 from Bcfg2.Server.Plugins.Packages import Collection
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 from Bcfg2.Server.Plugins.Packages.PackagesConfig import PackagesConfig
-
-logger = logging.getLogger('Packages')
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
@@ -44,6 +41,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                        self.cachepath, core.fam, self,
                                        self.config)
 
+    def toggle_debug(self):
+        Bcfg2.Server.Plugin.Plugin.toggle_debug(self)
+        self.sources.toggle_debug()
+
     @property
     def disableResolver(self):
         return self.config.get("global", "resolver",
@@ -62,14 +63,16 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                   'type': 'file',
                   'perms': '0644'}
 
-        collection = Collection.factory(metadata, self.sources, self.data)
+        collection = Collection.factory(metadata, self.sources, self.data,
+                                        debug=self.debug_flag)
         entry.text = collection.get_config()
         for (key, value) in list(attrib.items()):
             entry.attrib.__setitem__(key, value)
 
     def HandleEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            collection = Collection.factory(metadata, self.sources, self.data)
+            collection = Collection.factory(metadata, self.sources, self.data,
+                                            debug=self.debug_flag)
             entry.set('version', 'auto')
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
@@ -81,8 +84,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            collection = Collection.factory(metadata, self.sources, self.data)
-            if collection.magic_groups_match():
+            if self.config.getboolean("global", "magic_groups",
+                                      default=True) == True:
+                collection = Collection.factory(metadata, self.sources,
+                                                self.data,
+                                                debug=self.debug_flag)
+                if collection.magic_groups_match():
+                    return True
+            else:
                 return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
@@ -100,7 +109,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         metadata - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
-        collection = Collection.factory(metadata, self.sources, self.data)
+        collection = Collection.factory(metadata, self.sources, self.data,
+                                        debug=self.debug_flag)
         indep = lxml.etree.Element('Independent')
         self._build_packages(metadata, indep, structures,
                              collection=collection)
@@ -116,7 +126,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return
 
         if collection is None:
-            collection = Collection.factory(metadata, self.sources, self.data)
+            collection = Collection.factory(metadata, self.sources, self.data,
+                                            debug=self.debug_flag)
         # initial is the set of packages that are explicitly specified
         # in the configuration
         initial = set()
@@ -152,8 +163,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
         newpkgs = list(packages.difference(initial))
-        self.logger.debug("Packages: %d initial, %d complete, %d new" %
-                          (len(initial), len(packages), len(newpkgs)))
+        self.debug_log("Packages: %d initial, %d complete, %d new" %
+                       (len(initial), len(packages), len(newpkgs)))
         newpkgs.sort()
         for pkg in newpkgs:
             lxml.etree.SubElement(independent, 'BoundPackage', name=pkg,
@@ -209,8 +220,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                         os.unlink(cfile)
                 except OSError:
                     err = sys.exc_info()[1]
-                    logger.error("Packages: Could not remove cache file %s: %s"
-                                 % (cfile, err))
+                    self.logger.error("Packages: Could not remove cache file "
+                                      "%s: %s" % (cfile, err))
 
     def _load_gpg_keys(self, force_update):
         """ Load gpg keys from the config """
@@ -234,5 +245,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 os.unlink(kfile)
 
     def get_additional_data(self, metadata):
-        collection = Collection.factory(metadata, self.sources, self.data)
+        collection = Collection.factory(metadata, self.sources, self.data,
+                                        debug=self.debug_flag)
         return dict(sources=collection.get_additional_data())

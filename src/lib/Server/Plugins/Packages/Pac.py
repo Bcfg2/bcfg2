@@ -1,11 +1,8 @@
 import gzip
 import tarfile
-import logging
 from Bcfg2.Bcfg2Py3k import cPickle, file
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
-
-logger = logging.getLogger("Packages")
 
 class PacCollection(Collection):
     def get_group(self, group):
@@ -71,17 +68,18 @@ class PacSource(Source):
                 bdeps[barch] = dict()
                 bprov[barch] = dict()
             try:
-                logger.debug("Packages: try to read : " + fname)
+                self.debug_log("Packages: try to read %s" % fname)
                 tar = tarfile.open(fname, "r")
                 reader = gzip.GzipFile(fname)
             except:
-                logger.error("Packages: Failed to read file %s" % fname)
+                self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
 
             for tarinfo in tar:
                 if tarinfo.isdir():
                     self.pkgnames.add(tarinfo.name.rsplit("-", 2)[0])
-                    logger.debug("Packages: added : " + tarinfo.name.rsplit("-", 2)[0])
+                    self.debug_log("Packages: added %s" %
+                                   tarinfo.name.rsplit("-", 2)[0])
             tar.close()
 
         self.deps['global'] = dict()

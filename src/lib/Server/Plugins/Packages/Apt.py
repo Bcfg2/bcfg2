@@ -1,11 +1,8 @@
 import re
 import gzip
-import logging
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 from Bcfg2.Bcfg2Py3k import cPickle, file
-
-logger = logging.getLogger("Packages")
 
 class AptCollection(Collection):
     def get_group(self, group):
@@ -72,7 +69,7 @@ class AptSource(Source):
             try:
                 reader = gzip.GzipFile(fname)
             except:
-                logger.error("Packages: Failed to read file %s" % fname)
+                self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
                 words = str(line.strip()).split(':', 1)

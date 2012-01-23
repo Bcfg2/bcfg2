@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import base64
-import logging
+import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
      urlopen, file, cPickle
@@ -11,8 +11,6 @@ try:
     from hashlib import md5
 except ImportError:
     from md5 import md5
-
-logger = logging.getLogger('Packages')
 
 def fetch_url(url):
     if '@' in url:
@@ -32,11 +30,12 @@ class SourceInitError(Exception):
     pass
 
 
-class Source(object):
+class Source(Bcfg2.Server.Plugin.Debuggable):
     reponame_re = re.compile(r'.*/(?:RPMS\.)?([^/]+)')
     basegroups = []
 
     def __init__(self, basepath, xsource, config):
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.basepath = basepath
         self.xsource = xsource
         self.config = config
@@ -113,14 +112,14 @@ class Source(object):
                 self.load_state()
                 should_read = False 
             except:
-                logger.error("Packages: Cachefile %s load failed; "
-                             "falling back to file read" % self.cachefile)
+                self.logger.error("Packages: Cachefile %s load failed; "
+                                  "falling back to file read" % self.cachefile)
         if should_read:
             try:
                 self.read_files()
             except:
-                logger.error("Packages: File read failed; "
-                             "falling back to file download")
+                self.logger.error("Packages: File read failed; "
+                                  "falling back to file download")
                 should_download = True
 
         if should_download or force_update:
@@ -128,9 +127,10 @@ class Source(object):
                 self.update()
                 self.read_files()
             except:
-                logger.error("Packages: Failed to load data for Source of %s. "
-                             "Some Packages will be missing."
-                             % self.urls)
+                raise
+                self.logger.error("Packages: Failed to load data for Source "
+                                  "of %s. Some Packages will be missing." %
+                                  self.urls)
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
@@ -194,18 +194,18 @@ class Source(object):
 
     def update(self):
         for url in self.urls:
-            logger.info("Packages: Updating %s" % url)
+            self.logger.info("Packages: Updating %s" % url)
             fname = self.escape_url(url)
             try:
                 data = fetch_url(url)
                 file(fname, 'w').write(data)
             except ValueError:
-                logger.error("Packages: Bad url string %s" % url)
+                self.logger.error("Packages: Bad url string %s" % url)
                 raise
             except HTTPError:
                 err = sys.exc_info()[1]
-                logger.error("Packages: Failed to fetch url %s. HTTP response code=%s" %
-                             (url, err.code))
+                self.logger.error("Packages: Failed to fetch url %s. HTTP "
+                                  "response code=%s" % (url, err.code))
                 raise
 
     def applies(self, metadata):

@@ -1,17 +1,16 @@
 import os
 import sys
 import lxml.etree
-import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
-logger = logging.getLogger("Packages")
-
 class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
-                      Bcfg2.Server.Plugin.StructFile):
+                      Bcfg2.Server.Plugin.StructFile,
+                      Bcfg2.Server.Plugin.Debuggable):
     __identifier__ = None
     
     def __init__(self, filename, cachepath, fam, packages, config):
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         try:
             Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self,
                                                              filename,
@@ -21,7 +20,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             msg = "Packages: Failed to read configuration file: %s" % err
             if not os.path.exists(self.name):
                 msg += " Have you created it?"
-            logger.error(msg)
+            self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
         self.cachepath = cachepath
@@ -33,13 +32,18 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         self.parsed = set()
         self.loaded = False
 
+    def toggle_debug(self):
+        Bcfg2.Server.Plugin.Debuggable.toggle_debug(self)
+        for source in self.entries:
+            source.toggle_debug()
+
     def HandleEvent(self, event=None):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.HandleEvent(self, event=event)
         if event.filename != self.name:
             self.parsed.add(os.path.basename(event.filename))
 
         if sorted(list(self.parsed)) == sorted(self.extras):
-            logger.info("Reloading Packages plugin")
+            self.logger.info("Reloading Packages plugin")
             self.pkg_obj.Reload()
             self.loaded = True
 
@@ -56,7 +60,8 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         sources.xml """
         stype = xsource.get("type")
         if stype is None:
-            logger.error("Packages: No type specified for source, skipping")
+            self.logger.error("Packages: No type specified for source, "
+                              "skipping")
             return None
 
         try:
@@ -65,14 +70,14 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                              stype.title())
             cls = getattr(module, "%sSource" % stype.title())
         except (ImportError, AttributeError):
-            logger.error("Packages: Unknown source type %s" % stype)
+            self.logger.error("Packages: Unknown source type %s" % stype)
             return None
 
         try:
             source = cls(self.cachepath, xsource, self.config)
         except SourceInitError:
             err = sys.exc_info()[1]
-            logger.error("Packages: %s" % err)
+            self.logger.error("Packages: %s" % err)
             source = None
 
         return source
