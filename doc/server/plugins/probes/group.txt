@@ -88,7 +88,7 @@ Probe used to dynamically set client groups based on OS/distro.
     ARCH=`uname -m`
     case "$ARCH" in
             "x86_64")
-	    if [ "$OS_GROUP" == 'centos' -o "$OS_GROUP" == 'redhat' ]; then
+	    if [ "$OS_GROUP" == 'centos' -o "$OS_GROUP" == 'sl' -o "$OS_GROUP" == 'redhat' ]; then
                     OUTPUT="$OUTPUT\ngroup:${ARCH}"
             else
                     OUTPUT="$OUTPUT\ngroup:amd64"
