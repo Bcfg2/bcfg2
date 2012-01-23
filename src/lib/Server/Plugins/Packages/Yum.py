@@ -590,10 +590,11 @@ class YumSource(Source):
             pdata = pkg.find(XP + 'format')
             self.deps[arch][pkgname] = set()
             pre = pdata.find(RP + 'requires')
-            for entry in pre.getchildren():
-                self.deps[arch][pkgname].add(entry.get('name'))
-                if entry.get('name').startswith('/'):
-                    self.needed_paths.add(entry.get('name'))
+            if pre is not None:
+                for entry in pre.getchildren():
+                    self.deps[arch][pkgname].add(entry.get('name'))
+                    if entry.get('name').startswith('/'):
+                        self.needed_paths.add(entry.get('name'))
             pro = pdata.find(RP + 'provides')
             if pro != None:
                 for entry in pro.getchildren():
