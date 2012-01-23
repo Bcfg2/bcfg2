@@ -119,13 +119,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element ref="py:def"/>
-      <xsd:element ref="py:match"/>
-      <xsd:element ref="py:choose"/>
-      <xsd:element ref="py:for"/>
-      <xsd:element ref="py:if"/>
-      <xsd:element ref="py:with"/>
-      <xsd:element ref="py:replace"/>
+      <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'>
       <xsd:annotation>
@@ -235,13 +229,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element ref="py:def"/>
-      <xsd:element ref="py:match"/>
-      <xsd:element ref="py:choose"/>
-      <xsd:element ref="py:for"/>
-      <xsd:element ref="py:if"/>
-      <xsd:element ref="py:with"/>
-      <xsd:element ref="py:replace"/>
+      <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='description' />
     <xsd:attribute type='xsd:string' name='name'/>

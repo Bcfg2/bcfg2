@@ -39,13 +39,7 @@
           <xsd:attributeGroup ref="py:genshiAttrs"/>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element ref="py:def"/>
-      <xsd:element ref="py:match"/>
-      <xsd:element ref="py:choose"/>
-      <xsd:element ref="py:for"/>
-      <xsd:element ref="py:if"/>
-      <xsd:element ref="py:with"/>
-      <xsd:element ref="py:replace"/>
+      <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name"/>
     <xsd:attribute type="xsd:string" name="group"/>

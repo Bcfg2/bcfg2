@@ -12,8 +12,7 @@
     </xs:documentation>
   </xs:annotation>
 
-  <!-- genshi tags -->
-  <xs:element name="for" type="py:forType"/>
+  <!-- genshi types -->
   <xs:complexType name="forType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -21,7 +20,6 @@
     <xs:attribute name="each" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:element name="if" type="py:ifType"/>
   <xs:complexType name="ifType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -29,7 +27,6 @@
     <xs:attribute name="test" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:element name="match" type="py:matchType"/>
   <xs:complexType name="matchType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -40,7 +37,6 @@
     <xs:attribute name="recursive" type="xs:boolean" default="true"/>
   </xs:complexType>
 
-  <xs:element name="def" type="py:defType"/>
   <xs:complexType name="defType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -48,7 +44,6 @@
     <xs:attribute name="function" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:element name="with" type="py:withType"/>
   <xs:complexType name="withType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -56,7 +51,6 @@
     <xs:attribute name="vars" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:element name="replace" type="py:replaceType"/>
   <xs:complexType name="replaceType" mixed="true">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
@@ -64,7 +58,6 @@
     <xs:attribute name="value" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:element name="choose" type="py:chooseType"/>
   <xs:complexType name="chooseType" mixed="true">
     <xs:sequence>
       <xs:element name="when" type="py:ifType" maxOccurs="unbounded"/>
@@ -79,6 +72,19 @@
       <xs:any processContents="lax"/>
     </xs:choice>
   </xs:complexType>
+
+  <!-- genshi tags -->
+  <xs:group name="genshiElements">
+    <xs:choice>
+      <xs:element name="with" type="py:withType"/>
+      <xs:element name="replace" type="py:replaceType"/>
+      <xs:element name="choose" type="py:chooseType"/>
+      <xs:element name="for" type="py:forType"/>
+      <xs:element name="if" type="py:ifType"/>
+      <xs:element name="match" type="py:matchType"/>
+      <xs:element name="def" type="py:defType"/>
+    </xs:choice>
+  </xs:group>
 
   <!-- genshi attributes -->
   <xs:attributeGroup name="genshiAttrs">

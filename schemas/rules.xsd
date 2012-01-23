@@ -56,13 +56,7 @@
       <xsd:element name='Action' type='ActionType'/>
       <xsd:element name='Group' type='RContainerType'/>
       <xsd:element name='Client' type='RContainerType'/>
-      <xsd:element ref="py:def"/>
-      <xsd:element ref="py:match"/>
-      <xsd:element ref="py:choose"/>
-      <xsd:element ref="py:for"/>
-      <xsd:element ref="py:if"/>
-      <xsd:element ref="py:with"/>
-      <xsd:element ref="py:replace"/>
+      <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
     <xsd:attribute name='negate' type='xsd:boolean'/>
@@ -80,13 +74,7 @@
         <xsd:element name='PostInstall' type='PostInstallType'/>
         <xsd:element name='Group' type='RContainerType'/>
         <xsd:element name='Client' type='RContainerType'/>
-        <xsd:element ref="py:def"/>
-        <xsd:element ref="py:match"/>
-        <xsd:element ref="py:choose"/>
-        <xsd:element ref="py:for"/>
-        <xsd:element ref="py:if"/>
-        <xsd:element ref="py:with"/>
-        <xsd:element ref="py:replace"/>
+        <xsd:group ref="py:genshiElements"/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attributeGroup ref="py:genshiAttrs"/>
