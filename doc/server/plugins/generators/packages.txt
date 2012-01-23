@@ -130,12 +130,12 @@ Dependency resolution can be disabled by adding this to
 ``Packages/packages.conf`` in the ``global`` section::
 
     [global]
-    resolver=disabled
+    resolver=0
 
 All metadata processing can be disabled as well::
 
     [global]
-    metadata=disabled
+    metadata=0
 
 Blacklisting faulty dependencies
 --------------------------------
@@ -638,13 +638,21 @@ packages.conf
 =============
 
 ``packages.conf`` contains miscellaneous configuration options for the
-Packages plugin.  It understands the following directives:
+Packages plugin.  Any booleans in the config file accept the values
+"1", "yes", "true", and "on" for True, and "0", "no", "false", and
+"off" for False
+
+It understands the following directives:
 
 [global] section
 ----------------
 
-* ``resolver``: Disable dependency resolution.  Default is "enabled".
-* ``metadata``: Disable metadata processing.  Default is "enabled".
+* ``resolver``: Enable dependency resolution.  Default is ``1``
+  (true). For historical reasons, this also accepts "enabled" and
+  "disabled".
+* ``metadata``: Enable metadata processing.  Default is ``1``
+  (true). For historical reasons, this also accepts "enabled" and
+  "disabled".
 * ``yum_config``: The path at which to generate Yum configs.  No
   default.
 * ``apt_config``: The path at which to generate APT configs.  No

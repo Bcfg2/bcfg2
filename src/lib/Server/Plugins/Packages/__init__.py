@@ -47,13 +47,25 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     @property
     def disableResolver(self):
-        return self.config.get("global", "resolver",
-                               default="enabled").lower() == "disabled"
+        try:
+            return not self.config.getboolean("global", "resolver")
+        except ValueError:
+            # for historical reasons we also accept "enabled" and
+            # "disabled", which are not handled according to the
+            # Python docs but appear to be handled properly by
+            # ConfigParser in at least some versions
+            return self.config.get("global", "resolver",
+                                   default="enabled").lower() == "disabled"
 
     @property
     def disableMetaData(self):
-        return self.config.get("global", "metadata",
-                               default="enabled").lower() == "disabled"
+        try:
+            return not self.config.getboolean("global", "resolver")
+        except ValueError:
+            # for historical reasons we also accept "enabled" and
+            # "disabled"
+            return self.config.get("global", "metadata",
+                                   default="enabled").lower() == "disabled"
 
     def create_config(self, entry, metadata):
         """ create yum/apt config for the specified host """
