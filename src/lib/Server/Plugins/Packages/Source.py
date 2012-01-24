@@ -127,7 +127,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 self.update()
                 self.read_files()
             except:
-                raise
                 self.logger.error("Packages: Failed to load data for Source "
                                   "of %s. Some Packages will be missing." %
                                   self.urls)
