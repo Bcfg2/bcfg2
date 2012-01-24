@@ -109,7 +109,7 @@ class Client:
             self.logger.info(Bcfg2.Client.Tools.drivers)
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove']:
-            self.logger.error("Service removal is nonsensical, disable services to get former behavior")
+            self.logger.error("Service removal is nonsensical; removed services will only be disabled")
         if self.setup['remove'] not in [False,
                                         'all',
                                         'Services',

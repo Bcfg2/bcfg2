@@ -309,6 +309,13 @@ class SvcTool(Tool):
         # not supported for this driver
         return 0
 
+    def Remove(self, services):
+        """ Dummy implementation of service removal method """
+        if self.setup['servicemode'] != 'disabled':
+            for entry in services:
+                entry.set("status", "off")
+                self.InstallService(entry)
+
     def BundleUpdated(self, bundle, states):
         """The Bundle has been updated."""
         if self.setup['servicemode'] == 'disabled':
