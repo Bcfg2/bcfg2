@@ -49,6 +49,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def disableResolver(self):
         try:
             return not self.config.getboolean("global", "resolver")
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return False
         except ValueError:
             # for historical reasons we also accept "enabled" and
             # "disabled", which are not handled according to the
@@ -61,6 +63,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def disableMetaData(self):
         try:
             return not self.config.getboolean("global", "resolver")
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return False
         except ValueError:
             # for historical reasons we also accept "enabled" and
             # "disabled"
