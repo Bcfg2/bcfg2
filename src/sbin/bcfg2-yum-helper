@@ -80,13 +80,12 @@ class DepSolver(object):
             matches = self.yumbase.pkgSack.returnNewestByName(name=package)
         except yum.Errors.PackageSackError:
             if not silent:
-                self.logger.warning("bcfg2-yum-helper: Package '%s' not found" %
+                self.logger.warning("Package '%s' not found" %
                                     self.get_package_name(package))
             matches = []
         except yum.Errors.RepoError:
             err = sys.exc_info()[1]
-            self.logger.error("bcfg2-yum-helper: Temporary failure loading "
-                              "metadata for '%s': %s" %
+            self.logger.error("Temporary failure loading metadata for %s: %s" %
                               (self.get_package_name(package), err))
             matches = []
 
@@ -105,7 +104,7 @@ class DepSolver(object):
             deps.difference_update([dep for dep in deps
                                         if pkg.checkPrco('provides', dep)])
         else:
-            self.logger.error("bcfg2-yum-helper: No package available: %s" %
+            self.logger.error("No package available: %s" %
                               self.get_package_name(package))
         return deps
 
@@ -118,15 +117,14 @@ class DepSolver(object):
                 self.yumbase.whatProvides(*required).returnNewestByNameArch()
         except yum.Errors.NoMoreMirrorsRepoError:
             err = sys.exc_info()[1]
-            self.logger.error("bcfg2-yum-helper: Temporary failure loading "
-                              "metadata for '%s': %s" %
+            self.logger.error("Temporary failure loading metadata for %s: %s" %
                               (self.get_package_name(required), err))
             return []
 
         if prov and not all:
             prov = self._filter_provides(required, prov)
         elif not prov and not silent:
-            self.logger.error("bcfg2-yum-helper: No package provides %s" %
+            self.logger.error("No package provides %s" %
                               self.get_package_name(required))
         return prov
 
@@ -138,12 +136,11 @@ class DepSolver(object):
             if self.yumbase.comps.has_group(group):
                 group = self.yumbase.comps.return_group(group)
             else:
-                self.logger.warning("bcfg2-yum-helper: %s is not a valid group"
-                                    % group)
+                self.logger.warning("%s is not a valid group" % group)
                 return []
         except yum.Errors.GroupsError:
             err = sys.exc_info()[1]
-            self.logger.warning("bcfg2-yum-helper: %s" % err)
+            self.logger.warning(err)
             return []
         
         if ptype == "default":
@@ -226,16 +223,14 @@ class DepSolver(object):
                 
                 if not self.is_package(package):
                     # try this package out as a requirement
-                    self.logger.debug("bcfg2-yum-helper: Adding requirement %s"
-                                      % package)
+                    self.logger.debug("Adding requirement %s" % package)
                     requires.add((package, None, (None, None, None)))
                     continue
 
                 packages.add(package)
                 reqs = set(self.get_deps(package)).difference(satisfied)
                 if reqs:
-                    self.logger.debug("bcfg2-yum-helper: Adding requirements "
-                                      "for %s: %s" %
+                    self.logger.debug("Adding requirements for %s: %s" %
                                       (package,
                                        ",".join([self.get_package_name(r)
                                                  for r in reqs])))
@@ -253,8 +248,8 @@ class DepSolver(object):
                     reqs_satisfied.add(req)
                     continue
                     
-                self.logger.debug("bcfg2-yum-helper: Handling requirement '%s'"
-                                  % self.get_package_name(req))
+                self.logger.debug("Handling requirement '%s'" %
+                                  self.get_package_name(req))
                 providers = list(set(self.get_provides(req)))
                 if len(providers) > 1:
                     # hopefully one of the providing packages is already
@@ -268,14 +263,21 @@ class DepSolver(object):
                         if len(best) == 1:
                             providers = best
                         elif not final_pass:
-                            # found no "best" package, so defer
+                            self.logger.debug("%s has multiple providers: %s" %
+                                              (self.get_package_name(req),
+                                               providers))
+                            self.logger.debug("No provider is obviously the "
+                                              "best; deferring")
                             providers = None
-                        # else: found no "best" package, but it's the
-                        # final pass, so include them all
+                        else:
+                            # found no "best" package, but it's the
+                            # final pass, so include them all
+                            self.logger.debug("Found multiple providers for %s,"
+                                              "including all" %
+                                              self.get_package_name(req))
                 
                 if providers:
-                    self.logger.debug("bcfg2-yum-helper: Requirement '%s' "
-                                      "satisfied by %s" %
+                    self.logger.debug("Requirement '%s' satisfied by %s" %
                                       (self.get_package_name(req),
                                        ",".join([self.get_package_name(p)
                                                  for p in providers])))
@@ -289,6 +291,8 @@ class DepSolver(object):
                     reqs_satisfied.add(req)
                 elif providers is not None:
                     # nothing provided this requirement at all
+                    self.logger.debug("Nothing provides %s" %
+                                      self.get_package_name(req))
                     unknown.add(req)
                     reqs_satisfied.add(req)
                 # else, defer
@@ -315,7 +319,7 @@ class DepSolver(object):
             # many files were deleted.  so useful.  thanks, yum.
             msg = getattr(self.yumbase, "clean%s" % mdtype)()[1][0]
             if not msg.startswith("0 "):
-                self.logger.info("bcfg2-yum-helper: %s" % msg)
+                self.logger.info(msg)
 
 
 def main():
@@ -327,12 +331,11 @@ def main():
     try:
         cmd = args[0]
     except IndexError:
-        logger.error("bcfg2-yum-helper: No command given")
+        logger.error("No command given")
         return 1
 
     if not os.path.exists(options.config):
-        logger.error("bcfg2-yum-helper: Config file %s not found" %
-                     options.config)
+        logger.error("Config file %s not found" % options.config)
         return 1
 
     depsolver = DepSolver(options.config, options.verbose)

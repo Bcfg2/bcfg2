@@ -45,6 +45,8 @@ event_debug - Display filesystem events as they are processed
 groups - List groups
 help - Print this list of available commands
 mappings <type*> <name*> - Print generator mappings for optional type and name
+packageresolve <hostname> <package> [<package>...] - Resolve the specified set of packages
+packagesources - Show package sources
 profile <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
@@ -454,7 +456,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         try:
             meta = self.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            print("Unable to find metadata for host %s" % client)
+            print("Unable to find metadata for host %s" % args)
             return
         structures = self.GetStructures(meta)
         for clist in [struct.findall('Path') for struct in structures]:
@@ -473,6 +475,54 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                         continue
                     print(cand[0].name)
 
+    def do_packageresolve(self, args):
+        arglist = args.split(" ")
+        if len(arglist) < 2:
+            print("Usage: packageresolve <hostname> <package> [<package>...]")
+            return
+
+        hostname = arglist[0]
+        initial = arglist[1:]
+        metadata = self.build_metadata(hostname)
+        self.plugins['Packages'].toggle_debug()
+        collection = self.plugins['Packages']._get_collection(metadata)
+        packages, unknown = collection.complete(initial)
+        newpkgs = list(packages.difference(initial))
+        print("%d initial packages" % len(initial))
+        print("    %s" % "\n    ".join(initial))
+        print("%d new packages added" % len(newpkgs))
+        if newpkgs:
+            print("    %s" % "\n    ".join(newpkgs))
+        print("%d unknown packages" % len(unknown))
+        if unknown:
+            print("    %s" % "\n    ".join(unknown))
+
+    def do_packagesources(self, args):
+        try:
+            metadata = self.build_metadata(args)
+        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+            print("Unable to build metadata for host %s" % args)
+            return
+        collection = self.plugins['Packages']._get_collection(metadata)
+        for source in collection.sources:
+            # get_urls() loads url_map as a side-effect
+            source.get_urls()
+            for url_map in source.url_map:
+                if url_map['arch'] in metadata.groups:
+                    reponame = source.get_repo_name(url_map)
+                    print("Name: %s" % reponame)
+                    print("  Type: %s" % source.ptype)
+                    print("  URL: %s" % url_map['url'])
+                    if source.gpgkeys:
+                        print("  GPG Key(s): %s" % ", ".join(source.gpgkeys))
+                    else:
+                        print("  GPG Key(s): None")
+                    if len(source.blacklist):
+                        print("  Blacklist: %s" % ", ".join(source.blacklist))
+                    if len(source.whitelist):
+                        print("  Whitelist: %s" % ", ".join(source.whitelist))
+                    print("")
+        
     def do_profile(self, arg):
         """."""
         if not have_profile:

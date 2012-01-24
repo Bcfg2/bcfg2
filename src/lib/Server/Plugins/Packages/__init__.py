@@ -75,16 +75,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                   'type': 'file',
                   'perms': '0644'}
 
-        collection = Collection.factory(metadata, self.sources, self.data,
-                                        debug=self.debug_flag)
+        collection = self._get_collection(metadata)
         entry.text = collection.get_config()
         for (key, value) in list(attrib.items()):
             entry.attrib.__setitem__(key, value)
 
     def HandleEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            collection = Collection.factory(metadata, self.sources, self.data,
-                                            debug=self.debug_flag)
+            collection = self._get_collection(metadata)
             entry.set('version', 'auto')
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
@@ -98,9 +96,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if entry.tag == 'Package':
             if self.config.getboolean("global", "magic_groups",
                                       default=True) == True:
-                collection = Collection.factory(metadata, self.sources,
-                                                self.data,
-                                                debug=self.debug_flag)
+                collection = self._get_collection(metadata)
                 if collection.magic_groups_match():
                     return True
             else:
@@ -121,8 +117,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         metadata - client metadata instance
         structures - a list of structure-stage entry combinations
         '''
-        collection = Collection.factory(metadata, self.sources, self.data,
-                                        debug=self.debug_flag)
+        collection = self._get_collection(metadata)
         indep = lxml.etree.Element('Independent')
         self._build_packages(metadata, indep, structures,
                              collection=collection)
@@ -138,8 +133,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return
 
         if collection is None:
-            collection = Collection.factory(metadata, self.sources, self.data,
-                                            debug=self.debug_flag)
+            collection = self._get_collection(metadata)
         # initial is the set of packages that are explicitly specified
         # in the configuration
         initial = set()
@@ -256,7 +250,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
+    def _get_collection(self, metadata):
+        return Collection.factory(metadata, self.sources, self.data,
+                                  debug=self.debug_flag)
+
     def get_additional_data(self, metadata):
-        collection = Collection.factory(metadata, self.sources, self.data,
-                                        debug=self.debug_flag)
+        collection = self._get_collection(metadata)
         return dict(sources=collection.get_additional_data())

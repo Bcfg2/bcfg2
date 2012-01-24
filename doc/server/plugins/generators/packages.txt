@@ -526,50 +526,50 @@ as consumers, and will be bound to the appropriate repositories.
 Debugging unexpected behavior
 =============================
 
+.. versionadded:: 1.2.1
+
 Using bcfg2-info
 ----------------
 
 The dependency resolver used in Packages can be run in debug mode::
 
-
-    $ bcfg2-info
+    $ bcfg2-info packageresolve foo.example.com bcfg2-server zlib
     ...
-    Handled 20 events in 0.004s
-    > debug
-    dropping to python interpreter; press ^D to resume
-    ...
-    (debug_shell)
-    >>> m = self.build_metadata('ubik3')
-    >>> self.plugins['Packages'].complete(m, ['ssh'], debug=True)
-    Package ssh: adding new deps ['openssh-client', 'openssh-server']
-    Package openssh-server: adding new deps ['libc6', 'libcomerr2', 'libkrb53', 'libpam0g', 'libselinux1', 'libssl0.9.8
-    ', 'libwrap0', 'zlib1g', 'debconf', 'libpam-runtime', 'libpam-modules', 'adduser', 'dpkg', 'lsb-base']
-    Package debconf: adding new deps ['debconf-i18n']
-    Package libpam-modules: adding new deps ['libdb4.7']
-    Package openssh-client: adding new deps ['libedit2', 'libncurses5', 'passwd']
-    Package lsb-base: adding new deps ['sed', 'ncurses-bin']
-    Package adduser: adding new deps ['perl-base']
-    Package debconf-i18n: adding new deps ['liblocale-gettext-perl', 'libtext-iconv-perl', 'libtext-wrapi18n-perl', 'libtext-charwidth-perl']
-    Package passwd: adding new deps ['debianutils']
-    Package libtext-charwidth-perl: adding new deps ['perlapi-5.10.0']
-    VPackage perlapi-5.10.0: got provides ['perl-base']
-    Package libkrb53: adding new deps ['libkeyutils1']
-    Package libtext-iconv-perl: adding new deps ['perlapi-5.10.0']
-    Package libc6: adding new deps ['libgcc1', 'findutils']
-    Package libgcc1: adding new deps ['gcc-4.3-base']
-    (set(['debconf', 'libgcc1', 'lsb-base', 'libtext-wrapi18n-perl', 'libtext-iconv-perl', 'sed', 'passwd', 'findutils', 'libpam0g', 'openssh-client', 'debconf-i18n', 'libselinux1', 'zlib1g', 'adduser', 'libwrap0', 'ncurses-bin', 'libssl0.9.8', 'liblocale-gettext-perl', 'libkeyutils1', 'libpam-runtime', 'libpam-modules', 'openssh-server', 'libkrb53', 'ssh', 'libncurses5', 'libc6', 'libedit2', 'libcomerr2', 'dpkg', 'perl-base', 'libdb4.7', 'libtext-charwidth-perl', 'gcc-4.3-base', 'debianutils']), set([]), 'deb')
+    2 initial packages
+        bcfg2-server
+        zlib
+    54 new packages added
+        sqlite
+        less
+        libxml2
+        expat
+        ...
+    1 unknown packages
+        libglib-2.0.so.0()(64bit)
 
 This will show why the resolver is acting as it is. Replace
-``"ubik3"`` and ``['ssh']`` with a client name and list of packages,
-respectively. Also, a more polished interface to this functionality is
-coming as well.
+``foo.example.com`` and ``bcfg2-server`` with a client name and list
+of packages, respectively.
 
-Each line starting with Package: <name> describes a set of new
-prerequisites pulled in by a package. Lines starting with VPackage <vname>
-describe provides entries and their mappings to required names. The last
-line describes the overall results of the resolver, with three fields:
-a list of packages that should be installed, a list of unresolved
-requirements, and a type for these packages.
+Note that resolving a partial package list (as above) may result in
+more unknown entries than you'd have otherwise; some of the package
+drivers (Yum in particular) consider the full package list when
+resolving multiple providers, and will not be able to properly resolve
+some dependencies without a full package list.
+
+You can also view the sources applicable to a client::
+
+    $ bcfg2-info packagesources foo.example.com
+    ...
+    Name: centos-6-x86_64-updates
+      Type: yum
+      URL: http://mirror.example.com/centos-6-x86_64-updates
+      GPG Key(s): http://mirror.example.com/centos-6-x86_64-updates/RPM-GPG-KEY-CentOS-6
+    
+    Name: centos-6-x86_64-os
+      Type: yum
+      URL: http://mirror.example.com/centos-6-x86_64-os
+      GPG Key(s): http://mirror.example.com/centos-6-x86_64-os/RPM-GPG-KEY-CentOS-6
 
 Using bcfg2-server
 ------------------
