@@ -236,6 +236,7 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %{_sbindir}/bcfg2-reports
 %{_sbindir}/bcfg2-server
 %{_sbindir}/bcfg2-yum-helper
+%{_sbindir}/bcfg2-test
 
 %{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*

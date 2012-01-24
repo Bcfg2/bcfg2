@@ -22,7 +22,7 @@ VERSION := $(shell cat VERSION)
 RELEASE := $(shell cat RELEASE)
 BASE_VER := ${VERSION}-${RELEASE}
 CURRENT_PACKAGE := $(PACKAGE)-$(BASE_VER)
-TARBALL := $(CURRENT_PACKAGE).tar
+TARBALL := $(PACKAGE)-$(VERSION).tar
 
 DIRNAME := $(shell echo $${PWD})
 DIRBASE := $(shell basename $${PWD})
