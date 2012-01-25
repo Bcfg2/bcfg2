@@ -240,25 +240,25 @@ class Frame:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
             elif self.setup['remove'] in ['services', 'Services']:
-                self.removal = [entry for entry in self.extra \
+                self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Service']
             elif self.setup['remove'] in ['packages', 'Packages']:
-                self.removal = [entry for entry in self.extra \
+                self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Package']
 
-        candidates = [entry for entry in self.states \
+        candidates = [entry for entry in self.states
                       if not self.states[entry]]
 
         if self.dryrun:
             if self.whitelist:
                 self.logger.info("In dryrun mode: suppressing entry installation for:")
-                self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
-                                  in self.whitelist])
+                self.logger.info(["%s:%s" % (entry.tag, entry.get('name'))
+                                  for entry in self.whitelist])
                 self.whitelist = []
             if self.removal:
                 self.logger.info("In dryrun mode: suppressing entry removal for:")
-                self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for entry \
-                                  in self.removal])
+                self.logger.info(["%s:%s" % (entry.tag, entry.get('name'))
+                                  for entry in self.removal])
             self.removal = []
             return
         # Here is where most of the work goes
@@ -270,13 +270,13 @@ class Frame:
             for bundle in self.setup['bundle']:
                 if bundle not in all_bundle_names:
                     self.logger.info("Warning: Bundle %s not found" % bundle)
-            bundles = [b for b in self.config.findall('./Bundle') \
+            bundles = [b for b in self.config.findall('./Bundle')
                        if b.get('name') in self.setup['bundle']]
-            self.whitelist = [e for e in self.whitelist if \
-                              True in [e in b for b in bundles]]
+            self.whitelist = [e for e in self.whitelist
+                              if True in [e in b for b in bundles]]
         elif self.setup['indep']:
-            bundles = [nb for nb in self.config.getchildren() if nb.tag != \
-                       'Bundle']
+            bundles = [nb for nb in self.config.getchildren()
+                       if nb.tag != 'Bundle']
         else:
             bundles = self.config.getchildren()
 
@@ -284,22 +284,24 @@ class Frame:
         for bundle in bundles[:]:
             if bundle.tag != 'Bundle':
                 continue
-            actions = [a for a in bundle.findall('./Action') \
-                       if a.get('timing') != 'post']
-            # now we process all "always actions"
             bmodified = len([item for item in bundle if item in self.whitelist])
-            for action in actions:
-                if bmodified or action.get('when') == 'always':
-                    self.DispatchInstallCalls([action])
+            actions = [a for a in bundle.findall('./Action')
+                       if (a.get('timing') != 'post' and
+                           (bmodified or a.get('when') == 'always'))]
+            # now we process all "always actions"
+            if self.setup['interactive']:
+                promptFilter(prompt, actions)
+            self.DispatchInstallCalls(actions)
+            
             # need to test to fail entries in whitelist
             if False in [self.states[a] for a in actions]:
                 # then display bundles forced off with entries
-                self.logger.info("Bundle %s failed prerequisite action" % \
+                self.logger.info("Bundle %s failed prerequisite action" %
                                  (bundle.get('name')))
                 bundles.remove(bundle)
                 b_to_remv = [ent for ent in self.whitelist if ent in bundle]
                 if b_to_remv:
-                    self.logger.info("Not installing entries from Bundle %s" % \
+                    self.logger.info("Not installing entries from Bundle %s" %
                                      (bundle.get('name')))
                     self.logger.info(["%s:%s" % (e.tag, e.get('name'))
                                       for e in b_to_remv])
