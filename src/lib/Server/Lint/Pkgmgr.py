@@ -1,21 +1,19 @@
+import glob
+import lxml.etree
 import Bcfg2.Server.Lint
 
-class Pkgmgr(Bcfg2.Server.Lint.ServerPlugin):
+class Pkgmgr(Bcfg2.Server.Lint.ServerlessPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
 
     def Run(self):
-        if 'Pkgmgr' not in self.core.plugins:
-            self.logger.info("Pkgmgr server plugin is not enabled, skipping Pkgmgr lint checks")
-            return
-        
         pset = set()
-        for plist in self.core.plugins['Pkgmgr'].entries.values():
-            if self.HandlesFile(plist.name):
-                xdata = plist.data
+        for pfile in glob.glob("%s/Pkgmgr/*.xml" % self.config['repo']):
+            if self.HandlesFile(pfile):
+                xdata = lxml.etree.parse(pfile).getroot()
                 # get priority, type, group
-                priority = xdata.getroot().get('priority')
-                ptype = xdata.getroot().get('type')
-                for pkg in xdata.findall("//Package"):
+                priority = xdata.get('priority')
+                ptype = xdata.get('type')
+                for pkg in xdata.xpath("//Package"):
                     if pkg.getparent().tag == 'Group':
                         grp = pkg.getparent().get('name')
                         if (type(grp) is not str and

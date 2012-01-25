@@ -789,6 +789,9 @@ class XMLSrc(XMLFileBacked):
             self.pnode.Match(metadata, cache[1])
             self.cache = cache
 
+    def __str__(self):
+        return str(self.items)
+
 
 class InfoXML (XMLSrc):
     __node__ = InfoNode
