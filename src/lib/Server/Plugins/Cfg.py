@@ -31,6 +31,7 @@ try:
 except:
     have_cheetah = False
 
+# setup logging
 logger = logging.getLogger('Bcfg2.Plugins.Cfg')
 
 
@@ -220,25 +221,33 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             return "%s.H_%s" % (bfname, specific.hostname)
 
     def write_update(self, specific, new_entry, log):
+        # FIXME: need to redo print with python's logging module
         if 'text' in new_entry:
             name = self.build_filename(specific)
             if os.path.exists("%s.genshi" % name):
-                logger.error("Cfg: Unable to pull data for genshi types")
+                print("Cfg: Unable to pull data for genshi types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             elif os.path.exists("%s.cheetah" % name):
-                logger.error("Cfg: Unable to pull data for cheetah types")
+                print("Cfg: Unable to pull data for cheetah types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             try:
                 etext = new_entry['text'].encode(self.encoding)
             except:
-                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
+                print("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             open(name, 'w').write(etext)
             if log:
-                logger.info("Wrote file %s" % name)
+                print("Wrote file %s" % name)
         badattr = [attr for attr in ['owner', 'group', 'perms']
                    if attr in new_entry]
         if badattr:
+            # check for info files and inform user of their removal
+            if os.path.exists(self.path + "/:info"):
+                print("Removing :info file and replacing with info.xml")
+                os.remove(self.path + "/:info")
+            if os.path.exists(self.path + "/info"):
+                print("Removing info file and replacing with info.xml")
+                os.remove(self.path + "/info")
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
@@ -251,7 +260,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             ofile.write(lxml.etree.tostring(infoxml, pretty_print=True))
             ofile.close()
             if log:
-                logger.info("Wrote file %s" % (self.path + "/info.xml"))
+                print("Wrote file %s" % (self.path + "/info.xml"))
 
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool,
