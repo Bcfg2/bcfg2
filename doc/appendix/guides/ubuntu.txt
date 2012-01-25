@@ -133,8 +133,6 @@ Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
     database_host =
     # Not used with sqlite3.
     database_port =
-    # Set to empty string for default. Not used with sqlite3.
-    web_debug = True
 
     [communication]
     protocol = xmlrpc/ssl

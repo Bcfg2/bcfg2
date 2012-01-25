@@ -11,15 +11,14 @@ if len(c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])) == 0:
     sys.exit(1)
 
 try:
-    dset = c.get('statistics', 'web_debug')
+    DEBUG = c.getboolean('statistics', 'web_debug')
 except:
-    dset = 'false'
-
-if dset == "True":
-    DEBUG = True
-else:
     DEBUG = False
-    
+
+if DEBUG:
+    print("Warning: Setting web_debug to True causes extraordinary memory "
+          "leaks.  Only use this setting if you know what you're doing.")
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (

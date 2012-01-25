@@ -30,8 +30,6 @@ database_password =
 database_host =
 # Not used with sqlite3.
 database_port =
-# Set to empty string for default. Not used with sqlite3.
-web_debug = True
 
 [communication]
 protocol = %s
