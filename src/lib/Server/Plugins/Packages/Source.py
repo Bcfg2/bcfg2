@@ -31,7 +31,9 @@ class SourceInitError(Exception):
 
 
 class Source(Bcfg2.Server.Plugin.Debuggable):
-    reponame_re = re.compile(r'.*/(?:RPMS\.)?([^/]+)')
+    mrepo_re = re.compile(r'/RPMS\.([^/]+)')
+    pulprepo_re = re.compile(r'pulp/repos/([^/]+)')
+    genericrepo_re = re.compile(r'https?://[^/]+/(.+?)/?$')
     basegroups = []
 
     def __init__(self, basepath, xsource, config):
@@ -133,16 +135,22 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
-        match = self.reponame_re.search(url_map['url'])
         if url_map['component']:
             return url_map['component']
-        elif match:
-            return match.group(1)
         else:
-            # couldn't figure out the name from the URL or URL map
-            # (which probably means its a screwy URL), so we just
-            # generate a random one
-            name = base64.b64encode(os.urandom(16))[:-2]
+            name = None
+            for repo_re in (self.mrepo_re,
+                            self.pulprepo_re,
+                            self.genericrepo_re):
+                match = repo_re.search(url_map['url'])
+                if match:
+                    name = match.group(1).replace('/', '-')
+                    break
+            if name is None:
+                # couldn't figure out the name from the URL or URL map
+                # (which probably means its a screwy URL), so we just
+                # generate a random one
+                name = base64.b64encode(os.urandom(16))[:-2]
             return "%s-%s" % (self.groups[0], name)
 
     def __str__(self):

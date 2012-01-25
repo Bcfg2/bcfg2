@@ -144,8 +144,22 @@ class YumCollection(Collection):
             source.get_urls()
             for url_map in source.url_map:
                 if url_map['arch'] in self.metadata.groups:
-                    reponame = source.get_repo_name(url_map)
-                    config.add_section(reponame)
+                    basereponame = source.get_repo_name(url_map)
+                    reponame = basereponame
+
+                    added = False
+                    while not added:
+                        try:
+                            config.add_section(reponame)
+                            added = True
+                        except ConfigParser.DuplicateSectionError:
+                            match = re.match("-(\d)", reponame)
+                            if match:
+                                rid = int(match.group(1)) + 1
+                            else:
+                                rid = 1
+                            reponame = "%s-%d" % (basereponame, rid)
+                        
                     config.set(reponame, "name", reponame)
                     config.set(reponame, "baseurl", url_map['url'])
                     config.set(reponame, "enabled", "1")
