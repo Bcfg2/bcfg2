@@ -1105,33 +1105,52 @@ class GroupSpool(Plugin, Generator):
         self.AddDirectoryMonitor('')
         self.encoding = core.encoding
 
+    def add_entry(self, event):
+        epath = self.event_path(event)
+        ident = self.event_id(event)
+        if posixpath.isdir(epath):
+            self.AddDirectoryMonitor(epath[len(self.data):])
+        if ident not in self.entries and posixpath.isfile(epath):
+            dirpath = "".join([self.data, ident])
+            self.entries[ident] = self.es_cls(self.filename_pattern,
+                                              dirpath,
+                                              self.es_child_cls,
+                                              self.encoding)
+            self.Entries['Path'][ident] = self.entries[ident].bind_entry
+        if not posixpath.isdir(epath):
+            # do not pass through directory events
+            self.entries[ident].handle_event(event)
+
+    def event_path(self, event):
+        return "".join([self.data, self.handles[event.requestID],
+                        event.filename])
+
+    def event_id(self, event):
+        epath = self.event_path(event)
+        if posixpath.isdir(epath):
+            return self.handles[event.requestID] + event.filename
+        else:
+            return self.handles[event.requestID][:-1]
+
     def HandleEvent(self, event):
-        """Unified FAM event handler for DirShadow."""
+        """Unified FAM event handler for GroupSpool."""
         action = event.code2str()
         if event.filename[0] == '/':
             return
-        epath = "".join([self.data, self.handles[event.requestID],
-                         event.filename])
-        if posixpath.isdir(epath):
-            ident = self.handles[event.requestID] + event.filename
-        else:
-            ident = self.handles[event.requestID][:-1]
+        ident = self.event_id(event)
 
         if action in ['exists', 'created']:
-            if posixpath.isdir(epath):
-                self.AddDirectoryMonitor(epath[len(self.data):])
-            if ident not in self.entries and posixpath.isfile(epath):
-                dirpath = "".join([self.data, ident])
-                self.entries[ident] = self.es_cls(self.filename_pattern,
-                                                  dirpath,
-                                                  self.es_child_cls,
-                                                  self.encoding)
-                self.Entries['Path'][ident] = self.entries[ident].bind_entry
-            if not posixpath.isdir(epath):
-                # do not pass through directory events
+            self.add_entry(event)
+        if action == 'changed':
+            if ident in self.entries:
                 self.entries[ident].handle_event(event)
-        if action == 'changed' and ident in self.entries:
-            self.entries[ident].handle_event(event)
+            else:
+                # got a changed event for a file we didn't know
+                # about. go ahead and process this as a 'created', but
+                # warn
+                self.logger.warning("Got changed event for unknown file %s" %
+                                    ident)
+                self.add_entry(event)
         elif action == 'deleted':
             fbase = self.handles[event.requestID] + event.filename
             if fbase in self.entries:
