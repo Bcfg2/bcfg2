@@ -59,7 +59,7 @@ class DepSolver(object):
             return ["noarch"]
 
     def set_groups(self, groups):
-        self._groups = set(groups).add("noarch")
+        self._groups = set(groups).union(["noarch"])
 
     groups = property(get_groups, set_groups)
 
@@ -179,12 +179,21 @@ class DepSolver(object):
                 found = self.get_package_object(pkg.name)
                 if found == pkg or found.pkgtup == pkg.pkgtup:
                     rv.append(pkg)
+                else:
+                    self.logger.debug("Skipping %s, not newest (%s)" %
+                                      (pkg, found))
         else:
             rv = providers
         return [p.name for p in rv]
 
     def _filter_arch(self, packages):
-        matching = [pkg for pkg in packages if pkg.arch in self.groups]
+        matching = []
+        for pkg in packages:
+            if pkg.arch in self.groups:
+                matching.append(pkg)
+            else:
+                self.logger.debug("%s has non-matching architecture (%s)" %
+                                  (pkg, pkg.arch))
         if matching:
             return matching
         else:
@@ -201,10 +210,7 @@ class DepSolver(object):
         else:
             return str(package)
 
-    def complete(self, packagelist, groups=None):
-        if groups is None:
-            groups = []
-
+    def complete(self, packagelist):
         packages = set()
         pkgs = set(packagelist)
         requires = set()
@@ -344,8 +350,8 @@ def main():
         print json.dumps(True)
     elif cmd == "complete":
         data = json.loads(sys.stdin.read())
-        (packages, unknown) = depsolver.complete(data['packages'],
-                                                 groups=data['groups'])
+        depsolver.groups = data['groups']
+        (packages, unknown) = depsolver.complete(data['packages'])
         print json.dumps(dict(packages=list(packages),
                               unknown=list(unknown)))
     elif cmd == "is_virtual_package":
