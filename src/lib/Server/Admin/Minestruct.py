@@ -18,10 +18,6 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                  "-g <groups>",
                  "only build config for groups"))
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.StructureMode.__init__(self, configfile,
-                                                 self.__usage__)
-
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0:

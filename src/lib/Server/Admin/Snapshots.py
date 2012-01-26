@@ -23,11 +23,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                   'package':  Package,
                   'snapshot': Snapshot}
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-        #self.session = Bcfg2.Server.Snapshots.setup_session(debug=True)
-        self.session = Bcfg2.Server.Snapshots.setup_session(configfile)
-        self.cfile = configfile
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+        self.session = Bcfg2.Server.Snapshots.setup_session(self.configfile)
+        self.cfile = self.configfile
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)

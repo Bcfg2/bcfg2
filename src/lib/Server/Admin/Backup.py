@@ -12,17 +12,9 @@ class Backup(Bcfg2.Server.Admin.MetadataCore):
                                     #"\n\nbcfg2-admin backup restore")
     __usage__ = ("bcfg2-admin backup")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
-                                                 self.__usage__)
-
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
-        # Get Bcfg2 repo directory
-        opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-        setup = Bcfg2.Options.OptionParser(opts)
-        setup.parse(sys.argv[1:])
-        self.datastore = setup['repo']
+        self.datastore = self.setup['repo']
         timestamp = time.strftime('%Y%m%d%H%M%S')
         format = 'gz'
         mode = 'w:' + format

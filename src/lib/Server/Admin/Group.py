@@ -13,10 +13,6 @@ class Group(Bcfg2.Server.Admin.MetadataCore):
                                     "\nbcfg2-admin group del <group>\n")
     __usage__ = ("bcfg2-admin group [options] [add|del|update|list] [attr=val]")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
-                                                 self.__usage__)
-
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         if len(args) == 0:

@@ -4,7 +4,7 @@ import Bcfg2.Logger
 import Bcfg2.Server.Admin
 
 
-class Query(Bcfg2.Server.Admin.Mode):
+class Query(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Query clients"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin query [-n] [-c] "
                                     "[-f filename] g=group p=profile")
@@ -19,23 +19,14 @@ class Query(Bcfg2.Server.Admin.Mode):
                  "-f filename",
                  "write query to file"))
 
-    def __init__(self, cfile):
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
         logging.root.setLevel(100)
         Bcfg2.Logger.setup_logging(100, to_console=False, to_syslog=False)
-        Bcfg2.Server.Admin.Mode.__init__(self, cfile)
-        try:
-            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
-                                                ['Metadata', 'Probes'],
-                                                'foo', False, 'UTF-8')
-        except Bcfg2.Server.Core.CoreInitError:
-            msg = sys.exc_info()[1]
-            self.errExit("Core load failed because %s" % msg)
-        self.bcore.fam.handle_events_in_interval(1)
-        self.meta = self.bcore.metadata
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
-        clients = list(self.meta.clients.keys())
+        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
+        clients = list(self.metadata.clients.keys())
         filename_arg = False
         filename = None
         for arg in args:
@@ -54,9 +45,9 @@ class Query(Bcfg2.Server.Admin.Mode):
                 print("Unknown argument %s" % arg)
                 continue
             if k == 'p':
-                nc = self.meta.get_client_names_by_profiles(v.split(','))
+                nc = self.metadata.get_client_names_by_profiles(v.split(','))
             elif k == 'g':
-                nc = self.meta.get_client_names_by_groups(v.split(','))
+                nc = self.metadata.get_client_names_by_groups(v.split(','))
                 # add probed groups (if present)
                 for conn in self.bcore.connectors:
                     if isinstance(conn, Bcfg2.Server.Plugins.Probes.Probes):

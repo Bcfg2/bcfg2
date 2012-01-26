@@ -28,14 +28,13 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "stdin"))
     allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
-                                                 self.__usage__)
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
         self.log = False
         self.mode = 'interactive'
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
+        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         use_stdin = False
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')

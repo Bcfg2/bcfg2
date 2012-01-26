@@ -32,16 +32,10 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
               'indianred1', 'limegreen', 'orange1', 'lightblue2',
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
-    plugin_blacklist = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
-                        'Rules', 'Account', 'Decisions', 'Deps', 'Git', 'Svn',
-                        'Fossil', 'Bzr', 'Bundler', 'TGenshi', 'SGenshi',
-                        'Base']
-
-    def __init__(self, cfile):
-
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, cfile,
-                                                 self.__usage__,
-                                                 pblacklist=self.plugin_blacklist)
+    __plugin_blacklist__ = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
+                            'Rules', 'Account', 'Decisions', 'Deps', 'Git',
+                            'Svn', 'Fossil', 'Bzr', 'Bundler', 'TGenshi',
+                            'SGenshi', 'Base']
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
@@ -73,7 +67,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             elif opt in ("-o", "--outfile"):
                 outputfile = arg
 
-        data = self.Visualize(self.get_repo_path(), hset, bset,
+        data = self.Visualize(self.setup['repo'], hset, bset,
                               kset, only_client, outputfile)
         if data:
             print(data)

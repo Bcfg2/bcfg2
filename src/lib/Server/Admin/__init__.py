@@ -36,12 +36,16 @@ class Mode(object):
     """Help message has not yet been added for mode."""
     __shorthelp__ = 'Shorthelp not defined yet'
     __longhelp__ = 'Longhelp not defined yet'
+    __usage__ = None
     __args__ = []
 
-    def __init__(self, configfile):
-        self.configfile = configfile
+    def __init__(self, setup):
+        self.setup = setup
+        self.configfile = setup['configfile']
         self.__cfp = False
         self.log = logging.getLogger('Bcfg2.Server.Admin.Mode')
+        if self.__usage__ is not None:
+            setup.hm = self.__usage__
 
     def getCFP(self):
         if not self.__cfp:
@@ -58,16 +62,8 @@ class Mode(object):
         print(emsg)
         raise SystemExit(1)
 
-    def get_repo_path(self):
-        """Return repository path"""
-        try:
-            return self.cfp.get('server', 'repository')
-        except ConfigParser.NoSectionError:
-            self.errExit("Unable to find server section in bcfg2.conf")
-
     def load_stats(self, client):
-        stats = lxml.etree.parse("%s/etc/statistics.xml" %
-                                (self.get_repo_path()))
+        stats = lxml.etree.parse("%s/etc/statistics.xml" % self.setup['repo'])
         hostent = stats.xpath('//Node[@name="%s"]' % client)
         if not hostent:
             self.errExit("Could not find stats for client %s" % (client))
@@ -110,27 +106,30 @@ class Mode(object):
 
 class MetadataCore(Mode):
     """Base class for admin-modes that handle metadata."""
-    def __init__(self, configfile, usage, pwhitelist=None, pblacklist=None):
-        Mode.__init__(self, configfile)
-        options = {'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                   'configfile': Bcfg2.Options.CFILE,
-                   'encoding': Bcfg2.Options.ENCODING}
-        setup = Bcfg2.Options.OptionParser(options)
-        setup.hm = usage
-        setup.parse(sys.argv[1:])
-        if pwhitelist is not None:
-            setup['plugins'] = [x for x in setup['plugins']
-                                if x in pwhitelist]
-        elif pblacklist is not None:
-            setup['plugins'] = [x for x in setup['plugins']
-                                if x not in pblacklist]
+    __plugin_whitelist__ = None
+    __plugin_blacklist__ = None
+    
+    def __init__(self, setup):
+        Mode.__init__(self, setup)
+        if self.__plugin_whitelist__ is not None:
+            setup['plugins'] = [p for p in setup['plugins']
+                                if p in self.__plugin_whitelist__]
+        elif self.__plugin_blacklist__ is not None:
+            setup['plugins'] = [p for p in setup['plugins']
+                                if p not in self.__plugin_blacklist__]
+
         try:
-            self.bcore = Bcfg2.Server.Core.Core(self.get_repo_path(),
-                                                setup['plugins'],
-                                                'foo', setup['encoding'])
+            self.bcore = \
+                Bcfg2.Server.Core.Core(setup['repo'],
+                                       setup['plugins'],
+                                       setup['password'],
+                                       setup['encoding'],
+                                       filemonitor=setup['filemonitor'])
+            if setup['event debug']:
+                self.bcore.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
-            self.errExit("Core load failed because %s" % msg)
+            self.errExit("Core load failed: %s" % msg)
         self.bcore.fam.handle_events_in_interval(5)
         self.metadata = self.bcore.metadata
 

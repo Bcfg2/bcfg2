@@ -41,6 +41,12 @@ def main():
         'configfile': Bcfg2.Options.CFILE,
         'help': Bcfg2.Options.HELP,
         'verbose': Bcfg2.Options.VERBOSE,
+        'repo': Bcfg2.Options.SERVER_REPOSITORY,
+        'plugins': Bcfg2.Options.SERVER_PLUGINS,
+        'event debug': Bcfg2.Options.DEBUG,
+        'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+        'password': Bcfg2.Options.SERVER_PASSWORD,
+        'encoding': Bcfg2.Options.ENCODING,
         }
     setup = Bcfg2.Options.OptionParser(optinfo)
     # override default help message to include description of all modes
@@ -74,7 +80,7 @@ def main():
             e = sys.exc_info()[1]
             log.error("Failed to load admin mode %s: %s" % (modname, e))
             raise SystemExit(1)
-        mode = mode_cls(setup['configfile'])
+        mode = mode_cls(setup)
         mode(setup['args'][1:])
         if hasattr(mode, 'bcore'):
             mode.bcore.shutdown()

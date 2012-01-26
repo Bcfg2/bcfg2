@@ -12,8 +12,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
     __usage__ = ("bcfg2-admin compare <old> <new>\n\n"
                  "     -r\trecursive")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.Mode.__init__(self, setup)
         self.important = {'Path': ['name', 'type', 'owner', 'group', 'perms',
                                    'important', 'paranoid', 'sensitive',
                                    'dev_type', 'major', 'minor', 'prune',

@@ -77,6 +77,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''
     __shorthelp__ = "Manage dynamic reports"
     __longhelp__ = (__shorthelp__)
+    django_commands = ['syncdb', 'sqlall', 'validate']
     __usage__ = ("bcfg2-admin reports [command] [options]\n"
                  "    -v|--verbose         Be verbose\n"
                  "    -q|--quiet           Print only errors\n"
@@ -93,14 +94,13 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "      --expired          Expired clients only\n"
                  "    scrub                Scrub the database for duplicate reasons and orphaned entries\n"
                  "    update               Apply any updates to the reporting database\n"
-                 "\n")
+                 "\n"
+                 "  Django commands:\n    "
+                 "\n    ".join(self.django_commands))
 
-    def __init__(self, cfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, cfile)
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.Mode.__init__(self, setup)
         self.log.setLevel(logging.INFO)
-        self.django_commands = ['syncdb', 'sqlall', 'validate']
-        self.__usage__ = self.__usage__ + "  Django commands:\n    " + \
-             "\n    ".join(self.django_commands)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)

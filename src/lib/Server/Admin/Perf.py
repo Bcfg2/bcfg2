@@ -10,9 +10,6 @@ class Perf(Bcfg2.Server.Admin.Mode):
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin perf\n")
     __usage__ = ("bcfg2-admin perf")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-
     def __call__(self, args):
         output = [('Name', 'Min', 'Max', 'Mean', 'Count')]
         optinfo = {
@@ -25,7 +22,7 @@ class Perf(Bcfg2.Server.Admin.Mode):
             'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
             }
         setup = Bcfg2.Options.OptionParser(optinfo)
-        setup.parse(sys.argv[2:])
+        setup.parse(sys.argv[1:])
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
                                            setup['user'],
                                            setup['password'],

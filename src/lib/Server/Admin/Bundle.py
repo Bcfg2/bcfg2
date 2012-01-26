@@ -15,19 +15,13 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                                     "\nbcfg2-admin bundle show\n")
     __usage__ = ("bcfg2-admin bundle [options] [add|del] [group]")
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, configfile,
-                                                 self.__usage__)
-
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
-        reg = '((?:[a-z][a-z\\.\\d\\-]+)\\.(?:[a-z][a-z\\-]+))(?![\\w\\.])'
+        rg = re.compile(r'([^.]+\.(?:[a-z][a-z\-]+))(?![\w\.])',
+                        re.IGNORECASE | re.DOTALL)
 
         # Get all bundles out of the Bundle/ directory
-        opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-        setup = Bcfg2.Options.OptionParser(opts)
-        setup.parse(sys.argv[1:])
-        repo = setup['repo']
+        repo = self.setup['repo']
         xml_list = glob.glob("%s/Bundler/*.xml" % repo)
         genshi_list = glob.glob("%s/Bundler/*.genshi" % repo)
 
@@ -50,7 +44,6 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
         elif args[0] in ['list-xml', 'ls-xml']:
             bundle_name = []
             for bundle_path in xml_list:
-                rg = re.compile(reg, re.IGNORECASE | re.DOTALL)
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                 print(bundle.split('.')[0])
@@ -58,7 +51,6 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
         elif args[0] in ['list-genshi', 'ls-gen']:
             bundle_name = []
             for bundle_path in genshi_list:
-                rg = re.compile(reg, re.IGNORECASE | re.DOTALL)
                 bundle_name.append(rg.search(bundle_path).group(1))
             for bundle in bundle_name:
                 print(bundle.split('.')[0])
@@ -71,7 +63,7 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
             bundle_name = []
             bundle_list = xml_list + genshi_list
             for bundle_path in bundle_list:
-                rg = re.compile(reg, re.IGNORECASE | re.DOTALL)
+                print "matching %s" % bundle_path
                 bundle_name.append(rg.search(bundle_path).group(1))
             text = "Available bundles (Number of bundles: %s)" % \
                     (len(bundle_list))

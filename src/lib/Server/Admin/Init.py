@@ -173,9 +173,6 @@ class Init(Bcfg2.Server.Admin.Mode):
     repopath = ""
     response = ""
 
-    def __init__(self, configfile):
-        Bcfg2.Server.Admin.Mode.__init__(self, configfile)
-
     def _set_defaults(self):
         """Set default parameters."""
         self.configfile = self.opts['configfile']
