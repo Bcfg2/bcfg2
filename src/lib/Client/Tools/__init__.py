@@ -333,6 +333,7 @@ class SvcTool(Tool):
                 continue
             # need to handle servicemode = (build|default)
             # need to handle mode = (default|supervised)
+            rc = None
             if entry.get('status') == 'on':
                 if self.setup['servicemode'] == 'build':
                     rc = self.stop_service(entry)
