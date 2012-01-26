@@ -8,7 +8,6 @@ __all__ = [
         'Group',
         'Init',
         'Minestruct',
-        'Mode',
         'Perf',
         'Pull',
         'Query',

@@ -6,12 +6,11 @@ import logging
 import Bcfg2.Server.Core
 import Bcfg2.Logger
 import Bcfg2.Options
+import Bcfg2.Server.Admin
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import StringIO
 
 log = logging.getLogger('bcfg2-admin')
-
-import Bcfg2.Server.Admin
 
 def mode_import(modename):
     """Load Bcfg2.Server.Admin.<mode>."""
@@ -66,7 +65,7 @@ def main():
 
     if setup['args'][0] in get_modes():
         modname = setup['args'][0].capitalize()
-	if len(setup['args']) > 1 and setup['args'][1] == 'help':
+        if len(setup['args']) > 1 and setup['args'][1] == 'help':
             print(mode_import(modname).__longhelp__)
             raise SystemExit(0)
         try:

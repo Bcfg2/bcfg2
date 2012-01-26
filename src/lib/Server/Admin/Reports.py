@@ -8,9 +8,6 @@ import pickle
 import platform
 import sys
 import traceback
-from Bcfg2.Server.Reports.importscript import load_stats
-from Bcfg2.Server.Reports.updatefix import update_database
-from Bcfg2.Server.Reports.utils import *
 from lxml.etree import XML, XMLSyntaxError
 
 # Compatibility import
@@ -22,16 +19,15 @@ if sys.version_info >= (2, 5):
 else:
     from md5 import md5
 
-# Load django
-import django.core.management
-
+# Prereq issues can be signaled with ImportError, so no try needed
 # FIXME - settings file uses a hardcoded path for /etc/bcfg2.conf
-try:
-    import Bcfg2.Server.Reports.settings
-except Exception:
-    e = sys.exc_info()[1]
-    sys.stderr.write("Failed to load configuration settings. %s\n" % e)
-    raise SystemExit(1)
+import Bcfg2.Server.Reports.settings
+
+# Load django and reports stuff _after_ we know we can load settings
+import django.core.management
+from Bcfg2.Server.Reports.importscript import load_stats
+from Bcfg2.Server.Reports.updatefix import update_database
+from Bcfg2.Server.Reports.utils import *
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
 project_name = os.path.basename(project_directory)

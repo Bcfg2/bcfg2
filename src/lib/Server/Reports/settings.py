@@ -6,9 +6,8 @@ from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
 c = ConfigParser.ConfigParser()
 if len(c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])) == 0:
-    print("Please check that bcfg2.conf or bcfg2-web.conf exists "
-          "and is readable by your web server.")
-    sys.exit(1)
+    raise ImportError("Please check that bcfg2.conf or bcfg2-web.conf exists "
+                      "and is readable by your web server.")
 
 try:
     DEBUG = c.getboolean('statistics', 'web_debug')
@@ -30,8 +29,7 @@ try:
     db_engine = c.get('statistics', 'database_engine')
 except ConfigParser.NoSectionError:
     e = sys.exc_info()[1]
-    print("Failed to determine database engine: %s" % e)
-    sys.exit(1)
+    raise ImportError("Failed to determine database engine: %s" % e)
 db_name = ''
 if c.has_option('statistics', 'database_name'):
     db_name = c.get('statistics', 'database_name')
@@ -122,7 +120,7 @@ AUTHORIZED_GROUP = ''
 try:
     import django.contrib.auth
 except ImportError:
-    print('Import of Django module failed. Is Django installed?')
+    raise ImportError('Import of Django module failed. Is Django installed?')
 django.contrib.auth.LOGIN_URL = '/login'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
