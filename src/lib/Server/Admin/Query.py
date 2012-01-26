@@ -1,3 +1,4 @@
+import sys
 import logging
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
