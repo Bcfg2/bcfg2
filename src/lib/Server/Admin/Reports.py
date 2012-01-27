@@ -96,7 +96,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "    update               Apply any updates to the reporting database\n"
                  "\n"
                  "  Django commands:\n    "
-                 "\n    ".join(self.django_commands))
+                 "\n    ".join(django_commands))
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
