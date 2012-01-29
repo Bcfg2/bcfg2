@@ -23,7 +23,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
 IUSE="server"
 
-DEPEND=""
+DEPEND="dev-python/setuptools"
 RDEPEND="app-portage/gentoolkit
 	server? (
 		dev-python/lxml
