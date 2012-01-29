@@ -255,7 +255,6 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %changelog
-%changelog
 * Thu Jan 27 2011 Chris St. Pierre <stpierreca@ornl.gov> 1.2.0pre1-0.0
 - Added -doc sub-package
 
