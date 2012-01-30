@@ -5,13 +5,6 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
 
-# Most rpm-based distributions include the lxml package a 'python-lxml',
-# but some distributions and some people who roll their own lxml packages
-# call it just 'lxml'. We'll try to catch both.
-%define dfl_lxml python-lxml
-%define alt_lxml lxml
-%define lxmldep %(rpm -q %{alt_lxml} 2>&1 > /dev/null && echo %{alt_lxml} || echo %{dfl_lxml})
-
 Name:             bcfg2
 Version:          1.2.1
 Release:          %{release}
@@ -26,7 +19,7 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
-BuildRequires:    %{lxmldep}
+BuildRequires:    python-lxml
 
 # %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
 # %systems (and potentially very old Fedora systems, too)
@@ -39,7 +32,7 @@ BuildRequires: python-sphinx10
 BuildRequires: python-sphinx >= 0.6
 %endif
 
-Requires:         %{lxmldep} >= 0.9
+Requires:         python-lxml >= 0.9
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -75,7 +68,7 @@ Requires: bcfg2
 %if "%{py_ver}" < "2.6"
 Requires:         python-ssl
 %endif
-Requires:         %{lxmldep} >= 1.2.1
+Requires:         python-lxml >= 1.2.1
 %if "%{_vendor}" == "redhat"
 Requires: gamin-python
 %endif
