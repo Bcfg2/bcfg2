@@ -2,7 +2,7 @@
 vim: ft=xml
 -->
 <Bundle name='sgenshi-dirvish' xmlns:py="http://genshi.edgewall.org/">
-<py:for each="user in metadata.Properties['dirvish.xml'].data.find('users')">
+<py:for each="user in metadata.Properties['dirvish.xml'].xdata.find('users')">
 <!-- Generate configs for all users in dirvish.xml -->
 <BoundPath
 	name='/backup/homes/${user.tag}/dirvish/default.conf'
