@@ -33,7 +33,7 @@ Description: Configuration management server
 
 Package: bcfg2-web
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, bcfg2 (= ${binary:Version}), python-django,
+Depends: ${python:Depends}, ${misc:Depends}, bcfg2-server (= ${binary:Version}), python-django,
 Suggests: python-mysqldb, python-psycopg2, python-sqlite, libapache2-mod-wsgi
 XB-Python-Version: >= 2.4
 Description: Configuration management web interface
