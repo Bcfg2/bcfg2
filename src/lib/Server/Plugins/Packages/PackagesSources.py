@@ -27,7 +27,12 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         self.config = config
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
-            os.makedirs(self.cachepath)
+            try:
+                os.makedirs(self.cachepath)
+            except OSError:
+                err = sys.exc_info()[1]
+                self.logger.error("Could not create Packages cache at %s: %s" %
+                                  (self.cachepath, err))
         self.pkg_obj = packages
         self.parsed = set()
         self.loaded = False
