@@ -6,6 +6,7 @@ import sys
 import Bcfg2.Server.Core
 import Bcfg2.Options
 from nose.core import TestProgram
+from nose.suite import LazySuite
 from unittest import TestCase
 
 class ClientTest(TestCase):
@@ -43,13 +44,22 @@ class ClientTest(TestCase):
     id = __str__
 
 def main():
+    
     Bcfg2.Server.Core.Core.register_options()
-    args = Bcfg2.Options.args()
-    core = Bcfg2.Server.Core.Core.from_config(args)
-    core.fam.handle_events_in_interval(0.1)
-    suite = [ClientTest(core, client) for client in core.metadata.clients]
+    Bcfg2.Options.set_help(
+        "Build all clients, and test that there are no failures",
+        "Any unknown options will be passed verbatim to nosetests under the hood"
+    )
 
-    TestProgram(argv=sys.argv[0:1], suite = suite)
+    args, rest = Bcfg2.Options.known_args()
+
+    def run_tests():
+        core = Bcfg2.Server.Core.Core.from_config(args)
+        core.fam.handle_events_in_interval(0.1)
+        for client in core.metadata.clients:
+            yield ClientTest(core, client)
+
+    TestProgram(argv=sys.argv[0:1]+rest, suite=LazySuite(run_tests))
 
 if __name__ == "__main__":
     sys.exit(main())
