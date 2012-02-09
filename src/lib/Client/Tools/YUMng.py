@@ -11,11 +11,11 @@ import yum.callbacks
 import yum.Errors
 import yum.misc
 import rpmUtils.arch
+from metargs import Option
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 import Bcfg2.Options
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+
 
 # Fix for python2.3
 try:
@@ -64,20 +64,6 @@ def nevraString(p):
             if i in p:
                 ret = "%s%s" % (ret, j % p[i])
         return ret
-
-
-class Parser(ConfigParser.ConfigParser):
-
-    def get(self, section, option, default):
-        """
-        Override ConfigParser.get: If the request option is not in the
-        config file then return the value of default rather than raise
-        an exception.  We still raise exceptions on missing sections.
-        """
-        try:
-            return ConfigParser.ConfigParser.get(self, section, option)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return default
 
 
 class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
@@ -242,24 +228,33 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             raise Bcfg2.Client.Tools.toolInstantiationError
 
     def _loadConfig(self):
-        # Process the YUMng section from the config file.
-        CP = Parser()
-        CP.read(self.args.config)
-        truth = ['true', 'yes', '1']
+        def parse_bool(val):
+            return val.lower() in ['true', 'yes', '1']
+
+        Bcfg2.Options.add_options(
+            Option(self.name + ":pkg_checks", type=parse_bool, default=True,
+                   dest='pkg_checks'),
+            Option(self.name + ":pkg_verify", type=parse_bool, default=True,
+                   dest='pkg_verify'),
+            Option(self.name + ":installed_action", type=str.lower, default='install',
+                   dest='installed_action'),
+            Option(self.name + ":version_fail_action", type=str.lower, default='upgrade',
+                   dest='version_fail_action'),
+            Option(self.name + ":verify_fail_action", type=str.lower, default='reinstall',
+                   dest='verify_fail_action'),
+            Option(self.name + ":verify_flags", type=lambda x: x.lower().replace(' ', ','), default='',
+                   dest='verify_flags'),
+        )
+
+        yum_args = Bcfg2.Option.bootstrap()
 
         # These are all boolean flags, either we do stuff or we don't
-        self.pkg_checks = CP.get(self.name, "pkg_checks", "true").lower() \
-                in truth
-        self.pkg_verify = CP.get(self.name, "pkg_verify", "true").lower() \
-                in truth
-        self.doInstall = CP.get(self.name, "installed_action",
-                "install").lower() == "install"
-        self.doUpgrade = CP.get(self.name,
-                "version_fail_action", "upgrade").lower() == "upgrade"
-        self.doReinst = CP.get(self.name, "verify_fail_action",
-                "reinstall").lower() == "reinstall"
-        self.verifyFlags = CP.get(self.name, "verify_flags",
-                                  "").lower().replace(' ', ',')
+        self.pkg_checks = yum_args.pkg_checks
+        self.pkg_verify = yum_args.ykg_verify
+        self.doInstall = yum_args.installed_action == "install"
+        self.doUpgrade = yum_args.version_fail_action == "upgrade"
+        self.doReinst = yum_args.verify_fail_action == "reinstall"
+        self.verifyFlags = yum_args.verify_flags
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installOnlyPkgs:
