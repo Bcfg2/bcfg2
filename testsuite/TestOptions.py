@@ -85,19 +85,3 @@ class TestOptionSet(object):
         os3 = Bcfg2.Options.OptionSet(opts)
         os3.parse(['-G'])
         assert os3['foo'] == True
-
-
-class TestOptionParser(object):
-    def test__init(self):
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-h')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
-                                             odesc='1'))]
-        os1 = Bcfg2.Options.OptionParser(opts)
-        assert Bcfg2.Options.Option.cfpath == '/etc/bcfg2.conf'
-        sys.argv = ['foo', '-C', '/usr/local/etc/bcfg2.conf']
-        os2 = Bcfg2.Options.OptionParser(opts)
-        assert Bcfg2.Options.Option.cfpath == '/usr/local/etc/bcfg2.conf'
-        sys.argv = []
-        os3 = Bcfg2.Options.OptionParser(opts)
-        assert Bcfg2.Options.Option.cfpath == '/etc/bcfg2.conf'

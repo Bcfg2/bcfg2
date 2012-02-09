@@ -27,20 +27,7 @@ from Bcfg2.Bcfg2Py3k import Queue
 from Bcfg2.Bcfg2Py3k import Empty
 from Bcfg2.Bcfg2Py3k import Full
 
-# grab default metadata info from bcfg2.conf
-opts = {'owner': Bcfg2.Options.MDATA_OWNER,
-        'group': Bcfg2.Options.MDATA_GROUP,
-        'important': Bcfg2.Options.MDATA_IMPORTANT,
-        'perms': Bcfg2.Options.MDATA_PERMS,
-        'paranoid': Bcfg2.Options.MDATA_PARANOID,
-        'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
-mdata_setup = Bcfg2.Options.OptionParser(opts)
-mdata_setup.parse([])
-del mdata_setup['args']
-
 logger = logging.getLogger('Bcfg2.Server.Plugin')
-
-default_file_metadata = mdata_setup
 
 info_regex = re.compile( \
     'encoding:(\s)*(?P<encoding>\w+)|' +
@@ -51,6 +38,28 @@ info_regex = re.compile( \
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|' +
     'sensitive:(\s)*(?P<sensitive>\S+)|')
+
+Bcfg2.Options.add_options(
+    Bcfg2.Options.MDATA_OWNER,
+    Bcfg2.Options.MDATA_GROUP,
+    Bcfg2.Options.MDATA_IMPORTANT,
+    Bcfg2.Options.MDATA_PERMS,
+    Bcfg2.Options.MDATA_PARANOID,
+    Bcfg2.Options.MDATA_SENSITIVE
+)
+
+_opts = Bcfg2.Options.bootstrap()
+
+default_file_metadata = {
+    'owner': _opts.mdata_owner,
+    'group': _opts.mdata_group,
+    'important': _opts.mdata_important,
+    'perms': _opts.mdata_perms,
+    'paranoid': _opts.mdata_paranoid,
+    'sensitive': _opts.mdata_sensitive,
+}
+
+del _opts
 
 
 class PluginInitError(Exception):
@@ -117,6 +126,10 @@ class Plugin(Debuggable):
         self.data = "%s/%s" % (datastore, self.name)
         self.running = True
         Debuggable.__init__(self, name=self.name)
+
+    @classmethod
+    def register_options(cls, args=None):
+        pass
 
     @classmethod
     def init_repo(cls, repo):

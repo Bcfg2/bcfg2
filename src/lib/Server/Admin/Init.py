@@ -1,4 +1,5 @@
 import getpass
+import logging
 import os
 import random
 import socket
@@ -9,6 +10,8 @@ import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
+from Bcfg2.Server.Core import PLUGIN_ENTRYPOINT
+from Bcfg2.PluginLoader import load_exactly_one
 
 # default config file
 config = '''
@@ -165,18 +168,22 @@ class Init(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Interactively initialize a new repository.")
     __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
     __usage__ = "bcfg2-admin init"
-    options = {'configfile': Bcfg2.Options.CFILE,
-               'plugins': Bcfg2.Options.SERVER_PLUGINS,
-               'proto': Bcfg2.Options.SERVER_PROTOCOL,
-               'repo': Bcfg2.Options.SERVER_REPOSITORY,
-               'sendmail': Bcfg2.Options.SENDMAIL_PATH}
     repopath = ""
     response = ""
 
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.SERVER_PLUGINS,
+            Bcfg2.Options.SERVER_PROTOCOL,
+            Bcfg2.Options.SERVER_REPOSITORY,
+            Bcfg2.Options.SENDMAIL_PATH
+        )
+
     def _set_defaults(self):
         """Set default parameters."""
-        self.configfile = self.opts['configfile']
-        self.repopath = self.opts['repo']
+        self.configfile = self.args.config
+        self.repopath = self.args.repository_path
         self.password = gen_password(8)
         self.server_uri = "https://%s:6789" % socket.getfqdn()
         self.plugins = default_plugins
@@ -185,8 +192,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
 
         # Parse options
-        self.opts = Bcfg2.Options.OptionParser(self.options)
-        self.opts.parse(args)
+        self.args = args
         self._set_defaults()
 
         # Prompt the user for input
@@ -317,7 +323,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                                                                  clients)
             else:
                 try:
-                    cls = load_exactly_one('bcfg2.plugins', plugin)
+                    cls = load_exactly_one(PLUGIN_ENTRYPOINT, plugin)
                     cls.init_repo(self.repo_path)
                 except Exception:
                     logging.exception("Plugin setup for %s failed\n"
@@ -331,8 +337,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
         confdata = config % (self.repopath,
                              ','.join(self.plugins),
-                             self.opts['sendmail'],
-                             self.opts['proto'],
+                             self.args.reports_sendmailpath,
+                             self.args.communication_protocol,
                              self.password,
                              cpath,
                              kpath,

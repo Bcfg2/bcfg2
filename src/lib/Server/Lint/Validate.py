@@ -5,6 +5,7 @@ import os
 from subprocess import Popen, PIPE, STDOUT
 import sys
 
+import Bcfg2.Options
 import Bcfg2.Server.Lint
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
@@ -34,8 +35,15 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         self.filelists = {}
         self.get_filelists()
 
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Server.Lint.ServerlessPlugin.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.SCHEMA_PATH,
+        )
+
     def Run(self):
-        schemadir = self.config['schema']
+        schemadir = self.args.schema
         
         for path, schemaname in self.filesets.items():
             try:
@@ -117,7 +125,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         if self.files is not None:
             listfiles = lambda p: fnmatch.filter(self.files, p % "*")
         else:
-            listfiles = lambda p: glob.glob(p % self.config['repo'])
+            listfiles = lambda p: glob.glob(p % self.args.repository_path)
 
         for path in self.filesets.keys():
             if path.startswith("metadata:"):
@@ -132,7 +140,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                     self.filelists[path] = []
                     for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
                         for root, dirs, files in os.walk('%s/%s' %
-                                                         (self.config['repo'],
+                                                         (self.args.repository_path,
                                                           infodir)):
                             self.filelists[path].extend([os.path.join(root, f)
                                                          for f in files
@@ -158,7 +166,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         if self.files is not None:
             rv = fnmatch.filter(self.files, "*/Metadata/%s.xml" % mtype)
         else:
-            rv = glob.glob("%s/Metadata/%s.xml" % (self.config['repo'], mtype))
+            rv = glob.glob("%s/Metadata/%s.xml" % (self.args.repository_path, mtype))
 
         # attempt to follow XIncludes.  if the top-level files aren't
         # listed in self.files, though, there's really nothing we can

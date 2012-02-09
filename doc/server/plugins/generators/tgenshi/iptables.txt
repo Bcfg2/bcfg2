@@ -26,10 +26,9 @@ iptables
         import os,sys
         import Bcfg2.Options
 
-        opts = { 'repo': Bcfg2.Options.SERVER_REPOSITORY }
-        setup = Bcfg2.Options.OptionParser(opts)
-        setup.parse('--')
-        repo = setup['repo']
+        Bcfg2.Options.add_options(Bcfg2.Options.SERVER_REPOSITORY)
+        args = Bcfg2.Options.bootstrap()
+        repo = args.repository_path
         basedir = '%s' % (repo)
 
         # for instance: /var/lib/bcfg2/custom/etc/sysconfig/iptables/

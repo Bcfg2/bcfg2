@@ -8,8 +8,11 @@ import logging
 import sys
 import time
 import Bcfg2.Client.Tools
+import Bcfg2.Options
 from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 
+
+CLIENT_TOOL_ENTRYPOINT = 'bcfg2.client.tools'
 
 def cmpent(ent1, ent2):
     """Sort entries."""
@@ -75,12 +78,12 @@ def passes_black_list(entry, blacklist):
 
 class Frame:
     """Frame is the container for all Tool objects and state information."""
-    def __init__(self, config, setup, times, drivers, dryrun):
+    def __init__(self, config, args, times, drivers, dryrun):
         self.config = config
         self.times = times
         self.dryrun = dryrun
         self.times['initialization'] = time.time()
-        self.setup = setup
+        self.args = args
         self.tools = []
         self.states = {}
         self.whitelist = []
@@ -98,14 +101,14 @@ class Frame:
             if not isinstance(tool, str):
                 tclass[time.time()] = tool
             try:
-                tclass[tool] = load_exactly_one('bcfg2.client.tool', tool)
+                tclass[tool] = load_exactly_one(CLIENT_TOOL_ENTRYPOINT, tool)
             except (MultipleEntriesError, NoEntriesError):
                 self.logger.exception("Unable to load client tool")
                 continue
 
         for tool in list(tclass.values()):
             try:
-                self.tools.append(tool(self.logger, setup, config))
+                self.tools.append(tool(self.logger, args, config))
             except Bcfg2.Client.Tools.toolInstantiationError:
                 continue
             except:
@@ -148,6 +151,28 @@ class Frame:
             self.logger.debug("The following packages are prereqs added by Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
 
+    @classmethod
+    def register_options(cls):
+        """Register all the options for selected tools"""
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_DRIVERS,
+            Bcfg2.Options.CLIENT_FILE,
+            Bcfg2.Options.CLIENT_DLIST,
+            Bcfg2.Options.CLIENT_BUNDLE,
+            Bcfg2.Options.INTERACTIVE,
+            Bcfg2.Options.CLIENT_REMOVE,
+            Bcfg2.Options.CLIENT_INDEP,
+            Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+            Bcfg2.Options.CLIENT_KEVLAR,
+        )
+        args = Bcfg2.Options.bootstrap()
+        for tool in args.drivers:
+            try:
+                tclass = load_exactly_one(CLIENT_TOOL_ENTRYPOINT, tool)
+                tclass.register_options()
+            except (MultipleEntriesError, NoEntriesError):
+                continue
+
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
             ret = []
@@ -168,9 +193,9 @@ class Frame:
         # Need to process decision stuff early so that dryrun mode works with it
         self.whitelist = [entry for entry in self.states \
                           if not self.states[entry]]
-        if not self.setup['file']:
-            if self.setup['decision'] == 'whitelist':
-                dwl = self.setup['decision_list']
+        if not self.args.from_file:
+            if self.args.decision == 'whitelist':
+                dwl = self.args.decision_list
                 w_to_rem = [e for e in self.whitelist \
                             if not matches_white_list(e, dwl)]
                 if w_to_rem:
@@ -178,16 +203,16 @@ class Frame:
                     self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
                     self.whitelist = [x for x in self.whitelist \
                                       if x not in w_to_rem]
-            elif self.setup['decision'] == 'blacklist':
+            elif self.args.decision == 'blacklist':
                 b_to_rem = [e for e in self.whitelist \
-                            if not passes_black_list(e, self.setup['decision_list'])]
+                            if not passes_black_list(e, self.args.decision_list)]
                 if b_to_rem:
                     self.logger.info("In blacklist mode: suppressing installation of:")
                     self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
                     self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
 
         # take care of important entries first
-        if not self.dryrun and not self.setup['bundle']:
+        if not self.dryrun and not self.args.bundles:
             for cfile in [cfl for cfl in self.config.findall(".//Path") \
                           if cfl.get('name') in self.__important__ and \
                              cfl.get('type') == 'file']:
@@ -196,7 +221,7 @@ class Frame:
                 tl = [t for t in self.tools if t.handlesEntry(cfile) \
                      and t.canVerify(cfile)]
                 if tl:
-                    if self.setup['interactive'] and not \
+                    if self.args.interactive and not \
                            promptFilter("Install %s: %s? (y/N):", [cfile]):
                         self.whitelist.remove(cfile)
                         continue
@@ -232,13 +257,13 @@ class Frame:
         """Set self.whitelist based on user interaction."""
         prompt = "Install %s: %s? (y/N): "
         rprompt = "Remove %s: %s? (y/N): "
-        if self.setup['remove']:
-            if self.setup['remove'] == 'all':
+        if self.args.remove_extra:
+            if self.args.remove_extra == 'all':
                 self.removal = self.extra
-            elif self.setup['remove'] in ['services', 'Services']:
+            elif self.args.remove_extra in ['services', 'Services']:
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Service']
-            elif self.setup['remove'] in ['packages', 'Packages']:
+            elif self.args.remove_extra in ['packages', 'Packages']:
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Package']
 
@@ -259,18 +284,18 @@ class Frame:
             return
         # Here is where most of the work goes
         # first perform bundle filtering
-        if self.setup['bundle']:
+        if self.args.bundles:
             all_bundle_names = [b.get('name') for b in
                                 self.config.findall('./Bundle')]
             # warn if non-existent bundle given
-            for bundle in self.setup['bundle']:
+            for bundle in self.args.bundles:
                 if bundle not in all_bundle_names:
                     self.logger.info("Warning: Bundle %s not found" % bundle)
             bundles = [b for b in self.config.findall('./Bundle')
-                       if b.get('name') in self.setup['bundle']]
+                       if b.get('name') in self.args.bundles]
             self.whitelist = [e for e in self.whitelist
                               if True in [e in b for b in bundles]]
-        elif self.setup['indep']:
+        elif self.args.ignore_bundles:
             bundles = [nb for nb in self.config.getchildren()
                        if nb.tag != 'Bundle']
         else:
@@ -285,7 +310,7 @@ class Frame:
                        if (a.get('timing') != 'post' and
                            (bmodified or a.get('when') == 'always'))]
             # now we process all "always actions"
-            if self.setup['interactive']:
+            if self.args.interactive:
                 promptFilter(prompt, actions)
             self.DispatchInstallCalls(actions)
             
@@ -303,7 +328,7 @@ class Frame:
                                       for e in b_to_remv])
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
-        if self.setup['interactive']:
+        if self.args.interactive:
             self.whitelist = promptFilter(prompt, self.whitelist)
             self.removal = promptFilter(rprompt, self.removal)
 
@@ -347,12 +372,12 @@ class Frame:
                 self.logger.debug("Found clobbered entries:")
                 self.logger.debug(["%s:%s" % (entry.tag, entry.get('name')) \
                                    for entry in clobbered])
-                if not self.setup['interactive']:
+                if not self.args.interactive:
                     self.DispatchInstallCalls(clobbered)
 
         for bundle in self.config.findall('.//Bundle'):
-            if self.setup['bundle'] and \
-                   bundle.get('name') not in self.setup['bundle']:
+            if self.args.bundles and \
+                   bundle.get('name') not in self.args.bundles:
                 # prune out unspecified bundles when running with -b
                 continue
             for tool in self.tools:
@@ -385,7 +410,7 @@ class Frame:
                               entry in self.states if not self.states[entry]])
         self.logger.info('Total managed entries:\t%d' % len(list(self.states.values())))
         self.logger.info('Unmanaged entries:\t%d' % len(self.extra))
-        if phase == 'final' and self.setup['extra']:
+        if phase == 'final' and self.args.extra_display:
             self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) \
                               for entry in self.extra])
 
@@ -396,7 +421,7 @@ class Frame:
 
     def ReInventory(self):
         """Recheck everything."""
-        if not self.dryrun and self.setup['kevlar']:
+        if not self.dryrun and self.args.bulletproof:
             self.logger.info("Rechecking system inventory")
             self.Inventory()
 

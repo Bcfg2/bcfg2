@@ -5,10 +5,9 @@ warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
                         DeprecationWarning)
 import os
 import stat
-import sys
 from subprocess import Popen, PIPE
-import time
 
+import Bcfg2.Options
 import Bcfg2.Client.XML
 __revision__ = '$Revision$'
 
@@ -51,12 +50,12 @@ class Tool:
     __req__ = {}
     __important__ = []
 
-    def __init__(self, logger, setup, config):
+    def __init__(self, logger, args, config):
         self.__important__ = [entry.get('name') \
                               for struct in config for entry in struct \
                               if entry.tag == 'Path' and \
                               entry.get('important') in ['true', 'True']]
-        self.setup = setup
+        self.args = args
         self.logger = logger
         if not hasattr(self, '__ireq__'):
             self.__ireq__ = self.__req__
@@ -78,6 +77,10 @@ class Tool:
             except:
                 self.logger.debug("%s failed" % filename, exc_info=1)
                 raise toolInstantiationError
+
+    @classmethod
+    def register_options(cls):
+        pass
 
     def BundleUpdated(self, _, states):
         """This callback is used when bundle updates occur."""
@@ -202,8 +205,8 @@ class PkgTool(Tool):
     pkgtype = 'echo'
     name = 'PkgTool'
 
-    def __init__(self, logger, setup, config):
-        Tool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Tool.__init__(self, logger, args, config)
         self.installed = {}
         self.Remove = self.RemovePackages
         self.FindExtra = self.FindExtraPackages
@@ -288,9 +291,17 @@ class SvcTool(Tool):
     """This class defines basic Service behavior"""
     name = 'SvcTool'
 
-    def __init__(self, logger, setup, config):
-        Tool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Tool.__init__(self, logger, args, config)
         self.restarted = []
+
+    @classmethod
+    def register_options(cls):
+        Tool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_SERVICE_MODE,
+            Bcfg2.Options.INTERACTIVE,
+        )
 
     def get_svc_command(self, service, action):
         """Return the basename of the command used to start/stop services."""
@@ -315,30 +326,30 @@ class SvcTool(Tool):
 
     def Remove(self, services):
         """ Dummy implementation of service removal method """
-        if self.setup['servicemode'] != 'disabled':
+        if self.args.service_mode != 'disabled':
             for entry in services:
                 entry.set("status", "off")
                 self.InstallService(entry)
 
     def BundleUpdated(self, bundle, states):
         """The Bundle has been updated."""
-        if self.setup['servicemode'] == 'disabled':
+        if self.args.service_mode == 'disabled':
             return
 
         for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
             mode = entry.get('mode', 'default')
             if (mode == 'manual' or
                 (mode == 'interactive_only' and
-                 not self.setup['interactive'])):
+                 not self.args.interactive)):
                 continue
             # need to handle servicemode = (build|default)
             # need to handle mode = (default|supervised)
             rc = None
             if entry.get('status') == 'on':
-                if self.setup['servicemode'] == 'build':
+                if self.args.service_mode == 'build':
                     rc = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
-                    if self.setup['interactive']:
+                    if self.args.interactive:
                         prompt = ('Restart service %s?: (y/N): ' %
                                   entry.get('name'))
                         # py3k compatibility

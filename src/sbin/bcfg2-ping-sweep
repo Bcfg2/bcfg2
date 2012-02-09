@@ -13,13 +13,13 @@ import lxml.etree
 import Bcfg2.Options
 
 if __name__ == '__main__':
-    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY,
-            'configfile': Bcfg2.Options.CFILE}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY,
+    )
+    args = Bcfg2.Options.args()
 
-    cfpath = setup['configfile']
-    clientdatapath = "%s/Metadata/clients.xml" % setup['repo']
+    cfpath = args.config
+    clientdatapath = "%s/Metadata/clients.xml" % args.repository_path
 
     clientElement = lxml.etree.parse(clientdatapath)
     hostlist = [client.get('name')

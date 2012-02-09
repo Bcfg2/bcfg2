@@ -1,7 +1,9 @@
-import sys
 import logging
+import argparse
+from metargs import Option
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
+import Bcfg2.Options
 
 
 class Query(Bcfg2.Server.Admin.MetadataCore):
@@ -19,54 +21,52 @@ class Query(Bcfg2.Server.Admin.MetadataCore):
                  "-f filename",
                  "write query to file"))
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
+    def __init__(self):
         logging.root.setLevel(100)
         Bcfg2.Logger.setup_logging(100, to_console=False, to_syslog=False)
+        Bcfg2.Server.Admin.MetadataCore.__init__(self)
+        Bcfg2.Options.set_help(self.__shorthelp__)
+
+        Bcfg2.Options.add_options(
+            Option('-n', '--one-per-line', dest='per_line', action='store_true',
+                help="Print one result per line"),
+            Option('--comma-separated', dest='per_line', action='store_false',
+                help="Print results comma separated"),
+            Option('-f', '--output-file', type=argparse.FileType('w'),
+                default=None, help="Write the query results to the specified file"),
+            Option('query', type=lambda x: x.split('=', 1), nargs='+',
+                help='Query parameters. Should start with either p= or g= '
+                     'to specify either search by group or profile'),
+        )
+
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
+
         clients = list(self.metadata.clients.keys())
-        filename_arg = False
-        filename = None
-        for arg in args:
-            if filename_arg == True:
-                filename = arg
-                filename_arg = False
-                continue
-            if arg in ['-n', '-c']:
-                continue
-            if arg in ['-f']:
-                filename_arg = True
-                continue
-            try:
-                k, v = arg.split('=')
-            except:
-                print("Unknown argument %s" % arg)
-                continue
-            if k == 'p':
-                nc = self.metadata.get_client_names_by_profiles(v.split(','))
-            elif k == 'g':
-                nc = self.metadata.get_client_names_by_groups(v.split(','))
+        
+        for qtype, qvals in args.query:
+            if qtype == 'p':
+                nc = self.metadata.get_client_names_by_profiles(qvals.split(','))
+            elif qtype == 'g':
+                nc = self.metadata.get_client_names_by_groups(qvals.split(','))
                 # add probed groups (if present)
                 for conn in self.bcore.connectors:
                     if isinstance(conn, Bcfg2.Server.Plugins.Probes.Probes):
                         for c, glist in list(conn.cgroups.items()):
                             for g in glist:
-                                if g in v.split(','):
+                                if g in qvals.split(','):
                                     nc.append(c)
-            else:
-                print("One of g= or p= must be specified")
-                raise SystemExit(1)
-            clients = [c for c in clients if c in nc]
-        if '-n' in args:
+        
+        clients = [c for c in clients if c in nc]
+ 
+        if args.per_line:
             for client in clients:
                 print(client)
         else:
             print(','.join(clients))
-        if '-f' in args:
-            f = open(filename, "w")
+
+        if args.output_file is not None:
             for client in clients:
-                f.write(client + "\n")
-            f.close()
-            print("Wrote results to %s" % (filename))
+                args.output_file.write(client + "\n")
+            print("Wrote results to %s" % (args.output_file.name))

@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 """bcfg2-admin is a script that helps to administrate a Bcfg2 deployment."""
 
-import sys
 import logging
-import Bcfg2.Server.Core
-import Bcfg2.Logger
-import Bcfg2.Options
-import Bcfg2.Server.Admin
+from Bcfg2 import Options
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import StringIO
 from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
+from pkg_resources import iter_entry_points
+from metargs import Option
 
 log = logging.getLogger('bcfg2-admin')
 
+ADMIN_ENTRY_POINT = 'bcfg2.admin'
+
 def mode_import(modename):
     """Load the bcfg2.admin entry_point named modename"""
-    return load_exactly_one('bcfg2.admin', modename.capitalize())
+    return load_exactly_one(ADMIN_ENTRY_POINT, modename)
 
 def get_modes():
     """Get all available modes, except for the base mode."""
-    return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
+    return sorted(entry.name for entry in iter_entry_points(ADMIN_ENTRY_POINT))
 
 def create_description():
     """Create the description string from the list of modes."""
@@ -35,57 +35,25 @@ def create_description():
     return description.getvalue()
 
 def main():
-    optinfo = {
-        'configfile': Bcfg2.Options.CFILE,
-        'help': Bcfg2.Options.HELP,
-        'verbose': Bcfg2.Options.VERBOSE,
-        'repo': Bcfg2.Options.SERVER_REPOSITORY,
-        'plugins': Bcfg2.Options.SERVER_PLUGINS,
-        'event debug': Bcfg2.Options.DEBUG,
-        'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
-        'password': Bcfg2.Options.SERVER_PASSWORD,
-        'encoding': Bcfg2.Options.ENCODING,
-        }
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    # override default help message to include description of all modes
-    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
-                                        create_description())
-    setup.parse(sys.argv[1:])
+    formatted_modes = ", ".join(get_modes())
+    Options.add_options(
+        Options.VERBOSE,
+        Option('mode', choices=get_modes(), metavar='MODE',
+               help="Bcfg2 admin mode. Modes: %s" % formatted_modes)
+    )
 
-    log_args = dict(to_syslog=False, to_console=logging.WARNING)
-    if setup['verbose']:
-        log_args['to_console'] = logging.DEBUG
+    args = Options.bootstrap()
+    logging.basicConfig()
 
-    # Provide help if requested or no args were specified
-    if (not setup['args'] or len(setup['args']) < 1 or
-        setup['args'][0] == 'help' or setup['help']):
-        if len(setup['args']) > 1:
-            # Get help for a specific mode by passing it the help argument
-            setup['args'] = [setup['args'][1], setup['args'][0]]
-        else:
-            # Print short help for all modes
-            print(setup.hm)
-            raise SystemExit(0)
-
-    if setup['args'][0] in get_modes():
-        modname = setup['args'][0].capitalize()
-        if len(setup['args']) > 1 and setup['args'][1] == 'help':
-            print(mode_import(modname).__longhelp__)
-            raise SystemExit(0)
-        try:
-            mode_cls = mode_import(modname)
-        except (MultipleEntriesError, NoEntriesError):
-            log.exception("Failed to load admin mode %s" % modname)
-            raise SystemExit(1)
-        mode = mode_cls(setup)
-        mode(setup['args'][1:])
-        if hasattr(mode, 'bcore'):
-            mode.bcore.shutdown()
-    else:
-        log.error("Unknown mode %s" % setup['args'][0])
-        print("Usage:\n     %s" % setup.buildHelpMessage())
-        print(create_description())
+    try:
+        mode_cls = mode_import(args.mode)
+    except (MultipleEntriesError, NoEntriesError):
+        log.exception("Failed to load admin mode %s" % args.mode)
         raise SystemExit(1)
+    mode = mode_cls()
+    mode(Options.args())
+    if hasattr(mode, 'bcore'):
+        mode.bcore.shutdown()
 
 if __name__ == '__main__':
     try:

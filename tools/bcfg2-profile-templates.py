@@ -7,25 +7,24 @@ import logging
 import logging.handlers
 import operator
 import lxml.etree
+from metargs import Option
 import Bcfg2.Server.Core
 
 LOGGER = None
 
-def get_logger(setup=None):
+def get_logger(args):
     """ set up logging according to the verbose level given on the
     command line """
     global LOGGER
     if LOGGER is None:
-        if setup is None:
-            setup = dict()
         LOGGER = logging.getLogger(sys.argv[0])
         stderr = logging.StreamHandler()
         level = logging.WARNING
         lformat = "%(message)s"
-        if setup.get("debug", False):
+        if args.debug:
             stderr.setFormatter(logging.Formatter("%(asctime)s: %(levelname)s: %(message)s"))
             level = logging.DEBUG
-        elif setup.get("verbose", False):
+        elif args.verbose:
             level = logging.INFO
         LOGGER.setLevel(level)
         LOGGER.addHandler(stderr)
@@ -35,29 +34,18 @@ def get_logger(setup=None):
     return LOGGER
 
 def main():
-    optinfo = \
-        dict(configfile=Bcfg2.Options.CFILE,
-             help=Bcfg2.Options.HELP,
-             encoding=Bcfg2.Options.ENCODING,
-             repo=Bcfg2.Options.SERVER_REPOSITORY,
-             plugins=Bcfg2.Options.SERVER_PLUGINS,
-             password=Bcfg2.Options.SERVER_PASSWORD,
-             debug=Bcfg2.Options.DEBUG,
-             verbose=Bcfg2.Options.VERBOSE,
-             client=Bcfg2.Options.Option("Benchmark templates for one client",
-                                         cmd="--client",
-                                         odesc="<client>",
-                                         long_arg=True,
-                                         default=None),
-             )
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
-    logger = get_logger(setup)
+    Bcfg2.Server.Core.Core.register_options()
+    Bcfg2.Options.add_options(
+        Option('--client', help="Benchmark templates for one client"),
+        Option('templates', help="Templates to benchmark", nargs='*', metavar='template'),
+        Bcfg2.Options.SERVER_REPOSITORY,
+        Bcfg2.Options.DEBUG,
+        Bcfg2.Options.VERBOSE,
+    )
+    args = Bcfg2.Options.args()
+    logger = get_logger(args)
 
-    core = Bcfg2.Server.Core.Core(setup['repo'],
-                                  setup['plugins'],
-                                  setup['password'],
-                                  setup['encoding'])
+    core = Bcfg2.Server.Core.Core.from_config(args)
     logger.info("Bcfg2 server core loaded")
     core.fam.handle_events_in_interval(4)
     logger.debug("Repository events processed")
@@ -65,15 +53,12 @@ def main():
     # how many times to render each template for each client
     runs = 5
 
-    if setup['args']:
-        templates = setup['args']
-    else:
-        templates = []
+    templates = args.templates
 
-    if setup['client'] is None:
+    if args.client is None:
         clients = [core.build_metadata(c) for c in core.metadata.clients]
     else:
-        clients = [core.build_metadata(setup['client'])]
+        clients = [core.build_metadata(args.client)]
 
     times = dict()
     for plugin in ['Cfg', 'TGenshi', 'TCheetah']:
@@ -94,7 +79,7 @@ def main():
             entrysets = core.plugins[plugin].entries.values()
 
         for eset in entrysets:
-            path = eset.path.replace(setup['repo'], '')
+            path = eset.path.replace(args.repository_path, '')
             logger.info("Rendering %s..." % path)
             times[path] = dict()
             for metadata in clients:

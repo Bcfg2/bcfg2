@@ -17,6 +17,7 @@ except ImportError:
 from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
+from Bcfg2 import Options
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugins.Metadata
 # Compatibility imports
@@ -26,6 +27,7 @@ if sys.hexversion >= 0x03000000:
 
 logger = logging.getLogger('Bcfg2.Server.Core')
 
+PLUGIN_ENTRYPOINT = 'bcfg2.plugin'
 
 def critical_error(operation):
     """Log and err, traceback and return an xmlrpc fault to client."""
@@ -58,6 +60,36 @@ class Core(Component):
     """
     name = 'bcfg2-server'
     implementation = 'bcfg2-server'
+
+    @classmethod
+    def from_config(cls, args):
+        return cls(args.repository_path,
+                   args.server_plugins,
+                   args.password,
+                   args.encoding,
+                   args.config,
+                   args.ca_cert,
+                   args.server_filemonitor,
+                   args.server_enable_filemonitor)
+
+    @classmethod
+    def register_options(cls):
+        Options.add_options(
+            Options.SERVER_REPOSITORY,
+            Options.SERVER_PLUGINS,
+            Options.SERVER_PASSWORD,
+            Options.ENCODING,
+            Options.SERVER_CA,
+            Options.SERVER_FILEMONITOR,
+            Options.SERVER_ENABLE_FILEMONITOR)
+
+        opts = Options.bootstrap()
+        for plugin in opts.server_plugins:
+            try:
+                plug = load_exactly_one(PLUGIN_ENTRYPOINT, plugin)
+                plug.register_options()
+            except:
+                pass
 
     def __init__(self, repo, plugins, password, encoding,
                  cfile='/etc/bcfg2.conf', ca=None,
@@ -164,7 +196,7 @@ class Core(Component):
     def init_plugins(self, plugin):
         """Handling for the plugins."""
         try:
-            plug = load_exactly_one('bcfg2.plugin', plugin)
+            plug = load_exactly_one(PLUGIN_ENTRYPOINT, plugin)
         except (MultipleEntriesError, NoEntriesError):
             logger.exception("Unable to load plugin")
             return

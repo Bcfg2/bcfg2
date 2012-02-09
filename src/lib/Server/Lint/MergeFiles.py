@@ -32,10 +32,10 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
                            ", ".join([p for p in mset]))
 
     def get_similar(self, entries):
-        if "threshold" in self.config:
+        if hasattr(self.args, 'threshold'):
             # accept threshold either as a percent (e.g., "threshold=75") or
             # as a ratio (e.g., "threshold=.75")
-            threshold = float(self.config['threshold'])
+            threshold = float(self.args.threshold)
             if threshold > 1:
                 threshold /= 100
         else:

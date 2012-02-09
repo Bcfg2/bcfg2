@@ -1,6 +1,7 @@
-import getopt
 import sys
+from metargs import Option
 
+import Bcfg2.Options
 import Bcfg2.Server.Admin
 
 
@@ -28,30 +29,37 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "stdin"))
     allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self)
         self.log = False
         self.mode = 'interactive'
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.VERBOSE,
+            Option('-f', '--force'),
+            Bcfg2.Options.INTERACTIVE,
+            Option('-s', '--stdin', help='Use stdin', action='store_true'),
+        )
+        
+        args = Bcfg2.Options.bootstrap()
+        if not args.stdin:
+            Bcfg2.Options.add_options(
+                Option('client', help='Client to pull', metavar='<client>'),
+                Option('type', help='Entry type', metavar='<entry type>'),
+                Option('name', help='Entry name', metavar='<entry name>'),
+            )
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
-        use_stdin = False
-        try:
-            opts, gargs = getopt.getopt(args, 'vfIs')
-        except:
-            print(self.__shorthelp__)
-            raise SystemExit(1)
-        for opt in opts:
-            if opt[0] == '-v':
-                self.log = True
-            elif opt[0] == '-f':
-                self.mode = 'force'
-            elif opt[0] == '-I':
-                self.mode == 'interactive'
-            elif opt[0] == '-s':
-                use_stdin = True
 
-        if use_stdin:
+        if args.verbose:
+            self.log = True
+        if args.force:
+            self.mode = 'force'
+
+        if args.interactive:
+            self.mode == 'interactive'
+
+        if args.stdin:
             for line in sys.stdin:
                 try:
                     self.PullEntry(*line.split(None, 3))
@@ -59,11 +67,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                     print("  for %s" % line)
                 except:
                     print("Bad entry: %s" % line.strip())
-        elif len(gargs) < 3:
-            print(self.__longhelp__)
-            raise SystemExit(1)
         else:
-            self.PullEntry(gargs[0], gargs[1], gargs[2])
+            self.PullEntry(args.client, args.type, args.name)
 
     def BuildNewEntry(self, client, etype, ename):
         """Construct a new full entry for

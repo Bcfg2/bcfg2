@@ -127,10 +127,9 @@ Then, run::
     import os, Bcfg2.Options
     from genshi.template import TemplateLoader, NewTextTemplate
     name = os.path.dirname(path[path.find('/', 1):])
-    setup = Bcfg2.Options.OptionParser({'repo':
-                                        Bcfg2.Options.SERVER_REPOSITORY})
-    setup.parse('--')
-    template = TemplateLoader().load(set['repo'] + path, cls=NewTextTemplate)
+    Bcfg2.Options.add_options(Bcfg2.Options.SERVER_REPOSITORY)
+    args = Bcfg2.Options.bootstrap()
+    template = TemplateLoader().load(args.repository_path + path, cls=NewTextTemplate)
     print template.generate(metadata=metadata, path=path, name=name).render()
 
 This gives you more fine-grained control over how your template is

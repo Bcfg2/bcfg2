@@ -6,6 +6,7 @@ import os.path
 import sys
 import yum
 import Bcfg2.Client.XML
+import Bcfg2.Options
 import Bcfg2.Client.Tools.RPMng
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
@@ -77,8 +78,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     __new_gpg_ireq__ = {'Package': ['name'],
                         'Instance': ['version', 'release']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, args, config)
         self.__important__ = self.__important__ + \
                              [entry.get('name') for struct in config \
                               for entry in struct \
@@ -118,6 +119,14 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     dest[pname].update(data)
                 else:
                     dest[pname] = dict(data)
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.RPMng.RPMng.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.CLIENT_REMOVE,
+        )
 
     def VerifyPackage(self, entry, modlist):
         pinned_version = None
@@ -220,8 +229,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
-                self.setup.get('remove') == 'packages'):
+            if (self.args.remove_extra == 'all' or \
+                self.args.remove_extra == 'packages'):
                 self.RemovePackages(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -348,7 +357,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
 
                 self.RefreshPackages()
 
-        if not self.setup['kevlar']:
+        if not self.args.bulletproof:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 states[pkg_entry] = self.VerifyPackage(pkg_entry, \

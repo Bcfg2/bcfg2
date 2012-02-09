@@ -6,6 +6,7 @@ __revision__ = '$Revision$'
 import sys
 import inspect
 import logging
+from metargs import Option
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
@@ -15,44 +16,43 @@ from Bcfg2.Bcfg2Py3k import ConfigParser
 from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 
 
+BCFG2_LINT_ENTRYPOINT = 'bcfg2.lint'
+
 logger = logging.getLogger('bcfg2-lint')
 
-def run_serverless_plugins(plugins, config=None, setup=None, errorhandler=None):
+def run_serverless_plugins(plugins, config=None, args=None, errorhandler=None):
     logger.debug("Running serverless plugins")
     for plugin_name, plugin in list(plugins.items()):
         run_plugin(plugin, plugin_name, errorhandler=errorhandler,
-                   setup=setup, config=config, files=files)
+                   args=args, config=config, files=files)
 
-def run_server_plugins(plugins, config=None, setup=None, errorhandler=None):
-    core = load_server(setup)
+def run_server_plugins(plugins, config=None, args=None, errorhandler=None):
+    core = load_server(args)
     logger.debug("Running server plugins")
     for plugin_name, plugin in list(plugins.items()):
-        run_plugin(plugin, plugin_name, args=[core], errorhandler=errorhandler,
-                   setup=setup, config=config, files=files)
+        run_plugin(plugin, plugin_name, plugin_args=[core], errorhandler=errorhandler,
+                   args=args, config=config, files=files)
 
-def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
+def run_plugin(plugin, plugin_name, plugin_args=None, errorhandler=None,
                args=None, config=None, files=None):
     logger.debug("  Running %s" % plugin_name)
-    if args is None:
-        args = []
+    if plugin_args is None:
+        plugin_args = []
 
     if errorhandler is None:
         errorhandler = get_errorhandler(config)
 
     if config is not None and config.has_section(plugin_name):
-        arg = setup
         for key, val in config.items(plugin_name):
-            arg[key] = val
-        args.append(arg)
-    else:
-        args.append(setup)
+            setattr(args, key, val)
+    plugin_args.append(args)
         
     # older versions of python do not support mixing *-magic and
     # non-*-magic (e.g., "plugin(*args, files=files)", so we do this
     # all with *-magic
     kwargs = dict(files=files, errorhandler=errorhandler)
     
-    return plugin(*args, **kwargs).Run()
+    return plugin(*plugin_args, **kwargs).Run()
 
 def get_errorhandler(config):
     """ get a Bcfg2.Server.Lint.ErrorHandler object """
@@ -62,62 +62,58 @@ def get_errorhandler(config):
         conf = None
     return Bcfg2.Server.Lint.ErrorHandler(config=conf)
 
-def load_server(setup):
+def load_server(args):
     """ load server """
-    core = Bcfg2.Server.Core.Core(setup['repo'], setup['plugins'],
-                                  setup['password'], setup['encoding'])
-    if setup['event debug']:
+    core = Bcfg2.Server.Core.Core.from_config(args)
+    if args.debug:
         core.fam.debug = True
     core.fam.handle_events_in_interval(4)
     return core
 
 if __name__ == '__main__':
-    optinfo = {
-        'configfile': Bcfg2.Options.CFILE,
-        'help': Bcfg2.Options.HELP,
-        'verbose': Bcfg2.Options.VERBOSE,
-              }
-    optinfo.update({
-        'event debug': Bcfg2.Options.DEBUG,
-        'encoding': Bcfg2.Options.ENCODING,
-        # Server options
-        'repo': Bcfg2.Options.SERVER_REPOSITORY,
-        'plugins': Bcfg2.Options.SERVER_PLUGINS,
-        'mconnect': Bcfg2.Options.SERVER_MCONNECT,
-        'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
-        'location': Bcfg2.Options.SERVER_LOCATION,
-        'static': Bcfg2.Options.SERVER_STATIC,
-        'key': Bcfg2.Options.SERVER_KEY,
-        'cert': Bcfg2.Options.SERVER_CERT,
-        'ca': Bcfg2.Options.SERVER_CA,
-        'password': Bcfg2.Options.SERVER_PASSWORD,
-        'protocol': Bcfg2.Options.SERVER_PROTOCOL,
-        # More options
-        'logging': Bcfg2.Options.LOGGING_FILE_PATH,
-        'stdin': Bcfg2.Options.FILES_ON_STDIN,
-        'schema': Bcfg2.Options.SCHEMA_PATH,
-        'config': Bcfg2.Options.Option('Specify bcfg2-lint configuration file',
-                                       '/etc/bcfg2-lint.conf', 
-                                       cmd='--lint-config',
-                                       odesc='<conffile>',
-                                       long_arg=True),
-        'showerrors': Bcfg2.Options.Option('Show error handling', False,
-                                           cmd='--list-errors',
-                                           long_arg=True),
-        })
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.VERBOSE,
+        Bcfg2.Options.DEBUG,
+        Bcfg2.Options.FILES_ON_STDIN,
+        Option('--lint-config', default='/etc/bcfg2-lint.conf', 
+               help='Specify bcfg2-lint configuration file'),
+        Option('--list-errors', action='store_true',
+               help='Show error handling'),
+        Option('plugins', nargs='*', help='Plugins to run'),
+    )
+    Bcfg2.Server.Core.Core.register_options()
+    bootstrap_args = Bcfg2.Options.bootstrap()
 
     log_args = dict(to_syslog=False, to_console=logging.WARNING)
-    if setup['verbose']:
+    if bootstrap_args.verbose:
         log_args['to_console'] = logging.DEBUG
     Bcfg2.Logger.setup_logging('bcfg2-info', **log_args)
 
     config = ConfigParser.SafeConfigParser()
-    config.read(setup['configfile'])
-    config.read(setup['config'])
+    config.read(bootstrap_args.config)
+    config.read(bootstrap_args.lint_config)
 
-    if setup['showerrors']:
+    # get list of plugins to run
+    if bootstrap_args.plugins:
+        allplugins = bootstrap_args.plugins
+    elif "bcfg2-repo-validate" in sys.argv[0]:
+        allplugins = ['Duplicates', 'RequiredAttrs' 'Validate']
+    else:
+        try:
+            allplugins = config.get('lint', 'plugins').split(',')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            allplugins = Bcfg2.Server.Lint.__all__
+
+    for plugin in allplugins:
+        try:
+            plugin_cls = load_exactly_one(BCFG2_LINT_ENTRYPOINT, plugin)
+            plugin_cls.register_options()
+        except:
+            pass
+
+    args = Bcfg2.Options.args()
+
+    if args.list_errors:
         if config.has_section("errors"):
             econf = dict(config.items("errors"))
         else:
@@ -132,18 +128,7 @@ if __name__ == '__main__':
             print("%-35s %-35s" % (err, handler))
         raise SystemExit(0)
 
-    # get list of plugins to run
-    if setup['args']:
-        allplugins = setup['args']
-    elif "bcfg2-repo-validate" in sys.argv[0]:
-        allplugins = 'Duplicates,RequiredAttrs,Validate'.split(',')
-    else:
-        try:
-            allplugins = config.get('lint', 'plugins').split(',')
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            allplugins = Bcfg2.Server.Lint.__all__
-
-    if setup['stdin']:
+    if args.stdin:
         files = [s.strip() for s in sys.stdin.readlines()]
     else:
         files = None
@@ -153,7 +138,7 @@ if __name__ == '__main__':
     serverlessplugins = {}
     for plugin_name in allplugins:
         try:
-            plugin = load_exactly_one('bcfg2.lint', plugin_name)
+            plugin = load_exactly_one(BCFG2_LINT_ENTRYPOINT, plugin_name)
         except (MultipleEntriesError, NoEntriesError):
             logger.exception("Failed to load plugin %s" % plugin_name)
             raise SystemExit(1)
@@ -167,7 +152,7 @@ if __name__ == '__main__':
 
     run_serverless_plugins(serverlessplugins,
                            errorhandler=errorhandler,
-                           config=config, setup=setup)
+                           config=config, args=args)
 
     if serverplugins:
         if errorhandler.errors:
@@ -183,9 +168,9 @@ if __name__ == '__main__':
                   "plugins")
         else:
             run_server_plugins(serverplugins, errorhandler=errorhandler,
-                               config=config, setup=setup)
+                               config=config, args=args)
 
-    if errorhandler.errors or errorhandler.warnings or setup['verbose']:
+    if errorhandler.errors or errorhandler.warnings or args.verbose:
         print("%d errors" % errorhandler.errors)
         print("%d warnings" % errorhandler.warnings)
 

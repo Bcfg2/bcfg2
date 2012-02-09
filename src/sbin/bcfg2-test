@@ -4,6 +4,7 @@
 
 import sys
 import Bcfg2.Server.Core
+import Bcfg2.Options
 from nose.core import TestProgram
 from unittest import TestCase
 
@@ -42,23 +43,9 @@ class ClientTest(TestCase):
     id = __str__
 
 def main():
-    optinfo = {
-            'configfile': Bcfg2.Options.CFILE,
-            'help': Bcfg2.Options.HELP,
-            'encoding': Bcfg2.Options.ENCODING,
-            'repo': Bcfg2.Options.SERVER_REPOSITORY,
-            'plugins': Bcfg2.Options.SERVER_PLUGINS,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            }
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
-    core = Bcfg2.Server.Core.Core(
-        setup['repo'],
-        setup['plugins'],
-        setup['password'],
-        setup['encoding'],
-        filemonitor='pseudo'
-    )
+    Bcfg2.Server.Core.Core.register_options()
+    args = Bcfg2.Options.args()
+    core = Bcfg2.Server.Core.Core.from_config(args)
     core.fam.handle_events_in_interval(0.1)
     suite = [ClientTest(core, client) for client in core.metadata.clients]
 

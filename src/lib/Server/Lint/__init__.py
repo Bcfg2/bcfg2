@@ -20,6 +20,7 @@ import Bcfg2.Logger
 import fcntl
 import termios
 import struct
+import Bcfg2.Options
 
 def _ioctl_GWINSZ(fd):
     try:
@@ -50,14 +51,20 @@ def get_termsize():
 class Plugin (object):
     """ base class for ServerlessPlugin and ServerPlugin """
 
-    def __init__(self, config, errorhandler=None, files=None):
+    def __init__(self, args, errorhandler=None, files=None):
         self.files = files
-        self.config = config
+        self.args = args
         self.logger = logging.getLogger('bcfg2-lint')
         if errorhandler is None:
             self.errorHandler = ErrorHandler()
         else:
             self.errorHandler = errorhandler
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.SERVER_REPOSITORY
+        )
 
     def Run(self):
         """ run the plugin.  must be overloaded by child classes """
@@ -68,9 +75,9 @@ class Plugin (object):
         plugin according to the files list, false otherwise """
         return (self.files is None or
                 fname in self.files or
-                os.path.join(self.config['repo'], fname) in self.files or
+                os.path.join(self.args.repository_path, fname) in self.files or
                 os.path.abspath(fname) in self.files or
-                os.path.abspath(os.path.join(self.config['repo'],
+                os.path.abspath(os.path.join(self.args.repository_path,
                                              fname)) in self.files)
 
     def LintError(self, err, msg):
@@ -210,8 +217,8 @@ class ServerlessPlugin (Plugin):
 class ServerPlugin (Plugin):
     """ base class for plugins that check things that require the
     running Bcfg2 server """
-    def __init__(self, lintCore, config, **kwargs):
-        Plugin.__init__(self, config, **kwargs)
+    def __init__(self, lintCore, args, **kwargs):
+        Plugin.__init__(self, args, **kwargs)
         self.core = lintCore
         self.logger = self.core.logger
         self.metadata = self.core.metadata

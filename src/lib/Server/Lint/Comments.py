@@ -39,9 +39,9 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 rv.extend(self.config[global_item].split(","))
             
             item = "%s_%ss" % (rtype.lower(), itype)
-            if item in self.config:
-                if self.config[item]:
-                    rv.extend(self.config[item].split(","))
+            if hasattr(self.args, item):
+                if getattr(self.args, item):
+                    rv.extend(getattr(self.args, item).split(","))
                 else:
                     # config explicitly specifies nothing
                     rv = []

@@ -6,6 +6,7 @@ import os.path
 import rpm
 import rpmtools
 import Bcfg2.Client.Tools
+import Bcfg2.Options
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
@@ -40,8 +41,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
 
         # create a global ignore list used when ignoring particular
         # files during package verification
@@ -54,7 +55,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         # Process thee RPMng section from the config file.
         RPMng_CP = ConfigParser.ConfigParser()
-        RPMng_CP.read(self.setup.get('setup'))
+        RPMng_CP.read(self.args.config)
 
         # installonlypackages
         self.installOnlyPkgs = []
@@ -128,13 +129,25 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
         # Force a re- prelink of all packages if prelink exists.
         # Many, if not most package verifies can be caused by out of date prelinking.
-        if os.path.isfile('/usr/sbin/prelink') and not self.setup['dryrun']:
+        if os.path.isfile('/usr/sbin/prelink') and not self.args.dryrun:
             cmdrc, output = self.cmd.run('/usr/sbin/prelink -a -mR')
             if cmdrc == 0:
                 self.logger.debug('Pre-emptive prelink succeeded')
             else:
                 # FIXME : this is dumb - what if the output is huge?
                 self.logger.error('Pre-emptive prelink failed: %s' % output)
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.PkgTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_DRYRUN,
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.DEBUG,
+            Bcfg2.Options.CLIENT_QUICK,
+            Bcfg2.Options.CLIENT_REMOVE,
+            Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+        )
 
 
     def RefreshPackages(self):
@@ -160,7 +173,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         refresh_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
         for nevra in rpmtools.rpmpackagelist(refresh_ts):
             self.installed.setdefault(nevra['name'], []).append(nevra)
-        if self.setup['debug']:
+        if self.args.debug:
             print("The following package instances are installed:")
             for name, instances in list(self.installed.items()):
                 self.logger.debug("    " + name)
@@ -262,7 +275,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                               pkg.get('gpgkeyid', '')))
                                         self.logger.debug('         Disabling signature check.')
 
-                                    if self.setup.get('quick', False):
+                                    if self.args.disable_checksums:
                                         if rpmtools.prelink_exists:
                                             flags += ['nomd5', 'nosize']
                                         else:
@@ -321,7 +334,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                             pkg.get('gpgkeyid', '')))
                                             self.logger.info('         Disabling signature check.')
 
-                                        if self.setup.get('quick', False):
+                                        if self.args.disable_checksum:
                                             if rpmtools.prelink_exists:
                                                 flags += ['nomd5', 'nosize']
                                             else:
@@ -356,7 +369,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     instance_fail = False
                     # Dump the rpm verify results.
                     #****Write something to format this nicely.*****
-                    if self.setup['debug'] and self.instance_status[inst].get('verify', None):
+                    if self.args.debug and self.instance_status[inst].get('verify', None):
                         self.logger.debug(self.instance_status[inst]['verify'])
 
                     self.instance_status[inst]['verify_fail'] = False
@@ -614,9 +627,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
-                self.setup.get('remove') == 'packages') and\
-                not self.setup.get('dryrun'):
+            if (self.args.remove_extra == 'all' or \
+                self.args.remove_extra == 'packages') and\
+                not self.args.dryrun:
                 self.RemovePackages(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -729,7 +742,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
 
-        if not self.setup['kevlar']:
+        if not self.args.bulletproof:
             for pkg_entry in packages:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 states[pkg_entry] = self.VerifyPackage(pkg_entry, \
@@ -899,7 +912,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             if name not in packages:
                 extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
-                    if self.setup['extra']:
+                    if self.args.extra_display:
                         self.logger.info("Extra Package %s %s." % \
                                          (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \

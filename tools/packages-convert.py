@@ -30,10 +30,11 @@ def place_source(xdata, source, groups):
     return xdata
 
 def main():
-    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY
+    )
+    args = Bcfg2.Options.args()
+    repo = args.repository_path
     configpath = os.path.join(repo, 'Packages')
     oldconfigfile  = os.path.join(configpath, 'config.xml')
     newconfigfile  = os.path.join(configpath, 'packages.conf')

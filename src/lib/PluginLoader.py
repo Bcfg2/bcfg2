@@ -12,7 +12,7 @@ class MultipleEntriesError(Exception):
 
 class NoEntriesError(Exception):
     def __init__(self, group, name):
-        Exception.__init__("No entries found named %s in group %s" % (name, group))
+        Exception.__init__(self, "No entries found named %s in group %s" % (name, group))
 
 def load_exactly_one(group, name):
     """

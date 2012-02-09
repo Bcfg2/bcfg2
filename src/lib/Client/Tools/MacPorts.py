@@ -13,8 +13,8 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'macport'
     pkgtool = ("/opt/local/bin/port install %s")
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
         self.installed = {}
         self.RefreshPackages()
 

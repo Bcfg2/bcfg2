@@ -6,6 +6,7 @@ import tempfile
 
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+import Bcfg2.Options
 
 
 noask = '''
@@ -33,8 +34,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'sysv'
     pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
         # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name
@@ -46,6 +47,13 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                             self.pkgtool[1])
         except:
             self.pkgtool = (self.pkgtool[0] % (""), self.pkgtool[1])
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.PkgTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_QUICK
+        )
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -83,7 +91,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             else:
                 self.logger.debug("Package %s not installed" % (entry.get("name")))
         else:
-            if self.setup['quick'] or entry.attrib.get('verify', 'true') == 'false':
+            if self.args.disable_checksum or entry.attrib.get('verify', 'true') == 'false':
                 return True
             (vstat, odata) = self.cmd.run("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
             if vstat == 0:
