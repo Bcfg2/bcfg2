@@ -7,39 +7,26 @@ import Bcfg2.Client.Tools
 from metargs import Option, ConfigBackedArgumentParser
 import argparse
 
-def _uncache_args():
-    global _CACHED_KNOWN_ARGS, _CACHED_ARGS
-    _CACHED_KNOWN_ARGS = _CACHED_ARGS = None
-
 def add_option(opt):
     _GLOBAL_PARSER.append_option(opt)
-    _uncache_args()
 
 def add_options(*opts):
     _GLOBAL_PARSER.extend_options(opts)
-    _uncache_args()
 
 def bootstrap():
     return _GLOBAL_PARSER.bootstrap_parse()
 
 def args():
-    global _CACHED_ARGS
-    if _CACHED_ARGS is None:
-        _CACHED_ARGS = _GLOBAL_PARSER.parse_args()
-    return _CACHED_ARGS
+    return _GLOBAL_PARSER.parse_args()
 
 def known_args():
-    global _CACHED_KNOWN_ARGS
-    if _CACHED_KNOWN_ARGS is None:
-        _CACHED_KNOWN_ARGS = _GLOBAL_PARSER.parse_known_args()
-    return _CACHED_KNOWN_ARGS
+    return _GLOBAL_PARSER.parse_known_args()
 
 def set_help(description, epilog=None):
     _GLOBAL_PARSER.parser_kwargs['description'] = description
     _GLOBAL_PARSER.parser_kwargs['epilog'] = epilog
 
 _GLOBAL_PARSER = ConfigBackedArgumentParser('/etc/bcfg2.conf')
-_CACHED_KNOWN_ARGS = _CACHED_ARGS = None
 
 DEFAULT_INSTALL_PREFIX='/usr'
 
