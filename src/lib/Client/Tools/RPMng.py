@@ -5,10 +5,9 @@ __revision__ = '$Revision$'
 import os.path
 import rpm
 import rpmtools
+from metargs import Option
 import Bcfg2.Client.Tools
 import Bcfg2.Options
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # Fix for python2.3
 try:
@@ -53,80 +52,70 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.modlists = {}
         self.gpg_keyids = self.getinstalledgpg()
 
-        # Process thee RPMng section from the config file.
-        RPMng_CP = ConfigParser.ConfigParser()
-        RPMng_CP.read(self.args.config)
 
-        # installonlypackages
-        self.installOnlyPkgs = []
-        if RPMng_CP.has_option(self.name, 'installonlypackages'):
-            for i in RPMng_CP.get(self.name, 'installonlypackages').split(','):
-                self.installOnlyPkgs.append(i.strip())
-        if self.installOnlyPkgs == []:
-            self.installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
-                               'kernel-modules', 'kernel-debug', 'kernel-unsupported',
-                               'kernel-source', 'kernel-devel', 'kernel-default',
-                               'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
-                               'gpg-pubkey']
+        def as_lower(val):
+            return val.lower()
+
+        Bcfg2.Options.add_option(
+            Option(self.name + ':installonlypackages', nargs='*',
+                   dest='install_only_packages',
+                   default=['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
+                            'kernel-modules', 'kernel-debug', 'kernel-unsupported',
+                            'kernel-source', 'kernel-devel', 'kernel-default',
+                            'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
+                            'gpg-pubkey']),
+            Option(self.name + ':erase_flags', nargs='*', default=['allmatches'],
+                   dest='erase_flags'),
+            Option(self.name + ':pkg_checks', type=as_lower, default='true',
+                   dest='pkg_checks'),
+            Option(self.name + ':pkg_verify', type=as_lower, default='true',
+                   dest='pkg_verify'),
+            Option(self.name + ':installed_action', type=as_lower, default='install',
+                   dest='installed_action'),
+            Option(self.name + ':version_fail_action', type=as_lower, default='upgrade',
+                   dest='version_fail_action'),
+            Option(self.name + ':verify_flags', type=as_lower, nargs='*', default=[],
+                   dest='verify_flags'),
+        )
+
+        # verify_fail_action
+        if self.name == "RPMng":
+            Bcfg2.Options.add_option(
+                Option(self.name + ':verify_fail_action', type=as_lower,
+                       default='reinstall', dest='verify_fail_action')
+            )
+
+        rpm_args = Bcfg2.Options.bootstrap()
+
+        self.installOnlyPkgs = rpm_args.install_only_packages
         if 'gpg-pubkey' not in self.installOnlyPkgs:
             self.installOnlyPkgs.append('gpg-pubkey')
         self.logger.debug('installOnlyPackages = %s' % self.installOnlyPkgs)
 
-        # erase_flags
-        self.erase_flags = []
-        if RPMng_CP.has_option(self.name, 'erase_flags'):
-            for i in RPMng_CP.get(self.name, 'erase_flags').split(','):
-                self.erase_flags.append(i.strip())
-        if self.erase_flags == []:
-            self.erase_flags = ['allmatches']
+        self.erase_flags = rpm_args.erase_flags
         self.logger.debug('erase_flags = %s' % self.erase_flags)
 
-        # pkg_checks
-        if RPMng_CP.has_option(self.name, 'pkg_checks'):
-            self.pkg_checks = RPMng_CP.get(self.name, 'pkg_checks').lower()
-        else:
-            self.pkg_checks = 'true'
+        self.pkg_checks = rpm_args.pkg_checks
         self.logger.debug('pkg_checks = %s' % self.pkg_checks)
 
-        # pkg_verify
-        if RPMng_CP.has_option(self.name, 'pkg_verify'):
-            self.pkg_verify = RPMng_CP.get(self.name, 'pkg_verify').lower()
-        else:
-            self.pkg_verify = 'true'
+        self.pkg_verify = rpm_args.pkg_verify
         self.logger.debug('pkg_verify = %s' % self.pkg_verify)
 
-        # installed_action
-        if RPMng_CP.has_option(self.name, 'installed_action'):
-            self.installed_action = RPMng_CP.get(self.name, 'installed_action').lower()
-        else:
-            self.installed_action = 'install'
+        self.installed_action = rpm_args.installed_actions
         self.logger.debug('installed_action = %s' % self.installed_action)
 
-        # version_fail_action
-        if RPMng_CP.has_option(self.name, 'version_fail_action'):
-            self.version_fail_action = RPMng_CP.get(self.name, 'version_fail_action').lower()
-        else:
-            self.version_fail_action = 'upgrade'
+        self.version_fail_action = rpm_args.version_fail_action
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
 
-        # verify_fail_action
-        if self.name == "RPMng":
-            if RPMng_CP.has_option(self.name, 'verify_fail_action'):
-                self.verify_fail_action = RPMng_CP.get(self.name, 'verify_fail_action').lower()
-            else:
-                self.verify_fail_action = 'reinstall'
-        else: # yum can't reinstall packages.
+        if hasattr(rpm_args, 'verify_fail_action'):
+            self.verify_fail_action = rpm_args.verify_fail_action
+        else:
             self.verify_fail_action = 'none'
         self.logger.debug('verify_fail_action = %s' % self.verify_fail_action)
 
-        # version_fail_action
-        if RPMng_CP.has_option(self.name, 'verify_flags'):
-            self.verify_flags = RPMng_CP.get(self.name, 'verify_flags').lower().split(',')
-        else:
-            self.verify_flags = []
-        if '' in self.verify_flags:
-            self.verify_flags.remove('')
+        self.verify_flags = rpm_args.verify_flags
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
+
         # Force a re- prelink of all packages if prelink exists.
         # Many, if not most package verifies can be caused by out of date prelinking.
         if os.path.isfile('/usr/sbin/prelink') and not self.args.dryrun:
