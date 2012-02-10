@@ -30,10 +30,11 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
         Bcfg2.Options.add_options(
             Option('command', choices=['init', 'query', 'dump', 'reports'])
         )
+        Bcfg2.Server.Snapshots.register_snapshot_args()
 
         #self.session = Bcfg2.Server.Snapshots.setup_session(debug=True)
         args = Bcfg2.Options.bootstrap()
-        self.session = Bcfg2.Server.Snapshots.setup_session(args.config)
+        self.session = Bcfg2.Server.Snapshots.setup_session(args)
 
         if args.command == 'query':
             Bcfg2.Options.add_options(
