@@ -9,6 +9,8 @@ import os
 import sys
 import subprocess
 
+import Bcfg2.Options
+
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import StringIO
 from Bcfg2.Bcfg2Py3k import ConfigParser
@@ -215,9 +217,10 @@ Source URLS: %s""" % (self.filename, self.groups, self.priority, self.architectu
         self._rename_file()
 
 if __name__ == '__main__':
-    main_conf_parser = ConfigParser.SafeConfigParser()
-    main_conf_parser.read(['/etc/bcfg2.conf'])
-    repo = main_conf_parser.get('server', 'repository')
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY
+    )
+    repo = Bcfg2.Options.args().repository_path
 
     confparser = ConfigParser.SafeConfigParser()
     confparser.read(os.path.join(repo, "etc/debian-pkglist.conf"))
