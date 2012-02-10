@@ -7,15 +7,13 @@ information for Bcfg2."""
 __revision__ = '$Revision$'
 
 import copy
-import getopt
 import re
 import os
 import socket
-import sys
 from time import asctime, strptime
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
-# Compatibility imports
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from metargs import Option
+import Bcfg2.Options
 
 def generatereport(rspec, nrpt):
     """
@@ -60,13 +58,10 @@ def generatereport(rspec, nrpt):
         node.append(stats)
     return nodereprt
 
-def mail(mailbody, confi):
+def mail(mailbody, args):
     """mail mails a previously generated report."""
 
-    try:
-        mailer = confi.get('statistics', 'sendmailpath')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        mailer = "/usr/sbin/sendmail"
+    mailer = args.reports_sendmailpath
     # Open a pipe to the mail program and
     # write the data to the pipe.
     pipe = os.popen("%s -t" % mailer, 'w')
@@ -152,52 +147,39 @@ def pretty_print(element, level=0):
 
 
 if __name__ == '__main__':
-    ping=True
-    all=False
-    if '-C' in sys.argv:
-        cfpath = sys.argv[sys.argv.index('-C') + 1]
-    else:
-        cfpath = '/etc/bcfg2.conf'
-    c = ConfigParser.ConfigParser()
-    c.read([cfpath])
-    configpath = "%s/etc/report-configuration.xml" % c.get('server', 'repository')
-    statpath = "%s/etc/statistics.xml" % c.get('server', 'repository')
-    clientsdatapath = "%s/Metadata/clients.xml" % c.get('server', 'repository')
-    try:
-        prefix = c.get('server', 'prefix')
-    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-        prefix = '/usr'
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY,
+        Bcfg2.Options.INSTALL_PREFIX,
+        Bcfg2.Options.SENDMAIL_PATH,
+        Option('-A', '--all', help='include ALL clients', action='store_true'),
+        Option('-N', '--no-ping', help='do not ping clients', action='store_false', dest='ping'),
+        Option('-s', '--stats', help='stats path'),
+        Option('--report-config', help='report config path'),
+    )
+    args = Bcfg2.Options.args()
+    clientsdatapath = "%s/Metadata/clients.xml" % args.repository_path
+    prefix = args.server_prefix
 
     transformpath = "/%s/share/bcfg2/xsl-transforms/" % (prefix)
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
+    all = args.all
+    ping = args.ping
+    if args.stats is None:
+        statpath = "%s/etc/statistics.xml" % args.repository_path
+    else:
+        statpath = args.stats
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=","no-ping", "stats="])
-    except getopt.GetoptError:
-        mesg = sys.exc_info()[1]
-        # Print help information and exit:
-        print("%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg))
-        raise SystemExit(2)
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            print("Usage:\nbcfg2-build-reports [-h] [-c <configuration-file>] [-s <statistics-file>]")
-            raise SystemExit
-        if o in ("-A", "--all"):
-            all=True
-        if o in ("-c", "--config"):
-            configpath = a
-        if o in ("-N", "--no-ping"):
-            ping = False
-        if o in ("-s", "--stats"):
-            statpath = a
-
+    if args.report_config is None:
+        configpath = "%s/etc/report-configuration.xml" % args.repository_path
+    else:
+        configpath = args.report_config
 
     # See if hostinfo.xml exists, and is less than 23.5 hours old
     #try:
         #hostinstat = os.stat(hostinfopath)
         #if (time() - hostinstat[9])/(60*60) > 23.5:
     if ping:
-        os.system('bcfg2-ping-sweep -C %s' % cfpath) # bcfg2-ping-sweep needs to be in path
+        os.system('bcfg2-ping-sweep -C %s' % args.config) # bcfg2-ping-sweep needs to be in path
     #except OSError:
     #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
@@ -296,7 +278,7 @@ if __name__ == '__main__':
                             # Prepend To: and From:
                             outputstring = "To: %s\nFrom: root@%s\n%s"% \
                                            (toastring, socket.getfqdn(), outputstring)
-                            mail(outputstring, c) #call function to send
+                            mail(outputstring, args) #call function to send
 
                 else:
                     reportdata = copy.deepcopy(procnodereport)
@@ -312,7 +294,7 @@ if __name__ == '__main__':
                             # Prepend To: and From:
                             outputstring = "To: %s\nFrom: root@%s\n%s"% \
                                            (toastring, socket.getfqdn(), outputstring)
-                            mail(outputstring, c) #call function to send
+                            mail(outputstring, args) #call function to send
             else:
                 outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot(), encoding='UTF-8', xml_declaration=True)
                 if deliverymechanism == 'rss':
