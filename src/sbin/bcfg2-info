@@ -5,7 +5,6 @@ __revision__ = '$Revision$'
 
 from code import InteractiveConsole
 import cmd
-import errno
 import getopt
 import logging
 import lxml.etree
@@ -113,7 +112,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def __init__(self, event_debug, core_args):
         cmd.Cmd.__init__(self)
         try:
-            self.core = Bcfg2.Server.Core.Core.from_config(args)
+            self.core = Bcfg2.Server.Core.Core.from_config(core_args)
             if event_debug:
                 self.core.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
@@ -123,6 +122,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         self.prompt = '> '
         self.cont = True
         self.core.fam.handle_events_in_interval(4)
+        self.core_args = core_args
 
     def do_loop(self):
         """Looping."""
@@ -141,7 +141,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except dummyError:
                 continue
             except:
-                logger.error("Command failure", exc_info=1)
+                logger.exception("Command failure")
 
     def do_debug(self, args):
         """Debugging mode for more details."""
@@ -244,7 +244,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
             log = mockLog()
             import Bcfg2.Client.Tools.POSIX
-            p = Bcfg2.Client.Tools.POSIX.POSIX(log, setup, client_config)
+            p = Bcfg2.Client.Tools.POSIX.POSIX(log, self.core_args, client_config)
             states = dict()
             p.Inventory(states)
             p.Install(list(states.keys()), states)
@@ -286,6 +286,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 print(lxml.etree.tostring(entry, encoding="UTF-8",
                                           xml_declaration=True))
             except:
+                logger.exception("Failed to build entry %s for host %s" % (fname, client))
                 print("Failed to build entry %s for host %s" % (fname, client))
         else:
             print(usage)
@@ -337,18 +338,18 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         """Print out the current configuration of Bcfg2."""
         output = [
                 ('Description', 'Value'),
-                ('Path Bcfg2 repository', setup['repo']),
-                ('Plugins', setup['plugins']),
-                ('Password', setup['password']),
-                ('Server Metadata Connector', setup['mconnect']),
-                ('Filemonitor', setup['filemonitor']),
-                ('Server address',    setup['location']),
-                ('Static', setup['static']),
-                ('Path to key', setup['key']),
-                ('Path to SSL certificate', setup['cert']),
-                ('Path to SSL CA certificate', setup['ca']),
-                ('Protocol', setup['protocol']),
-                ('Logging', setup['logging'])
+                ('Path Bcfg2 repository', self.core_args.repository_path),
+                ('Plugins', self.core_args.server_plugins),
+                ('Password', self.core_args.password),
+                ('Server Metadata Connector', self.core_args.server_connectors),
+                ('Filemonitor', self.core_args.server_filemonitor),
+                ('Server address', self.core_args.server_location),
+                ('Static', self.core_args.components_static_port),
+                ('Path to key', self.core_args.ssl_key),
+                ('Path to SSL certificate', self.core_args.ssl_cert),
+                ('Path to SSL CA certificate', self.core_args.ca_cert),
+                ('Protocol', self.core_args.communication_protocol),
+                ('Logging', self.core_args.log_path)
                 ]
         printTabular(output)
 
@@ -558,6 +559,13 @@ if __name__ == '__main__':
     Bcfg2.Options.add_option(Option('command', nargs='*', help='Command to run'))
 
     args = Bcfg2.Options.args()
+
+    Bcfg2.Logger.setup_logging('bcfg2',
+                               to_syslog=False,
+                               to_console=True,
+                               level=logging.ERROR,
+                               to_file=args.log_path)
+
     if args.profile and have_profile:
         prof = profile.Profile()
         loop = prof.runcall(infoCore, args.nebug, args)
