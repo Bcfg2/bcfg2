@@ -169,4 +169,4 @@ CLIENT_SYSTEM_ETC_PATH = Option('APT:etc_path',
     help='System etc path', default='/etc')
 
 # Logging options
-LOGGING_FILE_PATH = Option('-o', '--log-path', help='Set path of file log')
+LOGGING_FILE_PATH = Option('logging:path', '-o', '--log-path', help='Set path of file log')
