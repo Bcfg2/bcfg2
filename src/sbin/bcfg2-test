@@ -3,6 +3,8 @@
 """This tool verifies that all clients known to the server build without failures"""
 
 import sys
+from sets import Set
+from metargs import Option
 import Bcfg2.Server.Core
 import Bcfg2.Options
 from nose.core import TestProgram
@@ -18,14 +20,22 @@ class ClientTest(TestCase):
     """
     __test__ = False # Do not collect
 
-    def __init__(self, bcfg2_core, client):
+    def __init__(self, bcfg2_core, client, ignore_entries=[]):
         TestCase.__init__(self)
         self.bcfg2_core = bcfg2_core
         self.client = client
+        self.ignore_entries = Set(ignore_entries)
 
     def runTest(self):
         config = self.bcfg2_core.BuildConfiguration(self.client)
-        failures = config.xpath('//*[@failure]')
+
+        def skip_failure(failure):
+            return ":".join((failure.tag, failure.attrib.get('name'))) in self.ignore_entries
+        failures = [failure
+            for failure
+            in config.xpath('//*[@failure]')
+            if not skip_failure(failure)]
+
 
         def format_failure(failure):
             return "%s(%s): %s" % (
@@ -45,6 +55,12 @@ class ClientTest(TestCase):
 
 def main():
     
+    Bcfg2.Options.add_options(
+        Option('--ignore-entries', 'bcfg2_test:ignore_entries', nargs='*',
+            default=[],
+            help='Ignore these entries if they fail to build. Format is '
+                 '<EntryType>:<name>')
+    )
     Bcfg2.Server.Core.Core.register_options()
     Bcfg2.Options.set_help(
         "Build all clients, and test that there are no failures",
@@ -57,7 +73,7 @@ def main():
         core = Bcfg2.Server.Core.Core.from_config(args)
         core.fam.handle_events_in_interval(0.1)
         for client in core.metadata.clients:
-            yield ClientTest(core, client)
+            yield ClientTest(core, client, args.ignore_entries)
 
     TestProgram(argv=sys.argv[0:1]+rest, suite=LazySuite(run_tests))
 
