@@ -22,6 +22,9 @@ def args():
 def known_args():
     return _GLOBAL_PARSER.parse_known_args()
 
+def add_configs(*cfgs):
+    _GLOBAL_PARSER.additional_configs.extend(cfgs)
+
 def set_help(description, epilog=None):
     _GLOBAL_PARSER.parser_kwargs['description'] = description
     _GLOBAL_PARSER.parser_kwargs['epilog'] = epilog
