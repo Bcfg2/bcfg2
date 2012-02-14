@@ -1157,8 +1157,11 @@ class GroupSpool(Plugin, Generator):
                 # a directory was deleted
                 del self.entries[fbase]
                 del self.Entries['Path'][fbase]
-            else:
+            elif ident in self.entries:
                 self.entries[ident].handle_event(event)
+            elif ident not in self.entries:
+                self.logger.warning("Got deleted event for unknown file %s" %
+                                    ident)
 
     def AddDirectoryMonitor(self, relative):
         """Add new directory to FAM structures."""
