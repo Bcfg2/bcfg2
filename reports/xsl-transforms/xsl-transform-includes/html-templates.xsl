@@ -4,7 +4,7 @@
 	<xsl:if test="count(Statistics/Good)+count(Statistics/Bad)+count(Statistics/Extra)+count(Statistics/Modified)+count(Statistics/Stale) > 0">
         
         <a name="{Client/@name}}"></a>
-        <div class="nodebox"">
+        <div class="nodebox">
             <span class="notebox">Time Ran: <xsl:value-of select="Statistics/@time" /></span>
               <span class="configbox">(<xsl:value-of select="Client/@profile" />)</span>
             
