@@ -25,11 +25,20 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}
 %else
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %endif
-
 BuildArch:        noarch
 
 BuildRequires:    python-devel
 BuildRequires:    python-lxml
+%if 0%{?mandriva_version}
+# mandriva seems to behave differently than other distros and needs this explicitly.
+BuildRequires:    python-setuptools
+%endif
+%if 0%{?mandriva_version} == 201100
+# mandriva 2011 has multiple providers for libsane, so (at least when building on OBS)
+# one must be chosen explicitly:
+# "have choice for libsane.so.1 needed by python-imaging: libsane1 sane-backends-iscan"
+BuildRequires:    libsane1
+%endif
 
 # %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
 # %systems (and potentially very old Fedora systems, too)
@@ -43,7 +52,15 @@ BuildRequires:    python-sphinx >= 0.6
 %endif
 
 Requires:         python-lxml >= 0.9
+%if 0%{?rhel_version}
+# the debian init script needs redhat-lsb.
+# iff we switch to the redhat one, this might not be needed anymore.
+Requires:         redhat-lsb
+%endif
+%if 0%{?fedora} == 0
+# fedora 15 and 16 (and possibly other distros) do not know this tag.
 Recommends:       cron
+%endif
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -269,7 +286,10 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %{_sbindir}/rcbcfg2
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2
 %endif
+%if 0%{?mandriva_version} == 0
+# mandriva (on OBS, at least) can't handle %ghost
 %ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
+%endif
 
 %post -n bcfg2-server
 # enable daemon on first install only (not on update).
@@ -344,7 +364,9 @@ fi
 %{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
+%if 0%{?mandriva_version} == 0
 %ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
+%endif
 
 %files -n bcfg2-doc
 %defattr(-,root,root,-)
@@ -357,9 +379,15 @@ fi
 %dir %{apache_conf}
 %dir %{apache_conf}/conf.d
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
+%if 0%{?mandriva_version} == 0
 %ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2-web.conf
+%endif
 
 %changelog
+* Sat Feb 18 2012 Christopher 'm4z' Holm <686f6c6d@googlemail.com> 1.2.1
+- Added Fedora and Mandriva compatibilty (for Open Build Service).
+- Added missing dependency redhat-lsb.
+
 * Tue Feb 14 2012 Christopher 'm4z' Holm <686f6c6d@googlemail.com> 1.2.1
 - Added openSUSE compatibility.
 - Various changes to satisfy rpmlint.
