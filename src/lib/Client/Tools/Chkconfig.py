@@ -1,8 +1,6 @@
 # This is the bcfg2 support for chkconfig
-# $Id$
 
 """This is chkconfig support."""
-__revision__ = '$Revision$'
 
 import os
 

@@ -1,5 +1,4 @@
 '''XML lib compatibility layer for the Bcfg2 client'''
-__revision__ = '$Revision$'
 
 # library will use lxml, then builtin xml.etree, then ElementTree
 

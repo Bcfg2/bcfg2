@@ -2,7 +2,6 @@
 This file provides the Hostbase plugin.
 It manages dns/dhcp/nis host information
 """
-__revision__ = '$Revision$'
 
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
@@ -23,7 +22,6 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Generator):
     """The Hostbase plugin handles host/network info."""
     name = 'Hostbase'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filepath = '/my/adm/hostbase/files/bind'
 

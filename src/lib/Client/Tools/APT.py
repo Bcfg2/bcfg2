@@ -1,5 +1,4 @@
 """This is the Bcfg2 support for apt-get."""
-__revision__ = '$Revision$'
 
 # suppress apt API warnings
 import warnings

@@ -1,6 +1,4 @@
-# This is the bcfg2 support for blastwave packages (pkg-get)
 """This provides Bcfg2 support for Blastwave."""
-__revision__ = '$Revision$'
 
 import tempfile
 import Bcfg2.Client.Tools.SYSV

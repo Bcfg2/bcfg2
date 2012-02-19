@@ -5,8 +5,6 @@ the right way to get around that in long-running processes it to have
 a short-lived helper.  No, seriously -- check out the yum-updatesd
 code.  It's pure madness. """
 
-__revision__ = '$Revision$'
-
 import os
 import sys
 import yum

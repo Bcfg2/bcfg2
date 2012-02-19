@@ -1,5 +1,4 @@
 """Option parsing library for utilities."""
-__revision__ = '$Revision$'
 
 import getopt
 import os

@@ -8,9 +8,6 @@ load_config -- read configuration files
 
 """
 
-__revision__ = '$Revision: $'
-
-
 import logging
 import re
 import socket

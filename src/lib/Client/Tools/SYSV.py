@@ -1,6 +1,4 @@
-# This is the bcfg2 support for solaris sysv packages
 """This provides bcfg2 support for Solaris SYSV packages."""
-__revision__ = '$Revision$'
 
 import tempfile
 

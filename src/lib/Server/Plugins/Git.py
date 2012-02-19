@@ -13,7 +13,6 @@ class Git(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
     """Git is a version plugin for dealing with Bcfg2 repos."""
     name = 'Git'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

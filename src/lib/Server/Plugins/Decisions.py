@@ -50,7 +50,6 @@ class Decisions(DecisionSet,
                 Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Decision):
     name = 'Decisions'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

@@ -1,5 +1,4 @@
 """This generator provides rule-based entry mappings."""
-__revision__ = '$Revision$'
 
 import re
 import Bcfg2.Server.Plugin
@@ -9,7 +8,6 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
                Bcfg2.Server.Plugin.StructureValidator):
     """Set default attributes on bound entries"""
     name = 'Defaults'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     # Rules is a Generator that happens to implement all of the

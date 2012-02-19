@@ -4,7 +4,6 @@
     <xsd:documentation>
       services schema for bcfg2
       Narayan Desai, Argonne National Laboratory
-      $Id$
     </xsd:documentation>
   </xsd:annotation>
 

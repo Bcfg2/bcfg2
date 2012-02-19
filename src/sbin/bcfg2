@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 """Bcfg2 Client"""
-__revision__ = '$Revision$'
 
 import fcntl
 import logging

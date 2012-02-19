@@ -10,7 +10,6 @@ class Hg(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
     """Mercurial is a version plugin for dealing with Bcfg2 repository."""
     name = 'Mercurial'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     experimental = True
 

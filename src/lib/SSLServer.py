@@ -1,7 +1,5 @@
 """Bcfg2 SSL server."""
 
-__revision__ = '$Revision$'
-
 __all__ = [
     "SSLServer", "XMLRPCRequestHandler", "XMLRPCServer",
 ]

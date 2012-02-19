@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 
 # This builds the XML Pkgmgr files for the encap directory
 # structure created by the place script. It assumes the 

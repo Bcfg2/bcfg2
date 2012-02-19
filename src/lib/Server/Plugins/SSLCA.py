@@ -16,7 +16,6 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     management of ssl certificates and their keys.
     """
     name = 'SSLCA'
-    __version__ = '$Id:$'
     __author__ = 'g.hagger@gmail.com'
     __child__ = Bcfg2.Server.Plugin.FileBacked
     key_specs = {}

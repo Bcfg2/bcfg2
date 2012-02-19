@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 '''Build debian/ubuntu package indexes'''
-__revision__ = '$Id$'
 
 # Original code from Bcfg2 sources
 

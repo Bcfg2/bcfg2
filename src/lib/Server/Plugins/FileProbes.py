@@ -3,7 +3,6 @@ added to the specification.  On subsequent runs, the file will be
 replaced on the client if it is missing; if it has changed on the
 client, it can either be updated in the specification or replaced on
 the client """
-__revision__ = '$Revision: 1465 $'
 
 import os
 import errno
@@ -54,7 +53,6 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
     name = 'FileProbes'
     experimental = True
-    __version__ = '$Id$'
     __author__ = 'chris.a.st.pierre@gmail.com'
 
     def __init__(self, core, datastore):

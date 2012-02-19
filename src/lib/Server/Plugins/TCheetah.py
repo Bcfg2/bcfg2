@@ -1,5 +1,4 @@
 '''This module implements a templating generator based on Cheetah'''
-__revision__ = '$Revision$'
 
 import binascii
 import logging
@@ -76,7 +75,6 @@ class TemplateFile:
 class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
     """The TCheetah generator implements a templating mechanism for configuration files."""
     name = 'TCheetah'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filename_pattern = 'template'
     es_child_cls = TemplateFile

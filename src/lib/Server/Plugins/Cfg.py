@@ -1,5 +1,4 @@
 """This module implements a config file repository."""
-__revision__ = '$Revision$'
 
 import binascii
 import logging
@@ -267,7 +266,6 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
           Bcfg2.Server.Plugin.PullTarget):
     """This generator in the configuration file repository for Bcfg2."""
     name = 'Cfg'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData

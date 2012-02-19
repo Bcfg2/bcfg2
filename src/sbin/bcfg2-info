@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 """This tool loads the Bcfg2 core into an interactive debugger."""
-__revision__ = '$Revision$'
 
 from code import InteractiveConsole
 import cmd
@@ -51,8 +50,7 @@ profile <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
 showclient <client1> <client2> - Show metadata for given hosts
-update - Process pending file events
-version - Print version of this tool"""
+update - Process pending file events"""
 
 BUILDDIR_USAGE = """Usage: builddir [-f] <hostname> <output dir>
 
@@ -191,10 +189,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_update(self, _):
         """Process pending filesystem events."""
         self.fam.handle_events_in_interval(0.1)
-
-    def do_version(self, _):
-        """Print out code version."""
-        print(__revision__)
 
     def do_build(self, args):
         """Build client configuration."""

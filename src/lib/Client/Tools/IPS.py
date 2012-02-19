@@ -1,5 +1,4 @@
 """This is the Bcfg2 support for OpenSolaris packages."""
-__revision__ = '$Revision$'
 
 import pkg.client.image as image
 import pkg.client.progress as progress

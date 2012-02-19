@@ -1,5 +1,4 @@
 """Bcfg2 logging support"""
-__revision__ = '$Revision$'
 
 import copy
 import fcntl

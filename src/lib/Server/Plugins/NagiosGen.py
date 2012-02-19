@@ -27,7 +27,6 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
        Nagios configuration file based on Bcfg2 data.
     """
     name = 'NagiosGen'
-    __version__ = '0.7'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

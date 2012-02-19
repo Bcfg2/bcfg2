@@ -2,8 +2,6 @@
 Contains all the views associated with the hostbase app
 Also has does form validation
 """
-__revision__ = "$Revision: $"
-
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.decorators import login_required

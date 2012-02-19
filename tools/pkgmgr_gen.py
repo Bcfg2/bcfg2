@@ -10,7 +10,6 @@
    bcfg2 client drivers.  The output can also contain the PackageList
    and nested group headers.
 """
-__revision__ = '$Revision: $'
 import collections
 import datetime
 import glob

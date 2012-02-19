@@ -59,7 +59,6 @@ class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
 class Editor(Bcfg2.Server.Plugin.GroupSpool,
              Bcfg2.Server.Plugin.Probing):
     name = 'Editor'
-    __version__ = '$Id$'
     __author__ = 'bcfg2-dev@mcs.anl.gov'
     filename_pattern = 'edits'
     es_child_cls = EditDirectives

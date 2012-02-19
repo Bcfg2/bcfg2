@@ -1,5 +1,4 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
-__revision__ = '$Revision$'
 
 import binascii
 import copy
@@ -117,7 +116,6 @@ class Statistics(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.ThreadedStatistics,
                  Bcfg2.Server.Plugin.PullSource):
     name = 'Statistics'
-    __version__ = '$Id$'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

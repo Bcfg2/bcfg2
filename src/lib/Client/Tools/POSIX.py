@@ -1,5 +1,4 @@
 """All POSIX Type client support for Bcfg2."""
-__revision__ = '$Revision$'
 
 import binascii
 from datetime import datetime

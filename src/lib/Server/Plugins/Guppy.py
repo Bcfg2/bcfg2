@@ -32,7 +32,6 @@ import Bcfg2.Server.Plugin
 class Guppy(Bcfg2.Server.Plugin.Plugin):
     """Guppy is a debugging plugin to help trace memory leaks"""
     name = 'Guppy'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     experimental = True
