@@ -1,8 +1,4 @@
 """This contains all Bcfg2 Tool modules"""
-# suppress popen2 warnings for python 2.3
-import warnings
-warnings.filterwarnings("ignore", "The popen2 module is deprecated.*",
-                        DeprecationWarning)
 import os
 import stat
 import sys

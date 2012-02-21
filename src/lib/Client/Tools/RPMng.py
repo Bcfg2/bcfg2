@@ -9,12 +9,6 @@ import Bcfg2.Client.Tools
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
-# Fix for python2.3
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 class RPMng(Bcfg2.Client.Tools.PkgTool):
     """Support for RPM packages."""
     name = 'RPMng'

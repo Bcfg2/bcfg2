@@ -10,12 +10,6 @@ import Bcfg2.Client.Tools.RPMng
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
-# Fix for python2.3
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 YAD = True
 CP = ConfigParser.ConfigParser()
 try:
