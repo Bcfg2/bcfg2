@@ -11,7 +11,7 @@ import lxml.etree
 import os
 import sys
 import tempfile
-from metargs import Option
+from Bcfg2.metargs import Option
 
 try:
     try:

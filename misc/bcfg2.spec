@@ -42,6 +42,7 @@ BuildRequires:    python-sphinx10
 BuildRequires:    python-sphinx >= 0.6
 %endif
 
+Requires:         python-argparse
 Requires:         python-lxml >= 0.9
 Recommends:       cron
 

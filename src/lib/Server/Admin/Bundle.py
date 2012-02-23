@@ -2,7 +2,7 @@ import lxml.etree
 import glob
 import re
 import Bcfg2.Server.Admin
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Options
 
 class Bundle(Bcfg2.Server.Admin.MetadataCore):

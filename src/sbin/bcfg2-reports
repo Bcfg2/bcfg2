@@ -5,7 +5,7 @@ __revision__ = '$Revision$'
 import os
 import sys
 import logging
-from metargs import Option, MissingConfigArgumentError
+from Bcfg2.metargs import Option, MissingConfigArgumentError
 import Bcfg2.Options
 
 try:

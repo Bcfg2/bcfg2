@@ -44,6 +44,7 @@ Requires:         python-elementtree
 %else if "%{py_ver}" < "2.5"
 Requires:         python-lxml
 %endif
+Requires:         python-argparse
 Requires:         initscripts
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig

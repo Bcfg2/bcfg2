@@ -1,6 +1,6 @@
 import lxml.etree
 import Bcfg2.Server.Admin
-from metargs import Option
+from Bcfg2.metargs import Option
 from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 import Bcfg2.Options
 

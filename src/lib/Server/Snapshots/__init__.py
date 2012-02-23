@@ -2,7 +2,7 @@ __all__ = ['models', 'db_from_config', 'setup_session']
 
 import sqlalchemy
 import sqlalchemy.orm
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Options
 
 def register_snapshot_args():

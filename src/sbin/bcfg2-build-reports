@@ -12,7 +12,7 @@ import os
 import socket
 from time import asctime, strptime
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Options
 
 def generatereport(rspec, nrpt):

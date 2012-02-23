@@ -5,7 +5,7 @@ import copy
 import os.path
 import sys
 import yum
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Client.XML
 import Bcfg2.Options
 import Bcfg2.Client.Tools.RPMng

@@ -1,5 +1,5 @@
 from datetime import date
-from metargs import Option
+from Bcfg2.metargs import Option
 import sys
 
 # Prereq issues can be signaled with ImportError, so no try needed

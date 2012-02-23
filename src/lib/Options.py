@@ -4,7 +4,7 @@ __revision__ = '$Revision$'
 import os.path
 import Bcfg2.Client.Tools
 # Compatibility imports
-from metargs import Option, ConfigBackedArgumentParser
+from Bcfg2.metargs import Option, ConfigBackedArgumentParser
 import argparse
 
 def add_option(opt):

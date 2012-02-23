@@ -1,6 +1,6 @@
 import logging
 import argparse
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Logger
 import Bcfg2.Server.Admin
 import Bcfg2.Options

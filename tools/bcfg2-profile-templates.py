@@ -7,7 +7,7 @@ import logging
 import logging.handlers
 import operator
 import lxml.etree
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Server.Core
 
 LOGGER = None

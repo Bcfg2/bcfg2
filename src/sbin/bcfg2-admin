@@ -7,7 +7,7 @@ from Bcfg2 import Options
 from Bcfg2.Bcfg2Py3k import StringIO
 from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 from pkg_resources import iter_entry_points
-from metargs import Option
+from Bcfg2.metargs import Option
 
 log = logging.getLogger('bcfg2-admin')
 

@@ -1,0 +1,15 @@
+[submodule "metargs"]
+	path = metargs
+	url = git://github.com/wgen/metargs.git
+[submodule "src/libmetargs"]
+	path = src/libmetargs
+	url = git://github.com/wgen/metargs.git
+[submodule "src/liblmetargs"]
+	path = src/liblmetargs
+	url = git://github.com/wgen/metargs.git
+[submodule "src/lib/metargs"]
+	path = src/lib/metargs
+	url = git://github.com/wgen/metargs.git
+[submodule "src/metargs"]
+	path = src/metargs
+	url = git://github.com/wgen/metargs.git

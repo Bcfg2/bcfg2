@@ -1,6 +1,6 @@
 import django
 import os.path
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Options
 
 # Django settings for bcfg2 reports project.

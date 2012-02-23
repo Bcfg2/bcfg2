@@ -5,7 +5,7 @@ __revision__ = '$Revision$'
 import os.path
 import rpm
 import rpmtools
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Client.Tools
 import Bcfg2.Options
 

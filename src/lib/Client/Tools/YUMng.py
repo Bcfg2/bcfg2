@@ -11,7 +11,7 @@ import yum.callbacks
 import yum.Errors
 import yum.misc
 import rpmUtils.arch
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 import Bcfg2.Options

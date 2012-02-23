@@ -4,7 +4,7 @@ import sys
 import copy
 import logging
 import lxml.etree
-from metargs import Option
+from Bcfg2.metargs import Option
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
 

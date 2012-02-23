@@ -1,4 +1,4 @@
-from metargs import Option
+from Bcfg2.metargs import Option
 from subprocess import Popen, PIPE
 import pipes
 import Bcfg2.Server.Admin
