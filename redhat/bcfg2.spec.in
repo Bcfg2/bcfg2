@@ -45,6 +45,7 @@ Requires:         python-elementtree
 Requires:         python-lxml
 %endif
 Requires:         python-argparse
+Requires:         python-nose
 Requires:         initscripts
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig

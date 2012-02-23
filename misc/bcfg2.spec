@@ -43,6 +43,7 @@ BuildRequires:    python-sphinx >= 0.6
 %endif
 
 Requires:         python-argparse
+Requires:         python-nose
 Requires:         python-lxml >= 0.9
 Recommends:       cron
 
