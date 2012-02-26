@@ -7,7 +7,7 @@ Type=forking
 StandardOutput=syslog
 StandardError=syslog
 EnvironmentFile=-/etc/sysconfig/bcfg2
-ExecStart=/usr/bin/bcfg2 $OPTIONS
+ExecStart=/usr/sbin/bcfg2 $OPTIONS
 
 [Install]
 WantedBy=multi-user.target
