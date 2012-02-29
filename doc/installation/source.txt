@@ -2,6 +2,7 @@
 
 .. _GPG1: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
 .. _GPG2: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x80B8492FA88FFF4B
+.. _Download: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
 
 .. _source:
 
@@ -14,7 +15,7 @@ Download
 Tarball
 ^^^^^^^
 
-The Bcfg2 source tarball can be grabbed from the Download_ page.
+The Bcfg2 source tarball can be grabbed from the `Download`_ page.
 
 All tarballs are signed with GPG keys `7F7D197E <GPG1>`_ or `A88FFF4B
 <GPG2>`_. You can verify your download by importing the keys and running ::
