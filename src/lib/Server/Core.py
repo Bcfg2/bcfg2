@@ -7,6 +7,7 @@ import select
 import sys
 import threading
 import time
+from traceback import format_exc
 
 try:
     import lxml.etree
@@ -270,12 +271,12 @@ class Core(Component):
                 self.Bind(entry, metadata)
             except PluginExecutionError, exc:
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
+                    entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Failed to bind entry: %s %s" % \
                              (entry.tag, entry.get('name')))
             except Exception, exc:
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
+                    entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Unexpected failure in BindStructure: %s %s" \
                              % (entry.tag, entry.get('name')), exc_info=1)
 

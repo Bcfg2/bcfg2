@@ -860,7 +860,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self._matches(entry, metadata,
                                       src.cache[1][entry.tag]))]
         if len(matching) == 0:
-            raise PluginExecutionError
+            raise PluginExecutionError('No matching source for entry when retrieving attributes for %s(%s)' % (entry.tag, entry.attrib.get('name')))
         elif len(matching) == 1:
             index = 0
         else:

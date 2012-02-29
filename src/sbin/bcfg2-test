@@ -10,6 +10,7 @@ import Bcfg2.Options
 from nose.core import TestProgram
 from nose.suite import LazySuite
 from unittest import TestCase
+import logging
 
 class ClientTest(TestCase):
     """
@@ -54,12 +55,12 @@ class ClientTest(TestCase):
     id = __str__
 
 def main():
-    
     Bcfg2.Options.add_options(
         Option('--ignore-entries', 'bcfg2_test:ignore_entries', nargs='*',
             default=[],
             help='Ignore these entries if they fail to build. Format is '
-                 '<EntryType>:<name>')
+                 '<EntryType>:<name>'),
+        Bcfg2.Options.VERBOSE,
     )
     Bcfg2.Server.Core.Core.register_options()
     Bcfg2.Options.set_help(
@@ -68,6 +69,9 @@ def main():
     )
 
     args, rest = Bcfg2.Options.known_args()
+
+    if args.verbose:
+        logging.basicConfig()
 
     def run_tests():
         core = Bcfg2.Server.Core.Core.from_config(args)
