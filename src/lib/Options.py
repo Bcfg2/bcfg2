@@ -29,7 +29,7 @@ def set_help(description, epilog=None):
     _GLOBAL_PARSER.parser_kwargs['description'] = description
     _GLOBAL_PARSER.parser_kwargs['epilog'] = epilog
 
-_GLOBAL_PARSER = ConfigBackedArgumentParser('/etc/bcfg2.conf')
+_GLOBAL_PARSER = ConfigBackedArgumentParser('/etc/bcfg2.conf', config_short_path='-C')
 
 DEFAULT_INSTALL_PREFIX='/usr'
 
