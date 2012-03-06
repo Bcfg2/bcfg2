@@ -114,7 +114,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     @classmethod
     def register_options(cls):
         Bcfg2.Client.Tools.Tool.register_options()
-        Bcfg2.Option.add_options(
+        Bcfg2.Options.add_options(
             Bcfg2.Options.PARANOID_PATH,
             Bcfg2.Options.PARANOID_MAX_COPIES,
             Bcfg2.Options.ENCODING,
