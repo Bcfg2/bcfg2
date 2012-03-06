@@ -30,7 +30,7 @@ class Action(Bcfg2.Client.Tools.Tool):
     @classmethod
     def register_options(cls):
         Bcfg2.Client.Tools.Tool.register_options()
-        Bcfg2.Options.add_clients(
+        Bcfg2.Options.add_options(
             Bcfg2.Options.CLIENT_DLIST,
             Bcfg2.Options.CLIENT_DRYRUN,
             Bcfg2.Options.INTERACTIVE,
