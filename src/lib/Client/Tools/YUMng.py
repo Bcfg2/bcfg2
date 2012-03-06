@@ -175,7 +175,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
     @classmethod
     def register_options(cls):
         Bcfg2.Client.Tools.PkgTool.register_options()
-        Bcfg2.Options.add_option(
+        Bcfg2.Options.add_options(
             Bcfg2.Options.VERBOSE,
             Bcfg2.Options.DEBUG,
             Bcfg2.Options.CLIENT_QUICK,
