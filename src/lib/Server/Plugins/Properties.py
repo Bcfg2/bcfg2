@@ -145,7 +145,7 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Error while creating Properties store: %s %s" %
                               (e.strerror, e.filename))
             raise Bcfg2.Server.Plugin.PluginInitError
-        self.default_property_files = Bcfg2.Options.args().default_property_files
+        self.default_property_files = Bcfg2.Options.bootstrap().default_property_files
 
     @classmethod
     def register_options(cls, args=None):
