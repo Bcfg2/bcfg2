@@ -84,7 +84,7 @@ class Client:
             self.logger.info("The following drivers are available:")
             self.logger.info(Bcfg2.Client.Tools.drivers)
             raise SystemExit(0)
-        if self.remove_extra in ['services', 'Services']:
+        if self.args.remove_extra in ['services', 'Services']:
             self.logger.error("Service removal is nonsensical; removed services will only be disabled")
         if (self.args.from_file is not None) and (self.args.cache is not None):
             print("cannot use -f and -c together")
