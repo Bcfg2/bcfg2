@@ -71,7 +71,7 @@ class Core(Component):
                    args.config,
                    args.ca_cert,
                    args.server_filemonitor,
-                   args.server_enable_filemonitor)
+                   not args.server_disable_filemonitor)
 
     @classmethod
     def register_options(cls):
@@ -82,7 +82,7 @@ class Core(Component):
             Options.ENCODING,
             Options.SERVER_CA,
             Options.SERVER_FILEMONITOR,
-            Options.SERVER_ENABLE_FILEMONITOR)
+            Options.SERVER_DISABLE_FILEMONITOR)
 
         opts = Options.bootstrap()
         for plugin in opts.server_plugins:

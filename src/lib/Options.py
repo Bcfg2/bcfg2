@@ -100,7 +100,7 @@ SERVER_MCONNECT = Option('server:connectors', help='Server Metadata Connector li
     default=['Probes'], nargs='*')
 SERVER_FILEMONITOR = Option('server:filemonitor', help='Server file monitor',
     default='default')
-SERVER_ENABLE_FILEMONITOR = Option('server:enable_filemonitor', help='Enable filemonitoring', action='store_true')
+SERVER_DISABLE_FILEMONITOR = Option('server:disable_filemonitor', help='Disable filemonitoring', action='store_true', default=False)
 SERVER_LISTEN_ALL = Option('server:listen_all', '--listen-all',
     help='Listen on all interfaces', action='store_true')
 SERVER_LOCATION = Option('components:bcfg2', '-S', '--server-location',
