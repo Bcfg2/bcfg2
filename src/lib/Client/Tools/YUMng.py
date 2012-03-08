@@ -250,7 +250,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         # These are all boolean flags, either we do stuff or we don't
         self.pkg_checks = yum_args.pkg_checks
-        self.pkg_verify = yum_args.ykg_verify
+        self.pkg_verify = yum_args.pkg_verify
         self.doInstall = yum_args.installed_action == "install"
         self.doUpgrade = yum_args.version_fail_action == "upgrade"
         self.doReinst = yum_args.verify_fail_action == "reinstall"
