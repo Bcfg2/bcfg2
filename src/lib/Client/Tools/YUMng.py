@@ -246,7 +246,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                    dest='verify_flags'),
         )
 
-        yum_args = Bcfg2.Option.bootstrap()
+        yum_args = Bcfg2.Options.bootstrap()
 
         # These are all boolean flags, either we do stuff or we don't
         self.pkg_checks = yum_args.pkg_checks
