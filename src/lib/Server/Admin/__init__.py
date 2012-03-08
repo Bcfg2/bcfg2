@@ -110,6 +110,7 @@ class MetadataCore(Mode):
 
         Options.add_options(
             Options.SERVER_PLUGINS,
+            Options.DEBUG,
         )
         Bcfg2.Server.Core.Core.register_options()
         args = Options.bootstrap()
