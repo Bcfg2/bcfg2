@@ -1,26 +1,28 @@
 #!/usr/sfw/bin/gmake
 
-PYTHON="/opt/csw/bin/python"
+PYTHON="/usr/local/bin/python"
 VERS=1.2.1-1
 PYVERSION := $(shell $(PYTHON) -c "import sys; print sys.version[0:3]")
 
 default: clean package
 
 package:
-	-mkdir tmp tmp/bcfg2-server tmp/bcfg2
-	-cd ../ && $(PYTHON) setup.py install --prefix=$(PWD)
+	-mkdir  tmp tmp/bcfg2-server tmp/bcfg2
+	-mkdir -p build/lib/$(PYVERSION)/site-packages
+	-cd ../ && PYTHONPATH=$(PYTHONPATH):$(PWD)/build/lib/python2.6/site-packages/ $(PYTHON) setup.py install --single-version-externally-managed --record=/dev/null --prefix=$(PWD)/build
+	#setuptools appears to use a restictive umask
+	-chmod -R o+r build/
 	-cat bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > bin/bcfg2.new && mv bin/bcfg2.new bin/bcfg2
-	# Set python version to whichever version is installed
-	-cat prototype.bcfg2 | sed -e 's!PYVERSION!python$(PYVERSION)!' > prototype.bcfg2.fixed
-	-cat prototype.bcfg2-server | sed -e 's!PYVERSION!python$(PYVERSION)!' > prototype.bcfg2-server.fixed
-	-pkgmk -o -a `uname -m` -f prototype.bcfg2.fixed -d $(PWD)/tmp -r $(PWD)
-	-pkgmk -o -a `uname -m` -f prototype.bcfg2-server.fixed -d $(PWD)/tmp -r $(PWD)
+	-./gen-prototypes.sh
+	-pkgmk -o -a `uname -m` -f prototype.bcfg2 -d $(PWD)/tmp -r $(PWD)/build
+	-pkgmk -o -a `uname -m` -f prototype.bcfg2-server -d $(PWD)/tmp -r $(PWD)/build
 	-pkgtrans -o -s $(PWD)/tmp $(PWD)/bcfg2-$(VERS) SCbcfg2
 	-pkgtrans -o -s $(PWD)/tmp $(PWD)/bcfg2-server-$(VERS) SCbcfg2-server
 	-gzip -f $(PWD)/bcfg2-$(VERS)
 	-gzip -f $(PWD)/bcfg2-server-$(VERS)
 
 clean:
-	-rm -rf tmp bin lib share
+	-rm -rf tmp build
 	-rm -rf bcfg2-$(VERS).gz bcfg2-server-$(VERS).gz
 	-rm -rf prototype.bcfg2.fixed prototype.bcfg2-server.fixed
+	-rm -f prototype.*
