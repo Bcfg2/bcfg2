@@ -168,7 +168,6 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             while not is_bound:
                 if tries >= 10:
                     self.logger.error("%s still not registered" % filename)
-                    raise Bcfg2.Server.Plugin.PluginExecutionError
                 self.core.fam.handle_events_in_interval(1)
                 try:
                     cfg.entries[filename].bind_entry(entry, metadata)
