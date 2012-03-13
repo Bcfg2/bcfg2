@@ -42,11 +42,11 @@ BuildRequires:    libsane1
 
 # %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
 # %systems (and potentially very old Fedora systems, too)
-%if "%{_vendor}" == "redhat" && 0%{?rhel} <= 6 && 0%{?fedora} == 0
+%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6 && 0%{?fedora} == 0
 BuildRequires:    python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
-%define pythonpath /usr/lib/python%{py_ver}/site-packages/Sphinx-1.0.4-py%{py_ver}.egg
+%define pythonpath %(find /usr/lib/python%{py_ver}/site-packages -name %Sphinx*.egg)
 %else
 BuildRequires:    python-sphinx >= 0.6
 %endif
