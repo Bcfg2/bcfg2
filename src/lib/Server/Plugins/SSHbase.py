@@ -235,6 +235,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             if entry.specific.match(event.filename):
                 entry.handle_event(event)
                 if event.filename.endswith(".pub"):
+                    self.logger.info("New public key %s; invalidating "
+                                     "ssh_known_hosts cache" % event.filename)
                     self.skn = False
                 return
 
@@ -244,6 +246,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             return
 
         if event.filename.endswith('.static'):
+            self.logger.info("Static key %s %s; invalidating ssh_known_hosts "
+                             "cache" % (event.filename, action))
             if action == "deleted" and event.filename in self.static:
                 del self.static[event.filename]
                 self.skn = False
