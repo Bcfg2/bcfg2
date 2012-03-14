@@ -6,6 +6,7 @@ the client """
 __revision__ = '$Revision: 1465 $'
 
 import os
+import sys
 import errno
 import binascii
 import lxml.etree
@@ -89,33 +90,27 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                                            interpreter="/usr/bin/env python")
                 probe.text = probecode % path
                 self.probes[metadata.hostname].append(probe)
-                self.logger.debug("Adding file probe for %s to %s" %
-                                  (path, metadata.hostname))
+                self.debug_log("Adding file probe for %s to %s" %
+                               (path, metadata.hostname))
         return self.probes[metadata.hostname]
 
     def ReceiveData(self, metadata, datalist):
         """Receive data from probe."""
-        self.logger.debug("Receiving file probe data from %s" %
-                          metadata.hostname)
+        self.debug_log("Receiving file probe data from %s" % metadata.hostname)
 
         for data in datalist:
             if data.text is None:
                 self.logger.error("Got null response to %s file probe from %s" %
                                   (data.get('name'), metadata.hostname))
             else:
-                self.logger.debug("%s:fileprobe:%s:%s" %
-                                  (metadata.hostname,
-                                   data.get("name"),
-                                   data.text))
                 try:
-                    filedata = lxml.etree.XML(data.text)
-                    self.write_file(filedata, metadata)
+                    self.write_data(lxml.etree.XML(data.text), metadata)
                 except lxml.etree.XMLSyntaxError:
                     # if we didn't get XML back from the probe, assume
                     # it's an error message
                     self.logger.error(data.text)
 
-    def write_file(self, data, metadata):
+    def write_data(self, data, metadata):
         """Write the probed file data to the bcfg2 specification."""
         filename = data.get("name")
         contents = binascii.a2b_base64(data.text)
@@ -139,73 +134,80 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             entrydata = entry.text
 
         if create:        
-            self.logger.info("Writing new probed file %s" % fileloc)    
-            try:
-                os.makedirs(os.path.dirname(fileloc))
-            except OSError, err:
-                if err.errno == errno.EEXIST:
-                    pass
-                else:
-                    raise
-            open(fileloc, 'wb').write(contents)
-
-            infoxml = os.path.join("%s%s" % (cfg.data, filename),
-                                   "info.xml")
-            if not os.path.exists(infoxml):
-                self.write_infoxml(infoxml, entry, data)
-
-            # Service the FAM events queued up by the key generation
-            # so the data structure entries will be available for
-            # binding.
-            #
-            # NOTE: We wait for up to ten seconds. There is some
-            # potential for race condition, because if the file
-            # monitor doesn't get notified about the new key files in
-            # time, those entries won't be available for binding. In
-            # practice, this seems "good enough".
-            tries = 0
-            is_bound = False
-            while not is_bound:
-                if tries >= 10:
-                    self.logger.error("%s still not registered" % filename)
-                self.core.fam.handle_events_in_interval(1)
-                try:
-                    cfg.entries[filename].bind_entry(entry, metadata)
-                    is_bound = True
-                except Bcfg2.Server.Plugin.PluginExecutionError:
-                    pass
-                tries += 1
+            self.logger.info("Writing new probed file %s" % fileloc)
+            self.write_file(fileloc, contents)
+            self.verify_file(filename, contents, metadata)
+            infoxml = os.path.join("%s%s" % (cfg.data, filename), "info.xml")
+            self.write_infoxml(infoxml, entry, data)
         elif entrydata == contents:
-            self.logger.debug("Existing %s contents match probed contents" %
-                              filename)
+            self.debug_log("Existing %s contents match probed contents" %
+                           filename)
             return
         elif (entry.get('update', 'false').lower() == "true"):
             self.logger.info("Writing updated probed file %s" % fileloc)
-            open(fileloc, 'wb').write(contents)
-            
-            # service FAM events
-            tries = 0
-            updated = False
-            while not updated:
-                if tries >= 10:
-                    self.logger.error("%s still not registered" % filename)
-                    raise Bcfg2.Server.Plugin.PluginExecutionError
-                self.core.fam.handle_events_in_interval(1)
-                cfg.entries[filename].bind_entry(entry, metadata)
-                # get current entry data
-                if entry.get("encoding") == "base64":
-                    entrydata = binascii.a2b_base64(entry.text)
-                else:
-                    entrydata = entry.text
-                if entrydata == contents:
-                    updated = True
-                tries += 1
+            self.write_file(fileloc, contents)
+            self.verify_file(filename, contents, metadata)
         else:
             self.logger.info("Skipping updated probed file %s" % fileloc)
             return
+
+    def write_file(self, fileloc, contents):
+        try:
+            os.makedirs(os.path.dirname(fileloc))
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno == errno.EEXIST:
+                pass
+            else:
+                self.logger.error("Could not create parent directories for %s: "
+                                  "%s" % (fileloc, err))
+                return
+
+        try:
+            open(fileloc, 'wb').write(contents)
+        except IOError:
+            err = sys.exc_info()[1]
+            self.logger.error("Could not write %s: %s" % (fileloc, err))
+            return
+
+    def verify_file(self, filename, contents, metadata):
+        # Service the FAM events queued up by the key generation so
+        # the data structure entries will be available for binding.
+        #
+        # NOTE: We wait for up to ten seconds. There is some potential
+        # for race condition, because if the file monitor doesn't get
+        # notified about the new key files in time, those entries
+        # won't be available for binding. In practice, this seems
+        # "good enough".
+        entry = self.entries[metadata.hostname][filename]
+        cfg = self.core.plugins['Cfg']
+        tries = 0
+        updated = False
+        while not updated:
+            if tries >= 10:
+                self.logger.error("%s still not registered" % filename)
+                return
+            self.core.fam.handle_events_in_interval(1)
+            try:
+                cfg.entries[filename].bind_entry(entry, metadata)
+            except Bcfg2.Server.Plugin.PluginExecutionError:
+                tries += 1
+                continue
+            
+            # get current entry data
+            if entry.get("encoding") == "base64":
+                entrydata = binascii.a2b_base64(entry.text)
+            else:
+                entrydata = entry.text
+            if entrydata == contents:
+                updated = True
+            tries += 1
     
     def write_infoxml(self, infoxml, entry, data):
         """ write an info.xml for the file """
+        if os.path.exists(infoxml):
+            return
+        
         self.logger.info("Writing info.xml at %s for %s" %
                          (infoxml, data.get("name")))
         info = \
@@ -221,5 +223,10 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         
         root = lxml.etree.Element("FileInfo")
         root.append(info)
-        open(infoxml, "w").write(lxml.etree.tostring(root,
-                                                     pretty_print=True))
+        try:
+            open(infoxml, "w").write(lxml.etree.tostring(root,
+                                                         pretty_print=True))
+        except IOError:
+            err = sys.exc_info()[1]
+            self.logger.error("Could not write %s: %s" % (fileloc, err))
+            return
