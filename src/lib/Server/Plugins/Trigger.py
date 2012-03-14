@@ -26,12 +26,19 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
         try:
             os.stat(self.data)
         except:
-            self.logger.error("Trigger: spool directory %s does not exist; unloading" % self.data)
+            self.logger.error("Trigger: spool directory %s does not exist; "
+                              "unloading" % self.data)
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def process_statistics(self, metadata, _):
         args = [metadata.hostname, '-p', metadata.profile, '-g',
                 ':'.join([g for g in metadata.groups])]
         for notifier in os.listdir(self.data):
-            n = self.data + '/' + notifier
-            async_run(n, args)
+            if ((notifier[-1] == '~') or
+                (notifier[:2] == '.#') or
+                (notifier[-4:] == '.swp') or
+                (notifier in ['SCCS', '.svn', '4913'])):
+                continue
+            npath = self.data + '/' + notifier
+            self.logger.debug("Running %s %s" % (npath, " ".join(args)))
+            async_run(npath, args)
