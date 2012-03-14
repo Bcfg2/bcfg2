@@ -992,6 +992,12 @@ class EntrySet:
             self.entry_init(event)
         else:
             if event.filename not in self.entries:
+                logger.warning("Got %s event for unknown file %s" %
+                               (action, event.filename))
+                if action == 'changed':
+                    # received a bogus changed event; warn, but treat
+                    # it like a created event
+                    self.entry_init(event)
                 return
             if action == 'changed':
                 self.entries[event.filename].handle_event(event)
