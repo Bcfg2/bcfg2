@@ -136,7 +136,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
         if url_map['component']:
-            return url_map['component']
+            rname = url_map['component']
         else:
             name = None
             for repo_re in (self.mrepo_re,
@@ -144,14 +144,18 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                             self.genericrepo_re):
                 match = repo_re.search(url_map['url'])
                 if match:
-                    name = match.group(1).replace('/', '-')
                     break
             if name is None:
                 # couldn't figure out the name from the URL or URL map
                 # (which probably means its a screwy URL), so we just
                 # generate a random one
                 name = base64.b64encode(os.urandom(16))[:-2]
-            return "%s-%s" % (self.groups[0], name)
+            rname = "%s-%s" % (self.groups[0], name)
+        # see yum/__init__.py in the yum source, lines 441-449, for
+        # the source of this regex.  yum doesn't like anything but
+        # string.ascii_letters, string.digits, and [-_.:].  There
+        # doesn't seem to be a reason for this, because yum.
+        return re.sub(r'[^A-Za-z0-9-_.:]', '-', rname)
 
     def __str__(self):
         if self.rawurl:
