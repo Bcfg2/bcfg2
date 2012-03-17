@@ -1,5 +1,4 @@
 """Bcfg2.Server.Core provides the runtime support for Bcfg2 modules."""
-__revision__ = '$Revision$'
 
 import atexit
 import logging

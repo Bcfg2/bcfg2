@@ -1,5 +1,4 @@
 """This provides Bcfg2 support for Alpine Linux APK packages."""
-__revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
 

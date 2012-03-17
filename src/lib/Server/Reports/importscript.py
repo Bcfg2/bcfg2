@@ -3,7 +3,6 @@
 Imports statistics.xml and clients.xml files in to database backend for
 new statistics engine
 """
-__revision__ = '$Revision$'
 
 import binascii
 import os

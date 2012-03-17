@@ -9,7 +9,6 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
     name = 'Svn2'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     conflicts = ['Svn']

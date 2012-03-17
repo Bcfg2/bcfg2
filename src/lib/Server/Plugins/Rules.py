@@ -1,5 +1,4 @@
 """This generator provides rule-based entry mappings."""
-__revision__ = '$Revision$'
 
 import re
 import Bcfg2.Server.Plugin
@@ -10,7 +9,6 @@ class RulesConfig(Bcfg2.Server.Plugin.SimpleConfig):
 class Rules(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles service assignments."""
     name = 'Rules'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

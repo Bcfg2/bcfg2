@@ -1,5 +1,4 @@
 '''This module implements a package management scheme for all images'''
-__revision__ = '$Revision$'
 
 import logging
 import re
@@ -132,7 +131,6 @@ class PkgSrc(Bcfg2.Server.Plugin.XMLSrc):
 class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles package assignments."""
     name = 'Pkgmgr'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = PkgSrc
     __element__ = 'Package'

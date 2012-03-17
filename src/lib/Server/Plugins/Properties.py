@@ -60,7 +60,6 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
        files into client metadata instances.
     """
     name = 'Properties'
-    version = '$Revision$'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

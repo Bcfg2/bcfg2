@@ -3,8 +3,6 @@
 
 """Generates hostinfo.xml at a regular interval."""
 
-__revision__ = '$Revision$'
-
 from os import dup2, execl, fork, uname, wait
 import sys
 import time

@@ -16,7 +16,6 @@ The metadata information get stored in an index file in the output directory.
 The format of the index file is:
 user,group,permission,/path/to/file
 '''
-__revision__ = '$Revision: 221 $'
 
 import logging, lxml.etree, Bcfg2.Logging, Bcfg2.Server.Core
 import Bcfg2.Server.Plugins.Metadata, Bcfg2.Server.Plugin

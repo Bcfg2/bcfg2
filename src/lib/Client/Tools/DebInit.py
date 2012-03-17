@@ -1,5 +1,4 @@
 """Debian Init Support for Bcfg2"""
-__revision__ = '$Revision$'
 
 import glob
 import os

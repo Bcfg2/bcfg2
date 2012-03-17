@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-__revision__ = "$Revision: $"
-
 import os
 import Bcfg2.Client.Proxy
 

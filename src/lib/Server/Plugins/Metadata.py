@@ -2,8 +2,6 @@
 This file stores persistent metadata for the Bcfg2 Configuration Repository.
 """
 
-__revision__ = '$Revision$'
-
 import copy
 import fcntl
 import lxml.etree
@@ -221,7 +219,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Metadata,
                Bcfg2.Server.Plugin.Statistics):
     """This class contains data for bcfg2 server metadata."""
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     name = "Metadata"
     sort_order = 500

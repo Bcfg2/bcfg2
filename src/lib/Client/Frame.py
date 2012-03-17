@@ -2,7 +2,6 @@
 Frame is the Client Framework that verifies and
 installs entries, and generates statistics.
 """
-__revision__ = '$Revision$'
 
 import logging
 import sys

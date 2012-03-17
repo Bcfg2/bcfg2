@@ -1,5 +1,4 @@
 """This provides bcfg2 support for yum."""
-__revision__ = '$Revision$'
 
 import copy
 import os.path

@@ -10,7 +10,6 @@ class Darcs(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Version):
     """Darcs is a version plugin for dealing with Bcfg2 repos."""
     name = 'Darcs'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     experimental = True
 

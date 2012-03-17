@@ -1,5 +1,4 @@
 """This provides bundle clauses with translation functionality."""
-__revision__ = '$Revision$'
 
 import copy
 import lxml.etree
@@ -35,7 +34,6 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
        bundle/translation scheme from Bcfg1.
     """
     name = 'Bundler'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
 

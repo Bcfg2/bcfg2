@@ -1,5 +1,4 @@
 '''This module implements a templating generator based on Genshi'''
-__revision__ = '$Revision$'
 
 import genshi.input
 import genshi.template
@@ -84,7 +83,6 @@ class SGenshi(SGenshiEntrySet,
               Bcfg2.Server.Plugin.Structure):
     """The SGenshi plugin provides templated structures."""
     name = 'SGenshi'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     deprecated = True
 

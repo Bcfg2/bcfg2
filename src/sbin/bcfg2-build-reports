@@ -4,8 +4,6 @@
 bcfg2-build-reports generates & distributes reports of statistic
 information for Bcfg2."""
 
-__revision__ = '$Revision$'
-
 import copy
 import getopt
 import re

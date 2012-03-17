@@ -1,5 +1,4 @@
 """This module sets up a base list of configuration entries."""
-__revision__ = '$Revision$'
 
 import copy
 import lxml.etree
@@ -18,7 +17,6 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     needed for most actual systems.
     """
     name = 'Base'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = Bcfg2.Server.Plugin.StructFile
     deprecated = True

@@ -1,5 +1,4 @@
 """This module provides the baseclass for Bcfg2 Server Plugins."""
-__revision__ = '$Revision$'
 
 import copy
 import logging
@@ -85,7 +84,6 @@ class Plugin(Debuggable):
     """This is the base class for all Bcfg2 Server plugins.
     Several attributes must be defined in the subclass:
     name : the name of the plugin
-    __version__ : a version string
     __author__ : the author/contact for the plugin
 
     Plugins can provide three basic types of functionality:
@@ -94,7 +92,6 @@ class Plugin(Debuggable):
       - Data collection (overloading GetProbes/ReceiveData)
     """
     name = 'Plugin'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     experimental = False
     deprecated = False
@@ -1094,7 +1091,6 @@ class EntrySet:
 class GroupSpool(Plugin, Generator):
     """Unified interface for handling group-specific data (e.g. .G## files)."""
     name = 'GroupSpool'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filename_pattern = ""
     es_child_cls = object

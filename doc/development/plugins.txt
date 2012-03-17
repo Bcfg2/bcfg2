@@ -164,7 +164,6 @@ Example Connector
              Bcfg2.Server.Plugin.Connector):
         '''The Foo plugin is here to illustrate a barebones connector'''
         name = 'Foo'
-        version = '$Revision: $'
         experimental = True
 
         def __init__(self, core, datastore):
@@ -195,13 +194,10 @@ do so. We will call our new plugin `MyMetadata`.
 
    .. code-block:: python
 
-       __revision__ = '$Revision$'
-
        import Bcfg2.Server.Plugins.Metadata
 
        class MyMetadata(Bcfg2.Server.Plugins.Metadata.Metadata):
            '''This class contains data for bcfg2 server metadata'''
-           __version__ = '$Id$'
            __author__ = 'bcfg-dev@mcs.anl.gov'
 
            def __init__(self, core, datastore, watch_clients=True):

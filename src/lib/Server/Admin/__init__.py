@@ -1,5 +1,3 @@
-__revision__ = '$Revision$'
-
 __all__ = [
         'Backup',
         'Bundle',

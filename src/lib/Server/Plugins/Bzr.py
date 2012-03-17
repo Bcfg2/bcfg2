@@ -10,7 +10,6 @@ class Bzr(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
     """Bzr is a version plugin for dealing with Bcfg2 repos."""
     name = 'Bzr'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

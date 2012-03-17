@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 
 # This gets the encaps out of a makeself .run file
 

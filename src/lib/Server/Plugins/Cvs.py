@@ -10,7 +10,6 @@ class Cvs(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
     """CVS is a version plugin for dealing with Bcfg2 repository."""
     name = 'Cvs'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     experimental = True
 

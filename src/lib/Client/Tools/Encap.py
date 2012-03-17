@@ -1,7 +1,5 @@
 """Bcfg2 Support for Encap Packages"""
 
-__revision__ = '$Revision$'
-
 import glob
 import re
 import Bcfg2.Client.Tools

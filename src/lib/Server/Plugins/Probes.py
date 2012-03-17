@@ -171,7 +171,6 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
              Bcfg2.Server.Plugin.Connector):
     """A plugin to gather information from a client machine."""
     name = 'Probes'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):

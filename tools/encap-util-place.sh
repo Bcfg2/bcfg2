@@ -1,5 +1,4 @@
 #!/bin/bash
-# $Id$
 
 # This puts encaps in the right directories, creating the
 # directories if needed.

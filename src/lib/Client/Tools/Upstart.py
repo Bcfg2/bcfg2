@@ -1,5 +1,4 @@
 """Upstart support for Bcfg2."""
-__revision__ = '$Revision$'
 
 import glob
 import re

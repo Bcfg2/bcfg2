@@ -1,5 +1,4 @@
 """This module implements a templating generator based on Genshi."""
-__revision__ = '$Revision$'
 
 import binascii
 import logging
@@ -131,7 +130,6 @@ class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
 
     """
     name = 'TGenshi'
-    __version__ = '$Id$'
     __author__ = 'jeff@ocjtech.us'
     filename_pattern = 'template\.(txt|newtxt|xml)'
     es_child_cls = TemplateFile

@@ -1,5 +1,4 @@
 """Action driver"""
-__revision__ = '$Revision$'
 
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list

@@ -18,7 +18,6 @@
     Run 'rpmtools' -h for the options.
 
 """
-__revision__ = '$Revision$'
 
 import grp
 import optparse

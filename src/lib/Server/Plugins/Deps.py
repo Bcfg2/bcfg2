@@ -1,5 +1,4 @@
 """This plugin provides automatic dependency handling."""
-__revision__ = '$Revision$'
 
 import lxml.etree
 
@@ -45,7 +44,6 @@ class DepXMLSrc(Bcfg2.Server.Plugin.XMLSrc):
 class Deps(Bcfg2.Server.Plugin.PrioDir,
            Bcfg2.Server.Plugin.StructureValidator):
     name = 'Deps'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = DepXMLSrc
 

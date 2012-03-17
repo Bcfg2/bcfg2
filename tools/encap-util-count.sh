@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 
 # This shows a count of encap packages per directory
 # Can be useful to make sure you have everything

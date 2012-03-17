@@ -63,7 +63,6 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
     The Ldap plugin allows adding data from an LDAP server to your metadata.
     """
     name = "Ldap"
-    version = "$Revision: $"
     experimental = True
     debug_flag = False
     

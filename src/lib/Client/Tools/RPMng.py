@@ -1,7 +1,5 @@
 """Bcfg2 Support for RPMS"""
 
-__revision__ = '$Revision$'
-
 import os.path
 import rpm
 import rpmtools

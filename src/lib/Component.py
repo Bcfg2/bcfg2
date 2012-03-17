@@ -1,7 +1,5 @@
 """Cobalt component base."""
 
-__revision__ = '$Revision$'
-
 __all__ = ["Component", "exposed", "automatic", "run_component"]
 
 import inspect

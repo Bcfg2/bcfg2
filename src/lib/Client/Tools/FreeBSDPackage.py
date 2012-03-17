@@ -1,5 +1,4 @@
 """This is the Bcfg2 tool for the FreeBSD package system."""
-__revision__ = '$Rev$'
 
 # TODO
 # - actual package installation

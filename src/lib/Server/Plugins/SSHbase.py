@@ -1,5 +1,4 @@
 '''This module manages ssh key files for bcfg2'''
-__revision__ = '$Revision$'
 
 import binascii
 import re
@@ -99,7 +98,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     """
     name = 'SSHbase'
-    __version__ = '$Id$'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     keypatterns = ["ssh_host_dsa_key",

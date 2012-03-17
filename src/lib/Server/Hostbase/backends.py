@@ -2,8 +2,6 @@ from django.contrib.auth.models import User
 #from ldapauth import *
 from nisauth import *
 
-__revision__ = '$Revision$'
-
 ## class LDAPBackend(object):
 
 ##     def authenticate(self,username=None,password=None):

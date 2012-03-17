@@ -6,7 +6,6 @@ from subprocess import Popen, PIPE
 import time
 
 import Bcfg2.Client.XML
-__revision__ = '$Revision$'
 
 __all__ = [tool.split('.')[0] \
            for tool in os.listdir(os.path.dirname(__file__)) \

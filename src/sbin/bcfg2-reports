@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Query reporting system for client status."""
-__revision__ = '$Revision$'
 
 import os
 import sys

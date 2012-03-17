@@ -1,5 +1,4 @@
 """Imports for Bcfg2.Server.Plugins."""
-__revision__ = '$Revision$'
 
 __all__ = [
            'Account',
