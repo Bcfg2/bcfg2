@@ -27,12 +27,7 @@ class Option(object):
     def getCFP(self):
         if not self.__cfp:
             self.__cfp = ConfigParser.ConfigParser()
-            # FIXME: Remove this hack when except: pass below is fixed
-            try:
-                self.__cfp.readfp(open(self.cfpath))
-            except IOError:
-                e = sys.exc_info()[1]
-                print("Unable to read bcfg2.conf: %s" % e)
+            self.__cfp.readfp(open(self.cfpath))
         return self.__cfp
     cfp = property(getCFP)
 
@@ -116,11 +111,7 @@ class Option(object):
             self.value = self.get_cooked_value(os.environ[self.env])
             return
         if self.cf:
-            """
-            FIXME: This is masking any sort of error present in getCFP, we
-            need to remove this catchall exception and figure out something
-            better
-            """
+            # FIXME: This is potentially masking a lot of errors
             try:
                 self.value = self.get_cooked_value(self.cfp.get(*self.cf))
                 return
@@ -383,3 +374,9 @@ class OptionParser(OptionSet):
             Option.cfpath = self.Bootstrap['configfile']
             Option.__cfp = False
         OptionSet.__init__(self, args)
+        try:
+            f = open(Option.cfpath, 'r')
+            f.close()
+        except IOError:
+            e = sys.exc_info()[1]
+            print("Warning! Unable to read specified configuration file: %s" % e)
