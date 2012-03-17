@@ -1,7 +1,9 @@
 import lxml.etree
 import os
 
+from Bcfg2.metargs import Option
 import Bcfg2.Server.Admin
+import Bcfg2.Options
 
 
 class Compare(Bcfg2.Server.Admin.Mode):
@@ -12,8 +14,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
     __usage__ = ("bcfg2-admin compare <old> <new>\n\n"
                  "     -r\trecursive")
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         self.important = {'Path': ['name', 'type', 'owner', 'group', 'perms',
                                    'important', 'paranoid', 'sensitive',
                                    'dev_type', 'major', 'minor', 'prune',
@@ -27,6 +29,12 @@ class Compare(Bcfg2.Server.Admin.Mode):
                                      'command'],
                           'PostInstall': ['name']
                           }
+        Bcfg2.Options.set_help(self.__shorthelp__)
+        Bcfg2.Options.add_options(
+            Option('-r', '--recursive', help='Compare recursively', action='store_true'),
+            Option('old', help='Base for the comparison', metavar='path'),
+            Option('new', help='Data to compare', metavar='path')
+        )
 
     def compareStructures(self, new, old):
         if new.tag == 'Independent':
@@ -118,34 +126,28 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        if len(args) == 0:
-            self.errExit("No argument specified.\n"
-                         "Please see bcfg2-admin compare help for usage.")
-        if '-r' in args:
-            args = list(args)
-            args.remove('-r')
-            (oldd, newd) = args
-            (old, new) = [os.listdir(spot) for spot in args]
+        if args.recursive:
+            old = os.listdir(args.old)
+            new = os.listdir(args.new)
             old_extra = []
             for item in old:
                 if item not in new:
                     old_extra.append(item)
                     continue
                 print("File: %s" % item)
-                state = self.__call__([oldd + '/' + item, newd + '/' + item])
+                state = self.__call__([args.old + '/' + item, args.new + '/' + item])
                 new.remove(item)
                 if state:
                     print("File %s is good" % item)
                 else:
                     print("File %s is bad" % item)
             if new:
-                print("%s has extra files: %s" % (newd, ', '.join(new)))
+                print("%s has extra files: %s" % (args.new, ', '.join(new)))
             if old_extra:
-                print("%s has extra files: %s" % (oldd, ', '.join(old_extra)))
+                print("%s has extra files: %s" % (args.old, ', '.join(old_extra)))
             return
         try:
-            (old, new) = args
-            return self.compareSpecifications(new, old)
+            return self.compareSpecifications(args.new, args.old)
         except IndexError:
             print(self.__call__.__doc__)
             raise SystemExit(1)

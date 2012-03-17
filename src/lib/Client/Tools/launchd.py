@@ -19,8 +19,8 @@ class launchd(Bcfg2.Client.Tools.Tool):
     and Name is acually a reverse-fqdn (or the label).
     '''
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, logger, args, config)
 
         '''Locate plist file that provides given reverse-fqdn name
         /Library/LaunchAgents          Per-user agents provided by the administrator.

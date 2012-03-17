@@ -13,8 +13,8 @@ class APK(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'apk'
     pkgtool = ("/sbin/apk add %s", ("%s", ["name"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
         self.installed = {}
         self.RefreshPackages()
 

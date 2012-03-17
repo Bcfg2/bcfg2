@@ -1,4 +1,5 @@
 from datetime import date
+from Bcfg2.metargs import Option
 import sys
 
 # Prereq issues can be signaled with ImportError, so no try needed
@@ -8,6 +9,7 @@ import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
      File, Group, Package, Service
+import Bcfg2.Options
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import u_str
 
@@ -23,44 +25,59 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                   'package':  Package,
                   'snapshot': Snapshot}
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
-        self.session = Bcfg2.Server.Snapshots.setup_session(self.configfile)
-        self.cfile = self.configfile
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
+        Bcfg2.Options.add_options(
+            Option('command', choices=['init', 'query', 'dump', 'reports'])
+        )
+        Bcfg2.Server.Snapshots.register_snapshot_args()
+
+        #self.session = Bcfg2.Server.Snapshots.setup_session(debug=True)
+        args = Bcfg2.Options.bootstrap()
+        self.session = Bcfg2.Server.Snapshots.setup_session(args)
+
+        if args.command == 'query':
+            Bcfg2.Options.add_options(
+                Option('qtype', choices=self.q_dispatch.keys()),
+            )
+        elif args.command == 'dump':
+            Bcfg2.Options.add_options(
+                Option('client', help='Client to dump')
+            )
+        elif args.command == 'reports':
+            Bcfg2.Options.add_options(
+                Option('-a', '--all', action='store_true'),
+                Option('-b', '--bad-entries', metavar='client'),
+                Option('-e', '--extra-entries', metavar='client'),
+                Option('--date', nargs=3, metavar='YY MM DD'),
+            )
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        if len(args) == 0 or args[0] == '-h':
-            print(self.__usage__)
-            raise SystemExit(0)
 
-        if args[0] == 'query':
-            if args[1] in self.q_dispatch:
-                q_obj = self.q_dispatch[args[1]]
-                if q_obj == Client:
-                    rows = []
-                    labels = ('Client', 'Active')
-                    for host in \
-                       self.session.query(q_obj).filter(q_obj.active == False):
-                        rows.append([host.name, 'No'])
-                    for host in \
-                       self.session.query(q_obj).filter(q_obj.active == True):
-                        rows.append([host.name, 'Yes'])
-                    self.print_table([labels]+rows,
-                                     justify='left',
-                                     hdr=True,
-                                     vdelim=" ",
-                                     padding=1)
-                elif q_obj == Group:
-                    print("Groups:")
-                    for group in self.session.query(q_obj).all():
-                        print(" %s" % group.name)
-                else:
-                    results = self.session.query(q_obj).all()
+        if args.command == 'query':
+            q_obj = self.q_dispatch[args.qtype]
+            if q_obj == Client:
+                rows = []
+                labels = ('Client', 'Active')
+                for host in \
+                   self.session.query(q_obj).filter(q_obj.active == False):
+                    rows.append([host.name, 'No'])
+                for host in \
+                   self.session.query(q_obj).filter(q_obj.active == True):
+                    rows.append([host.name, 'Yes'])
+                self.print_table([labels]+rows,
+                                 justify='left',
+                                 hdr=True,
+                                 vdelim=" ",
+                                 padding=1)
+            elif q_obj == Group:
+                print("Groups:")
+                for group in self.session.query(q_obj).all():
+                    print(" %s" % group.name)
             else:
-                print('error')
-                raise SystemExit(1)
-        elif args[0] == 'init':
+                results = self.session.query(q_obj).all()
+        elif args.command == 'init':
             # Initialize the Snapshots database
             dbpath = Bcfg2.Server.Snapshots.db_from_config(self.cfile)
             engine = sqlalchemy.create_engine(dbpath, echo=True)
@@ -70,8 +87,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
             Session.configure(bind=engine)
             session = Session()
             session.commit()
-        elif args[0] == 'dump':
-            client = args[1]
+        elif args.command == 'dump':
+            client = args.client
             snap = Snapshot.get_current(self.session, u_str(client))
             if not snap:
                 print("Current snapshot for %s not found" % client)
@@ -83,7 +100,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 print("end", pkg.end.name, pkg.end.version)
         elif args[0] == 'reports':
             # bcfg2-admin reporting interface for Snapshots
-            if '-a' in args[1:]:
+            if args.all:
                 # Query all hosts for Name, Status, Revision, Timestamp
                 q = self.session.query(Client.name,
                                        Snapshot.correct,
@@ -100,12 +117,9 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                  justify='left',
                                  hdr=True, vdelim=" ",
                                  padding=1)
-            elif '-b' in args[1:]:
+            elif args.bad_entries:
                 # Query a single host for bad entries
-                if len(args) < 3:
-                    print("Usage: bcfg2-admin snapshots -b <client>")
-                    return
-                client = args[2]
+                client = args.bad_entries
                 snap = Snapshot.get_current(self.session, u_str(client))
                 if not snap:
                     print("Current snapshot for %s not found" % client)
@@ -126,9 +140,9 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                             for s in snap.services if s.correct == False]
                 for svc in bad_svcs:
                     print(" Service:%s" % svc)
-            elif '-e' in args[1:]:
+            elif args.extra_entries:
                 # Query a single host for extra entries
-                client = args[2]
+                client = args.extra_entries
                 snap = Snapshot.get_current(self.session, u_str(client))
                 if not snap:
                     print("Current snapshot for %s not found" % client)
@@ -141,8 +155,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     print(" File:%s" % f.name)
                 for svc in snap.extra_services:
                     print(" Service:%s" % svc.name)
-            elif '--date' in args[1:]:
-                year, month, day = args[2:]
+            elif args.date:
+                year, month, day = args.date
                 timestamp = date(int(year), int(month), int(day))
                 snaps = []
                 for client in self.session.query(Client).filter(Client.active == True):
@@ -161,5 +175,3 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                  hdr=True,
                                  vdelim=" ",
                                  padding=1)
-            else:
-                print("Unknown options: ", args[1:])

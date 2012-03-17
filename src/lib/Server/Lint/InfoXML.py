@@ -21,8 +21,8 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     def check_infoxml(self, fname, xdata):
         for info in xdata.getroottree().findall("//Info"):
             required = []
-            if "required_attrs" in self.config:
-                required = self.config["required_attrs"].split(",")
+            if hasattr(self.args, 'required_attrs'):
+                required = self.args.required_attrs.split(",")
 
             missing = [attr for attr in required if info.get(attr) is None]
             if missing:

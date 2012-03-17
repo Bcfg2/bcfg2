@@ -7,10 +7,11 @@ import lxml.etree
 import Bcfg2.Options
 
 def main():
-    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY
+    )
+    args = Bcfg2.Options.args()
+    repo = args.repository_path
     oldconfigfile = os.path.join(repo, 'Properties', 'NagiosGen.xml')
     newconfigpath = os.path.join(repo, 'NagiosGen')
     newconfigfile = os.path.join(newconfigpath, 'config.xml')

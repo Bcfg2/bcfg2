@@ -1,6 +1,7 @@
 """Action driver"""
 __revision__ = '$Revision$'
 
+import Bcfg2.Options
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list
 
@@ -26,14 +27,24 @@ class Action(Bcfg2.Client.Tools.Tool):
     __req__ = {'PostInstall': ['name'],
                'Action': ['name', 'timing', 'when', 'command', 'status']}
 
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.Tool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_DLIST,
+            Bcfg2.Options.CLIENT_DRYRUN,
+            Bcfg2.Options.INTERACTIVE,
+            Bcfg2.Options.CLIENT_SERVICE_MODE,
+        )
+
     def _action_allowed(self, action):
-        if self.setup['decision'] == 'whitelist' and \
-           not matches_white_list(action, self.setup['decision_list']):
+        if self.args.decision == 'whitelist' and \
+           not matches_white_list(action, self.args.decision_list):
             self.logger.info("In whitelist mode: suppressing Action:" + \
                              action.get('name'))
             return False
-        if self.setup['decision'] == 'blacklist' and \
-           not passes_black_list(action, self.setup['decision_list']):
+        if self.args.decision == 'blacklist' and \
+           not passes_black_list(action, self.args.decision_list):
             self.logger.info("In blacklist mode: suppressing Action:" + \
                              action.get('name'))
             return False
@@ -41,8 +52,8 @@ class Action(Bcfg2.Client.Tools.Tool):
 
     def RunAction(self, entry):
         """This method handles command execution and status return."""
-        if not self.setup['dryrun']:
-            if self.setup['interactive']:
+        if not self.args.dryrun:
+            if self.args.interactive:
                 prompt = ('Run Action %s, %s: (y/N): ' %
                           (entry.get('name'), entry.get('command')))
                 # py3k compatibility
@@ -52,7 +63,7 @@ class Action(Bcfg2.Client.Tools.Tool):
                     ans = input(prompt)
                 if ans not in ['y', 'Y']:
                     return False
-            if self.setup['servicemode'] == 'build':
+            if self.args.service_mode == 'build':
                 if entry.get('build', 'true') == 'false':
                     self.logger.debug("Action: Deferring execution of %s due to build mode" % (entry.get('command')))
                     return False

@@ -115,12 +115,10 @@ class TemplateFile:
             if entry.text == '':
                 entry.set('empty', 'true')
         except TemplateError:
-            terror = sys.exc_info()[1]
-            logger.error('Genshi template error: %s' % terror)
+            logger.exception('Genshi template error')
             raise Bcfg2.Server.Plugin.PluginExecutionError
         except AttributeError:
-            err = sys.exc_info()[1]
-            logger.error('Genshi template loading error: %s' % err)
+            logger.exception('Genshi template loading error')
             raise Bcfg2.Server.Plugin.PluginExecutionError
 
 

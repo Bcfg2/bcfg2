@@ -3,9 +3,14 @@
 """This tool verifies that all clients known to the server build without failures"""
 
 import sys
+from sets import Set
+from Bcfg2.metargs import Option
 import Bcfg2.Server.Core
+import Bcfg2.Options
 from nose.core import TestProgram
+from nose.suite import LazySuite
 from unittest import TestCase
+import logging
 
 class ClientTest(TestCase):
     """
@@ -16,14 +21,22 @@ class ClientTest(TestCase):
     """
     __test__ = False # Do not collect
 
-    def __init__(self, bcfg2_core, client):
+    def __init__(self, bcfg2_core, client, ignore_entries=[]):
         TestCase.__init__(self)
         self.bcfg2_core = bcfg2_core
         self.client = client
+        self.ignore_entries = Set(ignore_entries)
 
     def runTest(self):
         config = self.bcfg2_core.BuildConfiguration(self.client)
-        failures = config.xpath('//*[@failure]')
+
+        def skip_failure(failure):
+            return ":".join((failure.tag, failure.attrib.get('name'))) in self.ignore_entries
+        failures = [failure
+            for failure
+            in config.xpath('//*[@failure]')
+            if not skip_failure(failure)]
+
 
         def format_failure(failure):
             return "%s(%s): %s" % (
@@ -42,27 +55,31 @@ class ClientTest(TestCase):
     id = __str__
 
 def main():
-    optinfo = {
-            'configfile': Bcfg2.Options.CFILE,
-            'help': Bcfg2.Options.HELP,
-            'encoding': Bcfg2.Options.ENCODING,
-            'repo': Bcfg2.Options.SERVER_REPOSITORY,
-            'plugins': Bcfg2.Options.SERVER_PLUGINS,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            }
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
-    core = Bcfg2.Server.Core.Core(
-        setup['repo'],
-        setup['plugins'],
-        setup['password'],
-        setup['encoding'],
-        filemonitor='pseudo'
+    Bcfg2.Options.add_options(
+        Option('--ignore-entries', 'bcfg2_test:ignore_entries', nargs='*',
+            default=[],
+            help='Ignore these entries if they fail to build. Format is '
+                 '<EntryType>:<name>'),
+        Bcfg2.Options.VERBOSE,
     )
-    core.fam.handle_events_in_interval(0.1)
-    suite = [ClientTest(core, client) for client in core.metadata.clients]
+    Bcfg2.Server.Core.Core.register_options()
+    Bcfg2.Options.set_help(
+        "Build all clients, and test that there are no failures",
+        "Any unknown options will be passed verbatim to nosetests under the hood"
+    )
 
-    TestProgram(argv=sys.argv[0:1], suite = suite)
+    args, rest = Bcfg2.Options.known_args()
+
+    if args.verbose:
+        logging.basicConfig()
+
+    def run_tests():
+        core = Bcfg2.Server.Core.Core.from_config(args)
+        core.fam.handle_events_in_interval(0.1)
+        for client in core.metadata.clients:
+            yield ClientTest(core, client, args.ignore_entries)
+
+    TestProgram(argv=sys.argv[0:1]+rest, suite=LazySuite(run_tests))
 
 if __name__ == "__main__":
     sys.exit(main())

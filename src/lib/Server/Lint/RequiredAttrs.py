@@ -71,7 +71,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             for rules in self.core.plugins['Rules'].entries.values():
                 xdata = rules.pnode.data
                 for path in xdata.xpath("//Path"):
-                    self.check_entry(path, os.path.join(self.config['repo'],
+                    self.check_entry(path, os.path.join(self.args.repository_path,
                                                         rules.name))
 
     def check_bundles(self):

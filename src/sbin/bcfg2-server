@@ -4,7 +4,6 @@
 __revision__ = '$Revision$'
 
 import logging
-import os.path
 import sys
 
 import Bcfg2.Logger
@@ -17,59 +16,35 @@ logger = logging.getLogger('bcfg2-server')
 
 if __name__ == '__main__':
 
-    OPTINFO = {
-        'configfile': Bcfg2.Options.CFILE,
-        'daemon'    : Bcfg2.Options.DAEMON,
-        'debug'     : Bcfg2.Options.DEBUG,
-        'help'      : Bcfg2.Options.HELP,
-        'verbose'   : Bcfg2.Options.VERBOSE,
-        'to_file'   : Bcfg2.Options.LOGGING_FILE_PATH,
-        }
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.DAEMON,
+        Bcfg2.Options.SERVER_KEY,
+        Bcfg2.Options.SERVER_CERT,
+        Bcfg2.Options.SERVER_CA,
+        Bcfg2.Options.SERVER_LISTEN_ALL,
+        Bcfg2.Options.SERVER_LOCATION,
+        Bcfg2.Options.LOGGING_FILE_PATH,
+        Bcfg2.Options.SERVER_PROTOCOL,
+    )
 
-    OPTINFO.update({'repo'     : Bcfg2.Options.SERVER_REPOSITORY,
-                    'plugins'  : Bcfg2.Options.SERVER_PLUGINS,
-                    'password' : Bcfg2.Options.SERVER_PASSWORD,
-                    'fm'       : Bcfg2.Options.SERVER_FILEMONITOR,
-                    })
-                    
-    OPTINFO.update({'key'      : Bcfg2.Options.SERVER_KEY,
-                    'cert'     : Bcfg2.Options.SERVER_CERT,
-                    'ca'       : Bcfg2.Options.SERVER_CA,
-                    'listen_all' : Bcfg2.Options.SERVER_LISTEN_ALL,
-                    'location' : Bcfg2.Options.SERVER_LOCATION,
-                    'passwd'   : Bcfg2.Options.SERVER_PASSWORD,
-                    'static'   : Bcfg2.Options.SERVER_STATIC,
-                    'encoding' : Bcfg2.Options.ENCODING,
-                    'filelog'  : Bcfg2.Options.LOGGING_FILE_PATH,
-                    'protocol' : Bcfg2.Options.SERVER_PROTOCOL,
-                    })
+    Bcfg2.Server.Core.Core.register_options()
+    args = Bcfg2.Options.args()
 
-    setup = Bcfg2.Options.OptionParser(OPTINFO)
-    setup.parse(sys.argv[1:])
     try:
         # check whether the specified bcfg2.conf exists
-        if not os.path.exists(setup['configfile']):
-            print("Could not read %s" % setup['configfile'])
-            sys.exit(1)
-        Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
-                                      listen_all=setup['listen_all'],
-                                      location=setup['location'],
-                                      daemon = setup['daemon'],
-                                      pidfile_name = setup['daemon'],
-                                      protocol = setup['protocol'],
-                                      to_file=setup['to_file'],
-                                      cfile=setup['configfile'],
+        Bcfg2.Component.run_component(Bcfg2.Server.Core.Core.from_config,
+                                      listen_all=args.listen_all,
+                                      location=args.server_location,
+                                      daemon = args.daemonize,
+                                      pidfile_name = args.daemonize,
+                                      protocol = args.communication_protocol,
+                                      to_file=args.log_path,
                                       register=False,
-                                      cls_kwargs={'repo':setup['repo'],
-                                                  'plugins':setup['plugins'],
-                                                  'password':setup['password'],
-                                                  'encoding':setup['encoding'],
-                                                  'ca':setup['ca'],
-                                                  'filemonitor':setup['fm'],
-                                                  'start_fam_thread':True},
-                                      keyfile=setup['key'],
-                                      certfile=setup['cert'],
-                                      ca=setup['ca'],
+                                      cls_kwargs={'args': args},
+                                      keyfile=args.ssl_key,
+                                      certfile=args.ssl_cert,
+                                      ca=args.ca_cert,
+                                      procname=Bcfg2.Server.Core.Core.implementation,
                                       )
     except CoreInitError:
         msg = sys.exc_info()[1]

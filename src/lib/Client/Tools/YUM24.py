@@ -5,28 +5,16 @@ import copy
 import os.path
 import sys
 import yum
+from Bcfg2.metargs import Option
 import Bcfg2.Client.XML
+import Bcfg2.Options
 import Bcfg2.Client.Tools.RPMng
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
 
 # Fix for python2.3
 try:
     set
 except NameError:
     from sets import Set as set
-
-YAD = True
-CP = ConfigParser.ConfigParser()
-try:
-    if '-C' in sys.argv:
-        CP.read([sys.argv[sys.argv.index('-C') + 1]])
-    else:
-        CP.read(['/etc/bcfg2.conf'])
-    if CP.get('YUMng', 'autodep').lower() == 'false':
-        YAD = False
-except:
-    pass
 
 if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
     raise ImportError
@@ -77,8 +65,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
     __new_gpg_ireq__ = {'Package': ['name'],
                         'Instance': ['version', 'release']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, args, config)
         self.__important__ = self.__important__ + \
                              [entry.get('name') for struct in config \
                               for entry in struct \
@@ -86,6 +74,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                               (entry.get('name').startswith('/etc/yum.d') \
                               or entry.get('name').startswith('/etc/yum.repos.d')) \
                               or entry.get('name') == '/etc/yum.conf']
+        self.YAD = args.YUMng_autodep != 'false'
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
@@ -118,6 +107,15 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     dest[pname].update(data)
                 else:
                     dest[pname] = dict(data)
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.RPMng.RPMng.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.CLIENT_REMOVE,
+            Option('YUMng:autodep', default='true', type=str.lower),
+        )
 
     def VerifyPackage(self, entry, modlist):
         pinned_version = None
@@ -220,8 +218,8 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
-                self.setup.get('remove') == 'packages'):
+            if (self.args.remove_extra == 'all' or \
+                self.args.remove_extra == 'packages'):
                 self.RemovePackages(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -280,7 +278,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
-            if YAD:
+            if self.YAD:
                 pkgtool = "/usr/bin/yum -d0 -y install %s"
             else:
                 pkgtool = "/usr/bin/yum -d0 install %s"
@@ -316,7 +314,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
 
-            if YAD:
+            if self.YAD:
                 pkgtool = "/usr/bin/yum -d0 -y update %s"
             else:
                 pkgtool = "/usr/bin/yum -d0 update %s"
@@ -348,7 +346,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
 
                 self.RefreshPackages()
 
-        if not self.setup['kevlar']:
+        if not self.args.bulletproof:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 states[pkg_entry] = self.VerifyPackage(pkg_entry, \
@@ -366,7 +364,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         """
         self.logger.debug('Running YUMng.RemovePackages()')
 
-        if YAD:
+        if self.YAD:
             pkgtool = "/usr/bin/yum -d0 -y erase %s"
         else:
             pkgtool = "/usr/bin/yum -d0 erase %s"

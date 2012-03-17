@@ -7,14 +7,18 @@ import select
 import sys
 import threading
 import time
+from traceback import format_exc
+
 try:
     import lxml.etree
 except ImportError:
     print("Failed to import lxml dependency. Shutting down server.")
     raise SystemExit(1)
 
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
+from Bcfg2 import Options
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugins.Metadata
 # Compatibility imports
@@ -24,6 +28,7 @@ if sys.hexversion >= 0x03000000:
 
 logger = logging.getLogger('Bcfg2.Server.Core')
 
+PLUGIN_ENTRYPOINT = 'bcfg2.plugin'
 
 def critical_error(operation):
     """Log and err, traceback and return an xmlrpc fault to client."""
@@ -56,6 +61,36 @@ class Core(Component):
     """
     name = 'bcfg2-server'
     implementation = 'bcfg2-server'
+
+    @classmethod
+    def from_config(cls, args):
+        return cls(args.repository_path,
+                   args.server_plugins,
+                   args.password,
+                   args.encoding,
+                   args.config,
+                   args.ca_cert,
+                   args.server_filemonitor,
+                   not args.server_disable_filemonitor)
+
+    @classmethod
+    def register_options(cls):
+        Options.add_options(
+            Options.SERVER_REPOSITORY,
+            Options.SERVER_PLUGINS,
+            Options.SERVER_PASSWORD,
+            Options.ENCODING,
+            Options.SERVER_CA,
+            Options.SERVER_FILEMONITOR,
+            Options.SERVER_DISABLE_FILEMONITOR)
+
+        opts = Options.bootstrap()
+        for plugin in opts.server_plugins:
+            try:
+                plug = load_exactly_one(PLUGIN_ENTRYPOINT, plugin)
+                plug.register_options()
+            except:
+                pass
 
     def __init__(self, repo, plugins, password, encoding,
                  cfile='/etc/bcfg2.conf', ca=None,
@@ -162,15 +197,11 @@ class Core(Component):
     def init_plugins(self, plugin):
         """Handling for the plugins."""
         try:
-            mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                (plugin)).Server.Plugins, plugin)
-        except ImportError:
-            try:
-                mod = __import__(plugin)
-            except:
-                logger.error("Failed to load plugin %s" % (plugin))
-                return
-        plug = getattr(mod, plugin)
+            plug = load_exactly_one(PLUGIN_ENTRYPOINT, plugin)
+        except (MultipleEntriesError, NoEntriesError):
+            logger.exception("Unable to load plugin")
+            return
+
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
                   if conflict in self.plugins]
@@ -240,12 +271,12 @@ class Core(Component):
                 self.Bind(entry, metadata)
             except PluginExecutionError, exc:
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
+                    entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Failed to bind entry: %s %s" % \
                              (entry.tag, entry.get('name')))
             except Exception, exc:
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
+                    entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Unexpected failure in BindStructure: %s %s" \
                              % (entry.tag, entry.get('name')), exc_info=1)
 

@@ -106,12 +106,22 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     __req__ = {'Path': ['name', 'type']}
 
     # grab paranoid options from /etc/bcfg2.conf
-    opts = {'ppath': Bcfg2.Options.PARANOID_PATH,
-            'max_copies': Bcfg2.Options.PARANOID_MAX_COPIES}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse([])
-    ppath = setup['ppath']
-    max_copies = setup['max_copies']
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, logger, args, config)
+        self.ppath = args.paranoid_path
+        self.max_copies = args.paranoid_max_copies
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.Tool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.PARANOID_PATH,
+            Bcfg2.Options.PARANOID_MAX_COPIES,
+            Bcfg2.Options.ENCODING,
+            Bcfg2.Options.INTERACTIVE,
+            Bcfg2.Options.CLIENT_PARANOID,
+        )
+
 
     def canInstall(self, entry):
         """Check if entry is complete for installation."""
@@ -458,7 +468,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             tempdata = entry.text
             if type(tempdata) == unicode:
                 try:
-                    tempdata = tempdata.encode(self.setup['encoding'])
+                    tempdata = tempdata.encode(self.args.encoding)
                 except UnicodeEncodeError:
                     e = sys.exc_info()[1]
                     self.logger.error("Error encoding file %s:\n %s" % \
@@ -498,7 +508,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 different = content != tempdata
         
         if different:
-            if self.setup['interactive']:
+            if self.args.interactive:
                 prompt = [entry.get('qtext', '')]
                 if not tbin and content is None:
                     # it's possible that we figured out the files are
@@ -514,7 +524,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         self.logger.error("Failed to read %s: %s" %
                                           (err.filename, err))
                         return False
-                if tbin or not isString(content, self.setup['encoding']):
+                if tbin or not isString(content, self.args.encoding):
                     # don't compute diffs if the file is binary
                     prompt.append('Binary file, no printable diff')
                 else:
@@ -524,7 +534,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     if diff:
                         udiff = '\n'.join(diff)
                         try:
-                            prompt.append(udiff.decode(self.setup['encoding']))
+                            prompt.append(udiff.decode(self.args.encoding))
                         except UnicodeDecodeError:
                             prompt.append("Binary file, no printable diff")
                     else:
@@ -549,7 +559,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                           (err.filename, err))
                         return False
 
-                if tbin or not isString(content, self.setup['encoding']):
+                if tbin or not isString(content, self.args.encoding):
                     # don't compute diffs if the file is binary
                     entry.set('current_bfile', binascii.b2a_base64(content))
                 else:
@@ -558,9 +568,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     if diff:
                         entry.set("current_bdiff",
                                   binascii.b2a_base64("\n".join(diff)))
-                    elif not tbin and isString(content, self.setup['encoding']):
+                    elif not tbin and isString(content, self.args.encoding):
                         entry.set('current_bfile', binascii.b2a_base64(content))
-        elif permissionStatus == False and self.setup['interactive']:
+        elif permissionStatus == False and self.args.interactive:
             prompt = [entry.get('qtext', '')]
             prompt.append("Install %s %s: (y/N): " % (entry.tag,
                                                       entry.get('name')))
@@ -602,7 +612,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
         # If we get here, then the parent directory should exist
         if (entry.get("paranoid", False) in ['true', 'True']) and \
-           self.setup.get("paranoid", False) and not \
+           self.args.paranoid and not \
            (entry.get('current_exists', 'true') == 'false'):
             bkupnam = entry.get('name').replace('/', '_')
             # current list of backups for this file
@@ -646,7 +656,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 filedata = ''
             else:
                 if type(entry.text) == unicode:
-                    filedata = entry.text.encode(self.setup['encoding'])
+                    filedata = entry.text.encode(self.args.encoding)
                 else:
                     filedata = entry.text
             newfile.write(filedata)

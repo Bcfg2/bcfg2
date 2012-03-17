@@ -23,16 +23,17 @@ logger = logging.getLogger()
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
-def run_component(component_cls, listen_all, location, daemon, pidfile_name,
-                  to_file, cfile, argv=None, register=True,
-                  state_name=False, cls_kwargs={}, extra_getopt='', time_out=10,
-                  protocol='xmlrpc/ssl', certfile=None, keyfile=None, ca=None):
+def run_component(component_cstr, listen_all, location, daemon, pidfile_name,
+                  to_file, argv=None, register=True,
+                  state_name=False, cls_args=[], cls_kwargs={}, extra_getopt='', time_out=10,
+                  protocol='xmlrpc/ssl', certfile=None, keyfile=None, ca=None,
+                  procname='generic'):
 
     # default settings
     level = logging.INFO
 
     logging.getLogger().setLevel(level)
-    Bcfg2.Logger.setup_logging(component_cls.implementation,
+    Bcfg2.Logger.setup_logging(procname,
                                to_console=True,
                                to_syslog=True,
                                to_file=to_file,
@@ -60,7 +61,7 @@ def run_component(component_cls, listen_all, location, daemon, pidfile_name,
         fprint(os.getpid(), pidfile)
         pidfile.close()
 
-    component = component_cls(cfile=cfile, **cls_kwargs)
+    component = component_cstr(*cls_args, **cls_kwargs)
     up = urlparse(location)
     port = tuple(up[1].split(':'))
     port = (port[0], int(port[1]))

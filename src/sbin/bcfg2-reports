@@ -4,13 +4,21 @@ __revision__ = '$Revision$'
 
 import os
 import sys
+import logging
+from Bcfg2.metargs import Option, MissingConfigArgumentError
+import Bcfg2.Options
 
 try:
     import Bcfg2.Server.Reports.settings
-except ConfigParser.NoSectionError:
-    print("Your bcfg2.conf is currently missing the statistics section which "
+except MissingConfigArgumentError:
+    logging.exception("Your bcfg2.conf is currently missing the statistics section which "
           "is necessary for the reporting interface. Please see bcfg2.conf(5) "
           "for more details.")
+    try:
+        # Parse arguments here to display help if it's available
+        Bcfg2.Options.args()
+    except:
+        pass
     sys.exit(1)
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
@@ -22,45 +30,9 @@ sys.path.pop()
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
 from Bcfg2.Server.Reports.reports.models import Client
-import getopt
 import datetime
-import fileinput
 
-usage = """Usage: bcfg2-reports [option] ...
-
-Options and arguments (and corresponding environment variables):
--a                        : shows all hosts, including expired hosts
--b NAME                   : single-host mode - shows bad entries from the
-                            current interaction of NAME
--c                        : shows only clean hosts
--d                        : shows only dirty hosts
--e NAME                   : single-host mode - shows extra entries from the
-                            current interaction of NAME
--h                        : shows help and usage info about bcfg2-reports
--m NAME                   : single-host mode - shows modified entries from the
-                            current interaction of NAME
--s NAME                   : single-host mode - shows bad, modified, and extra
-                            entries from the current interaction of NAME
--t NAME                   : single-host mode - shows total number of managed and
-                            good entries from the current interaction of NAME
--x NAME                   : toggles expired/unexpired state of NAME
---badentry=KIND,NAME      : shows only hosts whose current interaction has bad
-                            entries in of KIND kind and NAME name; if a single
-                            argument ARG1 is given, then KIND,NAME pairs will be
-                            read from a file of name ARG1
---modifiedentry=KIND,NAME : shows only hosts whose current interaction has
-                            modified entries in of KIND kind and NAME name; if a
-                            single argument ARG1 is given, then KIND,NAME pairs
-                            will be read from a file of name ARG1
---extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
-                            entries in of KIND kind and NAME name; if a single
-                            argument ARG1 is given, then KIND,NAME pairs will be
-                            read from a file of name ARG1
---fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
-                            (name,time,state)
---sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,... (name,time,state)
---stale                   : shows hosts which haven't run in the last 24 hours
-"""
+FIELDS = ['name', 'state', 'time', 'total', 'good', 'bad']
 
 def timecompare(client1, client2):
     """Compares two clients by their timestamps."""
@@ -166,7 +138,65 @@ def print_entry(item, max_name):
     fdata = item.entry.kind + ":" + item.entry.name
     display = fmt % (fdata)
     print(display)
-        
+
+def print_totals(c_inst):
+    managed = c_inst.current_interaction.totalcount
+    good = c_inst.current_interaction.goodcount
+    print("Total managed entries: %d (good: %d)" % (managed, good))
+
+def print_bad(c_inst):
+    baditems = c_inst.current_interaction.bad()
+
+    if len(baditems) > 0:
+        print("Bad Entries:")
+        max_name = -1
+        for item in baditems:
+            if len(item.entry.name) > max_name:
+                max_name = len(item.entry.name)
+        for item in baditems:
+            print_entry(item, max_name)
+
+def print_modified(c_inst):
+    modifieditems = c_inst.current_interaction.modified()
+
+    if len(modifieditems) > 0 and ('-m' in args or '-s' in args):
+        print "Modified Entries:"
+        max_name = -1
+        for item in modifieditems:
+            if len(item.entry.name) > max_name:
+                max_name = len(item.entry.name)
+        for item in modifieditems:
+            print_entry(item, max_name)
+
+def print_extra(c_inst):
+    extraitems = c_inst.current_interaction.extra()
+
+    if len(extraitems) > 0:
+        print("Extra Entries:")
+        max_name = -1
+        for item in extraitems:
+            if len(item.entry.name) > max_name:
+                max_name = len(item.entry.name)
+        for item in extraitems:
+            print_entry(item, max_name)
+
+def select_clients(entry_types, clients, itemgetter):
+    """
+    Returns a list of all clients that match one of the entry_types
+    (possible matches are selected using itemgetter)
+    """
+    entrydict = {}
+    results = []
+    for kind, name in entry_types:
+        for client in clients:
+            for item in itemgetter(client):
+                if item.entry.name == name and item.entry.kind == kind:
+                    results.append(client)
+                    entrydict.setdefault(client, []).append(name)
+                    break
+
+    return results, entrydict
+
 fields = ""
 sort = ""
 badentry = ""
@@ -175,50 +205,103 @@ extraentry = ""
 expire = ""
 singlehost = ""
 
+usage = """Usage: bcfg2-reports [option] ...
+
+Options and arguments (and corresponding environment variables):
+-a                        : shows all hosts, including expired hosts
+-b NAME                   : single-host mode - shows bad entries from the
+                            current interaction of NAME
+-c                        : shows only clean hosts
+-d                        : shows only dirty hosts
+-e NAME                   : single-host mode - shows extra entries from the
+                            current interaction of NAME
+-h                        : shows help and usage info about bcfg2-reports
+-m NAME                   : single-host mode - shows modified entries from the
+                            current interaction of NAME
+-s NAME                   : single-host mode - shows bad, modified, and extra
+                            entries from the current interaction of NAME
+-t NAME                   : single-host mode - shows total number of managed and
+                            good entries from the current interaction of NAME
+-x NAME                   : toggles expired/unexpired state of NAME
+--badentry=KIND,NAME      : shows only hosts whose current interaction has bad
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--modifiedentry=KIND,NAME : shows only hosts whose current interaction has
+                            modified entries in of KIND kind and NAME name; if a
+                            single argument ARG1 is given, then KIND,NAME pairs
+                            will be read from a file of name ARG1
+--extraentry=KIND,NAME    : shows only hosts whose current interaction has extra
+                            entries in of KIND kind and NAME name; if a single
+                            argument ARG1 is given, then KIND,NAME pairs will be
+                            read from a file of name ARG1
+--fields=ARG1,ARG2,...    : only displays the fields ARG1,ARG2,...
+                            (name,time,state)
+--sort=ARG1,ARG2,...      : sorts output on ARG1,ARG2,... (name,time,state)
+--stale                   : shows hosts which haven't run in the last 24 hours
+"""
+
+def entry_generator(val):
+    if ',' in val:
+        yield val.split(',')
+    else:
+        filedata = open(val)
+        for line in filedata:
+            yield line.strip().split(',')
+
+Bcfg2.Options.add_options(
+    Option('-a', '--all', help='shows all hosts, including expired hosts', action='store_true'),
+    Option('-b', '--bad-entries', metavar='NAME',
+        help='single-host mode - shows bad entries from the current interaction of NAME'),
+    Option('--only-clean', action='store_true', help='shows only clean hosts'),
+    Option('-d', '--only-dirty', action='store_true', help='shows only dirty hosts'),
+    Option('-e', '--extra-entries', metavar='NAME',
+        help='single-host mode - shows extra entries from the current interaction of NAME'),
+    Option('-m', '--modified-entries', metavar='NAME',
+        help='single-host mode - shows modified entries from the current interaction of NAME'),
+    Option('-s', '--single-host', metavar='NAME',
+        help='single-host mode - shows bad, modified, and extra entries from the current interaction of NAME'),
+    Option('-t', '--total-entries', metavar='NAME',
+        help='single-host mode - shows total number of managed and good entries from the current interaction of NAME'),
+    Option('-x', '--expired', metavar='NAME',
+        help='toggles expired/unexpired state of NAME'),
+    Option('--badentry', metavar='KIND,NAME', type=entry_generator,
+        help=('shows only hosts whose current interaction has badentries in of '
+              'KIND kind and NAME name; if a single argument ARG1 is given, then '
+              'KIND,NAME pairs will be read from a file of name ARG1')),
+    Option('--modifiedentry', metavar='KIND,NAME', type=entry_generator,
+        help=('shows only hosts whose current interaction has modified entries '
+              'in of KIND kind and NAME name; if a single argument ARG1 is given, '
+              'then KIND,NAME pairs will be read from a file of name ARG1')),
+    Option('--extraentry', metavar='KIND,NAME', type=entry_generator,
+        help=('shows only hosts whose current interaction has extra entries '
+              'in of KIND kind and NAME name; if a single argument ARG1 is '
+              'given, then KIND,NAME pairs will be read from a file of name ARG1')),
+    Option('--fields', nargs='+', metavar='ARG', default=['name', 'time', 'state'],
+        choices=FIELDS,
+        help='only displays the fields ARG1, ARG2,...'),
+    Option('--sort', nargs='+', metavar='ARG', default=['name', 'time', 'state'],
+        choices=FIELDS,
+        help='sorts output on ARG1, ARG2,...'),
+    Option('--stale', help="shows hosts which haven't run in the last 24 hours"),
+)
+
 c_list = Client.objects.all()
 
 result = list()
 entrydict = dict()
 
-args = sys.argv[1:]
-try:
-    opts, pargs = getopt.getopt(args, 'ab:cde:hm:s:t:x:',
-                                ['stale',
-                                 'sort=',
-                                 'fields=',
-                                 'badentry=',
-                                 'modifiedentry=',
-                                 'extraentry='])
-except getopt.GetoptError:
-    msg = sys.exc_info()[1]
-    print(msg)
-    print(usage)
-    sys.exit(2)
+args = Bcfg2.Options.args()
 
-for option in opts:
-    if len(option) > 0:
-        if option[0] == '--fields':
-            fields = option[1]
-        if option[0] == '--sort':
-            sort = option[1]
-        if option[0] == '--badentry':
-            badentry = option[1]
-        if option[0] == '--modifiedentry':
-            modifiedentry = option[1]
-        if option[0] == '--extraentry':
-            extraentry = option[1]
-        if option[0] == '-x':
-            expire = option[1]
-        if option[0] == '-s' or \
-           option[0] == '-t' or \
-           option[0] == '-b' or \
-           option[0] == '-m' or \
-           option[0] == '-e':
-            singlehost = option[1]
+singlehost = (args.single_host or
+              args.total_entries or
+              args.modified_entries or
+              args.bad_entries or
+              args.extra_entries)
 
-if expire != "":
+if args.expired is not None:
     for c_inst in c_list:
-        if expire == c_inst.name:
+        if args.expired == c_inst.name:
             if c_inst.expiration == None:
                 c_inst.expiration = datetime.datetime.now()
                 print("Host expired.")
@@ -227,170 +310,59 @@ if expire != "":
                 print("Host un-expired.")
             c_inst.save()
 
-elif '-h' in args:
-    print(usage)
-elif singlehost != "":
+elif singlehost:
     for c_inst in c_list:
         if singlehost == c_inst.name:
-            if '-t' in args:
-                managed = c_inst.current_interaction.totalcount
-                good = c_inst.current_interaction.goodcount
-                print("Total managed entries: %d (good: %d)" % (managed, good))
-            baditems = c_inst.current_interaction.bad()
-            if len(baditems) > 0 and ('-b' in args or '-s' in args):
-                print("Bad Entries:")
-                max_name = -1
-                for item in baditems:
-                    if len(item.entry.name) > max_name:
-                        max_name = len(item.entry.name)
-                for item in baditems:
-                    print_entry(item, max_name)
-            modifieditems = c_inst.current_interaction.modified()
-            if len(modifieditems) > 0 and ('-m' in args or '-s' in args):
-                print "Modified Entries:"
-                max_name = -1
-                for item in modifieditems:
-                    if len(item.entry.name) > max_name:
-                        max_name = len(item.entry.name)
-                for item in modifieditems:
-                    print_entry(item, max_name)
-            extraitems = c_inst.current_interaction.extra()
-            if len(extraitems) > 0 and ('-e' in args or '-s' in args):
-                print("Extra Entries:")
-                max_name = -1
-                for item in extraitems:
-                    if len(item.entry.name) > max_name:
-                        max_name = len(item.entry.name)
-                for item in extraitems:
-                    print_entry(item, max_name)
-                
+            if args.total_entries:
+                print_totals(c_inst)
+            if args.bad_entries or args.single_host:
+                print_bad(c_inst)
+            if args.modified_entries or args.single_host:
+                print_modified(c_inst)
+            if args.extra_entries or args.single_host:
+                print_extra(c_inst)
 
 else:
-    if fields == "":
-        fields = ['name', 'time', 'state']
-    else:
-        fields = fields.split(',')
-
-    if sort != "":
-        sort = sort.split(',')
-
-    if badentry != "":
-        badentry = badentry.split(',')
-
-    if modifiedentry != "":
-        modifiedentry = modifiedentry.split(',')
-
-    if extraentry != "":
-        extraentry = extraentry.split(',')
-    
     # stale hosts
-    if '--stale' in args:
-        for c_inst in c_list:
-            if c_inst.current_interaction.isstale():
-                result.append(c_inst)
+    if args.stale:
+        result.extend(c_inst for c_inst in c_list
+                      if c_inst.current_interaction.isstale())
     # clean hosts
-    elif '-c' in args:    
-        for c_inst in c_list:
-            if c_inst.current_interaction.isclean():
-                result.append(c_inst)
+    elif args.only_clean:
+        result.extend(c_inst for c_inst in c_list
+                       if c_inst.current_interaction.isclean())
     # dirty hosts
-    elif '-d' in args:    
-        for c_inst in c_list:
-            if not c_inst.current_interaction.isclean():
-                result.append(c_inst)
+    elif args.only_dirty:
+        result.extend(c_inst for c_inst in c_list
+                      if not c_inst.current_interaction.isclean())
 
-    elif badentry != "":
-        if len(badentry) == 1:
-            fileread = fileinput.input(badentry[0])
-            try:
-                for line in fileread:
-                    badentry = line.strip().split(',')
-                    for c_inst in c_list:
-                        baditems = c_inst.current_interaction.bad()
-                        for item in baditems:
-                            if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
-                                result.append(c_inst)
-                                if c_inst in entrydict:
-                                    entrydict.get(c_inst).append(badentry[1])
-                                else:
-                                    entrydict[c_inst] = [badentry[1]]
-                                break
-            except IOError:
-                e = sys.exc_info()[1]
-                print("Cannot read %s: %s" % (e.filename, e.strerror))
-        else:
-            for c_inst in c_list:
-                baditems = c_inst.current_interaction.bad()
-                for item in baditems:
-                    if item.entry.name == badentry[1] and item.entry.kind == badentry[0]:
-                        result.append(c_inst)
-                        break
-    elif modifiedentry != "":
-        if len(modifiedentry) == 1:
-            fileread = fileinput.input(modifiedentry[0])
-            try:
-                for line in fileread:
-                    modifiedentry = line.strip().split(',')
-                    for c_inst in c_list:
-                        modifieditems = c_inst.current_interaction.modified()
-                        for item in modifieditems:
-                            if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
-                                result.append(c_inst)
-                                if c_inst in entrydict:
-                                    entrydict.get(c_inst).append(modifiedentry[1])
-                                else:
-                                    entrydict[c_inst] = [modifiedentry[1]]
-                                break
-            except IOError:
-                e = sys.exc_info()[1]
-                print("Cannot read %s: %s" % (e.filename, e.strerror))
-        else:
-            for c_inst in c_list:
-                modifieditems = c_inst.current_interaction.modified()
-                for item in modifieditems:
-                    if item.entry.name == modifiedentry[1] and item.entry.kind == modifiedentry[0]:
-                        result.append(c_inst)
-                        break
-    elif extraentry != "":
-        if len(extraentry) == 1:
-            fileread = fileinput.input(extraentry[0])
-            try:
-                for line in fileread:
-                    extraentry = line.strip().split(',')
-                    for c_inst in c_list:
-                        extraitems = c_inst.current_interaction.extra()
-                        for item in extraitems:
-                            if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
-                                result.append(c_inst)
-                                if c_inst in entrydict:
-                                    entrydict.get(c_inst).append(extraentry[1])
-                                else:
-                                    entrydict[c_inst] = [extraentry[1]]
-                                break
-            except IOError:
-                e = sys.exc_info()[1]
-                print("Cannot read %s: %s" % (e.filename, e.strerror))
-        else:
-            for c_inst in c_list:
-                extraitems = c_inst.current_interaction.extra()
-                for item in extraitems:
-                    if item.entry.name == extraentry[1] and item.entry.kind == extraentry[0]:
-                        result.append(c_inst)
-                        break
+    elif args.badentry is not None:
+        result, entrydict = select_clients(
+            args.badentry,
+            c_list,
+            lambda c: c.current_interaction.bad()
+        )
+    elif args.modifiedentry is not None:
+        result, entrydict = select_clients(
+            args.modifiedentry,
+            c_list,
+            lambda c: c.current_interaction.modified()
+        )
+    elif args.extraentry is not None:
+        result, entrydict = select_clients(
+            args.extraentry,
+            c_list,
+            lambda c: c.current_interaction.extra()
+        )
 
     else:
-        for c_inst in c_list:
-            result.append(c_inst)
-    max_name = -1
-    if 'name' in fields:
-        for c_inst in result:
-            if len(c_inst.name) > max_name:
-                max_name = len(c_inst.name)
+        result.extend(c_list)
 
-    if sort != "":
-        result.sort(lambda x, y: crit_compare(sort, x, y))
-    
-    if fields != "":
+    if args.sort:
+        result.sort(lambda x, y: crit_compare(args.sort, x, y))
+
+    if args.fields:
+        max_name = max(len(c_inst.name) for c_inst in result)
         for c_inst in result:
-            if '-a' in args or c_inst.expiration == None:
-                print_fields(fields, c_inst, max_name, entrydict)
+            if args.all or c_inst.expiration == None:
+                print_fields(args.fields, c_inst, max_name, entrydict)

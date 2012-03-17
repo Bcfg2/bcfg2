@@ -5,9 +5,9 @@ __revision__ = '$Revision$'
 import os.path
 import rpm
 import rpmtools
+from Bcfg2.metargs import Option
 import Bcfg2.Client.Tools
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+import Bcfg2.Options
 
 # Fix for python2.3
 try:
@@ -40,8 +40,8 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
 
         # create a global ignore list used when ignoring particular
         # files during package verification
@@ -52,89 +52,91 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.modlists = {}
         self.gpg_keyids = self.getinstalledgpg()
 
-        # Process thee RPMng section from the config file.
-        RPMng_CP = ConfigParser.ConfigParser()
-        RPMng_CP.read(self.setup.get('setup'))
 
-        # installonlypackages
-        self.installOnlyPkgs = []
-        if RPMng_CP.has_option(self.name, 'installonlypackages'):
-            for i in RPMng_CP.get(self.name, 'installonlypackages').split(','):
-                self.installOnlyPkgs.append(i.strip())
-        if self.installOnlyPkgs == []:
-            self.installOnlyPkgs = ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
-                               'kernel-modules', 'kernel-debug', 'kernel-unsupported',
-                               'kernel-source', 'kernel-devel', 'kernel-default',
-                               'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
-                               'gpg-pubkey']
+        def as_lower(val):
+            return val.lower()
+
+        Bcfg2.Options.add_option(
+            Option(self.name + ':installonlypackages', nargs='*',
+                   dest='install_only_packages',
+                   default=['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp',
+                            'kernel-modules', 'kernel-debug', 'kernel-unsupported',
+                            'kernel-source', 'kernel-devel', 'kernel-default',
+                            'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen',
+                            'gpg-pubkey']),
+            Option(self.name + ':erase_flags', nargs='*', default=['allmatches'],
+                   dest='erase_flags'),
+            Option(self.name + ':pkg_checks', type=as_lower, default='true',
+                   dest='pkg_checks'),
+            Option(self.name + ':pkg_verify', type=as_lower, default='true',
+                   dest='pkg_verify'),
+            Option(self.name + ':installed_action', type=as_lower, default='install',
+                   dest='installed_action'),
+            Option(self.name + ':version_fail_action', type=as_lower, default='upgrade',
+                   dest='version_fail_action'),
+            Option(self.name + ':verify_flags', type=as_lower, nargs='*', default=[],
+                   dest='verify_flags'),
+        )
+
+        # verify_fail_action
+        if self.name == "RPMng":
+            Bcfg2.Options.add_option(
+                Option(self.name + ':verify_fail_action', type=as_lower,
+                       default='reinstall', dest='verify_fail_action')
+            )
+
+        rpm_args = Bcfg2.Options.bootstrap()
+
+        self.installOnlyPkgs = rpm_args.install_only_packages
         if 'gpg-pubkey' not in self.installOnlyPkgs:
             self.installOnlyPkgs.append('gpg-pubkey')
         self.logger.debug('installOnlyPackages = %s' % self.installOnlyPkgs)
 
-        # erase_flags
-        self.erase_flags = []
-        if RPMng_CP.has_option(self.name, 'erase_flags'):
-            for i in RPMng_CP.get(self.name, 'erase_flags').split(','):
-                self.erase_flags.append(i.strip())
-        if self.erase_flags == []:
-            self.erase_flags = ['allmatches']
+        self.erase_flags = rpm_args.erase_flags
         self.logger.debug('erase_flags = %s' % self.erase_flags)
 
-        # pkg_checks
-        if RPMng_CP.has_option(self.name, 'pkg_checks'):
-            self.pkg_checks = RPMng_CP.get(self.name, 'pkg_checks').lower()
-        else:
-            self.pkg_checks = 'true'
+        self.pkg_checks = rpm_args.pkg_checks
         self.logger.debug('pkg_checks = %s' % self.pkg_checks)
 
-        # pkg_verify
-        if RPMng_CP.has_option(self.name, 'pkg_verify'):
-            self.pkg_verify = RPMng_CP.get(self.name, 'pkg_verify').lower()
-        else:
-            self.pkg_verify = 'true'
+        self.pkg_verify = rpm_args.pkg_verify
         self.logger.debug('pkg_verify = %s' % self.pkg_verify)
 
-        # installed_action
-        if RPMng_CP.has_option(self.name, 'installed_action'):
-            self.installed_action = RPMng_CP.get(self.name, 'installed_action').lower()
-        else:
-            self.installed_action = 'install'
+        self.installed_action = rpm_args.installed_actions
         self.logger.debug('installed_action = %s' % self.installed_action)
 
-        # version_fail_action
-        if RPMng_CP.has_option(self.name, 'version_fail_action'):
-            self.version_fail_action = RPMng_CP.get(self.name, 'version_fail_action').lower()
-        else:
-            self.version_fail_action = 'upgrade'
+        self.version_fail_action = rpm_args.version_fail_action
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
 
-        # verify_fail_action
-        if self.name == "RPMng":
-            if RPMng_CP.has_option(self.name, 'verify_fail_action'):
-                self.verify_fail_action = RPMng_CP.get(self.name, 'verify_fail_action').lower()
-            else:
-                self.verify_fail_action = 'reinstall'
-        else: # yum can't reinstall packages.
+        if hasattr(rpm_args, 'verify_fail_action'):
+            self.verify_fail_action = rpm_args.verify_fail_action
+        else:
             self.verify_fail_action = 'none'
         self.logger.debug('verify_fail_action = %s' % self.verify_fail_action)
 
-        # version_fail_action
-        if RPMng_CP.has_option(self.name, 'verify_flags'):
-            self.verify_flags = RPMng_CP.get(self.name, 'verify_flags').lower().split(',')
-        else:
-            self.verify_flags = []
-        if '' in self.verify_flags:
-            self.verify_flags.remove('')
+        self.verify_flags = rpm_args.verify_flags
         self.logger.debug('version_fail_action = %s' % self.version_fail_action)
+
         # Force a re- prelink of all packages if prelink exists.
         # Many, if not most package verifies can be caused by out of date prelinking.
-        if os.path.isfile('/usr/sbin/prelink') and not self.setup['dryrun']:
+        if os.path.isfile('/usr/sbin/prelink') and not self.args.dryrun:
             cmdrc, output = self.cmd.run('/usr/sbin/prelink -a -mR')
             if cmdrc == 0:
                 self.logger.debug('Pre-emptive prelink succeeded')
             else:
                 # FIXME : this is dumb - what if the output is huge?
                 self.logger.error('Pre-emptive prelink failed: %s' % output)
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.PkgTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_DRYRUN,
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.DEBUG,
+            Bcfg2.Options.CLIENT_QUICK,
+            Bcfg2.Options.CLIENT_REMOVE,
+            Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+        )
 
 
     def RefreshPackages(self):
@@ -160,7 +162,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         refresh_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
         for nevra in rpmtools.rpmpackagelist(refresh_ts):
             self.installed.setdefault(nevra['name'], []).append(nevra)
-        if self.setup['debug']:
+        if self.args.debug:
             print("The following package instances are installed:")
             for name, instances in list(self.installed.items()):
                 self.logger.debug("    " + name)
@@ -262,7 +264,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                               pkg.get('gpgkeyid', '')))
                                         self.logger.debug('         Disabling signature check.')
 
-                                    if self.setup.get('quick', False):
+                                    if self.args.disable_checksums:
                                         if rpmtools.prelink_exists:
                                             flags += ['nomd5', 'nosize']
                                         else:
@@ -321,7 +323,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                             pkg.get('gpgkeyid', '')))
                                             self.logger.info('         Disabling signature check.')
 
-                                        if self.setup.get('quick', False):
+                                        if self.args.disable_checksum:
                                             if rpmtools.prelink_exists:
                                                 flags += ['nomd5', 'nosize']
                                             else:
@@ -356,7 +358,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     instance_fail = False
                     # Dump the rpm verify results.
                     #****Write something to format this nicely.*****
-                    if self.setup['debug'] and self.instance_status[inst].get('verify', None):
+                    if self.args.debug and self.instance_status[inst].get('verify', None):
                         self.logger.debug(self.instance_status[inst]['verify'])
 
                     self.instance_status[inst]['verify_fail'] = False
@@ -614,9 +616,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
-                self.setup.get('remove') == 'packages') and\
-                not self.setup.get('dryrun'):
+            if (self.args.remove_extra == 'all' or \
+                self.args.remove_extra == 'packages') and\
+                not self.args.dryrun:
                 self.RemovePackages(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -729,7 +731,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
 
-        if not self.setup['kevlar']:
+        if not self.args.bulletproof:
             for pkg_entry in packages:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
                 states[pkg_entry] = self.VerifyPackage(pkg_entry, \
@@ -899,7 +901,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
             if name not in packages:
                 extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
-                    if self.setup['extra']:
+                    if self.args.extra_display:
                         self.logger.info("Extra Package %s %s." % \
                                          (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \

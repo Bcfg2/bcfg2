@@ -11,18 +11,6 @@ import os
 import Bcfg2.Client.Tools
 import Bcfg2.Options
 
-# Options for tool locations
-opts = {'install_path': Bcfg2.Options.CLIENT_APT_TOOLS_INSTALL_PATH,
-        'var_path': Bcfg2.Options.CLIENT_APT_TOOLS_VAR_PATH,
-        'etc_path': Bcfg2.Options.CLIENT_SYSTEM_ETC_PATH}
-setup = Bcfg2.Options.OptionParser(opts)
-setup.parse([])
-install_path = setup['install_path']
-var_path = setup['var_path']
-etc_path = setup['etc_path']
-DEBSUMS = '%s/bin/debsums' % install_path
-APTGET = '%s/bin/apt-get' % install_path
-DPKG = '%s/bin/dpkg' % install_path
 
 class APT(Bcfg2.Client.Tools.Tool):
     """The Debian toolset implements package and service operations and inherits
@@ -30,23 +18,38 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     """
     name = 'APT'
-    __execs__ = [DEBSUMS, APTGET, DPKG]
     __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
     __req__ = {'Package': ['name', 'version'], 'Path': ['type']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    # Options for tool locations
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.CLIENT_APT_TOOLS_INSTALL_PATH,
+        Bcfg2.Options.CLIENT_APT_TOOLS_VAR_PATH,
+        Bcfg2.Options.CLIENT_SYSTEM_ETC_PATH
+    )
+    args = Bcfg2.Options.bootstrap()
+    install_path = args.APT_install_path
+    var_path = args.APT_var_path
+    etc_path = args.APT_etc_path
+    debsums = '%s/bin/debsums' % install_path
+    aptget = '%s/bin/apt-get' % install_path
+    dpkg = '%s/bin/dpkg' % install_path
+
+    __execs__ = [debsums, aptget, dpkg]
+
+    def __init__(self, logger, args, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, logger, args, config)
         path_entries = os.environ['PATH'].split(':')
         for reqdir in ['/sbin', '/usr/sbin']:
             if reqdir not in path_entries:
                 os.environ['PATH'] = os.environ['PATH'] + ':' + reqdir
-        self.pkgcmd = '%s ' % APTGET + \
+        self.pkgcmd = '%s ' % self.aptget + \
                       '-o DPkg::Options::=--force-overwrite ' + \
                       '-o DPkg::Options::=--force-confold ' + \
                       '-o DPkg::Options::=--force-confmiss ' + \
                       '--reinstall ' + \
                       '--force-yes '
-        if not self.setup['debug']:
+        if not self.args.debug:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
         self.ignores = [entry.get('name') for struct in config \
@@ -54,25 +57,24 @@ class APT(Bcfg2.Client.Tools.Tool):
                         if entry.tag == 'Path' and \
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
-                             ["%s/cache/debconf/config.dat" % var_path,
-                              "%s/cache/debconf/templates.dat" % var_path,
+                             ["%s/cache/debconf/config.dat" % self.var_path,
+                              "%s/cache/debconf/templates.dat" % self.var_path,
                               '/etc/passwd', '/etc/group',
-                              '%s/apt/apt.conf' % etc_path,
-                              '%s/dpkg/dpkg.cfg' % etc_path] + \
+                              '%s/apt/apt.conf' % self.etc_path,
+                              '%s/dpkg/dpkg.cfg' % self.etc_path] + \
                              [entry.get('name') for struct in config for entry in struct \
                               if entry.tag == 'Path' and \
-                              entry.get('name').startswith('%s/apt/sources.list' % etc_path)]
+                              entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
         self.nonexistent = [entry.get('name') for struct in config for entry in struct \
                               if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
-        if self.setup['kevlar'] and not self.setup['dryrun']:
-            self.cmd.run("%s --force-confold --configure --pending" % DPKG)
-            self.cmd.run("%s clean" % APTGET)
+        if self.args.bulletproof and not self.args.dryrun:
+            self.cmd.run("%s --force-confold --configure --pending" % self.dpkg)
+            self.cmd.run("%s clean" % self.aptget)
             try:
                 self.pkg_cache = apt.cache.Cache()
-            except SystemError:
-                e = sys.exc_info()[1]
+            except SystemError, e:
                 self.logger.info("Failed to initialize APT cache: %s" % e)
                 raise Bcfg2.Client.Tools.toolInstantiationError
             self.pkg_cache.update()
@@ -81,6 +83,16 @@ class APT(Bcfg2.Client.Tools.Tool):
             self._newapi = True
         else:
             self._newapi = False
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.Tool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.DEBUG,
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.CLIENT_DRYRUN,
+        )
+
 
     def FindExtra(self):
         """Find extra packages."""
@@ -96,7 +108,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                                          for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
-        output = self.cmd.run("%s -as %s" % (DEBSUMS, entry.get('name')))[1]
+        output = self.cmd.run("%s -as %s" % (self.debsums, entry.get('name')))[1]
         if len(output) == 1 and "no md5sums for" in output[0]:
             self.logger.info("Package %s has no md5sums. Cannot verify" % \
                              entry.get('name'))
@@ -188,7 +200,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             return False
         else:
             # version matches
-            if not self.setup['quick'] and entry.get('verify', 'true') == 'true' \
+            if not self.args.disable_checksum and entry.get('verify', 'true') == 'true' \
                    and checksums:
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums

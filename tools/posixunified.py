@@ -3,7 +3,6 @@
 from copy import deepcopy
 import lxml.etree
 import os
-import sys
 
 import Bcfg2.Options
 
@@ -17,12 +16,11 @@ NOTE: This script takes a conservative approach when it comes to
 """
 
 if __name__ == '__main__':
-    opts = {
-               'repo': Bcfg2.Options.SERVER_REPOSITORY,
-           }
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.SERVER_REPOSITORY
+    )
+    args = Bcfg2.Options.args()
+    repo = args.repository_path
     unifiedposixrules = "%s/Rules/unified-rules.xml" % repo
     rulesroot = lxml.etree.Element("Rules")
 

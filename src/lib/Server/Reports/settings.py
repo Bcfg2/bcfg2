@@ -1,18 +1,37 @@
 import django
-import sys
+import os.path
+from Bcfg2.metargs import Option
+import Bcfg2.Options
 
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
-c = ConfigParser.ConfigParser()
-if len(c.read(['/etc/bcfg2.conf', '/etc/bcfg2-web.conf'])) == 0:
-    raise ImportError("Please check that bcfg2.conf or bcfg2-web.conf exists "
-                      "and is readable by your web server.")
 
-try:
-    DEBUG = c.getboolean('statistics', 'web_debug')
-except:
-    DEBUG = False
+Bcfg2.Options.add_options(
+    Option('--web-config', 'statistics:config', default='/etc/bcfg2-web.conf',
+           help='Location of the reports configuration file', type=os.path.abspath),
+)
+
+Bcfg2.Options.add_configs(Bcfg2.Options.bootstrap().web_config)
+
+Bcfg2.Options.add_options(
+    Option('statistics:web_debug', default=False, type=lambda v: v == "True"),
+    Option('statistics:database_engine', required=True),
+    Option('statistics:database_name', default=''),
+    Option('statistics:time_zone'),
+    Option('statistics:web_prefix'),
+    Bcfg2.Options.SERVER_REPOSITORY,
+)
+
+if Bcfg2.Options.bootstrap().statistics_database_engine != 'sqlite3':
+    Bcfg2.Options.add_options(
+        Option('statistics:database_user', required=True),
+        Option('statistics:database_password', required=True),
+        Option('statistics:database_host', required=True),
+        Option('statistics:database_port', default=''),
+    )
+
+args = Bcfg2.Options.bootstrap()
+
+DEBUG = args.statistics_web_debug
 
 if DEBUG:
     print("Warning: Setting web_debug to True causes extraordinary memory "
@@ -25,16 +44,12 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
-try:
-    db_engine = c.get('statistics', 'database_engine')
-except ConfigParser.NoSectionError:
-    e = sys.exc_info()[1]
-    raise ImportError("Failed to determine database engine: %s" % e)
-db_name = ''
-if c.has_option('statistics', 'database_name'):
-    db_name = c.get('statistics', 'database_name')
-if db_engine == 'sqlite3' and db_name == '':
-    db_name = "%s/etc/brpt.sqlite" % c.get('server', 'repository')
+
+db_engine = args.statistics_database_engine
+db_name = args.statistics_database_name
+
+if db_name == '' and db_engine == 'sqlite3':
+    db_name = "%s/etc/brpt.sqlite" % args.repository_path
 
 DATABASES = {
     'default': {
@@ -44,13 +59,10 @@ DATABASES = {
 }
 
 if db_engine != 'sqlite3':
-    DATABASES['default']['USER'] =  c.get('statistics', 'database_user')
-    DATABASES['default']['PASSWORD'] = c.get('statistics', 'database_password')
-    DATABASES['default']['HOST'] = c.get('statistics', 'database_host')
-    try:
-        DATABASES['default']['PORT'] = c.get('statistics', 'database_port')
-    except: # An empty string tells Django to use the default port.
-        DATABASES['default']['PORT'] = ''
+    DATABASES['default']['USER'] = args.statistics_database_user
+    DATABASES['default']['PASSWORD'] = args.statistics_database_password
+    DATABASES['default']['HOST'] = args.statistics_database_host
+    DATABASES['default']['PORT'] = args.statistics_database_port
 
 if django.VERSION[0] == 1 and django.VERSION[1] < 2:
     DATABASE_ENGINE = db_engine
@@ -64,11 +76,9 @@ if django.VERSION[0] == 1 and django.VERSION[1] < 2:
 
 # Local time zone for this installation. All choices can be found here:
 # http://docs.djangoproject.com/en/dev/ref/settings/#time-zone
-try:
-    TIME_ZONE = c.get('statistics', 'time_zone')
-except:
-    if django.VERSION[0] == 1 and django.VERSION[1] > 2:
-        TIME_ZONE = None
+if (args.statistics_time_zone is not None or
+    django.VERSION[0] == 1 and django.VERSION[1] > 2):
+    TIME_ZONE = args.statistics_time_zone
 
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
@@ -84,8 +94,8 @@ MEDIA_ROOT = ''
 # URL that handles the media served from MEDIA_ROOT.
 # Example: "http://media.lawrence.com"
 MEDIA_URL = '/site_media'
-if c.has_option('statistics', 'web_prefix'):
-    MEDIA_URL = c.get('statistics', 'web_prefix').rstrip('/') + MEDIA_URL
+if args.statistics_web_prefix is not None:
+    MEDIA_URL = args.statistics_web_prefix.rstrip('/') + MEDIA_URL
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.

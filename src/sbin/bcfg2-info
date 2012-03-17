@@ -5,13 +5,13 @@ __revision__ = '$Revision$'
 
 from code import InteractiveConsole
 import cmd
-import errno
 import getopt
 import logging
 import lxml.etree
 import os
 import sys
 import tempfile
+from Bcfg2.metargs import Option
 
 try:
     try:
@@ -108,20 +108,21 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
-    def __init__(self, repo, plgs, passwd, encoding, event_debug, filemonitor='default'):
+
+    def __init__(self, event_debug, core_args):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd,
-                                            encoding, filemonitor=filemonitor)
+            self.core = Bcfg2.Server.Core.Core.from_config(core_args)
             if event_debug:
-                self.fam.debug = True
+                self.core.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             print("Core load failed because %s" % msg)
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True
-        self.fam.handle_events_in_interval(4)
+        self.core.fam.handle_events_in_interval(4)
+        self.core_args = core_args
 
     def do_loop(self):
         """Looping."""
@@ -140,7 +141,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             except dummyError:
                 continue
             except:
-                logger.error("Command failure", exc_info=1)
+                logger.exception("Command failure")
 
     def do_debug(self, args):
         """Debugging mode for more details."""
@@ -177,7 +178,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
            Exit program.
            Usage: [quit|exit]
         """
-        for plugin in list(self.plugins.values()):
+        for plugin in list(self.core.plugins.values()):
             plugin.shutdown()
         os._exit(0)
 
@@ -190,7 +191,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_update(self, _):
         """Process pending filesystem events."""
-        self.fam.handle_events_in_interval(0.1)
+        self.core.fam.handle_events_in_interval(0.1)
 
     def do_version(self, _):
         """Print out code version."""
@@ -209,7 +210,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if not ofile.startswith('/tmp') and not path_force:
                 print("Refusing to write files outside of /tmp without -f option")
                 return
-            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(ofile,
+            lxml.etree.ElementTree(self.core.BuildConfiguration(client)).write(ofile,
                                        encoding='UTF-8', xml_declaration=True,
                                        pretty_print=True)
         else:
@@ -231,7 +232,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if not odir.startswith('/tmp') and not path_force:
                 print("Refusing to write files outside of /tmp without -f option")
                 return
-            client_config = self.BuildConfiguration(client)
+            client_config = self.core.BuildConfiguration(client)
             if client_config.tag == 'error':
                 print("Building client configuration failed.")
                 return
@@ -243,7 +244,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
             log = mockLog()
             import Bcfg2.Client.Tools.POSIX
-            p = Bcfg2.Client.Tools.POSIX.POSIX(log, setup, client_config)
+            p = Bcfg2.Client.Tools.POSIX.POSIX(log, self.core_args, client_config)
             states = dict()
             p.Inventory(states)
             p.Install(list(states.keys()), states)
@@ -259,7 +260,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             os.mkdir(args)
         except:
             pass
-        for client in self.metadata.clients:
+        for client in self.core.metadata.clients:
             self.do_build("%s %s/%s.xml" % (client, args, client))
 
     def do_buildfile(self, args):
@@ -280,11 +281,12 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             if altsrc:
                 entry.set("altsrc", altsrc)
             try:
-                metadata = self.build_metadata(client)
-                self.Bind(entry, metadata)
+                metadata = self.core.build_metadata(client)
+                self.core.Bind(entry, metadata)
                 print(lxml.etree.tostring(entry, encoding="UTF-8",
                                           xml_declaration=True))
             except:
+                logger.exception("Failed to build entry %s for host %s" % (fname, client))
                 print("Failed to build entry %s for host %s" % (fname, client))
         else:
             print(usage)
@@ -294,9 +296,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         if len(args.split()) == 2:
             bname, client = args.split()
             try:
-                metadata = self.build_metadata(client)
-                if bname in self.plugins['Bundler'].entries:
-                    bundle = self.plugins['Bundler'].entries[bname]
+                metadata = self.core.build_metadata(client)
+                if bname in self.core.plugins['Bundler'].entries:
+                    bundle = self.core.plugins['Bundler'].entries[bname]
                     if isinstance(bundle,
                                   Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
                         stream = bundle.template.generate(metadata=metadata)
@@ -316,38 +318,38 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_bundles(self, _):
         """Print out group/bundle info."""
         data = [('Group', 'Bundles')]
-        groups = list(self.metadata.groups.keys())
+        groups = list(self.core.metadata.groups.keys())
         groups.sort()
         for group in groups:
             data.append((group,
-                         ','.join(self.metadata.groups[group][0])))
+                         ','.join(self.core.metadata.groups[group][0])))
         printTabular(data)
 
     def do_clients(self, _):
         """Print out client info."""
         data = [('Client', 'Profile')]
-        clist = list(self.metadata.clients.keys())
+        clist = list(self.core.metadata.clients.keys())
         clist.sort()
         for client in clist:
-            data.append((client, self.metadata.clients[client]))
+            data.append((client, self.core.metadata.clients[client]))
         printTabular(data)
 
     def do_config(self, _):
         """Print out the current configuration of Bcfg2."""
         output = [
                 ('Description', 'Value'),
-                ('Path Bcfg2 repository', setup['repo']),
-                ('Plugins', setup['plugins']),
-                ('Password', setup['password']),
-                ('Server Metadata Connector', setup['mconnect']),
-                ('Filemonitor', setup['filemonitor']),
-                ('Server address',    setup['location']),
-                ('Static', setup['static']),
-                ('Path to key', setup['key']),
-                ('Path to SSL certificate', setup['cert']),
-                ('Path to SSL CA certificate', setup['ca']),
-                ('Protocol', setup['protocol']),
-                ('Logging', setup['logging'])
+                ('Path Bcfg2 repository', self.core_args.repository_path),
+                ('Plugins', self.core_args.server_plugins),
+                ('Password', self.core_args.password),
+                ('Server Metadata Connector', self.core_args.server_connectors),
+                ('Filemonitor', self.core_args.server_filemonitor),
+                ('Server address', self.core_args.server_location),
+                ('Static', self.core_args.components_static_port),
+                ('Path to key', self.core_args.ssl_key),
+                ('Path to SSL certificate', self.core_args.ssl_cert),
+                ('Path to SSL CA certificate', self.core_args.ca_cert),
+                ('Protocol', self.core_args.communication_protocol),
+                ('Logging', self.core_args.log_path)
                 ]
         printTabular(output)
 
@@ -359,11 +361,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             return
         client = args.split()[0]
         try:
-            meta = self.build_metadata(client)
+            meta = self.core.build_metadata(client)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             print("Unable to find metadata for host %s" % client)
             return
-        structures = self.GetStructures(meta)
+        structures = self.core.GetStructures(meta)
         output = [('entrytype', 'name')]
         if arglen == 1:
             for item in structures:
@@ -380,18 +382,18 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_groups(self, _):
         """Print out group info."""
         data = [("Groups", "Profile", "Category", "Contains")]
-        grouplist = list(self.metadata.groups.keys())
+        grouplist = list(self.core.metadata.groups.keys())
         grouplist.sort()
         for group in grouplist:
-            if group in self.metadata.profiles:
+            if group in self.core.metadata.profiles:
                 prof = 'yes'
             else:
                 prof = 'no'
-            if group in self.metadata.categories:
-                cat = self.metadata.categories[group]
+            if group in self.core.metadata.categories:
+                cat = self.core.metadata.categories[group]
             else:
                 cat = ''
-            gdata = [grp for grp in self.metadata.groups[group][1]]
+            gdata = [grp for grp in self.core.metadata.groups[group][1]]
             if group in gdata:
                 gdata.remove(group)
             data.append((group, prof, cat, ','.join(gdata)))
@@ -405,7 +407,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             return
         for client in args.split():
             try:
-                client_meta = self.build_metadata(client)
+                client_meta = self.core.build_metadata(client)
             except:
                 print("Client %s not defined" % client)
                 continue
@@ -431,7 +433,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
-        for generator in self.generators:
+        for generator in self.core.generators:
             if arglen == 0:
                 etypes = list(generator.Entries.keys())
             else:
@@ -450,20 +452,20 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         printTabular(data)
 
     def do_event_debug(self, args):
-        self.fam.debug = True
+        self.core.fam.debug = True
 
     def do_cfgdebug(self, args):
         try:
-            meta = self.build_metadata(args)
+            meta = self.core.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             print("Unable to find metadata for host %s" % args)
             return
-        structures = self.GetStructures(meta)
+        structures = self.core.GetStructures(meta)
         for clist in [struct.findall('Path') for struct in structures]:
             for cfile in clist:
                 if cfile.get('name') in \
-                        self.plugins['Cfg'].Entries['ConfigFile']:
-                    cset = self.plugins['Cfg'].entries[cfile.get('name')]
+                        self.core.plugins['Cfg'].Entries['ConfigFile']:
+                    cset = self.core.plugins['Cfg'].entries[cfile.get('name')]
                     cand = cset.get_matching(meta)
                     fields = ['all', 'group']
                     while len(cand) > 1 and fields:
@@ -483,9 +485,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
         hostname = arglist[0]
         initial = arglist[1:]
-        metadata = self.build_metadata(hostname)
-        self.plugins['Packages'].toggle_debug()
-        collection = self.plugins['Packages']._get_collection(metadata)
+        metadata = self.core.build_metadata(hostname)
+        self.core.plugins['Packages'].toggle_debug()
+        collection = self.core.plugins['Packages']._get_collection(metadata)
         packages, unknown = collection.complete(initial)
         newpkgs = list(packages.difference(initial))
         print("%d initial packages" % len(initial))
@@ -499,11 +501,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_packagesources(self, args):
         try:
-            metadata = self.build_metadata(args)
+            metadata = self.core.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
             print("Unable to build metadata for host %s" % args)
             return
-        collection = self.plugins['Packages']._get_collection(metadata)
+        collection = self.core.plugins['Packages']._get_collection(metadata)
         for source in collection.sources:
             # get_urls() loads url_map as a side-effect
             source.get_urls()
@@ -542,49 +544,35 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             self.do_loop()
 
 if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
-    optinfo = {
-            'configfile': Bcfg2.Options.CFILE,
-            'help': Bcfg2.Options.HELP,
-              }
-    optinfo.update({
-                    'event debug': Bcfg2.Options.DEBUG,
-                    'profile': Bcfg2.Options.CORE_PROFILE,
-                    'encoding': Bcfg2.Options.ENCODING,
-                    # Server options
-                    'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'mconnect': Bcfg2.Options.SERVER_MCONNECT,
-                    'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
-                    'location': Bcfg2.Options.SERVER_LOCATION,
-                    'static': Bcfg2.Options.SERVER_STATIC,
-                    'key': Bcfg2.Options.SERVER_KEY,
-                    'cert': Bcfg2.Options.SERVER_CERT,
-                    'ca': Bcfg2.Options.SERVER_CA,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'protocol': Bcfg2.Options.SERVER_PROTOCOL,
-                    # More options
-                    'logging': Bcfg2.Options.LOGGING_FILE_PATH
-                    })
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
-                                        USAGE)
+    Bcfg2.Options.add_options(
+        Bcfg2.Options.CORE_PROFILE,
+        Bcfg2.Options.DEBUG,
+        Bcfg2.Options.LOGGING_FILE_PATH,
+        Bcfg2.Options.SERVER_CERT,
+        Bcfg2.Options.SERVER_KEY,
+        Bcfg2.Options.SERVER_LOCATION,
+        Bcfg2.Options.SERVER_MCONNECT,
+        Bcfg2.Options.SERVER_PROTOCOL,
+        Bcfg2.Options.SERVER_STATIC,
+    )
+    Bcfg2.Server.Core.Core.register_options()
+    Bcfg2.Options.add_option(Option('command', nargs='*', help='Command to run'))
 
-    setup.parse(sys.argv[1:])
-    if setup['args'] and setup['args'][0] == 'help':
-        print(setup.hm)
-        sys.exit(0)
-    elif setup['profile'] and have_profile:
+    args = Bcfg2.Options.args()
+
+    Bcfg2.Logger.setup_logging('bcfg2',
+                               to_syslog=False,
+                               to_console=True,
+                               level=logging.ERROR,
+                               to_file=args.log_path)
+
+    if args.profile and have_profile:
         prof = profile.Profile()
-        loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
-                            setup['password'], setup['encoding'],
-                            setup['event debug'], setup['filemonitor'])
+        loop = prof.runcall(infoCore, args.nebug, args)
         displayTrace(prof)
     else:
-        if setup['profile']:
+        if args.profile:
             print("Profiling functionality not available.")
-        loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
-                        setup['encoding'], setup['event debug'], setup['filemonitor'])
+        loop = infoCore(args.debug, args)
 
-    loop.Run(setup['args'])
+    loop.Run(args.command)

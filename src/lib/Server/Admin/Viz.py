@@ -1,8 +1,8 @@
-import getopt
+from Bcfg2.metargs import Option
 from subprocess import Popen, PIPE
-import sys
 import pipes
 import Bcfg2.Server.Admin
+import Bcfg2.Options
 
 
 class Viz(Bcfg2.Server.Admin.MetadataCore):
@@ -33,42 +33,30 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
     __plugin_blacklist__ = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
-                            'Rules', 'Account', 'Decisions', 'Deps', 'Git',
-                            'Svn', 'Fossil', 'Bzr', 'Bundler', 'TGenshi',
-                            'SGenshi', 'Base']
+                            'Rules', 'Account', 'Decisions', 'Deps', 'Git', 'Svn',
+                            'Fossil', 'Bzr', 'Bundler', 'TGenshi', 'SGenshi',
+                            'Base']
+
+    def __init__(self):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self,
+                                                 pblacklist=self.plugin_blacklist)
+        Bcfg2.Options.add_options(
+            Option('-H', '--includehosts', action='store_true',
+                help='include hosts in the viz output'),
+            Option('-b', '--includebundles', action='store_true',
+                help='include bundles in the viz output'),
+            Option('-k', '--includekey', action='store_true',
+                help='show a key for different digraph shapes'),
+            Option('--only-client',
+                help='show only the groups, bundles for the named client'),
+            Option('-o', '--outfile', help='write viz output to an output file')
+        )
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
-        # First get options to the 'viz' subcommand
-        try:
-            opts, args = getopt.getopt(args, 'Hbkc:o:',
-                                       ['includehosts', 'includebundles',
-                                        'includekey', 'only-client=', 'outfile='])
-        except getopt.GetoptError:
-            msg = sys.exc_info()[1]
-            print(msg)
-            print(self.__longhelp__)
-            raise SystemExit(1)
-
-        hset = False
-        bset = False
-        kset = False
-        only_client = None
-        outputfile = False
-        for opt, arg in opts:
-            if opt in ("-H", "--includehosts"):
-                hset = True
-            elif opt in ("-b", "--includebundles"):
-                bset = True
-            elif opt in ("-k", "--includekey"):
-                kset = True
-            elif opt in ("-c", "--only-client"):
-                only_client = arg
-            elif opt in ("-o", "--outfile"):
-                outputfile = arg
-
-        data = self.Visualize(self.setup['repo'], hset, bset,
-                              kset, only_client, outputfile)
+        data = self.Visualize(self.args.repository_path, args.includehosts,
+                              args.includebundles,
+                              args.includekey, args.only_client, args.outfile)
         if data:
             print(data)
         raise SystemExit(0)

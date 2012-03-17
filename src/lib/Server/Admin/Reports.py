@@ -8,6 +8,7 @@ import pickle
 import platform
 import sys
 import traceback
+import Bcfg2.Options
 from lxml.etree import XML, XMLSyntaxError
 
 # Compatibility import
@@ -98,84 +99,67 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "  Django commands:\n    "
                  "\n    ".join(django_commands))
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         self.log.setLevel(logging.INFO)
+        self.django_commands = ['syncdb', 'sqlall', 'validate']
+        self.__usage__ = self.__usage__ + "  Django commands:\n    " + \
+             "\n    ".join(self.django_commands)
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.VERBOSE,
+            Option('-q', '--quiet', action='store_true'),
+            Option('command',
+                choices=['init', 'load_stats', 'purge', 'scrub', 'update'] + self.django_commands,
+                help='Command to execute')
+        )
+        
+        args = Bcfg2.Options.bootstrap()
+        if args.command == 'load_stats':
+            Bcfg2.Options.add_options(
+                Option('-s', '--stats', help='Path to statistics.xml file'),
+                Option('-c', '--clients-file', help='Path to clients.xml file'),
+                Option('-O3', help='Fast mode. Duplicates data!', dest='quick', action='store_true')
+            )
+        elif args.command == 'purge':
+            Bcfg2.Options.add_options(
+                Option('--client', help='Client to operate on'),
+                Option('--days', type=int, help='Records older than n days', metavar='[n]'),
+                Option('--expired', help='Expired clients only')
+            )
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
-        if len(args) == 0 or args[0] == '-h':
-            print(self.__usage__)
-            raise SystemExit(0)
 
         verb = 0
 
-        if '-v' in args or '--verbose' in args:
+        if args.verbose:
             self.log.setLevel(logging.DEBUG)
             verb = 1
-        if '-q' in args or '--quiet' in args:
+        if args.quiet:
             self.log.setLevel(logging.WARNING)
 
         # FIXME - dry run
 
-        if args[0] in self.django_commands:
-            self.django_command_proxy(args[0])
-        elif args[0] == 'scrub':
+        if args.command in self.django_commands:
+            self.django_command_proxy(args.command)
+        elif args.command == 'scrub':
             self.scrub()
-        elif args[0] == 'init':
+        elif args.command == 'init':
             update_database()
-        elif args[0] == 'update':
+        elif args.command == 'update':
             update_database()
-        elif args[0] == 'load_stats':
-            quick = '-O3' in args
-            stats_file = None
-            clients_file = None
-            i = 1
-            while i < len(args):
-                if args[i] == '-s' or args[i] == '--stats':
-                    stats_file = args[i + 1]
-                    if stats_file[0] == '-':
-                        self.errExit("Invalid statistics file: %s" % stats_file)
-                elif args[i] == '-c' or args[i] == '--clients-file':
-                    clients_file = args[i + 1]
-                    if clients_file[0] == '-':
-                        self.errExit("Invalid clients file: %s" % clients_file)
-                i = i + 1
-            self.load_stats(stats_file, clients_file, verb, quick)
-        elif args[0] == 'purge':
-            expired = False
-            client = None
-            maxdate = None
-            state = None
-            i = 1
-            while i < len(args):
-                if args[i] == '-c' or args[i] == '--client':
-                    if client:
-                        self.errExit("Only one client per run")
-                    client = args[i + 1]
-                    print(client)
-                    i = i + 1
-                elif args[i] == '--days':
-                    if maxdate:
-                        self.errExit("Max date specified multiple times")
-                    try:
-                        maxdate = datetime.datetime.now() - datetime.timedelta(days=int(args[i + 1]))
-                    except:
-                        self.log.error("Invalid number of days: %s" % args[i + 1])
-                        raise SystemExit(-1)
-                    i = i + 1
-                elif args[i] == '--expired':
-                    expired = True
-                i = i + 1
-            if expired:
-                if state:
-                    self.log.error("--state is not valid with --expired")
-                    raise SystemExit(-1)
+        elif args.command == 'load_stats':
+            self.load_stats(args.stats, args.clients, verb, args.quick)
+        elif args.command == 'purge':
+            if args.days:
+                maxdate = datetime.datetime.now() - datetime.timedelta(days=args.days)
+            else:
+                maxdate = None
+
+            if args.expired:
                 self.purge_expired(maxdate)
             else:
-                self.purge(client, maxdate, state)
-        else:
-            print("Unknown command: %s" % args[0])
+                self.purge(args.client, maxdate, None)
 
     @transaction.commit_on_success
     def scrub(self):

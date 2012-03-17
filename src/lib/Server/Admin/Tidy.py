@@ -1,8 +1,10 @@
 import os
 import re
 import socket
+from Bcfg2.metargs import Option
 
 import Bcfg2.Server.Admin
+import Bcfg2.Options
 
 
 class Tidy(Bcfg2.Server.Admin.Mode):
@@ -16,11 +18,18 @@ class Tidy(Bcfg2.Server.Admin.Mode):
                  "-I",
                  "interactive"))
 
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
+        Bcfg2.Options.add_options(
+            Option('-f', '--force', action='store_true'),
+            Bcfg2.Options.INTERACTIVE,
+        )
+
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         badfiles = self.buildTidyList()
-        if '-f' in args or '-I' in args:
-            if '-I' in args:
+        if args.force or args.interactive:
+            if args.interactive:
                 for name in badfiles[:]:
                     # py3k compatibility
                     try:
@@ -46,7 +55,7 @@ class Tidy(Bcfg2.Server.Admin.Mode):
         bad = []
 
         # clean up unresolvable hosts in SSHbase
-        for name in os.listdir("%s/SSHbase" % self.setup['repo']):
+        for name in os.listdir("%s/SSHbase" % self.args.repository_path):
             if hostmatcher.match(name):
                 hostname = hostmatcher.match(name).group(1)
                 if hostname in good + bad:
@@ -56,14 +65,14 @@ class Tidy(Bcfg2.Server.Admin.Mode):
                     good.append(hostname)
                 except:
                     bad.append(hostname)
-        for name in os.listdir("%s/SSHbase" % self.setup['repo']):
+        for name in os.listdir("%s/SSHbase" % self.args.repository_path):
             if not hostmatcher.match(name):
-                to_remove.append("%s/SSHbase/%s" % (self.setup['repo'],
+                to_remove.append("%s/SSHbase/%s" % (self.args.repository_path,
                                                     name))
             else:
                 if hostmatcher.match(name).group(1) in bad:
                     to_remove.append("%s/SSHbase/%s" %
-                                    (self.setup['repo'], name))
+                                    (self.args.repository_path, name))
         # clean up file~
         # clean up files without parsable names in Cfg
         return to_remove

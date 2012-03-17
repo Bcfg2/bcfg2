@@ -8,6 +8,7 @@ import os
 
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+import Bcfg2.Options
 
 
 class Chkconfig(Bcfg2.Client.Tools.SvcTool):
@@ -17,6 +18,14 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'chkconfig')]
     __req__ = {'Service': ['name', 'status']}
     os.environ['LANG'] = 'C'
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.SvcTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_DRYRUN,
+            Bcfg2.Options.CLIENT_SERVICE_MODE,
+        )
 
     def get_svc_command(self, service, action):
         return "/sbin/service %s %s" % (service.get('name'), action)
@@ -60,8 +69,8 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                                    entry.get('name'))[0]
             needs_modification = ((command == 'start' and pstatus) or \
                                   (command == 'stop' and not pstatus))
-            if (not self.setup.get('dryrun') and
-                self.setup['servicemode'] != 'disabled' and
+            if (not self.args.dryrun and
+                self.args.service_mode != 'disabled' and
                 needs_modification):
                 self.cmd.run(self.get_svc_command(entry, command))
                 # service was modified, so it failed

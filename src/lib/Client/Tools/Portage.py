@@ -3,6 +3,7 @@ __revision__ = '$Revision$'
 
 import re
 import Bcfg2.Client.Tools
+import Bcfg2.Options
 
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
@@ -16,12 +17,19 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     # requires a working PORTAGE_BINHOST in make.conf
     pkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', ['name', 'version']))
 
-    def __init__(self, logger, cfg, setup):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
+    def __init__(self, logger, cfg, args):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, args)
         self.__important__ = self.__important__ + ['/etc/make.conf']
         self.cfg = cfg
         self.installed = {}
         self.RefreshPackages()
+
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.PkgTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.CLIENT_QUICK,
+        )
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -46,7 +54,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             return False
         if entry.attrib['name'] in self.installed:
             if self.installed[entry.attrib['name']] == entry.attrib['version']:
-                if not self.setup['quick'] and \
+                if not self.args.disable_checksum and \
                                 entry.get('verify', 'true') == 'true':
                     output = self.cmd.run("/usr/bin/equery -N check '=%s-%s' 2>&1 "
                                           "| grep '!!!' | awk '{print $2}'" \

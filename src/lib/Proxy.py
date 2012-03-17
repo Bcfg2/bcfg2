@@ -51,6 +51,7 @@ class ProxyError(Exception):
     the various xmlrpclib errors that might arise (mainly
     ProtocolError and Fault) """
     def __init__(self, err):
+        Exception.__init__(self, err)
         msg = None
         if isinstance(err, xmlrpclib.ProtocolError):
             # cut out the password in the URL

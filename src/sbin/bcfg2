@@ -16,8 +16,6 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
-# Compatibility imports
-from Bcfg2.Bcfg2Py3k import xmlrpclib
 
 import Bcfg2.Proxy
 import Bcfg2.Logger
@@ -28,10 +26,6 @@ def cb_sigint_handler(signum, frame):
     """Exit upon CTRL-C."""
     os._exit(1)
 
-DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
-                                     cmd="--decision-list", odesc='<file>',
-                                     long_arg=True)
-
 
 class Client:
     """The main bcfg2 client class"""
@@ -40,88 +34,63 @@ class Client:
         self.toolset = None
         self.config = None
 
-        optinfo = {
-            # 'optname': (('-a', argdesc, optdesc),
-            #                  env, cfpath, default, boolean)),
-            'verbose': Bcfg2.Options.VERBOSE,
-            'extra': Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
-            'quick': Bcfg2.Options.CLIENT_QUICK,
-            'debug': Bcfg2.Options.DEBUG,
-            'lockfile': Bcfg2.Options.LOCKFILE,
-            'drivers': Bcfg2.Options.CLIENT_DRIVERS,
-            'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
-            'paranoid': Bcfg2.Options.CLIENT_PARANOID,
-            'bundle': Bcfg2.Options.CLIENT_BUNDLE,
-            'bundle-quick': Bcfg2.Options.CLIENT_BUNDLEQUICK,
-            'indep': Bcfg2.Options.CLIENT_INDEP,
-            'file': Bcfg2.Options.CLIENT_FILE,
-            'interactive': Bcfg2.Options.INTERACTIVE,
-            'cache': Bcfg2.Options.CLIENT_CACHE,
-            'profile': Bcfg2.Options.CLIENT_PROFILE,
-            'remove': Bcfg2.Options.CLIENT_REMOVE,
-            'help': Bcfg2.Options.HELP,
-            'setup': Bcfg2.Options.CFILE,
-            'server': Bcfg2.Options.SERVER_LOCATION,
-            'user': Bcfg2.Options.CLIENT_USER,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'retries': Bcfg2.Options.CLIENT_RETRIES,
-            'kevlar': Bcfg2.Options.CLIENT_KEVLAR,
-            'decision-list': DECISION_LIST,
-            'encoding': Bcfg2.Options.ENCODING,
-            'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
-            'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
-            'decision': Bcfg2.Options.CLIENT_DLIST,
-            'servicemode': Bcfg2.Options.CLIENT_SERVICE_MODE,
-            'key': Bcfg2.Options.CLIENT_KEY,
-            'certificate': Bcfg2.Options.CLIENT_CERT,
-            'ca': Bcfg2.Options.CLIENT_CA,
-            'serverCN': Bcfg2.Options.CLIENT_SCNS,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.VERBOSE,
+            Bcfg2.Options.DEBUG,
+            Bcfg2.Options.LOCKFILE,
+            Bcfg2.Options.CLIENT_DRIVERS,
+            Bcfg2.Options.CLIENT_DRYRUN,
+            Bcfg2.Options.CLIENT_BUNDLE,
+            Bcfg2.Options.CLIENT_BUNDLEQUICK,
+            Bcfg2.Options.CLIENT_FILE,
+            Bcfg2.Options.CLIENT_CACHE,
+            Bcfg2.Options.CLIENT_PROFILE,
+            Bcfg2.Options.CLIENT_REMOVE,
+            Bcfg2.Options.SERVER_LOCATION,
+            Bcfg2.Options.CLIENT_USER,
+            Bcfg2.Options.SERVER_PASSWORD,
+            Bcfg2.Options.OMIT_LOCK_CHECK,
+            Bcfg2.Options.LOGGING_FILE_PATH,
+            Bcfg2.Options.CLIENT_DLIST,
+            Bcfg2.Options.CLIENT_KEY,
+            Bcfg2.Options.CLIENT_CERT,
+            Bcfg2.Options.CLIENT_CA,
+            Bcfg2.Options.CLIENT_SCNS,
+            Bcfg2.Options.CLIENT_TIMEOUT,
+        )
+        Bcfg2.Client.Frame.Frame.register_options()
 
-        self.setup = Bcfg2.Options.OptionParser(optinfo)
-        self.setup.parse(sys.argv[1:])
+        self.args = Bcfg2.Options.args()
 
-        if self.setup['args']:
-            print("Bcfg2 takes no arguments, only options")
-            print(self.setup.buildHelpMessage())
-            raise SystemExit(1)
         level = 30
-        if self.setup['verbose']:
+        if self.args.verbose:
             level = 20
-        if self.setup['debug']:
+        if self.args.debug:
             level = 0
         Bcfg2.Logger.setup_logging('bcfg2',
                                    to_syslog=False,
                                    level=level,
-                                   to_file=self.setup['filelog'])
+                                   to_file=self.args.log_path)
         self.logger = logging.getLogger('bcfg2')
-        self.logger.debug(self.setup)
-        if self.setup['bundle-quick']:
-            if self.setup['bundle'] == []:
+        self.logger.debug(self.args)
+        if self.args.quick_bundles:
+            if self.args.bundles == []:
                 self.logger.error("-Q option requires -b")
                 raise SystemExit(1)
-            elif self.setup['remove'] != False:
+            elif self.args.remove_extra != False:
                 self.logger.error("-Q option incompatible with -r")
                 raise SystemExit(1)
-        if 'drivers' in self.setup and self.setup['drivers'] == 'help':
+        if 'help' in self.args.drivers:
             self.logger.info("The following drivers are available:")
             self.logger.info(Bcfg2.Client.Tools.drivers)
             raise SystemExit(0)
-        if self.setup['remove'] and 'services' in self.setup['remove']:
+        if self.args.remove_extra in ['services', 'Services']:
             self.logger.error("Service removal is nonsensical; removed services will only be disabled")
-        if self.setup['remove'] not in [False,
-                                        'all',
-                                        'Services',
-                                        'Packages',
-                                        'services',
-                                        'packages']:
-            self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
-        if (self.setup["file"] != False) and (self.setup["cache"] != False):
+        if (self.args.from_file is not None) and (self.args.cache is not None):
             print("cannot use -f and -c together")
             raise SystemExit(1)
-        if not self.setup['server'].startswith('https://'):
-            self.setup['server'] = 'https://' + self.setup['server']
+        if not self.args.server_location.startswith('https://'):
+            self.args.server_location = 'https://' + self.args.server_location
 
     def run_probe(self, probe):
         """Execute probe."""
@@ -163,32 +132,30 @@ class Client:
         # begin configuration
         times['start'] = time.time()
 
-        if self.setup['file']:
+        if self.args.from_file:
             # read config from file
             try:
                 self.logger.debug("Reading cached configuration from %s" %
-                                  (self.setup['file']))
-                configfile = open(self.setup['file'], 'r')
-                rawconfig = configfile.read()
-                configfile.close()
+                                  (self.args.from_file.name))
+                rawconfig = self.args.from_file.read()
             except IOError:
                 self.fatal_error("Failed to read cached configuration from: %s"
-                                 % (self.setup['file']))
+                                 % (self.args.from_file.name))
                 return(1)
         else:
             # retrieve config from server
-            proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
-                                               self.setup['user'],
-                                               self.setup['password'],
-                                               key=self.setup['key'],
-                                               cert=self.setup['certificate'],
-                                               ca=self.setup['ca'],
-                                               allowedServerCNs=self.setup['serverCN'],
-                                               timeout=self.setup['timeout'])
+            proxy = Bcfg2.Proxy.ComponentProxy(self.args.server_location,
+                                               self.args.user,
+                                               self.args.password,
+                                               key=self.args.ssl_key,
+                                               cert=self.args.ssl_cert,
+                                               ca=self.args.ca_cert,
+                                               allowedServerCNs=self.args.ssl_cns,
+                                               timeout=self.args.timeout)
 
-            if self.setup['profile']:
+            if self.args.profile:
                 try:
-                    proxy.AssertProfile(self.setup['profile'])
+                    proxy.AssertProfile(self.args.profile)
                 except Bcfg2.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.fatal_error("Failed to set client profile")
@@ -239,12 +206,12 @@ class Client:
 
             times['probe_upload'] = time.time()
 
-            if self.setup['decision'] in ['whitelist', 'blacklist']:
+            if self.args.decision in ['whitelist', 'blacklist']:
                 try:
-                    self.setup['decision_list'] = \
-                        proxy.GetDecisionList(self.setup['decision'])
+                    self.decision_list = \
+                        proxy.GetDecisionList(self.args.decision)
                     self.logger.info("Got decision list from server:")
-                    self.logger.info(self.setup['decision_list'])
+                    self.logger.info(self.decision_list)
                 except Bcfg2.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.logger.error("Failed to get decision list: %s" % err)
@@ -260,13 +227,13 @@ class Client:
 
             times['config_download'] = time.time()
 
-        if self.setup['cache']:
+        if self.args.cache:
             try:
-                open(self.setup['cache'], 'w').write(rawconfig)
-                os.chmod(self.setup['cache'], 33152)
+                self.args.cache.write(rawconfig)
+                os.chmod(self.args.cache.name, 33152)
             except IOError:
                 self.logger.warning("Failed to write config cache file %s" %
-                                    (self.setup['cache']))
+                                    (self.args.cache.name))
             times['caching'] = time.time()
 
         try:
@@ -283,21 +250,21 @@ class Client:
             self.fatal_error("Server error: %s" % (self.config.text))
             return(1)
 
-        if self.setup['bundle-quick']:
+        if self.args.quick_bundles:
             newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
             [newconfig.append(bundle) for bundle in self.config.getchildren() if \
-             bundle.tag == 'Bundle' and bundle.get('name') in self.setup['bundle']]
+             bundle.tag == 'Bundle' and bundle.get('name') in self.args.bundles]
             self.config = newconfig
 
         self.tools = Bcfg2.Client.Frame.Frame(self.config,
-                                              self.setup,
-                                              times, self.setup['drivers'],
-                                              self.setup['dryrun'])
+                                              self.args,
+                                              times, self.args.drivers,
+                                              self.args.dryrun)
 
-        if not self.setup['omit-lock-check']:
+        if not self.args.omit_lock_check:
             #check lock here
             try:
-                lockfile = open(self.setup['lockfile'], 'w')
+                lockfile = open(self.args.components_lockfile, 'w')
                 try:
                     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
@@ -310,16 +277,16 @@ class Client:
         # execute the said configuration
         self.tools.Execute()
 
-        if not self.setup['omit-lock-check']:
+        if not self.args.omit_lock_check:
             #unlock here
             if lockfile:
                 try:
                     fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-                    os.remove(self.setup['lockfile'])
+                    os.remove(self.args.components_lockfile)
                 except OSError:
                     self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
 
-        if not self.setup['file'] and not self.setup['bundle-quick']:
+        if not self.args.from_file and not self.args.quick_bundles:
             # upload statistics
             feedback = self.tools.GenerateStats()
 

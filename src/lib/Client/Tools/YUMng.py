@@ -11,10 +11,11 @@ import yum.callbacks
 import yum.Errors
 import yum.misc
 import rpmUtils.arch
+from Bcfg2.metargs import Option
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+import Bcfg2.Options
+
 
 # Fix for python2.3
 try:
@@ -63,20 +64,6 @@ def nevraString(p):
             if i in p:
                 ret = "%s%s" % (ret, j % p[i])
         return ret
-
-
-class Parser(ConfigParser.ConfigParser):
-
-    def get(self, section, option, default):
-        """
-        Override ConfigParser.get: If the request option is not in the
-        config file then return the value of default rather than raise
-        an exception.  We still raise exceptions on missing sections.
-        """
-        try:
-            return ConfigParser.ConfigParser.get(self, section, option)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return default
 
 
 class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
@@ -145,9 +132,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
     conflicts = ['YUM24', 'RPMng']
 
-    def __init__(self, logger, setup, config):
-        self._loadYumBase(setup=setup, logger=logger)
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, logger, args, config):
+        self._loadYumBase(args=args, logger=logger)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, args, config)
         self.ignores = [entry.get('name') for struct in config \
                         for entry in struct \
                         if entry.tag == 'Path' and \
@@ -185,26 +172,37 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 else:
                     dest[pname] = dict(data)
 
-    def _loadYumBase(self, setup=None, logger=None):
+    @classmethod
+    def register_options(cls):
+        Bcfg2.Client.Tools.PkgTool.register_options()
+        Bcfg2.Options.add_options(
+            Bcfg2.Options.VERBOSE,
+            Bcfg2.Options.DEBUG,
+            Bcfg2.Options.CLIENT_QUICK,
+            Bcfg2.Options.CLIENT_KEVLAR,
+            Bcfg2.Options.CLIENT_REMOVE,
+        )
+
+    def _loadYumBase(self, args=None, logger=None):
         ''' this may be called before PkgTool.__init__() is called on
         this object (when the YUMng object is first instantiated;
         PkgTool.__init__() calls RefreshPackages(), which requires a
         YumBase object already exist), or after __init__() has
         completed, when we reload the yum config before installing
         packages. Consequently, we support both methods by allowing
-        setup and logger, the only object properties we use in this
+        args and logger, the only object properties we use in this
         function, to be passed as keyword arguments or to be omitted
         and drawn from the object itself.'''
         self.yb = yum.YumBase()
 
-        if setup is None:
-            setup = self.setup
+        if args is None:
+            args = self.args
         if logger is None:
             logger = self.logger
 
-        if setup['debug']:
+        if args.debug:
             debuglevel = 3
-        elif setup['verbose']:
+        elif args.verbose:
             debuglevel = 2
         else:
             debuglevel = 0
@@ -230,24 +228,33 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             raise Bcfg2.Client.Tools.toolInstantiationError
 
     def _loadConfig(self):
-        # Process the YUMng section from the config file.
-        CP = Parser()
-        CP.read(self.setup.get('setup'))
-        truth = ['true', 'yes', '1']
+        def parse_bool(val):
+            return val.lower() in ['true', 'yes', '1']
+
+        Bcfg2.Options.add_options(
+            Option(self.name + ":pkg_checks", type=parse_bool, default=True,
+                   dest='pkg_checks'),
+            Option(self.name + ":pkg_verify", type=parse_bool, default=True,
+                   dest='pkg_verify'),
+            Option(self.name + ":installed_action", type=str.lower, default='install',
+                   dest='installed_action'),
+            Option(self.name + ":version_fail_action", type=str.lower, default='upgrade',
+                   dest='version_fail_action'),
+            Option(self.name + ":verify_fail_action", type=str.lower, default='reinstall',
+                   dest='verify_fail_action'),
+            Option(self.name + ":verify_flags", type=lambda x: x.lower().replace(' ', ','), default='',
+                   dest='verify_flags'),
+        )
+
+        yum_args = Bcfg2.Options.bootstrap()
 
         # These are all boolean flags, either we do stuff or we don't
-        self.pkg_checks = CP.get(self.name, "pkg_checks", "true").lower() \
-                in truth
-        self.pkg_verify = CP.get(self.name, "pkg_verify", "true").lower() \
-                in truth
-        self.doInstall = CP.get(self.name, "installed_action",
-                "install").lower() == "install"
-        self.doUpgrade = CP.get(self.name,
-                "version_fail_action", "upgrade").lower() == "upgrade"
-        self.doReinst = CP.get(self.name, "verify_fail_action",
-                "reinstall").lower() == "reinstall"
-        self.verifyFlags = CP.get(self.name, "verify_flags",
-                                  "").lower().replace(' ', ',')
+        self.pkg_checks = yum_args.pkg_checks
+        self.pkg_verify = yum_args.pkg_verify
+        self.doInstall = yum_args.installed_action == "install"
+        self.doUpgrade = yum_args.version_fail_action == "upgrade"
+        self.doReinst = yum_args.verify_fail_action == "reinstall"
+        self.verifyFlags = yum_args.verify_flags
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installOnlyPkgs:
@@ -319,7 +326,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         def verify(p):
             # disabling file checksums is a new feature yum 3.2.17-ish
             try:
-                vResult = p.verify(fast=self.setup.get('quick', False))
+                vResult = p.verify(fast=self.args.disable_checksum)
             except TypeError:
                 # Older Yum API
                 vResult = p.verify()
@@ -527,7 +534,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
 
-            if self.setup.get('quick', False):
+            if self.args.disable_checksum:
                 # Passed -q on the command line
                 continue
             if not (pkg_verify and \
@@ -595,7 +602,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         else:
             install_only = False
 
-        if virtPkg or (install_only and not self.setup['kevlar']):
+        if virtPkg or (install_only and not self.args.bulletproof):
             # XXX: virtual capability supplied, we a probably dealing
             # with multiple packages of different names.  This check
             # doesn't make a lot of since in this case
@@ -802,8 +809,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if self.extra_instances is not None and len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
-                self.setup.get('remove') == 'packages'):
+            if (self.args.remove_extra == 'all' or \
+                self.args.remove_extra == 'packages'):
                 self.RemovePackages(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -904,7 +911,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         self._runYumTransaction()
 
-        if not self.setup['kevlar']:
+        if not self.args.bulletproof:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" \
                         % (pkg_entry.get('name')))
