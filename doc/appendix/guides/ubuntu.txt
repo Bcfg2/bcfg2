@@ -154,7 +154,7 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
     [global]
     root@lucid:~# cat /var/lib/bcfg2/Packages/sources.xml
     <Sources>
-      <Group name="lucid">
+      <Group name="ubuntu-lucid">
         <Source type="apt" url="http://archive.ubuntu.com/ubuntu" version="lucid">
           <Component>main</Component>
           <Component>multiverse</Component>
