@@ -111,7 +111,7 @@ class Plugin(Debuggable):
         object.__init__(self)
         self.Entries = {}
         self.core = core
-        self.data = "%s/%s" % (datastore, self.name)
+        self.data = os.path.join(datastore, self.name)
         self.running = True
         Debuggable.__init__(self, name=self.name)
 

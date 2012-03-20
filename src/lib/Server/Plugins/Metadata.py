@@ -65,16 +65,16 @@ class XMLMetadataConfig(object):
     def add_monitor(self, fname):
         """Add a fam monitor for an included file"""
         if self.should_monitor:
-            self.metadata.core.fam.AddMonitor("%s/%s" % (self.basedir, fname),
+            self.metadata.core.fam.AddMonitor(os.path.join(self.basedir, fname),
                                               self.metadata)
             self.extras.append(fname)
 
     def load_xml(self):
         """Load changes from XML"""
         try:
-            xdata = lxml.etree.parse("%s/%s" % (self.basedir, self.basefile))
+            xdata = lxml.etree.parse(os.path.join(self.basedir, self.basefile))
         except lxml.etree.XMLSyntaxError:
-            self.logger.error('Failed to parse %s' % (self.basefile))
+            self.logger.error('Failed to parse %s' % self.basefile)
             return
         self.basedata = copy.copy(xdata)
         included = [ent.get('href') for ent in \
@@ -86,19 +86,20 @@ class XMLMetadataConfig(object):
             try:
                 xdata.xinclude()
             except lxml.etree.XIncludeError:
-                self.logger.error("Failed to process XInclude for file %s" % self.basefile)
+                self.logger.error("Failed to process XInclude for file %s" %
+                                  self.basefile)
         self.data = xdata
 
     def write(self):
         """Write changes to xml back to disk."""
-        self.write_xml("%s/%s" % (self.basedir, self.basefile),
+        self.write_xml(os.path.join(self.basedir, self.basefile),
                        self.basedata)
 
     def write_xml(self, fname, xmltree):
         """Write changes to xml back to disk."""
         tmpfile = "%s.new" % fname
         try:
-            datafile = open("%s" % tmpfile, 'w')
+            datafile = open(tmpfile, 'w')
         except IOError:
             e = sys.exc_info()[1]
             self.logger.error("Failed to write %s: %s" % (tmpfile, e))
@@ -114,40 +115,42 @@ class XMLMetadataConfig(object):
             datafile.write(newcontents)
         except:
             fcntl.lockf(fd, fcntl.LOCK_UN)
-            self.logger.error("Metadata: Failed to write new xml data to %s" % tmpfile, exc_info=1)
-            os.unlink("%s" % tmpfile)
+            self.logger.error("Metadata: Failed to write new xml data to %s" %
+                              tmpfile, exc_info=1)
+            os.unlink(tmpfile)
             raise MetadataRuntimeError
         datafile.close()
 
         # check if clients.xml is a symlink
-        xmlfile = "%s" % fname
-        if os.path.islink(xmlfile):
-            xmlfile = os.readlink(xmlfile)
+        if os.path.islink(fname):
+            fname = os.readlink(fname)
 
         try:
-            os.rename("%s" % tmpfile, xmlfile)
+            os.rename(tmpfile, fname)
         except:
             self.logger.error("Metadata: Failed to rename %s" % tmpfile)
             raise MetadataRuntimeError
 
     def find_xml_for_xpath(self, xpath):
-        """Find and load xml data containing the xpath query"""
+        """Find and load xml file containing the xpath query"""
         if self.pseudo_monitor:
             # Reload xml if we don't have a real monitor
             self.load_xml()
         cli = self.basedata.xpath(xpath)
         if len(cli) > 0:
-            return {'filename': "%s/%s" % (self.basedir, self.basefile),
+            return {'filename': os.path.join(self.basedir, self.basefile),
                     'xmltree': self.basedata,
                     'xquery': cli}
         else:
             """Try to find the data in included files"""
             for included in self.extras:
                 try:
-                    xdata = lxml.etree.parse("%s/%s" % (self.basedir, included))
+                    xdata = lxml.etree.parse(os.path.join(self.basedir,
+                                                          included))
                     cli = xdata.xpath(xpath)
                     if len(cli) > 0:
-                        return {'filename': "%s/%s" % (self.basedir, included),
+                        return {'filename': os.path.join(self.basedir,
+                                                         included),
                                 'xmltree': xdata,
                                 'xquery': cli}
                 except lxml.etree.XMLSyntaxError:
@@ -229,8 +232,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Statistics.__init__(self)
         if watch_clients:
             try:
-                core.fam.AddMonitor("%s/%s" % (self.data, "groups.xml"), self)
-                core.fam.AddMonitor("%s/%s" % (self.data, "clients.xml"), self)
+                core.fam.AddMonitor(os.path.join(self.data, "groups.xml"), self)
+                core.fam.AddMonitor(os.path.join(self.data, "clients.xml"), self)
             except:
                 print("Unable to add file monitor for groups.xml or clients.xml")
                 raise Bcfg2.Server.Plugin.PluginInitError
@@ -271,269 +274,241 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     @classmethod
     def init_repo(cls, repo, groups, os_selection, clients):
-        path = '%s/%s' % (repo, cls.name)
+        path = os.path.join(repo, cls.name)
         os.makedirs(path)
-        open("%s/Metadata/groups.xml" %
-             repo, "w").write(groups % os_selection)
-        open("%s/Metadata/clients.xml" %
-             repo, "w").write(clients % socket.getfqdn())
+        open(os.path.join(repo, "Metadata", "groups.xml"),
+             "w").write(groups % os_selection)
+        open(os.path.join(repo, "Metadata", "clients.xml"),
+             "w").write(clients % socket.getfqdn())
 
     def get_groups(self):
         '''return groups xml tree'''
-        groups_tree = lxml.etree.parse(self.data + "/groups.xml")
+        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"))
         root = groups_tree.getroot()
         return root
 
+    def _search_xdata(self, tag, name, tree, alias=False):
+        for node in tree.findall("//%s" % tag):
+            if node.get("name") == name:
+                return node
+            elif alias:
+                for child in node:
+                    if (child.tag == "Alias" and
+                        child.attrib["name"] == name):
+                        return node
+        return None        
+
     def search_group(self, group_name, tree):
         """Find a group."""
-        for node in tree.findall("//Group"):
-            if node.get("name") == group_name:
-                return node
-            for child in node:
-                if child.tag == "Alias" and child.attrib["name"] == group_name:
-                    return node
-        return None
+        return self._search_xdata("Group", group_name, tree)
 
+    def search_bundle(self, bundle_name, tree):
+        """Find a bundle."""
+        return self._search_xdata("Bundle", bundle_name, tree)
+
+    def search_client(self, client_name, tree):
+        return self._search_xdata("Client", client_name, tree, alias=True)
+
+    def _add_xdata(self, config, tag, name, attribs=None, alias=False):
+        node = self._search_xdata(tag, name, config.xdata, alias=alias)
+        if node != None:
+            self.logger.error("%s \"%s\" already exists" % (tag, name))
+            raise MetadataConsistencyError
+        element = lxml.etree.SubElement(config.base_xdata.getroot(),
+                                        tag, name=name)
+        if attribs:
+            for key, val in list(attribs.items()):
+                element.set(key, val)
+        config.write()
+    
     def add_group(self, group_name, attribs):
         """Add group to groups.xml."""
+        return self._add_xdata(self.groups_xml, "Group", group_name,
+                               attribs=attribs)
 
-        node = self.search_group(group_name, self.groups_xml.xdata)
-        if node != None:
-            self.logger.error("Group \"%s\" already exists" % (group_name))
+    def add_bundle(self, bundle_name):
+        """Add bundle to groups.xml."""
+        return self._add_xdata(self.groups_xml, "Bundle", bundle_name)
+
+    def add_client(self, client_name, attribs):
+        """Add client to clients.xml."""
+        return self._add_xdata(self.clients_xml, "Client", client_name,
+                               attribs=attribs, alias=True)
+
+    def _update_xdata(self, config, tag, name, attribs, alias=False):
+        node = self._search_xdata(tag, name, config.xdata, alias=alias)
+        if node == None:
+            self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise MetadataConsistencyError
-
-        element = lxml.etree.SubElement(self.groups_xml.base_xdata.getroot(),
-                                      "Group", name=group_name)
+        xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
+                                          (tag, node.get('name')))
+        if not xdict:
+            self.logger.error("Unexpected error finding %s \"%s\"" %
+                              (tag, name))
+            raise MetadataConsistencyError
         for key, val in list(attribs.items()):
-            element.set(key, val)
-        self.groups_xml.write()
+            xdict['xquery'][0].set(key, val)
+        config.write_xml(xdict['filename'], xdict['xmltree'])
 
     def update_group(self, group_name, attribs):
         """Update a groups attributes."""
-        node = self.search_group(group_name, self.groups_xml.xdata)
-        if node == None:
-            self.logger.error("Group \"%s\" does not exist" % (group_name))
-            raise MetadataConsistencyError
-        xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
-        if not xdict:
-            self.logger.error("Unexpected error finding group")
-            raise MetadataConsistencyError
+        return self._update_xdata(self.groups_xml, "Group", group_name, attribs)
 
-        for key, val in list(attribs.items()):
-            xdict['xquery'][0].set(key, val)
-        self.groups_xml.write_xml(xdict['filename'], xdict['xmltree'])
+    def update_client(self, client_name, attribs):
+        """Update a clients attributes."""
+        return self._update_xdata(self.clients_xml, "Client", client_name,
+                                  attribs, alias=True)
 
-    def remove_group(self, group_name):
-        """Remove a group."""
-        node = self.search_group(group_name, self.groups_xml.xdata)
+    def _remove_xdata(self, config, tag, name, alias=False):
+        node = self._search_xdata(tag, name, config.xdata)
         if node == None:
-            self.logger.error("Group \"%s\" does not exist" % (group_name))
+            self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise MetadataConsistencyError
-        xdict = self.groups_xml.find_xml_for_xpath('.//Group[@name="%s"]' % (node.get('name')))
+        xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
+                                          (tag, node.get('name')))
         if not xdict:
-            self.logger.error("Unexpected error finding group")
+            self.logger.error("Unexpected error finding %s \"%s\"" %
+                              (tag, name))
             raise MetadataConsistencyError
         xdict['xquery'][0].getparent().remove(xdict['xquery'][0])
         self.groups_xml.write_xml(xdict['filename'], xdict['xmltree'])
 
-    def add_bundle(self, bundle_name):
-        """Add bundle to groups.xml."""
-        tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = tree.getroot()
-        element = lxml.etree.Element("Bundle", name=bundle_name)
-        node = self.search_group(bundle_name, tree)
-        if node != None:
-            self.logger.error("Bundle \"%s\" already exists" % (bundle_name))
-            raise MetadataConsistencyError
-        root.append(element)
-        group_tree = open(self.data + "/groups.xml", "w")
-        fd = group_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
-            else:
-                break
-        tree.write(group_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        group_tree.close()
+    def remove_group(self, group_name):
+        """Remove a group."""
+        return self._remove_xdata(self.groups_xml, "Group", group_name)
 
     def remove_bundle(self, bundle_name):
         """Remove a bundle."""
-        tree = lxml.etree.parse(self.data + "/groups.xml")
-        root = tree.getroot()
-        node = self.search_group(bundle_name, tree)
-        if node == None:
-            self.logger.error("Bundle \"%s\" not found" % (bundle_name))
-            raise MetadataConsistencyError
-        root.remove(node)
-        group_tree = open(self.data + "/groups.xml", "w")
-        fd = group_tree.fileno()
-        while True:
-            try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
-                continue
+        return self._remove_xdata(self.groups_xml, "Bundle", bundle_name)
+
+    def _handle_clients_xml_event(self, event):
+        xdata = self.clients_xml.xdata
+        self.clients = {}
+        self.aliases = {}
+        self.raliases = {}
+        self.bad_clients = {}
+        self.secure = []
+        self.floating = []
+        self.addresses = {}
+        self.raddresses = {}
+        for client in xdata.findall('.//Client'):
+            clname = client.get('name').lower()
+            if 'address' in client.attrib:
+                caddr = client.get('address')
+                if caddr in self.addresses:
+                    self.addresses[caddr].append(clname)
+                else:
+                    self.addresses[caddr] = [clname]
+                if clname not in self.raddresses:
+                    self.raddresses[clname] = set()
+                self.raddresses[clname].add(caddr)
+            if 'auth' in client.attrib:
+                self.auth[client.get('name')] = client.get('auth',
+                                                           'cert+password')
+            if 'uuid' in client.attrib:
+                self.uuid[client.get('uuid')] = clname
+            if client.get('secure', 'false') == 'true':
+                self.secure.append(clname)
+            if client.get('location', 'fixed') == 'floating':
+                self.floating.append(clname)
+            if 'password' in client.attrib:
+                self.passwords[clname] = client.get('password')
+
+            self.raliases[clname] = set()
+            for alias in client.findall('Alias'):
+                self.aliases.update({alias.get('name'): clname})
+                self.raliases[clname].add(alias.get('name'))
+                if 'address' not in alias.attrib:
+                    continue
+                if alias.get('address') in self.addresses:
+                    self.addresses[alias.get('address')].append(clname)
+                else:
+                    self.addresses[alias.get('address')] = [clname]
+                if clname not in self.raddresses:
+                    self.raddresses[clname] = set()
+                self.raddresses[clname].add(alias.get('address'))
+            self.clients.update({clname: client.get('profile')})
+        self.states['clients.xml'] = True
+
+    def _handle_groups_xml_event(self, event):
+        xdata = self.groups_xml.xdata
+        self.public = []
+        self.private = []
+        self.profiles = []
+        self.groups = {}
+        grouptmp = {}
+        self.categories = {}
+        groupseen = list()
+        for group in xdata.xpath('//Groups/Group'):
+            if group.get('name') not in groupseen:
+                groupseen.append(group.get('name'))
             else:
-                break
-        tree.write(group_tree)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
-        group_tree.close()
-
-    def search_client(self, client_name, tree):
-        """Find a client."""
-        for node in tree.findall("//Client"):
-            if node.get("name") == client_name:
-                return node
-            for child in node:
-                if child.tag == "Alias" and child.attrib["name"] == client_name:
-                    return node
-        return None
-
-    def add_client(self, client_name, attribs):
-        """Add client to clients.xml."""
-        node = self.search_client(client_name, self.clients_xml.xdata)
-        if node != None:
-            self.logger.error("Client \"%s\" already exists" % (client_name))
-            raise MetadataConsistencyError
-
-        element = lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
-                                      "Client", name=client_name)
-        for key, val in list(attribs.items()):
-            element.set(key, val)
-        self.clients_xml.write()
-
-    def update_client(self, client_name, attribs):
-        """Update a clients attributes."""
-        node = self.search_client(client_name, self.clients_xml.xdata)
-        if node == None:
-            self.logger.error("Client \"%s\" does not exist" % (client_name))
-            raise MetadataConsistencyError
-
-        xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (node.get('name')))
-        if not xdict:
-            self.logger.error("Unexpected error finding client")
-            raise MetadataConsistencyError
-
-        node = xdict['xquery'][0]
-        [node.set(key, value) for key, value in list(attribs.items())]
-        self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
+                self.logger.error("Metadata: Group %s defined multiply" %
+                                  group.get('name'))
+            grouptmp[group.get('name')] = \
+                ([item.get('name') for item in group.findall('./Bundle')],
+                 [item.get('name') for item in group.findall('./Group')])
+            grouptmp[group.get('name')][1].append(group.get('name'))
+            if group.get('default', 'false') == 'true':
+                self.default = group.get('name')
+            if group.get('profile', 'false') == 'true':
+                self.profiles.append(group.get('name'))
+            if group.get('public', 'false') == 'true':
+                self.public.append(group.get('name'))
+            elif group.get('public', 'true') == 'false':
+                self.private.append(group.get('name'))
+            if 'category' in group.attrib:
+                self.categories[group.get('name')] = group.get('category')
+        
+        for group in grouptmp:
+            # self.groups[group] => (bundles, groups, categories)
+            self.groups[group] = (set(), set(), {})
+            tocheck = [group]
+            group_cat = self.groups[group][2]
+            while tocheck:
+                now = tocheck.pop()
+                self.groups[group][1].add(now)
+                if now in grouptmp:
+                    (bundles, groups) = grouptmp[now]
+                    for ggg in groups:
+                        if ggg in self.groups[group][1]:
+                            continue
+                        if (ggg not in self.categories or \
+                            self.categories[ggg] not in self.groups[group][2]):
+                            self.groups[group][1].add(ggg)
+                            tocheck.append(ggg)
+                            if ggg in self.categories:
+                                group_cat[self.categories[ggg]] = ggg
+                        elif ggg in self.categories:
+                            self.logger.info("Group %s: %s cat-suppressed %s" % \
+                                             (group,
+                                              group_cat[self.categories[ggg]],
+                                              ggg))
+                    [self.groups[group][0].add(bund) for bund in bundles]
+        self.states['groups.xml'] = True
 
     def HandleEvent(self, event):
         """Handle update events for data files."""
         if self.clients_xml.HandleEvent(event):
-            xdata = self.clients_xml.xdata
-            self.clients = {}
-            self.aliases = {}
-            self.raliases = {}
-            self.bad_clients = {}
-            self.secure = []
-            self.floating = []
-            self.addresses = {}
-            self.raddresses = {}
-            for client in xdata.findall('.//Client'):
-                clname = client.get('name').lower()
-                if 'address' in client.attrib:
-                    caddr = client.get('address')
-                    if caddr in self.addresses:
-                        self.addresses[caddr].append(clname)
-                    else:
-                        self.addresses[caddr] = [clname]
-                    if clname not in self.raddresses:
-                        self.raddresses[clname] = set()
-                    self.raddresses[clname].add(caddr)
-                if 'auth' in client.attrib:
-                    self.auth[client.get('name')] = client.get('auth',
-                                                               'cert+password')
-                if 'uuid' in client.attrib:
-                    self.uuid[client.get('uuid')] = clname
-                if client.get('secure', 'false') == 'true':
-                    self.secure.append(clname)
-                if client.get('location', 'fixed') == 'floating':
-                    self.floating.append(clname)
-                if 'password' in client.attrib:
-                    self.passwords[clname] = client.get('password')
-                for alias in [alias for alias in client.findall('Alias')\
-                              if 'address' in alias.attrib]:
-                    if alias.get('address') in self.addresses:
-                        self.addresses[alias.get('address')].append(clname)
-                    else:
-                        self.addresses[alias.get('address')] = [clname]
-                    if clname not in self.raddresses:
-                        self.raddresses[clname] = set()
-                    self.raddresses[clname].add(alias.get('address'))
-                self.clients.update({clname: client.get('profile')})
-                [self.aliases.update({alias.get('name'): clname}) \
-                 for alias in client.findall('Alias')]
-                self.raliases[clname] = set()
-                [self.raliases[clname].add(alias.get('name')) for alias \
-                 in client.findall('Alias')]
-            self.states['clients.xml'] = True
+            self._handle_clients_xml_event(event)
         elif self.groups_xml.HandleEvent(event):
-            xdata = self.groups_xml.xdata
-            self.public = []
-            self.private = []
-            self.profiles = []
-            self.groups = {}
-            grouptmp = {}
-            self.categories = {}
-            groupseen = list()
-            for group in xdata.xpath('//Groups/Group'):
-                if group.get('name') not in groupseen:
-                    groupseen.append(group.get('name'))
-                else:
-                    self.logger.error("Metadata: Group %s defined multiply" % (group.get('name')))
-                grouptmp[group.get('name')] = tuple([[item.get('name') for item in group.findall(spec)]
-                                                     for spec in ['./Bundle', './Group']])
-                grouptmp[group.get('name')][1].append(group.get('name'))
-                if group.get('default', 'false') == 'true':
-                    self.default = group.get('name')
-                if group.get('profile', 'false') == 'true':
-                    self.profiles.append(group.get('name'))
-                if group.get('public', 'false') == 'true':
-                    self.public.append(group.get('name'))
-                elif group.get('public', 'true') == 'false':
-                    self.private.append(group.get('name'))
-                if 'category' in group.attrib:
-                    self.categories[group.get('name')] = group.get('category')
-            for group in grouptmp:
-                # self.groups[group] => (bundles, groups, categories)
-                self.groups[group] = (set(), set(), {})
-                tocheck = [group]
-                group_cat = self.groups[group][2]
-                while tocheck:
-                    now = tocheck.pop()
-                    self.groups[group][1].add(now)
-                    if now in grouptmp:
-                        (bundles, groups) = grouptmp[now]
-                        for ggg in [ggg for ggg in groups if ggg not in self.groups[group][1]]:
-                            if ggg not in self.categories or \
-                                   self.categories[ggg] not in self.groups[group][2]:
-                                self.groups[group][1].add(ggg)
-                                tocheck.append(ggg)
-                                if ggg in self.categories:
-                                    group_cat[self.categories[ggg]] = ggg
-                            elif ggg in self.categories:
-                                self.logger.info("Group %s: %s cat-suppressed %s" % \
-                                                 (group,
-                                                  group_cat[self.categories[ggg]],
-                                                  ggg))
-                        [self.groups[group][0].add(bund) for bund in bundles]
-            self.states['groups.xml'] = True
+            self._handle_groups_xml_event(event)
+        
         if False not in list(self.states.values()):
             # check that all client groups are real and complete
             real = list(self.groups.keys())
             for client in list(self.clients.keys()):
                 if self.clients[client] not in self.profiles:
-                    self.logger.error("Client %s set as nonexistent or incomplete group %s" \
-                                      % (client, self.clients[client]))
-                    self.logger.error("Removing client mapping for %s" % (client))
+                    self.logger.error("Client %s set as nonexistent or "
+                                      "incomplete group %s" %
+                                      (client, self.clients[client]))
+                    self.logger.error("Removing client mapping for %s" % client)
                     self.bad_clients[client] = self.clients[client]
                     del self.clients[client]
             for bclient in list(self.bad_clients.keys()):
                 if self.bad_clients[bclient] in self.profiles:
-                    self.logger.info("Restored profile mapping for client %s" % bclient)
+                    self.logger.info("Restored profile mapping for client %s" %
+                                     bclient)
                     self.clients[bclient] = self.bad_clients[bclient]
                     del self.bad_clients[bclient]
 
@@ -543,42 +518,37 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         if False in list(self.states.values()):
             raise MetadataRuntimeError
         if profile not in self.public:
-            self.logger.error("Failed to set client %s to private group %s" % (client, profile))
+            self.logger.error("Failed to set client %s to private group %s" %
+                              (client, profile))
             raise MetadataConsistencyError
         if client in self.clients:
-            self.logger.info("Changing %s group from %s to %s" % (client, self.clients[client], profile))
-            xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (client))
-            if not xdict:
-                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
-                raise MetadataConsistencyError
-            xdict['xquery'][0].set('profile', profile)
-            self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
+            self.logger.info("Changing %s group from %s to %s" %
+                             (client, self.clients[client], profile))
+            self.update_client(client, dict(profile=profile))
         else:
-            self.logger.info("Creating new client: %s, profile %s" % \
+            self.logger.info("Creating new client: %s, profile %s" %
                              (client, profile))
             if addresspair in self.session_cache:
                 # we are working with a uuid'd client
-                lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
-                                      'Client',
-                                      name=self.session_cache[addresspair][1],
-                                      uuid=client, profile=profile,
-                                      address=addresspair[0])
+                self.add_client(self.session_cache[addresspair][1],
+                                dict(uuid=client, profile=profile,
+                                     address=addresspair[0]))
             else:
-                lxml.etree.SubElement(self.clients_xml.base_xdata.getroot(),
-                                      'Client', name=client,
-                                      profile=profile)
+                self.add_client(client, dict(profile=profile))
         self.clients[client] = profile
         self.clients_xml.write()
 
     def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
         if addresspair in self.session_cache:
-            # client _was_ cached, so there can be some expired entries
-            # we need to clean them up to avoid potentially infinite memory swell
+            # client _was_ cached, so there can be some expired
+            # entries. we need to clean them up to avoid potentially
+            # infinite memory swell
             cache_ttl = 90
             if cleanup_cache:
-                # remove entries for this client's IP address with _any_ port numbers
-                # - perhaps a priority queue could be faster?
+                # remove entries for this client's IP address with
+                # _any_ port numbers - perhaps a priority queue could
+                # be faster?
                 curtime = time.time()
                 for addrpair in self.session_cache.keys():
                      if addresspair[0] == addrpair[0]:
@@ -586,13 +556,18 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                          if curtime - stamp > cache_ttl:
                              del self.session_cache[addrpair]
             # return the cached data
-            (stamp, uuid) = self.session_cache[addresspair]
-            if time.time() - stamp < cache_ttl:
-                return self.session_cache[addresspair][1]
+            try:
+                (stamp, uuid) = self.session_cache[addresspair]
+                if time.time() - stamp < cache_ttl:
+                    return self.session_cache[addresspair][1]
+            except KeyError:
+                # we cleaned all cached data for this client in cleanup_cache
+                pass
         address = addresspair[0]
         if address in self.addresses:
             if len(self.addresses[address]) != 1:
-                self.logger.error("Address %s has multiple reverse assignments; a uuid must be used" % (address))
+                self.logger.error("Address %s has multiple reverse assignments; "
+                                  "a uuid must be used" % (address))
                 raise MetadataConsistencyError
             return self.addresses[address][0]
         try:
@@ -617,7 +592,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             (bundles, groups, categories) = self.groups[profile]
         else:
             if self.default == None:
-                self.logger.error("Cannot set group for client %s; no default group set" % (client))
+                self.logger.error("Cannot set group for client %s; "
+                                  "no default group set" % client)
                 raise MetadataConsistencyError
             self.set_profile(client, self.default, (None, None))
             profile = self.default
@@ -632,7 +608,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             password = self.passwords[client]
         else:
             password = None
-        uuids = [item for item, value in list(self.uuid.items()) if value == client]
+        uuids = [item for item, value in list(self.uuid.items())
+                 if value == client]
         if uuids:
             uuid = uuids[0]
         else:
@@ -646,7 +623,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
         return ClientMetadata(client, profile, newgroups, newbundles, aliases,
-                              addresses, newcategories, uuid, password, self.query)
+                              addresses, newcategories, uuid, password,
+                              self.query)
 
     def get_all_group_names(self):
         all_groups = set()
@@ -670,22 +648,27 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def merge_additional_groups(self, imd, groups):
         for group in groups:
-            if group in self.categories and \
-                   self.categories[group] in imd.categories:
+            if (group in self.categories and
+                self.categories[group] in imd.categories):
                 continue
-            nb, ng, _ = self.groups.get(group, (list(), [group], dict()))
-            for b in nb:
-                if b not in imd.bundles:
-                    imd.bundles.add(b)
-            for g in ng:
-                if g not in imd.groups:
-                    if g in self.categories and \
-                       self.categories[g] in imd.categories:
+            newbundles, newgroups, _ = self.groups.get(group,
+                                                       (list(),
+                                                        [group],
+                                                        dict()))
+            for newbundle in newbundles:
+                if newbundle not in imd.bundles:
+                    imd.bundles.add(newbundle)
+            for newgroup in newgroups:
+                if newgroup not in imd.groups:
+                    if (newgroup in self.categories and
+                        self.categories[newgroup] in imd.categories):
                         continue
-                    if g in self.private:
-                        self.logger.error("Refusing to add dynamic membership in private group %s for client %s" % (g, imd.hostname))
+                    if newgroup in self.private:
+                        self.logger.error("Refusing to add dynamic membership "
+                                          "in private group %s for client %s" %
+                                          (newgroup, imd.hostname))
                         continue
-                    imd.groups.add(g)
+                    imd.groups.add(newgroup)
 
     def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
@@ -700,18 +683,19 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             return True
         if address in self.addresses:
             if client in self.addresses[address]:
-                self.debug_log("Client %s matches address %s" % (client, address))
+                self.debug_log("Client %s matches address %s" %
+                               (client, address))
                 return True
             else:
-                self.logger.error("Got request for non-float client %s from %s" \
-                                  % (client, address))
+                self.logger.error("Got request for non-float client %s from %s" %
+                                  (client, address))
                 return False
         resolved = self.resolve_client(addresspair)
         if resolved.lower() == client.lower():
             return True
         else:
-            self.logger.error("Got request for %s from incorrect address %s" \
-                              % (client, address))
+            self.logger.error("Got request for %s from incorrect address %s" %
+                              (client, address))
             self.logger.error("Resolved to %s" % resolved)
             return False
 
@@ -729,7 +713,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             try:
                 client = self.resolve_client(address)
             except MetadataConsistencyError:
-                self.logger.error("Client %s failed to resolve; metadata problem" % (address[0]))
+                self.logger.error("Client %s failed to resolve; metadata problem"
+                                  % address[0])
                 return False
         else:
             id_method = 'uuid'
@@ -761,10 +746,12 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
         if client not in self.passwords:
             if client in self.secure:
-                self.logger.error("Client %s in secure mode but has no password" % (address[0]))
+                self.logger.error("Client %s in secure mode but has no password"
+                                  % address[0])
                 return False
             if password != self.password:
-                self.logger.error("Client %s used incorrect global password" % (address[0]))
+                self.logger.error("Client %s used incorrect global password" %
+                                  address[0])
                 return False
         if client not in self.secure:
             if client in self.passwords:
@@ -772,14 +759,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             else:
                 plist = [self.password]
             if password not in plist:
-                self.logger.error("Client %s failed to use either allowed password" % \
-                                  (address[0]))
+                self.logger.error("Client %s failed to use either allowed "
+                                  "password" % address[0])
                 return False
         else:
             # client in secure mode and has a client password
             if password != self.passwords[client]:
-                self.logger.error("Client %s failed to use client password in secure mode" % \
-                                  (address[0]))
+                self.logger.error("Client %s failed to use client password in "
+                                  "secure mode" % address[0])
                 return False
         # populate the session cache
         if user.decode('utf-8') != 'root':
@@ -790,13 +777,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         """Hook into statistics interface to toggle clients in bootstrap mode."""
         client = meta.hostname
         if client in self.auth and self.auth[client] == 'bootstrap':
-            self.logger.info("Asserting client %s auth mode to cert" % client)
-            xdict = self.clients_xml.find_xml_for_xpath('.//Client[@name="%s"]' % (client))
-            if not xdict:
-                self.logger.error("Metadata: Unable to update profile for client %s.  Use of Xinclude?" % client)
-                raise MetadataConsistencyError
-            xdict['xquery'][0].set('auth', 'cert')
-            self.clients_xml.write_xml(xdict['filename'], xdict['xmltree'])
+            self.update_client(client, dict(auth='cert'))
 
     def viz(self, hosts, bundles, key, only_client, colors):
         """Admin mode viz support."""
@@ -812,14 +793,14 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         def include_group(group):
             return not only_client or group in clientmeta.groups
         
-        groups_tree = lxml.etree.parse(self.data + "/groups.xml")
+        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"))
         try:
             groups_tree.xinclude()
         except lxml.etree.XIncludeError:
             self.logger.error("Failed to process XInclude for file %s" % dest)
         groups = groups_tree.getroot()
         categories = {'default': 'grey83'}
-        viz_str = ""
+        viz_str = []
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
         for group in egroups:
             if not group.get('category') in categories:
@@ -839,10 +820,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                     instances[profile] = [client]
             for profile, clist in list(instances.items()):
                 clist.sort()
-                viz_str += '''\t"%s-instances" [ label="%s", shape="record" ];\n''' \
-                    % (profile, '|'.join(clist))
-                viz_str += '''\t"%s-instances" -> "group-%s";\n''' \
-                    % (profile, profile)
+                viz_str.append('"%s-instances" [ label="%s", shape="record" ];' %
+                               (profile, '|'.join(clist)))
+                viz_str.append('"%s-instances" -> "group-%s";' %
+                               (profile, profile))
         if bundles:
             bundles = []
             [bundles.append(bund.get('name')) \
@@ -851,8 +832,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                      and include_bundle(bund.get('name'))]
             bundles.sort()
             for bundle in bundles:
-                viz_str += '''\t"bundle-%s" [ label="%s", shape="septagon"];\n''' \
-                    % (bundle, bundle)
+                viz_str.append('"bundle-%s" [ label="%s", shape="septagon"];' %
+                               (bundle, bundle))
         gseen = []
         for group in egroups:
             if group.get('profile', 'false') == 'true':
@@ -861,24 +842,25 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 style = "filled"
             gseen.append(group.get('name'))
             if include_group(group.get('name')):
-                viz_str += '\t"group-%s" [label="%s", style="%s", fillcolor=%s];\n' % \
-                           (group.get('name'), group.get('name'), style, group.get('color'))
+                viz_str.append('"group-%s" [label="%s", style="%s", fillcolor=%s];' %
+                               (group.get('name'), group.get('name'), style,
+                                group.get('color')))
                 if bundles:
                     for bundle in group.findall('Bundle'):
-                        viz_str += '\t"group-%s" -> "bundle-%s";\n' % \
-                                   (group.get('name'), bundle.get('name'))
-        gfmt = '\t"group-%s" [label="%s", style="filled", fillcolor="grey83"];\n'
+                        viz_str.append('"group-%s" -> "bundle-%s";' %
+                                       (group.get('name'), bundle.get('name')))
+        gfmt = '"group-%s" [label="%s", style="filled", fillcolor="grey83"];'
         for group in egroups:
             for parent in group.findall('Group'):
                 if parent.get('name') not in gseen and include_group(parent.get('name')):
-                    viz_str += gfmt % (parent.get('name'), parent.get('name'))
+                    viz_str.append(gfmt % (parent.get('name'),
+                                           parent.get('name')))
                     gseen.append(parent.get("name"))
                 if include_group(group.get('name')):
-                    viz_str += '\t"group-%s" -> "group-%s" ;\n' % \
-                               (group.get('name'), parent.get('name'))
+                    viz_str.append('"group-%s" -> "group-%s";' %
+                                   (group.get('name'), parent.get('name')))
         if key:
             for category in categories:
-                viz_str += '''\t"''' + category + '''" [label="''' + category + \
-                    '''", shape="record", style="filled", fillcolor=''' + \
-                    categories[category] + '''];\n'''
-        return viz_str
+                viz_str.append('"%s" [label="%s", shape="record", style="filled", fillcolor="%s"];' %
+                               (category, category, categories[category]))
+        return "\n".join("\t" + s for s in viz_str)
