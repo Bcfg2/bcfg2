@@ -75,13 +75,17 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""
         bundleset = []
+        entries = []
 
         bundle_entries = {}
         for key, item in self.entries.items():
             bundle_entries.setdefault(self.patterns.match(os.path.basename(key)).group('name'), []).append(item)
 
         for bundlename in metadata.bundles:
-            entries = bundle_entries[bundlename]
+            try:
+                entries = bundle_entries[bundlename]
+            except KeyError:
+                self.logger.error("Bundler: Bundle %s does not exist" % bundlename)
             if len(entries) == 0:
                 continue
             elif len(entries) == 1:
