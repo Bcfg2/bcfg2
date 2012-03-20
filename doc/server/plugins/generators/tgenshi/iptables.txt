@@ -206,8 +206,8 @@ iptables
 ::
 
     :MYSQL - [0:0]
-    -A INPUT  -p tcp -m state --state NEW -m tcp --dport 3306 --tcp-flags FIN,SYN,RST,ACK SYN -j MYSQL
-    -A MYSQL -s 192.168.0.0/255.0.0.0  -j ACCEPT
+    -A INPUT -p tcp -m state --state NEW -m tcp --dport 3306 --tcp-flags FIN,SYN,RST,ACK SYN -j MYSQL
+    -A MYSQL -s 192.168.0.0/255.255.0.0 -j ACCEPT
 
 For a host that is in the mysql-server group you get an iptables file
 that looks like the following::
@@ -246,7 +246,7 @@ that looks like the following::
     # Allow SSH Access
     :SSH - [0:0]
     -A INPUT  -p tcp -m state --state NEW -m tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 22 -j SSH
-    -A SSH -s 192.168.0.0/255.0.0.0  -j ACCEPT
+    -A SSH -s 192.168.0.0/255.255.0.0  -j ACCEPT
 
     # Allow Ganglia Access
     -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1 --dport 8649 -j ACCEPT
