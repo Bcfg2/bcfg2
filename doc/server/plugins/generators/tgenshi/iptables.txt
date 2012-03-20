@@ -64,6 +64,7 @@ iptables
     :FORWARD DROP [0:0]
     :OUTPUT ACCEPT [0:0]
     :NO-SMTP - [0:0]
+    :SSH - [0:0]
 
     #Default rules
     #discard malicious packets
@@ -84,7 +85,7 @@ iptables
 
     # Allow SSH Access
     -A INPUT  -p tcp -m state --state NEW -m tcp --tcp-flags FIN,SYN,RST,ACK SYN --dport 22 -j SSH
-    -A SSH -s 192.0.0.0/255.0.0.0  -j ACCEPT
+    -A SSH -s 192.168.0.0/255.255.0.0  -j ACCEPT
 
     # Allow Ganglia Access
     -A INPUT -m state --state NEW -m tcp -p tcp --tcp-flags FIN,SYN,RST,ACK SYN --src 192.168.1.1 --dport 8649 -j ACCEPT
