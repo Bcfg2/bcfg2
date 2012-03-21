@@ -396,10 +396,8 @@ class YumCollection(Collection):
             self.logger.error("Packages: error running bcfg2-yum-helper "
                               "(returned %d): %s" % (rv, stderr))
         elif self.debug_flag:
-            self.logger.debug("Packages: debug info from bcfg2-yum-helper: %s" %
-                              stderr)
-            self.logger.debug("Packages: output from bcfg2-yum-helper: %s" %
-                              stderr)
+            self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
+                           stderr)
         try:
             return json.loads(stdout)
         except ValueError:
