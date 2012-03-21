@@ -1,0 +1,25 @@
+.. -*- mode: rst -*-
+
+.. _development-unit-testing:
+
+==================
+Bcfg2 unit testing
+==================
+
+.. _Python Mock Module: http://python-mock.sourceforge.net/
+.. _Python Nose: http://readthedocs.org/docs/nose/en/latest/
+
+You will first need to install the `Python Mock Module`_ and `Python
+Nose`_ modules. You can then run the existing tests with the
+following.::
+
+    cd testsuite
+    nosetests
+
+You should see output something like the following::
+
+    ..................................................
+    ----------------------------------------------------------------------
+    Ran 50 tests in 0.121s
+
+    OK

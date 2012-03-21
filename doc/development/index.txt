@@ -39,3 +39,4 @@ git access. Mail the :ref:`help-mailinglist` for details.
    testing
    documentation
    docstyleguide
+   unit-testing
