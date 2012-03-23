@@ -68,7 +68,7 @@ The Rules Group Tag may have the following attributes:
 +========+=========================+==============+
 | name   | Group Name              | String       |
 +--------+-------------------------+--------------+
-| negate | Negate group membership | (True|False) |
+| negate | Negate group membership | (true|false) |
 |        | (is not a member of)    |              |
 +--------+-------------------------+--------------+
 
@@ -195,7 +195,7 @@ The Client Tag may have the following attributes:
 +========+=========================+==============+
 | name   | Client Name             | String       |
 +--------+-------------------------+--------------+
-| negate | Negate client selection | (True|False) |
+| negate | Negate client selection | (true|false) |
 |        | (if not client name)    |              |
 +--------+-------------------------+--------------+
 
