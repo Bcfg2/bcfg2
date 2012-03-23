@@ -30,6 +30,12 @@
     <xsd:attribute type='xsd:string' name='sensitive' use='optional'/>
     <xsd:attribute type='xsd:string' name='to' use='optional'/>
     <xsd:attribute type='xsd:string' name='type' use='optional'/>
+    <!-- device attributes -->
+    <xsd:attribute type='xsd:string' name='dev_type' use='optional'/>
+    <xsd:attribute type='xsd:string' name='major' use='optional'/>
+    <xsd:attribute type='xsd:string' name='minor' use='optional'/>
+    <xsd:attribute type='xsd:string' name='mode' use='optional'/>
+    <!-- end device attributes -->
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>
