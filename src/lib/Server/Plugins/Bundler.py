@@ -76,24 +76,24 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
 
         bundle_entries = {}
         for key, item in self.entries.items():
-            bundle_entries.setdefault(self.patterns.match(os.path.basename(key)).group('name'), []).append(item)
+            bundle_entries.setdefault(self.patterns.match(os.path.basename(key)).group('name'),
+                                      []).append(item)
 
         for bundlename in metadata.bundles:
-            entries = bundle_entries[bundlename]
-            if len(entries) == 0:
+            try:
+                entries = bundle_entries[bundlename]
+            except KeyError:
+                self.logger.error("Bundler: Bundle %s does not exist" %
+                                  bundlename)
                 continue
-            elif len(entries) == 1:
-                try:
-                    bundleset.append(entries[0].get_xml_value(metadata))
-                except genshi.template.base.TemplateError:
-                    t = sys.exc_info()[1]
-                    self.logger.error("Bundler: Failed to template genshi bundle %s" \
-                                      % (bundlename))
-                    self.logger.error(t)
-                except:
-                    self.logger.error("Bundler: Unexpected bundler error for %s" \
-                                      % (bundlename), exc_info=1)
-            else:
-                self.logger.error("Got multiple matches for bundle %s" \
-                                  % (bundlename))
+            try:
+                bundleset.append(entries[0].get_xml_value(metadata))
+            except genshi.template.base.TemplateError:
+                t = sys.exc_info()[1]
+                self.logger.error("Bundler: Failed to template genshi bundle %s"
+                                  % bundlename)
+                self.logger.error(t)
+            except:
+                self.logger.error("Bundler: Unexpected bundler error for %s" %
+                                  bundlename, exc_info=1)
         return bundleset

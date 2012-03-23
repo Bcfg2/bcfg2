@@ -158,9 +158,11 @@ Handling GPG Keys
 
 .. versionadded:: 1.2.0
 
-Packages can automatically handle GPG signing keys for Yum and Pulp
-repositories. Simply specify the URL to the GPG key(s) for a
-repository in ``sources.xml``::
+If you have yum libraries installed, Packages can automatically handle
+GPG signing keys for Yum and Pulp repositories. (You do not need to
+use the native yum resolver; if yum libraries are available, GPG
+signing keys can be handled automatically.)  Simply specify the URL to
+the GPG key(s) for a repository in ``sources.xml``::
 
     <Source type="yum"
             rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">

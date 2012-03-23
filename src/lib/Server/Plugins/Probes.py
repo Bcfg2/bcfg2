@@ -137,6 +137,16 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
     def HandleEvent(self, event):
         if event.filename != self.path:
+            if (event.code2str == 'changed' and
+                event.filename.endswith("probed.xml") and
+                event.filename not in self.entries):
+                # for some reason, probed.xml is particularly prone to
+                # getting changed events before created events,
+                # because gamin is the worst ever.  anyhow, we
+                # specifically handle it here to avoid a warning on
+                # every single server startup.
+                self.entry_init(event)
+                return
             return self.handle_event(event)
 
     def get_probe_data(self, metadata):

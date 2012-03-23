@@ -4,7 +4,10 @@ import logging
 import re
 import Bcfg2.Server.Plugin
 import lxml
-from sets import Set
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
@@ -63,7 +66,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
         if 'Package' not in pdict:
             pdict['Package'] = set()
         for child in data.getchildren():
-            attrs = Set(data.attrib.keys()).difference(child.attrib.keys() + ['name'])
+            attrs = set(data.attrib.keys()).difference(child.attrib.keys() + ['name'])
             for attr in attrs:
                 try:
                     child.set(attr, data.get(attr))

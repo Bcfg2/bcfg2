@@ -197,8 +197,21 @@ class YumCollection(Collection):
                 needkeys.add(key)
 
         if len(needkeys):
-            keypkg = lxml.etree.Element('BoundPackage', name="gpg-pubkey",
-                                        type=self.ptype, origin='Packages')
+            if has_yum:
+                # this must be be has_yum, not use_yum, because
+                # regardless of whether the user wants to use the yum
+                # resolver we want to include gpg key data
+                keypkg = lxml.etree.Element('BoundPackage', name="gpg-pubkey",
+                                            type=self.ptype, origin='Packages')
+            else:
+                self.logger.warning("GPGKeys were specified for yum sources in "
+                                    "sources.xml, but no yum libraries were "
+                                    "found")
+                self.logger.warning("GPG key version/release data cannot be "
+                                    "determined automatically")
+                self.logger.warning("Install yum libraries, or manage GPG keys "
+                                    "manually")
+                keypkg = None
 
             for key in needkeys:
                 # figure out the path of the key on the client
@@ -219,7 +232,8 @@ class YumCollection(Collection):
                 # hook to add version/release info if possible
                 self._add_gpg_instances(keypkg, kdata, localkey, remotekey)
                 independent.append(keypath)
-            independent.append(keypkg)
+            if keypkg is not None:
+                independent.append(keypkg)
 
         # see if there are any pulp sources to handle
         has_pulp_sources = False
@@ -274,20 +288,25 @@ class YumCollection(Collection):
     def _add_gpg_instances(self, keyentry, keydata, localkey, remotekey):
         """ add gpg keys to the specification to ensure they get
         installed """
-        if self.use_yum:
-            try:
-                kinfo = yum.misc.getgpgkeyinfo(keydata)
-                version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
-                release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
-                
-                lxml.etree.SubElement(keyentry, 'Instance',
-                                      version=version,
-                                      release=release,
-                                      simplefile=remotekey)
-            except ValueError:
-                err = sys.exc_info()[1]
-                self.logger.error("Packages: Could not read GPG key %s: %s" %
-                                  (localkey, err))
+        # this must be be has_yum, not use_yum, because regardless of
+        # whether the user wants to use the yum resolver we want to
+        # include gpg key data
+        if not has_yum:
+            return
+        
+        try:
+            kinfo = yum.misc.getgpgkeyinfo(keydata)
+            version = yum.misc.keyIdToRPMVer(kinfo['keyid'])
+            release = yum.misc.keyIdToRPMVer(kinfo['timestamp'])
+            
+            lxml.etree.SubElement(keyentry, 'Instance',
+                                  version=version,
+                                  release=release,
+                                  simplefile=remotekey)
+        except ValueError:
+            err = sys.exc_info()[1]
+            self.logger.error("Packages: Could not read GPG key %s: %s" %
+                              (localkey, err))
 
     def is_package(self, package):
         if not self.use_yum:
@@ -396,10 +415,8 @@ class YumCollection(Collection):
             self.logger.error("Packages: error running bcfg2-yum-helper "
                               "(returned %d): %s" % (rv, stderr))
         elif self.debug_flag:
-            self.logger.debug("Packages: debug info from bcfg2-yum-helper: %s" %
-                              stderr)
-            self.logger.debug("Packages: output from bcfg2-yum-helper: %s" %
-                              stderr)
+            self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
+                           stderr)
         try:
             return json.loads(stdout)
         except ValueError:
@@ -438,19 +455,18 @@ class YumSource(Source):
             repoapi = RepositoryAPI()
             try:
                 self.repo = repoapi.repository(self.pulp_id)
-                self.gpgkeys = ["%s/%s" % (PULPCONFIG.cds['keyurl'], key)
+                self.gpgkeys = [os.path.join(PULPCONFIG.cds['keyurl'], key)
                                 for key in repoapi.listkeys(self.pulp_id)]
             except server.ServerRequestError:
                 err = sys.exc_info()[1]
                 if err[0] == 401:
                     msg = "Packages: Error authenticating to Pulp: %s" % err[1]
                 elif err[0] == 404:
-                    msg = "Packages: Pulp repo id %s not found: %s" % (self.pulp_id,
-                                                             err[1])
+                    msg = "Packages: Pulp repo id %s not found: %s" % \
+                          (self.pulp_id, err[1])
                 else:
-                    msg = "Packages: Error %d fetching pulp repo %s: %s" % (err[0],
-                                                                  self.pulp_id,
-                                                                  err[1])
+                    msg = "Packages: Error %d fetching pulp repo %s: %s" % \
+                          (err[0], self.pulp_id, err[1])
                 raise SourceInitError(msg)
             except socket.error:
                 err = sys.exc_info()[1]

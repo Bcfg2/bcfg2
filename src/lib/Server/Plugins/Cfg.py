@@ -100,6 +100,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.specific = CfgMatcher(path.split('/')[-1])
         path = path
 
+    def debug_log(self, message, flag=None):
+        if (flag is None and self.debug_flag) or flag:
+            self.logger.error(message)
+
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
 

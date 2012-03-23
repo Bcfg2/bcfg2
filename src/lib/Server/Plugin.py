@@ -1199,27 +1199,32 @@ class SimpleConfig(FileBacked,
             self.remove_section(section)
         self.read(self.name)
 
-    def get(self, section, option, default=None):
+    def get(self, section, option, **kwargs):
         """ convenience method for getting config items """
+        default = None
+        if 'default' in kwargs:
+            default = kwargs['default']
+            del kwargs['default']
         try:
-            return ConfigParser.SafeConfigParser.get(self, section, option)
+            return ConfigParser.SafeConfigParser.get(self, section, option,
+                                                     **kwargs)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             if default is not None:
                 return default
             else:
                 raise
 
-    def getboolean(self, section, option, default=None):
+    def getboolean(self, section, option, **kwargs):
         """ convenience method for getting boolean config items """
+        default = None
+        if 'default' in kwargs:
+            default = kwargs['default']
+            del kwargs['default']
         try:
-            return ConfigParser.SafeConfigParser.getboolean(self,
-                                                            section, option)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            if default is not None:
-                return default
-            else:
-                raise
-        except ValueError:
+            return ConfigParser.SafeConfigParser.getboolean(self, section,
+                                                            option, **kwargs)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+                ValueError):
             if default is not None:
                 return default
             else:
