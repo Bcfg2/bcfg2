@@ -1,0 +1,72 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-connectors-templatehelper:
+
+==============
+TemplateHelper
+==============
+
+The TemplateHelper plugin is a connector plugin that adds Python
+classes and methods to client metadata instances for use in
+templates.  This allows you to easily reuse code that is common
+amongst multiple templates and add convenience methods.
+
+Using TemplateHelper
+====================
+
+First, ``mkdir /var/lib/bcfg2/TemplateHelper`` and add
+**TemplateHelper** to your ``plugins`` line in ``/etc/bcfg2.conf``.
+Restart ``bcfg2-server``.
+
+Now, any ``.py`` file placed in ``/var/lib/bcfg2/TemplateHelper/``
+will be read and added to matching client metadata objects.  See
+:ref:`Writing Helpers` below for more information on how to write
+TemplateHelper scripts.
+
+TemplateHelper supports group- and host-specific helpers, so you could
+create, e.g., ``foo.py.G80_test`` to create a helper that only applied
+to machines in the group ``test``.
+
+Writing Helpers
+===============
+
+A helper module is just a Python module with three special conditions:
+
+* The filename must end with ``.py`` (before any specificity
+  strings, e.g., ``.G80_foo`` or ``.H_blah.example.com``
+* The module must have an attribute, ``__export__``, that lists all of
+  the classes, functions, variables, or other symbols you wish to
+  export from the module.
+* ``data``, ``handle_event``, ``name``, and ``specific`` are reserved
+  names.  You should not include symbols with a reserved name in
+  ``__export__``.  Additionally, including symbols that start with an
+  underscore or double underscore is bad form, and may also produce
+  errors.
+
+See ``examples/TemplateHelper`` for examples of helper modules.
+
+Usage
+=====
+
+Specific helpers can be referred to in
+templates as ``metadata.TemplateHelper[<modulename>]``. That accesses
+a HelperModule object will has, as attributes, all symbols listed in
+``__export__``.  For example, consider this helper module::
+
+  __export__ = ["hello"]
+  
+  def hello(metadata):
+      return "Hello, %s!" % metadata.hostname
+
+To use this in a TGenshi template, we could do::
+
+  ${metadata.TemplateHelper['hello'].hello(metadata)}
+
+The template would produce::
+
+  Hello, foo.example.com!
+
+Note that the client metadata object is not passed to a helper module
+in any magical way; if you want to access the client metadata object
+in a helper function or class, you must pass the object to the
+function manually.

@@ -935,7 +935,7 @@ class SpecificData(object):
             logger.error("Failed to read file %s" % self.name)
 
 
-class EntrySet:
+class EntrySet(object):
     """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
 
@@ -1011,7 +1011,8 @@ class EntrySet:
                 spec = self.specificity_from_filename(event.filename)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
-                    logger.error("Could not process filename %s; ignoring" % fpath)
+                    logger.error("Could not process filename %s; ignoring" %
+                                 fpath)
                 return
             self.entries[event.filename] = self.entry_type(fpath,
                                                            spec, self.encoding)
