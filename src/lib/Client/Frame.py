@@ -7,6 +7,7 @@ import logging
 import sys
 import time
 import Bcfg2.Client.Tools
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 
 
 def cmpent(ent1, ent2):
@@ -95,16 +96,11 @@ class Frame:
         for tool in drivers:
             if not isinstance(tool, str):
                 tclass[time.time()] = tool
-            tool_class = "Bcfg2.Client.Tools.%s" % tool
             try:
-                tclass[tool] = getattr(__import__(tool_class, globals(),
-                                                  locals(), ['*']),
-                                       tool)
-            except ImportError:
+                tclass[tool] = load_exactly_one('bcfg2.client.tool', tool)
+            except (MultipleEntriesError, NoEntriesError):
+                self.logger.exception("Unable to load client tool")
                 continue
-            except:
-                self.logger.error("Tool %s unexpectedly failed to load" % tool,
-                                  exc_info=1)
 
         for tool in list(tclass.values()):
             try:

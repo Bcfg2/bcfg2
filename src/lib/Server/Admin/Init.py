@@ -317,14 +317,11 @@ class Init(Bcfg2.Server.Admin.Mode):
                                                                  clients)
             else:
                 try:
-                    module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
-                                        '', ["Bcfg2.Server.Plugins"])
-                    cls = getattr(module, plugin)
-                    cls.init_repo(self.repopath)
+                    cls = load_exactly_one('bcfg2.plugins', plugin)
+                    cls.init_repo(self.repo_path)
                 except Exception:
-                    e = sys.exc_info()[1]
-                    print("Plugin setup for %s failed: %s\n"
-                          "Check that dependencies are installed?" % (plugin, e))
+                    logging.exception("Plugin setup for %s failed\n"
+                          "Check that dependencies are installed?" % plugin)
 
     def init_repo(self):
         """Setup a new repo and create the content of the configuration file."""

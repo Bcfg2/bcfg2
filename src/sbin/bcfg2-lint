@@ -11,6 +11,8 @@ import Bcfg2.Server.Core
 import Bcfg2.Server.Lint
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
+
 
 logger = logging.getLogger('bcfg2-lint')
 
@@ -150,17 +152,10 @@ if __name__ == '__main__':
     serverlessplugins = {}
     for plugin_name in allplugins:
         try:
-            mod = getattr(__import__("Bcfg2.Server.Lint.%s" %
-                                     (plugin_name)).Server.Lint, plugin_name)
-        except ImportError:
-            try:
-                mod = __import__(plugin_name)
-            except Exception:
-                err = sys.exc_info()[1]
-                logger.error("Failed to load plugin %s: %s" % (plugin_name,
-                                                               err))
-                raise SystemExit(1)
-        plugin = getattr(mod, plugin_name)
+            plugin = load_exactly_one('bcfg2.lint', plugin_name)
+        except (MultipleEntriesError, NoEntriesError):
+            logger.exception("Failed to load plugin %s" % plugin_name)
+            raise SystemExit(1)
         if [c for c in inspect.getmro(plugin)
             if c == Bcfg2.Server.Lint.ServerPlugin]:
             serverplugins[plugin_name] = plugin

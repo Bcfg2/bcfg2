@@ -2,6 +2,7 @@ import os
 import sys
 import lxml.etree
 import Bcfg2.Server.Plugin
+from Bcfg2.PluginLoader import load_exactly_one, MultipleEntriesError, NoEntriesError
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
@@ -70,16 +71,13 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             return None
 
         try:
-            module = getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
-                                        stype.title()).Server.Plugins.Packages,
-                             stype.title())
-            cls = getattr(module, "%sSource" % stype.title())
-        except (ImportError, AttributeError):
-            self.logger.error("Packages: Unknown source type %s" % stype)
+            source_class = load_exactly_one('bcfg2.packages.source', stype)
+        except (MultipleEntriesError, NoEntriesError):
+            self.logger.exception("Unable to load package source")
             return None
 
         try:
-            source = cls(self.cachepath, xsource, self.config)
+            source = source_class(self.cachepath, xsource, self.config)
         except SourceInitError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: %s" % err)
