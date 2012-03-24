@@ -102,7 +102,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
     def debug_log(self, message, flag=None):
         if (flag is None and self.debug_flag) or flag:
-            self.logger.error(message)
+            logger.error(message)
 
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
@@ -227,15 +227,15 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if 'text' in new_entry:
             name = self.build_filename(specific)
             if os.path.exists("%s.genshi" % name):
-                self.logger.error("Cfg: Unable to pull data for genshi types")
+                logger.error("Cfg: Unable to pull data for genshi types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             elif os.path.exists("%s.cheetah" % name):
-                self.logger.error("Cfg: Unable to pull data for cheetah types")
+                logger.error("Cfg: Unable to pull data for cheetah types")
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             try:
                 etext = new_entry['text'].encode(self.encoding)
             except:
-                self.logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
+                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             open(name, 'w').write(etext)
             self.debug_log("Wrote file %s" % name, flag=log)
@@ -244,11 +244,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if badattr:
             # check for info files and inform user of their removal
             if os.path.exists(self.path + "/:info"):
-                self.logger.info("Removing :info file and replacing with "
+                logger.info("Removing :info file and replacing with "
                                  "info.xml")
                 os.remove(self.path + "/:info")
             if os.path.exists(self.path + "/info"):
-                self.logger.info("Removing info file and replacing with "
+                logger.info("Removing info file and replacing with "
                                  "info.xml")
                 os.remove(self.path + "/info")
             metadata_updates = {}
