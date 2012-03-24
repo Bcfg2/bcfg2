@@ -1,0 +1,13 @@
+{% spaceless %}
+{% if filters %}
+{% for filter, filter_url in filters %}
+  {% if forloop.first %}
+    <div class="filter_bar">Active filters (click to remove):
+  {% endif %}
+       <a href='{{ filter_url }}'>{{ filter|capfirst }}</a>{% if not forloop.last %}, {% endif %}
+  {% if forloop.last %}
+    </div>
+  {% endif %}
+{% endfor %}
+{% endif %}
+{% endspaceless %}

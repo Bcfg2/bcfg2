@@ -12,13 +12,8 @@ Checking Out a Copy of the Code
 
       git clone git://git.mcs.anl.gov/bcfg2.git
 
-* Create link to :file:`src/lib`::
-
-      cd bcfg2
-      ln -s src/lib Bcfg2
-
 * Add :file:`bcfg2/src/sbin` to your :envvar:`PATH` environment variable
-* Add :file:`bcfg2` to your :envvar:`PYTHONPATH` environment variable
+* Add :file:`bcfg2/src/lib` to your :envvar:`PYTHONPATH` environment variable
 
 
 Using a Virtual Environment for Development

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block pagebanner %}
+  <div class="header">
+      <h2>Are you sure you want to remove {{ object.hostname }}?</h2>
+  </div>
+  <br/>
+{% endblock %}
+
+{% block sidebar %}
+{% include "navbar.tmpl" %}
+<ul class="sidebar">
+   <li><a href="dns/" class="sidebar">detailed dns info</a></li>
+   <li><a href="edit/" class="sidebar">edit host info</a></li>
+   <li><a href="dns/edit/" class="sidebar">edit dns info</a></li>
+</ul>
+{% include "logout.tmpl" %}
+{% endblock %}
+
+{% block content %}
+
+<table border="0" width="100%">
+   <colgroup>
+   <col width="150">
+   <col width="*">
+   <tr> <td> <b>hostname</b></td>
+   <td> {{ object.hostname }}</td></tr>
+   <tr> <td> <b>whatami</b></td>
+   <td> {{ object.whatami }}</td></tr>
+   <tr> <td> <b>netgroup</b></td>
+   <td> {{ object.netgroup }}</td></tr>
+   <tr> <td> <b>class</b></td>
+   <td> {{ object.security_class }}</td></tr>
+   <tr> <td> <b>support</b></td>
+   <td> {{ object.support }}</td></tr>
+   <tr> <td> <b>csi</b></td>
+   <td> {{ object.csi }}</td></tr>
+   <tr> <td> <b>printq</b></td>
+   <td> {{ object.printq }}</td></tr>
+   <tr> <td> <b>dhcp</b></td>
+   {% if host.dhcp %}
+   <td> y </td></tr>
+   {% else %}
+   <td> n </td></tr>
+   {% endif %}
+   <tr> <td> <b>outbound_smtp</b></td>
+   {% if host.outbound_smtp %}
+   <td> y </td></tr>
+   {% else %}
+   <td> n </td></tr>
+   {% endif %}
+   <tr> <td> <b>primary_user</b></td>
+   <td> {{ object.primary_user }}</td></tr>
+   <tr> <td> <b>administrator</b></td>
+   <td> {{ object.administrator }}</td></tr>
+   <tr> <td> <b>location</b></td>
+   <td> {{ object.location }}</td></tr>
+   <tr> <td> <b>expiration_date</b></td>
+   <td> {{ object.expiration_date }}</td></tr>
+   {% for interface in interfaces %}
+   <tr> <td><br><b>Interface</b></td>
+   {% ifnotequal interface.0.hdwr_type 'no' %}
+   <td><br>{{ interface.0.hdwr_type }}</td></tr>
+   {% endifnotequal %}
+   <tr> <td> <b>mac_addr</b></td>
+   <td> {{ interface.0.mac_addr }}</b></td></tr>
+   {% for ip in interface.1 %}
+   <tr> <td> <b>ip_addr</b></td>
+   <td> {{ ip.ip_addr }}</td></tr>
+   {% endfor %}
+   {% endfor %}
+   <tr> <td valign="top"> <b>comments</b></td>
+   <td>
+   {{ object.comments|linebreaksbr }}<br>
+   </td></tr>
+
+</table>
+<a style="font-size:75%" href="/hostbase/{{ object.id }}/dns/">see detailed DNS information for this host</a>
+<br><br>
+this host is {{ object.status }}<br>
+last update on {{ object.last }}<br>
+
+<form name="input" action="remove.html?sub=true" method="post">
+<input type="submit" value="remove">
+<input type="reset" value="cancel" onclick="history.back()">
+</form>
+
+{% endblock %}
+

@@ -1,0 +1,38 @@
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Performance Metrics{% endblock %}
+{% block pagebanner %}Performance Metrics{% endblock %}
+
+
+{% block extra_header_info %}
+{% endblock%}
+
+{% block content %}
+<div class='client_list_box'>
+  {% if metrics %}
+      <table cellpadding="3">
+	  <tr id='table_list_header' class='listview'>
+              <td>Name</td>
+              <td>Parse</td>
+              <td>Probe</td>
+              <td>Inventory</td>
+              <td>Install</td>
+              <td>Config</td>
+              <td>Total</td>
+          </tr>
+	  {% for metric in metrics|dictsort:"name" %}
+          <tr class='{% cycle listview,listview_alt %}'>
+              <td><a style='font-size: 100%'
+                   href="{% url reports_client_detail hostname=metric.name %}">{{ metric.name }}</a></td>
+              {% for mitem in metric|build_metric_list %}
+              <td>{{ mitem }}</td>
+              {% endfor %}
+	  </tr>
+	  {% endfor %}
+      </table>
+  {% else %}
+    <p>No metric data available</p>
+  {% endif %}
+</div>
+{% endblock %}

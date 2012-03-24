@@ -121,7 +121,7 @@ try:
 except ImportError:
     pass
 
-py3lib = 'src/lib/Bcfg2Py3Incompat.py'
+py3lib = 'src/lib/Bcfg2/Bcfg2Py3Incompat.py'
 if sys.hexversion < 0x03000000 and os.path.exists(py3lib):
     os.remove(py3lib)
 
@@ -151,7 +151,7 @@ setup(cmdclass=cmdclass,
                 "Bcfg2.Server.Snapshots",
                 ],
       install_requires = inst_reqs,
-      package_dir = {'Bcfg2': 'src/lib'},
+      package_dir = {'Bcfg2': 'src/lib/Bcfg2'},
       package_data = {'Bcfg2.Server.Reports.reports':['fixtures/*.xml',
                 'templates/*.html', 'templates/*/*.html',
                 'templates/*/*.inc' ] },
@@ -167,11 +167,11 @@ setup(cmdclass=cmdclass,
                     ('share/man/man5', glob("man/*.5")),
                     ('share/man/man8', glob("man/*.8")),
                     ('share/bcfg2/Hostbase/templates',
-                     glob('src/lib/Server/Hostbase/hostbase/webtemplates/*.*')),
+                     glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/*.*')),
                     ('share/bcfg2/Hostbase/templates/hostbase',
-                     glob('src/lib/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
+                     glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
                     ('share/bcfg2/Hostbase/repo',
-                     glob('src/lib/Server/Hostbase/templates/*')),
+                     glob('src/lib/Bcfg2/Server/Hostbase/templates/*')),
                     ('share/bcfg2/site_media',
                      glob('reports/site_media/*')),
                     ]

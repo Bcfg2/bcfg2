@@ -117,7 +117,7 @@ Configuration management system documentation
 %{__perl} -pi -e 's@chkconfig: (\d+)@chkconfig: -@' debian/bcfg2-server.init
 
 # get rid of extraneous shebangs
-for f in `find src/lib -name \*.py`
+for f in `find src/lib/Bcfg2 -name \*.py`
 do
         %{__sed} -i -e '/^#!/,1d' $f
 done
