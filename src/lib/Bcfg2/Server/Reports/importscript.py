@@ -117,8 +117,6 @@ def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location='')
                                                           default="unknown"),
                                      repo_rev_code=statistics.get('revision',
                                                                   default="unknown"),
-                                     client_version=statistics.get('client_version',
-                                                                   default="unknown"),
                                      goodcount=statistics.get('good',
                                                               default="0"),
                                      totalcount=statistics.get('total',

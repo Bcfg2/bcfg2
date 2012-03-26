@@ -426,7 +426,6 @@ class Frame:
         stats = Bcfg2.Client.XML.SubElement(feedback,
                                             'Statistics',
                                             total=str(len(self.states)),
-                                            client_version=__revision__,
                                             version='2.0',
                                             revision=self.config.get('revision', '-1'))
         good = len([key for key, val in list(self.states.items()) if val])
