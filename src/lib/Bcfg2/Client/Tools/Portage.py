@@ -2,6 +2,7 @@
 
 import re
 import Bcfg2.Client.Tools
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
@@ -13,26 +14,54 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
     # requires a working PORTAGE_BINHOST in make.conf
-    pkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', ['name', 'version']))
+    _binpkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', \
+                                     ['name', 'version']))
+    pkgtool = ('emerge %s', ('=%s-%s', ['name', 'version']))
 
     def __init__(self, logger, cfg, setup):
+        self._initialised = False
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
+        self._initialised = True
         self.__important__ = self.__important__ + ['/etc/make.conf']
+        self._pkg_pattern = re.compile('(.*)-(\d.*)')
+        self._ebuild_pattern = re.compile('(ebuild|binary)')
         self.cfg = cfg
         self.installed = {}
+        self._binpkgonly = True
+
+        # Used to get options from configuration file
+        parser = ConfigParser.ConfigParser()
+        parser.read(self.setup.get('setup'))
+        for opt in ['binpkgonly']:
+            if parser.has_option(self.name, opt):
+                setattr(self, ('_%s' % opt),
+                        self._StrToBoolIfBool(parser.get(self.name, opt)))
+
+        if self._binpkgonly:
+            self.pkgtool = self._binpkgtool
         self.RefreshPackages()
+
+    def _StrToBoolIfBool(self, s):
+        """Returns a boolean if the string specifies a boolean value.
+           Returns a string otherwise"""
+        if s.lower() in ('true', 'yes', 't', 'y', '1'):
+            return True
+        elif s.lower() in ('false', 'no', 'f', 'n', '0'):
+            return False
+        else:
+            return s
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
-        ret, cache = self.cmd.run("equery -q list '*'")
-        if ret == 2:
-            cache = self.cmd.run("equery -q list '*'")[1]
-        pattern = re.compile('(.*)-(\d.*)')
+        if not self._initialised:
+            return
+        self.logger.info('Getting list of installed packages')
+        cache = self.cmd.run("equery -q list '*'")[1]
         self.installed = {}
         for pkg in cache:
-            if pattern.match(pkg):
-                name = pattern.match(pkg).group(1)
-                version = pattern.match(pkg).group(2)
+            if self._pkg_pattern.match(pkg):
+                name = self._pkg_pattern.match(pkg).group(1)
+                version = self._pkg_pattern.match(pkg).group(2)
                 self.installed[name] = version
             else:
                 self.logger.info("Failed to parse pkg name %s" % pkg)
@@ -41,23 +70,47 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         """Verify package for entry."""
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
-               (entry.attrib['name']))
+                             (entry.get('name')))
             return False
-        if entry.attrib['name'] in self.installed:
-            if self.installed[entry.attrib['name']] == entry.attrib['version']:
-                if not self.setup['quick'] and \
-                                entry.get('verify', 'true') == 'true':
-                    output = self.cmd.run("/usr/bin/equery -N check '=%s-%s' 2>&1 "
-                                          "| grep '!!!' | awk '{print $2}'" \
-                                          % (entry.get('name'), entry.get('version')))[1]
-                    if [filename for filename in output \
-                                    if filename not in modlist]:
-                        return False
-                return True
-            else:
-                entry.set('current_version', self.installed[entry.get('name')])
-                return False
-        entry.set('current_exists', 'false')
+
+        if not (entry.get('name') in self.installed):
+            # Can't verify package that isn't installed
+            entry.set('current_exists', 'false')
+            return False
+
+        # get the installed version
+        version = self.installed[entry.get('name')]
+        entry.set('current_version', version)
+
+        if not self.setup['quick']:
+            if ('verify' not in entry.attrib) or \
+                self._StrToBoolIfBool(entry.get('verify')):
+
+            # Check the package if:
+            # - Not running in quick mode
+            # - No verify option is specified in the literal configuration
+            #    OR
+            # - Verify option is specified and is true
+
+                self.logger.debug('Running equery check on %s' %
+                                  entry.get('name'))
+                output = self.cmd.run("/usr/bin/equery -N check '=%s-%s' "
+                                      "2>&1 | grep '!!!' | awk '{print $2}'"
+                                      % ((entry.get('name'), version)))[1]
+                if [filename for filename in output \
+                    if filename not in modlist]:
+                    return False
+
+        # By now the package must be in one of the following states:
+        # - Not require checking
+        # - Have no files modified at all
+        # - Have modified files in the modlist only
+        if self.installed[entry.get('name')] == version:
+            # Specified package version is installed
+            # Specified package version may be any in literal configuration
+            return True
+
+        # Something got skipped. Indicates a bug
         return False
 
     def RemovePackages(self, packages):
@@ -66,6 +119,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         if len(packages) > 0:
             self.logger.info('Removing packages:')
             self.logger.info(pkgnames)
-            self.cmd.run("emerge --unmerge --quiet %s" % " ".join(pkgnames.split(' ')))
+            self.cmd.run("emerge --unmerge --quiet %s" %
+                         " ".join(pkgnames.split(' ')))
             self.RefreshPackages()
             self.extra = self.FindExtraPackages()

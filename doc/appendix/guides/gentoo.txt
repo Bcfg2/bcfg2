@@ -16,28 +16,38 @@ let the list know if you find errors or omissions.
 Installing Bcfg2
 ================
 
-Early in July 2008, Bcfg2 was added to the Gentoo portage tree.  So far
-it's only keyworded for ~x86, but we hope to see it soon in the amd64 and
-x64-solaris ports.  If you're using Gentoo on some other architecture, it
-should still work provided that you have a reasonably up to date Python;
-try adding `app-admin/bcfg2 ~*` to your `/etc/portage/package.keywords`
-file.
+Early in July 2008, Bcfg2 was added to the Gentoo portage tree.
 
 If you don't use portage to install Bcfg2, you'll want to make sure you
 have all the prerequisites installed first. For a server, you'll need:
 
-* ``app-admin/gamin`` or ``app-admin/fam``
+* ``dev-libs/libgamin[python]``
 * ``dev-python/lxml``
 
 Clients will need at least:
 
 * ``app-portage/gentoolkit``
 
+Portage installs from source
+============================
+
+.. versionadded:: 1.3.0
+
+By default the client will run with the ``--gitbinpkgonly`` option. If
+you want your client to install packages from source (rather than
+having a binary build host as seen below), you can set the following in
+``/etc/bcfg2.conf``.::
+
+    [Portage]
+    binpkgonly = false
+
 Package Repository
 ==================
 
+.. note: This is only necessary for using binary packages.
+
 You’ll need (to make) at least one archive of binary packages. The
-Portage driver calls ``emerge`` with the ``-getbinpkgonly`` option. See
+Portage driver calls ``emerge`` with the ``--getbinpkgonly`` option. See
 :manpage:`make.conf(5)` and :manpage:`emerge(1)` manpages, specifically
 the :envvar:`PORTAGE_BINHOST` environment variable.
 
@@ -109,59 +119,16 @@ Configuring Client Machines
 Set up ``/etc/bcfg2.conf`` the way you would for any other Bcfg2 client.
 
 In ``make.conf``, set *PORTAGE_BINHOST* to point to the URI of
-your package repository.  You may want to create versions of
+your package repository. You may want to create versions of
 ``make.conf`` for each package repository you maintain, with
 appropriate *PORTAGE_BINHOST* URI's in each, and associated with
 that package archive's group under ``Cfg`` -- for example, we have
-``Cfg/etc/make.conf/make.conf.G99_gentoo-200701-vmware``.  If a client
+``Cfg/etc/make.conf/make.conf.G99_gentoo-200701-vmware``. If a client
 host switches groups, and the new group needs a different set of packages,
 everything should just fall into place.
 
 Pitfalls
 ========
-
-Package Verification Issues
----------------------------
-
-As of this writing (2007/01/31), we're aware of a number of packages
-marked stable in the Gentoo x86 tree which, for one reason or another,
-consistently fail to verify cleanly under ``equery check``. In some cases
-(pam, openldap), files which don't (ever) exist on the system are
-nonetheless recorded in the package database; in some (python, Bcfg2,
-ahem), whole classes of files (.pyc and .pyo files) consistently fail
-their md5sum checks; and in others, the problem appears to be a
-discrepancy in the way that symlinks are created vs. the way they're
-recorded in the database. For example, in the OpenSSH package,
-/usr/bin/slogin is a symlink to ./ssh, but equery expects it to point to
-an unadorned ssh. An analogous situation exists with their manpages,
-leading to noise like this::
-
-    # equery check openssh
-    [ Checking net-misc/openssh-4.5_p1 ]
-    !!! /etc/ssh/sshd_config has incorrect md5sum
-    !!! /usr/bin/slogin does not point to ssh
-    !!! /usr/share/man/man1/slogin.1.gz does not point to ssh.1.gz
-    !!! /etc/ssh/ssh_config has incorrect md5sum
-     * 62 out of 66 files good
-
-We can ignore the lines for ``ssh_config`` and ``sshd_config``; those will
-be caught by Bcfg2 as registered config files and handled appropriately.
-
-Because Bcfg2 relies on the client system's native package reporting
-tool to judge the state of installed packages, complaints like these
-about trivial or intractable verification failures can trigger unnecessary
-bundle reinstalls when the Bcfg2 client runs. Bcfg2 will catch on after a
-pass or two that the situation isn't getting any better with repeated
-package installs, stop trying, and list those packages as "bad" in
-the client system's statistics.
-
-Aside from filing bugs with the Gentoo package maintainers, your narrator
-has been unable to come up with a good approach to this. Maybe write a
-series of ``Rules`` definitions according to what the package database
-thinks it should find, and/or stage copies of affected files under
-``Cfg``, and associate those rules and files with the affected package in
-a bundle? Annoying but possibly necessary if you want your stats file
-to look good.
 
 /boot
 -----
