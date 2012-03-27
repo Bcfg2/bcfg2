@@ -2,7 +2,6 @@
 __revision__ = '$Revision$'
 
 import os
-import popen2
 
 import Bcfg2.Client.Tools
 
@@ -27,7 +26,8 @@ class launchd(Bcfg2.Client.Tools.Tool):
         /Library/LaunchDaemons         System wide daemons provided by the administrator.
         /System/Library/LaunchAgents   Mac OS X Per-user agents.
         /System/Library/LaunchDaemons  Mac OS X System wide daemons.'''
-        plistLocations = ["/Library/LaunchDaemons", "/System/Library/LaunchDaemons"]
+        plistLocations = ["/Library/LaunchDaemons",
+                          "/System/Library/LaunchDaemons"]
         self.plistMapping = {}
         for directory in plistLocations:
             for daemon in os.listdir(directory):
@@ -36,10 +36,10 @@ class launchd(Bcfg2.Client.Tools.Tool):
                         d = daemon[:-6]
                     else:
                         d = daemon
-                    (stdout, _) = popen2.popen2('defaults read %s/%s Label' % (directory, d))
-                    label = stdout.read().strip()
+                    label = self.cmd.run('defaults read %s/%s Label' %
+                                         (directory, d))[1]
                     self.plistMapping[label] = "%s/%s" % (directory, daemon)
-                except KeyError: #perhaps this could be more robust
+                except KeyError:  # perhaps this could be more robust
                     pass
 
     def FindPlist(self, entry):
@@ -61,20 +61,26 @@ class launchd(Bcfg2.Client.Tools.Tool):
         """Verify launchd service entry."""
         try:
             services = self.cmd.run("/bin/launchctl list")[1]
-        except IndexError:#happens when no services are running (should be never)
+        except IndexError:
+            # happens when no services are running (should be never)
             services = []
         # launchctl output changed in 10.5
-        # It is now three columns, with the last column being the name of the # service
+        # It is now three columns, with the last
+        # column being the name of the # service
         version = self.os_version()
         if version.startswith('10.5') or version.startswith('10.6'):
             services = [s.split()[-1] for s in services]
-        if entry.get('name') in services:#doesn't check if non-spawning services are Started
+        if entry.get('name') in services:
+            # doesn't check if non-spawning services are Started
             return entry.get('status') == 'on'
         else:
-            self.logger.debug("Didn't find service Loaded (launchd running under same user as bcfg)")
+            self.logger.debug("Launchd: Didn't find service Loaded "
+                              "(launchd running under same user as bcfg)")
             return entry.get('status') == 'off'
 
-        try: #Perhaps add the "-w" flag to load and unload to modify the file itself!
+        try:
+            # Perhaps add the "-w" flag to load and
+            # unload to modify the file itself!
             self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))
         except IndexError:
             return 'on'
@@ -90,12 +96,14 @@ class launchd(Bcfg2.Client.Tools.Tool):
         name = entry.get('name')
         if entry.get('status') == 'on':
             self.logger.error("Installing service %s" % name)
-            cmdrc = self.cmd.run("/bin/launchctl load -w %s" % self.FindPlist(entry))
+            cmdrc = self.cmd.run("/bin/launchctl load -w %s" %
+                                 self.FindPlist(entry))
             cmdrc = self.cmd.run("/bin/launchctl start %s" % name)
         else:
             self.logger.error("Uninstalling service %s" % name)
             cmdrc = self.cmd.run("/bin/launchctl stop %s" % name)
-            cmdrc = self.cmd.run("/bin/launchctl unload -w %s" % self.FindPlist(entry))
+            cmdrc = self.cmd.run("/bin/launchctl unload -w %s" %
+                                 self.FindPlist(entry))
         return cmdrc[0] == 0
 
     def Remove(self, svcs):
@@ -120,17 +128,23 @@ class launchd(Bcfg2.Client.Tools.Tool):
         """Reload launchd plist."""
         for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
             if not self.canInstall(entry):
-                self.logger.error("Insufficient information to restart service %s" % (entry.get('name')))
+                self.logger.error("Insufficient information to restart service %s" %
+                                  (entry.get('name')))
             else:
                 name = entry.get('name')
                 if entry.get('status') == 'on' and self.FindPlist(entry):
                     self.logger.info("Reloading launchd service %s" % name)
-                    #stop?
+                    # stop?
                     self.cmd.run("/bin/launchctl stop %s" % name)
-                    self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))#what if it disappeared? how do we stop services that are currently running but the plist disappeared?!
-                    self.cmd.run("/bin/launchctl load -w %s" % (self.FindPlist(entry)))
+                    # what if it disappeared? how do we stop services
+                    # that are currently running but the plist disappeared?!
+                    self.cmd.run("/bin/launchctl unload -w %s" %
+                                 (self.FindPlist(entry)))
+                    self.cmd.run("/bin/launchctl load -w %s" %
+                                 (self.FindPlist(entry)))
                     self.cmd.run("/bin/launchctl start %s" % name)
                 else:
-                    #only if necessary....
+                    # only if necessary....
                     self.cmd.run("/bin/launchctl stop %s" % name)
-                    self.cmd.run("/bin/launchctl unload -w %s" % (self.FindPlist(entry)))
+                    self.cmd.run("/bin/launchctl unload -w %s" %
+                                 (self.FindPlist(entry)))
