@@ -52,7 +52,7 @@ Probe used to dynamically set client groups based on OS/distro.
             # redhat based
 	    if [ -x /bin/rpm ]; then
 	            OUTPUT="${OUTPUT}\ngroup:rpm"
-                    OS_GROUP=`/bin/rpm -q --qf "%{NAME}" --whatprovides redhat-release | sed 's/-release.*//' |  tr '[A-Z]' '[a-z]'`
+                    OS_GROUP=`/bin/rpm -q --qf "%{NAME}" --whatprovides redhat-release | grep -vi 'freeing read locks for locker' | sed 's/-release.*//' |  tr '[A-Z]' '[a-z]'`
                     REDHAT_VERSION=`/bin/rpm -q --qf "%{VERSION}" --whatprovides redhat-release`
                     case "$OS_GROUP" in
                             "centos" | "fedora" | "sl")
