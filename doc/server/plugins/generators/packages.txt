@@ -662,6 +662,8 @@ It understands the following directives:
 * ``gpg_keypath``: The path on the client RPM GPG keys will be copied
   to before they are imported on the client.  Default is
   "/etc/pki/rpm-gpg".
+* ``version``: Set the version attribute used when binding
+  Packages. Default is ``auto``.
 * ``import_gpg_keys``: The RPM release of an RPM GPG key cannot be
   reliably and automatically determined without importing the key into
   the server's key chain.  If ``import_gpg_keys`` is "false" (the

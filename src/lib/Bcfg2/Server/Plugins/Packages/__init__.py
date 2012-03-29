@@ -88,6 +88,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if entry.tag == 'Package':
             collection = self._get_collection(metadata)
             entry.set('version', 'auto')
+            entry.set('version', self.config.get("global",
+                                                 "version",
+                                                 default="auto"))
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
             if (entry.get("name") == self.config.get("global", "yum_config",
@@ -178,8 +181,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         newpkgs.sort()
         for pkg in newpkgs:
             lxml.etree.SubElement(independent, 'BoundPackage', name=pkg,
-                                  version='auto', type=collection.ptype,
-                                  origin='Packages')
+                                  version=self.config.get("global", "version",
+                                                          default="auto"),
+                                  type=collection.ptype, origin='Packages')
 
     def Refresh(self):
         '''Packages.Refresh() => True|False\nReload configuration
