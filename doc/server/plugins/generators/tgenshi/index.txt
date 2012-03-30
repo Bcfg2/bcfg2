@@ -130,7 +130,7 @@ Then, run::
     setup = Bcfg2.Options.OptionParser({'repo':
                                         Bcfg2.Options.SERVER_REPOSITORY})
     setup.parse('--')
-    template = TemplateLoader().load(set['repo'] + path, cls=NewTextTemplate)
+    template = TemplateLoader().load(setup['repo'] + path, cls=NewTextTemplate)
     print template.generate(metadata=metadata, path=path, name=name).render()
 
 This gives you more fine-grained control over how your template is
