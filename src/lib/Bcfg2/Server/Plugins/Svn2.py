@@ -71,7 +71,8 @@ class Svn2(Bcfg2.Server.Plugin.Plugin,
             self.revision = self.client.update(self.datastore, recurse=True)[0]
             self.logger.info("Svn2: Commited changes. At %s" %
                              self.revision.number)
-        except Exception, err:
+        except Exception:
+            err = sys.exc_info()[1]
             # try to be smart about the error we got back
             details = None
             if "callback_ssl_server_trust_prompt" in str(err):
