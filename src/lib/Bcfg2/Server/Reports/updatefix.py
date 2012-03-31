@@ -1,8 +1,9 @@
 import Bcfg2.Server.Reports.settings
 
-from django.db import connection
+from django.db import connection, DatabaseError
 import django.core.management
 import logging
+import sys
 import traceback
 from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion, \
                 TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
@@ -51,12 +52,78 @@ def _merge_database_table_entries():
 
 
 def _interactions_constraint_or_idx():
-    '''sqlite doesn't support alter tables.. or constraints'''
+    """sqlite doesn't support alter tables.. or constraints"""
     cursor = connection.cursor()
     try:
         cursor.execute('alter table reports_interaction add constraint reports_interaction_20100601 unique (client_id,timestamp)')
     except:
         cursor.execute('create unique index reports_interaction_20100601 on reports_interaction (client_id,timestamp)')
+
+
+def _remove_table_column(tbl, col):
+    """sqlite doesn't support deleting a column via alter table"""
+    cursor = connection.cursor()
+    try:
+        cursor.execute('alter table %s '
+                       'drop column %s;' % (tbl, col))
+    except DatabaseError:
+        # sqlite wants us to create a new table containing the columns we want
+        # and copy into it http://www.sqlite.org/faq.html#q11
+
+        tmptbl_name = "t_backup"
+        _tmptbl_create = \
+"""create temporary table "%s" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "client_id" integer NOT NULL REFERENCES "reports_client" ("id"),
+    "timestamp" datetime NOT NULL,
+    "state" varchar(32) NOT NULL,
+    "repo_rev_code" varchar(64) NOT NULL,
+    "goodcount" integer NOT NULL,
+    "totalcount" integer NOT NULL,
+    "server" varchar(256) NOT NULL,
+    "bad_entries" integer NOT NULL,
+    "modified_entries" integer NOT NULL,
+    "extra_entries" integer NOT NULL,
+    UNIQUE ("client_id", "timestamp")
+);""" % tmptbl_name
+        _newtbl_create = \
+"""create table "%s" (
+    "id" integer NOT NULL PRIMARY KEY,
+    "client_id" integer NOT NULL REFERENCES "reports_client" ("id"),
+    "timestamp" datetime NOT NULL,
+    "state" varchar(32) NOT NULL,
+    "repo_rev_code" varchar(64) NOT NULL,
+    "goodcount" integer NOT NULL,
+    "totalcount" integer NOT NULL,
+    "server" varchar(256) NOT NULL,
+    "bad_entries" integer NOT NULL,
+    "modified_entries" integer NOT NULL,
+    "extra_entries" integer NOT NULL,
+    UNIQUE ("client_id", "timestamp")
+);""" % tbl
+        new_cols = "id,\
+                    client_id,\
+                    timestamp,\
+                    state,\
+                    repo_rev_code,\
+                    goodcount,\
+                    totalcount,\
+                    server,\
+                    bad_entries,\
+                    modified_entries,\
+                    extra_entries"
+
+        delete_col = [_tmptbl_create,
+                      "insert into %s select %s from %s;" % (tmptbl_name, new_cols, tbl),
+                      "drop table %s" % tbl,
+                      _newtbl_create,
+                      "create index reports_interaction_client_id on %s (client_id);" % tbl,
+                      "insert into %s select %s from %s;" % (tbl, new_cols,
+                                                             tmptbl_name),
+                      "drop table %s;" % tmptbl_name]
+
+        for sql in delete_col:
+            cursor.execute(sql)
 
 
 def _populate_interaction_entry_counts():
@@ -103,6 +170,7 @@ _fixes = [_merge_database_table_entries,
           _interactions_constraint_or_idx,
           'alter table reports_reason add is_binary bool NOT NULL default False;',
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
+          _remove_table_column('reports_interaction', 'client_version'),
 ]
 
 # this will calculate the last possible version of the database
@@ -110,7 +178,7 @@ lastversion = len(_fixes)
 
 
 def rollupdate(current_version):
-    """ function responsible to coordinates all the updates
+    """function responsible to coordinates all the updates
     need current_version as integer
     """
     ret = None
@@ -122,8 +190,10 @@ def rollupdate(current_version):
                 else:
                     _fixes[i]()
             except:
-                logger.error("Failed to perform db update %s" % (_fixes[i]), exc_info=1)
-            # since array start at 0 but version start at 1 we add 1 to the normal count
+                logger.error("Failed to perform db update %s" % (_fixes[i]),
+                                                                 exc_info=1)
+            # since the array starts at 0 but version
+            # starts at 1 we add 1 to the normal count
             ret = InternalDatabaseVersion.objects.create(version=i + 1)
         return ret
     else:
@@ -135,16 +205,19 @@ def dosync():
     # try to detect if it's a fresh new database
     try:
         cursor = connection.cursor()
-        # If this table goes missing then don't forget to change it to the new one
+        # If this table goes missing,
+        # don't forget to change it to the new one
         cursor.execute("Select * from reports_client")
         # if we get here with no error then the database has existing tables
         fresh = False
     except:
-        logger.debug("there was an error while detecting the freshness of the database")
+        logger.debug("there was an error while detecting "
+                     "the freshness of the database")
         #we should get here if the database is new
         fresh = True
 
-    # ensure database connection are close, so that the management can do it's job right
+    # ensure database connections are closed
+    # so that the management can do its job right
     try:
         cursor.close()
         connection.close()
@@ -169,7 +242,8 @@ def dosync():
 
 
 def update_database():
-    ''' methode to search where we are in the revision of the database models and update them '''
+    """method to search where we are in the revision
+    of the database models and update them"""
     try:
         logger.debug("Running upgrade of models to the new one")
         dosync()
