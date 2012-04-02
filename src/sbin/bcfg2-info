@@ -28,6 +28,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins.Metadata
 import Bcfg2.Server.Plugins.SGenshi
+import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('bcfg2-info')
@@ -243,7 +244,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                         entry.set('name', odir + '/' + entry.get('name'))
 
             log = mockLog()
-            import Bcfg2.Client.Tools.POSIX
             p = Bcfg2.Client.Tools.POSIX.POSIX(log, self.core_args, client_config)
             states = dict()
             p.Inventory(states)
@@ -556,6 +556,7 @@ if __name__ == '__main__':
         Bcfg2.Options.SERVER_STATIC,
     )
     Bcfg2.Server.Core.Core.register_options()
+    Bcfg2.Client.Tools.POSIX.POSIX.register_options()
     Bcfg2.Options.add_option(Option('command', nargs='*', help='Command to run'))
 
     args = Bcfg2.Options.args()
