@@ -50,8 +50,7 @@ def main():
         }
     setup = Bcfg2.Options.OptionParser(optinfo)
     # override default help message to include description of all modes
-    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
-                                        create_description())
+    setup.hm = "%s\n%s" % (setup.buildHelpMessage(), create_description())
     setup.parse(sys.argv[1:])
 
     log_args = dict(to_syslog=False, to_console=logging.WARNING)
