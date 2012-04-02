@@ -133,7 +133,12 @@ class OptionSet(dict):
     def buildHelpMessage(self):
         if hasattr(self, 'hm'):
             return self.hm
-        return '     '.join([opt.buildHelpMessage() for opt in list(self.values())])
+        hlist = []  # list of _non-empty_ help messages
+        for opt in list(self.values()):
+            hm = opt.buildHelpMessage()
+            if hm != '':
+                hlist.append(hm)
+        return '     '.join(hlist)
 
     def helpExit(self, msg='', code=1):
         if msg:
