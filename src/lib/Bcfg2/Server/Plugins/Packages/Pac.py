@@ -6,7 +6,7 @@ from Bcfg2.Server.Plugins.Packages.Source import Source
 
 class PacCollection(Collection):
     def get_group(self, group):
-        self.logger.warning("Packages: Package groups are not supported by APT")
+        self.logger.warning("Packages: Package groups are not supported by Pacman")
         return []
 
 class PacSource(Source):
@@ -51,10 +51,9 @@ class PacSource(Source):
         bdeps = dict()
         bprov = dict()
 
+        depfnames = ['Depends', 'Pre-Depends']
         if self.recommended:
-            depfnames = ['Depends', 'Pre-Depends', 'Recommends']
-        else:
-            depfnames = ['Depends', 'Pre-Depends']
+            depfnames.append('Recommends')
 
         for fname in self.files:
             if not self.rawurl:
