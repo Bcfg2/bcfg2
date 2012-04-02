@@ -169,8 +169,13 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("Dropping to python interpreter; press ^D to resume")
             try:
                 import IPython
-                shell = IPython.Shell.IPShell(argv=[], user_ns=locals())
-                shell.mainloop()
+                if hasattr(IPython, "Shell"):
+                    shell = IPython.Shell.IPShell(argv=[], user_ns=locals())
+                    shell.mainloop()
+                elif hasattr(IPython, "embed"):
+                    IPython.embed(user_ns=locals())
+                else:
+                    raise ImportError
             except ImportError:
                 sh.interact()
 
