@@ -14,6 +14,7 @@ version = sys.version_info[:2]
 if version < (2, 6):
     need_m2crypto = True
 
+
 class BuildDTDDoc (Command):
     """Build DTD documentation"""
 
@@ -35,8 +36,8 @@ class BuildDTDDoc (Command):
         self.build_links = False
         self.links_file = None
         self.source_dir = None
-        self.build_dir  = None
-        self.xslt       = None
+        self.build_dir = None
+        self.xslt = None
 
     def finalize_options(self):
         """Set final values for all the options that this command
@@ -71,7 +72,7 @@ class BuildDTDDoc (Command):
                 self.announce("Using XSLT file %s" % self.xslt)
         self.ensure_filename('xslt')
 
-    def run (self):
+    def run(self):
         """Perform XSLT transforms, writing output to self.build_dir"""
 
         xslt = lxml.etree.parse(self.xslt).getroot()
@@ -81,18 +82,18 @@ class BuildDTDDoc (Command):
             self.announce("Building linksFile %s" % self.links_file)
             links_xml = \
                 lxml.etree.Element('links',
-                                   attrib={'xmlns':"http://titanium.dstc.edu.au/xml/xs3p"})
+                                   attrib={'xmlns': "http://titanium.dstc.edu.au/xml/xs3p"})
             for filename in glob(os.path.join(self.source_dir, '*.xsd')):
-                attrib = {'file-location':os.path.basename(filename),
-                          'docfile-location':os.path.splitext(os.path.basename(filename))[0] + ".html"}
+                attrib = {'file-location': os.path.basename(filename),
+                          'docfile-location': os.path.splitext(os.path.basename(filename))[0] + ".html"}
                 links_xml.append(lxml.etree.Element('schema', attrib=attrib))
             open(os.path.join(self.source_dir, self.links_file),
                  "w").write(lxml.etree.tostring(links_xml))
 
         # build parameter dict
-        params = {'printLegend':"'false'",
-                  'printGlossary':"'false'",
-                  'sortByComponent':"'false'",}
+        params = {'printLegend': "'false'",
+                  'printGlossary': "'false'",
+                  'sortByComponent': "'false'"}
         if self.links_file is not None:
             params['linksFile'] = "'%s'" % self.links_file
             params['searchIncludedSchemas'] = "'true'"
@@ -146,29 +147,30 @@ setup(cmdclass=cmdclass,
                 "Bcfg2.Server.Reports.reports.templatetags",
                 "Bcfg2.Server.Snapshots",
                 ],
-      install_requires = inst_reqs,
-      package_dir = {'Bcfg2': 'src/lib/Bcfg2'},
-      package_data = {'Bcfg2.Server.Reports.reports':['fixtures/*.xml',
-                'templates/*.html', 'templates/*/*.html',
-                'templates/*/*.inc' ] },
-      scripts = glob('src/sbin/*'),
-      data_files = [('share/bcfg2/schemas',
-                     glob('schemas/*.xsd')),
-                    ('share/bcfg2/xsl-transforms',
-                     glob('reports/xsl-transforms/*.xsl')),
-                    ('share/bcfg2/xsl-transforms/xsl-transform-includes',
-                     glob('reports/xsl-transforms/xsl-transform-includes/*.xsl')),
-                    ('share/bcfg2', glob('reports/reports.wsgi')),
-                    ('share/man/man1', glob("man/bcfg2.1")),
-                    ('share/man/man5', glob("man/*.5")),
-                    ('share/man/man8', glob("man/*.8")),
-                    ('share/bcfg2/Hostbase/templates',
-                     glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/*.*')),
-                    ('share/bcfg2/Hostbase/templates/hostbase',
-                     glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
-                    ('share/bcfg2/Hostbase/repo',
-                     glob('src/lib/Bcfg2/Server/Hostbase/templates/*')),
-                    ('share/bcfg2/site_media',
-                     glob('reports/site_media/*')),
-                    ]
+      install_requires=inst_reqs,
+      package_dir={'Bcfg2': 'src/lib/Bcfg2'},
+      package_data={'Bcfg2.Server.Reports.reports': ['fixtures/*.xml',
+                                                     'templates/*.html',
+                                                     'templates/*/*.html',
+                                                     'templates/*/*.inc']},
+      scripts=glob('src/sbin/*'),
+      data_files=[('share/bcfg2/schemas',
+                   glob('schemas/*.xsd')),
+                  ('share/bcfg2/xsl-transforms',
+                   glob('reports/xsl-transforms/*.xsl')),
+                  ('share/bcfg2/xsl-transforms/xsl-transform-includes',
+                   glob('reports/xsl-transforms/xsl-transform-includes/*.xsl')),
+                  ('share/bcfg2', glob('reports/reports.wsgi')),
+                  ('share/man/man1', glob("man/bcfg2.1")),
+                  ('share/man/man5', glob("man/*.5")),
+                  ('share/man/man8', glob("man/*.8")),
+                  ('share/bcfg2/Hostbase/templates',
+                   glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/*.*')),
+                  ('share/bcfg2/Hostbase/templates/hostbase',
+                   glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
+                  ('share/bcfg2/Hostbase/repo',
+                   glob('src/lib/Bcfg2/Server/Hostbase/templates/*')),
+                  ('share/bcfg2/site_media',
+                   glob('reports/site_media/*')),
+                  ]
       )
