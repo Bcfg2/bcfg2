@@ -121,10 +121,6 @@ try:
 except ImportError:
     pass
 
-py3lib = 'src/lib/Bcfg2/Bcfg2Py3Incompat.py'
-if sys.hexversion < 0x03000000 and os.path.exists(py3lib):
-    os.remove(py3lib)
-
 inst_reqs = ["lxml"]
 if need_m2crypto:
     inst_reqs.append("M2Crypto")

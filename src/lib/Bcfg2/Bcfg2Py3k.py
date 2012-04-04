@@ -75,17 +75,6 @@ def u_str(string, encoding=None):
         else:
             return unicode(string)
 
-"""
-In order to use the new syntax for printing to a file, we need to do
-a conditional import because there is a syntax incompatibility between
-the two versions of python.
-"""
-if sys.hexversion >= 0x03000000:
-    from Bcfg2.Bcfg2Py3Incompat import fprint
-else:
-    def fprint(s, f):
-        print >> f, s
-
 if sys.hexversion >= 0x03000000:
     from io import FileIO as file
 else:

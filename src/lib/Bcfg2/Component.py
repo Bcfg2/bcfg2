@@ -14,7 +14,7 @@ import Bcfg2.Logger
 from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse, fprint
+from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse
 
 logger = logging.getLogger()
 
@@ -55,7 +55,7 @@ def run_component(component_cls, listen_all, location, daemon, pidfile_name,
         os.chdir(os.sep)
 
         pidfile = open(pidfile_name or "/dev/null", "w")
-        fprint(os.getpid(), pidfile)
+        pidfile.write("%s\n" % os.getpid())
         pidfile.close()
 
     component = component_cls(cfile=cfile, **cls_kwargs)
