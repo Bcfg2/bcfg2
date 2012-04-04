@@ -111,12 +111,6 @@ class BuildDTDDoc (Command):
 cmdclass = {}
 
 try:
-    from sphinx.setup_command import BuildDoc
-    cmdclass['build_sphinx'] = BuildDoc
-except ImportError:
-    pass
-
-try:
     import lxml.etree
     cmdclass['build_dtddoc'] = BuildDTDDoc
 except ImportError:
