@@ -50,7 +50,8 @@
     <xsd:attribute type="xsd:string" name="srcs"/>
     <xsd:attribute type="PackageTypeEnum" name="type"/>
     <xsd:attribute type="xsd:string" name="bname"/>
-    <xsd:attribute name="pkg_checks" type="xsd:string"/>
+    <xsd:attribute name="pkg_checks" type="xsd:boolean"/>
+    <xsd:attribute name="pkg_verify" type="xsd:boolean"/>
     <xsd:attribute name="verify_flags" type="xsd:string"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
