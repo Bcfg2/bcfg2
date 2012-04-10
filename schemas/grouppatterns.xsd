@@ -1,11 +1,14 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       group patterns config schema for bcfg2
       Narayan Desai, Argonne National Laboratory
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
 
   <xsd:complexType name="PatternType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
@@ -21,6 +24,7 @@
       <xsd:element name="GroupPattern" type="PatternType"/>
       <xsd:element name="GroupPatterns" type="GroupPatternsType"/>
     </xsd:choice>
+    <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 
   <xsd:element name="GroupPatterns" type="GroupPatternsType"/>
