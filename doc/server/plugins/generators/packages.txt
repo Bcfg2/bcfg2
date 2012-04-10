@@ -51,7 +51,7 @@ member clients.
 | Yum    | yum      |              |
 +--------+----------+--------------+
 
-.. note:: 
+.. note::
 
    .. versionadded:: 1.2.0
 
@@ -567,7 +567,7 @@ You can also view the sources applicable to a client::
       Type: yum
       URL: http://mirror.example.com/centos-6-x86_64-updates
       GPG Key(s): http://mirror.example.com/centos-6-x86_64-updates/RPM-GPG-KEY-CentOS-6
-    
+
     Name: centos-6-x86_64-os
       Type: yum
       URL: http://mirror.example.com/centos-6-x86_64-os
@@ -662,17 +662,8 @@ It understands the following directives:
 * ``gpg_keypath``: The path on the client RPM GPG keys will be copied
   to before they are imported on the client.  Default is
   "/etc/pki/rpm-gpg".
-* ``import_gpg_keys``: The RPM release of an RPM GPG key cannot be
-  reliably and automatically determined without importing the key into
-  the server's key chain.  If ``import_gpg_keys`` is "false" (the
-  default), the release of automatically-generated RPM GPG key entries
-  in the specification will be set to "any", which disables
-  verification of the release.  (Version will still be verified.)  In
-  practice, this is unlikely to be an issue, as the RPM version of a
-  GPG key is the key's fingerprint, and collisions are rare.  If you
-  do encounter a GPG key version collision, you will need to set this
-  to "true", whereupon Packages will import the keys into the server's
-  key chain.  Python RPM libraries must be installed for this to work.
+* ``version``: Set the version attribute used when binding
+  Packages. Default is ``auto``.
 
 [yum] section
 -------------
