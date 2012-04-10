@@ -1,6 +1,6 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       bundle schema for bcfg2
@@ -237,6 +237,7 @@
     <xsd:attribute type='xsd:string' name='origin'/>
     <xsd:attribute type='xsd:string' name='revision'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
+    <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 
   <xsd:element name='Bundle' type='BundleType'>

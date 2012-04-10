@@ -1,5 +1,5 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       client schema for bcfg2
@@ -8,12 +8,15 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
+
   <xsd:complexType name='ClientType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Alias'>
         <xsd:complexType>
           <xsd:attribute type='xsd:string' name='name' use='required'/>
-          <xsd:attribute type='xsd:string' name='address'/>   
+          <xsd:attribute type='xsd:string' name='address'/>
         </xsd:complexType>
       </xsd:element>
     </xsd:choice>
@@ -35,6 +38,7 @@
       <xsd:element name='Clients' type='ClientsType'/>
     </xsd:choice>
     <xsd:attribute name='version' type='xsd:string'/>
+    <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 
   <xsd:element name='Clients' type='ClientsType'/>

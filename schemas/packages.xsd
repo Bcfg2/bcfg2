@@ -1,11 +1,14 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       packages config schema for bcfg2
       Narayan Desai, Argonne National Laboratory
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
 
   <xsd:simpleType name="sourceTypeEnum">
     <xsd:restriction base="xsd:string">
@@ -45,12 +48,13 @@
   </xsd:complexType>
 
   <xsd:complexType name="sourcesType">
-      <xsd:choice minOccurs="1" maxOccurs="unbounded">
-        <xsd:element name="Group" type="groupType"/>
-        <xsd:element name="Client" type="groupType"/>
-        <xsd:element name="Source" type="sourceType"/>
-        <xsd:element name="Sources" type="sourcesType"/>
-      </xsd:choice>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Group" type="groupType"/>
+      <xsd:element name="Client" type="groupType"/>
+      <xsd:element name="Source" type="sourceType"/>
+      <xsd:element name="Sources" type="sourcesType"/>
+    </xsd:choice>
+    <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 
   <xsd:element name="Sources" type="sourcesType"/>
