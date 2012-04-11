@@ -592,6 +592,29 @@ class SingleXMLFileBacked(XMLFileBacked):
         self.fam = fam
         self.fam.AddMonitor(filename, self)
 
+    def _follow_xincludes(self, fname=None, xdata=None):
+        ''' follow xincludes, adding included files to fam and to
+        self.extras '''
+        if xdata is None:
+            if fname is None:
+                xdata = self.xdata.getroottree()
+            else:
+                xdata = lxml.etree.parse(fname)
+        included = [ent.get('href')
+                    for ent in xdata.findall('//{http://www.w3.org/2001/XInclude}include')]
+        for name in included:
+            if name not in self.extras:
+                if name.startswith("/"):
+                    fpath = name
+                else:
+                    fpath = os.path.join(os.path.dirname(self.name), name)
+                self.add_monitor(fpath, name)
+                self._follow_xincludes(fname=fpath)
+
+    def add_monitor(self, fpath, fname):
+        self.fam.AddMonitor(fpath, self)
+        self.extras.append(fname)
+
     def Index(self):
         """Build local data structures."""
         try:
@@ -601,21 +624,13 @@ class SingleXMLFileBacked(XMLFileBacked):
             logger.error("Failed to parse %s: %s" % (self.name, err))
             raise Bcfg2.Server.Plugin.PluginInitError
 
-        included = [ent.get('href')
-                    for ent in self.xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
-        if included:
-            for name in included:
-                if name not in self.extras:
-                    self.fam.AddMonitor(os.path.join(os.path.dirname(self.name),
-                                                     name),
-                                        self)
-                    self.extras.append(name)
+        self._follow_xincludes()
+        if self.extras:
             try:
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
                 logger.error("XInclude failed on %s: %s" % (self.name, err))
-
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:

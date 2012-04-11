@@ -36,13 +36,16 @@ class MetadataRuntimeError(Exception):
     pass
 
 
-class XMLMetadataConfig(object):
+class XMLMetadataConfig(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     """Handles xml config files and all XInclude statements"""
     def __init__(self, metadata, watch_clients, basefile):
+        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self,
+                                                         os.path.join(metadata.data,
+                                                                      basefile),
+                                                         metadata.core.fam)
         self.metadata = metadata
         self.basefile = basefile
         self.should_monitor = watch_clients
-        self.extras = []
         self.data = None
         self.basedata = None
         self.basedir = metadata.data
@@ -62,11 +65,10 @@ class XMLMetadataConfig(object):
             raise MetadataRuntimeError
         return self.basedata
 
-    def add_monitor(self, fname):
+    def add_monitor(self, fpath, fname):
         """Add a fam monitor for an included file"""
         if self.should_monitor:
-            self.metadata.core.fam.AddMonitor(os.path.join(self.basedir, fname),
-                                              self.metadata)
+            self.metadata.core.fam.AddMonitor(fpath, self.metadata)
             self.extras.append(fname)
 
     def load_xml(self):
@@ -76,13 +78,10 @@ class XMLMetadataConfig(object):
         except lxml.etree.XMLSyntaxError:
             self.logger.error('Failed to parse %s' % self.basefile)
             return
+        self.extras = []
         self.basedata = copy.copy(xdata)
-        included = [ent.get('href') for ent in \
-                    xdata.findall('./{http://www.w3.org/2001/XInclude}include')]
-        if included:
-            for name in included:
-                if name not in self.extras:
-                    self.add_monitor(name)
+        self._follow_xincludes(xdata=xdata)
+        if self.extras:
             try:
                 xdata.xinclude()
             except lxml.etree.XIncludeError:

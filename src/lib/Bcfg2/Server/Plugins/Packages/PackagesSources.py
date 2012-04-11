@@ -44,8 +44,18 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
 
     def HandleEvent(self, event=None):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.HandleEvent(self, event=event)
-        if event.filename != self.name:
-            self.parsed.add(os.path.basename(event.filename))
+        if event and event.filename != self.name:
+            for fname in self.extras:
+                fpath = None
+                if fname.startswith("/"):
+                    fpath = os.path.abspath(fname)
+                else:
+                    fpath = \
+                        os.path.abspath(os.path.join(os.path.dirname(self.name),
+                                                                     fname))
+                if fpath == os.path.abspath(event.filename):
+                    self.parsed.add(fname)
+                    break
 
         if sorted(list(self.parsed)) == sorted(self.extras):
             self.logger.info("Reloading Packages plugin")
