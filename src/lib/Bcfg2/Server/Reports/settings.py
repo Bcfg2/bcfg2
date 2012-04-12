@@ -64,10 +64,10 @@ if django.VERSION[0] == 1 and django.VERSION[1] < 2:
 
 # Local time zone for this installation. All choices can be found here:
 # http://docs.djangoproject.com/en/dev/ref/settings/#time-zone
-try:
-    TIME_ZONE = c.get('statistics', 'time_zone')
-except:
-    if django.VERSION[0] == 1 and django.VERSION[1] > 2:
+if django.VERSION[0] == 1 and django.VERSION[1] > 2:
+    try:
+        TIME_ZONE = c.get('statistics', 'time_zone')
+    except:
         TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
