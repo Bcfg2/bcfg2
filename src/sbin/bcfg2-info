@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """This tool loads the Bcfg2 core into an interactive debugger."""
+__revision__ = '$Revision$'
 
 from code import InteractiveConsole
 import cmd
@@ -50,7 +51,8 @@ profile <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
 showclient <client1> <client2> - Show metadata for given hosts
-update - Process pending file events"""
+update - Process pending file events
+version - Print version of this tool"""
 
 BUILDDIR_USAGE = """Usage: builddir [-f] <hostname> <output dir>
 
@@ -194,6 +196,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_update(self, _):
         """Process pending filesystem events."""
         self.fam.handle_events_in_interval(0.1)
+
+    def do_version(self, _):
+        """Print out code version."""
+        print(__revision__)
 
     def do_build(self, args):
         """Build client configuration."""
@@ -521,7 +527,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                     if len(source.whitelist):
                         print("  Whitelist: %s" % ", ".join(source.whitelist))
                     print("")
-        
+
     def do_profile(self, arg):
         """."""
         if not have_profile:
@@ -545,27 +551,25 @@ if __name__ == '__main__':
     optinfo = {
             'configfile': Bcfg2.Options.CFILE,
             'help': Bcfg2.Options.HELP,
-              }
-    optinfo.update({
-                    'event debug': Bcfg2.Options.DEBUG,
-                    'profile': Bcfg2.Options.CORE_PROFILE,
-                    'encoding': Bcfg2.Options.ENCODING,
-                    # Server options
-                    'repo': Bcfg2.Options.SERVER_REPOSITORY,
-                    'plugins': Bcfg2.Options.SERVER_PLUGINS,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'mconnect': Bcfg2.Options.SERVER_MCONNECT,
-                    'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
-                    'location': Bcfg2.Options.SERVER_LOCATION,
-                    'static': Bcfg2.Options.SERVER_STATIC,
-                    'key': Bcfg2.Options.SERVER_KEY,
-                    'cert': Bcfg2.Options.SERVER_CERT,
-                    'ca': Bcfg2.Options.SERVER_CA,
-                    'password': Bcfg2.Options.SERVER_PASSWORD,
-                    'protocol': Bcfg2.Options.SERVER_PROTOCOL,
-                    # More options
-                    'logging': Bcfg2.Options.LOGGING_FILE_PATH
-                    })
+            'event debug': Bcfg2.Options.DEBUG,
+            'profile': Bcfg2.Options.CORE_PROFILE,
+            'encoding': Bcfg2.Options.ENCODING,
+            # Server options
+            'repo': Bcfg2.Options.SERVER_REPOSITORY,
+            'plugins': Bcfg2.Options.SERVER_PLUGINS,
+            'password': Bcfg2.Options.SERVER_PASSWORD,
+            'mconnect': Bcfg2.Options.SERVER_MCONNECT,
+            'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+            'location': Bcfg2.Options.SERVER_LOCATION,
+            'static': Bcfg2.Options.SERVER_STATIC,
+            'key': Bcfg2.Options.SERVER_KEY,
+            'cert': Bcfg2.Options.SERVER_CERT,
+            'ca': Bcfg2.Options.SERVER_CA,
+            'password': Bcfg2.Options.SERVER_PASSWORD,
+            'protocol': Bcfg2.Options.SERVER_PROTOCOL,
+            # More options
+            'logging': Bcfg2.Options.LOGGING_FILE_PATH
+            }
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
                                         USAGE)
