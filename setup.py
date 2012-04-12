@@ -116,7 +116,7 @@ try:
 except ImportError:
     pass
 
-inst_reqs = ["lxml"]
+inst_reqs = ["lxml", "nose"]
 if need_m2crypto:
     inst_reqs.append("M2Crypto")
 
