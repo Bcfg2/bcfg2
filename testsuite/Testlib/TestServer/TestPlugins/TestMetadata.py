@@ -67,11 +67,12 @@ def get_metadata_object(core=None, watch_clients=False):
 
 
 class TestXMLMetadataConfig(unittest.TestCase):
-    def get_config_object(self, basefile=None, core=None, watch_clients=False):
+    def get_config_object(self, basefile="clients.xml", core=None,
+                          watch_clients=False):
         self.metadata = get_metadata_object(core=core,
                                             watch_clients=watch_clients)
         return XMLMetadataConfig(self.metadata, watch_clients, basefile)
-        
+
     def test_xdata(self):
         config = self.get_config_object()
         # we can't use assertRaises here because xdata is a property
@@ -99,17 +100,19 @@ class TestXMLMetadataConfig(unittest.TestCase):
     def test_add_monitor(self):
         core = Mock()
         config = self.get_config_object(core=core)
+
+        fname = "test.xml"
+        fpath = os.path.join(self.metadata.data, "test.xml")
+
         config.extras = []
-        config.add_monitor("test.xml")
+        config.add_monitor(fpath, fname)
         self.assertFalse(core.fam.AddMonitor.called)
         self.assertEqual(config.extras, [])
-        
+
         config = self.get_config_object(core=core, watch_clients=True)
-        config.add_monitor("test.xml")
-        core.fam.AddMonitor.assert_called_with(os.path.join(self.metadata.data,
-                                                            "test.xml"),
-                                               self.metadata)
-        self.assertItemsEqual(config.extras, ["test.xml"])
+        config.add_monitor(fpath, fname)
+        core.fam.AddMonitor.assert_called_with(fpath, self.metadata)
+        self.assertItemsEqual(config.extras, [fname])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.add_monitor")
     @patch("lxml.etree.parse")
@@ -131,11 +134,15 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         config.data = None
         config.basedata = None
-        mock_parse.return_value.findall = \
-            Mock(return_value=[lxml.etree.Element(XI + "include",
-                                                  href="more.xml"),
-                               lxml.etree.Element(XI + "include",
-                                                  href="evenmore.xml")])
+
+        def side_effect(*args):
+            def second_call(*args):
+                return []
+            mock_parse.return_value.findall.side_effect = second_call
+            return [lxml.etree.Element(XI + "include", href="more.xml"),
+                    lxml.etree.Element(XI + "include", href="evenmore.xml")]
+
+        mock_parse.return_value.findall = Mock(side_effect=side_effect)
         config.load_xml()
         mock_add_monitor.assert_any_call("more.xml")
         mock_add_monitor.assert_any_call("evenmore.xml")
@@ -163,9 +170,9 @@ class TestXMLMetadataConfig(unittest.TestCase):
         fpath = os.path.join(self.metadata.data, fname)
         tmpfile = "%s.new" % fpath
         linkdest = os.path.join(self.metadata.data, "client-link.xml")
-        
+
         mock_islink.return_value = False
-        
+
         config.write_xml(fpath, clients_test_tree)
         mock_open.assert_called_with(tmpfile, "w")
         self.assertTrue(mock_open.return_value.write.called)
@@ -293,7 +300,7 @@ class TestMetadata(unittest.TestCase):
         mock_parse.assert_called_with(os.path.join(datastore, "Metadata",
                                                    "groups.xml"))
         self.assertIsInstance(groups, lxml.etree._Element)
-        
+
     def test_search_xdata_name(self):
         # test finding a node with the proper name
         metadata = get_metadata_object()
@@ -403,7 +410,7 @@ class TestMetadata(unittest.TestCase):
         self.assertRaises(MetadataConsistencyError,
                           metadata.remove_group,
                           "bogus_group")
-    
+
     def test_add_bundle(self):
         metadata = get_metadata_object()
         metadata.groups_xml.write = Mock()
@@ -441,7 +448,7 @@ class TestMetadata(unittest.TestCase):
         self.assertRaises(MetadataConsistencyError,
                           metadata.remove_bundle,
                           "bogus_bundle")
-    
+
     def test_add_client(self):
         metadata = get_metadata_object()
         metadata.clients_xml.write = Mock()
@@ -692,7 +699,7 @@ class TestMetadata(unittest.TestCase):
                           set(["bundle1", "bundle2"]), set(),
                           set(["1.2.3.2"]), dict(category1="group1"),
                           None, None))
-                          
+
         imd = metadata.get_initial_metadata("alias1")
         self.assertEqual(mock_clientmetadata.call_args[0][:9],
                          ("client3", "group1", set(["group1"]), set(),
@@ -708,7 +715,7 @@ class TestMetadata(unittest.TestCase):
         self.assertRaises(MetadataConsistencyError,
                           metadata.get_initial_metadata,
                           "client_new2")
-        
+
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_all_group_names(self):
@@ -836,7 +843,7 @@ class TestMetadata(unittest.TestCase):
         # floating cert-auth clients add themselves to the cache
         self.assertIn("1.2.3.1", metadata.session_cache)
         self.assertEqual(metadata.session_cache["1.2.3.1"][1], "client1")
-        
+
         cert = dict(subject=[[("commonName", "client7")]])
         self.assertTrue(metadata.AuthenticateConnection(cert, "root", None,
                                                         "1.2.3.4"))
@@ -877,7 +884,7 @@ class TestMetadata(unittest.TestCase):
 
         self.assertFalse(metadata.AuthenticateConnection(None, "client5",
                                                          "password2",
-                                                         "1.2.3.7"))        
+                                                         "1.2.3.7"))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     @patch("Bcfg2.Server.Plugins.Metadata.Metadata.update_client")
