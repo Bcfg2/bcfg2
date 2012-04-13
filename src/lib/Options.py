@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 import getopt
 import os
 import sys
+import shlex
 import Bcfg2.Client.Tools
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
@@ -348,7 +349,16 @@ CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
 CLIENT_TIMEOUT = Option('Set the client XML-RPC timeout', default=90,
                         cmd='-t', cf=('communication', 'timeout'),
                         odesc='<timeout>')
-                     
+
+# bcfg2-test options
+TEST_NOSEOPTS = Option('Options to pass to nosetests', default=[],
+                       cmd='--nose-options', cf=('bcfg2_test', 'nose_options'),
+                       odesc='<opts>', long_arg=True, cook=shlex.split)
+TEST_IGNORE = Option('Ignore these entries if they fail to build.', default=[],
+                     cmd='--ignore',
+                     cf=('bcfg2_test', 'ignore_entries'), long_arg=True,
+                     odesc='<Type>:<name>,<Type>:<name>', cook=list_split)
+
 # APT client tool options
 CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
                                        cf=('APT', 'install_path'),
