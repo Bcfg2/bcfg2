@@ -114,11 +114,13 @@ class TemplateFile:
             if entry.text == '':
                 entry.set('empty', 'true')
         except TemplateError:
+            err = sys.exc_info()[1]
             logger.exception('Genshi template error')
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+            raise Bcfg2.Server.Plugin.PluginExecutionError('Genshi template error: %s' % err)
         except AttributeError:
+            err = sys.exc_info()[1]
             logger.exception('Genshi template loading error')
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+            raise Bcfg2.Server.Plugin.PluginExecutionError('Genshi template loading error: %s' % err)
 
 
 class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
