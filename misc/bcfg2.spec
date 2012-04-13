@@ -57,8 +57,8 @@ Requires:         python-lxml >= 0.9
 # iff we switch to the redhat one, this might not be needed anymore.
 Requires:         redhat-lsb
 %endif
-%if 0%{?fedora} == 0
-# fedora 15 and 16 (and possibly other distros) do not know this tag.
+%if "%{_vendor}" != "redhat"
+# fedora and rhel (and possibly other distros) do not know this tag.
 Recommends:       cron
 %endif
 
