@@ -11,7 +11,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'macport')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'macport'
-    pkgtool = ("/opt/local/bin/port install %s")
+    pkgtool = ('/opt/local/bin/port install %s', ('%s', ['name']))
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
@@ -27,7 +27,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
                 continue
             pkgname = pkg.split('@')[0].strip()
             version = pkg.split('@')[1].split(' ')[0]
-            self.logger.info(" pkgname: %s\n version: %s" % (pkgname, version))
+            self.logger.info(" pkgname: %s version: %s" % (pkgname, version))
             self.installed[pkgname] = version
 
     def VerifyPackage(self, entry, modlist):
