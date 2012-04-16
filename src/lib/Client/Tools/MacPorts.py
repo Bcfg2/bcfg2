@@ -38,13 +38,20 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
             return False
 
         if entry.attrib['name'] in self.installed:
-            if self.installed[entry.attrib['name']] == entry.attrib['version']:
+            if (self.installed[entry.attrib['name']] == entry.attrib['version'] or
+                entry.attrib['version'] == 'any'):
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 #FIXME: We should be able to check this once
                 #       http://trac.macports.org/ticket/15709 is implemented
                 return True
             else:
+                self.logger.info("  %s: Wrong version installed.  "
+                                 "Want %s, but have %s" % (entry.get("name"),
+                                                           entry.get("version"),
+                                                           self.installed[entry.get("name")],
+                                                           ))
+
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False
         entry.set('current_exists', 'false')
