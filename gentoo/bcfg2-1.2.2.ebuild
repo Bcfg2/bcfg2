@@ -1,6 +1,6 @@
 # Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Header: /var/cvsroot/gentoo-x86/app-admin/bcfg2/bcfg2-1.2.0.ebuild,v 1.1 2011/12/28 07:56:20 xmw Exp $
 
 EAPI="3"
 PYTHON_DEPEND="2:2.6"
@@ -12,20 +12,19 @@ inherit distutils
 
 DESCRIPTION="configuration management tool"
 HOMEPAGE="http://bcfg2.org"
-
-# handle the "pre" case
-MY_P="${P/_/}"
-SRC_URI="ftp://ftp.mcs.anl.gov/pub/bcfg/${MY_P}.tar.gz"
-S="${WORKDIR}/${MY_P}"
+SRC_URI="ftp://ftp.mcs.anl.gov/pub/bcfg/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
-IUSE="server"
+IUSE="doc genshi server"
 
-DEPEND="dev-python/setuptools"
+DEPEND="dev-python/setuptools
+	doc? ( dev-python/sphinx )"
 RDEPEND="app-portage/gentoolkit
+	genshi? ( dev-python/genshi )
 	server? (
+		virtual/fam
 		dev-python/lxml
 		dev-libs/libgamin[python] )"
 
@@ -37,19 +36,37 @@ distutils_src_install_post_hook() {
 	fi
 }
 
+src_compile() {
+	distutils_src_compile
+
+	if use doc; then
+		einfo "Building Bcfg2 documentation"
+		PYTHONPATH="build-$(PYTHON -f --ABI)" \
+			sphinx-build doc doc_output || die
+	fi
+}
+
 src_install() {
 	distutils_src_install --record=PY_SERVER_LIBS --install-scripts "${EPREFIX}/usr/sbin"
 
 	if ! use server; then
-	    # Remove files only necessary for a server installation
-		rm -rf "${ED}usr/share/bcfg2"
-		rm -rf "${ED}usr/share/man/man8"
+		# Remove files only necessary for a server installation
+		rm -rf "${ED}usr/share/bcfg2" || die
+		rm -rf "${ED}usr/share/man/man8" || die
 	else
-		newinitd "${FILESDIR}/bcfg2-server.rc" bcfg2-server
+		newinitd "${FILESDIR}/${PN}-server-1.2.0.rc" bcfg2-server
 	fi
 
 	insinto /etc
-	doins examples/bcfg2.conf || die "doins failed"
+	doins examples/bcfg2.conf
+
+	if use doc; then
+		# install the sphinx documentation
+		pushd doc_output > /dev/null
+		insinto /usr/share/doc/${PF}/html
+		doins -r [a-z]* _images _static || die "Failed to install documentation"
+		popd > /dev/null
+	fi
 }
 
 pkg_postinst () {
