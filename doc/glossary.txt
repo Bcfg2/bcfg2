@@ -33,8 +33,6 @@ Glossary
     profile
         A special type of group that a client is explicitly assigned to.
 
-    structure
-
     repository
         A collection of folders and files that together define the
         configurations that Bcfg2 applies to clients. The repository
