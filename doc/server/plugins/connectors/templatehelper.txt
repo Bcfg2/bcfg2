@@ -20,12 +20,14 @@ Restart ``bcfg2-server``.
 
 Now, any ``.py`` file placed in ``/var/lib/bcfg2/TemplateHelper/``
 will be read and added to matching client metadata objects.  See
-:ref:`Writing Helpers` below for more information on how to write
-TemplateHelper scripts.
+:ref:`writing-templatehelpers` below for more information on how to
+write TemplateHelper scripts.
 
 TemplateHelper supports group- and host-specific helpers, so you could
 create, e.g., ``foo.py.G80_test`` to create a helper that only applied
 to machines in the group ``test``.
+
+.. _writing-templatehelpers:
 
 Writing Helpers
 ===============
