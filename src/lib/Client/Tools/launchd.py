@@ -37,10 +37,11 @@ class launchd(Bcfg2.Client.Tools.Tool):
                     else:
                         d = daemon
                     label = self.cmd.run('defaults read %s/%s Label' %
-                                         (directory, d))[1]
+                                         (directory, d))[1][0]
                     self.plistMapping[label] = "%s/%s" % (directory, daemon)
-                except KeyError:  # perhaps this could be more robust
-                    pass
+                except KeyError:
+                    self.logger.warning("Could not get label from %s/%s" %
+                                        (directory, daemon))
 
     def FindPlist(self, entry):
         return self.plistMapping.get(entry.get('name'), None)
