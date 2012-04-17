@@ -54,6 +54,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
         self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
 
+        self.essential = xsource.get('essential', 'true').lower() == 'true'
         self.recommended = xsource.get('recommended', 'false').lower() == 'true'
 
         self.rawurl = xsource.get('rawurl', '')

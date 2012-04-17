@@ -205,14 +205,13 @@ something like this::
 
     .. versionadded:: 1.1.0
 
-    The default behavior of the Packages plugin is to not make
-    any assumptions about which packages you want to have added
-    automatically. For that reason, neither **Recommended** nor
-    **Suggested** packages are added as dependencies by default. You
-    will notice that the default behavior for apt is to add Recommended
-    packages as dependencies. You can configure the Packages plugin to
-    add recommended packages by adding the ``recommended`` attribute,
-    e.g.:
+    The default behavior of the Packages plugin is to not make any
+    assumptions about which packages you want to have added automatically
+    [#f1]_. For that reason, neither **Recommended** nor **Suggested**
+    packages are added as dependencies by default. You will notice
+    that the default behavior for apt is to add Recommended packages as
+    dependencies. You can configure the Packages plugin to add recommended
+    packages by adding the ``recommended`` attribute, e.g.:
 
     .. code-block:: xml
 
@@ -220,6 +219,14 @@ something like this::
 
     .. warning:: You must regenerate the Packages cache when adding or
                  removing the recommended attribute.
+
+    .. [#f1] Bcfg2 will by default add **Essential** packages to the
+             client specification. You can disable this behavior by
+             setting the ``essential`` attribute to *false*:
+
+    .. code-block:: xml
+
+        <Source type="apt" essential="false" ...>
 
 Yum sources can be similarly specified::
 

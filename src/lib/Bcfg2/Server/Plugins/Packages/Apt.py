@@ -12,6 +12,7 @@ class AptCollection(Collection):
 class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
+    essentialpkgs = set()
 
     def __init__(self, basepath, xsource, config):
         Source.__init__(self, basepath, xsource, config)
@@ -50,10 +51,9 @@ class AptSource(Source):
     def read_files(self):
         bdeps = dict()
         bprov = dict()
+        depfnames = ['Depends', 'Pre-Depends']
         if self.recommended:
-            depfnames = ['Depends', 'Pre-Depends', 'Recommends']
-        else:
-            depfnames = ['Depends', 'Pre-Depends']
+            depfnames.append('Recommends')
         for fname in self.files:
             if not self.rawurl:
                 barch = [x
@@ -77,6 +77,8 @@ class AptSource(Source):
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
                     bdeps[barch][pkgname] = []
+                elif words[0] == 'Essential' and self.essential:
+                    self.essentialpkgs.add(pkgname)
                 elif words[0] in depfnames:
                     vindex = 0
                     for dep in words[1].split(','):
