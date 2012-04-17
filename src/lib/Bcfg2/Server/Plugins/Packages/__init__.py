@@ -146,6 +146,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         initial = set()
         # base is the set of initial packages with groups expanded
         base = set()
+        # essential pkgs are those marked as such by the distribution
+        essential = collection.get_essential()
         to_remove = []
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
@@ -167,7 +169,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 else:
                     self.logger.error("Packages: Malformed Package: %s" %
                                       lxml.etree.tostring(pkg))
-        base.update(initial)
+        base.update(initial | essential)
         for el in to_remove:
             el.getparent().remove(el)
 

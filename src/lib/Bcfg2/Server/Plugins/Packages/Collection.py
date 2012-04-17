@@ -97,6 +97,12 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
                 return source.get_deps(self.metadata, package)
         return []
 
+    def get_essential(self):
+        essential = set()
+        for source in self.sources:
+            essential |= source.essentialpkgs
+        return essential
+
     def get_provides(self, package):
         for source in self.sources:
             providers = source.get_provides(self.metadata, package)
