@@ -120,8 +120,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         base_files = [matching.index(m) for m in matching
                       if not m.specific.delta]
         if not base_files:
-            logger.error("No base file found for %s" % entry.get('name'))
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+            msg = "No base file found for %s" % entry.get('name')
+            logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         base = min(base_files)
         used = matching[:base + 1]
         used.reverse()
@@ -133,15 +134,16 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         basefile = used.pop(0)
         if entry.get('perms').lower() == 'inherit':
             # use on-disk permissions
-            fname = "%s/%s" % (self.path, entry.get('name'))
+            fname = os.path.join(self.path, entry.get('name'))
             entry.set('perms',
                       str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
         if entry.tag == 'Path':
             entry.set('type', 'file')
         if basefile.name.endswith(".genshi"):
             if not have_genshi:
-                logger.error("Cfg: Genshi is not available")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: Genshi is not available: %s" % entry.get("name")
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             try:
                 template_cls = NewTextTemplate
                 loader = TemplateLoader()
@@ -159,13 +161,15 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 if data == '':
                     entry.set('empty', 'true')
             except Exception:
-                e = sys.exc_info()[1]
-                logger.error("Cfg: genshi exception: %s" % e)
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: genshi exception (%s): %s" % (entry.get("name"),
+                                                          sys.exc_info()[1])
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         elif basefile.name.endswith(".cheetah"):
             if not have_cheetah:
-                logger.error("Cfg: Cheetah is not available")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: Cheetah is not available: %s" % entry.get("name")
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             try:
                 fname = entry.get('realname', entry.get('name'))
                 s = {'useStackFrames': False}
@@ -178,9 +182,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 if data == '':
                     entry.set('empty', 'true')
             except Exception:
-                e = sys.exc_info()[1]
-                logger.error("Cfg: cheetah exception: %s" % e)
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: cheetah exception (%s): %s" % (entry.get("name"),
+                                                           sys.exc_info()[1])
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             data = basefile.data
             for delta in used:
@@ -191,17 +196,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             try:
                 entry.text = u_str(data, self.encoding)
             except UnicodeDecodeError:
-                e = sys.exc_info()[1]
-                logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
+                msg = "Failed to decode %s: %s" % (entry.get('name'),
+                                                   sys.exc_info()[1])
+                logger.error(msg)
                 logger.error("Please verify you are using the proper encoding.")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except ValueError:
-                e = sys.exc_info()[1]
-                logger.error("Error in specification for %s" % entry.get('name'))
-                logger.error("%s" % e)
+                msg = "Error in specification for %s: %s" % (entry.get('name'),
+                                                             sys.exc_info()[1])
+                logger.error(msg)
                 logger.error("You need to specify base64 encoding for %s." %
                              entry.get('name'))
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 
@@ -228,16 +234,20 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if 'text' in new_entry:
             name = self.build_filename(specific)
             if os.path.exists("%s.genshi" % name):
-                logger.error("Cfg: Unable to pull data for genshi types")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: Unable to pull data for genshi types"
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             elif os.path.exists("%s.cheetah" % name):
-                logger.error("Cfg: Unable to pull data for cheetah types")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: Unable to pull data for cheetah types"
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             try:
                 etext = new_entry['text'].encode(self.encoding)
             except:
-                logger.error("Cfg: Cannot encode content of %s as %s" % (name, self.encoding))
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Cfg: Cannot encode content of %s as %s" % (name,
+                                                                  self.encoding)
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             open(name, 'w').write(etext)
             self.debug_log("Wrote file %s" % name, flag=log)
         badattr = [attr for attr in ['owner', 'group', 'perms']

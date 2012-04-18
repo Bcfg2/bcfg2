@@ -819,7 +819,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         try:
             groups_tree.xinclude()
         except lxml.etree.XIncludeError:
-            self.logger.error("Failed to process XInclude for file %s" % dest)
+            self.logger.error("Failed to process XInclude for file %s: %s" %
+                              (dest, sys.exc_info()[1]))
         groups = groups_tree.getroot()
         categories = {'default': 'grey83'}
         viz_str = ""
