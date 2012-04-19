@@ -10,7 +10,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
     __handles__ = [('Package', 'macport')]
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'macport'
-    pkgtool = ("/opt/local/bin/port install %s")
+    pkgtool = ('/opt/local/bin/port install %s', ('%s', ['name']))
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
@@ -26,7 +26,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
                 continue
             pkgname = pkg.split('@')[0].strip()
             version = pkg.split('@')[1].split(' ')[0]
-            self.logger.info(" pkgname: %s\n version: %s" % (pkgname, version))
+            self.logger.info(" pkgname: %s version: %s" % (pkgname, version))
             self.installed[pkgname] = version
 
     def VerifyPackage(self, entry, modlist):
@@ -37,13 +37,20 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
             return False
 
         if entry.attrib['name'] in self.installed:
-            if self.installed[entry.attrib['name']] == entry.attrib['version']:
+            if (self.installed[entry.attrib['name']] == entry.attrib['version'] or
+                entry.attrib['version'] == 'any'):
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 #FIXME: We should be able to check this once
                 #       http://trac.macports.org/ticket/15709 is implemented
                 return True
             else:
+                self.logger.info("  %s: Wrong version installed.  "
+                                 "Want %s, but have %s" % (entry.get("name"),
+                                                           entry.get("version"),
+                                                           self.installed[entry.get("name")],
+                                                           ))
+
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False
         entry.set('current_exists', 'false')

@@ -71,6 +71,15 @@ Apache configuration for web-based reports
     by adding a **web_prefix** setting in the [statistics] section of
     your ``bcfg2.conf``.
 
+.. warning::
+
+    When running with SELINUX enabled, you can have potential problems
+    with the WSGISocketPrefix. One solution that works without too much
+    trouble is modifying your prefix so that it is located in a standard
+    location::
+
+        WSGISocketPrefix /var/run/httpd/wsgi
+
 An example site config is included below::
 
     <IfModule mod_wsgi.c>
