@@ -46,7 +46,7 @@ groups - List groups
 help - Print this list of available commands
 mappings <type*> <name*> - Print generator mappings for optional type and name
 packageresolve <hostname> <package> [<package>...] - Resolve the specified set of packages
-packagesources - Show package sources
+packagesources <hostname> - Show package sources
 profile <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
@@ -508,20 +508,26 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             # get_urls() loads url_map as a side-effect
             source.get_urls()
             for url_map in source.url_map:
-                if url_map['arch'] in metadata.groups:
-                    reponame = source.get_repo_name(url_map)
-                    print("Name: %s" % reponame)
-                    print("  Type: %s" % source.ptype)
+                for arch in url_map['arches']:
+                    # make sure client is in all the proper arch groups
+                    if arch not in metadata.groups:
+                        continue
+                reponame = source.get_repo_name(url_map)
+                print("Name: %s" % reponame)
+                print("  Type: %s" % source.ptype)
+                if url_map['url'] != '':
                     print("  URL: %s" % url_map['url'])
-                    if source.gpgkeys:
-                        print("  GPG Key(s): %s" % ", ".join(source.gpgkeys))
-                    else:
-                        print("  GPG Key(s): None")
-                    if len(source.blacklist):
-                        print("  Blacklist: %s" % ", ".join(source.blacklist))
-                    if len(source.whitelist):
-                        print("  Whitelist: %s" % ", ".join(source.whitelist))
-                    print("")
+                elif url_map['rawurl'] != '':
+                    print("  RAWURL: %s" % url_map['rawurl'])
+                if source.gpgkeys:
+                    print("  GPG Key(s): %s" % ", ".join(source.gpgkeys))
+                else:
+                    print("  GPG Key(s): None")
+                if len(source.blacklist):
+                    print("  Blacklist: %s" % ", ".join(source.blacklist))
+                if len(source.whitelist):
+                    print("  Whitelist: %s" % ", ".join(source.whitelist))
+                print("")
         
     def do_profile(self, arg):
         """."""

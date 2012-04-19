@@ -135,8 +135,9 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
-        if url_map['component']:
-            rname = url_map['component']
+        if url_map['components']:
+            # use the first component as the name
+            rname = url_map['components'][0]
         else:
             name = None
             for repo_re in (self.mrepo_re,
