@@ -18,7 +18,8 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
 
         for eset in entries.values():
             for fname, sdata in list(eset.entries.items()):
-                if fname.endswith(".genshi") or fname.endswith(".newtxt"):
+                if (self.HandlesFile(fname) and
+                    (fname.endswith(".genshi") or fname.endswith(".newtxt"))):
                     try:
                         loader.load(sdata.name,
                                     cls=genshi.template.NewTextTemplate)

@@ -12,9 +12,9 @@ class Deltas(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_entry(self, basename, entry):
         for fname in list(entry.entries.keys()):
-            match = entry.specific.delta_reg.match(fname)
-            if match:
-                self.LintError("%s-file-used" % match.group('delta'),
-                               "%s file used on %s: %s" % (match.group('delta'),
-                                                           basename,
-                                                           fname))
+            if self.HandlesFile(fname):
+                match = entry.specific.delta_reg.match(fname)
+                if match:
+                    self.LintError("%s-file-used" % match.group('delta'),
+                                   "%s file used on %s: %s" %
+                                   (match.group('delta'), basename, fname))
