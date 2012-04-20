@@ -2,13 +2,16 @@ import Bcfg2.Server.Lint
 
 class Deltas(Bcfg2.Server.Lint.ServerPlugin):
     """ Warn about usage of .cat and .diff files """
-
     def Run(self):
         """ run plugin """
         if 'Cfg' in self.core.plugins:
             cfg = self.core.plugins['Cfg']
             for basename, entry in list(cfg.entries.items()):
                 self.check_entry(basename, entry)
+
+    def Errors(self):
+        return {"cat-file-used":"warning",
+                "diff-file-used":"warning"}
 
     def check_entry(self, basename, entry):
         for fname in list(entry.entries.keys()):

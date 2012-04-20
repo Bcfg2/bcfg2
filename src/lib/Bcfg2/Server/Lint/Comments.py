@@ -16,6 +16,12 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         self.check_infoxml()
         self.check_probes()
 
+    def Errors(self):
+        return {"unexpanded-keywords":"warning",
+                "keywords-not-found":"warning",
+                "comments-not-found":"warning",
+                "broken-xinclude-chain":"warning"}
+
     def required_keywords(self, rtype):
         """ given a file type, fetch the list of required VCS keywords
         from the bcfg2-lint config """

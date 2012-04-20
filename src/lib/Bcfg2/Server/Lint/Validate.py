@@ -63,6 +63,15 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
         self.check_properties()
 
+    def Errors(self):
+        return {"broken-xinclude-chain":"warning",
+                "schema-failed-to-parse":"warning",
+                "properties-schema-not-found":"warning",
+                "xml-failed-to-parse":"error",
+                "xml-failed-to-read":"error",
+                "xml-failed-to-verify":"error",
+                "input-output-error":"error"}
+
     def check_properties(self):
         """ check Properties files against their schemas """
         for filename in self.filelists['props']:

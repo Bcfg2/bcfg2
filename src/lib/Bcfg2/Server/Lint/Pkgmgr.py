@@ -4,7 +4,6 @@ import Bcfg2.Server.Lint
 
 class Pkgmgr(Bcfg2.Server.Lint.ServerlessPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
-
     def Run(self):
         pset = set()
         for pfile in glob.glob("%s/Pkgmgr/*.xml" % self.config['repo']):
@@ -33,3 +32,6 @@ class Pkgmgr(Bcfg2.Server.Lint.ServerlessPlugin):
                                          (pkg.get('name'), priority, ptype))
                     else:
                         pset.add(ptuple)
+    
+    def Errors(self):
+        return {"duplicate-packages":"error"}

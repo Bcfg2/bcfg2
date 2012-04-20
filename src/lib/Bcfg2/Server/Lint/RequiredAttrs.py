@@ -6,7 +6,6 @@ from Bcfg2.Server.Plugins.Packages import Apt, Yum
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ verify attributes for configuration entries (as defined in
     doc/server/configurationentries) """
-
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.required_attrs = {
@@ -37,6 +36,13 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         else:
             self.check_rules()
             self.check_bundles()
+
+    def Errors(self):
+        return {"unknown-entry-type":"error",
+                "unknown-entry-tag":"error",
+                "required-attrs-missing":"error",
+                "extra-attrs":"warning"}
+
 
     def check_packages(self):
         """ check package sources for Source entries with missing attrs """

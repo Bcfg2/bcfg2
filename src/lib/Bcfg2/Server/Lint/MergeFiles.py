@@ -6,12 +6,16 @@ import Bcfg2.Server.Lint
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
     might be merged into one """
-
     def Run(self):
         if 'Cfg' in self.core.plugins:
             self.check_cfg()
         if 'Probes' in self.core.plugins:
             self.check_probes()
+
+    def Errors(self):
+        return {"merge-cfg":"warning",
+                "merge-probes":"warning"}
+
 
     def check_cfg(self):
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
@@ -26,7 +30,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     def check_probes(self):
         probes = self.core.plugins['Probes'].probes.entries
         for mset in self.get_similar(probes):
-            self.LintError("merge-cfg",
+            self.LintError("merge-probes",
                            "The following probes are similar: %s. "
                            "Consider merging them into a single probe." %
                            ", ".join([p for p in mset]))

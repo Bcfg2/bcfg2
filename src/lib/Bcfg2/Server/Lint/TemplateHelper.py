@@ -53,3 +53,11 @@ class TemplateHelper(Bcfg2.Server.Lint.ServerlessPlugin):
                     self.LintError("templatehelper-underscore-export",
                                    "%s: exported symbol %s starts with underscore" %
                                    (helper, sym))
+
+    def Errors(self):
+        return {"templatehelper-import-error":"error",
+                "templatehelper-no-export":"error",
+                "templatehelper-nonlist-export":"error",
+                "templatehelper-nonexistent-export":"error",
+                "templatehelper-reserved-export":"error",
+                "templatehelper-underscore-export":"warning"}

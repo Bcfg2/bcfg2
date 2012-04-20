@@ -4,7 +4,6 @@ import Bcfg2.Server.Lint
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all config files have an info.xml file"""
-
     def Run(self):
         if 'Cfg' in self.core.plugins:
             for filename, entryset in self.core.plugins['Cfg'].entries.items():
@@ -17,6 +16,12 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                     else:
                         self.LintError("no-infoxml",
                                        "No info.xml found for %s" % filename)
+
+    def Errors(self):
+        return {"no-infoxml":"warning",
+                "paranoid-false":"warning",
+                "broken-xinclude-chain":"warning",
+                "required-infoxml-attrs-missing":"error"}
 
     def check_infoxml(self, fname, xdata):
         for info in xdata.getroottree().findall("//Info"):

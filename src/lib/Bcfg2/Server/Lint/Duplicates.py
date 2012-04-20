@@ -22,6 +22,13 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
         if self.clients_xdata is not None:
             self.duplicate_clients()
 
+    def Errors(self):
+        return {"broken-xinclude-chain":"warning",
+                "duplicate-client":"error",
+                "duplicate-group":"error",
+                "duplicate-package":"error",
+                "multiple-default-groups":"error"}
+
     def load_xdata(self):
         """ attempt to load XML data for groups and clients.  only
         actually load data if all documents reference in XIncludes can

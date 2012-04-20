@@ -54,13 +54,18 @@ class Plugin (object):
         self.config = config
         self.logger = logging.getLogger('bcfg2-lint')
         if errorhandler is None:
-            self.errorHandler = ErrorHandler()
+            self.errorhandler = ErrorHandler()
         else:
-            self.errorHandler = errorhandler
+            self.errorhandler = errorhandler
+        self.errorhandler.RegisterErrors(self.Errors())
 
     def Run(self):
         """ run the plugin.  must be overloaded by child classes """
         pass
+
+    def Errors(self):
+        """ returns a dict of errors the plugin supplies.  must be
+        overloaded by child classes """
 
     def HandlesFile(self, fname):
         """ returns true if the given file should be handled by the
@@ -73,7 +78,7 @@ class Plugin (object):
                                              fname)) in self.files)
 
     def LintError(self, err, msg):
-        self.errorHandler.dispatch(err, msg)
+        self.errorhandler.dispatch(err, msg)
 
     def RenderXML(self, element):
         """render an XML element for error output -- line number
@@ -92,42 +97,6 @@ class Plugin (object):
 
 class ErrorHandler (object):
     # how to handle different errors by default
-    _errors = {"no-infoxml":"warning",
-               "paranoid-false":"warning",
-               "bundle-not-found":"error",
-               "inconsistent-bundle-name":"warning",
-               "group-tag-not-allowed":"error",
-               "unexpanded-keywords":"warning",
-               "keywords-not-found":"warning",
-               "comments-not-found":"warning",
-               "broken-xinclude-chain":"warning",
-               "duplicate-client":"error",
-               "duplicate-group":"error",
-               "duplicate-package":"error",
-               "multiple-default-groups":"error",
-               "required-infoxml-attrs-missing":"error",
-               "unknown-entry-type":"error",
-               "required-attrs-missing":"error",
-               "extra-attrs":"warning",
-               "schema-failed-to-parse":"warning",
-               "properties-schema-not-found":"warning",
-               "xml-failed-to-parse":"error",
-               "xml-failed-to-read":"error",
-               "xml-failed-to-verify":"error",
-               "merge-cfg":"warning",
-               "merge-probes":"warning",
-               "input-output-error":"error",
-               "genshi-syntax-error":"error",
-               "pattern-fails-to-initialize":"error",
-               "cat-file-used":"warning",
-               "diff-file-used":"warning",
-               "templatehelper-import-error":"error",
-               "templatehelper-no-export":"error",
-               "templatehelper-nonlist-export":"error",
-               "templatehelper-nonexistent-export":"error",
-               "templatehelper-reserved-export":"error",
-               "templatehelper-underscore-export":"warning"}
-
     def __init__(self, config=None):
         self.errors = 0
         self.warnings = 0
@@ -152,7 +121,8 @@ class ErrorHandler (object):
                 else:
                     self._handlers[err] = self.debug
 
-        for err, action in self._errors.items():
+    def RegisterErrors(self, errors):
+        for err, action in errors.items():
             if err not in self._handlers:
                 if "warn" in action:
                     self._handlers[err] = self.warn
@@ -160,6 +130,7 @@ class ErrorHandler (object):
                     self._handlers[err] = self.error
                 else:
                     self._handlers[err] = self.debug
+        
 
     def dispatch(self, err, msg):
         if err in self._handlers:

@@ -3,7 +3,6 @@ import Bcfg2.Server.Lint
 
 class Bundles(Bcfg2.Server.Lint.ServerPlugin):
     """ Perform various bundle checks """
-
     def Run(self):
         """ run plugin """
         if 'Bundler' in self.core.plugins:
@@ -14,6 +13,10 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
                         type(bundle) is not
                         Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
                         self.bundle_names(bundle)
+
+    def Errors(self):
+        return {"bundle-not-found":"error",
+                "inconsistent-bundle-name":"warning"}
 
     def missing_bundles(self):
         """ find bundles listed in Metadata but not implemented in Bundler """
@@ -48,14 +51,3 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
             self.LintError("inconsistent-bundle-name",
                            "Inconsistent bundle name: filename is %s, bundle name is %s" %
                            (fname, bname))
-
-    def sgenshi_groups(self, bundle):
-        """ ensure that Genshi Bundles do not include <Group> tags,
-        which are not supported  """
-        xdata = lxml.etree.parse(bundle.name)
-        groups = [self.RenderXML(g)
-                  for g in xdata.getroottree().findall("//Group")]
-        if groups:
-            self.LintError("group-tag-not-allowed",
-                           "<Group> tag is not allowed in SGenshi Bundle:\n%s" %
-                           "\n".join(groups))
