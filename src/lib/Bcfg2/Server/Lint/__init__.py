@@ -120,7 +120,13 @@ class ErrorHandler (object):
                "genshi-syntax-error":"error",
                "pattern-fails-to-initialize":"error",
                "cat-file-used":"warning",
-               "diff-file-used":"warning"}
+               "diff-file-used":"warning",
+               "templatehelper-import-error":"error",
+               "templatehelper-no-export":"error",
+               "templatehelper-nonlist-export":"error",
+               "templatehelper-nonexistent-export":"error",
+               "templatehelper-reserved-export":"error",
+               "templatehelper-underscore-export":"warning"}
 
     def __init__(self, config=None):
         self.errors = 0
