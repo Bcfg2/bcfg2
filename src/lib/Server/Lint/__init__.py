@@ -8,7 +8,8 @@ __all__ = ['Bundles',
            'Pkgmgr',
            'RequiredAttrs',
            'Validate',
-           'Genshi']
+           'Genshi',
+           'Deltas']
 
 import logging
 import os
@@ -119,7 +120,9 @@ class ErrorHandler (object):
                "merge-probes":"warning",
                "input-output-error":"error",
                "genshi-syntax-error":"error",
-               "pattern-fails-to-initialize":"error"}
+               "pattern-fails-to-initialize":"error",
+               "cat-file-used":"warning",
+               "diff-file-used":"warning"}
 
     def __init__(self, config=None):
         self.errors = 0
