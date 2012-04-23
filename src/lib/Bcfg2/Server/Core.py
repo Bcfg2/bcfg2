@@ -388,9 +388,9 @@ class Core(Component):
             return lxml.etree.tostring(resp, encoding='UTF-8',
                                        xml_declaration=True)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-            warning = 'Client metadata resolution error for %s; check server log' % address[0]
+            warning = 'Client metadata resolution error for %s' % address[0]
             self.logger.warning(warning)
-            raise xmlrpclib.Fault(6, warning)
+            raise xmlrpclib.Fault(6, warning + "; check server log")
         except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
             err_msg = 'Metadata system runtime failure'
             self.logger.error(err_msg)
