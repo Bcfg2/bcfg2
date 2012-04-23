@@ -132,11 +132,12 @@ class ErrorHandler (object):
 
         termsize = get_termsize()
         if termsize is not None:
-            self._wrapper = textwrap.TextWrapper(initial_indent="  ",
-                                                 subsequent_indent="  ",
-                                                 width=termsize[0])
+            twrap = textwrap.TextWrapper(initial_indent="  ",
+                                        subsequent_indent="  ",
+                                        width=termsize[0])
+            self._wrapper = twrap.wrap
         else:
-            self._wrapper = None
+            self._wrapper = lambda s: [s]
 
         self._handlers = {}
         if config is not None:
@@ -191,13 +192,10 @@ class ErrorHandler (object):
         rawlines = msg.splitlines()
         firstline = True
         for rawline in rawlines:
-            if self._wrapper:
-                lines = self._wrapper.wrap(rawline)
-            else:
-                lines = [rawline]
+            lines = self._wrapper(rawline)
             for line in lines:
                 if firstline:
-                    logfunc("%s%s" % (prefix, line.lstrip()))
+                    logfunc(prefix + line.lstrip())
                     firstline = False
                 else:
                     logfunc(line)
