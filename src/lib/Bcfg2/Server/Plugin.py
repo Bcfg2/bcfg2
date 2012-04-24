@@ -945,6 +945,8 @@ class SpecificData(object):
             return
         try:
             self.data = open(self.name).read()
+        except UnicodeDecodeError:
+            self.data = open(self.name, mode='rb').read()
         except:
             logger.error("Failed to read file %s" % self.name)
 

@@ -42,7 +42,10 @@ def sort_xml(node, key=None):
     for child in node:
         sort_xml(child, key)
 
-    sorted_children = sorted(node, key=key)
+    try:
+        sorted_children = sorted(node, key=key)
+    except TypeError:
+        sorted_children = node
     node[:] = sorted_children
 
 
@@ -239,12 +242,14 @@ class Core(Component):
                 continue
             try:
                 self.Bind(entry, metadata)
-            except PluginExecutionError, exc:
+            except PluginExecutionError:
+                exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Failed to bind entry: %s %s" % \
                              (entry.tag, entry.get('name')))
-            except Exception, exc:
+            except Exception:
+                exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % format_exc())
                 logger.error("Unexpected failure in BindStructure: %s %s" \

@@ -14,7 +14,6 @@ import logging
 import ssl
 import threading
 import time
-import types
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import xmlrpclib, SimpleXMLRPCServer, SocketServer
 
@@ -46,7 +45,7 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             # py3k compatibility
-            if type(response) not in [bool, str, list, dict, types.NoneType]:
+            if type(response) not in [bool, str, list, dict] or response is None:
                 response = (response.decode('utf-8'), )
             else:
                 response = (response, )

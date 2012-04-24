@@ -1,4 +1,4 @@
-'''This module manages ssh key files for bcfg2'''
+"""This module manages ssh key files for bcfg2"""
 
 import binascii
 import re
@@ -19,9 +19,14 @@ logger = logging.getLogger(__name__)
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
     def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
+        Bcfg2.Server.Plugin.SpecificData.__init__(self,
+                                                  name,
+                                                  specific,
                                                   encoding)
         self.encoding = encoding
+
+    def __lt__(self, other):
+        return self.name < other.name
 
     def bind_entry(self, entry, metadata):
         entry.set('type', 'file')
@@ -212,7 +217,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                         continue
 
                     skn.append("%s %s" % (','.join(hostnames),
-                                          entry.data.decode().rstrip()))
+                                          entry.data.rstrip()))
 
             self.__skn = "\n".join(skn) + "\n"
         return self.__skn
@@ -323,8 +328,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                         pass
             hostkeys.sort()
             for hostkey in hostkeys:
-                entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % (
-                    hostkey.data.decode())
+                entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % \
+                              (hostkey.data)
             self.entries[entry.get('name')].bind_info_to_entry(entry, metadata)
 
     def build_hk(self, entry, metadata):

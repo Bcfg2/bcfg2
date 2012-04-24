@@ -95,9 +95,9 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         else:
             msgs = [record]
         for newrec in msgs:
-            msg = self.log_format_string % (self.encodePriority(self.facility,
-                                                                newrec.levelname.lower()),
-                                            self.format(newrec))
+            msg = '<%d>%s\000' % (self.encodePriority(self.facility,
+                                                      newrec.levelname.lower()),
+                                  self.format(newrec))
             try:
                 self.socket.send(msg.encode('ascii'))
             except socket.error:
