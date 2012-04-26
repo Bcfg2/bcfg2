@@ -46,7 +46,7 @@ BuildRequires:    libsane1
 BuildRequires:    python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
-%define pythonpath %(find /usr/lib/python%{py_ver}/site-packages -name Sphinx*.egg)
+%define pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
 %else
 BuildRequires:    python-sphinx >= 0.6
 %endif
