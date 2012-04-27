@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load split %}
 {% load syntax_coloring %}
 
 
@@ -88,6 +89,20 @@ div.entry_list h3 {
           {{ item.reason.current_diff|syntaxhilight }}
         </div>
       {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- display extra directory entries -->
+  {% if item.reason.unpruned %}
+    <div class='entry_list'>
+      <div class='entry_list_head'>
+          <h3>Extra entries found</h3>
+      </div>
+      <table class='entry_list' cellpadding='3'>
+        {% for unpruned_item in item.reason.unpruned|split %}
+          <tr><td>{{ unpruned_item }}</td></tr>
+        {% endfor %}
+      </table>
     </div>
   {% endif %}
 

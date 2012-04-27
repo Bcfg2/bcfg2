@@ -20,7 +20,7 @@ import Bcfg2.Client.Tools
 import Bcfg2.Options
 from Bcfg2.Client import XML
 
-log = logging.getLogger('posix')
+log = logging.getLogger('POSIX')
 
 # map between dev_type attribute and stat constants
 device_map = {'block': stat.S_IFBLK,
@@ -258,8 +258,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if entry.get('perms') == None or \
            entry.get('owner') == None or \
            entry.get('group') == None:
-            self.logger.error('Entry %s not completely specified. '
-                              'Try running bcfg2-lint.' % (entry.get('name')))
+            self.logger.error("POSIX: Entry %s not completely specified. "
+                              "Try running bcfg2-lint." % (entry.get('name')))
             return False
         while len(entry.get('perms', '')) < 4:
             entry.set('perms', '0' + entry.get('perms', ''))
@@ -267,15 +267,15 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             ondisk = os.stat(entry.get('name'))
         except OSError:
             entry.set('current_exists', 'false')
-            self.logger.debug("%s %s does not exist" %
+            self.logger.info("POSIX: %s %s does not exist" %
                               (entry.tag, entry.get('name')))
             return False
         try:
             owner = str(ondisk[stat.ST_UID])
             group = str(ondisk[stat.ST_GID])
         except (OSError, KeyError):
-            self.logger.error('User/Group resolution failed for path %s' % \
-                              entry.get('name'))
+            self.logger.info("POSIX: User/Group resolution failed "
+                             "for path %s" % entry.get('name'))
             owner = 'root'
             group = '0'
         finfo = os.stat(entry.get('name'))
@@ -300,11 +300,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 ex_ents = [e for e in entries if e not in modlist]
                 if ex_ents:
                     pruneTrue = False
-                    self.logger.debug("Directory %s contains extra entries:" % \
-                                      entry.get('name'))
-                    self.logger.debug(ex_ents)
+                    self.logger.info("POSIX: Directory %s contains "
+                                     "extra entries:" % entry.get('name'))
+                    self.logger.info(ex_ents)
                     nqtext = entry.get('qtext', '') + '\n'
-                    nqtext += "Directory %s contains extra entries:" % \
+                    nqtext += "Directory %s contains extra entries: " % \
                               entry.get('name')
                     nqtext += ":".join(ex_ents)
                     entry.set('qtest', nqtext)

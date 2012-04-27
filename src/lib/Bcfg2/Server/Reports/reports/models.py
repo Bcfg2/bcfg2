@@ -277,6 +277,7 @@ class Reason(models.Model):
     current_diff = models.TextField(max_length=1280, blank=True)
     is_binary = models.BooleanField(default=False)
     is_sensitive = models.BooleanField(default=False)
+    unpruned = models.TextField(max_length=1280, blank=True)
 
     def _str_(self):
         return "Reason"

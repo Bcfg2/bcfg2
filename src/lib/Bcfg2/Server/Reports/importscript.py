@@ -40,6 +40,7 @@ from Bcfg2.Bcfg2Py3k import ConfigParser
 def build_reason_kwargs(r_ent, encoding, logger):
     binary_file = False
     sensitive_file = False
+    unpruned_entries = ''
     if r_ent.get('sensitive') in ['true', 'True']:
         sensitive_file = True
         rc_diff = ''
@@ -57,6 +58,10 @@ def build_reason_kwargs(r_ent, encoding, logger):
         rc_diff = r_ent.get('current_diff')
     else:
         rc_diff = ''
+    # detect unmanaged entries in pruned directories
+    if r_ent.get('prune', 'false') == 'true' and r_ent.get('qtest'):
+        unpruned_elist = [e.get('path') for e in r_ent.findall('Prune')]
+        unpruned_entries = "\n".join(unpruned_elist)
     if not binary_file:
         try:
             rc_diff = rc_diff.decode(encoding)
@@ -78,7 +83,8 @@ def build_reason_kwargs(r_ent, encoding, logger):
                 current_exists=r_ent.get('current_exists', default="True").capitalize() == "True",
                 current_diff=rc_diff,
                 is_binary=binary_file,
-                is_sensitive=sensitive_file)
+                is_sensitive=sensitive_file,
+                unpruned=unpruned_entries)
 
 
 def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location=''):
