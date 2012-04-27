@@ -270,7 +270,7 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 # mandriva and RHEL 5 cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
-touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{_sysconfdir}/bcfg2-web.conf
+touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web.conf
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
