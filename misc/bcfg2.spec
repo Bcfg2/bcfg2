@@ -264,6 +264,10 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 %{__mkdir_p} %{buildroot}%{_localstatedir}/cache/bcfg2
 
+# mandriva and RHEL 5 cannot handle %ghost without the file existing,
+# so let's touch a bunch of empty config files
+touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{_sysconfdir}/bcfg2-web.conf
+
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
 
@@ -286,10 +290,7 @@ mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %{_sbindir}/rcbcfg2
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2
 %endif
-%if 0%{?mandriva_version} == 0
-# mandriva (on OBS, at least) can't handle %ghost
-%ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
-%endif
+%ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
 %post -n bcfg2-server
 # enable daemon on first install only (not on update).
@@ -364,9 +365,7 @@ fi
 %{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
-%if 0%{?mandriva_version} == 0
-%ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
-%endif
+%ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
 %files -n bcfg2-doc
 %defattr(-,root,root,-)
@@ -379,9 +378,7 @@ fi
 %dir %{apache_conf}
 %dir %{apache_conf}/conf.d
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
-%if 0%{?mandriva_version} == 0
-%ghost %attr(0600,root,root) %{_sysconfdir}/bcfg2-web.conf
-%endif
+%ghost %config(noreplace,missingok) %attr(0640,root,apache) %{_sysconfdir}/bcfg2-web.conf
 
 %changelog
 * Sat Feb 18 2012 Christopher 'm4z' Holm <686f6c6d@googlemail.com> 1.2.1
