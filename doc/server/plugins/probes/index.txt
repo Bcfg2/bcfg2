@@ -208,7 +208,7 @@ look something like:
     <FileProbes>
       <FileProbe name="/etc/foo.conf"/>
       <Group name="blah-servers">
-        <FileProbe name="/etc/blah.conf" update="true"
+        <FileProbe name="/etc/blah.conf" update="true"/>
       </Group>
       <Client name="bar.example.com">
         <FileProbe name="/var/lib/bar.gz" base64="true"/>
