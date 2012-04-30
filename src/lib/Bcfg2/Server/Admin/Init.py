@@ -55,6 +55,7 @@ groups = '''<Groups version='3.0'>
    <Group name='suse'/>
    <Group name='mandrake'/>
    <Group name='solaris'/>
+   <Group name='arch'/>
 </Groups>
 '''
 
@@ -71,7 +72,8 @@ os_list = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
            ('Debian', 'debian'),
            ('Ubuntu', 'ubuntu'),
            ('Gentoo', 'gentoo'),
-           ('FreeBSD', 'freebsd')]
+           ('FreeBSD', 'freebsd'),
+           ('Arch', 'arch')]
 
 # Complete list of plugins
 plugin_list = ['Account',
