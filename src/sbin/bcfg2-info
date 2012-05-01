@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 """This tool loads the Bcfg2 core into an interactive debugger."""
 
-from code import InteractiveConsole
+import os
+import sys
 import cmd
 import errno
 import getopt
+import fnmatch
 import logging
-import lxml.etree
-import os
-import sys
 import tempfile
+import lxml.etree
+from code import InteractiveConsole
 
 try:
     try:
@@ -32,7 +33,8 @@ logger = logging.getLogger('bcfg2-info')
 USAGE = """Commands:
 build <hostname> <filename> - Build config for hostname, writing to filename
 builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname
-buildall <directory> - Build configs for all clients in directory
+buildall <directory> [<hostnames*>] - Build configs for all clients in directory
+buildallfile <directory> <filename> [<hostnames*>] - Build config file for all clients in directory
 buildfile <filename> <hostname> - Build config file for hostname (not written to disk)
 buildbundle <bundle> <hostname> - Render a templated bundle for hostname (not written to disk)
 bundles - Print out group/bundle information
@@ -75,9 +77,11 @@ class mockLog(object):
     def debug(self, *args, **kwargs):
         pass
 
+
 class dummyError(Exception):
     """This is just a dummy."""
     pass
+
 
 class FileNotBuilt(Exception):
     """Thrown when File entry contains no content."""
@@ -86,6 +90,30 @@ class FileNotBuilt(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
+
+def getClientList(hostglobs):
+    """ given a host glob, get a list of clients that match it """
+    # special cases to speed things up:
+    if '*' in hostglobs:
+        return list(self.metadata.clients.keys())
+    has_wildcards = False
+    for glob in hostglobs:
+        # check if any wildcard characters are in the string
+        if set('*?[]') & set(glob):
+            has_wildcards = True
+            break
+    if not has_wildcards:
+        return hostglobs
+
+    rv = set()
+    clist = set(self.metadata.clients.keys())
+    for glob in hostglobs:
+        for client in clist:
+            if fnmatch.fnmatch(client, glob):
+                rv.update(client)
+        clist.difference_update(rv)
+    return list(rv)
 
 def printTabular(rows):
     """Print data in tabular format."""
@@ -250,21 +278,29 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             self.help_builddir()
 
     def do_buildall(self, args):
-        if len(args.split()) != 1:
-            print("Usage: buildall <directory>")
+        if len(args.split()) < 1:
+            print("Usage: buildall <directory> [<hostnames*>]")
             return
+
+        destdir = args[0]
         try:
-            os.mkdir(args)
-        except:
-            pass
-        for client in self.metadata.clients:
+            os.mkdir(destdir)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno != 17:
+                print("Could not create %s: %s" % (destdir, err))
+        if len(args) > 1:
+            clients = getClientList(args[1:])
+        else:
+            clients = list(self.metadata.clients.keys())
+        for client in clients:
             self.do_build("%s %s/%s.xml" % (client, args, client))
 
-    def do_buildfile(self, args):
-        """Build a config file for client."""
-        usage = 'Usage: buildfile [--altsrc=<altsrc>] filename hostname'
+    def do_buildallfile(self, args):
+        """Build a config file for all clients."""
+        usage = 'Usage: buildallfile [--altsrc=<altsrc>] <directory> <filename> [<hostnames*>]'
         try:
-            opts, alist = getopt.gnu_getopt(args.split(), '', ['altsrc='])
+            opts, args = getopt.gnu_getopt(args.split(), '', ['altsrc='])
         except:
             print(usage)
             return
@@ -272,20 +308,69 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         for opt in opts:
             if opt[0] == '--altsrc':
                 altsrc = opt[1]
-        if len(alist) == 2:
-            fname, client = alist
-            entry = lxml.etree.Element('Path', type='file', name=fname)
-            if altsrc:
-                entry.set("altsrc", altsrc)
-            try:
-                metadata = self.build_metadata(client)
-                self.Bind(entry, metadata)
-                print(lxml.etree.tostring(entry, encoding="UTF-8",
-                                          xml_declaration=True))
-            except:
-                print("Failed to build entry %s for host %s" % (fname, client))
-        else:
+        if len(args) < 2:
             print(usage)
+            return
+
+        destdir = args[0]
+        filename = args[1]
+        try:
+            os.mkdir(destdir)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno != 17:
+                print("Could not create %s: %s" % (destdir, err))
+        if len(args) > 2:
+            clients = getClientList(args[1:])
+        else:
+            clients = list(self.metadata.clients.keys())
+        if altsrc:
+            args = "--altsrc %s -f %%s %%s %%s" % altsrc
+        else:
+            args = "-f %s %s %s"
+        for client in clients:
+            self.do_buildfile(args % (os.path.join(destdir, client),
+                                      filename, client))
+
+    def do_buildfile(self, args):
+        """Build a config file for client."""
+        usage = 'Usage: buildfile [-f <outfile>] [--altsrc=<altsrc>] filename hostname'
+        try:
+            opts, alist = getopt.gnu_getopt(args.split(), 'f:', ['altsrc='])
+        except:
+            print(usage)
+            return
+        altsrc = None
+        outfile = None
+        for opt in opts:
+            if opt[0] == '--altsrc':
+                altsrc = opt[1]
+            elif opt[0] == '-f':
+                outfile = opt[1]
+        if len(alist) != 2:
+            print(usage)
+            return
+
+        fname, client = alist
+        entry = lxml.etree.Element('Path', type='file', name=fname)
+        if altsrc:
+            entry.set("altsrc", altsrc)
+        try:
+            metadata = self.build_metadata(client)
+            self.Bind(entry, metadata)
+            data = lxml.etree.tostring(entry, encoding="UTF-8",
+                                       xml_declaration=True)
+            if outfile:
+                open(outfile, 'w').write(data)
+            else:
+                print(data)
+        except IOError:
+            err = sys.exc_info()[1]
+            print("Could not write to %s: %s" % (outfile, err))
+            print(data)
+        except Exception:
+            print("Failed to build entry %s for host %s" % (fname, client))
+            raise
 
     def do_buildbundle(self, args):
         """Render a bundle for client."""
