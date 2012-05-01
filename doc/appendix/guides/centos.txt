@@ -4,29 +4,30 @@
 
 .. _appendix-guides-centos:
 
-=====================
-Quickstart for CentOS
-=====================
+===========================================
+CentOS, Scientific Linux, other RHEL clones
+===========================================
 
-This is a complete getting started guide for CentOS. With this document
-you should be able to install a Bcfg2 server and a Bcfg2 client.
+This is a complete getting started guide for CentOS, Scientific Linux, other
+Red Hat Enterprise Linux clones. With this document you should be able to
+install and configure a Bcfg2 server and a Bcfg2 client.
 
 Install Bcfg2
 =============
 
-The fastest way to get Bcfg2 onto your system is to use Yum or
-your preferred package management tool. We'll be using the ones
-that are distributed through EPEL_, but depending on your aversion
-to risk you could download an RPM from other places as well.  See
-:ref:`getting_started-using_bcfg2-with-centos` for information about
-building Bcfg2 from source and making your own packages.
+The fastest way to get Bcfg2 onto your system is to use Yum or your preferred
+package management tool. In this quide the packages that are distributed
+through EPEL_, but depending on your aversion to risk you could download an
+RPM from other places as well.  See 
+:ref:`getting_started-using_bcfg2-with-centos` for information about building
+Bcfg2 from source and making your own packages. 
 
 Using EPEL
 ----------
 
 .. warning::
 
-    EPEL has outdated versions of the server package for centos5 and
+    EPEL has outdated versions of the server package for CentOS 5 and
     earlier. This guide is intended to be used with versions 1.0.0 and
     higher. Please consider building a newer RPM if you are following
     this guide.
@@ -35,7 +36,11 @@ Make sure EPEL_ is a valid repository on your server. The `instructions
 <http://fedoraproject.org/wiki/EPEL/FAQ#howtouse>`_ on how to do this
 basically say::
 
-    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+EPEL_ for 5.x ::
+    [root@config ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+EPEL_ for 6.x ::
+    [root@config ~]# rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
 .. note::
 
@@ -44,7 +49,7 @@ basically say::
 
 Install the bcfg2-server and bcfg2 RPMs::
 
-    [root@centos ~]# yum install bcfg2-server bcfg2
+    [root@config ~]# yum install bcfg2-server bcfg2
 
 Your system should now have the necessary software to use Bcfg2. The
 next step is to set up your Bcfg2 :term:`repository`.
@@ -60,8 +65,8 @@ is a tool which allows you to automate this::
     Store bcfg2 configuration in [/etc/bcfg2.conf]:
     Location of bcfg2 repository [/var/lib/bcfg2]:
     Input password used for communication verification (without echoing; leave blank for a random):
-    What is the server's hostname: [centos]
-    Input the server location [https://centos:6789]:
+    What is the server's hostname: [config.your.network]
+    Input the server location [https://config.your.network:6789]:
     Input base Operating System for clients:
     1: Redhat/Fedora/RHEL/RHAS/Centos
     2: SUSE/SLES
@@ -77,7 +82,7 @@ is a tool which allows you to automate this::
     writing new private key to '/etc/bcfg2.key'
     -----
     Signature ok
-    subject=/C=US=ST=Illinois/L=Argonne/CN=centos
+    subject=/C=US=ST=Illinois/L=Argonne/CN=config.your.network
     Getting Private key
     Repository created successfuly in /var/lib/bcfg2
 
