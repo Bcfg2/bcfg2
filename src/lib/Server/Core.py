@@ -283,7 +283,8 @@ class Core(Component):
         if len(g2list) == 1:
             return g2list[0].HandleEntry(entry, metadata)
         entry.set('failure', 'no matching generator')
-        raise PluginExecutionError(entry.tag, entry.get('name'))
+        raise PluginExecutionError("No matching generator: %s:%s" %
+                                   (entry.tag, entry.get('name')))
 
     def BuildConfiguration(self, client):
         """Build configuration for clients."""
