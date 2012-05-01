@@ -17,7 +17,7 @@ Install Bcfg2
 The fastest way to get Bcfg2 onto your system is to use Yum or
 your preferred package management tool. We'll be using the ones
 that are distributed through EPEL_, but depending on your aversion
-to risk you could download an RPM from other places as well.  See
+to risk you could download an RPM from other places as well. See
 :ref:`getting_started-using_bcfg2-with-centos` for information about
 building Bcfg2 from source and making your own packages.
 
@@ -102,20 +102,20 @@ Run bcfg2 to be sure you are able to communicate with the server::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
 
     Phase: initial
-    Correct entries:        0
-    Incorrect entries:      0
-    Total managed entries:  0
-    Unmanaged entries:      208
+    Correct entries: 0
+    Incorrect entries: 0
+    Total managed entries: 0
+    Unmanaged entries: 208
 
 
     Phase: final
-    Correct entries:        0
-    Incorrect entries:      0
-    Total managed entries:  0
-    Unmanaged entries:      208
+    Correct entries: 0
+    Incorrect entries: 0
+    Total managed entries: 0
+    Unmanaged entries: 208
 
     No ca is specified. Cannot authenticate the server with SSL.
 
@@ -147,20 +147,20 @@ Now if you run the client, no more warning::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
 
     Phase: initial
-    Correct entries:        0
-    Incorrect entries:      0
-    Total managed entries:  0
-    Unmanaged entries:      208
+    Correct entries: 0
+    Incorrect entries: 0
+    Total managed entries: 0
+    Unmanaged entries: 208
 
 
     Phase: final
-    Correct entries:        0
-    Incorrect entries:      0
-    Total managed entries:  0
-    Unmanaged entries:      208
+    Correct entries: 0
+    Incorrect entries: 0
+    Total managed entries: 0
+    Unmanaged entries: 208
 
 Bring your first machine under Bcfg2 control
 ============================================
@@ -173,7 +173,7 @@ Setup the :ref:`server-plugins-generators-packages` plugin
 ----------------------------------------------------------
 
 First, replace **Pkgmgr** with **Packages** in the plugins
-line of ``bcfg2.conf``.  Then create Packages layout (as per
+line of ``bcfg2.conf``. Then create Packages layout (as per
 :ref:`packages-exampleusage`) in ``/var/lib/bcfg2``
 
 .. note:: I am using the RawURL syntax here since we are using `mrepo`_
@@ -291,30 +291,30 @@ Now if we run the client, we can see what this has done for us.::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
             Package pam failed verification.
 
     Phase: initial
-    Correct entries:        94
-    Incorrect entries:      1
-    Total managed entries:  95
-    Unmanaged entries:      113
+    Correct entries: 94
+    Incorrect entries: 1
+    Total managed entries: 95
+    Unmanaged entries: 113
 
     In dryrun mode: suppressing entry installation for:
       Package:pam
 
     Phase: final
-    Correct entries:        94
-    Incorrect entries:      1
+    Correct entries: 94
+    Incorrect entries: 1
      Package:pam
-    Total managed entries:  95
-    Unmanaged entries:      113
+    Total managed entries: 95
+    Unmanaged entries: 113
 
 Interesting, our **pam** package failed verification. What does this
 mean? Let's have a look::
 
     [root@centos ~]# rpm --verify pam
-    ....L...  c /etc/pam.d/system-auth
+    ....L... c /etc/pam.d/system-auth
 
 Sigh, it looks like the default RPM install for pam fails to verify
 using its own verification process (trust me, it's not the only one). At
@@ -336,23 +336,23 @@ entries?::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
     Extra Package openssh-clients 4.3p2-36.el5_4.4.x86_64.
     Extra Package libuser 0.54.7-2.1el5_4.1.x86_64.
     ...
 
     Phase: initial
-    Correct entries:        95
-    Incorrect entries:      0
-    Total managed entries:  95
-    Unmanaged entries:      113
+    Correct entries: 95
+    Incorrect entries: 0
+    Total managed entries: 95
+    Unmanaged entries: 113
 
 
     Phase: final
-    Correct entries:        95
-    Incorrect entries:      0
-    Total managed entries:  95
-    Unmanaged entries:      113
+    Correct entries: 95
+    Incorrect entries: 0
+    Total managed entries: 95
+    Unmanaged entries: 113
      Package:at
      Package:avahi
      Package:avahi-compat-libdns_sd
@@ -394,22 +394,22 @@ package::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
     Extra Package gpg-pubkey e8562897-459f07a4.None.
     Extra Package gpg-pubkey 217521f6-45e8a532.None.
 
     Phase: initial
-    Correct entries:        187
-    Incorrect entries:      0
-    Total managed entries:  187
-    Unmanaged entries:      16
+    Correct entries: 187
+    Incorrect entries: 0
+    Total managed entries: 187
+    Unmanaged entries: 16
 
 
     Phase: final
-    Correct entries:        187
-    Incorrect entries:      0
-    Total managed entries:  187
-    Unmanaged entries:      16
+    Correct entries: 187
+    Incorrect entries: 0
+    Total managed entries: 187
+    Unmanaged entries: 16
      Package:gpg-pubkey
      Service:atd
      Service:avahi-daemon
@@ -562,20 +562,20 @@ Now we run the client and see there are no more unmanaged entries!::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action       Chkconfig  POSIX        YUMng
+     Action Chkconfig POSIX YUMng
 
     Phase: initial
-    Correct entries:        205
-    Incorrect entries:      0
-    Total managed entries:  205
-    Unmanaged entries:      0
+    Correct entries: 205
+    Incorrect entries: 0
+    Total managed entries: 205
+    Unmanaged entries: 0
 
 
     Phase: final
-    Correct entries:        205
-    Incorrect entries:      0
-    Total managed entries:  205
-    Unmanaged entries:      0
+    Correct entries: 205
+    Incorrect entries: 0
+    Total managed entries: 205
+    Unmanaged entries: 0
 
 .. warning::
 

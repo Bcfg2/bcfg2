@@ -7,7 +7,7 @@
 mrepo
 =====
 
-This section describes how to setup an `mrepo`_ mirror.
+.. This section describes how to setup an `mrepo`_ mirror.
 
 `mrepo`_ builds a local APT/Yum RPM repository from local ISO files,
 downloaded updates, and extra packages from 3rd party repositories. It
@@ -68,3 +68,27 @@ Update the repositories
 ::
 
     mrepo -ug
+
+Example sources.xml file
+------------------------
+
+.. code-block:: xml
+
+    <Sources>
+            <!-- CentOS (5.4) sources -->
+            <YUMSource>
+                    <Group>centos-5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.os</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+            <YUMSource>
+                    <Group>centos-5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.updates</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+            <YUMSource>
+                    <Group>centos-5.4</Group>
+                    <RawURL>http://mrepo/centos5-x86_64/RPMS.extras</RawURL>
+                    <Arch>x86_64</Arch>
+            </YUMSource>
+    </Sources>

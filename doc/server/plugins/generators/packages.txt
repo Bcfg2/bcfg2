@@ -34,21 +34,21 @@ member clients.
 +--------+----------+--------------+
 | Source | OS Group | Architecture |
 +========+==========+==============+
-| Apt    | debian   | i386         |
+| Apt | debian | i386 |
 +--------+----------+--------------+
-| Apt    | ubuntu   | amd64        |
+| Apt | ubuntu | amd64 |
 +--------+----------+--------------+
-| Apt    | nexenta  |              |
+| Apt | nexenta | |
 +--------+----------+--------------+
-| Apt    | apt      |              |
+| Apt | apt | |
 +--------+----------+--------------+
-| Yum    | redhat   | i386         |
+| Yum | redhat | i386 |
 +--------+----------+--------------+
-| Yum    | centos   | x86_64       |
+| Yum | centos | x86_64 |
 +--------+----------+--------------+
-| Yum    | fedora   |              |
+| Yum | fedora | |
 +--------+----------+--------------+
-| Yum    | yum      |              |
+| Yum | yum | |
 +--------+----------+--------------+
 
 .. note::
@@ -56,19 +56,19 @@ member clients.
    .. versionadded:: 1.2.0
 
    Magic OS groups can be disabled in Bcfg2 1.2 and greater by setting
-   ``magic_groups`` to ``0`` in ``Packages/packages.conf``.  This may
+   ``magic_groups`` to ``0`` in ``Packages/packages.conf``. This may
    give you greater flexibility in determining which source types to
-   use for which OSes.  Magic architecture groups cannot be disabled.
+   use for which OSes. Magic architecture groups cannot be disabled.
 
 
 Limiting sources to groups
 ==========================
 
 ``Packages/sources.xml`` processes ``<Group>`` and ``<Client>`` tags
-just like Bundles.  In addition to any groups or clients specified
+just like Bundles. In addition to any groups or clients specified
 that way, clients must
 be a member of the appropriate architecture group as specified in a
-Source stanza.  In total, in order for a source to be associated with
+Source stanza. In total, in order for a source to be associated with
 a client, the client must be in one of the magic groups (debian,
 ubuntu, or nexenta), any explicit groups or clients specified in
 ``sources.xml``, and any specified architecture groups.
@@ -161,7 +161,7 @@ Handling GPG Keys
 If you have yum libraries installed, Packages can automatically handle
 GPG signing keys for Yum and Pulp repositories. (You do not need to
 use the native yum resolver; if yum libraries are available, GPG
-signing keys can be handled automatically.)  Simply specify the URL to
+signing keys can be handled automatically.) Simply specify the URL to
 the GPG key(s) for a repository in ``sources.xml``::
 
     <Source type="yum"
@@ -342,7 +342,7 @@ updated.
 Availability
 ============
 
-Support for clients using yum and apt is currently available.  Support for
+Support for clients using yum and apt is currently available. Support for
 other package managers (Portage, Zypper, IPS, etc) remain to be added.
 
 Validation
@@ -358,7 +358,7 @@ Limitations
 
 Packages does not do traditional caching as other plugins
 do. Modifying sources in the Packages ``sources.xml`` file requires a
-server restart for the time being.  You do not have to restart the
+server restart for the time being. You do not have to restart the
 server after changing ``packages.conf`` or after adding new sources to
 ``sources.xml``.
 
@@ -391,9 +391,9 @@ Then add the corresponding Path entry to your Yum bundle.
 .. versionadded:: 1.1.0
 
 APT repository information can be generated automatically from
-software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`.  A
+software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`. A
 list of source urls are exposed in the client's metadata as
-``metadata.Packages.sources``.  E.g.::
+``metadata.Packages.sources``. E.g.::
 
     # bcfg2 maintained apt
 
@@ -411,7 +411,7 @@ Using Native Yum Libraries
 
 By default, Bcfg2 uses an internal implementation of Yum's dependency
 resolution and other routines so that the Bcfg2 server can be run on a
-host that does not support Yum itself.  If you run the Bcfg2 server on
+host that does not support Yum itself. If you run the Bcfg2 server on
 a machine that does have Yum libraries, however, you can enable use of
 those native libraries in Bcfg2 by setting ``use_yum_libraries`` to
 ``1`` in the ``[yum]`` section of ``Packages/packages.conf``.
@@ -425,7 +425,7 @@ Benefits to this include:
 
 Drawbacks include:
 
-* More disk I/O.  In some cases, you may have to raise the open file
+* More disk I/O. In some cases, you may have to raise the open file
   limit for the user who runs your Bcfg2 server process, particularly
   if you have a lot of repositories.
 * Resolution of package dependencies is slower in some cases,
@@ -440,8 +440,8 @@ Configuring the Yum Helper
 Due to poor memory management by the Yum API, the long-lived
 bcfg2-server process uses an external short-lived helper,
 ``bcfg2-yum-helper``, to do the actual Yum API calls for native yum
-library support.  By default, Bcfg2 looks for this helper at
-``/usr/sbin/bcfg2-yum-helper``.  If you have installed the helper
+library support. By default, Bcfg2 looks for this helper at
+``/usr/sbin/bcfg2-yum-helper``. If you have installed the helper
 elsewhere, you will need to configure that location with the
 ``helper`` option in the ``[yum]`` section, e.g.::
 
@@ -455,11 +455,11 @@ Setting Yum Options
 In ``Packages/packages.conf``, any options you set in the ``[yum]``
 section other than ``use_yum_libraries`` and ``helper`` will be passed
 along verbatim to the configuration of the Yum objects used in the
-Bcfg2 server.  The following options are set by default, and should
+Bcfg2 server. The following options are set by default, and should
 not generally be overridden:
 
 * ``cachedir`` is set to a hashed value unique to each distinct Yum
-  configuration.  Don't set this unless you know what you're doing.
+  configuration. Don't set this unless you know what you're doing.
 * ``keepcache`` is set to ``0``; there is no benefit to changing this.
 * ``sslverify`` is set to ``0``; change this if you know what you're
   doing.
@@ -469,16 +469,16 @@ not generally be overridden:
 Package Groups
 --------------
 
-Yum package groups are supported by the native Yum libraries.  To
+Yum package groups are supported by the native Yum libraries. To
 include a package group, use the ``group`` attribute of the
-``Package`` tag.  You can use either the short group ID or the long
+``Package`` tag. You can use either the short group ID or the long
 group name::
 
     <Package group="SNMP Support"/>
     <Package group="system-management-snmp"/>
 
 By default, only those packages considered the "default" packages in a
-group will be installed.  You can change this behavior using the
+group will be installed. You can change this behavior using the
 "type" attribute::
 
     <Package group="development" type="optional"/>
@@ -492,7 +492,7 @@ Valid values of "type" are:
   including mandatory, default, and optional packages.
 
 You can view the packages in a group by category with the ``yum
-groupinfo`` command.  More information about the different levels can
+groupinfo`` command. More information about the different levels can
 be found at
 http://fedoraproject.org/wiki/How_to_use_and_edit_comps.xml_for_package_groups#Installation
 
@@ -504,7 +504,7 @@ Pulp Support
 .. versionadded:: 1.2.0
 
 Bcfg2 contains explicit support for repositories managed by Pulp
-(http://pulpproject.org/).  Due to the amount of data about a
+(http://pulpproject.org/). Due to the amount of data about a
 repository that can be retrieved directly from Pulp, the only thing
 necessary to configure a Pulp repo is the repo ID::
 
@@ -516,7 +516,7 @@ necessary to configure a Pulp repo is the repo ID::
       </Group>
     </Sources>
 
-Pulp sources require some additional configuration.  First, the Bcfg2
+Pulp sources require some additional configuration. First, the Bcfg2
 server must have a valid ``/etc/pulp/consumer/consumer.conf`` that is
 readable by the user your Bcfg2 server runs as; the Pulp server,
 URLs, and so on, are determined from this.
@@ -526,7 +526,7 @@ options in the ``[pulp]`` section:
 
 * ``username`` and ``password``: The username and password of a Pulp
   user that will be used to register new clients and bind them to
-  repositories.  Membership in the default ``consumer-users`` role is
+  repositories. Membership in the default ``consumer-users`` role is
   sufficient.
 
 Bcfg2 clients using Pulp sources will be registered to the Pulp server
@@ -647,7 +647,7 @@ packages.conf
 =============
 
 ``packages.conf`` contains miscellaneous configuration options for the
-Packages plugin.  Any booleans in the config file accept the values
+Packages plugin. Any booleans in the config file accept the values
 "1", "yes", "true", and "on" for True, and "0", "no", "false", and
 "off" for False
 
@@ -656,18 +656,18 @@ It understands the following directives:
 [global] section
 ----------------
 
-* ``resolver``: Enable dependency resolution.  Default is ``1``
+* ``resolver``: Enable dependency resolution. Default is ``1``
   (true). For historical reasons, this also accepts "enabled" and
   "disabled".
-* ``metadata``: Enable metadata processing.  Default is ``1``
+* ``metadata``: Enable metadata processing. Default is ``1``
   (true). For historical reasons, this also accepts "enabled" and
   "disabled".
-* ``yum_config``: The path at which to generate Yum configs.  No
+* ``yum_config``: The path at which to generate Yum configs. No
   default.
-* ``apt_config``: The path at which to generate APT configs.  No
+* ``apt_config``: The path at which to generate APT configs. No
   default.
 * ``gpg_keypath``: The path on the client RPM GPG keys will be copied
-  to before they are imported on the client.  Default is
+  to before they are imported on the client. Default is
   "/etc/pki/rpm-gpg".
 * ``version``: Set the version attribute used when binding
   Packages. Default is ``auto``.
@@ -676,7 +676,7 @@ It understands the following directives:
 -------------
 
 * ``use_yum_libraries``: Whether or not to use the :ref:`native yum
-  library support <native-yum-libraries>`.  Default is ``0`` (false).
+  library support <native-yum-libraries>`. Default is ``0`` (false).
 
 All other options in the ``[yum]`` section will be passed along
 verbatim to the Yum configuration if you are using the native Yum
@@ -687,5 +687,5 @@ library support.
 
 * ``username`` and ``password``: The username and password of a Pulp
   user that will be used to register new clients and bind them to
-  repositories.  Membership in the default ``consumer-users`` role is
+  repositories. Membership in the default ``consumer-users`` role is
   sufficient.

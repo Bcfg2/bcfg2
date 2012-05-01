@@ -8,13 +8,15 @@ bundle
 For a list of all available xml bundles use ``list-xml``. ``list-genshi``
 will list all available genshi bundles.::
 
-    # bcfg2-admin bundle list-xml
-    # bcfg2-admin bundle list-genshi
+.. code-block:: sh
+    # bcfg2-admin bundles list-xml
+    # bcfg2-admin bundles list-genshi
 
 ``show`` provides an interactive dialog to get details about the available
 bundles.::
 
-    # bcfg2-admin bundle show
+.. code-block:: sh
+    # bcfg2-admin bundles show
     Available bundles (Number of bundles: 4)
     ----------------------------------------
     [0]	motd.xml

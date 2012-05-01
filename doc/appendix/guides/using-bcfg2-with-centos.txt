@@ -23,11 +23,13 @@ While you can go about building all these things from source, this
 how to will try and meet the dependencies using packages from EPEL_
 or RPMforge_. The *el5* package should be compatible with CentOS 5.x.
 
-EPEL_::
+EPEL_ for 5.x ::
+    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
-    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-3.noarch.rpm
+EPEL_ for 6.x ::
+    [root@centos ~]# rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
-RPMforge_::
+RPMforge_ for 5.x ::
 
     [root@centos ~]# rpm -Uvh http://dag.wieers.com/rpm/packages/rpmforge-release/rpmforge-release-0.3.6-1.el5.rf.x86_64.rpm
 
