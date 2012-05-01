@@ -1,6 +1,7 @@
 """Option parsing library for utilities."""
 
 import getopt
+import re
 import os
 import sys
 import shlex
@@ -171,8 +172,10 @@ class OptionSet(dict):
                 val = option.value
                 self[key] = val
 
-list_split = lambda x:x.replace(' ','').split(',')
-flist_split = lambda x:list_split(x.replace(':', '').lower())
+def list_split(c_string):
+    if c_string:
+        return re.split("\s*,\s*", c_string)
+    return []
 
 def colon_split(c_string):
     if c_string:
