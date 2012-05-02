@@ -9,6 +9,7 @@ For a list of all available xml bundles use ``list-xml``. ``list-genshi``
 will list all available genshi bundles.::
 
 .. code-block:: sh
+
     # bcfg2-admin bundles list-xml
     # bcfg2-admin bundles list-genshi
 
@@ -16,6 +17,7 @@ will list all available genshi bundles.::
 bundles.::
 
 .. code-block:: sh
+
     # bcfg2-admin bundles show
     Available bundles (Number of bundles: 4)
     ----------------------------------------
