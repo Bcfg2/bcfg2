@@ -64,7 +64,7 @@ class ProxyError(Exception):
                                               err.faultCode)
         else:
             msg = str(err)
-        Exception(self, msg)
+        Exception.__init__(self, msg)
 
 class CertificateError(Exception):
     def __init__(self, commonName):
