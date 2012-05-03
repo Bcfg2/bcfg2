@@ -16,7 +16,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         self.check_infoxml()
         self.check_probes()
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"unexpanded-keywords":"warning",
                 "keywords-not-found":"warning",
                 "comments-not-found":"warning",

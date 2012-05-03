@@ -37,7 +37,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             self.check_rules()
             self.check_bundles()
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"unknown-entry-type":"error",
                 "unknown-entry-tag":"error",
                 "required-attrs-missing":"error",

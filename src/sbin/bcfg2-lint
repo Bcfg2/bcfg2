@@ -114,21 +114,6 @@ if __name__ == '__main__':
     config.read(setup['configfile'])
     config.read(setup['config'])
 
-    if setup['showerrors']:
-        if config.has_section("errors"):
-            econf = dict(config.items("errors"))
-        else:
-            econf = dict()
-
-        print("%-35s %-35s" % ("Error name", "Handler (Default)"))
-        for err, default in Bcfg2.Server.Lint.ErrorHandler._errors.items():
-            if err in econf and econf[err] != default:
-                handler = "%s (%s)" % (econf[err], default)
-            else:
-                handler = default
-            print("%-35s %-35s" % (err, handler))
-        raise SystemExit(0)
-
     # get list of plugins to run
     if setup['args']:
         allplugins = setup['args']
@@ -168,6 +153,15 @@ if __name__ == '__main__':
             serverlessplugins[plugin_name] = plugin
 
     errorhandler = get_errorhandler(config)
+
+    if setup['showerrors']:
+        for plugin in serverplugins.values() + serverlessplugins.values():
+            errorhandler.RegisterErrors(getattr(plugin, 'Errors')())
+
+        print("%-35s %-35s" % ("Error name", "Handler"))
+        for err, handler in errorhandler._handlers.items():
+            print("%-35s %-35s" % (err, handler.__name__))
+        raise SystemExit(0)
 
     run_serverless_plugins(serverlessplugins,
                            errorhandler=errorhandler,

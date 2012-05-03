@@ -17,7 +17,8 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                         self.LintError("no-infoxml",
                                        "No info.xml found for %s" % filename)
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"no-infoxml":"warning",
                 "paranoid-false":"warning",
                 "broken-xinclude-chain":"warning",

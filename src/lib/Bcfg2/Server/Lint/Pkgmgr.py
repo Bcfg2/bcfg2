@@ -33,5 +33,6 @@ class Pkgmgr(Bcfg2.Server.Lint.ServerlessPlugin):
                     else:
                         pset.add(ptuple)
     
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"duplicate-packages":"error"}

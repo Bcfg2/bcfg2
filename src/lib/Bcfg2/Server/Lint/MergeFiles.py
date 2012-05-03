@@ -12,7 +12,8 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         if 'Probes' in self.core.plugins:
             self.check_probes()
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"merge-cfg":"warning",
                 "merge-probes":"warning"}
 

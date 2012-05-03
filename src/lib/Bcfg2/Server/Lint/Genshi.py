@@ -11,7 +11,8 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                 self.check_files(self.core.plugins[plugin].entries,
                                  loader=loader)
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"genshi-syntax-error":"error"}
 
     def check_files(self, entries, loader=None):

@@ -22,7 +22,8 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
         if self.clients_xdata is not None:
             self.duplicate_clients()
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"broken-xinclude-chain":"warning",
                 "duplicate-client":"error",
                 "duplicate-group":"error",

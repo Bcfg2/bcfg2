@@ -63,7 +63,8 @@ class Plugin (object):
         """ run the plugin.  must be overloaded by child classes """
         pass
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         """ returns a dict of errors the plugin supplies.  must be
         overloaded by child classes """
 
@@ -131,7 +132,6 @@ class ErrorHandler (object):
                 else:
                     self._handlers[err] = self.debug
         
-
     def dispatch(self, err, msg):
         if err in self._handlers:
             self._handlers[err](msg)

@@ -9,7 +9,8 @@ class Deltas(Bcfg2.Server.Lint.ServerPlugin):
             for basename, entry in list(cfg.entries.items()):
                 self.check_entry(basename, entry)
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"cat-file-used":"warning",
                 "diff-file-used":"warning"}
 

@@ -14,7 +14,8 @@ class Bundles(Bcfg2.Server.Lint.ServerPlugin):
                         Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
                         self.bundle_names(bundle)
 
-    def Errors(self):
+    @classmethod
+    def Errors(cls):
         return {"bundle-not-found":"error",
                 "inconsistent-bundle-name":"warning"}
 
