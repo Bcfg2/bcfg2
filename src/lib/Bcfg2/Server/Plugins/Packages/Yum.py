@@ -15,6 +15,7 @@ from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, ConfigParser, file
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
+from Bcfg2.Server.Plugins.Packages.PackagesConfig import PackagesConfig
 
 logger = logging.getLogger(__name__)
 
@@ -91,12 +92,9 @@ class YumCollection(Collection):
         self.keypath = os.path.join(self.basepath, "keys")
 
         if len(sources):
-            config = sources[0].config
-            self.use_yum = has_yum and config.getboolean("yum",
-                                                         "use_yum_libraries",
-                                                         default=False)
+            self.config = sources[0].config
         else:
-            self.use_yum = False
+            self.config = PackageConfig('Packages')
 
         if self.use_yum:
             self.cachefile = os.path.join(self.cachepath,
@@ -110,11 +108,18 @@ class YumCollection(Collection):
             self.cfgfile = os.path.join(self.configdir,
                                         "%s-yum.conf" % self.cachekey)
             self.write_config()
-
-            self.helper = self.config.get("yum", "helper",
-                                          default="/usr/sbin/bcfg2-yum-helper")
         if has_pulp and self.has_pulp_sources:
             _setup_pulp(self.config)
+
+    @property
+    def helper(self):
+        return self.config.get("yum", "helper",
+                               default="/usr/sbin/bcfg2-yum-helper")
+
+    @property
+    def use_yum(self):
+        return has_yum and self.config.getboolean("yum", "use_yum_libraries",
+                                                  default=False)
 
     @property
     def has_pulp_sources(self):
@@ -492,8 +497,10 @@ class YumSource(Source):
         self.needed_paths = set()
         self.file_to_arch = dict()
 
-        self.use_yum = has_yum and config.getboolean("yum", "use_yum_libraries",
-                                                     default=False)
+    @property
+    def use_yum(self):
+        return has_yum and self.config.getboolean("yum", "use_yum_libraries",
+                                                  default=False)
 
     def save_state(self):
         if not self.use_yum:

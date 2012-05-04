@@ -4,7 +4,6 @@ import copy
 import logging
 import lxml.etree
 import os
-import os.path
 import pickle
 import posixpath
 import re
@@ -1202,6 +1201,7 @@ class SimpleConfig(FileBacked,
         filename = os.path.join(plugin.data, plugin.name.lower() + ".conf")
         self.plugin = plugin
         self.fam = self.plugin.core.fam
+        self.read_files = set()
         Bcfg2.Server.Plugin.FileBacked.__init__(self, filename)
         ConfigParser.SafeConfigParser.__init__(self)
 
@@ -1213,7 +1213,7 @@ class SimpleConfig(FileBacked,
         """ Build local data structures """
         for section in self.sections():
             self.remove_section(section)
-        self.read(self.name)
+        self.read_files.update(self.read(self.name))
 
     def get(self, section, option, **kwargs):
         """ convenience method for getting config items """
@@ -1245,3 +1245,11 @@ class SimpleConfig(FileBacked,
                 return default
             else:
                 raise
+
+    @property
+    def loaded(self):
+        if os.path.exists(self.name):
+            return self.name in self.read_files
+        else:
+            return True
+            
