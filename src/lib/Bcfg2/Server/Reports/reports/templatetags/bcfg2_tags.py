@@ -1,3 +1,5 @@
+import sys
+
 from django import template
 from django.core.urlresolvers import resolve, reverse, Resolver404, NoReverseMatch
 from django.utils.encoding import smart_unicode, smart_str
@@ -30,65 +32,65 @@ def page_navigator(context):
         return {}
 
     try:
-       view, args, kwargs = resolve(path)
-       current_page = int(kwargs.get('page_number',1))
-       fragment['current_page'] = current_page
-       fragment['page_number'] = current_page
-       fragment['total_pages'] = total_pages
-       fragment['records_per_page'] = records_per_page
-       if current_page > 1:
-           kwargs['page_number'] = current_page - 1
-           fragment['prev_page'] = reverse(view, args=args, kwargs=kwargs)
-       if current_page < total_pages:
-           kwargs['page_number'] = current_page + 1
-           fragment['next_page'] = reverse(view, args=args, kwargs=kwargs)
+        view, args, kwargs = resolve(path)
+        current_page = int(kwargs.get('page_number', 1))
+        fragment['current_page'] = current_page
+        fragment['page_number'] = current_page
+        fragment['total_pages'] = total_pages
+        fragment['records_per_page'] = records_per_page
+        if current_page > 1:
+            kwargs['page_number'] = current_page - 1
+            fragment['prev_page'] = reverse(view, args=args, kwargs=kwargs)
+        if current_page < total_pages:
+            kwargs['page_number'] = current_page + 1
+            fragment['next_page'] = reverse(view, args=args, kwargs=kwargs)
 
-       view_range = 5
-       if total_pages > view_range:
-           pager_start = current_page - 2
-           pager_end = current_page + 2
-           if pager_start < 1:
-               pager_end += (1 - pager_start)
-               pager_start = 1
-           if pager_end > total_pages:
-               pager_start -= (pager_end - total_pages)
-               pager_end = total_pages
-       else:
-           pager_start = 1
-           pager_end = total_pages
+        view_range = 5
+        if total_pages > view_range:
+            pager_start = current_page - 2
+            pager_end = current_page + 2
+            if pager_start < 1:
+                pager_end += (1 - pager_start)
+                pager_start = 1
+            if pager_end > total_pages:
+                pager_start -= (pager_end - total_pages)
+                pager_end = total_pages
+        else:
+            pager_start = 1
+            pager_end = total_pages
 
-       if pager_start > 1:
-           kwargs['page_number'] = 1
-           fragment['first_page'] = reverse(view, args=args, kwargs=kwargs)
-       if pager_end < total_pages:
-           kwargs['page_number'] = total_pages
-           fragment['last_page'] = reverse(view, args=args, kwargs=kwargs)
+        if pager_start > 1:
+            kwargs['page_number'] = 1
+            fragment['first_page'] = reverse(view, args=args, kwargs=kwargs)
+        if pager_end < total_pages:
+            kwargs['page_number'] = total_pages
+            fragment['last_page'] = reverse(view, args=args, kwargs=kwargs)
 
-       pager = []
-       for page in range(pager_start, int(pager_end) + 1):
-           kwargs['page_number'] = page
-           pager.append( (page, reverse(view, args=args, kwargs=kwargs)) )
+        pager = []
+        for page in range(pager_start, int(pager_end) + 1):
+            kwargs['page_number'] = page
+            pager.append( (page, reverse(view, args=args, kwargs=kwargs)) )
 
-       kwargs['page_number'] = 1
-       page_limits = []
-       for limit in __PAGE_NAV_LIMITS__:
-           kwargs['page_limit'] = limit
-           page_limits.append( (limit, reverse(view, args=args, kwargs=kwargs)) )
-       # resolver doesn't like this
-       del kwargs['page_number']
-       del kwargs['page_limit']
-       page_limits.append( ('all', reverse(view, args=args, kwargs=kwargs) + "|all") )
+        kwargs['page_number'] = 1
+        page_limits = []
+        for limit in __PAGE_NAV_LIMITS__:
+            kwargs['page_limit'] = limit
+            page_limits.append( (limit, reverse(view, args=args, kwargs=kwargs)) )
+        # resolver doesn't like this
+        del kwargs['page_number']
+        del kwargs['page_limit']
+        page_limits.append( ('all', reverse(view, args=args, kwargs=kwargs) + "|all") )
 
-       fragment['pager'] = pager
-       fragment['page_limits'] = page_limits
+        fragment['pager'] = pager
+        fragment['page_limits'] = page_limits
 
     except Resolver404:
-       path = "404"
+        path = "404"
     except NoReverseMatch:
-       nr = sys.exc_info()[1]
-       path = "NoReverseMatch: %s" % nr
+        nr = sys.exc_info()[1]
+        path = "NoReverseMatch: %s" % nr
     except ValueError:
-       path = "ValueError"
+        path = "ValueError"
     #FIXME - Handle these
 
     fragment['path'] = path
@@ -112,7 +114,7 @@ def filter_navigator(context):
                 myargs = kwargs.copy()
                 del myargs[filter]
                 filters.append( (filter, reverse(view, args=args, kwargs=myargs) ) )
-        filters.sort(lambda x,y: cmp(x[0], y[0]))
+        filters.sort(lambda x, y: cmp(x[0], y[0]))
         return { 'filters': filters }
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
         pass
@@ -168,7 +170,7 @@ def sort_interactions_by_name(value):
     Sort an interaction list by client name
     """
     inters = list(value)
-    inters.sort(lambda a,b: cmp(a.client.name, b.client.name))
+    inters.sort(lambda a, b: cmp(a.client.name, b.client.name))
     return inters
 
 class AddUrlFilter(template.Node):
@@ -235,8 +237,8 @@ def sortwell(value):
     """
 
     configItems = list(value)
-    configItems.sort(lambda x,y: cmp(x.entry.name, y.entry.name))
-    configItems.sort(lambda x,y: cmp(x.entry.kind, y.entry.kind))
+    configItems.sort(lambda x, y: cmp(x.entry.name, y.entry.name))
+    configItems.sort(lambda x, y: cmp(x.entry.kind, y.entry.kind))
     return configItems
 
 class MediaTag(template.Node):
@@ -246,15 +248,15 @@ class MediaTag(template.Node):
     def render(self, context):
         base = context['MEDIA_URL']
         try:
-           request = context['request']
-           try:
-               base = request.environ['bcfg2.media_url']
-           except:
-               if request.path != request.META['PATH_INFO']:
-                   offset = request.path.find(request.META['PATH_INFO'])
-                   if offset > 0:
-                       base = "%s/%s" % (request.path[:offset], \
-                               context['MEDIA_URL'].strip('/'))
+            request = context['request']
+            try:
+                base = request.environ['bcfg2.media_url']
+            except:
+                if request.path != request.META['PATH_INFO']:
+                    offset = request.path.find(request.META['PATH_INFO'])
+                    if offset > 0:
+                        base = "%s/%s" % (request.path[:offset], \
+                                context['MEDIA_URL'].strip('/'))
         except:
             pass
         return "%s/%s" % (base, self.filter_value)
@@ -267,7 +269,7 @@ def to_media_url(parser, token):
     {% to_media_url /bcfg2.css %}
     """
     try:
-        tag_name, filter_value = token.split_contents()
+        filter_value = token.split_contents()[1]
         filter_value = parser.compile_filter(filter_value)
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires exactly one argument" % token.contents.split()[0])
