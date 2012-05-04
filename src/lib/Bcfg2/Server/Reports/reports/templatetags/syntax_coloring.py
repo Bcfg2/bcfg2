@@ -1,6 +1,6 @@
 import sys
 from django import template
-from django.utils.encoding import smart_unicode, smart_str
+from django.utils.encoding import smart_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
