@@ -52,22 +52,22 @@ PULPCONFIG = None
 def _setup_pulp(config):
     global PULPSERVER, PULPCONFIG
     if not has_pulp:
-        logger.error("Packages: Cannot create Pulp collection: Pulp libraries not "
-                     "found")
-        raise Bcfg2.Server.Plugin.PluginInitError
+        msg = "Packages: Cannot create Pulp collection: Pulp libraries not found"
+        logger.error(msg)
+        raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
     if PULPSERVER is None:
         try:
             username = config.get("pulp", "username")
             password = config.get("pulp", "password")
         except ConfigParser.NoSectionError:
-            logger.error("Packages: No [pulp] section found in Packages/packages.conf")
-            raise Bcfg2.Server.Plugin.PluginInitError
+            msg = "Packages: No [pulp] section found in Packages/packages.conf"
+            logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginInitError(msg)
         except ConfigParser.NoOptionError:
-            err = sys.exc_info()[1]
-            logger.error("Packages: Required option not found in "
-                         "Packages/packages.conf: %s" % err)
-            raise Bcfg2.Server.Plugin.PluginInitError
+            msg = "Packages: Required option not found in Packages/packages.conf: %s" % sys.exc_info()[1]
+            logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
         PULPCONFIG = ConsumerConfig()
         serveropts = PULPCONFIG.server
@@ -113,8 +113,16 @@ class YumCollection(Collection):
 
             self.helper = self.config.get("yum", "helper",
                                           default="/usr/sbin/bcfg2-yum-helper")
-        if has_pulp:
+        if has_pulp and self.has_pulp_sources:
             _setup_pulp(self.config)
+
+    @property
+    def has_pulp_sources(self):
+        """ see if there are any pulp sources to handle """
+        for source in self.sources:
+            if source.pulp_id:
+                return True
+        return False
 
     def write_config(self):
         if not os.path.exists(self.cfgfile):
@@ -235,14 +243,7 @@ class YumCollection(Collection):
             if keypkg is not None:
                 independent.append(keypkg)
 
-        # see if there are any pulp sources to handle
-        has_pulp_sources = False
-        for source in self.sources:
-            if source.pulp_id:
-                has_pulp_sources = True
-                break
-
-        if has_pulp_sources:
+        if self.has_pulp_sources:
             consumerapi = ConsumerAPI()
             consumer = self._get_pulp_consumer(consumerapi=consumerapi)
             if consumer is None:
