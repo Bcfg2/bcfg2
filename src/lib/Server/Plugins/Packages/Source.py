@@ -33,7 +33,7 @@ class SourceInitError(Exception):
 class Source(Bcfg2.Server.Plugin.Debuggable):
     mrepo_re = re.compile(r'/RPMS\.([^/]+)')
     pulprepo_re = re.compile(r'pulp/repos/([^/]+)')
-    genericrepo_re = re.compile(r'https?://[^/]+/(.+?)/?$')
+    genericrepo_re = re.compile('https?://.*?/([^/]+)/?$')
     basegroups = []
 
     def __init__(self, basepath, xsource, config):
@@ -135,7 +135,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
-        if url_map['components']:
+        if 'components' in url_map and url_map['components']:
             # use the first component as the name
             rname = url_map['components'][0]
         else:
@@ -145,6 +145,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                             self.genericrepo_re):
                 match = repo_re.search(url_map['url'])
                 if match:
+                    name = match.group(1)
                     break
             if name is None:
                 # couldn't figure out the name from the URL or URL map
