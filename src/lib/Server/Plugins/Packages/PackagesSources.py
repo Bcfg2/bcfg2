@@ -35,7 +35,6 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                                   (self.cachepath, err))
         self.pkg_obj = packages
         self.parsed = set()
-        self.loaded = False
 
     def toggle_debug(self):
         Bcfg2.Server.Plugin.Debuggable.toggle_debug(self)
@@ -47,10 +46,13 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         if event.filename != self.name:
             self.parsed.add(os.path.basename(event.filename))
 
-        if sorted(list(self.parsed)) == sorted(self.extras):
+        if self.config.loaded and self.loaded:
             self.logger.info("Reloading Packages plugin")
             self.pkg_obj.Reload()
-            self.loaded = True
+
+    @property
+    def loaded(self):
+        return sorted(list(self.parsed)) == sorted(self.extras)
 
     def Index(self):
         Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
