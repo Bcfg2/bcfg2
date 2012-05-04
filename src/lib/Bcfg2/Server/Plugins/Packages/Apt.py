@@ -12,7 +12,6 @@ class AptCollection(Collection):
 class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
-    essentialpkgs = set()
 
     def __init__(self, basepath, xsource, config):
         Source.__init__(self, basepath, xsource, config)

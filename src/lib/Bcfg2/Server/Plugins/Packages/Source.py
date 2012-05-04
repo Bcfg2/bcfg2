@@ -41,6 +41,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         self.basepath = basepath
         self.xsource = xsource
         self.config = config
+        self.essentialpkgs = set()
 
         try:
             self.version = xsource.find('Version').text
