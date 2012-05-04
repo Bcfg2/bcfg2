@@ -2,6 +2,7 @@ import Bcfg2.Server.Lint
 
 class Deltas(Bcfg2.Server.Lint.ServerPlugin):
     """ Warn about usage of .cat and .diff files """
+
     def Run(self):
         """ run plugin """
         if 'Cfg' in self.core.plugins:

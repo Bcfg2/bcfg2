@@ -6,8 +6,6 @@
 Bcfg2 Dynamic Reporting System
 ==============================
 
-.. versionadded:: 0.8.2
-
 Installation
 ============
 
