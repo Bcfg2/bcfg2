@@ -15,6 +15,7 @@ try:
 except:
     colorize = False
 
+
 # py3k compatibility
 def u_str(string):
     if sys.hexversion >= 0x03000000:
@@ -22,10 +23,12 @@ def u_str(string):
     else:
         return unicode(string)
 
+
 @register.filter
 def syntaxhilight(value, arg="diff", autoescape=None):
     """
-    Returns a syntax-hilighted version of Code; requires code/language arguments
+    Returns a syntax-hilighted version of Code;
+    requires code/language arguments
     """
 
     if autoescape:
@@ -44,6 +47,6 @@ def syntaxhilight(value, arg="diff", autoescape=None):
         except:
             return value
     else:
-        return mark_safe(u_str('<div class="note-box">Tip: Install pygments for highlighting</div><pre>%s</pre>') % value)
+        return mark_safe(u_str('<div class="note-box">Tip: Install pygments '
+                               'for highlighting</div><pre>%s</pre>') % value)
 syntaxhilight.needs_autoescape = True
-
