@@ -1,7 +1,8 @@
 import sys
 
 from django import template
-from django.core.urlresolvers import resolve, reverse, Resolver404, NoReverseMatch
+from django.core.urlresolvers import resolve, reverse, \
+                                     Resolver404, NoReverseMatch
 from django.utils.encoding import smart_unicode, smart_str
 from datetime import datetime, timedelta
 from Bcfg2.Server.Reports.utils import filter_list
@@ -10,13 +11,14 @@ register = template.Library()
 
 __PAGE_NAV_LIMITS__ = (10, 25, 50, 100)
 
+
 @register.inclusion_tag('widgets/page_bar.html', takes_context=True)
 def page_navigator(context):
     """
     Creates paginated links.
 
-    Expects the context to be a RequestContext and views.prepare_paginated_list()
-    to have populated page information.
+    Expects the context to be a RequestContext and
+    views.prepare_paginated_list() to have populated page information.
     """
     fragment = dict()
     try:
@@ -69,17 +71,19 @@ def page_navigator(context):
         pager = []
         for page in range(pager_start, int(pager_end) + 1):
             kwargs['page_number'] = page
-            pager.append( (page, reverse(view, args=args, kwargs=kwargs)) )
+            pager.append((page, reverse(view, args=args, kwargs=kwargs)))
 
         kwargs['page_number'] = 1
         page_limits = []
         for limit in __PAGE_NAV_LIMITS__:
             kwargs['page_limit'] = limit
-            page_limits.append( (limit, reverse(view, args=args, kwargs=kwargs)) )
+            page_limits.append((limit,
+                                reverse(view, args=args, kwargs=kwargs)))
         # resolver doesn't like this
         del kwargs['page_number']
         del kwargs['page_limit']
-        page_limits.append( ('all', reverse(view, args=args, kwargs=kwargs) + "|all") )
+        page_limits.append(('all',
+                           reverse(view, args=args, kwargs=kwargs) + "|all"))
 
         fragment['pager'] = pager
         fragment['page_limits'] = page_limits
@@ -95,6 +99,7 @@ def page_navigator(context):
 
     fragment['path'] = path
     return fragment
+
 
 @register.inclusion_tag('widgets/filter_bar.html', takes_context=True)
 def filter_navigator(context):
@@ -113,12 +118,14 @@ def filter_navigator(context):
             if filter in kwargs:
                 myargs = kwargs.copy()
                 del myargs[filter]
-                filters.append( (filter, reverse(view, args=args, kwargs=myargs) ) )
+                filters.append((filter,
+                                reverse(view, args=args, kwargs=myargs)))
         filters.sort(lambda x, y: cmp(x[0], y[0]))
-        return { 'filters': filters }
+        return {'filters': filters}
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
         pass
     return dict()
+
 
 def _subtract_or_na(mdict, x, y):
     """
@@ -129,28 +136,30 @@ def _subtract_or_na(mdict, x, y):
     except:
         return "n/a"
 
+
 @register.filter
 def build_metric_list(mdict):
     """
     Create a list of metric table entries
 
-    Moving this here it simplify the view.  Should really handle the case where these
-    are missing...
+    Moving this here to simplify the view.
+    Should really handle the case where these are missing...
     """
     td_list = []
     # parse
-    td_list.append( _subtract_or_na(mdict, 'config_parse', 'config_download'))
+    td_list.append(_subtract_or_na(mdict, 'config_parse', 'config_download'))
     #probe
-    td_list.append( _subtract_or_na(mdict, 'probe_upload', 'start'))
+    td_list.append(_subtract_or_na(mdict, 'probe_upload', 'start'))
     #inventory
-    td_list.append( _subtract_or_na(mdict, 'inventory', 'initialization'))
+    td_list.append(_subtract_or_na(mdict, 'inventory', 'initialization'))
     #install
-    td_list.append( _subtract_or_na(mdict, 'install', 'inventory'))
+    td_list.append(_subtract_or_na(mdict, 'install', 'inventory'))
     #cfg download & parse
-    td_list.append( _subtract_or_na(mdict, 'config_parse', 'probe_upload'))
+    td_list.append(_subtract_or_na(mdict, 'config_parse', 'probe_upload'))
     #total
-    td_list.append( _subtract_or_na(mdict, 'finished', 'start'))
+    td_list.append(_subtract_or_na(mdict, 'finished', 'start'))
     return td_list
+
 
 @register.filter
 def isstale(timestamp, entry_max=None):
@@ -164,6 +173,7 @@ def isstale(timestamp, entry_max=None):
         entry_max = datetime.now()
     return entry_max - timestamp > timedelta(hours=24)
 
+
 @register.filter
 def sort_interactions_by_name(value):
     """
@@ -172,6 +182,7 @@ def sort_interactions_by_name(value):
     inters = list(value)
     inters.sort(lambda a, b: cmp(a.client.name, b.client.name))
     return inters
+
 
 class AddUrlFilter(template.Node):
     def __init__(self, filter_name, filter_value):
@@ -198,13 +209,14 @@ class AddUrlFilter(template.Node):
                     link = reverse(view, args=args, kwargs=kwargs)
                 except NoReverseMatch:
                     link = reverse(self.fallback_view, args=None,
-                        kwargs={ filter_name: filter_value })
+                        kwargs={filter_name: filter_value})
         except NoReverseMatch:
             rm = sys.exc_info()[1]
             raise rm
         except (Resolver404, ValueError):
             pass
         return link
+
 
 @register.tag
 def add_url_filter(parser, token):
@@ -229,6 +241,7 @@ def add_url_filter(parser, token):
 
     return AddUrlFilter(filter_name, filter_value)
 
+
 @register.filter
 def sortwell(value):
     """
@@ -240,6 +253,7 @@ def sortwell(value):
     configItems.sort(lambda x, y: cmp(x.entry.name, y.entry.name))
     configItems.sort(lambda x, y: cmp(x.entry.kind, y.entry.kind))
     return configItems
+
 
 class MediaTag(template.Node):
     def __init__(self, filter_value):
@@ -261,6 +275,7 @@ class MediaTag(template.Node):
             pass
         return "%s/%s" % (base, self.filter_value)
 
+
 @register.tag
 def to_media_url(parser, token):
     """
@@ -276,3 +291,23 @@ def to_media_url(parser, token):
 
     return MediaTag(filter_value)
 
+@register.filter
+def determine_client_state(entry):
+    """
+    Determine client state.
+
+    This is used to determine whether a client is reporting clean or
+    dirty. If the client is reporting dirty, this will figure out just
+    _how_ dirty and adjust the color accordingly.
+    """
+    if entry.state == 'clean':
+        return "clean-lineitem"
+
+    bad_percentage = 100 * (float(entry.badcount()) / entry.totalcount)
+    if bad_percentage < 33:
+        thisdirty = "slightly-dirty-lineitem"
+    elif bad_percentage < 66:
+        thisdirty = "dirty-lineitem"
+    else:
+        thisdirty = "very-dirty-lineitem"
+    return thisdirty

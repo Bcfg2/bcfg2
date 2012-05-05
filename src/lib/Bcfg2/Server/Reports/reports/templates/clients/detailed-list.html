@@ -23,7 +23,7 @@
   <tr class='{% cycle listview,listview_alt %}'>
     <td class='left_column'><a href='{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=entry.client.name, pk=entry.id %}'>{{ entry.client.name }}</a></td>
     <td class='right_column' style='width:75px'><a href='{% add_url_filter state=entry.state %}'
-      {% ifequal entry.state 'dirty' %}class='dirty-lineitem'{% endifequal %}>{{ entry.state }}</a></td>
+      class='{{entry|determine_client_state}}'>{{ entry.state }}</a></td>
     <td class='right_column_narrow'>{{ entry.goodcount }}</td>
     <td class='right_column_narrow'>{{ entry.bad_entry_count }}</td>
     <td class='right_column_narrow'>{{ entry.modified_entry_count }}</td>

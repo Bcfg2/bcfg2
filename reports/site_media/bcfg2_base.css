@@ -103,11 +103,33 @@ ul.menu-level2 {
 	bottom: 0px;
 	right: 0px;
 }
-
-.dirty-lineitem {
+/*
+ * slightly-dirty: node is < 33% dirty
+ */
+.slightly-dirty-lineitem {
         background: #FFAAAA;
 }
+.slightly-dirty-lineitem a {
+        color: #10324b;
+        text-decoration: none;
+}
+/*
+ * dirty: node is >= 33% dirty but < 66% dirty
+ */
+.dirty-lineitem {
+        background: #FF7777;
+}
 .dirty-lineitem a {
+        color: #10324b;
+        text-decoration: none;
+}
+/*
+ * very-dirty: node is >= 66% dirty
+ */
+.very-dirty-lineitem {
+        background: #FF4444;
+}
+.very-dirty-lineitem a {
         color: #10324b;
         text-decoration: none;
 }

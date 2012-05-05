@@ -1,4 +1,5 @@
 {% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
 
 {% block extra_header_info %}
 {% endblock%}
@@ -8,27 +9,26 @@
 {% block pagebanner %}Clients - Grid View{% endblock %}
 
 {% block content %}
-
 {% if inter_list %}
-    <table class='grid-view' align='center'>
+  <table class='grid-view' align='center'>
   {% for inter in inter_list %}
-      {% if forloop.first %}<tr>{% endif %}
-        <td class="{{inter.state}}-lineitem">
-            <a href="{% spaceless %}{% if not timestamp %}
-                    {% url reports_client_detail inter.client.name %}
-                {% else %}
-                    {% url reports_client_detail_pk inter.client.name,inter.id %}
-                {% endif %}
-                {% endspaceless %}">{{ inter.client.name }}</a>
-        </td>
-      {% if forloop.last %}
-        </tr>
-			{% else %}
-        {% if forloop.counter|divisibleby:"4" %}</tr><tr>{% endif %}
-      {% endif %}
-    {% endfor %}
-     </table>
-{% else %}
-    <p>No client records are available.</p>
+    {% if forloop.first %}<tr>{% endif %}
+      <td class='{{ inter|determine_client_state }}'>
+          <a href="{% spaceless %}
+              {% if not timestamp %}
+                  {% url reports_client_detail inter.client.name %}
+              {% else %}
+                  {% url reports_client_detail_pk inter.client.name,inter.id %}
+              {% endif %}
+              {% endspaceless %}">{{ inter.client.name }}</a>
+      </td>
+    {% if forloop.last %}
+      </tr>
+    {% else %}
+      {% if forloop.counter|divisibleby:"4" %}</tr><tr>{% endif %}
+    {% endif %}
+  {% endfor %}
+  </table>
+{% else %}<p>No client records are available.</p>
 {% endif %}
 {% endblock %}

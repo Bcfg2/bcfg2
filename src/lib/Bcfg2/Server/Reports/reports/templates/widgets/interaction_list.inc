@@ -20,7 +20,7 @@
     <td class='right_column_wide'><a href='{% add_url_filter hostname=entry.client.name %}'>{{ entry.client.name }}</a></td>
     {% endif %}
     <td class='right_column' style='width:75px'><a href='{% add_url_filter state=entry.state %}'
-        {% ifequal entry.state 'dirty' %}class='dirty-lineitem'{% endifequal %}>{{ entry.state }}</a></td>
+        class='{{entry|determine_client_state}}'>{{ entry.state }}</a></td>
     <td class='right_column_narrow'>{{ entry.goodcount }}</td>
     <td class='right_column_narrow'>{{ entry.bad_entry_count }}</td>
     <td class='right_column_narrow'>{{ entry.modified_entry_count }}</td>
