@@ -67,9 +67,15 @@ def _remove_table_column(tbl, col):
         cursor.execute('alter table %s '
                        'drop column %s;' % (tbl, col))
     except DatabaseError:
+        # check if table exists
+        try:
+            cursor.execute('select * from sqlite_master where name=%s and type="table";' % tbl)
+        except DatabaseError:
+            # table doesn't exist
+            return
+
         # sqlite wants us to create a new table containing the columns we want
         # and copy into it http://www.sqlite.org/faq.html#q11
-
         tmptbl_name = "t_backup"
         _tmptbl_create = \
 """create temporary table "%s" (
