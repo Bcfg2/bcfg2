@@ -37,7 +37,7 @@ possible fields in an info file are:
 +------------+-------------------+----------------------------------+---------+
 | owner:     | Any valid user    | Sets owner of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
-| paranoid:  | true | false      | Backup file before replacement?  | false   |
+| paranoid:  | true | false      | Backup file before replacement?  | true    |
 +------------+-------------------+----------------------------------+---------+
 | perms:     | Numeric file mode | Sets the permissions of the file | 0644    |
 |            | | 'inherit'       | (or inherits from the files on   |         |

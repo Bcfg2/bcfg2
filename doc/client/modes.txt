@@ -33,7 +33,7 @@ How do I use it?
 ----------------
 
 #. In the Bcfg2 repository, put `paranoid='true'` in the ``info.xml``
-   file.
+   file (this is the default setting).
 #. On the client, create ``/var/cache/bcfg2`` (or specify an alternate
    path in the [paranoid] section of ``/etc/bcfg2.conf``).
 #. On the client, run `bcfg2` with the `-P` option (alternatively, you
@@ -71,9 +71,7 @@ accomplish this by adding a global metadata override in your
     [mdata]
     paranoid=true
 
-This will override the default value of "paranoid=false" and change it to
-"true" which will cause every file you add or update in your Bcfg2 repo
-to backup on the client as specified in your client config.
+.. note:: This is the default setting.
 
 Overall client service mode
 ===========================
