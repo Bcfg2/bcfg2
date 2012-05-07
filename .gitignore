@@ -1,4 +1,19 @@
-build/
-dist/
+*.py[co]
+
+# vim
+*.swp
+*.swo
+
+# Packages
 src/Bcfg2
-*.pyc
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
