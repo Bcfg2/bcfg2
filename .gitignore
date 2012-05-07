@@ -8,7 +8,5 @@
 build/
 dist/
 src/Bcfg2
-*.pyc
-*.swp
 *.egg
 *.egg-info
