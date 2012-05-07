@@ -137,6 +137,8 @@ All metadata processing can be disabled as well::
     [global]
     metadata=0
 
+This setting implies disabling the resolver.
+
 Blacklisting faulty dependencies
 --------------------------------
 
@@ -654,8 +656,9 @@ It understands the following directives:
   (true). For historical reasons, this also accepts "enabled" and
   "disabled".
 * ``metadata``: Enable metadata processing.  Default is ``1``
-  (true). For historical reasons, this also accepts "enabled" and
-  "disabled".
+  (true). If ``metadata`` is disabled, it's implied that ``resolver``
+  is also disabled.  For historical reasons, this also accepts
+  "enabled" and "disabled".
 * ``yum_config``: The path at which to generate Yum configs.  No
   default.
 * ``apt_config``: The path at which to generate APT configs.  No
