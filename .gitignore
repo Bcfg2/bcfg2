@@ -5,15 +5,10 @@
 *.swo
 
 # Packages
+build/
+dist/
 src/Bcfg2
+*.pyc
+*.swp
 *.egg
 *.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
