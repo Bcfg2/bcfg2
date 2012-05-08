@@ -246,8 +246,8 @@ class Core(Component):
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % format_exc())
-                logger.error("Failed to bind entry: %s %s" % \
-                             (entry.tag, entry.get('name')))
+                logger.error("Failed to bind entry %s:%s: %s" %
+                             (entry.tag, entry.get('name'), exc))
             except Exception:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:

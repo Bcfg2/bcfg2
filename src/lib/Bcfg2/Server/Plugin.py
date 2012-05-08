@@ -122,6 +122,9 @@ class Plugin(Debuggable):
     def shutdown(self):
         self.running = False
 
+    def __str__(self):
+        return "%s Plugin" % self.__class__.__name__
+
 
 class Generator(object):
     """Generator plugins contribute to literal client configurations."""
@@ -804,7 +807,7 @@ class XMLSrc(XMLFileBacked):
         return str(self.items)
 
 
-class InfoXML (XMLSrc):
+class InfoXML(XMLSrc):
     __node__ = InfoNode
 
 
@@ -951,11 +954,12 @@ class SpecificData(object):
             logger.error("Failed to read file %s" % self.name)
 
 
-class EntrySet(object):
+class EntrySet(Debuggable):
     """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
 
     def __init__(self, basename, path, entry_type, encoding):
+        Debuggable.__init__(self, name=basename)
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
@@ -966,14 +970,22 @@ class EntrySet(object):
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
         self.specific = re.compile(pattern)
 
+    def debug_log(self, message, flag=None):
+        if (flag is None and self.debug_flag) or flag:
+            logger.error(message)
+
+    def sort_by_specific(self, one, other):
+        return cmp(one.specific, other.specific)
+
     def get_matching(self, metadata):
         return [item for item in list(self.entries.values())
                 if item.specific.matches(metadata)]
 
-    def best_matching(self, metadata):
+    def best_matching(self, metadata, matching=None):
         """ Return the appropriate interpreted template from the set of
         available templates. """
-        matching = self.get_matching(metadata)
+        if matching is None:
+            matching = self.get_matching(metadata)
 
         hspec = [ent for ent in matching if ent.specific.hostname]
         if hspec:
@@ -1017,26 +1029,32 @@ class EntrySet(object):
             elif action == 'deleted':
                 del self.entries[event.filename]
 
-    def entry_init(self, event):
+    def entry_init(self, event, entry_type=None, specific=None):
         """Handle template and info file creation."""
+        if entry_type is None:
+            entry_type = self.entry_type
+
         if event.filename in self.entries:
             logger.warn("Got duplicate add for %s" % event.filename)
         else:
-            fpath = "%s/%s" % (self.path, event.filename)
+            fpath = os.path.join(self.path, event.filename)
             try:
-                spec = self.specificity_from_filename(event.filename)
+                spec = self.specificity_from_filename(event.filename,
+                                                      specific=specific)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
                     logger.error("Could not process filename %s; ignoring" %
                                  fpath)
                 return
-            self.entries[event.filename] = self.entry_type(fpath,
-                                                           spec, self.encoding)
+            self.entries[event.filename] = entry_type(fpath, spec,
+                                                      self.encoding)
         self.entries[event.filename].handle_event(event)
 
-    def specificity_from_filename(self, fname):
+    def specificity_from_filename(self, fname, specific=None):
         """Construct a specificity instance from a filename and regex."""
-        data = self.specific.match(fname)
+        if specific is None:
+            specific = self.specific
+        data = specific.match(fname)
         if not data:
             raise SpecificityError(fname)
         kwargs = {}
@@ -1053,7 +1071,7 @@ class EntrySet(object):
 
     def update_metadata(self, event):
         """Process info and info.xml files for the templates."""
-        fpath = "%s/%s" % (self.path, event.filename)
+        fpath = os.path.join(self.path, event.filename)
         if event.filename == 'info.xml':
             if not self.infoxml:
                 self.infoxml = InfoXML(fpath, True)
