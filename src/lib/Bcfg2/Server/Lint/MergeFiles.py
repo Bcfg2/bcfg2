@@ -2,6 +2,7 @@ import os
 import copy
 from difflib import SequenceMatcher
 import Bcfg2.Server.Lint
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
@@ -20,7 +21,9 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_cfg(self):
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
-            for mset in self.get_similar(entryset.entries):
+            candidates = dict([(f, e) for f, e in entryset.entries.items()
+                               if isinstance(e, CfgGenerator)])
+            for mset in self.get_similar(candidates):
                 self.LintError("merge-cfg",
                                "The following files are similar: %s. "
                                "Consider merging them into a single Genshi "
