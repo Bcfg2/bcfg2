@@ -93,8 +93,64 @@ classes.
     one. That way if a hostname changes or an extra copy of a particular
     client is built, it will get the same changes as the original.
 
+Templates
+=========
+
+Genshi Templates
+----------------
+
+Genshi templates maybe used for entries as well.  Any file ending in .genshi
+will be processed using the new template style (like .newtxt in the TGenshi
+plugin).
+
+Cheetah Templates
+-----------------
+
+Cheetah templates maybe used for entries as well.  Simply name your file
+with a .cheetah extenstion and it will be processed like the TCheetah
+plugin.
+
+Notes on Using Templates
+------------------------
+
+Templates can be host and group specific as well.  Deltas will not be
+processed for any genshi or cheetah base file.
+
+.. note::
+
+    If you are using templating in combination with host-specific
+    or group-specific files, you will need to ensure that the ``.genshi``
+    or ``.cheetah`` extension is at the **end** of the filename. Using the
+    examples from above for *host.example.com* and group *server* you would
+    have the following (using genshi only)::
+
+        Cfg/etc/fstab/fstab.H_host.example.com.genshi
+        Cfg/etc/fstab/fstab.G50_server.genshi
+
+Genshi templates take precence over cheetah templates.  For example, if
+two files exist named
+
+    Cfg/etc/fstab/fstab.genshi
+    Cfg/etc/fstab/fstab.cheetah
+
+the cheetah template is ignored.  But you can mix genshi and cheetah when
+using different host-specific or group-specific files.  For example:
+
+    Cfg/etc/fstab/fstab.H_host.example.com.genshi
+    Cfg/etc/fstab/fstab.G50_server.cheetah
+
 Deltas
 ======
+
+.. note::
+
+    In Bcfg2 1.3 and newer, deltas are deprecated.  It is recommended
+    that you use templates instead.  The
+    :ref:`TemplateHelper plugin
+    <server-plugins-connectors-templatehelper>` comes with an example
+    helper that can be used to include other files easily, a subset of
+    cat file functionality.  ``bcfg2-lint`` checks for deltas and
+    warns about them.
 
 Bcfg2 has finer grained control over how to deliver configuration
 files to a host. Let's say we have a Group named file-server. Members
@@ -150,51 +206,44 @@ file. The reason the other deltas aren't applied to *foo.example.com*
 is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
 applies all the deltas at the most specific level.
 
-Templates
-=========
+Content Validation
+==================
 
-Genshi Templates
-----------------
+To ensure that files with invalid content are not pushed out, you can
+provide a content validation script that will be run against each
+file.  Create a file called ``:test`` inside the directory for the
+file you want to test.  For example::
 
-Genshi templates maybe used for entries as well.  Any file ending in .genshi
-will be processed using the new template style (like .newtxt in the TGenshi
-plugin).
+  Cfg/etc/sudoers/:test
 
-Cheetah Templates
------------------
+You can also create host- and group-specific validators::
 
-Cheetah templates maybe used for entries as well.  Simply name your file
-with a .cheetah extenstion and it will be processed like the TCheetah
-plugin.
+  Cfg/etc/sudoers/:test.G80_foogroup
+  Cfg/etc/sudoers/:test.H_bar.example.com
 
-Notes on Using Templates
-------------------------
+A validator script has the following attributes:
 
-Templates can be host and group specific as well.  Deltas will not be
-processed for any genshi or cheetah base file.
+* It must be executable, or specify a valid bangpath;
+* The entire content of the file is passed to the validator on
+  stdin;
+* The validator is not called with any flags or arguments;
+* The validator must return 0 on success and non-zero on failure; and
+* The validator must output a sensible error message on failure.
 
-.. note::
+For ``sudoers``, a very simple validator is::
 
-    If you are using templating in combination with host-specific
-    or group-specific files, you will need to ensure that the ``.genshi``
-    or ``.cheetah`` extension is at the **end** of the filename. Using the
-    examples from above for *host.example.com* and group *server* you would
-    have the following (using genshi only)::
+  #!/bin/sh
+  visudo -cf -
 
-        Cfg/etc/fstab/fstab.H_host.example.com.genshi
-        Cfg/etc/fstab/fstab.G50_server.genshi
+This uses the ``visudo`` command's built-in validation.
 
-Genshi templates take precence over cheetah templates.  For example, if
-two files exist named
+.. note:
 
-    Cfg/etc/fstab/fstab.genshi
-    Cfg/etc/fstab/fstab.cheetah
-
-the cheetah template is ignored.  But you can mix genshi and cheetah when
-using different host-specific or group-specific files.  For example:
-
-    Cfg/etc/fstab/fstab.H_host.example.com.genshi
-    Cfg/etc/fstab/fstab.G50_server.cheetah
+    Before 1.3 is released, it will be possible to disable validation
+    in the configuration, but enable it for ``bcfg2-test``.  This is
+    recommended for heavily-used servers, since running an external
+    command is fairly resource intensive and could quickly exhaust the
+    file descriptors of a server.
 
 File permissions
 ================

@@ -11,13 +11,15 @@ import lxml.etree
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import u_str
 
-logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+logger = logging.getLogger(__name__)
 
 PROCESSORS = None
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
+    __basenames__ = []
     __extensions__ = []
     __ignore__ = []
+    __specific__ = True
 
     def __init__(self, fname, spec, encoding):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, fname, spec, encoding)
@@ -25,26 +27,54 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         self.regex = self.__class__.get_regex(fname)
 
     @classmethod
-    def get_regex(cls, fname, extensions=None):
+    def get_regex(cls, fname=None, extensions=None):
         if extensions is None:
             extensions = cls.__extensions__
+        if cls.__basenames__:
+            fname = '|'.join(cls.__basenames__)
 
-        base_re = '^(?P<basename>%s)(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))' % re.escape(fname)
+        components = ['^(?P<basename>%s)' % fname]
+        if cls.__specific__:
+            components.append('(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))')
         if extensions:
-            base_re += '\\.(?P<extension>%s)' % '|'.join(extensions)
-        base_re += '$'
-        return re.compile(base_re)
+            components.append('\\.(?P<extension>%s)' % '|'.join(extensions))
+        components.append('$')
+        return re.compile("".join(components))
     
     @classmethod
-    def handles(cls, basename, event):
-        return (event.filename.startswith(os.path.basename(basename)) and
-                cls.get_regex(os.path.basename(basename)).match(event.filename))
+    def handles(cls, event, basename=None):
+        if cls.__basenames__:
+            basenames = cls.__basenames__
+        else:
+            basenames = [basename]
+
+        # do simple non-regex matching first
+        match = False
+        for bname in basenames:
+            if event.filename.startswith(os.path.basename(bname)):
+                match = True
+                break
+        return (match and
+                cls.get_regex(fname=os.path.basename(basename)).match(event.filename))
 
     @classmethod
-    def ignore(cls, basename, event):
-        return (cls.__ignore__ and
-                event.filename.startswith(os.path.basename(basename)) and
-                cls.get_regex(os.path.basename(basename),
+    def ignore(cls, event, basename=None):
+        if not cls.__ignore__:
+            return False
+
+        if cls.__basenames__:
+            basenames = cls.__basenames__
+        else:
+            basenames = [basename]
+
+        # do simple non-regex matching first
+        match = False
+        for bname in basenames:
+            if event.filename.startswith(os.path.basename(bname)):
+                match = True
+                break
+        return (match and
+                cls.get_regex(fname=os.path.basename(basename),
                               extensions=cls.__ignore__).match(event.filename))
         
 
@@ -56,30 +86,25 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
 
 
 class CfgGenerator(CfgBaseFileMatcher):
+    """ CfgGenerators generate the initial content of a file """
     def get_data(self, entry, metadata):
         return self.data
 
 
 class CfgFilter(CfgBaseFileMatcher):
+    """ CfgFilters modify the initial content of a file after it's
+    been generated """
     def modify_data(self, entry, metadata, data):
         raise NotImplementedError
 
 
-class CfgInfo(Bcfg2.Server.Plugin.SpecificData):
-    names = []
-    regex = re.compile('^$')
+class CfgInfo(CfgBaseFileMatcher):
+    """ CfgInfos provide metadata (owner, group, paranoid, etc.) for a
+    file entry """
+    __specific__ = False
 
-    def __init__(self, path):
-        self.path = path
-        self.name = os.path.basename(path)
-
-    @classmethod
-    def handles(cls, basename, event):
-        return event.filename in cls.names or cls.regex.match(event.filename)
-
-    @classmethod
-    def ignore(cls, basename, event):
-        return False
+    def __init__(self, fname):
+        CfgBaseFileMatcher.__init__(self, fname, None, None)
 
     def bind_info_to_entry(self, entry, metadata):
         raise NotImplementedError
@@ -87,29 +112,33 @@ class CfgInfo(Bcfg2.Server.Plugin.SpecificData):
     def _set_info(self, entry, info):
         for key, value in list(info.items()):
             entry.attrib.__setitem__(key, value)
-    
-    def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.name)
+
+
+class CfgVerifier(CfgBaseFileMatcher):
+    """ Verifiers validate entries """
+    def verify_entry(self, entry, metadata, data):
+        raise NotImplementedError
+
+
+class CfgVerificationError(Exception):
+    pass
 
 
 class CfgDefaultInfo(CfgInfo):
     def __init__(self, defaults):
-        self.name = ''
+        CfgInfo.__init__(self, '')
         self.defaults = defaults
-
-    def handles(self, event):
-        return False
 
     def bind_info_to_entry(self, entry, metadata):
         self._set_info(entry, self.defaults)
 
+DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.default_file_metadata)
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, entry_type, encoding):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
         self.specific = None
-        self.default_info = CfgDefaultInfo(self.metadata)
         self.load_processors()
 
     def load_processors(self):
@@ -128,38 +157,41 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                  submodule[1])
                 proc = getattr(module, submodule[1])
                 if set(proc.__mro__).intersection([CfgInfo, CfgFilter,
-                                                   CfgGenerator]):
+                                                   CfgGenerator, CfgVerifier]):
                     PROCESSORS.append(proc)
 
     def handle_event(self, event):
         action = event.code2str()
         
-        for proc in PROCESSORS:
-            if proc.handles(self.path, event):
-                self.debug_log("%s handling %s event on %s" %
-                               (proc.__name__, action, event.filename))
-                if action in ['exists', 'created']:
-                    self.entry_init(event, proc)
-                elif event.filename not in self.entries:
-                    logger.warning("Got %s event for unknown file %s" %
-                                   (action, event.filename))
+        if event.filename not in self.entries:
+            if action not in ['exists', 'created', 'changed']:
+                # process a bogus changed event like a created
+                return
+                
+            for proc in PROCESSORS:
+                if proc.handles(event, basename=self.path):
                     if action == 'changed':
-                        # received a bogus changed event; warn, but
-                        # treat it like a created event
-                        self.entry_init(event, proc)
-                elif action == 'changed':
-                    self.entries[event.filename].handle_event(event)
-                elif action == 'deleted':
-                    del self.entries[event.filename]
-                return
-            elif proc.ignore(self.path, event):
-                return
+                        # warn about a bogus 'changed' event, but
+                        # handle it like a 'created'
+                        logger.warning("Got %s event for unknown file %s" %
+                                       (action, event.filename))
+                    self.debug_log("%s handling %s event on %s" %
+                                   (proc.__name__, action, event.filename))
+                    self.entry_init(event, proc)
+                    return
+                elif proc.ignore(event, basename=self.path):
+                    return
+        elif action == 'changed':
+            self.entries[event.filename].handle_event(event)
+        elif action == 'deleted':
+            del self.entries[event.filename]
+            return
 
-        logger.error("Could not process filename %s; ignoring" %
-                     event.filename)
+        logger.error("Could not process event %s for %s; ignoring" %
+                     (action, event.filename))
 
     def entry_init(self, event, proc):
-        if CfgBaseFileMatcher in proc.__mro__:
+        if proc.__specific__:
             Bcfg2.Server.Plugin.EntrySet.entry_init(
                 self, event, entry_type=proc,
                 specific=proc.get_regex(os.path.basename(self.path)))
@@ -175,9 +207,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         info_handlers = []
         generators = []
         filters = []
+        verifiers = []
         for ent in self.entries.values():
-            if (hasattr(ent, 'specific') and
-                not ent.specific.matches(metadata)):
+            if ent.__specific__ and not ent.specific.matches(metadata):
                 continue
             if isinstance(ent, CfgInfo):
                 info_handlers.append(ent)
@@ -185,8 +217,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 generators.append(ent)
             elif isinstance(ent, CfgFilter):
                 filters.append(ent)
+            elif isinstance(ent, CfgVerifier):
+                verifiers.append(ent)
 
-        self.default_info.bind_info_to_entry(entry, metadata)
+        DEFAULT_INFO.bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
             logger.error("More than one info supplier found for %s: %s" %
                          (self.name, info_handlers))
@@ -212,6 +246,29 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         for fltr in filters:
             data = fltr.modify_data(entry, metadata, data)
 
+        # TODO: disable runtime verification in config, but let
+        # bcfg2-test turn it back on dynamically.  need to sort out
+        # config files first.
+
+        # we can have multiple verifiers, but we only want to use the
+        # best matching verifier of each class
+        verifiers_by_class = dict()
+        for verifier in verifiers:
+            cls = verifier.__class__.__name__
+            if cls not in verifiers_by_class:
+                verifiers_by_class[cls] = [verifier]
+            else:
+                verifiers_by_class[cls].append(verifier)
+        for verifiers in verifiers_by_class.values():
+            verifier = self.best_matching(metadata, verifiers)
+            try:
+                verifier.verify_entry(entry, metadata, data)
+            except CfgVerificationError:
+                msg = "Data for %s for %s failed to verify: %s" % \
+                    (entry.get('name'), metadata.hostname, sys.exc_info()[1])
+                logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                
         if entry.get('encoding') == 'base64':
             data = binascii.b2a_base64(data)
         else:

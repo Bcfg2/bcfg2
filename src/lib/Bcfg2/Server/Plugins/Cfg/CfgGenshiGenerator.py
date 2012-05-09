@@ -33,9 +33,9 @@ class CfgGenshiGenerator(CfgGenerator):
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
     @classmethod
-    def ignore(cls, basename, event):
+    def ignore(cls, event, basename=None):
         return (event.filename.endswith(".genshi_include") or
-                CfgGenerator.ignore(basename, event))
+                CfgGenerator.ignore(event, basename=basename))
 
     def get_data(self, entry, metadata):
         fname = entry.get('realname', entry.get('name'))

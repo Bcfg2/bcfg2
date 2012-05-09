@@ -2,10 +2,10 @@ import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
 
-logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+logger = logging.getLogger(__name__)
 
 class CfgInfoXML(CfgInfo):
-    names = ['info.xml']
+    __basenames__ = ['info.xml']
 
     def __init__(self, path):
         CfgInfo.__init__(self, path)

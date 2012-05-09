@@ -2,10 +2,10 @@ import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
 
-logger = logging.getLogger('Bcfg2.Plugins.Cfg')
+logger = logging.getLogger(__name__)
 
 class CfgLegacyInfo(CfgInfo):
-    names = ['info', ':info']
+    __basenames__ = ['info', ':info']
 
     def bind_info_to_entry(self, entry, metadata):
         self._set_info(entry, self.metadata)
