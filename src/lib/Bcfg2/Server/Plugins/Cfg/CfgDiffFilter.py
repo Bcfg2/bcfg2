@@ -21,7 +21,7 @@ class CfgDiffFilter(CfgFilter):
         ret = patch.wait()
         output = open(basefile.name, 'r').read()
         os.unlink(basefile.name)
-        if ret >> 8 != 0:
+        if ret != 0:
             logger.error("Error applying diff %s: %s" % (delta.name, stderr))
             raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
         return output
