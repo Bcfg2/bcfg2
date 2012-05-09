@@ -1,6 +1,10 @@
 import os.path
 import lxml.etree
 import Bcfg2.Server.Lint
+from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator import CfgPlaintextGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 
 class Comments(Bcfg2.Server.Lint.ServerPlugin):
     """ check files for various required headers """
@@ -13,7 +17,6 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         self.check_properties()
         self.check_metadata()
         self.check_cfg()
-        self.check_infoxml()
         self.check_probes()
 
     @classmethod
@@ -90,25 +93,24 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                            "metadata")
 
     def check_cfg(self):
-        """ check Cfg files for required headers """
+        """ check Cfg files and info.xml files for required headers """
         if 'Cfg' in self.core.plugins:
             for entryset in self.core.plugins['Cfg'].entries.values():
                 for entry in entryset.entries.values():
-                    if entry.name.endswith(".genshi"):
+                    rtype = None
+                    if isinstance(entry, CfgGenshiGenerator):
                         rtype = "tgenshi"
-                    else:
+                    elif isinstance(entry, CfgPlaintextGenerator):
                         rtype = "cfg"
-                    self.check_plaintext(entry.name, entry.data, rtype)
-
-    def check_infoxml(self):
-        """ check info.xml files for required headers """
-        if 'Cfg' in self.core.plugins:
-            for entryset in self.core.plugins['Cfg'].entries.items():
-                if (hasattr(entryset, "infoxml") and
-                    entryset.infoxml is not None):
-                    self.check_xml(entryset.infoxml.name,
-                                   entryset.infoxml.pnode.data,
-                                   "infoxml")
+                    elif isinstance(entry, CfgCheetahGenerator):
+                        rtype = "tcheetah"
+                    elif isinstance(entry, CfgInfoXML):
+                        self.check_xml(entry.infoxml.name,
+                                       entry.infoxml.pnode.data,
+                                       "infoxml")
+                        continue
+                    if rtype:
+                        self.check_plaintext(entry.name, entry.data, rtype)
 
     def check_probes(self):
         """ check probes for required headers """

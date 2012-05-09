@@ -52,6 +52,7 @@ class CfgGenshiGenerator(CfgGenerator):
     def handle_event(self, event):
         if event.code2str() == 'deleted':
             return
+        CfgGenerator.handle_event(self, event)
         try:
             self.template = self.loader.load(self.name, cls=NewTextTemplate,
                                              encoding=self.encoding)
