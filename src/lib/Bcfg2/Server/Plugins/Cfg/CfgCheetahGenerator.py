@@ -9,7 +9,7 @@ try:
     import Cheetah.Template
     import Cheetah.Parser
     have_cheetah = True
-except:
+except ImportError:
     have_cheetah = False
 
 

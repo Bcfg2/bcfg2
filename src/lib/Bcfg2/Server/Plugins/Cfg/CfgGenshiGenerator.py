@@ -9,7 +9,7 @@ try:
     import genshi.core
     from genshi.template import TemplateLoader, NewTextTemplate
     have_genshi = True
-except:
+except ImportError:
     have_genshi = False
 
 # snipped from TGenshi

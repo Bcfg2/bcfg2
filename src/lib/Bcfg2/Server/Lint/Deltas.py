@@ -1,4 +1,5 @@
 import Bcfg2.Server.Lint
+from Bcfg2.Server.Plugins.Cfg import CfgFilter
 
 class Deltas(Bcfg2.Server.Lint.ServerPlugin):
     """ Warn about usage of .cat and .diff files """
@@ -16,10 +17,9 @@ class Deltas(Bcfg2.Server.Lint.ServerPlugin):
                 "diff-file-used":"warning"}
 
     def check_entry(self, basename, entry):
-        for fname in list(entry.entries.keys()):
-            if self.HandlesFile(fname):
-                match = entry.specific.delta_reg.match(fname)
-                if match:
-                    self.LintError("%s-file-used" % match.group('delta'),
-                                   "%s file used on %s: %s" %
-                                   (match.group('delta'), basename, fname))
+        for fname, processor in entry.entries.items():
+            if self.HandlesFile(fname) and isinstance(processor, CfgFilter):
+                extension = fname.split(".")[-1]
+                self.LintError("%s-file-used" % extension,
+                               "%s file used on %s: %s" %
+                               (extension, basename, fname))
