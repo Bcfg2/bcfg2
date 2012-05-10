@@ -1,5 +1,14 @@
 """Django models for Bcfg2 reports."""
-from django.db import models
+import sys
+
+from django.core.exceptions import ImproperlyConfigured
+try:
+    from django.db import models
+except ImproperlyConfigured:
+    e = sys.exc_info()[1]
+    print("Reports: unable to import django models: %s" % e)
+    sys.exit(1)
+
 from django.db import connection, transaction
 from django.db.models import Q
 from datetime import datetime, timedelta
