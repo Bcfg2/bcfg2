@@ -73,11 +73,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def create_config(self, entry, metadata):
         """ create yum/apt config for the specified host """
-        attrib = {'encoding': 'ascii',
-                  'owner': 'root',
-                  'group': 'root',
-                  'type': 'file',
-                  'perms': '0644'}
+        attrib = dict(encoding='ascii',
+                      owner='root',
+                      group='root',
+                      type='file',
+                      perms='0644',
+                      important='true')
 
         collection = self._get_collection(metadata)
         entry.text = collection.get_config()
