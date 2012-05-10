@@ -177,7 +177,7 @@ _fixes = [_merge_database_table_entries,
           'alter table reports_reason add is_binary bool NOT NULL default False;',
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
           _remove_table_column('reports_interaction', 'client_version'),
-          "alter table reports_reason add unpruned varchar(1280) not null default 'N/A';",
+          "alter table reports_reason add unpruned varchar(1280) not null default '';",
 ]
 
 # this will calculate the last possible version of the database
