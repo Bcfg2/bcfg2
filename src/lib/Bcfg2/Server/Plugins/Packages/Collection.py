@@ -1,3 +1,4 @@
+import sys
 import copy
 import logging
 import Bcfg2.Server.Plugin
@@ -18,8 +19,15 @@ except ImportError:
 # startup.  (It would also prevent machines that change groups from
 # working properly; e.g., if you reinstall a machine with a new OS,
 # then returning a cached Collection object would give the wrong
-# sources to that client.)
+# sources to that client.)  These are keyed by the collection
+# cachekey, a unique key identifying the collection by its _config_,
+# which could be shared among multiple clients.
 collections = dict()
+
+# cache mapping of hostname -> collection cachekey.  this _is_ used to
+# return a Collection object when one is requested, so each entry is
+# very short-lived -- it's purged at the end of each client run.
+clients = dict()
 
 class Collection(Bcfg2.Server.Plugin.Debuggable):
     def __init__(self, metadata, sources, basepath, debug=False):
@@ -32,11 +40,11 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
         self.virt_pkgs = dict()
 
         try:
-            self.config = sources[0].config
+            self.setup = sources[0].setup
             self.cachepath = sources[0].basepath
             self.ptype = sources[0].ptype
         except IndexError:
-            self.config = None
+            self.setup = None
             self.cachepath = None
             self.ptype = "unknown"
 
@@ -290,9 +298,33 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
     def sort(self, cmp=None, key=None, reverse=False):
         self.sources.sort(cmp, key, reverse)
 
+def get_collection_class(source_type):
+    modname = "Bcfg2.Server.Plugins.Packages.%s" % source_type.title()
+    
+    try:
+        module = sys.modules[modname]
+    except KeyError:
+        try:
+            module = __import__(modname).Server.Plugins.Packages
+        except ImportError:
+            msg = "Packages: Unknown source type %s" % source_type
+            logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+    
+    try:
+        cclass = getattr(module, source_type.title() + "Collection")
+    except AttributeError:
+        msg = "Packages: No collection class found for %s sources" % source_type
+        logger.error(msg)
+        raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+    
+    return cclass
+
 def clear_cache():
     global collections
+    global clients
     collections = dict()
+    clients = dict()
 
 def factory(metadata, sources, basepath, debug=False):
     global collections
@@ -301,6 +333,9 @@ def factory(metadata, sources, basepath, debug=False):
         # if sources.xml has not received a FAM event yet, defer;
         # instantiate a dummy Collection object
         return Collection(metadata, [], basepath)
+
+    if metadata.hostname in clients:
+        return collections[clients[metadata.hostname]]
 
     sclasses = set()
     relevant = list()
@@ -326,24 +361,16 @@ def factory(metadata, sources, basepath, debug=False):
                          metadata.hostname)
         cclass = Collection
     else:
-        stype = sclasses.pop().__name__.replace("Source", "")
-        try:
-            module = \
-                getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
-                                   stype.title()).Server.Plugins.Packages,
-                        stype.title())
-            cclass = getattr(module, "%sCollection" % stype.title())
-        except ImportError:
-            logger.error("Packages: Unknown source type %s" % stype)
-        except AttributeError:
-            logger.warning("Packages: No collection class found for %s sources"
-                           % stype)
+        cclass = get_collection_class(sclasses.pop().__name__.replace("Source",
+                                                                      ""))
 
     if debug:
         logger.error("Packages: Using %s for Collection of sources for %s" %
                      (cclass.__name__, metadata.hostname))
 
     collection = cclass(metadata, relevant, basepath, debug=debug)
-    collections[metadata.hostname] = collection
+    ckey = collection.cachekey
+    clients[metadata.hostname] = ckey
+    collections[ckey] = collection
     return collection
 

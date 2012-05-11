@@ -15,7 +15,8 @@ from Bcfg2.Server.Plugins.Packages.PackagesConfig import PackagesConfig
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
-               Bcfg2.Server.Plugin.Connector):
+               Bcfg2.Server.Plugin.Connector,
+               Bcfg2.Server.Plugin.GoalValidator):
     name = 'Packages'
     conflicts = ['Pkgmgr']
     experimental = True
@@ -101,8 +102,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag == 'Package':
-            if self.config.getboolean("global", "magic_groups",
-                                      default=True) == True:
+            if self.config.getboolean("global", "magic_groups", default=True):
                 collection = self._get_collection(metadata)
                 if collection.magic_groups_match():
                     return True
@@ -267,3 +267,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def get_additional_data(self, metadata):
         collection = self._get_collection(metadata)
         return dict(sources=collection.get_additional_data())
+
+    def validate_goals(self, metadata, _):
+        """ we abuse the GoalValidator plugin since validate_goals()
+        is the very last thing called during a client config run.  so
+        we use this to clear the collection cache for this client,
+        which must persist only the duration of a client run """
+        if metadata.hostname in Collection.clients:
+            del Collection.clients[metadata.hostname]
