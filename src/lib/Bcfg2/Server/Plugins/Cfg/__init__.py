@@ -8,12 +8,14 @@ import pkgutil
 import logging
 import binascii
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import u_str
 
 logger = logging.getLogger(__name__)
 
 PROCESSORS = None
+SETUP = None
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     __basenames__ = []
@@ -246,28 +248,26 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         for fltr in filters:
             data = fltr.modify_data(entry, metadata, data)
 
-        # TODO: disable runtime verification in config, but let
-        # bcfg2-test turn it back on dynamically.  need to sort out
-        # config files first.
-
-        # we can have multiple verifiers, but we only want to use the
-        # best matching verifier of each class
-        verifiers_by_class = dict()
-        for verifier in verifiers:
-            cls = verifier.__class__.__name__
-            if cls not in verifiers_by_class:
-                verifiers_by_class[cls] = [verifier]
-            else:
-                verifiers_by_class[cls].append(verifier)
-        for verifiers in verifiers_by_class.values():
-            verifier = self.best_matching(metadata, verifiers)
-            try:
-                verifier.verify_entry(entry, metadata, data)
-            except CfgVerificationError:
-                msg = "Data for %s for %s failed to verify: %s" % \
-                    (entry.get('name'), metadata.hostname, sys.exc_info()[1])
-                logger.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        if SETUP['validate']:
+            # we can have multiple verifiers, but we only want to use the
+            # best matching verifier of each class
+            verifiers_by_class = dict()
+            for verifier in verifiers:
+                cls = verifier.__class__.__name__
+                if cls not in verifiers_by_class:
+                    verifiers_by_class[cls] = [verifier]
+                else:
+                    verifiers_by_class[cls].append(verifier)
+            for verifiers in verifiers_by_class.values():
+                verifier = self.best_matching(metadata, verifiers)
+                try:
+                    verifier.verify_entry(entry, metadata, data)
+                except CfgVerificationError:
+                    msg = "Data for %s for %s failed to verify: %s" % \
+                        (entry.get('name'), metadata.hostname,
+                         sys.exc_info()[1])
+                    logger.error(msg)
+                    raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
                 
         if entry.get('encoding') == 'base64':
             data = binascii.b2a_base64(data)
@@ -377,6 +377,16 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     __author__ = 'bcfg-dev@mcs.anl.gov'
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
+
+    def __init__(self, core, datastore):
+        global SETUP
+        Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.PullTarget.__init__(self)
+        
+        SETUP = core.setup
+        if 'validate' not in SETUP:
+            SETUP['validate'] = Bcfg2.Options.CFG_VALIDATION
+            SETUP.reparse()
 
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(entry,

@@ -71,6 +71,7 @@ def main():
         'verbose': Bcfg2.Options.VERBOSE,
         'noseopts': Bcfg2.Options.TEST_NOSEOPTS,
         'ignore': Bcfg2.Options.TEST_IGNORE,
+        'validate': Bcfg2.Options.CFG_VALIDATION,
         }
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = \

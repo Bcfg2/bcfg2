@@ -411,6 +411,11 @@ CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
 LOGGING_FILE_PATH = Option('Set path of file log', default=None,
                            cmd='-o', odesc='<path>', cf=('logging', 'path'))
 
+# Plugin-specific options
+CFG_VALIDATION = Option('Run validation on Cfg files', default=True,
+                        cf=('cfg', 'validation'), cmd='--cfg-validation',
+                        long_arg=True, cook=get_bool)
+
 class OptionParser(OptionSet):
     """
        OptionParser bootstraps option parsing,
@@ -428,8 +433,13 @@ class OptionParser(OptionSet):
             return
         if event.code2str() == 'deleted':
             return
-        for key, opt in self.optinfo:
+        self.reparse()
+
+    def reparse(self):
+        for key, opt in self.optinfo.items():
             self[key] = opt
+        if "args" not in self.optinfo:
+            del self['args']
         self.parse(self.argv, self.do_getopt)
 
     def parse(self, argv, do_getopt=True):
