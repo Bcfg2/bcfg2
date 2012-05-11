@@ -63,10 +63,20 @@ def _interactions_constraint_or_idx():
 def _remove_table_column(tbl, col):
     """sqlite doesn't support deleting a column via alter table"""
     cursor = connection.cursor()
-    try:
+    db_engine = Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE']
+    if db_engine == 'django.db.backends.mysql':
+        db_name = Bcfg2.Server.Reports.settings.DATABASES['default']['NAME']
+        column_exists = cursor.execute('select * from information_schema.columns '
+                                       'where table_schema="%s" and '
+                                       'table_name="%s" '
+                                       'and column_name="%s";' % (db_name, tbl, col))
+        if not column_exists:
+            # column doesn't exist
+            return
+        # if column exists from previous database, remove it
         cursor.execute('alter table %s '
                        'drop column %s;' % (tbl, col))
-    except DatabaseError:
+    elif db_engine == 'django.db.backends.sqlite3':
         # check if table exists
         try:
             cursor.execute('select * from sqlite_master where name=%s and type="table";' % tbl)
