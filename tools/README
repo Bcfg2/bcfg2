@@ -66,12 +66,6 @@ hostbase.py {-l|-c} <hostname>
 hostinfo.py {-q <query>|--showfields}
     - Query the hostbase databse
 
-nagios-convert.py
-    - Convert 1.1.x-style NagiosGen config to 1.2.x-style
-
-packages-convert.py
-    - Convert 1.1.x-style Packages config to 1.2.x-style
-
 pkgmgr_gen.py
     - Generate Pkgmgr XML files from a list of directories that
       contain RPMS
@@ -80,13 +74,13 @@ pkgmgr_update.py
     - Update Pkgmgr XML files from a list of directories that contain
       RPMS
 
-posixunified.py
-    - Convert 1.0.x-style Rules, Bundler, and Base configs to 1.1.x
-      POSIX unified-style configs (i.e., ConfigFile, Directory,
-      Permissions, and SymLink all become Path entries)
-
 rpmlisting.py
     - ???
+
+upgrade
+    - This directory contains scripts used to upgrade to the specified
+      version.  E.g., upgrade/1.2 has scripts needed to upgrade to
+      Bcfg2 1.2.x from bcfg2 1.1.x
 
 yum-listpkgs.xml.py
     - Produces a list of all packages installed and available in a

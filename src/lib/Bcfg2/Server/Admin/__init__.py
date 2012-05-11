@@ -122,7 +122,8 @@ class MetadataCore(Mode):
                                        setup['plugins'],
                                        setup['password'],
                                        setup['encoding'],
-                                       filemonitor=setup['filemonitor'])
+                                       filemonitor=setup['filemonitor'],
+                                       setup=setup)
             if setup['event debug']:
                 self.bcore.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:

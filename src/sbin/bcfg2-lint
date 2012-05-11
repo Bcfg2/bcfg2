@@ -62,7 +62,9 @@ def get_errorhandler(config):
 def load_server(setup):
     """ load server """
     core = Bcfg2.Server.Core.Core(setup['repo'], setup['plugins'],
-                                  setup['password'], setup['encoding'])
+                                  setup['password'], setup['encoding'],
+                                  filemonitor=setup['filemonitor'],
+                                  setup=setup)
     if setup['event debug']:
         core.fam.debug = True
     core.fam.handle_events_in_interval(4)
@@ -73,8 +75,6 @@ if __name__ == '__main__':
         'configfile': Bcfg2.Options.CFILE,
         'help': Bcfg2.Options.HELP,
         'verbose': Bcfg2.Options.VERBOSE,
-              }
-    optinfo.update({
         'event debug': Bcfg2.Options.DEBUG,
         'encoding': Bcfg2.Options.ENCODING,
         # Server options
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         'showerrors': Bcfg2.Options.Option('Show error handling', False,
                                            cmd='--list-errors',
                                            long_arg=True),
-        })
+        }
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 

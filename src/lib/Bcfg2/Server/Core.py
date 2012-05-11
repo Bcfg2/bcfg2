@@ -62,7 +62,7 @@ class Core(Component):
     implementation = 'bcfg2-server'
 
     def __init__(self, repo, plugins, password, encoding,
-                 cfile='/etc/bcfg2.conf', ca=None,
+                 cfile='/etc/bcfg2.conf', ca=None, setup=None,
                  filemonitor='default', start_fam_thread=False):
         Component.__init__(self)
         self.datastore = repo
@@ -85,6 +85,7 @@ class Core(Component):
         self.revision = '-1'
         self.password = password
         self.encoding = encoding
+        self.setup = setup
         atexit.register(self.shutdown)
         # Create an event to signal worker threads to shutdown
         self.terminate = threading.Event()
@@ -131,6 +132,11 @@ class Core(Component):
         self.fam_thread = threading.Thread(target=self._file_monitor_thread)
         if start_fam_thread:
             self.fam_thread.start()
+            self.monitor_cfile()
+
+    def monitor_cfile(self):
+        if self.setup:
+            self.fam.AddMonitor(self.cfile, self.setup)
 
     def plugins_by_type(self, base_cls):
         """Return a list of loaded plugins that match the passed type.

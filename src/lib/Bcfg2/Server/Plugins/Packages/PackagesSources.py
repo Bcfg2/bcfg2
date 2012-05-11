@@ -9,7 +9,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                       Bcfg2.Server.Plugin.Debuggable):
     __identifier__ = None
 
-    def __init__(self, filename, cachepath, fam, packages, config):
+    def __init__(self, filename, cachepath, fam, packages, setup):
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         try:
             Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self,
@@ -24,7 +24,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
         self.cachepath = cachepath
-        self.config = config
+        self.setup = setup
         if not os.path.exists(self.cachepath):
             # create cache directory if needed
             try:
@@ -56,7 +56,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                     self.parsed.add(fname)
                     break
 
-        if self.config.loaded and self.loaded:
+        if self.loaded:
             self.logger.info("Reloading Packages plugin")
             self.pkg_obj.Reload()
 
@@ -91,7 +91,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             return None
 
         try:
-            source = cls(self.cachepath, xsource, self.config)
+            source = cls(self.cachepath, xsource, self.setup)
         except SourceInitError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: %s" % err)

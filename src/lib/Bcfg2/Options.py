@@ -21,17 +21,40 @@ class OptionFailure(Exception):
 DEFAULT_CONFIG_LOCATION = '/etc/bcfg2.conf' #/etc/bcfg2.conf
 DEFAULT_INSTALL_PREFIX = '/usr' #/usr
 
+class DefaultConfigParser(ConfigParser.ConfigParser):
+    def get(self, section, option, **kwargs):
+        """ convenience method for getting config items """
+        default = None
+        if 'default' in kwargs:
+            default = kwargs['default']
+            del kwargs['default']
+        try:
+            return ConfigParser.ConfigParser.get(self, section, option,
+                                                 **kwargs)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            if default is not None:
+                return default
+            else:
+                raise
+
+    def getboolean(self, section, option, **kwargs):
+        """ convenience method for getting boolean config items """
+        default = None
+        if 'default' in kwargs:
+            default = kwargs['default']
+            del kwargs['default']
+        try:
+            return ConfigParser.ConfigParser.getboolean(self, section,
+                                                        option, **kwargs)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError,
+                ValueError):
+            if default is not None:
+                return default
+            else:
+                raise
+
+
 class Option(object):
-    cfpath = DEFAULT_CONFIG_LOCATION
-    __cfp = False
-
-    def getCFP(self):
-        if not self.__cfp:
-            self.__cfp = ConfigParser.ConfigParser()
-            self.__cfp.readfp(open(self.cfpath))
-        return self.__cfp
-    cfp = property(getCFP)
-
     def get_cooked_value(self, value):
         if self.boolean:
             return True
@@ -93,7 +116,7 @@ class Option(object):
         else:
             return self.cmd[2:]
 
-    def parse(self, opts, rawopts):
+    def parse(self, opts, rawopts, configparser=None):
         if self.cmd and opts:
             # Processing getopted data
             optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
@@ -111,26 +134,35 @@ class Option(object):
         if self.env and self.env in os.environ:
             self.value = self.get_cooked_value(os.environ[self.env])
             return
-        if self.cf:
-            # FIXME: This is potentially masking a lot of errors
+        if self.cf and configparser:
             try:
-                self.value = self.get_cooked_value(self.cfp.get(*self.cf))
+                self.value = self.get_cooked_value(configparser.get(*self.cf))
                 return
-            except:
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                 pass
         # Default value not cooked
         self.value = self.default
 
 class OptionSet(dict):
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         dict.__init__(self, *args)
         self.hm = self.buildHelpMessage()
+        if 'configfile' in kwargs:
+            self.cfile = kwargs['configfile']
+        else:
+            self.cfile = DEFAULT_CONFIG_LOCATION
+        self.cfp = DefaultConfigParser()
+        if (len(self.cfp.read(self.cfile)) == 0 and
+            ('quiet' not in kwargs or not kwargs['quiet'])):
+            print("Warning! Unable to read specified configuration file: %s" %
+                  self.cfile)
 
     def buildGetopt(self):
         return ''.join([opt.buildGetopt() for opt in list(self.values())])
 
     def buildLongGetopt(self):
-        return [opt.buildLongGetopt() for opt in list(self.values()) if opt.long]
+        return [opt.buildLongGetopt() for opt in list(self.values())
+                if opt.long]
 
     def buildHelpMessage(self):
         if hasattr(self, 'hm'):
@@ -165,9 +197,9 @@ class OptionSet(dict):
                 continue
             option = self[key]
             if do_getopt:
-                option.parse(opts, [])
+                option.parse(opts, [], configparser=self.cfp)
             else:
-                option.parse([], argv)
+                option.parse([], argv, configparser=self.cfp)
             if hasattr(option, 'value'):
                 val = option.value
                 self[key] = val
@@ -385,15 +417,23 @@ class OptionParser(OptionSet):
        getting the value of the config file
     """
     def __init__(self, args):
-        self.Bootstrap = OptionSet([('configfile', CFILE)])
+        self.Bootstrap = OptionSet([('configfile', CFILE)], quiet=True)
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
-        if self.Bootstrap['configfile'] != Option.cfpath:
-            Option.cfpath = self.Bootstrap['configfile']
-            Option.__cfp = False
-        OptionSet.__init__(self, args)
-        try:
-            f = open(Option.cfpath, 'r')
-            f.close()
-        except IOError:
-            e = sys.exc_info()[1]
-            print("Warning! Unable to read specified configuration file: %s" % e)
+        OptionSet.__init__(self, args, configfile=self.Bootstrap['configfile'])
+        self.optinfo = args
+
+    def HandleEvent(self, event):
+        if not self['configfile'].endswith(event.filename):
+            print("Got event for unknown file: %s" % event.filename)
+            return
+        if event.code2str() == 'deleted':
+            return
+        for key, opt in self.optinfo:
+            self[key] = opt
+        self.parse(self.argv, self.do_getopt)
+
+    def parse(self, argv, do_getopt=True):
+        self.argv = argv
+        self.do_getopt = do_getopt
+        OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
+

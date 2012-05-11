@@ -3,9 +3,6 @@
 import re
 import Bcfg2.Server.Plugin
 
-class RulesConfig(Bcfg2.Server.Plugin.SimpleConfig):
-    _required = False
-
 class Rules(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles service assignments."""
     name = 'Rules'
@@ -13,7 +10,6 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
-        self.config = RulesConfig(self)
         self._regex_cache = dict()
 
     def HandlesEntry(self, entry, metadata):
@@ -52,4 +48,4 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
         return False
 
     def _regex_enabled(self):
-        return self.config.getboolean("rules", "regex", default=False)
+        return self.core.setup.cfp.getboolean("rules", "regex", default=False)

@@ -86,7 +86,8 @@ def main():
         setup['plugins'],
         setup['password'],
         setup['encoding'],
-        filemonitor='pseudo'
+        filemonitor='pseudo',
+        setup=setup
         )
 
     ignore = dict()

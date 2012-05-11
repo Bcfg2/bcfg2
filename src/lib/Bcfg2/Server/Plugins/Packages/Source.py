@@ -36,11 +36,11 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     genericrepo_re = re.compile('https?://.*?/([^/]+)/?$')
     basegroups = []
 
-    def __init__(self, basepath, xsource, config):
+    def __init__(self, basepath, xsource, setup):
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.basepath = basepath
         self.xsource = xsource
-        self.config = config
+        self.setup = setup
         self.essentialpkgs = set()
 
         try:
@@ -272,8 +272,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         if not found_arch:
             return False
 
-        if self.config.getboolean("global", "magic_groups",
-                                  default=True) == False:
+        if not self.setup.cfp.getboolean("packages", "magic_groups",
+                                         default=True):
             return True
         else:
             for group in self.basegroups:

@@ -3,7 +3,6 @@
 
 import sys
 import logging
-import Bcfg2.Server.Core
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Admin
@@ -31,7 +30,7 @@ def create_description():
     for mode in modes:
         try:
             description.write(("   %-15s   %s\n" %
-                   (mode, mode_import(mode).__shorthelp__)))
+                               (mode, mode_import(mode).__shorthelp__)))
         except (ImportError, SystemExit):
             pass
     return description.getvalue()

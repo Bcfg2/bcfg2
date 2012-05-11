@@ -133,11 +133,13 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
-    def __init__(self, repo, plgs, passwd, encoding, event_debug, filemonitor='default'):
+    def __init__(self, repo, plgs, passwd, encoding, event_debug,
+                 filemonitor='default', setup=None):
         cmd.Cmd.__init__(self)
         try:
             Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd,
-                                            encoding, filemonitor=filemonitor)
+                                            encoding, filemonitor=filemonitor,
+                                            setup=setup)
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
@@ -668,12 +670,14 @@ if __name__ == '__main__':
         prof = profile.Profile()
         loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
                             setup['password'], setup['encoding'],
-                            setup['event debug'], setup['filemonitor'])
+                            setup['event debug'], setup['filemonitor'],
+                            setup)
         displayTrace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
         loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
-                        setup['encoding'], setup['event debug'], setup['filemonitor'])
+                        setup['encoding'], setup['event debug'],
+                        setup['filemonitor'], setup)
 
     loop.Run(setup['args'])
