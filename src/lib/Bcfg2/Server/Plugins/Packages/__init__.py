@@ -88,7 +88,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def HandleEntry(self, entry, metadata):
         if entry.tag == 'Package':
             collection = self._get_collection(metadata)
-            entry.set('version', 'auto')
             entry.set('version', self.config.get("global",
                                                  "version",
                                                  default="auto"))
