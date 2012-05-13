@@ -35,24 +35,24 @@ templating -- see below).
 Group-Specific Files
 ====================
 
-It is often that you want one version of a config file for all of your
-machines except those in a particular group. For example, ``/etc/fstab``
-should look alike on all of your desktop machines, but should be
-different on your file servers. Bcfg2 can handle this case through use
-of group-specific files.
+It is often the case that you want one version of a config file for
+all of your machines except those in a particular group. For example,
+``/etc/fstab`` should look alike on all of your desktop machines, but
+should be different on your file servers. Bcfg2 can handle this case
+through use of group-specific files.
 
 As mentioned above, all Cfg entries live in like-named directories
 at the end of their directory tree. In the case of fstab, the file at
 ``Cfg/etc/fstab/fstab`` will be handed out by default to any client that
 asks for a copy of ``/etc/fstab``. Group-specific files are located in
-the same directory and are named with the syntax::
+the same directory and are named with the following syntax::
 
     /path/to/filename/filename.GNN_groupname
 
-in which **NN** is a priority number where **00** is lowest and
-**99** is highest, and **groupname** is the name of a group defined in
+**NN** is a priority number where **00** is lowest and **99**
+is highest, and **groupname** is the name of a group defined in
 ``Metadata/groups.xml``. Back to our fstab example, we might have a
-``Cfg/etc/fstab/`` directory that looks like::
+``Cfg/etc/fstab/`` directory that looks like this::
 
     fstab
     fstab.G50_server
