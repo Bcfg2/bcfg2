@@ -154,7 +154,7 @@ class InteractiveManager(models.Manager):
             cursor.execute(sql)
             return [item[0] for item in cursor.fetchall()]
         except:
-            '''FIXME - really need some error hadling'''
+            '''FIXME - really need some error handling'''
             pass
         return []
 
