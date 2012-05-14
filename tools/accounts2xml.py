@@ -25,11 +25,10 @@
 accounts2xml.py
 
 This script coverts a csv file to an XML.
-The script takes 2 paramenters
+The script takes 1 paramenters
 * filename
-* row node name
 
-e.g., ./accounts2xml.py /etc/passwd UnixUser
+e.g., ./accounts2xml.py /etc/passwd
 
 Created by Giovanni Collazo on 2011-02-19.
 Copyright (c) 2011 24veces.com. All rights reserved.
@@ -74,12 +73,9 @@ def main(args):
     print "ERROR: Please provide a filename.csv as the first argument"
     sys.exit()
     
-  try:
-    single_item = args[2]
-  except IndexError:
-    print "ERROR: Please provide a name to be used for each row node"
-    sys.exit()
-  
+  node_user = "UnixUser"
+  node_group = "UnixGroup"
+
   f = csv.reader(open(filename, 'rb'), delimiter=':')
   
   doc = Document()
@@ -88,15 +84,26 @@ def main(args):
   
   columns = f.next()
   
+  groups = dict()
   for row in f:
     match = re.search(r'/bin/\w*sh', row[6])  # adjust this line to match the right shell path
     if match:
-        item = doc.createElement(single_item)
+        item = doc.createElement(node_user)
         root_element.appendChild(item)
         extra_groups = os.popen("groups %s" % row[0]).readline()[:-1] 
-        item.setAttribute('extra_groups', extra_groups.split(' : ')[1])
+        extra_groups_str = extra_groups.split(' : ')[1]
+        populate_groups(groups, extra_groups_str)
+        item.setAttribute('extra_groups', extra_groups_str)
         create_col_nodes(columns, item, doc, row)
-  
+    
+  for gkey, gval in groups.items():
+    item = doc.createElement(node_group)
+    root_element.appendChild(item)
+    item.setAttribute('name', gkey)
+    (gid,extra) = gval.split(':')
+    item.setAttribute('gid', gid)
+    item.setAttribute('extra_groups', extra)
+
   output_file = "accounts.xml"
   doc.writexml(open(output_file, 'w'), addindent='    ', newl='\n') # Write file
   
@@ -110,6 +117,21 @@ def create_col_nodes(cols, item, doc, row):
 
     if col != "pass":
         item.setAttributeNode(att)
+
+def populate_groups(group_dic, group_str):
+    for g in group_str.split(' '):
+        if not group_dic.has_key(g):
+            group_ent = os.popen("getent group %s" % g).readline()[:-1].split(':')
+            gid = group_ent[2]
+            extra = group_ent[3]
+            extra_list = list(extra)
+            for e in extra_list:
+                if e == ',':
+                    loc = extra_list.index(e)
+                    extra_list[loc] = ' '
+            extra = "".join(extra_list)
+            group_dic[g] = gid + ":" + extra
+
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv))
