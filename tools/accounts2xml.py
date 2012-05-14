@@ -60,6 +60,7 @@ import sys
 import csv
 import os
 import re
+import grp
 from xml.dom.minidom import Document
 
 def main(args):
@@ -112,8 +113,12 @@ def main(args):
   
 def create_col_nodes(cols, item, doc, row): 
   for col in cols:
-    att = doc.createAttribute(str.replace(col, " ", "_").lower())
-    att.nodeValue = row.pop(0)
+    if col == "gid":
+        att = doc.createAttribute("group")
+        att.nodeValue = grp.getgrgid(int(row.pop(0)))[0]
+    else:
+        att = doc.createAttribute(str.replace(col, " ", "_").lower())
+        att.nodeValue = row.pop(0)
 
     if col != "pass":
         item.setAttributeNode(att)
