@@ -298,7 +298,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         generators = [ent for ent in list(self.entries.values())
                       if (isinstance(ent, CfgGenerator) and
                           ent.specific.matches(metadata))]
-        if not matching:
+        if not generators:
             msg = "No base file found for %s" % entry.get('name')
             logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
