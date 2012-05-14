@@ -126,15 +126,15 @@ Disabling dependency resolution
 
 .. versionadded:: 1.1.0
 
-Dependency resolution can be disabled by adding this to
-``Packages/packages.conf`` in the ``global`` section::
+Dependency resolution can be disabled by adding the following setting
+to ``bcfg2.conf`` in the ``packages`` section::
 
-    [global]
+    [packages]
     resolver=0
 
 All metadata processing can be disabled as well::
 
-    [global]
+    [packages]
     metadata=0
 
 Blacklisting faulty dependencies
@@ -353,15 +353,6 @@ be validated using ``bcfg2-lint``.
 
 .. note:: The schema requires that elements be specified in the above order.
 
-Limitations
-===========
-
-Packages does not do traditional caching as other plugins
-do. Modifying sources in the Packages ``sources.xml`` file requires a
-server restart for the time being. You do not have to restart the
-server after changing ``packages.conf`` or after adding new sources to
-``sources.xml``.
-
 Package Checking and Verification
 =================================
 
@@ -380,10 +371,10 @@ Generating Client APT/Yum Configurations
 .. versionadded:: 1.2.0
 
 The Packages plugin has native support for generating Yum configs.
-You must set ``yum_config`` in ``Packages/packages.conf`` to the path
-to the yum config file you want to generate::
+You must set ``yum_config`` in ``bcfg2.conf`` to the path to the yum
+config file you want to generate::
 
-    [global]
+    [packages]
     yum_config=/etc/yum.repos.d/all.repo
 
 Then add the corresponding Path entry to your Yum bundle.
@@ -414,7 +405,7 @@ resolution and other routines so that the Bcfg2 server can be run on a
 host that does not support Yum itself. If you run the Bcfg2 server on
 a machine that does have Yum libraries, however, you can enable use of
 those native libraries in Bcfg2 by setting ``use_yum_libraries`` to
-``1`` in the ``[yum]`` section of ``Packages/packages.conf``.
+``1`` in the ``[packages:yum]`` section of ``bcfg2.conf``.
 
 Benefits to this include:
 
@@ -452,11 +443,11 @@ elsewhere, you will need to configure that location with the
 Setting Yum Options
 -------------------
 
-In ``Packages/packages.conf``, any options you set in the ``[yum]``
+In ``bcfg2.conf``, any options you set in the ``[packages:yum]``
 section other than ``use_yum_libraries`` and ``helper`` will be passed
 along verbatim to the configuration of the Yum objects used in the
-Bcfg2 server. The following options are set by default, and should
-not generally be overridden:
+Bcfg2 server. The following options are set by default, and should not
+generally be overridden:
 
 * ``cachedir`` is set to a hashed value unique to each distinct Yum
   configuration. Don't set this unless you know what you're doing.
@@ -521,8 +512,8 @@ server must have a valid ``/etc/pulp/consumer/consumer.conf`` that is
 readable by the user your Bcfg2 server runs as; the Pulp server,
 URLs, and so on, are determined from this.
 
-Secondly, in ``Packages/packages.conf`` you must set the following
-options in the ``[pulp]`` section:
+Secondly, in ``bcfg2.conf`` you must set the following
+options in the ``[packages:pulp]`` section:
 
 * ``username`` and ``password``: The username and password of a Pulp
   user that will be used to register new clients and bind them to
@@ -643,17 +634,17 @@ multiple data sources need to be multiplexed.
 The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
 relatively simple implementation of a source.
 
-packages.conf
+Configuration
 =============
 
-``packages.conf`` contains miscellaneous configuration options for the
+``bcfg2.conf`` contains miscellaneous configuration options for the
 Packages plugin. Any booleans in the config file accept the values
 "1", "yes", "true", and "on" for True, and "0", "no", "false", and
-"off" for False
+"off" for False.
 
 It understands the following directives:
 
-[global] section
+[packages] section
 ----------------
 
 * ``resolver``: Enable dependency resolution. Default is ``1``
@@ -672,17 +663,20 @@ It understands the following directives:
 * ``version``: Set the version attribute used when binding
   Packages. Default is ``auto``.
 
-[yum] section
+[packages:yum] section
 -------------
 
 * ``use_yum_libraries``: Whether or not to use the :ref:`native yum
   library support <native-yum-libraries>`. Default is ``0`` (false).
+* ``helper``: Path to ``bcfg2-yum-helper``.  By default, Bcfg2 looks
+  first in ``$PATH`` and then in ``/usr/sbin/bcfg2-yum-helper`` for
+  the helper.
 
-All other options in the ``[yum]`` section will be passed along
-verbatim to the Yum configuration if you are using the native Yum
-library support.
+All other options in the ``[packages:yum]`` section will be passed
+along verbatim to the Yum configuration if you are using the native
+Yum library support.
 
-[pulp] section
+[packages:pulp] section
 --------------
 
 * ``username`` and ``password``: The username and password of a Pulp

@@ -356,13 +356,10 @@ Using Regular Expressions in Rules
 
 If you wish, you can configure the Rules plugin to support regular
 expressions.  This entails a small performance and memory usage
-penalty.  To do so, create a file, "Rules/rules.conf", and add the
-following text::
+penalty.  To do so, add the following setting to ``bcfg2.conf``::
 
   [rules]
   regex = yes
-
-You will have to restart the Bcfg2 server after making that change.
 
 With regular expressions enabled, you can use a regex in the ``name``
 attribute to match multiple abstract configuration entries.
@@ -372,4 +369,4 @@ name="bcfg2".../>`` will *not* match a Service named ``bcfg2-server``;
 you'd have to explicitly specify ``<Service name="bcfg2.*".../>``.
 
 Note that only one Rule can apply to any abstract entry, so you cannot
-specify multiple regexs to match the same rule.
+specify multiple regexes to match the same rule.
