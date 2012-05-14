@@ -237,13 +237,19 @@ For ``sudoers``, a very simple validator is::
 
 This uses the ``visudo`` command's built-in validation.
 
-.. note:
+If you wish to disable validation, this can be done with the following
+setting in ``bcfg2.conf``::
 
-    Before 1.3 is released, it will be possible to disable validation
-    in the configuration, but enable it for ``bcfg2-test``.  This is
-    recommended for heavily-used servers, since running an external
-    command is fairly resource intensive and could quickly exhaust the
-    file descriptors of a server.
+  [cfg]
+  validation=no
+
+If you have a very large number of validators, you may wish to disable
+validation by default to avoid slowing down the generation of
+configurations on the server, and use ``bcfg2-test`` (for instance, as
+a post-commit hook or as part of a code review process) to run
+validation.  You can do this by setting ``validation=no`` in
+``bcfg2.conf`` as described above, and then calling ``bcfg2-test``
+with the ``--cfg-validation`` flag.
 
 File permissions
 ================
