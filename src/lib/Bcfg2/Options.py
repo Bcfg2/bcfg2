@@ -432,7 +432,7 @@ class OptionParser(OptionSet):
             # we haven't parsed options yet, or CFILE wasn't included
             # in the options
             return
-        if os.path.basename(self['configfile']) != event.filename:
+        if event.filename != self['configfile']:
             print("Got event for unknown file: %s" % event.filename)
             return
         if event.code2str() == 'deleted':
