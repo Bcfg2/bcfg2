@@ -6,11 +6,10 @@ import copy
 import fcntl
 import lxml.etree
 import os
-import os.path
 import socket
 import sys
 import time
-
+import Bcfg2.Server
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 
@@ -74,7 +73,8 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.SingleXMLFileBacked):
     def load_xml(self):
         """Load changes from XML"""
         try:
-            xdata = lxml.etree.parse(os.path.join(self.basedir, self.basefile))
+            xdata = lxml.etree.parse(os.path.join(self.basedir, self.basefile),
+                                     parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             self.logger.error('Failed to parse %s' % self.basefile)
             return
@@ -145,7 +145,8 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.SingleXMLFileBacked):
             for included in self.extras:
                 try:
                     xdata = lxml.etree.parse(os.path.join(self.basedir,
-                                                          included))
+                                                          included),
+                                             parser=Bcfg2.Server.XMLParser)
                     cli = xdata.xpath(xpath)
                     if len(cli) > 0:
                         return {'filename': os.path.join(self.basedir,
@@ -282,7 +283,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def get_groups(self):
         '''return groups xml tree'''
-        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"))
+        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"),
+                                       parser=Bcfg2.Server.XMLParser)
         root = groups_tree.getroot()
         return root
 
@@ -792,7 +794,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         def include_group(group):
             return not only_client or group in clientmeta.groups
 
-        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"))
+        groups_tree = lxml.etree.parse(os.path.join(self.data, "groups.xml"),
+                                       parser=Bcfg2.Server.XMLParser)
         try:
             groups_tree.xinclude()
         except lxml.etree.XIncludeError:

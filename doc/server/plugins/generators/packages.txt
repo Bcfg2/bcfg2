@@ -137,6 +137,8 @@ All metadata processing can be disabled as well::
     [packages]
     metadata=0
 
+This setting implies disabling the resolver.
+
 Blacklisting faulty dependencies
 --------------------------------
 
@@ -431,10 +433,11 @@ Configuring the Yum Helper
 Due to poor memory management by the Yum API, the long-lived
 bcfg2-server process uses an external short-lived helper,
 ``bcfg2-yum-helper``, to do the actual Yum API calls for native yum
-library support. By default, Bcfg2 looks for this helper at
-``/usr/sbin/bcfg2-yum-helper``. If you have installed the helper
-elsewhere, you will need to configure that location with the
-``helper`` option in the ``[yum]`` section, e.g.::
+library support.  By default, Bcfg2 looks for this helper in
+``$PATH``, or, failing that, at ``/usr/sbin/bcfg2-yum-helper``.  If
+you have installed the helper elsewhere, you will need to configure
+that location with the ``helper`` option in the ``[yum]`` section,
+e.g.::
 
     [yum]
     use_yum_libraries = 1
@@ -650,10 +653,11 @@ It understands the following directives:
 * ``resolver``: Enable dependency resolution. Default is ``1``
   (true). For historical reasons, this also accepts "enabled" and
   "disabled".
-* ``metadata``: Enable metadata processing. Default is ``1``
-  (true). For historical reasons, this also accepts "enabled" and
-  "disabled".
-* ``yum_config``: The path at which to generate Yum configs. No
+* ``metadata``: Enable metadata processing.  Default is ``1``
+  (true). If ``metadata`` is disabled, it's implied that ``resolver``
+  is also disabled.  For historical reasons, this also accepts
+  "enabled" and "disabled".
+* ``yum_config``: The path at which to generate Yum configs.  No
   default.
 * ``apt_config``: The path at which to generate APT configs. No
   default.

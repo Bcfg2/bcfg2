@@ -105,10 +105,24 @@ class YumCollection(Collection):
         if has_pulp and self.has_pulp_sources:
             _setup_pulp(self.setup)
 
+        self._helper = None
+
     @property
     def helper(self):
-        return self.setup.cfp.get("packages:yum", "helper",
-                                  default="/usr/sbin/bcfg2-yum-helper")
+        try:
+            return self.config.get("yum", "helper")
+        except:
+            pass
+
+        if not self._helper:
+            # first see if bcfg2-yum-helper is in PATH
+            try:
+                Popen(['bcfg2-yum-helper'],
+                      stdin=PIPE, stdout=PIPE, stderr=PIPE).wait()
+                self._helper = 'bcfg2-yum-helper'
+            except OSError:
+                self._helper = "/usr/sbin/bcfg2-yum-helper"
+        return self._helper
 
     @property
     def use_yum(self):

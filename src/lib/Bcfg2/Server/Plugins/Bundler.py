@@ -6,7 +6,7 @@ import os
 import os.path
 import re
 import sys
-
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
 try:
@@ -51,7 +51,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def template_dispatch(self, name):
-        bundle = lxml.etree.parse(name)
+        bundle = lxml.etree.parse(name,
+                                  parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
         if name.endswith('.xml'):
             if have_genshi and \

@@ -42,14 +42,16 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         if event.filename.endswith('.xml'):
             if action in ['exists', 'created', 'changed']:
                 if event.filename.endswith('key.xml'):
-                    key_spec = dict(list(lxml.etree.parse(epath).find('Key').items()))
+                    key_spec = dict(list(lxml.etree.parse(epath,
+                                                          parser=Bcfg2.Server.XMLParser).find('Key').items()))
                     self.key_specs[ident] = {
                         'bits': key_spec.get('bits', 2048),
                         'type': key_spec.get('type', 'rsa')
                     }
                     self.Entries['Path'][ident] = self.get_key
                 elif event.filename.endswith('cert.xml'):
-                    cert_spec = dict(list(lxml.etree.parse(epath).find('Cert').items()))
+                    cert_spec = dict(list(lxml.etree.parse(epath,
+                                                           parser=Bcfg2.Server.XMLParser).find('Cert').items()))
                     ca = cert_spec.get('ca', 'default')
                     self.cert_specs[ident] = {
                         'ca': ca,

@@ -7,7 +7,7 @@ import glob
 import socket
 import logging
 import lxml.etree
-
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
 LOGGER = logging.getLogger('Bcfg2.Plugins.NagiosGen')
@@ -84,7 +84,8 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
             LOGGER.warn("Parsing deprecated NagiosGen/parents.xml. "
                         "Update to the new-style config with "
                         "nagiosgen-convert.py.")
-            parents = lxml.etree.parse(pfile)
+            parents = lxml.etree.parse(pfile,
+                                       parser=Bcfg2.Server.XMLParser)
             for el in parents.xpath("//Depend[@name='%s']" % metadata.hostname):
                 if 'parent' in xtra:
                     xtra['parent'] += "," + el.get("on")

@@ -45,6 +45,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     @property
     def disableResolver(self):
+        if self.disableMetaData:
+            # disabling metadata without disabling the resolver Breaks
+            # Things
+            return True
         try:
             return not self.core.setup.cfp.getboolean("packages", "resolver")
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):

@@ -1,4 +1,5 @@
 import lxml.etree
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import glob
 import os
@@ -16,7 +17,8 @@ class BBfile(Bcfg2.Server.Plugin.XMLFileBacked):
         """Build data into an xml object."""
 
         try:
-            self.data = lxml.etree.XML(self.data)
+            self.data = lxml.etree.XML(self.data,
+                                       parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             Bcfg2.Server.Plugin.logger.error("Failed to parse %s" % self.name)
             return
