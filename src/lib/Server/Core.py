@@ -17,6 +17,7 @@ except ImportError:
 
 from Bcfg2.Component import Component, exposed
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
+import Bcfg2.Server
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugins.Metadata
 # Compatibility imports
@@ -413,7 +414,8 @@ class Core(Component):
         # clear dynamic groups
         self.metadata.cgroups[meta.hostname] = []
         try:
-            xpdata = lxml.etree.XML(probedata.encode('utf-8'))
+            xpdata = lxml.etree.XML(probedata.encode('utf-8'),
+                                    parser=Bcfg2.Server.XMLParser)
         except:
             self.logger.error("Failed to parse probe data from client %s" % \
                               (address[0]))
@@ -462,7 +464,8 @@ class Core(Component):
     @exposed
     def RecvStats(self, address, stats):
         """Act on statistics upload."""
-        sdata = lxml.etree.XML(stats.encode('utf-8'))
+        sdata = lxml.etree.XML(stats.encode('utf-8'),
+                               parser=Bcfg2.Server.XMLParser)
         client = self.metadata.resolve_client(address)
         self.process_statistics(client, sdata)
         return "<ok/>"

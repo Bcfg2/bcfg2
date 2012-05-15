@@ -2,6 +2,8 @@ import time
 import lxml.etree
 import operator
 import re
+import os
+import Bcfg2.Server
 
 try:
     import json
@@ -93,7 +95,8 @@ class ProbeData(object):
     def xdata(self):
         if self._xdata is None:
             try:
-                self._xdata = lxml.etree.XML(self.data)
+                self._xdata = lxml.etree.XML(self.data,
+                                             parser=Bcfg2.Server.XMLParser)
             except lxml.etree.XMLSyntaxError:
                 pass
         return self._xdata
@@ -221,7 +224,8 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
 
     def load_data(self):
         try:
-            data = lxml.etree.parse(self.data + '/probed.xml').getroot()
+            data = lxml.etree.parse(os.path.join(self.data, 'probed.xml'),
+                                    parser=Bcfg2.Server.XMLParser).getroot()
         except:
             self.logger.error("Failed to read file probed.xml")
             return

@@ -11,6 +11,7 @@ import errno
 import binascii
 import lxml.etree
 import Bcfg2.Options
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
 probecode = """#!/usr/bin/env python
@@ -104,7 +105,9 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                                   (data.get('name'), metadata.hostname))
             else:
                 try:
-                    self.write_data(lxml.etree.XML(data.text), metadata)
+                    self.write_data(lxml.etree.XML(data.text,
+                                                   parser=Bcfg2.Server.XMLParser),
+                                    metadata)
                 except lxml.etree.XMLSyntaxError:
                     # if we didn't get XML back from the probe, assume
                     # it's an error message

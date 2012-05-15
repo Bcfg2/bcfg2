@@ -8,7 +8,7 @@ import logging
 import copy
 import sys
 import os.path
-
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Plugins.TGenshi
 
@@ -29,7 +29,8 @@ class SGenshiTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
         try:
             stream = self.template.generate(metadata=metadata).filter( \
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
-            data = lxml.etree.XML(stream.render('xml', strip_whitespace=False))
+            data = lxml.etree.XML(stream.render('xml', strip_whitespace=False),
+                                  parser=Bcfg2.Server.XMLParser)
             bundlename = os.path.splitext(os.path.basename(self.name))[0]
             bundle = lxml.etree.Element('Bundle', name=bundlename)
             for item in self.Match(metadata, data):
