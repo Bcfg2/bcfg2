@@ -10,6 +10,7 @@ import posixpath
 import re
 import sys
 import threading
+import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
 from lxml.etree import XML, XMLSyntaxError
@@ -256,7 +257,9 @@ class ThreadedStatistics(Statistics,
                     if self.terminate.isSet():
                         return False
 
-                self.work_queue.put_nowait((metadata, lxml.etree.fromstring(pdata)))
+                self.work_queue.put_nowait((metadata,
+                                            lxml.etree.XML(pdata,
+                                                           parser=Bcfg2.Server.XMLParser)))
             except Full:
                 self.logger.warning("Queue.Full: Failed to load queue data")
                 break
@@ -597,7 +600,8 @@ class SingleXMLFileBacked(XMLFileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            self.xdata = lxml.etree.XML(self.data, base_url=self.name)
+            self.xdata = lxml.etree.XML(self.data, base_url=self.name,
+                                        parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
             logger.error("Failed to parse %s: %s" % (self.name, err))
@@ -763,7 +767,7 @@ class XMLSrc(XMLFileBacked):
             return
         self.items = {}
         try:
-            xdata = lxml.etree.XML(data)
+            xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse file %s" % (self.name))
             return
