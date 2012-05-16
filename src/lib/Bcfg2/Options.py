@@ -1,10 +1,11 @@
 """Option parsing library for utilities."""
 
-import getopt
 import re
 import os
 import sys
+import copy
 import shlex
+import getopt
 import Bcfg2.Client.Tools
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
@@ -425,7 +426,7 @@ class OptionParser(OptionSet):
         self.Bootstrap = OptionSet([('configfile', CFILE)], quiet=True)
         self.Bootstrap.parse(sys.argv[1:], do_getopt=False)
         OptionSet.__init__(self, args, configfile=self.Bootstrap['configfile'])
-        self.optinfo = args
+        self.optinfo = copy.copy(args)
 
     def HandleEvent(self, event):
         if 'configfile' not in self or not isinstance(self['configfile'], str):
@@ -451,3 +452,10 @@ class OptionParser(OptionSet):
         self.do_getopt = do_getopt
         OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
 
+    def add_option(self, name, opt):
+        self[name] = opt
+        self.optinfo[name] = opt
+
+    def update(self, optdict):
+        dict.update(self, optdict)
+        self.optinfo.update(optdict)

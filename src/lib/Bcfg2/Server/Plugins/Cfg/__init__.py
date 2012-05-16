@@ -385,7 +385,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         
         SETUP = core.setup
         if 'validate' not in SETUP:
-            SETUP['validate'] = Bcfg2.Options.CFG_VALIDATION
+            SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
             SETUP.reparse()
 
     def AcceptChoices(self, entry, metadata):
