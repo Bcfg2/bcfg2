@@ -13,8 +13,6 @@ import threading
 import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
-from lxml.etree import XML, XMLSyntaxError
-
 import Bcfg2.Options
 
 # py3k compatibility
@@ -574,8 +572,9 @@ class XMLFileBacked(FileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            self.xdata = XML(self.data)
-        except XMLSyntaxError:
+            self.xdata = lxml.etree.XML(self.data,
+                                        parser=Bcfg2.Server.XMLParser)
+        except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse %s" % (self.name))
             return
         self.entries = self.xdata.getchildren()
