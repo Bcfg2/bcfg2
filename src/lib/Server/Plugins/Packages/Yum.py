@@ -4,7 +4,6 @@ import time
 import copy
 import glob
 import socket
-import random
 import logging
 import threading
 import lxml.etree

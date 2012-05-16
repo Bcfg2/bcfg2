@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import base64
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
@@ -147,12 +146,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 if match:
                     name = match.group(1)
                     break
-            if name is None:
-                # couldn't figure out the name from the URL or URL map
-                # (which probably means its a screwy URL), so we just
-                # generate a random one
-                name = base64.b64encode(os.urandom(16))[:-2]
-            rname = "%s-%s" % (self.groups[0], name)
+            if name is not None:
+                rname = "%s-%s" % (self.groups[0], name)
+            else:
+                rname = self.groups[0]
         # see yum/__init__.py in the yum source, lines 441-449, for
         # the source of this regex.  yum doesn't like anything but
         # string.ascii_letters, string.digits, and [-_.:].  There
