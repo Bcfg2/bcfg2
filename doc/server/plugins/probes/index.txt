@@ -211,7 +211,7 @@ look something like:
         <FileProbe name="/etc/blah.conf" update="true"
       </Group>
       <Client name="bar.example.com">
-        <FileProbe name="/var/lib/bar.gz" base64="true"/>
+        <FileProbe name="/var/lib/bar.gz" encoding="base64"/>
       </Client>
     </FileProbes>
 
