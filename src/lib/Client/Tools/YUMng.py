@@ -490,6 +490,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 _POs = POs
             if len(_POs) == 0:
                 # Package (name, arch) not installed
+                entry.set('current_exists', 'false')
                 self.logger.debug("  %s is not installed" % nevraString(nevra))
                 stat['installed'] = False
                 package_fail = True
@@ -520,6 +521,12 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
+                entry.set('current_version', "%s-%s.%s" % (POs[0]['version'],
+                                                           POs[0]['release'],
+                                                           POs[0]['arch']))
+                entry.set('version', "%s-%s.%s" % (nevra['version'],
+                                                   nevra['release'],
+                                                   nevra['arch']))
                 self.logger.info("  %s: Wrong version installed.  "
                                  "Want %s, but have %s" % (entry.get("name"),
                                                            nevraString(nevra),
