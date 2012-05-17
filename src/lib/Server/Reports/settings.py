@@ -43,6 +43,9 @@ DATABASES = {
     }
 }
 
+if db_engine == 'ibm_db_django':
+    DATABASES['default']['ENGINE'] = db_engine
+
 if db_engine != 'sqlite3':
     DATABASES['default']['USER'] =  c.get('statistics', 'database_user')
     DATABASES['default']['PASSWORD'] = c.get('statistics', 'database_password')
