@@ -178,8 +178,8 @@ With the keys specified thusly, Packages will include the keys in the
 generated yum config file, and will ensure that the keys are imported
 on the client.
 
-There is no need to specify ``<GPGKey>`` tags for :ref:``Pulp sources
-<pulp-source-support>``; that data is pulled directly from the Pulp
+There is no need to specify ``<GPGKey>`` tags for :ref:`Pulp sources
+<pulp-source-support>`; that data is pulled directly from the Pulp
 REST API.
 
 .. _packages-exampleusage:
@@ -243,7 +243,7 @@ Yum sources can be similarly specified::
 For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
 
-:ref:``Pulp sources <pulp-source-support>`` are very simple to specify
+:ref:`Pulp sources <pulp-source-support>` are very simple to specify
 due to the amount of data that can be queried from Pulp itself::
 
     <Sources>
