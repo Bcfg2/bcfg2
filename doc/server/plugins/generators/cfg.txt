@@ -163,6 +163,14 @@ An encrypted file should end with ``.crypt``, e.g.::
 
     Cfg/etc/foo.conf
     Cfg/etc/foo.conf/foo.conf.crypt
+    Cfg/etc/foo.conf/foo.conf.G10_foo.crypt
+
+Encrypted Genshi or Cheetah templates can have the extensions in
+either order, e.g.::
+
+    Cfg/etc/foo.conf/foo.conf.crypt.genshi
+    Cfg/etc/foo.conf/foo.conf.G10_foo.genshi.crypt
+    Cfg/etc/foo.conf/foo.conf.H_bar.example.com.crypt.cheetah
 
 To encrypt a file, you can run::
 
@@ -173,12 +181,7 @@ you can remove the plaintext version.
 
 To decrypt a file, you can run::
 
-    
-
-.. note::
-
-    It is not currently possible to encrypt Genshi or Cheetah
-    templates.
+    openssl enc -d -aes-256-cbc -k <passphrase> -in foo.conf.crypt -out foo.conf -a
 
 Configuring Encryption
 ----------------------

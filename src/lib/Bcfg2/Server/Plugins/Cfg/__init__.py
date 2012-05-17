@@ -287,6 +287,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 logger.error("You need to specify base64 encoding for %s." %
                              entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            except TypeError:
+                # data is already unicode; newer versions of Cheetah
+                # seem to return unicode
+                pass
 
         if data:
             entry.text = data

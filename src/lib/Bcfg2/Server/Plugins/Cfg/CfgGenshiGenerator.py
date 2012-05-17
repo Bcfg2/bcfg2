@@ -23,10 +23,12 @@ def removecomment(stream):
 
 class CfgGenshiGenerator(CfgGenerator):
     __extensions__ = ['genshi']
+    __loader_cls__ = TemplateLoader
 
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
-        self.loader = TemplateLoader()
+        self.loader = self.__loader_cls__()
+        self.template = None
         if not have_genshi:
             msg = "Cfg: Genshi is not available: %s" % entry.get("name")
             logger.error(msg)

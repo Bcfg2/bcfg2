@@ -6,8 +6,7 @@ from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 logger = logging.getLogger(__name__)
 
 try:
-    import Cheetah.Template
-    import Cheetah.Parser
+    from Cheetah.Template import Template
     have_cheetah = True
 except ImportError:
     have_cheetah = False
@@ -25,9 +24,8 @@ class CfgCheetahGenerator(CfgGenerator):
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
     def get_data(self, entry, metadata):
-        template = Cheetah.Template.Template(self.data,
-                                             compilerSettings=self.settings)
+        template = Template(self.data, compilerSettings=self.settings)
         template.metadata = metadata
         template.path = entry.get('realname', entry.get('name'))
-        template.source_path = self.path
+        template.source_path = self.name
         return template.respond()

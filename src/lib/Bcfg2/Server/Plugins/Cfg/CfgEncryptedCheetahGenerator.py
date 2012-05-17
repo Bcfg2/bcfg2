@@ -11,4 +11,4 @@ class CfgEncryptedCheetahGenerator(CfgCheetahGenerator, CfgEncryptedGenerator):
         CfgEncryptedGenerator.handle_event(self, event)
 
     def get_data(self, entry, metadata):
-        CfgCheetahGenerator.get_data(self, entry, metadata)
+        return CfgCheetahGenerator.get_data(self, entry, metadata)

@@ -18,12 +18,16 @@ def passphrases():
         return dict()
 
 def decrypt(crypted):
+    if not have_crypto:
+        msg = "Cfg: M2Crypto is not available: %s" % entry.get("name")
+        logger.error(msg)
+        raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
     for passwd in passphrases().values():
         try:
             return ssl_decrypt(crypted, passwd)
         except EVPError:
             pass
-    raise EVPError("Failed to decrypt %s" % self.name)
+    raise EVPError("Failed to decrypt")
 
 class CfgEncryptedGenerator(CfgGenerator):
     __extensions__ = ["crypt"]
@@ -49,9 +53,9 @@ class CfgEncryptedGenerator(CfgGenerator):
         try:
             self.data = decrypt(crypted)
         except EVPError:
-            err = sys.exc_info()[1]
-            logger.error(err)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(err)
+            msg = "Failed to decrypt %s" % self.name
+            logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
     def get_data(self, entry, metadata):
         if self.data is None:
