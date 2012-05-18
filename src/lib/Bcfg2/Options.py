@@ -150,6 +150,7 @@ class OptionSet(dict):
         self.hm = self.buildHelpMessage()
         if 'configfile' in kwargs:
             self.cfile = kwargs['configfile']
+            os.environ['BCFG2_CONFIG_FILE'] = self.cfile
         else:
             self.cfile = DEFAULT_CONFIG_LOCATION
         self.cfp = DefaultConfigParser()
