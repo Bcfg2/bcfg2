@@ -169,6 +169,9 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         else:
             return self.__class__.__name__
 
+    def __repr__(self):
+        return str(self)
+
     def get_urls(self):
         return []
     urls = property(get_urls)

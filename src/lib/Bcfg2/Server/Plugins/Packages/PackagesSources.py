@@ -106,7 +106,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         return "PackagesSources: %s" % repr(self.entries)
 
     def __str__(self):
-        return "PackagesSources: %s" % str(self.entries)
+        return "PackagesSources: %s sources" % len(self.entries)
 
     def __len__(self):
         return len(self.entries)
