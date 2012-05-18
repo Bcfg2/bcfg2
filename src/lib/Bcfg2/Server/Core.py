@@ -67,17 +67,28 @@ class Core(Component):
                  filemonitor='default', start_fam_thread=False):
         Component.__init__(self)
         self.datastore = repo
-        if filemonitor not in Bcfg2.Server.FileMonitor.available:
+
+        try:
+            fm = Bcfg2.Server.FileMonitor.available[filemonitor]
+        except KeyError:
             logger.error("File monitor driver %s not available; "
                          "forcing to default" % filemonitor)
-            filemonitor = 'default'
+            fm = Bcfg2.Server.FileMonitor.available['default']
+        famargs = dict(ignore=[], debug=False)
+        if 'ignore' in setup:
+            famargs['ignore'] = setup['ignore']
+        if 'debug' in setup:
+            famargs['debug'] = setup['debug']
+        elif 'event debug' in setup:
+            famargs['debug'] = setup['event debug']
         try:
-            self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
+            self.fam = fm(**famargs)
         except IOError:
             logger.error("Failed to instantiate fam driver %s" % filemonitor,
                          exc_info=1)
-            raise CoreInitError("failed to instantiate fam driver (used %s)" % \
+            raise CoreInitError("Failed to instantiate fam driver (used %s)" %
                                 filemonitor)
+
         self.pubspace = {}
         self.cfile = cfile
         self.cron = {}
@@ -198,6 +209,7 @@ class Core(Component):
         """Shutting down the plugins."""
         if not self.terminate.isSet():
             self.terminate.set()
+            self.fam.shutdown()
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
 

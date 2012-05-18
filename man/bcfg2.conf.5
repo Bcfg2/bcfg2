@@ -35,7 +35,13 @@ using the 'bcfg2-admin init' command.
 .TP
 .B filemonitor
 The file monitor used to watch for changes in the repository.
-Values of 'gamin', 'fam', or 'pseudo' are valid.
+Values of 'inotify', 'gamin', 'fam', or 'pseudo' are valid.  The
+default is the best available monitor.
+
+.TP
+.B ignore_files
+A comma-separated list of globs that should be ignored by the file
+monitor.  Default: '*~,.#*,*#,*.swp,SCCS,.svn,4913,.gitignore'
 
 .TP
 .B listen_all
@@ -133,7 +139,7 @@ administrator supervision is available. (0.9.6 and later)
 \(bu
 .B Deps
 The Deps plugin allows you to make a series of assertions like
-"Package X requires Package Y (and optionally also Package Z etc.)
+"Package X requires Package Y (and optionally also Package Z etc.)"
 
 \(bu
 .B Editor
@@ -440,6 +446,11 @@ sqlite
 .B database
 The name of the database to use for statistics data.
 eg: $REPOSITORY_DIR/etc/bcfg2.sqlite
+
+.SH PLUGIN-SPECIFIC OPTIONS
+
+Many plugins specify their own options in bcfg2.conf; see the online
+documentation about each plugin for more information on these.
 
 .SH SEE ALSO
 .BR bcfg2(1),

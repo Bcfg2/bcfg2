@@ -44,6 +44,7 @@ def main():
         'plugins': Bcfg2.Options.SERVER_PLUGINS,
         'event debug': Bcfg2.Options.DEBUG,
         'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+        'ignore': Bcfg2.Options.SERVER_FAM_IGNORE,
         'password': Bcfg2.Options.SERVER_PASSWORD,
         'encoding': Bcfg2.Options.ENCODING,
         }

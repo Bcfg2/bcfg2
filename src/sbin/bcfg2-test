@@ -70,7 +70,8 @@ def main():
         'password': Bcfg2.Options.SERVER_PASSWORD,
         'verbose': Bcfg2.Options.VERBOSE,
         'noseopts': Bcfg2.Options.TEST_NOSEOPTS,
-        'ignore': Bcfg2.Options.TEST_IGNORE,
+        'ignore': Bcfg2.Options.SERVER_FAM_IGNORE,
+        'test_ignore': Bcfg2.Options.TEST_IGNORE,
         'validate': Bcfg2.Options.CFG_VALIDATION,
         }
     setup = Bcfg2.Options.OptionParser(optinfo)
@@ -92,7 +93,7 @@ def main():
         )
 
     ignore = dict()
-    for entry in setup['ignore']:
+    for entry in setup['test_ignore']:
         tag, name = entry.split(":")
         try:
             ignore[tag].append(name)

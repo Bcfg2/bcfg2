@@ -648,6 +648,7 @@ if __name__ == '__main__':
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'mconnect': Bcfg2.Options.SERVER_MCONNECT,
             'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
+            'ignore': Bcfg2.Options.SERVER_FAM_IGNORE,
             'location': Bcfg2.Options.SERVER_LOCATION,
             'static': Bcfg2.Options.SERVER_STATIC,
             'key': Bcfg2.Options.SERVER_KEY,

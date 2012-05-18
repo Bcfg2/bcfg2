@@ -480,8 +480,8 @@ class DirectoryBacked(object):
             return
 
         if event.requestID not in self.handles:
-            logger.warn("Got %s event with unknown handle (%s) for %s"
-                        % (action, event.requestID, abspath))
+            logger.warn("Got %s event with unknown handle (%s) for %s" %
+                        (action, event.requestID, event.filename))
             return
 
         # Calculate the absolute and relative paths this event refers to
@@ -522,21 +522,13 @@ class DirectoryBacked(object):
                     # didn't know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    logger.warn("Got %s event for unexpected dir %s" % (action,
-                                                                        abspath))
+                    logger.warn("Got %s event for unexpected dir %s" %
+                                (action, abspath))
                     self.add_directory_monitor(relpath)
             else:
-                logger.warn("Got unknown dir event %s %s %s" % (event.requestID,
-                                                                event.code2str(),
-                                                                abspath))
+                logger.warn("Got unknown dir event %s %s %s" %
+                            (event.requestID, event.code2str(), abspath))
         else:
-            # Deal with events for non-directories
-            if ((event.filename[-1] == '~') or
-                (event.filename[:2] == '.#') or
-                (event.filename[-4:] == '.swp') or
-                (event.filename in ['SCCS', '.svn', '4913']) or
-                (not self.patterns.match(event.filename))):
-                return
             if action in ['exists', 'created']:
                 self.add_entry(relpath, event)
             elif action == 'changed':
@@ -547,13 +539,13 @@ class DirectoryBacked(object):
                     # know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    logger.warn("Got %s event for unexpected file %s" % (action,
-                                                                         abspath))
+                    logger.warn("Got %s event for unexpected file %s" %
+                                (action,
+                                 abspath))
                     self.add_entry(relpath, event)
             else:
-                logger.warn("Got unknown file event %s %s %s" % (event.requestID,
-                                                                 event.code2str(),
-                                                                 abspath))
+                logger.warn("Got unknown file event %s %s %s" %
+                            (event.requestID, event.code2str(), abspath))
 
 
 class XMLFileBacked(FileBacked):
@@ -583,16 +575,18 @@ class XMLFileBacked(FileBacked):
         return iter(self.entries)
 
     def __str__(self):
-        return "%s: %s" % (self.name, lxml.etree.tostring(self.xdata))
+        return "%s at %s" % (self.__class__.__name__, self.name)
 
 
 class SingleXMLFileBacked(XMLFileBacked):
     """This object is a coherent cache for an independent XML file."""
-    def __init__(self, filename, fam):
+    def __init__(self, filename, fam, should_monitor=True):
         XMLFileBacked.__init__(self, filename)
         self.extras = []
         self.fam = fam
-        self.fam.AddMonitor(filename, self)
+        self.should_monitor = should_monitor
+        if should_monitor:
+            self.fam.AddMonitor(filename, self)
 
     def _follow_xincludes(self, fname=None, xdata=None):
         ''' follow xincludes, adding included files to fam and to
@@ -614,8 +608,9 @@ class SingleXMLFileBacked(XMLFileBacked):
                 self._follow_xincludes(fname=fpath)
 
     def add_monitor(self, fpath, fname):
-        self.fam.AddMonitor(fpath, self)
-        self.extras.append(fname)
+        if self.should_monitor:
+            self.fam.AddMonitor(fpath, self)
+            self.extras.append(fname)
 
     def Index(self):
         """Build local data structures."""
@@ -1207,7 +1202,7 @@ class GroupSpool(Plugin, Generator):
         name = self.data + relative
         if relative not in list(self.handles.values()):
             if not posixpath.isdir(name):
-                print("Failed to open directory %s" % (name))
+                self.logger.error("Failed to open directory %s" % name)
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.handles[reqid] = relative

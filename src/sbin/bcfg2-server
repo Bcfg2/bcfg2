@@ -26,6 +26,7 @@ if __name__ == '__main__':
         'plugins'   : Bcfg2.Options.SERVER_PLUGINS,
         'password'  : Bcfg2.Options.SERVER_PASSWORD,
         'fm'        : Bcfg2.Options.SERVER_FILEMONITOR,
+        'ignore'    : Bcfg2.Options.SERVER_FAM_IGNORE,
         'key'       : Bcfg2.Options.SERVER_KEY,
         'cert'      : Bcfg2.Options.SERVER_CERT,
         'ca'        : Bcfg2.Options.SERVER_CA,
