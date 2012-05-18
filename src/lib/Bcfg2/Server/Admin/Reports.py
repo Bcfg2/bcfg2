@@ -95,8 +95,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "    scrub                Scrub the database for duplicate reasons and orphaned entries\n"
                  "    update               Apply any updates to the reporting database\n"
                  "\n"
-                 "  Django commands:\n    "
-                 "\n    ".join(django_commands))
+                 "  Django commands:\n    " \
+                 + "\n    ".join(django_commands))
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
