@@ -152,7 +152,19 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         global PROCESSORS
         if PROCESSORS is None:
             PROCESSORS = []
-            for submodule in pkgutil.walk_packages(path=__path__):
+            if hasattr(pkgutil, 'walk_packages'):
+                submodules = pkgutil.walk_packages(path=__path__)
+            else:
+                #python 2.4
+                import glob
+                submodules = []
+                for path in __path__:
+                    for submodule in glob.glob("%s/*.py" % path):
+                        mod = '.'.join(submodule.split("/")[-1].split('.')[:-1])
+                        if mod != '__init__':
+                            submodules.append((None, mod, True))
+
+            for submodule in submodules:
                 module = getattr(__import__("%s.%s" %
                                             (__name__,
                                              submodule[1])).Server.Plugins.Cfg,
