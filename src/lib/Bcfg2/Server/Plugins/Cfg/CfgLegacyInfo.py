@@ -7,6 +7,10 @@ logger = logging.getLogger(__name__)
 class CfgLegacyInfo(CfgInfo):
     __basenames__ = ['info', ':info']
 
+    def __init__(self, path):
+        CfgInfo.__init__(self, path)
+        self.path = path
+
     def bind_info_to_entry(self, entry, metadata):
         self._set_info(entry, self.metadata)
 
