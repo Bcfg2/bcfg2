@@ -21,7 +21,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), libxml2-utils (>= 2.6.23), lsb-base (>= 3.1-9), ucf, bcfg2 (= ${binary:Version}), openssl, python-ssl | python2.6 | python3.0 | python3.1 | python3.2, python-gamin
+Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), libxml2-utils (>= 2.6.23), lsb-base (>= 3.1-9), ucf, bcfg2 (= ${binary:Version}), openssl, python-ssl | python2.6 | python3.0 | python3.1 | python3.2, python-pyinotify | python-gamin
 XB-Python-Version: >= 2.4
 Recommends: graphviz, patch
 Suggests: python-cheetah, python-genshi (>= 0.4.4), python-profiler, python-sqlalchemy (>= 0.5.0), python-django, mail-transport-agent, bcfg2-doc (= ${binary:Version})

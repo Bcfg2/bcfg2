@@ -24,9 +24,8 @@ DEPEND="dev-python/setuptools
 RDEPEND="app-portage/gentoolkit
 	genshi? ( dev-python/genshi )
 	server? (
-		virtual/fam
 		dev-python/lxml
-		dev-libs/libgamin[python] )"
+		|| ( dev-python/pyinotify dev-libs/libgamin[python] ) )"
 
 PYTHON_MODNAME="Bcfg2"
 
