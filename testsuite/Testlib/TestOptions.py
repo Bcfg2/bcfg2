@@ -4,6 +4,7 @@ import unittest
 from mock import Mock, patch
 import Bcfg2.Options
 
+
 class TestOption(unittest.TestCase):
     def test__init(self):
         self.assertRaises(Bcfg2.Options.OptionFailure,
@@ -19,18 +20,20 @@ class TestOption(unittest.TestCase):
                           Bcfg2.Options.Option,
                           'foo', False, cmd='-foo', long_arg=True)
 
-    @patch('ConfigParser.ConfigParser')
+    @patch('Bcfg2.Options.DefaultConfigParser')
     @patch('__builtin__.open')
-    def test_getCFP(self, mock_open, mock_cp):
+    def test_get(self, mock_open, mock_cp):
         mock_cp.return_value = Mock()
         o = Bcfg2.Options.Option('foo', False, cmd='-f')
-        self.assertFalse(o._Option__cfp)
-        o.getCFP()
+        self.assertFalse(o.cf)
+        c = Bcfg2.Options.DefaultConfigParser()
+        c.get('foo', False, cmd='-f')
         mock_cp.assert_any_call()
         mock_open.assert_any_call(Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
-        self.assertTrue(mock_cp.return_value.readfp.called)
-        
-    @patch('Bcfg2.Options.Option.cfp')
+        print(mock_cp.return_value.get.called)
+        self.assertTrue(mock_cp.return_value.get.called)
+
+    @patch('Bcfg2.Options.DefaultConfigParser')
     def test_parse(self, mock_cfp):
         cf = ('communication', 'password')
         o = Bcfg2.Options.Option('foo', 'test4', cmd='-F', env='TEST2',
@@ -112,13 +115,13 @@ class TestOptionParser(unittest.TestCase):
                 ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
                                              odesc='1'))]
         oset1 = Bcfg2.Options.OptionParser(opts)
-        self.assertEqual(Bcfg2.Options.Option.cfpath,
+        self.assertEqual(oset1.cfile,
                          Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
         sys.argv = ['foo', '-C', '/usr/local/etc/bcfg2.conf']
         oset2 = Bcfg2.Options.OptionParser(opts)
-        self.assertEqual(Bcfg2.Options.Option.cfpath,
+        self.assertEqual(oset2.cfile,
                          '/usr/local/etc/bcfg2.conf')
         sys.argv = []
         oset3 = Bcfg2.Options.OptionParser(opts)
-        self.assertEqual(Bcfg2.Options.Option.cfpath,
+        self.assertEqual(oset3.cfile,
                          Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
