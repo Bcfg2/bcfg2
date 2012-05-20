@@ -150,7 +150,6 @@ class OptionSet(dict):
         self.hm = self.buildHelpMessage()
         if 'configfile' in kwargs:
             self.cfile = kwargs['configfile']
-            os.environ['BCFG2_CONFIG_FILE'] = self.cfile
         else:
             self.cfile = DEFAULT_CONFIG_LOCATION
         self.cfp = DefaultConfigParser()
@@ -311,8 +310,8 @@ SERVER_FILEMONITOR = Option('Server file monitor', cf=('server', 'filemonitor'),
                             default='default', odesc='File monitoring driver')
 SERVER_FAM_IGNORE = Option('File globs to ignore',
                            cf=('server', 'ignore_files'), cook=list_split,
-                           default=['*~', '.#*', '*#', '*.swp', 'SCCS', '.svn',
-                                    '4913', '.gitignore'])
+                           default=['*~', '.#*', '*#', '*.swp', '.*.swx', 'SCCS',
+                                    '.svn', '4913', '.gitignore'])
 SERVER_LISTEN_ALL = Option('Listen on all interfaces',
                            cf=('server', 'listen_all'),
                            cmd='--listen-all',
