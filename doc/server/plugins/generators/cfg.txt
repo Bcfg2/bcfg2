@@ -211,9 +211,9 @@ passphrases in your Bcfg2 repository, so you'll want to encrypt
 ``bcfg2.conf``.  The best way to solve this is:
 
 #. On your Bcfg2 server, manually add the ``[cfg:encryption]`` section
- to ``bcfg2.conf`` and restart the Bcfg2 server.
+   to ``bcfg2.conf`` and restart the Bcfg2 server.
 #. Update ``bcfg2.conf`` in your Bcfg2 repository with the
- passphrases, and encrypt it.
+   passphrases, and encrypt it.
 
 The first (manual) step breaks the mutual dependency.
 

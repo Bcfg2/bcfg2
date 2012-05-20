@@ -648,7 +648,7 @@ Packages plugin. Any booleans in the config file accept the values
 It understands the following directives:
 
 [packages] section
-----------------
+------------------
 
 * ``resolver``: Enable dependency resolution. Default is ``1``
   (true). For historical reasons, this also accepts "enabled" and
@@ -668,7 +668,7 @@ It understands the following directives:
   Packages. Default is ``auto``.
 
 [packages:yum] section
--------------
+----------------------
 
 * ``use_yum_libraries``: Whether or not to use the :ref:`native yum
   library support <native-yum-libraries>`. Default is ``0`` (false).
@@ -681,7 +681,7 @@ along verbatim to the Yum configuration if you are using the native
 Yum library support.
 
 [packages:pulp] section
---------------
+-----------------------
 
 * ``username`` and ``password``: The username and password of a Pulp
   user that will be used to register new clients and bind them to
