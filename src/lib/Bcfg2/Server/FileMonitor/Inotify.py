@@ -5,7 +5,8 @@ import stat
 import logging
 import operator
 import pyinotify
-from Bcfg2.Server.FileMonitor import FileMonitor, Event
+from Bcfg2.Server.FileMonitor import Event
+from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,12 @@ class InotifyEvent(Event):
             self.action = self.action_map[event.mask]
 
 
-class Inotify(FileMonitor, pyinotify.ProcessEvent):
+class Inotify(Pseudo, pyinotify.ProcessEvent):
     __priority__ = 1
     mask = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY
 
     def __init__(self, ignore=None, debug=False):
-        FileMonitor.__init__(self, ignore=ignore, debug=debug)
+        Pseudo.__init__(self, ignore=ignore, debug=debug)
         self.wm = pyinotify.WatchManager()
         self.notifier = pyinotify.ThreadedNotifier(self.wm, self)
         self.notifier.start()
@@ -47,14 +48,10 @@ class Inotify(FileMonitor, pyinotify.ProcessEvent):
                     wd = watch.wd
         else:
             wd = res[path]
-        self.handles[wd] = obj
-        self.events.append(Event(wd, path, "exists"))
 
-        mode = os.stat(path)[stat.ST_MODE]
-        if stat.S_ISDIR(mode):
-            for wname in os.listdir(path):
-                self.events.append(Event(wd, wname, "exists"))
-        return wd
+        # inotify doesn't produce initial 'exists' events, so we
+        # inherit from Pseudo to produce those
+        return Pseudo.AddMonitor(self, path, obj, handleID=wd)
 
     def shutdown(self):
         self.notifier.stop()
