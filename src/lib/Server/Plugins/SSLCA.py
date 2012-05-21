@@ -115,6 +115,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         else:
             entry.text = self.entries[filename].data
 
+        entry.set("type", "file")
         if path in self.infoxml:
             Bcfg2.Server.Plugin.bind_info(entry, metadata,
                                           infoxml=self.infoxml[path])
@@ -163,6 +164,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             self.entries[filename].HandleEvent()
             entry.text = cert
 
+        entry.set("type", "file")
         if path in self.infoxml:
             Bcfg2.Server.Plugin.bind_info(entry, metadata,
                                           infoxml=self.infoxml[path])
