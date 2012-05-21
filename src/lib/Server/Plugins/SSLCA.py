@@ -23,6 +23,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     cert_specs = {}
     CAs = {}
 
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
+        self.infoxml = dict()
+
     def HandleEvent(self, event=None):
         """
         Updates which files this plugin handles based upon filesystem events.
@@ -38,7 +42,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         else:
             ident = self.handles[event.requestID][:-1]
 
-        fname = "".join([ident, '/', event.filename])
+        fname = os.path.join(ident, event.filename)
 
         if event.filename.endswith('.xml'):
             if action in ['exists', 'created', 'changed']:
@@ -70,6 +74,10 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                     cp.read(self.core.cfile)
                     self.CAs[ca] = dict(cp.items('sslca_' + ca))
                     self.Entries['Path'][ident] = self.get_cert
+                elif event.filename.endswith("info.xml"):
+                    self.infoxml[ident] = Bcfg2.Server.Plugin.InfoXML(epath,
+                                                                      noprio=True)
+                    self.infoxml[ident].HandleEvent(event)
             if action == 'deleted':
                 if ident in self.Entries['Path']:
                     del self.Entries['Path'][ident]
@@ -93,27 +101,25 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         either grabs a prexisting key hostfile, or triggers the generation
         of a new key if one doesn't exist.
         """
-        # set path type and permissions, otherwise bcfg2 won't bind the file
-        permdata = {'owner': 'root',
-                    'group': 'root',
-                    'type': 'file',
-                    'perms': '644'}
-        [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
-
         # check if we already have a hostfile, or need to generate a new key
         # TODO: verify key fits the specs
         path = entry.get('name')
-        filename = "".join([path, '/', path.rsplit('/', 1)[1],
-                            '.H_', metadata.hostname])
+        filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
+                                                   metadata.hostname))
         if filename not in list(self.entries.keys()):
             key = self.build_key(filename, entry, metadata)
             open(self.data + filename, 'w').write(key)
             entry.text = key
-            self.entries[filename] = self.__child__("%s%s" % (self.data,
-                                                              filename))
+            self.entries[filename] = self.__child__(self.data + filename)
             self.entries[filename].HandleEvent()
         else:
             entry.text = self.entries[filename].data
+
+        if path in self.infoxml:
+            Bcfg2.Server.Plugin.bind_info(entry, metadata,
+                                          infoxml=self.infoxml[path])
+        else:
+            Bcfg2.Server.Plugin.bind_info(entry, metadata)
 
     def build_key(self, filename, entry, metadata):
         """
@@ -133,38 +139,35 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         either grabs a prexisting cert hostfile, or triggers the generation
         of a new cert if one doesn't exist.
         """
-        # set path type and permissions, otherwise bcfg2 won't bind the file
-        permdata = {'owner': 'root',
-                    'group': 'root',
-                    'type': 'file',
-                    'perms': '644'}
-        [entry.attrib.__setitem__(key, permdata[key]) for key in permdata]
-
         path = entry.get('name')
-        filename = "".join([path, '/', path.rsplit('/', 1)[1],
-                            '.H_', metadata.hostname])
+        filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
+                                                   metadata.hostname))
 
         # first - ensure we have a key to work with
         key = self.cert_specs[entry.get('name')].get('key')
-        key_filename = "".join([key, '/', key.rsplit('/', 1)[1],
-                                '.H_', metadata.hostname])
+        key_filename = os.path.join(key, "%s.H_%s" % (os.path.basename(key),
+                                                      metadata.hostname))
         if key_filename not in self.entries:
             e = lxml.etree.Element('Path')
-            e.attrib['name'] = key
+            e.set('name', key)
             self.core.Bind(e, metadata)
 
         # check if we have a valid hostfile
-        if filename in list(self.entries.keys()) and self.verify_cert(filename,
-                                                                      key_filename,
-                                                                      entry):
+        if (filename in list(self.entries.keys()) and 
+            self.verify_cert(filename, key_filename, entry)):
             entry.text = self.entries[filename].data
         else:
             cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
-            self.entries[filename] = self.__child__("%s%s" % (self.data,
-                                                              filename))
+            self.entries[filename] = self.__child__(self.data + filename)
             self.entries[filename].HandleEvent()
             entry.text = cert
+
+        if path in self.infoxml:
+            Bcfg2.Server.Plugin.bind_info(entry, metadata,
+                                          infoxml=self.infoxml[path])
+        else:
+            Bcfg2.Server.Plugin.bind_info(entry, metadata)
 
     def verify_cert(self, filename, key_filename, entry):
         if self.verify_cert_against_ca(filename, entry):

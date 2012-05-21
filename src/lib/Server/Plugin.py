@@ -50,6 +50,19 @@ info_regex = re.compile( \
     'perms:(\s)*(?P<perms>\w+)|' +
     'sensitive:(\s)*(?P<sensitive>\S+)|')
 
+def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
+    for attr, val in list(default.items()):
+        entry.set(attr, val)
+    if infoxml:
+        mdata = dict()
+        infoxml.pnode.Match(metadata, mdata, entry=entry)
+        if 'Info' not in mdata:
+            msg = "Failed to set metadata for file %s" % entry.get('name')
+            logger.error(msg)
+            raise PluginExecutionError(msg)
+        for attr, val in list(mdata['Info'][None].items()):
+            entry.set(attr, val)
+
 
 class PluginInitError(Exception):
     """Error raised in cases of Plugin initialization errors."""
@@ -1074,18 +1087,7 @@ class EntrySet:
         return cmp(x.specific.prio, y.specific.prio)
 
     def bind_info_to_entry(self, entry, metadata):
-        # first set defaults from global metadata/:info
-        for key in self.metadata:
-            entry.set(key, self.metadata[key])
-        if self.infoxml:
-            mdata = {}
-            self.infoxml.pnode.Match(metadata, mdata, entry=entry)
-            if 'Info' not in mdata:
-                logger.error("Failed to set metadata for file %s" % \
-                             (entry.get('name')))
-                raise PluginExecutionError
-            [entry.attrib.__setitem__(key, value) \
-             for (key, value) in list(mdata['Info'][None].items())]
+        bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
 
     def bind_entry(self, entry, metadata):
         """Return the appropriate interpreted template from the set of available templates."""
