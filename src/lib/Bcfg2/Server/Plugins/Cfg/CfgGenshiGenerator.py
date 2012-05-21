@@ -10,6 +10,7 @@ try:
     from genshi.template import TemplateLoader, NewTextTemplate
     have_genshi = True
 except ImportError:
+    TemplateLoader = None
     have_genshi = False
 
 # snipped from TGenshi
