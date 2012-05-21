@@ -10,9 +10,8 @@ import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
 try:
-    import genshi.template
-    import genshi.template.base
-    import Bcfg2.Server.Plugins.SGenshi
+    import genshi.template.base.TemplateError
+    from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
     have_genshi = True
 except:
     have_genshi = False
@@ -54,22 +53,16 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         bundle = lxml.etree.parse(name,
                                   parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
-        if name.endswith('.xml'):
-            if have_genshi and \
-               (nsmap == {'py': 'http://genshi.edgewall.org/'}):
-                # allow for genshi bundles with .xml extensions
-                spec = Bcfg2.Server.Plugin.Specificity()
-                return Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile(name,
-                                                                        spec,
-                                                                        self.encoding)
-            else:
-                return BundleFile(name)
-        elif name.endswith('.genshi'):
+        if (name.endswith('.genshi') or
+            ('py' in nsmap and
+             nsmap['py'] == 'http://genshi.edgewall.org/')):
             if have_genshi:
                 spec = Bcfg2.Server.Plugin.Specificity()
-                return Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile(name,
-                                                                        spec,
-                                                                        self.encoding)
+                return SGenshiTemplateFile(name, spec, self.encoding)
+            else:
+                raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not available: %s" % name)
+        else:
+            return BundleFile(name)
 
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""
@@ -89,7 +82,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                 continue
             try:
                 bundleset.append(entries[0].get_xml_value(metadata))
-            except genshi.template.base.TemplateError:
+            except TemplateError:
                 t = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to template genshi bundle %s"
                                   % bundlename)

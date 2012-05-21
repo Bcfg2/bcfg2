@@ -1,6 +1,7 @@
 """Bcfg2.Server.FileMonitor provides the support for monitoring files."""
 
 import os
+import sys
 import fnmatch
 import logging
 import pkgutil
@@ -75,8 +76,9 @@ class FileMonitor(object):
         try:
             self.handles[event.requestID].HandleEvent(event)
         except:
-            logger.error("Error in handling of event for %s" %
-                         event.filename, exc_info=1)
+            err = sys.exc_info()[1]
+            logger.error("Error in handling of event for %s: %s" %
+                         (event.filename, err))
 
     def handle_event_set(self, lock=None):
         count = 1
