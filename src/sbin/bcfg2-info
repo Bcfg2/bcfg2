@@ -642,29 +642,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
-    optinfo = {
-            'configfile': Bcfg2.Options.CFILE,
-            'help': Bcfg2.Options.HELP,
-            'event debug': Bcfg2.Options.DEBUG,
-            'profile': Bcfg2.Options.CORE_PROFILE,
-            'encoding': Bcfg2.Options.ENCODING,
-            # Server options
-            'repo': Bcfg2.Options.SERVER_REPOSITORY,
-            'plugins': Bcfg2.Options.SERVER_PLUGINS,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'mconnect': Bcfg2.Options.SERVER_MCONNECT,
-            'filemonitor': Bcfg2.Options.SERVER_FILEMONITOR,
-            'ignore': Bcfg2.Options.SERVER_FAM_IGNORE,
-            'location': Bcfg2.Options.SERVER_LOCATION,
-            'static': Bcfg2.Options.SERVER_STATIC,
-            'key': Bcfg2.Options.SERVER_KEY,
-            'cert': Bcfg2.Options.SERVER_CERT,
-            'ca': Bcfg2.Options.SERVER_CA,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'protocol': Bcfg2.Options.SERVER_PROTOCOL,
-            # More options
-            'logging': Bcfg2.Options.LOGGING_FILE_PATH
-            }
+    optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
+                   mconnect=Bcfg2.Options.SERVER_MCONNECT)
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
                                         USAGE)
@@ -677,14 +658,14 @@ if __name__ == '__main__':
         prof = profile.Profile()
         loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
                             setup['password'], setup['encoding'],
-                            setup['event debug'], setup['filemonitor'],
+                            setup['debug'], setup['filemonitor'],
                             setup)
         displayTrace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
         loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
-                        setup['encoding'], setup['event debug'],
+                        setup['encoding'], setup['debug'],
                         setup['filemonitor'], setup)
 
     loop.Run(setup['args'])

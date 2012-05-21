@@ -27,10 +27,6 @@ def cb_sigint_handler(signum, frame):
     """Exit upon CTRL-C."""
     os._exit(1)
 
-DECISION_LIST = Bcfg2.Options.Option('Decision List', default=False,
-                                     cmd="--decision-list", odesc='<file>',
-                                     long_arg=True)
-
 
 class Client:
     """The main bcfg2 client class"""
@@ -38,46 +34,36 @@ class Client:
     def __init__(self):
         self.toolset = None
         self.config = None
-
-        optinfo = {
-            # 'optname': (('-a', argdesc, optdesc),
-            #                  env, cfpath, default, boolean)),
-            'verbose': Bcfg2.Options.VERBOSE,
-            'extra': Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
-            'quick': Bcfg2.Options.CLIENT_QUICK,
-            'debug': Bcfg2.Options.DEBUG,
-            'lockfile': Bcfg2.Options.LOCKFILE,
-            'drivers': Bcfg2.Options.CLIENT_DRIVERS,
-            'dryrun': Bcfg2.Options.CLIENT_DRYRUN,
-            'paranoid': Bcfg2.Options.CLIENT_PARANOID,
-            'bundle': Bcfg2.Options.CLIENT_BUNDLE,
-            'bundle-quick': Bcfg2.Options.CLIENT_BUNDLEQUICK,
-            'indep': Bcfg2.Options.CLIENT_INDEP,
-            'file': Bcfg2.Options.CLIENT_FILE,
-            'interactive': Bcfg2.Options.INTERACTIVE,
-            'cache': Bcfg2.Options.CLIENT_CACHE,
-            'profile': Bcfg2.Options.CLIENT_PROFILE,
-            'remove': Bcfg2.Options.CLIENT_REMOVE,
-            'help': Bcfg2.Options.HELP,
-            'setup': Bcfg2.Options.CFILE,
-            'server': Bcfg2.Options.SERVER_LOCATION,
-            'user': Bcfg2.Options.CLIENT_USER,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'retries': Bcfg2.Options.CLIENT_RETRIES,
-            'kevlar': Bcfg2.Options.CLIENT_KEVLAR,
-            'decision-list': DECISION_LIST,
-            'encoding': Bcfg2.Options.ENCODING,
-            'omit-lock-check': Bcfg2.Options.OMIT_LOCK_CHECK,
-            'filelog': Bcfg2.Options.LOGGING_FILE_PATH,
-            'decision': Bcfg2.Options.CLIENT_DLIST,
-            'servicemode': Bcfg2.Options.CLIENT_SERVICE_MODE,
-            'key': Bcfg2.Options.CLIENT_KEY,
-            'certificate': Bcfg2.Options.CLIENT_CERT,
-            'ca': Bcfg2.Options.CLIENT_CA,
-            'serverCN': Bcfg2.Options.CLIENT_SCNS,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
-
+        
+        optinfo = dict(extra=Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+                       quick=Bcfg2.Options.CLIENT_QUICK,
+                       lockfile=Bcfg2.Options.LOCKFILE,
+                       drivers=Bcfg2.Options.CLIENT_DRIVERS,
+                       dryrun=Bcfg2.Options.CLIENT_DRYRUN,
+                       paranoid=Bcfg2.Options.CLIENT_PARANOID,
+                       bundle=Bcfg2.Options.CLIENT_BUNDLE,
+                       bundle_quick=Bcfg2.Options.CLIENT_BUNDLEQUICK,
+                       indep=Bcfg2.Options.CLIENT_INDEP,
+                       file=Bcfg2.Options.CLIENT_FILE,
+                       interactive=Bcfg2.Options.INTERACTIVE,
+                       cache=Bcfg2.Options.CLIENT_CACHE,
+                       profile=Bcfg2.Options.CLIENT_PROFILE,
+                       remove=Bcfg2.Options.CLIENT_REMOVE,
+                       server=Bcfg2.Options.SERVER_LOCATION,
+                       user=Bcfg2.Options.CLIENT_USER,
+                       password=Bcfg2.Options.SERVER_PASSWORD,
+                       retries=Bcfg2.Options.CLIENT_RETRIES,
+                       kevlar=Bcfg2.Options.CLIENT_KEVLAR,
+                       omit_lock_check=Bcfg2.Options.OMIT_LOCK_CHECK,
+                       decision=Bcfg2.Options.CLIENT_DLIST,
+                       servicemode=Bcfg2.Options.CLIENT_SERVICE_MODE,
+                       key=Bcfg2.Options.CLIENT_KEY,
+                       certificate=Bcfg2.Options.CLIENT_CERT,
+                       ca=Bcfg2.Options.CLIENT_CA,
+                       serverCN=Bcfg2.Options.CLIENT_SCNS,
+                       timeout=Bcfg2.Options.CLIENT_TIMEOUT,
+                       decision_list=Bcfg2.Options.CLIENT_DECISION_LIST)
+        optinfo.update(CLI_COMMON_OPTIONS)
         self.setup = Bcfg2.Options.OptionParser(optinfo)
         self.setup.parse(sys.argv[1:])
 
@@ -93,10 +79,10 @@ class Client:
         Bcfg2.Logger.setup_logging('bcfg2',
                                    to_syslog=False,
                                    level=level,
-                                   to_file=self.setup['filelog'])
+                                   to_file=self.setup['logging'])
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
-        if self.setup['bundle-quick']:
+        if self.setup['bundle_quick']:
             if self.setup['bundle'] == []:
                 self.logger.error("-Q option requires -b")
                 raise SystemExit(1)
@@ -282,7 +268,7 @@ class Client:
             self.fatal_error("Server error: %s" % (self.config.text))
             return(1)
 
-        if self.setup['bundle-quick']:
+        if self.setup['bundle_quick']:
             newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
             [newconfig.append(bundle) for bundle in self.config.getchildren() if \
              bundle.tag == 'Bundle' and bundle.get('name') in self.setup['bundle']]
@@ -293,7 +279,7 @@ class Client:
                                               times, self.setup['drivers'],
                                               self.setup['dryrun'])
 
-        if not self.setup['omit-lock-check']:
+        if not self.setup['omit_lock_check']:
             #check lock here
             try:
                 lockfile = open(self.setup['lockfile'], 'w')
@@ -309,7 +295,7 @@ class Client:
         # execute the said configuration
         self.tools.Execute()
 
-        if not self.setup['omit-lock-check']:
+        if not self.setup['omit_lock_check']:
             #unlock here
             if lockfile:
                 try:
@@ -318,7 +304,7 @@ class Client:
                 except OSError:
                     self.logger.error("Failed to unlock lockfile %s" % lockfile.name)
 
-        if not self.setup['file'] and not self.setup['bundle-quick']:
+        if not self.setup['file'] and not self.setup['bundle_quick']:
             # upload statistics
             feedback = self.tools.GenerateStats()
 

@@ -258,16 +258,11 @@ PARANOID_MAX_COPIES = Option('Specify the number of paranoid copies you want',
                              default=1, cf=('paranoid', 'max_copies'),
                              odesc='<max paranoid copies>')
 OMIT_LOCK_CHECK = Option('Omit lock check', default=False, cmd='-O')
-CORE_PROFILE = Option('profile',
-                      default=False, cmd='-p', )
-FILES_ON_STDIN = Option('Operate on a list of files supplied on stdin',
-                        cmd='--stdin', default=False, long_arg=True)
+CORE_PROFILE = Option('profile', default=False, cmd='-p', )
 SCHEMA_PATH = Option('Path to XML Schema files', cmd='--schema',
                      odesc='<schema path>',
                      default="%s/share/bcfg2/schemas" % DEFAULT_INSTALL_PREFIX,
                      long_arg=True)
-REQUIRE_SCHEMA = Option("Require property files to have matching schema files",
-                        cmd="--require-schema", default=False, long_arg=True)
 
 # Metadata options
 MDATA_OWNER = Option('Default Path owner',
@@ -379,9 +374,6 @@ CLIENT_INDEP = Option('Only configure independent entries, ignore bundles', defa
                        cmd='-z')
 CLIENT_KEVLAR = Option('Run in kevlar (bulletproof) mode', default=False,
                        cmd='-k', )
-CLIENT_DLIST = Option('Run client in server decision list mode', default='none',
-                      cf=('client', 'decision'),
-                      cmd='-l', odesc='<whitelist|blacklist|none>')
 CLIENT_FILE = Option('Configure from a file rather than querying the server',
                      default=False, cmd='-f', odesc='<specification path>')
 CLIENT_QUICK = Option('Disable some checksum verification', default=False,
@@ -393,8 +385,14 @@ CLIENT_SERVICE_MODE = Option('Set client service mode', default='default',
 CLIENT_TIMEOUT = Option('Set the client XML-RPC timeout', default=90,
                         cmd='-t', cf=('communication', 'timeout'),
                         odesc='<timeout>')
+CLIENT_DLIST = Option('Run client in server decision list mode', default='none',
+                      cf=('client', 'decision'),
+                      cmd='-l', odesc='<whitelist|blacklist|none>')
+CLIENT_DECISION_LIST = Option('Decision List', default=False,
+                              cmd="--decision-list", odesc='<file>',
+                              long_arg=True)
 
-# bcfg2-test options
+# bcfg2-test and bcfg2-lint options
 TEST_NOSEOPTS = Option('Options to pass to nosetests', default=[],
                        cmd='--nose-options', cf=('bcfg2_test', 'nose_options'),
                        odesc='<opts>', long_arg=True, cook=shlex.split)
@@ -402,6 +400,13 @@ TEST_IGNORE = Option('Ignore these entries if they fail to build.', default=[],
                      cmd='--ignore',
                      cf=('bcfg2_test', 'ignore_entries'), long_arg=True,
                      odesc='<Type>:<name>,<Type>:<name>', cook=list_split)
+LINT_CONFIG = Option('Specify bcfg2-lint configuration file',
+                     '/etc/bcfg2-lint.conf', cmd='--lint-config',
+                     odesc='<conffile>', long_arg=True)
+LINT_SHOW_ERRORS = Option('Show error handling', False, cmd='--list-errors',
+                          long_arg=True)
+LINT_FILES_ON_STDIN = Option('Operate on a list of files supplied on stdin',
+                             cmd='--stdin', default=False, long_arg=True)
 
 # APT client tool options
 CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
@@ -410,7 +415,7 @@ CLIENT_APT_TOOLS_INSTALL_PATH = Option('Apt tools install path',
 CLIENT_APT_TOOLS_VAR_PATH = Option('Apt tools var path',
                                    cf=('APT', 'var_path'), default='/var')
 CLIENT_SYSTEM_ETC_PATH = Option('System etc path', cf=('APT', 'etc_path'),
-                         default='/etc')
+                                default='/etc')
 
 # Logging options
 LOGGING_FILE_PATH = Option('Set path of file log', default=None,
@@ -420,6 +425,30 @@ LOGGING_FILE_PATH = Option('Set path of file log', default=None,
 CFG_VALIDATION = Option('Run validation on Cfg files', default=True,
                         cf=('cfg', 'validation'), cmd='--cfg-validation',
                         long_arg=True, cook=get_bool)
+
+
+# Option groups
+CLI_COMMON_OPTIONS = dict(configfile=CFILE,
+                          debug=DEBUG,
+                          help=HELP,
+                          verbose=VERBOSE,
+                          encoding=ENCODING,
+                          logging=LOGGING_FILE_PATH)
+
+DAEMON_COMMON_OPTIONS = dict(daemon=DAEMON,
+                             listen_all=SERVER_LISTEN_ALL)
+
+SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
+                             plugins=SERVER_PLUGINS,
+                             password=SERVER_PASSWORD,
+                             filemonitor=SERVER_FILEMONITOR,
+                             ignore=SERVER_FAM_IGNORE,
+                             location=SERVER_LOCATION,
+                             static=SERVER_STATIC,
+                             key=SERVER_KEY,
+                             cert=SERVER_CERT,
+                             ca=SERVER_CA,
+                             protocol=SERVER_PROTOCOL)
 
 class OptionParser(OptionSet):
     """

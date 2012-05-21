@@ -123,9 +123,8 @@ class MetadataCore(Mode):
                                        setup['password'],
                                        setup['encoding'],
                                        filemonitor=setup['filemonitor'],
+                                       cfile=setup['configfile'],
                                        setup=setup)
-            if setup['event debug']:
-                self.bcore.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed: %s" % msg)

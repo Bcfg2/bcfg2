@@ -15,31 +15,11 @@ from Bcfg2.Server.Core import CoreInitError
 logger = logging.getLogger('bcfg2-server')
 
 if __name__ == '__main__':
-    OPTINFO = {
-        'configfile': Bcfg2.Options.CFILE,
-        'daemon'    : Bcfg2.Options.DAEMON,
-        'debug'     : Bcfg2.Options.DEBUG,
-        'help'      : Bcfg2.Options.HELP,
-        'verbose'   : Bcfg2.Options.VERBOSE,
-        'to_file'   : Bcfg2.Options.LOGGING_FILE_PATH,
-        'repo'      : Bcfg2.Options.SERVER_REPOSITORY,
-        'plugins'   : Bcfg2.Options.SERVER_PLUGINS,
-        'password'  : Bcfg2.Options.SERVER_PASSWORD,
-        'fm'        : Bcfg2.Options.SERVER_FILEMONITOR,
-        'ignore'    : Bcfg2.Options.SERVER_FAM_IGNORE,
-        'key'       : Bcfg2.Options.SERVER_KEY,
-        'cert'      : Bcfg2.Options.SERVER_CERT,
-        'ca'        : Bcfg2.Options.SERVER_CA,
-        'listen_all': Bcfg2.Options.SERVER_LISTEN_ALL,
-        'location'  : Bcfg2.Options.SERVER_LOCATION,
-        'passwd'    : Bcfg2.Options.SERVER_PASSWORD,
-        'static'    : Bcfg2.Options.SERVER_STATIC,
-        'encoding'  : Bcfg2.Options.ENCODING,
-        'filelog'   : Bcfg2.Options.LOGGING_FILE_PATH,
-        'protocol'  : Bcfg2.Options.SERVER_PROTOCOL,
-        }
-
-    setup = Bcfg2.Options.OptionParser(OPTINFO)
+    optinfo = dict()
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.DAEMON_COMMON_OPTIONS)
+    setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
     try:
         # check whether the specified bcfg2.conf exists
@@ -52,7 +32,7 @@ if __name__ == '__main__':
                                       daemon=setup['daemon'],
                                       pidfile_name=setup['daemon'],
                                       protocol=setup['protocol'],
-                                      to_file=setup['to_file'],
+                                      to_file=setup['logging'],
                                       cfile=setup['configfile'],
                                       register=False,
                                       cls_kwargs={'repo':setup['repo'],
@@ -60,7 +40,7 @@ if __name__ == '__main__':
                                                   'password':setup['password'],
                                                   'encoding':setup['encoding'],
                                                   'ca':setup['ca'],
-                                                  'filemonitor':setup['fm'],
+                                                  'filemonitor':setup['filemonitor'],
                                                   'start_fam_thread':True,
                                                   'setup':setup},
                                       keyfile=setup['key'],

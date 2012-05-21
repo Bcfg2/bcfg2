@@ -61,19 +61,11 @@ class ClientTest(TestCase):
     id = __str__
 
 def main():
-    optinfo = {
-        'configfile': Bcfg2.Options.CFILE,
-        'help': Bcfg2.Options.HELP,
-        'encoding': Bcfg2.Options.ENCODING,
-        'repo': Bcfg2.Options.SERVER_REPOSITORY,
-        'plugins': Bcfg2.Options.SERVER_PLUGINS,
-        'password': Bcfg2.Options.SERVER_PASSWORD,
-        'verbose': Bcfg2.Options.VERBOSE,
-        'noseopts': Bcfg2.Options.TEST_NOSEOPTS,
-        'ignore': Bcfg2.Options.SERVER_FAM_IGNORE,
-        'test_ignore': Bcfg2.Options.TEST_IGNORE,
-        'validate': Bcfg2.Options.CFG_VALIDATION,
-        }
+    optinfo = dict(noseopts=Bcfg2.Options.TEST_NOSEOPTS,
+                   test_ignore=Bcfg2.Options.TEST_IGNORE,
+                   validate=Bcfg2.Options.CFG_VALIDATION)
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = \
         "bcfg2-test [options] [client] [client] [...]\nOptions:\n     %s" % \
@@ -88,7 +80,7 @@ def main():
         setup['plugins'],
         setup['password'],
         setup['encoding'],
-        filemonitor='pseudo',
+        filemonitor=setup['filemonitor'],
         setup=setup
         )
 

@@ -79,8 +79,6 @@ class Core(Component):
             famargs['ignore'] = setup['ignore']
         if 'debug' in setup:
             famargs['debug'] = setup['debug']
-        elif 'event debug' in setup:
-            famargs['debug'] = setup['event debug']
         try:
             self.fam = fm(**famargs)
         except IOError:
