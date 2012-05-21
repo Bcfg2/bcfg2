@@ -86,8 +86,8 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                                         stype.title()).Server.Plugins.Packages,
                              stype.title())
             cls = getattr(module, "%sSource" % stype.title())
-        except (ImportError, AttributeError):
-            self.logger.error("Packages: Unknown source type %s" % stype)
+        except (ImportError, AttributeError), ex:
+            self.logger.error("Packages: Unknown source type %s (%s)" % (stype, ex))
             return None
 
         try:
