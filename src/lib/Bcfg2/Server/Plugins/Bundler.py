@@ -10,7 +10,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
 try:
-    import genshi.template.base.TemplateError
+    import genshi.template.base
     from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
     have_genshi = True
 except:
@@ -82,7 +82,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                 continue
             try:
                 bundleset.append(entries[0].get_xml_value(metadata))
-            except TemplateError:
+            except genshi.template.base.TemplateError:
                 t = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to template genshi bundle %s"
                                   % bundlename)
