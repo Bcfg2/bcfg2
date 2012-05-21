@@ -10,7 +10,7 @@ try:
     from genshi.template import TemplateLoader
 except ImportError:
     # CfgGenshiGenerator will raise errors if genshi doesn't exist
-    pass
+    TemplateLoader = object
 
 
 class EncryptedTemplateLoader(TemplateLoader):

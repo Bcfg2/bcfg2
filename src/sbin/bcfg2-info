@@ -26,8 +26,13 @@ import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins.Metadata
-import Bcfg2.Server.Plugins.SGenshi
 import Bcfg2.Server.Plugin
+
+try:
+    import Bcfg2.Server.Plugins.SGenshi
+    has_genshi = True
+except ImportError:
+    has_genshi = False
 
 logger = logging.getLogger('bcfg2-info')
 USAGE = """Commands:
@@ -384,8 +389,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 metadata = self.build_metadata(client)
                 if bname in self.plugins['Bundler'].entries:
                     bundle = self.plugins['Bundler'].entries[bname]
-                    if isinstance(bundle,
-                                  Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile):
+                    if (has_genshi and
+                        isinstance(bundle,
+                                   Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile)):
                         stream = bundle.template.generate(metadata=metadata)
                         print(stream.render("xml"))
                     else:

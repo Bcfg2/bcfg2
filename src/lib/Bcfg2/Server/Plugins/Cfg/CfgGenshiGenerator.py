@@ -28,12 +28,12 @@ class CfgGenshiGenerator(CfgGenerator):
 
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
-        self.loader = self.__loader_cls__()
-        self.template = None
         if not have_genshi:
-            msg = "Cfg: Genshi is not available: %s" % entry.get("name")
+            msg = "Cfg: Genshi is not available: %s" % fname
             logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        self.loader = self.__loader_cls__()
+        self.template = None
 
     @classmethod
     def ignore(cls, event, basename=None):
