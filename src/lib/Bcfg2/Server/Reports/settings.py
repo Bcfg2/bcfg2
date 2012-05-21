@@ -1,15 +1,21 @@
 import django
 import os
 import sys
+import getopt
+import Bcfg2.Options
+
+
+cfile_opt=Bcfg2.Options.CFILE
+cfiles=[cfile_opt.default, '/etc/bcfg2-web.conf']
+for i in range(1, len(sys.argv)):
+    if sys.argv[i] == cfile_opt.cmd:
+        cfiles = sys.argv[i+1]
+        break
 
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import ConfigParser
 # Django settings for bcfg2 reports project.
 c = ConfigParser.ConfigParser()
-if 'BCFG2_CONFIG_FILE' in os.environ:
-    cfiles=os.environ['BCFG2_CONFIG_FILE']
-else:
-    cfiles=['/etc/bcfg2.conf', '/etc/bcfg2-web.conf']
 if len(c.read(cfiles)) == 0:
     raise ImportError("Please check that bcfg2.conf or bcfg2-web.conf exists "
                       "and is readable by your web server.")
