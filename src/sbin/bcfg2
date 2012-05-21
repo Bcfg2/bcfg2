@@ -63,7 +63,7 @@ class Client:
                        serverCN=Bcfg2.Options.CLIENT_SCNS,
                        timeout=Bcfg2.Options.CLIENT_TIMEOUT,
                        decision_list=Bcfg2.Options.CLIENT_DECISION_LIST)
-        optinfo.update(CLI_COMMON_OPTIONS)
+        optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
         self.setup = Bcfg2.Options.OptionParser(optinfo)
         self.setup.parse(sys.argv[1:])
 

@@ -37,8 +37,8 @@ def create_description():
 
 def main():
     optinfo = dict()
-    optinfo.update(CLI_COMMON_OPTIONS)
-    optinfo.update(SERVER_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     # override default help message to include description of all modes
     setup.hm = "%s\n%s" % (setup.buildHelpMessage(), create_description())
