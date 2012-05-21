@@ -25,6 +25,11 @@ from Bcfg2.Bcfg2Py3k import Queue
 from Bcfg2.Bcfg2Py3k import Empty
 from Bcfg2.Bcfg2Py3k import Full
 
+# make encoding available
+encparse = Bcfg2.Options.OptionParser({'encoding': Bcfg2.Options.ENCODING})
+encparse.parse([])
+encoding = encparse['encoding']
+
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'group': Bcfg2.Options.MDATA_GROUP,

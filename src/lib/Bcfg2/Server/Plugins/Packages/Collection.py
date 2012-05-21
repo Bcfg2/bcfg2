@@ -52,7 +52,7 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
 
     @property
     def cachekey(self):
-        return md5(self.get_config()).hexdigest()
+        return md5(self.get_config().encode(Bcfg2.Server.Plugin.encoding)).hexdigest()
 
     def get_config(self):
         self.logger.error("Packages: Cannot generate config for host with "
