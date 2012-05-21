@@ -177,6 +177,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                                 if a in metadata.groups]
         vdict = dict()
         for agrp in agroups:
+            if agrp not in self.provides:
+                self.logger.warning("%s provides no packages for %s" %
+                                    (self, agrp))
+                continue
             for key, value in list(self.provides[agrp].items()):
                 if key not in vdict:
                     vdict[key] = set(value)
