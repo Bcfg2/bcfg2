@@ -46,35 +46,39 @@ def calcPerms(initial, perms):
     return tempperms
 
 
-def normGid(entry):
+def normGid(entry, logger=None):
     """
        This takes a group name or gid and
        returns the corresponding gid or False.
     """
+    if logger is None:
+        logger = log
     try:
         try:
             return int(entry.get('group'))
         except:
             return int(grp.getgrnam(entry.get('group'))[2])
     except (OSError, KeyError):
-        log.error('GID normalization failed for %s. Does group %s exist?'
-                  % (entry.get('name'), entry.get('group')))
+        logger.error('GID normalization failed for %s. Does group %s exist?' %
+                     (entry.get('name'), entry.get('group')))
         return False
 
 
-def normUid(entry):
+def normUid(entry, logger=None):
     """
        This takes a user name or uid and
        returns the corresponding uid or False.
     """
+    if logger is None:
+        logger = log
     try:
         try:
             return int(entry.get('owner'))
         except:
             return int(pwd.getpwnam(entry.get('owner'))[2])
     except (OSError, KeyError):
-        log.error('UID normalization failed for %s. Does owner %s exist?'
-                  % (entry.get('name'), entry.get('owner')))
+        logger.error('UID normalization failed for %s. Does owner %s exist?' %
+                     (entry.get('name'), entry.get('owner')))
         return False
 
 
@@ -173,8 +177,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             dev_type = entry.get('dev_type')
             mode = calcPerms(device_map[dev_type],
                              entry.get('mode', '0600'))
-            owner = normUid(entry)
-            group = normGid(entry)
+            owner = normUid(entry, logger=self.logger)
+            group = normGid(entry, logger=self.logger)
             if dev_type in ['block', 'char']:
                 # check for incompletely specified entries
                 if entry.get('major') == None or \
@@ -246,7 +250,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 are set as specified by the user.
                 """
                 os.chmod(entry.get('name'), mode)
-                os.chown(entry.get('name'), normUid(entry), normGid(entry))
+                os.chown(entry.get('name'),
+                         normUid(entry, logger=self.logger),
+                         normGid(entry, logger=self.logger))
                 return True
             except KeyError:
                 self.logger.error('Failed to install %s' % entry.get('name'))
@@ -285,8 +291,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             mtime = str(finfo[stat.ST_MTIME])
         else:
             mtime = '-1'
-        pTrue = ((owner == str(normUid(entry))) and
-                 (group == str(normGid(entry))) and
+        pTrue = ((owner == str(normUid(entry, logger=self.logger))) and
+                 (group == str(normGid(entry, logger=self.logger))) and
                  (perms == entry.get('perms')) and
                  (mtime == entry.get('mtime', '-1')))
 
@@ -316,7 +322,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 pruneTrue = True
 
         if not pTrue:
-            if owner != str(normUid(entry)):
+            if owner != str(normUid(entry, logger=self.logger)):
                 entry.set('current_owner', owner)
                 self.logger.debug("%s %s ownership wrong" % \
                                   (entry.tag, entry.get('name')))
@@ -324,7 +330,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 nqtext += "%s owner wrong. is %s should be %s" % \
                           (entry.get('name'), owner, entry.get('owner'))
                 entry.set('qtext', nqtext)
-            if group != str(normGid(entry)):
+            if group != str(normGid(entry, logger=self.logger)):
                 entry.set('current_group', group)
                 self.logger.debug("%s %s group wrong" % \
                                   (entry.tag, entry.get('name')))
@@ -652,7 +658,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             newfile.write(filedata)
             newfile.close()
             try:
-                os.chown(newfile.name, normUid(entry), normGid(entry))
+                os.chown(newfile.name,
+                         normUid(entry, logger=self.logger),
+                         normGid(entry, logger=self.logger))
             except KeyError:
                 self.logger.error("Failed to chown %s to %s:%s" %
                                   (newfile.name, entry.get('owner'),
@@ -787,8 +795,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             return False
         if entry.get('recursive') in ['True', 'true']:
             # verify ownership information recursively
-            owner = normUid(entry)
-            group = normGid(entry)
+            owner = normUid(entry, logger=self.logger)
+            group = normGid(entry, logger=self.logger)
 
             for root, dirs, files in os.walk(entry.get('name')):
                 for p in dirs + files:
@@ -857,8 +865,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         plist = [entry.get('name')]
         if entry.get('recursive') in ['True', 'true']:
             # verify ownership information recursively
-            owner = normUid(entry)
-            group = normGid(entry)
+            owner = normUid(entry, logger=self.logger)
+            group = normGid(entry, logger=self.logger)
 
             for root, dirs, files in os.walk(entry.get('name')):
                 for p in dirs + files:
@@ -869,7 +877,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         plist.append(path)
         try:
             for p in plist:
-                os.chown(p, normUid(entry), normGid(entry))
+                os.chown(p,
+                         normUid(entry, logger=self.logger),
+                         normGid(entry, logger=self.logger))
                 os.chmod(p, calcPerms(stat.S_IFDIR, entry.get('perms')))
             return True
         except (OSError, KeyError):
