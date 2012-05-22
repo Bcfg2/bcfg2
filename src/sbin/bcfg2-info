@@ -643,7 +643,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
-                   mconnect=Bcfg2.Options.SERVER_MCONNECT)
+                   mconnect=Bcfg2.Options.SERVER_MCONNECT,
+                   interactive=Bcfg2.Options.INTERACTIVE)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
