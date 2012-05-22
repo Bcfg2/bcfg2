@@ -259,15 +259,23 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             self.help_builddir()
 
     def do_buildall(self, args):
-        if len(args.split()) != 1:
-            print("Usage: buildall <directory>")
+        alist = args.split()
+        for arg in alist:
+            if arg == '-f':
+                alist.remove('-f')
+                flags = [arg]
+        if len(alist) != 1:
+            print("Usage: buildall [-f] <directory>")
             return
-        try:
-            os.mkdir(args)
-        except:
-            pass
+        if not os.path.exists(alist[0]):
+            try:
+                os.mkdir(alist[0])
+            except OSError:
+                err = sys.exc_info()[1]
+                logger.error("Could not create %s: %s" % (alist[0], err))
         for client in self.metadata.clients:
-            self.do_build("%s %s/%s.xml" % (client, args, client))
+            self.do_build("%s %s %s/%s.xml" % (" ".join(flags),
+                                               client, args, client))
 
     def do_buildfile(self, args):
         """Build a config file for client."""
