@@ -13,6 +13,7 @@ package:
 	#setuptools appears to use a restictive umask
 	-chmod -R o+r build/
 	-cat build/bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > build/bin/bcfg2.new && mv build/bin/bcfg2.new build/bin/bcfg2
+	-chmod +x build/bin/bcfg2
 	-sh ./gen-prototypes.sh
 	-pkgmk -o -a `uname -m` -f prototype.bcfg2 -d $(PWD)/tmp -r $(PWD)/build
 	-pkgmk -o -a `uname -m` -f prototype.bcfg2-server -d $(PWD)/tmp -r $(PWD)/build
