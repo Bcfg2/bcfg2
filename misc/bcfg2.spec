@@ -260,8 +260,8 @@ ln -s %{_initrddir}/bcfg2 %{buildroot}%{_sbindir}/rcbcfg2
 ln -s %{_initrddir}/bcfg2-server %{buildroot}%{_sbindir}/rcbcfg2-server
 %endif
 
-mv build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
-mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
+cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+cp -r build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
