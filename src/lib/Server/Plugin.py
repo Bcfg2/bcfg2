@@ -881,6 +881,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
             if self._matches(entry, metadata, [rname]):
                 data = matching[index].cache[1][entry.tag][rname]
                 break
+        else:
+            # Fall back on __getitem__. Required if override used
+            data = matching[index].cache[1][entry.tag][entry.get('name')]
         if '__text__' in data:
             entry.text = data['__text__']
         if '__children__' in data:

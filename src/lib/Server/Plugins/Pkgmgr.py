@@ -25,12 +25,14 @@ class FuzzyDict(dict):
             print("got non-string key %s" % str(key))
         return dict.__getitem__(self, key)
 
-    def has_key(self, key):
+    def __contains__(self, key):
         if isinstance(key, str):
             mdata = self.fuzzy.match(key)
-            if self.fuzzy.match(key):
-                return dict.has_key(self, mdata.groupdict()['name'])
-        return dict.has_key(self, key)
+            if mdata:
+                return dict.__contains__(self, mdata.groupdict()['name'])
+        else:
+            print("got non-string key %s" % str(key))
+        return dict.__contains__(self, key)
 
     def get(self, key, default=None):
         try:
