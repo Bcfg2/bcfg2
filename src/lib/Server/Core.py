@@ -72,10 +72,9 @@ class Core(Component):
         try:
             self.fam = Bcfg2.Server.FileMonitor.available[filemonitor]()
         except IOError:
-            logger.error("Failed to instantiate fam driver %s" % filemonitor,
-                         exc_info=1)
-            raise CoreInitError("failed to instantiate fam driver (used %s)" % \
-                                filemonitor)
+            msg = "Failed to instantiate fam driver %s" % filemonitor
+            logger.error(msg, exc_info=1)
+            raise CoreInitError(msg)
         self.pubspace = {}
         self.cfile = cfile
         self.cron = {}
