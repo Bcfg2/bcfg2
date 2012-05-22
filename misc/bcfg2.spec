@@ -51,7 +51,6 @@ BuildRequires:    python-sphinx10
 BuildRequires:    python-sphinx >= 0.6
 %endif
 
-Requires:         python-nose
 Requires:         python-lxml >= 0.9
 %if 0%{?rhel_version}
 # the debian init script needs redhat-lsb.
@@ -107,6 +106,7 @@ Requires:         python-lxml >= 1.2.1
 %if "%{_vendor}" == "redhat"
 Requires:         gamin-python
 %endif
+Requires:         python-nose
 
 %description -n bcfg2-server
 Bcfg2 helps system administrators produce a consistent, reproducible,
