@@ -12,8 +12,8 @@ package:
 	-cd ../ && PYTHONPATH=$(PYTHONPATH):$(PWD)/build/lib/python2.6/site-packages/ $(PYTHON) setup.py install --single-version-externally-managed --record=/dev/null --prefix=$(PWD)/build
 	#setuptools appears to use a restictive umask
 	-chmod -R o+r build/
-	-cat bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > bin/bcfg2.new && mv bin/bcfg2.new bin/bcfg2
-	-./gen-prototypes.sh
+	-cat build/bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > build/bin/bcfg2.new && mv build/bin/bcfg2.new build/bin/bcfg2
+	-sh ./gen-prototypes.sh
 	-pkgmk -o -a `uname -m` -f prototype.bcfg2 -d $(PWD)/tmp -r $(PWD)/build
 	-pkgmk -o -a `uname -m` -f prototype.bcfg2-server -d $(PWD)/tmp -r $(PWD)/build
 	-pkgtrans -o -s $(PWD)/tmp $(PWD)/bcfg2-$(VERS) SCbcfg2
