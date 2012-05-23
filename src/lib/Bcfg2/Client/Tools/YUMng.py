@@ -514,9 +514,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
-                entry.set('current_version', "%s-%s.%s" % (POs[0]['version'],
-                                                           POs[0]['release'],
-                                                           POs[0]['arch']))
+                entry.set('current_version', "%s-%s.%s" % (POs[0].version,
+                                                           POs[0].release,
+                                                           POs[0].arch))
                 entry.set('version', "%s-%s.%s" % (nevra['version'],
                                                    nevra['release'],
                                                    nevra['arch']))
