@@ -287,13 +287,14 @@ def dosync():
         # not yet tested for full functionnality
         django.core.management.call_command("syncdb", interactive=False, verbosity=0)
         if fresh:
-            django.core.management.call_command("loaddata", 'initial_version.xml', verbosity=0)
+            iv = InternalDatabaseVersion.objects.create(version=len(_fixes))
+            logger.debug("loading the initial version at %s" % iv.version)
     elif "syncdb" in dir(django.core.management):
         # this exist only for django 0.96.*
         django.core.management.syncdb(interactive=False, verbosity=0)
         if fresh:
-            logger.debug("loading the initial_version fixtures")
-            django.core.management.load_data(fixture_labels=['initial_version'], verbosity=0)
+            iv = InternalDatabaseVersion.objects.create(version=len(_fixes))
+            logger.debug("loading the initial version at %s" % iv.version)
     else:
         logger.warning("Don't forget to run syncdb")
 
