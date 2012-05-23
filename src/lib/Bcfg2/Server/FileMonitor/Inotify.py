@@ -42,7 +42,6 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             # relative path
             path = os.path.basename(ievent.pathname)
         evt = Event(ievent.wd, path, action)
-        print "created event %s" % evt
         self.events.append(evt)
 
     def AddMonitor(self, path, obj):
