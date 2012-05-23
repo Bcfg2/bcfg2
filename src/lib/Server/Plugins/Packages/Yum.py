@@ -204,6 +204,13 @@ class YumCollection(Collection):
                         config.set(reponame, "includepkgs",
                                    " ".join(source.whitelist))
 
+                    if raw:
+                        opts = source.server_options
+                    else:
+                        opts = source.client_options
+                    for opt, val in opts.items():
+                        config.set(reponame, opt, val)
+
         if raw:
             return config
         else:

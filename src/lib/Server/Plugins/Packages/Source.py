@@ -49,7 +49,18 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         for key, tag in [('components', 'Component'), ('arches', 'Arch'),
                          ('blacklist', 'Blacklist'),
                          ('whitelist', 'Whitelist')]:
-            self.__dict__[key] = [item.text for item in xsource.findall(tag)]
+            setattr(self, key, [item.text for item in xsource.findall(tag)])
+        self.server_options = dict()
+        self.client_options = dict()
+        opts = xsource.findall("Options")
+        for el in opts:
+            repoopts = dict([(k, v)
+                             for k, v in el.attrib.items()
+                             if k != "clientonly" and k != "serveronly"])
+            if el.get("clientonly", "false").lower() == "false":
+                self.server_options.update(repoopts)
+            if el.get("serveronly", "false").lower() == "false":
+                self.client_options.update(repoopts)
 
         self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
 

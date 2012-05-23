@@ -18,11 +18,18 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:complexType name="RepoOptionsType">
+      <xsd:attribute type="xsd:boolean" name="serveronly"/>
+      <xsd:attribute type="xsd:boolean" name="clientonly"/>
+      <xsd:anyAttribute processContents="lax"/>
+  </xsd:complexType>
+
   <xsd:complexType name="sourceType">
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="Component" type="xsd:string"/>
       <xsd:element name="Arch" type="xsd:string"/>
       <xsd:element name="GPGKey" type="xsd:string"/>
+      <xsd:element name="Options" type="RepoOptionsType"/>
       <xsd:choice>
         <xsd:element name="Blacklist" type="xsd:string"/>
         <xsd:element name="Whitelist" type="xsd:string"/>
