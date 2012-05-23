@@ -10,20 +10,12 @@ from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 
 logger = logging.getLogger(__name__)
 
-class InotifyEvent(Event):
-    action_map = {pyinotify.IN_CREATE: 'created',
-                  pyinotify.IN_DELETE: 'deleted',
-                  pyinotify.IN_MODIFY: 'changed'}
-
-    def __init__(self, event):
-        Event.__init__(self, event.wd, event.pathname, event.mask)
-        if event.mask in self.action_map:
-            self.action = self.action_map[event.mask]
-
-
 class Inotify(Pseudo, pyinotify.ProcessEvent):
     __priority__ = 1
     mask = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY
+    action_map = {pyinotify.IN_CREATE: 'created',
+                  pyinotify.IN_DELETE: 'deleted',
+                  pyinotify.IN_MODIFY: 'changed'}
 
     def __init__(self, ignore=None, debug=False):
         Pseudo.__init__(self, ignore=ignore, debug=debug)
@@ -34,8 +26,24 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     def fileno(self):
         return self.wm.get_fd()
 
-    def process_default(self, event):
-        self.events.append(InotifyEvent(event))
+    def process_default(self, ievent):
+        action = ievent.maskname
+        for amask, aname in self.action_map.items():
+            if ievent.mask & amask:
+                action = aname
+                break
+        # FAM-style file monitors return the full path to the parent
+        # directory that is being watched, relative paths to anything
+        # contained within the directory
+        watch = self.wm.watches[ievent.wd]
+        if watch.path == ievent.pathname:
+            path = ievent.pathname
+        else:
+            # relative path
+            path = os.path.basename(ievent.pathname)
+        evt = Event(ievent.wd, path, action)
+        print "created event %s" % evt
+        self.events.append(evt)
 
     def AddMonitor(self, path, obj):
         res = self.wm.add_watch(path, self.mask, quiet=False)
