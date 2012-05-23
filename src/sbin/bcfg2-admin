@@ -44,9 +44,13 @@ def main():
     setup.hm = "%s\n%s" % (setup.buildHelpMessage(), create_description())
     setup.parse(sys.argv[1:])
 
-    log_args = dict(to_syslog=False, to_console=logging.WARNING)
-    if setup['verbose']:
-        log_args['to_console'] = logging.DEBUG
+    if setup['debug']:
+        level = logging.DEBUG
+    elif setup['verbose']:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+    Bcfg2.Logger.setup_logging('bcfg2-admin', to_syslog=False, level=level)
 
     # Provide help if requested or no args were specified
     if (not setup['args'] or len(setup['args']) < 1 or

@@ -79,8 +79,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
     __longhelp__ = (__shorthelp__)
     django_commands = ['syncdb', 'sqlall', 'validate']
     __usage__ = ("bcfg2-admin reports [command] [options]\n"
-                 "    -v|--verbose         Be verbose\n"
-                 "    -q|--quiet           Print only errors\n"
                  "\n"
                  "  Commands:\n"
                  "    init                 Initialize the database\n"
@@ -100,21 +98,12 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
-        self.log.setLevel(logging.INFO)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0 or args[0] == '-h':
             print(self.__usage__)
             raise SystemExit(0)
-
-        verb = 0
-
-        if '-v' in args or '--verbose' in args:
-            self.log.setLevel(logging.DEBUG)
-            verb = 1
-        if '-q' in args or '--quiet' in args:
-            self.log.setLevel(logging.WARNING)
 
         # FIXME - dry run
 
@@ -141,7 +130,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                     if clients_file[0] == '-':
                         self.errExit("Invalid clients file: %s" % clients_file)
                 i = i + 1
-            self.load_stats(stats_file, clients_file, verb, quick)
+            self.load_stats(stats_file, clients_file, self.log.getEffectiveLevel() > logging.WARNING, quick)
         elif args[0] == 'purge':
             expired = False
             client = None

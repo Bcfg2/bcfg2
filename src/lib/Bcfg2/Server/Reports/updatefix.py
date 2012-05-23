@@ -312,9 +312,10 @@ def update_database():
             know_version = know_version[0]
         logger.debug("Presently at %s" % know_version)
         if know_version.version < lastversion:
+            logger.info("upgrading database")
             new_version = rollupdate(know_version.version)
             if new_version:
-                logger.debug("upgraded to %s" % new_version)
+                logger.info("upgraded to %s" % new_version)
     except:
         logger.error("Error while updating the database")
         for x in traceback.format_exc().splitlines():
