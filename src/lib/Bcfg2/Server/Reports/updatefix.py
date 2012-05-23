@@ -1,12 +1,12 @@
 import Bcfg2.Server.Reports.settings
 
-from django.db import connection, DatabaseError
+from django.db import connection, DatabaseError, backend
 import django.core.management
 import logging
 import sys
 import traceback
 from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion, \
-                TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
+                Reason, TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
 logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
 
 
@@ -59,6 +59,45 @@ def _interactions_constraint_or_idx():
     except:
         cursor.execute('create unique index reports_interaction_20100601 on reports_interaction (client_id,timestamp)')
 
+
+def _rebuild_reports_reason():
+    """Rebuild the reports_reason table with better data types"""
+    cursor = connection.cursor()
+    columns = ['owner', 'current_owner',
+               'group', 'current_group',
+               'perms', 'current_perms',
+               'status', 'current_status',
+               'to', 'current_to']
+
+    tbl_name = backend.DatabaseOperations().quote_name('reports_reason')
+
+    db_engine = Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE']
+    if db_engine == 'django.db.backends.mysql':
+        modify_cmd = 'MODIFY '
+    elif db_engine == 'django.db.backends.sqlite3':
+        """ Sqlite is a special case.  Altering columns is not supported. """
+        tmp_tbl_name = backend.DatabaseOperations().quote_name('reports_reason_temp')
+        cursor.execute('ALTER TABLE %s RENAME TO %s' % (tbl_name, tmp_tbl_name))
+        django.core.management.call_command("syncdb", interactive=False, verbosity=0)
+        columns = ",".join([backend.DatabaseOperations().quote_name(f.name) \
+                            for f in Reason._meta.fields])
+        cursor.execute('insert into %s(%s) select %s from %s;' % (tbl_name,
+                                                                  columns,
+                                                                  columns,
+                                                                  tmp_tbl_name))
+        cursor.execute('DROP TABLE %s;' % tmp_tbl_name)
+        return
+    else:
+        modify_cmd = 'ALTER COLUMN '
+
+    col_strings = []
+    for column in columns:
+        col_strings.append("%s %s %s" % ( \
+            modify_cmd,
+            backend.DatabaseOperations().quote_name(column),
+            Reason._meta.get_field(column).db_type()
+        ))
+    cursor.execute('ALTER TABLE %s %s' % (tbl_name, ", ".join(col_strings)))
 
 def _remove_table_column(tbl, col):
     """sqlite doesn't support deleting a column via alter table"""
@@ -188,6 +227,7 @@ _fixes = [_merge_database_table_entries,
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
           _remove_table_column('reports_interaction', 'client_version'),
           "alter table reports_reason add unpruned varchar(1280) not null default '';",
+          _rebuild_reports_reason,
 ]
 
 # this will calculate the last possible version of the database
