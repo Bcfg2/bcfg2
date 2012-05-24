@@ -20,7 +20,7 @@ an existing driver, and the process that was used to create it.
    * Otherwise, subclass ``Bcfg2.Client.Tools.Tool`` (from here referenced
      as branch [T])
 
-#. Set ``__name__`` to "RPM"
+#. Set ``name`` to "RPM"
 #. Add any required executable programs to ``__execs__``
 #. Set ``__handles__`` to a list of (**entry.tag**, **entry.get('type')**)
    tuples. This determines which entries the Tool module can be used
