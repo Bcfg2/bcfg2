@@ -6,20 +6,6 @@ import sys
 import yum
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
-
-YAD = True
-CP = ConfigParser.ConfigParser()
-try:
-    if '-C' in sys.argv:
-        CP.read([sys.argv[sys.argv.index('-C') + 1]])
-    else:
-        CP.read(['/etc/bcfg2.conf'])
-    if CP.get('YUMng', 'autodep').lower() == 'false':
-        YAD = False
-except:
-    pass
 
 if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
     raise ImportError
@@ -79,6 +65,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                               (entry.get('name').startswith('/etc/yum.d') \
                               or entry.get('name').startswith('/etc/yum.repos.d')) \
                               or entry.get('name') == '/etc/yum.conf']
+        self.autodep = setup.get("yum24_autodep")
         self.yum_avail = dict()
         self.yum_installed = dict()
         self.yb = yum.YumBase()
@@ -273,7 +260,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(install_pkgs) > 0:
             self.logger.info("Attempting to install packages")
 
-            if YAD:
+            if self.autodep:
                 pkgtool = "/usr/bin/yum -d0 -y install %s"
             else:
                 pkgtool = "/usr/bin/yum -d0 install %s"
@@ -309,7 +296,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         if len(upgrade_pkgs) > 0:
             self.logger.info("Attempting to upgrade packages")
 
-            if YAD:
+            if self.autodep:
                 pkgtool = "/usr/bin/yum -d0 -y update %s"
             else:
                 pkgtool = "/usr/bin/yum -d0 update %s"
@@ -359,7 +346,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
         """
         self.logger.debug('Running YUMng.RemovePackages()')
 
-        if YAD:
+        if self.autodep:
             pkgtool = "/usr/bin/yum -d0 -y erase %s"
         else:
             pkgtool = "/usr/bin/yum -d0 erase %s"

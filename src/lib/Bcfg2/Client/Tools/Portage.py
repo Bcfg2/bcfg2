@@ -2,8 +2,6 @@
 
 import re
 import Bcfg2.Client.Tools
-from Bcfg2.Bcfg2Py3k import ConfigParser
-
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
     """The Gentoo toolset implements package and service operations and
@@ -27,29 +25,10 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         self._ebuild_pattern = re.compile('(ebuild|binary)')
         self.cfg = cfg
         self.installed = {}
-        self._binpkgonly = True
-
-        # Used to get options from configuration file
-        parser = ConfigParser.ConfigParser()
-        parser.read(self.setup.get('setup'))
-        for opt in ['binpkgonly']:
-            if parser.has_option(self.name, opt):
-                setattr(self, ('_%s' % opt),
-                        self._StrToBoolIfBool(parser.get(self.name, opt)))
-
+        self._binpkgonly = self.setup.get('portage_binpkgonly', False)
         if self._binpkgonly:
             self.pkgtool = self._binpkgtool
         self.RefreshPackages()
-
-    def _StrToBoolIfBool(self, s):
-        """Returns a boolean if the string specifies a boolean value.
-           Returns a string otherwise"""
-        if s.lower() in ('true', 'yes', 't', 'y', '1'):
-            return True
-        elif s.lower() in ('false', 'no', 'f', 'n', '0'):
-            return False
-        else:
-            return s
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -83,8 +62,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         entry.set('current_version', version)
 
         if not self.setup['quick']:
-            if ('verify' not in entry.attrib) or \
-                self._StrToBoolIfBool(entry.get('verify')):
+            if ('verify' not in entry.attrib or
+                entry.get('verify').lower == 'true'):
 
             # Check the package if:
             # - Not running in quick mode

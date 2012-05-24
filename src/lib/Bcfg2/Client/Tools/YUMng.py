@@ -12,9 +12,6 @@ import yum.misc
 import rpmUtils.arch
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-# Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
-
 
 def build_yname(pkgname, inst):
     """Build yum appropriate package name."""
@@ -56,20 +53,6 @@ def nevraString(p):
             if i in p:
                 ret = "%s%s" % (ret, j % p[i])
         return ret
-
-
-class Parser(ConfigParser.ConfigParser):
-
-    def get(self, section, option, default):
-        """
-        Override ConfigParser.get: If the request option is not in the
-        config file then return the value of default rather than raise
-        an exception.  We still raise exceptions on missing sections.
-        """
-        try:
-            return ConfigParser.ConfigParser.get(self, section, option)
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return default
 
 
 class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
@@ -224,38 +207,24 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
     def _loadConfig(self):
         # Process the YUMng section from the config file.
-        CP = Parser()
-        CP.read(self.setup.get('setup'))
-        truth = ['true', 'yes', '1']
-
         # These are all boolean flags, either we do stuff or we don't
-        self.pkg_checks = CP.get(self.name, "pkg_checks", "true").lower() \
-                in truth
-        self.pkg_verify = CP.get(self.name, "pkg_verify", "true").lower() \
-                in truth
-        self.doInstall = CP.get(self.name, "installed_action",
-                "install").lower() == "install"
-        self.doUpgrade = CP.get(self.name,
-                "version_fail_action", "upgrade").lower() == "upgrade"
-        self.doReinst = CP.get(self.name, "verify_fail_action",
-                "reinstall").lower() == "reinstall"
-        self.verifyFlags = CP.get(self.name, "verify_flags",
-                                  "").lower().replace(' ', ',')
+        self.pkg_checks = self.setup["yumng_pkg_checks"]
+        self.pkg_verify = self.setup["yumng_pkg_verify"]
+        self.doInstall = self.setup["yumng_installed_action"] == "install"
+        self.doUpgrade = self.setup["yumng_version_action"] == "upgrade"
+        self.doReinst = self.setup["yumng_verify_action"] == "reinstall"
+        self.verifyFlags = self.setup["yumng_verify_flags"]
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installOnlyPkgs:
             self.installOnlyPkgs.append('gpg-pubkey')
 
-        self.logger.debug("YUMng: Install missing: %s" \
-                % self.doInstall)
+        self.logger.debug("YUMng: Install missing: %s" % self.doInstall)
         self.logger.debug("YUMng: pkg_checks: %s" % self.pkg_checks)
         self.logger.debug("YUMng: pkg_verify: %s" % self.pkg_verify)
-        self.logger.debug("YUMng: Upgrade on version fail: %s" \
-                % self.doUpgrade)
-        self.logger.debug("YUMng: Reinstall on verify fail: %s" \
-                % self.doReinst)
-        self.logger.debug("YUMng: installOnlyPkgs: %s" \
-                % str(self.installOnlyPkgs))
+        self.logger.debug("YUMng: Upgrade on version fail: %s" % self.doUpgrade)
+        self.logger.debug("YUMng: Reinstall on verify fail: %s" % self.doReinst)
+        self.logger.debug("YUMng: installOnlyPkgs: %s" % self.installOnlyPkgs)
         self.logger.debug("YUMng: verify_flags: %s" % self.verifyFlags)
 
     def _fixAutoVersion(self, entry):

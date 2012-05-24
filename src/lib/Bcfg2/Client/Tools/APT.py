@@ -6,22 +6,7 @@ warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
 import apt.cache
 import os
-
 import Bcfg2.Client.Tools
-import Bcfg2.Options
-
-# Options for tool locations
-opts = {'install_path': Bcfg2.Options.CLIENT_APT_TOOLS_INSTALL_PATH,
-        'var_path': Bcfg2.Options.CLIENT_APT_TOOLS_VAR_PATH,
-        'etc_path': Bcfg2.Options.CLIENT_SYSTEM_ETC_PATH}
-setup = Bcfg2.Options.OptionParser(opts)
-setup.parse([])
-install_path = setup['install_path']
-var_path = setup['var_path']
-etc_path = setup['etc_path']
-DEBSUMS = '%s/bin/debsums' % install_path
-APTGET = '%s/bin/apt-get' % install_path
-DPKG = '%s/bin/dpkg' % install_path
 
 class APT(Bcfg2.Client.Tools.Tool):
     """The Debian toolset implements package and service operations and inherits
@@ -29,17 +14,26 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     """
     name = 'APT'
-    __execs__ = [DEBSUMS, APTGET, DPKG]
+    __execs__ = []
     __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
     __req__ = {'Package': ['name', 'version'], 'Path': ['type']}
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+
+        self.install_path = setup.get('apt_install_path', '/usr')
+        self.var_path = setup.get('apt_var_path', '/var')
+        self.etc_path = setup.get('apt_etc_path', '/etc')
+        self.debsums = '%s/bin/debsums' % self.install_path
+        self.aptget = '%s/bin/apt-get' % self.install_path
+        self.dpkg = '%s/bin/dpkg' % self.install_path
+        self.__execs__ = [self.debsums, self.aptget, self.dpkg]
+
         path_entries = os.environ['PATH'].split(':')
         for reqdir in ['/sbin', '/usr/sbin']:
             if reqdir not in path_entries:
                 os.environ['PATH'] = os.environ['PATH'] + ':' + reqdir
-        self.pkgcmd = '%s ' % APTGET + \
+        self.pkgcmd = '%s ' % self.aptget + \
                       '-o DPkg::Options::=--force-overwrite ' + \
                       '-o DPkg::Options::=--force-confold ' + \
                       '-o DPkg::Options::=--force-confmiss ' + \
@@ -53,21 +47,21 @@ class APT(Bcfg2.Client.Tools.Tool):
                         if entry.tag == 'Path' and \
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
-                             ["%s/cache/debconf/config.dat" % var_path,
-                              "%s/cache/debconf/templates.dat" % var_path,
+                             ["%s/cache/debconf/config.dat" % self.var_path,
+                              "%s/cache/debconf/templates.dat" % self.var_path,
                               '/etc/passwd', '/etc/group',
-                              '%s/apt/apt.conf' % etc_path,
-                              '%s/dpkg/dpkg.cfg' % etc_path] + \
+                              '%s/apt/apt.conf' % self.etc_path,
+                              '%s/dpkg/dpkg.cfg' % self.etc_path] + \
                              [entry.get('name') for struct in config for entry in struct \
                               if entry.tag == 'Path' and \
-                              entry.get('name').startswith('%s/apt/sources.list' % etc_path)]
+                              entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
         self.nonexistent = [entry.get('name') for struct in config for entry in struct \
                               if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
-            self.cmd.run("%s --force-confold --configure --pending" % DPKG)
-            self.cmd.run("%s clean" % APTGET)
+            self.cmd.run("%s --force-confold --configure --pending" % self.dpkg)
+            self.cmd.run("%s clean" % self.aptget)
             try:
                 self.pkg_cache = apt.cache.Cache()
             except SystemError:
@@ -95,7 +89,8 @@ class APT(Bcfg2.Client.Tools.Tool):
                                          for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
-        output = self.cmd.run("%s -as %s" % (DEBSUMS, entry.get('name')))[1]
+        output = self.cmd.run("%s -as %s" % (self.debsums,
+                                             entry.get('name')))[1]
         if len(output) == 1 and "no md5sums for" in output[0]:
             self.logger.info("Package %s has no md5sums. Cannot verify" % \
                              entry.get('name'))

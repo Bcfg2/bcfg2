@@ -11,13 +11,6 @@ import Bcfg2.Client.Tools
 from Bcfg2.Bcfg2Py3k import ConfigParser
 
 
-def bool_cook(x):
-    if x:
-        return True
-    else:
-        return False
-
-
 class OptionFailure(Exception):
     pass
 
@@ -83,7 +76,7 @@ class Option(object):
         self.env = env
         self.cf = cf
         self.boolean = False
-        if not odesc and not cook:
+        if not odesc and not cook and isinstance(self.default, bool):
             self.boolean = True
         self.cook = cook
 
@@ -271,7 +264,7 @@ VERBOSE = \
            cmd='-v')
 DAEMON = \
     Option("Daemonize process, storing pid",
-           default=False,
+           default=None,
            cmd='-D',
            odesc='<pidfile>')
 INSTALL_PREFIX = \
@@ -310,7 +303,7 @@ OMIT_LOCK_CHECK = \
 CORE_PROFILE = \
     Option('profile',
            default=False,
-           cmd='-p', )
+           cmd='-p')
 SCHEMA_PATH = \
     Option('Path to XML Schema files',
            default='%s/share/bcfg2/schemas' % DEFAULT_INSTALL_PREFIX,
@@ -360,14 +353,7 @@ SERVER_REPOSITORY = \
 SERVER_PLUGINS = \
     Option('Server plugin list',
            # default server plugins
-           default=[
-                    'Bundler',
-                    'Cfg',
-                    'Metadata',
-                    'Pkgmgr',
-                    'Rules',
-                    'SSHbase',
-                   ],
+           default=['Bundler', 'Cfg', 'Metadata', 'Pkgmgr', 'Rules', 'SSHbase'],
            cf=('server', 'plugins'),
            cook=list_split)
 SERVER_MCONNECT = \
@@ -382,24 +368,14 @@ SERVER_FILEMONITOR = \
            cf=('server', 'filemonitor'))
 SERVER_FAM_IGNORE = \
     Option('File globs to ignore',
-           default=[
-                    '*~',
-                    '*#',
-                    '.#*',
-                    '*.swp',
-                    '.*.swx',
-                    'SCCS',
-                    '.svn',
-                    '4913',
-                    '.gitignore',
-                   ],
+           default=['*~', '*#', '.#*', '*.swp', '.*.swx', 'SCCS', '.svn',
+                    '4913', '.gitignore',],
            cf=('server', 'ignore_files'),
            cook=list_split)
 SERVER_LISTEN_ALL = \
     Option('Listen on all interfaces',
            default=False,
            cmd='--listen-all',
-           odesc='True|False',
            cf=('server', 'listen_all'),
            cook=get_bool,
            long_arg=True)
@@ -412,11 +388,10 @@ SERVER_LOCATION = \
 SERVER_STATIC = \
     Option('Server runs on static port',
            default=False,
-           cf=('components', 'bcfg2'),
-           cook=bool_cook)
+           cf=('components', 'bcfg2'))
 SERVER_KEY = \
     Option('Path to SSL key',
-           default=False,
+           default=None,
            cmd='--ssl-key',
            odesc='<ssl key>',
            cf=('communication', 'key'),
@@ -433,7 +408,7 @@ SERVER_CA = \
            cf=('communication', 'ca'))
 SERVER_PASSWORD = \
     Option('Communication Password',
-           default=False,
+           default=None,
            cmd='-x',
            odesc='<password>',
            cf=('communication', 'password'))
@@ -474,7 +449,7 @@ CLIENT_SCNS = \
            long_arg=True)
 CLIENT_PROFILE = \
     Option('Assert the given profile for the host',
-           default=False,
+           default=None,
            cmd='-p',
            odesc='<profile>')
 CLIENT_RETRIES = \
@@ -506,12 +481,12 @@ CLIENT_DRIVERS = \
            cook=list_split)
 CLIENT_CACHE = \
     Option('Store the configuration in a file',
-           default=False,
+           default=None,
            cmd='-c',
            odesc='<cache path>')
 CLIENT_REMOVE = \
     Option('Force removal of additional configuration items',
-           default=False,
+           default=None,
            cmd='-r',
            odesc='<entry type|all>')
 CLIENT_BUNDLE = \
@@ -521,7 +496,7 @@ CLIENT_BUNDLE = \
            odesc='<bundle:bundle>',
            cook=colon_split)
 CLIENT_BUNDLEQUICK = \
-    Option('only verify/configure the given bundle(s)',
+    Option('Only verify/configure the given bundle(s)',
            default=False,
            cmd='-Q')
 CLIENT_INDEP = \
@@ -534,7 +509,7 @@ CLIENT_KEVLAR = \
            cmd='-k', )
 CLIENT_FILE = \
     Option('Configure from a file rather than querying the server',
-           default=False,
+           default=None,
            cmd='-f',
            odesc='<specification path>')
 CLIENT_QUICK = \
@@ -605,7 +580,7 @@ LINT_FILES_ON_STDIN = \
            cmd='--stdin',
            long_arg=True)
 
-# APT client tool options
+# individual client tool options
 CLIENT_APT_TOOLS_INSTALL_PATH = \
     Option('Apt tools install path',
            default='/usr',
@@ -618,6 +593,125 @@ CLIENT_SYSTEM_ETC_PATH = \
     Option('System etc path',
            default='/etc',
            cf=('APT', 'etc_path'))
+CLIENT_PORTAGE_BINPKGONLY = \
+    Option('Portage binary packages only',
+           default=False,
+           cf=('Portage', 'binpkgonly'),
+           cook=get_bool)
+CLIENT_RPMNG_INSTALLONLY = \
+    Option('RPMng install-only packages',
+           default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
+                    'kernel-smp', 'kernel-modules', 'kernel-debug',
+                    'kernel-unsupported', 'kernel-devel', 'kernel-source',
+                    'kernel-default', 'kernel-largesmp-devel',
+                    'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
+           cf=('RPMng', 'installonlypackages'),
+           cook=list_split)
+CLIENT_RPMNG_PKG_CHECKS = \
+    Option("Perform RPMng package checks",
+           default=True,
+           cf=('RPMng', 'pkg_checks'),
+           cook=get_bool)
+CLIENT_RPMNG_PKG_VERIFY = \
+    Option("Perform RPMng package verify",
+           default=True,
+           cf=('RPMng', 'pkg_verify'),
+           cook=get_bool)
+CLIENT_RPMNG_INSTALLED_ACTION = \
+    Option("RPMng installed action",
+           default="install",
+           cf=('RPMng', 'installed_action'))
+CLIENT_RPMNG_ERASE_FLAGS = \
+    Option("RPMng erase flags",
+           default=["allmatches"],
+           cf=('RPMng', 'erase_flags'),
+           cook=list_split)
+CLIENT_RPMNG_VERSION_FAIL_ACTION = \
+    Option("RPMng version fail action",
+           default="upgrade",
+           cf=('RPMng', 'version_fail_action'))
+CLIENT_RPMNG_VERIFY_FAIL_ACTION = \
+    Option("RPMng verify fail action",
+           default="reinstall",
+           cf=('RPMng', 'verify_fail_action'))
+CLIENT_RPMNG_VERIFY_FLAGS = \
+    Option("RPMng verify flags",
+           default=[],
+           cf=('RPMng', 'verify_flags'),
+           cook=list_split)
+CLIENT_YUM24_INSTALLONLY = \
+    Option('RPMng install-only packages',
+           default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
+                    'kernel-smp', 'kernel-modules', 'kernel-debug',
+                    'kernel-unsupported', 'kernel-devel', 'kernel-source',
+                    'kernel-default', 'kernel-largesmp-devel',
+                    'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
+           cf=('RPMng', 'installonlypackages'),
+           cook=list_split)
+CLIENT_YUM24_PKG_CHECKS = \
+    Option("Perform YUM24 package checks",
+           default=True,
+           cf=('YUM24', 'pkg_checks'),
+           cook=get_bool)
+CLIENT_YUM24_PKG_VERIFY = \
+    Option("Perform YUM24 package verify",
+           default=True,
+           cf=('YUM24', 'pkg_verify'),
+           cook=get_bool)
+CLIENT_YUM24_INSTALLED_ACTION = \
+    Option("YUM24 installed action",
+           default="install",
+           cf=('YUM24', 'installed_action'))
+CLIENT_YUM24_ERASE_FLAGS = \
+    Option("YUM24 erase flags",
+           default=["allmatches"],
+           cf=('YUM24', 'erase_flags'),
+           cook=list_split)
+CLIENT_YUM24_VERSION_FAIL_ACTION = \
+    Option("YUM24 version fail action",
+           cf=('YUM24', 'version_fail_action'),
+           default="upgrade")
+CLIENT_YUM24_VERIFY_FAIL_ACTION = \
+    Option("YUM24 verify fail action",
+           default="reinstall",
+           cf=('YUM24', 'verify_fail_action'))
+CLIENT_YUM24_VERIFY_FLAGS = \
+    Option("YUM24 verify flags",
+           default=[],
+           cf=('YUM24', 'verify_flags'),
+           cook=list_split)
+CLIENT_YUM24_AUTODEP = \
+    Option("YUM24 autodependency processing",
+           default=True,
+           cf=('YUM24', 'autodep'),
+           cook=get_bool)
+CLIENT_YUMNG_PKG_CHECKS = \
+    Option("Perform YUMng package checks",
+           default=True,
+           cf=('YUMng', 'pkg_checks'),
+           cook=get_bool)
+CLIENT_YUMNG_PKG_VERIFY = \
+    Option("Perform YUMng package verify",
+           default=True,
+           cf=('YUMng', 'pkg_verify'),
+           cook=get_bool)
+CLIENT_YUMNG_INSTALLED_ACTION = \
+    Option("YUMng installed action",
+           default="install",
+           cf=('YUMng', 'installed_action'))
+CLIENT_YUMNG_VERSION_FAIL_ACTION = \
+    Option("YUMng version fail action",
+           default="upgrade",
+           cf=('YUMng', 'version_fail_action'))
+CLIENT_YUMNG_VERIFY_FAIL_ACTION = \
+    Option("YUMng verify fail action",
+           default="reinstall",
+           cf=('YUMng', 'verify_fail_action'))
+CLIENT_YUMNG_VERIFY_FLAGS = \
+    Option("YUMng verify flags",
+           default=[],
+           cf=('YUMng', 'verify_flags'),
+           cook=list_split)
 
 # Logging options
 LOGGING_FILE_PATH = \
@@ -633,7 +727,8 @@ CFG_VALIDATION = \
            default=True,
            cmd='--cfg-validation',
            cf=('cfg', 'validation'),
-           long_arg=True, cook=get_bool)
+           long_arg=True,
+           cook=get_bool)
 
 
 # Option groups
@@ -659,6 +754,34 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              ca=SERVER_CA,
                              protocol=SERVER_PROTOCOL)
 
+DRIVER_OPTIONS = \
+    dict(apt_install_path=CLIENT_APT_TOOLS_INSTALL_PATH,
+         apt_var_path=CLIENT_APT_TOOLS_VAR_PATH,
+         apt_etc_path=CLIENT_SYSTEM_ETC_PATH,
+         portage_binpkgonly=CLIENT_PORTAGE_BINPKGONLY,
+         rpmng_installonly=CLIENT_RPMNG_INSTALLONLY,
+         rpmng_pkg_checks=CLIENT_RPMNG_PKG_CHECKS,
+         rpmng_pkg_verify=CLIENT_RPMNG_PKG_VERIFY,
+         rpmng_installed_action=CLIENT_RPMNG_INSTALLED_ACTION,
+         rpmng_erase_flags=CLIENT_RPMNG_ERASE_FLAGS,
+         rpmng_version_fail_action=CLIENT_RPMNG_VERSION_FAIL_ACTION,
+         rpmng_verify_fail_action=CLIENT_RPMNG_VERIFY_FAIL_ACTION,
+         rpmng_verify_flags=CLIENT_RPMNG_VERIFY_FLAGS,
+         yum24_installonly=CLIENT_YUM24_INSTALLONLY,
+         yum24_pkg_checks=CLIENT_YUM24_PKG_CHECKS,
+         yum24_pkg_verify=CLIENT_YUM24_PKG_VERIFY,
+         yum24_installed_action=CLIENT_YUM24_INSTALLED_ACTION,
+         yum24_erase_flags=CLIENT_YUM24_ERASE_FLAGS,
+         yum24_version_fail_action=CLIENT_YUM24_VERSION_FAIL_ACTION,
+         yum24_verify_fail_action=CLIENT_YUM24_VERIFY_FAIL_ACTION,
+         yum24_verify_flags=CLIENT_YUM24_VERIFY_FLAGS,
+         yum24_autodep=CLIENT_YUM24_AUTODEP,
+         yumng_pkg_checks=CLIENT_YUMNG_PKG_CHECKS,
+         yumng_pkg_verify=CLIENT_YUMNG_PKG_VERIFY,
+         yumng_installed_action=CLIENT_YUMNG_INSTALLED_ACTION,
+         yumng_version_fail_action=CLIENT_YUMNG_VERSION_FAIL_ACTION,
+         yumng_verify_fail_action=CLIENT_YUMNG_VERIFY_FAIL_ACTION,
+         yumng_verify_flags=CLIENT_YUMNG_VERIFY_FLAGS)
 
 class OptionParser(OptionSet):
     """

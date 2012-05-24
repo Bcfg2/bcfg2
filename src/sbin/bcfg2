@@ -35,35 +35,37 @@ class Client:
         self.toolset = None
         self.config = None
         
-        optinfo = dict(extra=Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
-                       quick=Bcfg2.Options.CLIENT_QUICK,
-                       lockfile=Bcfg2.Options.LOCKFILE,
-                       drivers=Bcfg2.Options.CLIENT_DRIVERS,
-                       dryrun=Bcfg2.Options.CLIENT_DRYRUN,
-                       paranoid=Bcfg2.Options.CLIENT_PARANOID,
-                       bundle=Bcfg2.Options.CLIENT_BUNDLE,
-                       bundle_quick=Bcfg2.Options.CLIENT_BUNDLEQUICK,
-                       indep=Bcfg2.Options.CLIENT_INDEP,
-                       file=Bcfg2.Options.CLIENT_FILE,
-                       interactive=Bcfg2.Options.INTERACTIVE,
-                       cache=Bcfg2.Options.CLIENT_CACHE,
-                       profile=Bcfg2.Options.CLIENT_PROFILE,
-                       remove=Bcfg2.Options.CLIENT_REMOVE,
-                       server=Bcfg2.Options.SERVER_LOCATION,
-                       user=Bcfg2.Options.CLIENT_USER,
-                       password=Bcfg2.Options.SERVER_PASSWORD,
-                       retries=Bcfg2.Options.CLIENT_RETRIES,
-                       kevlar=Bcfg2.Options.CLIENT_KEVLAR,
-                       omit_lock_check=Bcfg2.Options.OMIT_LOCK_CHECK,
-                       decision=Bcfg2.Options.CLIENT_DLIST,
-                       servicemode=Bcfg2.Options.CLIENT_SERVICE_MODE,
-                       key=Bcfg2.Options.CLIENT_KEY,
-                       certificate=Bcfg2.Options.CLIENT_CERT,
-                       ca=Bcfg2.Options.CLIENT_CA,
-                       serverCN=Bcfg2.Options.CLIENT_SCNS,
-                       timeout=Bcfg2.Options.CLIENT_TIMEOUT,
-                       decision_list=Bcfg2.Options.CLIENT_DECISION_LIST)
+        optinfo = \
+            dict(extra=Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
+                 quick=Bcfg2.Options.CLIENT_QUICK,
+                 lockfile=Bcfg2.Options.LOCKFILE,
+                 drivers=Bcfg2.Options.CLIENT_DRIVERS,
+                 dryrun=Bcfg2.Options.CLIENT_DRYRUN,
+                 paranoid=Bcfg2.Options.CLIENT_PARANOID,
+                 bundle=Bcfg2.Options.CLIENT_BUNDLE,
+                 bundle_quick=Bcfg2.Options.CLIENT_BUNDLEQUICK,
+                 indep=Bcfg2.Options.CLIENT_INDEP,
+                 file=Bcfg2.Options.CLIENT_FILE,
+                 interactive=Bcfg2.Options.INTERACTIVE,
+                 cache=Bcfg2.Options.CLIENT_CACHE,
+                 profile=Bcfg2.Options.CLIENT_PROFILE,
+                 remove=Bcfg2.Options.CLIENT_REMOVE,
+                 server=Bcfg2.Options.SERVER_LOCATION,
+                 user=Bcfg2.Options.CLIENT_USER,
+                 password=Bcfg2.Options.SERVER_PASSWORD,
+                 retries=Bcfg2.Options.CLIENT_RETRIES,
+                 kevlar=Bcfg2.Options.CLIENT_KEVLAR,
+                 omit_lock_check=Bcfg2.Options.OMIT_LOCK_CHECK,
+                 decision=Bcfg2.Options.CLIENT_DLIST,
+                 servicemode=Bcfg2.Options.CLIENT_SERVICE_MODE,
+                 key=Bcfg2.Options.CLIENT_KEY,
+                 certificate=Bcfg2.Options.CLIENT_CERT,
+                 ca=Bcfg2.Options.CLIENT_CA,
+                 serverCN=Bcfg2.Options.CLIENT_SCNS,
+                 timeout=Bcfg2.Options.CLIENT_TIMEOUT,
+                 decision_list=Bcfg2.Options.CLIENT_DECISION_LIST)
         optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+        optinfo.update(Bcfg2.Options.DRIVER_OPTIONS)
         self.setup = Bcfg2.Options.OptionParser(optinfo)
         self.setup.parse(sys.argv[1:])
 
@@ -86,7 +88,7 @@ class Client:
             if self.setup['bundle'] == []:
                 self.logger.error("-Q option requires -b")
                 raise SystemExit(1)
-            elif self.setup['remove'] != False:
+            elif self.setup['remove']:
                 self.logger.error("-Q option incompatible with -r")
                 raise SystemExit(1)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
@@ -95,14 +97,11 @@ class Client:
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove']:
             self.logger.error("Service removal is nonsensical; removed services will only be disabled")
-        if self.setup['remove'] not in [False,
-                                        'all',
-                                        'Services',
-                                        'Packages',
-                                        'services',
-                                        'packages']:
+        if self.setup['remove'] not in [None, 'all',
+                                        'Services', 'Packages',
+                                        'services', 'packages']:
             self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
-        if (self.setup["file"] != False) and (self.setup["cache"] != False):
+        if self.setup["file"] and self.setup["cache"]:
             print("cannot use -f and -c together")
             raise SystemExit(1)
         if not self.setup['server'].startswith('https://'):
