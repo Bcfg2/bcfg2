@@ -18,6 +18,7 @@ from Bcfg2.Server.Reports.updatefix import update_database
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
+
 class DBStats(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.ThreadedStatistics,
               Bcfg2.Server.Plugin.PullSource):
@@ -29,7 +30,8 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.PullSource.__init__(self)
         self.cpath = "%s/Metadata/clients.xml" % datastore
         self.core = core
-        logger.debug("Searching for new models to add to the statistics database")
+        logger.debug("Searching for new models to "
+                     "add to the statistics database")
         try:
             update_database()
         except Exception:
@@ -64,8 +66,8 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                 return
             except MultipleObjectsReturned:
                 e = sys.exc_info()[1]
-                logger.error("DBStats: MultipleObjectsReturned while handling %s: %s" % \
-                    (metadata.hostname, e))
+                logger.error("DBStats: MultipleObjectsReturned while "
+                             "handling %s: %s" % (metadata.hostname, e))
                 logger.error("DBStats: Data is inconsistent")
                 break
             except:
@@ -100,7 +102,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         if entry.reason.is_sensitive:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         elif len(entry.reason.unpruned) != 0:
-                ret.append('\n'.join(entry.reason.unpruned))
+            ret.append('\n'.join(entry.reason.unpruned))
         elif entry.reason.current_diff != '':
             if entry.reason.is_binary:
                 ret.append(binascii.a2b_base64(entry.reason.current_diff))
