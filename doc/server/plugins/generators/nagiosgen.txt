@@ -18,6 +18,10 @@ Create the NagiosGen directory::
 
     $ mkdir /var/lib/bcfg2/NagiosGen
 
+Create an empty config.xml::
+
+    $ echo "<NagiosGen></NagiosGen>" >> /var/lib/bcfg2/NagiosGen/config.xml
+
 Create default host, and group specs in:
 
 * /var/lib/bcfg2/NagiosGen/default-host.cfg::
