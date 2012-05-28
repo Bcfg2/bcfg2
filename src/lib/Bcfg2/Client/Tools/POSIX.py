@@ -758,7 +758,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.error('Failed to remove %s: %s' % (ename,
                                                                e.strerror))
         else:
-            if os.path.isdir(ename):
+            if os.path.islink(ename):
+                os.remove(ename)
+                return True
+            elif os.path.isdir(ename):
                 try:
                     os.rmdir(ename)
                     return True
