@@ -1,4 +1,4 @@
-import sys
+ import sys
 import copy
 import logging
 import Bcfg2.Server.Plugin
@@ -52,12 +52,37 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
 
     @property
     def cachekey(self):
-        return md5(self.get_config().encode(Bcfg2.Server.Plugin.encoding)).hexdigest()
+        return md5(self.sourcelist().encode(Bcfg2.Server.Plugin.encoding)).hexdigest()
 
     def get_config(self):
-        self.logger.error("Packages: Cannot generate config for host with "
-                          "multiple source types (%s)" % self.metadata.hostname)
+        self.logger.error("Packages: Cannot generate config for host %s with "
+                          "no sources or multiple source types" %
+                          self.metadata.hostname)
         return ""
+
+    def sourcelist(self):
+        srcs = []
+        for source in self.sources:
+            # get_urls() loads url_map as a side-effect
+            source.get_urls()
+            for url_map in source.url_map:
+                reponame = source.get_repo_name(url_map)
+                srcs.append("Name: %s" % reponame)
+                srcs.append("  Type: %s" % source.ptype)
+                if url_map['url']:
+                    srcs.append("  URL: %s" % url_map['url'])
+                elif url_map['rawurl']:
+                    srcs.append("  RAWURL: %s" % url_map['rawurl'])
+                if source.gpgkeys:
+                    srcs.append("  GPG Key(s): %s" % ", ".join(source.gpgkeys))
+                else:
+                    srcs.append("  GPG Key(s): None")
+                if len(source.blacklist):
+                    srcs.append("  Blacklist: %s" % ", ".join(source.blacklist))
+                if len(source.whitelist):
+                    srcs.append("  Whitelist: %s" % ", ".join(source.whitelist))
+                srcs.append("")
+        return "\n".join(srcs)
 
     def get_relevant_groups(self):
         groups = []

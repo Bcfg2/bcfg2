@@ -601,30 +601,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("Unable to build metadata for host %s" % args)
             return
         collection = self.plugins['Packages']._get_collection(metadata)
-        for source in collection.sources:
-            # get_urls() loads url_map as a side-effect
-            source.get_urls()
-            for url_map in source.url_map:
-                for arch in url_map['arches']:
-                    # make sure client is in all the proper arch groups
-                    if arch not in metadata.groups:
-                        continue
-                reponame = source.get_repo_name(url_map)
-                print("Name: %s" % reponame)
-                print("  Type: %s" % source.ptype)
-                if url_map['url'] != '':
-                    print("  URL: %s" % url_map['url'])
-                elif url_map['rawurl'] != '':
-                    print("  RAWURL: %s" % url_map['rawurl'])
-                if source.gpgkeys:
-                    print("  GPG Key(s): %s" % ", ".join(source.gpgkeys))
-                else:
-                    print("  GPG Key(s): None")
-                if len(source.blacklist):
-                    print("  Blacklist: %s" % ", ".join(source.blacklist))
-                if len(source.whitelist):
-                    print("  Whitelist: %s" % ", ".join(source.whitelist))
-                print("")
+        print collection.sourcelist()
 
     def do_profile(self, arg):
         """."""
