@@ -77,7 +77,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''
     __shorthelp__ = "Manage dynamic reports"
     __longhelp__ = (__shorthelp__)
-    django_commands = ['syncdb', 'sqlall', 'validate']
+    django_commands = ['dbshell', 'shell', 'syncdb', 'sqlall', 'validate']
     __usage__ = ("bcfg2-admin reports [command] [options]\n"
                  "\n"
                  "  Commands:\n"
