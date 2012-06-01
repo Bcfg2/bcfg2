@@ -95,12 +95,14 @@ class Client:
             self.logger.info("The following drivers are available:")
             self.logger.info(Bcfg2.Client.Tools.drivers)
             raise SystemExit(0)
-        if self.setup['remove'] and 'services' in self.setup['remove']:
-            self.logger.error("Service removal is nonsensical; removed services will only be disabled")
-        if self.setup['remove'] not in [None, 'all',
-                                        'Services', 'Packages',
-                                        'services', 'packages']:
-            self.logger.error("Got unknown argument %s for -r" % (self.setup['remove']))
+        if self.setup['remove'] and 'services' in self.setup['remove'].lower():
+            self.logger.error("Service removal is nonsensical; "
+                              "removed services will only be disabled")
+        if (self.setup['remove'] and
+            self.setup['remove'].lower() not in ['all', 'services',
+                                                 'packages']):
+            self.logger.error("Got unknown argument %s for -r" % 
+                              self.setup['remove'])
         if self.setup["file"] and self.setup["cache"]:
             print("cannot use -f and -c together")
             raise SystemExit(1)

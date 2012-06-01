@@ -211,8 +211,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         self.pkg_checks = self.setup["yumng_pkg_checks"]
         self.pkg_verify = self.setup["yumng_pkg_verify"]
         self.doInstall = self.setup["yumng_installed_action"] == "install"
-        self.doUpgrade = self.setup["yumng_version_action"] == "upgrade"
-        self.doReinst = self.setup["yumng_verify_action"] == "reinstall"
+        self.doUpgrade = self.setup["yumng_version_fail_action"] == "upgrade"
+        self.doReinst = self.setup["yumng_verify_fail_action"] == "reinstall"
         self.verifyFlags = self.setup["yumng_verify_flags"]
 
         self.installOnlyPkgs = self.yb.conf.installonlypkgs
