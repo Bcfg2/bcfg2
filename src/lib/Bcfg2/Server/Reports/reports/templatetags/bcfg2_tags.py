@@ -1,9 +1,14 @@
 import sys
+from copy import copy
 
 from django import template
+from django.conf import settings
 from django.core.urlresolvers import resolve, reverse, \
                                      Resolver404, NoReverseMatch
+from django.template.loader import get_template, \
+        get_template_from_string,TemplateDoesNotExist
 from django.utils.encoding import smart_unicode, smart_str
+from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from Bcfg2.Server.Reports.utils import filter_list
 
@@ -311,3 +316,98 @@ def determine_client_state(entry):
     else:
         thisdirty = "very-dirty-lineitem"
     return thisdirty
+
+
+@register.tag(name='qs')
+def do_qs(parser, token):
+    """
+    qs tag
+
+    accepts a name value pair and inserts or replaces it in the query string
+    """
+    try:
+        tag, name, value = token.split_contents()
+    except ValueError:
+        raise TemplateSyntaxError, "%r tag requires exactly two arguments" \
+            % token.contents.split()[0]
+    return QsNode(name, value)
+
+class QsNode(template.Node):
+    def __init__(self, name, value):
+        self.name = template.Variable(name)
+        self.value = template.Variable(value)
+
+    def render(self, context):
+        try:
+            name = self.name.resolve(context)
+            value = self.value.resolve(context)
+            request = context['request']
+            qs = copy(request.GET)
+            qs[name] = value
+            return "?%s" % qs.urlencode()
+        except template.VariableDoesNotExist:
+            return ''
+        except KeyError:
+            if settings.TEMPLATE_DEBUG:
+                raise Exception,  "'qs' tag requires context['request']"
+            return ''
+        except:
+            return ''
+
+
+@register.tag
+def sort_link(parser, token):
+    '''
+    Create a sort anchor tag.  Reverse it if active.
+
+    {% sort_link sort_key text %}
+    '''
+    try:
+        tag, sort_key, text = token.split_contents()
+    except ValueError:
+        raise TemplateSyntaxError("%r tag requires at least four arguments" \
+            % token.split_contents()[0])
+
+    return SortLinkNode(sort_key, text)
+
+class SortLinkNode(template.Node):
+    __TMPL__ = "{% load bcfg2_tags %}<a href='{% qs 'sort' key %}'>{{ text }}</a>"
+
+    def __init__(self, sort_key, text):
+        self.sort_key = template.Variable(sort_key)
+        self.text = template.Variable(text)
+
+    def render(self, context):
+        try:
+            try:
+                sort = context['request'].GET['sort']
+            except KeyError:
+                #fall back on this
+                sort = context.get('sort', '')
+            sort_key = self.sort_key.resolve(context)
+            text = self.text.resolve(context)
+
+            # add arrows
+            try:
+                sort_base = sort_key.lstrip('-')
+                if sort[0] == '-' and sort[1:] == sort_base:
+                    text = text + '&#x25BC;'
+                    sort_key = sort_base
+                elif sort_base == sort:
+                    text = text + '&#x25B2;'
+                    sort_key = '-' + sort_base
+            except IndexError:
+                pass
+
+            context.push()
+            context['key'] = sort_key
+            context['text'] = mark_safe(text)
+            output = get_template_from_string(self.__TMPL__).render(context)
+            context.pop()
+            return output
+        except:
+            if settings.DEBUG:
+                raise
+            raise
+            return ''
+

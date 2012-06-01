@@ -18,6 +18,9 @@ from django.db import connection
 from Bcfg2.Server.Reports.reports.models import *
 
 
+__SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra', \
+            'timestamp', 'server' )
+
 class PaginationError(Exception):
     """This error is raised when pagination cannot be completed."""
     pass
@@ -177,8 +180,29 @@ def client_detailed_list(request, timestamp=None, **kwargs):
 
     """
 
+    try:
+        sort = request.GET['sort']
+        if sort[0] == '-':
+            sort_key = sort[1:]
+        else:
+            sort_key = sort
+        if not sort_key in __SORT_FIELDS__:
+            raise ValueError
+
+        if sort_key == "client":
+            kwargs['orderby'] = "%s__name" % sort
+        elif sort_key == "good":
+            kwargs['orderby'] = "%scount" % sort
+        elif sort_key in ["bad", "modified", "extra"]:
+            kwargs['orderby'] = "%s_entries" % sort
+        else:
+            kwargs['orderby'] = sort
+        kwargs['sort'] = sort
+    except (ValueError, KeyError):
+        kwargs['orderby'] = "client__name"
+        kwargs['sort'] = "client"
+
     kwargs['interaction_base'] = Interaction.objects.interaction_per_client(timestamp).select_related()
-    kwargs['orderby'] = "client__name"
     kwargs['page_limit'] = 0
     return render_history_view(request, 'clients/detailed-list.html', **kwargs)
 
@@ -349,6 +373,8 @@ def render_history_view(request, template='clients/history.html', **kwargs):
 
     if 'orderby' in kwargs and kwargs['orderby']:
         iquery = iquery.order_by(kwargs['orderby'])
+    if 'sort' in kwargs:
+        context['sort'] = kwargs['sort']
 
     if 'state' in kwargs and kwargs['state']:
         iquery = iquery.filter(state__exact=kwargs['state'])
