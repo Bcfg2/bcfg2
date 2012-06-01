@@ -207,10 +207,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 else:
                     raise ImportError
             except ImportError:
-                import bpython.cli
-                bpython.cli.main(locals_=locals())
-            finally:
-                sh.interact()
+                try:
+                    import bpython.cli
+                    bpython.cli.main(locals_=locals())
+                except ImportError:
+                    sh.interact()
 
     def do_quit(self, _):
         """
