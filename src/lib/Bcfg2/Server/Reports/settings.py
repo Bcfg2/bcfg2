@@ -1,9 +1,12 @@
-import django
 import os
 import sys
 import getopt
 import Bcfg2.Options
 
+try:
+    import django
+except ImportError:
+    raise ImportError('Import of Django module failed. Is Django installed?')
 
 cfile_opt=Bcfg2.Options.CFILE
 cfiles=[cfile_opt.default, '/etc/bcfg2-web.conf']
@@ -131,11 +134,7 @@ AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
 # The NIS group authorized to login to BCFG2's reportinvg system
 AUTHORIZED_GROUP = ''
 #create login url area:
-try:
-    import django.contrib.auth
-except ImportError:
-    raise ImportError('Import of Django module failed. Is Django installed?')
-django.contrib.auth.LOGIN_URL = '/login'
+LOGIN_URL = '/login'
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
@@ -145,7 +144,6 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates".
     # Always use forward slashes, even on Windows.
     '/usr/share/python-support/python-django/django/contrib/admin/templates/',
-    'Bcfg2.Server.Reports.reports'
 )
 
 if django.VERSION[0] == 1 and django.VERSION[1] < 2:
