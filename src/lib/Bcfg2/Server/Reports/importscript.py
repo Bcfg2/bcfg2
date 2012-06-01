@@ -28,7 +28,7 @@ from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime
 from django.db import connection
-from Bcfg2.Server.Reports.updatefix import update_database
+from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 import logging
 import Bcfg2.Logger
 import platform
@@ -304,7 +304,10 @@ if __name__ == '__main__':
 
     q = '-O3' in sys.argv
     # Be sure the database is ready for new schema
-    update_database()
+    try:
+        update_database()
+    except UpdaterError:
+        raise SystemExit(1)
     load_stats(clientsdata,
                statsdata,
                encoding,

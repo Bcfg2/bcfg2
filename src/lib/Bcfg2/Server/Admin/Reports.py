@@ -26,7 +26,7 @@ import Bcfg2.Server.Reports.settings
 # Load django and reports stuff _after_ we know we can load settings
 import django.core.management
 from Bcfg2.Server.Reports.importscript import load_stats
-from Bcfg2.Server.Reports.updatefix import update_database
+from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 from Bcfg2.Server.Reports.utils import *
 
 project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
@@ -111,10 +111,14 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.django_command_proxy(args[0])
         elif args[0] == 'scrub':
             self.scrub()
-        elif args[0] == 'init':
-            update_database()
-        elif args[0] == 'update':
-            update_database()
+        elif args[0] in ['init', 'update']:
+            try:
+                update_database()
+            #except SchemaTooOldError:
+            #    logger.error("Sc
+            except UpdaterError:
+                print "Update failed"
+                raise SystemExit(-1)
         elif args[0] == 'load_stats':
             quick = '-O3' in args
             stats_file = None
@@ -266,6 +270,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
                        self.log,
                        quick=quick,
                        location=platform.node())
+        except UpdaterError:
+            self.errExit("StatReports: Database updater failed")
         except:
             pass
 

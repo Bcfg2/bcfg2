@@ -286,7 +286,7 @@ class Reason(models.Model):
     current_diff = models.TextField(max_length=1024*1024, blank=True)
     is_binary = models.BooleanField(default=False)
     is_sensitive = models.BooleanField(default=False)
-    unpruned = models.TextField(max_length=4096, blank=True)
+    unpruned = models.TextField(max_length=4096, blank=True, default='')
 
     def _str_(self):
         return "Reason"
@@ -350,3 +350,6 @@ class InternalDatabaseVersion(models.Model):
 
     def __str__(self):
         return "version %d updated the %s" % (self.version, self.updated.isoformat())
+
+    class Meta:
+        get_latest_by = "version"

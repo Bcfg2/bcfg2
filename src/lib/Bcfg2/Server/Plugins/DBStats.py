@@ -14,7 +14,7 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.Reports.importscript
 from Bcfg2.Server.Reports.reports.models import Client
 import Bcfg2.Server.Reports.settings
-from Bcfg2.Server.Reports.updatefix import update_database
+from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
@@ -34,6 +34,8 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
                      "add to the statistics database")
         try:
             update_database()
+        except UpdaterError:
+            raise Bcfg2.Server.Plugin.PluginInitError
         except Exception:
             inst = sys.exc_info()[1]
             logger.debug(str(inst))
