@@ -78,8 +78,9 @@ class Debuggable(object):
 
     def toggle_debug(self):
         self.debug_flag = not self.debug_flag
-        self.logger("%s: debug_flag = %s" % (self.__class__.__name__,
-                                             self.debug_flag))
+        self.debug_log("%s: debug_flag = %s" % (self.__class__.__name__,
+                                                self.debug_flag),
+                       flag=True)
         return self.debug_flag
 
     def debug_log(self, message, flag=None):
