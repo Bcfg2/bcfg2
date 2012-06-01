@@ -1,4 +1,4 @@
- import sys
+import sys
 import copy
 import logging
 import Bcfg2.Server.Plugin
