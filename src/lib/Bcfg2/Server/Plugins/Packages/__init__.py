@@ -40,8 +40,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                        self.core.setup)
 
     def toggle_debug(self):
-        Bcfg2.Server.Plugin.Plugin.toggle_debug(self)
+        rv = Bcfg2.Server.Plugin.Plugin.toggle_debug(self)
         self.sources.toggle_debug()
+        return rv
 
     @property
     def disableResolver(self):
