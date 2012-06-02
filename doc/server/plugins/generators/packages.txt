@@ -147,7 +147,9 @@ Packages, please file a bug report so that we can fix the problem in
 future releases. In the meantime, you can work around this issue by
 blacklisting the offending Package in your Sources. The blacklist
 element should immediately follow the Component section of your source
-and should look like the following::
+and should look like the following:
+
+.. code-block::xml
 
     <Blacklist>unwanted-packagename</Blacklist>
 
@@ -164,7 +166,9 @@ If you have yum libraries installed, Packages can automatically handle
 GPG signing keys for Yum and Pulp repositories. (You do not need to
 use the native yum resolver; if yum libraries are available, GPG
 signing keys can be handled automatically.) Simply specify the URL to
-the GPG key(s) for a repository in ``sources.xml``::
+the GPG key(s) for a repository in ``sources.xml``:
+
+.. code-block::xml
 
     <Source type="yum"
             rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
@@ -188,7 +192,9 @@ Example usage
 =============
 
 Create a ``sources.xml`` file in the Packages directory that looks
-something like this::
+something like this:
+
+.. code-block::xml
 
     <Sources>
       <Group name="ubuntu-intrepid">
@@ -230,7 +236,9 @@ something like this::
 
         <Source type="apt" essential="false" ...>
 
-Yum sources can be similarly specified::
+Yum sources can be similarly specified:
+
+.. code-block::xml
 
     <Sources>
       <Group name="centos-5.2">
@@ -251,7 +259,9 @@ For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
 
 :ref:``Pulp sources <pulp-source-support>`` are very simple to specify
-due to the amount of data that can be queried from Pulp itself::
+due to the amount of data that can be queried from Pulp itself:
+
+.. code-block::xml
 
     <Sources>
       <Group name="centos-6-x86_64">
@@ -359,7 +369,9 @@ Package Checking and Verification
 =================================
 
 In order to do disable per-package verification Pkgmgr style, you will
-need to use :ref:`BoundEntries <boundentries>`, e.g.::
+need to use :ref:`BoundEntries <boundentries>`, e.g.:
+
+.. code-block::xml
 
     <BoundPackage name="mem-agent" priority="1" version="auto"
                   type="yum" verify="false"/>
@@ -466,14 +478,18 @@ Package Groups
 Yum package groups are supported by the native Yum libraries. To
 include a package group, use the ``group`` attribute of the
 ``Package`` tag. You can use either the short group ID or the long
-group name::
+group name:
+
+.. code-block::xml
 
     <Package group="SNMP Support"/>
     <Package group="system-management-snmp"/>
 
 By default, only those packages considered the "default" packages in a
 group will be installed. You can change this behavior using the
-"type" attribute::
+"type" attribute:
+
+.. code-block::xml
 
     <Package group="development" type="optional"/>
     <Package group="Administration Tools" type="mandatory"/>
@@ -500,7 +516,9 @@ Pulp Support
 Bcfg2 contains explicit support for repositories managed by Pulp
 (http://pulpproject.org/). Due to the amount of data about a
 repository that can be retrieved directly from Pulp, the only thing
-necessary to configure a Pulp repo is the repo ID::
+necessary to configure a Pulp repo is the repo ID:
+
+.. code-block::xml
 
     <Sources>
       <Group name="centos-6-x86_64">
